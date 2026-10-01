@@ -9,6 +9,7 @@ import {
   labelSpecLines,
   type PouchSpecConfiguration,
   pouchSpecLines,
+  serviceSpecLines,
   type TagSleeveSpecConfiguration,
   tagSleeveSpecLines,
 } from '@modules/quotes/line-summary';
@@ -23,7 +24,7 @@ import { type PriceHintDto, type PriceHintQuery } from './price-hints.dto';
 
 const BOX = new Set(['folding', 'corrugate']);
 /** Every calculator a hint can be priced with (D-220). */
-const HINTED = new Set([...BOX, 'label', 'tag_sleeve', 'pouch']);
+const HINTED = new Set([...BOX, 'label', 'tag_sleeve', 'pouch', 'service']);
 
 /** Up to the next satang: a "starting from" figure never undercuts the price a quote gives (D-181). */
 const ceilMoney = (value: string) =>
@@ -116,7 +117,9 @@ export class PriceHintsService {
         ? await tagSleeveSpecLines(this.prisma, cfg as unknown as TagSleeveSpecConfiguration)
         : key === 'pouch'
           ? await pouchSpecLines(this.prisma, cfg as unknown as PouchSpecConfiguration)
-          : await labelSpecLines(this.prisma, cfg as unknown as LabelSpecConfiguration);
+          : key === 'service'
+            ? await serviceSpecLines(this.prisma, cfg as unknown as { catalogProductId: string })
+            : await labelSpecLines(this.prisma, cfg as unknown as LabelSpecConfiguration);
     return {
       quantity: cheapest.quantity,
       unitPrice: cheapest.unitPrice!,

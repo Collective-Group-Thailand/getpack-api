@@ -431,6 +431,33 @@ export class StandardProductInputDataDto {
   stockProducts!: StandardProductInputItemDto[];
 }
 
+// --- service CS input data (U-B6 service, legacy `cs/service/get-input-data`) ---------------------------------------
+
+class ServiceInputItemDto {
+  @ApiProperty({ format: 'uuid', example: '0192f3a0-7c1e-7d2a-9b1f-00000000e301' })
+  id!: string;
+
+  @ApiProperty({ example: 'print-plate' })
+  slug!: string;
+
+  @ApiProperty({ example: 'ค่า Plate พิมพ์' })
+  nameTh!: string;
+
+  @ApiProperty({ example: 'Print plate' })
+  nameEn!: string;
+}
+
+export class ServiceInputDataDto {
+  @ApiProperty({ type: CsDiscountPolicyDto })
+  discountPolicy!: CsDiscountPolicyDto;
+
+  @ApiProperty({
+    type: [ServiceInputItemDto],
+    description: 'Active service items (catalogue products of type `service`)',
+  })
+  items!: ServiceInputItemDto[];
+}
+
 class FactoryQuotePartDto {
   @ApiProperty({ example: 'main' })
   partKey!: string;
@@ -798,6 +825,18 @@ export const STANDARD_PRODUCT_INPUT_DATA_EXAMPLE: StandardProductInputDataDto = 
       unit: 'piece',
       minOrderQty: 100,
       weightG: 18,
+    },
+  ],
+};
+
+export const SERVICE_INPUT_DATA_EXAMPLE: ServiceInputDataDto = {
+  discountPolicy: { directLimitPct: '5' },
+  items: [
+    {
+      id: '0192f3a0-7c1e-7d2a-9b1f-00000000e301',
+      slug: 'print-plate',
+      nameTh: 'ค่า Plate พิมพ์',
+      nameEn: 'Print plate',
     },
   ],
 };

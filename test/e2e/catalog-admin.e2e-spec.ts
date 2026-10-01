@@ -52,7 +52,9 @@ describe('catalogue admin (e2e, B2.1)', () => {
   const admin = as('admin');
 
   let seq = 0;
-  async function productType(calculatorKey = 'folding'): Promise<{ id: string; etag: string }> {
+  async function productType(
+    calculatorKey: string | null = 'folding',
+  ): Promise<{ id: string; etag: string }> {
     const n = ++seq;
     const category = await admin
       .post('/v1/admin/catalog/product-categories', {
@@ -158,8 +160,8 @@ describe('catalogue admin (e2e, B2.1)', () => {
   });
 
   it('keeps a new type on RFQ until its calculator ships (D-100)', async () => {
-    // Service has no calculator yet (the switch itself is covered in folding-quotes).
-    const type = await productType('service');
+    // Every calculator ships since U-B6: a type without a calculator stays RFQ (the switch is covered in folding-quotes).
+    const type = await productType(null);
     const refused = await admin
       .post(`/v1/admin/catalog/product-types/${type.id}/actions/change-quote-mode`, {
         quoteMode: 'instant',

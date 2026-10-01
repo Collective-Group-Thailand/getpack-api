@@ -377,6 +377,14 @@ export async function standardProductSpecLines(
   return lines;
 }
 
+/** A service configuration (U-B6 service): the service item. */
+export async function serviceSpecLines(db: Tx, cfg: { catalogProductId: string }): Promise<SpecLineDto[]> {
+  const item = await db.catalogProduct.findUnique({ where: { publicId: cfg.catalogProductId } });
+  return item
+    ? [{ key: 'service', labelTh: 'บริการ', labelEn: 'Service', valueTh: item.nameTh, valueEn: item.nameEn }]
+    : [];
+}
+
 type SchemaProperty = { title?: unknown; 'x-title-en'?: unknown };
 
 function text(value: unknown): string {

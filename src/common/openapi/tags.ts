@@ -78,6 +78,9 @@ export const API_TAGS: Record<string, string> = {
   'admin.csStandardProduct':
     'The CS standard-product calculator: stock products and pricing with the staff view (D-100, D-141).',
   'partner.pricingStandardProduct': 'A factory prices a standard product on its own price list (D-044).',
+  'admin.csService':
+    'The CS service calculator: service items, price lines and CS-entered amounts (D-100, D-194, D-141).',
+  'partner.pricingService': 'A factory prices a service item on its own price list (D-044).',
   'partner.pricingTagSleeve': 'A factory prices a tag & sleeve configuration on its own price list (D-044).',
   'ops.health': 'Liveness and readiness of the API and its dependencies (database, Redis, object storage).',
   'auth.staff': 'Sign-in for Packio staff (e-mail + password). ADR-0004.',

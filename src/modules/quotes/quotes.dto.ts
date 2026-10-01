@@ -229,6 +229,7 @@ export class SavedQuoteDto {
       { $ref: getSchemaPath('TagSleeveConfigurationDto') },
       { $ref: getSchemaPath('PouchConfigurationDto') },
       { $ref: getSchemaPath('StandardProductConfigurationDto') },
+      { $ref: getSchemaPath('ServiceConfigurationDto') },
     ],
     nullable: true,
     description: "The configuration of the product type's calculator; null for RFQ quotes",

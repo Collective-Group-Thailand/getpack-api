@@ -28,6 +28,7 @@ import {
   CsCorrugateConfigurationDto,
 } from './corrugate.dto';
 import { CorrugateInputDataService } from './corrugate-input-data.service';
+import { CsServicePricingService } from './cs-service-pricing.service';
 import { FoldingInputDataService } from './folding-input-data.service';
 import { LABEL_CONFIGURATION_EXAMPLE, LabelConfigurationDto } from './label.dto';
 import { LabelInputDataService } from './label-input-data.service';
@@ -54,10 +55,21 @@ import {
   LabelInputDataDto,
   POUCH_INPUT_DATA_EXAMPLE,
   PouchInputDataDto,
+  SERVICE_INPUT_DATA_EXAMPLE,
+  ServiceInputDataDto,
   STANDARD_PRODUCT_INPUT_DATA_EXAMPLE,
   StandardProductInputDataDto,
   TAG_SLEEVE_INPUT_DATA_EXAMPLE,
 } from './quotes.io.dto';
+import {
+  CS_SERVICE_PRICE_EXAMPLE,
+  CS_SERVICE_PRICE_RESULT_EXAMPLE,
+  CsServicePriceDto,
+  CsServicePriceResultDto,
+  SERVICE_CONFIGURATION_EXAMPLE,
+  ServiceConfigurationDto,
+} from './service.dto';
+import { ServiceInputDataService } from './service-input-data.service';
 import {
   STANDARD_PRODUCT_CONFIGURATION_EXAMPLE,
   StandardProductConfigurationDto,
@@ -125,6 +137,7 @@ async function adminView(
   TagSleeveConfigurationDto,
   PouchConfigurationDto,
   StandardProductConfigurationDto,
+  ServiceConfigurationDto,
 )
 @Controller('quotes')
 export class StoreQuotesController {
@@ -143,7 +156,7 @@ export class StoreQuotesController {
       'Prices each quantity from the active factories that hold an instant price path (D-043, D-100): price incl. VAT, ' +
       'lead time and earliest ship date within capacity (D-101), quantity tolerance (D-021). A quantity without an ' +
       'instant price carries the reason and routes to RFQ. The configuration is the one of the type’s calculator ' +
-      '(folding, corrugate, label, tag & sleeve, pouch, standard product). Nothing is saved (quotes are saved with B2.5, D-051); no factory data is returned ' +
+      '(folding, corrugate, label, tag & sleeve, pouch, standard product, service). Nothing is saved (quotes are saved with B2.5, D-051); no factory data is returned ' +
       '(D-050). Works signed in or anonymously.',
     implements: CALCULATION,
   })
@@ -874,5 +887,148 @@ export class PartnerStandardProductPricingController {
   ): Promise<FactoryQuoteDto> {
     const factory = await this.access.factory(actor, factoryId);
     return this.engine.priceForFactory('standard_product', body, factory);
+  }
+}
+
+@ApiSurface('admin', 'csService')
+@Controller('cs/service')
+export class AdminCsServiceController {
+  constructor(
+    private readonly engine: QuoteEngineService,
+    private readonly inputData: ServiceInputDataService,
+    private readonly pricing: CsServicePricingService,
+    private readonly permissions: PermissionResolver,
+  ) {}
+
+  @Get('input-data')
+  @Can('quotes.calculate')
+  @ApiEndpoint({
+    id: 'admin.csService.inputData',
+    summary: 'Service items of the CS service calculator',
+    description:
+      'Active service items — catalogue products of type `service` (plates, die blocks, molds, mockups, design, ' +
+      'delivery…) — and the CS discount limit (legacy `cs/service/get-input-data`, D-100).',
+    implements: ['D-100'],
+  })
+  @ApiSuccess(200, {
+    description: 'Input data',
+    type: ServiceInputDataDto,
+    example: SERVICE_INPUT_DATA_EXAMPLE,
+  })
+  @ApiStandardErrors()
+  get(): Promise<ServiceInputDataDto> {
+    return this.inputData.get();
+  }
+
+  @Post('calculate')
+  @HttpCode(200)
+  @Can('quotes.calculate')
+  @ApiEndpoint({
+    id: 'admin.csService.calculate',
+    summary: 'Price a service item from the factories’ service price lines (CS)',
+    description:
+      'The store calculation plus the staff view, from the factories’ `service` price lines (net cost per unit, ' +
+      'Packio’s margin, VAT). A service ships nothing, so there is no shipping line. Without a line the item has no ' +
+      'instant price: CS prices it from an amount (`admin.csService.price`). Buy prices need `factory_cost.read`, the ' +
+      'margin `margin.read` (D-141).',
+    implements: [...CALCULATION, 'D-012', 'D-141'],
+  })
+  @ApiBody({ type: ServiceConfigurationDto, examples: { default: { value: SERVICE_CONFIGURATION_EXAMPLE } } })
+  @ApiSuccess(200, {
+    description: 'Prices per quantity with the staff view',
+    type: AdminQuoteCalculationDto,
+    example: ADMIN_CALCULATION_EXAMPLE,
+  })
+  @ApiStandardErrors(
+    'http.bad_request',
+    'http.malformed_json',
+    'validation.failed',
+    'pricing.vat_rate_missing',
+  )
+  async calculate(
+    @CurrentActor() actor: Actor,
+    @Body() body: ServiceConfigurationDto,
+  ): Promise<AdminQuoteCalculationDto> {
+    const view = await this.engine.price('service', body, {
+      channel: 'cs',
+      actorUserId: actor.type === 'user' ? actor.userId : undefined,
+      ip: RequestContext.current()?.ip,
+    });
+    return adminView(view, actor, this.permissions);
+  }
+
+  @Post('actions/price')
+  @HttpCode(200)
+  @Can('quotes.calculate')
+  @ApiEndpoint({
+    id: 'admin.csService.price',
+    summary: 'Price a service from the amount CS enters',
+    description:
+      'Legacy `cs/service` maths, computed on the server (D-194: the price is entered by CS, no new formula): from a ' +
+      'net cost, Packio’s `service` margin and the dated VAT give the net and gross sell price; from a VAT-inclusive ' +
+      'sell price (design), the net and the cost — each rounded as legacy’s page did — and, for a hired freelancer, the ' +
+      'payable (legacy `design_cost`). Nothing is saved. A cost CS did not enter needs `factory_cost.read`, the margin ' +
+      '`margin.read` (D-141).',
+    implements: ['D-194', 'D-100', 'D-063', 'D-141'],
+  })
+  @ApiBody({ type: CsServicePriceDto, examples: { default: { value: CS_SERVICE_PRICE_EXAMPLE } } })
+  @ApiSuccess(200, {
+    description: 'Net, VAT and gross per unit and for the quantity',
+    type: CsServicePriceResultDto,
+    example: CS_SERVICE_PRICE_RESULT_EXAMPLE,
+  })
+  @ApiStandardErrors(
+    'http.bad_request',
+    'http.malformed_json',
+    'validation.failed',
+    'pricing.vat_rate_missing',
+  )
+  async price(
+    @CurrentActor() actor: Actor,
+    @Body() body: CsServicePriceDto,
+  ): Promise<CsServicePriceResultDto> {
+    const granted =
+      actor.type === 'user' ? (await this.permissions.forUser(actor.userId)).permissions : new Set<string>();
+    return this.pricing.price(body, {
+      cost: granted.has('factory_cost.read'),
+      margin: granted.has('margin.read'),
+    });
+  }
+}
+
+@ApiSurface('partner', 'pricingService')
+@Controller('factories/:factoryId/pricing/service')
+export class PartnerServicePricingController {
+  constructor(
+    private readonly engine: QuoteEngineService,
+    private readonly access: FactoryAccess,
+  ) {}
+
+  @Post('calculate')
+  @HttpCode(200)
+  @Can('factory_prices.read')
+  @ApiParam({ name: 'factoryId', format: 'uuid' })
+  @ApiEndpoint({
+    id: 'partner.pricingService.calculate',
+    summary: 'Price a service item on my own price list',
+    description:
+      'The buy side only, on the factory’s own service price lines in force: buy price per quantity, lead time, per ' +
+      'print type. Never Packio’s sell price or another factory (D-044, D-042); another factory is 404.',
+    implements: ['D-044', 'D-042', 'D-040'],
+  })
+  @ApiBody({ type: ServiceConfigurationDto, examples: { default: { value: SERVICE_CONFIGURATION_EXAMPLE } } })
+  @ApiSuccess(200, {
+    description: 'Buy side per print type',
+    type: FactoryQuoteDto,
+    example: FACTORY_QUOTE_EXAMPLE,
+  })
+  @ApiStandardErrors('http.bad_request', 'http.malformed_json', 'http.not_found', 'validation.failed')
+  async calculate(
+    @CurrentActor() actor: Actor,
+    @Param('factoryId', ParseUUIDPipe) factoryId: string,
+    @Body() body: ServiceConfigurationDto,
+  ): Promise<FactoryQuoteDto> {
+    const factory = await this.access.factory(actor, factoryId);
+    return this.engine.priceForFactory('service', body, factory);
   }
 }

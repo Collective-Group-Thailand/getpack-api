@@ -22,12 +22,16 @@ export interface LoadedSell {
 export async function loadSellSnapshot(
   db: Tx,
   productTypeId: bigint,
-  printTypeId: bigint,
+  /** Null: the product type's tables only (a CS amount with no factory print type, U-B6 service). */
+  printTypeId: bigint | null,
   at: Date,
   opts: { priceMaxInclusive?: boolean } = {},
 ): Promise<LoadedSell> {
   const tables = await db.sellMarginTable.findMany({
-    where: { productTypeId, OR: [{ printTypeId }, { printTypeId: null }] },
+    where: {
+      productTypeId,
+      OR: printTypeId === null ? [{ printTypeId: null }] : [{ printTypeId }, { printTypeId: null }],
+    },
     include: {
       versions: {
         where: { status: 'approved', effectiveFrom: { lte: at } },
@@ -39,8 +43,9 @@ export async function loadSellSnapshot(
   });
   const pick = (kind: string) =>
     (
-      tables.find((t) => t.kind === kind && t.printTypeId === printTypeId) ??
-      tables.find((t) => t.kind === kind && t.printTypeId === null)
+      (printTypeId !== null
+        ? tables.find((t) => t.kind === kind && t.printTypeId === printTypeId)
+        : undefined) ?? tables.find((t) => t.kind === kind && t.printTypeId === null)
     )?.versions[0];
   const margin = pick('margin');
   const fixCost = pick('fix_cost');

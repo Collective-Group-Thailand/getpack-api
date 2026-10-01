@@ -9,6 +9,7 @@ import { CorrugateConfigurationDto, CsCorrugateConfigurationDto } from './corrug
 import { LabelConfigurationDto } from './label.dto';
 import { PouchConfigurationDto } from './pouch.dto';
 import { FoldingConfigurationDto } from './quote.dto';
+import { ServiceConfigurationDto } from './service.dto';
 import { StandardProductConfigurationDto } from './standard-product.dto';
 import { TagSleeveConfigurationDto } from './tag-sleeve.dto';
 
@@ -24,12 +25,14 @@ export const CALCULATOR_SALES_UNIT: Partial<Record<CalculatorKey, ProductUnit>> 
   label: 'piece',
   tag_sleeve: 'piece',
   pouch: 'pouch',
+  service: 'job',
 };
 
-/** Calculators priced without a difficulty level (legacy pouch and standard-product prices have none, U-B6). */
+/** Calculators priced without a difficulty level (legacy pouch, standard-product and service prices have none, U-B6). */
 export const CALCULATORS_WITHOUT_DIFFICULTY: ReadonlySet<CalculatorKey> = new Set<CalculatorKey>([
   'pouch',
   'standard_product',
+  'service',
 ]);
 
 const DTOS: Partial<Record<CalculatorKey, { store: Type<object>; staff: Type<object> }>> = {
@@ -39,6 +42,7 @@ const DTOS: Partial<Record<CalculatorKey, { store: Type<object>; staff: Type<obj
   tag_sleeve: { store: TagSleeveConfigurationDto, staff: TagSleeveConfigurationDto },
   pouch: { store: PouchConfigurationDto, staff: PouchConfigurationDto },
   standard_product: { store: StandardProductConfigurationDto, staff: StandardProductConfigurationDto },
+  service: { store: ServiceConfigurationDto, staff: ServiceConfigurationDto },
 };
 
 export async function validateConfiguration(
@@ -86,7 +90,13 @@ export async function assertStoreRules(
         'the catalogue product is priced at its own difficulty level',
       );
     }
-  } else if (key === 'corrugate' || key === 'label' || key === 'tag_sleeve' || key === 'pouch') {
+  } else if (
+    key === 'corrugate' ||
+    key === 'label' ||
+    key === 'tag_sleeve' ||
+    key === 'pouch' ||
+    key === 'service'
+  ) {
     fail('configuration.catalogProductId', 'required', 'the catalogue product is required');
   }
   if (typeof configuration['patternId'] !== 'string') return;

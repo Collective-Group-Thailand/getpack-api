@@ -33,6 +33,7 @@ const REFERENCE_CALCULATORS: ReadonlySet<string> = new Set([
   'label',
   'tag_sleeve',
   'pouch',
+  'service',
 ]);
 
 @Injectable()

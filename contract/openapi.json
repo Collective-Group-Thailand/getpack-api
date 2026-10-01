@@ -7380,6 +7380,9 @@
                   },
                   {
                     "$ref": "#/components/schemas/StandardProductConfigurationDto"
+                  },
+                  {
+                    "$ref": "#/components/schemas/ServiceConfigurationDto"
                   }
                 ]
               },
@@ -11874,9 +11877,12 @@
               },
               {
                 "$ref": "#/components/schemas/StandardProductConfigurationDto"
+              },
+              {
+                "$ref": "#/components/schemas/ServiceConfigurationDto"
               }
             ],
-            "description": "The configuration of the product type's calculator: `FoldingConfigurationDto` for folding cartons, `CorrugateConfigurationDto` for corrugated boxes, `LabelConfigurationDto` for labels, `TagSleeveConfigurationDto` for tags & sleeves, `PouchConfigurationDto` for pouches, `StandardProductConfigurationDto` for standard products (validated against it; paths under `configuration`)"
+            "description": "The configuration of the product type's calculator: `FoldingConfigurationDto` for folding cartons, `CorrugateConfigurationDto` for corrugated boxes, `LabelConfigurationDto` for labels, `TagSleeveConfigurationDto` for tags & sleeves, `PouchConfigurationDto` for pouches, `StandardProductConfigurationDto` for standard products, `ServiceConfigurationDto` for services (validated against it; paths under `configuration`)"
           },
           "deliveryPostcode": {
             "description": "Delivery postcode: prices shipping on the customer rate card (D-013)",
@@ -23113,6 +23119,108 @@
         },
         "required": [
           "directLimitPct"
+        ],
+        "type": "object"
+      },
+      "CsServicePriceDto": {
+        "properties": {
+          "amount": {
+            "description": "The amount CS entered, per unit Unit: THB.",
+            "example": 1000,
+            "minimum": 0,
+            "type": "number"
+          },
+          "basis": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ServiceAmountBasis"
+              }
+            ],
+            "description": "What CS entered: `buy_cost_net` the net cost (plates, die blocks, molds, mockups, delivery) or `sell_gross` the VAT-inclusive sell price (design) — legacy `cs/service` (D-194)",
+            "example": "buy_cost_net"
+          },
+          "catalogProductId": {
+            "description": "The service item",
+            "example": "0192f3a0-7c1e-7d2a-9b1f-00000000e301",
+            "format": "uuid",
+            "type": "string"
+          },
+          "freelancer": {
+            "description": "A hired freelancer design: also returns the freelancer’s payable (`sell_gross` only)",
+            "example": false,
+            "type": "boolean"
+          },
+          "quantity": {
+            "description": "Units (default 1, as legacy)",
+            "example": 1,
+            "maximum": 10000,
+            "minimum": 1,
+            "type": "integer"
+          }
+        },
+        "required": [
+          "catalogProductId",
+          "basis",
+          "amount"
+        ],
+        "type": "object"
+      },
+      "CsServicePriceResultDto": {
+        "properties": {
+          "basis": {
+            "example": "buy_cost_net",
+            "type": "string"
+          },
+          "freelancerPayableAmount": {
+            "description": "Payable to a hired freelancer for the quantity (legacy `design_cost`); null otherwise",
+            "example": null,
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "marginPct": {
+            "description": "Margin %; null without `margin.read`",
+            "example": "6.5",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "quantity": {
+            "example": 1,
+            "type": "number"
+          },
+          "total": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ServiceAmountsDto"
+              }
+            ],
+            "description": "Per unit × quantity"
+          },
+          "unit": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ServiceAmountsDto"
+              }
+            ],
+            "description": "Per unit"
+          },
+          "vatPct": {
+            "description": "VAT % (the dated `vat_standard` rate)",
+            "example": "7",
+            "type": "string"
+          }
+        },
+        "required": [
+          "basis",
+          "quantity",
+          "marginPct",
+          "vatPct",
+          "unit",
+          "total",
+          "freelancerPayableAmount"
         ],
         "type": "object"
       },
@@ -41541,6 +41649,7 @@
           "percent_reduces",
           "standard_size_prices",
           "stock_product_prices",
+          "service_prices",
           "conditions",
           "calculate_conditions",
           "production_conditions",
@@ -50662,9 +50771,12 @@
               },
               {
                 "$ref": "#/components/schemas/StandardProductConfigurationDto"
+              },
+              {
+                "$ref": "#/components/schemas/ServiceConfigurationDto"
               }
             ],
-            "description": "The configuration of the product type's calculator: `FoldingConfigurationDto` for folding cartons, `CorrugateConfigurationDto` for corrugated boxes, `LabelConfigurationDto` for labels, `TagSleeveConfigurationDto` for tags & sleeves, `PouchConfigurationDto` for pouches, `StandardProductConfigurationDto` for standard products (validated against it; paths under `configuration`)"
+            "description": "The configuration of the product type's calculator: `FoldingConfigurationDto` for folding cartons, `CorrugateConfigurationDto` for corrugated boxes, `LabelConfigurationDto` for labels, `TagSleeveConfigurationDto` for tags & sleeves, `PouchConfigurationDto` for pouches, `StandardProductConfigurationDto` for standard products, `ServiceConfigurationDto` for services (validated against it; paths under `configuration`)"
           },
           "deliveryPostcode": {
             "description": "Delivery postcode: prices shipping on the customer rate card (D-013)",
@@ -50738,6 +50850,9 @@
                   },
                   {
                     "$ref": "#/components/schemas/StandardProductConfigurationDto"
+                  },
+                  {
+                    "$ref": "#/components/schemas/ServiceConfigurationDto"
                   }
                 ]
               },
@@ -51833,6 +51948,131 @@
           "monthly"
         ],
         "type": "string"
+      },
+      "ServiceAmountBasis": {
+        "description": "What CS entered: `buy_cost_net` the net cost (plates, die blocks, molds, mockups, delivery) or `sell_gross` the VAT-inclusive sell price (design) — legacy `cs/service` (D-194)",
+        "enum": [
+          "buy_cost_net",
+          "sell_gross"
+        ],
+        "type": "string"
+      },
+      "ServiceAmountsDto": {
+        "properties": {
+          "costAmount": {
+            "description": "Net buy cost; null without D-141 grant",
+            "example": "1000.00",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "grossAmount": {
+            "description": "Sell price, VAT included",
+            "example": "1144.39",
+            "type": "string"
+          },
+          "marginAmount": {
+            "description": "Packio margin; null without `margin.read`",
+            "example": "69.52",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "netAmount": {
+            "description": "Net sell price",
+            "example": "1069.52",
+            "type": "string"
+          },
+          "vatAmount": {
+            "example": "74.87",
+            "type": "string"
+          }
+        },
+        "required": [
+          "costAmount",
+          "netAmount",
+          "vatAmount",
+          "grossAmount",
+          "marginAmount"
+        ],
+        "type": "object"
+      },
+      "ServiceConfigurationDto": {
+        "properties": {
+          "catalogProductId": {
+            "description": "The service item (a catalogue product of type `service`)",
+            "example": "0192f3a0-7c1e-7d2a-9b1f-00000000e301",
+            "format": "uuid",
+            "type": "string"
+          },
+          "quantities": {
+            "description": "Quantities to price, 1 to 10",
+            "example": [
+              1
+            ],
+            "items": {
+              "maximum": 10000,
+              "minimum": 1,
+              "type": "number"
+            },
+            "minItems": 1,
+            "type": "array"
+          }
+        },
+        "required": [
+          "catalogProductId",
+          "quantities"
+        ],
+        "type": "object"
+      },
+      "ServiceInputDataDto": {
+        "properties": {
+          "discountPolicy": {
+            "$ref": "#/components/schemas/CsDiscountPolicyDto"
+          },
+          "items": {
+            "description": "Active service items (catalogue products of type `service`)",
+            "items": {
+              "$ref": "#/components/schemas/ServiceInputItemDto"
+            },
+            "type": "array"
+          }
+        },
+        "required": [
+          "discountPolicy",
+          "items"
+        ],
+        "type": "object"
+      },
+      "ServiceInputItemDto": {
+        "properties": {
+          "id": {
+            "example": "0192f3a0-7c1e-7d2a-9b1f-00000000e301",
+            "format": "uuid",
+            "type": "string"
+          },
+          "nameEn": {
+            "example": "Print plate",
+            "type": "string"
+          },
+          "nameTh": {
+            "example": "ค่า Plate พิมพ์",
+            "type": "string"
+          },
+          "slug": {
+            "example": "print-plate",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "slug",
+          "nameTh",
+          "nameEn"
+        ],
+        "type": "object"
       },
       "SetCapacityDto": {
         "properties": {
@@ -55399,9 +55639,12 @@
               },
               {
                 "$ref": "#/components/schemas/StandardProductConfigurationDto"
+              },
+              {
+                "$ref": "#/components/schemas/ServiceConfigurationDto"
               }
             ],
-            "description": "The configuration of the product type's calculator: `FoldingConfigurationDto` for folding cartons, `CorrugateConfigurationDto` for corrugated boxes, `LabelConfigurationDto` for labels, `TagSleeveConfigurationDto` for tags & sleeves, `PouchConfigurationDto` for pouches, `StandardProductConfigurationDto` for standard products (validated against it; paths under `configuration`)"
+            "description": "The configuration of the product type's calculator: `FoldingConfigurationDto` for folding cartons, `CorrugateConfigurationDto` for corrugated boxes, `LabelConfigurationDto` for labels, `TagSleeveConfigurationDto` for tags & sleeves, `PouchConfigurationDto` for pouches, `StandardProductConfigurationDto` for standard products, `ServiceConfigurationDto` for services (validated against it; paths under `configuration`)"
           },
           "customerUserId": {
             "description": "The customer the quote is for",
@@ -142739,6 +142982,665 @@
         "summary": "Catalogue choices of the CS pouch calculator",
         "tags": [
           "admin.csPouch"
+        ],
+        "x-required-permissions": [
+          "quotes.calculate"
+        ]
+      }
+    },
+    "/v1/admin/cs/service/actions/price": {
+      "post": {
+        "description": "Legacy `cs/service` maths, computed on the server (D-194: the price is entered by CS, no new formula): from a net cost, Packio’s `service` margin and the dated VAT give the net and gross sell price; from a VAT-inclusive sell price (design), the net and the cost — each rounded as legacy’s page did — and, for a hired freelancer, the payable (legacy `design_cost`). Nothing is saved. A cost CS did not enter needs `factory_cost.read`, the margin `margin.read` (D-141).\n\nImplements: D-194, D-100, D-063, D-141.",
+        "operationId": "admin.csService.price",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "examples": {
+                "default": {
+                  "value": {
+                    "amount": 1000,
+                    "basis": "buy_cost_net",
+                    "catalogProductId": "0192f3a0-7c1e-7d2a-9b1f-00000000e301",
+                    "quantity": 1
+                  }
+                }
+              },
+              "schema": {
+                "$ref": "#/components/schemas/CsServicePriceDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "basis": "buy_cost_net",
+                  "freelancerPayableAmount": null,
+                  "marginPct": "6.5",
+                  "quantity": 1,
+                  "total": {
+                    "costAmount": "1000.00",
+                    "grossAmount": "1144.39",
+                    "marginAmount": "69.52",
+                    "netAmount": "1069.52",
+                    "vatAmount": "74.87"
+                  },
+                  "unit": {
+                    "costAmount": "1000.00",
+                    "grossAmount": "1144.39",
+                    "marginAmount": "69.52",
+                    "netAmount": "1069.52",
+                    "vatAmount": "74.87"
+                  },
+                  "vatPct": "7"
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/CsServicePriceResultDto"
+                }
+              }
+            },
+            "description": "Net, VAT and gross per unit and for the quantity",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "400": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.bad_request": {
+                    "$ref": "#/components/examples/problem.http.bad_request"
+                  },
+                  "http.malformed_json": {
+                    "$ref": "#/components/examples/problem.http.malformed_json"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.bad_request`, `http.malformed_json`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.unauthenticated": {
+                    "$ref": "#/components/examples/problem.auth.unauthenticated"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.unauthenticated`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.forbidden": {
+                    "$ref": "#/components/examples/problem.auth.forbidden"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.forbidden`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "validation.failed": {
+                    "$ref": "#/components/examples/problem.validation.failed"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `validation.failed`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "503": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "pricing.vat_rate_missing": {
+                    "$ref": "#/components/examples/problem.pricing.vat_rate_missing"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `pricing.vat_rate_missing`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "staff": []
+          }
+        ],
+        "summary": "Price a service from the amount CS enters",
+        "tags": [
+          "admin.csService"
+        ],
+        "x-required-permissions": [
+          "quotes.calculate"
+        ]
+      }
+    },
+    "/v1/admin/cs/service/calculate": {
+      "post": {
+        "description": "The store calculation plus the staff view, from the factories’ `service` price lines (net cost per unit, Packio’s margin, VAT). A service ships nothing, so there is no shipping line. Without a line the item has no instant price: CS prices it from an amount (`admin.csService.price`). Buy prices need `factory_cost.read`, the margin `margin.read` (D-141).\n\nImplements: D-100, D-043, D-050, D-051, D-101, D-012, D-141.",
+        "operationId": "admin.csService.calculate",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "examples": {
+                "default": {
+                  "value": {
+                    "catalogProductId": "0192f3a0-7c1e-7d2a-9b1f-00000000e301",
+                    "quantities": [
+                      1
+                    ]
+                  }
+                }
+              },
+              "schema": {
+                "$ref": "#/components/schemas/ServiceConfigurationDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "calculatorVersion": "1.0.0",
+                  "options": [
+                    {
+                      "error": null,
+                      "optionKey": "0192f3a0-7c1e-7d2a-9b1f-00000000f001:0192f3a0-7c1e-7d2a-9b1f-00000000a107"
+                    }
+                  ],
+                  "steps": [
+                    {
+                      "designFeeAmount": "0.00",
+                      "earliestDeliveryDate": "2026-10-10",
+                      "earliestShipDate": "2026-10-09",
+                      "grossAmount": "13508.40",
+                      "instant": true,
+                      "internal": {
+                        "belowMarginFloor": false,
+                        "buyPrice": "10123.45",
+                        "factoryId": "0192f3a0-7c1e-7d2a-9b1f-00000000f001",
+                        "marginPct": "24.1234",
+                        "parts": [
+                          {
+                            "buyPrice": "10123.45",
+                            "layoutAmount": 10,
+                            "layoutStandard": false,
+                            "partKey": "main",
+                            "sheets": 225
+                          }
+                        ],
+                        "priceListVersionId": "0192f3a0-7c1e-7d2a-9b1f-00000000a101",
+                        "printTypeId": "0192f3a0-7c1e-7d2a-9b1f-00000000a107",
+                        "productionRun": 1000,
+                        "shipping": {
+                          "cartons": 2,
+                          "costAmount": "95.00",
+                          "customerRateVersionId": "0192f3a0-7c1e-7d2a-9b1f-00000000d402",
+                          "factoryPayoutVersionId": "0192f3a0-7c1e-7d2a-9b1f-00000000d412",
+                          "marginAmount": "25.00",
+                          "method": "factory_fleet",
+                          "pallets": null,
+                          "volumeCm3": 61776,
+                          "weightG": 31000,
+                          "zoneCode": "bkk"
+                        }
+                      },
+                      "leadTimeDays": 7,
+                      "productAmount": "13380.00",
+                      "quantity": 1000,
+                      "reason": null,
+                      "shippingAmount": "128.40",
+                      "shippingNetAmount": "120.00",
+                      "shippingPending": false,
+                      "shippingPendingReason": null,
+                      "shippingVatAmount": "8.40",
+                      "structureDesignFeeAmount": "0.00",
+                      "toleranceOveragePct": "5.0000",
+                      "toleranceShortagePct": "5.0000",
+                      "toolingAmount": "0.00",
+                      "unitPrice": "13.38",
+                      "vatAmount": "883.73"
+                    }
+                  ]
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/AdminQuoteCalculationDto"
+                }
+              }
+            },
+            "description": "Prices per quantity with the staff view",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "400": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.bad_request": {
+                    "$ref": "#/components/examples/problem.http.bad_request"
+                  },
+                  "http.malformed_json": {
+                    "$ref": "#/components/examples/problem.http.malformed_json"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.bad_request`, `http.malformed_json`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.unauthenticated": {
+                    "$ref": "#/components/examples/problem.auth.unauthenticated"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.unauthenticated`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.forbidden": {
+                    "$ref": "#/components/examples/problem.auth.forbidden"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.forbidden`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "validation.failed": {
+                    "$ref": "#/components/examples/problem.validation.failed"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `validation.failed`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "503": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "pricing.vat_rate_missing": {
+                    "$ref": "#/components/examples/problem.pricing.vat_rate_missing"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `pricing.vat_rate_missing`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "staff": []
+          }
+        ],
+        "summary": "Price a service item from the factories’ service price lines (CS)",
+        "tags": [
+          "admin.csService"
+        ],
+        "x-required-permissions": [
+          "quotes.calculate"
+        ]
+      }
+    },
+    "/v1/admin/cs/service/input-data": {
+      "get": {
+        "description": "Active service items — catalogue products of type `service` (plates, die blocks, molds, mockups, design, delivery…) — and the CS discount limit (legacy `cs/service/get-input-data`, D-100).\n\nImplements: D-100.",
+        "operationId": "admin.csService.inputData",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "discountPolicy": {
+                    "directLimitPct": "5"
+                  },
+                  "items": [
+                    {
+                      "id": "0192f3a0-7c1e-7d2a-9b1f-00000000e301",
+                      "nameEn": "Print plate",
+                      "nameTh": "ค่า Plate พิมพ์",
+                      "slug": "print-plate"
+                    }
+                  ]
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ServiceInputDataDto"
+                }
+              }
+            },
+            "description": "Input data",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.unauthenticated": {
+                    "$ref": "#/components/examples/problem.auth.unauthenticated"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.unauthenticated`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.forbidden": {
+                    "$ref": "#/components/examples/problem.auth.forbidden"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.forbidden`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "staff": []
+          }
+        ],
+        "summary": "Service items of the CS service calculator",
+        "tags": [
+          "admin.csService"
         ],
         "x-required-permissions": [
           "quotes.calculate"
@@ -271116,6 +272018,258 @@
         ]
       }
     },
+    "/v1/partner/factories/{factoryId}/pricing/service/calculate": {
+      "post": {
+        "description": "The buy side only, on the factory’s own service price lines in force: buy price per quantity, lead time, per print type. Never Packio’s sell price or another factory (D-044, D-042); another factory is 404.\n\nImplements: D-044, D-042, D-040.",
+        "operationId": "partner.pricingService.calculate",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "factoryId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "examples": {
+                "default": {
+                  "value": {
+                    "catalogProductId": "0192f3a0-7c1e-7d2a-9b1f-00000000e301",
+                    "quantities": [
+                      1
+                    ]
+                  }
+                }
+              },
+              "schema": {
+                "$ref": "#/components/schemas/ServiceConfigurationDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "calculatorVersion": "1.0.0",
+                  "options": [
+                    {
+                      "error": null,
+                      "printTypeId": "0192f3a0-7c1e-7d2a-9b1f-00000000a107",
+                      "steps": [
+                        {
+                          "buyPrice": "10123.45",
+                          "leadTimeDays": 7,
+                          "parts": [
+                            {
+                              "buyPrice": "10123.45",
+                              "layoutAmount": 10,
+                              "layoutStandard": false,
+                              "partKey": "main",
+                              "sheets": 225,
+                              "totalCost": "9111.11"
+                            }
+                          ],
+                          "productionRun": 1000,
+                          "quantity": 1000
+                        }
+                      ]
+                    }
+                  ],
+                  "priceListVersionId": "0192f3a0-7c1e-7d2a-9b1f-00000000a101"
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/FactoryQuoteDto"
+                }
+              }
+            },
+            "description": "Buy side per print type",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "400": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.bad_request": {
+                    "$ref": "#/components/examples/problem.http.bad_request"
+                  },
+                  "http.malformed_json": {
+                    "$ref": "#/components/examples/problem.http.malformed_json"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.bad_request`, `http.malformed_json`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.unauthenticated": {
+                    "$ref": "#/components/examples/problem.auth.unauthenticated"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.unauthenticated`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.forbidden": {
+                    "$ref": "#/components/examples/problem.auth.forbidden"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.forbidden`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "404": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.not_found": {
+                    "$ref": "#/components/examples/problem.http.not_found"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.not_found`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "validation.failed": {
+                    "$ref": "#/components/examples/problem.validation.failed"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `validation.failed`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "partner": []
+          }
+        ],
+        "summary": "Price a service item on my own price list",
+        "tags": [
+          "partner.pricingService"
+        ],
+        "x-required-permissions": [
+          "factory_prices.read"
+        ]
+      }
+    },
     "/v1/partner/factories/{factoryId}/pricing/standard-product/calculate": {
       "post": {
         "description": "The buy side only, on the factory’s own standard-product price list in force: buy price per quantity, lead time, per print type. Never Packio’s sell price or another factory (D-044, D-042); another factory is 404.\n\nImplements: D-044, D-042, D-040.",
@@ -324719,7 +325873,7 @@
     },
     "/v1/store/quotes/actions/calculate": {
       "post": {
-        "description": "Prices each quantity from the active factories that hold an instant price path (D-043, D-100): price incl. VAT, lead time and earliest ship date within capacity (D-101), quantity tolerance (D-021). A quantity without an instant price carries the reason and routes to RFQ. The configuration is the one of the type’s calculator (folding, corrugate, label, tag & sleeve, pouch, standard product). Nothing is saved (quotes are saved with B2.5, D-051); no factory data is returned (D-050). Works signed in or anonymously.\n\nImplements: D-100, D-043, D-050, D-051, D-101.",
+        "description": "Prices each quantity from the active factories that hold an instant price path (D-043, D-100): price incl. VAT, lead time and earliest ship date within capacity (D-101), quantity tolerance (D-021). A quantity without an instant price carries the reason and routes to RFQ. The configuration is the one of the type’s calculator (folding, corrugate, label, tag & sleeve, pouch, standard product, service). Nothing is saved (quotes are saved with B2.5, D-051); no factory data is returned (D-050). Works signed in or anonymously.\n\nImplements: D-100, D-043, D-050, D-051, D-101.",
         "operationId": "store.quotes.calculate",
         "parameters": [
           {
@@ -334354,6 +335508,10 @@
       "name": "admin.csPouch"
     },
     {
+      "description": "The CS service calculator: service items, price lines and CS-entered amounts (D-100, D-194, D-141).",
+      "name": "admin.csService"
+    },
+    {
       "description": "The CS standard-product calculator: stock products and pricing with the staff view (D-100, D-141).",
       "name": "admin.csStandardProduct"
     },
@@ -334708,6 +335866,10 @@
     {
       "description": "A factory prices a pouch configuration on its own price list (D-044).",
       "name": "partner.pricingPouch"
+    },
+    {
+      "description": "A factory prices a service item on its own price list (D-044).",
+      "name": "partner.pricingService"
     },
     {
       "description": "A factory prices a standard product on its own price list (D-044).",

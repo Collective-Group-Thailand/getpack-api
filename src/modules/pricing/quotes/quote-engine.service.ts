@@ -218,16 +218,22 @@ export class QuoteEngineService {
     const factoryIds = new Map(candidates.map((c) => [c.factoryPublicId, c.factoryId]));
     const vatPct = loaded[0] ? await this.vatPct(loaded[0].vatRateVersionId, db) : null;
     const shipParts = adapter.shipmentParts(resolved);
+    // A service ships nothing (U-B6 service): no shipment is prepared and the quote carries no shipping line.
+    const nothingToShip = shipParts.length === 0;
     let customerRateVersionId: string | null = null;
     const payoutVersionIds: Record<string, string> = {};
 
     const steps: QuoteStepView[] = [];
     for (const [index, qty] of resolved.quantities.entries()) {
-      const prepared = await this.shipping.prepare(shipParts, qty, ctx.deliveryPostcode ?? null, at, db);
-      Object.assign(settingVersionIds, prepared.settingVersionIds);
-      if (prepared.customer.versionId !== null)
-        customerRateVersionId = prepared.customer.versionId.toString();
-      const shippingPriced = prepared.customer.priced;
+      const prepared = nothingToShip
+        ? null
+        : await this.shipping.prepare(shipParts, qty, ctx.deliveryPostcode ?? null, at, db);
+      if (prepared) {
+        Object.assign(settingVersionIds, prepared.settingVersionIds);
+        if (prepared.customer.versionId !== null)
+          customerRateVersionId = prepared.customer.versionId.toString();
+      }
+      const shippingPriced = prepared?.customer.priced ?? false;
       // Effective cost to Collective Group: buy price + delivery cost (fleet payout or carrier), then
       // lead time; an option without a delivery path to the postcode is skipped (fail closed).
       const deliveries = new Map<string, Delivery>();
@@ -245,7 +251,7 @@ export class QuoteEngineService {
         if (shippingPriced) {
           delivery =
             deliveries.get(o.factoryId) ??
-            (await this.shipping.delivery(factoryIds.get(o.factoryId)!, prepared, at, db));
+            (await this.shipping.delivery(factoryIds.get(o.factoryId)!, prepared!, at, db));
           deliveries.set(o.factoryId, delivery);
           if (!delivery.available) continue;
         }
@@ -282,7 +288,7 @@ export class QuoteEngineService {
       const tolerance = await this.tolerance(factoryId, resolved.productTypeId, at, db);
       const s = chosen.step;
       const delivery = chosen.delivery?.available ? chosen.delivery : null;
-      const customer = prepared.customer.priced ? prepared.customer : null;
+      const customer = prepared?.customer.priced ? prepared.customer : null;
       const shipNet = customer ? customer.net : null;
       const shipVat = shipNet && vatPct ? ShippingQuoteService.vat(shipNet, vatPct) : null;
       const shipGross = shipNet && shipVat ? shipNet.add(shipVat) : null;
@@ -311,10 +317,11 @@ export class QuoteEngineService {
             : null,
         toleranceShortagePct: tolerance.shortage,
         toleranceOveragePct: tolerance.overage,
-        shippingPending: !shipGross,
-        shippingPendingReason: shipGross
-          ? null
-          : (ShippingQuoteService.missReason(prepared.customer) ?? 'no_rate_card'),
+        shippingPending: !nothingToShip && !shipGross,
+        shippingPendingReason:
+          nothingToShip || shipGross
+            ? null
+            : (ShippingQuoteService.missReason(prepared!.customer) ?? 'no_rate_card'),
         internal: {
           factoryId: option.factoryId,
           printTypeId: option.printTypePublicId,
@@ -331,7 +338,7 @@ export class QuoteEngineService {
             layoutStandard: p.layoutStandard,
           })),
           shipping:
-            delivery && customer && shipNet
+            prepared && delivery && customer && shipNet
               ? {
                   method: delivery.method,
                   costAmount: formatMoney(delivery.cost),

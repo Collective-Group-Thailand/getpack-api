@@ -32,6 +32,7 @@ import {
   labelSpecLines,
   type PouchSpecConfiguration,
   pouchSpecLines,
+  serviceSpecLines,
   type StandardProductSpecConfiguration,
   standardProductSpecLines,
   SUMMARY_INCLUDE,
@@ -142,7 +143,12 @@ export class SavedQuotesService {
                   this.prisma,
                   configuration as unknown as StandardProductSpecConfiguration,
                 )
-              : null;
+              : calculatorKey === 'service'
+                ? await serviceSpecLines(
+                    this.prisma,
+                    configuration as unknown as { catalogProductId: string },
+                  )
+                : null;
     return this.prisma.withTx(async (tx) => {
       const quote = await tx.quote.create({
         data: {
