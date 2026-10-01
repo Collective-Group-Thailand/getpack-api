@@ -8,6 +8,7 @@ import {
   phpFloatval,
   phpIntval,
   phpRound,
+  roundUp,
 } from './php';
 
 describe('PHP 7 numerics for the ported calculators (B2.3)', () => {
@@ -76,6 +77,16 @@ describe('PHP 7 numerics for the ported calculators (B2.3)', () => {
     expect(convertTo2Decimal(1.1)).toBe(1.11);
     expect(convertTo2Decimal3Digit(1.2341)).toBe(1.24);
     expect(convertTo2Decimal3Digit(1.2301)).toBe(1.23);
+  });
+
+  it('ports roundUp (helpers.php:1706-1711): ceiling to the digit, then round', () => {
+    // The pouch factory price: 8.93 × 1.15 = 10.2695 → 10.3 (port map golden G1).
+    expect(roundUp(8.93 * 1.15, 1)).toBe(10.3);
+    expect(roundUp(10.3, 1)).toBe(10.3);
+    expect(roundUp(10.31, 1)).toBe(10.4);
+    // A digit of 0 or null falls back to the decimals, as PHP's `$digit == null`.
+    expect(roundUp(1.231, 2, 0)).toBe(1.24);
+    expect(roundUp(1.2341, 2, 3)).toBe(1.24);
   });
 
   it('ports convertNumberFloat (helpers.php:2686-2706) as a plain 2-decimal string', () => {

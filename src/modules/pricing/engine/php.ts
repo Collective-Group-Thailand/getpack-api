@@ -103,3 +103,12 @@ export function convertNumberFloat(value: string | number | null | undefined = 0
   const number = typeof value === 'string' ? phpFloatval(value.replaceAll(',', '')) : (value ?? 0);
   return numberFormat(phpRound(number, digits), digits === 0 ? 0 : 2, '.', '');
 }
+
+/**
+ * `roundUp($value, $decimal, $digit = null)` — ceiling to `digit` decimals (default `decimal`), then PHP round to
+ * `decimal` (legacy `app/Helpers/helpers.php:1706-1711`; the pouch factory price per piece, `roundUp(…, 1)`).
+ */
+export function roundUp(value: number, decimal: number, digit: number | null = null): number {
+  const multiples = Math.pow(10, digit === null || digit === 0 ? decimal : digit);
+  return phpRound(Math.ceil(value * multiples) / multiples, decimal);
+}
