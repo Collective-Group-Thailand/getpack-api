@@ -28,4 +28,8 @@ export const SHIPPED_CALCULATORS: ReadonlySet<CalculatorKey> = new Set<Calculato
   // transcription of the PHP), validation docs/pricing-validation-standard-product.md (pending sign-off). The type
   // stays seeded `rfq` (A-16) until the business signs off the cases and the factory's stock-product prices (D-100).
   'standard_product',
+  // U-B6 service: legacy's only service maths (the CS service page) with golden cases test/golden/service (expected
+  // values from an independent transcription of the JS / PHP), validation docs/pricing-validation-service.md (pending
+  // sign-off). The type stays seeded `rfq` (A-16) until the business signs off and a factory holds service lines.
+  'service',
 ]);

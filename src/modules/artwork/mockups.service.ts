@@ -13,8 +13,9 @@ export interface MockupInput {
 }
 
 /**
- * The paid mockup / physical proof add-on (D-072). No calculator prices it yet (the `service` calculator is
- * not ported, B2.3), so CS quotes it for the customer who asked (`mockups.manage`, audited): an order line
+ * The paid mockup / physical proof add-on (D-072). Its price is entered by CS until a sample rule set has a signed
+ * validation document (D-194; the `service` calculator ports only legacy's CS service maths, U-B6), so CS quotes it
+ * for the customer who asked (`mockups.manage`, audited): an order line
  * and a fixed-amount instalment due now (ADR-0008 item 6). Once paid, production releases a job of kind
  * `mockup` for it (B4.2).
  */
