@@ -291,6 +291,7 @@ export class MilestonesService {
       const photoIds = await this.photos(tx, job, input.photoFileIds);
       const earlier = await tx.qcCheck.count({ where: { jobId: job.id } });
       const qc = await tx.qcCheck.create({
+        include: { performedBy: { select: { publicId: true, displayName: true } } },
         data: {
           jobId: job.id,
           factoryId: job.factoryId,
@@ -321,6 +322,7 @@ export class MilestonesService {
     const job = await this.jobs.get(actor, jobPublicId);
     const checks = await this.prisma.qcCheck.findMany({
       where: { jobId: job.id },
+      include: { performedBy: { select: { publicId: true, displayName: true } } },
       orderBy: { performedAt: 'asc' },
     });
     const photos = await this.prisma.attachment.findMany({
@@ -361,8 +363,23 @@ export class MilestonesService {
         { issueId: issue.publicId, kind: issue.kind },
         actor,
       );
-      return issue;
+      return (await this.withIssueRefs(tx, [issue.id]))[0]!;
     });
+  }
+
+  /**
+   * D-232: a factory closes an issue its own people raised (machine fixed, material arrived), with a note. Staff
+   * close any issue (`resolveIssue`). Neither moves the job's dates or SLA.
+   */
+  async resolveOwnIssue(actor: Actor, jobPublicId: string, issuePublicId: string, note: string) {
+    const job = await this.jobs.get(actor, jobPublicId);
+    const issue = await this.prisma.jobIssue.findFirst({
+      where: { publicId: issuePublicId, jobId: job.id },
+      include: { raisedBy: { select: { kind: true } } },
+    });
+    if (!issue) throw new DomainException('http.not_found');
+    if (issue.raisedBy?.kind !== 'partner') throw new DomainException('auth.forbidden');
+    return this.resolveIssue(actor as UserActor, issuePublicId, note);
   }
 
   async resolveIssue(actor: UserActor, issuePublicId: string, note: string) {
@@ -384,16 +401,40 @@ export class MilestonesService {
         tx,
         issue.jobId,
         'production_job.issue_resolved',
-        { issueId: issue.publicId },
+        { issueId: issue.publicId, by: actor.audience === 'partner' ? 'factory' : 'packio' },
         actor,
       );
-      return resolved;
+      return (await this.withIssueRefs(tx, [resolved.id]))[0]!;
     });
   }
 
   async issues(actor: Actor, jobPublicId: string) {
     const job = await this.jobs.get(actor, jobPublicId);
-    return this.prisma.jobIssue.findMany({ where: { jobId: job.id }, orderBy: { createdAt: 'asc' } });
+    const ids = (await this.prisma.jobIssue.findMany({ where: { jobId: job.id }, select: { id: true } })).map(
+      (i) => i.id,
+    );
+    return this.withIssueRefs(this.prisma, ids);
+  }
+
+  /** Issues with who raised and closed them and their photos, oldest first. */
+  private async withIssueRefs(db: Tx, ids: bigint[]) {
+    const user = { select: { publicId: true, displayName: true } } as const;
+    const [issues, photos] = await Promise.all([
+      db.jobIssue.findMany({
+        where: { id: { in: ids } },
+        include: { raisedBy: user, resolvedBy: user },
+        orderBy: { createdAt: 'asc' },
+      }),
+      db.attachment.findMany({
+        where: { subjectType: 'job_issue', subjectId: { in: ids } },
+        include: { fileObject: { select: { publicId: true } } },
+        orderBy: [{ sort: 'asc' }, { id: 'asc' }],
+      }),
+    ]);
+    return issues.map((i) => ({
+      ...i,
+      photoFileIds: photos.filter((p) => p.subjectId === i.id).map((p) => p.fileObject.publicId),
+    }));
   }
 
   // --- hold / resume (staff) --------------------------------------------------------------------------

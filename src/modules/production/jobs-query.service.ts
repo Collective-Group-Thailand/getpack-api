@@ -1,13 +1,13 @@
 import { type Actor } from '@common/context/actor';
 import { DomainException } from '@common/errors/domain.exception';
+import { bangkokDate, startOfBangkokDay } from '@common/time/bangkok';
 import { PrismaService, type Tx } from '@database/prisma.service';
 import { type Prisma } from '@generated/prisma/client';
 import { ScopingService } from '@modules/iam/scoping.service';
 import { Injectable, type OnModuleInit } from '@nestjs/common';
 import { FilesService } from '@platform/files/files.service';
 
-import { currentMilestone } from './job-views';
-import { JOB_INCLUDE, type JobRow } from './job-views';
+import { currentMilestone, JOB_INCLUDE, type JobExtras, type JobRow } from './job-views';
 import { type BoardColumnDto, type ProductionBoardDto } from './production.dto';
 import { type RouteSnapshot } from './production.service';
 
@@ -86,6 +86,165 @@ export class JobsQueryService implements OnModuleInit {
     for (const a of attachments)
       map.set(a.subjectId, [...(map.get(a.subjectId) ?? []), a.fileObject.publicId]);
     return map;
+  }
+
+  /** Pieces of each destination already on live shipments of these jobs, and the approved proofs (U-B0.3). */
+  async extras(rows: JobRow[]): Promise<JobExtras> {
+    const jobIds = rows.map((r) => r.id);
+    const proofIds = [
+      ...new Set(
+        rows.flatMap((r) => {
+          const id = (r.specSnapshot as Record<string, unknown>)['approvedProofId'];
+          return typeof id === 'string' ? [id] : [];
+        }),
+      ),
+    ];
+    const [items, proofs] = await Promise.all([
+      jobIds.length
+        ? this.prisma.shipmentItem.groupBy({
+            by: ['orderDestinationId'],
+            where: {
+              productionJobId: { in: jobIds },
+              shipment: { status: { notIn: ['cancelled', 'returned'] } },
+            },
+            _sum: { quantity: true },
+          })
+        : [],
+      proofIds.length
+        ? this.prisma.proof.findMany({
+            where: { publicId: { in: proofIds } },
+            select: { publicId: true, versionNo: true, decidedAt: true },
+          })
+        : [],
+    ]);
+    return {
+      shipped: new Map(items.map((i) => [i.orderDestinationId, i._sum.quantity ?? 0])),
+      proofs: new Map(proofs.map((p) => [p.publicId, { versionNo: p.versionNo, decidedAt: p.decidedAt }])),
+    };
+  }
+
+  /**
+   * A shop-floor scan or a typed code (U-B0.3): a job number, a job id, or the label code of one of its cartons —
+   * within the caller's factories only (404 otherwise).
+   */
+  async lookup(actor: Actor, code: string): Promise<{ publicId: string; jobNo: string }> {
+    const scope = await this.scopeWhere(actor);
+    const trimmed = code.trim();
+    const uuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(trimmed);
+    const direct = await this.prisma.productionJob.findFirst({
+      where: {
+        ...scope,
+        OR: [{ jobNo: { equals: trimmed, mode: 'insensitive' } }, ...(uuid ? [{ publicId: trimmed }] : [])],
+      },
+      select: { publicId: true, jobNo: true },
+    });
+    if (direct) return direct;
+    const carton = await this.prisma.shipmentCarton.findUnique({
+      where: { labelCode: trimmed.toUpperCase() },
+      select: { shipment: { select: { items: { select: { productionJobId: true } } } } },
+    });
+    const jobIds = [...new Set(carton?.shipment.items.map((i) => i.productionJobId) ?? [])];
+    if (jobIds.length === 1) {
+      const job = await this.prisma.productionJob.findFirst({
+        where: { ...scope, id: jobIds[0] },
+        select: { publicId: true, jobNo: true },
+      });
+      if (job) return job;
+    }
+    throw new DomainException('http.not_found');
+  }
+
+  /**
+   * The factory's day (U-B0.3, D-074, D-076): jobs to accept and how many are late, steps due today (Asia/Bangkok),
+   * jobs at risk or on hold, planned inspections; alerts; and a work queue — acceptance by deadline, then at-risk
+   * jobs, then steps due today (at most 20).
+   */
+  async today(factoryId: bigint, now = new Date()) {
+    const start = startOfBangkokDay(bangkokDate(now));
+    const end = new Date(start.getTime() + 86_400_000);
+    const soon = new Date(now.getTime() + 4 * 3_600_000);
+    const mine = { factoryId };
+    const open = {
+      status: { in: ['accepted', 'in_progress', 'on_hold'] as ('accepted' | 'in_progress' | 'on_hold')[] },
+    };
+    const [awaiting, overdue, dueToday, atRisk, onHold, inspections] = await Promise.all([
+      this.prisma.productionJob.findMany({
+        where: { ...mine, status: 'released' },
+        include: JOB_INCLUDE,
+        orderBy: { acceptDueAt: 'asc' },
+        take: 20,
+      }),
+      this.prisma.productionJob.count({ where: { ...mine, status: 'released', acceptDueAt: { lt: now } } }),
+      this.prisma.productionJob.findMany({
+        where: {
+          ...mine,
+          ...open,
+          milestones: { some: { status: { notIn: ['completed', 'skipped'] }, dueAt: { lt: end } } },
+        },
+        include: JOB_INCLUDE,
+        orderBy: { promisedShipDate: 'asc' },
+        take: 20,
+      }),
+      this.prisma.productionJob.findMany({
+        where: { ...mine, ...open, atRiskSince: { not: null } },
+        include: JOB_INCLUDE,
+        orderBy: { atRiskSince: 'asc' },
+        take: 20,
+      }),
+      this.prisma.productionJob.count({ where: { ...mine, status: 'on_hold' } }),
+      this.prisma.inspection.findMany({
+        where: { selected: true, status: { in: ['planned', 'in_progress'] }, job: { ...mine, ...open } },
+        include: { job: { select: { publicId: true, jobNo: true } } },
+        orderBy: { scheduledAt: 'asc' },
+      }),
+    ]);
+    const milestonesDueToday = await this.prisma.jobMilestone.count({
+      where: {
+        job: { ...mine, ...open },
+        status: { notIn: ['completed', 'skipped'] },
+        dueAt: { gte: start, lt: end },
+      },
+    });
+    const alerts = [
+      ...awaiting
+        .filter((j) => j.acceptDueAt < soon)
+        .map((j) => ({
+          kind: j.acceptDueAt < now ? 'acceptance_overdue' : 'acceptance_due_soon',
+          jobId: j.publicId,
+          jobNo: j.jobNo,
+          dueAt: j.acceptDueAt,
+        })),
+      ...dueToday.flatMap((j) => {
+        const current = currentMilestone(j);
+        return current?.dueAt && current.dueAt < now
+          ? [{ kind: 'step_overdue', jobId: j.publicId, jobNo: j.jobNo, dueAt: current.dueAt }]
+          : [];
+      }),
+      ...inspections.map((i) => ({
+        kind: 'inspection_planned',
+        jobId: i.job.publicId,
+        jobNo: i.job.jobNo,
+        dueAt: i.scheduledAt,
+      })),
+    ];
+    const seen = new Set<bigint>();
+    const queue = [...awaiting, ...atRisk, ...dueToday]
+      .filter((j) => !seen.has(j.id) && seen.add(j.id))
+      .slice(0, 20);
+    return {
+      counters: {
+        awaitingAcceptance: await this.prisma.productionJob.count({ where: { ...mine, status: 'released' } }),
+        acceptanceOverdue: overdue,
+        milestonesDueToday,
+        atRisk: await this.prisma.productionJob.count({
+          where: { ...mine, ...open, atRiskSince: { not: null } },
+        }),
+        onHold,
+        inspectionsPlanned: inspections.length,
+      },
+      alerts,
+      queue,
+    };
   }
 
   /**

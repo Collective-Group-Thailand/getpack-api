@@ -23,6 +23,7 @@ import {
   SCORECARD_EXAMPLE,
   ScorecardDto,
   ScorecardMonthQuery,
+  ScorecardQuery,
 } from './production.dto';
 import { ProductionOversightService } from './production-oversight.service';
 
@@ -287,13 +288,18 @@ export class PartnerScorecardsController {
     id: 'partner.production.scorecards',
     summary: 'My factory’s monthly scorecards',
     description:
-      'On-time acceptance, on-time shipping, QC first pass, claim rate and on-time updates (D-155); used in allocation when several factories serve a type (D-075).',
+      'On-time acceptance, on-time shipping, QC first pass, claim rate and on-time updates (D-155), newest first — ' +
+      'the latest `months` (default 12, at most 24); used in allocation when several factories serve a type (D-075).',
     implements: ['D-155', 'D-075'],
   })
   @ApiSuccess(200, { description: 'Scorecards', type: [ScorecardDto], example: [SCORECARD_EXAMPLE] })
   @ApiStandardErrors('http.not_found', 'validation.failed')
-  async scorecards(@CurrentActor() actor: Actor, @Param('factoryId', ParseUUIDPipe) factoryId: string) {
+  async scorecards(
+    @CurrentActor() actor: Actor,
+    @Param('factoryId', ParseUUIDPipe) factoryId: string,
+    @Query() q: ScorecardQuery,
+  ) {
     const factory = await this.access.factory(actor, factoryId);
-    return (await this.oversight.scorecards(factory.id)).map(scorecardDto);
+    return (await this.oversight.scorecards(factory.id, q.months ?? 12)).map(scorecardDto);
   }
 }

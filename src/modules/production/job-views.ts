@@ -16,9 +16,17 @@ export const JOB_INCLUDE = {
     select: {
       publicId: true,
       orderCode: true,
+      toleranceShortagePct: true,
+      toleranceOveragePct: true,
       productType: { select: { code: true } },
-      destinations: { orderBy: [{ sort: 'asc' }, { id: 'asc' }] },
+      destinations: {
+        orderBy: [{ sort: 'asc' }, { id: 'asc' }],
+        include: { province: { select: { nameTh: true, nameEn: true } } },
+      },
     },
+  },
+  inspections: {
+    select: { status: true, scheduledAt: true, sampleSize: true, resultAt: true, selected: true },
   },
   factory: { select: { publicId: true, code: true } },
   milestones: { orderBy: { seq: 'asc' } },
@@ -59,9 +67,25 @@ export function milestoneDtos(row: JobRow, photos: Map<bigint, string[]>): Miles
   });
 }
 
+/** Facts read alongside the job rows (U-B0.3): pieces already on live shipments, the approved proof. */
+export interface JobExtras {
+  shipped: Map<bigint, number>;
+  proofs: Map<string, { versionNo: number; decidedAt: Date | null }>;
+}
+const NO_EXTRAS: JobExtras = { shipped: new Map(), proofs: new Map() };
+
 /** The factory's projection: what to make and where to deliver — no price, no customer beyond D-142. */
-export function partnerJobDto(row: JobRow, photos: Map<bigint, string[]>): PartnerJobDto {
+export function partnerJobDto(
+  row: JobRow,
+  photos: Map<bigint, string[]>,
+  extras: JobExtras = NO_EXTRAS,
+): PartnerJobDto {
   const spec = row.specSnapshot as Record<string, unknown>;
+  const proofId = (spec['approvedProofId'] as string | null | undefined) ?? null;
+  const proof = proofId ? extras.proofs.get(proofId) : undefined;
+  const typeName = (spec['productTypeNameTh'] as string | undefined) ?? null;
+  const unit = (spec['unit'] as string | undefined) ?? '';
+  const inspection = row.inspections.find((i) => i.selected) ?? null;
   return {
     id: row.publicId,
     jobNo: row.jobNo,
@@ -82,6 +106,32 @@ export function partnerJobDto(row: JobRow, photos: Map<bigint, string[]>): Partn
     dielineFileId: (spec['dielineFileId'] as string | null) ?? null,
     inspectionRequired: row.inspectionRequired,
     holdReason: row.holdReason,
+    productTypeCode: row.order.productType.code,
+    productTypeNameTh: typeName,
+    title: `${typeName ?? row.order.productType.code} · ${row.quantityOrdered}${unit ? ` ${unit}` : ''}`,
+    currentMilestoneKey: currentMilestone(row)?.stepKey ?? null,
+    atRisk: row.atRiskSince !== null,
+    riskReason: riskReason(row),
+    rejectedAt: iso(row.rejectedAt),
+    rejectReasonCode: row.rejectReasonCode,
+    rejectNote: row.rejectNote,
+    tolerance:
+      row.order.toleranceShortagePct && row.order.toleranceOveragePct
+        ? {
+            shortagePct: row.order.toleranceShortagePct.toFixed(4),
+            overagePct: row.order.toleranceOveragePct.toFixed(4),
+          }
+        : null,
+    artwork:
+      proofId && proof ? { proofId, versionNo: proof.versionNo, approvedAt: iso(proof.decidedAt) } : null,
+    inspection: inspection
+      ? {
+          status: inspection.status,
+          scheduledAt: iso(inspection.scheduledAt),
+          sampleSize: inspection.sampleSize,
+          resultAt: iso(inspection.resultAt),
+        }
+      : null,
     destinations: row.order.destinations.map((d) => ({
       id: d.publicId,
       recipientName: d.recipientName,
@@ -89,7 +139,10 @@ export function partnerJobDto(row: JobRow, photos: Map<bigint, string[]>): Partn
       line1: d.line1,
       line2: d.line2,
       postcode: d.postcode,
+      provinceNameTh: d.province.nameTh,
+      provinceNameEn: d.province.nameEn,
       quantity: d.quantity,
+      shippedQuantity: extras.shipped.get(d.id) ?? 0,
     })),
     milestones: milestoneDtos(row, photos),
   };
@@ -113,25 +166,19 @@ export function adminJobDto(
   row: JobRow,
   photos: Map<bigint, string[]>,
   grants: { cost: boolean; margin: boolean },
+  extras: JobExtras = NO_EXTRAS,
 ): AdminJobDto {
   const buy = row.buyPriceSnapshot as { buyCostNet?: string | null };
   return {
-    ...partnerJobDto(row, photos),
+    ...partnerJobDto(row, photos, extras),
     orderId: row.order.publicId,
     orderCode: row.order.orderCode,
-    productTypeCode: row.order.productType.code,
-    currentMilestoneKey: currentMilestone(row)?.stepKey ?? null,
-    riskReason: riskReason(row),
     factoryId: row.factory.publicId,
     factoryCode: row.factory.code,
     releaseMode: row.releaseMode,
     releaseReason: row.releaseReason,
-    rejectedAt: iso(row.rejectedAt),
-    rejectReasonCode: row.rejectReasonCode,
-    rejectNote: row.rejectNote,
     escalatedAt: iso(row.escalatedAt),
     predictedFinishOn: day(row.predictedFinishOn),
-    atRisk: row.atRiskSince !== null,
     inspectionReasons: row.inspectionReasons,
     buyCostNet: grants.cost ? (buy.buyCostNet ?? null) : null,
     assignments: row.assignments.map((a) => ({
@@ -158,6 +205,7 @@ export function qcDto(q: {
   note: string | null;
   performedAt: Date;
   photoFileIds: string[];
+  performedBy?: { publicId: string; displayName: string } | null;
 }): QcCheckDto {
   return {
     id: q.publicId,
@@ -171,6 +219,9 @@ export function qcDto(q: {
     note: q.note,
     performedAt: toBangkokIso(q.performedAt),
     photoFileIds: q.photoFileIds,
+    performedBy: q.performedBy
+      ? { id: q.performedBy.publicId, displayName: q.performedBy.displayName }
+      : null,
   };
 }
 
@@ -182,6 +233,9 @@ export function issueDto(i: {
   createdAt: Date;
   resolvedAt: Date | null;
   resolutionNote: string | null;
+  raisedBy?: { publicId: string; displayName: string } | null;
+  resolvedBy?: { publicId: string; displayName: string } | null;
+  photoFileIds?: string[];
 }): JobIssueDto {
   return {
     id: i.publicId,
@@ -191,5 +245,8 @@ export function issueDto(i: {
     createdAt: toBangkokIso(i.createdAt),
     resolvedAt: i.resolvedAt ? toBangkokIso(i.resolvedAt) : null,
     resolutionNote: i.resolutionNote,
+    raisedBy: i.raisedBy ? { id: i.raisedBy.publicId, displayName: i.raisedBy.displayName } : null,
+    resolvedBy: i.resolvedBy ? { id: i.resolvedBy.publicId, displayName: i.resolvedBy.displayName } : null,
+    photoFileIds: i.photoFileIds ?? [],
   };
 }

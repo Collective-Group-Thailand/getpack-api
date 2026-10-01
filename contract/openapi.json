@@ -5468,6 +5468,17 @@
               "null"
             ]
           },
+          "artwork": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/JobArtworkDto"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "The approved proof the job prints"
+          },
           "assignments": {
             "items": {
               "$ref": "#/components/schemas/JobAssignmentDto"
@@ -5475,6 +5486,7 @@
             "type": "array"
           },
           "atRisk": {
+            "description": "Predicted to miss its promise (D-075)",
             "example": false,
             "type": "boolean"
           },
@@ -5536,6 +5548,17 @@
             "example": "0192f3a0-7c1e-7d2a-9b1f-0000000f1001",
             "format": "uuid",
             "type": "string"
+          },
+          "inspection": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/JobInspectionDto"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Packio’s inspection when one is planned (D-076)"
           },
           "inspectionReasons": {
             "description": "Why Packio inspects (D-076)",
@@ -5608,6 +5631,13 @@
           "productTypeCode": {
             "example": "folding_box",
             "type": "string"
+          },
+          "productTypeNameTh": {
+            "example": "กล่องพับ",
+            "type": [
+              "string",
+              "null"
+            ]
           },
           "promisedShipDate": {
             "example": "2026-10-09",
@@ -5702,6 +5732,22 @@
               }
             ],
             "example": "released"
+          },
+          "title": {
+            "description": "Short label: product type and quantity",
+            "example": "กล่องพับ · 1000 ชิ้น",
+            "type": "string"
+          },
+          "tolerance": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/JobToleranceDto"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Quantity tolerance frozen in the quote (D-021)"
           }
         },
         "required": [
@@ -5724,23 +5770,28 @@
           "dielineFileId",
           "inspectionRequired",
           "holdReason",
+          "productTypeCode",
+          "productTypeNameTh",
+          "title",
+          "currentMilestoneKey",
+          "atRisk",
+          "riskReason",
+          "rejectedAt",
+          "rejectReasonCode",
+          "rejectNote",
+          "tolerance",
+          "artwork",
+          "inspection",
           "destinations",
           "milestones",
           "orderId",
-          "productTypeCode",
-          "currentMilestoneKey",
-          "riskReason",
           "orderCode",
           "factoryId",
           "factoryCode",
           "releaseMode",
           "releaseReason",
-          "rejectedAt",
-          "rejectReasonCode",
-          "rejectNote",
           "escalatedAt",
           "predictedFinishOn",
-          "atRisk",
           "inspectionReasons",
           "buyCostNet",
           "assignments"
@@ -26627,6 +26678,15 @@
         ],
         "type": "string"
       },
+      "FactoryAlertKind": {
+        "enum": [
+          "acceptance_overdue",
+          "acceptance_due_soon",
+          "step_overdue",
+          "inspection_planned"
+        ],
+        "type": "string"
+      },
       "FactoryClaimResponse": {
         "enum": [
           "accepted",
@@ -27742,6 +27802,109 @@
           "offboard"
         ],
         "type": "string"
+      },
+      "FactoryTodayAlertDto": {
+        "properties": {
+          "dueAt": {
+            "example": "2026-09-28T10:00:00+07:00",
+            "format": "date-time",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "jobId": {
+            "example": "0192f3a0-7c1e-7d2a-9b1f-0000000f1001",
+            "format": "uuid",
+            "type": "string"
+          },
+          "jobNo": {
+            "example": "JOB-2609-00001",
+            "type": "string"
+          },
+          "kind": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/FactoryAlertKind"
+              }
+            ],
+            "example": "acceptance_due_soon"
+          }
+        },
+        "required": [
+          "kind",
+          "jobId",
+          "jobNo",
+          "dueAt"
+        ],
+        "type": "object"
+      },
+      "FactoryTodayCountersDto": {
+        "properties": {
+          "acceptanceOverdue": {
+            "description": "Of those, past the acceptance deadline",
+            "example": 0,
+            "type": "integer"
+          },
+          "atRisk": {
+            "example": 1,
+            "type": "integer"
+          },
+          "awaitingAcceptance": {
+            "description": "Released jobs to accept (D-074)",
+            "example": 2,
+            "type": "integer"
+          },
+          "inspectionsPlanned": {
+            "description": "Packio inspections planned or in progress (D-076)",
+            "example": 1,
+            "type": "integer"
+          },
+          "milestonesDueToday": {
+            "description": "Steps due today (Asia/Bangkok)",
+            "example": 3,
+            "type": "integer"
+          },
+          "onHold": {
+            "example": 0,
+            "type": "integer"
+          }
+        },
+        "required": [
+          "awaitingAcceptance",
+          "acceptanceOverdue",
+          "milestonesDueToday",
+          "atRisk",
+          "onHold",
+          "inspectionsPlanned"
+        ],
+        "type": "object"
+      },
+      "FactoryTodayDto": {
+        "properties": {
+          "alerts": {
+            "items": {
+              "$ref": "#/components/schemas/FactoryTodayAlertDto"
+            },
+            "type": "array"
+          },
+          "counters": {
+            "$ref": "#/components/schemas/FactoryTodayCountersDto"
+          },
+          "queue": {
+            "description": "Work queue, at most 20: jobs to accept by deadline, then at-risk, then steps due today",
+            "items": {
+              "$ref": "#/components/schemas/PartnerJobDto"
+            },
+            "type": "array"
+          }
+        },
+        "required": [
+          "counters",
+          "alerts",
+          "queue"
+        ],
+        "type": "object"
       },
       "FactoryUserDto": {
         "properties": {
@@ -31708,6 +31871,33 @@
         ],
         "type": "object"
       },
+      "JobArtworkDto": {
+        "properties": {
+          "approvedAt": {
+            "example": "2026-09-26T15:00:00+07:00",
+            "format": "date-time",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "proofId": {
+            "example": "0192f3a0-7c1e-7d2a-9b1f-0000000f1012",
+            "format": "uuid",
+            "type": "string"
+          },
+          "versionNo": {
+            "example": 2,
+            "type": "integer"
+          }
+        },
+        "required": [
+          "proofId",
+          "versionNo",
+          "approvedAt"
+        ],
+        "type": "object"
+      },
       "JobAssignmentDto": {
         "properties": {
           "decidedAt": {
@@ -31800,6 +31990,14 @@
             "example": "10110",
             "type": "string"
           },
+          "provinceNameEn": {
+            "example": "Bangkok",
+            "type": "string"
+          },
+          "provinceNameTh": {
+            "example": "กรุงเทพมหานคร",
+            "type": "string"
+          },
           "quantity": {
             "example": 1000,
             "type": "integer"
@@ -31808,6 +32006,11 @@
             "description": "Recipient (D-142: name, address and phone only)",
             "example": "ผู้รับ ทดสอบ",
             "type": "string"
+          },
+          "shippedQuantity": {
+            "description": "Pieces on live shipments of this job (not cancelled / returned)",
+            "example": 0,
+            "type": "integer"
           }
         },
         "required": [
@@ -31817,7 +32020,50 @@
           "line1",
           "line2",
           "postcode",
-          "quantity"
+          "provinceNameTh",
+          "provinceNameEn",
+          "quantity",
+          "shippedQuantity"
+        ],
+        "type": "object"
+      },
+      "JobInspectionDto": {
+        "properties": {
+          "resultAt": {
+            "example": null,
+            "format": "date-time",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "sampleSize": {
+            "description": "Pieces Packio samples (D-076)",
+            "example": 80,
+            "type": "integer"
+          },
+          "scheduledAt": {
+            "example": null,
+            "format": "date-time",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "status": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/InspectionStatus"
+              }
+            ],
+            "example": "planned"
+          }
+        },
+        "required": [
+          "status",
+          "scheduledAt",
+          "sampleSize",
+          "resultAt"
         ],
         "type": "object"
       },
@@ -31840,6 +32086,24 @@
             "example": "material_shortage",
             "type": "string"
           },
+          "photoFileIds": {
+            "example": [],
+            "items": {
+              "format": "uuid",
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "raisedBy": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/UserRefDto"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
           "resolutionNote": {
             "example": null,
             "type": [
@@ -31852,6 +32116,16 @@
             "type": [
               "string",
               "null"
+            ]
+          },
+          "resolvedBy": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/UserRefDto"
+              },
+              {
+                "type": "null"
+              }
             ]
           },
           "status": {
@@ -31870,9 +32144,24 @@
           "status",
           "createdAt",
           "resolvedAt",
-          "resolutionNote"
+          "resolutionNote",
+          "raisedBy",
+          "resolvedBy",
+          "photoFileIds"
         ],
         "type": "object"
+      },
+      "JobIssueKind": {
+        "enum": [
+          "material_shortage",
+          "machine_down",
+          "artwork_question",
+          "quantity",
+          "quality",
+          "delay",
+          "other"
+        ],
+        "type": "string"
       },
       "JobKind": {
         "enum": [
@@ -31881,6 +32170,24 @@
           "reproduction"
         ],
         "type": "string"
+      },
+      "JobLookupDto": {
+        "properties": {
+          "jobId": {
+            "example": "0192f3a0-7c1e-7d2a-9b1f-0000000f1001",
+            "format": "uuid",
+            "type": "string"
+          },
+          "jobNo": {
+            "example": "JOB-2609-00001",
+            "type": "string"
+          }
+        },
+        "required": [
+          "jobId",
+          "jobNo"
+        ],
+        "type": "object"
       },
       "JobQueue": {
         "enum": [
@@ -31915,6 +32222,33 @@
           "running",
           "succeeded",
           "failed"
+        ],
+        "type": "string"
+      },
+      "JobToleranceDto": {
+        "properties": {
+          "overagePct": {
+            "example": "5.0000",
+            "type": "string"
+          },
+          "shortagePct": {
+            "description": "Shortage accepted, percent (frozen in the quote, D-021)",
+            "example": "5.0000",
+            "type": "string"
+          }
+        },
+        "required": [
+          "shortagePct",
+          "overagePct"
+        ],
+        "type": "object"
+      },
+      "JobView": {
+        "enum": [
+          "to_accept",
+          "in_production",
+          "ready_to_ship",
+          "late"
         ],
         "type": "string"
       },
@@ -35798,6 +36132,30 @@
               "null"
             ]
           },
+          "artwork": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/JobArtworkDto"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "The approved proof the job prints"
+          },
+          "atRisk": {
+            "description": "Predicted to miss its promise (D-075)",
+            "example": false,
+            "type": "boolean"
+          },
+          "currentMilestoneKey": {
+            "description": "The first step not done yet",
+            "example": "printing",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
           "destinations": {
             "items": {
               "$ref": "#/components/schemas/JobDestinationDto"
@@ -35823,6 +36181,17 @@
             "example": "0192f3a0-7c1e-7d2a-9b1f-0000000f1001",
             "format": "uuid",
             "type": "string"
+          },
+          "inspection": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/JobInspectionDto"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Packio’s inspection when one is planned (D-076)"
           },
           "inspectionRequired": {
             "description": "Packio inspects this job before shipping (D-076)",
@@ -35868,6 +36237,17 @@
               "null"
             ]
           },
+          "productTypeCode": {
+            "example": "folding_box",
+            "type": "string"
+          },
+          "productTypeNameTh": {
+            "example": "กล่องพับ",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
           "promisedShipDate": {
             "example": "2026-10-09",
             "type": [
@@ -35893,9 +36273,42 @@
               "null"
             ]
           },
+          "rejectNote": {
+            "example": null,
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "rejectReasonCode": {
+            "example": null,
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "rejectedAt": {
+            "example": null,
+            "type": [
+              "string",
+              "null"
+            ]
+          },
           "releasedAt": {
             "example": "2026-09-27T10:00:00+07:00",
             "type": "string"
+          },
+          "riskReason": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/JobRiskReason"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "`step_overdue`: the current step is past due; `late_plan`: the plan already ends after the promise",
+            "example": null
           },
           "spec": {
             "additionalProperties": true,
@@ -35913,6 +36326,22 @@
               }
             ],
             "example": "released"
+          },
+          "title": {
+            "description": "Short label: product type and quantity",
+            "example": "กล่องพับ · 1000 ชิ้น",
+            "type": "string"
+          },
+          "tolerance": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/JobToleranceDto"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Quantity tolerance frozen in the quote (D-021)"
           }
         },
         "required": [
@@ -35935,6 +36364,18 @@
           "dielineFileId",
           "inspectionRequired",
           "holdReason",
+          "productTypeCode",
+          "productTypeNameTh",
+          "title",
+          "currentMilestoneKey",
+          "atRisk",
+          "riskReason",
+          "rejectedAt",
+          "rejectReasonCode",
+          "rejectNote",
+          "tolerance",
+          "artwork",
+          "inspection",
           "destinations",
           "milestones"
         ],
@@ -42609,6 +43050,17 @@
             "example": "2026-10-05T10:00:00+07:00",
             "type": "string"
           },
+          "performedBy": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/UserRefDto"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Who recorded the check"
+          },
           "photoFileIds": {
             "example": [
               "0192f3a0-7c1e-7d2a-9b1f-0000000f1005"
@@ -42653,7 +43105,8 @@
           "quantityDefective",
           "note",
           "performedAt",
-          "photoFileIds"
+          "photoFileIds",
+          "performedBy"
         ],
         "type": "object"
       },
@@ -43371,11 +43824,12 @@
             "type": "string"
           },
           "kind": {
-            "description": "Short code, e.g. material_shortage, machine_down, artwork_question",
-            "example": "material_shortage",
-            "maxLength": 64,
-            "minLength": 1,
-            "type": "string"
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/JobIssueKind"
+              }
+            ],
+            "example": "material_shortage"
           },
           "photoFileIds": {
             "example": [],
@@ -177614,8 +178068,14 @@
                   "description": "กระดาษอาร์ตการ์ดขาดสต็อก รอของ 2 วัน",
                   "id": "0192f3a0-7c1e-7d2a-9b1f-0000000f1004",
                   "kind": "material_shortage",
+                  "photoFileIds": [],
+                  "raisedBy": {
+                    "displayName": "วางแผน โรงงาน (fake)",
+                    "id": "0192f3a0-7c1e-7d2a-9b1f-0000000f1013"
+                  },
                   "resolutionNote": "เลื่อนวันส่งกับลูกค้าแล้ว",
                   "resolvedAt": "2026-10-02T12:00:00+07:00",
+                  "resolvedBy": null,
                   "status": "resolved"
                 },
                 "schema": {
@@ -192395,6 +192855,11 @@
                   "acceptDueAt": "2026-09-28T10:00:00+07:00",
                   "acceptedAt": null,
                   "approvedFileId": "0192f3a0-7c1e-7d2a-9b1f-0000000f1005",
+                  "artwork": {
+                    "approvedAt": "2026-09-26T15:00:00+07:00",
+                    "proofId": "0192f3a0-7c1e-7d2a-9b1f-0000000f1012",
+                    "versionNo": 2
+                  },
                   "assignments": [
                     {
                       "decidedAt": "2026-09-27T10:00:00+07:00",
@@ -192416,8 +192881,11 @@
                       "line2": null,
                       "phone": "+66810001234",
                       "postcode": "10110",
+                      "provinceNameEn": "Bangkok",
+                      "provinceNameTh": "กรุงเทพมหานคร",
                       "quantity": 1000,
-                      "recipientName": "ผู้รับ ทดสอบ"
+                      "recipientName": "ผู้รับ ทดสอบ",
+                      "shippedQuantity": 0
                     }
                   ],
                   "dielineFileId": null,
@@ -192426,6 +192894,7 @@
                   "factoryId": "0192f3a0-7c1e-7d2a-9b1f-0000000f1003",
                   "holdReason": null,
                   "id": "0192f3a0-7c1e-7d2a-9b1f-0000000f1001",
+                  "inspection": null,
                   "inspectionReasons": [],
                   "inspectionRequired": false,
                   "jobNo": "JOB-2609-00001",
@@ -192459,6 +192928,7 @@
                   "plannedStartOn": "2026-09-28",
                   "predictedFinishOn": null,
                   "productTypeCode": "folding_box",
+                  "productTypeNameTh": "กล่องพับ",
                   "promisedShipDate": "2026-10-09",
                   "quantityGood": null,
                   "quantityOrdered": 1000,
@@ -192474,7 +192944,12 @@
                     "productTypeCode": "folding_carton",
                     "quantity": 1000
                   },
-                  "status": "released"
+                  "status": "released",
+                  "title": "กล่องพับ · 1000 ชิ้น",
+                  "tolerance": {
+                    "overagePct": "5.0000",
+                    "shortagePct": "5.0000"
+                  }
                 },
                 "schema": {
                   "$ref": "#/components/schemas/AdminJobDto"
@@ -206841,6 +207316,15 @@
             }
           },
           {
+            "description": "Shop-floor views: to_accept = released; in_production = accepted, in progress or on hold; ready_to_ship = completed jobs whose order is not delivered yet (see `destinations[].shippedQuantity`); late = at risk",
+            "in": "query",
+            "name": "view",
+            "required": false,
+            "schema": {
+              "$ref": "#/components/schemas/JobView"
+            }
+          },
+          {
             "description": "Jobs of this factory",
             "in": "query",
             "name": "factoryId",
@@ -206874,6 +207358,11 @@
                       "acceptDueAt": "2026-09-28T10:00:00+07:00",
                       "acceptedAt": null,
                       "approvedFileId": "0192f3a0-7c1e-7d2a-9b1f-0000000f1005",
+                      "artwork": {
+                        "approvedAt": "2026-09-26T15:00:00+07:00",
+                        "proofId": "0192f3a0-7c1e-7d2a-9b1f-0000000f1012",
+                        "versionNo": 2
+                      },
                       "assignments": [
                         {
                           "decidedAt": "2026-09-27T10:00:00+07:00",
@@ -206895,8 +207384,11 @@
                           "line2": null,
                           "phone": "+66810001234",
                           "postcode": "10110",
+                          "provinceNameEn": "Bangkok",
+                          "provinceNameTh": "กรุงเทพมหานคร",
                           "quantity": 1000,
-                          "recipientName": "ผู้รับ ทดสอบ"
+                          "recipientName": "ผู้รับ ทดสอบ",
+                          "shippedQuantity": 0
                         }
                       ],
                       "dielineFileId": null,
@@ -206905,6 +207397,7 @@
                       "factoryId": "0192f3a0-7c1e-7d2a-9b1f-0000000f1003",
                       "holdReason": null,
                       "id": "0192f3a0-7c1e-7d2a-9b1f-0000000f1001",
+                      "inspection": null,
                       "inspectionReasons": [],
                       "inspectionRequired": false,
                       "jobNo": "JOB-2609-00001",
@@ -206938,6 +207431,7 @@
                       "plannedStartOn": "2026-09-28",
                       "predictedFinishOn": null,
                       "productTypeCode": "folding_box",
+                      "productTypeNameTh": "กล่องพับ",
                       "promisedShipDate": "2026-10-09",
                       "quantityGood": null,
                       "quantityOrdered": 1000,
@@ -206953,7 +207447,12 @@
                         "productTypeCode": "folding_carton",
                         "quantity": 1000
                       },
-                      "status": "released"
+                      "status": "released",
+                      "title": "กล่องพับ · 1000 ชิ้น",
+                      "tolerance": {
+                        "overagePct": "5.0000",
+                        "shortagePct": "5.0000"
+                      }
                     }
                   ],
                   "meta": {
@@ -207142,6 +207641,11 @@
                   "acceptDueAt": "2026-09-28T10:00:00+07:00",
                   "acceptedAt": null,
                   "approvedFileId": "0192f3a0-7c1e-7d2a-9b1f-0000000f1005",
+                  "artwork": {
+                    "approvedAt": "2026-09-26T15:00:00+07:00",
+                    "proofId": "0192f3a0-7c1e-7d2a-9b1f-0000000f1012",
+                    "versionNo": 2
+                  },
                   "assignments": [
                     {
                       "decidedAt": "2026-09-27T10:00:00+07:00",
@@ -207163,8 +207667,11 @@
                       "line2": null,
                       "phone": "+66810001234",
                       "postcode": "10110",
+                      "provinceNameEn": "Bangkok",
+                      "provinceNameTh": "กรุงเทพมหานคร",
                       "quantity": 1000,
-                      "recipientName": "ผู้รับ ทดสอบ"
+                      "recipientName": "ผู้รับ ทดสอบ",
+                      "shippedQuantity": 0
                     }
                   ],
                   "dielineFileId": null,
@@ -207173,6 +207680,7 @@
                   "factoryId": "0192f3a0-7c1e-7d2a-9b1f-0000000f1003",
                   "holdReason": null,
                   "id": "0192f3a0-7c1e-7d2a-9b1f-0000000f1001",
+                  "inspection": null,
                   "inspectionReasons": [],
                   "inspectionRequired": false,
                   "jobNo": "JOB-2609-00001",
@@ -207206,6 +207714,7 @@
                   "plannedStartOn": "2026-09-28",
                   "predictedFinishOn": null,
                   "productTypeCode": "folding_box",
+                  "productTypeNameTh": "กล่องพับ",
                   "promisedShipDate": "2026-10-09",
                   "quantityGood": null,
                   "quantityOrdered": 1000,
@@ -207221,7 +207730,12 @@
                     "productTypeCode": "folding_carton",
                     "quantity": 1000
                   },
-                  "status": "released"
+                  "status": "released",
+                  "title": "กล่องพับ · 1000 ชิ้น",
+                  "tolerance": {
+                    "overagePct": "5.0000",
+                    "shortagePct": "5.0000"
+                  }
                 },
                 "schema": {
                   "$ref": "#/components/schemas/AdminJobDto"
@@ -207425,6 +207939,11 @@
                   "acceptDueAt": "2026-09-28T10:00:00+07:00",
                   "acceptedAt": null,
                   "approvedFileId": "0192f3a0-7c1e-7d2a-9b1f-0000000f1005",
+                  "artwork": {
+                    "approvedAt": "2026-09-26T15:00:00+07:00",
+                    "proofId": "0192f3a0-7c1e-7d2a-9b1f-0000000f1012",
+                    "versionNo": 2
+                  },
                   "assignments": [
                     {
                       "decidedAt": "2026-09-27T10:00:00+07:00",
@@ -207446,8 +207965,11 @@
                       "line2": null,
                       "phone": "+66810001234",
                       "postcode": "10110",
+                      "provinceNameEn": "Bangkok",
+                      "provinceNameTh": "กรุงเทพมหานคร",
                       "quantity": 1000,
-                      "recipientName": "ผู้รับ ทดสอบ"
+                      "recipientName": "ผู้รับ ทดสอบ",
+                      "shippedQuantity": 0
                     }
                   ],
                   "dielineFileId": null,
@@ -207456,6 +207978,7 @@
                   "factoryId": "0192f3a0-7c1e-7d2a-9b1f-0000000f1003",
                   "holdReason": "ลูกค้าขอพักงานเพื่อแก้ไฟล์",
                   "id": "0192f3a0-7c1e-7d2a-9b1f-0000000f1001",
+                  "inspection": null,
                   "inspectionReasons": [],
                   "inspectionRequired": false,
                   "jobNo": "JOB-2609-00001",
@@ -207489,6 +208012,7 @@
                   "plannedStartOn": "2026-09-28",
                   "predictedFinishOn": null,
                   "productTypeCode": "folding_box",
+                  "productTypeNameTh": "กล่องพับ",
                   "promisedShipDate": "2026-10-09",
                   "quantityGood": null,
                   "quantityOrdered": 1000,
@@ -207504,7 +208028,12 @@
                     "productTypeCode": "folding_carton",
                     "quantity": 1000
                   },
-                  "status": "on_hold"
+                  "status": "on_hold",
+                  "title": "กล่องพับ · 1000 ชิ้น",
+                  "tolerance": {
+                    "overagePct": "5.0000",
+                    "shortagePct": "5.0000"
+                  }
                 },
                 "schema": {
                   "$ref": "#/components/schemas/AdminJobDto"
@@ -207752,6 +208281,11 @@
                   "acceptDueAt": "2026-09-28T10:00:00+07:00",
                   "acceptedAt": null,
                   "approvedFileId": "0192f3a0-7c1e-7d2a-9b1f-0000000f1005",
+                  "artwork": {
+                    "approvedAt": "2026-09-26T15:00:00+07:00",
+                    "proofId": "0192f3a0-7c1e-7d2a-9b1f-0000000f1012",
+                    "versionNo": 2
+                  },
                   "assignments": [
                     {
                       "decidedAt": "2026-09-27T10:00:00+07:00",
@@ -207773,8 +208307,11 @@
                       "line2": null,
                       "phone": "+66810001234",
                       "postcode": "10110",
+                      "provinceNameEn": "Bangkok",
+                      "provinceNameTh": "กรุงเทพมหานคร",
                       "quantity": 1000,
-                      "recipientName": "ผู้รับ ทดสอบ"
+                      "recipientName": "ผู้รับ ทดสอบ",
+                      "shippedQuantity": 0
                     }
                   ],
                   "dielineFileId": null,
@@ -207783,6 +208320,7 @@
                   "factoryId": "0192f3a0-7c1e-7d2a-9b1f-0000000f1003",
                   "holdReason": null,
                   "id": "0192f3a0-7c1e-7d2a-9b1f-0000000f1001",
+                  "inspection": null,
                   "inspectionReasons": [],
                   "inspectionRequired": false,
                   "jobNo": "JOB-2609-00001",
@@ -207816,6 +208354,7 @@
                   "plannedStartOn": "2026-09-28",
                   "predictedFinishOn": null,
                   "productTypeCode": "folding_box",
+                  "productTypeNameTh": "กล่องพับ",
                   "promisedShipDate": "2026-10-09",
                   "quantityGood": null,
                   "quantityOrdered": 1000,
@@ -207831,7 +208370,12 @@
                     "productTypeCode": "folding_carton",
                     "quantity": 1000
                   },
-                  "status": "released"
+                  "status": "released",
+                  "title": "กล่องพับ · 1000 ชิ้น",
+                  "tolerance": {
+                    "overagePct": "5.0000",
+                    "shortagePct": "5.0000"
+                  }
                 },
                 "schema": {
                   "$ref": "#/components/schemas/AdminJobDto"
@@ -208070,6 +208614,11 @@
                   "acceptDueAt": "2026-09-28T10:00:00+07:00",
                   "acceptedAt": null,
                   "approvedFileId": "0192f3a0-7c1e-7d2a-9b1f-0000000f1005",
+                  "artwork": {
+                    "approvedAt": "2026-09-26T15:00:00+07:00",
+                    "proofId": "0192f3a0-7c1e-7d2a-9b1f-0000000f1012",
+                    "versionNo": 2
+                  },
                   "assignments": [
                     {
                       "decidedAt": "2026-09-27T10:00:00+07:00",
@@ -208091,8 +208640,11 @@
                       "line2": null,
                       "phone": "+66810001234",
                       "postcode": "10110",
+                      "provinceNameEn": "Bangkok",
+                      "provinceNameTh": "กรุงเทพมหานคร",
                       "quantity": 1000,
-                      "recipientName": "ผู้รับ ทดสอบ"
+                      "recipientName": "ผู้รับ ทดสอบ",
+                      "shippedQuantity": 0
                     }
                   ],
                   "dielineFileId": null,
@@ -208101,6 +208653,7 @@
                   "factoryId": "0192f3a0-7c1e-7d2a-9b1f-0000000f1003",
                   "holdReason": null,
                   "id": "0192f3a0-7c1e-7d2a-9b1f-0000000f1001",
+                  "inspection": null,
                   "inspectionReasons": [],
                   "inspectionRequired": false,
                   "jobNo": "JOB-2609-00001",
@@ -208134,6 +208687,7 @@
                   "plannedStartOn": "2026-09-28",
                   "predictedFinishOn": null,
                   "productTypeCode": "folding_box",
+                  "productTypeNameTh": "กล่องพับ",
                   "promisedShipDate": "2026-10-09",
                   "quantityGood": null,
                   "quantityOrdered": 1000,
@@ -208149,7 +208703,12 @@
                     "productTypeCode": "folding_carton",
                     "quantity": 1000
                   },
-                  "status": "in_progress"
+                  "status": "in_progress",
+                  "title": "กล่องพับ · 1000 ชิ้น",
+                  "tolerance": {
+                    "overagePct": "5.0000",
+                    "shortagePct": "5.0000"
+                  }
                 },
                 "schema": {
                   "$ref": "#/components/schemas/AdminJobDto"
@@ -208358,8 +208917,14 @@
                     "description": "กระดาษอาร์ตการ์ดขาดสต็อก รอของ 2 วัน",
                     "id": "0192f3a0-7c1e-7d2a-9b1f-0000000f1004",
                     "kind": "material_shortage",
+                    "photoFileIds": [],
+                    "raisedBy": {
+                      "displayName": "วางแผน โรงงาน (fake)",
+                      "id": "0192f3a0-7c1e-7d2a-9b1f-0000000f1013"
+                    },
                     "resolutionNote": null,
                     "resolvedAt": null,
+                    "resolvedBy": null,
                     "status": "open"
                   }
                 ],
@@ -208558,6 +209123,10 @@
                     "isFirstPass": true,
                     "note": null,
                     "performedAt": "2026-10-05T10:00:00+07:00",
+                    "performedBy": {
+                      "displayName": "QC โรงงาน (fake)",
+                      "id": "0192f3a0-7c1e-7d2a-9b1f-0000000f1013"
+                    },
                     "photoFileIds": [
                       "0192f3a0-7c1e-7d2a-9b1f-0000000f1005"
                     ],
@@ -262837,7 +263406,7 @@
     },
     "/v1/partner/factories/{factoryId}/scorecards": {
       "get": {
-        "description": "On-time acceptance, on-time shipping, QC first pass, claim rate and on-time updates (D-155); used in allocation when several factories serve a type (D-075).\n\nImplements: D-155, D-075.",
+        "description": "On-time acceptance, on-time shipping, QC first pass, claim rate and on-time updates (D-155), newest first — the latest `months` (default 12, at most 24); used in allocation when several factories serve a type (D-075).\n\nImplements: D-155, D-075.",
         "operationId": "partner.production.scorecards",
         "parameters": [
           {
@@ -262847,6 +263416,18 @@
             "schema": {
               "format": "uuid",
               "type": "string"
+            }
+          },
+          {
+            "description": "Latest months",
+            "in": "query",
+            "name": "months",
+            "required": false,
+            "schema": {
+              "default": 12,
+              "maximum": 24,
+              "minimum": 1,
+              "type": "integer"
             }
           },
           {
@@ -263953,6 +264534,286 @@
         ],
         "x-required-permissions": [
           "factory_rate_card.accept"
+        ]
+      }
+    },
+    "/v1/partner/factories/{factoryId}/today": {
+      "get": {
+        "description": "Jobs to accept and how many are past the 1-business-day deadline (D-074), steps due today (Asia/Bangkok), jobs at risk or on hold, Packio inspections planned (D-076); alerts; and a work queue of at most 20 jobs — acceptance by deadline, then at-risk jobs, then steps due today.\n\nImplements: D-074, D-076, D-101.",
+        "operationId": "partner.production.today",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "factoryId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "alerts": [
+                    {
+                      "dueAt": "2026-09-28T10:00:00+07:00",
+                      "jobId": "0192f3a0-7c1e-7d2a-9b1f-0000000f1001",
+                      "jobNo": "JOB-2609-00001",
+                      "kind": "acceptance_due_soon"
+                    }
+                  ],
+                  "counters": {
+                    "acceptanceOverdue": 0,
+                    "atRisk": 0,
+                    "awaitingAcceptance": 1,
+                    "inspectionsPlanned": 0,
+                    "milestonesDueToday": 2,
+                    "onHold": 0
+                  },
+                  "queue": [
+                    {
+                      "acceptDueAt": "2026-09-28T10:00:00+07:00",
+                      "acceptedAt": null,
+                      "approvedFileId": "0192f3a0-7c1e-7d2a-9b1f-0000000f1005",
+                      "artwork": {
+                        "approvedAt": "2026-09-26T15:00:00+07:00",
+                        "proofId": "0192f3a0-7c1e-7d2a-9b1f-0000000f1012",
+                        "versionNo": 2
+                      },
+                      "atRisk": false,
+                      "currentMilestoneKey": "printing",
+                      "destinations": [
+                        {
+                          "id": "0192f3a0-7c1e-7d2a-9b1f-0000000f2002",
+                          "line1": "1 ถนนทดสอบ",
+                          "line2": null,
+                          "phone": "+66810001234",
+                          "postcode": "10110",
+                          "provinceNameEn": "Bangkok",
+                          "provinceNameTh": "กรุงเทพมหานคร",
+                          "quantity": 1000,
+                          "recipientName": "ผู้รับ ทดสอบ",
+                          "shippedQuantity": 0
+                        }
+                      ],
+                      "dielineFileId": null,
+                      "holdReason": null,
+                      "id": "0192f3a0-7c1e-7d2a-9b1f-0000000f1001",
+                      "inspection": null,
+                      "inspectionRequired": false,
+                      "jobNo": "JOB-2609-00001",
+                      "kind": "production",
+                      "lotNo": null,
+                      "milestones": [
+                        {
+                          "completedAt": null,
+                          "customerVisible": true,
+                          "dueAt": "2026-10-02T17:00:00+07:00",
+                          "evidence": "photo",
+                          "id": "0192f3a0-7c1e-7d2a-9b1f-0000000f1004",
+                          "key": "printing",
+                          "nameEn": "Printing",
+                          "nameTh": "พิมพ์",
+                          "note": null,
+                          "onTime": null,
+                          "photoFileIds": [],
+                          "quantityIn": 1050,
+                          "quantityOut": null,
+                          "quantityScrap": null,
+                          "seq": 4,
+                          "startedAt": "2026-10-01T09:00:00+07:00",
+                          "status": "in_progress",
+                          "tracksQuantity": true
+                        }
+                      ],
+                      "plannedFinishOn": "2026-10-09",
+                      "plannedStartOn": "2026-09-28",
+                      "productTypeCode": "folding_box",
+                      "productTypeNameTh": "กล่องพับ",
+                      "promisedShipDate": "2026-10-09",
+                      "quantityGood": null,
+                      "quantityOrdered": 1000,
+                      "quantityScrap": null,
+                      "rejectNote": null,
+                      "rejectReasonCode": null,
+                      "rejectedAt": null,
+                      "releasedAt": "2026-09-27T10:00:00+07:00",
+                      "riskReason": null,
+                      "spec": {
+                        "productTypeCode": "folding_carton",
+                        "quantity": 1000
+                      },
+                      "status": "released",
+                      "title": "กล่องพับ · 1000 ชิ้น",
+                      "tolerance": {
+                        "overagePct": "5.0000",
+                        "shortagePct": "5.0000"
+                      }
+                    }
+                  ]
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/FactoryTodayDto"
+                }
+              }
+            },
+            "description": "Today",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.unauthenticated": {
+                    "$ref": "#/components/examples/problem.auth.unauthenticated"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.unauthenticated`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.forbidden": {
+                    "$ref": "#/components/examples/problem.auth.forbidden"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.forbidden`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "404": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.not_found": {
+                    "$ref": "#/components/examples/problem.http.not_found"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.not_found`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "validation.failed": {
+                    "$ref": "#/components/examples/problem.validation.failed"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `validation.failed`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "partner": []
+          }
+        ],
+        "summary": "My factory’s day",
+        "tags": [
+          "partner.production"
+        ],
+        "x-required-permissions": [
+          "factory_jobs.read"
         ]
       }
     },
@@ -267707,7 +268568,7 @@
     },
     "/v1/partner/production-jobs": {
       "get": {
-        "description": "Newest first; `awaiting_acceptance` = released jobs to accept within 1 business day (D-074). No selling prices (D-142).\n\nImplements: D-074, D-142.",
+        "description": "Newest first; `awaiting_acceptance` = released jobs to accept within 1 business day (D-074); `view` picks a shop-floor view; `factoryId` narrows to one of my factories. Each job carries its product type, risk, tolerance, approved proof, Packio inspection and pieces already shipped per destination. No selling prices (D-142).\n\nImplements: D-074, D-142.",
         "operationId": "partner.production.list",
         "parameters": [
           {
@@ -267788,6 +268649,15 @@
             }
           },
           {
+            "description": "Shop-floor views: to_accept = released; in_production = accepted, in progress or on hold; ready_to_ship = completed jobs whose order is not delivered yet (see `destinations[].shippedQuantity`); late = at risk",
+            "in": "query",
+            "name": "view",
+            "required": false,
+            "schema": {
+              "$ref": "#/components/schemas/JobView"
+            }
+          },
+          {
             "description": "Jobs of this factory",
             "in": "query",
             "name": "factoryId",
@@ -267821,6 +268691,13 @@
                       "acceptDueAt": "2026-09-28T10:00:00+07:00",
                       "acceptedAt": null,
                       "approvedFileId": "0192f3a0-7c1e-7d2a-9b1f-0000000f1005",
+                      "artwork": {
+                        "approvedAt": "2026-09-26T15:00:00+07:00",
+                        "proofId": "0192f3a0-7c1e-7d2a-9b1f-0000000f1012",
+                        "versionNo": 2
+                      },
+                      "atRisk": false,
+                      "currentMilestoneKey": "printing",
                       "destinations": [
                         {
                           "id": "0192f3a0-7c1e-7d2a-9b1f-0000000f2002",
@@ -267828,13 +268705,17 @@
                           "line2": null,
                           "phone": "+66810001234",
                           "postcode": "10110",
+                          "provinceNameEn": "Bangkok",
+                          "provinceNameTh": "กรุงเทพมหานคร",
                           "quantity": 1000,
-                          "recipientName": "ผู้รับ ทดสอบ"
+                          "recipientName": "ผู้รับ ทดสอบ",
+                          "shippedQuantity": 0
                         }
                       ],
                       "dielineFileId": null,
                       "holdReason": null,
                       "id": "0192f3a0-7c1e-7d2a-9b1f-0000000f1001",
+                      "inspection": null,
                       "inspectionRequired": false,
                       "jobNo": "JOB-2609-00001",
                       "kind": "production",
@@ -267863,16 +268744,27 @@
                       ],
                       "plannedFinishOn": "2026-10-09",
                       "plannedStartOn": "2026-09-28",
+                      "productTypeCode": "folding_box",
+                      "productTypeNameTh": "กล่องพับ",
                       "promisedShipDate": "2026-10-09",
                       "quantityGood": null,
                       "quantityOrdered": 1000,
                       "quantityScrap": null,
+                      "rejectNote": null,
+                      "rejectReasonCode": null,
+                      "rejectedAt": null,
                       "releasedAt": "2026-09-27T10:00:00+07:00",
+                      "riskReason": null,
                       "spec": {
                         "productTypeCode": "folding_carton",
                         "quantity": 1000
                       },
-                      "status": "released"
+                      "status": "released",
+                      "title": "กล่องพับ · 1000 ชิ้น",
+                      "tolerance": {
+                        "overagePct": "5.0000",
+                        "shortagePct": "5.0000"
+                      }
                     }
                   ],
                   "meta": {
@@ -268035,6 +268927,194 @@
         ]
       }
     },
+    "/v1/partner/production-jobs/lookup": {
+      "get": {
+        "description": "A job number, a job id, or the label code of one of its cartons — within my factories only (404 otherwise).\n\nImplements: D-044.",
+        "operationId": "partner.production.lookup",
+        "parameters": [
+          {
+            "description": "Job no., job id or a carton label code",
+            "in": "query",
+            "name": "code",
+            "required": true,
+            "schema": {
+              "example": "JOB-2609-00001",
+              "maxLength": 64,
+              "minLength": 3,
+              "type": "string"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "jobId": "0192f3a0-7c1e-7d2a-9b1f-0000000f1001",
+                  "jobNo": "JOB-2609-00001"
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/JobLookupDto"
+                }
+              }
+            },
+            "description": "Job",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.unauthenticated": {
+                    "$ref": "#/components/examples/problem.auth.unauthenticated"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.unauthenticated`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.forbidden": {
+                    "$ref": "#/components/examples/problem.auth.forbidden"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.forbidden`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "404": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.not_found": {
+                    "$ref": "#/components/examples/problem.http.not_found"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.not_found`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "validation.failed": {
+                    "$ref": "#/components/examples/problem.validation.failed"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `validation.failed`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "partner": []
+          }
+        ],
+        "summary": "Find my job from a scanned or typed code",
+        "tags": [
+          "partner.production"
+        ],
+        "x-required-permissions": [
+          "factory_jobs.read"
+        ]
+      }
+    },
     "/v1/partner/production-jobs/{jobId}": {
       "get": {
         "description": "Spec, the approved artwork and dieline (download the approved version only), delivery contacts (D-142), milestones.\n\nImplements: D-142, D-075.",
@@ -268061,6 +269141,13 @@
                   "acceptDueAt": "2026-09-28T10:00:00+07:00",
                   "acceptedAt": null,
                   "approvedFileId": "0192f3a0-7c1e-7d2a-9b1f-0000000f1005",
+                  "artwork": {
+                    "approvedAt": "2026-09-26T15:00:00+07:00",
+                    "proofId": "0192f3a0-7c1e-7d2a-9b1f-0000000f1012",
+                    "versionNo": 2
+                  },
+                  "atRisk": false,
+                  "currentMilestoneKey": "printing",
                   "destinations": [
                     {
                       "id": "0192f3a0-7c1e-7d2a-9b1f-0000000f2002",
@@ -268068,13 +269155,17 @@
                       "line2": null,
                       "phone": "+66810001234",
                       "postcode": "10110",
+                      "provinceNameEn": "Bangkok",
+                      "provinceNameTh": "กรุงเทพมหานคร",
                       "quantity": 1000,
-                      "recipientName": "ผู้รับ ทดสอบ"
+                      "recipientName": "ผู้รับ ทดสอบ",
+                      "shippedQuantity": 0
                     }
                   ],
                   "dielineFileId": null,
                   "holdReason": null,
                   "id": "0192f3a0-7c1e-7d2a-9b1f-0000000f1001",
+                  "inspection": null,
                   "inspectionRequired": false,
                   "jobNo": "JOB-2609-00001",
                   "kind": "production",
@@ -268103,16 +269194,27 @@
                   ],
                   "plannedFinishOn": "2026-10-09",
                   "plannedStartOn": "2026-09-28",
+                  "productTypeCode": "folding_box",
+                  "productTypeNameTh": "กล่องพับ",
                   "promisedShipDate": "2026-10-09",
                   "quantityGood": null,
                   "quantityOrdered": 1000,
                   "quantityScrap": null,
+                  "rejectNote": null,
+                  "rejectReasonCode": null,
+                  "rejectedAt": null,
                   "releasedAt": "2026-09-27T10:00:00+07:00",
+                  "riskReason": null,
                   "spec": {
                     "productTypeCode": "folding_carton",
                     "quantity": 1000
                   },
-                  "status": "released"
+                  "status": "released",
+                  "title": "กล่องพับ · 1000 ชิ้น",
+                  "tolerance": {
+                    "overagePct": "5.0000",
+                    "shortagePct": "5.0000"
+                  }
                 },
                 "schema": {
                   "$ref": "#/components/schemas/PartnerJobDto"
@@ -268302,6 +269404,13 @@
                   "acceptDueAt": "2026-09-28T10:00:00+07:00",
                   "acceptedAt": "2026-09-27T14:00:00+07:00",
                   "approvedFileId": "0192f3a0-7c1e-7d2a-9b1f-0000000f1005",
+                  "artwork": {
+                    "approvedAt": "2026-09-26T15:00:00+07:00",
+                    "proofId": "0192f3a0-7c1e-7d2a-9b1f-0000000f1012",
+                    "versionNo": 2
+                  },
+                  "atRisk": false,
+                  "currentMilestoneKey": "printing",
                   "destinations": [
                     {
                       "id": "0192f3a0-7c1e-7d2a-9b1f-0000000f2002",
@@ -268309,13 +269418,17 @@
                       "line2": null,
                       "phone": "+66810001234",
                       "postcode": "10110",
+                      "provinceNameEn": "Bangkok",
+                      "provinceNameTh": "กรุงเทพมหานคร",
                       "quantity": 1000,
-                      "recipientName": "ผู้รับ ทดสอบ"
+                      "recipientName": "ผู้รับ ทดสอบ",
+                      "shippedQuantity": 0
                     }
                   ],
                   "dielineFileId": null,
                   "holdReason": null,
                   "id": "0192f3a0-7c1e-7d2a-9b1f-0000000f1001",
+                  "inspection": null,
                   "inspectionRequired": false,
                   "jobNo": "JOB-2609-00001",
                   "kind": "production",
@@ -268344,16 +269457,27 @@
                   ],
                   "plannedFinishOn": "2026-10-09",
                   "plannedStartOn": "2026-09-28",
+                  "productTypeCode": "folding_box",
+                  "productTypeNameTh": "กล่องพับ",
                   "promisedShipDate": "2026-10-09",
                   "quantityGood": null,
                   "quantityOrdered": 1000,
                   "quantityScrap": null,
+                  "rejectNote": null,
+                  "rejectReasonCode": null,
+                  "rejectedAt": null,
                   "releasedAt": "2026-09-27T10:00:00+07:00",
+                  "riskReason": null,
                   "spec": {
                     "productTypeCode": "folding_carton",
                     "quantity": 1000
                   },
-                  "status": "accepted"
+                  "status": "accepted",
+                  "title": "กล่องพับ · 1000 ชิ้น",
+                  "tolerance": {
+                    "overagePct": "5.0000",
+                    "shortagePct": "5.0000"
+                  }
                 },
                 "schema": {
                   "$ref": "#/components/schemas/PartnerJobDto"
@@ -268613,6 +269737,13 @@
                   "acceptDueAt": "2026-09-28T10:00:00+07:00",
                   "acceptedAt": null,
                   "approvedFileId": "0192f3a0-7c1e-7d2a-9b1f-0000000f1005",
+                  "artwork": {
+                    "approvedAt": "2026-09-26T15:00:00+07:00",
+                    "proofId": "0192f3a0-7c1e-7d2a-9b1f-0000000f1012",
+                    "versionNo": 2
+                  },
+                  "atRisk": false,
+                  "currentMilestoneKey": "printing",
                   "destinations": [
                     {
                       "id": "0192f3a0-7c1e-7d2a-9b1f-0000000f2002",
@@ -268620,13 +269751,17 @@
                       "line2": null,
                       "phone": "+66810001234",
                       "postcode": "10110",
+                      "provinceNameEn": "Bangkok",
+                      "provinceNameTh": "กรุงเทพมหานคร",
                       "quantity": 1000,
-                      "recipientName": "ผู้รับ ทดสอบ"
+                      "recipientName": "ผู้รับ ทดสอบ",
+                      "shippedQuantity": 0
                     }
                   ],
                   "dielineFileId": null,
                   "holdReason": null,
                   "id": "0192f3a0-7c1e-7d2a-9b1f-0000000f1001",
+                  "inspection": null,
                   "inspectionRequired": false,
                   "jobNo": "JOB-2609-00001",
                   "kind": "production",
@@ -268655,16 +269790,27 @@
                   ],
                   "plannedFinishOn": "2026-10-09",
                   "plannedStartOn": "2026-09-28",
+                  "productTypeCode": "folding_box",
+                  "productTypeNameTh": "กล่องพับ",
                   "promisedShipDate": "2026-10-09",
                   "quantityGood": null,
                   "quantityOrdered": 1000,
                   "quantityScrap": null,
+                  "rejectNote": null,
+                  "rejectReasonCode": null,
+                  "rejectedAt": null,
                   "releasedAt": "2026-09-27T10:00:00+07:00",
+                  "riskReason": null,
                   "spec": {
                     "productTypeCode": "folding_carton",
                     "quantity": 1000
                   },
-                  "status": "rejected"
+                  "status": "rejected",
+                  "title": "กล่องพับ · 1000 ชิ้น",
+                  "tolerance": {
+                    "overagePct": "5.0000",
+                    "shortagePct": "5.0000"
+                  }
                 },
                 "schema": {
                   "$ref": "#/components/schemas/PartnerJobDto"
@@ -268911,8 +270057,14 @@
                     "description": "กระดาษอาร์ตการ์ดขาดสต็อก รอของ 2 วัน",
                     "id": "0192f3a0-7c1e-7d2a-9b1f-0000000f1004",
                     "kind": "material_shortage",
+                    "photoFileIds": [],
+                    "raisedBy": {
+                      "displayName": "วางแผน โรงงาน (fake)",
+                      "id": "0192f3a0-7c1e-7d2a-9b1f-0000000f1013"
+                    },
                     "resolutionNote": null,
                     "resolvedAt": null,
+                    "resolvedBy": null,
                     "status": "open"
                   }
                 ],
@@ -269078,7 +270230,7 @@
         ]
       },
       "post": {
-        "description": "Material shortage, machine down, questions about the artwork… Packio staff answer it.\n\nImplements: D-074.",
+        "description": "Material shortage, machine down, a question about the artwork… (named kinds, D-232) with photos. Packio staff answer it; the factory may close an issue it raised itself (`partner.production.resolveIssue`).\n\nImplements: D-074, D-232.",
         "operationId": "partner.production.raiseIssue",
         "parameters": [
           {
@@ -269089,6 +270241,9 @@
               "format": "uuid",
               "type": "string"
             }
+          },
+          {
+            "$ref": "#/components/parameters/IdempotencyKeyOptional"
           },
           {
             "$ref": "#/components/parameters/AcceptLanguage"
@@ -269121,8 +270276,14 @@
                   "description": "กระดาษอาร์ตการ์ดขาดสต็อก รอของ 2 วัน",
                   "id": "0192f3a0-7c1e-7d2a-9b1f-0000000f1004",
                   "kind": "material_shortage",
+                  "photoFileIds": [],
+                  "raisedBy": {
+                    "displayName": "วางแผน โรงงาน (fake)",
+                    "id": "0192f3a0-7c1e-7d2a-9b1f-0000000f1013"
+                  },
                   "resolutionNote": null,
                   "resolvedAt": null,
+                  "resolvedBy": null,
                   "status": "open"
                 },
                 "schema": {
@@ -269132,6 +270293,9 @@
             },
             "description": "Raised",
             "headers": {
+              "Idempotent-Replayed": {
+                "$ref": "#/components/headers/IdempotentReplayed"
+              },
               "X-RateLimit-Limit": {
                 "$ref": "#/components/headers/RateLimitLimit"
               },
@@ -269155,6 +270319,9 @@
                   },
                   "http.malformed_json": {
                     "$ref": "#/components/examples/problem.http.malformed_json"
+                  },
+                  "idempotency.key_invalid": {
+                    "$ref": "#/components/examples/problem.idempotency.key_invalid"
                   }
                 },
                 "schema": {
@@ -269162,7 +270329,7 @@
                 }
               }
             },
-            "description": "Problem: `http.bad_request`, `http.malformed_json`",
+            "description": "Problem: `http.bad_request`, `http.malformed_json`, `idempotency.key_invalid`",
             "headers": {
               "X-Request-Id": {
                 "$ref": "#/components/headers/XRequestId"
@@ -269229,12 +270396,35 @@
               }
             }
           },
+          "409": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "idempotency.in_progress": {
+                    "$ref": "#/components/examples/problem.idempotency.in_progress"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `idempotency.in_progress`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
           "422": {
             "content": {
               "application/problem+json": {
                 "examples": {
                   "artwork.file_not_usable": {
                     "$ref": "#/components/examples/problem.artwork.file_not_usable"
+                  },
+                  "idempotency.key_reused": {
+                    "$ref": "#/components/examples/problem.idempotency.key_reused"
                   },
                   "validation.failed": {
                     "$ref": "#/components/examples/problem.validation.failed"
@@ -269245,7 +270435,7 @@
                 }
               }
             },
-            "description": "Problem: `artwork.file_not_usable`, `validation.failed`",
+            "description": "Problem: `artwork.file_not_usable`, `idempotency.key_reused`, `validation.failed`",
             "headers": {
               "X-Request-Id": {
                 "$ref": "#/components/headers/XRequestId"
@@ -269302,6 +270492,286 @@
           }
         ],
         "summary": "Raise an issue on my job",
+        "tags": [
+          "partner.production"
+        ],
+        "x-required-permissions": [
+          "factory_issues.raise"
+        ]
+      }
+    },
+    "/v1/partner/production-jobs/{jobId}/issues/{issueId}/actions/resolve": {
+      "post": {
+        "description": "With a note (e.g. the machine is fixed). Only issues raised by the factory’s own people (403 for an issue Packio opened); never moves the job’s dates or SLA (D-232). Audited with an event.\n\nImplements: D-232.",
+        "operationId": "partner.production.resolveIssue",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "jobId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "issueId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/IdempotencyKeyOptional"
+          },
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "examples": {
+                "default": {
+                  "value": {
+                    "note": "ซ่อมเครื่องเสร็จแล้ว เดินงานต่อ"
+                  }
+                }
+              },
+              "schema": {
+                "$ref": "#/components/schemas/ResolveIssueDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "createdAt": "2026-10-02T10:00:00+07:00",
+                  "description": "กระดาษอาร์ตการ์ดขาดสต็อก รอของ 2 วัน",
+                  "id": "0192f3a0-7c1e-7d2a-9b1f-0000000f1004",
+                  "kind": "material_shortage",
+                  "photoFileIds": [],
+                  "raisedBy": {
+                    "displayName": "วางแผน โรงงาน (fake)",
+                    "id": "0192f3a0-7c1e-7d2a-9b1f-0000000f1013"
+                  },
+                  "resolutionNote": "ซ่อมเครื่องเสร็จแล้ว เดินงานต่อ",
+                  "resolvedAt": null,
+                  "resolvedBy": null,
+                  "status": "resolved"
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/JobIssueDto"
+                }
+              }
+            },
+            "description": "Closed",
+            "headers": {
+              "Idempotent-Replayed": {
+                "$ref": "#/components/headers/IdempotentReplayed"
+              },
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "400": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.bad_request": {
+                    "$ref": "#/components/examples/problem.http.bad_request"
+                  },
+                  "http.malformed_json": {
+                    "$ref": "#/components/examples/problem.http.malformed_json"
+                  },
+                  "idempotency.key_invalid": {
+                    "$ref": "#/components/examples/problem.idempotency.key_invalid"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.bad_request`, `http.malformed_json`, `idempotency.key_invalid`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.unauthenticated": {
+                    "$ref": "#/components/examples/problem.auth.unauthenticated"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.unauthenticated`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.forbidden": {
+                    "$ref": "#/components/examples/problem.auth.forbidden"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.forbidden`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "404": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.not_found": {
+                    "$ref": "#/components/examples/problem.http.not_found"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.not_found`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "409": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "idempotency.in_progress": {
+                    "$ref": "#/components/examples/problem.idempotency.in_progress"
+                  },
+                  "production.invalid_status": {
+                    "$ref": "#/components/examples/problem.production.invalid_status"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `idempotency.in_progress`, `production.invalid_status`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "idempotency.key_reused": {
+                    "$ref": "#/components/examples/problem.idempotency.key_reused"
+                  },
+                  "validation.failed": {
+                    "$ref": "#/components/examples/problem.validation.failed"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `idempotency.key_reused`, `validation.failed`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "partner": []
+          }
+        ],
+        "summary": "Close an issue my factory raised",
         "tags": [
           "partner.production"
         ],
@@ -269374,6 +270844,13 @@
                     "acceptDueAt": "2026-09-28T10:00:00+07:00",
                     "acceptedAt": null,
                     "approvedFileId": "0192f3a0-7c1e-7d2a-9b1f-0000000f1005",
+                    "artwork": {
+                      "approvedAt": "2026-09-26T15:00:00+07:00",
+                      "proofId": "0192f3a0-7c1e-7d2a-9b1f-0000000f1012",
+                      "versionNo": 2
+                    },
+                    "atRisk": false,
+                    "currentMilestoneKey": "printing",
                     "destinations": [
                       {
                         "id": "0192f3a0-7c1e-7d2a-9b1f-0000000f2002",
@@ -269381,13 +270858,17 @@
                         "line2": null,
                         "phone": "+66810001234",
                         "postcode": "10110",
+                        "provinceNameEn": "Bangkok",
+                        "provinceNameTh": "กรุงเทพมหานคร",
                         "quantity": 1000,
-                        "recipientName": "ผู้รับ ทดสอบ"
+                        "recipientName": "ผู้รับ ทดสอบ",
+                        "shippedQuantity": 0
                       }
                     ],
                     "dielineFileId": null,
                     "holdReason": null,
                     "id": "0192f3a0-7c1e-7d2a-9b1f-0000000f1001",
+                    "inspection": null,
                     "inspectionRequired": false,
                     "jobNo": "JOB-2609-00001",
                     "kind": "production",
@@ -269416,16 +270897,27 @@
                     ],
                     "plannedFinishOn": "2026-10-09",
                     "plannedStartOn": "2026-09-28",
+                    "productTypeCode": "folding_box",
+                    "productTypeNameTh": "กล่องพับ",
                     "promisedShipDate": "2026-10-09",
                     "quantityGood": null,
                     "quantityOrdered": 1000,
                     "quantityScrap": null,
+                    "rejectNote": null,
+                    "rejectReasonCode": null,
+                    "rejectedAt": null,
                     "releasedAt": "2026-09-27T10:00:00+07:00",
+                    "riskReason": null,
                     "spec": {
                       "productTypeCode": "folding_carton",
                       "quantity": 1000
                     },
-                    "status": "in_progress"
+                    "status": "in_progress",
+                    "title": "กล่องพับ · 1000 ชิ้น",
+                    "tolerance": {
+                      "overagePct": "5.0000",
+                      "shortagePct": "5.0000"
+                    }
                   },
                   "reason": null
                 },
@@ -269691,6 +271183,10 @@
                     "isFirstPass": true,
                     "note": null,
                     "performedAt": "2026-10-05T10:00:00+07:00",
+                    "performedBy": {
+                      "displayName": "QC โรงงาน (fake)",
+                      "id": "0192f3a0-7c1e-7d2a-9b1f-0000000f1013"
+                    },
                     "photoFileIds": [
                       "0192f3a0-7c1e-7d2a-9b1f-0000000f1005"
                     ],
@@ -269919,6 +271415,10 @@
                   "isFirstPass": true,
                   "note": null,
                   "performedAt": "2026-10-05T10:00:00+07:00",
+                  "performedBy": {
+                    "displayName": "QC โรงงาน (fake)",
+                    "id": "0192f3a0-7c1e-7d2a-9b1f-0000000f1013"
+                  },
                   "photoFileIds": [
                     "0192f3a0-7c1e-7d2a-9b1f-0000000f1005"
                   ],

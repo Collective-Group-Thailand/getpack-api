@@ -273,6 +273,74 @@ describe('production milestones and the partner surface (e2e, B4.2)', () => {
       (await as(ctx, owner).get(`/v1/partner/production-jobs/${job.id}/issues`).expect(200)).body[0].status,
     ).toBe('resolved');
 
+    // U-B0.3 (D-232): named kinds; the factory closes an issue its own people raised, not one it did not.
+    await as(ctx, operator)
+      .post(`/v1/partner/production-jobs/${job.id}/issues`, { kind: 'paper_jam', description: 'ไม่รู้จัก' })
+      .expect(422);
+    const own = await as(ctx, operator)
+      .post(`/v1/partner/production-jobs/${job.id}/issues`, {
+        kind: 'machine_down',
+        description: 'เครื่องตัดเสีย',
+      })
+      .set('Idempotency-Key', randomUUID())
+      .expect(201);
+    expect(own.body).toMatchObject({ raisedBy: { id: expect.any(String) }, photoFileIds: [] });
+    const closed = await as(ctx, owner)
+      .post(`/v1/partner/production-jobs/${job.id}/issues/${own.body.id as string}/actions/resolve`, {
+        note: 'ซ่อมเสร็จแล้ว',
+      })
+      .expect(200);
+    expect(closed.body).toMatchObject({ status: 'resolved', resolvedBy: { id: expect.any(String) } });
+    await as(ctx, owner)
+      .post(`/v1/partner/production-jobs/${job.id}/issues/${own.body.id as string}/actions/resolve`, {
+        note: 'ซ้ำ',
+      })
+      .expect(409);
+
+    // U-B0.3: the job carries its refs; lookup by job number; my factory's day; scorecard months.
+    const detail = (await as(ctx, owner).get(`/v1/partner/production-jobs/${job.id}`).expect(200)).body as {
+      jobNo: string;
+      productTypeCode: string;
+      title: string;
+      atRisk: boolean;
+      artwork: { versionNo: number } | null;
+      destinations: { provinceNameTh: string; shippedQuantity: number }[];
+    };
+    expect(detail).toMatchObject({
+      productTypeCode: expect.any(String),
+      title: expect.any(String),
+      atRisk: false,
+    });
+    expect(detail.artwork?.versionNo).toEqual(expect.any(Number));
+    expect(detail.destinations[0]).toMatchObject({ provinceNameTh: expect.any(String), shippedQuantity: 0 });
+    const found = await as(ctx, owner)
+      .get(`/v1/partner/production-jobs/lookup?code=${encodeURIComponent(detail.jobNo.toLowerCase())}`)
+      .expect(200);
+    expect(found.body).toEqual({ jobId: job.id, jobNo: detail.jobNo });
+    await as(ctx, owner).get('/v1/partner/production-jobs/lookup?code=NO-SUCH-JOB').expect(404);
+    const inProduction = (
+      await as(ctx, owner).get('/v1/partner/production-jobs?view=in_production&perPage=100').expect(200)
+    ).body.data as { id: string }[];
+    expect(inProduction.map((j) => j.id)).toContain(job.id);
+    const today = (
+      await as(ctx, owner).get(`/v1/partner/factories/${fixture.factoryPublicId}/today`).expect(200)
+    ).body as { counters: Record<string, number>; queue: unknown[]; alerts: unknown[] };
+    expect(Object.keys(today.counters).sort()).toEqual([
+      'acceptanceOverdue',
+      'atRisk',
+      'awaitingAcceptance',
+      'inspectionsPlanned',
+      'milestonesDueToday',
+      'onHold',
+    ]);
+    expect(today.queue.length).toBeLessThanOrEqual(20);
+    await as(ctx, owner)
+      .get(`/v1/partner/factories/${fixture.factoryPublicId}/scorecards?months=3`)
+      .expect(200);
+    await as(ctx, owner)
+      .get(`/v1/partner/factories/${fixture.factoryPublicId}/scorecards?months=25`)
+      .expect(422);
+
     await as(ctx, lead)
       .post(`/v1/admin/production-jobs/${job.id}/actions/hold`, { reason: 'ลูกค้าขอพักงาน' })
       .expect(200);

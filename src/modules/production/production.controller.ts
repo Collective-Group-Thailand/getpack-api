@@ -59,9 +59,14 @@ export class AdminProductionController {
   private async dtos(actor: Actor, rows: JobRow[]) {
     const granted =
       actor.type === 'user' ? (await this.permissions.forUser(actor.userId)).permissions : new Set<string>();
-    const photos = await this.jobs.photos(rows);
+    const [photos, extras] = await Promise.all([this.jobs.photos(rows), this.jobs.extras(rows)]);
     return rows.map((r) =>
-      adminJobDto(r, photos, { cost: granted.has('factory_cost.read'), margin: granted.has('margin.read') }),
+      adminJobDto(
+        r,
+        photos,
+        { cost: granted.has('factory_cost.read'), margin: granted.has('margin.read') },
+        extras,
+      ),
     );
   }
 

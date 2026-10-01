@@ -4,7 +4,9 @@ import { type Actor } from '@common/context/actor';
 import { Idempotent } from '@common/idempotency/idempotent.decorator';
 import { ApiEndpoint, ApiStandardErrors, ApiSuccess } from '@common/openapi/decorators';
 import { ApiPaginated } from '@common/pagination/api-paginated.decorator';
+import { toBangkokIso } from '@common/time/bangkok';
 import { type Prisma } from '@generated/prisma/client';
+import { FactoryAccess } from '@modules/partners/factories/factory-access';
 import { ApiSurface } from '@modules/surfaces/surfaces';
 import { Body, Controller, Get, HttpCode, Param, ParseUUIDPipe, Post, Query } from '@nestjs/common';
 import { ApiBody, ApiParam } from '@nestjs/swagger';
@@ -14,10 +16,13 @@ import { issueDto, qcDto } from './job-views';
 import { JobsQueryService } from './jobs-query.service';
 import { MilestonesService } from './milestones.service';
 import {
+  FactoryTodayDto,
   ISSUE_EXAMPLE,
   JOB_IDS,
   JobIssueDto,
   JobListQuery,
+  JobLookupDto,
+  JobLookupQuery,
   MILESTONE_EXAMPLE,
   MilestoneUpdateResultDto,
   PARTNER_JOB_EXAMPLE,
@@ -27,6 +32,7 @@ import {
   RaiseIssueDto,
   RecordQcDto,
   RejectJobDto,
+  ResolveIssueDto,
   UpdateMilestoneDto,
 } from './production.dto';
 import { ProductionService } from './production.service';
@@ -44,8 +50,8 @@ export class PartnerProductionController {
   ) {}
 
   private async dtos(rows: JobRow[]) {
-    const photos = await this.jobs.photos(rows);
-    return rows.map((r) => partnerJobDto(r, photos));
+    const [photos, extras] = await Promise.all([this.jobs.photos(rows), this.jobs.extras(rows)]);
+    return rows.map((r) => partnerJobDto(r, photos, extras));
   }
 
   @Get('production-jobs')
@@ -54,19 +60,48 @@ export class PartnerProductionController {
     id: 'partner.production.list',
     summary: 'List my factory’s jobs',
     description:
-      'Newest first; `awaiting_acceptance` = released jobs to accept within 1 business day (D-074). No selling prices (D-142).',
+      'Newest first; `awaiting_acceptance` = released jobs to accept within 1 business day (D-074); `view` picks a ' +
+      'shop-floor view; `factoryId` narrows to one of my factories. Each job carries its product type, risk, ' +
+      'tolerance, approved proof, Packio inspection and pieces already shipped per destination. No selling prices (D-142).',
     implements: ['D-074', 'D-142'],
   })
   @ApiPaginated(PartnerJobDto, { example: PARTNER_JOB_EXAMPLE })
   @ApiStandardErrors('validation.failed')
   async list(@CurrentActor() actor: Actor, @Query() q: JobListQuery) {
     const where: Prisma.ProductionJobWhereInput = {
-      ...(q.status && { status: q.status }),
-      ...(q.queue === 'awaiting_acceptance' && { status: 'released' }),
-      ...(q.queue === 'at_risk' && { atRiskSince: { not: null } }),
+      AND: [
+        {
+          ...(q.status && { status: q.status }),
+          ...(q.queue === 'awaiting_acceptance' && { status: 'released' }),
+          ...(q.queue === 'at_risk' && { atRiskSince: { not: null } }),
+          ...(q.factoryId && { factory: { publicId: q.factoryId } }),
+          ...(q.orderId && { order: { publicId: q.orderId } }),
+        },
+        q.view ? VIEWS[q.view] : {},
+      ],
     };
     const [rows, total] = await this.jobs.list(actor, where, q.page, q.perPage);
     return { data: await this.dtos(rows), meta: { page: q.page, perPage: q.perPage, total } };
+  }
+
+  @Get('production-jobs/lookup')
+  @Can('factory_jobs.read')
+  @ApiEndpoint({
+    id: 'partner.production.lookup',
+    summary: 'Find my job from a scanned or typed code',
+    description:
+      'A job number, a job id, or the label code of one of its cartons — within my factories only (404 otherwise).',
+    implements: ['D-044'],
+  })
+  @ApiSuccess(200, {
+    description: 'Job',
+    type: JobLookupDto,
+    example: { jobId: JOB_IDS.job, jobNo: 'JOB-2609-00001' },
+  })
+  @ApiStandardErrors('http.not_found', 'validation.failed')
+  async lookup(@CurrentActor() actor: Actor, @Query() q: JobLookupQuery): Promise<JobLookupDto> {
+    const job = await this.jobs.lookup(actor, q.code);
+    return { jobId: job.publicId, jobNo: job.jobNo };
   }
 
   @Get('production-jobs/:jobId')
@@ -276,13 +311,16 @@ export class PartnerProductionController {
   }
 
   @Post('production-jobs/:jobId/issues')
+  @Idempotent({ optional: true })
   @Can('factory_issues.raise')
   @jobParam
   @ApiEndpoint({
     id: 'partner.production.raiseIssue',
     summary: 'Raise an issue on my job',
-    description: 'Material shortage, machine down, questions about the artwork… Packio staff answer it.',
-    implements: ['D-074'],
+    description:
+      'Material shortage, machine down, a question about the artwork… (named kinds, D-232) with photos. Packio staff ' +
+      'answer it; the factory may close an issue it raised itself (`partner.production.resolveIssue`).',
+    implements: ['D-074', 'D-232'],
   })
   @ApiBody({
     type: RaiseIssueDto,
@@ -319,5 +357,114 @@ export class PartnerProductionController {
   @ApiStandardErrors('http.not_found', 'validation.failed')
   async listIssues(@CurrentActor() actor: Actor, @Param('jobId', ParseUUIDPipe) jobId: string) {
     return (await this.milestones.issues(actor, jobId)).map(issueDto);
+  }
+
+  @Post('production-jobs/:jobId/issues/:issueId/actions/resolve')
+  @HttpCode(200)
+  @Idempotent({ optional: true })
+  @Can('factory_issues.raise')
+  @jobParam
+  @ApiParam({ name: 'issueId', format: 'uuid' })
+  @ApiEndpoint({
+    id: 'partner.production.resolveIssue',
+    summary: 'Close an issue my factory raised',
+    description:
+      'With a note (e.g. the machine is fixed). Only issues raised by the factory’s own people (403 for an issue ' +
+      'Packio opened); never moves the job’s dates or SLA (D-232). Audited with an event.',
+    implements: ['D-232'],
+  })
+  @ApiBody({
+    type: ResolveIssueDto,
+    examples: { default: { value: { note: 'ซ่อมเครื่องเสร็จแล้ว เดินงานต่อ' } } },
+  })
+  @ApiSuccess(200, {
+    description: 'Closed',
+    type: JobIssueDto,
+    example: { ...ISSUE_EXAMPLE, status: 'resolved', resolutionNote: 'ซ่อมเครื่องเสร็จแล้ว เดินงานต่อ' },
+  })
+  @ApiStandardErrors(
+    'http.bad_request',
+    'http.malformed_json',
+    'http.not_found',
+    'validation.failed',
+    'production.invalid_status',
+  )
+  async resolveIssue(
+    @CurrentActor() actor: Actor,
+    @Param('jobId', ParseUUIDPipe) jobId: string,
+    @Param('issueId', ParseUUIDPipe) issueId: string,
+    @Body() body: ResolveIssueDto,
+  ): Promise<JobIssueDto> {
+    return issueDto(await this.milestones.resolveOwnIssue(actor, jobId, issueId, body.note));
+  }
+}
+
+const VIEWS: Record<NonNullable<JobListQuery['view']>, Prisma.ProductionJobWhereInput> = {
+  to_accept: { status: 'released' },
+  in_production: { status: { in: ['accepted', 'in_progress', 'on_hold'] } },
+  ready_to_ship: {
+    status: 'completed',
+    jobKind: 'production',
+    order: { deliveredAt: null, cancelledAt: null },
+  },
+  late: { atRiskSince: { not: null }, status: { in: ['accepted', 'in_progress', 'on_hold'] } },
+};
+
+@ApiSurface('partner', 'production')
+@Controller('factories/:factoryId')
+export class PartnerShopFloorController {
+  constructor(
+    private readonly jobs: JobsQueryService,
+    private readonly access: FactoryAccess,
+  ) {}
+
+  @Get('today')
+  @Can('factory_jobs.read')
+  @ApiParam({ name: 'factoryId', format: 'uuid' })
+  @ApiEndpoint({
+    id: 'partner.production.today',
+    summary: 'My factory’s day',
+    description:
+      'Jobs to accept and how many are past the 1-business-day deadline (D-074), steps due today (Asia/Bangkok), ' +
+      'jobs at risk or on hold, Packio inspections planned (D-076); alerts; and a work queue of at most 20 jobs — ' +
+      'acceptance by deadline, then at-risk jobs, then steps due today.',
+    implements: ['D-074', 'D-076', 'D-101'],
+  })
+  @ApiSuccess(200, {
+    description: 'Today',
+    type: FactoryTodayDto,
+    example: {
+      counters: {
+        awaitingAcceptance: 1,
+        acceptanceOverdue: 0,
+        milestonesDueToday: 2,
+        atRisk: 0,
+        onHold: 0,
+        inspectionsPlanned: 0,
+      },
+      alerts: [
+        {
+          kind: 'acceptance_due_soon',
+          jobId: JOB_IDS.job,
+          jobNo: 'JOB-2609-00001',
+          dueAt: '2026-09-28T10:00:00+07:00',
+        },
+      ],
+      queue: [PARTNER_JOB_EXAMPLE],
+    },
+  })
+  @ApiStandardErrors('http.not_found', 'validation.failed')
+  async today(
+    @CurrentActor() actor: Actor,
+    @Param('factoryId', ParseUUIDPipe) factoryId: string,
+  ): Promise<FactoryTodayDto> {
+    const factory = await this.access.factory(actor, factoryId);
+    const { counters, alerts, queue } = await this.jobs.today(factory.id);
+    const [photos, extras] = await Promise.all([this.jobs.photos(queue), this.jobs.extras(queue)]);
+    return {
+      counters,
+      alerts: alerts.map((a) => ({ ...a, dueAt: a.dueAt ? toBangkokIso(a.dueAt) : null })),
+      queue: queue.map((r) => partnerJobDto(r, photos, extras)),
+    };
   }
 }

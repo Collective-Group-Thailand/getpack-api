@@ -113,6 +113,17 @@ export class JobListQuery extends PageQuery {
   @IsUUID()
   orderId?: string;
 
+  @ApiPropertyOptional({
+    enum: ['to_accept', 'in_production', 'ready_to_ship', 'late'],
+    enumName: 'JobView',
+    description:
+      'Shop-floor views: to_accept = released; in_production = accepted, in progress or on hold; ready_to_ship = ' +
+      'completed jobs whose order is not delivered yet (see `destinations[].shippedQuantity`); late = at risk',
+  })
+  @IsOptional()
+  @IsIn(['to_accept', 'in_production', 'ready_to_ship', 'late'])
+  view?: 'to_accept' | 'in_production' | 'ready_to_ship' | 'late';
+
   @ApiPropertyOptional({ format: 'uuid', description: 'Jobs of this factory' })
   @IsOptional()
   @IsUUID()
@@ -251,8 +262,58 @@ export class JobDestinationDto {
   @ApiProperty({ example: '10110' })
   postcode!: string;
 
+  @ApiProperty({ example: 'กรุงเทพมหานคร' })
+  provinceNameTh!: string;
+
+  @ApiProperty({ example: 'Bangkok' })
+  provinceNameEn!: string;
+
   @ApiProperty({ type: 'integer', example: 1000 })
   quantity!: number;
+
+  @ApiProperty({
+    type: 'integer',
+    example: 0,
+    description: 'Pieces on live shipments of this job (not cancelled / returned)',
+  })
+  shippedQuantity!: number;
+}
+
+export class JobToleranceDto {
+  @ApiProperty({ example: '5.0000', description: 'Shortage accepted, percent (frozen in the quote, D-021)' })
+  shortagePct!: string;
+
+  @ApiProperty({ example: '5.0000' })
+  overagePct!: string;
+}
+
+export class JobArtworkDto {
+  @ApiProperty({ format: 'uuid', example: '0192f3a0-7c1e-7d2a-9b1f-0000000f1012' })
+  proofId!: string;
+
+  @ApiProperty({ type: 'integer', example: 2 })
+  versionNo!: number;
+
+  @ApiProperty({ type: String, format: 'date-time', nullable: true, example: '2026-09-26T15:00:00+07:00' })
+  approvedAt!: string | null;
+}
+
+export class JobInspectionDto {
+  @ApiProperty({
+    enum: ['planned', 'in_progress', 'passed', 'failed', 'waived'],
+    enumName: 'InspectionStatus',
+    example: 'planned',
+  })
+  status!: string;
+
+  @ApiProperty({ type: String, format: 'date-time', nullable: true, example: null })
+  scheduledAt!: string | null;
+
+  @ApiProperty({ type: 'integer', example: 80, description: 'Pieces Packio samples (D-076)' })
+  sampleSize!: number;
+
+  @ApiProperty({ type: String, format: 'date-time', nullable: true, example: null })
+  resultAt!: string | null;
 }
 
 export class JobAssignmentDto {
@@ -355,19 +416,14 @@ export class PartnerJobDto {
   @ApiProperty({ type: String, nullable: true, example: null })
   holdReason!: string | null;
 
-  @ApiProperty({ type: [JobDestinationDto] })
-  destinations!: JobDestinationDto[];
-
-  @ApiProperty({ type: [MilestoneDto] })
-  milestones!: MilestoneDto[];
-}
-
-export class AdminJobDto extends PartnerJobDto {
-  @ApiProperty({ format: 'uuid', example: JOB_IDS.order })
-  orderId!: string;
-
   @ApiProperty({ example: 'folding_box' })
   productTypeCode!: string;
+
+  @ApiProperty({ type: String, nullable: true, example: 'กล่องพับ' })
+  productTypeNameTh!: string | null;
+
+  @ApiProperty({ example: 'กล่องพับ · 1000 ชิ้น', description: 'Short label: product type and quantity' })
+  title!: string;
 
   @ApiProperty({
     type: String,
@@ -376,6 +432,9 @@ export class AdminJobDto extends PartnerJobDto {
     description: 'The first step not done yet',
   })
   currentMilestoneKey!: string | null;
+
+  @ApiProperty({ example: false, description: 'Predicted to miss its promise (D-075)' })
+  atRisk!: boolean;
 
   @ApiProperty({
     enum: ['step_overdue', 'late_plan'],
@@ -386,6 +445,43 @@ export class AdminJobDto extends PartnerJobDto {
       '`step_overdue`: the current step is past due; `late_plan`: the plan already ends after the promise',
   })
   riskReason!: string | null;
+
+  @ApiProperty({ type: String, nullable: true, example: null })
+  rejectedAt!: string | null;
+
+  @ApiProperty({ type: String, nullable: true, example: null })
+  rejectReasonCode!: string | null;
+
+  @ApiProperty({ type: String, nullable: true, example: null })
+  rejectNote!: string | null;
+
+  @ApiProperty({
+    type: JobToleranceDto,
+    nullable: true,
+    description: 'Quantity tolerance frozen in the quote (D-021)',
+  })
+  tolerance!: JobToleranceDto | null;
+
+  @ApiProperty({ type: JobArtworkDto, nullable: true, description: 'The approved proof the job prints' })
+  artwork!: JobArtworkDto | null;
+
+  @ApiProperty({
+    type: JobInspectionDto,
+    nullable: true,
+    description: 'Packio’s inspection when one is planned (D-076)',
+  })
+  inspection!: JobInspectionDto | null;
+
+  @ApiProperty({ type: [JobDestinationDto] })
+  destinations!: JobDestinationDto[];
+
+  @ApiProperty({ type: [MilestoneDto] })
+  milestones!: MilestoneDto[];
+}
+
+export class AdminJobDto extends PartnerJobDto {
+  @ApiProperty({ format: 'uuid', example: JOB_IDS.order })
+  orderId!: string;
 
   @ApiProperty({ example: 'DEVOR-2609-00001' })
   orderCode!: string;
@@ -402,15 +498,6 @@ export class AdminJobDto extends PartnerJobDto {
   @ApiProperty({ type: String, nullable: true, example: null })
   releaseReason!: string | null;
 
-  @ApiProperty({ type: String, nullable: true, example: null })
-  rejectedAt!: string | null;
-
-  @ApiProperty({ type: String, nullable: true, example: null })
-  rejectReasonCode!: string | null;
-
-  @ApiProperty({ type: String, nullable: true, example: null })
-  rejectNote!: string | null;
-
   @ApiProperty({
     type: String,
     nullable: true,
@@ -421,9 +508,6 @@ export class AdminJobDto extends PartnerJobDto {
 
   @ApiProperty({ type: String, nullable: true, example: null })
   predictedFinishOn!: string | null;
-
-  @ApiProperty({ example: false })
-  atRisk!: boolean;
 
   @ApiProperty({ type: [String], example: [], description: 'Why Packio inspects (D-076)' })
   inspectionReasons!: string[];
@@ -481,6 +565,22 @@ export const PARTNER_JOB_EXAMPLE: PartnerJobDto = {
   dielineFileId: null,
   inspectionRequired: false,
   holdReason: null,
+  productTypeCode: 'folding_box',
+  productTypeNameTh: 'กล่องพับ',
+  title: 'กล่องพับ · 1000 ชิ้น',
+  currentMilestoneKey: 'printing',
+  atRisk: false,
+  riskReason: null,
+  rejectedAt: null,
+  rejectReasonCode: null,
+  rejectNote: null,
+  tolerance: { shortagePct: '5.0000', overagePct: '5.0000' },
+  artwork: {
+    proofId: '0192f3a0-7c1e-7d2a-9b1f-0000000f1012',
+    versionNo: 2,
+    approvedAt: '2026-09-26T15:00:00+07:00',
+  },
+  inspection: null,
   destinations: [
     {
       id: '0192f3a0-7c1e-7d2a-9b1f-0000000f2002',
@@ -489,7 +589,10 @@ export const PARTNER_JOB_EXAMPLE: PartnerJobDto = {
       line1: '1 ถนนทดสอบ',
       line2: null,
       postcode: '10110',
+      provinceNameTh: 'กรุงเทพมหานคร',
+      provinceNameEn: 'Bangkok',
       quantity: 1000,
+      shippedQuantity: 0,
     },
   ],
   milestones: [MILESTONE_EXAMPLE],
@@ -499,19 +602,12 @@ export const ADMIN_JOB_EXAMPLE: AdminJobDto = {
   ...PARTNER_JOB_EXAMPLE,
   orderId: JOB_IDS.order,
   orderCode: 'DEVOR-2609-00001',
-  productTypeCode: 'folding_box',
-  currentMilestoneKey: 'printing',
-  riskReason: null,
   factoryId: JOB_IDS.factory,
   factoryCode: 'F9001',
   releaseMode: 'auto',
   releaseReason: null,
-  rejectedAt: null,
-  rejectReasonCode: null,
-  rejectNote: null,
   escalatedAt: null,
   predictedFinishOn: null,
-  atRisk: false,
   inspectionReasons: [],
   buyCostNet: null,
   assignments: [
@@ -736,18 +832,25 @@ export class QcCheckDto {
 
   @ApiProperty({ type: [String], format: 'uuid', example: [JOB_IDS.file] })
   photoFileIds!: string[];
+
+  @ApiProperty({ type: UserRefDto, nullable: true, description: 'Who recorded the check' })
+  performedBy!: UserRefDto | null;
 }
 
+export const JOB_ISSUE_KINDS = [
+  'material_shortage',
+  'machine_down',
+  'artwork_question',
+  'quantity',
+  'quality',
+  'delay',
+  'other',
+] as const;
+
 export class RaiseIssueDto {
-  @ApiProperty({
-    example: 'material_shortage',
-    maxLength: 64,
-    description: 'Short code, e.g. material_shortage, machine_down, artwork_question',
-  })
-  @IsString()
-  @MinLength(1)
-  @MaxLength(64)
-  kind!: string;
+  @ApiProperty({ enum: JOB_ISSUE_KINDS, enumName: 'JobIssueKind', example: 'material_shortage' })
+  @IsIn(JOB_ISSUE_KINDS)
+  kind!: (typeof JOB_ISSUE_KINDS)[number];
 
   @ApiProperty({ example: 'กระดาษอาร์ตการ์ดขาดสต็อก รอของ 2 วัน', minLength: 3, maxLength: 2000 })
   @IsString()
@@ -784,6 +887,15 @@ export class JobIssueDto {
 
   @ApiProperty({ type: String, nullable: true, example: null })
   resolutionNote!: string | null;
+
+  @ApiProperty({ type: UserRefDto, nullable: true })
+  raisedBy!: UserRefDto | null;
+
+  @ApiProperty({ type: UserRefDto, nullable: true })
+  resolvedBy!: UserRefDto | null;
+
+  @ApiProperty({ type: [String], format: 'uuid', example: [] })
+  photoFileIds!: string[];
 }
 
 export class ResolveIssueDto {
@@ -1039,6 +1151,7 @@ export const QC_EXAMPLE: QcCheckDto = {
   note: null,
   performedAt: '2026-10-05T10:00:00+07:00',
   photoFileIds: [JOB_IDS.file],
+  performedBy: { id: '0192f3a0-7c1e-7d2a-9b1f-0000000f1013', displayName: 'QC โรงงาน (fake)' },
 };
 
 export const ISSUE_EXAMPLE: JobIssueDto = {
@@ -1049,6 +1162,9 @@ export const ISSUE_EXAMPLE: JobIssueDto = {
   createdAt: '2026-10-02T10:00:00+07:00',
   resolvedAt: null,
   resolutionNote: null,
+  raisedBy: { id: '0192f3a0-7c1e-7d2a-9b1f-0000000f1013', displayName: 'วางแผน โรงงาน (fake)' },
+  resolvedBy: null,
+  photoFileIds: [],
 };
 
 export const ROUTE_EXAMPLE: MilestoneRouteDto = {
@@ -1354,3 +1470,98 @@ export const SCORECARD_EXAMPLE: ScorecardDto = {
   jobsCount: 20,
   computedAt: '2026-10-01T02:00:00+07:00',
 };
+
+// --- U-B0.3: shop floor ------------------------------------------------------------------------------------
+
+export class JobLookupQuery {
+  @ApiProperty({
+    example: 'JOB-2609-00001',
+    minLength: 3,
+    maxLength: 64,
+    description: 'Job no., job id or a carton label code',
+  })
+  @IsString()
+  @MinLength(3)
+  @MaxLength(64)
+  code!: string;
+}
+
+export class JobLookupDto {
+  @ApiProperty({ format: 'uuid', example: JOB_IDS.job })
+  jobId!: string;
+
+  @ApiProperty({ example: 'JOB-2609-00001' })
+  jobNo!: string;
+}
+
+export class ScorecardQuery {
+  @ApiPropertyOptional({
+    type: 'integer',
+    minimum: 1,
+    maximum: 24,
+    default: 12,
+    description: 'Latest months',
+  })
+  @IsOptional()
+  @Type(() => Number)
+  @IsInt()
+  @Min(1)
+  @Max(24)
+  months?: number;
+}
+
+export class FactoryTodayCountersDto {
+  @ApiProperty({ type: 'integer', example: 2, description: 'Released jobs to accept (D-074)' })
+  awaitingAcceptance!: number;
+
+  @ApiProperty({ type: 'integer', example: 0, description: 'Of those, past the acceptance deadline' })
+  acceptanceOverdue!: number;
+
+  @ApiProperty({ type: 'integer', example: 3, description: 'Steps due today (Asia/Bangkok)' })
+  milestonesDueToday!: number;
+
+  @ApiProperty({ type: 'integer', example: 1 })
+  atRisk!: number;
+
+  @ApiProperty({ type: 'integer', example: 0 })
+  onHold!: number;
+
+  @ApiProperty({
+    type: 'integer',
+    example: 1,
+    description: 'Packio inspections planned or in progress (D-076)',
+  })
+  inspectionsPlanned!: number;
+}
+
+export class FactoryTodayAlertDto {
+  @ApiProperty({
+    enum: ['acceptance_overdue', 'acceptance_due_soon', 'step_overdue', 'inspection_planned'],
+    enumName: 'FactoryAlertKind',
+    example: 'acceptance_due_soon',
+  })
+  kind!: string;
+
+  @ApiProperty({ format: 'uuid', example: JOB_IDS.job })
+  jobId!: string;
+
+  @ApiProperty({ example: 'JOB-2609-00001' })
+  jobNo!: string;
+
+  @ApiProperty({ type: String, format: 'date-time', nullable: true, example: '2026-09-28T10:00:00+07:00' })
+  dueAt!: string | null;
+}
+
+export class FactoryTodayDto {
+  @ApiProperty({ type: FactoryTodayCountersDto })
+  counters!: FactoryTodayCountersDto;
+
+  @ApiProperty({ type: [FactoryTodayAlertDto] })
+  alerts!: FactoryTodayAlertDto[];
+
+  @ApiProperty({
+    type: [PartnerJobDto],
+    description: 'Work queue, at most 20: jobs to accept by deadline, then at-risk, then steps due today',
+  })
+  queue!: PartnerJobDto[];
+}
