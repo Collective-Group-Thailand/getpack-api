@@ -777,11 +777,32 @@ describe('payables, payouts & banking (e2e, B5.3)', () => {
     expect(D(bs.totals.production!).add(bs.totals.shipping!).add(bs.totals.other!).toFixed(2)).toBe(
       bs.netAmount,
     );
-    expect(bs.totals.advanceOffset).toBe(gross(advance).toFixed(2));
-    expect(bs.totals.alreadyPaid).toBe(
-      gross(advance).add(gross(balance)).sub(D(balance.retentionAmount)).toFixed(2),
+    // A payout may also settle other jobs of the factory: the totals are this job's share.
+    const payables = await ctx.prisma.payableItem.findMany({
+      where: { purchaseOrderId: po.id },
+      include: { allocations: { include: { payoutItem: true } } },
+    });
+    const sumOf = (rows: { netAmount: unknown; vatAmount: unknown }[]) =>
+      rows.reduce((a, r) => a.add(gross({ apNetAmount: r.netAmount, vatAmount: r.vatAmount })), D(0));
+    const advances = payables.filter((p) => p.source === 'advance' && p.status === 'paid');
+    const paidShare = payables.reduce((a, p) => {
+      for (const al of p.allocations.filter((x) => x.payoutItem.status === 'paid')) {
+        const g = sumOf([al]);
+        a = a.add(p.source === 'goods_receipt' ? g.sub(r2(g.mul(D(p.retentionPct)).div(100))) : g);
+      }
+      return a;
+    }, D(0));
+    const retention = payables.find((p) => p.source === 'retention');
+    expect(bs.totals.advanceOffset).toBe(sumOf(advances).toFixed(2));
+    expect(bs.totals.alreadyPaid).toBe(paidShare.toFixed(2));
+    expect(bs.totals.remaining).toBe(
+      (retention ? D(retention.openNetAmount).add(D(retention.openVatAmount)) : D(0)).toFixed(2),
     );
-    expect(bs.totals.remaining).toBe(D(balance.retentionAmount).toFixed(2));
+    expect(D(bs.totals.alreadyPaid!).add(bs.totals.remaining!).toFixed(2)).toBe(
+      sumOf(advances)
+        .add(sumOf(payables.filter((p) => p.source === 'goods_receipt')))
+        .toFixed(2),
+    );
     expect(bs).toMatchObject({
       confirmedBy: { displayName: expect.any(String) },
       disputedLineNos: [1],
@@ -829,14 +850,14 @@ describe('payables, payouts & banking (e2e, B5.3)', () => {
       claimDeductions: unknown[];
     };
     expect(detail.remittanceAdviceAvailable).toBe(true);
-    expect(detail.allocations).toEqual([
+    expect(detail.allocations).toContainEqual(
       expect.objectContaining({
         source: 'goods_receipt',
         poNumber: po.poNumber,
         grNumber: gr.grNumber,
         bsNumber: bs.bsNumber,
       }),
-    ]);
+    );
     expect(detail.claimDeductions).toEqual([]);
     const others = await ctx.prisma.payoutItem.findFirstOrThrow({
       where: { vendorId: { not: balance.vendorId } },

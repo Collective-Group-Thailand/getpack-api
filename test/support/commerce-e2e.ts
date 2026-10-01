@@ -174,7 +174,12 @@ export async function seedShipping(ctx: CommerceApp, factoryPublicId: string, po
       const zone = await tx.zone.create({
         data: { schemeId: scheme.id, code: `b3_${postcode}_${ctx.run}`, nameTh: postcode, nameEn: postcode },
       });
-      await tx.zonePostcode.create({ data: { zoneId: zone.id, schemeId: scheme.id, postcode } });
+      // Postcodes are derived from the run number, so an earlier run may hold this one: it moves to the new zone.
+      await tx.zonePostcode.upsert({
+        where: { schemeId_postcode: { schemeId: scheme.id, postcode } },
+        create: { zoneId: zone.id, schemeId: scheme.id, postcode },
+        update: { zoneId: zone.id },
+      });
       zones.push(zone);
     }
     const card = await tx.customerShippingRateCard.findUniqueOrThrow({ where: { key: 'default' } });
