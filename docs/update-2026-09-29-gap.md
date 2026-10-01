@@ -292,6 +292,27 @@ Legacy traced from `/Users/superball/Abbon/Loco_Pack/locopack-web`. Live paths: 
 
 **Outcome (2026-09-30, U-B6 corrugate complete, branch `feat/u-b6-corrugate-calculator`):** C.1 geometry (slice 3), C.2 engines (slices 4–5), C.3 orchestration (slice 6), C.4 sell side shared (slice 1), C.5 price components and C.6 catalogue data (slice 2), C.7 generic quote engine, saved quotes and checkout (slices 1, 7b), C.8 packer (slice 6), C.9 CS endpoints and C.10 factory breakdown (slice 7a), C.11 store calculate (slice 7a), C.12 store configurator (slice 7c), C.13 per-calculator log input (slice 1), C.15 port map (slice 1, §10 in slice 8), C.17 dev fixture (slice 6), C.20 geometry admin (slice 7d) — **met**. C.14 golden cases + `docs/pricing-validation-corrugate.md` — **met, signed off 2026-09-30** (replayed on Locopack staging). C.16 `corrugate` in `SHIPPED_CALCULATORS`, type still seeded `rfq` — **met**. C.19 tag `v0.3.0` — **local tag** (no git remote in this checkout). C.18 tier-B envelopes — out of scope.
 
+## U-B6 pouch — B2.3 Deliverable 2.3 for pouch (2026-10-01, planning)
+
+Legacy traced from `legacy/locopack-web` (port map `docs/legacy/05-pouch-port-map.md`). Live paths: CS `POST cs/pouch` → `PouchCalculator::fromCS:259-376` → `calculate:468-555`; customer web `POST /api/pouch/calculate` → `fromSME` and `POST /api/orders-v2`. Unlike tag & sleeve, pouch has **its own engine** (no folding, no `SaleMargin`): one roll-fed digital print type, film charged on the full web width × the advance per pouch, print per cm², fixed lamination and pouch-making formulas, options per piece / per cm² / per cm of width, factory-margin tiers rounded up to 0.1 THB, its own Packio margin and shipping packer.
+
+| # | Requirement | Before | Evidence | This session |
+|---|---|---|---|---|
+| P.1 | Geometry: five shapes (3-side seal, pillow, centre-seal gusset, quad seal, stand-up) → film across × advance; `min_dl`, `max_dl` | missing | patterns carry folding / corrugate formulas only | `pouch_formula` on patterns (migration) + pure geometry (slice 2–3) |
+| P.2 | Cost: minimum run / setup length → film per pouch, material on the web width, print, options, lamination, making, factory margin, rounding | missing | — | Pure port (slice 3) |
+| P.3 | Price-list components | missing | folding / label components do not fit (per-cm² prices, web terms, option price modes, area minimums) | 8 `pl_pouch_*` components (slice 2) |
+| P.4 | Sell side: quantity tiers, fix cost, gross margin per piece, VAT, design fee | partial | shared `sell.ts` (different order of operations) | `pouchSale` on the shared sell snapshot (slice 3) |
+| P.5 | Minimum order by area, allowed options per pattern × material | missing | — | Components + refusals (slice 3) |
+| P.6 | Shipping packer | missing | packers for folding / corrugate / label; one carton type per part | Pouch packer; a packed part may carry several carton groups (slice 4) |
+| P.7 | Adapter, loader, quote engine, saved quotes, hints | partial | generic adapter / registry | Slice 4 |
+| P.8 | `admin.csPouch.*`, `partner.pricingPouch.calculate`, store calculate / configurator, size rules (w, l, b, s, cs) | missing | — | Slice 4 |
+| P.9 | Golden cases + `docs/pricing-validation-pouch.md` | missing | no pouch `calculate_logs` (pouch never logs) | 20 cases with expected values from an independent Python transcription of the PHP, as label (slice 3) |
+| P.10 | Shipped; type stays `rfq`; release | — | `catalog-admin.e2e-spec.ts` uses `pouch` as the unshipped example | Move that test to another unshipped calculator; `v0.9.0` (slice 5) |
+
+**Proposed decisions (accepted under the user's standing instruction, 2026-10-01):** (1) Maths exact, orchestration bugs fixed (port map §6, P1–P35; §9 lists the Packio treatment). (2) Every legacy constant of the formulas (lamination 4 THB/m² × 0.8 m, making threshold 10 000 and 0.2 THB, 10 g per pouch, carton sizes) becomes a price-list term or, for shipping, a ported packer constant with its legacy reference — the price constants are per factory terms so the business can change them. (3) A quantity below the factory's minimum is refused for that factory, as label (legacy raised the quantity). (4) An unprinted pouch has no print cost (the print colour is optional). (5) Allowed options are keyed by material (legacy by material family); the dev fixture lists them per material.
+
+**Plan (slices):** 1 port map + this analysis (docs) · 2 migration (pattern `pouch_formula`, 8 price components), descriptors, registrar · 3 pure port + Python reference + 20 golden cases · 4 loader, adapter, packer, DTO, CS / partner / store endpoints, configurator, dev fixture, e2e · 5 validation doc, shipped, release `v0.9.0`.
+
 ## U-B6 tag & sleeve — B2.3 Deliverable 2.3 for tag & sleeve (2026-10-01, planning)
 
 Legacy traced from `legacy/locopack-web` (port map `docs/legacy/05-tag-sleeve-port-map.md`). Live paths: CS `POST /api/cs/tagAndSleeve` → `TagAndSleeveCalculator::fromCS:216-491` → `CStoFactoryFolding:493-720` → **`FoldingCalculator::calculate`** (folding engine A); customer web `POST /api/products` → `Calculator::FromSME` → `fromSME:120-178`. The class has no pricing maths of its own: tags and sleeves are flat folding blanks (patterns 33–36, `dw = w`, `dl = l`, d = 0) priced on the folding engine with folding price rows.
