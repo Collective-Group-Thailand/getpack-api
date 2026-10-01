@@ -556,6 +556,7 @@ model User {
   brandAssetsRemoved         CompanyBrandAsset[]     @relation("CompanyBrandAssetRemovedBy")
   prepressOrders             Order[]                 @relation("OrderPrepressAssignee")
   shipmentExceptionsResolved Shipment[]              @relation("ShipmentExceptionResolvedBy")
+  shipmentsCarrierRequested  Shipment[]              @relation("ShipmentCarrierRequestedBy")
   savedViews                 SavedView[]             @relation("SavedViewOwner")
   podReviews                 ProofOfDeliveryReview[] @relation("ProofOfDeliveryReviewedBy")
   conversationMessagesSent   ConversationMessage[]   @relation("ConversationMessageSender")

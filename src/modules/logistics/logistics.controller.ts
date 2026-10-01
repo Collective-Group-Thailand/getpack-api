@@ -19,6 +19,7 @@ import { PermissionResolver } from '@modules/iam/permission-resolver.service';
 import { orderDto, orderViewContext } from '@modules/orders/order-views';
 import { ORDER_EXAMPLE, OrderDto } from '@modules/orders/orders.dto';
 import { OrdersService } from '@modules/orders/orders.service';
+import { FactoryAccess } from '@modules/partners/factories/factory-access';
 import { ApiSurface } from '@modules/surfaces/surfaces';
 import { Body, Controller, Get, HttpCode, Param, ParseUUIDPipe, Post, Query, Res } from '@nestjs/common';
 import { ApiBody, ApiParam } from '@nestjs/swagger';
@@ -36,15 +37,19 @@ import {
   DeliveryReconciliationDto,
   PARTNER_SHIPMENT_EXAMPLE,
   PartnerShipmentDto,
+  PartnerShipmentListQuery,
   POD_EXAMPLE,
   RECONCILIATION_EXAMPLE,
   RecordPodDto,
+  RequestCarrierDto,
   ResolveShipmentExceptionDto,
   ReviewPodDto,
+  SHIP_PLAN_EXAMPLE,
   SHIPMENT_IDS,
   ShipmentCarrierQuoteDto,
   ShipmentListQuery,
   ShipmentStatusUpdateDto,
+  ShipPlanJobDto,
   SplitShipmentDto,
   SplitShipmentResultDto,
   STORE_SHIPMENT_EXAMPLE,
@@ -104,9 +109,16 @@ export class PartnerShipmentsController {
     private readonly query: ShipmentsQueryService,
   ) {}
 
+  private async dtos(rows: ShipmentRow[]) {
+    const [photos, blocked] = await Promise.all([
+      this.query.podPhotos(rows),
+      this.shipments.blockedByPayment(rows),
+    ]);
+    return rows.map((r) => partnerShipmentDto(r, photos.get(r.id), blocked.has(r.id)));
+  }
+
   private async dto(actor: Actor, publicId: string) {
-    const row = await this.query.get(actor, publicId);
-    return partnerShipmentDto(row, (await this.query.podPhotos([row])).get(row.id));
+    return (await this.dtos([await this.query.get(actor, publicId)]))[0]!;
   }
 
   @Get('shipments')
@@ -114,18 +126,17 @@ export class PartnerShipmentsController {
   @ApiEndpoint({
     id: 'partner.shipments.list',
     summary: 'List my factory’s shipments',
-    description: 'Newest first; destination contacts only (D-142), no prices.',
+    description:
+      'Newest first; `view` groups the statuses (open, in transit, delivered, exceptions). Destination contacts only ' +
+      '(D-142), no prices; each trip says whether unpaid instalments block pickup and whether a carrier was asked for.',
     implements: ['D-013', 'D-142'],
   })
   @ApiPaginated(PartnerShipmentDto, { example: PARTNER_SHIPMENT_EXAMPLE })
   @ApiStandardErrors('validation.failed')
-  async list(@CurrentActor() actor: Actor, @Query() q: ShipmentListQuery) {
-    const [rows, total] = await this.query.list(actor, listWhere(q), q.page, q.perPage);
-    const photos = await this.query.podPhotos(rows);
-    return {
-      data: rows.map((r) => partnerShipmentDto(r, photos.get(r.id))),
-      meta: { page: q.page, perPage: q.perPage, total },
-    };
+  async list(@CurrentActor() actor: Actor, @Query() q: PartnerShipmentListQuery) {
+    const where: Prisma.ShipmentWhereInput = { AND: [listWhere(q), q.view ? PARTNER_VIEWS[q.view] : {}] };
+    const [rows, total] = await this.query.list(actor, where, q.page, q.perPage);
+    return { data: await this.dtos(rows), meta: { page: q.page, perPage: q.perPage, total } };
   }
 
   @Get('shipments/:shipmentId')
@@ -351,6 +362,103 @@ export class PartnerShipmentsController {
     const row = await this.query.get(actor, shipmentId);
     await this.shipments.cancel(actor, row.id, body.reason);
     return this.dto(actor, shipmentId);
+  }
+
+  @Post('shipments/:shipmentId/actions/request-carrier')
+  @HttpCode(200)
+  @Idempotent()
+  @Can('factory_shipments.manage')
+  @shipmentParam
+  @ApiEndpoint({
+    id: 'partner.shipments.requestCarrier',
+    summary: 'Ask Packio for a carrier',
+    description:
+      'For a packed trip our own fleet cannot serve (D-013 fallback, D-114): recorded with the reason and raised to ' +
+      'Packio Logistics, who book the carrier. We never book a carrier ourselves. Once per trip (409 otherwise).',
+    implements: ['D-013', 'D-114'],
+  })
+  @ApiBody({
+    type: RequestCarrierDto,
+    examples: { default: { value: { reason: 'รถโรงงานไม่วิ่งเชียงราย' } } },
+  })
+  @ApiSuccess(200, {
+    description: 'Requested',
+    type: PartnerShipmentDto,
+    example: {
+      ...PARTNER_SHIPMENT_EXAMPLE,
+      carrierRequest: { requestedAt: '2026-10-19T17:00:00+07:00', reason: 'รถโรงงานไม่วิ่งเชียงราย' },
+    },
+  })
+  @ApiStandardErrors(
+    'http.bad_request',
+    'http.malformed_json',
+    'http.not_found',
+    'validation.failed',
+    'shipments.invalid_status',
+  )
+  async requestCarrier(
+    @CurrentActor() actor: Actor,
+    @Param('shipmentId', ParseUUIDPipe) shipmentId: string,
+    @Body() body: RequestCarrierDto,
+  ) {
+    const row = await this.query.get(actor, shipmentId);
+    if (actor.type !== 'user') throw new DomainException('auth.forbidden');
+    await this.shipments.requestCarrier(actor, row.id, body.reason);
+    return this.dto(actor, shipmentId);
+  }
+}
+
+const PARTNER_VIEWS: Record<NonNullable<PartnerShipmentListQuery['view']>, Prisma.ShipmentWhereInput> = {
+  open: { status: { in: ['draft', 'ready'] } },
+  in_transit: { status: { in: ['picked_up', 'in_transit', 'out_for_delivery'] } },
+  delivered: { status: 'delivered' },
+  exceptions: { status: { in: ['failed', 'returned'] } },
+};
+
+@ApiSurface('partner', 'logistics')
+@Controller('factories/:factoryId')
+export class PartnerShipPlanController {
+  constructor(
+    private readonly shipments: ShipmentsService,
+    private readonly access: FactoryAccess,
+  ) {}
+
+  @Get('ship-plan')
+  @Can('factory_shipments.read')
+  @ApiParam({ name: 'factoryId', format: 'uuid' })
+  @ApiEndpoint({
+    id: 'partner.shipments.shipPlan',
+    summary: 'What my factory can ship',
+    description:
+      'Completed jobs whose orders are not delivered yet: per destination the pieces already on live trips and what ' +
+      'remains, and whether pickup would be refused today (instalments before shipping, Packio inspection — the ' +
+      'checks of dispatch, B3.2 / D-076). Destination contacts only (D-142).',
+    implements: ['D-013', 'D-076', 'D-142'],
+  })
+  @ApiSuccess(200, { description: 'Plan', type: [ShipPlanJobDto], example: [SHIP_PLAN_EXAMPLE] })
+  @ApiStandardErrors('http.not_found', 'validation.failed')
+  async shipPlan(
+    @CurrentActor() actor: Actor,
+    @Param('factoryId', ParseUUIDPipe) factoryId: string,
+  ): Promise<ShipPlanJobDto[]> {
+    const factory = await this.access.factory(actor, factoryId);
+    return (await this.shipments.shipPlan(factory.id)).map(({ job, blockedReason, destinations }) => ({
+      jobId: job.publicId,
+      jobNo: job.jobNo,
+      orderCode: job.order.orderCode,
+      quantityOrdered: job.quantityOrdered,
+      quantityGood: job.quantityGood,
+      blockedReason,
+      destinations: destinations.map(({ destination: d, shipped, remaining }) => ({
+        destinationId: d.publicId,
+        recipientName: d.recipientName,
+        postcode: d.postcode,
+        provinceNameTh: d.province.nameTh,
+        quantity: d.quantity,
+        shippedQuantity: shipped,
+        remainingQuantity: remaining,
+      })),
+    }));
   }
 }
 

@@ -766,6 +766,7 @@ const CHECKS = [
   'ck_saved_views__name',
   'ck_saved_views__query',
   'ck_saved_views__columns',
+  'ck_shipments__carrier_request',
 ];
 
 const TRIGGERS = [

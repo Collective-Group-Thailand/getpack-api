@@ -17,7 +17,9 @@ export const SHIPMENT_INCLUDE = {
   items: {
     orderBy: { id: 'asc' },
     include: {
-      order: { select: { publicId: true, orderCode: true } },
+      order: {
+        select: { publicId: true, orderCode: true, deliveryReconciliation: { select: { outcome: true } } },
+      },
       orderDestination: { select: { publicId: true } },
       productionJob: { select: { publicId: true, jobNo: true } },
     },
@@ -79,7 +81,11 @@ function podDto(row: ShipmentRow, photos: string[]): ProofOfDeliveryDto | null {
 }
 
 /** The factory's projection (D-142): where to deliver and what, no price. */
-export function partnerShipmentDto(row: ShipmentRow, podPhotos: string[] = []): PartnerShipmentDto {
+export function partnerShipmentDto(
+  row: ShipmentRow,
+  podPhotos: string[] = [],
+  blockedByPayment = false,
+): PartnerShipmentDto {
   return {
     id: row.publicId,
     shipmentNo: row.shipmentNo,
@@ -110,6 +116,7 @@ export function partnerShipmentDto(row: ShipmentRow, podPhotos: string[] = []): 
       orderCode: i.order.orderCode,
       quantity: i.quantity,
       deliveredQuantity: i.deliveredQuantity,
+      toleranceOutcome: i.order.deliveryReconciliation?.outcome ?? null,
     })),
     events: row.events.map((e) => ({
       occurredAt: toBangkokIso(e.occurredAt),
@@ -120,6 +127,12 @@ export function partnerShipmentDto(row: ShipmentRow, podPhotos: string[] = []): 
     })),
     proofOfDelivery: podDto(row, podPhotos),
     note: row.note,
+    cartons: row.cartons.map((c) => ({ seq: c.seq, labelCode: c.labelCode, weightG: c.weightG })),
+    blockedByPayment,
+    carrierRequest:
+      row.carrierRequestedAt && row.carrierRequestReason
+        ? { requestedAt: toBangkokIso(row.carrierRequestedAt), reason: row.carrierRequestReason }
+        : null,
   };
 }
 
@@ -131,7 +144,7 @@ export function adminShipmentDto(
 ): AdminShipmentDto {
   const review = row.proofOfDelivery?.reviews[0];
   return {
-    ...partnerShipmentDto(row, podPhotos),
+    ...partnerShipmentDto(row, podPhotos, blockedByPayment),
     factoryId: row.factory.publicId,
     factoryCode: row.factory.code,
     carrierBookingRef: row.carrierBookingRef,
@@ -140,8 +153,6 @@ export function adminShipmentDto(
     carrierCostAmount: grants.cost ? (row.carrierCostAmount?.toFixed(2) ?? null) : null,
     cancelledAt: iso(row.cancelledAt),
     cancelReason: row.cancelReason,
-    cartons: row.cartons.map((c) => ({ seq: c.seq, labelCode: c.labelCode, weightG: c.weightG })),
-    blockedByPayment,
     exception: exceptionDto(row),
     podReview: row.proofOfDelivery
       ? {

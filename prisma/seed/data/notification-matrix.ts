@@ -483,6 +483,17 @@ const ROWS: Row[] = [
     'Partner team: price proposal (D-040)',
   ),
   T(
+    'shipment.carrier_requested',
+    'logistics',
+    ['in_app', 'line'],
+    { th: 'โรงงานขอให้จองขนส่ง', en: 'A factory asks for a carrier' },
+    {
+      th: 'โรงงานขอให้ Packio จองขนส่งสำหรับ {{payload.shipmentNo}} ({{payload.reason}})',
+      en: 'A factory asks Packio to book a carrier for {{payload.shipmentNo}} ({{payload.reason}})',
+    },
+    'Logistics: a factory asks for a fallback carrier (D-013, D-114; U-B0.3)',
+  ),
+  T(
     'shipment.gate_bypassed',
     'logistics',
     ['in_app', 'line'],

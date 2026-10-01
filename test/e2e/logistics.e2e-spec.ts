@@ -452,6 +452,34 @@ describe('logistics: shipments, POD, tolerance and completion (e2e, B4.3)', () =
     const s = (await createShipment(owner, o.jobId, [[d1.id, 600]], 1).expect(201)).body as Shipment;
     await post(owner, `/v1/partner/shipments/${s.id}/actions/ready`).expect(200);
 
+    // U-B0.3: the factory asks Packio for a carrier (once); its view shows the cartons and the request.
+    const asked = await post(owner, `/v1/partner/shipments/${s.id}/actions/request-carrier`, {
+      reason: 'รถโรงงานไม่วิ่งพื้นที่นี้',
+    }).expect(200);
+    expect(asked.body).toMatchObject({
+      carrierRequest: { reason: 'รถโรงงานไม่วิ่งพื้นที่นี้' },
+      blockedByPayment: false,
+      cartons: [expect.objectContaining({ seq: 1 })],
+    });
+    await post(owner, `/v1/partner/shipments/${s.id}/actions/request-carrier`, {
+      reason: 'ซ้ำอีกครั้ง',
+    }).expect(409);
+    const open = (await as(ctx, owner).get('/v1/partner/shipments?view=open&perPage=100').expect(200)).body
+      .data as { id: string }[];
+    expect(open.map((x) => x.id)).toContain(s.id);
+    const plan = (
+      await as(ctx, owner).get(`/v1/partner/factories/${fixture.factoryPublicId}/ship-plan`).expect(200)
+    ).body as {
+      jobId: string;
+      destinations: { destinationId: string; shippedQuantity: number; remainingQuantity: number }[];
+    }[];
+    const planned = plan.find((p) => p.jobId === o.jobId)!;
+    expect(planned.destinations.find((d) => d.destinationId === d1.id)).toMatchObject({
+      shippedQuantity: 600,
+      remainingQuantity: 0,
+    });
+    expect(planned.destinations.find((d) => d.destinationId === d2.id)).toMatchObject({ shippedQuantity: 0 });
+
     const logistics = await staffToken(ctx, 'logistics');
     await ctx.prisma.carrier.update({ where: { code: 'flash_express' }, data: { enabled: true } });
     await ensureCarrierAccount('flash_express');

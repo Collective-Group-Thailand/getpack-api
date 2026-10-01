@@ -7656,8 +7656,19 @@
               "null"
             ]
           },
+          "carrierRequest": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/CarrierRequestDto"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "The factory asked Packio for a fallback carrier (D-013, D-114)"
+          },
           "cartons": {
-            "description": "One per carton once packed",
+            "description": "One per carton once packed (label code on the carton)",
             "items": {
               "$ref": "#/components/schemas/ShipmentCartonDto"
             },
@@ -7861,6 +7872,9 @@
           "events",
           "proofOfDelivery",
           "note",
+          "cartons",
+          "blockedByPayment",
+          "carrierRequest",
           "factoryId",
           "factoryCode",
           "carrierBookingRef",
@@ -7869,8 +7883,6 @@
           "carrierCostAmount",
           "cancelledAt",
           "cancelReason",
-          "cartons",
-          "blockedByPayment",
           "exception",
           "podReview",
           "splitFrom"
@@ -12630,6 +12642,24 @@
           "amount",
           "transitDays",
           "currency"
+        ],
+        "type": "object"
+      },
+      "CarrierRequestDto": {
+        "properties": {
+          "reason": {
+            "example": "รถโรงงานไม่วิ่งเชียงราย",
+            "type": "string"
+          },
+          "requestedAt": {
+            "example": "2026-10-19T17:00:00+07:00",
+            "format": "date-time",
+            "type": "string"
+          }
+        },
+        "required": [
+          "requestedAt",
+          "reason"
         ],
         "type": "object"
       },
@@ -36656,6 +36686,11 @@
       },
       "PartnerShipmentDto": {
         "properties": {
+          "blockedByPayment": {
+            "description": "Not picked up yet and an order still owes instalments due before shipping (B3.2)",
+            "example": false,
+            "type": "boolean"
+          },
           "carrier": {
             "allOf": [
               {
@@ -36663,6 +36698,24 @@
               }
             ],
             "example": "factory_fleet"
+          },
+          "carrierRequest": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/CarrierRequestDto"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "The factory asked Packio for a fallback carrier (D-013, D-114)"
+          },
+          "cartons": {
+            "description": "One per carton once packed (label code on the carton)",
+            "items": {
+              "$ref": "#/components/schemas/ShipmentCartonDto"
+            },
+            "type": "array"
           },
           "cartonsCount": {
             "example": 3,
@@ -36804,9 +36857,21 @@
           "items",
           "events",
           "proofOfDelivery",
-          "note"
+          "note",
+          "cartons",
+          "blockedByPayment",
+          "carrierRequest"
         ],
         "type": "object"
+      },
+      "PartnerShipmentView": {
+        "enum": [
+          "open",
+          "in_transit",
+          "delivered",
+          "exceptions"
+        ],
+        "type": "string"
       },
       "PatternConditionSlotDto": {
         "properties": {
@@ -50870,6 +50935,116 @@
         ],
         "type": "object"
       },
+      "ShipBlockedReason": {
+        "description": "Why pickup would be refused today (the shipping gate, B3.2 / D-076)",
+        "enum": [
+          "payment_pending",
+          "inspection_pending"
+        ],
+        "type": "string"
+      },
+      "ShipPlanDestinationDto": {
+        "properties": {
+          "destinationId": {
+            "example": "0192f3a0-7c1e-7d2a-9b1f-0000000f2002",
+            "format": "uuid",
+            "type": "string"
+          },
+          "postcode": {
+            "example": "10110",
+            "type": "string"
+          },
+          "provinceNameTh": {
+            "example": "กรุงเทพมหานคร",
+            "type": "string"
+          },
+          "quantity": {
+            "description": "Pieces for this address",
+            "example": 600,
+            "type": "integer"
+          },
+          "recipientName": {
+            "example": "สมหญิง ใจดี",
+            "type": "string"
+          },
+          "remainingQuantity": {
+            "example": 600,
+            "type": "integer"
+          },
+          "shippedQuantity": {
+            "description": "On live shipments already",
+            "example": 0,
+            "type": "integer"
+          }
+        },
+        "required": [
+          "destinationId",
+          "recipientName",
+          "postcode",
+          "provinceNameTh",
+          "quantity",
+          "shippedQuantity",
+          "remainingQuantity"
+        ],
+        "type": "object"
+      },
+      "ShipPlanJobDto": {
+        "properties": {
+          "blockedReason": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ShipBlockedReason"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Why pickup would be refused today (the shipping gate, B3.2 / D-076)",
+            "example": null
+          },
+          "destinations": {
+            "items": {
+              "$ref": "#/components/schemas/ShipPlanDestinationDto"
+            },
+            "type": "array"
+          },
+          "jobId": {
+            "example": "0192f3a0-7c1e-7d2a-9b1f-0000000f1001",
+            "format": "uuid",
+            "type": "string"
+          },
+          "jobNo": {
+            "example": "JOB-2610-0001",
+            "type": "string"
+          },
+          "orderCode": {
+            "example": "PK-2610-0001-01",
+            "type": "string"
+          },
+          "quantityGood": {
+            "description": "Good pieces reported",
+            "example": 1000,
+            "type": [
+              "integer",
+              "null"
+            ]
+          },
+          "quantityOrdered": {
+            "example": 1000,
+            "type": "integer"
+          }
+        },
+        "required": [
+          "jobId",
+          "jobNo",
+          "orderCode",
+          "quantityOrdered",
+          "quantityGood",
+          "blockedReason",
+          "destinations"
+        ],
+        "type": "object"
+      },
       "ShipmentCarrierQuoteDto": {
         "properties": {
           "amount": {
@@ -51159,6 +51334,18 @@
           "quantity": {
             "example": 600,
             "type": "integer"
+          },
+          "toleranceOutcome": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ToleranceOutcome"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "The order’s delivered-vs-ordered result once every shipment of it is delivered (D-021, D-080)",
+            "example": null
           }
         },
         "required": [
@@ -51167,7 +51354,8 @@
           "jobNo",
           "orderCode",
           "quantity",
-          "deliveredQuantity"
+          "deliveredQuantity",
+          "toleranceOutcome"
         ],
         "type": "object"
       },
@@ -231142,6 +231330,7 @@
                       "carrier": "factory_fleet",
                       "carrierBookingRef": null,
                       "carrierCostAmount": null,
+                      "carrierRequest": null,
                       "cartons": [
                         {
                           "labelCode": "9F3A0C1B2D4E-01",
@@ -231193,7 +231382,8 @@
                           "jobId": "0192f3a0-7c1e-7d2a-9b1f-0000000f1001",
                           "jobNo": "JOB-2610-0001",
                           "orderCode": "PK-2610-0001-01",
-                          "quantity": 600
+                          "quantity": 600,
+                          "toleranceOutcome": null
                         }
                       ],
                       "labelFileId": "0192f3a0-7c1e-7d2a-9b1f-0000000f2003",
@@ -231403,6 +231593,7 @@
                   "carrier": "factory_fleet",
                   "carrierBookingRef": null,
                   "carrierCostAmount": null,
+                  "carrierRequest": null,
                   "cartons": [
                     {
                       "labelCode": "9F3A0C1B2D4E-01",
@@ -231454,7 +231645,8 @@
                       "jobId": "0192f3a0-7c1e-7d2a-9b1f-0000000f1001",
                       "jobNo": "JOB-2610-0001",
                       "orderCode": "PK-2610-0001-01",
-                      "quantity": 600
+                      "quantity": 600,
+                      "toleranceOutcome": null
                     }
                   ],
                   "labelFileId": "0192f3a0-7c1e-7d2a-9b1f-0000000f2003",
@@ -231689,6 +231881,7 @@
                   "carrier": "flash_express",
                   "carrierBookingRef": "FLASH-1",
                   "carrierCostAmount": null,
+                  "carrierRequest": null,
                   "cartons": [
                     {
                       "labelCode": "9F3A0C1B2D4E-01",
@@ -231740,7 +231933,8 @@
                       "jobId": "0192f3a0-7c1e-7d2a-9b1f-0000000f1001",
                       "jobNo": "JOB-2610-0001",
                       "orderCode": "PK-2610-0001-01",
-                      "quantity": 600
+                      "quantity": 600,
+                      "toleranceOutcome": null
                     }
                   ],
                   "labelFileId": "0192f3a0-7c1e-7d2a-9b1f-0000000f2003",
@@ -232078,6 +232272,7 @@
                   "carrier": "factory_fleet",
                   "carrierBookingRef": null,
                   "carrierCostAmount": null,
+                  "carrierRequest": null,
                   "cartons": [
                     {
                       "labelCode": "9F3A0C1B2D4E-01",
@@ -232129,7 +232324,8 @@
                       "jobId": "0192f3a0-7c1e-7d2a-9b1f-0000000f1001",
                       "jobNo": "JOB-2610-0001",
                       "orderCode": "PK-2610-0001-01",
-                      "quantity": 600
+                      "quantity": 600,
+                      "toleranceOutcome": null
                     }
                   ],
                   "labelFileId": "0192f3a0-7c1e-7d2a-9b1f-0000000f2003",
@@ -232442,6 +232638,7 @@
                   "carrier": "factory_fleet",
                   "carrierBookingRef": null,
                   "carrierCostAmount": null,
+                  "carrierRequest": null,
                   "cartons": [
                     {
                       "labelCode": "9F3A0C1B2D4E-01",
@@ -232493,7 +232690,8 @@
                       "jobId": "0192f3a0-7c1e-7d2a-9b1f-0000000f1001",
                       "jobNo": "JOB-2610-0001",
                       "orderCode": "PK-2610-0001-01",
-                      "quantity": 600
+                      "quantity": 600,
+                      "toleranceOutcome": null
                     }
                   ],
                   "labelFileId": "0192f3a0-7c1e-7d2a-9b1f-0000000f2003",
@@ -232811,6 +233009,7 @@
                     "carrier": "factory_fleet",
                     "carrierBookingRef": null,
                     "carrierCostAmount": null,
+                    "carrierRequest": null,
                     "cartons": [],
                     "cartonsCount": 1,
                     "deliveredAt": null,
@@ -232846,7 +233045,8 @@
                         "jobId": "0192f3a0-7c1e-7d2a-9b1f-0000000f1001",
                         "jobNo": "JOB-2610-0001",
                         "orderCode": "PK-2610-0001-01",
-                        "quantity": 600
+                        "quantity": 600,
+                        "toleranceOutcome": null
                       }
                     ],
                     "labelFileId": "0192f3a0-7c1e-7d2a-9b1f-0000000f2003",
@@ -232876,6 +233076,7 @@
                     "carrier": "factory_fleet",
                     "carrierBookingRef": null,
                     "carrierCostAmount": null,
+                    "carrierRequest": null,
                     "cartons": [],
                     "cartonsCount": 2,
                     "deliveredAt": null,
@@ -232911,7 +233112,8 @@
                         "jobId": "0192f3a0-7c1e-7d2a-9b1f-0000000f1001",
                         "jobNo": "JOB-2610-0001",
                         "orderCode": "PK-2610-0001-01",
-                        "quantity": 600
+                        "quantity": 600,
+                        "toleranceOutcome": null
                       }
                     ],
                     "labelFileId": "0192f3a0-7c1e-7d2a-9b1f-0000000f2003",
@@ -233445,6 +233647,7 @@
                   "carrier": "factory_fleet",
                   "carrierBookingRef": null,
                   "carrierCostAmount": null,
+                  "carrierRequest": null,
                   "cartons": [
                     {
                       "labelCode": "9F3A0C1B2D4E-01",
@@ -233496,7 +233699,8 @@
                       "jobId": "0192f3a0-7c1e-7d2a-9b1f-0000000f1001",
                       "jobNo": "JOB-2610-0001",
                       "orderCode": "PK-2610-0001-01",
-                      "quantity": 600
+                      "quantity": 600,
+                      "toleranceOutcome": null
                     }
                   ],
                   "labelFileId": "0192f3a0-7c1e-7d2a-9b1f-0000000f2003",
@@ -233790,6 +233994,7 @@
                   "carrier": "factory_fleet",
                   "carrierBookingRef": null,
                   "carrierCostAmount": null,
+                  "carrierRequest": null,
                   "cartons": [
                     {
                       "labelCode": "9F3A0C1B2D4E-01",
@@ -233841,7 +234046,8 @@
                       "jobId": "0192f3a0-7c1e-7d2a-9b1f-0000000f1001",
                       "jobNo": "JOB-2610-0001",
                       "orderCode": "PK-2610-0001-01",
-                      "quantity": 600
+                      "quantity": 600,
+                      "toleranceOutcome": null
                     }
                   ],
                   "labelFileId": "0192f3a0-7c1e-7d2a-9b1f-0000000f2003",
@@ -234165,6 +234371,7 @@
                   "carrier": "factory_fleet",
                   "carrierBookingRef": null,
                   "carrierCostAmount": null,
+                  "carrierRequest": null,
                   "cartons": [
                     {
                       "labelCode": "9F3A0C1B2D4E-01",
@@ -234216,7 +234423,8 @@
                       "jobId": "0192f3a0-7c1e-7d2a-9b1f-0000000f1001",
                       "jobNo": "JOB-2610-0001",
                       "orderCode": "PK-2610-0001-01",
-                      "quantity": 600
+                      "quantity": 600,
+                      "toleranceOutcome": null
                     }
                   ],
                   "labelFileId": "0192f3a0-7c1e-7d2a-9b1f-0000000f2003",
@@ -263612,6 +263820,211 @@
         ]
       }
     },
+    "/v1/partner/factories/{factoryId}/ship-plan": {
+      "get": {
+        "description": "Completed jobs whose orders are not delivered yet: per destination the pieces already on live trips and what remains, and whether pickup would be refused today (instalments before shipping, Packio inspection — the checks of dispatch, B3.2 / D-076). Destination contacts only (D-142).\n\nImplements: D-013, D-076, D-142.",
+        "operationId": "partner.shipments.shipPlan",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "factoryId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "example": [
+                  {
+                    "blockedReason": null,
+                    "destinations": [
+                      {
+                        "destinationId": "0192f3a0-7c1e-7d2a-9b1f-0000000f2002",
+                        "postcode": "10110",
+                        "provinceNameTh": "กรุงเทพมหานคร",
+                        "quantity": 600,
+                        "recipientName": "สมหญิง ใจดี",
+                        "remainingQuantity": 600,
+                        "shippedQuantity": 0
+                      }
+                    ],
+                    "jobId": "0192f3a0-7c1e-7d2a-9b1f-0000000f1001",
+                    "jobNo": "JOB-2610-0001",
+                    "orderCode": "PK-2610-0001-01",
+                    "quantityGood": 1000,
+                    "quantityOrdered": 1000
+                  }
+                ],
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/ShipPlanJobDto"
+                  },
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Plan",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.unauthenticated": {
+                    "$ref": "#/components/examples/problem.auth.unauthenticated"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.unauthenticated`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.forbidden": {
+                    "$ref": "#/components/examples/problem.auth.forbidden"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.forbidden`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "404": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.not_found": {
+                    "$ref": "#/components/examples/problem.http.not_found"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.not_found`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "validation.failed": {
+                    "$ref": "#/components/examples/problem.validation.failed"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `validation.failed`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "partner": []
+          }
+        ],
+        "summary": "What my factory can ship",
+        "tags": [
+          "partner.logistics"
+        ],
+        "x-required-permissions": [
+          "factory_shipments.read"
+        ]
+      }
+    },
     "/v1/partner/factories/{factoryId}/shipping-rate-card": {
       "get": {
         "description": "What Packio pays the factory for delivering with its own fleet: in force, scheduled, awaiting an answer (D-013).\n\nImplements: D-013, D-042, D-044.",
@@ -272602,7 +273015,7 @@
     },
     "/v1/partner/shipments": {
       "get": {
-        "description": "Newest first; destination contacts only (D-142), no prices.\n\nImplements: D-013, D-142.",
+        "description": "Newest first; `view` groups the statuses (open, in transit, delivered, exceptions). Destination contacts only (D-142), no prices; each trip says whether unpaid instalments block pickup and whether a carrier was asked for.\n\nImplements: D-013, D-142.",
         "operationId": "partner.shipments.list",
         "parameters": [
           {
@@ -272674,6 +273087,15 @@
             }
           },
           {
+            "description": "open = draft or packed; in_transit = picked up to out for delivery; exceptions = failed or returned",
+            "in": "query",
+            "name": "view",
+            "required": false,
+            "schema": {
+              "$ref": "#/components/schemas/PartnerShipmentView"
+            }
+          },
+          {
             "$ref": "#/components/parameters/AcceptLanguage"
           }
         ],
@@ -272684,7 +273106,26 @@
                 "example": {
                   "data": [
                     {
+                      "blockedByPayment": false,
                       "carrier": "factory_fleet",
+                      "carrierRequest": null,
+                      "cartons": [
+                        {
+                          "labelCode": "9F3A0C1B2D4E-01",
+                          "seq": 1,
+                          "weightG": null
+                        },
+                        {
+                          "labelCode": "9F3A0C1B2D4E-02",
+                          "seq": 2,
+                          "weightG": null
+                        },
+                        {
+                          "labelCode": "9F3A0C1B2D4E-03",
+                          "seq": 3,
+                          "weightG": null
+                        }
+                      ],
                       "cartonsCount": 3,
                       "deliveredAt": null,
                       "destination": {
@@ -272716,7 +273157,8 @@
                           "jobId": "0192f3a0-7c1e-7d2a-9b1f-0000000f1001",
                           "jobNo": "JOB-2610-0001",
                           "orderCode": "PK-2610-0001-01",
-                          "quantity": 600
+                          "quantity": 600,
+                          "toleranceOutcome": null
                         }
                       ],
                       "labelFileId": "0192f3a0-7c1e-7d2a-9b1f-0000000f2003",
@@ -272935,7 +273377,26 @@
             "content": {
               "application/json": {
                 "example": {
+                  "blockedByPayment": false,
                   "carrier": "factory_fleet",
+                  "carrierRequest": null,
+                  "cartons": [
+                    {
+                      "labelCode": "9F3A0C1B2D4E-01",
+                      "seq": 1,
+                      "weightG": null
+                    },
+                    {
+                      "labelCode": "9F3A0C1B2D4E-02",
+                      "seq": 2,
+                      "weightG": null
+                    },
+                    {
+                      "labelCode": "9F3A0C1B2D4E-03",
+                      "seq": 3,
+                      "weightG": null
+                    }
+                  ],
                   "cartonsCount": 3,
                   "deliveredAt": null,
                   "destination": {
@@ -272967,7 +273428,8 @@
                       "jobId": "0192f3a0-7c1e-7d2a-9b1f-0000000f1001",
                       "jobNo": "JOB-2610-0001",
                       "orderCode": "PK-2610-0001-01",
-                      "quantity": 600
+                      "quantity": 600,
+                      "toleranceOutcome": null
                     }
                   ],
                   "labelFileId": null,
@@ -273229,7 +273691,26 @@
             "content": {
               "application/json": {
                 "example": {
+                  "blockedByPayment": false,
                   "carrier": "factory_fleet",
+                  "carrierRequest": null,
+                  "cartons": [
+                    {
+                      "labelCode": "9F3A0C1B2D4E-01",
+                      "seq": 1,
+                      "weightG": null
+                    },
+                    {
+                      "labelCode": "9F3A0C1B2D4E-02",
+                      "seq": 2,
+                      "weightG": null
+                    },
+                    {
+                      "labelCode": "9F3A0C1B2D4E-03",
+                      "seq": 3,
+                      "weightG": null
+                    }
+                  ],
                   "cartonsCount": 3,
                   "deliveredAt": null,
                   "destination": {
@@ -273261,7 +273742,8 @@
                       "jobId": "0192f3a0-7c1e-7d2a-9b1f-0000000f1001",
                       "jobNo": "JOB-2610-0001",
                       "orderCode": "PK-2610-0001-01",
-                      "quantity": 600
+                      "quantity": 600,
+                      "toleranceOutcome": null
                     }
                   ],
                   "labelFileId": "0192f3a0-7c1e-7d2a-9b1f-0000000f2003",
@@ -273479,7 +273961,26 @@
             "content": {
               "application/json": {
                 "example": {
+                  "blockedByPayment": false,
                   "carrier": "factory_fleet",
+                  "carrierRequest": null,
+                  "cartons": [
+                    {
+                      "labelCode": "9F3A0C1B2D4E-01",
+                      "seq": 1,
+                      "weightG": null
+                    },
+                    {
+                      "labelCode": "9F3A0C1B2D4E-02",
+                      "seq": 2,
+                      "weightG": null
+                    },
+                    {
+                      "labelCode": "9F3A0C1B2D4E-03",
+                      "seq": 3,
+                      "weightG": null
+                    }
+                  ],
                   "cartonsCount": 3,
                   "deliveredAt": null,
                   "destination": {
@@ -273511,7 +274012,8 @@
                       "jobId": "0192f3a0-7c1e-7d2a-9b1f-0000000f1001",
                       "jobNo": "JOB-2610-0001",
                       "orderCode": "PK-2610-0001-01",
-                      "quantity": 600
+                      "quantity": 600,
+                      "toleranceOutcome": null
                     }
                   ],
                   "labelFileId": "0192f3a0-7c1e-7d2a-9b1f-0000000f2003",
@@ -273770,7 +274272,26 @@
             "content": {
               "application/json": {
                 "example": {
+                  "blockedByPayment": false,
                   "carrier": "factory_fleet",
+                  "carrierRequest": null,
+                  "cartons": [
+                    {
+                      "labelCode": "9F3A0C1B2D4E-01",
+                      "seq": 1,
+                      "weightG": null
+                    },
+                    {
+                      "labelCode": "9F3A0C1B2D4E-02",
+                      "seq": 2,
+                      "weightG": null
+                    },
+                    {
+                      "labelCode": "9F3A0C1B2D4E-03",
+                      "seq": 3,
+                      "weightG": null
+                    }
+                  ],
                   "cartonsCount": 3,
                   "deliveredAt": null,
                   "destination": {
@@ -273802,7 +274323,8 @@
                       "jobId": "0192f3a0-7c1e-7d2a-9b1f-0000000f1001",
                       "jobNo": "JOB-2610-0001",
                       "orderCode": "PK-2610-0001-01",
-                      "quantity": 600
+                      "quantity": 600,
+                      "toleranceOutcome": null
                     }
                   ],
                   "labelFileId": "0192f3a0-7c1e-7d2a-9b1f-0000000f2003",
@@ -274061,7 +274583,26 @@
             "content": {
               "application/json": {
                 "example": {
+                  "blockedByPayment": false,
                   "carrier": "factory_fleet",
+                  "carrierRequest": null,
+                  "cartons": [
+                    {
+                      "labelCode": "9F3A0C1B2D4E-01",
+                      "seq": 1,
+                      "weightG": null
+                    },
+                    {
+                      "labelCode": "9F3A0C1B2D4E-02",
+                      "seq": 2,
+                      "weightG": null
+                    },
+                    {
+                      "labelCode": "9F3A0C1B2D4E-03",
+                      "seq": 3,
+                      "weightG": null
+                    }
+                  ],
                   "cartonsCount": 3,
                   "deliveredAt": null,
                   "destination": {
@@ -274093,7 +274634,8 @@
                       "jobId": "0192f3a0-7c1e-7d2a-9b1f-0000000f1001",
                       "jobNo": "JOB-2610-0001",
                       "orderCode": "PK-2610-0001-01",
-                      "quantity": 600
+                      "quantity": 600,
+                      "toleranceOutcome": null
                     }
                   ],
                   "labelFileId": "0192f3a0-7c1e-7d2a-9b1f-0000000f2003",
@@ -274340,6 +274882,337 @@
         ]
       }
     },
+    "/v1/partner/shipments/{shipmentId}/actions/request-carrier": {
+      "post": {
+        "description": "For a packed trip our own fleet cannot serve (D-013 fallback, D-114): recorded with the reason and raised to Packio Logistics, who book the carrier. We never book a carrier ourselves. Once per trip (409 otherwise).\n\nImplements: D-013, D-114.",
+        "operationId": "partner.shipments.requestCarrier",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "shipmentId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/IdempotencyKey"
+          },
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "examples": {
+                "default": {
+                  "value": {
+                    "reason": "รถโรงงานไม่วิ่งเชียงราย"
+                  }
+                }
+              },
+              "schema": {
+                "$ref": "#/components/schemas/CancelShipmentDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "blockedByPayment": false,
+                  "carrier": "factory_fleet",
+                  "carrierRequest": {
+                    "reason": "รถโรงงานไม่วิ่งเชียงราย",
+                    "requestedAt": "2026-10-19T17:00:00+07:00"
+                  },
+                  "cartons": [
+                    {
+                      "labelCode": "9F3A0C1B2D4E-01",
+                      "seq": 1,
+                      "weightG": null
+                    },
+                    {
+                      "labelCode": "9F3A0C1B2D4E-02",
+                      "seq": 2,
+                      "weightG": null
+                    },
+                    {
+                      "labelCode": "9F3A0C1B2D4E-03",
+                      "seq": 3,
+                      "weightG": null
+                    }
+                  ],
+                  "cartonsCount": 3,
+                  "deliveredAt": null,
+                  "destination": {
+                    "line1": "99/9 ถนนสุขุมวิท",
+                    "line2": "แขวงคลองตัน เขตคลองเตย",
+                    "phone": "+66810001234",
+                    "postcode": "10110",
+                    "province": {
+                      "id": "0192f3a0-7c1e-7d2a-9b1f-0000000f2007",
+                      "nameEn": "Bangkok",
+                      "nameTh": "กรุงเทพมหานคร"
+                    },
+                    "recipientName": "สมหญิง ใจดี"
+                  },
+                  "events": [
+                    {
+                      "location": null,
+                      "note": null,
+                      "occurredAt": "2026-10-19T16:00:00+07:00",
+                      "source": "factory",
+                      "status": "ready"
+                    }
+                  ],
+                  "id": "0192f3a0-7c1e-7d2a-9b1f-0000000f2001",
+                  "items": [
+                    {
+                      "deliveredQuantity": null,
+                      "destinationId": "0192f3a0-7c1e-7d2a-9b1f-0000000f2002",
+                      "jobId": "0192f3a0-7c1e-7d2a-9b1f-0000000f1001",
+                      "jobNo": "JOB-2610-0001",
+                      "orderCode": "PK-2610-0001-01",
+                      "quantity": 600,
+                      "toleranceOutcome": null
+                    }
+                  ],
+                  "labelFileId": "0192f3a0-7c1e-7d2a-9b1f-0000000f2003",
+                  "note": null,
+                  "packingListFileId": "0192f3a0-7c1e-7d2a-9b1f-0000000f2004",
+                  "pickedUpAt": null,
+                  "plannedShipOn": "2026-10-20",
+                  "proofOfDelivery": null,
+                  "readyAt": "2026-10-19T16:00:00+07:00",
+                  "shipmentNo": "SH-2610-0001",
+                  "status": "ready",
+                  "trackingNo": null,
+                  "volumeCm3": 120000,
+                  "weightG": 18000
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/PartnerShipmentDto"
+                }
+              }
+            },
+            "description": "Requested",
+            "headers": {
+              "Idempotent-Replayed": {
+                "$ref": "#/components/headers/IdempotentReplayed"
+              },
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "400": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.bad_request": {
+                    "$ref": "#/components/examples/problem.http.bad_request"
+                  },
+                  "http.malformed_json": {
+                    "$ref": "#/components/examples/problem.http.malformed_json"
+                  },
+                  "idempotency.key_invalid": {
+                    "$ref": "#/components/examples/problem.idempotency.key_invalid"
+                  },
+                  "idempotency.key_required": {
+                    "$ref": "#/components/examples/problem.idempotency.key_required"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.bad_request`, `http.malformed_json`, `idempotency.key_invalid`, `idempotency.key_required`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.unauthenticated": {
+                    "$ref": "#/components/examples/problem.auth.unauthenticated"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.unauthenticated`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.forbidden": {
+                    "$ref": "#/components/examples/problem.auth.forbidden"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.forbidden`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "404": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.not_found": {
+                    "$ref": "#/components/examples/problem.http.not_found"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.not_found`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "409": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "idempotency.in_progress": {
+                    "$ref": "#/components/examples/problem.idempotency.in_progress"
+                  },
+                  "shipments.invalid_status": {
+                    "$ref": "#/components/examples/problem.shipments.invalid_status"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `idempotency.in_progress`, `shipments.invalid_status`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "idempotency.key_reused": {
+                    "$ref": "#/components/examples/problem.idempotency.key_reused"
+                  },
+                  "validation.failed": {
+                    "$ref": "#/components/examples/problem.validation.failed"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `idempotency.key_reused`, `validation.failed`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "partner": []
+          }
+        ],
+        "summary": "Ask Packio for a carrier",
+        "tags": [
+          "partner.logistics"
+        ],
+        "x-required-permissions": [
+          "factory_shipments.manage"
+        ]
+      }
+    },
     "/v1/partner/shipments/{shipmentId}/events": {
       "post": {
         "description": "In transit, out for delivery, failed attempt or returned (goods back at the factory; ship them again). Delivery itself is recorded with the proof of delivery. Carrier-booked shipments move by carrier callbacks.\n\nImplements: D-013.",
@@ -274385,7 +275258,26 @@
             "content": {
               "application/json": {
                 "example": {
+                  "blockedByPayment": false,
                   "carrier": "factory_fleet",
+                  "carrierRequest": null,
+                  "cartons": [
+                    {
+                      "labelCode": "9F3A0C1B2D4E-01",
+                      "seq": 1,
+                      "weightG": null
+                    },
+                    {
+                      "labelCode": "9F3A0C1B2D4E-02",
+                      "seq": 2,
+                      "weightG": null
+                    },
+                    {
+                      "labelCode": "9F3A0C1B2D4E-03",
+                      "seq": 3,
+                      "weightG": null
+                    }
+                  ],
                   "cartonsCount": 3,
                   "deliveredAt": null,
                   "destination": {
@@ -274417,7 +275309,8 @@
                       "jobId": "0192f3a0-7c1e-7d2a-9b1f-0000000f1001",
                       "jobNo": "JOB-2610-0001",
                       "orderCode": "PK-2610-0001-01",
-                      "quantity": 600
+                      "quantity": 600,
+                      "toleranceOutcome": null
                     }
                   ],
                   "labelFileId": "0192f3a0-7c1e-7d2a-9b1f-0000000f2003",
@@ -274705,7 +275598,26 @@
             "content": {
               "application/json": {
                 "example": {
+                  "blockedByPayment": false,
                   "carrier": "factory_fleet",
+                  "carrierRequest": null,
+                  "cartons": [
+                    {
+                      "labelCode": "9F3A0C1B2D4E-01",
+                      "seq": 1,
+                      "weightG": null
+                    },
+                    {
+                      "labelCode": "9F3A0C1B2D4E-02",
+                      "seq": 2,
+                      "weightG": null
+                    },
+                    {
+                      "labelCode": "9F3A0C1B2D4E-03",
+                      "seq": 3,
+                      "weightG": null
+                    }
+                  ],
                   "cartonsCount": 3,
                   "deliveredAt": null,
                   "destination": {
@@ -274737,7 +275649,8 @@
                       "jobId": "0192f3a0-7c1e-7d2a-9b1f-0000000f1001",
                       "jobNo": "JOB-2610-0001",
                       "orderCode": "PK-2610-0001-01",
-                      "quantity": 600
+                      "quantity": 600,
+                      "toleranceOutcome": null
                     }
                   ],
                   "labelFileId": "0192f3a0-7c1e-7d2a-9b1f-0000000f2003",

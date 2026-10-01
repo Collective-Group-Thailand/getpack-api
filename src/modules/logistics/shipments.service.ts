@@ -759,6 +759,92 @@ export class ShipmentsService {
     });
   }
 
+  /**
+   * The factory asks Packio for a fallback carrier for a packed trip its own fleet cannot serve (D-013, D-114;
+   * U-B0.3): recorded with the reason and raised to Logistics (`shipment.carrier_requested`), who books through
+   * `admin.shipments.bookCarrier`. The factory never books a carrier itself.
+   */
+  async requestCarrier(actor: UserActor, shipmentId: bigint, reason: string): Promise<void> {
+    await this.prisma.withTx(async (tx) => {
+      const shipment = await this.lock(tx, shipmentId);
+      const carrier = await tx.carrier.findUniqueOrThrow({ where: { id: shipment.carrierId } });
+      if (shipment.status !== 'ready' || carrier.code !== 'factory_fleet' || shipment.carrierRequestedAt)
+        throw new DomainException('shipments.invalid_status', {
+          params: { status: shipment.carrierRequestedAt ? 'carrier already requested' : shipment.status },
+        });
+      await tx.shipment.update({
+        where: { id: shipment.id },
+        data: {
+          carrierRequestedAt: new Date(),
+          carrierRequestReason: reason,
+          carrierRequestedById: actor.userId,
+          updatedById: actor.userId,
+          rowVersion: { increment: 1 },
+        },
+      });
+      await this.record(tx, shipment, 'shipment.carrier_requested', { reason }, actor);
+    });
+  }
+
+  /**
+   * What the factory can ship (U-B0.3): its completed production jobs whose orders are not delivered, per
+   * destination the pieces already on live shipments and what remains, and whether pickup would be refused today
+   * (the shipping gate: payment before shipping, Packio inspection).
+   */
+  async shipPlan(factoryId: bigint) {
+    const jobs = await this.prisma.productionJob.findMany({
+      where: {
+        factoryId,
+        status: 'completed',
+        jobKind: 'production',
+        order: { deliveredAt: null, cancelledAt: null },
+      },
+      include: {
+        order: {
+          select: {
+            id: true,
+            orderCode: true,
+            destinations: {
+              orderBy: [{ sort: 'asc' }, { id: 'asc' }],
+              include: { province: { select: { nameTh: true } } },
+            },
+          },
+        },
+        inspections: { select: { status: true, selected: true } },
+      },
+      orderBy: { promisedShipDate: 'asc' },
+      take: 200,
+    });
+    const shipped = jobs.length
+      ? await this.prisma.shipmentItem.groupBy({
+          by: ['productionJobId', 'orderDestinationId'],
+          where: {
+            productionJobId: { in: jobs.map((j) => j.id) },
+            shipment: { status: { notIn: NOT_SHIPPED } },
+          },
+          _sum: { quantity: true },
+        })
+      : [];
+    const out = [];
+    for (const job of jobs) {
+      const paid = await this.schedules.canShip(job.order.id);
+      const inspected =
+        !job.inspectionRequired ||
+        job.inspections.some((i) => i.selected && (i.status === 'passed' || i.status === 'waived'));
+      out.push({
+        job,
+        blockedReason: !paid ? 'payment_pending' : !inspected ? 'inspection_pending' : null,
+        destinations: job.order.destinations.map((d) => {
+          const done =
+            shipped.find((x) => x.productionJobId === job.id && x.orderDestinationId === d.id)?._sum
+              .quantity ?? 0;
+          return { destination: d, shipped: done, remaining: Math.max(d.quantity - done, 0) };
+        }),
+      });
+    }
+    return out;
+  }
+
   /** Shipments not picked up yet whose orders still owe instalments due before shipping (B3.2). */
   async blockedByPayment(rows: { id: bigint; status: ShipmentStatus; items: { orderId: bigint }[] }[]) {
     const waiting = rows.filter((r) => r.status === 'draft' || r.status === 'ready');

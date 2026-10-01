@@ -407,6 +407,16 @@ export class ShipmentItemDto {
 
   @ApiProperty({ type: 'integer', nullable: true, example: null })
   deliveredQuantity!: number | null;
+
+  @ApiProperty({
+    enum: TOLERANCE_OUTCOMES,
+    enumName: 'ToleranceOutcome',
+    nullable: true,
+    example: null,
+    description:
+      'The order’s delivered-vs-ordered result once every shipment of it is delivered (D-021, D-080)',
+  })
+  toleranceOutcome!: string | null;
 }
 
 export class ShipmentEventDto {
@@ -472,6 +482,29 @@ export class ShipmentDestinationDto {
   province!: GeoRefDto;
 }
 
+export class ShipmentCartonDto {
+  @ApiProperty({ type: 'integer', example: 1 })
+  seq!: number;
+
+  @ApiProperty({ example: '9F3A0C1B2D4E-01', description: 'Printed on the carton label (QR → tracking)' })
+  labelCode!: string;
+
+  @ApiProperty({ type: 'integer', nullable: true, example: null })
+  weightG!: number | null;
+}
+
+export class CarrierRequestDto {
+  @ApiProperty({ format: 'date-time', example: '2026-10-19T17:00:00+07:00' })
+  requestedAt!: string;
+
+  @ApiProperty({ example: 'รถโรงงานไม่วิ่งเชียงราย' })
+  reason!: string;
+}
+
+/** `{ reason }` (3–400 characters), the shape of a cancellation reason. */
+export const RequestCarrierDto = CancelShipmentDto;
+export type RequestCarrierDto = CancelShipmentDto;
+
 /** The factory's view (D-142): destination contacts, no price, no customer identity beyond the recipient. */
 export class PartnerShipmentDto {
   @ApiProperty({ format: 'uuid', example: SHIPMENT_IDS.shipment })
@@ -535,17 +568,25 @@ export class PartnerShipmentDto {
 
   @ApiProperty({ nullable: true, example: null })
   note!: string | null;
-}
 
-export class ShipmentCartonDto {
-  @ApiProperty({ type: 'integer', example: 1 })
-  seq!: number;
+  @ApiProperty({
+    type: [ShipmentCartonDto],
+    description: 'One per carton once packed (label code on the carton)',
+  })
+  cartons!: ShipmentCartonDto[];
 
-  @ApiProperty({ example: '9F3A0C1B2D4E-01', description: 'Printed on the carton label (QR → tracking)' })
-  labelCode!: string;
+  @ApiProperty({
+    example: false,
+    description: 'Not picked up yet and an order still owes instalments due before shipping (B3.2)',
+  })
+  blockedByPayment!: boolean;
 
-  @ApiProperty({ type: 'integer', nullable: true, example: null })
-  weightG!: number | null;
+  @ApiProperty({
+    type: CarrierRequestDto,
+    nullable: true,
+    description: 'The factory asked Packio for a fallback carrier (D-013, D-114)',
+  })
+  carrierRequest!: CarrierRequestDto | null;
 }
 
 /** A failed or returned delivery and how staff resolved it (D-230). */
@@ -638,15 +679,6 @@ export class AdminShipmentDto extends PartnerShipmentDto {
   @ApiProperty({ nullable: true, example: null })
   cancelReason!: string | null;
 
-  @ApiProperty({ type: [ShipmentCartonDto], description: 'One per carton once packed' })
-  cartons!: ShipmentCartonDto[];
-
-  @ApiProperty({
-    example: false,
-    description: 'Not picked up yet and an order still owes instalments due before shipping (B3.2)',
-  })
-  blockedByPayment!: boolean;
-
   @ApiProperty({ type: ShipmentExceptionDto, nullable: true, description: 'Failed or returned (D-230)' })
   exception!: ShipmentExceptionDto | null;
 
@@ -727,6 +759,7 @@ const SHIPMENT_BASE = {
       orderCode: 'PK-2610-0001-01',
       quantity: 600,
       deliveredQuantity: null,
+      toleranceOutcome: null,
     },
   ],
   events: [
@@ -740,6 +773,13 @@ const SHIPMENT_BASE = {
   ],
   proofOfDelivery: null,
   note: null,
+  cartons: [
+    { seq: 1, labelCode: '9F3A0C1B2D4E-01', weightG: null },
+    { seq: 2, labelCode: '9F3A0C1B2D4E-02', weightG: null },
+    { seq: 3, labelCode: '9F3A0C1B2D4E-03', weightG: null },
+  ],
+  blockedByPayment: false,
+  carrierRequest: null,
 };
 export const PARTNER_SHIPMENT_EXAMPLE = SHIPMENT_BASE;
 export const ADMIN_SHIPMENT_EXAMPLE = {
@@ -752,12 +792,6 @@ export const ADMIN_SHIPMENT_EXAMPLE = {
   carrierCostAmount: null,
   cancelledAt: null,
   cancelReason: null,
-  cartons: [
-    { seq: 1, labelCode: '9F3A0C1B2D4E-01', weightG: null },
-    { seq: 2, labelCode: '9F3A0C1B2D4E-02', weightG: null },
-    { seq: 3, labelCode: '9F3A0C1B2D4E-03', weightG: null },
-  ],
-  blockedByPayment: false,
   exception: null,
   podReview: null,
   splitFrom: null,
@@ -929,4 +963,92 @@ export const STORE_SHIPMENT_EXAMPLE = {
     capturedAt: '2026-10-21T14:05:00+07:00',
     photoFileIds: [SHIPMENT_IDS.photo],
   },
+};
+
+// --- U-B0.3: partner views, ship plan --------------------------------------------------------------------
+
+export const PARTNER_SHIPMENT_VIEWS = ['open', 'in_transit', 'delivered', 'exceptions'] as const;
+
+export class PartnerShipmentListQuery extends ShipmentListQuery {
+  @ApiPropertyOptional({
+    enum: PARTNER_SHIPMENT_VIEWS,
+    enumName: 'PartnerShipmentView',
+    description:
+      'open = draft or packed; in_transit = picked up to out for delivery; exceptions = failed or returned',
+  })
+  @IsOptional()
+  @IsIn(PARTNER_SHIPMENT_VIEWS)
+  view?: (typeof PARTNER_SHIPMENT_VIEWS)[number];
+}
+
+export class ShipPlanDestinationDto {
+  @ApiProperty({ format: 'uuid', example: SHIPMENT_IDS.destination })
+  destinationId!: string;
+
+  @ApiProperty({ example: 'สมหญิง ใจดี' })
+  recipientName!: string;
+
+  @ApiProperty({ example: '10110' })
+  postcode!: string;
+
+  @ApiProperty({ example: 'กรุงเทพมหานคร' })
+  provinceNameTh!: string;
+
+  @ApiProperty({ type: 'integer', example: 600, description: 'Pieces for this address' })
+  quantity!: number;
+
+  @ApiProperty({ type: 'integer', example: 0, description: 'On live shipments already' })
+  shippedQuantity!: number;
+
+  @ApiProperty({ type: 'integer', example: 600 })
+  remainingQuantity!: number;
+}
+
+export class ShipPlanJobDto {
+  @ApiProperty({ format: 'uuid', example: SHIPMENT_IDS.job })
+  jobId!: string;
+
+  @ApiProperty({ example: 'JOB-2610-0001' })
+  jobNo!: string;
+
+  @ApiProperty({ example: 'PK-2610-0001-01' })
+  orderCode!: string;
+
+  @ApiProperty({ type: 'integer', example: 1000 })
+  quantityOrdered!: number;
+
+  @ApiProperty({ type: 'integer', nullable: true, example: 1000, description: 'Good pieces reported' })
+  quantityGood!: number | null;
+
+  @ApiProperty({
+    enum: ['payment_pending', 'inspection_pending'],
+    enumName: 'ShipBlockedReason',
+    nullable: true,
+    example: null,
+    description: 'Why pickup would be refused today (the shipping gate, B3.2 / D-076)',
+  })
+  blockedReason!: string | null;
+
+  @ApiProperty({ type: [ShipPlanDestinationDto] })
+  destinations!: ShipPlanDestinationDto[];
+}
+
+export const SHIP_PLAN_EXAMPLE: ShipPlanJobDto = {
+  jobId: SHIPMENT_IDS.job,
+  jobNo: 'JOB-2610-0001',
+  orderCode: 'PK-2610-0001-01',
+  quantityOrdered: 1000,
+  quantityGood: 1000,
+  blockedReason: null,
+  destinations: [
+    {
+      destinationId: SHIPMENT_IDS.destination,
+      recipientName: 'สมหญิง ใจดี',
+      postcode: '10110',
+      provinceNameTh: 'กรุงเทพมหานคร',
+      quantity: 600,
+      shippedQuantity: 0,
+      remainingQuantity: 600,
+    },
+  ],
 };

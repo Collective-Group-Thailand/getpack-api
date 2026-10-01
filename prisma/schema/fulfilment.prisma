@@ -1146,6 +1146,10 @@ model Shipment {
   /// Staff-only (P25): what the fallback carrier charges Packio.
   carrierCostAmount      Decimal?                     @map("carrier_cost_amount") @db.Decimal(14, 2)
   note                   String?
+  /// The factory asked Packio for a fallback carrier (D-013, D-114; U-B0.3): Logistics books it.
+  carrierRequestedAt     DateTime?                    @map("carrier_requested_at") @db.Timestamptz(6)
+  carrierRequestReason   String?                      @map("carrier_request_reason")
+  carrierRequestedById   BigInt?                      @map("carrier_requested_by")
   /// The shipment this one was split from (D-230), same factory, destination and draft state.
   splitFromId            BigInt?                      @map("split_from_id")
   /// Staff resolution of a failed or returned delivery (D-230).
@@ -1159,6 +1163,7 @@ model Shipment {
   updatedById            BigInt?                      @map("updated_by")
   rowVersion             Int                          @default(1) @map("row_version")
 
+  carrierRequestedBy   User?                            @relation("ShipmentCarrierRequestedBy", fields: [carrierRequestedById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_shipments__carrier_requested_by")
   splitFrom            Shipment?                        @relation("ShipmentSplitFrom", fields: [splitFromId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_shipments__split_from_id")
   splits               Shipment[]                       @relation("ShipmentSplitFrom")
   exceptionResolvedBy  User?                            @relation("ShipmentExceptionResolvedBy", fields: [exceptionResolvedById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_shipments__exception_resolved_by")
@@ -1202,6 +1207,7 @@ model Shipment {
   @@index([createdById], map: "ix_shipments__created_by")
   @@index([updatedById], map: "ix_shipments__updated_by")
   @@index([splitFromId], map: "ix_shipments__split_from_id")
+  @@index([carrierRequestedById], map: "ix_shipments__carrier_requested_by")
   @@index([exceptionResolvedById], map: "ix_shipments__exception_resolved_by")
   @@index([pickedUpAt], map: "ix_shipments__picked_up_at", where: raw("(picked_up_at IS NOT NULL)"))
   @@index([deliveredAt], map: "ix_shipments__delivered_at", where: raw("(delivered_at IS NOT NULL)"))
