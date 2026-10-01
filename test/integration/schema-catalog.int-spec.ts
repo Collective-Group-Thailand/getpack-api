@@ -6,6 +6,19 @@ import { type MigratedDatabase, startMigratedDatabase, stopMigratedDatabase } fr
  */
 
 const CHECKS = [
+  'ck_pl_label_diecut_prices__box_band',
+  'ck_pl_label_diecut_prices__non_negative',
+  'ck_pl_label_diecut_prices__sheet_band',
+  'ck_pl_label_paper_sheets__cut_on_roll',
+  'ck_pl_label_paper_sheets__size',
+  'ck_pl_label_print_type_terms__engine_variant',
+  'ck_pl_label_print_type_terms__factory_margin_pct',
+  'ck_pl_label_print_type_terms__lead_time',
+  'ck_pl_label_print_type_terms__min_order',
+  'ck_pl_label_print_type_terms__min_roll',
+  'ck_pl_label_print_type_terms__min_sheet',
+  'ck_pl_label_print_type_terms__waste_method',
+  'ck_pl_label_roll_print_prices__price',
   'ck_attachments__note',
   'ck_factory_change_requests__answered',
   'ck_factory_change_requests__message',
@@ -775,6 +788,10 @@ const CHECKS = [
 ];
 
 const TRIGGERS = [
+  'tg_pl_label_diecut_prices__version_frozen',
+  'tg_pl_label_paper_sheets__version_frozen',
+  'tg_pl_label_print_type_terms__version_frozen',
+  'tg_pl_label_roll_print_prices__version_frozen',
   'tg_activity_logs__append_only',
   'tg_approval_actions__append_only',
   'tg_approval_actions__maker_checker',

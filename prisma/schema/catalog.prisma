@@ -334,6 +334,9 @@ model PrintType {
   plCorrugatePrintPrices    PlCorrugatePrintPrice[]    @relation("PlCorrugatePrintPricePrintType")
   plCorrugateDiecutPrices   PlCorrugateDiecutPrice[]   @relation("PlCorrugateDiecutPricePrintType")
   plCorrugateAssemblyPrices PlCorrugateAssemblyPrice[] @relation("PlCorrugateAssemblyPricePrintType")
+  plLabelPrintTypeTerms     PlLabelPrintTypeTerm[]     @relation("PlLabelPrintTypeTermPrintType")
+  plLabelRollPrintPrices    PlLabelRollPrintPrice[]    @relation("PlLabelRollPrintPricePrintType")
+  plLabelDiecutPrices       PlLabelDiecutPrice[]       @relation("PlLabelDiecutPricePrintType")
   // --- end Corrugate price components
 
   @@index([productTypeId], map: "ix_print_types__product_type_id")
@@ -865,6 +868,7 @@ model InkColour {
   // --- end Folding price components
   // --- Corrugate price components (U-B6)
   plCorrugatePrintPrices PlCorrugatePrintPrice[] @relation("PlCorrugatePrintPriceInkColour")
+  plLabelRollPrintPrices PlLabelRollPrintPrice[] @relation("PlLabelRollPrintPriceInkColour")
   // --- end Corrugate price components
 
   @@index([groupId], map: "ix_ink_colours__group_id")
@@ -910,13 +914,14 @@ model DiecutType {
   updatedById   BigInt?       @map("updated_by")
   rowVersion    Int           @default(1) @map("row_version")
 
-  group                    DiecutGroup?    @relation(fields: [groupId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_diecut_types__group_id")
-  createdBy                User?           @relation("DiecutTypeCreatedBy", fields: [createdById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_diecut_types__created_by")
-  updatedBy                User?           @relation("DiecutTypeUpdatedBy", fields: [updatedById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_diecut_types__updated_by")
-  imageFile                FileObject?     @relation("DiecutTypeImageFile", fields: [imageFileId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_diecut_types__image_file_id")
+  group                    DiecutGroup?         @relation(fields: [groupId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_diecut_types__group_id")
+  createdBy                User?                @relation("DiecutTypeCreatedBy", fields: [createdById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_diecut_types__created_by")
+  updatedBy                User?                @relation("DiecutTypeUpdatedBy", fields: [updatedById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_diecut_types__updated_by")
+  imageFile                FileObject?          @relation("DiecutTypeImageFile", fields: [imageFileId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_diecut_types__image_file_id")
   // --- Folding price components (B2.3)
-  plDiecutWastesDiecutType PlDiecutWaste[] @relation("PlDiecutWasteDiecutType")
+  plDiecutWastesDiecutType PlDiecutWaste[]      @relation("PlDiecutWasteDiecutType")
   // --- end Folding price components
+  plLabelDiecutPrices      PlLabelDiecutPrice[] @relation("PlLabelDiecutPriceDiecutType")
 
   @@index([groupId], map: "ix_diecut_types__group_id")
   @@index([imageFileId], map: "ix_diecut_types__image_file_id")
@@ -1048,6 +1053,8 @@ model DifficultyLevel {
   plDifficultyLevels                 PlDifficultyLevel[]      @relation("PlDifficultyLevelDifficultyLevel")
   plDifficultyMargins                PlDifficultyMargin[]     @relation("PlDifficultyMarginDifficultyLevel")
   plCorrugateDiecutPrices            PlCorrugateDiecutPrice[] @relation("PlCorrugateDiecutPriceDifficultyLevel")
+  plLabelRollPrintPrices             PlLabelRollPrintPrice[]  @relation("PlLabelRollPrintPriceDifficultyLevel")
+  plLabelDiecutPrices                PlLabelDiecutPrice[]     @relation("PlLabelDiecutPriceDifficultyLevel")
   // --- end Corrugate price components
 
   @@index([groupId], map: "ix_difficulty_levels__group_id")

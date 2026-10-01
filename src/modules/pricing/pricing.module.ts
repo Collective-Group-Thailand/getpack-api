@@ -7,6 +7,7 @@ import { CorrugatePriceComponentsRegistrar } from './calculators/corrugate/price
 import { FoldingQuoteAdapter } from './calculators/folding/folding.adapter';
 import { FoldingSnapshotLoader } from './calculators/folding/folding-snapshot.loader';
 import { FoldingPriceComponentsRegistrar } from './calculators/folding/price-components.registrar';
+import { LabelPriceComponentsRegistrar } from './calculators/label/price-components.registrar';
 import { PriceHintsService } from './hints/price-hints.service';
 import { CorrugateInputDataService } from './quotes/corrugate-input-data.service';
 import { FoldingInputDataService } from './quotes/folding-input-data.service';
@@ -32,7 +33,12 @@ const SERVICES = [
  */
 @Global()
 @Module({
-  providers: [...SERVICES, FoldingPriceComponentsRegistrar, CorrugatePriceComponentsRegistrar],
+  providers: [
+    ...SERVICES,
+    FoldingPriceComponentsRegistrar,
+    CorrugatePriceComponentsRegistrar,
+    LabelPriceComponentsRegistrar,
+  ],
   exports: SERVICES,
 })
 export class PricingModule {}

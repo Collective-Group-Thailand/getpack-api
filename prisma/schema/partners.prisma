@@ -213,6 +213,11 @@ enum PriceComponent {
   corrugate_pattern_conditions
   fixed_options
 
+  label_print_type_terms
+  label_paper_sheets
+  label_roll_print_prices
+  label_diecut_prices
+
   @@map("price_component")
 }
 
@@ -1136,6 +1141,10 @@ model PriceListVersion {
   corrugatePrintPrices       PlCorrugatePrintPrice[]       @relation("PlCorrugatePrintPricePriceListVersion")
   corrugateDiecutPrices      PlCorrugateDiecutPrice[]      @relation("PlCorrugateDiecutPricePriceListVersion")
   corrugateAssemblyPrices    PlCorrugateAssemblyPrice[]    @relation("PlCorrugateAssemblyPricePriceListVersion")
+  labelPrintTypeTerms        PlLabelPrintTypeTerm[]        @relation("PlLabelPrintTypeTermPriceListVersion")
+  labelPaperSheets           PlLabelPaperSheet[]           @relation("PlLabelPaperSheetPriceListVersion")
+  labelRollPrintPrices       PlLabelRollPrintPrice[]       @relation("PlLabelRollPrintPricePriceListVersion")
+  labelDiecutPrices          PlLabelDiecutPrice[]          @relation("PlLabelDiecutPricePriceListVersion")
   // --- end Corrugate price components
 
   @@unique([priceListId, versionNo], map: "ux_price_list_versions__price_list_id__version_no")
@@ -2306,4 +2315,113 @@ model FactoryChangeRequest {
   @@index([respondedById], map: "ix_factory_change_requests__responded_by")
   @@index([createdById], map: "ix_factory_change_requests__created_by")
   @@map("factory_change_requests")
+}
+
+// ------------------------------------------------------------------------------------------------
+// Label price components (U-B6 label, A-71; port map docs/legacy/05-label-port-map.md). The folding
+// components label also reads are reused unchanged: material prices, paper sizes, paper trims, print
+// plates, print prices, finish prices, die blocks, the three waste tables, ink colours.
+// ------------------------------------------------------------------------------------------------
+
+/// Per print type of a factory's label price list (legacy `factory_match_print_type`, `factory.calculate_waste_type`, hard-coded factories 13 / 14 / 16).
+model PlLabelPrintTypeTerm {
+  id                 BigInt   @id(map: "pk_pl_label_print_type_terms") @default(autoincrement())
+  priceListVersionId BigInt   @map("price_list_version_id")
+  lineKey            String   @map("line_key")
+  printTypeId        BigInt   @map("print_type_id")
+  /// `offset` (legacy print type 3) or `digital` (4, 7, 8).
+  engineVariant      String   @map("engine_variant")
+  /// Legacy `factory_match_print_type.margin`: the factory's price = cost ÷ (1 − pct / 100).
+  factoryMarginPct   Decimal  @map("factory_margin_pct") @db.Decimal(7, 4)
+  minOrderAmount     Int?     @map("min_order_amount")
+  /// Legacy `min_sheet_per_job`: the sheet count never goes below it.
+  minSheetPerJob     Int      @default(0) @map("min_sheet_per_job")
+  leadTimeDays       Decimal? @map("lead_time_days") @db.Decimal(6, 2)
+  bulkLeadTimeMinQty Int?     @map("bulk_lead_time_min_qty")
+  bulkLeadTimeDays   Decimal? @map("bulk_lead_time_days") @db.Decimal(6, 2)
+  /// Legacy `factory.calculate_waste_type`: 1 setup waste on every process, 2 only on the first.
+  wasteMethod        Int      @default(1) @map("waste_method") @db.SmallInt
+  /// Legacy factories 13 / 14 never die-cut.
+  diecutAvailable    Boolean  @default(true) @map("diecut_available")
+  /// Shortest roll the factory runs (legacy 300 m, `LabelCalculator.php:456`); null = no minimum.
+  minRollLengthM     Decimal? @map("min_roll_length_m") @db.Decimal(10, 2)
+  createdAt          DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  priceListVersion PriceListVersion @relation("PlLabelPrintTypeTermPriceListVersion", fields: [priceListVersionId], references: [id], onDelete: Cascade, onUpdate: Restrict, map: "fk_pl_label_print_type_terms__price_list_version_id")
+  printType        PrintType        @relation("PlLabelPrintTypeTermPrintType", fields: [printTypeId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_pl_label_print_type_terms__print_type_id")
+
+  @@unique([priceListVersionId, lineKey], map: "ux_pl_label_print_type_terms__version__line_key")
+  @@index([printTypeId], map: "ix_pl_label_print_type_terms__print_type_id")
+  @@map("pl_label_print_type_terms")
+}
+
+/// The sheets and rolls a label is laid out on (legacy `paper_sheets` of the factory): a sheet of a paper size, a roll when `sheet_l_in` = 0, cut to sheets when `sheet_cut_length_in` > 0.
+model PlLabelPaperSheet {
+  id                 BigInt   @id(map: "pk_pl_label_paper_sheets") @default(autoincrement())
+  priceListVersionId BigInt   @map("price_list_version_id")
+  lineKey            String   @map("line_key")
+  sizeWIn            Decimal  @map("size_w_in") @db.Decimal(10, 4)
+  sizeLIn            Decimal  @map("size_l_in") @db.Decimal(10, 4)
+  sheetCut           Int      @map("sheet_cut")
+  sheetWIn           Decimal  @map("sheet_w_in") @db.Decimal(10, 4)
+  sheetLIn           Decimal  @map("sheet_l_in") @db.Decimal(10, 4)
+  sheetCutLengthIn   Decimal  @default(0) @map("sheet_cut_length_in") @db.Decimal(10, 4)
+  createdAt          DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  priceListVersion PriceListVersion @relation("PlLabelPaperSheetPriceListVersion", fields: [priceListVersionId], references: [id], onDelete: Cascade, onUpdate: Restrict, map: "fk_pl_label_paper_sheets__price_list_version_id")
+
+  @@unique([priceListVersionId, lineKey], map: "ux_pl_label_paper_sheets__version__line_key")
+  @@map("pl_label_paper_sheets")
+}
+
+/// Digital ink on a roll per m² and colour (legacy `print_prices.price_roll_thb_per_m2`).
+model PlLabelRollPrintPrice {
+  id                 BigInt   @id(map: "pk_pl_label_roll_print_prices") @default(autoincrement())
+  priceListVersionId BigInt   @map("price_list_version_id")
+  lineKey            String   @map("line_key")
+  difficultyLevelId  BigInt   @map("difficulty_level_id")
+  printTypeId        BigInt   @map("print_type_id")
+  inkColourId        BigInt   @map("ink_colour_id")
+  pricePerM2         Decimal  @map("price_per_m2") @db.Decimal(18, 6)
+  createdAt          DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  priceListVersion PriceListVersion @relation("PlLabelRollPrintPricePriceListVersion", fields: [priceListVersionId], references: [id], onDelete: Cascade, onUpdate: Restrict, map: "fk_pl_label_roll_print_prices__price_list_version_id")
+  difficultyLevel  DifficultyLevel  @relation("PlLabelRollPrintPriceDifficultyLevel", fields: [difficultyLevelId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_pl_label_roll_print_prices__difficulty_level_id")
+  printType        PrintType        @relation("PlLabelRollPrintPricePrintType", fields: [printTypeId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_pl_label_roll_print_prices__print_type_id")
+  inkColour        InkColour        @relation("PlLabelRollPrintPriceInkColour", fields: [inkColourId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_pl_label_roll_print_prices__ink_colour_id")
+
+  @@unique([priceListVersionId, lineKey], map: "ux_pl_label_roll_print_prices__version__line_key")
+  @@index([difficultyLevelId], map: "ix_pl_label_roll_print_prices__difficulty_level_id")
+  @@index([printTypeId], map: "ix_pl_label_roll_print_prices__print_type_id")
+  @@index([inkColourId], map: "ix_pl_label_roll_print_prices__ink_colour_id")
+  @@map("pl_label_roll_print_prices")
+}
+
+/// Digital die-cut (legacy `diecut_price` read by `LabelCalculator::calculateCost:1149-1152,1247-1249`): a sheet job by die-cut type and sheets band, a roll by quantity band; a job price, else per m².
+model PlLabelDiecutPrice {
+  id                  BigInt   @id(map: "pk_pl_label_diecut_prices") @default(autoincrement())
+  priceListVersionId  BigInt   @map("price_list_version_id")
+  lineKey             String   @map("line_key")
+  difficultyLevelId   BigInt   @map("difficulty_level_id")
+  printTypeId         BigInt   @map("print_type_id")
+  /// Null on roll rows (legacy reads no die-cut type for rolls).
+  diecutTypeId        BigInt?  @map("diecut_type_id")
+  minPaperSheetAmount Decimal? @map("min_paper_sheet_amount") @db.Decimal(14, 2)
+  maxPaperSheetAmount Decimal? @map("max_paper_sheet_amount") @db.Decimal(14, 2)
+  minBoxAmount        Int?     @map("min_box_amount")
+  maxBoxAmount        Int?     @map("max_box_amount")
+  diecutPrice         Decimal? @map("diecut_price") @db.Decimal(18, 6)
+  pricePerM2          Decimal? @map("price_per_m2") @db.Decimal(18, 6)
+  createdAt           DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  priceListVersion PriceListVersion @relation("PlLabelDiecutPricePriceListVersion", fields: [priceListVersionId], references: [id], onDelete: Cascade, onUpdate: Restrict, map: "fk_pl_label_diecut_prices__price_list_version_id")
+  difficultyLevel  DifficultyLevel  @relation("PlLabelDiecutPriceDifficultyLevel", fields: [difficultyLevelId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_pl_label_diecut_prices__difficulty_level_id")
+  printType        PrintType        @relation("PlLabelDiecutPricePrintType", fields: [printTypeId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_pl_label_diecut_prices__print_type_id")
+  diecutType       DiecutType?      @relation("PlLabelDiecutPriceDiecutType", fields: [diecutTypeId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_pl_label_diecut_prices__diecut_type_id")
+
+  @@unique([priceListVersionId, lineKey], map: "ux_pl_label_diecut_prices__version__line_key")
+  @@index([difficultyLevelId], map: "ix_pl_label_diecut_prices__difficulty_level_id")
+  @@index([printTypeId], map: "ix_pl_label_diecut_prices__print_type_id")
+  @@index([diecutTypeId], map: "ix_pl_label_diecut_prices__diecut_type_id")
+  @@map("pl_label_diecut_prices")
 }
