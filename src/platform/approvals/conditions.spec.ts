@@ -1,5 +1,5 @@
 import { APPROVAL_POLICIES } from '../../../prisma/seed/data/approval-policies';
-import { evaluateCondition } from './conditions';
+import { conditionProblems, evaluateCondition } from './conditions';
 
 const discountSteps = APPROVAL_POLICIES.find((p) => p.key === 'discount_memo')!.steps;
 const routeDiscount = (pct: string, flags: string[] = []) =>
@@ -66,5 +66,34 @@ describe('approval step conditions (ADR-0006)', () => {
     expect(evaluateCondition({ field: 'payload.factory.tier', op: 'eq', value: 'A' }, ctx)).toBe(true);
     expect(evaluateCondition({ field: 'payload.count', op: 'gte', value: 3 }, ctx)).toBe(true);
     expect(evaluateCondition({ field: 'payload.missing.deep', op: 'eq', value: 'A' }, ctx)).toBe(false);
+  });
+});
+
+describe('proposed step conditions (U-B0.3)', () => {
+  it('accepts the shapes the seeds use', () => {
+    for (const policy of APPROVAL_POLICIES)
+      for (const step of policy.steps) expect(conditionProblems(step.condition ?? null)).toEqual([]);
+    expect(conditionProblems(null)).toEqual([]);
+    expect(conditionProblems({ field: 'amount', op: 'lte', value: '100000.00' })).toEqual([]);
+    expect(
+      conditionProblems({
+        any: [
+          { field: 'pct', op: 'gt', value: '15' },
+          { field: 'flags', op: 'includes', value: 'below_margin_floor' },
+        ],
+      }),
+    ).toEqual([]);
+    expect(conditionProblems({ field: 'amount', op: 'gt', ref: 'company.order_approval_threshold' })).toEqual(
+      [],
+    );
+  });
+
+  it('names what is wrong', () => {
+    expect(conditionProblems({ field: 'price', op: 'gt', value: 1 })).toEqual([
+      'condition.field: amount, pct, flags, entity or payload.<path>',
+    ]);
+    expect(conditionProblems({ all: [] })).toEqual(['condition.all: a non-empty list']);
+    expect(conditionProblems({ field: 'amount', op: 'between', value: 1, ref: 'x' })).toHaveLength(2);
+    expect(conditionProblems([1])).toEqual(['condition: an object or null']);
   });
 });

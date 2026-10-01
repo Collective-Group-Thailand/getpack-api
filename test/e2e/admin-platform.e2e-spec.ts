@@ -1,9 +1,13 @@
 import { randomUUID } from 'node:crypto';
 
+import { PasswordService } from '@modules/auth/password.service';
+import { ApprovalPoliciesService } from '@platform/approvals/approval-policies.service';
 import { BusinessCalendarService } from '@platform/calendar/business-calendar.service';
+import { envelopeFromRow } from '@platform/domain-events/domain-event';
 import request from 'supertest';
 
 import { as, bootCommerceApp, type CommerceApp, staffToken } from '../support/commerce-e2e';
+import { E2E_DEV_PASSWORD } from '../support/e2e';
 
 /**
  * U-B0.3 slice 1: staff directory (least privilege), segregation-of-duties rules, credit- and debit-note
@@ -319,5 +323,83 @@ describe('admin platform reads (e2e, U-B0.3)', () => {
         where: { action: 'business_calendar.day_set', resourcePublicId: calendar.publicId },
       }),
     ).toBe(1);
+  });
+
+  it('proposes an approval-policy version that another Superadmin approves; it waits for its date (D-063; U-B0.3)', async () => {
+    const superadmin = await staffToken(ctx, 'superadmin');
+    // A second Superadmin: the proposer never approves (maker-checker).
+    const email = `superadmin-2-${ctx.run}@example.invalid`;
+    const role = await ctx.prisma.role.findUniqueOrThrow({ where: { key: 'superadmin' } });
+    await ctx.prisma.user.create({
+      data: {
+        kind: 'staff',
+        status: 'active',
+        email,
+        displayName: 'Second superadmin (fake)',
+        passwordHash: await new PasswordService().hash(E2E_DEV_PASSWORD),
+        roles: { create: { roleId: role.id, scopeType: 'platform', reason: 'e2e (fake)' } },
+      },
+    });
+    const checker = (
+      await request(ctx.server)
+        .post('/v1/auth/staff/login')
+        .send({ email, password: E2E_DEV_PASSWORD })
+        .expect(200)
+    ).body.accessToken as string;
+
+    type Policy = {
+      id: string;
+      key: string;
+      current: { versionNo: number } | null;
+      pending: unknown;
+      upcoming: unknown;
+    };
+    const policies = (await as(ctx, superadmin).get('/v1/admin/approval-policies').expect(200))
+      .body as Policy[];
+    const policy = policies.find((p) => p.key === 'referral_review')!;
+    expect(policy.current).not.toBeNull();
+    const effectiveFrom = `2099-01-${String(1 + (ctx.run % 28)).padStart(2, '0')}T00:00:00+07:00`;
+    const body = {
+      effectiveFrom,
+      reason: 'ทดสอบเวอร์ชันใหม่ (fake)',
+      steps: [{ name: 'Marketing review', approverRole: 'marketing', condition: null }],
+    };
+    const post = (token: string, b: object) =>
+      as(ctx, token)
+        .post(`/v1/admin/approval-policies/${policy.id}/versions`, b)
+        .set('Idempotency-Key', randomUUID());
+    await post(await staffToken(ctx, 'admin'), body).expect(403);
+    await post(superadmin, { ...body, steps: [{ name: 'x', approverRole: 'nobody' }] }).expect(422);
+    await post(superadmin, {
+      ...body,
+      steps: [{ name: 'xx', approverRole: 'marketing', condition: { field: 'price', op: 'gt', value: 1 } }],
+    }).expect(422);
+    await post(superadmin, { ...body, effectiveFrom: '2020-01-01T00:00:00+07:00' }).expect(422);
+    const proposed = (await post(superadmin, body).expect(201)).body as {
+      versionNo: number;
+      status: string;
+      approvalId: string;
+    };
+    expect(proposed).toMatchObject({ status: 'proposed', approvalId: expect.any(String) });
+    await post(superadmin, body).expect(409);
+
+    await as(ctx, superadmin)
+      .post(`/v1/admin/approvals/${proposed.approvalId}/actions/approve`, {})
+      .expect(403);
+    await as(ctx, checker).post(`/v1/admin/approvals/${proposed.approvalId}/actions/approve`, {}).expect(200);
+    const outcome = await ctx.prisma.domainEvent.findFirstOrThrow({
+      where: { type: 'approval.approved', aggregateId: proposed.approvalId },
+    });
+    await ctx.prisma.withTx((tx) =>
+      ctx.app.get(ApprovalPoliciesService).onApprovalOutcome(envelopeFromRow(outcome), tx),
+    );
+    const after = (
+      (await as(ctx, superadmin).get('/v1/admin/approval-policies').expect(200)).body as Policy[]
+    ).find((p) => p.key === 'referral_review')!;
+    expect(after).toMatchObject({
+      pending: null,
+      upcoming: expect.objectContaining({ versionNo: proposed.versionNo }),
+    });
+    expect(after.current).toEqual(policy.current);
   });
 });

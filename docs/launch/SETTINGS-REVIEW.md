@@ -106,6 +106,7 @@ Seeded per entity from the `SEED_ENTITY_*` environment variables — never from 
 | `price_proposal` | price_proposal | Partner Manager review: **partner_manager** | D-040, D-042 | Seed from D-040 — reviewed by the Partner team |
 | `partner_activation` | factory | Partner Manager approval: **partner_manager** | D-041, D-011 | Seed from D-041 |
 | `partner_pricing_mode_change` | factory | Partner Manager approval: **partner_manager** | D-042, D-167 | Seed from D-042 / D-167 — Partner Manager approves |
+| `approval_policy_change` | approval_policy_version | Superadmin approval: **superadmin** | D-063 | Seed from D-063 — Superadmin approves (B6.3 launch gap) |
 | `factory_tolerance_change` | factory_tolerance_policy_version | Superadmin approval: **superadmin** | D-173, D-021, D-063 | Seed from D-173 — Superadmin approves (proposed default) |
 | `factory_payout_policy_change` | factory_payout_policy_version | Superadmin approval: **superadmin** | D-173, D-022, D-063 | Seed from D-173 — Superadmin approves (proposed default) |
 | `customer_shipping_rate_change` | customer_shipping_rate_card_version | C-Level approval: **c_level** | D-013, D-063 | Chosen at B2.4 planning (2026-09-26) — no decision names the approver; C-Level (proposed default) |

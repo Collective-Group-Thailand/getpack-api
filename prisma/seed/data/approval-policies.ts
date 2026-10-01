@@ -119,6 +119,15 @@ export const APPROVAL_POLICIES: readonly PolicySeed[] = [
     steps: [{ name: 'Partner Manager approval', role: 'partner_manager' }],
   },
   {
+    key: 'approval_policy_change',
+    subjectType: 'approval_policy_version',
+    description:
+      'A new version of an approval policy (the approval matrix): a Superadmin proposes it, another Superadmin approves it; it applies from its date and the running version is never edited (D-063, ADR-0006)',
+    decisions: ['D-063'],
+    reason: 'Seed from D-063 — Superadmin approves (B6.3 launch gap)',
+    steps: [{ name: 'Superadmin approval', role: 'superadmin' }],
+  },
+  {
     key: 'factory_tolerance_change',
     subjectType: 'factory_tolerance_policy_version',
     description:

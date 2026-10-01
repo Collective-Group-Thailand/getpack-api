@@ -90,3 +90,40 @@ function asDecimal(value: unknown): Decimal | null {
   if (typeof value === 'string' && DECIMAL.test(value)) return new Decimal(value);
   return null;
 }
+
+const OPS: readonly ConditionOp[] = ['gt', 'gte', 'lt', 'lte', 'eq', 'ne', 'includes', 'excludes'];
+const FIELDS = new Set(['amount', 'pct', 'flags', 'entity']);
+
+/**
+ * Problems of a step condition proposed by staff (U-B0.3): the shape the engine evaluates, known fields
+ * (`amount`, `pct`, `flags`, `entity`, `payload.<path>`), known operators and a scalar value or a `ref` name.
+ * Empty = valid. `null` (always) is valid.
+ */
+export function conditionProblems(condition: unknown, path = 'condition', depth = 0): string[] {
+  if (condition === null) return [];
+  if (depth > 5) return [`${path}: nested too deep (at most 5 levels)`];
+  if (typeof condition !== 'object' || Array.isArray(condition)) return [`${path}: an object or null`];
+  const c = condition as Record<string, unknown>;
+  for (const group of ['all', 'any'] as const)
+    if (group in c) {
+      if (Object.keys(c).length !== 1) return [`${path}: \`${group}\` stands alone`];
+      const items = c[group];
+      if (!Array.isArray(items) || items.length === 0) return [`${path}.${group}: a non-empty list`];
+      return items.flatMap((inner, i) => conditionProblems(inner, `${path}.${group}.${i}`, depth + 1));
+    }
+  const problems: string[] = [];
+  const field = c['field'];
+  if (typeof field !== 'string' || !(FIELDS.has(field) || /^payload\.[A-Za-z0-9_.]+$/.test(field)))
+    problems.push(`${path}.field: amount, pct, flags, entity or payload.<path>`);
+  if (!OPS.includes(c['op'] as ConditionOp)) problems.push(`${path}.op: one of ${OPS.join(', ')}`);
+  const hasValue = 'value' in c;
+  const hasRef = 'ref' in c;
+  if (hasValue === hasRef) problems.push(`${path}: exactly one of value or ref`);
+  if (hasValue && !['string', 'number', 'boolean'].includes(typeof c['value']))
+    problems.push(`${path}.value: a string, number or boolean`);
+  if (hasRef && (typeof c['ref'] !== 'string' || !/^[a-z][a-z0-9_.]*$/.test(c['ref'])))
+    problems.push(`${path}.ref: a reference name`);
+  const extra = Object.keys(c).filter((k) => !['field', 'op', 'value', 'ref'].includes(k));
+  if (extra.length) problems.push(`${path}: unknown keys ${extra.join(', ')}`);
+  return problems;
+}

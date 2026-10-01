@@ -42,6 +42,7 @@ import { SHIPPING_ADMIN_CONTROLLERS } from '@modules/shipping/shipping.registry'
 import { TAX_ADMIN_CONTROLLERS } from '@modules/tax/tax.registry';
 import { TIMELINE_ADMIN_CONTROLLERS } from '@modules/timeline/timeline.registry';
 import { Module } from '@nestjs/common';
+import { AdminApprovalPoliciesController } from '@platform/approvals/approval-policies.controller';
 import { ApprovalDelegationsController, ApprovalsController } from '@platform/approvals/approvals.controller';
 import { AuditLogsController } from '@platform/audit/audit.controller';
 import { AuditQueryService } from '@platform/audit/audit-query.service';
@@ -83,6 +84,7 @@ import { SettingsAdminModule } from '@platform/settings/settings-admin.module';
     OutboxAdminController,
     ApprovalsController,
     ApprovalDelegationsController,
+    AdminApprovalPoliciesController,
     SettingsController,
     FeatureFlagsController,
     NotificationTemplatesController,
