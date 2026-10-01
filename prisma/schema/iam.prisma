@@ -556,6 +556,7 @@ model User {
   brandAssetsRemoved         CompanyBrandAsset[]     @relation("CompanyBrandAssetRemovedBy")
   prepressOrders             Order[]                 @relation("OrderPrepressAssignee")
   shipmentExceptionsResolved Shipment[]              @relation("ShipmentExceptionResolvedBy")
+  savedViews                 SavedView[]             @relation("SavedViewOwner")
   podReviews                 ProofOfDeliveryReview[] @relation("ProofOfDeliveryReviewedBy")
   conversationMessagesSent   ConversationMessage[]   @relation("ConversationMessageSender")
   // --- end Fulfilment B4.6
@@ -1070,4 +1071,28 @@ model PrivacyRequest {
   @@index([status, dueAt], map: "ix_privacy_requests__status__due_at")
   @@index([exportFileId], map: "ix_privacy_requests__export_file_id")
   @@map("privacy_requests")
+}
+
+/// A staff member's saved list view (U-B0.3): the list's URL parameters, optional columns, optionally shared.
+model SavedView {
+  id          BigInt   @id(map: "pk_saved_views") @default(autoincrement())
+  publicId    String   @unique(map: "ux_saved_views__public_id") @default(dbgenerated("uuidv7()")) @map("public_id") @db.Uuid
+  ownerUserId BigInt   @map("owner_user_id")
+  /// The frontend's list key, e.g. `orders` (format-checked; the frontend owns the list names).
+  resource    String
+  name        String
+  /// The list's URL parameters verbatim (string → string).
+  query       Json
+  columns     String[]
+  /// False when the view keeps the list's default columns.
+  hasColumns  Boolean  @default(false) @map("has_columns")
+  shared      Boolean  @default(false)
+  createdAt   DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt   DateTime @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  owner User @relation("SavedViewOwner", fields: [ownerUserId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_saved_views__owner_user_id")
+
+  @@unique([ownerUserId, resource, name], map: "ux_saved_views__owner_user_id__resource__name")
+  @@index([resource, shared], map: "ix_saved_views__resource__shared")
+  @@map("saved_views")
 }

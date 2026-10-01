@@ -591,6 +591,7 @@ model Quote {
   @@index([supersededById], map: "ix_quotes__superseded_by_id")
   @@index([createdAt], map: "ix_quotes__created_at")
   @@index([convertedAt], map: "ix_quotes__converted_at", where: raw("(converted_at IS NOT NULL)"))
+  @@index([quoteCode(ops: raw("gin_trgm_ops"))], type: Gin, map: "ix_quotes__quote_code_trgm")
   @@map("quotes")
 }
 
@@ -745,6 +746,7 @@ model Rfq {
   @@index([createdById], map: "ix_rfqs__created_by")
   @@index([submittedAt], map: "ix_rfqs__submitted_at")
   @@index([closedAt], map: "ix_rfqs__closed_at", where: raw("(closed_at IS NOT NULL)"))
+  @@index([rfqCode(ops: raw("gin_trgm_ops"))], type: Gin, map: "ix_rfqs__rfq_code_trgm")
   @@map("rfqs")
 }
 

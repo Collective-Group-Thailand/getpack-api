@@ -119,4 +119,100 @@ describe('admin platform reads (e2e, U-B0.3)', () => {
       .get(`/v1/admin/ops/web-vitals?date=${day}`)
       .expect(403);
   });
+
+  it('saves list views per staff member, shares them, and lets only the owner delete (U-B0.3)', async () => {
+    const cs = await staffToken(ctx, 'cs');
+    const lead = await staffToken(ctx, 'cs_lead');
+    const resource = `orders-${ctx.run}`;
+    const mine = await as(ctx, cs)
+      .post('/v1/admin/saved-views', { resource, name: 'รอชำระ', query: { status: 'waiting_payment' } })
+      .expect(201);
+    expect(mine.body).toMatchObject({
+      resource,
+      columns: null,
+      shared: false,
+      owner: { id: expect.any(String) },
+    });
+    await as(ctx, cs).post('/v1/admin/saved-views', { resource, name: 'รอชำระ', query: {} }).expect(409);
+    const shared = await as(ctx, cs)
+      .post('/v1/admin/saved-views', {
+        resource,
+        name: 'ทีม',
+        query: { status: 'in_production' },
+        columns: ['orderCode', 'status'],
+        shared: true,
+      })
+      .expect(201);
+    await as(ctx, cs)
+      .post('/v1/admin/saved-views', { resource: 'Orders!', name: 'x', query: {} })
+      .expect(422);
+    await as(ctx, cs)
+      .post('/v1/admin/saved-views', { resource, name: 'ยาว', query: { q: 'x'.repeat(501) } })
+      .expect(422);
+
+    const forLead = await as(ctx, lead).get(`/v1/admin/saved-views?resource=${resource}`).expect(200);
+    expect((forLead.body.data as { id: string }[]).map((v) => v.id)).toEqual([shared.body.id]);
+    await as(ctx, lead)
+      .delete(`/v1/admin/saved-views/${shared.body.id as string}`)
+      .expect(403);
+    await as(ctx, lead)
+      .delete(`/v1/admin/saved-views/${mine.body.id as string}`)
+      .expect(404);
+    await as(ctx, cs)
+      .delete(`/v1/admin/saved-views/${shared.body.id as string}`)
+      .expect(204);
+    const left = await as(ctx, cs).get(`/v1/admin/saved-views?resource=${resource}`).expect(200);
+    expect(left.body.meta.total).toBe(1);
+  });
+
+  it('searches by code within the types I may read, and audits a look-up by e-mail (U-B0.3)', async () => {
+    const admin = await staffToken(ctx, 'admin');
+    const code = `SRCH${ctx.run}`;
+    const vendor = await ctx.prisma.vendor.create({
+      data: {
+        kind: 'factory',
+        legalName: `Search ${code} (fake)`,
+        juristicType: 'company',
+        taxId: '0000000000019',
+      },
+    });
+    const factory = await ctx.prisma.factory.create({
+      data: {
+        code,
+        vendorId: vendor.id,
+        legalName: `Search ${code} (fake)`,
+        juristicType: 'company',
+        taxId: '0000000000019',
+        branchCode: '00003',
+        status: 'applied',
+      },
+    });
+    const found = (
+      await as(ctx, admin)
+        .get(`/v1/admin/search?q=${encodeURIComponent(factory.code)}`)
+        .expect(200)
+    ).body as { data: { type: string; id: string }[] };
+    expect(found.data).toEqual(
+      expect.arrayContaining([expect.objectContaining({ type: 'factory', id: factory.publicId })]),
+    );
+    // Marketing reads no factories: the type is left out.
+    const marketing = await staffToken(ctx, 'marketing');
+    const none = (
+      await as(ctx, marketing)
+        .get(`/v1/admin/search?q=${encodeURIComponent(factory.code)}`)
+        .expect(200)
+    ).body as { data: { type: string }[] };
+    expect(none.data.some((r) => r.type === 'factory')).toBe(false);
+
+    const before = await ctx.prisma.auditLog.count({ where: { action: 'admin_search.personal_data' } });
+    const byEmail = (await as(ctx, admin).get('/v1/admin/search?q=finance@example.invalid').expect(200))
+      .body as {
+      data: { type: string; title: string }[];
+    };
+    expect(byEmail.data).toEqual([expect.objectContaining({ type: 'user' })]);
+    expect(await ctx.prisma.auditLog.count({ where: { action: 'admin_search.personal_data' } })).toBe(
+      before + 1,
+    );
+    await as(ctx, admin).get('/v1/admin/search?q=x').expect(422);
+  });
 });

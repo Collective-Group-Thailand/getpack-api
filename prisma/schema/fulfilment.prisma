@@ -1205,6 +1205,7 @@ model Shipment {
   @@index([exceptionResolvedById], map: "ix_shipments__exception_resolved_by")
   @@index([pickedUpAt], map: "ix_shipments__picked_up_at", where: raw("(picked_up_at IS NOT NULL)"))
   @@index([deliveredAt], map: "ix_shipments__delivered_at", where: raw("(delivered_at IS NOT NULL)"))
+  @@index([shipmentNo(ops: raw("gin_trgm_ops"))], type: Gin, map: "ix_shipments__shipment_no_trgm")
   @@map("shipments")
 }
 
@@ -1521,6 +1522,7 @@ model Claim {
   @@index([decidedById], map: "ix_claims__decided_by")
   @@index([createdById], map: "ix_claims__created_by")
   @@index([submittedAt], map: "ix_claims__submitted_at")
+  @@index([claimNo(ops: raw("gin_trgm_ops"))], type: Gin, map: "ix_claims__claim_no_trgm")
   @@map("claims")
 }
 

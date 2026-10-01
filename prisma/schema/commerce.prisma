@@ -204,6 +204,7 @@ model CustomerProfile {
   @@index([createdById], map: "ix_customer_profiles__created_by")
   @@index([updatedById], map: "ix_customer_profiles__updated_by")
   @@index([referredByUserId], map: "ix_customer_profiles__referred_by_user_id")
+  @@index([customerCode(ops: raw("gin_trgm_ops"))], type: Gin, map: "ix_customer_profiles__customer_code_trgm")
   @@map("customer_profiles")
 }
 
@@ -516,6 +517,7 @@ model OrderGroup {
   @@index([updatedById], map: "ix_order_groups__updated_by")
   @@index([expiresAt], map: "ix_order_groups__expires_at", where: raw("(status = 'waiting_payment'::order_group_status)"))
   @@index([placedAt], map: "ix_order_groups__placed_at")
+  @@index([groupCode(ops: raw("gin_trgm_ops"))], type: Gin, map: "ix_order_groups__group_code_trgm")
   @@map("order_groups")
 }
 
@@ -682,6 +684,7 @@ model Order {
   @@index([prepressAssigneeId], map: "ix_orders__prepress_assignee_id")
   @@index([reuseArtworkProofId], map: "ix_orders__reuse_artwork_proof_id")
   @@index([shippedAt], map: "ix_orders__shipped_at", where: raw("(shipped_at IS NOT NULL)"))
+  @@index([orderCode(ops: raw("gin_trgm_ops"))], type: Gin, map: "ix_orders__order_code_trgm")
   @@map("orders")
 }
 
@@ -1961,6 +1964,7 @@ model Company {
   @@index([appliedById], map: "ix_companies__applied_by")
   @@index([kycReviewedById], map: "ix_companies__kyc_reviewed_by")
   @@index([updatedById], map: "ix_companies__updated_by")
+  @@index([legalName(ops: raw("gin_trgm_ops"))], type: Gin, map: "ix_companies__legal_name_trgm")
   @@map("companies")
 }
 

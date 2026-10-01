@@ -761,6 +761,11 @@ const CHECKS = [
   'ck_shipments__exception_resolution',
   'ck_shipments__split_from',
   'ck_proof_of_delivery_reviews__note',
+  // --- U-B0.3 saved views
+  'ck_saved_views__resource',
+  'ck_saved_views__name',
+  'ck_saved_views__query',
+  'ck_saved_views__columns',
 ];
 
 const TRIGGERS = [
@@ -1112,6 +1117,16 @@ const TRIGRAM_INDEXES = [
   'ix_stock_products__name_en_trgm',
   'ix_stock_products__name_th_trgm',
   'ix_stock_products__sku_trgm',
+  // --- U-B0.3 admin search by code
+  'ix_claims__claim_no_trgm',
+  'ix_companies__legal_name_trgm',
+  'ix_customer_profiles__customer_code_trgm',
+  'ix_factories__legal_name_trgm',
+  'ix_order_groups__group_code_trgm',
+  'ix_orders__order_code_trgm',
+  'ix_quotes__quote_code_trgm',
+  'ix_rfqs__rfq_code_trgm',
+  'ix_shipments__shipment_no_trgm',
 ];
 
 /** Exclusion constraints (non-overlapping bands, B2.3+). */

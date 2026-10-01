@@ -391,6 +391,7 @@ model Factory {
   @@unique([taxId, branchCode], map: "ux_factories__tax_id__branch_code")
   @@index([status], map: "ix_factories__status")
   @@index([calendarId], map: "ix_factories__calendar_id")
+  @@index([legalName(ops: raw("gin_trgm_ops"))], type: Gin, map: "ix_factories__legal_name_trgm")
   @@map("factories")
 }
 
