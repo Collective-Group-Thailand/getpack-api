@@ -6,6 +6,10 @@ import { type MigratedDatabase, startMigratedDatabase, stopMigratedDatabase } fr
  */
 
 const CHECKS = [
+  'ck_attachments__note',
+  'ck_factory_change_requests__answered',
+  'ck_factory_change_requests__message',
+  'ck_factory_change_requests__site_visit',
   'ck_billing_statements__disputed_line_nos',
   'ck_activity_logs__actor',
   'ck_approval_delegations__distinct',

@@ -333,6 +333,8 @@ model User {
   factoryKycDocumentsVerified              FactoryKycDocument[]               @relation("FactoryKycDocumentVerifiedBy")
   factoryKycDocumentsCreated               FactoryKycDocument[]               @relation("FactoryKycDocumentCreatedBy")
   siteVisitsRecorded                       SiteVisit[]                        @relation("SiteVisitRecordedBy")
+  factoryChangeRequestsResponded           FactoryChangeRequest[]             @relation("FactoryChangeRequestRespondedBy")
+  factoryChangeRequestsCreated             FactoryChangeRequest[]             @relation("FactoryChangeRequestCreatedBy")
   siteVisitInspectors                      SiteVisitInspector[]               @relation("SiteVisitInspectorUser")
   agreementTemplatesCreated                AgreementTemplate[]                @relation("AgreementTemplateCreatedBy")
   agreementTemplatesUpdated                AgreementTemplate[]                @relation("AgreementTemplateUpdatedBy")

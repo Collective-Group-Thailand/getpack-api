@@ -903,6 +903,8 @@ model Attachment {
   role              String
   sort              Int               @default(0) @db.SmallInt
   customerShareable Boolean           @default(false) @map("customer_shareable")
+  /// What the uploader says the file shows (price-proposal evidence, U-B0.3).
+  note              String?
   createdAt         DateTime          @default(now()) @map("created_at") @db.Timestamptz(6)
   createdById       BigInt?           @map("created_by")
 

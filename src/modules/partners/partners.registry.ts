@@ -21,6 +21,11 @@ import {
   PartnerPriceProposalsController,
 } from './pricing/pricing.controller';
 import { AdminCoverageController } from './quote-path/quote-path.controller';
+import {
+  AdminFactoryChangeRequestsController,
+  PartnerChangeRequestsController,
+  PartnerFactorySelfServiceController,
+} from './self-service/self-service.controller';
 import { ZonePostcodesController, zones, zoneSchemes } from './zones/zones';
 
 /** `/v1/admin/*` controllers of the partners context. */
@@ -39,6 +44,7 @@ export const PARTNERS_ADMIN_CONTROLLERS: Type<unknown>[] = [
   AdminPriceSuggestionsController,
   IndexSeriesController,
   AdminCoverageController,
+  AdminFactoryChangeRequestsController,
 ];
 
 /** `/v1/partner/*` controllers of the partners context (own factory only, D-044). */
@@ -55,4 +61,6 @@ export const PARTNERS_PARTNER_CONTROLLERS: Type<unknown>[] = [
   }),
   PartnerPriceListsController,
   PartnerPriceProposalsController,
+  PartnerFactorySelfServiceController,
+  PartnerChangeRequestsController,
 ];

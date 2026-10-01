@@ -329,6 +329,7 @@ model Factory {
   onboardingSteps      FactoryOnboardingStep[]
   kycDocuments         FactoryKycDocument[]
   siteVisits           SiteVisit[]
+  changeRequests       FactoryChangeRequest[]
   agreementAcceptances AgreementAcceptance[]
   capabilities         FactoryCapability[]
   capabilityItems      FactoryCapabilityItem[]
@@ -2248,4 +2249,61 @@ model PlCorrugateAssemblyPrice {
   @@index([printTypeId], map: "ix_pl_corrugate_assembly_prices__print_type_id")
   @@index([assemblyId], map: "ix_pl_corrugate_assembly_prices__assembly_id")
   @@map("pl_corrugate_assembly_prices")
+}
+
+// ------------------------------------------------------------------------------------------------
+// Factory change requests (U-B0.3, A-69): a factory asks the Partner team to change something only
+// staff may change (capability, capacity, zones, tolerance, tier, pricing arrangement, payout policy)
+// or to book a site visit; staff answer it. No business value changes through the request itself.
+// ------------------------------------------------------------------------------------------------
+
+enum FactoryChangeRequestTopic {
+  capability
+  capacity
+  delivery_zones
+  tolerance
+  participation_tier
+  pricing_arrangement
+  payout_policy
+  site_visit
+  other
+
+  @@map("factory_change_request_topic")
+}
+
+enum FactoryChangeRequestStatus {
+  open
+  in_progress
+  done
+  declined
+
+  @@map("factory_change_request_status")
+}
+
+model FactoryChangeRequest {
+  id             BigInt                     @id(map: "pk_factory_change_requests") @default(autoincrement())
+  publicId       String                     @unique(map: "ux_factory_change_requests__public_id") @default(dbgenerated("uuidv7()")) @map("public_id") @db.Uuid
+  factoryId      BigInt                     @map("factory_id")
+  topic          FactoryChangeRequestTopic
+  message        String
+  /// Preferred days (site visits need at least one future day).
+  preferredDates DateTime[]                 @default([]) @map("preferred_dates") @db.Date
+  status         FactoryChangeRequestStatus @default(open)
+  response       String?
+  respondedAt    DateTime?                  @map("responded_at") @db.Timestamptz(6)
+  respondedById  BigInt?                    @map("responded_by")
+  createdAt      DateTime                   @default(now()) @map("created_at") @db.Timestamptz(6)
+  createdById    BigInt                     @map("created_by")
+  updatedAt      DateTime                   @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+  rowVersion     Int                        @default(1) @map("row_version")
+
+  factory     Factory @relation(fields: [factoryId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_factory_change_requests__factory_id")
+  respondedBy User?   @relation("FactoryChangeRequestRespondedBy", fields: [respondedById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_factory_change_requests__responded_by")
+  createdBy   User    @relation("FactoryChangeRequestCreatedBy", fields: [createdById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_factory_change_requests__created_by")
+
+  @@index([factoryId, status], map: "ix_factory_change_requests__factory_id__status")
+  @@index([status, createdAt], map: "ix_factory_change_requests__status__created_at")
+  @@index([respondedById], map: "ix_factory_change_requests__responded_by")
+  @@index([createdById], map: "ix_factory_change_requests__created_by")
+  @@map("factory_change_requests")
 }

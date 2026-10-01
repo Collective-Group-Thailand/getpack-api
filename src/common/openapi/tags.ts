@@ -95,6 +95,10 @@ export const API_TAGS: Record<string, string> = {
     'My factory’s jobs: accept / reject, milestones with photos and quantities, QC, issues, capacity and scorecard (D-074…D-076, D-142, D-155).',
   'admin.milestoneRoutes': 'Milestone routes per product type and variant, versioned (D-075).',
   'partner.factoryUsers': 'The users of my factory and their factory roles (factory owner, D-140).',
+  'partner.changeRequests':
+    'Requests to the Partner team for changes only staff make, or a site visit; with the team’s answer (U-B0.3).',
+  'admin.factoryChangeRequests':
+    'The Partner team’s queue of factory change requests and their answers (U-B0.3).',
   'admin.inspections': 'Packio risk-based inspections (D-076, ISO 2859-1) and factory scorecards (D-155).',
   'partner.logistics':
     'My factory’s shipments: create from completed jobs, labels and packing lists, dispatch behind the shipping gate, delivery steps and proof of delivery (D-013, D-142).',

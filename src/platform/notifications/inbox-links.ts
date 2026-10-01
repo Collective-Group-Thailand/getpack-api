@@ -33,6 +33,7 @@ const LINKS: Record<InboxSurface, Record<string, Link>> = {
     claim: (id) => `/claims/${id}`,
     billing_statement: (id) => `/billing/${id}`,
     price_proposal: (id) => `/prices/proposals/${id}`,
+    factory_change_request: () => '/requests',
   },
 };
 

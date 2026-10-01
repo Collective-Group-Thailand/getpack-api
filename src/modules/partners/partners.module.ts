@@ -19,6 +19,9 @@ import { PriceSimulationsService } from './pricing/price-simulations.service';
 import { PriceSuggestionsService } from './pricing/price-suggestions.service';
 import { SuggestionEngine } from './pricing/suggestion-engine';
 import { QuotePathService } from './quote-path/quote-path.service';
+import { FactoryChangeRequestsService } from './self-service/change-requests.service';
+import { ProposalEvidenceService } from './self-service/proposal-evidence.service';
+import { FactorySelfServiceService } from './self-service/self-service.service';
 import { SiteVisitsService } from './site-visits/site-visits.service';
 
 const SERVICES = [
@@ -40,6 +43,9 @@ const SERVICES = [
   PriceSuggestionsService,
   PriceSimulationsService,
   QuotePathService,
+  FactoryChangeRequestsService,
+  ProposalEvidenceService,
+  FactorySelfServiceService,
   LookupHasher,
 ];
 

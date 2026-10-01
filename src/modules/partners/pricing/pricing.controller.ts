@@ -12,6 +12,12 @@ import { ApiBody, ApiParam, OmitType } from '@nestjs/swagger';
 
 import { ReasonBodyDto } from '../factories/factories.dto';
 import { staffOrPartner } from '../partner-actor';
+import { ProposalEvidenceService } from '../self-service/proposal-evidence.service';
+import {
+  AddProposalEvidenceDto,
+  PROPOSAL_EVIDENCE_EXAMPLE,
+  ProposalEvidenceDto,
+} from '../self-service/self-service.dto';
 import { PriceListsService } from './price-lists.service';
 import { PriceProposalsService } from './price-proposals.service';
 import { PriceSimulationsService } from './price-simulations.service';
@@ -156,7 +162,10 @@ export class AdminPriceListsController {
 @ApiSurface('admin', 'priceProposals')
 @Controller()
 export class AdminPriceProposalsController {
-  constructor(private readonly proposals: PriceProposalsService) {}
+  constructor(
+    private readonly proposals: PriceProposalsService,
+    private readonly evidence: ProposalEvidenceService,
+  ) {}
 
   @Get('price-proposals')
   @Can('partners.read')
@@ -193,6 +202,27 @@ export class AdminPriceProposalsController {
   @ApiStandardErrors('http.not_found', 'validation.failed')
   get(@CurrentActor() actor: Actor, @Param('proposalId', ParseUUIDPipe) proposalId: string) {
     return this.proposals.get(actor, proposalId, { side: 'staff' });
+  }
+
+  @Get('price-proposals/:proposalId/evidence')
+  @Can('price_proposals.review')
+  @proposalParam
+  @ApiEndpoint({
+    id: 'admin.priceProposals.listEvidence',
+    summary: 'Evidence attached to a price proposal',
+    description:
+      'Files the factory attached to support its proposal (supplier quotations, index prints) with its notes; ' +
+      'download through the files API (U-B0.3, D-040).',
+    implements: GOVERNANCE,
+  })
+  @ApiSuccess(200, {
+    description: 'Evidence',
+    type: [ProposalEvidenceDto],
+    example: [PROPOSAL_EVIDENCE_EXAMPLE],
+  })
+  @ApiStandardErrors('http.not_found', 'validation.failed')
+  listEvidence(@CurrentActor() actor: Actor, @Param('proposalId', ParseUUIDPipe) proposalId: string) {
+    return this.evidence.list(actor, proposalId);
   }
 
   @Post('factories/:factoryId/price-proposals')
@@ -459,7 +489,75 @@ export class PartnerPriceListsController {
 @ApiSurface('partner', 'priceProposals')
 @Controller('factories/:factoryId/price-proposals')
 export class PartnerPriceProposalsController {
-  constructor(private readonly proposals: PriceProposalsService) {}
+  constructor(
+    private readonly proposals: PriceProposalsService,
+    private readonly evidence: ProposalEvidenceService,
+  ) {}
+
+  @Get(':proposalId/evidence')
+  @Can('factory_prices.read')
+  @factoryParam
+  @proposalParam
+  @ApiEndpoint({
+    id: 'partner.priceProposals.listEvidence',
+    summary: 'Evidence on one of my proposals',
+    description: 'Files my factory attached to support the proposal, with their notes (U-B0.3, D-040).',
+    implements: GOVERNANCE,
+  })
+  @ApiSuccess(200, {
+    description: 'Evidence',
+    type: [ProposalEvidenceDto],
+    example: [PROPOSAL_EVIDENCE_EXAMPLE],
+  })
+  @ApiStandardErrors('http.not_found', 'validation.failed')
+  listEvidence(
+    @CurrentActor() actor: Actor,
+    @Param('factoryId', ParseUUIDPipe) factoryId: string,
+    @Param('proposalId', ParseUUIDPipe) proposalId: string,
+  ) {
+    return this.evidence.list(actor, proposalId, factoryId);
+  }
+
+  @Post(':proposalId/evidence')
+  @Can('factory_prices.propose')
+  @Idempotent()
+  @factoryParam
+  @proposalParam
+  @ApiEndpoint({
+    id: 'partner.priceProposals.addEvidence',
+    summary: 'Attach evidence to one of my proposals',
+    description:
+      'A file I uploaded (purpose `document` or `evidence`, scan not infected) with a note of up to 500 characters, ' +
+      'while the proposal is open; 409 `partners.proposal_closed` once decided. Audited, on the factory activity ' +
+      '(U-B0.3, D-040). Requires `Idempotency-Key`.',
+    implements: GOVERNANCE,
+  })
+  @ApiBody({
+    type: AddProposalEvidenceDto,
+    examples: { default: { value: { fileId: PRICING_IDS.factory, note: 'ใบเสนอราคากระดาษจากผู้ขาย' } } },
+  })
+  @ApiSuccess(201, {
+    description: 'The proposal’s evidence',
+    type: [ProposalEvidenceDto],
+    example: [PROPOSAL_EVIDENCE_EXAMPLE],
+  })
+  @ApiStandardErrors(
+    'http.bad_request',
+    'http.malformed_json',
+    'http.not_found',
+    'validation.failed',
+    'http.conflict',
+    'partners.proposal_closed',
+    'artwork.file_not_usable',
+  )
+  addEvidence(
+    @CurrentActor() actor: Actor,
+    @Param('factoryId', ParseUUIDPipe) factoryId: string,
+    @Param('proposalId', ParseUUIDPipe) proposalId: string,
+    @Body() body: AddProposalEvidenceDto,
+  ) {
+    return this.evidence.add(staffOrPartner(actor), factoryId, proposalId, body);
+  }
 
   @Get()
   @Can('factory_prices.read')

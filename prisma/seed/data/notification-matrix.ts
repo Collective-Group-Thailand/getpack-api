@@ -483,6 +483,20 @@ const ROWS: Row[] = [
     'Partner team: price proposal (D-040)',
   ),
   T(
+    'factory_change_request.created',
+    'partner',
+    ['in_app'],
+    {
+      th: 'โรงงาน {{payload.factoryCode}} ขอเปลี่ยนแปลงข้อมูล',
+      en: 'Factory {{payload.factoryCode}} asks for a change',
+    },
+    {
+      th: 'โรงงาน {{payload.factoryCode}} ส่งคำขอเรื่อง {{payload.topic}} รอทีมพาร์ทเนอร์ตอบ',
+      en: 'Factory {{payload.factoryCode}} sent a {{payload.topic}} request for the Partner team',
+    },
+    'Partner team: a factory change request (U-B0.3)',
+  ),
+  T(
     'shipment.carrier_requested',
     'logistics',
     ['in_app', 'line'],
@@ -540,6 +554,16 @@ const ROWS: Row[] = [
   ),
 
   // --- factories -------------------------------------------------------------------------------------------
+  F(
+    'factory_change_request.answered',
+    ['in_app', 'email'],
+    { th: 'ทีมพาร์ทเนอร์ตอบคำขอของคุณ', en: 'The Partner team answered your request' },
+    {
+      th: 'คำขอเรื่อง {{payload.topic}} มีสถานะ {{payload.status}} ดูคำตอบได้ในพื้นที่พาร์ทเนอร์',
+      en: 'Your {{payload.topic}} request is {{payload.status}}; read the answer in the partner zone',
+    },
+    'Factory: the Partner team answered a change request (U-B0.3)',
+  ),
   F(
     'rfq.consultation_requested',
     ['in_app', 'email', 'line'],
