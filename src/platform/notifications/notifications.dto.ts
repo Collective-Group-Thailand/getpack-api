@@ -404,6 +404,26 @@ export class InboxItemDto {
 
   @ApiProperty({ type: String, format: 'date-time', nullable: true, example: null })
   readAt!: string | null;
+
+  @ApiProperty({
+    type: String,
+    nullable: true,
+    example: '/approvals/0192f3a0-7c1e-7d2a-9b1f-00000000e002',
+    description: 'Page of the zone the item is about (zone-relative path); null when the zone has none',
+  })
+  url!: string | null;
+}
+
+export class InboxMetaDto {
+  @ApiProperty({ type: String, nullable: true, example: null, description: 'Opaque; null on the last page' })
+  nextCursor!: string | null;
+
+  @ApiProperty({
+    type: 'integer',
+    example: 3,
+    description: 'All my unread in-app notifications, not only this page',
+  })
+  unreadCount!: number;
 }
 
 export const INBOX_EXAMPLE: InboxItemDto = {
@@ -413,6 +433,73 @@ export const INBOX_EXAMPLE: InboxItemDto = {
   body: 'คำขอ discount_memo รอการอนุมัติของคุณ',
   createdAt: '2026-09-23T14:05:00+07:00',
   readAt: null,
+  url: '/approvals/0192f3a0-7c1e-7d2a-9b1f-00000000e002',
+};
+
+export class InboxPageDto {
+  @ApiProperty({ type: [InboxItemDto] })
+  data!: InboxItemDto[];
+
+  @ApiProperty({ type: InboxMetaDto })
+  meta!: InboxMetaDto;
+}
+
+/** Channels and categories a factory user chooses (D-143, D-231): no marketing to factories. */
+export const PARTNER_CHANNELS = ['web_push', 'line', 'email'] as const;
+export const PARTNER_CATEGORIES = ['transactional', 'security'] as const;
+
+export class PartnerNotificationChoiceDto {
+  @ApiProperty({ enum: PARTNER_CHANNELS, enumName: 'PartnerNotificationChannel', example: 'line' })
+  @IsIn(PARTNER_CHANNELS)
+  channel!: (typeof PARTNER_CHANNELS)[number];
+
+  @ApiProperty({
+    enum: PARTNER_CATEGORIES,
+    enumName: 'PartnerNotificationCategory',
+    example: 'transactional',
+  })
+  @IsIn(PARTNER_CATEGORIES)
+  category!: (typeof PARTNER_CATEGORIES)[number];
+
+  @ApiProperty({ example: true })
+  @IsBoolean()
+  enabled!: boolean;
+}
+
+export class PartnerNotificationPreferenceDto extends PartnerNotificationChoiceDto {
+  @ApiProperty({
+    example: false,
+    description: 'Cannot be switched off (e-mail of jobs and shipments, security)',
+  })
+  locked!: boolean;
+}
+
+export class PartnerNotificationPreferencesDto {
+  @ApiProperty({ type: [PartnerNotificationPreferenceDto] })
+  preferences!: PartnerNotificationPreferenceDto[];
+
+  @ApiProperty({ example: false, description: 'A LINE account is linked (LINE messages need it)' })
+  lineLinked!: boolean;
+}
+
+export class SetPartnerNotificationPreferencesDto {
+  @ApiProperty({ type: [PartnerNotificationChoiceDto] })
+  @ArrayMaxSize(6)
+  @ValidateNested({ each: true })
+  @Type(() => PartnerNotificationChoiceDto)
+  preferences!: PartnerNotificationChoiceDto[];
+}
+
+export const PARTNER_PREFERENCES_EXAMPLE: PartnerNotificationPreferencesDto = {
+  preferences: [
+    { channel: 'web_push', category: 'transactional', enabled: true, locked: false },
+    { channel: 'line', category: 'transactional', enabled: false, locked: false },
+    { channel: 'email', category: 'transactional', enabled: true, locked: true },
+    { channel: 'web_push', category: 'security', enabled: true, locked: true },
+    { channel: 'line', category: 'security', enabled: true, locked: true },
+    { channel: 'email', category: 'security', enabled: true, locked: true },
+  ],
+  lineLinked: false,
 };
 
 // --- consent purposes (admin) -----------------------------------------------------------------

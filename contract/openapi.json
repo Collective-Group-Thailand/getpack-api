@@ -29950,6 +29950,14 @@
               "string",
               "null"
             ]
+          },
+          "url": {
+            "description": "Page of the zone the item is about (zone-relative path); null when the zone has none",
+            "example": "/approvals/0192f3a0-7c1e-7d2a-9b1f-00000000e002",
+            "type": [
+              "string",
+              "null"
+            ]
           }
         },
         "required": [
@@ -29958,7 +29966,48 @@
           "title",
           "body",
           "createdAt",
-          "readAt"
+          "readAt",
+          "url"
+        ],
+        "type": "object"
+      },
+      "InboxMetaDto": {
+        "properties": {
+          "nextCursor": {
+            "description": "Opaque; null on the last page",
+            "example": null,
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "unreadCount": {
+            "description": "All my unread in-app notifications, not only this page",
+            "example": 3,
+            "type": "integer"
+          }
+        },
+        "required": [
+          "nextCursor",
+          "unreadCount"
+        ],
+        "type": "object"
+      },
+      "InboxPageDto": {
+        "properties": {
+          "data": {
+            "items": {
+              "$ref": "#/components/schemas/InboxItemDto"
+            },
+            "type": "array"
+          },
+          "meta": {
+            "$ref": "#/components/schemas/InboxMetaDto"
+          }
+        },
+        "required": [
+          "data",
+          "meta"
         ],
         "type": "object"
       },
@@ -35286,6 +35335,107 @@
           "roles",
           "permissions",
           "factories"
+        ],
+        "type": "object"
+      },
+      "PartnerNotificationCategory": {
+        "enum": [
+          "transactional",
+          "security"
+        ],
+        "type": "string"
+      },
+      "PartnerNotificationChannel": {
+        "enum": [
+          "web_push",
+          "line",
+          "email"
+        ],
+        "type": "string"
+      },
+      "PartnerNotificationChoiceDto": {
+        "properties": {
+          "category": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/PartnerNotificationCategory"
+              }
+            ],
+            "example": "transactional"
+          },
+          "channel": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/PartnerNotificationChannel"
+              }
+            ],
+            "example": "line"
+          },
+          "enabled": {
+            "example": true,
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "channel",
+          "category",
+          "enabled"
+        ],
+        "type": "object"
+      },
+      "PartnerNotificationPreferenceDto": {
+        "properties": {
+          "category": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/PartnerNotificationCategory"
+              }
+            ],
+            "example": "transactional"
+          },
+          "channel": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/PartnerNotificationChannel"
+              }
+            ],
+            "example": "line"
+          },
+          "enabled": {
+            "example": true,
+            "type": "boolean"
+          },
+          "locked": {
+            "description": "Cannot be switched off (e-mail of jobs and shipments, security)",
+            "example": false,
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "channel",
+          "category",
+          "enabled",
+          "locked"
+        ],
+        "type": "object"
+      },
+      "PartnerNotificationPreferencesDto": {
+        "properties": {
+          "lineLinked": {
+            "description": "A LINE account is linked (LINE messages need it)",
+            "example": false,
+            "type": "boolean"
+          },
+          "preferences": {
+            "items": {
+              "$ref": "#/components/schemas/PartnerNotificationPreferenceDto"
+            },
+            "type": "array"
+          }
+        },
+        "required": [
+          "preferences",
+          "lineLinked"
         ],
         "type": "object"
       },
@@ -46558,6 +46708,14 @@
         ],
         "type": "object"
       },
+      "RumZone": {
+        "enum": [
+          "store",
+          "admin",
+          "partner"
+        ],
+        "type": "string"
+      },
       "RunBankAccountDto": {
         "properties": {
           "accountNoLast4": {
@@ -48070,6 +48228,21 @@
           "reason",
           "productTypeId",
           "tier"
+        ],
+        "type": "object"
+      },
+      "SetPartnerNotificationPreferencesDto": {
+        "properties": {
+          "preferences": {
+            "items": {
+              "$ref": "#/components/schemas/PartnerNotificationChoiceDto"
+            },
+            "maxItems": 6,
+            "type": "array"
+          }
+        },
+        "required": [
+          "preferences"
         ],
         "type": "object"
       },
@@ -60643,6 +60816,128 @@
         "required": [
           "id",
           "vapidPublicKey"
+        ],
+        "type": "object"
+      },
+      "WebVitalDto": {
+        "properties": {
+          "id": {
+            "description": "The sample id of the web-vitals library",
+            "example": "v4-169615-123",
+            "maxLength": 100,
+            "type": "string"
+          },
+          "name": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/WebVitalName"
+              }
+            ],
+            "example": "LCP"
+          },
+          "rating": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/WebVitalRating"
+              }
+            ],
+            "example": "good"
+          },
+          "route": {
+            "description": "Route pattern, never a real path (no ids, codes or tokens — 422 otherwise)",
+            "example": "/orders/[orderId]",
+            "maxLength": 200,
+            "pattern": "^\\/",
+            "type": "string"
+          },
+          "value": {
+            "description": "Milliseconds (CLS: unitless score)",
+            "example": 2140.5,
+            "maximum": 600000,
+            "minimum": 0,
+            "type": "number"
+          },
+          "zone": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/RumZone"
+              }
+            ],
+            "example": "store"
+          }
+        },
+        "required": [
+          "name",
+          "value",
+          "rating",
+          "id",
+          "route",
+          "zone"
+        ],
+        "type": "object"
+      },
+      "WebVitalName": {
+        "enum": [
+          "LCP",
+          "INP",
+          "CLS",
+          "FCP",
+          "TTFB"
+        ],
+        "type": "string"
+      },
+      "WebVitalRating": {
+        "enum": [
+          "good",
+          "needs-improvement",
+          "poor"
+        ],
+        "type": "string"
+      },
+      "WebVitalSummaryDto": {
+        "properties": {
+          "average": {
+            "description": "Mean value (ms; CLS unitless)",
+            "example": 2140.5,
+            "type": "number"
+          },
+          "name": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/WebVitalName"
+              }
+            ],
+            "example": "LCP"
+          },
+          "poorPct": {
+            "description": "Share of samples rated poor, percent",
+            "example": 4.2,
+            "type": "number"
+          },
+          "route": {
+            "example": "/orders/[orderId]",
+            "type": "string"
+          },
+          "samples": {
+            "example": 120,
+            "type": "integer"
+          },
+          "zone": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/RumZone"
+              }
+            ],
+            "example": "store"
+          }
+        },
+        "required": [
+          "zone",
+          "route",
+          "name",
+          "samples",
+          "average",
+          "poorPct"
         ],
         "type": "object"
       },
@@ -179946,7 +180241,7 @@
     },
     "/v1/admin/notifications": {
       "get": {
-        "description": "Newest first, cursor-paginated. Realtime signals (`notification.created`) tell the client to refetch.\n\nImplements: D-143.",
+        "description": "Newest first, cursor-paginated, with the count of all my unread items and, per item, the page of this zone it is about. Realtime signals (`notification.created`) tell the client to refetch.\n\nImplements: D-143.",
         "operationId": "admin.notifications.list",
         "parameters": [
           {
@@ -179985,34 +180280,21 @@
                       "eventType": "approval.requested",
                       "id": "0192f3a0-7c1e-7d2a-9b1f-00000000e001",
                       "readAt": null,
-                      "title": "มีคำขออนุมัติรอคุณ"
+                      "title": "มีคำขออนุมัติรอคุณ",
+                      "url": "/approvals/0192f3a0-7c1e-7d2a-9b1f-00000000e002"
                     }
                   ],
                   "meta": {
-                    "nextCursor": "eyJpZCI6IjEyMyJ9"
+                    "nextCursor": null,
+                    "unreadCount": 1
                   }
                 },
                 "schema": {
-                  "properties": {
-                    "data": {
-                      "items": {
-                        "$ref": "#/components/schemas/InboxItemDto"
-                      },
-                      "type": "array"
-                    },
-                    "meta": {
-                      "$ref": "#/components/schemas/CursorMeta"
-                    }
-                  },
-                  "required": [
-                    "data",
-                    "meta"
-                  ],
-                  "type": "object"
+                  "$ref": "#/components/schemas/InboxPageDto"
                 }
               }
             },
-            "description": "One slice of the feed",
+            "description": "My notifications",
             "headers": {
               "X-RateLimit-Limit": {
                 "$ref": "#/components/headers/RateLimitLimit"
@@ -180138,6 +180420,128 @@
           }
         ],
         "summary": "My in-app notifications",
+        "tags": [
+          "admin.notifications"
+        ]
+      }
+    },
+    "/v1/admin/notifications/actions/read-all": {
+      "post": {
+        "description": "Every unread item, in one call. Idempotent.\n\nImplements: D-143.",
+        "operationId": "admin.notifications.markAllRead",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Marked read",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.unauthenticated": {
+                    "$ref": "#/components/examples/problem.auth.unauthenticated"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.unauthenticated`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.forbidden": {
+                    "$ref": "#/components/examples/problem.auth.forbidden"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.forbidden`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "staff": []
+          }
+        ],
+        "summary": "Mark all my in-app notifications read",
         "tags": [
           "admin.notifications"
         ]
@@ -180449,6 +180853,181 @@
           }
         ],
         "summary": "Operational signals",
+        "tags": [
+          "admin.ops"
+        ],
+        "x-required-permissions": [
+          "ops.read"
+        ]
+      }
+    },
+    "/v1/admin/ops/web-vitals": {
+      "get": {
+        "description": "Samples, mean and share rated poor per zone, route pattern and metric, from real visits.\n\nImplements: D-144.",
+        "operationId": "admin.ops.webVitals",
+        "parameters": [
+          {
+            "description": "Bangkok day (kept 35 days)",
+            "in": "query",
+            "name": "date",
+            "required": true,
+            "schema": {
+              "example": "2026-10-01",
+              "type": "string"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "example": [
+                  {
+                    "average": 2140.5,
+                    "name": "LCP",
+                    "poorPct": 4.2,
+                    "route": "/orders/[orderId]",
+                    "samples": 120,
+                    "zone": "store"
+                  }
+                ],
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/WebVitalSummaryDto"
+                  },
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Summary",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.unauthenticated": {
+                    "$ref": "#/components/examples/problem.auth.unauthenticated"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.unauthenticated`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.forbidden": {
+                    "$ref": "#/components/examples/problem.auth.forbidden"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.forbidden`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "validation.failed": {
+                    "$ref": "#/components/examples/problem.validation.failed"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `validation.failed`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "staff": []
+          }
+        ],
+        "summary": "Web vitals of a day",
         "tags": [
           "admin.ops"
         ],
@@ -220865,6 +221444,193 @@
         ]
       }
     },
+    "/v1/admin/rum/web-vitals": {
+      "post": {
+        "description": "A Core Web Vitals sample from the browser (posted with `sendBeacon`), aggregated per Bangkok day, zone, route pattern and metric. Fire-and-forget: 202 with no body. Only a route pattern is accepted (422 for a real path — PDPA, D-144); nothing identifies the visitor.\n\nImplements: D-144.",
+        "operationId": "admin.rum.recordWebVital",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "examples": {
+                "default": {
+                  "value": {
+                    "id": "v4-169615-123",
+                    "name": "LCP",
+                    "rating": "good",
+                    "route": "/orders/[orderId]",
+                    "value": 2140.5,
+                    "zone": "admin"
+                  }
+                }
+              },
+              "schema": {
+                "$ref": "#/components/schemas/WebVitalDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "202": {
+            "description": "Accepted",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "400": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.bad_request": {
+                    "$ref": "#/components/examples/problem.http.bad_request"
+                  },
+                  "http.malformed_json": {
+                    "$ref": "#/components/examples/problem.http.malformed_json"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.bad_request`, `http.malformed_json`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.unauthenticated": {
+                    "$ref": "#/components/examples/problem.auth.unauthenticated"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.unauthenticated`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.forbidden": {
+                    "$ref": "#/components/examples/problem.auth.forbidden"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.forbidden`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "validation.failed": {
+                    "$ref": "#/components/examples/problem.validation.failed"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `validation.failed`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "staff": []
+          }
+        ],
+        "summary": "Record a web-vital sample",
+        "tags": [
+          "admin.rum"
+        ]
+      }
+    },
     "/v1/admin/scorecards": {
       "get": {
         "description": "On-time acceptance and shipping, QC first pass, claim rate, on-time updates per factory (D-155).\n\nImplements: D-155, D-075.",
@@ -259041,9 +259807,413 @@
         ]
       }
     },
+    "/v1/partner/me/notification-preferences": {
+      "get": {
+        "description": "Web push, LINE and e-mail for transactional (jobs, shipments, billing, claims) and security messages; unset = on. E-mail of transactional messages and every security message are locked on (D-231). `lineLinked` says whether LINE can reach me at all.\n\nImplements: D-143, D-231.",
+        "operationId": "partner.me.notificationPreferences",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "lineLinked": false,
+                  "preferences": [
+                    {
+                      "category": "transactional",
+                      "channel": "web_push",
+                      "enabled": true,
+                      "locked": false
+                    },
+                    {
+                      "category": "transactional",
+                      "channel": "line",
+                      "enabled": false,
+                      "locked": false
+                    },
+                    {
+                      "category": "transactional",
+                      "channel": "email",
+                      "enabled": true,
+                      "locked": true
+                    },
+                    {
+                      "category": "security",
+                      "channel": "web_push",
+                      "enabled": true,
+                      "locked": true
+                    },
+                    {
+                      "category": "security",
+                      "channel": "line",
+                      "enabled": true,
+                      "locked": true
+                    },
+                    {
+                      "category": "security",
+                      "channel": "email",
+                      "enabled": true,
+                      "locked": true
+                    }
+                  ]
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/PartnerNotificationPreferencesDto"
+                }
+              }
+            },
+            "description": "Preferences",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.unauthenticated": {
+                    "$ref": "#/components/examples/problem.auth.unauthenticated"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.unauthenticated`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.forbidden": {
+                    "$ref": "#/components/examples/problem.auth.forbidden"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.forbidden`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "partner": []
+          }
+        ],
+        "summary": "My notification channel choices",
+        "tags": [
+          "partner.me"
+        ]
+      },
+      "put": {
+        "description": "Switching a locked choice off is refused (422, D-231). Audited.\n\nImplements: D-143, D-231.",
+        "operationId": "partner.me.setNotificationPreferences",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "examples": {
+                "default": {
+                  "value": {
+                    "preferences": [
+                      {
+                        "category": "transactional",
+                        "channel": "line",
+                        "enabled": false
+                      }
+                    ]
+                  }
+                }
+              },
+              "schema": {
+                "$ref": "#/components/schemas/SetPartnerNotificationPreferencesDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "lineLinked": false,
+                  "preferences": [
+                    {
+                      "category": "transactional",
+                      "channel": "web_push",
+                      "enabled": true,
+                      "locked": false
+                    },
+                    {
+                      "category": "transactional",
+                      "channel": "line",
+                      "enabled": false,
+                      "locked": false
+                    },
+                    {
+                      "category": "transactional",
+                      "channel": "email",
+                      "enabled": true,
+                      "locked": true
+                    },
+                    {
+                      "category": "security",
+                      "channel": "web_push",
+                      "enabled": true,
+                      "locked": true
+                    },
+                    {
+                      "category": "security",
+                      "channel": "line",
+                      "enabled": true,
+                      "locked": true
+                    },
+                    {
+                      "category": "security",
+                      "channel": "email",
+                      "enabled": true,
+                      "locked": true
+                    }
+                  ]
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/PartnerNotificationPreferencesDto"
+                }
+              }
+            },
+            "description": "Saved",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "400": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.bad_request": {
+                    "$ref": "#/components/examples/problem.http.bad_request"
+                  },
+                  "http.malformed_json": {
+                    "$ref": "#/components/examples/problem.http.malformed_json"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.bad_request`, `http.malformed_json`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.unauthenticated": {
+                    "$ref": "#/components/examples/problem.auth.unauthenticated"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.unauthenticated`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.forbidden": {
+                    "$ref": "#/components/examples/problem.auth.forbidden"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.forbidden`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "validation.failed": {
+                    "$ref": "#/components/examples/problem.validation.failed"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `validation.failed`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "partner": []
+          }
+        ],
+        "summary": "Change my notification channel choices",
+        "tags": [
+          "partner.me"
+        ]
+      }
+    },
     "/v1/partner/notifications": {
       "get": {
-        "description": "Newest first, cursor-paginated. Realtime signals (`notification.created`) tell the client to refetch.\n\nImplements: D-143.",
+        "description": "Newest first, cursor-paginated, with the count of all my unread items and, per item, the page of this zone it is about. Realtime signals (`notification.created`) tell the client to refetch.\n\nImplements: D-143.",
         "operationId": "partner.notifications.list",
         "parameters": [
           {
@@ -259082,34 +260252,21 @@
                       "eventType": "approval.requested",
                       "id": "0192f3a0-7c1e-7d2a-9b1f-00000000e001",
                       "readAt": null,
-                      "title": "มีคำขออนุมัติรอคุณ"
+                      "title": "มีคำขออนุมัติรอคุณ",
+                      "url": "/approvals/0192f3a0-7c1e-7d2a-9b1f-00000000e002"
                     }
                   ],
                   "meta": {
-                    "nextCursor": "eyJpZCI6IjEyMyJ9"
+                    "nextCursor": null,
+                    "unreadCount": 1
                   }
                 },
                 "schema": {
-                  "properties": {
-                    "data": {
-                      "items": {
-                        "$ref": "#/components/schemas/InboxItemDto"
-                      },
-                      "type": "array"
-                    },
-                    "meta": {
-                      "$ref": "#/components/schemas/CursorMeta"
-                    }
-                  },
-                  "required": [
-                    "data",
-                    "meta"
-                  ],
-                  "type": "object"
+                  "$ref": "#/components/schemas/InboxPageDto"
                 }
               }
             },
-            "description": "One slice of the feed",
+            "description": "My notifications",
             "headers": {
               "X-RateLimit-Limit": {
                 "$ref": "#/components/headers/RateLimitLimit"
@@ -259235,6 +260392,128 @@
           }
         ],
         "summary": "My in-app notifications",
+        "tags": [
+          "partner.notifications"
+        ]
+      }
+    },
+    "/v1/partner/notifications/actions/read-all": {
+      "post": {
+        "description": "Every unread item, in one call. Idempotent.\n\nImplements: D-143.",
+        "operationId": "partner.notifications.markAllRead",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Marked read",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.unauthenticated": {
+                    "$ref": "#/components/examples/problem.auth.unauthenticated"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.unauthenticated`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.forbidden": {
+                    "$ref": "#/components/examples/problem.auth.forbidden"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.forbidden`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "partner": []
+          }
+        ],
+        "summary": "Mark all my in-app notifications read",
         "tags": [
           "partner.notifications"
         ]
@@ -262784,6 +264063,193 @@
         "summary": "Server-sent events for the signed-in principal",
         "tags": [
           "partner.realtime"
+        ]
+      }
+    },
+    "/v1/partner/rum/web-vitals": {
+      "post": {
+        "description": "A Core Web Vitals sample from the browser (posted with `sendBeacon`), aggregated per Bangkok day, zone, route pattern and metric. Fire-and-forget: 202 with no body. Only a route pattern is accepted (422 for a real path — PDPA, D-144); nothing identifies the visitor.\n\nImplements: D-144.",
+        "operationId": "partner.rum.recordWebVital",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "examples": {
+                "default": {
+                  "value": {
+                    "id": "v4-169615-123",
+                    "name": "LCP",
+                    "rating": "good",
+                    "route": "/orders/[orderId]",
+                    "value": 2140.5,
+                    "zone": "partner"
+                  }
+                }
+              },
+              "schema": {
+                "$ref": "#/components/schemas/WebVitalDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "202": {
+            "description": "Accepted",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "400": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.bad_request": {
+                    "$ref": "#/components/examples/problem.http.bad_request"
+                  },
+                  "http.malformed_json": {
+                    "$ref": "#/components/examples/problem.http.malformed_json"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.bad_request`, `http.malformed_json`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.unauthenticated": {
+                    "$ref": "#/components/examples/problem.auth.unauthenticated"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.unauthenticated`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.forbidden": {
+                    "$ref": "#/components/examples/problem.auth.forbidden"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.forbidden`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "validation.failed": {
+                    "$ref": "#/components/examples/problem.validation.failed"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `validation.failed`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "partner": []
+          }
+        ],
+        "summary": "Record a web-vital sample",
+        "tags": [
+          "partner.rum"
         ]
       }
     },
@@ -292951,7 +294417,7 @@
     },
     "/v1/store/notifications": {
       "get": {
-        "description": "Newest first, cursor-paginated. Realtime signals (`notification.created`) tell the client to refetch.\n\nImplements: D-143.",
+        "description": "Newest first, cursor-paginated, with the count of all my unread items and, per item, the page of this zone it is about. Realtime signals (`notification.created`) tell the client to refetch.\n\nImplements: D-143.",
         "operationId": "store.notifications.list",
         "parameters": [
           {
@@ -292990,34 +294456,21 @@
                       "eventType": "approval.requested",
                       "id": "0192f3a0-7c1e-7d2a-9b1f-00000000e001",
                       "readAt": null,
-                      "title": "มีคำขออนุมัติรอคุณ"
+                      "title": "มีคำขออนุมัติรอคุณ",
+                      "url": "/approvals/0192f3a0-7c1e-7d2a-9b1f-00000000e002"
                     }
                   ],
                   "meta": {
-                    "nextCursor": "eyJpZCI6IjEyMyJ9"
+                    "nextCursor": null,
+                    "unreadCount": 1
                   }
                 },
                 "schema": {
-                  "properties": {
-                    "data": {
-                      "items": {
-                        "$ref": "#/components/schemas/InboxItemDto"
-                      },
-                      "type": "array"
-                    },
-                    "meta": {
-                      "$ref": "#/components/schemas/CursorMeta"
-                    }
-                  },
-                  "required": [
-                    "data",
-                    "meta"
-                  ],
-                  "type": "object"
+                  "$ref": "#/components/schemas/InboxPageDto"
                 }
               }
             },
-            "description": "One slice of the feed",
+            "description": "My notifications",
             "headers": {
               "X-RateLimit-Limit": {
                 "$ref": "#/components/headers/RateLimitLimit"
@@ -293143,6 +294596,128 @@
           }
         ],
         "summary": "My in-app notifications",
+        "tags": [
+          "store.notifications"
+        ]
+      }
+    },
+    "/v1/store/notifications/actions/read-all": {
+      "post": {
+        "description": "Every unread item, in one call. Idempotent.\n\nImplements: D-143.",
+        "operationId": "store.notifications.markAllRead",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Marked read",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.unauthenticated": {
+                    "$ref": "#/components/examples/problem.auth.unauthenticated"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.unauthenticated`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.forbidden": {
+                    "$ref": "#/components/examples/problem.auth.forbidden"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.forbidden`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "customer": []
+          }
+        ],
+        "summary": "Mark all my in-app notifications read",
         "tags": [
           "store.notifications"
         ]
@@ -308992,6 +310567,189 @@
         ]
       }
     },
+    "/v1/store/rum/web-vitals": {
+      "post": {
+        "description": "A Core Web Vitals sample from the browser (posted with `sendBeacon`), aggregated per Bangkok day, zone, route pattern and metric. Fire-and-forget: 202 with no body. Only a route pattern is accepted (422 for a real path — PDPA, D-144); nothing identifies the visitor. Anonymous visitors may post.\n\nImplements: D-144.",
+        "operationId": "store.rum.recordWebVital",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "examples": {
+                "default": {
+                  "value": {
+                    "id": "v4-169615-123",
+                    "name": "LCP",
+                    "rating": "good",
+                    "route": "/orders/[orderId]",
+                    "value": 2140.5,
+                    "zone": "store"
+                  }
+                }
+              },
+              "schema": {
+                "$ref": "#/components/schemas/WebVitalDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "202": {
+            "description": "Accepted",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "400": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.bad_request": {
+                    "$ref": "#/components/examples/problem.http.bad_request"
+                  },
+                  "http.malformed_json": {
+                    "$ref": "#/components/examples/problem.http.malformed_json"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.bad_request`, `http.malformed_json`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.unauthenticated": {
+                    "$ref": "#/components/examples/problem.auth.unauthenticated"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.unauthenticated`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.forbidden": {
+                    "$ref": "#/components/examples/problem.auth.forbidden"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.forbidden`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "validation.failed": {
+                    "$ref": "#/components/examples/problem.validation.failed"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `validation.failed`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [],
+        "summary": "Record a web-vital sample",
+        "tags": [
+          "store.rum"
+        ]
+      }
+    },
     "/v1/store/shared-designs/{token}": {
       "get": {
         "description": "Anyone with the link sees the current version of the design with signed asset URLs — never its owner. Revoked, expired or deleted answers 404 (D-226). Rate-limited per client.\n\nImplements: D-226.",
@@ -313599,6 +315357,10 @@
       "name": "admin.roles"
     },
     {
+      "description": "Real-user monitoring: Core Web Vitals samples by route pattern (U-B0.3).",
+      "name": "admin.rum"
+    },
+    {
       "description": "Packio's sell margins, fix costs and design fees, effective-dated (D-063).",
       "name": "admin.sellMarginTables"
     },
@@ -313717,6 +315479,10 @@
     {
       "description": "Requests for the factory’s buy price on an RFQ; never the sell price (D-044).",
       "name": "partner.rfqConsultations"
+    },
+    {
+      "description": "Real-user monitoring: Core Web Vitals samples by route pattern (U-B0.3).",
+      "name": "partner.rum"
     },
     {
       "description": "The own shipping payout card: read and accept or counter (D-013, D-042).",
@@ -313845,6 +315611,10 @@
     {
       "description": "Requests for quote: submit, talk to Packio, accept or decline a quotation (D-100, D-043).",
       "name": "store.rfqs"
+    },
+    {
+      "description": "Real-user monitoring: Core Web Vitals samples by route pattern, anonymous allowed (U-B0.3).",
+      "name": "store.rum"
     },
     {
       "description": "Saved quotations: 15-day price lock, share links, PDF in the name of the issuing entity, re-pricing after expiry (D-051).",

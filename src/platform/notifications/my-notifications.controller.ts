@@ -2,8 +2,7 @@ import { CurrentActor } from '@common/auth/auth.decorators';
 import { type Actor, type UserActor } from '@common/context/actor';
 import { DomainException } from '@common/errors/domain.exception';
 import { ApiEndpoint, ApiStandardErrors, ApiSuccess } from '@common/openapi/decorators';
-import { ApiCursorPaginated } from '@common/pagination/api-paginated.decorator';
-import { type CursorPage, CursorQuery, DEFAULT_CURSOR_LIMIT } from '@common/pagination/pagination.dto';
+import { CursorQuery, DEFAULT_CURSOR_LIMIT } from '@common/pagination/pagination.dto';
 import { toBangkokIso } from '@common/time/bangkok';
 import { ApiSurface, type Surface } from '@modules/surfaces/surfaces';
 import {
@@ -20,13 +19,17 @@ import {
 } from '@nestjs/common';
 import { ApiBody } from '@nestjs/swagger';
 
+import { inboxLink } from './inbox-links';
 import { MyNotificationsService } from './my-notifications.service';
 import {
   ConsentDto,
   INBOX_EXAMPLE,
-  InboxItemDto,
+  InboxPageDto,
   NotificationPreferenceDto,
+  PARTNER_PREFERENCES_EXAMPLE,
+  PartnerNotificationPreferencesDto,
   RecordConsentDto,
+  SetPartnerNotificationPreferencesDto,
   SetPreferencesDto,
 } from './notifications.dto';
 
@@ -47,13 +50,18 @@ function inboxController(surface: Extract<Surface, 'store' | 'admin' | 'partner'
       id: `${surface}.notifications.list`,
       summary: 'My in-app notifications',
       description:
-        'Newest first, cursor-paginated. Realtime signals (`notification.created`) tell the client to refetch.',
+        'Newest first, cursor-paginated, with the count of all my unread items and, per item, the page of this ' +
+        'zone it is about. Realtime signals (`notification.created`) tell the client to refetch.',
       implements: ['D-143'],
     })
-    @ApiCursorPaginated(InboxItemDto, { example: INBOX_EXAMPLE })
+    @ApiSuccess(200, {
+      description: 'My notifications',
+      type: InboxPageDto,
+      example: { data: [INBOX_EXAMPLE], meta: { nextCursor: null, unreadCount: 1 } },
+    })
     @ApiStandardErrors('validation.failed')
-    async list(@CurrentActor() actor: Actor, @Query() query: CursorQuery): Promise<CursorPage<InboxItemDto>> {
-      const { items, nextCursor } = await this.mine.inbox(
+    async list(@CurrentActor() actor: Actor, @Query() query: CursorQuery): Promise<InboxPageDto> {
+      const { items, nextCursor, unreadCount } = await this.mine.inbox(
         me(actor).userId,
         query.cursor,
         query.limit ?? DEFAULT_CURSOR_LIMIT,
@@ -66,9 +74,24 @@ function inboxController(surface: Extract<Surface, 'store' | 'admin' | 'partner'
           body,
           createdAt: toBangkokIso(row.createdAt),
           readAt: row.readAt ? toBangkokIso(row.readAt) : null,
+          url: inboxLink(surface, row.event.aggregateType, row.event.aggregateId, row.event.payload),
         })),
-        meta: { nextCursor },
+        meta: { nextCursor, unreadCount },
       };
+    }
+
+    @Post('actions/read-all')
+    @HttpCode(204)
+    @ApiEndpoint({
+      id: `${surface}.notifications.markAllRead`,
+      summary: 'Mark all my in-app notifications read',
+      description: 'Every unread item, in one call. Idempotent.',
+      implements: ['D-143'],
+    })
+    @ApiSuccess(204, { description: 'Marked read' })
+    @ApiStandardErrors()
+    async markAllRead(@CurrentActor() actor: Actor): Promise<void> {
+      await this.mine.markAllRead(me(actor).userId);
     }
 
     @Post(':notificationId/actions/read')
@@ -217,6 +240,58 @@ export class StoreMyNotificationSettingsController {
     return toConsentDtos(
       await this.mine.recordConsent(me(actor), body.purpose, body.granted, body.source ?? 'web'),
     );
+  }
+}
+
+@ApiSurface('partner', 'me')
+@Controller('me')
+export class PartnerMyNotificationSettingsController {
+  constructor(private readonly mine: MyNotificationsService) {}
+
+  @Get('notification-preferences')
+  @ApiEndpoint({
+    id: 'partner.me.notificationPreferences',
+    summary: 'My notification channel choices',
+    description:
+      'Web push, LINE and e-mail for transactional (jobs, shipments, billing, claims) and security messages; ' +
+      'unset = on. E-mail of transactional messages and every security message are locked on (D-231). ' +
+      '`lineLinked` says whether LINE can reach me at all.',
+    implements: ['D-143', 'D-231'],
+  })
+  @ApiSuccess(200, {
+    description: 'Preferences',
+    type: PartnerNotificationPreferencesDto,
+    example: PARTNER_PREFERENCES_EXAMPLE,
+  })
+  @ApiStandardErrors()
+  preferences(@CurrentActor() actor: Actor): Promise<PartnerNotificationPreferencesDto> {
+    return this.mine.partnerPreferences(me(actor).userId);
+  }
+
+  @Put('notification-preferences')
+  @ApiEndpoint({
+    id: 'partner.me.setNotificationPreferences',
+    summary: 'Change my notification channel choices',
+    description: 'Switching a locked choice off is refused (422, D-231). Audited.',
+    implements: ['D-143', 'D-231'],
+  })
+  @ApiBody({
+    type: SetPartnerNotificationPreferencesDto,
+    examples: {
+      default: { value: { preferences: [{ channel: 'line', category: 'transactional', enabled: false }] } },
+    },
+  })
+  @ApiSuccess(200, {
+    description: 'Saved',
+    type: PartnerNotificationPreferencesDto,
+    example: PARTNER_PREFERENCES_EXAMPLE,
+  })
+  @ApiStandardErrors('http.bad_request', 'http.malformed_json', 'validation.failed')
+  setPreferences(
+    @CurrentActor() actor: Actor,
+    @Body() body: SetPartnerNotificationPreferencesDto,
+  ): Promise<PartnerNotificationPreferencesDto> {
+    return this.mine.setPartnerPreferences(me(actor), body.preferences);
   }
 }
 

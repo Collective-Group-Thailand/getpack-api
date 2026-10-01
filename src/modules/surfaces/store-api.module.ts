@@ -16,6 +16,7 @@ import { DESIGN_SERVICES_STORE_CONTROLLERS } from '@modules/design-services/desi
 import { DESIGNS_STORE_CONTROLLERS } from '@modules/designs/designs.registry';
 import { LOGISTICS_STORE_CONTROLLERS } from '@modules/logistics/logistics.registry';
 import { LOYALTY_STORE_CONTROLLERS } from '@modules/loyalty/loyalty.registry';
+import { OPS_STORE_CONTROLLERS } from '@modules/ops/ops.registry';
 import { ORDERS_STORE_CONTROLLERS } from '@modules/orders/orders.registry';
 import { StoreQuotePathController } from '@modules/partners/quote-path/quote-path.controller';
 import { PAYMENT_SCHEDULES_STORE_CONTROLLERS } from '@modules/payment-schedules/payment-schedules.registry';
@@ -38,6 +39,7 @@ import { RealtimeModule } from '@platform/realtime/realtime.module';
 @Module({
   imports: [RealtimeModule],
   controllers: [
+    ...OPS_STORE_CONTROLLERS,
     StoreFilesController,
 
     StoreRealtimeController,

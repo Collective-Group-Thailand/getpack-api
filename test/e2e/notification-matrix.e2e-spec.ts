@@ -96,4 +96,70 @@ describe('notification routing matrix (e2e, B4.6)', () => {
     const again = await rows('production_job.released', { recipientUserId: ownerUser.id });
     expect(again).toHaveLength(3);
   });
+
+  it('counts unread items, links each to its page, marks all read; factory channel choices (U-B0.3, D-231)', async () => {
+    const owner = await factoryToken(ctx, fixture.factoryPublicId, 'factory_owner', 62);
+    const { token } = await customerToken(ctx, 2);
+    const prepress = await staffToken(ctx, 'prepress');
+    const group = await placeOrder(ctx, token, fixture, code);
+    const orderId = group.orders[0]!.id;
+    await payDue(ctx, token, group.id);
+    await approveArtwork(ctx, token, prepress, orderId);
+    await ctx.pump({ notifications: true });
+    // The delivery worker sends queued in-app rows; done here directly.
+    await ctx.prisma.notification.updateMany({
+      where: { channel: 'in_app', status: 'queued' },
+      data: { status: 'sent', sentAt: new Date() },
+    });
+
+    type Inbox = { data: { eventType: string; url: string | null }[]; meta: { unreadCount: number } };
+    const mine = (await as(ctx, token).get('/v1/store/notifications?limit=50').expect(200)).body as Inbox;
+    expect(mine.meta.unreadCount).toBeGreaterThan(0);
+    expect(mine.data.find((n) => n.eventType === 'production.queued')?.url).toBe(
+      `/account/orders/${orderId}`,
+    );
+    await as(ctx, token).post('/v1/store/notifications/actions/read-all').expect(204);
+    expect(
+      ((await as(ctx, token).get('/v1/store/notifications').expect(200)).body as Inbox).meta.unreadCount,
+    ).toBe(0);
+
+    const job = await ctx.prisma.productionJob.findFirstOrThrow({ where: { order: { publicId: orderId } } });
+    const factoryInbox = (await as(ctx, owner).get('/v1/partner/notifications?limit=50').expect(200))
+      .body as Inbox;
+    expect(factoryInbox.data.find((n) => n.eventType === 'production_job.released')?.url).toBe(
+      `/jobs/${job.publicId}`,
+    );
+
+    type Prefs = { preferences: { channel: string; category: string; enabled: boolean; locked: boolean }[] };
+    const prefs = (await as(ctx, owner).get('/v1/partner/me/notification-preferences').expect(200))
+      .body as Prefs & { lineLinked: boolean };
+    expect(prefs.preferences).toHaveLength(6);
+    expect(prefs.lineLinked).toBe(false);
+    expect(
+      prefs.preferences.find((p) => p.channel === 'email' && p.category === 'transactional'),
+    ).toMatchObject({
+      enabled: true,
+      locked: true,
+    });
+    await as(ctx, owner)
+      .put('/v1/partner/me/notification-preferences', {
+        preferences: [{ channel: 'email', category: 'transactional', enabled: false }],
+      })
+      .expect(422);
+    await as(ctx, owner)
+      .put('/v1/partner/me/notification-preferences', {
+        preferences: [{ channel: 'email', category: 'marketing', enabled: false }],
+      })
+      .expect(422);
+    const saved = (
+      await as(ctx, owner)
+        .put('/v1/partner/me/notification-preferences', {
+          preferences: [{ channel: 'line', category: 'transactional', enabled: false }],
+        })
+        .expect(200)
+    ).body as Prefs;
+    expect(
+      saved.preferences.find((p) => p.channel === 'line' && p.category === 'transactional')?.enabled,
+    ).toBe(false);
+  });
 });

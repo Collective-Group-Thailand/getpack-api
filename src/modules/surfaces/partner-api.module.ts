@@ -1,6 +1,7 @@
 import { PartnerMeController } from '@modules/auth/controllers/me.controllers';
 import { CLAIMS_PARTNER_CONTROLLERS } from '@modules/claims/claims.registry';
 import { LOGISTICS_PARTNER_CONTROLLERS } from '@modules/logistics/logistics.registry';
+import { OPS_PARTNER_CONTROLLERS } from '@modules/ops/ops.registry';
 import { PARTNERS_PARTNER_CONTROLLERS } from '@modules/partners/partners.registry';
 import { PAYABLES_PARTNER_CONTROLLERS } from '@modules/payables/payables.registry';
 import { PAYOUTS_PARTNER_CONTROLLERS } from '@modules/payouts/payouts.registry';
@@ -10,7 +11,10 @@ import { QUOTES_PARTNER_CONTROLLERS } from '@modules/quotes/quotes.registry';
 import { SHIPPING_PARTNER_CONTROLLERS } from '@modules/shipping/shipping.registry';
 import { Module } from '@nestjs/common';
 import { PartnerFilesController } from '@platform/files/files.controllers';
-import { PartnerInboxController } from '@platform/notifications/my-notifications.controller';
+import {
+  PartnerInboxController,
+  PartnerMyNotificationSettingsController,
+} from '@platform/notifications/my-notifications.controller';
 import { PartnerRealtimeController, PartnerWebPushController } from '@platform/realtime/realtime.controllers';
 import { RealtimeModule } from '@platform/realtime/realtime.module';
 
@@ -18,12 +22,14 @@ import { RealtimeModule } from '@platform/realtime/realtime.module';
 @Module({
   imports: [RealtimeModule],
   controllers: [
+    ...OPS_PARTNER_CONTROLLERS,
     PartnerFilesController,
 
     PartnerRealtimeController,
     PartnerWebPushController,
     PartnerMeController,
     PartnerInboxController,
+    PartnerMyNotificationSettingsController,
 
     ...PARTNERS_PARTNER_CONTROLLERS,
     ...PAYABLES_PARTNER_CONTROLLERS,

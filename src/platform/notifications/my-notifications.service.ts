@@ -11,7 +11,11 @@ import { Injectable } from '@nestjs/common';
 import { AuditService } from '@platform/audit/audit.service';
 import { DomainEvents } from '@platform/domain-events/domain-events.service';
 
+import { PARTNER_CATEGORIES, PARTNER_CHANNELS } from './notifications.dto';
 import { renderTemplate } from './template-renderer';
+
+const partnerLocked = (channel: string, category: string) =>
+  category === 'security' || (channel === 'email' && category === 'transactional');
 
 /**
  * A user's own notification settings (D-143 channel choice, D-144 opt-out of marketing only), PDPA
@@ -160,7 +164,60 @@ export class MyNotificationsService {
       }),
     );
     const last = rows.length > limit ? rows[limit - 1] : undefined;
-    return { items, nextCursor: last ? encodeCursor({ id: last.id.toString() }) : null };
+    const unreadCount = await this.prisma.notification.count({
+      where: { recipientUserId: userId, channel: 'in_app', status: 'sent' },
+    });
+    return { items, nextCursor: last ? encodeCursor({ id: last.id.toString() }) : null, unreadCount };
+  }
+
+  /** Marks every unread in-app notification of the user read (U-B0.3); idempotent. */
+  async markAllRead(userId: bigint): Promise<number> {
+    const updated = await this.prisma.notification.updateMany({
+      where: { recipientUserId: userId, channel: 'in_app', status: 'sent' },
+      data: { status: 'read', readAt: new Date() },
+    });
+    return updated.count;
+  }
+
+  // --- factory users (D-143, D-231) -----------------------------------------------------------------------
+
+  /** Every channel × category of a factory user, unset = on; e-mail of transactional events and security are locked. */
+  async partnerPreferences(userId: bigint) {
+    const [rows, line] = await Promise.all([
+      this.prisma.notificationPreference.findMany({ where: { userId } }),
+      this.prisma.lineAccount.count({ where: { userId, linkedAt: { not: null } } }),
+    ]);
+    const preferences = PARTNER_CATEGORIES.flatMap((category) =>
+      PARTNER_CHANNELS.map((channel) => {
+        const locked = partnerLocked(channel, category);
+        const row = rows.find((r) => r.channel === channel && r.category === category);
+        return { channel, category, enabled: locked || (row?.enabled ?? true), locked };
+      }),
+    );
+    return { preferences, lineLinked: line > 0 };
+  }
+
+  async setPartnerPreferences(
+    actor: UserActor,
+    items: {
+      channel: (typeof PARTNER_CHANNELS)[number];
+      category: (typeof PARTNER_CATEGORIES)[number];
+      enabled: boolean;
+    }[],
+  ) {
+    const locked = items.findIndex((i) => !i.enabled && partnerLocked(i.channel, i.category));
+    if (locked >= 0)
+      throw new DomainException('validation.failed', {
+        errors: [
+          {
+            path: `preferences.${locked}`,
+            code: 'locked',
+            message: 'Job and shipment e-mails and security messages cannot be switched off (D-231)',
+          },
+        ],
+      });
+    await this.setPreferences(actor, items);
+    return this.partnerPreferences(actor.userId);
   }
 
   async markRead(userId: bigint, eventId: string): Promise<void> {

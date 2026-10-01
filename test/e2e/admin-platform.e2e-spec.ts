@@ -1,5 +1,7 @@
 import { randomUUID } from 'node:crypto';
 
+import request from 'supertest';
+
 import { as, bootCommerceApp, type CommerceApp, staffToken } from '../support/commerce-e2e';
 
 /**
@@ -74,5 +76,47 @@ describe('admin platform reads (e2e, U-B0.3)', () => {
       .expect(200);
     expect(none.body.meta.total).toBe(0);
     await as(ctx, finance).get('/v1/admin/customer-documents?paymentId=nope').expect(422);
+  });
+
+  it('takes web vitals by route pattern only and sums them per day (RUM)', async () => {
+    const sample = {
+      name: 'LCP',
+      value: 2000,
+      rating: 'poor',
+      id: 'v4-1',
+      route: '/orders/[orderId]',
+      zone: 'store',
+    };
+    await request(ctx.server).post('/v1/store/rum/web-vitals').send(sample).expect(202);
+    await request(ctx.server)
+      .post('/v1/store/rum/web-vitals')
+      .send({ ...sample, value: 1000, rating: 'good' })
+      .expect(202);
+    await request(ctx.server)
+      .post('/v1/store/rum/web-vitals')
+      .send({ ...sample, route: '/orders/PK-2610-0001' })
+      .expect(422);
+    await request(ctx.server).post('/v1/admin/rum/web-vitals').send(sample).expect(401);
+    const admin = await staffToken(ctx, 'admin');
+    await as(ctx, admin)
+      .post('/v1/admin/rum/web-vitals', { ...sample, zone: 'admin', route: '/orders' })
+      .expect(202);
+
+    const day = new Date(Date.now() + 7 * 3_600_000).toISOString().slice(0, 10);
+    const rows = (await as(ctx, admin).get(`/v1/admin/ops/web-vitals?date=${day}`).expect(200)).body as {
+      zone: string;
+      route: string;
+      name: string;
+      samples: number;
+      poorPct: number;
+    }[];
+    const store = rows.find(
+      (r) => r.zone === 'store' && r.route === '/orders/[orderId]' && r.name === 'LCP',
+    )!;
+    expect(store.samples).toBeGreaterThanOrEqual(2);
+    expect(store.poorPct).toBeGreaterThan(0);
+    await as(ctx, await staffToken(ctx, 'cs'))
+      .get(`/v1/admin/ops/web-vitals?date=${day}`)
+      .expect(403);
   });
 });
