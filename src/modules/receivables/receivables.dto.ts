@@ -917,3 +917,125 @@ export class StatementQuery {
   @Matches(/^\d{4}-\d{2}$/)
   month!: string;
 }
+
+// --- resend, deliveries, dunning log (U-B0.3) ---------------------------------------------------------------
+
+export const NOTIFICATION_STATUSES = [
+  'queued',
+  'deferred_quiet_hours',
+  'suppressed_no_consent',
+  'sent',
+  'delivered',
+  'failed',
+  'bounced',
+  'read',
+] as const;
+
+export class DocumentSendResultDto {
+  @ApiProperty({ format: 'uuid', example: '0192f3a0-7c1e-7d2a-9b1f-0000000d7001' })
+  documentId!: string;
+
+  @ApiProperty({ format: 'date-time', example: '2026-10-05T10:00:00+07:00' })
+  requestedAt!: string;
+}
+
+export class DocumentDeliveryDto {
+  @ApiProperty({
+    enum: ['email', 'sms', 'line', 'web_push', 'in_app', 'teams'],
+    enumName: 'NotificationChannel',
+    example: 'email',
+  })
+  channel!: string;
+
+  @ApiProperty({ type: String, nullable: true, example: 's***@example.com', description: 'Masked (PDPA)' })
+  recipient!: string | null;
+
+  @ApiProperty({ enum: NOTIFICATION_STATUSES, enumName: 'NotificationStatus', example: 'sent' })
+  status!: string;
+
+  @ApiProperty({ type: String, format: 'date-time', nullable: true, example: '2026-10-05T10:01:00+07:00' })
+  sentAt!: string | null;
+
+  @ApiProperty({ enum: ['issued', 'resent'], enumName: 'DocumentDeliveryKind', example: 'resent' })
+  kind!: string;
+
+  @ApiProperty({
+    format: 'date-time',
+    example: '2026-10-05T10:00:00+07:00',
+    description: 'When it was asked for',
+  })
+  requestedAt!: string;
+}
+
+export class DunningLogQuery extends PageQuery {
+  @ApiPropertyOptional({ format: 'uuid' })
+  @IsOptional()
+  @IsUUID()
+  customerId?: string;
+
+  @ApiPropertyOptional({ format: 'uuid' })
+  @IsOptional()
+  @IsUUID()
+  companyId?: string;
+
+  @ApiPropertyOptional({ format: 'uuid' })
+  @IsOptional()
+  @IsUUID()
+  documentId?: string;
+
+  @ApiPropertyOptional({
+    format: 'date',
+    example: '2026-10-01',
+    description: 'Reminders on or after (Bangkok)',
+  })
+  @IsOptional()
+  @Matches(DAY)
+  from?: string;
+}
+
+export class DunningEntryDto {
+  @ApiProperty({ format: 'uuid', example: '0192f3a0-7c1e-7d2a-9b1f-0000000d7001' })
+  documentId!: string;
+
+  @ApiProperty({ example: 'IV-2610-00012' })
+  docNumber!: string;
+
+  @ApiProperty({ format: 'uuid', example: '0192f3a0-7c1e-7d2a-9b1f-0000000d7002' })
+  customerId!: string;
+
+  @ApiProperty({ type: String, format: 'uuid', nullable: true, example: null })
+  companyId!: string | null;
+
+  @ApiProperty({ enum: ['before_due', 'on_due', 'overdue'], enumName: 'DunningStage', example: 'before_due' })
+  stage!: string;
+
+  @ApiProperty({
+    format: 'date-time',
+    example: '2026-10-08T09:00:00+07:00',
+    description: 'When the reminder was raised',
+  })
+  remindedAt!: string;
+
+  @ApiProperty({
+    enum: ['email', 'sms', 'line', 'web_push', 'in_app', 'teams'],
+    enumName: 'NotificationChannel',
+    nullable: true,
+    example: 'email',
+    description: 'Null when no route sent it',
+  })
+  channel!: string | null;
+
+  @ApiProperty({ type: String, nullable: true, example: 's***@example.com', description: 'Masked (PDPA)' })
+  recipient!: string | null;
+
+  @ApiProperty({
+    enum: NOTIFICATION_STATUSES,
+    enumName: 'NotificationStatus',
+    nullable: true,
+    example: 'sent',
+  })
+  status!: string | null;
+
+  @ApiProperty({ type: String, format: 'date-time', nullable: true, example: '2026-10-08T09:00:05+07:00' })
+  sentAt!: string | null;
+}

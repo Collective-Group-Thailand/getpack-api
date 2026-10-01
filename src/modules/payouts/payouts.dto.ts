@@ -1,4 +1,5 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import { DownloadUrlDto } from '@platform/files/files.dto';
 import { Type } from 'class-transformer';
 import {
   ArrayMaxSize,
@@ -358,6 +359,24 @@ export class IssuedWhtCertificateDto {
 
   @ApiProperty({ example: true })
   pdfReady!: boolean;
+}
+
+export class WhtCertificateDownloadDto extends IssuedWhtCertificateDto {
+  @ApiProperty({
+    type: DownloadUrlDto,
+    nullable: true,
+    description: 'Short-lived signed URL; null while not rendered',
+  })
+  download!: DownloadUrlDto | null;
+}
+
+/** The documents of a paid payout item (U-B0.3): remittance advice and 50 ทวิ, as short-lived signed URLs. */
+export class PayoutItemDocumentsDto {
+  @ApiProperty({ type: DownloadUrlDto })
+  remittanceAdvice!: DownloadUrlDto;
+
+  @ApiProperty({ type: [WhtCertificateDownloadDto] })
+  whtCertificates!: WhtCertificateDownloadDto[];
 }
 
 export class PartnerPayoutDto {

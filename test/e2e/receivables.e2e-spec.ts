@@ -7,6 +7,7 @@ import { type FakeScbGateway } from '@integrations/payments/fake-payment-gateway
 import { SCB_GATEWAY } from '@integrations/payments/payment-gateways.port';
 import { OrdersService } from '@modules/orders/orders.service';
 import { DocumentFilesService } from '@modules/receivables/document-files.service';
+import { ReceivablesService } from '@modules/receivables/receivables.service';
 import { DomainEvents } from '@platform/domain-events/domain-events.service';
 import request from 'supertest';
 
@@ -294,6 +295,32 @@ describe('receivables & customer documents (e2e, B5.2)', () => {
     const aging = await as(ctx, finance).get('/v1/admin/receivables/aging').expect(200);
     expect(D(aging.body.totals.current).add(aging.body.totals.d1_30).gte(order.grossAmount.toString())).toBe(
       true,
+    );
+
+    // U-B0.3: the dunning log shows the reminder; staff send the invoice again and see where it went.
+    const receivable = await ctx.prisma.receivableItem.findFirstOrThrow({
+      where: { customerDocument: { publicId: iv.id } },
+    });
+    await ctx.app.get(ReceivablesService).dunning(new Date(receivable.dueDate.getTime() + 2 * 86_400_000));
+    await ctx.pump({ notifications: true });
+    const log = await as(ctx, finance).get(`/v1/admin/dunning-log?documentId=${iv.id}`).expect(200);
+    expect(log.body.data).toEqual(
+      expect.arrayContaining([expect.objectContaining({ documentId: iv.id, stage: 'overdue' })]),
+    );
+    await as(ctx, await staffToken(ctx, 'cs'))
+      .post(`/v1/admin/customer-documents/${iv.id}/actions/resend`)
+      .set('Idempotency-Key', randomUUID())
+      .expect(403);
+    await as(ctx, finance)
+      .post(`/v1/admin/customer-documents/${iv.id}/actions/resend`)
+      .set('Idempotency-Key', randomUUID())
+      .expect(202);
+    await ctx.pump({ notifications: true });
+    const deliveries = await as(ctx, finance)
+      .get(`/v1/admin/customer-documents/${iv.id}/deliveries`)
+      .expect(200);
+    expect(deliveries.body).toEqual(
+      expect.arrayContaining([expect.objectContaining({ channel: 'email', kind: 'resent' })]),
     );
 
     // The customer pays the credit-term instalment, withholding tax: an RC collects the invoice.

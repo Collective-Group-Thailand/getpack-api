@@ -373,6 +373,27 @@ describe('payables, payouts & banking (e2e, B5.3)', () => {
       )
       .expect(200);
     await as(ctx, stranger).get(`/v1/partner/factories/${fixture.factoryPublicId}/payouts`).expect(404);
+
+    // U-B0.3: the back office downloads the remittance advice and the 50 ทวิ of the paid item.
+    const docs = (
+      await as(ctx, finance)
+        .get(`/v1/admin/payout-runs/${advanceRun.id}/items/${item.id}/documents`)
+        .expect(200)
+    ).body as {
+      remittanceAdvice: { url: string };
+      whtCertificates: { wtNumber: string; download: unknown }[];
+    };
+    expect(docs.remittanceAdvice.url).toEqual(expect.any(String));
+    expect(docs.whtCertificates).toEqual([expect.objectContaining({ download: expect.any(Object) })]);
+    const again = (
+      await as(ctx, finance)
+        .get(`/v1/admin/payout-runs/${advanceRun.id}/items/${item.id}/documents`)
+        .expect(200)
+    ).body as { remittanceAdvice: { url: string } };
+    expect(again.remittanceAdvice.url).toEqual(expect.any(String));
+    expect(
+      (await ctx.prisma.payoutItem.findUniqueOrThrow({ where: { publicId: item.id } })).remittanceFileId,
+    ).not.toBeNull();
   });
 
   it('receives the goods at POD, applies the advance and validates the factory tax invoice (P15, P16, P17V)', async () => {

@@ -115,6 +115,16 @@ const ROWS: Row[] = [
     'Customer: CS reminds of an instalment due (U-B0.2, D-143)',
   ),
   C(
+    'customer_document.sent',
+    ['email', 'line'],
+    { th: 'เอกสาร {{payload.docNumber}} จาก Packio', en: 'Document {{payload.docNumber}} from Packio' },
+    {
+      th: 'เอกสาร {{payload.docNumber}} ของคุณพร้อมแล้ว ดาวน์โหลดได้ที่บัญชี Packio ของคุณ',
+      en: 'Your document {{payload.docNumber}} is ready; download it from your Packio account',
+    },
+    'Customer: staff send (again) a tax invoice, receipt or note (U-B0.3, D-143)',
+  ),
+  C(
     'instalment.paid',
     ['email', 'in_app'],
     { th: 'ได้รับชำระเงินแล้ว', en: 'Payment received' },

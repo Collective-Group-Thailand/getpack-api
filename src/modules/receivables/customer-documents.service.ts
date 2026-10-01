@@ -380,6 +380,92 @@ export class CustomerDocumentsService {
   }
 
   /**
+   * Sends an issued document to its customer again (U-B0.3, D-143): `customer_document.sent` is routed by the
+   * notification matrix (e-mail, LINE when linked); the PDF is downloaded from the customer's account. Audited.
+   */
+  async send(actor: UserActor, publicId: string): Promise<{ eventId: string; at: Date }> {
+    return this.prisma.withTx(async (tx) => {
+      const doc = await tx.customerDocument.findUnique({
+        where: { publicId },
+        include: { customer: { select: { publicId: true } } },
+      });
+      if (!doc) throw new DomainException('http.not_found');
+      if (doc.status === 'void')
+        throw new DomainException('receivables.document_not_voidable', { params: { reason: 'it is void' } });
+      await this.audit.record(tx, {
+        category: 'finance',
+        action: 'customer_document.sent',
+        actor,
+        resourceType: 'customer_document',
+        resourcePublicId: doc.publicId,
+        entityId: doc.entityId,
+        data: { docNumber: doc.docNumber },
+      });
+      const event = await this.events.record(
+        tx,
+        {
+          type: 'customer_document.sent',
+          aggregateType: 'customer_document',
+          aggregateId: doc.publicId,
+          entityId: doc.entityId,
+          payload: {
+            documentId: doc.publicId,
+            docType: doc.docType,
+            docNumber: doc.docNumber,
+            customerId: doc.customer.publicId,
+            kind: 'resent',
+          },
+        },
+        actor,
+      );
+      return { eventId: event.id, at: new Date(event.occurredAt) };
+    });
+  }
+
+  /** Where a document went: the notifications of its `customer_document.sent` events, newest first. */
+  async deliveries(publicId: string) {
+    const doc = await this.prisma.customerDocument.findUnique({ where: { publicId }, select: { id: true } });
+    if (!doc) throw new DomainException('http.not_found');
+    return this.prisma.notification.findMany({
+      where: {
+        event: { aggregateType: 'customer_document', aggregateId: publicId, type: 'customer_document.sent' },
+      },
+      include: { event: { select: { payload: true, occurredAt: true } } },
+      orderBy: [{ createdAt: 'desc' }, { id: 'desc' }],
+    });
+  }
+
+  /** The D-122 reminders sent for receivables, with the notifications each fanned out to (U-B0.3). */
+  async dunningLog(where: Prisma.DunningNoticeWhereInput, page: number, perPage: number) {
+    const [rows, total] = await Promise.all([
+      this.prisma.dunningNotice.findMany({
+        where,
+        include: {
+          receivableItem: {
+            select: {
+              customerDocument: { select: { publicId: true, docNumber: true } },
+              customer: { select: { publicId: true, displayName: true } },
+              company: { select: { publicId: true } },
+            },
+          },
+        },
+        orderBy: [{ sentAt: 'desc' }, { id: 'desc' }],
+        skip: (page - 1) * perPage,
+        take: perPage,
+      }),
+      this.prisma.dunningNotice.count({ where }),
+    ]);
+    const eventIds = rows.flatMap((r) => (r.domainEventId ? [r.domainEventId] : []));
+    const notifications = eventIds.length
+      ? await this.prisma.notification.findMany({
+          where: { eventId: { in: eventIds }, channel: { not: 'in_app' } },
+          orderBy: { id: 'asc' },
+        })
+      : [];
+    return { rows, notifications, total };
+  }
+
+  /**
    * Voids an invoice or debit note nothing has been collected on: the number stays with its reason and the
    * ledger reverses the document's journals. Tax invoices and receipts are corrected by credit notes (§2).
    */

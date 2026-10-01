@@ -27,6 +27,7 @@ import {
   PartnerPayoutDto,
   PAYOUT_IDS,
   PayoutExceptionDto,
+  PayoutItemDocumentsDto,
   PayoutRunDto,
   PayoutStatementQuery,
   RUN_EXAMPLE,
@@ -276,6 +277,50 @@ export class AdminPayoutsController {
         }),
       }),
     );
+  }
+
+  @Get('payout-runs/:runId/items/:itemId/documents')
+  @Can('payables.read')
+  @ApiParam({ name: 'runId', format: 'uuid' })
+  @ApiParam({ name: 'itemId', format: 'uuid' })
+  @ApiEndpoint({
+    id: 'admin.payouts.itemDocuments',
+    summary: 'Documents of a paid payout item',
+    description:
+      'The factory remittance advice (rendered and kept on first request) and the 50 ทวิ issued with the payment, ' +
+      'as 5-minute signed URLs (D-022, D-166). 409 before the item is paid.',
+    implements: DOCS,
+  })
+  @ApiSuccess(200, {
+    description: 'Documents',
+    type: PayoutItemDocumentsDto,
+    example: {
+      remittanceAdvice: DOWNLOAD_EXAMPLE,
+      whtCertificates: [{ ...PARTNER_PAYOUT_EXAMPLE.whtCertificates[0]!, download: DOWNLOAD_EXAMPLE }],
+    },
+  })
+  @ApiStandardErrors('http.not_found', 'validation.failed', 'payouts.run_invalid_status')
+  async itemDocuments(
+    @Param('runId', ParseUUIDPipe) runId: string,
+    @Param('itemId', ParseUUIDPipe) itemId: string,
+  ): Promise<PayoutItemDocumentsDto> {
+    const { remittanceFileId, certificates } = await this.payouts.itemDocuments(runId, itemId);
+    return {
+      remittanceAdvice: download(await this.files.downloadUrl(remittanceFileId)),
+      whtCertificates: await Promise.all(
+        certificates.map(async (c) => ({
+          id: c.publicId,
+          wtNumber: c.wtNumber,
+          form: c.form,
+          paidOn: c.paidOn.toISOString().slice(0, 10),
+          paidAmount: c.paidAmount.toFixed(2),
+          whtRatePct: c.whtRatePct.toFixed(4),
+          whtAmount: c.whtAmount.toFixed(2),
+          pdfReady: c.fileObjectId !== null,
+          download: c.fileObjectId ? download(await this.files.downloadUrl(c.fileObjectId)) : null,
+        })),
+      ),
+    };
   }
 
   @Get('payout-exceptions')

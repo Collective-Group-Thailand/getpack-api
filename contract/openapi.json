@@ -25425,6 +25425,72 @@
         ],
         "type": "object"
       },
+      "DocumentDeliveryDto": {
+        "properties": {
+          "channel": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/NotificationChannel"
+              }
+            ],
+            "example": "email"
+          },
+          "kind": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/DocumentDeliveryKind"
+              }
+            ],
+            "example": "resent"
+          },
+          "recipient": {
+            "description": "Masked (PDPA)",
+            "example": "s***@example.com",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "requestedAt": {
+            "description": "When it was asked for",
+            "example": "2026-10-05T10:00:00+07:00",
+            "format": "date-time",
+            "type": "string"
+          },
+          "sentAt": {
+            "example": "2026-10-05T10:01:00+07:00",
+            "format": "date-time",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "status": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/NotificationStatus"
+              }
+            ],
+            "example": "sent"
+          }
+        },
+        "required": [
+          "channel",
+          "recipient",
+          "status",
+          "sentAt",
+          "kind",
+          "requestedAt"
+        ],
+        "type": "object"
+      },
+      "DocumentDeliveryKind": {
+        "enum": [
+          "issued",
+          "resent"
+        ],
+        "type": "string"
+      },
       "DocumentPartyDto": {
         "properties": {
           "address": {
@@ -25503,6 +25569,25 @@
         "required": [
           "id",
           "docNumber"
+        ],
+        "type": "object"
+      },
+      "DocumentSendResultDto": {
+        "properties": {
+          "documentId": {
+            "example": "0192f3a0-7c1e-7d2a-9b1f-0000000d7001",
+            "format": "uuid",
+            "type": "string"
+          },
+          "requestedAt": {
+            "example": "2026-10-05T10:00:00+07:00",
+            "format": "date-time",
+            "type": "string"
+          }
+        },
+        "required": [
+          "documentId",
+          "requestedAt"
         ],
         "type": "object"
       },
@@ -25816,6 +25901,106 @@
           "before_shipping",
           "on_delivery",
           "days_after_delivery"
+        ],
+        "type": "string"
+      },
+      "DunningEntryDto": {
+        "properties": {
+          "channel": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/NotificationChannel"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Null when no route sent it",
+            "example": "email"
+          },
+          "companyId": {
+            "example": null,
+            "format": "uuid",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "customerId": {
+            "example": "0192f3a0-7c1e-7d2a-9b1f-0000000d7002",
+            "format": "uuid",
+            "type": "string"
+          },
+          "docNumber": {
+            "example": "IV-2610-00012",
+            "type": "string"
+          },
+          "documentId": {
+            "example": "0192f3a0-7c1e-7d2a-9b1f-0000000d7001",
+            "format": "uuid",
+            "type": "string"
+          },
+          "recipient": {
+            "description": "Masked (PDPA)",
+            "example": "s***@example.com",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "remindedAt": {
+            "description": "When the reminder was raised",
+            "example": "2026-10-08T09:00:00+07:00",
+            "format": "date-time",
+            "type": "string"
+          },
+          "sentAt": {
+            "example": "2026-10-08T09:00:05+07:00",
+            "format": "date-time",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "stage": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/DunningStage"
+              }
+            ],
+            "example": "before_due"
+          },
+          "status": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/NotificationStatus"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "example": "sent"
+          }
+        },
+        "required": [
+          "documentId",
+          "docNumber",
+          "customerId",
+          "companyId",
+          "stage",
+          "remindedAt",
+          "channel",
+          "recipient",
+          "status",
+          "sentAt"
+        ],
+        "type": "object"
+      },
+      "DunningStage": {
+        "enum": [
+          "before_due",
+          "on_due",
+          "overdue"
         ],
         "type": "string"
       },
@@ -33358,6 +33543,19 @@
         ],
         "type": "object"
       },
+      "NotificationStatus": {
+        "enum": [
+          "queued",
+          "deferred_quiet_hours",
+          "suppressed_no_consent",
+          "sent",
+          "delivered",
+          "failed",
+          "bounced",
+          "read"
+        ],
+        "type": "string"
+      },
       "NotificationTemplateDto": {
         "properties": {
           "category": {
@@ -36583,6 +36781,24 @@
           "status",
           "cashAmount",
           "failureReason"
+        ],
+        "type": "object"
+      },
+      "PayoutItemDocumentsDto": {
+        "properties": {
+          "remittanceAdvice": {
+            "$ref": "#/components/schemas/DownloadUrlDto"
+          },
+          "whtCertificates": {
+            "items": {
+              "$ref": "#/components/schemas/WhtCertificateDownloadDto"
+            },
+            "type": "array"
+          }
+        },
+        "required": [
+          "remittanceAdvice",
+          "whtCertificates"
         ],
         "type": "object"
       },
@@ -61217,6 +61433,71 @@
           "waived"
         ],
         "type": "string"
+      },
+      "WhtCertificateDownloadDto": {
+        "properties": {
+          "download": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/DownloadUrlDto"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Short-lived signed URL; null while not rendered"
+          },
+          "form": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/WhtForm"
+              }
+            ],
+            "example": "pnd53"
+          },
+          "id": {
+            "example": "0192f3a0-7c1e-7d2a-9b1f-000000530105",
+            "format": "uuid",
+            "type": "string"
+          },
+          "paidAmount": {
+            "example": "5560.00",
+            "type": "string"
+          },
+          "paidOn": {
+            "example": "2026-10-27",
+            "format": "date",
+            "type": "string"
+          },
+          "pdfReady": {
+            "example": true,
+            "type": "boolean"
+          },
+          "whtAmount": {
+            "example": "166.80",
+            "type": "string"
+          },
+          "whtRatePct": {
+            "example": "3.0000",
+            "type": "string"
+          },
+          "wtNumber": {
+            "example": "DEVWT-26-00001",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "wtNumber",
+          "form",
+          "paidOn",
+          "paidAmount",
+          "whtRatePct",
+          "whtAmount",
+          "pdfReady",
+          "download"
+        ],
+        "type": "object"
       },
       "WhtCertificateDto": {
         "properties": {
@@ -136209,6 +136490,246 @@
         ]
       }
     },
+    "/v1/admin/customer-documents/{documentId}/actions/resend": {
+      "post": {
+        "description": "Raises `customer_document.sent`: the notification matrix sends it by e-mail and by LINE when linked (D-143); the customer downloads the PDF from their account. Asynchronous — `admin.customerDocuments.deliveries` shows where it went. A void document is refused (409). Audited.\n\nImplements: D-143, D-010.",
+        "operationId": "admin.customerDocuments.resend",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "documentId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/IdempotencyKey"
+          },
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "responses": {
+          "202": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "documentId": "0192f3a0-7c1e-7d2a-9b1f-0000000d7001",
+                  "requestedAt": "2026-10-05T10:00:00+07:00"
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/DocumentSendResultDto"
+                }
+              }
+            },
+            "description": "Requested",
+            "headers": {
+              "Idempotent-Replayed": {
+                "$ref": "#/components/headers/IdempotentReplayed"
+              },
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "400": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "idempotency.key_invalid": {
+                    "$ref": "#/components/examples/problem.idempotency.key_invalid"
+                  },
+                  "idempotency.key_required": {
+                    "$ref": "#/components/examples/problem.idempotency.key_required"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `idempotency.key_invalid`, `idempotency.key_required`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.unauthenticated": {
+                    "$ref": "#/components/examples/problem.auth.unauthenticated"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.unauthenticated`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.forbidden": {
+                    "$ref": "#/components/examples/problem.auth.forbidden"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.forbidden`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "404": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.not_found": {
+                    "$ref": "#/components/examples/problem.http.not_found"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.not_found`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "409": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "idempotency.in_progress": {
+                    "$ref": "#/components/examples/problem.idempotency.in_progress"
+                  },
+                  "receivables.document_not_voidable": {
+                    "$ref": "#/components/examples/problem.receivables.document_not_voidable"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `idempotency.in_progress`, `receivables.document_not_voidable`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "idempotency.key_reused": {
+                    "$ref": "#/components/examples/problem.idempotency.key_reused"
+                  },
+                  "validation.failed": {
+                    "$ref": "#/components/examples/problem.validation.failed"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `idempotency.key_reused`, `validation.failed`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "staff": []
+          }
+        ],
+        "summary": "Send a document to its customer again",
+        "tags": [
+          "admin.customerDocuments"
+        ],
+        "x-required-permissions": [
+          "receivables.manage"
+        ]
+      }
+    },
     "/v1/admin/customer-documents/{documentId}/actions/void": {
       "post": {
         "description": "Only an IV or DN nothing was collected on: its number stays with the reason and its journals are reversed (§4). Tax invoices and receipts are corrected by credit notes. Requires `Idempotency-Key`.\n\nImplements: D-010, D-092, D-033.",
@@ -136524,6 +137045,200 @@
         ],
         "x-required-permissions": [
           "receivables.manage"
+        ]
+      }
+    },
+    "/v1/admin/customer-documents/{documentId}/deliveries": {
+      "get": {
+        "description": "Each channel and recipient (masked, PDPA) of every send, with its delivery status, newest first.\n\nImplements: D-143.",
+        "operationId": "admin.customerDocuments.deliveries",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "documentId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "example": [
+                  {
+                    "channel": "email",
+                    "kind": "resent",
+                    "recipient": "s***@example.com",
+                    "requestedAt": "2026-10-05T10:00:00+07:00",
+                    "sentAt": "2026-10-05T10:01:00+07:00",
+                    "status": "sent"
+                  }
+                ],
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/DocumentDeliveryDto"
+                  },
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Deliveries",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.unauthenticated": {
+                    "$ref": "#/components/examples/problem.auth.unauthenticated"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.unauthenticated`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.forbidden": {
+                    "$ref": "#/components/examples/problem.auth.forbidden"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.forbidden`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "404": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.not_found": {
+                    "$ref": "#/components/examples/problem.http.not_found"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.not_found`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "validation.failed": {
+                    "$ref": "#/components/examples/problem.validation.failed"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `validation.failed`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "staff": []
+          }
+        ],
+        "summary": "Where a document was sent",
+        "tags": [
+          "admin.customerDocuments"
+        ],
+        "x-required-permissions": [
+          "receivables.read"
         ]
       }
     },
@@ -149570,6 +150285,282 @@
         ],
         "x-required-permissions": [
           "document_series.manage"
+        ]
+      }
+    },
+    "/v1/admin/dunning-log": {
+      "get": {
+        "description": "The D-122 reminders of the `receivables.dunning` job (before the due date, on it, overdue), newest first, one row per channel it went out on (masked recipient, delivery status), or one row without a channel when no route sent it. Company credit instalments are reminded by the companies module, not listed here.\n\nImplements: D-122, D-143.",
+        "operationId": "admin.customerDocuments.dunningLog",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "page",
+            "required": false,
+            "schema": {
+              "default": 1,
+              "minimum": 1,
+              "type": "integer"
+            }
+          },
+          {
+            "in": "query",
+            "name": "perPage",
+            "required": false,
+            "schema": {
+              "default": 25,
+              "maximum": 100,
+              "minimum": 1,
+              "type": "integer"
+            }
+          },
+          {
+            "description": "Sort field; each endpoint validates it against its own allow-list.",
+            "in": "query",
+            "name": "sort",
+            "required": false,
+            "schema": {
+              "example": "createdAt",
+              "maxLength": 64,
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "order",
+            "required": false,
+            "schema": {
+              "$ref": "#/components/schemas/SortOrder"
+            }
+          },
+          {
+            "description": "Free-text search",
+            "in": "query",
+            "name": "q",
+            "required": false,
+            "schema": {
+              "maxLength": 200,
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "customerId",
+            "required": false,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "companyId",
+            "required": false,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "documentId",
+            "required": false,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "description": "Reminders on or after (Bangkok)",
+            "in": "query",
+            "name": "from",
+            "required": false,
+            "schema": {
+              "example": "2026-10-01",
+              "format": "date",
+              "type": "string"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "data": [
+                    {
+                      "channel": "email",
+                      "companyId": null,
+                      "customerId": "0192f3a0-7c1e-7d2a-9b1f-0000000d7002",
+                      "docNumber": "IV-2610-00012",
+                      "documentId": "0192f3a0-7c1e-7d2a-9b1f-0000000d7001",
+                      "recipient": "s***@example.com",
+                      "remindedAt": "2026-10-08T09:00:00+07:00",
+                      "sentAt": "2026-10-08T09:00:05+07:00",
+                      "stage": "before_due",
+                      "status": "sent"
+                    }
+                  ],
+                  "meta": {
+                    "page": 1,
+                    "perPage": 25,
+                    "total": 1
+                  }
+                },
+                "schema": {
+                  "properties": {
+                    "data": {
+                      "items": {
+                        "$ref": "#/components/schemas/DunningEntryDto"
+                      },
+                      "type": "array"
+                    },
+                    "meta": {
+                      "$ref": "#/components/schemas/PageMeta"
+                    }
+                  },
+                  "required": [
+                    "data",
+                    "meta"
+                  ],
+                  "type": "object"
+                }
+              }
+            },
+            "description": "One page of results",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.unauthenticated": {
+                    "$ref": "#/components/examples/problem.auth.unauthenticated"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.unauthenticated`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.forbidden": {
+                    "$ref": "#/components/examples/problem.auth.forbidden"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.forbidden`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "validation.failed": {
+                    "$ref": "#/components/examples/problem.validation.failed"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `validation.failed`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "staff": []
+          }
+        ],
+        "summary": "List the payment reminders sent",
+        "tags": [
+          "admin.customerDocuments"
+        ],
+        "x-required-permissions": [
+          "receivables.read"
         ]
       }
     },
@@ -196721,6 +197712,238 @@
         ],
         "x-required-permissions": [
           "payouts.execute"
+        ]
+      }
+    },
+    "/v1/admin/payout-runs/{runId}/items/{itemId}/documents": {
+      "get": {
+        "description": "The factory remittance advice (rendered and kept on first request) and the 50 ทวิ issued with the payment, as 5-minute signed URLs (D-022, D-166). 409 before the item is paid.\n\nImplements: D-022, D-093, D-164, D-166.",
+        "operationId": "admin.payouts.itemDocuments",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "runId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "itemId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "remittanceAdvice": {
+                    "expiresAt": "2026-10-27T10:05:00+07:00",
+                    "url": "https://packio-files.s3.example.com/…&X-Amz-Expires=300"
+                  },
+                  "whtCertificates": [
+                    {
+                      "download": {
+                        "expiresAt": "2026-10-27T10:05:00+07:00",
+                        "url": "https://packio-files.s3.example.com/…&X-Amz-Expires=300"
+                      },
+                      "form": "pnd53",
+                      "id": "0192f3a0-7c1e-7d2a-9b1f-000000530105",
+                      "paidAmount": "5560.00",
+                      "paidOn": "2026-10-27",
+                      "pdfReady": true,
+                      "whtAmount": "166.80",
+                      "whtRatePct": "3.0000",
+                      "wtNumber": "DEVWT-26-00001"
+                    }
+                  ]
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/PayoutItemDocumentsDto"
+                }
+              }
+            },
+            "description": "Documents",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.unauthenticated": {
+                    "$ref": "#/components/examples/problem.auth.unauthenticated"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.unauthenticated`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.forbidden": {
+                    "$ref": "#/components/examples/problem.auth.forbidden"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.forbidden`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "404": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.not_found": {
+                    "$ref": "#/components/examples/problem.http.not_found"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.not_found`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "409": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "payouts.run_invalid_status": {
+                    "$ref": "#/components/examples/problem.payouts.run_invalid_status"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `payouts.run_invalid_status`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "validation.failed": {
+                    "$ref": "#/components/examples/problem.validation.failed"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `validation.failed`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "staff": []
+          }
+        ],
+        "summary": "Documents of a paid payout item",
+        "tags": [
+          "admin.payouts"
+        ],
+        "x-required-permissions": [
+          "payables.read"
         ]
       }
     },

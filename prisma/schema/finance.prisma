@@ -1902,8 +1902,11 @@ model PayoutItem {
   bankRef             String?          @map("bank_ref")
   failureReason       String?          @map("failure_reason")
   paidOn              DateTime?        @map("paid_on") @db.Date
+  /// The factory remittance advice, rendered on first request once paid (U-B0.3).
+  remittanceFileId    BigInt?          @map("remittance_file_id")
   createdAt           DateTime         @default(now()) @map("created_at") @db.Timestamptz(6)
 
+  remittanceFile    FileObject?            @relation("PayoutItemRemittanceFile", fields: [remittanceFileId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_payout_items__remittance_file_id")
   run               PayoutRun              @relation(fields: [runId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_payout_items__run_id")
   vendor            Vendor                 @relation("PayoutItemVendor", fields: [vendorId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_payout_items__vendor_id")
   vendorBankAccount VendorBankAccount?     @relation("PayoutItemVendorBankAccount", fields: [vendorBankAccountId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_payout_items__vendor_bank_account_id")
@@ -1914,6 +1917,7 @@ model PayoutItem {
   @@index([runId], map: "ix_payout_items__run_id")
   @@index([vendorId, status], map: "ix_payout_items__vendor_id__status")
   @@index([vendorBankAccountId], map: "ix_payout_items__vendor_bank_account_id")
+  @@index([remittanceFileId], map: "ix_payout_items__remittance_file_id")
   @@map("payout_items")
 }
 

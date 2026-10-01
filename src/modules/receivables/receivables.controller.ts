@@ -32,7 +32,11 @@ import {
   CreditNoteRequestListQuery,
   CustomerDocumentDto,
   DOCUMENT_EXAMPLE,
+  DocumentDeliveryDto,
   DocumentListQuery,
+  DocumentSendResultDto,
+  DunningEntryDto,
+  DunningLogQuery,
   IssueDebitNoteDto,
   ITEM_EXAMPLE,
   ProvisionDto,
@@ -152,6 +156,129 @@ export class AdminCustomerDocumentsController {
       appliesTo: r.appliesTo,
       direction: r.direction,
     }));
+  }
+
+  @Post('customer-documents/:documentId/actions/resend')
+  @HttpCode(202)
+  @Idempotent()
+  @Can('receivables.manage')
+  @ApiParam({ name: 'documentId', format: 'uuid' })
+  @ApiEndpoint({
+    id: 'admin.customerDocuments.resend',
+    summary: 'Send a document to its customer again',
+    description:
+      'Raises `customer_document.sent`: the notification matrix sends it by e-mail and by LINE when linked (D-143); ' +
+      'the customer downloads the PDF from their account. Asynchronous — `admin.customerDocuments.deliveries` shows ' +
+      'where it went. A void document is refused (409). Audited.',
+    implements: ['D-143', 'D-010'],
+  })
+  @ApiSuccess(202, {
+    description: 'Requested',
+    type: DocumentSendResultDto,
+    example: { documentId: '0192f3a0-7c1e-7d2a-9b1f-0000000d7001', requestedAt: '2026-10-05T10:00:00+07:00' },
+  })
+  @ApiStandardErrors('http.not_found', 'validation.failed', 'receivables.document_not_voidable')
+  async resend(
+    @CurrentActor() actor: Actor,
+    @Param('documentId', ParseUUIDPipe) documentId: string,
+  ): Promise<DocumentSendResultDto> {
+    const sent = await this.documents.send(staff(actor), documentId);
+    return { documentId, requestedAt: toBangkokIso(sent.at) };
+  }
+
+  @Get('customer-documents/:documentId/deliveries')
+  @Can('receivables.read')
+  @ApiParam({ name: 'documentId', format: 'uuid' })
+  @ApiEndpoint({
+    id: 'admin.customerDocuments.deliveries',
+    summary: 'Where a document was sent',
+    description:
+      'Each channel and recipient (masked, PDPA) of every send, with its delivery status, newest first.',
+    implements: ['D-143'],
+  })
+  @ApiSuccess(200, {
+    description: 'Deliveries',
+    type: [DocumentDeliveryDto],
+    example: [
+      {
+        channel: 'email',
+        recipient: 's***@example.com',
+        status: 'sent',
+        sentAt: '2026-10-05T10:01:00+07:00',
+        kind: 'resent',
+        requestedAt: '2026-10-05T10:00:00+07:00',
+      },
+    ],
+  })
+  @ApiStandardErrors('http.not_found', 'validation.failed')
+  async deliveries(@Param('documentId', ParseUUIDPipe) documentId: string): Promise<DocumentDeliveryDto[]> {
+    return (await this.documents.deliveries(documentId)).map((n) => ({
+      channel: n.channel,
+      recipient: n.recipientAddressMasked,
+      status: n.status,
+      sentAt: n.sentAt ? toBangkokIso(n.sentAt) : null,
+      kind: (n.event.payload as { kind?: string }).kind === 'issued' ? 'issued' : 'resent',
+      requestedAt: toBangkokIso(n.event.occurredAt),
+    }));
+  }
+
+  @Get('dunning-log')
+  @Can('receivables.read')
+  @ApiEndpoint({
+    id: 'admin.customerDocuments.dunningLog',
+    summary: 'List the payment reminders sent',
+    description:
+      'The D-122 reminders of the `receivables.dunning` job (before the due date, on it, overdue), newest first, one ' +
+      'row per channel it went out on (masked recipient, delivery status), or one row without a channel when no ' +
+      'route sent it. Company credit instalments are reminded by the companies module, not listed here.',
+    implements: ['D-122', 'D-143'],
+  })
+  @ApiPaginated(DunningEntryDto, {
+    example: {
+      documentId: '0192f3a0-7c1e-7d2a-9b1f-0000000d7001',
+      docNumber: 'IV-2610-00012',
+      customerId: '0192f3a0-7c1e-7d2a-9b1f-0000000d7002',
+      companyId: null,
+      stage: 'before_due',
+      remindedAt: '2026-10-08T09:00:00+07:00',
+      channel: 'email',
+      recipient: 's***@example.com',
+      status: 'sent',
+      sentAt: '2026-10-08T09:00:05+07:00',
+    },
+  })
+  @ApiStandardErrors('validation.failed')
+  async dunningLog(@Query() q: DunningLogQuery) {
+    const where: Prisma.DunningNoticeWhereInput = {
+      receivableItem: {
+        ...(q.customerId && { customer: { publicId: q.customerId } }),
+        ...(q.companyId && { company: { publicId: q.companyId } }),
+        ...(q.documentId && { customerDocument: { publicId: q.documentId } }),
+      },
+      ...(q.from && { sentAt: { gte: new Date(`${q.from}T00:00:00+07:00`) } }),
+    };
+    const { rows, notifications, total } = await this.documents.dunningLog(where, q.page, q.perPage);
+    const data = rows.flatMap((r): DunningEntryDto[] => {
+      const base = {
+        documentId: r.receivableItem.customerDocument.publicId,
+        docNumber: r.receivableItem.customerDocument.docNumber,
+        customerId: r.receivableItem.customer.publicId,
+        companyId: r.receivableItem.company?.publicId ?? null,
+        stage: r.stage,
+        remindedAt: toBangkokIso(r.sentAt),
+      };
+      const sent = notifications.filter((n) => n.eventId === r.domainEventId);
+      return sent.length === 0
+        ? [{ ...base, channel: null, recipient: null, status: null, sentAt: null }]
+        : sent.map((n) => ({
+            ...base,
+            channel: n.channel,
+            recipient: n.recipientAddressMasked,
+            status: n.status,
+            sentAt: n.sentAt ? toBangkokIso(n.sentAt) : null,
+          }));
+    });
+    return { data, meta: { page: q.page, perPage: q.perPage, total } };
   }
 
   @Get('customer-documents/:documentId')

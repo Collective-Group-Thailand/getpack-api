@@ -31,6 +31,7 @@ import { FilesService } from '@platform/files/files.service';
 import { DocumentNumberingService } from '@platform/numbering/document-numbering.service';
 
 import { readObject } from './read-object';
+import { renderRemittanceAdviceHtml } from './remittance-advice-render';
 import { renderWhtCertificateHtml } from './wht-certificate-render';
 
 const D = (v: { toString(): string } | string | number) => new MoneyDecimal(v.toString());
@@ -796,6 +797,83 @@ export class PayoutsService {
   }
 
   /** A 50 ทวิ of a vendor (partner download: the vendor must be the actor's factory's). */
+  /**
+   * The documents of a paid payout item (U-B0.3): its 50 ทวิ and the factory remittance advice, rendered and kept
+   * on first request (the paid item accepts only that change). 409 before the item is paid.
+   */
+  async itemDocuments(runPublicId: string, itemPublicId: string) {
+    const item = await this.prisma.payoutItem.findFirst({
+      where: { publicId: itemPublicId, run: { publicId: runPublicId } },
+      include: {
+        run: true,
+        vendor: true,
+        vendorBankAccount: { select: { accountNoLast4: true } },
+        allocations: {
+          include: {
+            payableItem: {
+              include: {
+                purchaseOrder: { select: { poNumber: true } },
+                order: { select: { orderCode: true } },
+              },
+            },
+          },
+          orderBy: { id: 'asc' },
+        },
+        whtCertificates: { where: { status: 'issued' }, orderBy: { id: 'asc' } },
+      },
+    });
+    if (!item) throw new DomainException('http.not_found');
+    if (item.status !== 'paid' || !item.paidOn || !item.pvNumber)
+      throw new DomainException('payouts.run_invalid_status', { params: { status: item.status } });
+    let remittanceFileId = item.remittanceFileId;
+    if (remittanceFileId === null) {
+      const paidOn = item.paidOn.toISOString().slice(0, 10);
+      const seller = await this.documents.seller(
+        this.prisma,
+        item.run.entityId,
+        new Date(`${paidOn}T12:00:00+07:00`),
+      );
+      const html = renderRemittanceAdviceHtml({
+        pvNumber: item.pvNumber,
+        paidOn,
+        payer: { name: seller.legalNameTh ?? '', taxId: seller.taxId ?? '' },
+        payee: { name: item.vendor.legalName, taxId: item.vendor.taxId, branchCode: item.vendor.branchCode },
+        bankAccountLast4: item.vendorBankAccount?.accountNoLast4 ?? null,
+        bankRef: item.bankRef,
+        lines: item.allocations.map((a) => ({
+          label:
+            [a.payableItem.purchaseOrder?.poNumber, a.payableItem.order?.orderCode]
+              .filter(Boolean)
+              .join(' · ') || a.payableItem.source,
+          netAmount: a.netAmount.toFixed(2),
+          vatAmount: a.vatAmount.toFixed(2),
+        })),
+        apNetAmount: item.apNetAmount.toFixed(2),
+        vatAmount: item.vatAmount.toFixed(2),
+        whtAmount: item.whtAmount.toFixed(2),
+        retentionAmount: item.retentionAmount.toFixed(2),
+        cashAmount: item.cashAmount.toFixed(2),
+      });
+      const stored = await this.files.storeSystem({
+        body: await this.renderer.render(html),
+        fileName: `${item.pvNumber}-remittance.pdf`,
+        mimeType: 'application/pdf',
+        retentionClass: 'financial_record',
+        ownerUserId: null,
+        ownerFactoryId:
+          (await this.prisma.factory.findUnique({ where: { vendorId: item.vendorId } }))?.id ?? null,
+      });
+      // A concurrent first request may have won; keep whichever file was set first.
+      await this.prisma.payoutItem.updateMany({
+        where: { id: item.id, remittanceFileId: null },
+        data: { remittanceFileId: stored.id },
+      });
+      remittanceFileId = (await this.prisma.payoutItem.findUniqueOrThrow({ where: { id: item.id } }))
+        .remittanceFileId;
+    }
+    return { item, remittanceFileId: remittanceFileId!, certificates: item.whtCertificates };
+  }
+
   async certificate(publicId: string, vendorId: bigint | null) {
     const cert = await this.prisma.whtCertificate.findUnique({ where: { publicId } });
     if (!cert || (vendorId !== null && cert.vendorId !== vendorId))

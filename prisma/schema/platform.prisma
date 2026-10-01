@@ -868,6 +868,7 @@ model FileObject {
   payoutBankFiles          PayoutRun[]           @relation("PayoutRunBankFile")
   payoutConfirmations      PayoutRun[]           @relation("PayoutRunConfirmationFile")
   whtCertificateFiles      WhtCertificate[]      @relation("WhtCertificateFile")
+  payoutRemittanceFiles    PayoutItem[]          @relation("PayoutItemRemittanceFile")
   bankStatementImports     BankStatementImport[] @relation("BankStatementImportFile")
   gatewaySettlementReports GatewaySettlement[]   @relation("GatewaySettlementReport")
   // --- end Finance B5.3
