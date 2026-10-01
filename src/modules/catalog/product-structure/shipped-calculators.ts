@@ -20,4 +20,8 @@ export const SHIPPED_CALCULATORS: ReadonlySet<CalculatorKey> = new Set<Calculato
   // folding engine's hand-derived vectors), validation docs/pricing-validation-tag-sleeve.md (pending sign-off). The
   // type stays seeded `rfq` (A-16) until the business signs off the cases and the factory's tag price list (D-100).
   'tag_sleeve',
+  // U-B6 pouch: golden cases test/golden/pouch (expected values from an independent Python transcription of the PHP),
+  // validation docs/pricing-validation-pouch.md (pending sign-off). The type stays seeded `rfq` (A-16) until the
+  // business signs off the cases and the factory's pouch price list (D-100).
+  'pouch',
 ]);
