@@ -6,6 +6,8 @@ import { type MigratedDatabase, startMigratedDatabase, stopMigratedDatabase } fr
  */
 
 const CHECKS = [
+  'ck_pl_service_prices__lead_time',
+  'ck_pl_service_prices__unit_cost',
   'ck_pl_stock_product_prices__band',
   'ck_pl_stock_product_prices__lead_time',
   'ck_pl_stock_product_prices__price',
@@ -814,6 +816,7 @@ const TRIGGERS = [
   'tg_pl_label_paper_sheets__version_frozen',
   'tg_pl_label_print_type_terms__version_frozen',
   'tg_pl_label_roll_print_prices__version_frozen',
+  'tg_pl_service_prices__version_frozen',
   'tg_pl_stock_product_prices__version_frozen',
   'tg_pl_pouch_factory_margins__version_frozen',
   'tg_pl_pouch_material_prices__version_frozen',

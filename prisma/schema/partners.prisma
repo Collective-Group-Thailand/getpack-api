@@ -197,6 +197,7 @@ enum PriceComponent {
   percent_reduces
   standard_size_prices
   stock_product_prices
+  service_prices
   conditions
   calculate_conditions
   production_conditions
@@ -1162,6 +1163,7 @@ model PriceListVersion {
   pouchFactoryMargins        PlPouchFactoryMargin[]        @relation("PlPouchFactoryMarginPriceListVersion")
   pouchOptionRules           PlPouchOptionRule[]           @relation("PlPouchOptionRulePriceListVersion")
   stockProductPrices         PlStockProductPrice[]         @relation("PlStockProductPricePriceListVersion")
+  servicePrices              PlServicePrice[]              @relation("PlServicePricePriceListVersion")
   // --- end Corrugate price components
 
   @@unique([priceListId, versionNo], map: "ux_price_list_versions__price_list_id__version_no")
@@ -2656,4 +2658,29 @@ model PlStockProductPrice {
   @@index([printTypeId], map: "ix_pl_stock_product_prices__print_type_id")
   @@index([stockProductId], map: "ix_pl_stock_product_prices__stock_product_id")
   @@map("pl_stock_product_prices")
+}
+
+// U-B6 service (schema-design A-75, port map docs/legacy/05-service-port-map.md §9): a factory's net buy cost per unit of a
+// service item (a `service` catalogue product). Legacy kept no service price table (CS typed the cost, D-194); a line
+// here is what makes a service instant (D-100, D-043).
+model PlServicePrice {
+  id                 BigInt   @id(map: "pk_pl_service_prices") @default(autoincrement())
+  priceListVersionId BigInt   @map("price_list_version_id")
+  lineKey            String   @map("line_key")
+  /// Legacy print type `service` (11).
+  printTypeId        BigInt   @map("print_type_id")
+  catalogProductId   BigInt   @map("catalog_product_id")
+  /// Net buy cost per unit (legacy `cost`, VAT excluded, input tax 0).
+  unitCost           Decimal  @map("unit_cost") @db.Decimal(18, 6)
+  leadTimeDays       Decimal? @map("lead_time_days") @db.Decimal(6, 2)
+  createdAt          DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  priceListVersion PriceListVersion @relation("PlServicePricePriceListVersion", fields: [priceListVersionId], references: [id], onDelete: Cascade, onUpdate: Restrict, map: "fk_pl_service_prices__price_list_version_id")
+  printType        PrintType        @relation("PlServicePricePrintType", fields: [printTypeId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_pl_service_prices__print_type_id")
+  catalogProduct   CatalogProduct   @relation("PlServicePriceCatalogProduct", fields: [catalogProductId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_pl_service_prices__catalog_product_id")
+
+  @@unique([priceListVersionId, lineKey], map: "ux_pl_service_prices__version__line_key")
+  @@index([printTypeId], map: "ix_pl_service_prices__print_type_id")
+  @@index([catalogProductId], map: "ix_pl_service_prices__catalog_product_id")
+  @@map("pl_service_prices")
 }

@@ -346,6 +346,7 @@ model PrintType {
   plPouchFactoryMargins     PlPouchFactoryMargin[]     @relation("PlPouchFactoryMarginPrintType")
   plPouchOptionRules        PlPouchOptionRule[]        @relation("PlPouchOptionRulePrintType")
   plStockProductPrices      PlStockProductPrice[]      @relation("PlStockProductPricePrintType")
+  plServicePrices           PlServicePrice[]           @relation("PlServicePricePrintType")
   // --- end Corrugate price components
 
   @@index([productTypeId], map: "ix_print_types__product_type_id")
@@ -410,6 +411,8 @@ model CatalogProduct {
   // --- Fulfilment B4.1 (generated back-relations)
   designDocuments DesignDocument[] @relation("DesignDocumentCatalogProduct")
   // --- end Fulfilment B4.1
+
+  plServicePrices PlServicePrice[] @relation("PlServicePriceCatalogProduct")
 
   @@index([productTypeId], map: "ix_catalog_products__product_type_id")
   @@index([seoPageId], map: "ix_catalog_products__seo_page_id")

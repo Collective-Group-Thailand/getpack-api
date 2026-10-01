@@ -13,6 +13,7 @@ import { LabelPriceComponentsRegistrar } from './calculators/label/price-compone
 import { PouchQuoteAdapter } from './calculators/pouch/pouch.adapter';
 import { PouchSnapshotLoader } from './calculators/pouch/pouch-snapshot.loader';
 import { PouchPriceComponentsRegistrar } from './calculators/pouch/price-components.registrar';
+import { ServicePriceComponentsRegistrar } from './calculators/service/price-components.registrar';
 import { StandardProductPriceComponentsRegistrar } from './calculators/standard-product/price-components.registrar';
 import { StandardProductQuoteAdapter } from './calculators/standard-product/standard-product.adapter';
 import { StandardProductSnapshotLoader } from './calculators/standard-product/standard-product-snapshot.loader';
@@ -62,6 +63,7 @@ const SERVICES = [
     LabelPriceComponentsRegistrar,
     PouchPriceComponentsRegistrar,
     StandardProductPriceComponentsRegistrar,
+    ServicePriceComponentsRegistrar,
   ],
   exports: SERVICES,
 })
