@@ -6,6 +6,7 @@ import { sizeRulesOf, sizeViolation } from '@modules/catalog/store/size-rules';
 import { type Type } from '@nestjs/common';
 
 import { CorrugateConfigurationDto, CsCorrugateConfigurationDto } from './corrugate.dto';
+import { LabelConfigurationDto } from './label.dto';
 import { FoldingConfigurationDto } from './quote.dto';
 
 /**
@@ -17,11 +18,13 @@ import { FoldingConfigurationDto } from './quote.dto';
 export const CALCULATOR_SALES_UNIT: Partial<Record<CalculatorKey, ProductUnit>> = {
   folding: 'piece',
   corrugate: 'piece',
+  label: 'piece',
 };
 
 const DTOS: Partial<Record<CalculatorKey, { store: Type<object>; staff: Type<object> }>> = {
   folding: { store: FoldingConfigurationDto, staff: FoldingConfigurationDto },
   corrugate: { store: CorrugateConfigurationDto, staff: CsCorrugateConfigurationDto },
+  label: { store: LabelConfigurationDto, staff: LabelConfigurationDto },
 };
 
 export async function validateConfiguration(
@@ -68,7 +71,7 @@ export async function assertStoreRules(
         'the catalogue product is priced at its own difficulty level',
       );
     }
-  } else if (key === 'corrugate') {
+  } else if (key === 'corrugate' || key === 'label') {
     fail('configuration.catalogProductId', 'required', 'the catalogue product is required');
   }
   if (typeof configuration['patternId'] !== 'string') return;

@@ -172,6 +172,85 @@ export async function boxSpecLines(db: Tx, cfg: BoxConfiguration): Promise<SpecL
   return lines;
 }
 
+/** A label configuration (U-B6 label): W × L, a label stock, print and coating per side, a die-cut. */
+export interface LabelSpecConfiguration {
+  w: number;
+  l: number;
+  materialId: string;
+  printFront?: { inkColourIds: string[] };
+  printBack?: { inkColourIds: string[] };
+  finishFrontId?: string;
+  finishBackId?: string;
+  diecutTypeId?: string;
+  design?: { graphic?: boolean };
+}
+
+const LABEL_LINES = {
+  size: ['ขนาด (กว้าง × ยาว)', 'Size (W × L)'],
+  material: ['วัสดุ', 'Material'],
+  print_front: ['พิมพ์ด้านหน้า', 'Print (face)'],
+  print_back: ['พิมพ์ด้านหลัง', 'Print (back)'],
+  coating_front: ['เคลือบด้านหน้า', 'Coating (face)'],
+  coating_back: ['เคลือบด้านหลัง', 'Coating (back)'],
+  diecut: ['ไดคัท', 'Die-cut'],
+  design_service: ['บริการออกแบบ', 'Design service'],
+} as const;
+
+export async function labelSpecLines(db: Tx, cfg: LabelSpecConfiguration): Promise<SpecLineDto[]> {
+  const byIds = (ids: string[]) => ({ where: { publicId: { in: ids } } });
+  const colours = uniq([...(cfg.printFront?.inkColourIds ?? []), ...(cfg.printBack?.inkColourIds ?? [])]);
+  const [materials, inks, finishes, diecuts] = await Promise.all([
+    names([cfg.materialId], async (ids) =>
+      (await db.material.findMany(byIds(ids))).map((r) => ({
+        publicId: r.publicId,
+        th: r.nameTh,
+        en: r.nameEn,
+      })),
+    ),
+    names(colours, async (ids) =>
+      (await db.inkColour.findMany(byIds(ids))).map((r) => ({
+        publicId: r.publicId,
+        th: r.name,
+        en: r.name,
+      })),
+    ),
+    names(uniq([cfg.finishFrontId, cfg.finishBackId]), async (ids) =>
+      (await db.finish.findMany(byIds(ids))).map((r) => ({
+        publicId: r.publicId,
+        th: r.nameTh,
+        en: r.nameEn,
+      })),
+    ),
+    names(uniq([cfg.diecutTypeId]), async (ids) =>
+      (await db.diecutType.findMany(byIds(ids))).map((r) => ({
+        publicId: r.publicId,
+        th: r.nameTh,
+        en: r.nameEn,
+      })),
+    ),
+  ]);
+  const lines: SpecLineDto[] = [];
+  const push = (key: keyof typeof LABEL_LINES, valueTh: string, valueEn: string) => {
+    const [labelTh, labelEn] = LABEL_LINES[key];
+    lines.push({ key, labelTh, labelEn, valueTh, valueEn });
+  };
+  const list = (map: Map<string, Named>, ids: (string | undefined)[], key: keyof typeof LABEL_LINES) => {
+    const found = uniq(ids)
+      .map((id) => map.get(id))
+      .filter((n): n is Named => !!n);
+    if (found.length) push(key, found.map((n) => n.th).join(', '), found.map((n) => n.en).join(', '));
+  };
+  push('size', `${mm(cfg.w)} × ${mm(cfg.l)} มม.`, `${mm(cfg.w)} × ${mm(cfg.l)} mm`);
+  list(materials, [cfg.materialId], 'material');
+  list(inks, cfg.printFront?.inkColourIds ?? [], 'print_front');
+  list(inks, cfg.printBack?.inkColourIds ?? [], 'print_back');
+  list(finishes, [cfg.finishFrontId], 'coating_front');
+  list(finishes, [cfg.finishBackId], 'coating_back');
+  list(diecuts, [cfg.diecutTypeId], 'diecut');
+  if (cfg.design?.graphic) push('design_service', 'กราฟิก', 'Graphic');
+  return lines;
+}
+
 type SchemaProperty = { title?: unknown; 'x-title-en'?: unknown };
 
 function text(value: unknown): string {

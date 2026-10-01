@@ -4,8 +4,10 @@ import { StorePriceHintsController } from './hints/price-hints.controller';
 import {
   AdminCsCorrugateController,
   AdminCsFoldingController,
+  AdminCsLabelController,
   PartnerCorrugatePricingController,
   PartnerFoldingPricingController,
+  PartnerLabelPricingController,
   StoreQuotesController,
 } from './quotes/quotes.controller';
 import { SellMarginTablesController } from './sell-margins/sell-margins.controller';
@@ -17,6 +19,7 @@ export const PRICING_STORE_CONTROLLERS: Type<unknown>[] = [StoreQuotesController
 export const PRICING_ADMIN_CONTROLLERS: Type<unknown>[] = [
   AdminCsFoldingController,
   AdminCsCorrugateController,
+  AdminCsLabelController,
   SellMarginTablesController,
 ];
 
@@ -24,4 +27,5 @@ export const PRICING_ADMIN_CONTROLLERS: Type<unknown>[] = [
 export const PRICING_PARTNER_CONTROLLERS: Type<unknown>[] = [
   PartnerFoldingPricingController,
   PartnerCorrugatePricingController,
+  PartnerLabelPricingController,
 ];

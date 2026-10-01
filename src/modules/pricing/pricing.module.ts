@@ -7,10 +7,13 @@ import { CorrugatePriceComponentsRegistrar } from './calculators/corrugate/price
 import { FoldingQuoteAdapter } from './calculators/folding/folding.adapter';
 import { FoldingSnapshotLoader } from './calculators/folding/folding-snapshot.loader';
 import { FoldingPriceComponentsRegistrar } from './calculators/folding/price-components.registrar';
+import { LabelQuoteAdapter } from './calculators/label/label.adapter';
+import { LabelSnapshotLoader } from './calculators/label/label-snapshot.loader';
 import { LabelPriceComponentsRegistrar } from './calculators/label/price-components.registrar';
 import { PriceHintsService } from './hints/price-hints.service';
 import { CorrugateInputDataService } from './quotes/corrugate-input-data.service';
 import { FoldingInputDataService } from './quotes/folding-input-data.service';
+import { LabelInputDataService } from './quotes/label-input-data.service';
 import { QuoteEngineService } from './quotes/quote-engine.service';
 import { SellMarginsService } from './sell-margins/sell-margins.service';
 
@@ -20,9 +23,12 @@ const SERVICES = [
   FoldingQuoteAdapter,
   CorrugateSnapshotLoader,
   CorrugateQuoteAdapter,
+  LabelSnapshotLoader,
+  LabelQuoteAdapter,
   QuoteEngineService,
   FoldingInputDataService,
   CorrugateInputDataService,
+  LabelInputDataService,
   SellMarginsService,
   PriceHintsService,
 ];

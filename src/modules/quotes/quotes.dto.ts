@@ -225,6 +225,7 @@ export class SavedQuoteDto {
     anyOf: [
       { $ref: getSchemaPath(FoldingConfigurationDto) },
       { $ref: getSchemaPath('CorrugateConfigurationDto') },
+      { $ref: getSchemaPath('LabelConfigurationDto') },
     ],
     nullable: true,
     description: "The configuration of the product type's calculator; null for RFQ quotes",

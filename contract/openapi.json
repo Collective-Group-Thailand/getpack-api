@@ -7368,6 +7368,9 @@
                   },
                   {
                     "$ref": "#/components/schemas/CorrugateConfigurationDto"
+                  },
+                  {
+                    "$ref": "#/components/schemas/LabelConfigurationDto"
                   }
                 ]
               },
@@ -11850,9 +11853,12 @@
               },
               {
                 "$ref": "#/components/schemas/CorrugateConfigurationDto"
+              },
+              {
+                "$ref": "#/components/schemas/LabelConfigurationDto"
               }
             ],
-            "description": "The configuration of the product type's calculator: `FoldingConfigurationDto` for folding cartons, `CorrugateConfigurationDto` for corrugated boxes (validated against it; paths under `configuration`)"
+            "description": "The configuration of the product type's calculator: `FoldingConfigurationDto` for folding cartons, `CorrugateConfigurationDto` for corrugated boxes, `LabelConfigurationDto` for labels (validated against it; paths under `configuration`)"
           },
           "deliveryPostcode": {
             "description": "Delivery postcode: prices shipping on the customer rate card (D-013)",
@@ -33563,6 +33569,181 @@
         ],
         "type": "string"
       },
+      "LabelConfigurationDto": {
+        "properties": {
+          "catalogProductId": {
+            "description": "The catalogue product (required on the store, where the difficulty level must be the product’s own); staff may price without one",
+            "example": "0192f3a0-7c1e-7d2a-9b1f-00000000c101",
+            "format": "uuid",
+            "type": "string"
+          },
+          "design": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/DesignOptionsDto"
+              }
+            ],
+            "description": "Graphic design only (labels have no structure fee)"
+          },
+          "diecutTypeId": {
+            "description": "Die-cut (kiss cut, through cut…)",
+            "example": "0192f3a0-7c1e-7d2a-9b1f-00000000c104",
+            "format": "uuid",
+            "type": "string"
+          },
+          "difficultyLevelId": {
+            "example": "0192f3a0-7c1e-7d2a-9b1f-00000000a103",
+            "format": "uuid",
+            "type": "string"
+          },
+          "finishBackId": {
+            "description": "Coating on the back",
+            "example": "0192f3a0-7c1e-7d2a-9b1f-00000000c103",
+            "format": "uuid",
+            "type": "string"
+          },
+          "finishFrontId": {
+            "description": "Coating on the face",
+            "example": "0192f3a0-7c1e-7d2a-9b1f-00000000c103",
+            "format": "uuid",
+            "type": "string"
+          },
+          "l": {
+            "description": "Label length Unit: mm.",
+            "example": 70,
+            "minimum": 0,
+            "type": "number"
+          },
+          "materialId": {
+            "description": "The label stock (a `label_stock` material)",
+            "example": "0192f3a0-7c1e-7d2a-9b1f-00000000c102",
+            "format": "uuid",
+            "type": "string"
+          },
+          "printBack": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/LabelPrintSideDto"
+              }
+            ],
+            "description": "Print on the back"
+          },
+          "printFront": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/LabelPrintSideDto"
+              }
+            ],
+            "description": "Print on the face; omit for an unprinted label"
+          },
+          "quantities": {
+            "description": "Quantities to price, 1 to 10",
+            "example": [
+              500,
+              1000,
+              3000
+            ],
+            "items": {
+              "maximum": 10000000,
+              "minimum": 1,
+              "type": "number"
+            },
+            "minItems": 1,
+            "type": "array"
+          },
+          "w": {
+            "description": "Label width — the bounding box of any shape (legacy prices W × L only) Unit: mm.",
+            "example": 50,
+            "minimum": 0,
+            "type": "number"
+          }
+        },
+        "required": [
+          "w",
+          "l",
+          "materialId",
+          "difficultyLevelId",
+          "quantities"
+        ],
+        "type": "object"
+      },
+      "LabelInputDataDto": {
+        "properties": {
+          "catalogProducts": {
+            "description": "The calculator’s catalogue products",
+            "items": {
+              "$ref": "#/components/schemas/CsCatalogProductDto"
+            },
+            "type": "array"
+          },
+          "diecutTypes": {
+            "items": {
+              "$ref": "#/components/schemas/CodeNameRefDto"
+            },
+            "type": "array"
+          },
+          "difficultyLevels": {
+            "items": {
+              "$ref": "#/components/schemas/CodeNameRefDto"
+            },
+            "type": "array"
+          },
+          "discountPolicy": {
+            "$ref": "#/components/schemas/CsDiscountPolicyDto"
+          },
+          "finishes": {
+            "description": "Coatings and laminations",
+            "items": {
+              "$ref": "#/components/schemas/CorrugateInputCoatingDto"
+            },
+            "type": "array"
+          },
+          "inkColours": {
+            "items": {
+              "$ref": "#/components/schemas/InputInkColourDto"
+            },
+            "type": "array"
+          },
+          "labelStocks": {
+            "description": "Label stocks (`label_stock` materials)",
+            "items": {
+              "$ref": "#/components/schemas/InputMaterialDto"
+            },
+            "type": "array"
+          }
+        },
+        "required": [
+          "catalogProducts",
+          "discountPolicy",
+          "labelStocks",
+          "inkColours",
+          "finishes",
+          "diecutTypes",
+          "difficultyLevels"
+        ],
+        "type": "object"
+      },
+      "LabelPrintSideDto": {
+        "properties": {
+          "inkColourIds": {
+            "description": "Ink colours printed on this side (a process colour such as CMYK is one colour)",
+            "example": [
+              "0192f3a0-7c1e-7d2a-9b1f-00000000a104"
+            ],
+            "items": {
+              "format": "uuid",
+              "type": "string"
+            },
+            "maxItems": 8,
+            "minItems": 1,
+            "type": "array"
+          }
+        },
+        "required": [
+          "inkColourIds"
+        ],
+        "type": "object"
+      },
       "LedgerDimension": {
         "enum": [
           "order",
@@ -41107,7 +41288,11 @@
           "corrugate_diecut_prices",
           "corrugate_assembly_prices",
           "corrugate_pattern_conditions",
-          "fixed_options"
+          "fixed_options",
+          "label_print_type_terms",
+          "label_paper_sheets",
+          "label_roll_print_prices",
+          "label_diecut_prices"
         ],
         "type": "string"
       },
@@ -50190,9 +50375,12 @@
               },
               {
                 "$ref": "#/components/schemas/CorrugateConfigurationDto"
+              },
+              {
+                "$ref": "#/components/schemas/LabelConfigurationDto"
               }
             ],
-            "description": "The configuration of the product type's calculator: `FoldingConfigurationDto` for folding cartons, `CorrugateConfigurationDto` for corrugated boxes (validated against it; paths under `configuration`)"
+            "description": "The configuration of the product type's calculator: `FoldingConfigurationDto` for folding cartons, `CorrugateConfigurationDto` for corrugated boxes, `LabelConfigurationDto` for labels (validated against it; paths under `configuration`)"
           },
           "deliveryPostcode": {
             "description": "Delivery postcode: prices shipping on the customer rate card (D-013)",
@@ -50254,6 +50442,9 @@
                   },
                   {
                     "$ref": "#/components/schemas/CorrugateConfigurationDto"
+                  },
+                  {
+                    "$ref": "#/components/schemas/LabelConfigurationDto"
                   }
                 ]
               },
@@ -54903,9 +55094,12 @@
               },
               {
                 "$ref": "#/components/schemas/CorrugateConfigurationDto"
+              },
+              {
+                "$ref": "#/components/schemas/LabelConfigurationDto"
               }
             ],
-            "description": "The configuration of the product type's calculator: `FoldingConfigurationDto` for folding cartons, `CorrugateConfigurationDto` for corrugated boxes (validated against it; paths under `configuration`)"
+            "description": "The configuration of the product type's calculator: `FoldingConfigurationDto` for folding cartons, `CorrugateConfigurationDto` for corrugated boxes, `LabelConfigurationDto` for labels (validated against it; paths under `configuration`)"
           },
           "customerUserId": {
             "description": "The customer the quote is for",
@@ -140955,6 +141149,475 @@
         "summary": "Catalogue choices of the CS folding calculator",
         "tags": [
           "admin.csFolding"
+        ],
+        "x-required-permissions": [
+          "quotes.calculate"
+        ]
+      }
+    },
+    "/v1/admin/cs/label/calculate": {
+      "post": {
+        "description": "The store calculation plus the staff view (selected factory and print type, price-list version, margin-floor flag, each option’s reason when it has no price). Labels are priced on their W × L bounding box on the factory’s sheets and rolls; offset label printing is not priced (U-B6 label, quirk L2). Buy prices need `factory_cost.read`, the margin `margin.read` (D-141). Works before the type is switched to instant, for checks.\n\nImplements: D-100, D-043, D-050, D-051, D-101, D-012, D-141.",
+        "operationId": "admin.csLabel.calculate",
+        "parameters": [
+          {
+            "description": "Prices shipping on the customer rate card (D-013)",
+            "in": "query",
+            "name": "deliveryPostcode",
+            "required": false,
+            "schema": {
+              "example": "10110",
+              "pattern": "^[0-9]{5}$",
+              "type": "string"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "examples": {
+                "default": {
+                  "value": {
+                    "catalogProductId": "0192f3a0-7c1e-7d2a-9b1f-00000000c101",
+                    "design": {
+                      "graphic": false,
+                      "structure": false
+                    },
+                    "diecutTypeId": "0192f3a0-7c1e-7d2a-9b1f-00000000c104",
+                    "difficultyLevelId": "0192f3a0-7c1e-7d2a-9b1f-00000000a103",
+                    "l": 70,
+                    "materialId": "0192f3a0-7c1e-7d2a-9b1f-00000000c102",
+                    "printFront": {
+                      "inkColourIds": [
+                        "0192f3a0-7c1e-7d2a-9b1f-00000000a104"
+                      ]
+                    },
+                    "quantities": [
+                      1000
+                    ],
+                    "w": 50
+                  }
+                }
+              },
+              "schema": {
+                "$ref": "#/components/schemas/LabelConfigurationDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "calculatorVersion": "1.0.0",
+                  "options": [
+                    {
+                      "error": null,
+                      "optionKey": "0192f3a0-7c1e-7d2a-9b1f-00000000f001:0192f3a0-7c1e-7d2a-9b1f-00000000a107"
+                    }
+                  ],
+                  "steps": [
+                    {
+                      "designFeeAmount": "0.00",
+                      "earliestDeliveryDate": "2026-10-10",
+                      "earliestShipDate": "2026-10-09",
+                      "grossAmount": "13508.40",
+                      "instant": true,
+                      "internal": {
+                        "belowMarginFloor": false,
+                        "buyPrice": "10123.45",
+                        "factoryId": "0192f3a0-7c1e-7d2a-9b1f-00000000f001",
+                        "marginPct": "24.1234",
+                        "parts": [
+                          {
+                            "buyPrice": "10123.45",
+                            "layoutAmount": 10,
+                            "layoutStandard": false,
+                            "partKey": "main",
+                            "sheets": 225
+                          }
+                        ],
+                        "priceListVersionId": "0192f3a0-7c1e-7d2a-9b1f-00000000a101",
+                        "printTypeId": "0192f3a0-7c1e-7d2a-9b1f-00000000a107",
+                        "productionRun": 1000,
+                        "shipping": {
+                          "cartons": 2,
+                          "costAmount": "95.00",
+                          "customerRateVersionId": "0192f3a0-7c1e-7d2a-9b1f-00000000d402",
+                          "factoryPayoutVersionId": "0192f3a0-7c1e-7d2a-9b1f-00000000d412",
+                          "marginAmount": "25.00",
+                          "method": "factory_fleet",
+                          "pallets": null,
+                          "volumeCm3": 61776,
+                          "weightG": 31000,
+                          "zoneCode": "bkk"
+                        }
+                      },
+                      "leadTimeDays": 7,
+                      "productAmount": "13380.00",
+                      "quantity": 1000,
+                      "reason": null,
+                      "shippingAmount": "128.40",
+                      "shippingNetAmount": "120.00",
+                      "shippingPending": false,
+                      "shippingPendingReason": null,
+                      "shippingVatAmount": "8.40",
+                      "structureDesignFeeAmount": "0.00",
+                      "toleranceOveragePct": "5.0000",
+                      "toleranceShortagePct": "5.0000",
+                      "toolingAmount": "0.00",
+                      "unitPrice": "13.38",
+                      "vatAmount": "883.73"
+                    }
+                  ]
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/AdminQuoteCalculationDto"
+                }
+              }
+            },
+            "description": "Prices per quantity with the staff view",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "400": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.bad_request": {
+                    "$ref": "#/components/examples/problem.http.bad_request"
+                  },
+                  "http.malformed_json": {
+                    "$ref": "#/components/examples/problem.http.malformed_json"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.bad_request`, `http.malformed_json`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.unauthenticated": {
+                    "$ref": "#/components/examples/problem.auth.unauthenticated"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.unauthenticated`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.forbidden": {
+                    "$ref": "#/components/examples/problem.auth.forbidden"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.forbidden`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "validation.failed": {
+                    "$ref": "#/components/examples/problem.validation.failed"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `validation.failed`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "503": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "pricing.vat_rate_missing": {
+                    "$ref": "#/components/examples/problem.pricing.vat_rate_missing"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `pricing.vat_rate_missing`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "staff": []
+          }
+        ],
+        "summary": "Price a label configuration for a customer (CS)",
+        "tags": [
+          "admin.csLabel"
+        ],
+        "x-required-permissions": [
+          "quotes.calculate"
+        ]
+      }
+    },
+    "/v1/admin/cs/label/input-data": {
+      "get": {
+        "description": "Active label stocks, ink colours, coatings, die-cut types, difficulty levels and the label catalogue products (legacy `cs/label/get-input-data`, D-100).\n\nImplements: D-100.",
+        "operationId": "admin.csLabel.inputData",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "catalogProducts": [],
+                  "diecutTypes": [
+                    {
+                      "code": "kiss",
+                      "id": "0192f3a0-7c1e-7d2a-9b1f-00000000c104",
+                      "nameEn": "Kiss cut",
+                      "nameTh": "ไดคัทครึ่ง"
+                    }
+                  ],
+                  "difficultyLevels": [],
+                  "discountPolicy": {
+                    "directLimitPct": "5"
+                  },
+                  "finishes": [
+                    {
+                      "code": "gloss",
+                      "finishKind": "coating",
+                      "id": "0192f3a0-7c1e-7d2a-9b1f-00000000c103",
+                      "nameEn": "Gloss",
+                      "nameTh": "เคลือบเงา"
+                    }
+                  ],
+                  "inkColours": [],
+                  "labelStocks": [
+                    {
+                      "code": "pp-white-80",
+                      "gsm": 80,
+                      "id": "0192f3a0-7c1e-7d2a-9b1f-00000000c102",
+                      "nameEn": "White PP label stock",
+                      "nameTh": "สติ๊กเกอร์ PP ขาว"
+                    }
+                  ]
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/LabelInputDataDto"
+                }
+              }
+            },
+            "description": "Input data",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.unauthenticated": {
+                    "$ref": "#/components/examples/problem.auth.unauthenticated"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.unauthenticated`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.forbidden": {
+                    "$ref": "#/components/examples/problem.auth.forbidden"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.forbidden`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "staff": []
+          }
+        ],
+        "summary": "Catalogue choices of the CS label calculator",
+        "tags": [
+          "admin.csLabel"
         ],
         "x-required-permissions": [
           "quotes.calculate"
@@ -267798,6 +268461,272 @@
         ]
       }
     },
+    "/v1/partner/factories/{factoryId}/pricing/label/calculate": {
+      "post": {
+        "description": "The buy side only, on the factory’s own price list in force: cost, buy price, lay-out, sheets (or metres of roll), lead time, per print type (legacy factory tool `POST /api/calculate/label`). Never Packio’s sell price or another factory (D-044, D-042); another factory is 404.\n\nImplements: D-044, D-042, D-040.",
+        "operationId": "partner.pricingLabel.calculate",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "factoryId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "examples": {
+                "default": {
+                  "value": {
+                    "catalogProductId": "0192f3a0-7c1e-7d2a-9b1f-00000000c101",
+                    "design": {
+                      "graphic": false,
+                      "structure": false
+                    },
+                    "diecutTypeId": "0192f3a0-7c1e-7d2a-9b1f-00000000c104",
+                    "difficultyLevelId": "0192f3a0-7c1e-7d2a-9b1f-00000000a103",
+                    "l": 70,
+                    "materialId": "0192f3a0-7c1e-7d2a-9b1f-00000000c102",
+                    "printFront": {
+                      "inkColourIds": [
+                        "0192f3a0-7c1e-7d2a-9b1f-00000000a104"
+                      ]
+                    },
+                    "quantities": [
+                      1000
+                    ],
+                    "w": 50
+                  }
+                }
+              },
+              "schema": {
+                "$ref": "#/components/schemas/LabelConfigurationDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "calculatorVersion": "1.0.0",
+                  "options": [
+                    {
+                      "error": null,
+                      "printTypeId": "0192f3a0-7c1e-7d2a-9b1f-00000000a107",
+                      "steps": [
+                        {
+                          "buyPrice": "10123.45",
+                          "leadTimeDays": 7,
+                          "parts": [
+                            {
+                              "buyPrice": "10123.45",
+                              "layoutAmount": 10,
+                              "layoutStandard": false,
+                              "partKey": "main",
+                              "sheets": 225,
+                              "totalCost": "9111.11"
+                            }
+                          ],
+                          "productionRun": 1000,
+                          "quantity": 1000
+                        }
+                      ]
+                    }
+                  ],
+                  "priceListVersionId": "0192f3a0-7c1e-7d2a-9b1f-00000000a101"
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/FactoryQuoteDto"
+                }
+              }
+            },
+            "description": "Buy side per print type",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "400": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.bad_request": {
+                    "$ref": "#/components/examples/problem.http.bad_request"
+                  },
+                  "http.malformed_json": {
+                    "$ref": "#/components/examples/problem.http.malformed_json"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.bad_request`, `http.malformed_json`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.unauthenticated": {
+                    "$ref": "#/components/examples/problem.auth.unauthenticated"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.unauthenticated`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.forbidden": {
+                    "$ref": "#/components/examples/problem.auth.forbidden"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.forbidden`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "404": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.not_found": {
+                    "$ref": "#/components/examples/problem.http.not_found"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.not_found`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "validation.failed": {
+                    "$ref": "#/components/examples/problem.validation.failed"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `validation.failed`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "partner": []
+          }
+        ],
+        "summary": "Price a label configuration on my own price list",
+        "tags": [
+          "partner.pricingLabel"
+        ],
+        "x-required-permissions": [
+          "factory_prices.read"
+        ]
+      }
+    },
     "/v1/partner/factories/{factoryId}/references": {
       "get": {
         "description": "The product types and catalogue rows (materials, print types, finishes…) my own price lines and capabilities refer to, with their codes and names — to label the ids a price line carries. Never a price; own factory only (U-B0.3, D-040, D-044).\n\nImplements: D-040, D-044.",
@@ -330433,6 +331362,10 @@
       "name": "admin.csFolding"
     },
     {
+      "description": "The CS label calculator: catalogue choices and pricing with the staff view (D-100, D-141).",
+      "name": "admin.csLabel"
+    },
+    {
       "description": "Tax invoices, invoices, receipts, credit and debit notes issued by the entity under the Packio brand (D-010, D-092): PDFs, voids, credit notes under maker-checker (D-169).",
       "name": "admin.customerDocuments"
     },
@@ -330771,6 +331704,10 @@
     {
       "description": "A factory prices a folding configuration on its own price list (D-044).",
       "name": "partner.pricingFolding"
+    },
+    {
+      "description": "A factory prices a label configuration on its own price list (D-044).",
+      "name": "partner.pricingLabel"
     },
     {
       "description": "My factory’s jobs: accept / reject, milestones with photos and quantities, QC, issues, capacity and scorecard (D-074…D-076, D-142, D-155).",

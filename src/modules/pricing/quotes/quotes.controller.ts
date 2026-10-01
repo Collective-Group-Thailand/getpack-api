@@ -29,6 +29,8 @@ import {
 } from './corrugate.dto';
 import { CorrugateInputDataService } from './corrugate-input-data.service';
 import { FoldingInputDataService } from './folding-input-data.service';
+import { LABEL_CONFIGURATION_EXAMPLE, LabelConfigurationDto } from './label.dto';
+import { LabelInputDataService } from './label-input-data.service';
 import {
   ADMIN_CALCULATION_EXAMPLE,
   AdminQuoteCalculationDto,
@@ -46,6 +48,8 @@ import {
   FactoryQuoteDto,
   FoldingInputDataDto,
   INPUT_DATA_EXAMPLE,
+  LABEL_INPUT_DATA_EXAMPLE,
+  LabelInputDataDto,
 } from './quotes.io.dto';
 
 const CALCULATION = ['D-100', 'D-043', 'D-050', 'D-051', 'D-101'];
@@ -101,7 +105,7 @@ async function adminView(
 }
 
 @ApiTags('store.quotes')
-@ApiExtraModels(FoldingConfigurationDto, CorrugateConfigurationDto)
+@ApiExtraModels(FoldingConfigurationDto, CorrugateConfigurationDto, LabelConfigurationDto)
 @Controller('quotes')
 export class StoreQuotesController {
   constructor(
@@ -392,5 +396,114 @@ export class PartnerCorrugatePricingController {
   ): Promise<FactoryQuoteDto> {
     const factory = await this.access.factory(actor, factoryId);
     return this.engine.priceForFactory('corrugate', body, factory);
+  }
+}
+
+@ApiSurface('admin', 'csLabel')
+@Controller('cs/label')
+export class AdminCsLabelController {
+  constructor(
+    private readonly engine: QuoteEngineService,
+    private readonly inputData: LabelInputDataService,
+    private readonly permissions: PermissionResolver,
+  ) {}
+
+  @Get('input-data')
+  @Can('quotes.calculate')
+  @ApiEndpoint({
+    id: 'admin.csLabel.inputData',
+    summary: 'Catalogue choices of the CS label calculator',
+    description:
+      'Active label stocks, ink colours, coatings, die-cut types, difficulty levels and the label catalogue products ' +
+      '(legacy `cs/label/get-input-data`, D-100).',
+    implements: ['D-100'],
+  })
+  @ApiSuccess(200, { description: 'Input data', type: LabelInputDataDto, example: LABEL_INPUT_DATA_EXAMPLE })
+  @ApiStandardErrors()
+  get(): Promise<LabelInputDataDto> {
+    return this.inputData.get();
+  }
+
+  @Post('calculate')
+  @HttpCode(200)
+  @Can('quotes.calculate')
+  @ApiEndpoint({
+    id: 'admin.csLabel.calculate',
+    summary: 'Price a label configuration for a customer (CS)',
+    description:
+      'The store calculation plus the staff view (selected factory and print type, price-list version, margin-floor ' +
+      'flag, each option’s reason when it has no price). Labels are priced on their W × L bounding box on the ' +
+      'factory’s sheets and rolls; offset label printing is not priced (U-B6 label, quirk L2). Buy prices need ' +
+      '`factory_cost.read`, the margin `margin.read` (D-141). Works before the type is switched to instant, for checks.',
+    implements: [...CALCULATION, 'D-012', 'D-141'],
+  })
+  @ApiBody({ type: LabelConfigurationDto, examples: { default: { value: LABEL_CONFIGURATION_EXAMPLE } } })
+  @ApiSuccess(200, {
+    description: 'Prices per quantity with the staff view',
+    type: AdminQuoteCalculationDto,
+    example: ADMIN_CALCULATION_EXAMPLE,
+  })
+  @ApiStandardErrors(
+    'http.bad_request',
+    'http.malformed_json',
+    'validation.failed',
+    'pricing.vat_rate_missing',
+  )
+  @ApiQuery({
+    name: 'deliveryPostcode',
+    required: false,
+    schema: { type: 'string', pattern: '^[0-9]{5}$', example: '10110' },
+    description: 'Prices shipping on the customer rate card (D-013)',
+  })
+  async calculate(
+    @CurrentActor() actor: Actor,
+    @Body() body: LabelConfigurationDto,
+    @Query('deliveryPostcode', new ParseOptionalPostcodePipe()) deliveryPostcode?: string,
+  ): Promise<AdminQuoteCalculationDto> {
+    const view = await this.engine.price('label', body, {
+      deliveryPostcode,
+      channel: 'cs',
+      actorUserId: actor.type === 'user' ? actor.userId : undefined,
+      ip: RequestContext.current()?.ip,
+    });
+    return adminView(view, actor, this.permissions);
+  }
+}
+
+@ApiSurface('partner', 'pricingLabel')
+@Controller('factories/:factoryId/pricing/label')
+export class PartnerLabelPricingController {
+  constructor(
+    private readonly engine: QuoteEngineService,
+    private readonly access: FactoryAccess,
+  ) {}
+
+  @Post('calculate')
+  @HttpCode(200)
+  @Can('factory_prices.read')
+  @ApiParam({ name: 'factoryId', format: 'uuid' })
+  @ApiEndpoint({
+    id: 'partner.pricingLabel.calculate',
+    summary: 'Price a label configuration on my own price list',
+    description:
+      'The buy side only, on the factory’s own price list in force: cost, buy price, lay-out, sheets (or metres of ' +
+      'roll), lead time, per print type (legacy factory tool `POST /api/calculate/label`). Never Packio’s sell price or ' +
+      'another factory (D-044, D-042); another factory is 404.',
+    implements: ['D-044', 'D-042', 'D-040'],
+  })
+  @ApiBody({ type: LabelConfigurationDto, examples: { default: { value: LABEL_CONFIGURATION_EXAMPLE } } })
+  @ApiSuccess(200, {
+    description: 'Buy side per print type',
+    type: FactoryQuoteDto,
+    example: FACTORY_QUOTE_EXAMPLE,
+  })
+  @ApiStandardErrors('http.bad_request', 'http.malformed_json', 'http.not_found', 'validation.failed')
+  async calculate(
+    @CurrentActor() actor: Actor,
+    @Param('factoryId', ParseUUIDPipe) factoryId: string,
+    @Body() body: LabelConfigurationDto,
+  ): Promise<FactoryQuoteDto> {
+    const factory = await this.access.factory(actor, factoryId);
+    return this.engine.priceForFactory('label', body, factory);
   }
 }

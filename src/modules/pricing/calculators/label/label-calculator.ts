@@ -165,10 +165,10 @@ function optionResult(input: LabelInput, option: LabelOption): LabelOptionResult
   const { terms } = option.tables;
   let processes: LabelProcesses;
   try {
-    if (option.unavailable?.length)
-      throw new PricingError('price_line_missing', option.unavailable.join(', '));
     // Legacy's offset label path never produced a price (quirk L2): offset print types are not priced.
     if (terms.engine !== 'digital') throw new PricingError('process_not_possible', 'offset label printing');
+    if (option.unavailable?.length)
+      throw new PricingError('price_line_missing', option.unavailable.join(', '));
     // Colours the factory does not print fail in legacy (`CStoFactory:289-330`).
     const missing = [...input.printFront, ...input.printBack].filter((c) => !option.inkColours.has(c));
     if (missing.length) throw new PricingError('process_not_possible', `ink colour ${missing[0]}`);

@@ -8,6 +8,7 @@ import { ApiProperty } from '@nestjs/swagger';
 
 import { CORRUGATE_FORMULAS } from '../calculators/corrugate/formulas';
 import { CORRUGATE_IDS, PRINT_AREAS } from './corrugate.dto';
+import { LABEL_IDS } from './label.dto';
 import { IDS } from './quote.dto';
 
 /** CS folding input data and the partner's buy-side calculation (B2.3). */
@@ -267,7 +268,7 @@ class CorrugateInputBoardDto {
   strength!: string | null;
 }
 
-class CorrugateInputCoatingDto extends CodeNameRefDto {
+export class CorrugateInputCoatingDto extends CodeNameRefDto {
   @ApiProperty({ example: 'coating' })
   finishKind!: string;
 }
@@ -307,6 +308,30 @@ export class CorrugateInputDataDto {
     example: ['top', 'side', 'top_side', 'all_round'],
   })
   printAreas!: (typeof PRINT_AREAS)[number][];
+}
+
+/** What the CS label calculator offers (U-B6 label; legacy `cs/label/get-input-data`). */
+export class LabelInputDataDto {
+  @ApiProperty({ type: [CsCatalogProductDto], description: 'The calculator’s catalogue products' })
+  catalogProducts!: CsCatalogProductDto[];
+
+  @ApiProperty({ type: CsDiscountPolicyDto })
+  discountPolicy!: CsDiscountPolicyDto;
+
+  @ApiProperty({ type: [InputMaterialDto], description: 'Label stocks (`label_stock` materials)' })
+  labelStocks!: InputMaterialDto[];
+
+  @ApiProperty({ type: [InputInkColourDto] })
+  inkColours!: InputInkColourDto[];
+
+  @ApiProperty({ type: [CorrugateInputCoatingDto], description: 'Coatings and laminations' })
+  finishes!: CorrugateInputCoatingDto[];
+
+  @ApiProperty({ type: [CodeNameRefDto] })
+  diecutTypes!: CodeNameRefDto[];
+
+  @ApiProperty({ type: [CodeNameRefDto] })
+  difficultyLevels!: CodeNameRefDto[];
 }
 
 class FactoryQuotePartDto {
@@ -541,4 +566,24 @@ export const CORRUGATE_INPUT_DATA_EXAMPLE: CorrugateInputDataDto = {
   assemblies: [],
   difficultyLevels: [{ id: IDS.difficulty, code: 'normal', nameTh: 'ปกติ', nameEn: 'Normal' }],
   printAreas: ['top', 'side', 'top_side', 'all_round'],
+};
+
+export const LABEL_INPUT_DATA_EXAMPLE: LabelInputDataDto = {
+  catalogProducts: [],
+  discountPolicy: { directLimitPct: '5' },
+  labelStocks: [
+    {
+      id: LABEL_IDS.labelStock,
+      code: 'pp-white-80',
+      nameTh: 'สติ๊กเกอร์ PP ขาว',
+      nameEn: 'White PP label stock',
+      gsm: 80,
+    },
+  ],
+  inkColours: [],
+  finishes: [
+    { id: LABEL_IDS.coating, code: 'gloss', nameTh: 'เคลือบเงา', nameEn: 'Gloss', finishKind: 'coating' },
+  ],
+  diecutTypes: [{ id: LABEL_IDS.diecut, code: 'kiss', nameTh: 'ไดคัทครึ่ง', nameEn: 'Kiss cut' }],
+  difficultyLevels: [],
 };

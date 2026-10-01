@@ -66,7 +66,10 @@ export const API_TAGS: Record<string, string> = {
   'partner.pricingFolding': 'A factory prices a folding configuration on its own price list (D-044).',
   'admin.csCorrugate':
     'The CS corrugate calculator: catalogue choices and pricing with the staff view (D-100, D-141).',
+  'admin.csLabel':
+    'The CS label calculator: catalogue choices and pricing with the staff view (D-100, D-141).',
   'partner.pricingCorrugate': 'A factory prices a corrugate configuration on its own price list (D-044).',
+  'partner.pricingLabel': 'A factory prices a label configuration on its own price list (D-044).',
   'ops.health': 'Liveness and readiness of the API and its dependencies (database, Redis, object storage).',
   'auth.staff': 'Sign-in for Packio staff (e-mail + password). ADR-0004.',
   'auth.partner': 'Sign-in for partner-factory users (password or device PIN). ADR-0004.',

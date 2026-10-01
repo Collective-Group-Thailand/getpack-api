@@ -314,8 +314,8 @@ def option(inp, o):
     head = dict(optionKey=o['optionKey'])
     terms = o['tables']['terms']
     try:
-        if o.get('unavailable'): raise Refused('price_line_missing', ', '.join(o['unavailable']))
         if terms['engine'] != 'digital': raise Refused('process_not_possible', 'offset label printing')
+        if o.get('unavailable'): raise Refused('price_line_missing', ', '.join(o['unavailable']))
         for c in inp['printFront'] + inp['printBack']:
             if c not in o['inkColours']: raise Refused('process_not_possible', f'ink colour {c}')
         proc = dict(print_front=bool(inp['printFront']), print_back=bool(inp['printBack']),

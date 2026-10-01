@@ -26,8 +26,8 @@ import { SHIPPED_CALCULATORS } from './shipped-calculators';
  * a catalogue product and a pattern. Each replaces the collection in one transaction, bumps the
  * parent's `row_version` (so its ETag changes), writes an audit row and a domain event.
  */
-/** Calculators whose configuration can be a price-hint reference (the box calculators, D-220). */
-const REFERENCE_CALCULATORS: ReadonlySet<string> = new Set(['folding', 'corrugate']);
+/** Calculators whose configuration can be a price-hint reference (D-220): the ported ones. */
+const REFERENCE_CALCULATORS: ReadonlySet<string> = new Set(['folding', 'corrugate', 'label']);
 
 @Injectable()
 export class ProductStructureService {

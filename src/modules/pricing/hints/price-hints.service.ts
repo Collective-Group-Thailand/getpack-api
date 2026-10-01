@@ -2,7 +2,12 @@ import { MoneyDecimal } from '@common/money/money';
 import { toBangkokIso } from '@common/time/bangkok';
 import { PrismaService } from '@database/prisma.service';
 import { type Prisma } from '@generated/prisma/client';
-import { type BoxConfiguration, boxSpecLines } from '@modules/quotes/line-summary';
+import {
+  type BoxConfiguration,
+  boxSpecLines,
+  type LabelSpecConfiguration,
+  labelSpecLines,
+} from '@modules/quotes/line-summary';
 import { type SpecLineDto } from '@modules/quotes/line-summary.dto';
 import { Injectable, Logger } from '@nestjs/common';
 import { type DomainEventEnvelope } from '@platform/domain-events/domain-event';
@@ -13,6 +18,8 @@ import { QuoteEngineService } from '../quotes/quote-engine.service';
 import { type PriceHintDto, type PriceHintQuery } from './price-hints.dto';
 
 const BOX = new Set(['folding', 'corrugate']);
+/** Every calculator a hint can be priced with (D-220). */
+const HINTED = new Set([...BOX, 'label']);
 
 /** Up to the next satang: a "starting from" figure never undercuts the price a quote gives (D-181). */
 const ceilMoney = (value: string) =>
@@ -84,7 +91,7 @@ export class PriceHintsService {
       p.productType.status !== 'active' ||
       p.productType.quoteMode !== 'instant' ||
       !key ||
-      !BOX.has(key) ||
+      !HINTED.has(key) ||
       !this.engine.hasCalculator(key as never)
     ) {
       return null;
@@ -99,7 +106,9 @@ export class PriceHintsService {
       .filter((s) => s.instant && s.unitPrice !== null)
       .sort((a, b) => new MoneyDecimal(a.unitPrice!).cmp(new MoneyDecimal(b.unitPrice!)))[0];
     if (!cheapest) return null;
-    const specSummary = await boxSpecLines(this.prisma, cfg as unknown as BoxConfiguration);
+    const specSummary = BOX.has(key)
+      ? await boxSpecLines(this.prisma, cfg as unknown as BoxConfiguration)
+      : await labelSpecLines(this.prisma, cfg as unknown as LabelSpecConfiguration);
     return {
       quantity: cheapest.quantity,
       unitPrice: cheapest.unitPrice!,

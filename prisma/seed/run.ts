@@ -9,6 +9,7 @@ import { config } from 'dotenv';
 import { PrismaClient } from '../../src/generated/prisma/client';
 import { seedDevCorrugate } from './dev-corrugate';
 import { seedDevFolding } from './dev-folding';
+import { seedDevLabel } from './dev-label';
 import { seedDev } from './dev-seed';
 import { type EntitySeedInput, seedReference } from './reference-seed';
 
@@ -57,6 +58,9 @@ async function main(): Promise<void> {
       // Its corrugate price list (U-B6).
       const corrugate = await prisma.$transaction((tx) => seedDevCorrugate(tx), { timeout: 60_000 });
       if (corrugate.created) report['dev_corrugate_price_list'] = 1;
+      // Its label price list (U-B6 label).
+      const label = await prisma.$transaction((tx) => seedDevLabel(tx), { timeout: 60_000 });
+      if (label.created) report['dev_label_price_list'] = 1;
     }
     const created = Object.entries(report)
       .map(([what, n]) => `${what}=${n}`)

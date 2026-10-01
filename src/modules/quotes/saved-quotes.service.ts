@@ -25,7 +25,13 @@ import { EntitiesService } from '@platform/entities/entities.service';
 import { DocumentNumberingService } from '@platform/numbering/document-numbering.service';
 import { SettingsService } from '@platform/settings/settings.service';
 
-import { type BoxConfiguration, boxSpecLines, SUMMARY_INCLUDE } from './line-summary';
+import {
+  type BoxConfiguration,
+  boxSpecLines,
+  type LabelSpecConfiguration,
+  labelSpecLines,
+  SUMMARY_INCLUDE,
+} from './line-summary';
 
 const BOX_CALCULATORS: ReadonlySet<string> = new Set(['folding', 'corrugate']);
 
@@ -119,7 +125,9 @@ export class SavedQuotesService {
     // Box calculators (folding, corrugate) share one configuration shape; others get their lines when ported.
     const specSummary = BOX_CALCULATORS.has(calculatorKey)
       ? await boxSpecLines(this.prisma, configuration as unknown as BoxConfiguration)
-      : null;
+      : calculatorKey === 'label'
+        ? await labelSpecLines(this.prisma, configuration as unknown as LabelSpecConfiguration)
+        : null;
     return this.prisma.withTx(async (tx) => {
       const quote = await tx.quote.create({
         data: {
