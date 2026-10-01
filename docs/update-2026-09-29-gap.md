@@ -292,6 +292,24 @@ Legacy traced from `/Users/superball/Abbon/Loco_Pack/locopack-web`. Live paths: 
 
 **Outcome (2026-09-30, U-B6 corrugate complete, branch `feat/u-b6-corrugate-calculator`):** C.1 geometry (slice 3), C.2 engines (slices 4–5), C.3 orchestration (slice 6), C.4 sell side shared (slice 1), C.5 price components and C.6 catalogue data (slice 2), C.7 generic quote engine, saved quotes and checkout (slices 1, 7b), C.8 packer (slice 6), C.9 CS endpoints and C.10 factory breakdown (slice 7a), C.11 store calculate (slice 7a), C.12 store configurator (slice 7c), C.13 per-calculator log input (slice 1), C.15 port map (slice 1, §10 in slice 8), C.17 dev fixture (slice 6), C.20 geometry admin (slice 7d) — **met**. C.14 golden cases + `docs/pricing-validation-corrugate.md` — **met, signed off 2026-09-30** (replayed on Locopack staging). C.16 `corrugate` in `SHIPPED_CALCULATORS`, type still seeded `rfq` — **met**. C.19 tag `v0.3.0` — **local tag** (no git remote in this checkout). C.18 tier-B envelopes — out of scope.
 
+## U-B6 standard product — B2.3 Deliverable 2.3 for standard product (2026-10-01, planning)
+
+Legacy traced from `legacy/locopack-web` (port map `docs/legacy/05-standard-product-port-map.md`). Live paths: customer `GET api/standard-products/{id}/zipcode/{zip}/step-prices`, `GET …/checkout`, `POST api/standard-products/create-order`; CS `GET cs/standard-products/{id}/get-prices` (`CalculatePrice::getSteps` / `findPrice`, `Utils::costToSalePrice`, `CalculateDelivery`). A standard product is a ready-made SKU of one factory with quantity tiers of **buy** prices; the sell price is a flat Packio margin and VAT, each rounded up to the satang, plus a delivery charge per piece folded into the tier price.
+
+| # | Requirement | Before | Evidence | This session |
+|---|---|---|---|---|
+| S.1 | Catalogue: SKUs, unit, dimensions, weight, attributes, stock | met | `stock_products`, `stock_product_attributes`, `stock_levels`, `stock_movements` (B2.1) | Reused |
+| S.2 | Buy-price tiers per factory | missing | `price_component` has `stock_product_prices`; no table (schema-design §3.4 plans `pl_stock_product_prices`) | Migration + descriptor (slice 2) |
+| S.3 | Tier table and lookup (`getSteps`, `sortPrices`, `findPrice`), sell price (`costToSalePrice`) | missing | — | Pure port + Python reference + 20 golden cases (slice 3) |
+| S.4 | Adapter, quote engine (stock product in the quote and the calculate log), packer | partial | `quotes.stock_product_id`, `calculate_logs.stock_product_id` exist; checkout reads `quote.stockProductId` | Adapter, loader, `stock` shipment part (slice 4) |
+| S.5 | `admin.csStandardProduct.*`, `partner.pricingStandardProduct.calculate`, store calculate | missing | — | Slice 4 |
+| S.6 | "Starting from" price of stock products | missing | price hints publish `null` for stock products ("not ported yet") | Hints priced through the calculator (slice 4) |
+| S.7 | Golden cases + `docs/pricing-validation-standard-product.md`; shipped; type stays `rfq`; release | — | — | Slice 5, `v0.10.0` |
+
+**Proposed decisions (accepted under the user's standing instruction, 2026-10-01):** port map §9 — (1) a standard product is a stock product; (2) buy tiers per factory × print type in `pl_stock_product_prices`; (3) legacy's two roundings kept, margin / fix cost (per piece) / design fee from Packio's `standard_product` sell tables, dated VAT; (4) legacy's tier rules (last tier from the previous maximum, `sortPrices` absorption) kept on the goods price, flagged for the business; a quantity outside the tiers is refused; (5) delivery on the rate cards by weight (pouch packer for pouch-unit products), a product without a weight has no instant price; (6) stock reserved at the order step, not read by pricing.
+
+**Plan (slices):** 1 port map + this analysis (docs) · 2 migration `pl_stock_product_prices`, descriptor, registrar · 3 pure port + Python reference + golden cases · 4 loader, adapter, packer, DTO, CS / partner / store endpoints, hints, dev fixture, e2e · 5 validation doc, shipped, release `v0.10.0`.
+
 ## U-B6 pouch — B2.3 Deliverable 2.3 for pouch (2026-10-01, planning)
 
 Legacy traced from `legacy/locopack-web` (port map `docs/legacy/05-pouch-port-map.md`). Live paths: CS `POST cs/pouch` → `PouchCalculator::fromCS:259-376` → `calculate:468-555`; customer web `POST /api/pouch/calculate` → `fromSME` and `POST /api/orders-v2`. Unlike tag & sleeve, pouch has **its own engine** (no folding, no `SaleMargin`): one roll-fed digital print type, film charged on the full web width × the advance per pouch, print per cm², fixed lamination and pouch-making formulas, options per piece / per cm² / per cm of width, factory-margin tiers rounded up to 0.1 THB, its own Packio margin and shipping packer.
