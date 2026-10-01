@@ -217,6 +217,14 @@ enum PriceComponent {
   label_paper_sheets
   label_roll_print_prices
   label_diecut_prices
+  pouch_print_type_terms
+  pouch_material_prices
+  pouch_print_prices
+  pouch_option_prices
+  pouch_process_prices
+  pouch_min_quantities
+  pouch_factory_margins
+  pouch_option_rules
 
   @@map("price_component")
 }
@@ -1145,6 +1153,14 @@ model PriceListVersion {
   labelPaperSheets           PlLabelPaperSheet[]           @relation("PlLabelPaperSheetPriceListVersion")
   labelRollPrintPrices       PlLabelRollPrintPrice[]       @relation("PlLabelRollPrintPricePriceListVersion")
   labelDiecutPrices          PlLabelDiecutPrice[]          @relation("PlLabelDiecutPricePriceListVersion")
+  pouchPrintTypeTerms        PlPouchPrintTypeTerm[]        @relation("PlPouchPrintTypeTermPriceListVersion")
+  pouchMaterialPrices        PlPouchMaterialPrice[]        @relation("PlPouchMaterialPricePriceListVersion")
+  pouchPrintPrices           PlPouchPrintPrice[]           @relation("PlPouchPrintPricePriceListVersion")
+  pouchOptionPrices          PlPouchOptionPrice[]          @relation("PlPouchOptionPricePriceListVersion")
+  pouchProcessPrices         PlPouchProcessPrice[]         @relation("PlPouchProcessPricePriceListVersion")
+  pouchMinQuantities         PlPouchMinQuantity[]          @relation("PlPouchMinQuantityPriceListVersion")
+  pouchFactoryMargins        PlPouchFactoryMargin[]        @relation("PlPouchFactoryMarginPriceListVersion")
+  pouchOptionRules           PlPouchOptionRule[]           @relation("PlPouchOptionRulePriceListVersion")
   // --- end Corrugate price components
 
   @@unique([priceListId, versionNo], map: "ux_price_list_versions__price_list_id__version_no")
@@ -2424,4 +2440,192 @@ model PlLabelDiecutPrice {
   @@index([printTypeId], map: "ix_pl_label_diecut_prices__print_type_id")
   @@index([diecutTypeId], map: "ix_pl_label_diecut_prices__diecut_type_id")
   @@map("pl_label_diecut_prices")
+}
+
+// U-B6 pouch (schema-design A-73, port map docs/legacy/05-pouch-port-map.md §9): the pouch price components.
+
+model PlPouchPrintTypeTerm {
+  id                  BigInt   @id(map: "pk_pl_pouch_print_type_terms") @default(autoincrement())
+  priceListVersionId  BigInt   @map("price_list_version_id")
+  lineKey             String   @map("line_key")
+  printTypeId         BigInt   @map("print_type_id")
+  /// Legacy `factory_match_print_type.tolerances` (`t`): allowance added across the web, mm.
+  toleranceMm         Decimal  @map("tolerance_mm") @db.Decimal(10, 2)
+  /// Narrowest film width priced across the web (`min_dl`), mm.
+  minDlMm             Decimal  @map("min_dl_mm") @db.Decimal(10, 2)
+  /// Widest film the factory runs (`max_dl`), mm; wider = not possible.
+  maxDlMm             Decimal  @map("max_dl_mm") @db.Decimal(10, 2)
+  /// Shortest run (`min_material_length`), metres.
+  minMaterialLengthM  Decimal  @map("min_material_length_m") @db.Decimal(10, 2)
+  /// Setup length per job (`length_plus`), metres.
+  setupLengthM        Decimal  @map("setup_length_m") @db.Decimal(10, 2)
+  /// Web width the material is charged on at least (`width_roll`), mm.
+  webWidthMm          Decimal  @map("web_width_mm") @db.Decimal(10, 2)
+  /// Minimum material cost per job (`min_material_cost`), THB.
+  minMaterialCost     Decimal  @map("min_material_cost") @db.Decimal(18, 6)
+  /// Gap between pouches along the web (`bridge`), mm.
+  bridgeMm            Decimal  @map("bridge_mm") @db.Decimal(10, 2)
+  /// Legacy `factory_match_print_type.margin`, used when no factory-margin band matches.
+  factoryMarginPct    Decimal  @map("factory_margin_pct") @db.Decimal(7, 4)
+  leadTimeDays        Decimal? @map("lead_time_days") @db.Decimal(6, 2)
+  /// Lamination (legacy group 36 "drye"): rate per m² and web width, m (legacy hard-coded 4 and 0.8).
+  laminationRatePerM2 Decimal  @map("lamination_rate_per_m2") @db.Decimal(18, 6)
+  laminationWebWidthM Decimal  @map("lamination_web_width_m") @db.Decimal(10, 4)
+  /// Pouch making (legacy group 37): above this quantity a price per piece, else the band minimum (legacy 10000, 0.2).
+  makingQtyThreshold  Int      @map("making_qty_threshold")
+  makingPricePerPcs   Decimal  @map("making_price_per_pcs") @db.Decimal(18, 6)
+  createdAt           DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  priceListVersion PriceListVersion @relation("PlPouchPrintTypeTermPriceListVersion", fields: [priceListVersionId], references: [id], onDelete: Cascade, onUpdate: Restrict, map: "fk_pl_pouch_print_type_terms__price_list_version_id")
+  printType        PrintType        @relation("PlPouchPrintTypeTermPrintType", fields: [printTypeId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_pl_pouch_print_type_terms__print_type_id")
+
+  @@unique([priceListVersionId, lineKey], map: "ux_pl_pouch_print_type_terms__version__line_key")
+  @@index([printTypeId], map: "ix_pl_pouch_print_type_terms__print_type_id")
+  @@map("pl_pouch_print_type_terms")
+}
+
+model PlPouchMaterialPrice {
+  id                 BigInt   @id(map: "pk_pl_pouch_material_prices") @default(autoincrement())
+  priceListVersionId BigInt   @map("price_list_version_id")
+  lineKey            String   @map("line_key")
+  printTypeId        BigInt   @map("print_type_id")
+  materialId         BigInt   @map("material_id")
+  /// Legacy `paper.price_per_sqcm`.
+  pricePerCm2        Decimal  @map("price_per_cm2") @db.Decimal(18, 8)
+  createdAt          DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  priceListVersion PriceListVersion @relation("PlPouchMaterialPricePriceListVersion", fields: [priceListVersionId], references: [id], onDelete: Cascade, onUpdate: Restrict, map: "fk_pl_pouch_material_prices__price_list_version_id")
+  printType        PrintType        @relation("PlPouchMaterialPricePrintType", fields: [printTypeId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_pl_pouch_material_prices__print_type_id")
+  material         Material         @relation("PlPouchMaterialPriceMaterial", fields: [materialId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_pl_pouch_material_prices__material_id")
+
+  @@unique([priceListVersionId, lineKey], map: "ux_pl_pouch_material_prices__version__line_key")
+  @@index([printTypeId], map: "ix_pl_pouch_material_prices__print_type_id")
+  @@index([materialId], map: "ix_pl_pouch_material_prices__material_id")
+  @@map("pl_pouch_material_prices")
+}
+
+model PlPouchPrintPrice {
+  id                 BigInt   @id(map: "pk_pl_pouch_print_prices") @default(autoincrement())
+  priceListVersionId BigInt   @map("price_list_version_id")
+  lineKey            String   @map("line_key")
+  printTypeId        BigInt   @map("print_type_id")
+  inkColourId        BigInt   @map("ink_colour_id")
+  /// Legacy `color.price_per_sqcm`.
+  pricePerCm2        Decimal  @map("price_per_cm2") @db.Decimal(18, 8)
+  createdAt          DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  priceListVersion PriceListVersion @relation("PlPouchPrintPricePriceListVersion", fields: [priceListVersionId], references: [id], onDelete: Cascade, onUpdate: Restrict, map: "fk_pl_pouch_print_prices__price_list_version_id")
+  printType        PrintType        @relation("PlPouchPrintPricePrintType", fields: [printTypeId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_pl_pouch_print_prices__print_type_id")
+  inkColour        InkColour        @relation("PlPouchPrintPriceInkColour", fields: [inkColourId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_pl_pouch_print_prices__ink_colour_id")
+
+  @@unique([priceListVersionId, lineKey], map: "ux_pl_pouch_print_prices__version__line_key")
+  @@index([printTypeId], map: "ix_pl_pouch_print_prices__print_type_id")
+  @@index([inkColourId], map: "ix_pl_pouch_print_prices__ink_colour_id")
+  @@map("pl_pouch_print_prices")
+}
+
+model PlPouchOptionPrice {
+  id                 BigInt   @id(map: "pk_pl_pouch_option_prices") @default(autoincrement())
+  priceListVersionId BigInt   @map("price_list_version_id")
+  lineKey            String   @map("line_key")
+  printTypeId        BigInt   @map("print_type_id")
+  assemblyId         BigInt   @map("assembly_id")
+  minQty             Int?     @map("min_qty")
+  maxQty             Int?     @map("max_qty")
+  /// `per_piece` (legacy other groups), `per_cm2` of the pouch (group 28 white base), `zipper` (group 29: per piece, else per cm of width).
+  priceMode          String   @map("price_mode")
+  pricePerPcs        Decimal? @map("price_per_pcs") @db.Decimal(18, 6)
+  pricePerCm         Decimal? @map("price_per_cm") @db.Decimal(18, 6)
+  pricePerCm2        Decimal? @map("price_per_cm2") @db.Decimal(18, 8)
+  createdAt          DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  priceListVersion PriceListVersion @relation("PlPouchOptionPricePriceListVersion", fields: [priceListVersionId], references: [id], onDelete: Cascade, onUpdate: Restrict, map: "fk_pl_pouch_option_prices__price_list_version_id")
+  printType        PrintType        @relation("PlPouchOptionPricePrintType", fields: [printTypeId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_pl_pouch_option_prices__print_type_id")
+  assembly         Assembly         @relation("PlPouchOptionPriceAssembly", fields: [assemblyId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_pl_pouch_option_prices__assembly_id")
+
+  @@unique([priceListVersionId, lineKey], map: "ux_pl_pouch_option_prices__version__line_key")
+  @@index([printTypeId], map: "ix_pl_pouch_option_prices__print_type_id")
+  @@index([assemblyId], map: "ix_pl_pouch_option_prices__assembly_id")
+  @@map("pl_pouch_option_prices")
+}
+
+model PlPouchProcessPrice {
+  id                 BigInt   @id(map: "pk_pl_pouch_process_prices") @default(autoincrement())
+  priceListVersionId BigInt   @map("price_list_version_id")
+  lineKey            String   @map("line_key")
+  printTypeId        BigInt   @map("print_type_id")
+  /// `lamination` (legacy group 36) or `making` (group 37), always run.
+  process            String   @map("process")
+  minQty             Int?     @map("min_qty")
+  maxQty             Int?     @map("max_qty")
+  minPrice           Decimal  @map("min_price") @db.Decimal(18, 6)
+  createdAt          DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  priceListVersion PriceListVersion @relation("PlPouchProcessPricePriceListVersion", fields: [priceListVersionId], references: [id], onDelete: Cascade, onUpdate: Restrict, map: "fk_pl_pouch_process_prices__price_list_version_id")
+  printType        PrintType        @relation("PlPouchProcessPricePrintType", fields: [printTypeId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_pl_pouch_process_prices__print_type_id")
+
+  @@unique([priceListVersionId, lineKey], map: "ux_pl_pouch_process_prices__version__line_key")
+  @@index([printTypeId], map: "ix_pl_pouch_process_prices__print_type_id")
+  @@map("pl_pouch_process_prices")
+}
+
+model PlPouchMinQuantity {
+  id                 BigInt   @id(map: "pk_pl_pouch_min_quantities") @default(autoincrement())
+  priceListVersionId BigInt   @map("price_list_version_id")
+  lineKey            String   @map("line_key")
+  printTypeId        BigInt   @map("print_type_id")
+  /// Pouch area band (legacy `production_conditions` type 2 `min_sqcm` / `max_sqcm`), cm².
+  minSqcm            Decimal? @map("min_sqcm") @db.Decimal(14, 2)
+  maxSqcm            Decimal? @map("max_sqcm") @db.Decimal(14, 2)
+  minQty             Int      @map("min_qty")
+  createdAt          DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  priceListVersion PriceListVersion @relation("PlPouchMinQuantityPriceListVersion", fields: [priceListVersionId], references: [id], onDelete: Cascade, onUpdate: Restrict, map: "fk_pl_pouch_min_quantities__price_list_version_id")
+  printType        PrintType        @relation("PlPouchMinQuantityPrintType", fields: [printTypeId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_pl_pouch_min_quantities__print_type_id")
+
+  @@unique([priceListVersionId, lineKey], map: "ux_pl_pouch_min_quantities__version__line_key")
+  @@index([printTypeId], map: "ix_pl_pouch_min_quantities__print_type_id")
+  @@map("pl_pouch_min_quantities")
+}
+
+model PlPouchFactoryMargin {
+  id                 BigInt   @id(map: "pk_pl_pouch_factory_margins") @default(autoincrement())
+  priceListVersionId BigInt   @map("price_list_version_id")
+  lineKey            String   @map("line_key")
+  printTypeId        BigInt   @map("print_type_id")
+  minQty             Int?     @map("min_qty")
+  maxQty             Int?     @map("max_qty")
+  marginPct          Decimal  @map("margin_pct") @db.Decimal(7, 4)
+  createdAt          DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  priceListVersion PriceListVersion @relation("PlPouchFactoryMarginPriceListVersion", fields: [priceListVersionId], references: [id], onDelete: Cascade, onUpdate: Restrict, map: "fk_pl_pouch_factory_margins__price_list_version_id")
+  printType        PrintType        @relation("PlPouchFactoryMarginPrintType", fields: [printTypeId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_pl_pouch_factory_margins__print_type_id")
+
+  @@unique([priceListVersionId, lineKey], map: "ux_pl_pouch_factory_margins__version__line_key")
+  @@index([printTypeId], map: "ix_pl_pouch_factory_margins__print_type_id")
+  @@map("pl_pouch_factory_margins")
+}
+
+model PlPouchOptionRule {
+  id                 BigInt   @id(map: "pk_pl_pouch_option_rules") @default(autoincrement())
+  priceListVersionId BigInt   @map("price_list_version_id")
+  lineKey            String   @map("line_key")
+  printTypeId        BigInt   @map("print_type_id")
+  patternId          BigInt   @map("pattern_id")
+  materialId         BigInt   @map("material_id")
+  assemblyId         BigInt   @map("assembly_id")
+  createdAt          DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  priceListVersion PriceListVersion @relation("PlPouchOptionRulePriceListVersion", fields: [priceListVersionId], references: [id], onDelete: Cascade, onUpdate: Restrict, map: "fk_pl_pouch_option_rules__price_list_version_id")
+  printType        PrintType        @relation("PlPouchOptionRulePrintType", fields: [printTypeId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_pl_pouch_option_rules__print_type_id")
+  pattern          Pattern          @relation("PlPouchOptionRulePattern", fields: [patternId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_pl_pouch_option_rules__pattern_id")
+  material         Material         @relation("PlPouchOptionRuleMaterial", fields: [materialId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_pl_pouch_option_rules__material_id")
+  assembly         Assembly         @relation("PlPouchOptionRuleAssembly", fields: [assemblyId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_pl_pouch_option_rules__assembly_id")
+
+  @@unique([priceListVersionId, lineKey], map: "ux_pl_pouch_option_rules__version__line_key")
+  @@index([printTypeId], map: "ix_pl_pouch_option_rules__print_type_id")
+  @@index([patternId], map: "ix_pl_pouch_option_rules__pattern_id")
+  @@index([materialId], map: "ix_pl_pouch_option_rules__material_id")
+  @@index([assemblyId], map: "ix_pl_pouch_option_rules__assembly_id")
+  @@map("pl_pouch_option_rules")
 }

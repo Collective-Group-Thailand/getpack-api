@@ -337,6 +337,14 @@ model PrintType {
   plLabelPrintTypeTerms     PlLabelPrintTypeTerm[]     @relation("PlLabelPrintTypeTermPrintType")
   plLabelRollPrintPrices    PlLabelRollPrintPrice[]    @relation("PlLabelRollPrintPricePrintType")
   plLabelDiecutPrices       PlLabelDiecutPrice[]       @relation("PlLabelDiecutPricePrintType")
+  plPouchPrintTypeTerms     PlPouchPrintTypeTerm[]     @relation("PlPouchPrintTypeTermPrintType")
+  plPouchMaterialPrices     PlPouchMaterialPrice[]     @relation("PlPouchMaterialPricePrintType")
+  plPouchPrintPrices        PlPouchPrintPrice[]        @relation("PlPouchPrintPricePrintType")
+  plPouchOptionPrices       PlPouchOptionPrice[]       @relation("PlPouchOptionPricePrintType")
+  plPouchProcessPrices      PlPouchProcessPrice[]      @relation("PlPouchProcessPricePrintType")
+  plPouchMinQuantitys       PlPouchMinQuantity[]       @relation("PlPouchMinQuantityPrintType")
+  plPouchFactoryMargins     PlPouchFactoryMargin[]     @relation("PlPouchFactoryMarginPrintType")
+  plPouchOptionRules        PlPouchOptionRule[]        @relation("PlPouchOptionRulePrintType")
   // --- end Corrugate price components
 
   @@index([productTypeId], map: "ix_print_types__product_type_id")
@@ -523,6 +531,8 @@ model Pattern {
   geometryFormula  GeometryFormula?  @map("geometry_formula")
   /// Blank formula of the corrugate calculator (U-B6, schema-design A-49); never together with `geometry_formula`.
   corrugateFormula CorrugateFormula? @map("corrugate_formula")
+  /// Shape of the pouch calculator (U-B6 pouch, schema-design A-73); never together with the other formulas.
+  pouchFormula     PouchFormula?     @map("pouch_formula")
   status           CatalogStatus     @default(draft)
   descriptionTh    String?           @map("description_th")
   descriptionEn    String?           @map("description_en")
@@ -544,6 +554,7 @@ model Pattern {
   imageFile           FileObject?                @relation("PatternImageFile", fields: [imageFileId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_patterns__image_file_id")
   // --- Folding price components (B2.3)
   plPatternConditions PlPatternCondition[]       @relation("PlPatternConditionPattern")
+  plPouchOptionRules  PlPouchOptionRule[]        @relation("PlPouchOptionRulePattern")
   // --- end Folding price components
 
   // --- Fulfilment B4.1 (generated back-relations)
@@ -713,16 +724,18 @@ model Material {
   updatedById   BigInt?       @map("updated_by")
   rowVersion    Int           @default(1) @map("row_version")
 
-  family                      MaterialFamily?      @relation(fields: [familyId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_materials__family_id")
-  fluteType                   FluteType?           @relation(fields: [fluteTypeId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_materials__flute_type_id")
-  createdBy                   User?                @relation("MaterialCreatedBy", fields: [createdById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_materials__created_by")
-  updatedBy                   User?                @relation("MaterialUpdatedBy", fields: [updatedById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_materials__updated_by")
-  imageFile                   FileObject?          @relation("MaterialImageFile", fields: [imageFileId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_materials__image_file_id")
+  family                      MaterialFamily?        @relation(fields: [familyId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_materials__family_id")
+  fluteType                   FluteType?             @relation(fields: [fluteTypeId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_materials__flute_type_id")
+  createdBy                   User?                  @relation("MaterialCreatedBy", fields: [createdById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_materials__created_by")
+  updatedBy                   User?                  @relation("MaterialUpdatedBy", fields: [updatedById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_materials__updated_by")
+  imageFile                   FileObject?            @relation("MaterialImageFile", fields: [imageFileId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_materials__image_file_id")
   // --- Folding price components (B2.3)
-  plMaterialPrices            PlMaterialPrice[]    @relation("PlMaterialPriceMaterial")
-  plPaperSizes                PlPaperSize[]        @relation("PlPaperSizeMaterial")
-  plProcessExclusionsMaterial PlProcessExclusion[] @relation("PlProcessExclusionMaterial")
-  plPrintPricesMaterial       PlPrintPrice[]       @relation("PlPrintPriceMaterial")
+  plMaterialPrices            PlMaterialPrice[]      @relation("PlMaterialPriceMaterial")
+  plPouchMaterialPrices       PlPouchMaterialPrice[] @relation("PlPouchMaterialPriceMaterial")
+  plPouchOptionRules          PlPouchOptionRule[]    @relation("PlPouchOptionRuleMaterial")
+  plPaperSizes                PlPaperSize[]          @relation("PlPaperSizeMaterial")
+  plProcessExclusionsMaterial PlProcessExclusion[]   @relation("PlProcessExclusionMaterial")
+  plPrintPricesMaterial       PlPrintPrice[]         @relation("PlPrintPriceMaterial")
   // --- end Folding price components
 
   // --- Fulfilment B4.1 (generated back-relations)
@@ -865,6 +878,7 @@ model InkColour {
   // --- Folding price components (B2.3)
   plInkColoursInkColour  PlInkColour[]           @relation("PlInkColourInkColour")
   plPrintPricesInkColour PlPrintPrice[]          @relation("PlPrintPriceInkColour")
+  plPouchPrintPrices     PlPouchPrintPrice[]     @relation("PlPouchPrintPriceInkColour")
   // --- end Folding price components
   // --- Corrugate price components (U-B6)
   plCorrugatePrintPrices PlCorrugatePrintPrice[] @relation("PlCorrugatePrintPriceInkColour")
@@ -982,6 +996,8 @@ model Assembly {
   plProcessExclusionsAssembly PlProcessExclusion[]       @relation("PlProcessExclusionAssembly")
   plAssemblyWastesAssembly    PlAssemblyWaste[]          @relation("PlAssemblyWasteAssembly")
   plAssemblyPricesAssembly    PlAssemblyPrice[]          @relation("PlAssemblyPriceAssembly")
+  plPouchOptionPrices         PlPouchOptionPrice[]       @relation("PlPouchOptionPriceAssembly")
+  plPouchOptionRules          PlPouchOptionRule[]        @relation("PlPouchOptionRuleAssembly")
   // --- end Folding price components
   // --- Corrugate price components (U-B6)
   plCorrugateFixedOptions     PlCorrugateFixedOption[]   @relation("PlCorrugateFixedOptionAssembly")
@@ -1858,6 +1874,17 @@ enum CorrugateFormula {
   full_overlap
 
   @@map("corrugate_formula")
+}
+
+/// Pouch shapes (legacy `PouchCalculator::calculateDimension:557-581`, patterns 40–44, port map §2.2).
+enum PouchFormula {
+  three_side_seal
+  pillow_center_seal
+  center_seal_gusset
+  quad_seal
+  stand_up
+
+  @@map("pouch_formula")
 }
 
 enum GeometryDeterminant {

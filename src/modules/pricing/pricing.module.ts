@@ -10,6 +10,7 @@ import { FoldingPriceComponentsRegistrar } from './calculators/folding/price-com
 import { LabelQuoteAdapter } from './calculators/label/label.adapter';
 import { LabelSnapshotLoader } from './calculators/label/label-snapshot.loader';
 import { LabelPriceComponentsRegistrar } from './calculators/label/price-components.registrar';
+import { PouchPriceComponentsRegistrar } from './calculators/pouch/price-components.registrar';
 import { TagSleeveQuoteAdapter } from './calculators/tag-sleeve/tag-sleeve.adapter';
 import { PriceHintsService } from './hints/price-hints.service';
 import { CorrugateInputDataService } from './quotes/corrugate-input-data.service';
@@ -46,6 +47,7 @@ const SERVICES = [
     FoldingPriceComponentsRegistrar,
     CorrugatePriceComponentsRegistrar,
     LabelPriceComponentsRegistrar,
+    PouchPriceComponentsRegistrar,
   ],
   exports: SERVICES,
 })
