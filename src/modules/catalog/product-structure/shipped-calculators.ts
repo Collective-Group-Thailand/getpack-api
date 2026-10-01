@@ -24,4 +24,8 @@ export const SHIPPED_CALCULATORS: ReadonlySet<CalculatorKey> = new Set<Calculato
   // validation docs/pricing-validation-pouch.md (pending sign-off). The type stays seeded `rfq` (A-16) until the
   // business signs off the cases and the factory's pouch price list (D-100).
   'pouch',
+  // U-B6 standard product: golden cases test/golden/standard-product (expected values from an independent Python
+  // transcription of the PHP), validation docs/pricing-validation-standard-product.md (pending sign-off). The type
+  // stays seeded `rfq` (A-16) until the business signs off the cases and the factory's stock-product prices (D-100).
+  'standard_product',
 ]);
