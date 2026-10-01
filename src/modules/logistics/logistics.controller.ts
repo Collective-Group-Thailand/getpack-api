@@ -50,6 +50,7 @@ import {
   STORE_SHIPMENT_EXAMPLE,
   StoreShipmentDto,
 } from './logistics.dto';
+import { SHIPMENT_QUEUE_WHERE as QUEUES } from './shipment-queues';
 import {
   adminShipmentDto,
   partnerShipmentDto,
@@ -927,13 +928,6 @@ export class StoreShipmentsController {
     );
   }
 }
-
-const QUEUES: Record<NonNullable<AdminShipmentListQuery['queue']>, Prisma.ShipmentWhereInput> = {
-  awaiting_pickup: { status: 'ready' },
-  in_transit: { status: { in: ['picked_up', 'in_transit', 'out_for_delivery'] } },
-  exceptions: { OR: [{ status: 'failed' }, { status: 'returned', exceptionResolvedAt: null }] },
-  pod_review: { status: 'delivered', proofOfDelivery: { reviews: { none: {} } } },
-};
 
 function adminListWhere(q: AdminShipmentListQuery): Prisma.ShipmentWhereInput {
   return {

@@ -215,4 +215,28 @@ describe('admin platform reads (e2e, U-B0.3)', () => {
     );
     await as(ctx, admin).get('/v1/admin/search?q=x').expect(422);
   });
+
+  it('shows each staff member the work queues of their permissions (U-B0.3)', async () => {
+    type Dashboard = { queues: { key: string; count: number; overdueCount: number }[]; generatedAt: string };
+    const keys = async (role: string) =>
+      (
+        (
+          await as(ctx, await staffToken(ctx, role))
+            .get('/v1/admin/dashboard')
+            .expect(200)
+        ).body as Dashboard
+      ).queues.map((q) => q.key);
+    const finance = await keys('finance');
+    expect(finance).toEqual(expect.arrayContaining(['finance.slips', 'finance.unmatched_bank_lines']));
+    expect(finance).not.toContain('claims.open');
+    const cs = await keys('cs');
+    expect(cs).toEqual(expect.arrayContaining(['orders.waiting_payment', 'claims.open']));
+    expect(cs.some((k) => k.startsWith('finance.'))).toBe(false);
+    const body = (
+      await as(ctx, await staffToken(ctx, 'superadmin'))
+        .get('/v1/admin/dashboard')
+        .expect(200)
+    ).body as Dashboard;
+    for (const q of body.queues) expect(q.overdueCount).toBeLessThanOrEqual(q.count);
+  });
 });

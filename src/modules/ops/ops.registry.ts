@@ -1,5 +1,6 @@
 import { type Type } from '@nestjs/common';
 
+import { AdminDashboardController } from './dashboard.controller';
 import { AdminOpsController } from './ops.controller';
 import {
   AdminRumController,
@@ -10,6 +11,7 @@ import {
 
 export const OPS_ADMIN_CONTROLLERS: Type<unknown>[] = [
   AdminOpsController,
+  AdminDashboardController,
   AdminWebVitalsController,
   AdminRumController,
 ];

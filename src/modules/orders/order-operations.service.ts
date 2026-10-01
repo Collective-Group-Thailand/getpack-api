@@ -444,21 +444,7 @@ export class OrderOperationsService {
 
   /** Admin work queues; `withinDays` narrows "due soon" (a view filter, not a business rule). */
   async queue(key: QueueKey, page: number, perPage: number, withinDays = 3, now = new Date()) {
-    const today = new Date(`${bangkokDate(now)}T00:00:00Z`);
-    const notShipped = { shippedAt: null, cancelledAt: null };
-    const where: Prisma.OrderWhereInput =
-      key === 'waiting_payment'
-        ? { status: 'waiting_payment', orderGroup: { status: 'waiting_payment' } }
-        : key === 'artwork_review'
-          ? { artworkStatus: { in: ['uploaded', 'in_review'] }, cancelledAt: null }
-          : key === 'waiting_production'
-            ? { status: { in: ['paid_for_production', 'artwork_approved'] } }
-            : key === 'due_soon'
-              ? {
-                  ...notShipped,
-                  promisedShipDate: { gte: today, lte: new Date(today.getTime() + withinDays * 86_400_000) },
-                }
-              : { ...notShipped, promisedShipDate: { lt: today } };
+    const where = orderQueueWhere(key, withinDays, now);
     const orderBy: Prisma.OrderOrderByWithRelationInput =
       key === 'waiting_payment'
         ? { createdAt: 'asc' }
@@ -550,4 +536,22 @@ function totalsRow(o: {
     whtAmount: o.whtAmount.toFixed(2),
     cashAmount: o.cashAmount.toFixed(2),
   };
+}
+
+/** Which orders a work queue holds (shared with the admin dashboard counts, U-B0.3). */
+export function orderQueueWhere(key: QueueKey, withinDays = 3, now = new Date()): Prisma.OrderWhereInput {
+  const today = new Date(`${bangkokDate(now)}T00:00:00Z`);
+  const notShipped = { shippedAt: null, cancelledAt: null };
+  return key === 'waiting_payment'
+    ? { status: 'waiting_payment', orderGroup: { status: 'waiting_payment' } }
+    : key === 'artwork_review'
+      ? { artworkStatus: { in: ['uploaded', 'in_review'] }, cancelledAt: null }
+      : key === 'waiting_production'
+        ? { status: { in: ['paid_for_production', 'artwork_approved'] } }
+        : key === 'due_soon'
+          ? {
+              ...notShipped,
+              promisedShipDate: { gte: today, lte: new Date(today.getTime() + withinDays * 86_400_000) },
+            }
+          : { ...notShipped, promisedShipDate: { lt: today } };
 }

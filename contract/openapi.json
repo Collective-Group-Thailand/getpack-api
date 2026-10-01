@@ -5203,6 +5203,27 @@
         ],
         "type": "object"
       },
+      "AdminDashboardDto": {
+        "properties": {
+          "generatedAt": {
+            "example": "2026-10-01T10:00:00+07:00",
+            "format": "date-time",
+            "type": "string"
+          },
+          "queues": {
+            "description": "Only the queues I may work",
+            "items": {
+              "$ref": "#/components/schemas/DashboardQueueDto"
+            },
+            "type": "array"
+          }
+        },
+        "required": [
+          "queues",
+          "generatedAt"
+        ],
+        "type": "object"
+      },
       "AdminDesignDocumentDto": {
         "properties": {
           "assets": {
@@ -23023,6 +23044,45 @@
           "government"
         ],
         "type": "string"
+      },
+      "DashboardQueueDto": {
+        "properties": {
+          "count": {
+            "example": 4,
+            "type": "integer"
+          },
+          "key": {
+            "description": "Stable key; the frontend owns the label",
+            "example": "finance.slips",
+            "type": "string"
+          },
+          "nextDueAt": {
+            "example": "2026-10-01T14:30:00+07:00",
+            "format": "date-time",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "overdueCount": {
+            "description": "Past their due time (SLA on the business calendar)",
+            "example": 1,
+            "type": "integer"
+          },
+          "path": {
+            "description": "Zone-relative page of the queue",
+            "example": "/finance/slips",
+            "type": "string"
+          }
+        },
+        "required": [
+          "key",
+          "path",
+          "count",
+          "overdueCount",
+          "nextDueAt"
+        ],
+        "type": "object"
       },
       "DecideClaimDto": {
         "properties": {
@@ -144636,6 +144696,147 @@
         ],
         "x-required-permissions": [
           "customers.manage"
+        ]
+      }
+    },
+    "/v1/admin/dashboard": {
+      "get": {
+        "description": "Counts of the queues I may work (each gated on the permission that works the queue, not the one that reads it): orders, RFQs, production, shipments, claims, KYC and the finance queues (slips with the D-061 SLA, unmatched bank lines, unidentified receipts, payout runs awaiting approval, deliveries without goods receipt, bills without a tax invoice, missing WHT certificates, overdue B2B invoices, refunds to pay, open close tasks). `overdueCount` and `nextDueAt` come from the stored SLA due times (business calendar, D-061, D-074, D-175).\n\nImplements: D-061, D-074, D-175.",
+        "operationId": "admin.dashboard.get",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "generatedAt": "2026-10-01T10:00:00+07:00",
+                  "queues": [
+                    {
+                      "count": 4,
+                      "key": "finance.slips",
+                      "nextDueAt": "2026-10-01T14:30:00+07:00",
+                      "overdueCount": 1,
+                      "path": "/finance/slips"
+                    }
+                  ]
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/AdminDashboardDto"
+                }
+              }
+            },
+            "description": "Dashboard",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.unauthenticated": {
+                    "$ref": "#/components/examples/problem.auth.unauthenticated"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.unauthenticated`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.forbidden": {
+                    "$ref": "#/components/examples/problem.auth.forbidden"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.forbidden`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "staff": []
+          }
+        ],
+        "summary": "My work queues",
+        "tags": [
+          "admin.ops"
         ]
       }
     },
