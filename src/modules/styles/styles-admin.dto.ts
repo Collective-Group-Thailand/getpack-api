@@ -1,7 +1,21 @@
 import { PageQuery } from '@common/pagination/pagination.dto';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { Transform } from 'class-transformer';
-import { IsBoolean, IsIn, IsOptional, IsString, Matches, MaxLength } from 'class-validator';
+import { Type } from 'class-transformer';
+import {
+  ArrayMaxSize,
+  IsArray,
+  IsBoolean,
+  IsIn,
+  IsInt,
+  IsOptional,
+  IsString,
+  Matches,
+  Max,
+  MaxLength,
+  Min,
+  ValidateNested,
+} from 'class-validator';
 
 import { PUBLISH_REASONS } from './publishability';
 
@@ -114,6 +128,9 @@ export class AdminStyleBaseDto {
 
   @ApiProperty({ example: false, description: 'A recipe version is approved by Prepress' })
   recipeApproved!: boolean;
+
+  @ApiProperty({ type: 'integer', example: 1, description: 'Row version (the ETag / If-Match of curation)' })
+  version!: number;
 }
 
 export class StyleRecipeDto {
@@ -344,6 +361,7 @@ export const ADMIN_STYLE_EXAMPLE: AdminStyleBaseDto = {
   referenceVerifiedAt: null,
   recipeVersion: null,
   recipeApproved: false,
+  version: 1,
 };
 
 export const ADMIN_STYLE_DETAIL_EXAMPLE: AdminStyleBaseDetailDto = {
@@ -388,3 +406,92 @@ export const IMPORT_RUN_EXAMPLE: StyleImportRunDto = {
   createdAt: TS,
   decidedAt: TS,
 };
+
+export class StyleSynonymInputDto {
+  @ApiProperty({ enum: ['th', 'en'], enumName: 'LocaleCode', example: 'th' })
+  @IsIn(['th', 'en'])
+  locale!: 'th' | 'en';
+
+  @ApiProperty({ example: 'กล่องครีม' })
+  @IsString()
+  @MaxLength(80)
+  @Matches(/\S/)
+  term!: string;
+}
+
+/** D-246 curation; a name change clears both name approvals (D-212). */
+export class UpdateStyleDto {
+  @ApiPropertyOptional({ example: true })
+  @IsOptional()
+  @IsBoolean()
+  featured?: boolean;
+
+  @ApiPropertyOptional({ example: false, description: 'Hidden styles are never published (D-243)' })
+  @IsOptional()
+  @IsBoolean()
+  hidden?: boolean;
+
+  @ApiPropertyOptional({ type: 'integer', example: 10, minimum: 0, maximum: 100000 })
+  @IsOptional()
+  @Type(() => Number)
+  @IsInt()
+  @Min(0)
+  @Max(100_000)
+  sort?: number;
+
+  @ApiPropertyOptional({ example: 'กล่องฝาเสียบ' })
+  @IsOptional()
+  @IsString()
+  @MaxLength(200)
+  @Matches(/\S/)
+  nameTh?: string;
+
+  @ApiPropertyOptional({ example: 'Tuck-end carton' })
+  @IsOptional()
+  @IsString()
+  @MaxLength(200)
+  @Matches(/\S/)
+  nameEn?: string;
+
+  @ApiPropertyOptional({ type: String, nullable: true, example: 'กล่องกระดาษพับสำหรับเครื่องสำอาง' })
+  @IsOptional()
+  @IsString()
+  @MaxLength(4000)
+  descriptionTh?: string | null;
+
+  @ApiPropertyOptional({ type: String, nullable: true, example: 'A folding carton for cosmetics' })
+  @IsOptional()
+  @IsString()
+  @MaxLength(4000)
+  descriptionEn?: string | null;
+
+  @ApiPropertyOptional({
+    type: String,
+    nullable: true,
+    example: 'other',
+    description: 'The Packio product type it is sold as (null: none — not publishable)',
+  })
+  @IsOptional()
+  @IsString()
+  @Matches(/^[a-z][a-z0-9_]*$/)
+  productTypeCode?: string | null;
+
+  @ApiPropertyOptional({ type: [StyleSynonymInputDto], description: 'Replaces the search synonyms' })
+  @IsOptional()
+  @IsArray()
+  @ArrayMaxSize(50)
+  @ValidateNested({ each: true })
+  @Type(() => StyleSynonymInputDto)
+  synonyms?: StyleSynonymInputDto[];
+
+  @ApiPropertyOptional({
+    type: [String],
+    example: ['cosmetics'],
+    description: 'Replaces the use cases (snake_case)',
+  })
+  @IsOptional()
+  @IsArray()
+  @ArrayMaxSize(30)
+  @Matches(/^[a-z][a-z0-9_]*$/, { each: true })
+  useCases?: string[];
+}

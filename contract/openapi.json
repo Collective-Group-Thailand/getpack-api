@@ -3202,6 +3202,17 @@
           "type": "https://errors.packio/styles.role_required"
         }
       },
+      "problem.styles.variant_not_found": {
+        "summary": "styles.variant_not_found",
+        "value": {
+          "code": "styles.variant_not_found",
+          "detail": "ไม่พบแบบกล่องที่เผยแพร่ด้วยรหัสนี้",
+          "requestId": "6f1c2d8e-2c7b-4d0e-9d1c-3f1a2b3c4d5e",
+          "status": 404,
+          "title": "ไม่พบแบบกล่อง",
+          "type": "https://errors.packio/styles.variant_not_found"
+        }
+      },
       "problem.support.contact_required": {
         "summary": "support.contact_required",
         "value": {
@@ -8720,6 +8731,11 @@
           "variants": {
             "$ref": "#/components/schemas/StyleVariantCountsDto"
           },
+          "version": {
+            "description": "Row version (the ETag / If-Match of curation)",
+            "example": 1,
+            "type": "integer"
+          },
           "wave": {
             "example": 1,
             "type": "integer"
@@ -8747,6 +8763,7 @@
           "referenceVerifiedAt",
           "recipeVersion",
           "recipeApproved",
+          "version",
           "construction",
           "variantAxes",
           "complexity",
@@ -8868,6 +8885,11 @@
           "variants": {
             "$ref": "#/components/schemas/StyleVariantCountsDto"
           },
+          "version": {
+            "description": "Row version (the ETag / If-Match of curation)",
+            "example": 1,
+            "type": "integer"
+          },
           "wave": {
             "example": 1,
             "type": "integer"
@@ -8894,7 +8916,8 @@
           "referenceCode",
           "referenceVerifiedAt",
           "recipeVersion",
-          "recipeApproved"
+          "recipeApproved",
+          "version"
         ],
         "type": "object"
       },
@@ -36751,6 +36774,23 @@
         ],
         "type": "object"
       },
+      "LeadTimeRangeDto": {
+        "properties": {
+          "maxDays": {
+            "example": 12,
+            "type": "integer"
+          },
+          "minDays": {
+            "example": 7,
+            "type": "integer"
+          }
+        },
+        "required": [
+          "minDays",
+          "maxDays"
+        ],
+        "type": "object"
+      },
       "LedgerDimension": {
         "enum": [
           "order",
@@ -63089,6 +63129,422 @@
         ],
         "type": "object"
       },
+      "StyleAssetDto": {
+        "properties": {
+          "kind": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/StyleAssetKind"
+              }
+            ],
+            "example": "thumbnail_2d"
+          },
+          "sha256": {
+            "description": "sha256 of the asset (hex)",
+            "example": "b2f1…",
+            "type": "string"
+          },
+          "variantCode": {
+            "description": "Variant code, null for the base",
+            "example": null,
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "kind",
+          "variantCode",
+          "sha256"
+        ],
+        "type": "object"
+      },
+      "StyleAssetKind": {
+        "enum": [
+          "thumbnail_2d",
+          "thumbnail_3d",
+          "dieline_svg",
+          "manifest"
+        ],
+        "type": "string"
+      },
+      "StyleAxisDto": {
+        "properties": {
+          "axis": {
+            "example": "tuck_bottom",
+            "type": "string"
+          },
+          "multiSelect": {
+            "description": "Any combination of the values (pouch features)",
+            "example": false,
+            "type": "boolean"
+          },
+          "values": {
+            "description": "Values with a publishable variant",
+            "example": [
+              "tuck",
+              "crash_lock"
+            ],
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          }
+        },
+        "required": [
+          "axis",
+          "values",
+          "multiSelect"
+        ],
+        "type": "object"
+      },
+      "StyleCardDto": {
+        "properties": {
+          "category": {
+            "example": "folding_carton",
+            "type": "string"
+          },
+          "code": {
+            "example": "PK-TE-01",
+            "type": "string"
+          },
+          "family": {
+            "example": "tuck_end",
+            "type": "string"
+          },
+          "favourite": {
+            "description": "Null when not signed in",
+            "example": null,
+            "type": [
+              "boolean",
+              "null"
+            ]
+          },
+          "featured": {
+            "example": false,
+            "type": "boolean"
+          },
+          "materialClass": {
+            "example": "paperboard",
+            "type": "string"
+          },
+          "nameEn": {
+            "example": "Tuck-end carton (configurable ends)",
+            "type": "string"
+          },
+          "nameTh": {
+            "example": "กล่องฝาเสียบ (ปรับฝาบน-ล่างได้)",
+            "type": "string"
+          },
+          "pricePath": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/QuoteMode"
+              }
+            ],
+            "example": "instant"
+          },
+          "referenceCode": {
+            "description": "Only once Prepress verified it (D-211)",
+            "example": null,
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "startingPrice": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/StylePriceDto"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Null without a price hint (D-220)"
+          },
+          "variantCount": {
+            "description": "Publishable variants",
+            "example": 228,
+            "type": "integer"
+          }
+        },
+        "required": [
+          "code",
+          "nameTh",
+          "nameEn",
+          "category",
+          "family",
+          "materialClass",
+          "pricePath",
+          "variantCount",
+          "featured",
+          "startingPrice",
+          "referenceCode",
+          "favourite"
+        ],
+        "type": "object"
+      },
+      "StyleDetailDto": {
+        "properties": {
+          "assets": {
+            "items": {
+              "$ref": "#/components/schemas/StyleAssetDto"
+            },
+            "type": "array"
+          },
+          "axes": {
+            "items": {
+              "$ref": "#/components/schemas/StyleAxisDto"
+            },
+            "type": "array"
+          },
+          "category": {
+            "example": "folding_carton",
+            "type": "string"
+          },
+          "code": {
+            "example": "PK-TE-01",
+            "type": "string"
+          },
+          "construction": {
+            "example": "Four side panels + glue flap; …",
+            "type": "string"
+          },
+          "descriptionEn": {
+            "example": null,
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "descriptionTh": {
+            "example": null,
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "family": {
+            "example": "tuck_end",
+            "type": "string"
+          },
+          "favourite": {
+            "description": "Null when not signed in",
+            "example": null,
+            "type": [
+              "boolean",
+              "null"
+            ]
+          },
+          "featured": {
+            "example": false,
+            "type": "boolean"
+          },
+          "leadTime": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/LeadTimeRangeDto"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "materialClass": {
+            "example": "paperboard",
+            "type": "string"
+          },
+          "nameEn": {
+            "example": "Tuck-end carton (configurable ends)",
+            "type": "string"
+          },
+          "nameTh": {
+            "example": "กล่องฝาเสียบ (ปรับฝาบน-ล่างได้)",
+            "type": "string"
+          },
+          "partnersCount": {
+            "description": "Partners able to make it — only with ≥ 3 active factories (D-201); never who they are",
+            "example": null,
+            "type": [
+              "integer",
+              "null"
+            ]
+          },
+          "pricePath": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/QuoteMode"
+              }
+            ],
+            "example": "instant"
+          },
+          "referenceCode": {
+            "description": "Only once Prepress verified it (D-211)",
+            "example": null,
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "sizeRanges": {
+            "items": {
+              "$ref": "#/components/schemas/StyleSizeRangeDto"
+            },
+            "type": "array"
+          },
+          "startingPrice": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/StylePriceDto"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Null without a price hint (D-220)"
+          },
+          "useCases": {
+            "example": [
+              "cosmetics"
+            ],
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "variantCount": {
+            "description": "Publishable variants",
+            "example": 228,
+            "type": "integer"
+          },
+          "variants": {
+            "description": "Publishable variants (valid combinations)",
+            "items": {
+              "$ref": "#/components/schemas/StyleVariantRefDto"
+            },
+            "type": "array"
+          }
+        },
+        "required": [
+          "code",
+          "nameTh",
+          "nameEn",
+          "category",
+          "family",
+          "materialClass",
+          "pricePath",
+          "variantCount",
+          "featured",
+          "startingPrice",
+          "referenceCode",
+          "favourite",
+          "construction",
+          "descriptionTh",
+          "descriptionEn",
+          "axes",
+          "variants",
+          "sizeRanges",
+          "leadTime",
+          "partnersCount",
+          "useCases",
+          "assets"
+        ],
+        "type": "object"
+      },
+      "StyleFacetValueDto": {
+        "properties": {
+          "count": {
+            "example": 12,
+            "type": "integer"
+          },
+          "value": {
+            "example": "folding_carton",
+            "type": "string"
+          }
+        },
+        "required": [
+          "value",
+          "count"
+        ],
+        "type": "object"
+      },
+      "StyleFacetsDto": {
+        "properties": {
+          "category": {
+            "items": {
+              "$ref": "#/components/schemas/StyleFacetValueDto"
+            },
+            "type": "array"
+          },
+          "closure": {
+            "description": "Closure options `axis:value`",
+            "items": {
+              "$ref": "#/components/schemas/StyleFacetValueDto"
+            },
+            "type": "array"
+          },
+          "family": {
+            "items": {
+              "$ref": "#/components/schemas/StyleFacetValueDto"
+            },
+            "type": "array"
+          },
+          "feature": {
+            "description": "Feature options `axis:value`",
+            "items": {
+              "$ref": "#/components/schemas/StyleFacetValueDto"
+            },
+            "type": "array"
+          },
+          "materialClass": {
+            "items": {
+              "$ref": "#/components/schemas/StyleFacetValueDto"
+            },
+            "type": "array"
+          },
+          "pricePath": {
+            "items": {
+              "$ref": "#/components/schemas/StyleFacetValueDto"
+            },
+            "type": "array"
+          },
+          "useCase": {
+            "items": {
+              "$ref": "#/components/schemas/StyleFacetValueDto"
+            },
+            "type": "array"
+          }
+        },
+        "required": [
+          "category",
+          "family",
+          "closure",
+          "feature",
+          "useCase",
+          "materialClass",
+          "pricePath"
+        ],
+        "type": "object"
+      },
+      "StyleFavouriteDto": {
+        "properties": {
+          "addedAt": {
+            "example": "2026-10-03T10:00:00+07:00",
+            "format": "date-time",
+            "type": "string"
+          },
+          "style": {
+            "$ref": "#/components/schemas/StyleCardDto"
+          }
+        },
+        "required": [
+          "style",
+          "addedAt"
+        ],
+        "type": "object"
+      },
       "StyleImportKind": {
         "enum": [
           "master",
@@ -63191,6 +63647,33 @@
         ],
         "type": "string"
       },
+      "StyleListDto": {
+        "properties": {
+          "data": {
+            "items": {
+              "$ref": "#/components/schemas/StyleCardDto"
+            },
+            "type": "array"
+          },
+          "facets": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/StyleFacetsDto"
+              }
+            ],
+            "description": "Counts over the styles matching the query and filters"
+          },
+          "meta": {
+            "$ref": "#/components/schemas/CursorMeta"
+          }
+        },
+        "required": [
+          "data",
+          "facets",
+          "meta"
+        ],
+        "type": "object"
+      },
       "StyleNameApproverRole": {
         "description": "Which approval this is (D-212): Marketing for the wording, Prepress for technical terms",
         "enum": [
@@ -63221,6 +63704,47 @@
         "required": [
           "marketingAt",
           "prepressAt"
+        ],
+        "type": "object"
+      },
+      "StylePriceDto": {
+        "properties": {
+          "catalogProductSlug": {
+            "description": "The catalogue product whose reference configuration was priced",
+            "example": "dev-tuck-end-box",
+            "type": "string"
+          },
+          "computedAt": {
+            "example": "2026-10-03T10:00:00+07:00",
+            "format": "date-time",
+            "type": "string"
+          },
+          "currency": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/Currency"
+              }
+            ],
+            "description": "Always THB (one currency)",
+            "example": "THB"
+          },
+          "quantity": {
+            "description": "The quantity this price assumes",
+            "example": 1000,
+            "type": "integer"
+          },
+          "unitPrice": {
+            "description": "Per piece incl. VAT, excluding delivery and design (D-220)",
+            "example": "4.85",
+            "type": "string"
+          }
+        },
+        "required": [
+          "unitPrice",
+          "currency",
+          "quantity",
+          "catalogProductSlug",
+          "computedAt"
         ],
         "type": "object"
       },
@@ -63323,6 +63847,93 @@
         ],
         "type": "object"
       },
+      "StyleSizeRangeDto": {
+        "properties": {
+          "materialClass": {
+            "example": "paperboard",
+            "type": "string"
+          },
+          "maxHMm": {
+            "example": 300,
+            "type": [
+              "number",
+              "null"
+            ]
+          },
+          "maxLMm": {
+            "example": 400,
+            "type": [
+              "number",
+              "null"
+            ]
+          },
+          "maxWMm": {
+            "example": 300,
+            "type": [
+              "number",
+              "null"
+            ]
+          },
+          "minHMm": {
+            "example": 20,
+            "type": [
+              "number",
+              "null"
+            ]
+          },
+          "minLMm": {
+            "example": 30,
+            "type": [
+              "number",
+              "null"
+            ]
+          },
+          "minWMm": {
+            "description": "Inside size (D-182). Unit: mm.",
+            "example": 30,
+            "type": [
+              "number",
+              "null"
+            ]
+          },
+          "source": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/StyleSizeRangeSource"
+              }
+            ],
+            "example": "pattern_rules"
+          }
+        },
+        "required": [
+          "materialClass",
+          "source",
+          "minWMm",
+          "maxWMm",
+          "minLMm",
+          "maxLMm",
+          "minHMm",
+          "maxHMm"
+        ],
+        "type": "object"
+      },
+      "StyleSizeRangeSource": {
+        "enum": [
+          "recipe",
+          "pattern_rules"
+        ],
+        "type": "string"
+      },
+      "StyleSort": {
+        "enum": [
+          "relevance",
+          "popular",
+          "new",
+          "instant_first",
+          "name"
+        ],
+        "type": "string"
+      },
       "StyleStatus": {
         "enum": [
           "active",
@@ -63351,6 +63962,29 @@
         ],
         "type": "object"
       },
+      "StyleSynonymInputDto": {
+        "properties": {
+          "locale": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/LocaleCode"
+              }
+            ],
+            "example": "th"
+          },
+          "term": {
+            "example": "กล่องครีม",
+            "maxLength": 80,
+            "pattern": "\\S",
+            "type": "string"
+          }
+        },
+        "required": [
+          "locale",
+          "term"
+        ],
+        "type": "object"
+      },
       "StyleVariantCountsDto": {
         "properties": {
           "active": {
@@ -63370,6 +64004,29 @@
           "total",
           "active",
           "publishable"
+        ],
+        "type": "object"
+      },
+      "StyleVariantRefDto": {
+        "properties": {
+          "code": {
+            "example": "PK-TE-01-K7QD",
+            "type": "string"
+          },
+          "options": {
+            "additionalProperties": true,
+            "example": {
+              "hang": "none",
+              "tuck_bottom": "crash_lock",
+              "tuck_top": "reverse_tuck",
+              "window": "none"
+            },
+            "type": "object"
+          }
+        },
+        "required": [
+          "code",
+          "options"
         ],
         "type": "object"
       },
@@ -68945,6 +69602,83 @@
               "number",
               "null"
             ]
+          }
+        },
+        "type": "object"
+      },
+      "UpdateStyleDto": {
+        "properties": {
+          "descriptionEn": {
+            "example": "A folding carton for cosmetics",
+            "maxLength": 4000,
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "descriptionTh": {
+            "example": "กล่องกระดาษพับสำหรับเครื่องสำอาง",
+            "maxLength": 4000,
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "featured": {
+            "example": true,
+            "type": "boolean"
+          },
+          "hidden": {
+            "description": "Hidden styles are never published (D-243)",
+            "example": false,
+            "type": "boolean"
+          },
+          "nameEn": {
+            "example": "Tuck-end carton",
+            "maxLength": 200,
+            "pattern": "\\S",
+            "type": "string"
+          },
+          "nameTh": {
+            "example": "กล่องฝาเสียบ",
+            "maxLength": 200,
+            "pattern": "\\S",
+            "type": "string"
+          },
+          "productTypeCode": {
+            "description": "The Packio product type it is sold as (null: none — not publishable)",
+            "example": "other",
+            "pattern": "^[a-z][a-z0-9_]*$",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "sort": {
+            "example": 10,
+            "maximum": 100000,
+            "minimum": 0,
+            "type": "integer"
+          },
+          "synonyms": {
+            "description": "Replaces the search synonyms",
+            "items": {
+              "$ref": "#/components/schemas/StyleSynonymInputDto"
+            },
+            "maxItems": 50,
+            "type": "array"
+          },
+          "useCases": {
+            "description": "Replaces the use cases (snake_case)",
+            "example": [
+              "cosmetics"
+            ],
+            "items": {
+              "pattern": "^[a-z][a-z0-9_]*$",
+              "type": "string"
+            },
+            "maxItems": 30,
+            "type": "array"
           }
         },
         "type": "object"
@@ -256389,6 +257123,7 @@
                         "publishable": 0,
                         "total": 228
                       },
+                      "version": 1,
                       "wave": 1
                     }
                   ],
@@ -256631,6 +257366,7 @@
                     "publishable": 0,
                     "total": 228
                   },
+                  "version": 1,
                   "wave": 1
                 },
                 "schema": {
@@ -256640,6 +257376,9 @@
             },
             "description": "The base",
             "headers": {
+              "ETag": {
+                "$ref": "#/components/headers/ETag"
+              },
               "X-RateLimit-Limit": {
                 "$ref": "#/components/headers/RateLimitLimit"
               },
@@ -256790,6 +257529,335 @@
         "x-required-permissions": [
           "styles.read"
         ]
+      },
+      "patch": {
+        "description": "Marketing / Admin curation (D-246): featured, hidden (never published, D-243), order, Thai / English names and descriptions, the Packio product type, search synonyms and use cases. Changing a name clears both name approvals (D-212). Needs `If-Match` from `admin.styles.get`. Audited; publishability recomputed.\n\nImplements: D-241, D-242, D-243, D-246, D-212.",
+        "operationId": "admin.styles.update",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "styleId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/IfMatch"
+          },
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "examples": {
+                "default": {
+                  "value": {
+                    "featured": true,
+                    "sort": 10,
+                    "useCases": [
+                      "cosmetics"
+                    ]
+                  }
+                }
+              },
+              "schema": {
+                "$ref": "#/components/schemas/UpdateStyleDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "category": "folding_carton",
+                  "code": "PK-TE-01",
+                  "complexity": "M",
+                  "construction": "Four side panels + glue flap; top and bottom closures chosen from the tuck/lock/seal set.",
+                  "descriptionEn": null,
+                  "descriptionTh": null,
+                  "family": "tuck_end",
+                  "featured": false,
+                  "hidden": false,
+                  "id": "0192f3a0-7c1e-7d2a-9b1f-0000000ae001",
+                  "materialClass": "paperboard",
+                  "nameEn": "Tuck-end carton (configurable ends)",
+                  "nameTh": "กล่องฝาเสียบ (ปรับฝาบน-ล่างได้)",
+                  "namesApproval": {
+                    "marketingAt": null,
+                    "prepressAt": null
+                  },
+                  "patternId": null,
+                  "pricingPathAtLaunch": "instant_after_signoff",
+                  "productTypeCode": "folding_carton",
+                  "publishedAt": null,
+                  "reasonCounts": [
+                    {
+                      "count": 228,
+                      "reason": "no_recipe"
+                    },
+                    {
+                      "count": 228,
+                      "reason": "names_not_approved"
+                    },
+                    {
+                      "count": 228,
+                      "reason": "not_makeable"
+                    }
+                  ],
+                  "recipeApproved": false,
+                  "recipeVersion": null,
+                  "recipes": [],
+                  "referenceCode": null,
+                  "referenceVerifiedAt": null,
+                  "sort": 0,
+                  "sourceProductType": "folding",
+                  "status": "active",
+                  "synonyms": [],
+                  "useCases": [],
+                  "variantAxes": [
+                    "tuck_top",
+                    "tuck_bottom",
+                    "hang",
+                    "window"
+                  ],
+                  "variants": {
+                    "active": 228,
+                    "publishable": 0,
+                    "total": 228
+                  },
+                  "version": 1,
+                  "wave": 1
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/AdminStyleBaseDetailDto"
+                }
+              }
+            },
+            "description": "The base",
+            "headers": {
+              "ETag": {
+                "$ref": "#/components/headers/ETag"
+              },
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "400": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.bad_request": {
+                    "$ref": "#/components/examples/problem.http.bad_request"
+                  },
+                  "http.malformed_json": {
+                    "$ref": "#/components/examples/problem.http.malformed_json"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.bad_request`, `http.malformed_json`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.unauthenticated": {
+                    "$ref": "#/components/examples/problem.auth.unauthenticated"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.unauthenticated`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.forbidden": {
+                    "$ref": "#/components/examples/problem.auth.forbidden"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.forbidden`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "404": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.not_found": {
+                    "$ref": "#/components/examples/problem.http.not_found"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.not_found`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "412": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "concurrency.stale": {
+                    "$ref": "#/components/examples/problem.concurrency.stale"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `concurrency.stale`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "validation.failed": {
+                    "$ref": "#/components/examples/problem.validation.failed"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `validation.failed`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "428": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "concurrency.precondition_required": {
+                    "$ref": "#/components/examples/problem.concurrency.precondition_required"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `concurrency.precondition_required`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "staff": []
+          }
+        ],
+        "summary": "Curate a style-library base",
+        "tags": [
+          "admin.styles"
+        ],
+        "x-required-permissions": [
+          "styles.curate"
+        ]
       }
     },
     "/v1/admin/styles/{styleId}/actions/approve-names": {
@@ -256888,6 +257956,7 @@
                     "publishable": 0,
                     "total": 228
                   },
+                  "version": 1,
                   "wave": 1
                 },
                 "schema": {
@@ -257171,6 +258240,7 @@
                     "publishable": 0,
                     "total": 228
                   },
+                  "version": 1,
                   "wave": 1
                 },
                 "schema": {
@@ -257463,6 +258533,7 @@
                     "publishable": 0,
                     "total": 228
                   },
+                  "version": 1,
                   "wave": 1
                 },
                 "schema": {
@@ -346687,6 +347758,1257 @@
         ]
       }
     },
+    "/v1/store/style-favourites": {
+      "get": {
+        "description": "The signed-in customer’s favourite styles that are still published, newest first (D-246).\n\nImplements: D-246.",
+        "operationId": "store.styleFavourites.list",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "example": [
+                  {
+                    "addedAt": "2026-10-03T10:00:00+07:00",
+                    "style": {
+                      "category": "folding_carton",
+                      "code": "PK-TE-01",
+                      "family": "tuck_end",
+                      "favourite": true,
+                      "featured": false,
+                      "materialClass": "paperboard",
+                      "nameEn": "Tuck-end carton (configurable ends)",
+                      "nameTh": "กล่องฝาเสียบ (ปรับฝาบน-ล่างได้)",
+                      "pricePath": "instant",
+                      "referenceCode": null,
+                      "startingPrice": {
+                        "catalogProductSlug": "dev-tuck-end-box",
+                        "computedAt": "2026-10-03T10:00:00+07:00",
+                        "currency": "THB",
+                        "quantity": 1000,
+                        "unitPrice": "4.85"
+                      },
+                      "variantCount": 228
+                    }
+                  }
+                ],
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/StyleFavouriteDto"
+                  },
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Favourites",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.unauthenticated": {
+                    "$ref": "#/components/examples/problem.auth.unauthenticated"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.unauthenticated`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.forbidden": {
+                    "$ref": "#/components/examples/problem.auth.forbidden"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.forbidden`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "validation.failed": {
+                    "$ref": "#/components/examples/problem.validation.failed"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `validation.failed`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "customer": []
+          }
+        ],
+        "summary": "List my favourite styles",
+        "tags": [
+          "store.styleFavourites"
+        ]
+      }
+    },
+    "/v1/store/style-favourites/{code}": {
+      "delete": {
+        "description": "Idempotent (D-246).\n\nImplements: D-246.",
+        "operationId": "store.styleFavourites.remove",
+        "parameters": [
+          {
+            "description": "The public style code (D-184)",
+            "in": "path",
+            "name": "code",
+            "required": true,
+            "schema": {
+              "example": "PK-TE-01",
+              "type": "string"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Removed",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.unauthenticated": {
+                    "$ref": "#/components/examples/problem.auth.unauthenticated"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.unauthenticated`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.forbidden": {
+                    "$ref": "#/components/examples/problem.auth.forbidden"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.forbidden`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "validation.failed": {
+                    "$ref": "#/components/examples/problem.validation.failed"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `validation.failed`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "customer": []
+          }
+        ],
+        "summary": "Remove a style from my favourites",
+        "tags": [
+          "store.styleFavourites"
+        ]
+      },
+      "put": {
+        "description": "Idempotent: adding a favourite twice keeps one (D-246). Published styles only.\n\nImplements: D-246.",
+        "operationId": "store.styleFavourites.add",
+        "parameters": [
+          {
+            "description": "The public style code (D-184)",
+            "in": "path",
+            "name": "code",
+            "required": true,
+            "schema": {
+              "example": "PK-TE-01",
+              "type": "string"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Added",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.unauthenticated": {
+                    "$ref": "#/components/examples/problem.auth.unauthenticated"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.unauthenticated`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.forbidden": {
+                    "$ref": "#/components/examples/problem.auth.forbidden"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.forbidden`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "404": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "styles.variant_not_found": {
+                    "$ref": "#/components/examples/problem.styles.variant_not_found"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `styles.variant_not_found`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "customer": []
+          }
+        ],
+        "summary": "Add a style to my favourites",
+        "tags": [
+          "store.styleFavourites"
+        ]
+      }
+    },
+    "/v1/store/styles": {
+      "get": {
+        "description": "Published styles only — every listed style has at least one variant that is priced (instant or RFQ) and makeable by a partner (D-243). Facets with counts over the matching styles (category, family, closure, feature, use case, material class, price path), Thai / English search over names, codes and synonyms with typo tolerance, sorts `relevance` (with `q`), `popular`, `new`, `instant_first`, `name`, cursor pages (D-245). `favourite` is filled for a signed-in customer. No factory identity (D-050).\n\nImplements: D-245, D-246, D-243, D-050.",
+        "operationId": "store.styles.list",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "cursor",
+            "required": false,
+            "schema": {
+              "maxLength": 512,
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "default": 50,
+              "maximum": 100,
+              "minimum": 1,
+              "type": "integer"
+            }
+          },
+          {
+            "description": "Thai / English search over names, codes and synonyms (typos tolerated)",
+            "in": "query",
+            "name": "q",
+            "required": false,
+            "schema": {
+              "example": "กล่องครีม",
+              "maxLength": 100,
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "category",
+            "required": false,
+            "schema": {
+              "example": "folding_carton",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "family",
+            "required": false,
+            "schema": {
+              "example": "tuck_end",
+              "type": "string"
+            }
+          },
+          {
+            "description": "A closure option `axis:value`",
+            "in": "query",
+            "name": "closure",
+            "required": false,
+            "schema": {
+              "example": "tuck_bottom:crash_lock",
+              "type": "string"
+            }
+          },
+          {
+            "description": "A feature option `axis:value`",
+            "in": "query",
+            "name": "feature",
+            "required": false,
+            "schema": {
+              "example": "window:front_window",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "useCase",
+            "required": false,
+            "schema": {
+              "example": "cosmetics",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "materialClass",
+            "required": false,
+            "schema": {
+              "example": "paperboard",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "pricePath",
+            "required": false,
+            "schema": {
+              "$ref": "#/components/schemas/QuoteMode"
+            }
+          },
+          {
+            "description": "Default: relevance with `q`, else popular",
+            "in": "query",
+            "name": "sort",
+            "required": false,
+            "schema": {
+              "$ref": "#/components/schemas/StyleSort"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "data": [
+                    {
+                      "category": "folding_carton",
+                      "code": "PK-TE-01",
+                      "family": "tuck_end",
+                      "favourite": null,
+                      "featured": false,
+                      "materialClass": "paperboard",
+                      "nameEn": "Tuck-end carton (configurable ends)",
+                      "nameTh": "กล่องฝาเสียบ (ปรับฝาบน-ล่างได้)",
+                      "pricePath": "instant",
+                      "referenceCode": null,
+                      "startingPrice": {
+                        "catalogProductSlug": "dev-tuck-end-box",
+                        "computedAt": "2026-10-03T10:00:00+07:00",
+                        "currency": "THB",
+                        "quantity": 1000,
+                        "unitPrice": "4.85"
+                      },
+                      "variantCount": 228
+                    }
+                  ],
+                  "facets": {
+                    "category": [
+                      {
+                        "count": 1,
+                        "value": "folding_carton"
+                      }
+                    ],
+                    "closure": [
+                      {
+                        "count": 1,
+                        "value": "tuck_bottom:crash_lock"
+                      }
+                    ],
+                    "family": [
+                      {
+                        "count": 1,
+                        "value": "tuck_end"
+                      }
+                    ],
+                    "feature": [
+                      {
+                        "count": 1,
+                        "value": "window:front_window"
+                      }
+                    ],
+                    "materialClass": [
+                      {
+                        "count": 1,
+                        "value": "paperboard"
+                      }
+                    ],
+                    "pricePath": [
+                      {
+                        "count": 1,
+                        "value": "instant"
+                      }
+                    ],
+                    "useCase": []
+                  },
+                  "meta": {
+                    "nextCursor": null
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/StyleListDto"
+                }
+              }
+            },
+            "description": "A page of styles with facets",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.unauthenticated": {
+                    "$ref": "#/components/examples/problem.auth.unauthenticated"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.unauthenticated`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.forbidden": {
+                    "$ref": "#/components/examples/problem.auth.forbidden"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.forbidden`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "validation.failed": {
+                    "$ref": "#/components/examples/problem.validation.failed"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `validation.failed`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [],
+        "summary": "Browse the style library",
+        "tags": [
+          "store.styles"
+        ]
+      }
+    },
+    "/v1/store/styles/compare": {
+      "get": {
+        "description": "The detail of up to 3 published styles side by side, in the order asked (D-246).\n\nImplements: D-245, D-246, D-243, D-050.",
+        "operationId": "store.styles.compare",
+        "parameters": [
+          {
+            "description": "Up to 3 style codes, comma-separated (D-246)",
+            "in": "query",
+            "name": "codes",
+            "required": true,
+            "schema": {
+              "example": "PK-TE-01,PK-RSC-01",
+              "maxItems": 3,
+              "minItems": 1,
+              "type": "string"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "example": [
+                  {
+                    "assets": [],
+                    "axes": [
+                      {
+                        "axis": "tuck_bottom",
+                        "multiSelect": false,
+                        "values": [
+                          "tuck",
+                          "crash_lock"
+                        ]
+                      }
+                    ],
+                    "category": "folding_carton",
+                    "code": "PK-TE-01",
+                    "construction": "Four side panels + glue flap; top and bottom closures chosen from the tuck/lock/seal set.",
+                    "descriptionEn": null,
+                    "descriptionTh": null,
+                    "family": "tuck_end",
+                    "favourite": null,
+                    "featured": false,
+                    "leadTime": null,
+                    "materialClass": "paperboard",
+                    "nameEn": "Tuck-end carton (configurable ends)",
+                    "nameTh": "กล่องฝาเสียบ (ปรับฝาบน-ล่างได้)",
+                    "partnersCount": null,
+                    "pricePath": "instant",
+                    "referenceCode": null,
+                    "sizeRanges": [
+                      {
+                        "materialClass": "paperboard",
+                        "maxHMm": 300,
+                        "maxLMm": 400,
+                        "maxWMm": 300,
+                        "minHMm": 20,
+                        "minLMm": 30,
+                        "minWMm": 30,
+                        "source": "pattern_rules"
+                      }
+                    ],
+                    "startingPrice": {
+                      "catalogProductSlug": "dev-tuck-end-box",
+                      "computedAt": "2026-10-03T10:00:00+07:00",
+                      "currency": "THB",
+                      "quantity": 1000,
+                      "unitPrice": "4.85"
+                    },
+                    "useCases": [],
+                    "variantCount": 228,
+                    "variants": [
+                      {
+                        "code": "PK-TE-01-K7QD",
+                        "options": {
+                          "hang": "none",
+                          "tuck_bottom": "crash_lock",
+                          "tuck_top": "reverse_tuck",
+                          "window": "none"
+                        }
+                      }
+                    ]
+                  }
+                ],
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/StyleDetailDto"
+                  },
+                  "type": "array"
+                }
+              }
+            },
+            "description": "The styles",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.unauthenticated": {
+                    "$ref": "#/components/examples/problem.auth.unauthenticated"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.unauthenticated`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.forbidden": {
+                    "$ref": "#/components/examples/problem.auth.forbidden"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.forbidden`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "404": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "styles.variant_not_found": {
+                    "$ref": "#/components/examples/problem.styles.variant_not_found"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `styles.variant_not_found`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "validation.failed": {
+                    "$ref": "#/components/examples/problem.validation.failed"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `validation.failed`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [],
+        "summary": "Compare up to three styles",
+        "tags": [
+          "store.styles"
+        ]
+      }
+    },
+    "/v1/store/styles/{code}": {
+      "get": {
+        "description": "A published style by its public code (D-184, D-245): construction, the publishable variants and their option combinations, size ranges per material class (the recipe’s solver, else the linked pattern’s rules — `source`), the starting price and the quantity it assumes (D-220, none without a hint), the lead-time band, the number of partners able to make it only with ≥ 3 active factories (D-201), use cases and assets. A verified reference code only (D-211).\n\nImplements: D-245, D-246, D-243, D-050, D-201, D-220, D-211.",
+        "operationId": "store.styles.get",
+        "parameters": [
+          {
+            "description": "The public style code (D-184)",
+            "in": "path",
+            "name": "code",
+            "required": true,
+            "schema": {
+              "example": "PK-TE-01",
+              "type": "string"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "assets": [],
+                  "axes": [
+                    {
+                      "axis": "tuck_bottom",
+                      "multiSelect": false,
+                      "values": [
+                        "tuck",
+                        "crash_lock"
+                      ]
+                    }
+                  ],
+                  "category": "folding_carton",
+                  "code": "PK-TE-01",
+                  "construction": "Four side panels + glue flap; top and bottom closures chosen from the tuck/lock/seal set.",
+                  "descriptionEn": null,
+                  "descriptionTh": null,
+                  "family": "tuck_end",
+                  "favourite": null,
+                  "featured": false,
+                  "leadTime": null,
+                  "materialClass": "paperboard",
+                  "nameEn": "Tuck-end carton (configurable ends)",
+                  "nameTh": "กล่องฝาเสียบ (ปรับฝาบน-ล่างได้)",
+                  "partnersCount": null,
+                  "pricePath": "instant",
+                  "referenceCode": null,
+                  "sizeRanges": [
+                    {
+                      "materialClass": "paperboard",
+                      "maxHMm": 300,
+                      "maxLMm": 400,
+                      "maxWMm": 300,
+                      "minHMm": 20,
+                      "minLMm": 30,
+                      "minWMm": 30,
+                      "source": "pattern_rules"
+                    }
+                  ],
+                  "startingPrice": {
+                    "catalogProductSlug": "dev-tuck-end-box",
+                    "computedAt": "2026-10-03T10:00:00+07:00",
+                    "currency": "THB",
+                    "quantity": 1000,
+                    "unitPrice": "4.85"
+                  },
+                  "useCases": [],
+                  "variantCount": 228,
+                  "variants": [
+                    {
+                      "code": "PK-TE-01-K7QD",
+                      "options": {
+                        "hang": "none",
+                        "tuck_bottom": "crash_lock",
+                        "tuck_top": "reverse_tuck",
+                        "window": "none"
+                      }
+                    }
+                  ]
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/StyleDetailDto"
+                }
+              }
+            },
+            "description": "The style",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.unauthenticated": {
+                    "$ref": "#/components/examples/problem.auth.unauthenticated"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.unauthenticated`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.forbidden": {
+                    "$ref": "#/components/examples/problem.auth.forbidden"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.forbidden`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "404": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "styles.variant_not_found": {
+                    "$ref": "#/components/examples/problem.styles.variant_not_found"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `styles.variant_not_found`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [],
+        "summary": "Get a style",
+        "tags": [
+          "store.styles"
+        ]
+      }
+    },
     "/v1/store/support-channels": {
       "get": {
         "description": "Packio’s own LINE Official Account, phone, e-mail and opening hours (D-005), from the setting `storefront.support_channels` kept by the CS Lead (D-221). A field is null until it is set.\n\nImplements: D-221, D-005.",
@@ -351165,6 +353487,14 @@
     {
       "description": "Measurement bases of a size (D-182): inside, outside and score-to-score sizes from the material caliper; millimetres only (D-183).",
       "name": "store.specs"
+    },
+    {
+      "description": "The signed-in customer’s favourite styles (D-246).",
+      "name": "store.styleFavourites"
+    },
+    {
+      "description": "The style library (D-245): published styles with facets, search, sorts and detail — combinations, size ranges, starting price, lead time; compare up to three (D-246).",
+      "name": "store.styles"
     },
     {
       "description": "How to reach Packio CS: support channels and the contact form (D-221, D-005).",

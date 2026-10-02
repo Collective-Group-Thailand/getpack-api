@@ -4,12 +4,14 @@ import { DomainEvents } from '@platform/domain-events/domain-events.service';
 import { SettingsService } from '@platform/settings/settings.service';
 
 import { publishReasons } from './publishability';
+import { searchDocument } from './search-document';
 import { StyleMakeabilityService } from './style-makeability.service';
 
 /**
  * Recomputes D-243 publishability for the given bases (all when omitted): writes each variant's `publishable` and
  * reasons, stamps the first publication of a variant and of its base (D-184: codes are frozen from then), and
- * publishes `style_base.publishability_changed` when a base's publishable count changes.
+ * publishes `style_base.publishability_changed` when a base's publishable count changes; keeps the search document
+ * current (D-245).
  */
 @Injectable()
 export class StylePublishingService {
@@ -43,6 +45,8 @@ export class StylePublishingService {
             publishedAt: true,
           },
         },
+        synonyms: { select: { term: true } },
+        useCases: { select: { code: true } },
       },
     });
     const now = new Date();
@@ -98,6 +102,14 @@ export class StylePublishingService {
             },
           });
         }
+      }
+      const document = searchDocument(
+        base,
+        base.synonyms.map((x) => x.term),
+        base.useCases.map((u) => u.code),
+      );
+      if (document !== base.searchDocument) {
+        await tx.styleBase.update({ where: { id: base.id }, data: { searchDocument: document } });
       }
       if (after > 0 && !base.publishedAt) {
         await tx.styleBase.update({ where: { id: base.id }, data: { publishedAt: now } });

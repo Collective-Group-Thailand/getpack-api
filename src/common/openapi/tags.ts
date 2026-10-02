@@ -54,6 +54,9 @@ export const API_TAGS: Record<string, string> = {
   'admin.privacyRequests': 'The Data Protection Officer answers PDPA export and deletion requests (D-222).',
   'store.configurations':
     'Draft configurations (D-185): keep an incomplete configuration with its completeness, resume, share, turn it into a quotation or an RFQ.',
+  'store.styles':
+    'The style library (D-245): published styles with facets, search, sorts and detail — combinations, size ranges, starting price, lead time; compare up to three (D-246).',
+  'store.styleFavourites': 'The signed-in customer’s favourite styles (D-246).',
   'admin.styles':
     'Style library for staff (D-241–D-243): bases, generated variants and why they are not publishable; Prepress approves recipes and verifies references, Marketing and Prepress approve names.',
   'admin.styleImports':

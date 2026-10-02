@@ -1,5 +1,6 @@
 import { type UserActor } from '@common/context/actor';
 import { DomainException } from '@common/errors/domain.exception';
+import { assertIfMatch, etagOf } from '@common/etag/etag';
 import { toBangkokIso } from '@common/time/bangkok';
 import { PrismaService, type Tx } from '@database/prisma.service';
 import { type Prisma } from '@generated/prisma/client';
@@ -15,6 +16,7 @@ import {
   type AdminStyleBaseDto,
   type AdminStyleVariantDto,
   type StyleImportRunDto,
+  type UpdateStyleDto,
 } from './styles-admin.dto';
 
 export const BASE_INCLUDE = {
@@ -239,6 +241,72 @@ export class StylesAdminService {
     return this.get(publicId);
   }
 
+  /** D-246 curation with If-Match; a name change clears both name approvals (D-212). Audited, evented, recomputed. */
+  async update(actor: UserActor, publicId: string, ifMatch: string | undefined, input: UpdateStyleDto) {
+    await this.prisma.withTx(async (tx) => {
+      const base = await this.row(tx, publicId);
+      assertIfMatch(ifMatch, etagOf(base.publicId, base.rowVersion));
+      let productTypeId: bigint | null | undefined;
+      if (input.productTypeCode !== undefined) {
+        if (input.productTypeCode === null) productTypeId = null;
+        else {
+          const type = await tx.productType.findUnique({
+            where: { code: input.productTypeCode },
+            select: { id: true },
+          });
+          if (!type)
+            throw new DomainException('validation.failed', {
+              errors: [{ path: 'productTypeCode', code: 'exists', message: 'no such product type' }],
+            });
+          productTypeId = type.id;
+        }
+      }
+      const renamed =
+        (input.nameTh !== undefined && input.nameTh.trim() !== base.nameTh) ||
+        (input.nameEn !== undefined && input.nameEn.trim() !== base.nameEn);
+      await tx.styleBase.update({
+        where: { id: base.id },
+        data: {
+          ...(input.featured !== undefined && { featured: input.featured }),
+          ...(input.hidden !== undefined && { hidden: input.hidden }),
+          ...(input.sort !== undefined && { sort: input.sort }),
+          ...(input.nameTh !== undefined && { nameTh: input.nameTh.trim() }),
+          ...(input.nameEn !== undefined && { nameEn: input.nameEn.trim() }),
+          ...(input.descriptionTh !== undefined && { descriptionTh: input.descriptionTh?.trim() || null }),
+          ...(input.descriptionEn !== undefined && { descriptionEn: input.descriptionEn?.trim() || null }),
+          ...(productTypeId !== undefined && { productTypeId }),
+          ...(renamed && {
+            namesApprovedMarketingAt: null,
+            namesApprovedMarketingBy: null,
+            namesApprovedPrepressAt: null,
+            namesApprovedPrepressBy: null,
+          }),
+          updatedById: actor.userId,
+          rowVersion: { increment: 1 },
+        },
+      });
+      if (input.synonyms) {
+        await tx.styleSynonym.deleteMany({ where: { baseId: base.id } });
+        const unique = new Map(input.synonyms.map((x) => [`${x.locale}:${x.term.trim().toLowerCase()}`, x]));
+        await tx.styleSynonym.createMany({
+          data: [...unique.values()].map((x) => ({ baseId: base.id, locale: x.locale, term: x.term.trim() })),
+        });
+      }
+      if (input.useCases) {
+        await tx.styleUseCase.deleteMany({ where: { baseId: base.id } });
+        await tx.styleUseCase.createMany({
+          data: [...new Set(input.useCases)].map((code) => ({ baseId: base.id, code })),
+        });
+      }
+      await this.record(tx, base, 'style_base.curated', {
+        fields: Object.keys(input).filter((k) => input[k as keyof UpdateStyleDto] !== undefined),
+        namesApprovalCleared: renamed,
+      });
+      await this.publishing.recompute(tx, [base.id]);
+    });
+    return this.get(publicId);
+  }
+
   async runs(query: {
     page: number;
     perPage: number;
@@ -312,6 +380,7 @@ export class StylesAdminService {
       referenceVerifiedAt: iso(row.referenceVerifiedAt),
       recipeVersion: latest?.version ?? null,
       recipeApproved: row.recipes.some((r) => r.approvedAt !== null),
+      version: row.rowVersion,
     };
   }
 

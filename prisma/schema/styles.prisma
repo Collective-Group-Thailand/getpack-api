@@ -71,26 +71,31 @@ model StyleBase {
   publishedAt              DateTime?   @map("published_at") @db.Timestamptz(6)
   /// sha256 of the imported fields, so a re-import of the same data changes nothing.
   sourceSha256             Bytes       @map("source_sha256")
+  /// D-245: names, codes, family, category, material class, synonyms, use cases and a verified reference, lower-cased —
+  /// searched with the `simple` text-search configuration and trigram similarity (typo tolerance).
+  searchDocument           String      @default("") @map("search_document")
   lastImportRunId          BigInt?     @map("last_import_run_id")
   createdAt                DateTime    @default(now()) @map("created_at") @db.Timestamptz(6)
   updatedAt                DateTime    @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
   updatedById              BigInt?     @map("updated_by")
   rowVersion               Int         @default(1) @map("row_version")
 
-  productType         ProductType?    @relation("StyleBaseProductType", fields: [productTypeId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_style_bases__product_type_id")
-  pattern             Pattern?        @relation("StyleBasePattern", fields: [patternId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_style_bases__pattern_id")
-  referenceVerifiedBy User?           @relation("StyleBaseReferenceVerifiedBy", fields: [referenceVerifiedById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_style_bases__reference_verified_by")
-  marketingApprover   User?           @relation("StyleBaseNamesMarketing", fields: [namesApprovedMarketingBy], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_style_bases__names_approved_marketing_by")
-  prepressApprover    User?           @relation("StyleBaseNamesPrepress", fields: [namesApprovedPrepressBy], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_style_bases__names_approved_prepress_by")
-  updatedBy           User?           @relation("StyleBaseUpdatedBy", fields: [updatedById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_style_bases__updated_by")
-  lastImportRun       StyleImportRun? @relation("StyleBaseLastImportRun", fields: [lastImportRunId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_style_bases__last_import_run_id")
+  productType         ProductType?     @relation("StyleBaseProductType", fields: [productTypeId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_style_bases__product_type_id")
+  pattern             Pattern?         @relation("StyleBasePattern", fields: [patternId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_style_bases__pattern_id")
+  referenceVerifiedBy User?            @relation("StyleBaseReferenceVerifiedBy", fields: [referenceVerifiedById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_style_bases__reference_verified_by")
+  marketingApprover   User?            @relation("StyleBaseNamesMarketing", fields: [namesApprovedMarketingBy], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_style_bases__names_approved_marketing_by")
+  prepressApprover    User?            @relation("StyleBaseNamesPrepress", fields: [namesApprovedPrepressBy], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_style_bases__names_approved_prepress_by")
+  updatedBy           User?            @relation("StyleBaseUpdatedBy", fields: [updatedById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_style_bases__updated_by")
+  lastImportRun       StyleImportRun?  @relation("StyleBaseLastImportRun", fields: [lastImportRunId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_style_bases__last_import_run_id")
   variants            StyleVariant[]
   recipes             StyleRecipe[]
   assets              StyleAsset[]
   synonyms            StyleSynonym[]
   useCases            StyleUseCase[]
+  favourites          StyleFavourite[]
 
   @@index([category, status], map: "ix_style_bases__category__status")
+  @@index([searchDocument(ops: raw("gin_trgm_ops"))], type: Gin, map: "ix_style_bases__search_document_trgm")
   @@index([productTypeId], map: "ix_style_bases__product_type_id")
   @@index([referenceVerifiedById], map: "ix_style_bases__reference_verified_by")
   @@index([namesApprovedMarketingBy], map: "ix_style_bases__names_approved_marketing_by")
@@ -225,8 +230,24 @@ model StyleImportRun {
   bases           StyleBase[]      @relation("StyleBaseLastImportRun")
   recipes         StyleRecipe[]    @relation("StyleRecipeImportRun")
 
+  @@unique([kind, checksum], map: "ux_style_import_runs__kind__checksum__live", where: raw("(status <> 'rejected'::style_import_status)"))
   @@index([kind, checksum], map: "ix_style_import_runs__kind__checksum")
   @@index([approvalRequestId], map: "ix_style_import_runs__approval_request_id")
   @@index([createdById], map: "ix_style_import_runs__created_by")
   @@map("style_import_runs")
+}
+
+/// D-246: a customer's favourite style (private to them).
+model StyleFavourite {
+  id        BigInt   @id(map: "pk_style_favourites") @default(autoincrement())
+  userId    BigInt   @map("user_id")
+  baseId    BigInt   @map("base_id")
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  user User      @relation("StyleFavouriteUser", fields: [userId], references: [id], onDelete: Cascade, onUpdate: Restrict, map: "fk_style_favourites__user_id")
+  base StyleBase @relation(fields: [baseId], references: [id], onDelete: Cascade, onUpdate: Restrict, map: "fk_style_favourites__base_id")
+
+  @@unique([userId, baseId], map: "ux_style_favourites__user_id__base_id")
+  @@index([baseId], map: "ix_style_favourites__base_id")
+  @@map("style_favourites")
 }

@@ -39,7 +39,9 @@ describe('style master file (U3.B1, D-241)', () => {
   it('restricts the tuck pair to the allowed pairs', () => {
     const te = master.bases.find((b) => b.code === 'PK-TE-01')!;
     const pairs = new Set(
-      variantsOf(te, master).map((v) => `${v.options['tuck_top']}/${v.options['tuck_bottom']}`),
+      variantsOf(te, master).map(
+        (v) => `${String(v.options['tuck_top'])}/${String(v.options['tuck_bottom'])}`,
+      ),
     );
     expect(pairs.size).toBe(19);
     expect([...pairs].every((p) => master.allowedTuckPairs.some(([t, b]) => `${t}/${b}` === p))).toBe(true);

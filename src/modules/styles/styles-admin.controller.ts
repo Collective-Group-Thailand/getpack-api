@@ -1,12 +1,14 @@
 import { CurrentActor } from '@common/auth/auth.decorators';
 import { Can } from '@common/auth/can.decorator';
 import { type Actor } from '@common/context/actor';
-import { ApiEndpoint, ApiStandardErrors, ApiSuccess } from '@common/openapi/decorators';
+import { etagOf } from '@common/etag/etag';
+import { IfMatch, UseEtag } from '@common/etag/etag.interceptor';
+import { ApiConcurrency, ApiEndpoint, ApiStandardErrors, ApiSuccess } from '@common/openapi/decorators';
 import { ApiPaginated } from '@common/pagination/api-paginated.decorator';
 import { PageQuery } from '@common/pagination/pagination.dto';
 import { staffOrPartner } from '@modules/partners/partner-actor';
 import { ApiSurface } from '@modules/surfaces/surfaces';
-import { Body, Controller, Get, HttpCode, Param, ParseUUIDPipe, Post, Query } from '@nestjs/common';
+import { Body, Controller, Get, HttpCode, Param, ParseUUIDPipe, Patch, Post, Query } from '@nestjs/common';
 import { ApiBody, ApiParam } from '@nestjs/swagger';
 
 import {
@@ -21,6 +23,7 @@ import {
   ApproveNamesDto,
   IMPORT_RUN_EXAMPLE,
   StyleImportRunDto,
+  UpdateStyleDto,
   VerifyReferenceDto,
 } from './styles-admin.dto';
 import { StylesAdminService } from './styles-admin.service';
@@ -66,9 +69,43 @@ export class AdminStylesController {
     type: AdminStyleBaseDetailDto,
     example: ADMIN_STYLE_DETAIL_EXAMPLE,
   })
+  @UseEtag((b: AdminStyleBaseDetailDto) => etagOf(b.id, b.version))
   @ApiStandardErrors('http.not_found', 'validation.failed')
   async get(@Param('styleId', ParseUUIDPipe) id: string) {
     return this.styles.get(id);
+  }
+
+  @Patch(':styleId')
+  @Can('styles.curate')
+  @styleParam
+  @ApiConcurrency()
+  @ApiEndpoint({
+    id: 'admin.styles.update',
+    summary: 'Curate a style-library base',
+    description:
+      'Marketing / Admin curation (D-246): featured, hidden (never published, D-243), order, Thai / English names and ' +
+      'descriptions, the Packio product type, search synonyms and use cases. Changing a name clears both name ' +
+      'approvals (D-212). Needs `If-Match` from `admin.styles.get`. Audited; publishability recomputed.',
+    implements: [...DECISIONS, 'D-246', 'D-212'],
+  })
+  @ApiBody({
+    type: UpdateStyleDto,
+    examples: { default: { value: { featured: true, sort: 10, useCases: ['cosmetics'] } } },
+  })
+  @UseEtag((b: AdminStyleBaseDetailDto) => etagOf(b.id, b.version))
+  @ApiSuccess(200, {
+    description: 'The base',
+    type: AdminStyleBaseDetailDto,
+    example: ADMIN_STYLE_DETAIL_EXAMPLE,
+  })
+  @ApiStandardErrors('http.bad_request', 'http.malformed_json', 'http.not_found', 'validation.failed')
+  async update(
+    @CurrentActor() actor: Actor,
+    @Param('styleId', ParseUUIDPipe) id: string,
+    @IfMatch() ifMatch: string | undefined,
+    @Body() body: UpdateStyleDto,
+  ) {
+    return this.styles.update(staffOrPartner(actor), id, ifMatch, body);
   }
 
   @Get(':styleId/variants')
