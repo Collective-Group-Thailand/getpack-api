@@ -5,6 +5,7 @@ import { assertIfMatch, etagOf } from '@common/etag/etag';
 import { MoneyDecimal } from '@common/money/money';
 import { refuseUnits } from '@common/validation/units';
 import { PrismaService, type Tx } from '@database/prisma.service';
+import { type MeasurementBasis } from '@generated/prisma/client';
 import { Prisma, type RfqStatus, type SalesChannel } from '@generated/prisma/client';
 import { canonical } from '@modules/catalog/imports/import-engine';
 import { FactoryAccess } from '@modules/partners/factories/factory-access';
@@ -80,6 +81,7 @@ export interface SubmitRfqInput {
   lengthMm?: number | null;
   widthMm?: number | null;
   heightMm?: number | null;
+  measurementBasis?: MeasurementBasis;
   quantities: number[];
   targetDate?: string | null;
   deliveryPostcode: string;
@@ -209,6 +211,7 @@ export class RfqsService implements OnModuleInit {
           lengthMm: input.lengthMm ?? null,
           widthMm: input.widthMm ?? null,
           heightMm: input.heightMm ?? null,
+          measurementBasis: input.measurementBasis ?? 'internal',
           targetDate: input.targetDate ? new Date(`${input.targetDate}T00:00:00Z`) : null,
           deliveryPostcode: input.deliveryPostcode,
           provinceId: province?.district.provinceId ?? null,
@@ -331,6 +334,13 @@ export class RfqsService implements OnModuleInit {
         rfqId: rfq.publicId,
         rfqCode: rfq.rfqCode,
         spec: rfq.spec,
+        // D-182: the size and its basis travel with the quote to the order and the job (RFQ orders had none).
+        size: {
+          basis: rfq.measurementBasis,
+          lengthMm: rfq.lengthMm === null ? null : Number(rfq.lengthMm),
+          widthMm: rfq.widthMm === null ? null : Number(rfq.widthMm),
+          heightMm: rfq.heightMm === null ? null : Number(rfq.heightMm),
+        },
       };
       const configRefs = {
         rfqQuoteId: quote.publicId,
@@ -906,6 +916,7 @@ export class RfqsService implements OnModuleInit {
             lengthMm: true,
             widthMm: true,
             heightMm: true,
+            measurementBasis: true,
             targetDate: true,
             productType: { select: { code: true, nameTh: true, nameEn: true } },
             province: { select: { nameTh: true, nameEn: true } },

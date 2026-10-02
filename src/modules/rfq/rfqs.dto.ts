@@ -4,6 +4,7 @@ import { PageQuery } from '@common/pagination/pagination.dto';
 import { EnumField, IntField, RefField, TextField } from '@modules/catalog/crud/dto-fields';
 import { SpecLineDto } from '@modules/quotes/line-summary.dto';
 import { MONEY, POSTCODE, RATE } from '@modules/shipping/rates/customer-rates.dto';
+import { MEASUREMENT_BASES } from '@modules/specs/dimension-conversion';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { UserRefDto } from '@platform/approvals/approvals.dto';
 import { AttachedFileDto } from '@platform/files/files.dto';
@@ -109,6 +110,15 @@ export class SubmitRfqDto {
   @Min(0.01)
   @Max(99_999)
   heightMm?: number | null;
+
+  @EnumField(MEASUREMENT_BASES, 'MeasurementBasis', {
+    example: 'internal',
+    optional: true,
+    description:
+      'Basis of length / width / height (D-182): internal, external, over_crease or product. Absent: internal ' +
+      '(assumed, deprecated — becomes required)',
+  })
+  measurementBasis?: (typeof MEASUREMENT_BASES)[number];
 
   @ApiProperty({ type: [Number], example: [500, 1000, 3000], description: '1–10 quantity tiers' })
   @IsArray()
@@ -622,6 +632,14 @@ export class RfqDto {
   @ApiProperty({ type: Number, nullable: true, example: 320 })
   heightMm!: number | null;
 
+  @ApiProperty({
+    enum: MEASUREMENT_BASES,
+    enumName: 'MeasurementBasis',
+    example: 'internal',
+    description: 'Basis of length / width / height (D-182)',
+  })
+  measurementBasis!: (typeof MEASUREMENT_BASES)[number];
+
   @ApiProperty({ type: [Number], example: [500, 1000, 3000] })
   quantities!: number[];
 
@@ -760,6 +778,14 @@ export class FactoryConsultationDto {
 
   @ApiProperty({ type: Number, nullable: true, example: 320 })
   heightMm!: number | null;
+
+  @ApiProperty({
+    enum: MEASUREMENT_BASES,
+    enumName: 'MeasurementBasis',
+    example: 'internal',
+    description: 'Basis of length / width / height (D-182)',
+  })
+  measurementBasis!: (typeof MEASUREMENT_BASES)[number];
 
   @ApiProperty({ type: [Number], example: [500, 1000, 3000] })
   quantities!: number[];

@@ -9,6 +9,7 @@ import {
   STORE_CALCULATION_EXAMPLE,
 } from '@modules/pricing/quotes/quote.dto';
 import { RATE_MISS_REASONS } from '@modules/shipping/rates/customer-rates.dto';
+import { QuoteDimensionsDto } from '@modules/specs/specs.dto';
 import { ApiProperty, ApiPropertyOptional, getSchemaPath } from '@nestjs/swagger';
 import { UserRefDto } from '@platform/approvals/approvals.dto';
 import { IsIn, IsOptional, IsString, IsUUID, MaxLength } from 'class-validator';
@@ -263,6 +264,15 @@ export class SavedQuoteDto {
   })
   currency!: 'THB';
 
+  @ApiProperty({
+    type: QuoteDimensionsDto,
+    nullable: true,
+    example: null,
+    description:
+      'The sizes frozen with the quote (D-182); null before measurement bases or for a product without a size',
+  })
+  dimensions!: QuoteDimensionsDto | null;
+
   @ApiProperty({ type: String, format: 'date-time', nullable: true, example: null })
   sharedAt!: string | null;
 
@@ -349,6 +359,7 @@ export const QUOTE_EXAMPLE: SavedQuoteDto = {
   options: [OPTION_EXAMPLE],
   pdfStatus: 'none',
   currency: 'THB',
+  dimensions: null,
   sharedAt: null,
   createdAt: '2026-10-01T09:00:00+07:00',
 };

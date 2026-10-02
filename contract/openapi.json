@@ -5423,6 +5423,15 @@
               "null"
             ]
           },
+          "measurementBasis": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/MeasurementBasis"
+              }
+            ],
+            "description": "Basis of the sizes (D-182)",
+            "example": "internal"
+          },
           "orders": {
             "description": "Orders placed with this design or whose artwork was submitted from it, newest first",
             "items": {
@@ -5518,6 +5527,7 @@
           "lengthMm",
           "widthMm",
           "heightMm",
+          "measurementBasis",
           "materialId",
           "semiDesignTemplateId",
           "thumbnailFileId",
@@ -6973,6 +6983,58 @@
             "example": "1.0.0",
             "type": "string"
           },
+          "dimensions": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/QuoteDimensionsDto"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "The sizes on every basis and the size priced (D-182)",
+            "example": {
+              "bases": [
+                "internal",
+                "external",
+                "over_crease"
+              ],
+              "basis": "internal",
+              "basisAssumed": false,
+              "caliperMm": 0.5,
+              "conversionVersion": "1.0.0",
+              "entered": {
+                "d": 50,
+                "l": 150,
+                "w": 100
+              },
+              "family": "box",
+              "priced": {
+                "d": 50,
+                "l": 150,
+                "w": 100
+              },
+              "pricedBasis": "internal",
+              "sizes": {
+                "external": {
+                  "d": 51,
+                  "l": 151,
+                  "w": 101
+                },
+                "internal": {
+                  "d": 50,
+                  "l": 150,
+                  "w": 100
+                },
+                "overCrease": {
+                  "d": 51,
+                  "l": 150.5,
+                  "w": 100.5
+                },
+                "product": null
+              }
+            }
+          },
           "options": {
             "items": {
               "$ref": "#/components/schemas/QuoteOptionDto"
@@ -6989,7 +7051,8 @@
         "required": [
           "calculatorVersion",
           "steps",
-          "options"
+          "options",
+          "dimensions"
         ],
         "type": "object"
       },
@@ -7473,6 +7536,18 @@
               "null"
             ]
           },
+          "dimensions": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/QuoteDimensionsDto"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "The sizes frozen with the quote (D-182); null before measurement bases or for a product without a size",
+            "example": null
+          },
           "id": {
             "example": "0192f3a0-7c1e-7d2a-9b1f-00000000e601",
             "format": "uuid",
@@ -7583,6 +7658,7 @@
           "options",
           "pdfStatus",
           "currency",
+          "dimensions",
           "sharedAt",
           "createdAt",
           "channel",
@@ -17714,6 +17790,15 @@
       },
       "CorrugateConfigurationDto": {
         "properties": {
+          "basis": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/MeasurementBasis"
+              }
+            ],
+            "description": "Basis of w / l / d: internal, external or over_crease; another basis than internal is converted with the material caliper (D-182). Absent: internal (assumed, deprecated)",
+            "example": "internal"
+          },
           "catalogProductId": {
             "description": "The catalogue product: its standard sizes carry no die block (legacy `recheckStandardSize`). Required on the store, where the difficulty level must be the product’s own (configurator `difficultyLevelId`, quirk C9)",
             "example": "0192f3a0-7c1e-7d2a-9b1f-00000000b106",
@@ -19391,6 +19476,15 @@
             "example": "0192f3a0-7c1e-7d2a-9b1f-0000000e5004",
             "format": "uuid",
             "type": "string"
+          },
+          "measurementBasis": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/MeasurementBasis"
+              }
+            ],
+            "description": "Basis of the sizes (D-182). Absent: internal (assumed, deprecated)",
+            "example": "internal"
           },
           "patternId": {
             "example": "0192f3a0-7c1e-7d2a-9b1f-0000000e5003",
@@ -23312,6 +23406,15 @@
       },
       "CsCorrugateConfigurationDto": {
         "properties": {
+          "basis": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/MeasurementBasis"
+              }
+            ],
+            "description": "Basis of w / l / d: internal, external or over_crease; another basis than internal is converted with the material caliper (D-182). Absent: internal (assumed, deprecated)",
+            "example": "internal"
+          },
           "catalogProductId": {
             "description": "The catalogue product: its standard sizes carry no die block (legacy `recheckStandardSize`). Required on the store, where the difficulty level must be the product’s own (configurator `difficultyLevelId`, quirk C9)",
             "example": "0192f3a0-7c1e-7d2a-9b1f-00000000b106",
@@ -25271,6 +25374,15 @@
               "null"
             ]
           },
+          "measurementBasis": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/MeasurementBasis"
+              }
+            ],
+            "description": "Basis of the sizes (D-182)",
+            "example": "internal"
+          },
           "orders": {
             "description": "Orders placed with this design or whose artwork was submitted from it, newest first",
             "items": {
@@ -25363,6 +25475,7 @@
           "lengthMm",
           "widthMm",
           "heightMm",
+          "measurementBasis",
           "materialId",
           "semiDesignTemplateId",
           "thumbnailFileId",
@@ -27266,6 +27379,15 @@
             "example": 100,
             "type": "number"
           },
+          "measurementBasis": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/MeasurementBasis"
+              }
+            ],
+            "description": "Basis of the sizes (D-182)",
+            "example": "internal"
+          },
           "orderId": {
             "description": "The order it was drawn for",
             "example": null,
@@ -27322,6 +27444,7 @@
           "lengthMm",
           "widthMm",
           "heightMm",
+          "measurementBasis",
           "orderId",
           "outputFileId",
           "outputFile",
@@ -28107,6 +28230,15 @@
               "null"
             ]
           },
+          "measurementBasis": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/MeasurementBasis"
+              }
+            ],
+            "description": "Basis of length / width / height (D-182)",
+            "example": "internal"
+          },
           "note": {
             "example": "Please quote the three tiers (fake)",
             "type": "string"
@@ -28187,6 +28319,7 @@
           "lengthMm",
           "widthMm",
           "heightMm",
+          "measurementBasis",
           "quantities",
           "targetDate",
           "deliveryProvince",
@@ -30287,6 +30420,15 @@
       },
       "FoldingConfigurationDto": {
         "properties": {
+          "basis": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/MeasurementBasis"
+              }
+            ],
+            "description": "Basis of w / l / d: internal, external or over_crease; another basis than internal is converted with the material caliper (D-182). Absent: internal (assumed, deprecated)",
+            "example": "internal"
+          },
           "c": {
             "description": "Overlap of the flat overlap patterns Unit: mm.",
             "example": 0,
@@ -31690,6 +31832,15 @@
             "example": "0192f3a0-7c1e-7d2a-9b1f-0000000e5004",
             "format": "uuid",
             "type": "string"
+          },
+          "measurementBasis": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/MeasurementBasis"
+              }
+            ],
+            "description": "Basis of the sizes (D-182). Absent: internal (assumed, deprecated)",
+            "example": "internal"
           },
           "patternId": {
             "example": "0192f3a0-7c1e-7d2a-9b1f-0000000e5003",
@@ -34128,6 +34279,15 @@
       },
       "LabelConfigurationDto": {
         "properties": {
+          "basis": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/MeasurementBasis"
+              }
+            ],
+            "description": "Basis of the sizes: product, the finished size (D-182). Absent: product (assumed, deprecated)",
+            "example": "product"
+          },
           "catalogProductId": {
             "description": "The catalogue product (required on the store, where the difficulty level must be the product’s own); staff may price without one",
             "example": "0192f3a0-7c1e-7d2a-9b1f-00000000c101",
@@ -35024,6 +35184,7 @@
         "type": "string"
       },
       "MeasurementBasis": {
+        "description": "Basis of w / l / d: internal, external or over_crease; another basis than internal is converted with the material caliper (D-182). Absent: internal (assumed, deprecated)",
         "enum": [
           "internal",
           "external",
@@ -41038,6 +41199,15 @@
             "minimum": 0,
             "type": "number"
           },
+          "basis": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/MeasurementBasis"
+              }
+            ],
+            "description": "Basis of the sizes: product, the finished size (D-182). Absent: product (assumed, deprecated)",
+            "example": "product"
+          },
           "catalogProductId": {
             "description": "The catalogue product (required on the store); staff may price without one",
             "example": "0192f3a0-7c1e-7d2a-9b1f-00000000e101",
@@ -43230,6 +43400,13 @@
           "platform_rate_card",
           "assisted_entry",
           "import"
+        ],
+        "type": "string"
+      },
+      "PricedMeasurementBasis": {
+        "enum": [
+          "internal",
+          "product"
         ],
         "type": "string"
       },
@@ -45840,6 +46017,58 @@
             "example": "1.0.0",
             "type": "string"
           },
+          "dimensions": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/QuoteDimensionsDto"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "The sizes on every basis and the size priced (D-182); null for a product without a size",
+            "example": {
+              "bases": [
+                "internal",
+                "external",
+                "over_crease"
+              ],
+              "basis": "internal",
+              "basisAssumed": false,
+              "caliperMm": 0.5,
+              "conversionVersion": "1.0.0",
+              "entered": {
+                "d": 50,
+                "l": 150,
+                "w": 100
+              },
+              "family": "box",
+              "priced": {
+                "d": 50,
+                "l": 150,
+                "w": 100
+              },
+              "pricedBasis": "internal",
+              "sizes": {
+                "external": {
+                  "d": 51,
+                  "l": 151,
+                  "w": 101
+                },
+                "internal": {
+                  "d": 50,
+                  "l": 150,
+                  "w": 100
+                },
+                "overCrease": {
+                  "d": 51,
+                  "l": 150.5,
+                  "w": 100.5
+                },
+                "product": null
+              }
+            }
+          },
           "steps": {
             "items": {
               "$ref": "#/components/schemas/QuoteStepDto"
@@ -45850,7 +46079,103 @@
         "required": [
           "calculationId",
           "calculatorVersion",
-          "steps"
+          "steps",
+          "dimensions"
+        ],
+        "type": "object"
+      },
+      "QuoteDimensionsDto": {
+        "properties": {
+          "bases": {
+            "example": [
+              "internal",
+              "external",
+              "over_crease"
+            ],
+            "items": {
+              "$ref": "#/components/schemas/MeasurementBasis"
+            },
+            "type": "array"
+          },
+          "basis": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/MeasurementBasis"
+              }
+            ],
+            "description": "Basis entered",
+            "example": "internal"
+          },
+          "basisAssumed": {
+            "description": "The request named no basis and the default was assumed (internal / product); deprecated, the basis becomes required",
+            "example": false,
+            "type": "boolean"
+          },
+          "caliperMm": {
+            "description": "Caliper used, mm; null when unknown",
+            "example": 0.5,
+            "type": [
+              "number",
+              "null"
+            ]
+          },
+          "conversionVersion": {
+            "description": "Conversion rules version (frozen on quotes)",
+            "example": "1.0.0",
+            "type": "string"
+          },
+          "entered": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/SizeDto"
+              }
+            ],
+            "description": "The size entered, on `basis`"
+          },
+          "family": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ConstructionFamily"
+              }
+            ],
+            "example": "box"
+          },
+          "priced": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/SizeDto"
+              }
+            ],
+            "description": "The size the calculator priced, on `pricedBasis`"
+          },
+          "pricedBasis": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/PricedMeasurementBasis"
+              }
+            ],
+            "example": "internal"
+          },
+          "sizes": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/BasisSizesDto"
+              }
+            ],
+            "description": "Each basis; null where a caliper is needed and unknown"
+          }
+        },
+        "required": [
+          "family",
+          "bases",
+          "caliperMm",
+          "conversionVersion",
+          "sizes",
+          "basis",
+          "basisAssumed",
+          "entered",
+          "priced",
+          "pricedBasis"
         ],
         "type": "object"
       },
@@ -49120,6 +49445,15 @@
             "minimum": 1,
             "type": "number"
           },
+          "measurementBasis": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/MeasurementBasis"
+              }
+            ],
+            "description": "Basis of the sizes (D-182). A dieline is drawn from inside sizes: only internal",
+            "example": "internal"
+          },
           "patternId": {
             "description": "A box style with a dieline key",
             "example": "0192f3a0-7c1e-7d2a-9b1f-0000000e5003",
@@ -49749,6 +50083,15 @@
               "null"
             ]
           },
+          "measurementBasis": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/MeasurementBasis"
+              }
+            ],
+            "description": "Basis of length / width / height (D-182)",
+            "example": "internal"
+          },
           "messages": {
             "items": {
               "$ref": "#/components/schemas/RfqMessageDto"
@@ -49853,6 +50196,7 @@
           "lengthMm",
           "widthMm",
           "heightMm",
+          "measurementBasis",
           "quantities",
           "targetDate",
           "deliveryPostcode",
@@ -51256,6 +51600,15 @@
             "format": "uuid",
             "type": "string"
           },
+          "measurementBasis": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/MeasurementBasis"
+              }
+            ],
+            "description": "Basis of the sizes (D-182). Absent: internal (assumed, deprecated)",
+            "example": "internal"
+          },
           "patternId": {
             "description": "Change the box style",
             "example": "0192f3a0-7c1e-7d2a-9b1f-0000000e5003",
@@ -51433,6 +51786,18 @@
               "null"
             ]
           },
+          "dimensions": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/QuoteDimensionsDto"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "The sizes frozen with the quote (D-182); null before measurement bases or for a product without a size",
+            "example": null
+          },
           "id": {
             "example": "0192f3a0-7c1e-7d2a-9b1f-00000000e601",
             "format": "uuid",
@@ -51523,6 +51888,7 @@
           "options",
           "pdfStatus",
           "currency",
+          "dimensions",
           "sharedAt",
           "createdAt"
         ],
@@ -53679,6 +54045,15 @@
               "null"
             ]
           },
+          "measurementBasis": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/MeasurementBasis"
+              }
+            ],
+            "description": "Basis of the sizes (D-182)",
+            "example": "internal"
+          },
           "product": {
             "$ref": "#/components/schemas/DesignProductRefDto"
           },
@@ -53728,6 +54103,7 @@
           "lengthMm",
           "widthMm",
           "heightMm",
+          "measurementBasis",
           "versionNo",
           "schemaVersion",
           "document",
@@ -55833,6 +56209,15 @@
               "null"
             ]
           },
+          "measurementBasis": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/MeasurementBasis"
+              }
+            ],
+            "description": "Basis of length / width / height (D-182)",
+            "example": "internal"
+          },
           "messages": {
             "default": [],
             "items": {
@@ -55967,6 +56352,7 @@
           "lengthMm",
           "widthMm",
           "heightMm",
+          "measurementBasis",
           "quantities",
           "targetDate",
           "deliveryPostcode",
@@ -56321,6 +56707,15 @@
               "number",
               "null"
             ]
+          },
+          "measurementBasis": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/MeasurementBasis"
+              }
+            ],
+            "description": "Basis of length / width / height (D-182): internal, external, over_crease or product. Absent: internal (assumed, deprecated — becomes required)",
+            "example": "internal"
           },
           "notes": {
             "example": "Logo on both sides (fake)",
@@ -60251,6 +60646,15 @@
               "null"
             ]
           },
+          "measurementBasis": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/MeasurementBasis"
+              }
+            ],
+            "description": "Basis of length / width / height (D-182): internal, external, over_crease or product. Absent: internal (assumed, deprecated — becomes required)",
+            "example": "internal"
+          },
           "notes": {
             "example": "Logo on both sides (fake)",
             "maxLength": 4000,
@@ -60549,6 +60953,15 @@
             },
             "maxItems": 6,
             "type": "array"
+          },
+          "basis": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/MeasurementBasis"
+              }
+            ],
+            "description": "Basis of the sizes: product, the finished size (D-182). Absent: product (assumed, deprecated)",
+            "example": "product"
           },
           "catalogProductId": {
             "description": "The catalogue product (required on the store, where the difficulty level must be the product’s own); staff may price without one",
@@ -141711,6 +142124,47 @@
               "application/json": {
                 "example": {
                   "calculatorVersion": "1.0.0",
+                  "dimensions": {
+                    "bases": [
+                      "internal",
+                      "external",
+                      "over_crease"
+                    ],
+                    "basis": "internal",
+                    "basisAssumed": false,
+                    "caliperMm": 0.5,
+                    "conversionVersion": "1.0.0",
+                    "entered": {
+                      "d": 50,
+                      "l": 150,
+                      "w": 100
+                    },
+                    "family": "box",
+                    "priced": {
+                      "d": 50,
+                      "l": 150,
+                      "w": 100
+                    },
+                    "pricedBasis": "internal",
+                    "sizes": {
+                      "external": {
+                        "d": 51,
+                        "l": 151,
+                        "w": 101
+                      },
+                      "internal": {
+                        "d": 50,
+                        "l": 150,
+                        "w": 100
+                      },
+                      "overCrease": {
+                        "d": 51,
+                        "l": 150.5,
+                        "w": 100.5
+                      },
+                      "product": null
+                    }
+                  },
                   "options": [
                     {
                       "error": null,
@@ -142273,6 +142727,47 @@
               "application/json": {
                 "example": {
                   "calculatorVersion": "1.0.0",
+                  "dimensions": {
+                    "bases": [
+                      "internal",
+                      "external",
+                      "over_crease"
+                    ],
+                    "basis": "internal",
+                    "basisAssumed": false,
+                    "caliperMm": 0.5,
+                    "conversionVersion": "1.0.0",
+                    "entered": {
+                      "d": 50,
+                      "l": 150,
+                      "w": 100
+                    },
+                    "family": "box",
+                    "priced": {
+                      "d": 50,
+                      "l": 150,
+                      "w": 100
+                    },
+                    "pricedBasis": "internal",
+                    "sizes": {
+                      "external": {
+                        "d": 51,
+                        "l": 151,
+                        "w": 101
+                      },
+                      "internal": {
+                        "d": 50,
+                        "l": 150,
+                        "w": 100
+                      },
+                      "overCrease": {
+                        "d": 51,
+                        "l": 150.5,
+                        "w": 100.5
+                      },
+                      "product": null
+                    }
+                  },
                   "options": [
                     {
                       "error": null,
@@ -142809,6 +143304,47 @@
               "application/json": {
                 "example": {
                   "calculatorVersion": "1.0.0",
+                  "dimensions": {
+                    "bases": [
+                      "internal",
+                      "external",
+                      "over_crease"
+                    ],
+                    "basis": "internal",
+                    "basisAssumed": false,
+                    "caliperMm": 0.5,
+                    "conversionVersion": "1.0.0",
+                    "entered": {
+                      "d": 50,
+                      "l": 150,
+                      "w": 100
+                    },
+                    "family": "box",
+                    "priced": {
+                      "d": 50,
+                      "l": 150,
+                      "w": 100
+                    },
+                    "pricedBasis": "internal",
+                    "sizes": {
+                      "external": {
+                        "d": 51,
+                        "l": 151,
+                        "w": 101
+                      },
+                      "internal": {
+                        "d": 50,
+                        "l": 150,
+                        "w": 100
+                      },
+                      "overCrease": {
+                        "d": 51,
+                        "l": 150.5,
+                        "w": 100.5
+                      },
+                      "product": null
+                    }
+                  },
                   "options": [
                     {
                       "error": null,
@@ -143278,6 +143814,47 @@
               "application/json": {
                 "example": {
                   "calculatorVersion": "1.0.0",
+                  "dimensions": {
+                    "bases": [
+                      "internal",
+                      "external",
+                      "over_crease"
+                    ],
+                    "basis": "internal",
+                    "basisAssumed": false,
+                    "caliperMm": 0.5,
+                    "conversionVersion": "1.0.0",
+                    "entered": {
+                      "d": 50,
+                      "l": 150,
+                      "w": 100
+                    },
+                    "family": "box",
+                    "priced": {
+                      "d": 50,
+                      "l": 150,
+                      "w": 100
+                    },
+                    "pricedBasis": "internal",
+                    "sizes": {
+                      "external": {
+                        "d": 51,
+                        "l": 151,
+                        "w": 101
+                      },
+                      "internal": {
+                        "d": 50,
+                        "l": 150,
+                        "w": 100
+                      },
+                      "overCrease": {
+                        "d": 51,
+                        "l": 150.5,
+                        "w": 100.5
+                      },
+                      "product": null
+                    }
+                  },
                   "options": [
                     {
                       "error": null,
@@ -143988,6 +144565,47 @@
               "application/json": {
                 "example": {
                   "calculatorVersion": "1.0.0",
+                  "dimensions": {
+                    "bases": [
+                      "internal",
+                      "external",
+                      "over_crease"
+                    ],
+                    "basis": "internal",
+                    "basisAssumed": false,
+                    "caliperMm": 0.5,
+                    "conversionVersion": "1.0.0",
+                    "entered": {
+                      "d": 50,
+                      "l": 150,
+                      "w": 100
+                    },
+                    "family": "box",
+                    "priced": {
+                      "d": 50,
+                      "l": 150,
+                      "w": 100
+                    },
+                    "pricedBasis": "internal",
+                    "sizes": {
+                      "external": {
+                        "d": 51,
+                        "l": 151,
+                        "w": 101
+                      },
+                      "internal": {
+                        "d": 50,
+                        "l": 150,
+                        "w": 100
+                      },
+                      "overCrease": {
+                        "d": 51,
+                        "l": 150.5,
+                        "w": 100.5
+                      },
+                      "product": null
+                    }
+                  },
                   "options": [
                     {
                       "error": null,
@@ -144427,6 +145045,47 @@
               "application/json": {
                 "example": {
                   "calculatorVersion": "1.0.0",
+                  "dimensions": {
+                    "bases": [
+                      "internal",
+                      "external",
+                      "over_crease"
+                    ],
+                    "basis": "internal",
+                    "basisAssumed": false,
+                    "caliperMm": 0.5,
+                    "conversionVersion": "1.0.0",
+                    "entered": {
+                      "d": 50,
+                      "l": 150,
+                      "w": 100
+                    },
+                    "family": "box",
+                    "priced": {
+                      "d": 50,
+                      "l": 150,
+                      "w": 100
+                    },
+                    "pricedBasis": "internal",
+                    "sizes": {
+                      "external": {
+                        "d": 51,
+                        "l": 151,
+                        "w": 101
+                      },
+                      "internal": {
+                        "d": 50,
+                        "l": 150,
+                        "w": 100
+                      },
+                      "overCrease": {
+                        "d": 51,
+                        "l": 150.5,
+                        "w": 100.5
+                      },
+                      "product": null
+                    }
+                  },
                   "options": [
                     {
                       "error": null,
@@ -144901,6 +145560,47 @@
               "application/json": {
                 "example": {
                   "calculatorVersion": "1.0.0",
+                  "dimensions": {
+                    "bases": [
+                      "internal",
+                      "external",
+                      "over_crease"
+                    ],
+                    "basis": "internal",
+                    "basisAssumed": false,
+                    "caliperMm": 0.5,
+                    "conversionVersion": "1.0.0",
+                    "entered": {
+                      "d": 50,
+                      "l": 150,
+                      "w": 100
+                    },
+                    "family": "box",
+                    "priced": {
+                      "d": 50,
+                      "l": 150,
+                      "w": 100
+                    },
+                    "pricedBasis": "internal",
+                    "sizes": {
+                      "external": {
+                        "d": 51,
+                        "l": 151,
+                        "w": 101
+                      },
+                      "internal": {
+                        "d": 50,
+                        "l": 150,
+                        "w": 100
+                      },
+                      "overCrease": {
+                        "d": 51,
+                        "l": 150.5,
+                        "w": 100.5
+                      },
+                      "product": null
+                    }
+                  },
                   "options": [
                     {
                       "error": null,
@@ -157381,6 +158081,7 @@
                     },
                     "heightMm": 40,
                     "lengthMm": 100,
+                    "measurementBasis": "internal",
                     "patternId": "0192f3a0-7c1e-7d2a-9b1f-0000000e5003",
                     "schemaVersion": 1,
                     "title": "กล่องกาแฟของฉัน",
@@ -157436,6 +158137,7 @@
                   "id": "0192f3a0-7c1e-7d2a-9b1f-0000000e5001",
                   "lengthMm": 100,
                   "materialId": null,
+                  "measurementBasis": "internal",
                   "orders": [
                     {
                       "orderCode": "PK-2610-0001-01",
@@ -157732,6 +158434,7 @@
                   "id": "0192f3a0-7c1e-7d2a-9b1f-0000000e5001",
                   "lengthMm": 100,
                   "materialId": null,
+                  "measurementBasis": "internal",
                   "orders": [
                     {
                       "orderCode": "PK-2610-0001-01",
@@ -158018,6 +158721,7 @@
                   "id": "0192f3a0-7c1e-7d2a-9b1f-0000000e5001",
                   "lengthMm": 100,
                   "materialId": null,
+                  "measurementBasis": "internal",
                   "orders": [
                     {
                       "orderCode": "PK-2610-0001-01",
@@ -158377,6 +159081,7 @@
                   "id": "0192f3a0-7c1e-7d2a-9b1f-0000000e5001",
                   "lengthMm": 100,
                   "materialId": null,
+                  "measurementBasis": "internal",
                   "orders": [
                     {
                       "orderCode": "PK-2610-0001-01",
@@ -202083,6 +202788,7 @@
                     "heightMm": 40,
                     "id": "0192f3a0-7c1e-7d2a-9b1f-0000000e5008",
                     "lengthMm": 100,
+                    "measurementBasis": "internal",
                     "orderId": "0192f3a0-7c1e-7d2a-9b1f-0000000e5009",
                     "outputFile": null,
                     "outputFileId": null,
@@ -202299,6 +203005,7 @@
                   "heightMm": 40,
                   "id": "0192f3a0-7c1e-7d2a-9b1f-0000000e5008",
                   "lengthMm": 100,
+                  "measurementBasis": "internal",
                   "orderId": "0192f3a0-7c1e-7d2a-9b1f-0000000e5009",
                   "outputFile": null,
                   "outputFileId": null,
@@ -221968,6 +222675,7 @@
                       },
                       "customerCode": "CU-000042",
                       "deliveryPostcode": "10110",
+                      "dimensions": null,
                       "id": "0192f3a0-7c1e-7d2a-9b1f-00000000e601",
                       "note": null,
                       "options": [
@@ -222349,6 +223057,7 @@
                   },
                   "customerCode": "CU-000042",
                   "deliveryPostcode": "10110",
+                  "dimensions": null,
                   "id": "0192f3a0-7c1e-7d2a-9b1f-00000000e601",
                   "note": null,
                   "options": [
@@ -222711,6 +223420,7 @@
                   },
                   "customerCode": "CU-000042",
                   "deliveryPostcode": "10110",
+                  "dimensions": null,
                   "id": "0192f3a0-7c1e-7d2a-9b1f-00000000e601",
                   "note": null,
                   "options": [
@@ -223044,6 +223754,7 @@
                   },
                   "customerCode": "CU-000042",
                   "deliveryPostcode": "10110",
+                  "dimensions": null,
                   "id": "0192f3a0-7c1e-7d2a-9b1f-00000000e601",
                   "note": null,
                   "options": [
@@ -223406,6 +224117,7 @@
                   },
                   "customerCode": "CU-000042",
                   "deliveryPostcode": "10110",
+                  "dimensions": null,
                   "id": "0192f3a0-7c1e-7d2a-9b1f-00000000e601",
                   "note": null,
                   "options": [
@@ -223750,6 +224462,7 @@
                     "createdAt": "2026-10-01T09:00:00+07:00",
                     "currency": "THB",
                     "deliveryPostcode": "10110",
+                    "dimensions": null,
                     "id": "0192f3a0-7c1e-7d2a-9b1f-00000000e601",
                     "options": [
                       {
@@ -229986,6 +230699,7 @@
                   "heightMm": 320,
                   "id": "0192f3a0-7c1e-7d2a-9b1f-00000000e701",
                   "lengthMm": 250,
+                  "measurementBasis": "internal",
                   "messages": [
                     {
                       "author": "packio",
@@ -230411,6 +231125,7 @@
                   "heightMm": 320,
                   "id": "0192f3a0-7c1e-7d2a-9b1f-00000000e701",
                   "lengthMm": 250,
+                  "measurementBasis": "internal",
                   "messages": [
                     {
                       "author": "packio",
@@ -230770,6 +231485,7 @@
                   "heightMm": 320,
                   "id": "0192f3a0-7c1e-7d2a-9b1f-00000000e701",
                   "lengthMm": 250,
+                  "measurementBasis": "internal",
                   "messages": [
                     {
                       "author": "packio",
@@ -231147,6 +231863,7 @@
                   "heightMm": 320,
                   "id": "0192f3a0-7c1e-7d2a-9b1f-00000000e701",
                   "lengthMm": 250,
+                  "measurementBasis": "internal",
                   "messages": [
                     {
                       "author": "packio",
@@ -231639,6 +232356,7 @@
                       "heightMm": 320,
                       "id": "0192f3a0-7c1e-7d2a-9b1f-00000000e701",
                       "lengthMm": 250,
+                      "measurementBasis": "internal",
                       "messages": [
                         {
                           "author": "packio",
@@ -231901,6 +232619,7 @@
                     "deliveryPostcode": "10110",
                     "heightMm": 320,
                     "lengthMm": 250,
+                    "measurementBasis": "internal",
                     "notes": "Logo on both sides (fake)",
                     "productTypeCode": "paper_bag",
                     "quantities": [
@@ -231983,6 +232702,7 @@
                   "heightMm": 320,
                   "id": "0192f3a0-7c1e-7d2a-9b1f-00000000e701",
                   "lengthMm": 250,
+                  "measurementBasis": "internal",
                   "messages": [
                     {
                       "author": "packio",
@@ -232357,6 +233077,7 @@
                   "heightMm": 320,
                   "id": "0192f3a0-7c1e-7d2a-9b1f-00000000e701",
                   "lengthMm": 250,
+                  "measurementBasis": "internal",
                   "messages": [
                     {
                       "author": "packio",
@@ -232693,6 +233414,7 @@
                   "heightMm": 320,
                   "id": "0192f3a0-7c1e-7d2a-9b1f-00000000e701",
                   "lengthMm": 250,
+                  "measurementBasis": "internal",
                   "messages": [
                     {
                       "author": "packio",
@@ -233076,6 +233798,7 @@
                   "heightMm": 320,
                   "id": "0192f3a0-7c1e-7d2a-9b1f-00000000e701",
                   "lengthMm": 250,
+                  "measurementBasis": "internal",
                   "messages": [
                     {
                       "author": "packio",
@@ -233464,6 +234187,7 @@
                   "heightMm": 320,
                   "id": "0192f3a0-7c1e-7d2a-9b1f-00000000e701",
                   "lengthMm": 250,
+                  "measurementBasis": "internal",
                   "messages": [
                     {
                       "author": "packio",
@@ -233826,6 +234550,7 @@
                   "heightMm": 320,
                   "id": "0192f3a0-7c1e-7d2a-9b1f-00000000e701",
                   "lengthMm": 250,
+                  "measurementBasis": "internal",
                   "messages": [
                     {
                       "author": "packio",
@@ -234384,6 +235109,7 @@
                   "heightMm": 320,
                   "id": "0192f3a0-7c1e-7d2a-9b1f-00000000e701",
                   "lengthMm": 250,
+                  "measurementBasis": "internal",
                   "messages": [
                     {
                       "author": "packio",
@@ -234776,6 +235502,7 @@
                   "heightMm": 320,
                   "id": "0192f3a0-7c1e-7d2a-9b1f-00000000e701",
                   "lengthMm": 250,
+                  "measurementBasis": "internal",
                   "messages": [
                     {
                       "author": "packio",
@@ -235164,6 +235891,7 @@
                   "heightMm": 320,
                   "id": "0192f3a0-7c1e-7d2a-9b1f-00000000e701",
                   "lengthMm": 250,
+                  "measurementBasis": "internal",
                   "messages": [
                     {
                       "author": "packio",
@@ -274053,6 +274781,7 @@
                     "id": "0192f3a0-7c1e-7d2a-9b1f-00000000e704",
                     "lengthMm": 250,
                     "lines": null,
+                    "measurementBasis": "internal",
                     "note": "Please quote the three tiers (fake)",
                     "productTypeCode": "paper_bag",
                     "productTypeName": "ถุงกระดาษ",
@@ -274290,6 +275019,7 @@
                   "id": "0192f3a0-7c1e-7d2a-9b1f-00000000e704",
                   "lengthMm": 250,
                   "lines": null,
+                  "measurementBasis": "internal",
                   "note": "Please quote the three tiers (fake)",
                   "productTypeCode": "paper_bag",
                   "productTypeName": "ถุงกระดาษ",
@@ -274576,6 +275306,7 @@
                   "id": "0192f3a0-7c1e-7d2a-9b1f-00000000e704",
                   "lengthMm": 250,
                   "lines": null,
+                  "measurementBasis": "internal",
                   "note": "Please quote the three tiers (fake)",
                   "productTypeCode": "paper_bag",
                   "productTypeName": "ถุงกระดาษ",
@@ -308087,6 +308818,7 @@
                       "id": "0192f3a0-7c1e-7d2a-9b1f-0000000e5001",
                       "lengthMm": 100,
                       "materialId": null,
+                      "measurementBasis": "internal",
                       "orders": [
                         {
                           "orderCode": "PK-2610-0001-01",
@@ -308303,6 +309035,7 @@
                     },
                     "heightMm": 40,
                     "lengthMm": 100,
+                    "measurementBasis": "internal",
                     "patternId": "0192f3a0-7c1e-7d2a-9b1f-0000000e5003",
                     "schemaVersion": 1,
                     "title": "กล่องกาแฟของฉัน",
@@ -308357,6 +309090,7 @@
                   "id": "0192f3a0-7c1e-7d2a-9b1f-0000000e5001",
                   "lengthMm": 100,
                   "materialId": null,
+                  "measurementBasis": "internal",
                   "orders": [
                     {
                       "orderCode": "PK-2610-0001-01",
@@ -309086,6 +309820,7 @@
                   "id": "0192f3a0-7c1e-7d2a-9b1f-0000000e5001",
                   "lengthMm": 100,
                   "materialId": null,
+                  "measurementBasis": "internal",
                   "orders": [
                     {
                       "orderCode": "PK-2610-0001-01",
@@ -309363,6 +310098,7 @@
                   "id": "0192f3a0-7c1e-7d2a-9b1f-0000000e5001",
                   "lengthMm": 100,
                   "materialId": null,
+                  "measurementBasis": "internal",
                   "orders": [
                     {
                       "orderCode": "PK-2610-0001-01",
@@ -309693,6 +310429,7 @@
                   "id": "0192f3a0-7c1e-7d2a-9b1f-0000000e5001",
                   "lengthMm": 100,
                   "materialId": null,
+                  "measurementBasis": "internal",
                   "orders": [],
                   "patternId": "0192f3a0-7c1e-7d2a-9b1f-0000000e5003",
                   "product": {
@@ -310183,6 +310920,7 @@
                   "id": "0192f3a0-7c1e-7d2a-9b1f-0000000e5001",
                   "lengthMm": 100,
                   "materialId": null,
+                  "measurementBasis": "internal",
                   "orders": [
                     {
                       "orderCode": "PK-2610-0001-01",
@@ -310443,6 +311181,7 @@
                   "id": "0192f3a0-7c1e-7d2a-9b1f-0000000e5001",
                   "lengthMm": 100,
                   "materialId": null,
+                  "measurementBasis": "internal",
                   "orders": [
                     {
                       "orderCode": "PK-2610-0001-01",
@@ -311301,6 +312040,7 @@
                   "id": "0192f3a0-7c1e-7d2a-9b1f-0000000e5001",
                   "lengthMm": 100,
                   "materialId": null,
+                  "measurementBasis": "internal",
                   "orders": [
                     {
                       "orderCode": "PK-2610-0001-01",
@@ -312345,6 +313085,7 @@
                   "heightMm": 40,
                   "id": "0192f3a0-7c1e-7d2a-9b1f-0000000e5008",
                   "lengthMm": 100,
+                  "measurementBasis": "internal",
                   "orderId": null,
                   "outputFile": null,
                   "outputFileId": null,
@@ -312585,6 +313326,7 @@
                   "heightMm": 40,
                   "id": "0192f3a0-7c1e-7d2a-9b1f-0000000e5008",
                   "lengthMm": 100,
+                  "measurementBasis": "internal",
                   "orderId": null,
                   "outputFile": {
                     "id": "0192f3a0-7c1e-7d2a-9b1f-0000000e5006",
@@ -326891,6 +327633,7 @@
                       "createdAt": "2026-10-01T09:00:00+07:00",
                       "currency": "THB",
                       "deliveryPostcode": "10110",
+                      "dimensions": null,
                       "id": "0192f3a0-7c1e-7d2a-9b1f-00000000e601",
                       "options": [
                         {
@@ -327227,6 +327970,7 @@
                   "createdAt": "2026-10-01T09:00:00+07:00",
                   "currency": "THB",
                   "deliveryPostcode": "10110",
+                  "dimensions": null,
                   "id": "0192f3a0-7c1e-7d2a-9b1f-00000000e601",
                   "options": [
                     {
@@ -327626,6 +328370,47 @@
                 "example": {
                   "calculationId": "0192f3a0-7c1e-7d2a-9b1f-0000000c1001",
                   "calculatorVersion": "1.0.0",
+                  "dimensions": {
+                    "bases": [
+                      "internal",
+                      "external",
+                      "over_crease"
+                    ],
+                    "basis": "internal",
+                    "basisAssumed": false,
+                    "caliperMm": 0.5,
+                    "conversionVersion": "1.0.0",
+                    "entered": {
+                      "d": 50,
+                      "l": 150,
+                      "w": 100
+                    },
+                    "family": "box",
+                    "priced": {
+                      "d": 50,
+                      "l": 150,
+                      "w": 100
+                    },
+                    "pricedBasis": "internal",
+                    "sizes": {
+                      "external": {
+                        "d": 51,
+                        "l": 151,
+                        "w": 101
+                      },
+                      "internal": {
+                        "d": 50,
+                        "l": 150,
+                        "w": 100
+                      },
+                      "overCrease": {
+                        "d": 51,
+                        "l": 150.5,
+                        "w": 100.5
+                      },
+                      "product": null
+                    }
+                  },
                   "steps": [
                     {
                       "designFeeAmount": "0.00",
@@ -327857,6 +328642,7 @@
                   "createdAt": "2026-10-01T09:00:00+07:00",
                   "currency": "THB",
                   "deliveryPostcode": "10110",
+                  "dimensions": null,
                   "id": "0192f3a0-7c1e-7d2a-9b1f-00000000e601",
                   "options": [
                     {
@@ -328131,6 +328917,7 @@
                   "createdAt": "2026-10-01T09:00:00+07:00",
                   "currency": "THB",
                   "deliveryPostcode": "10110",
+                  "dimensions": null,
                   "id": "0192f3a0-7c1e-7d2a-9b1f-00000000e601",
                   "options": [
                     {
@@ -328432,6 +329219,7 @@
                   "createdAt": "2026-10-01T09:00:00+07:00",
                   "currency": "THB",
                   "deliveryPostcode": "10110",
+                  "dimensions": null,
                   "id": "0192f3a0-7c1e-7d2a-9b1f-00000000e601",
                   "options": [
                     {
@@ -328753,6 +329541,7 @@
                   "createdAt": "2026-10-01T09:00:00+07:00",
                   "currency": "THB",
                   "deliveryPostcode": "10110",
+                  "dimensions": null,
                   "id": "0192f3a0-7c1e-7d2a-9b1f-00000000e601",
                   "options": [
                     {
@@ -329066,6 +329855,7 @@
                   "createdAt": "2026-10-01T09:00:00+07:00",
                   "currency": "THB",
                   "deliveryPostcode": "10110",
+                  "dimensions": null,
                   "id": "0192f3a0-7c1e-7d2a-9b1f-00000000e601",
                   "options": [
                     {
@@ -329385,6 +330175,7 @@
                     "createdAt": "2026-10-01T09:00:00+07:00",
                     "currency": "THB",
                     "deliveryPostcode": "10110",
+                    "dimensions": null,
                     "id": "0192f3a0-7c1e-7d2a-9b1f-00000000e601",
                     "options": [
                       {
@@ -330787,6 +331578,7 @@
                       "heightMm": 320,
                       "id": "0192f3a0-7c1e-7d2a-9b1f-00000000e701",
                       "lengthMm": 250,
+                      "measurementBasis": "internal",
                       "messages": [
                         {
                           "author": "packio",
@@ -331021,6 +331813,7 @@
                     "deliveryPostcode": "10110",
                     "heightMm": 320,
                     "lengthMm": 250,
+                    "measurementBasis": "internal",
                     "notes": "Logo on both sides (fake)",
                     "productTypeCode": "paper_bag",
                     "quantities": [
@@ -331065,6 +331858,7 @@
                   "heightMm": 320,
                   "id": "0192f3a0-7c1e-7d2a-9b1f-00000000e701",
                   "lengthMm": 250,
+                  "measurementBasis": "internal",
                   "messages": [],
                   "nextActions": [
                     {
@@ -331349,6 +332143,7 @@
                   "heightMm": 320,
                   "id": "0192f3a0-7c1e-7d2a-9b1f-00000000e701",
                   "lengthMm": 250,
+                  "measurementBasis": "internal",
                   "messages": [
                     {
                       "author": "packio",
@@ -331623,6 +332418,7 @@
                   "heightMm": 320,
                   "id": "0192f3a0-7c1e-7d2a-9b1f-00000000e701",
                   "lengthMm": 250,
+                  "measurementBasis": "internal",
                   "messages": [
                     {
                       "author": "packio",
@@ -331969,6 +332765,7 @@
                   "heightMm": 320,
                   "id": "0192f3a0-7c1e-7d2a-9b1f-00000000e701",
                   "lengthMm": 250,
+                  "measurementBasis": "internal",
                   "messages": [
                     {
                       "author": "packio",
@@ -332280,6 +333077,7 @@
                   "heightMm": 320,
                   "id": "0192f3a0-7c1e-7d2a-9b1f-00000000e701",
                   "lengthMm": 250,
+                  "measurementBasis": "internal",
                   "messages": [
                     {
                       "author": "packio",
@@ -332775,6 +333573,7 @@
                   "expiresAt": "2026-10-15T10:00:00+07:00",
                   "heightMm": 40,
                   "lengthMm": 100,
+                  "measurementBasis": "internal",
                   "product": {
                     "id": "0192f3a0-7c1e-7d2a-9b1f-0000000e5002",
                     "nameEn": "Tuck-end box",

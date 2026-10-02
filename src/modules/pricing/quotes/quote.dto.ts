@@ -1,5 +1,8 @@
 import { BoolField, DecimalField, EnumField, IntField, RefField } from '@modules/catalog/crud/dto-fields';
 import { RATE_MISS_REASONS } from '@modules/shipping/rates/customer-rates.dto';
+import { type MeasurementBasis } from '@modules/specs/dimension-conversion';
+import { QUOTE_DIMENSIONS_EXAMPLE, QuoteDimensionsDto } from '@modules/specs/specs.dto';
+import { BasisField } from '@modules/specs/specs.dto';
 import { ApiProperty, ApiPropertyOptional, getSchemaPath } from '@nestjs/swagger';
 import { Type } from 'class-transformer';
 import {
@@ -172,6 +175,9 @@ export class FoldingConfigurationDto {
 
   @RefField({ example: IDS.pattern, optional: true })
   catalogProductId?: string;
+
+  @BasisField('box')
+  basis?: MeasurementBasis;
 
   @DecimalField({ example: 60, positive: true, ...MM, description: 'Box width' })
   w!: number;
@@ -416,6 +422,14 @@ export class QuoteCalculationDto {
 
   @ApiProperty({ type: [QuoteStepDto] })
   steps!: QuoteStepDto[];
+
+  @ApiProperty({
+    type: QuoteDimensionsDto,
+    nullable: true,
+    example: QUOTE_DIMENSIONS_EXAMPLE,
+    description: 'The sizes on every basis and the size priced (D-182); null for a product without a size',
+  })
+  dimensions!: QuoteDimensionsDto | null;
 }
 
 export class QuotePartInternalDto {
@@ -560,10 +574,19 @@ export class AdminQuoteCalculationDto {
 
   @ApiProperty({ type: [QuoteOptionDto] })
   options!: QuoteOptionDto[];
+
+  @ApiProperty({
+    type: QuoteDimensionsDto,
+    nullable: true,
+    example: QUOTE_DIMENSIONS_EXAMPLE,
+    description: 'The sizes on every basis and the size priced (D-182)',
+  })
+  dimensions!: QuoteDimensionsDto | null;
 }
 
 export const STORE_CALCULATION_EXAMPLE: QuoteCalculationDto = {
   calculatorVersion: '1.0.0',
+  dimensions: QUOTE_DIMENSIONS_EXAMPLE,
   calculationId: '0192f3a0-7c1e-7d2a-9b1f-0000000c1001',
   steps: [
     {
@@ -592,6 +615,7 @@ export const STORE_CALCULATION_EXAMPLE: QuoteCalculationDto = {
 };
 
 export const ADMIN_CALCULATION_EXAMPLE: AdminQuoteCalculationDto = {
+  dimensions: QUOTE_DIMENSIONS_EXAMPLE,
   calculatorVersion: '1.0.0',
   steps: [
     {

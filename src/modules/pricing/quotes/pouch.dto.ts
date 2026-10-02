@@ -1,4 +1,6 @@
 import { DecimalField, RefField } from '@modules/catalog/crud/dto-fields';
+import { type MeasurementBasis } from '@modules/specs/dimension-conversion';
+import { BasisField } from '@modules/specs/specs.dto';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { Type } from 'class-transformer';
 import {
@@ -46,6 +48,9 @@ export class PouchConfigurationDto {
     description: 'The catalogue product (required on the store); staff may price without one',
   })
   catalogProductId?: string;
+
+  @BasisField('flat')
+  basis?: MeasurementBasis;
 
   @DecimalField({ example: 140, positive: true, ...MM, description: 'Pouch width, seals included' })
   w!: number;

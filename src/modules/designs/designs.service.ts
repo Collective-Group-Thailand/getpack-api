@@ -6,6 +6,7 @@ import { DomainException } from '@common/errors/domain.exception';
 import { assertIfMatch, etagOf } from '@common/etag/etag';
 import { toBangkokIso } from '@common/time/bangkok';
 import { PrismaService, type Tx } from '@database/prisma.service';
+import { type MeasurementBasis } from '@generated/prisma/client';
 import { type DesignVersionKind, type FileObject, Prisma } from '@generated/prisma/client';
 import { type OrderRefDto } from '@modules/carts/carts.dto';
 import { canonical } from '@modules/catalog/imports/import-engine';
@@ -58,6 +59,7 @@ export interface CreateDesignInput {
   lengthMm?: number;
   widthMm?: number;
   heightMm?: number;
+  measurementBasis?: MeasurementBasis;
   materialId?: string;
   semiDesignTemplateId?: string;
   title: string;
@@ -77,6 +79,7 @@ export interface SaveDesignInput {
   lengthMm?: number;
   widthMm?: number;
   heightMm?: number;
+  measurementBasis?: MeasurementBasis;
 }
 
 interface VersionInput {
@@ -216,6 +219,7 @@ export class DesignsService implements OnModuleInit {
           lengthMm: input.lengthMm ?? null,
           widthMm: input.widthMm ?? null,
           heightMm: input.heightMm ?? null,
+          measurementBasis: input.measurementBasis ?? 'internal',
           materialId: material?.id ?? null,
           semiDesignTemplateId: templateId,
           title: input.title,
@@ -256,6 +260,7 @@ export class DesignsService implements OnModuleInit {
           ...(input.lengthMm !== undefined && { lengthMm: input.lengthMm }),
           ...(input.widthMm !== undefined && { widthMm: input.widthMm }),
           ...(input.heightMm !== undefined && { heightMm: input.heightMm }),
+          ...(input.measurementBasis !== undefined && { measurementBasis: input.measurementBasis }),
           rowVersion: { increment: 1 },
         },
       });
@@ -336,6 +341,7 @@ export class DesignsService implements OnModuleInit {
           lengthMm: source.lengthMm,
           widthMm: source.widthMm,
           heightMm: source.heightMm,
+          measurementBasis: source.measurementBasis,
           materialId: source.materialId,
           semiDesignTemplateId: source.semiDesignTemplateId,
           thumbnailFileId: source.thumbnailFileId,
@@ -460,6 +466,7 @@ export class DesignsService implements OnModuleInit {
               lengthMm: row.lengthMm ?? null,
               widthMm: row.widthMm ?? null,
               heightMm: row.heightMm ?? null,
+              measurementBasis: row.measurementBasis ?? 'internal',
               title: row.title,
               importLocalId: row.localId,
             },
@@ -590,6 +597,7 @@ export class DesignsService implements OnModuleInit {
       lengthMm: num(row.lengthMm),
       widthMm: num(row.widthMm),
       heightMm: num(row.heightMm),
+      measurementBasis: row.measurementBasis,
       versionNo: row.currentVersion?.versionNo ?? null,
       schemaVersion: row.currentVersion?.schemaVersion ?? null,
       document: withDocument

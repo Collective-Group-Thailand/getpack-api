@@ -2,9 +2,11 @@ import { type Actor, systemActor, type UserActor } from '@common/context/actor';
 import { DomainException } from '@common/errors/domain.exception';
 import { toBangkokIso } from '@common/time/bangkok';
 import { PrismaService, type Tx } from '@database/prisma.service';
+import { type MeasurementBasis } from '@generated/prisma/client';
 import { type DrawingFormat, type Prisma } from '@generated/prisma/client';
 import { DIELINE_ENGINE, type DielineEngine } from '@integrations/dieline/dieline-engine.port';
 import { ArtworkService } from '@modules/artwork/artwork.service';
+import { pricedConfiguration } from '@modules/quotes/quote-input';
 import { Inject, Injectable, Logger } from '@nestjs/common';
 import { type DomainEventEnvelope } from '@platform/domain-events/domain-event';
 import { OnDomainEvent } from '@platform/domain-events/on-domain-event.decorator';
@@ -31,6 +33,7 @@ export interface DrawingInput {
   lengthMm: number;
   widthMm: number;
   heightMm: number;
+  measurementBasis?: MeasurementBasis;
   format: DrawingFormat;
   designId?: string;
 }
@@ -68,6 +71,14 @@ export class DrawingsService {
   }
 
   async request(actor: UserActor, input: DrawingInput): Promise<DrawingJobRow> {
+    // A dieline is drawn from inside sizes (D-182): another basis is converted first (`store.specs.convertDimensions`).
+    if (input.measurementBasis && input.measurementBasis !== 'internal') {
+      throw new DomainException('specs.basis_not_accepted', {
+        errors: [
+          { path: 'measurementBasis', code: 'basis_not_accepted', message: 'drawings take inside sizes' },
+        ],
+      });
+    }
     const pattern = await this.drawablePattern(input.patternId);
     const design = input.designId
       ? await this.prisma.designDocument.findFirst({
@@ -312,7 +323,10 @@ export class DrawingsService {
 
   /** Pattern and dimensions of a box quote input, when its pattern has a dieline. */
   private async boxOf(input: unknown, db: Tx = this.prisma) {
-    const box = ((input as { configuration?: BoxInput } | null)?.configuration ?? input) as BoxInput | null;
+    // The size the box was priced on: inside dimensions (D-182), what a dieline is drawn from.
+    const box = (
+      (input as { configuration?: BoxInput } | null)?.configuration ? pricedConfiguration(input) : input
+    ) as BoxInput | null;
     if (!box || typeof box.patternId !== 'string') return null;
     const size = (v: unknown) => (typeof v === 'number' && v > 0 ? v : null);
     const l = size(box.l);
@@ -334,6 +348,7 @@ export function drawingDto(job: DrawingJobRow): DrawingJobDto {
     lengthMm: job.lengthMm.toNumber(),
     widthMm: job.widthMm.toNumber(),
     heightMm: job.heightMm.toNumber(),
+    measurementBasis: job.measurementBasis,
     orderId: job.order?.publicId ?? null,
     outputFileId: job.outputFile?.publicId ?? null,
     outputFile: job.outputFile

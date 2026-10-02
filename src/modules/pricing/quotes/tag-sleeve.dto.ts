@@ -1,4 +1,6 @@
 import { DecimalField, RefField } from '@modules/catalog/crud/dto-fields';
+import { type MeasurementBasis } from '@modules/specs/dimension-conversion';
+import { BasisField } from '@modules/specs/specs.dto';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { Type } from 'class-transformer';
 import {
@@ -47,6 +49,9 @@ export class TagSleeveConfigurationDto {
       'may price without one',
   })
   catalogProductId?: string;
+
+  @BasisField('flat')
+  basis?: MeasurementBasis;
 
   @DecimalField({ example: 50, positive: true, ...MM, description: 'Tag or sleeve width (flat)' })
   w!: number;

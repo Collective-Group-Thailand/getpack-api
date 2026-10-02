@@ -13,6 +13,7 @@ import {
 import { QuotePathService } from '@modules/partners/quote-path/quote-path.service';
 import { type RateMissReason } from '@modules/shipping/rates/customer-rates.dto';
 import { type Delivery, ShippingQuoteService } from '@modules/shipping/shipping-quote.service';
+import { type QuoteDimensions, SpecsService } from '@modules/specs/specs.service';
 import { Injectable, Logger } from '@nestjs/common';
 import { BusinessCalendarService } from '@platform/calendar/business-calendar.service';
 import { DomainEvents } from '@platform/domain-events/domain-events.service';
@@ -118,6 +119,8 @@ export interface QuoteView {
     settingVersionIds: Record<string, string>;
     calculatorVersion: string;
   };
+  /** The configuration's sizes on every basis and the size priced (D-182); null for products without a size. */
+  dimensions: QuoteDimensions | null;
   /** The analytics row of this calculation (null when it could not be written); internal only. */
   calculateLog?: { id: bigint; occurredAt: Date; publicId: string } | null;
 }
@@ -186,6 +189,7 @@ export class QuoteEngineService {
     private readonly settings: SettingsService,
     private readonly shipping: ShippingQuoteService,
     private readonly events: DomainEvents,
+    private readonly specs: SpecsService,
   ) {}
 
   hasCalculator(key: CalculatorKey): boolean {
@@ -203,9 +207,16 @@ export class QuoteEngineService {
     cfg: unknown,
   ): Promise<{ facts: EnvelopeFacts; quantities: readonly number[] }> {
     const adapter = this.adapter(key);
+    cfg = (await this.measure(key, cfg, this.prisma)).cfg;
     const resolved = (await adapter.resolve(cfg, this.prisma)) as ResolvedBase;
     const facts = await this.quotePath.publicFacts(adapter.envelopeFacts(resolved, cfg), this.prisma);
     return { facts, quantities: resolved.quantities };
+  }
+
+  /** The configuration to price and its frozen sizes (D-182): another basis is converted to the one priced. */
+  private async measure(key: CalculatorKey, cfg: unknown, db: Tx) {
+    if (cfg === null || typeof cfg !== 'object' || Array.isArray(cfg)) return { cfg, dimensions: null };
+    return this.specs.measureConfiguration(db, key, cfg as Record<string, unknown>);
   }
 
   async price(key: CalculatorKey, cfg: unknown, ctx: QuoteContext): Promise<QuoteView> {
@@ -213,6 +224,8 @@ export class QuoteEngineService {
     const at = ctx.at ?? new Date();
     const db = this.prisma;
     const adapter = this.adapter(key);
+    const measured = await this.measure(key, cfg, db);
+    cfg = measured.cfg;
     const resolved = (await adapter.resolve(cfg, db)) as ResolvedBase;
     const candidates = await this.quotePath.instantCandidates(resolved.productTypeId, at, db);
     // Tier B prices only inside its envelope (D-043, D-234): per quantity and print type, below.
@@ -404,6 +417,7 @@ export class QuoteEngineService {
         settingVersionIds,
         calculatorVersion: adapter.version,
       },
+      dimensions: measured.dimensions,
     };
     view.calculateLog =
       ctx.log === false ? null : await this.log(adapter, cfg, resolved, view, ctx, at, Date.now() - started);
@@ -423,6 +437,7 @@ export class QuoteEngineService {
   ): Promise<FactoryQuoteView> {
     const db = this.prisma;
     const adapter = this.adapter(key);
+    cfg = (await this.measure(key, cfg, db)).cfg;
     const resolved = (await adapter.resolve(cfg, db)) as ResolvedBase;
     const version = await db.priceListVersion.findFirst({
       where: {
@@ -577,6 +592,7 @@ export class QuoteEngineService {
     db: Tx = this.prisma,
   ): Promise<DestinationShipping[]> {
     const adapter = this.adapter(key);
+    cfg = (await this.measure(key, cfg, db)).cfg;
     const parts = adapter.shipmentParts(await adapter.resolve(cfg, db));
     const out: DestinationShipping[] = [];
     for (const leg of legs) {

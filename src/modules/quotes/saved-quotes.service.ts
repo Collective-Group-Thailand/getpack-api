@@ -38,6 +38,7 @@ import {
   SUMMARY_INCLUDE,
   type TagSleeveSpecConfiguration,
   tagSleeveSpecLines,
+  withBasisLines,
 } from './line-summary';
 
 const BOX_CALCULATORS: ReadonlySet<string> = new Set(['folding', 'corrugate']);
@@ -113,6 +114,8 @@ export class SavedQuotesService {
       productTypeCode: input.productTypeCode,
       configuration: configuration,
       deliveryPostcode: input.deliveryPostcode ?? null,
+      // D-182: the sizes on every basis and the size priced, frozen with the quote (input schema 2).
+      ...(view.dimensions && { dimensions: view.dimensions }),
     };
     const configRefs = {
       ...view.configRefs,
@@ -130,7 +133,7 @@ export class SavedQuotesService {
     );
     const customerUserId = owner.kind === 'customer' ? owner.userId : (extra.customerUserId ?? null);
     // Box calculators (folding, corrugate) share one configuration shape; others get their lines when ported.
-    const specSummary = BOX_CALCULATORS.has(calculatorKey)
+    const specLines = BOX_CALCULATORS.has(calculatorKey)
       ? await boxSpecLines(this.prisma, configuration as unknown as BoxConfiguration)
       : calculatorKey === 'label'
         ? await labelSpecLines(this.prisma, configuration as unknown as LabelSpecConfiguration)
@@ -149,6 +152,7 @@ export class SavedQuotesService {
                     configuration as unknown as { catalogProductId: string },
                   )
                 : null;
+    const specSummary = specLines ? withBasisLines(specLines, view.dimensions) : null;
     return this.prisma.withTx(async (tx) => {
       const quote = await tx.quote.create({
         data: {
@@ -163,7 +167,7 @@ export class SavedQuotesService {
           catalogProductId: await this.catalogProductId(configuration),
           stockProductId: await this.stockProductId(configuration),
           input: snapshotInput as unknown as Prisma.InputJsonValue,
-          inputSchemaVersion: 1,
+          inputSchemaVersion: view.dimensions ? 2 : 1,
           specSummary: specSummary ? (specSummary as unknown as Prisma.InputJsonValue) : Prisma.DbNull,
           calculatorVersion: view.calculatorVersion,
           configRefs: configRefs,

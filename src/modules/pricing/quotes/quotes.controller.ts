@@ -97,6 +97,7 @@ const storeView = (view: QuoteView): QuoteCalculationDto => ({
   calculatorVersion: view.calculatorVersion,
   calculationId: view.calculateLog?.publicId ?? null,
   steps: view.steps.map(({ internal: _internal, ...step }) => step),
+  dimensions: view.dimensions,
 });
 
 /** The staff view with buy prices only for `factory_cost.read` and margins only for `margin.read` (D-141). */
@@ -112,6 +113,7 @@ async function adminView(
   return {
     calculatorVersion: view.calculatorVersion,
     options: view.options,
+    dimensions: view.dimensions,
     steps: view.steps.map((s) => ({
       ...s,
       internal: s.internal && {

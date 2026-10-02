@@ -10,6 +10,7 @@ import { canonical } from '@modules/catalog/imports/import-engine';
 import { CustomersService, type TaxProfileSnapshot } from '@modules/customers/customers.service';
 import { QuoteEngineService } from '@modules/pricing/quotes/quote-engine.service';
 import { QuoteConversionService } from '@modules/quotes/quote-conversion.service';
+import { pricedConfiguration } from '@modules/quotes/quote-input';
 import { Injectable } from '@nestjs/common';
 import { ActivityLogService } from '@platform/activity/activity-log.service';
 import { BusinessCalendarService } from '@platform/calendar/business-calendar.service';
@@ -498,10 +499,9 @@ export class CheckoutService {
     if (!factoryId) throw new DomainException('checkout.shipping_unavailable');
     const calculator = item.quote.productType.calculatorKey;
     if (!calculator) throw new DomainException('checkout.shipping_unavailable');
-    const input = item.quote.input as unknown as { configuration: Record<string, unknown> };
     const priced = await this.engine.destinationShipping(
       calculator,
-      input.configuration,
+      pricedConfiguration(item.quote.input),
       factoryId,
       rows.map((r) => ({ postcode: r.snap.postcode, quantity: r.d.quantity })),
       at,

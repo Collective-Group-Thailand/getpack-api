@@ -1,5 +1,7 @@
 import { type Tx } from '@database/prisma.service';
 import { imageUrl } from '@modules/catalog/store/store-catalog.service';
+import { type MeasurementBasis } from '@modules/specs/dimension-conversion';
+import { type QuoteDimensions } from '@modules/specs/specs.service';
 
 import { type LineSummaryDto, type SpecLineDto } from './line-summary.dto';
 
@@ -475,4 +477,38 @@ export function lineSummary(source: SummarySource, unit: LineSummaryDto['unit'])
     unit,
     specs: Array.isArray(source.specSummary) ? (source.specSummary as SpecLineDto[]) : [],
   };
+}
+
+const BASIS_LABELS: Record<MeasurementBasis, [string, string]> = {
+  internal: ['ด้านใน', 'inside'],
+  external: ['ด้านนอก', 'outside'],
+  over_crease: ['วัดตามรอยพับ', 'over crease'],
+  product: ['ขนาดชิ้นงาน', 'finished size'],
+};
+
+/**
+ * The basis on the size line (D-182), and the inside size priced when the customer measured on another basis — what
+ * the proof, the job sheet and the factory read. Lines without `dimensions` (older quotes) are left as they are.
+ */
+export function withBasisLines(lines: SpecLineDto[], dimensions: QuoteDimensions | null): SpecLineDto[] {
+  if (!dimensions) return lines;
+  const [th, en] = BASIS_LABELS[dimensions.basis];
+  const out = lines.map((line) =>
+    line.key === 'size'
+      ? { ...line, valueTh: `${line.valueTh} (${th})`, valueEn: `${line.valueEn} (${en})` }
+      : line,
+  );
+  if (dimensions.basis !== dimensions.pricedBasis) {
+    const p = dimensions.priced;
+    const size = `${mm(p.w)} × ${mm(p.l)} × ${mm(p.d)}`;
+    const at = out.findIndex((line) => line.key === 'size');
+    out.splice(at + 1, 0, {
+      key: 'priced_size',
+      labelTh: 'ขนาดด้านในที่ใช้คำนวณ',
+      labelEn: 'Inside size priced',
+      valueTh: `${size} มม.`,
+      valueEn: `${size} mm`,
+    });
+  }
+  return out;
 }

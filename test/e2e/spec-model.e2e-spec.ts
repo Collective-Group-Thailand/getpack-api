@@ -1,5 +1,6 @@
 import request from 'supertest';
 
+import { type DevCorrugate, seedDevCorrugate } from '../../prisma/seed/dev-corrugate';
 import { type DevFolding } from '../../prisma/seed/dev-folding';
 import {
   as,
@@ -115,5 +116,82 @@ describe('specification model v2 (e2e, U2.1)', () => {
     } finally {
       await ctx.prisma.material.update({ where: { code: 'dev-art-350' }, data: { caliperMm: null } });
     }
+  });
+
+  it('prices a box on its inside size whatever basis it was measured on, and freezes it (D-182)', async () => {
+    const corrugate: DevCorrugate = (
+      await ctx.prisma.$transaction((tx) => seedDevCorrugate(tx), { timeout: 60_000 })
+    ).fixture;
+    const box = (over: Record<string, unknown>) => ({
+      patternId: corrugate.rscPatternPublicId,
+      catalogProductId: corrugate.catalogProductPublicId,
+      materialId: corrugate.boardPublicId,
+      difficultyLevelId: corrugate.difficultyLevelPublicId,
+      quantities: [1000],
+      parts: [{ printFront: [{ inkColourId: corrugate.inkColourPublicId, area: 'top' }] }],
+      design: { graphic: false, structure: false },
+      ...over,
+    });
+    const board = await ctx.prisma.material.findUniqueOrThrow({
+      where: { publicId: corrugate.boardPublicId },
+    });
+    const calc = (cfg: object) => as(ctx, cs).post('/v1/admin/cs/corrugate/calculate', cfg);
+    try {
+      await ctx.prisma.material.update({ where: { id: board.id }, data: { caliperMm: null } });
+      const noCaliper = await calc(box({ basis: 'external', w: 304, l: 404, d: 254 })).expect(422);
+      expect(noCaliper.body.code).toBe('specs.caliper_missing');
+      const assumed = await calc(box({ w: 300, l: 400, d: 250 })).expect(200);
+      expect(assumed.body.dimensions).toMatchObject({ basis: 'internal', basisAssumed: true, family: 'box' });
+
+      await ctx.prisma.material.update({ where: { id: board.id }, data: { caliperMm: 2 } });
+      const inside = await calc(box({ basis: 'internal', w: 300, l: 400, d: 250 })).expect(200);
+      const outside = await calc(box({ basis: 'external', w: 304, l: 404, d: 254 })).expect(200);
+      expect(outside.body.dimensions).toMatchObject({
+        basis: 'external',
+        basisAssumed: false,
+        entered: { w: 304, l: 404, d: 254 },
+        priced: { w: 300, l: 400, d: 250 },
+        pricedBasis: 'internal',
+        caliperMm: 2,
+        sizes: { overCrease: { w: 302, l: 402, d: 254 } },
+      });
+      expect(outside.body.steps[0].grossAmount).toBe(inside.body.steps[0].grossAmount);
+      await calc(box({ basis: 'product', w: 300, l: 400, d: 250 })).expect(422);
+
+      await ctx.prisma.productType.update({ where: { code: 'corrugated' }, data: { quoteMode: 'instant' } });
+      const saved = await as(ctx, customer)
+        .post('/v1/store/quotes', {
+          productTypeCode: 'corrugated',
+          configuration: box({ basis: 'external', w: 304, l: 404, d: 254 }),
+        })
+        .expect(201);
+      expect(saved.body.dimensions).toMatchObject({ basis: 'external', priced: { w: 300, l: 400, d: 250 } });
+      const size = (saved.body.summary.specs as { key: string; valueEn: string }[]).filter((l) =>
+        ['size', 'priced_size'].includes(l.key),
+      );
+      expect(size.map((l) => l.valueEn)).toEqual(['304 × 404 × 254 mm (outside)', '300 × 400 × 250 mm']);
+      // A later caliper change never changes what the saved quote means.
+      await ctx.prisma.material.update({ where: { id: board.id }, data: { caliperMm: 3 } });
+      const again = await as(ctx, customer).get(`/v1/store/quotes/${saved.body.id}`).expect(200);
+      expect(again.body.dimensions).toEqual(saved.body.dimensions);
+    } finally {
+      await ctx.prisma.material.update({ where: { id: board.id }, data: { caliperMm: null } });
+      await ctx.prisma.productType.update({ where: { code: 'corrugated' }, data: { quoteMode: 'rfq' } });
+    }
+  });
+
+  it('measures a flat product on its finished size and an RFQ on the basis it names (D-182)', async () => {
+    const flat = await as(ctx, cs)
+      .post('/v1/admin/cs/folding/calculate', { ...foldingConfiguration(fixture, [1000]), basis: 'internal' })
+      .expect(422);
+    expect(flat.body.code).toBe('specs.basis_not_accepted');
+    const product = await as(ctx, cs)
+      .post('/v1/admin/cs/folding/calculate', { ...foldingConfiguration(fixture, [1000]), basis: 'product' })
+      .expect(200);
+    expect(product.body.dimensions).toMatchObject({
+      family: 'flat',
+      basis: 'product',
+      pricedBasis: 'product',
+    });
   });
 });

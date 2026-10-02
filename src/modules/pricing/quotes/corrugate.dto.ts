@@ -1,4 +1,6 @@
 import { DecimalField, EnumField, IntField, RefField } from '@modules/catalog/crud/dto-fields';
+import { type MeasurementBasis } from '@modules/specs/dimension-conversion';
+import { BasisField } from '@modules/specs/specs.dto';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { Type } from 'class-transformer';
 import {
@@ -139,6 +141,9 @@ export class CorrugateConfigurationDto {
       'the store, where the difficulty level must be the product’s own (configurator `difficultyLevelId`, quirk C9)',
   })
   catalogProductId?: string;
+
+  @BasisField('box')
+  basis?: MeasurementBasis;
 
   @DecimalField({ example: 300, positive: true, ...MM, description: 'Box width' })
   w!: number;

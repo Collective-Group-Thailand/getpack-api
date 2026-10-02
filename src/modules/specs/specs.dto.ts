@@ -132,3 +132,56 @@ export const CONVERTED_EXAMPLE: ConvertedDimensionsDto = {
     product: null,
   },
 };
+
+/**
+ * The measurement basis of a configuration's sizes (D-182). Optional for one release: absent, a box, tray or sleeve is
+ * read as `internal` and a flat product as `product` (`dimensions.basisAssumed`); it becomes required once packio-web
+ * pins the release that sends it (U2.1 contract plan, removal of the fallback in U-B5).
+ */
+export function BasisField(kind: 'box' | 'flat') {
+  return EnumField(MEASUREMENT_BASES, 'MeasurementBasis', {
+    example: kind === 'box' ? 'internal' : 'product',
+    optional: true,
+    description:
+      kind === 'box'
+        ? 'Basis of w / l / d: internal, external or over_crease; another basis than internal is converted with the ' +
+          'material caliper (D-182). Absent: internal (assumed, deprecated)'
+        : 'Basis of the sizes: product, the finished size (D-182). Absent: product (assumed, deprecated)',
+  });
+}
+
+/** A configuration's sizes as priced and frozen with the quote (D-182). */
+export class QuoteDimensionsDto extends ConvertedDimensionsDto {
+  @ApiProperty({
+    enum: MEASUREMENT_BASES,
+    enumName: 'MeasurementBasis',
+    example: 'internal',
+    description: 'Basis entered',
+  })
+  basis!: (typeof MEASUREMENT_BASES)[number];
+
+  @ApiProperty({
+    example: false,
+    description:
+      'The request named no basis and the default was assumed (internal / product); deprecated, the basis becomes required',
+  })
+  basisAssumed!: boolean;
+
+  @ApiProperty({ type: SizeDto, description: 'The size entered, on `basis`' })
+  entered!: SizeDto;
+
+  @ApiProperty({ type: SizeDto, description: 'The size the calculator priced, on `pricedBasis`' })
+  priced!: SizeDto;
+
+  @ApiProperty({ enum: ['internal', 'product'], enumName: 'PricedMeasurementBasis', example: 'internal' })
+  pricedBasis!: 'internal' | 'product';
+}
+
+export const QUOTE_DIMENSIONS_EXAMPLE: QuoteDimensionsDto = {
+  ...CONVERTED_EXAMPLE,
+  basis: 'internal',
+  basisAssumed: false,
+  entered: { w: 100, l: 150, d: 50 },
+  priced: { w: 100, l: 150, d: 50 },
+  pricedBasis: 'internal',
+};

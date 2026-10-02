@@ -1,5 +1,7 @@
 import { PageQuery } from '@common/pagination/pagination.dto';
 import { OrderRefDto } from '@modules/carts/carts.dto';
+import { EnumField } from '@modules/catalog/crud/dto-fields';
+import { MEASUREMENT_BASES } from '@modules/specs/dimension-conversion';
 import { applyDecorators } from '@nestjs/common';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { AttachedFileDto } from '@platform/files/files.dto';
@@ -80,6 +82,13 @@ export class CreateDesignDto {
 
   @Dimension('Height, mm', true)
   heightMm?: number;
+
+  @EnumField(MEASUREMENT_BASES, 'MeasurementBasis', {
+    example: 'internal',
+    optional: true,
+    description: 'Basis of the sizes (D-182). Absent: internal (assumed, deprecated)',
+  })
+  measurementBasis?: (typeof MEASUREMENT_BASES)[number];
 
   @ApiPropertyOptional({ format: 'uuid', example: DESIGN_IDS.material })
   @IsOptional()
@@ -192,6 +201,13 @@ export class SaveDesignDto {
 
   @Dimension('Height, mm', true)
   heightMm?: number;
+
+  @EnumField(MEASUREMENT_BASES, 'MeasurementBasis', {
+    example: 'internal',
+    optional: true,
+    description: 'Basis of the sizes (D-182). Absent: internal (assumed, deprecated)',
+  })
+  measurementBasis?: (typeof MEASUREMENT_BASES)[number];
 }
 
 export class DesignListQuery extends PageQuery {
@@ -292,6 +308,13 @@ export class ImportDesignRowDto {
   @Dimension('Height, mm', true)
   heightMm?: number;
 
+  @EnumField(MEASUREMENT_BASES, 'MeasurementBasis', {
+    example: 'internal',
+    optional: true,
+    description: 'Basis of the sizes (D-182). Absent: internal (assumed, deprecated)',
+  })
+  measurementBasis?: (typeof MEASUREMENT_BASES)[number];
+
   @ApiProperty({ type: 'integer', example: 1, minimum: 1 })
   @Type(() => Number)
   @IsInt()
@@ -383,6 +406,13 @@ export class RequestDrawingDto {
 
   @Dimension('Height, mm')
   heightMm!: number;
+
+  @EnumField(MEASUREMENT_BASES, 'MeasurementBasis', {
+    example: 'internal',
+    optional: true,
+    description: 'Basis of the sizes (D-182). A dieline is drawn from inside sizes: only internal',
+  })
+  measurementBasis?: (typeof MEASUREMENT_BASES)[number];
 
   @ApiProperty({ enum: DRAWING_FORMATS, enumName: 'DrawingFormat', example: 'pdf' })
   @IsIn(DRAWING_FORMATS)
@@ -521,6 +551,14 @@ export class DesignDocumentDto {
   @ApiProperty({ type: Number, nullable: true, example: 40, description: 'mm' })
   heightMm!: number | null;
 
+  @ApiProperty({
+    enum: MEASUREMENT_BASES,
+    enumName: 'MeasurementBasis',
+    example: 'internal',
+    description: 'Basis of the sizes (D-182)',
+  })
+  measurementBasis!: (typeof MEASUREMENT_BASES)[number];
+
   @ApiProperty({ type: String, format: 'uuid', nullable: true, example: null })
   materialId!: string | null;
 
@@ -655,6 +693,14 @@ export class SharedDesignDto {
   @ApiProperty({ type: Number, nullable: true, example: 40, description: 'mm' })
   heightMm!: number | null;
 
+  @ApiProperty({
+    enum: MEASUREMENT_BASES,
+    enumName: 'MeasurementBasis',
+    example: 'internal',
+    description: 'Basis of the sizes (D-182)',
+  })
+  measurementBasis!: (typeof MEASUREMENT_BASES)[number];
+
   @ApiProperty({ type: 'integer', nullable: true, example: 3 })
   versionNo!: number | null;
 
@@ -698,6 +744,14 @@ export class DrawingJobDto {
 
   @ApiProperty({ example: 40, description: 'mm' })
   heightMm!: number;
+
+  @ApiProperty({
+    enum: MEASUREMENT_BASES,
+    enumName: 'MeasurementBasis',
+    example: 'internal',
+    description: 'Basis of the sizes (D-182)',
+  })
+  measurementBasis!: (typeof MEASUREMENT_BASES)[number];
 
   @ApiProperty({
     type: String,
@@ -762,6 +816,7 @@ export const DESIGN_EXAMPLE: DesignDocumentDto = {
   lengthMm: 100,
   widthMm: 60,
   heightMm: 40,
+  measurementBasis: 'internal',
   materialId: null,
   semiDesignTemplateId: null,
   thumbnailFileId: null,
@@ -790,6 +845,7 @@ export const SHARED_DESIGN_EXAMPLE: SharedDesignDto = {
   lengthMm: 100,
   widthMm: 60,
   heightMm: 40,
+  measurementBasis: 'internal',
   versionNo: 3,
   schemaVersion: 1,
   document: DOCUMENT_EXAMPLE,
@@ -807,6 +863,7 @@ export const DRAWING_EXAMPLE: DrawingJobDto = {
   lengthMm: 100,
   widthMm: 60,
   heightMm: 40,
+  measurementBasis: 'internal',
   orderId: null,
   outputFileId: null,
   outputFile: null,
@@ -822,6 +879,7 @@ export const CREATE_DESIGN_EXAMPLE = {
   lengthMm: 100,
   widthMm: 60,
   heightMm: 40,
+  measurementBasis: 'internal',
   title: 'กล่องกาแฟของฉัน',
   schemaVersion: 1,
   document: DOCUMENT_EXAMPLE,

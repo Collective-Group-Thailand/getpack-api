@@ -11,6 +11,8 @@ import { type LoadedOptionBase, type ResolvedBase } from '@modules/pricing/calcu
 import { CalculatorRegistry } from '@modules/pricing/calculators/calculator';
 import { Injectable, Logger } from '@nestjs/common';
 
+import { pricedConfiguration } from './quote-input';
+
 /** Thrown to roll the simulation transaction back once the numbers are taken. */
 class Rollback extends Error {
   constructor(readonly result: RepriceResult) {
@@ -89,7 +91,7 @@ export class SavedQuotesRepricer implements QuoteRepricer {
             const at = quoteOptions[0]!.quote.createdAt;
             try {
               const cfg = adapter.withQuantities(
-                input.configuration,
+                pricedConfiguration(input),
                 quoteOptions.map((o) => o.quantity),
               ) as unknown;
               const resolved = (await adapter.resolve(cfg, tx)) as ResolvedBase;

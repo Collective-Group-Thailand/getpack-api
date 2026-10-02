@@ -36,7 +36,11 @@ function option(o: QuoteRow['options'][number]): SavedQuoteOptionDto {
 
 /** The customer view: no factory, buy price or margin (D-050). */
 export function quoteDto(q: QuoteRow, now = new Date()): SavedQuoteDto {
-  const input = q.input as { configuration?: unknown; deliveryPostcode?: string | null };
+  const input = q.input as {
+    configuration?: unknown;
+    deliveryPostcode?: string | null;
+    dimensions?: SavedQuoteDto['dimensions'];
+  };
   return {
     id: q.publicId,
     quoteCode: q.quoteCode,
@@ -54,6 +58,7 @@ export function quoteDto(q: QuoteRow, now = new Date()): SavedQuoteDto {
     pdfStatus: pdfStatus(q),
     currency: 'THB',
     sharedAt: q.sharedAt ? toBangkokIso(q.sharedAt) : null,
+    dimensions: input.dimensions ?? null,
     createdAt: toBangkokIso(q.createdAt),
   };
 }

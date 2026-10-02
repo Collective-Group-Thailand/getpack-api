@@ -9,6 +9,7 @@ import {
   constructionFamily,
   type ConvertedSizes,
   convertSize,
+  internalSize,
   type MeasurementBasis,
   type Size,
 } from './dimension-conversion';
@@ -52,6 +53,66 @@ export class SpecsService {
       if (error instanceof BasisError) throw new DomainException(error.code);
       throw error;
     }
+  }
+
+  /**
+   * Measures a calculator configuration (D-182): its basis (assumed when absent — `internal` for a box, tray or
+   * sleeve, `product` for a flat product — until the basis becomes required, U2.1 contract plan), every basis of its
+   * family, and the size the calculator prices: internal for box calculators (converted with the material's caliper,
+   * `specs.caliper_missing` without one), the product size for flat products. Returns the configuration to price
+   * (`basis` removed, sizes replaced) and the frozen `dimensions`.
+   */
+  async measureConfiguration(
+    db: Tx,
+    calculator: CalculatorKey,
+    cfg: Record<string, unknown>,
+  ): Promise<{ cfg: Record<string, unknown>; dimensions: QuoteDimensions | null }> {
+    if (!DIMENSIONED.has(calculator) || typeof cfg['w'] !== 'number' || typeof cfg['l'] !== 'number') {
+      return { cfg, dimensions: null };
+    }
+    const hasDepth = typeof cfg['d'] === 'number';
+    const entered: Size = { w: cfg['w'], l: cfg['l'], d: hasDepth ? (cfg['d'] as number) : 0 };
+    const [pattern, material] = await Promise.all([
+      typeof cfg['patternId'] === 'string'
+        ? db.pattern.findUnique({
+            where: { publicId: cfg['patternId'] },
+            select: { geometryFormula: true, corrugateFormula: true },
+          })
+        : null,
+      typeof cfg['materialId'] === 'string'
+        ? db.material.findUnique({ where: { publicId: cfg['materialId'] }, select: { caliperMm: true } })
+        : null,
+    ]);
+    const family = constructionFamily(calculator, pattern, hasDepth ? entered.d : null);
+    const given = cfg['basis'] as MeasurementBasis | undefined;
+    const basis: MeasurementBasis = given ?? (family === 'flat' ? 'product' : 'internal');
+    const caliper = material?.caliperMm ? Number(material.caliperMm) : null;
+    let converted: ConvertedSizes;
+    let priced: Size;
+    try {
+      converted = convertSize(entered, basis, family, caliper);
+      priced = family === 'flat' ? converted.sizes.product! : internalSize(converted);
+    } catch (error) {
+      if (error instanceof BasisError) {
+        throw new DomainException(error.code, {
+          errors: [{ path: 'configuration.basis', code: error.code, message: `basis ${basis} (${family})` }],
+        });
+      }
+      throw error;
+    }
+    const { basis: _basis, ...rest } = cfg;
+    void _basis;
+    return {
+      cfg: { ...rest, w: priced.w, l: priced.l, ...(hasDepth ? { d: priced.d } : {}) },
+      dimensions: {
+        basis,
+        basisAssumed: given === undefined,
+        entered,
+        priced,
+        pricedBasis: family === 'flat' ? 'product' : 'internal',
+        ...toDto(converted),
+      },
+    };
   }
 
   /** `store.specs.convertDimensions`: public ids in, every basis of the family out. */
@@ -100,6 +161,25 @@ export class SpecsService {
     });
     return toDto(converted);
   }
+}
+
+/** The calculators whose configurations carry a size (D-182). */
+const DIMENSIONED: ReadonlySet<CalculatorKey> = new Set([
+  'folding',
+  'corrugate',
+  'tag_sleeve',
+  'label',
+  'pouch',
+]);
+
+/** The sizes of a priced configuration, frozen in the quote (`quotes.input.dimensions`, input schema 2). */
+export interface QuoteDimensions extends ConvertedDimensionsDto {
+  basis: MeasurementBasis;
+  /** The request named no basis: assumed until the basis is required (U2.1 contract plan). */
+  basisAssumed: boolean;
+  entered: Size;
+  priced: Size;
+  pricedBasis: 'internal' | 'product';
 }
 
 export function toDto(c: ConvertedSizes): ConvertedDimensionsDto {

@@ -12,6 +12,7 @@ import {
 import { OrdersService } from '@modules/orders/orders.service';
 import { CapacityService } from '@modules/partners/capacity/capacity.service';
 import { QuoteEngineService } from '@modules/pricing/quotes/quote-engine.service';
+import { pricedConfiguration } from '@modules/quotes/quote-input';
 import { Injectable, Logger } from '@nestjs/common';
 import { ActivityLogService } from '@platform/activity/activity-log.service';
 import { AuditService } from '@platform/audit/audit.service';
@@ -297,10 +298,13 @@ export class ProductionService {
         promisedShipDate: order.promisedShipDate,
         quantityOrdered: quantity,
         specSnapshot: {
-          schemaVersion: 1,
+          schemaVersion: 2,
           productTypeCode: order.productType.code,
           productTypeNameTh: order.productType.nameTh,
           configuration: ((order.quote.input ?? {}) as { configuration?: unknown }).configuration ?? null,
+          // D-182: the sizes as priced (instant quotes) or as requested (RFQ quotes), with their basis.
+          dimensions: ((order.quote.input ?? {}) as { dimensions?: unknown }).dimensions ?? null,
+          size: ((order.quote.input ?? {}) as { size?: unknown }).size ?? null,
           quantity,
           unit: kind === 'mockup' ? 'set' : order.unit,
           designOption: order.designOption,
@@ -769,7 +773,7 @@ export class ProductionService {
 
   /** The order's margin at another factory's buy price (its calculator), customer price unchanged. */
   private async marginAt(tx: Tx, order: OrderForRelease, factory: { id: bigint; publicId: string }) {
-    const cfg = ((order.quote.input ?? {}) as { configuration?: Record<string, unknown> }).configuration;
+    const cfg = pricedConfiguration(order.quote.input);
     const calculator = order.productType.calculatorKey;
     if (!cfg || !calculator || !this.quotes.hasCalculator(calculator)) return null;
     // Only a path the factory holds for this configuration: tier A, or tier B inside its envelope (D-043, D-234).
