@@ -520,44 +520,47 @@ enum QuoteStatus {
  * lifecycle columns change (trigger). Valid for `quotes.validity_days` with the price locked.
  */
 model Quote {
-  id                 BigInt       @id(map: "pk_quotes") @default(autoincrement())
-  publicId           String       @unique(map: "ux_quotes__public_id") @default(dbgenerated("uuidv7()")) @map("public_id") @db.Uuid
-  quoteCode          String?      @unique(map: "ux_quotes__quote_code") @map("quote_code")
-  entityId           BigInt       @map("entity_id")
-  channel            SalesChannel
-  source             QuoteSource
-  rfqQuoteId         BigInt?      @unique(map: "ux_quotes__rfq_quote_id") @map("rfq_quote_id")
-  customerUserId     BigInt?      @map("customer_user_id")
-  createdById        BigInt?      @map("created_by")
-  anonymousId        String?      @map("anonymous_id")
-  productTypeId      BigInt       @map("product_type_id")
-  catalogProductId   BigInt?      @map("catalog_product_id")
-  stockProductId     BigInt?      @map("stock_product_id")
-  input              Json
-  inputSchemaVersion Int          @map("input_schema_version") @db.SmallInt
+  id                       BigInt       @id(map: "pk_quotes") @default(autoincrement())
+  publicId                 String       @unique(map: "ux_quotes__public_id") @default(dbgenerated("uuidv7()")) @map("public_id") @db.Uuid
+  quoteCode                String?      @unique(map: "ux_quotes__quote_code") @map("quote_code")
+  entityId                 BigInt       @map("entity_id")
+  channel                  SalesChannel
+  source                   QuoteSource
+  rfqQuoteId               BigInt?      @unique(map: "ux_quotes__rfq_quote_id") @map("rfq_quote_id")
+  customerUserId           BigInt?      @map("customer_user_id")
+  createdById              BigInt?      @map("created_by")
+  anonymousId              String?      @map("anonymous_id")
+  productTypeId            BigInt       @map("product_type_id")
+  catalogProductId         BigInt?      @map("catalog_product_id")
+  stockProductId           BigInt?      @map("stock_product_id")
+  input                    Json
+  inputSchemaVersion       Int          @map("input_schema_version") @db.SmallInt
   /// Human-readable spec lines resolved when the quote was made (U-B0.1, schema-design A-51): catalogue names frozen like the price.
-  specSummary        Json?        @map("spec_summary")
-  calculatorVersion  String       @map("calculator_version")
-  configRefs         Json         @map("config_refs")
-  status             QuoteStatus
-  validUntil         DateTime     @map("valid_until") @db.Timestamptz(6)
-  shareTokenHash     Bytes?       @unique(map: "ux_quotes__share_token_hash") @map("share_token_hash")
-  sharedAt           DateTime?    @map("shared_at") @db.Timestamptz(6)
+  specSummary              Json?        @map("spec_summary")
+  calculatorVersion        String       @map("calculator_version")
+  configRefs               Json         @map("config_refs")
+  status                   QuoteStatus
+  validUntil               DateTime     @map("valid_until") @db.Timestamptz(6)
+  shareTokenHash           Bytes?       @unique(map: "ux_quotes__share_token_hash") @map("share_token_hash")
+  sharedAt                 DateTime?    @map("shared_at") @db.Timestamptz(6)
   /// D-185 / F5: the share link stops resolving after this (configurations.share_link_days); null = not shared.
-  shareExpiresAt     DateTime?    @map("share_expires_at") @db.Timestamptz(6)
+  shareExpiresAt           DateTime?    @map("share_expires_at") @db.Timestamptz(6)
   /// CS's internal note on a quotation (U-B0.2); never shown to the customer or on the PDF.
-  staffNote          String?      @map("staff_note")
-  pdfFileId          BigInt?      @map("pdf_file_id")
-  pdfRequestedAt     DateTime?    @map("pdf_requested_at") @db.Timestamptz(6)
-  deliveryPostcode   String?      @map("delivery_postcode") @db.Char(5)
-  promotionCode      String?      @map("promotion_code")
-  snapshotSha256     Bytes        @map("snapshot_sha256")
-  supersededById     BigInt?      @map("superseded_by_id")
-  convertedAt        DateTime?    @map("converted_at") @db.Timestamptz(6)
-  createdAt          DateTime     @default(now()) @map("created_at") @db.Timestamptz(6)
-  updatedAt          DateTime     @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
-  rowVersion         Int          @default(1) @map("row_version")
-  companyId          BigInt?      @map("company_id")
+  staffNote                String?      @map("staff_note")
+  pdfFileId                BigInt?      @map("pdf_file_id")
+  pdfRequestedAt           DateTime?    @map("pdf_requested_at") @db.Timestamptz(6)
+  deliveryPostcode         String?      @map("delivery_postcode") @db.Char(5)
+  promotionCode            String?      @map("promotion_code")
+  snapshotSha256           Bytes        @map("snapshot_sha256")
+  supersededById           BigInt?      @map("superseded_by_id")
+  convertedAt              DateTime?    @map("converted_at") @db.Timestamptz(6)
+  createdAt                DateTime     @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt                DateTime     @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+  rowVersion               Int          @default(1) @map("row_version")
+  companyId                BigInt?      @map("company_id")
+  /// D-240: the Structure Advisor recommendation and choice the customer saved this quotation from; set once.
+  advisoryRecommendationId BigInt?      @map("advisory_recommendation_id")
+  advisoryChoiceId         BigInt?      @map("advisory_choice_id")
 
   entity         Entity          @relation("QuoteEntity", fields: [entityId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_quotes__entity_id")
   rfqQuote       RfqQuote?       @relation("QuoteRfqQuote", fields: [rfqQuoteId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_quotes__rfq_quote_id")
@@ -577,11 +580,15 @@ model Quote {
   cartItemsPending CartItem[] @relation("CartItemPendingQuote")
   orders           Order[]    @relation("OrderQuote")
 
-  company       Company?       @relation("QuoteCompany", fields: [companyId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_quotes__company_id")
-  discountMemos DiscountMemo[] @relation("DiscountMemoQuote")
+  advisoryRecommendation AdvisoryRecommendation? @relation("QuoteAdvisoryRecommendation", fields: [advisoryRecommendationId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_quotes__advisory_recommendation_id")
+  advisoryChoice         AdvisoryChoice?         @relation("QuoteAdvisoryChoice", fields: [advisoryChoiceId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_quotes__advisory_choice_id")
+  company                Company?                @relation("QuoteCompany", fields: [companyId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_quotes__company_id")
+  discountMemos          DiscountMemo[]          @relation("DiscountMemoQuote")
 
   configurationDrafts ConfigurationDraft[] @relation("ConfigurationDraftQuote")
 
+  @@index([advisoryRecommendationId], map: "ix_quotes__advisory_recommendation_id")
+  @@index([advisoryChoiceId], map: "ix_quotes__advisory_choice_id")
   @@index([companyId], map: "ix_quotes__company_id")
   @@index([customerUserId, createdAt(sort: Desc)], map: "ix_quotes__customer_user_id__created_at")
   @@index([status, validUntil], map: "ix_quotes__status__valid_until")

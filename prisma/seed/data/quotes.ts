@@ -13,12 +13,18 @@ export const UNMET_DEMAND_REASONS = [
 ] as const;
 
 /**
- * Pricing feature flags (U-B6 tail): a ported engine stays off until its validation document is signed (A-16, D-100).
+ * Pricing feature flags (U-B6 tail, U2.2): a ported engine or the Structure Advisor stays off until its validation
+ * document is signed (A-16, D-100, D-189).
  */
 export const PRICING_FEATURE_FLAGS = [
   {
     key: 'pricing.folding_engine_b',
     description:
       'Folding engine B (type-B factories, D-233) in customer and CS quotes — off until docs/pricing-validation-folding-b.md is signed; factory breakdowns price B meanwhile',
+  },
+  {
+    key: 'advisory.structure_advisor',
+    description:
+      'Structure Advisor for customers (store.advisory.recommend / choose, D-237) — off until the golden cases of docs/advisory-validation.md are signed by the Partner Manager and Prepress (D-189); staff evaluate meanwhile',
   },
 ] as const;

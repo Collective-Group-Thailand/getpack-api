@@ -166,6 +166,28 @@ export interface SettingValues {
   'fulfilment.dimensional_tolerance_mm': Partial<Record<string, string>>;
   /** D-186 colour tolerance ΔE2000 for printed products (decimal strings). */
   'fulfilment.colour_tolerance_delta_e': { standard: string; flexo: string };
+  /** Not seeded (D-237): the Structure Advisor rule set; `advisory.not_configured` until a Superadmin sets it. */
+  'advisory.rule_set': AdvisoryRuleSet;
+}
+
+/** D-237 Structure Advisor rule set (decimal strings; factors 0 < f ≤ 1, applied as retained strength). */
+export interface AdvisoryRuleSet {
+  /** k in BCT [N] = k × ECT [kN/m] × √(caliper [mm] × perimeter [mm]) (simplified McKee). */
+  mckeeConstant: string;
+  /** ± % around the McKee estimate: the range shown, the low end decides. */
+  uncertaintyPct: string;
+  /** Corrugate formulas the relation is applied to (D-235). */
+  formulas: string[];
+  /** Below this margin % of the low end over the requirement, the option warns `thin_margin`. */
+  thinMarginPct: string;
+  factors: {
+    humidity: Record<'dry' | 'normal' | 'humid' | 'very_humid', string>;
+    storage: Record<'up_to_10_days' | 'up_to_30_days' | 'up_to_90_days' | 'over_90_days', string>;
+    palletPattern: Record<'none' | 'column' | 'interlocked', string>;
+    palletOverhang: Record<'none' | 'overhang', string>;
+    transport: Record<'pickup' | 'parcel_domestic' | 'pallet_domestic' | 'sea_export', string>;
+    fragility: Record<'low' | 'medium' | 'high', string>;
+  };
 }
 
 export type SettingKey = keyof SettingValues;

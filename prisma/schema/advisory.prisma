@@ -1,0 +1,80 @@
+// U2.2 Structure Advisor (schema-design A-85; D-188, D-189, D-235–D-240).
+
+enum AdvisoryOutcome {
+  recommended
+  no_board_meets_load
+
+  @@map("advisory_outcome")
+}
+
+/// D-240: one Structure Advisor run, logged with everything needed to replay it — inputs, the rule-set setting version
+/// and its value, the engine version, the board data used and the output. Write-once.
+model AdvisoryRecommendation {
+  id                    BigInt          @id(map: "pk_advisory_recommendations") @default(autoincrement())
+  publicId              String          @unique(map: "ux_advisory_recommendations__public_id") @default(dbgenerated("uuidv7()")) @map("public_id") @db.Uuid
+  channel               SalesChannel
+  /// The customer the advice is for (signed in); null with an anonymous configurator session or a staff evaluation.
+  customerUserId        BigInt?         @map("customer_user_id")
+  anonymousId           String?         @map("anonymous_id") @db.Uuid
+  /// Staff who ran an evaluation (`admin.advisory.evaluate`).
+  createdById           BigInt?         @map("created_by")
+  productTypeId         BigInt          @map("product_type_id")
+  patternId             BigInt          @map("pattern_id")
+  catalogProductId      BigInt?         @map("catalog_product_id")
+  inputs                Json
+  ruleSetVersionId      BigInt          @map("rule_set_version_id")
+  /// The `advisory.rule_set` value of that version, copied so a replay never depends on a later read.
+  ruleSet               Json            @map("rule_set")
+  engineVersion         String          @map("engine_version")
+  /// Board data the engine read (sheet ids, ECT, caliper, grammage, factory ids — staff only).
+  boards                Json
+  output                Json
+  outcome               AdvisoryOutcome
+  recommendedMaterialId BigInt?         @map("recommended_material_id")
+  warningCodes          String[]        @default([]) @map("warning_codes")
+  createdAt             DateTime        @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  customer            User?            @relation("AdvisoryRecommendationCustomer", fields: [customerUserId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_advisory_recommendations__customer_user_id")
+  createdBy           User?            @relation("AdvisoryRecommendationCreatedBy", fields: [createdById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_advisory_recommendations__created_by")
+  productType         ProductType      @relation("AdvisoryRecommendationProductType", fields: [productTypeId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_advisory_recommendations__product_type_id")
+  pattern             Pattern          @relation("AdvisoryRecommendationPattern", fields: [patternId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_advisory_recommendations__pattern_id")
+  catalogProduct      CatalogProduct?  @relation("AdvisoryRecommendationCatalogProduct", fields: [catalogProductId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_advisory_recommendations__catalog_product_id")
+  ruleSetVersion      SettingVersion   @relation("AdvisoryRecommendationRuleSetVersion", fields: [ruleSetVersionId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_advisory_recommendations__rule_set_version_id")
+  recommendedMaterial Material?        @relation("AdvisoryRecommendationMaterial", fields: [recommendedMaterialId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_advisory_recommendations__recommended_material_id")
+  choices             AdvisoryChoice[]
+  quotes              Quote[]          @relation("QuoteAdvisoryRecommendation")
+
+  @@index([customerUserId, createdAt], map: "ix_advisory_recommendations__customer_user_id__created_at")
+  @@index([anonymousId], map: "ix_advisory_recommendations__anonymous_id")
+  @@index([createdAt], map: "ix_advisory_recommendations__created_at")
+  @@index([createdById], map: "ix_advisory_recommendations__created_by")
+  @@index([productTypeId], map: "ix_advisory_recommendations__product_type_id")
+  @@index([patternId], map: "ix_advisory_recommendations__pattern_id")
+  @@index([catalogProductId], map: "ix_advisory_recommendations__catalog_product_id")
+  @@index([ruleSetVersionId], map: "ix_advisory_recommendations__rule_set_version_id")
+  @@index([recommendedMaterialId], map: "ix_advisory_recommendations__recommended_material_id")
+  @@map("advisory_recommendations")
+}
+
+/// D-240 / D-189: the customer's choice of a board from a recommendation, with the warning codes acknowledged — who
+/// (user or anonymous session) and when. Append-only: the latest row is the current choice.
+model AdvisoryChoice {
+  id                   BigInt   @id(map: "pk_advisory_choices") @default(autoincrement())
+  publicId             String   @unique(map: "ux_advisory_choices__public_id") @default(dbgenerated("uuidv7()")) @map("public_id") @db.Uuid
+  recommendationId     BigInt   @map("recommendation_id")
+  materialId           BigInt   @map("material_id")
+  acknowledgedWarnings String[] @default([]) @map("acknowledged_warnings")
+  chosenByUserId       BigInt?  @map("chosen_by_user_id")
+  anonymousId          String?  @map("anonymous_id") @db.Uuid
+  createdAt            DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  recommendation AdvisoryRecommendation @relation(fields: [recommendationId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_advisory_choices__recommendation_id")
+  material       Material               @relation("AdvisoryChoiceMaterial", fields: [materialId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_advisory_choices__material_id")
+  chosenBy       User?                  @relation("AdvisoryChoiceChosenBy", fields: [chosenByUserId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_advisory_choices__chosen_by_user_id")
+  quotes         Quote[]                @relation("QuoteAdvisoryChoice")
+
+  @@index([recommendationId, createdAt], map: "ix_advisory_choices__recommendation_id__created_at")
+  @@index([materialId], map: "ix_advisory_choices__material_id")
+  @@index([chosenByUserId], map: "ix_advisory_choices__chosen_by_user_id")
+  @@map("advisory_choices")
+}

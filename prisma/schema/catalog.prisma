@@ -273,6 +273,8 @@ model ProductType {
 
   configurationDrafts ConfigurationDraft[] @relation("ConfigurationDraftProductType")
 
+  advisoryRecommendations AdvisoryRecommendation[] @relation("AdvisoryRecommendationProductType")
+
   @@index([categoryId], map: "ix_product_types__category_id")
   @@map("product_types")
 }
@@ -424,6 +426,8 @@ model CatalogProduct {
   plServicePrices PlServicePrice[] @relation("PlServicePriceCatalogProduct")
 
   configurationDrafts ConfigurationDraft[] @relation("ConfigurationDraftCatalogProduct")
+
+  advisoryRecommendations AdvisoryRecommendation[] @relation("AdvisoryRecommendationCatalogProduct")
 
   @@index([productTypeId], map: "ix_catalog_products__product_type_id")
   @@index([seoPageId], map: "ix_catalog_products__seo_page_id")
@@ -587,6 +591,8 @@ model Pattern {
   plCorrugateFixedOptions      PlCorrugateFixedOption[]      @relation("PlCorrugateFixedOptionPattern")
   plCorrugatePatternConditions PlCorrugatePatternCondition[] @relation("PlCorrugatePatternConditionPattern")
   // --- end Corrugate price components
+
+  advisoryRecommendations AdvisoryRecommendation[] @relation("AdvisoryRecommendationPattern")
 
   @@index([productTypeId], map: "ix_patterns__product_type_id")
   @@index([imageFileId], map: "ix_patterns__image_file_id")
@@ -769,6 +775,10 @@ model Material {
   plBoardPrices          PlBoardPrice[]          @relation("PlBoardPriceMaterial")
   plCorrugatePrintPrices PlCorrugatePrintPrice[] @relation("PlCorrugatePrintPriceMaterial")
   // --- end Corrugate price components
+
+  boardStrengthSheets     BoardStrengthSheet[]     @relation("BoardStrengthSheetMaterial")
+  advisoryRecommendations AdvisoryRecommendation[] @relation("AdvisoryRecommendationMaterial")
+  advisoryChoices         AdvisoryChoice[]         @relation("AdvisoryChoiceMaterial")
 
   @@index([familyId], map: "ix_materials__family_id")
   @@index([fluteTypeId], map: "ix_materials__flute_type_id")

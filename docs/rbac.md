@@ -45,6 +45,8 @@ Legend: ● granted · ◆ granted and sensitive (cost/margin data, D-141).
 | `geography.manage` — Maintain provinces, districts, subdistricts and postcodes (D-161, D-170) | ● |  |  |  | ● |  |  |  |  |  |  |  |  |  |  |
 | `partners.read` — Read partner factories and their onboarding | ● | ● | ● |  | ● |  |  |  | ● | ● |  |  | ● | ● |  |
 | `partners.manage` — Create factories, run onboarding, capability, tiers, capacity and status changes (D-011, D-041, D-171) | ● |  |  |  |  |  |  |  |  |  |  |  | ● |  |  |
+| `advisory.read` — Read Structure Advisor recommendations (inputs, rule set, board data, choices) and replay them (D-240) | ● |  |  |  | ● | ● | ● | ● |  |  |  |  | ● | ● |  |
+| `advisory.evaluate` — Run the Structure Advisor for a configuration, also while it is off for customers (D-237, D-239) | ● |  |  |  | ● | ● | ● | ● |  |  |  |  | ● |  |  |
 | `partners.site_visits.record` — Record site visits of partner factories (D-041) | ● |  |  |  |  |  |  |  |  |  |  |  | ● |  |  |
 | `price_proposals.review` — Review price proposals, draft platform rate cards and decide lines (D-040, D-042) | ● |  |  |  |  |  |  |  |  |  |  |  | ● |  |  |
 | `price_suggestions.read` — See staff-only price suggestions, benchmarks and impact simulations (D-040, D-044) | ◆ | ◆ |  |  |  |  |  |  |  |  |  |  | ◆ |  |  |

@@ -489,6 +489,8 @@ model SettingVersion {
   loyaltyMembershipsTiers LoyaltyMembership[] @relation("LoyaltyMembershipTiersVersion")
   pointsEntries           PointsEntry[]       @relation("PointsEntryPointValueVersion")
 
+  advisoryRecommendations AdvisoryRecommendation[] @relation("AdvisoryRecommendationRuleSetVersion")
+
   @@unique([settingId, versionNo], map: "ux_setting_versions__setting_id__version_no")
   @@index([settingId, effectiveFrom(sort: Desc), versionNo(sort: Desc)], map: "ix_setting_versions__resolution", where: raw("status = 'approved'"))
   @@index([approvalRequestId], map: "ix_setting_versions__approval_request_id")
@@ -885,6 +887,8 @@ model FileObject {
   patternImages    Pattern[]    @relation("PatternImageFile")
 
   privacyExports PrivacyRequest[] @relation("PrivacyRequestExportFile")
+
+  boardStrengthSheets BoardStrengthSheet[] @relation("BoardStrengthSheetFile")
 
   @@index([sha256], map: "ix_file_objects__sha256")
   @@index([uploadStatus, expiresAt], map: "ix_file_objects__upload_status__expires_at")

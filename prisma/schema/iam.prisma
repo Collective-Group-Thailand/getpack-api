@@ -644,6 +644,11 @@ model User {
 
   configurationDrafts ConfigurationDraft[] @relation("ConfigurationDraftOwner")
 
+  boardStrengthSheetsCreated BoardStrengthSheet[]     @relation("BoardStrengthSheetCreatedBy")
+  advisoryRecommendations    AdvisoryRecommendation[] @relation("AdvisoryRecommendationCustomer")
+  advisoryRecommendationsRun AdvisoryRecommendation[] @relation("AdvisoryRecommendationCreatedBy")
+  advisoryChoices            AdvisoryChoice[]         @relation("AdvisoryChoiceChosenBy")
+
   @@unique([kind, email], map: "ux_users__kind__email", where: raw("((email IS NOT NULL) AND (anonymised_at IS NULL))"))
   @@unique([kind, phone], map: "ux_users__kind__phone", where: raw("((phone IS NOT NULL) AND (anonymised_at IS NULL))"))
   @@index([createdById], map: "ix_users__created_by")

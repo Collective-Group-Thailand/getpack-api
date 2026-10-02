@@ -1,3 +1,5 @@
+import { Ajv, type ValidateFunction } from 'ajv';
+
 /** Value types of `settings.value_type` (schema-design §3.1). */
 export type SettingValueTypeName =
   | 'string'
@@ -67,6 +69,24 @@ export function settingValueError(
         : 'must be { from: "HH:MM", to: "HH:MM" }';
     }
     case 'json':
-      return value !== null && typeof value === 'object' ? null : 'must be a JSON object or array';
+      if (value === null || typeof value !== 'object') return 'must be a JSON object or array';
+      return jsonSchemaError(value, schema);
   }
+}
+
+const ajv = new Ajv({ allErrors: false, strict: false });
+const compiled = new Map<string, ValidateFunction>();
+
+/** A JSON setting whose schema declares a `type` is checked against it (e.g. `advisory.rule_set`, D-237). */
+function jsonSchemaError(value: unknown, schema?: Record<string, unknown> | null): string | null {
+  if (!schema || typeof schema['type'] !== 'string') return null;
+  const key = JSON.stringify(schema);
+  let validate = compiled.get(key);
+  if (!validate) {
+    validate = ajv.compile(schema);
+    compiled.set(key, validate);
+  }
+  if (validate(value)) return null;
+  const error = validate.errors?.[0];
+  return `${error?.instancePath || '/'} ${error?.message ?? 'does not match the schema'}`;
 }

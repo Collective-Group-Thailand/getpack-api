@@ -136,6 +136,21 @@ export const PERMISSIONS = [
     description: 'Create factories, run onboarding, capability, tiers, capacity and status changes',
     decisionRefs: ['D-011', 'D-041', 'D-171'],
   },
+
+  // --- Structure Advisor (U2.2, D-188, D-189, D-235–D-240)
+  {
+    key: 'advisory.read',
+    audience: 'staff',
+    description:
+      'Read Structure Advisor recommendations (inputs, rule set, board data, choices) and replay them',
+    decisionRefs: ['D-240'],
+  },
+  {
+    key: 'advisory.evaluate',
+    audience: 'staff',
+    description: 'Run the Structure Advisor for a configuration, also while it is off for customers',
+    decisionRefs: ['D-237', 'D-239'],
+  },
   {
     key: 'partners.site_visits.record',
     audience: 'staff',

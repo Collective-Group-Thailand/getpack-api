@@ -4,6 +4,8 @@
  * human code formats (schema-design Q-2).
  * Money and percentages are decimal strings (CLAUDE.md); percentages are in percent (10 = 10 %).
  */
+import { ADVISORY_RULE_SET_SCHEMA } from '../../../src/modules/advisory/rule-set';
+
 export type Confirmation = 'confirmed' | 'proposed' | 'pending_cpa' | 'pending_business';
 
 export interface SettingSeed {
@@ -824,6 +826,20 @@ export const SETTINGS: readonly SettingSeed[] = [
     description:
       'D-186 published colour tolerance, ΔE2000 against the approved proof, for printed products (≤ 3; ≤ 5 for flexo)',
     decisions: ['D-186'],
+    ownerRole: 'superadmin',
+  },
+
+  // --- Structure Advisor (U2.2, D-237): definition only — not seeded in production; the advisor answers
+  // `advisory.not_configured` until a Superadmin sets it (the proposal is in docs/advisory-validation.md).
+  {
+    key: 'advisory.rule_set',
+    valueType: 'json',
+    value: null,
+    unset: true,
+    valueSchema: ADVISORY_RULE_SET_SCHEMA,
+    description:
+      'D-237 Structure Advisor rule set: McKee constant, ± uncertainty band %, eligible corrugate formulas, thin-margin threshold % and one factor (0 < f ≤ 1) per band of humidity, storage time, pallet pattern, pallet overhang, transport mode and fragility; not seeded — no advice until a Superadmin sets it after the D-189 sign-off',
+    decisions: ['D-188', 'D-237', 'D-239'],
     ownerRole: 'superadmin',
   },
 

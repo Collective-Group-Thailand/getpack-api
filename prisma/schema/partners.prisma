@@ -406,6 +406,8 @@ model Factory {
   vendorDeductions  VendorDeduction[]  @relation("VendorDeductionFactory")
   // --- end Finance B5.3
 
+  boardStrengthSheets BoardStrengthSheet[] @relation("BoardStrengthSheetFactory")
+
   @@unique([taxId, branchCode], map: "ux_factories__tax_id__branch_code")
   @@index([status], map: "ix_factories__status")
   @@index([calendarId], map: "ix_factories__calendar_id")
@@ -2847,3 +2849,36 @@ model PlCodeMargin {
 }
 
 // --- end Folding engine B price components
+
+/// D-236 (U2.2, schema-design A-85): a partner's signed board data sheet for one corrugated board — the only board
+/// strength the Structure Advisor reads (D-188). Effective-dated, never edited: a new version supersedes.
+model BoardStrengthSheet {
+  id              BigInt   @id(map: "pk_board_strength_sheets") @default(autoincrement())
+  publicId        String   @unique(map: "ux_board_strength_sheets__public_id") @default(dbgenerated("uuidv7()")) @map("public_id") @db.Uuid
+  factoryId       BigInt   @map("factory_id")
+  materialId      BigInt   @map("material_id")
+  versionNo       Int      @map("version_no")
+  /// Edge crush test, kN/m.
+  ectKnPerM       Decimal  @map("ect_kn_per_m") @db.Decimal(8, 3)
+  caliperMm       Decimal  @map("caliper_mm") @db.Decimal(6, 3)
+  grammageGsm     Decimal  @map("grammage_gsm") @db.Decimal(8, 2)
+  /// The standard the sheet states (e.g. ISO 3037).
+  testMethod      String   @map("test_method")
+  dataSheetFileId BigInt   @map("data_sheet_file_id")
+  signedOn        DateTime @map("signed_on") @db.Date
+  effectiveFrom   DateTime @map("effective_from") @db.Timestamptz(6)
+  note            String?
+  createdAt       DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  createdById     BigInt?  @map("created_by")
+
+  factory       Factory    @relation("BoardStrengthSheetFactory", fields: [factoryId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_board_strength_sheets__factory_id")
+  material      Material   @relation("BoardStrengthSheetMaterial", fields: [materialId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_board_strength_sheets__material_id")
+  dataSheetFile FileObject @relation("BoardStrengthSheetFile", fields: [dataSheetFileId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_board_strength_sheets__data_sheet_file_id")
+  createdBy     User?      @relation("BoardStrengthSheetCreatedBy", fields: [createdById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_board_strength_sheets__created_by")
+
+  @@unique([factoryId, materialId, versionNo], map: "ux_board_strength_sheets__factory_id__material_id__version_no")
+  @@index([materialId, effectiveFrom], map: "ix_board_strength_sheets__material_id__effective_from")
+  @@index([dataSheetFileId], map: "ix_board_strength_sheets__data_sheet_file_id")
+  @@index([createdById], map: "ix_board_strength_sheets__created_by")
+  @@map("board_strength_sheets")
+}
