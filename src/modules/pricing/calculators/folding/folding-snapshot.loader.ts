@@ -4,6 +4,7 @@ import { type Prisma } from '@generated/prisma/client';
 import { Injectable } from '@nestjs/common';
 
 import { type LoadedSell, loadSellSnapshot } from '../shared/sell-snapshot';
+import { type BTables } from './b/tables';
 import { type FoldingEngine, type FoldingOption, type FoldingPart } from './folding-calculator';
 import {
   FOLDING_DETERMINANTS,
@@ -602,60 +603,63 @@ export class FoldingSnapshotLoader {
           digitalMethod: r.digitalMethod as 'per_piece' | 'per_piece_area_band' | 'per_carton',
         })),
       };
-      const tables: OffsetTables | DigitalTables =
-        engine === 'a_digital'
-          ? {
-              ...common,
-              terms: {
-                ...offsetTerms,
-                paperMethod: t.digitalPaperMethod as DigitalTables['terms']['paperMethod'],
-                trimDlMm: num0(t.trimDlMm),
-                trimDwMm: num0(t.trimDwMm),
-                usePaperAmountForCal: t.usePaperAmountForCal,
-                printMethod: t.digitalPrintMethod as DigitalTables['terms']['printMethod'],
-                printBand: t.digitalPrintBand as DigitalTables['terms']['printBand'],
-                printByMaterial: t.digitalPrintByMaterial,
-                finishMethod: t.digitalFinishMethod as DigitalTables['terms']['finishMethod'],
-                diecutBlock: t.digitalDiecutBlock as DigitalTables['terms']['diecutBlock'],
-                costMultiplier: num0(t.costMultiplier),
-                minLotPrice: num(t.minLotPrice),
-              },
-              printTypeId: pt.toString(),
-              materialPrices: materialPrices.map((r) => ({
-                minPaperAmount: r.minPaperAmount,
-                maxPaperAmount: r.maxPaperAmount,
-                costPerKg: num(r.costPerKg),
-                costPerPcs: num(r.costPerPcs),
-                costPerM2: num(r.costPerM2),
-              })),
-            }
-          : {
-              ...common,
-              terms: offsetTerms,
-              standardInkColours: new Set(
-                inks.filter((i) => i.isStandard).map((i) => i.inkColourId.toString()),
-              ),
-              printPlates: printPlates.map((r) => ({
-                machineId: r.machineId.toString(),
-                wMin: num0(r.plateWMinIn),
-                wMax: num0(r.plateWMaxIn),
-                lMin: num0(r.plateLMinIn),
-                lMax: num0(r.plateLMaxIn),
-                platePrice: num0(r.platePrice),
-              })),
-              finishPlates: finishPlates.map((r) => ({
-                finishId: r.finishId.toString(),
-                machineId: r.machineId.toString(),
-                wMin: num0(r.plateWMinIn),
-                wMax: num0(r.plateWMaxIn),
-                lMin: num0(r.plateLMinIn),
-                lMax: num0(r.plateLMaxIn),
-                pricePerIn2: num0(r.pricePerIn2),
-                minPlatePrice: num0(r.minPlatePrice),
-              })),
-              assemblySheets: assemblySheets.map((r) => ({ wIn: num0(r.sheetWIn), lIn: num0(r.sheetLIn) })),
-              patternKind: resolved.patternKind,
-            };
+      const printPlateRows = printPlates.map((r) => ({
+        machineId: r.machineId.toString(),
+        wMin: num0(r.plateWMinIn),
+        wMax: num0(r.plateWMaxIn),
+        lMin: num0(r.plateLMinIn),
+        lMax: num0(r.plateLMaxIn),
+        platePrice: num0(r.platePrice),
+      }));
+      const tables: OffsetTables | DigitalTables | BTables =
+        engine === 'b'
+          ? await this.bTables(v, pt, difficultyLevelId, num0(t.factoryMarginPct), common, printPlateRows, db)
+          : engine === 'a_digital'
+            ? {
+                ...common,
+                terms: {
+                  ...offsetTerms,
+                  paperMethod: t.digitalPaperMethod as DigitalTables['terms']['paperMethod'],
+                  trimDlMm: num0(t.trimDlMm),
+                  trimDwMm: num0(t.trimDwMm),
+                  usePaperAmountForCal: t.usePaperAmountForCal,
+                  printMethod: t.digitalPrintMethod as DigitalTables['terms']['printMethod'],
+                  printBand: t.digitalPrintBand as DigitalTables['terms']['printBand'],
+                  printByMaterial: t.digitalPrintByMaterial,
+                  finishMethod: t.digitalFinishMethod as DigitalTables['terms']['finishMethod'],
+                  diecutBlock: t.digitalDiecutBlock as DigitalTables['terms']['diecutBlock'],
+                  costMultiplier: num0(t.costMultiplier),
+                  minLotPrice: num(t.minLotPrice),
+                },
+                printTypeId: pt.toString(),
+                materialPrices: materialPrices.map((r) => ({
+                  minPaperAmount: r.minPaperAmount,
+                  maxPaperAmount: r.maxPaperAmount,
+                  costPerKg: num(r.costPerKg),
+                  costPerPcs: num(r.costPerPcs),
+                  costPerM2: num(r.costPerM2),
+                })),
+              }
+            : {
+                ...common,
+                terms: offsetTerms,
+                standardInkColours: new Set(
+                  inks.filter((i) => i.isStandard).map((i) => i.inkColourId.toString()),
+                ),
+                printPlates: printPlateRows,
+                finishPlates: finishPlates.map((r) => ({
+                  finishId: r.finishId.toString(),
+                  machineId: r.machineId.toString(),
+                  wMin: num0(r.plateWMinIn),
+                  wMax: num0(r.plateWMaxIn),
+                  lMin: num0(r.plateLMinIn),
+                  lMax: num0(r.plateLMaxIn),
+                  pricePerIn2: num0(r.pricePerIn2),
+                  minPlatePrice: num0(r.minPlatePrice),
+                })),
+                assemblySheets: assemblySheets.map((r) => ({ wIn: num0(r.sheetWIn), lIn: num0(r.sheetLIn) })),
+                patternKind: resolved.patternKind,
+              };
       const sell = await this.sell(resolved.productTypeId, pt, at, db);
       loaded.push({
         priceListVersionId: v,
@@ -682,6 +686,88 @@ export class FoldingSnapshotLoader {
       });
     }
     return loaded;
+  }
+
+  /**
+   * Engine B's tables for one print type (U-B6 tail, D-233): its own components (schema-design A-76) and engine A's
+   * waste, finish, die-cut and plate lines of the same print type. Code margins come ordered by their range.
+   */
+  private async bTables(
+    v: bigint,
+    pt: bigint,
+    difficultyLevelId: bigint,
+    factoryMarginPct: number,
+    common: Pick<
+      BTables,
+      'finishWastes' | 'diecutWastes' | 'assemblyWastes' | 'finishPrices' | 'diecutPrices' | 'diecutBlocks'
+    >,
+    printPlates: BTables['printPlates'],
+    db: Tx,
+  ): Promise<BTables> {
+    const scoped = { priceListVersionId: v, printTypeId: pt, difficultyLevelId };
+    const byId = { orderBy: { id: 'asc' as const } };
+    const [printWastes, printPrices, foilPrices, assemblyPrices, codeMargins] = await Promise.all([
+      db.plBPrintWaste.findMany({ where: scoped, ...byId }),
+      db.plBPrintPrice.findMany({ where: scoped, ...byId }),
+      db.plFoilPrice.findMany({ where: scoped, ...byId }),
+      db.plBAssemblyPrice.findMany({ where: scoped, ...byId }),
+      db.plCodeMargin.findMany({
+        where: { priceListVersionId: v, printTypeId: pt },
+        orderBy: [{ maxRangeContPct: 'asc' }, { id: 'asc' }],
+      }),
+    ]);
+    return {
+      terms: { factoryMarginPct },
+      printWastes: printWastes.map((r) => ({
+        inkColourId: r.inkColourId.toString(),
+        colourCount: r.colourCount,
+        percentWaste: num0(r.percentWaste),
+        setupWaste: r.setupWaste,
+      })),
+      finishWastes: common.finishWastes,
+      diecutWastes: common.diecutWastes,
+      assemblyWastes: common.assemblyWastes,
+      printPlates,
+      printPrices: printPrices.map((r) => ({
+        machineId: r.machineId.toString(),
+        inkColourId: r.inkColourId.toString(),
+        colourCount: r.colourCount,
+        priceInkPerM2: num0(r.priceInkPerM2),
+        priceColorCombineSpecialColor: num0(r.priceColorCombineSpecialColor),
+      })),
+      finishPrices: common.finishPrices,
+      foilPrices: foilPrices.map((r) => ({
+        finishId: r.finishId.toString(),
+        priceByAreaPerIn2: num0(r.priceByAreaPerIn2),
+        bahtPerRoll: num0(r.bahtPerRoll),
+        rollWidthIn: num0(r.rollWidthIn),
+        rollLengthIn: num0(r.rollLengthIn),
+        wMin: num0(r.blockWMinIn),
+        wMax: num0(r.blockWMaxIn),
+        lMin: num0(r.blockLMinIn),
+        lMax: num0(r.blockLMaxIn),
+        toolingPrice: num0(r.toolingPrice),
+      })),
+      diecutPrices: common.diecutPrices,
+      diecutBlocks: common.diecutBlocks,
+      assemblyPrices: assemblyPrices.map((r) => ({
+        assemblyId: r.assemblyId.toString(),
+        rangeMin: r.rangeAmountMin,
+        rangeMax: r.rangeAmountMax,
+        assemblyType: r.assemblyType as 1 | 2 | 3 | 4,
+        pricePerDepthM: num0(r.pricePerDepthM),
+        minPricePerAreaIn2: num0(r.minPricePerAreaIn2),
+        pricePerPcs: num0(r.pricePerPcs),
+        minPrice: num0(r.minPrice),
+        blockPrice: num0(r.blockPrice),
+        materialPricePerIn2: num0(r.materialPricePerIn2),
+      })),
+      codeMargins: codeMargins.map((r) => ({
+        maxRangeContPct: num0(r.maxRangeContPct),
+        minContBahtPerLot: num0(r.minContBahtPerLot),
+        codeName: r.codeName,
+      })),
+    };
   }
 
   // --- sell side -------------------------------------------------------------------------------

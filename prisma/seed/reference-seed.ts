@@ -20,7 +20,7 @@ import { NOTIFICATION_ROUTES, NOTIFICATION_TEMPLATES } from './data/notification
 import { AGREEMENT_TEMPLATES } from './data/partners';
 import { CUSTOMER_POSTING_RULES } from './data/posting-rules-customer';
 import { VENDOR_POSTING_RULES } from './data/posting-rules-vendor';
-import { UNMET_DEMAND_REASONS } from './data/quotes';
+import { PRICING_FEATURE_FLAGS, UNMET_DEMAND_REASONS } from './data/quotes';
 import { CREDIT_NOTE_REASONS, FINANCE_FEATURE_FLAGS } from './data/receivables';
 import { CONSENT_PURPOSES, NATIONAL_CALENDAR, SOD_RULES, TAX_RATES, TEAMS } from './data/reference';
 import { ENTITY_SETTING_KEYS, SETTINGS, type SettingSeed } from './data/settings';
@@ -583,7 +583,12 @@ async function ensureMilestoneRoutes(tx: Tx, count: (what: string) => void): Pro
 
 /** Payment provider (D-005, D-176) and fulfilment integration (B4) feature flags, off. */
 async function ensurePaymentFeatureFlags(tx: Tx, count: (what: string) => void): Promise<void> {
-  for (const flag of [...PAYMENT_FEATURE_FLAGS, ...FULFILMENT_FEATURE_FLAGS, ...FINANCE_FEATURE_FLAGS]) {
+  for (const flag of [
+    ...PAYMENT_FEATURE_FLAGS,
+    ...FULFILMENT_FEATURE_FLAGS,
+    ...FINANCE_FEATURE_FLAGS,
+    ...PRICING_FEATURE_FLAGS,
+  ]) {
     if (await tx.featureFlag.findUnique({ where: { key: flag.key } })) continue;
     await tx.featureFlag.create({
       data: { key: flag.key, description: flag.description, enabled: false, ownerRoleKey: 'superadmin' },

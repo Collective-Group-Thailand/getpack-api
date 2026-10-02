@@ -89,6 +89,11 @@ export interface CalculationLogInput {
   inputSchemaVersion: number;
 }
 
+/** How options are loaded: `preview` also prices print types not yet released for quotes (factory breakdowns, D-233). */
+export interface LoadOptions {
+  preview?: boolean;
+}
+
 export interface CalculatorAdapter<
   Cfg = unknown,
   Resolved extends ResolvedBase = ResolvedBase,
@@ -106,6 +111,7 @@ export interface CalculatorAdapter<
     resolved: Resolved,
     at: Date,
     db: Tx,
+    opts?: LoadOptions,
   ): Promise<Loaded[]>;
   /** Pure: no database or clock. `withDesign` false prices the factory side only. */
   calculate(resolved: Resolved, loaded: readonly Loaded[], opts: { withDesign: boolean }): PricedOption[];

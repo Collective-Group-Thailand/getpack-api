@@ -137,3 +137,4 @@ Every integration flag is seeded **off** and switched on by a superadmin once it
 | `payments.scb_direct_debit` | SCB direct debit — R2 (D-111), adapter stubbed |
 | `drawing.engine` | Dieline drawing engine @packio/dieline (B4.1) — off until the package is published; drawings answer 501 |
 | `e_tax.sending` | Send e-Tax invoices / e-Receipts to the Revenue Department (D-091): XML and PDF are generated in R1; sending is enabled in R2 after registration |
+| `pricing.folding_engine_b` | Folding engine B (type-B factories, D-233) in customer and CS quotes — off until docs/pricing-validation-folding-b.md is signed; factory breakdowns price B meanwhile |

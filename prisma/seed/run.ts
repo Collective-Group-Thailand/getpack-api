@@ -9,6 +9,7 @@ import { config } from 'dotenv';
 import { PrismaClient } from '../../src/generated/prisma/client';
 import { seedDevCorrugate } from './dev-corrugate';
 import { seedDevFolding } from './dev-folding';
+import { seedDevFoldingB } from './dev-folding-b';
 import { seedDevLabel } from './dev-label';
 import { seedDevPouch } from './dev-pouch';
 import { seedDev } from './dev-seed';
@@ -59,6 +60,9 @@ async function main(): Promise<void> {
       // A fake folding factory so `pnpm dev` can price a folding box (B2.3).
       const folding = await prisma.$transaction((tx) => seedDevFolding(tx), { timeout: 60_000 });
       if (folding.created) report['dev_folding_factory'] = 1;
+      // A fake type-B folding factory, priced by engine B once `pricing.folding_engine_b` is on (U-B6 tail, D-233).
+      const foldingB = await prisma.$transaction((tx) => seedDevFoldingB(tx), { timeout: 60_000 });
+      if (foldingB.created) report['dev_folding_b_factory'] = 1;
       // Its corrugate price list (U-B6).
       const corrugate = await prisma.$transaction((tx) => seedDevCorrugate(tx), { timeout: 60_000 });
       if (corrugate.created) report['dev_corrugate_price_list'] = 1;

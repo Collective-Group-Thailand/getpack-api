@@ -16,6 +16,7 @@ import { SettingsService } from '@platform/settings/settings.service';
 import {
   type AnyCalculatorAdapter,
   type LoadedOptionBase,
+  type LoadOptions,
   type PricedStep,
   type ResolvedBase,
 } from '../calculators/adapter';
@@ -388,6 +389,7 @@ export class QuoteEngineService {
     cfg: unknown,
     factory: { id: bigint; publicId: string },
     at = new Date(),
+    opts: LoadOptions = {},
   ): Promise<FactoryQuoteView> {
     const db = this.prisma;
     const adapter = this.adapter(key);
@@ -401,7 +403,7 @@ export class QuoteEngineService {
       orderBy: [{ effectiveFrom: 'desc' }, { versionNo: 'desc' }],
     });
     if (!version) return { calculatorVersion: adapter.version, priceListVersionId: null, options: [] };
-    const loaded = (await adapter.options(factory, version.id, resolved, at, db)) as LoadedOptionBase[];
+    const loaded = (await adapter.options(factory, version.id, resolved, at, db, opts)) as LoadedOptionBase[];
     const options = adapter.calculate(resolved, loaded, { withDesign: false });
     return {
       calculatorVersion: adapter.version,

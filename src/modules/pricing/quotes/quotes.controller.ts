@@ -295,8 +295,9 @@ export class PartnerFoldingPricingController {
     summary: 'Price a folding configuration on my own price list',
     description:
       'The buy side only, on the factory’s own price list in force: cost, buy price per part, layouts, sheets, lead ' +
-      'time, per print type. Never Packio’s sell price or another factory (D-044, D-042); another factory is 404.',
-    implements: ['D-044', 'D-042', 'D-040'],
+      'time, per print type. Never Packio’s sell price or another factory (D-044, D-042); another factory is 404. ' +
+      'Engine B print types are priced here before they are released to quotes, for checking (D-233).',
+    implements: ['D-044', 'D-042', 'D-040', 'D-233'],
   })
   @ApiBody({ type: FoldingConfigurationDto, examples: { default: { value: CONFIGURATION_EXAMPLE } } })
   @ApiSuccess(200, {
@@ -311,7 +312,8 @@ export class PartnerFoldingPricingController {
     @Body() body: FoldingConfigurationDto,
   ): Promise<FactoryQuoteDto> {
     const factory = await this.access.factory(actor, factoryId);
-    return this.engine.priceForFactory('folding', body, factory);
+    // Engine B options are priced before their release so the factory can check its B price list (D-233).
+    return this.engine.priceForFactory('folding', body, factory, new Date(), { preview: true });
   }
 }
 

@@ -2,10 +2,12 @@ import { type Tx } from '@database/prisma.service';
 import { type Prisma } from '@generated/prisma/client';
 import { type ShipmentPart } from '@modules/shipping/shipping-quote.service';
 import { Injectable, type OnModuleInit } from '@nestjs/common';
+import { FeatureFlagsService } from '@platform/feature-flags/feature-flags.service';
 
 import {
   type CalculationLogInput,
   type CalculatorAdapter,
+  type LoadOptions,
   type PricedOption,
   type ResolvedBase,
 } from '../adapter';
@@ -25,6 +27,11 @@ export type LoadedFoldingOption = LoadedOption & {
   factoryId: string;
 };
 
+/** Feature flag that releases folding engine B to customer and CS quotes (D-233). */
+export const ENGINE_B_FLAG = 'pricing.folding_engine_b';
+const ENGINE_B_HELD =
+  'engine B awaits sign-off of docs/pricing-validation-folding-b.md (flag pricing.folding_engine_b, D-233)';
+
 /** The folding calculator behind the quote engine (B2.3): loader + pure `calculate_cs` port. */
 @Injectable()
 export class FoldingQuoteAdapter
@@ -36,6 +43,7 @@ export class FoldingQuoteAdapter
   constructor(
     private readonly loader: FoldingSnapshotLoader,
     private readonly registry: CalculatorRegistry,
+    private readonly flags: FeatureFlagsService,
   ) {}
 
   onModuleInit(): void {
@@ -57,9 +65,20 @@ export class FoldingQuoteAdapter
     resolved: ResolvedFoldingQuote,
     at: Date,
     db: Tx,
+    opts: LoadOptions = {},
   ): Promise<LoadedFoldingOption[]> {
     const loaded = await this.loader.options(factory, priceListVersionId, resolved, at, db);
-    return loaded.map((l) => ({ ...l, optionKey: l.option.optionKey, factoryId: l.option.factoryId }));
+    // Engine B is released by the flag once its validation document is signed (D-233); a factory breakdown prices it.
+    const holdB =
+      !opts.preview &&
+      loaded.some((l) => l.option.engine === 'b') &&
+      !(await this.flags.isEnabled(ENGINE_B_FLAG));
+    return loaded.map((l) => ({
+      ...l,
+      ...(holdB && l.option.engine === 'b' ? { option: { ...l.option, refusal: ENGINE_B_HELD } } : {}),
+      optionKey: l.option.optionKey,
+      factoryId: l.option.factoryId,
+    }));
   }
 
   calculate(

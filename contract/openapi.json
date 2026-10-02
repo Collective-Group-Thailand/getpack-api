@@ -41676,7 +41676,10 @@
           "pouch_process_prices",
           "pouch_min_quantities",
           "pouch_factory_margins",
-          "pouch_option_rules"
+          "pouch_option_rules",
+          "b_print_wastes",
+          "b_print_prices",
+          "b_assembly_prices"
         ],
         "type": "string"
       },
@@ -271203,7 +271206,7 @@
     },
     "/v1/partner/factories/{factoryId}/pricing/folding/calculate": {
       "post": {
-        "description": "The buy side only, on the factory’s own price list in force: cost, buy price per part, layouts, sheets, lead time, per print type. Never Packio’s sell price or another factory (D-044, D-042); another factory is 404.\n\nImplements: D-044, D-042, D-040.",
+        "description": "The buy side only, on the factory’s own price list in force: cost, buy price per part, layouts, sheets, lead time, per print type. Never Packio’s sell price or another factory (D-044, D-042); another factory is 404. Engine B print types are priced here before they are released to quotes, for checking (D-233).\n\nImplements: D-044, D-042, D-040, D-233.",
         "operationId": "partner.pricingFolding.calculate",
         "parameters": [
           {

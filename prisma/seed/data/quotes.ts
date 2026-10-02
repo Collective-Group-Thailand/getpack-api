@@ -11,3 +11,14 @@ export const UNMET_DEMAND_REASONS = [
   { code: 'customer_declined', nameTh: 'ลูกค้าไม่รับใบเสนอราคา', nameEn: 'Customer declined the quotation' },
   { code: 'expired', nameTh: 'หมดอายุ', nameEn: 'Expired' },
 ] as const;
+
+/**
+ * Pricing feature flags (U-B6 tail): a ported engine stays off until its validation document is signed (A-16, D-100).
+ */
+export const PRICING_FEATURE_FLAGS = [
+  {
+    key: 'pricing.folding_engine_b',
+    description:
+      'Folding engine B (type-B factories, D-233) in customer and CS quotes — off until docs/pricing-validation-folding-b.md is signed; factory breakdowns price B meanwhile',
+  },
+] as const;

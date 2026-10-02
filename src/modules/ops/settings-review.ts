@@ -1,6 +1,7 @@
 import { APPROVAL_POLICIES } from '../../../prisma/seed/data/approval-policies';
 import { PAYMENT_FEATURE_FLAGS } from '../../../prisma/seed/data/commerce';
 import { FULFILMENT_FEATURE_FLAGS } from '../../../prisma/seed/data/fulfilment';
+import { PRICING_FEATURE_FLAGS } from '../../../prisma/seed/data/quotes';
 import { FINANCE_FEATURE_FLAGS } from '../../../prisma/seed/data/receivables';
 import { ENTITY_SETTING_KEYS, SETTINGS } from '../../../prisma/seed/data/settings';
 
@@ -60,9 +61,12 @@ export function renderSettingsReview(): string {
     '',
     '| Flag | What it switches |',
     '|---|---|',
-    ...[...PAYMENT_FEATURE_FLAGS, ...FULFILMENT_FEATURE_FLAGS, ...FINANCE_FEATURE_FLAGS].map(
-      (f) => `| \`${f.key}\` | ${cell(f.description)} |`,
-    ),
+    ...[
+      ...PAYMENT_FEATURE_FLAGS,
+      ...FULFILMENT_FEATURE_FLAGS,
+      ...FINANCE_FEATURE_FLAGS,
+      ...PRICING_FEATURE_FLAGS,
+    ].map((f) => `| \`${f.key}\` | ${cell(f.description)} |`),
     '',
   ];
   return lines.join('\n');
