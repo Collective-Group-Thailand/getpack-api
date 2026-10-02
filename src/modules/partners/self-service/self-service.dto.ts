@@ -1,4 +1,5 @@
 import { PageQuery } from '@common/pagination/pagination.dto';
+import { EnumField, RefField } from '@modules/catalog/crud/dto-fields';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { UserRefDto } from '@platform/approvals/approvals.dto';
 import { Type } from 'class-transformer';
@@ -15,8 +16,10 @@ import {
   MaxLength,
   Min,
   MinLength,
+  ValidateNested,
 } from 'class-validator';
 
+import { ENVELOPE_EXAMPLE, TierBEnvelopeDto } from '../configuration/tier-b-envelope.dto';
 import { CapacityWeekDto } from '../operations.dto';
 
 /**
@@ -70,6 +73,32 @@ export class FactoryChangeRequestDto {
   @ApiProperty({ type: [String], format: 'date', example: ['2026-10-20'] })
   preferredDates!: string[];
 
+  @ApiProperty({
+    type: String,
+    format: 'uuid',
+    nullable: true,
+    example: null,
+    description: 'Topic participation_tier: the product type (D-234)',
+  })
+  productTypeId!: string | null;
+
+  @ApiProperty({
+    enum: ['A', 'B', 'C'],
+    enumName: 'ParticipationTier',
+    nullable: true,
+    example: null,
+    description: 'Topic participation_tier: the tier asked for',
+  })
+  proposedTier!: 'A' | 'B' | 'C' | null;
+
+  @ApiProperty({
+    type: TierBEnvelopeDto,
+    nullable: true,
+    example: null,
+    description: 'Topic participation_tier, tier B: the envelope asked for (D-234)',
+  })
+  proposedEnvelope!: TierBEnvelopeDto | null;
+
   @ApiProperty({ enum: CHANGE_REQUEST_STATUSES, enumName: 'FactoryChangeRequestStatus', example: 'open' })
   status!: string;
 
@@ -96,6 +125,9 @@ export const CHANGE_REQUEST_EXAMPLE: FactoryChangeRequestDto = {
   topic: 'site_visit',
   message: 'ขอนัดตรวจโรงงานหลังติดตั้งเครื่องใหม่',
   preferredDates: ['2026-10-20'],
+  productTypeId: null,
+  proposedTier: null,
+  proposedEnvelope: null,
   status: 'open',
   response: null,
   respondedAt: null,
@@ -127,6 +159,30 @@ export class CreateFactoryChangeRequestDto {
   @ArrayMaxSize(5)
   @Matches(DAY, { each: true })
   preferredDates?: string[];
+
+  @RefField({
+    example: IDS.productType,
+    optional: true,
+    description: 'Topic participation_tier: the product type the tier is for (D-234)',
+  })
+  productTypeId?: string;
+
+  @EnumField(['A', 'B', 'C'], 'ParticipationTier', {
+    example: 'B',
+    optional: true,
+    description: 'Topic participation_tier: the tier asked for',
+  })
+  proposedTier?: 'A' | 'B' | 'C';
+
+  @ApiPropertyOptional({
+    type: TierBEnvelopeDto,
+    example: ENVELOPE_EXAMPLE,
+    description: 'Topic participation_tier, tier B: the envelope asked for; staff apply it (D-234)',
+  })
+  @IsOptional()
+  @ValidateNested()
+  @Type(() => TierBEnvelopeDto)
+  proposedEnvelope?: TierBEnvelopeDto;
 }
 
 export class ChangeRequestListQuery extends PageQuery {

@@ -19,6 +19,8 @@ import {
   type SetToleranceDto,
   type VersionMetaDto,
 } from './configuration.dto';
+import { validatedEnvelope } from './envelope-catalogue';
+import { type TierBEnvelope } from './tier-b-envelope';
 
 /** Back-dating tolerance for clock skew; history is never rewritten (ADR-0005). */
 const BACKDATE_SLACK_MS = 60_000;
@@ -144,6 +146,7 @@ export class ConfigurationService {
           ...versionMeta(v),
           tier: v.tier,
           envelopeNote: v.envelopeNote,
+          envelope: (v.envelope as TierBEnvelope | null) ?? null,
         });
         return {
           productTypeId: p.productType.publicId,
@@ -210,6 +213,18 @@ export class ConfigurationService {
     const factory = await this.access.factory(actor, factoryPublicId);
     return this.prisma.withTx(async (tx) => {
       const productTypeId = await this.productType(tx, input.productTypeId);
+      // D-234: a tier-B path covers only its envelope; tiers A and C carry none.
+      let envelope: TierBEnvelope | null = null;
+      if (input.tier === 'B') {
+        const type = await tx.productType.findUniqueOrThrow({ where: { id: productTypeId } });
+        envelope = await validatedEnvelope(tx, type, input.envelope ?? null);
+      } else if (input.envelope) {
+        throw new DomainException('validation.failed', {
+          errors: [
+            { path: 'envelope', code: 'tier_b_only', message: 'only a tier-B participation has an envelope' },
+          ],
+        });
+      }
       // D-043: a tier is a promise to quote, so the factory must be able to make the type.
       const capable = await tx.factoryCapability.count({
         where: { factoryId: factory.id, productTypeId, status: 'active' },
@@ -224,7 +239,11 @@ export class ConfigurationService {
         }));
       return this.write(tx, actor, factory, 'participation', tx.factoryParticipationVersion, {
         identity: { participationId: identity.id },
-        values: { tier: input.tier, envelopeNote: input.envelopeNote ?? null },
+        values: {
+          tier: input.tier,
+          envelopeNote: input.envelopeNote ?? null,
+          envelope: envelope ?? Prisma.DbNull,
+        },
         effectiveFrom: input.effectiveFrom,
         reason: input.reason,
       });
@@ -401,6 +420,8 @@ export class ConfigurationService {
         versionNo: version.versionNo,
         effectiveFrom: effectiveFrom.toISOString(),
         approvalRequestId,
+        // The tier and its envelope travel with the event (D-234): the coverage map and availability follow them.
+        ...(kind === 'participation' && { values: jsonSafe(change.values) }),
       },
     );
     return {
@@ -501,6 +522,9 @@ export class ConfigurationService {
 /** Decimal values as strings for approval payloads (JSON). */
 function jsonSafe(values: Record<string, unknown>): Record<string, unknown> {
   return Object.fromEntries(
-    Object.entries(values).map(([k, v]) => [k, v instanceof Prisma.Decimal ? v.toString() : v]),
+    Object.entries(values).map(([k, v]) => [
+      k,
+      v instanceof Prisma.Decimal ? v.toString() : v === Prisma.DbNull ? null : v,
+    ]),
   );
 }

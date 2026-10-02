@@ -30,6 +30,8 @@ describe('tier-B envelope (D-043, D-234)', () => {
     );
     expect(parseEnvelope('service', {}).errors[0]!.message).toMatch(/at least one dimension/);
     expect(parseEnvelope('folding', []).errors[0]!.message).toBe('must be an object');
+    // A validated DTO instance carries unset keys as undefined: they restrict nothing.
+    expect(parseEnvelope('folding', { materialIds: [ART], stockProductIds: undefined }).errors).toEqual([]);
   });
 
   it('checks bands, uuids and duplicates', () => {

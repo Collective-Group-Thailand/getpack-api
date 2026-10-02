@@ -19483,6 +19483,44 @@
             "maxItems": 5,
             "type": "array"
           },
+          "productTypeId": {
+            "description": "Topic participation_tier: the product type the tier is for (D-234)",
+            "example": "0192f3a0-7c1e-7d2a-9b1f-000000c0a003",
+            "format": "uuid",
+            "type": "string"
+          },
+          "proposedEnvelope": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/TierBEnvelopeDto"
+              }
+            ],
+            "description": "Topic participation_tier, tier B: the envelope asked for; staff apply it (D-234)",
+            "example": {
+              "materialIds": [
+                "0192f3a0-7c1e-7d2a-9b1f-00000000d301"
+              ],
+              "printTypeIds": [
+                "0192f3a0-7c1e-7d2a-9b1f-00000000d101"
+              ],
+              "quantity": {
+                "max": 20000,
+                "min": 500
+              },
+              "standardSizeIds": [
+                "0192f3a0-7c1e-7d2a-9b1f-00000000d201"
+              ]
+            }
+          },
+          "proposedTier": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ParticipationTier"
+              }
+            ],
+            "description": "Topic participation_tier: the tier asked for",
+            "example": "B"
+          },
           "topic": {
             "allOf": [
               {
@@ -27594,6 +27632,39 @@
             },
             "type": "array"
           },
+          "productTypeId": {
+            "description": "Topic participation_tier: the product type (D-234)",
+            "example": null,
+            "format": "uuid",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "proposedEnvelope": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/TierBEnvelopeDto"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Topic participation_tier, tier B: the envelope asked for (D-234)",
+            "example": null
+          },
+          "proposedTier": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ParticipationTier"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Topic participation_tier: the tier asked for",
+            "example": null
+          },
           "respondedAt": {
             "example": null,
             "format": "date-time",
@@ -27645,6 +27716,9 @@
           "topic",
           "message",
           "preferredDates",
+          "productTypeId",
+          "proposedTier",
+          "proposedEnvelope",
           "status",
           "response",
           "respondedAt",
@@ -37130,8 +37204,20 @@
             "format": "date-time",
             "type": "string"
           },
+          "envelope": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/TierBEnvelopeDto"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Tier B: what the path covers (D-234); null for tiers A and C",
+            "example": null
+          },
           "envelopeNote": {
-            "description": "Tier B: what the price lines cover",
+            "description": "Tier B: a human summary of what the path covers",
             "example": null,
             "type": [
               "string",
@@ -37170,7 +37256,8 @@
           "reason",
           "approvalRequestId",
           "tier",
-          "envelopeNote"
+          "envelopeNote",
+          "envelope"
         ],
         "type": "object"
       },
@@ -52407,6 +52494,32 @@
             "example": "2026-10-01T00:00:00+07:00",
             "format": "date-time",
             "type": "string"
+          },
+          "envelope": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/TierBEnvelopeDto"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Required for tier B, refused otherwise (D-234): the configurations the path covers — quantity, print types, sizes (ranges or standard sizes), patterns, materials, stock products or service items, as the type’s calculator carries",
+            "example": {
+              "materialIds": [
+                "0192f3a0-7c1e-7d2a-9b1f-00000000d301"
+              ],
+              "printTypeIds": [
+                "0192f3a0-7c1e-7d2a-9b1f-00000000d101"
+              ],
+              "quantity": {
+                "max": 20000,
+                "min": 500
+              },
+              "standardSizeIds": [
+                "0192f3a0-7c1e-7d2a-9b1f-00000000d201"
+              ]
+            }
           },
           "envelopeNote": {
             "example": null,
@@ -165751,6 +165864,7 @@
                       "current": {
                         "approvalRequestId": null,
                         "effectiveFrom": "2026-09-26T10:00:00+07:00",
+                        "envelope": null,
                         "envelopeNote": null,
                         "reason": "Agreed with the factory at onboarding",
                         "status": "approved",
@@ -169118,7 +169232,7 @@
     },
     "/v1/admin/factories/{factoryId}/participations": {
       "post": {
-        "description": "New version (ADR-0005). A tier needs an active capability for the type. A = full price list, B = within the lines it covers, C = quote on request (D-043).\n\nImplements: D-043, D-100.",
+        "description": "New version (ADR-0005), effective-dated and never backdated, audited. A tier needs an active capability for the type. A = full price list, B = instant only inside its `envelope` (required for B, refused for A and C; checked per calculator and against the catalogue) and where the price lines price it, C = quote on request (D-043, D-234). Set by staff with `partners.manage`, no approval step (D-234).\n\nImplements: D-043, D-234, D-100.",
         "operationId": "admin.factories.setParticipation",
         "parameters": [
           {
@@ -169143,6 +169257,23 @@
                     "productTypeId": "0192f3a0-7c1e-7d2a-9b1f-00000000c002",
                     "reason": "Full price list agreed",
                     "tier": "A"
+                  }
+                },
+                "tierB": {
+                  "value": {
+                    "envelope": {
+                      "quantity": {
+                        "max": null,
+                        "min": 500
+                      },
+                      "standardSizeIds": [
+                        "0192f3a0-7c1e-7d2a-9b1f-00000000d201"
+                      ]
+                    },
+                    "envelopeNote": "Standard sizes on art card only",
+                    "productTypeId": "0192f3a0-7c1e-7d2a-9b1f-00000000c002",
+                    "reason": "Standard sizes priced at onboarding",
+                    "tier": "B"
                   }
                 }
               },
@@ -173911,7 +174042,7 @@
     },
     "/v1/admin/factory-change-requests": {
       "get": {
-        "description": "What factories asked the Partner team, newest first; filter by status, topic or factory (U-B0.3).\n\nImplements: D-021, D-041, D-043, D-167, D-173, D-022.",
+        "description": "What factories asked the Partner team, newest first; filter by status, topic or factory (U-B0.3).\n\nImplements: D-021, D-041, D-043, D-234, D-167, D-173, D-022.",
         "operationId": "admin.factoryChangeRequests.list",
         "parameters": [
           {
@@ -174012,6 +174143,9 @@
                       "preferredDates": [
                         "2026-10-20"
                       ],
+                      "productTypeId": null,
+                      "proposedEnvelope": null,
+                      "proposedTier": null,
                       "respondedAt": null,
                       "respondedBy": null,
                       "response": null,
@@ -174181,7 +174315,7 @@
     },
     "/v1/admin/factory-change-requests/{requestId}/actions/answer": {
       "post": {
-        "description": "Mark it in progress, or close it as done / declined with a response the factory reads. The change itself is made through its governed endpoint (versions, approvals); this records the answer and notifies the factory (U-B0.3). 409 once closed.\n\nImplements: D-021, D-041, D-043, D-167, D-173, D-022.",
+        "description": "Mark it in progress, or close it as done / declined with a response the factory reads. The change itself is made through its governed endpoint (versions, approvals); this records the answer and notifies the factory (U-B0.3). 409 once closed.\n\nImplements: D-021, D-041, D-043, D-234, D-167, D-173, D-022.",
         "operationId": "admin.factoryChangeRequests.answer",
         "parameters": [
           {
@@ -174235,6 +174369,9 @@
                   "preferredDates": [
                     "2026-10-20"
                   ],
+                  "productTypeId": null,
+                  "proposedEnvelope": null,
+                  "proposedTier": null,
                   "respondedAt": "2026-10-02T09:00:00+07:00",
                   "respondedBy": {
                     "displayName": "ทีมพาร์ทเนอร์ (fake)",
@@ -264080,7 +264217,7 @@
     },
     "/v1/partner/factories/{factoryId}/change-requests": {
       "get": {
-        "description": "What my factory asked the Partner team, newest first, with the team’s answer (U-B0.3).\n\nImplements: D-021, D-041, D-043, D-167, D-173, D-022.",
+        "description": "What my factory asked the Partner team, newest first, with the team’s answer (U-B0.3).\n\nImplements: D-021, D-041, D-043, D-234, D-167, D-173, D-022.",
         "operationId": "partner.changeRequests.list",
         "parameters": [
           {
@@ -264173,6 +264310,9 @@
                       "preferredDates": [
                         "2026-10-20"
                       ],
+                      "productTypeId": null,
+                      "proposedEnvelope": null,
+                      "proposedTier": null,
                       "respondedAt": null,
                       "respondedBy": null,
                       "response": null,
@@ -264360,7 +264500,7 @@
         ]
       },
       "post": {
-        "description": "For what only Packio staff change — capability, capacity, delivery zones, tolerance, participation tier, pricing arrangement, payout policy — or a site visit (at least one preferred day after today). The request changes nothing by itself; the Partner team is notified and answers (U-B0.3). `Idempotency-Key` recommended.\n\nImplements: D-021, D-041, D-043, D-167, D-173, D-022.",
+        "description": "For what only Packio staff change — capability, capacity, delivery zones, tolerance, participation tier, pricing arrangement, payout policy — or a site visit (at least one preferred day after today). A tier ask (`participation_tier`) may name the product type, the tier and, for tier B, the envelope (D-234), checked like the participation write. The request changes nothing by itself; the Partner team is notified and answers (U-B0.3). `Idempotency-Key` recommended.\n\nImplements: D-021, D-041, D-043, D-234, D-167, D-173, D-022.",
         "operationId": "partner.changeRequests.create",
         "parameters": [
           {
@@ -264391,6 +264531,19 @@
                     ],
                     "topic": "site_visit"
                   }
+                },
+                "tierB": {
+                  "value": {
+                    "message": "ขอเปิดราคาทันทีสำหรับขนาดมาตรฐาน",
+                    "productTypeId": "0192f3a0-7c1e-7d2a-9b1f-000000c0a003",
+                    "proposedEnvelope": {
+                      "standardSizeIds": [
+                        "0192f3a0-7c1e-7d2a-9b1f-00000000d201"
+                      ]
+                    },
+                    "proposedTier": "B",
+                    "topic": "participation_tier"
+                  }
                 }
               },
               "schema": {
@@ -264417,6 +264570,9 @@
                   "preferredDates": [
                     "2026-10-20"
                   ],
+                  "productTypeId": null,
+                  "proposedEnvelope": null,
+                  "proposedTier": null,
                   "respondedAt": null,
                   "respondedBy": null,
                   "response": null,
@@ -264678,6 +264834,7 @@
                       "current": {
                         "approvalRequestId": null,
                         "effectiveFrom": "2026-09-26T10:00:00+07:00",
+                        "envelope": null,
                         "envelopeNote": null,
                         "reason": "Agreed with the factory at onboarding",
                         "status": "approved",

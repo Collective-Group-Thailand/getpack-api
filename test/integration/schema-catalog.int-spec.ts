@@ -826,6 +826,7 @@ const CHECKS = [
   'ck_pl_code_margins__code_name',
   // --- U-B6 tail tier-B envelope (A-77)
   'ck_factory_participation_versions__envelope',
+  'ck_factory_change_requests__participation',
 ];
 
 const TRIGGERS = [

@@ -1,7 +1,9 @@
 import { DecimalField, EnumField, IntField, RefField, TextField } from '@modules/catalog/crud/dto-fields';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { Type } from 'class-transformer';
-import { IsDate, IsOptional } from 'class-validator';
+import { IsDate, IsOptional, ValidateNested } from 'class-validator';
+
+import { ENVELOPE_EXAMPLE, TierBEnvelopeDto } from './tier-b-envelope.dto';
 
 export const PARTICIPATION_TIERS = ['A', 'B', 'C'] as const;
 export const OWNERSHIP_MODES = ['platform_rate_card', 'factory_price_list'] as const;
@@ -70,9 +72,17 @@ export class ParticipationVersionDto extends VersionMetaDto {
     type: String,
     nullable: true,
     example: null,
-    description: 'Tier B: what the price lines cover',
+    description: 'Tier B: a human summary of what the path covers',
   })
   envelopeNote!: string | null;
+
+  @ApiProperty({
+    type: TierBEnvelopeDto,
+    nullable: true,
+    example: null,
+    description: 'Tier B: what the path covers (D-234); null for tiers A and C',
+  })
+  envelope!: TierBEnvelopeDto | null;
 }
 
 export class SetParticipationDto extends VersionInput {
@@ -88,6 +98,19 @@ export class SetParticipationDto extends VersionInput {
 
   @TextField({ example: null, nullable: true, max: 1000 })
   envelopeNote?: string | null;
+
+  @ApiPropertyOptional({
+    type: TierBEnvelopeDto,
+    nullable: true,
+    example: ENVELOPE_EXAMPLE,
+    description:
+      'Required for tier B, refused otherwise (D-234): the configurations the path covers — quantity, print types, sizes ' +
+      '(ranges or standard sizes), patterns, materials, stock products or service items, as the type’s calculator carries',
+  })
+  @IsOptional()
+  @ValidateNested()
+  @Type(() => TierBEnvelopeDto)
+  envelope?: TierBEnvelopeDto | null;
 }
 
 // --- pricing arrangement (D-042) -------------------------------------------------------------------
@@ -300,7 +323,7 @@ export const CONFIGURATION_EXAMPLE: FactoryConfigurationDto = {
     {
       productTypeId: PRODUCT_TYPE,
       productTypeCode: 'folding_carton',
-      current: { ...VERSION_EXAMPLE, tier: 'A', envelopeNote: null },
+      current: { ...VERSION_EXAMPLE, tier: 'A', envelopeNote: null, envelope: null },
       upcoming: [],
     },
   ],

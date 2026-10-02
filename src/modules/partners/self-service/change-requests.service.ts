@@ -5,19 +5,22 @@ import { PrismaService, type Tx } from '@database/prisma.service';
 import {
   type FactoryChangeRequestStatus,
   type FactoryChangeRequestTopic,
-  type Prisma,
+  Prisma,
 } from '@generated/prisma/client';
 import { Injectable } from '@nestjs/common';
 import { ActivityLogService } from '@platform/activity/activity-log.service';
 import { AuditService } from '@platform/audit/audit.service';
 import { DomainEvents } from '@platform/domain-events/domain-events.service';
 
+import { validatedEnvelope } from '../configuration/envelope-catalogue';
+import { type TierBEnvelope } from '../configuration/tier-b-envelope';
 import { FactoryAccess } from '../factories/factory-access';
 import { type FactoryChangeRequestDto } from './self-service.dto';
 
 const USER_REF = { select: { publicId: true, displayName: true } } as const;
 const INCLUDE = {
   factory: { select: { publicId: true, code: true } },
+  productType: { select: { publicId: true } },
   respondedBy: USER_REF,
   createdBy: USER_REF,
 } satisfies Prisma.FactoryChangeRequestInclude;
@@ -33,6 +36,9 @@ export const changeRequestDto = (r: Row): FactoryChangeRequestDto => ({
   topic: r.topic,
   message: r.message,
   preferredDates: r.preferredDates.map(day),
+  productTypeId: r.productType?.publicId ?? null,
+  proposedTier: r.proposedTier,
+  proposedEnvelope: (r.proposedEnvelope as TierBEnvelope | null) ?? null,
   status: r.status,
   response: r.response,
   respondedAt: r.respondedAt ? toBangkokIso(r.respondedAt) : null,
@@ -100,7 +106,14 @@ export class FactoryChangeRequestsService {
   async create(
     actor: UserActor,
     factoryPublicId: string,
-    input: { topic: FactoryChangeRequestTopic; message: string; preferredDates?: string[] },
+    input: {
+      topic: FactoryChangeRequestTopic;
+      message: string;
+      preferredDates?: string[];
+      productTypeId?: string;
+      proposedTier?: 'A' | 'B' | 'C';
+      proposedEnvelope?: unknown;
+    },
   ): Promise<Row> {
     const factory = await this.access.factory(actor, factoryPublicId);
     const dates = [...new Set(input.preferredDates ?? [])].sort();
@@ -121,6 +134,7 @@ export class FactoryChangeRequestsService {
         errors: [{ path: 'message', code: 'too_short', message: 'at least 3 characters' }],
       });
     return this.prisma.withTx(async (tx) => {
+      const participation = await this.participationAsk(tx, input);
       const row = await tx.factoryChangeRequest.create({
         data: {
           factoryId: factory.id,
@@ -128,6 +142,7 @@ export class FactoryChangeRequestsService {
           message,
           preferredDates: dates.map((d) => new Date(`${d}T00:00:00Z`)),
           createdById: actor.userId,
+          ...participation,
         },
         include: INCLUDE,
       });
@@ -137,6 +152,51 @@ export class FactoryChangeRequestsService {
       });
       return row;
     });
+  }
+
+  /**
+   * A structured tier ask (topic `participation_tier`, D-234): the product type and tier, and for tier B an envelope
+   * checked like the participation write — so staff can apply it as asked. Other topics carry none of these.
+   */
+  private async participationAsk(
+    tx: Tx,
+    input: {
+      topic: FactoryChangeRequestTopic;
+      productTypeId?: string;
+      proposedTier?: string;
+      proposedEnvelope?: unknown;
+    },
+  ): Promise<
+    Pick<
+      Prisma.FactoryChangeRequestUncheckedCreateInput,
+      'productTypeId' | 'proposedTier' | 'proposedEnvelope'
+    >
+  > {
+    const fail = (path: string, message: string) =>
+      new DomainException('validation.failed', { errors: [{ path, code: 'participation', message }] });
+    const asked =
+      input.productTypeId !== undefined ||
+      input.proposedTier !== undefined ||
+      input.proposedEnvelope !== undefined;
+    if (!asked) return {};
+    if (input.topic !== 'participation_tier')
+      throw fail('topic', 'a tier ask uses the topic participation_tier');
+    if (!input.productTypeId) throw fail('productTypeId', 'the product type the tier is for');
+    if (!input.proposedTier) throw fail('proposedTier', 'the tier asked for');
+    const type = await tx.productType.findUnique({ where: { publicId: input.productTypeId } });
+    if (!type) throw fail('productTypeId', 'productTypeId does not exist');
+    if (input.proposedTier !== 'B' && input.proposedEnvelope !== undefined) {
+      throw fail('proposedEnvelope', 'only a tier-B ask has an envelope');
+    }
+    const envelope =
+      input.proposedTier === 'B'
+        ? await validatedEnvelope(tx, type, input.proposedEnvelope ?? null, 'proposedEnvelope')
+        : null;
+    return {
+      productTypeId: type.id,
+      proposedTier: input.proposedTier as 'A' | 'B' | 'C',
+      proposedEnvelope: (envelope ?? Prisma.DbNull) as Prisma.InputJsonValue,
+    };
   }
 
   /** The Partner team works on or closes a request; closing (done / declined) needs a response. */

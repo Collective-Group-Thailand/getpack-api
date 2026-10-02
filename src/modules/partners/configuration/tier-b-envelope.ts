@@ -85,7 +85,8 @@ export function parseEnvelope(
   const envelope: TierBEnvelope = {};
   if (!isObject(raw)) return { envelope, errors: [{ path: 'envelope', message: 'must be an object' }] };
   const allowed = new Set<string>(ENVELOPE_DIMENSIONS[calculator]);
-  for (const key of Object.keys(raw)) {
+  // A validated DTO instance carries every declared key, unset ones as undefined.
+  for (const key of Object.keys(raw).filter((k) => raw[k] !== undefined)) {
     if (!allowed.has(key)) {
       errors.push({ path: `envelope.${key}`, message: `${calculator} configurations do not carry ${key}` });
     }

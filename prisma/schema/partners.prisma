@@ -2320,30 +2320,36 @@ enum FactoryChangeRequestStatus {
 }
 
 model FactoryChangeRequest {
-  id             BigInt                     @id(map: "pk_factory_change_requests") @default(autoincrement())
-  publicId       String                     @unique(map: "ux_factory_change_requests__public_id") @default(dbgenerated("uuidv7()")) @map("public_id") @db.Uuid
-  factoryId      BigInt                     @map("factory_id")
-  topic          FactoryChangeRequestTopic
-  message        String
+  id               BigInt                     @id(map: "pk_factory_change_requests") @default(autoincrement())
+  publicId         String                     @unique(map: "ux_factory_change_requests__public_id") @default(dbgenerated("uuidv7()")) @map("public_id") @db.Uuid
+  factoryId        BigInt                     @map("factory_id")
+  topic            FactoryChangeRequestTopic
+  message          String
   /// Preferred days (site visits need at least one future day).
-  preferredDates DateTime[]                 @default([]) @map("preferred_dates") @db.Date
-  status         FactoryChangeRequestStatus @default(open)
-  response       String?
-  respondedAt    DateTime?                  @map("responded_at") @db.Timestamptz(6)
-  respondedById  BigInt?                    @map("responded_by")
-  createdAt      DateTime                   @default(now()) @map("created_at") @db.Timestamptz(6)
-  createdById    BigInt                     @map("created_by")
-  updatedAt      DateTime                   @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
-  rowVersion     Int                        @default(1) @map("row_version")
+  preferredDates   DateTime[]                 @default([]) @map("preferred_dates") @db.Date
+  /// Topic `participation_tier` (D-234): the product type, and the tier and tier-B envelope the factory asks for.
+  productTypeId    BigInt?                    @map("product_type_id")
+  proposedTier     ParticipationTier?         @map("proposed_tier")
+  proposedEnvelope Json?                      @map("proposed_envelope")
+  status           FactoryChangeRequestStatus @default(open)
+  response         String?
+  respondedAt      DateTime?                  @map("responded_at") @db.Timestamptz(6)
+  respondedById    BigInt?                    @map("responded_by")
+  createdAt        DateTime                   @default(now()) @map("created_at") @db.Timestamptz(6)
+  createdById      BigInt                     @map("created_by")
+  updatedAt        DateTime                   @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+  rowVersion       Int                        @default(1) @map("row_version")
 
-  factory     Factory @relation(fields: [factoryId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_factory_change_requests__factory_id")
-  respondedBy User?   @relation("FactoryChangeRequestRespondedBy", fields: [respondedById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_factory_change_requests__responded_by")
-  createdBy   User    @relation("FactoryChangeRequestCreatedBy", fields: [createdById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_factory_change_requests__created_by")
+  factory     Factory      @relation(fields: [factoryId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_factory_change_requests__factory_id")
+  productType ProductType? @relation("FactoryChangeRequestProductType", fields: [productTypeId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_factory_change_requests__product_type_id")
+  respondedBy User?        @relation("FactoryChangeRequestRespondedBy", fields: [respondedById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_factory_change_requests__responded_by")
+  createdBy   User         @relation("FactoryChangeRequestCreatedBy", fields: [createdById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_factory_change_requests__created_by")
 
   @@index([factoryId, status], map: "ix_factory_change_requests__factory_id__status")
   @@index([status, createdAt], map: "ix_factory_change_requests__status__created_at")
   @@index([respondedById], map: "ix_factory_change_requests__responded_by")
   @@index([createdById], map: "ix_factory_change_requests__created_by")
+  @@index([productTypeId], map: "ix_factory_change_requests__product_type_id")
   @@map("factory_change_requests")
 }
 

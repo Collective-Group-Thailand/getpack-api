@@ -269,6 +269,8 @@ model ProductType {
   journalLines JournalLine[] @relation("JournalLineProductType")
   // --- end Finance B5.1
 
+  factoryChangeRequests FactoryChangeRequest[] @relation("FactoryChangeRequestProductType")
+
   @@index([categoryId], map: "ix_product_types__category_id")
   @@map("product_types")
 }

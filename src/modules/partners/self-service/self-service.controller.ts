@@ -29,7 +29,7 @@ import { FactorySelfServiceService } from './self-service.service';
 
 const WRITE = ['http.bad_request', 'http.malformed_json', 'http.not_found', 'validation.failed'] as const;
 const factoryParam = ApiParam({ name: 'factoryId', format: 'uuid' });
-const TOPICS = ['D-021', 'D-041', 'D-043', 'D-167', 'D-173', 'D-022'];
+const TOPICS = ['D-021', 'D-041', 'D-043', 'D-234', 'D-167', 'D-173', 'D-022'];
 
 const user = (actor: Actor): UserActor => {
   if (actor.type !== 'user') throw new DomainException('auth.forbidden');
@@ -139,8 +139,10 @@ export class PartnerChangeRequestsController {
     summary: 'Ask the Partner team for a change',
     description:
       'For what only Packio staff change — capability, capacity, delivery zones, tolerance, participation tier, ' +
-      'pricing arrangement, payout policy — or a site visit (at least one preferred day after today). The request ' +
-      'changes nothing by itself; the Partner team is notified and answers (U-B0.3). `Idempotency-Key` recommended.',
+      'pricing arrangement, payout policy — or a site visit (at least one preferred day after today). A tier ask ' +
+      '(`participation_tier`) may name the product type, the tier and, for tier B, the envelope (D-234), checked like ' +
+      'the participation write. The request changes nothing by itself; the Partner team is notified and answers ' +
+      '(U-B0.3). `Idempotency-Key` recommended.',
     implements: TOPICS,
   })
   @ApiBody({
@@ -151,6 +153,15 @@ export class PartnerChangeRequestsController {
           topic: 'site_visit',
           message: 'ขอนัดตรวจโรงงานหลังติดตั้งเครื่องใหม่',
           preferredDates: ['2026-10-20'],
+        },
+      },
+      tierB: {
+        value: {
+          topic: 'participation_tier',
+          message: 'ขอเปิดราคาทันทีสำหรับขนาดมาตรฐาน',
+          productTypeId: '0192f3a0-7c1e-7d2a-9b1f-000000c0a003',
+          proposedTier: 'B',
+          proposedEnvelope: { standardSizeIds: ['0192f3a0-7c1e-7d2a-9b1f-00000000d201'] },
         },
       },
     },

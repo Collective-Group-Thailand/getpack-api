@@ -205,15 +205,29 @@ export class AdminFactoryOperationsController extends FactoryReads {
     id: 'admin.factories.setParticipation',
     summary: 'Set the participation tier of a factory for a product type',
     description:
-      'New version (ADR-0005). A tier needs an active capability for the type. A = full price list, B = within the lines it ' +
-      'covers, C = quote on request (D-043).',
-    implements: ['D-043', 'D-100'],
+      'New version (ADR-0005), effective-dated and never backdated, audited. A tier needs an active capability for the ' +
+      'type. A = full price list, B = instant only inside its `envelope` (required for B, refused for A and C; checked ' +
+      'per calculator and against the catalogue) and where the price lines price it, C = quote on request (D-043, ' +
+      'D-234). Set by staff with `partners.manage`, no approval step (D-234).',
+    implements: ['D-043', 'D-234', 'D-100'],
   })
   @ApiBody({
     type: SetParticipationDto,
     examples: {
       default: {
         value: { productTypeId: CAPABILITY_IDS.productType, tier: 'A', reason: 'Full price list agreed' },
+      },
+      tierB: {
+        value: {
+          productTypeId: CAPABILITY_IDS.productType,
+          tier: 'B',
+          envelopeNote: 'Standard sizes on art card only',
+          envelope: {
+            standardSizeIds: ['0192f3a0-7c1e-7d2a-9b1f-00000000d201'],
+            quantity: { min: 500, max: null },
+          },
+          reason: 'Standard sizes priced at onboarding',
+        },
       },
     },
   })
