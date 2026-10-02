@@ -288,7 +288,8 @@ export class MaterialDto {
     type: Number,
     nullable: true,
     example: 0.45,
-    description: 'Board caliper (mm) — converts a box size between inside, outside and score-to-score (D-182)',
+    description:
+      'Board caliper (mm) — converts a box size between inside, outside and score-to-score (D-182)',
   })
   caliperMm!: number | null;
 
