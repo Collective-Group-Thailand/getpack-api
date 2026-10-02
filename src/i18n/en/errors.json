@@ -1332,5 +1332,27 @@
       "title": "Not a corrugated board",
       "detail": "Board strength sheets are kept for corrugated boards only (D-236)."
     }
+  },
+  "styles": {
+    "recipe_approved": {
+      "title": "Recipe already approved",
+      "detail": "This recipe version is approved already (D-243)."
+    },
+    "maker_checker": {
+      "title": "Approve someone else’s import",
+      "detail": "The person who imported a recipe cannot approve it (D-243)."
+    },
+    "role_required": {
+      "title": "Role required",
+      "detail": "This approval needs the role it names (D-212)."
+    },
+    "reference_mismatch": {
+      "title": "Reference code changed",
+      "detail": "The reference code to verify is not the base’s current one (D-211)."
+    },
+    "variant_not_found": {
+      "title": "Style not found",
+      "detail": "No published style has this code (D-245)."
+    }
   }
 }

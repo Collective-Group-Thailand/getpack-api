@@ -1,0 +1,232 @@
+// U3 style library (schema-design A-86; D-184, D-211, D-212, D-241–D-246).
+
+enum StyleStatus {
+  active
+  retired
+
+  @@map("style_status")
+}
+
+enum StyleImportKind {
+  master
+  recipes
+
+  @@map("style_import_kind")
+}
+
+enum StyleImportStatus {
+  applied
+  pending_approval
+  rejected
+
+  @@map("style_import_status")
+}
+
+enum StyleAssetKind {
+  thumbnail_2d
+  thumbnail_3d
+  dieline_svg
+  manifest
+
+  @@map("style_asset_kind")
+}
+
+/// D-241: a base structure of the style library (`PK-<FAMILY>-<NN>`, D-184), imported from the master file.
+model StyleBase {
+  id                       BigInt      @id(map: "pk_style_bases") @default(autoincrement())
+  publicId                 String      @unique(map: "ux_style_bases__public_id") @default(dbgenerated("uuidv7()")) @map("public_id") @db.Uuid
+  code                     String      @unique(map: "ux_style_bases__code")
+  family                   String
+  category                 String
+  /// The master file's product type (folding, corrugate, rigid, mailer …), kept as imported.
+  sourceProductType        String      @map("source_product_type")
+  /// The Packio product type it is sold as; null until mapped (no pricing path, D-243).
+  productTypeId            BigInt?     @map("product_type_id")
+  /// The configurator / pricing style with the same code (D-184); null when none exists yet.
+  patternId                BigInt?     @unique(map: "ux_style_bases__pattern_id") @map("pattern_id")
+  nameTh                   String      @map("name_th")
+  nameEn                   String      @map("name_en")
+  construction             String
+  materialClass            String      @map("material_class")
+  variantAxes              String[]    @default([]) @map("variant_axes")
+  wave                     Int         @db.SmallInt
+  complexity               String?
+  /// Industry reference (FEFCO / ECMA) as imported — shown only once verified (D-211).
+  referenceCode            String?     @map("reference_code")
+  referenceVerifiedAt      DateTime?   @map("reference_verified_at") @db.Timestamptz(6)
+  referenceVerifiedById    BigInt?     @map("reference_verified_by")
+  pricingPathAtLaunch      String?     @map("pricing_path_at_launch")
+  /// D-212 name approval: Marketing (wording) and Prepress (technical terms); cleared when a name changes.
+  namesApprovedMarketingAt DateTime?   @map("names_approved_marketing_at") @db.Timestamptz(6)
+  namesApprovedMarketingBy BigInt?     @map("names_approved_marketing_by")
+  namesApprovedPrepressAt  DateTime?   @map("names_approved_prepress_at") @db.Timestamptz(6)
+  namesApprovedPrepressBy  BigInt?     @map("names_approved_prepress_by")
+  descriptionTh            String?     @map("description_th")
+  descriptionEn            String?     @map("description_en")
+  featured                 Boolean     @default(false)
+  hidden                   Boolean     @default(false)
+  sort                     Int         @default(0)
+  status                   StyleStatus @default(active)
+  /// First time a variant became publishable (D-184: the code is frozen from then).
+  publishedAt              DateTime?   @map("published_at") @db.Timestamptz(6)
+  /// sha256 of the imported fields, so a re-import of the same data changes nothing.
+  sourceSha256             Bytes       @map("source_sha256")
+  lastImportRunId          BigInt?     @map("last_import_run_id")
+  createdAt                DateTime    @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt                DateTime    @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+  updatedById              BigInt?     @map("updated_by")
+  rowVersion               Int         @default(1) @map("row_version")
+
+  productType         ProductType?    @relation("StyleBaseProductType", fields: [productTypeId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_style_bases__product_type_id")
+  pattern             Pattern?        @relation("StyleBasePattern", fields: [patternId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_style_bases__pattern_id")
+  referenceVerifiedBy User?           @relation("StyleBaseReferenceVerifiedBy", fields: [referenceVerifiedById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_style_bases__reference_verified_by")
+  marketingApprover   User?           @relation("StyleBaseNamesMarketing", fields: [namesApprovedMarketingBy], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_style_bases__names_approved_marketing_by")
+  prepressApprover    User?           @relation("StyleBaseNamesPrepress", fields: [namesApprovedPrepressBy], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_style_bases__names_approved_prepress_by")
+  updatedBy           User?           @relation("StyleBaseUpdatedBy", fields: [updatedById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_style_bases__updated_by")
+  lastImportRun       StyleImportRun? @relation("StyleBaseLastImportRun", fields: [lastImportRunId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_style_bases__last_import_run_id")
+  variants            StyleVariant[]
+  recipes             StyleRecipe[]
+  assets              StyleAsset[]
+  synonyms            StyleSynonym[]
+  useCases            StyleUseCase[]
+
+  @@index([category, status], map: "ix_style_bases__category__status")
+  @@index([productTypeId], map: "ix_style_bases__product_type_id")
+  @@index([referenceVerifiedById], map: "ix_style_bases__reference_verified_by")
+  @@index([namesApprovedMarketingBy], map: "ix_style_bases__names_approved_marketing_by")
+  @@index([namesApprovedPrepressBy], map: "ix_style_bases__names_approved_prepress_by")
+  @@index([updatedById], map: "ix_style_bases__updated_by")
+  @@index([lastImportRunId], map: "ix_style_bases__last_import_run_id")
+  @@map("style_bases")
+}
+
+/// D-241 / D-243: one structural variant (a combination of option values) with its publishability and reasons.
+model StyleVariant {
+  id          BigInt      @id(map: "pk_style_variants") @default(autoincrement())
+  publicId    String      @unique(map: "ux_style_variants__public_id") @default(dbgenerated("uuidv7()")) @map("public_id") @db.Uuid
+  baseId      BigInt      @map("base_id")
+  code        String      @unique(map: "ux_style_variants__code")
+  codeSuffix  String      @map("code_suffix")
+  /// Normalised `axis=value;axis=value` in the base's axis order (a multi-select value joins with `+`).
+  optionKey   String      @map("option_key")
+  options     Json
+  publishable Boolean     @default(false)
+  reasons     String[]    @default([])
+  evaluatedAt DateTime?   @map("evaluated_at") @db.Timestamptz(6)
+  publishedAt DateTime?   @map("published_at") @db.Timestamptz(6)
+  status      StyleStatus @default(active)
+  createdAt   DateTime    @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt   DateTime    @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  base   StyleBase    @relation(fields: [baseId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_style_variants__base_id")
+  assets StyleAsset[]
+
+  @@unique([baseId, optionKey], map: "ux_style_variants__base_id__option_key")
+  @@index([baseId, publishable], map: "ix_style_variants__base_id__publishable")
+  @@map("style_variants")
+}
+
+/// D-241: a versioned `@packio/dieline` recipe of a base; current = the latest version approved by Prepress.
+model StyleRecipe {
+  id            BigInt    @id(map: "pk_style_recipes") @default(autoincrement())
+  publicId      String    @unique(map: "ux_style_recipes__public_id") @default(dbgenerated("uuidv7()")) @map("public_id") @db.Uuid
+  baseId        BigInt    @map("base_id")
+  version       Int
+  schemaVersion String    @map("schema_version")
+  recipe        Json
+  checksum      Bytes
+  /// Processes the recipe's modules declare (D-244); empty = use the process rules.
+  processes     String[]  @default([])
+  /// Size ranges per material class from the recipe's constraint solver (mm, internal basis).
+  sizeRanges    Json?     @map("size_ranges")
+  approvedAt    DateTime? @map("approved_at") @db.Timestamptz(6)
+  approvedById  BigInt?   @map("approved_by")
+  importRunId   BigInt?   @map("import_run_id")
+  createdAt     DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  base       StyleBase       @relation(fields: [baseId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_style_recipes__base_id")
+  approvedBy User?           @relation("StyleRecipeApprovedBy", fields: [approvedById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_style_recipes__approved_by")
+  importRun  StyleImportRun? @relation("StyleRecipeImportRun", fields: [importRunId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_style_recipes__import_run_id")
+
+  @@unique([baseId, version], map: "ux_style_recipes__base_id__version")
+  @@index([approvedById], map: "ix_style_recipes__approved_by")
+  @@index([importRunId], map: "ix_style_recipes__import_run_id")
+  @@map("style_recipes")
+}
+
+/// D-241: generated assets of a base or variant (thumbnails, dieline SVG, manifest) — object-storage keys + hashes.
+model StyleAsset {
+  id            BigInt         @id(map: "pk_style_assets") @default(autoincrement())
+  publicId      String         @unique(map: "ux_style_assets__public_id") @default(dbgenerated("uuidv7()")) @map("public_id") @db.Uuid
+  baseId        BigInt         @map("base_id")
+  variantId     BigInt?        @map("variant_id")
+  kind          StyleAssetKind
+  storageKey    String         @map("storage_key")
+  sha256        Bytes
+  contentType   String         @map("content_type")
+  recipeVersion Int?           @map("recipe_version")
+  createdAt     DateTime       @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  base    StyleBase     @relation(fields: [baseId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_style_assets__base_id")
+  variant StyleVariant? @relation(fields: [variantId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_style_assets__variant_id")
+
+  @@index([baseId, kind], map: "ix_style_assets__base_id__kind")
+  @@index([variantId], map: "ix_style_assets__variant_id")
+  @@map("style_assets")
+}
+
+/// D-245: Thai / English search terms of a base.
+model StyleSynonym {
+  id        BigInt   @id(map: "pk_style_synonyms") @default(autoincrement())
+  baseId    BigInt   @map("base_id")
+  locale    String
+  term      String
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  base StyleBase @relation(fields: [baseId], references: [id], onDelete: Cascade, onUpdate: Restrict, map: "fk_style_synonyms__base_id")
+
+  @@index([baseId], map: "ix_style_synonyms__base_id")
+  @@map("style_synonyms")
+}
+
+/// D-245: use cases of a base (facet).
+model StyleUseCase {
+  id        BigInt   @id(map: "pk_style_use_cases") @default(autoincrement())
+  baseId    BigInt   @map("base_id")
+  code      String
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  base StyleBase @relation(fields: [baseId], references: [id], onDelete: Cascade, onUpdate: Restrict, map: "fk_style_use_cases__base_id")
+
+  @@unique([baseId, code], map: "ux_style_use_cases__base_id__code")
+  @@map("style_use_cases")
+}
+
+/// D-242: one style import (master file or recipe bundle): checksum, diff, and the changes held for approval.
+model StyleImportRun {
+  id                BigInt            @id(map: "pk_style_import_runs") @default(autoincrement())
+  publicId          String            @unique(map: "ux_style_import_runs__public_id") @default(dbgenerated("uuidv7()")) @map("public_id") @db.Uuid
+  kind              StyleImportKind
+  fileName          String            @map("file_name")
+  checksum          Bytes
+  status            StyleImportStatus
+  /// Counts and the per-row changes applied.
+  diff              Json
+  /// Changes to published rows, applied only when the approval is granted (D-242).
+  pendingChanges    Json?             @map("pending_changes")
+  axes              Json?
+  approvalRequestId BigInt?           @map("approval_request_id")
+  createdById       BigInt?           @map("created_by")
+  createdAt         DateTime          @default(now()) @map("created_at") @db.Timestamptz(6)
+  decidedAt         DateTime?         @map("decided_at") @db.Timestamptz(6)
+
+  approvalRequest ApprovalRequest? @relation("StyleImportRunApproval", fields: [approvalRequestId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_style_import_runs__approval_request_id")
+  createdBy       User?            @relation("StyleImportRunCreatedBy", fields: [createdById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_style_import_runs__created_by")
+  bases           StyleBase[]      @relation("StyleBaseLastImportRun")
+  recipes         StyleRecipe[]    @relation("StyleRecipeImportRun")
+
+  @@index([kind, checksum], map: "ix_style_import_runs__kind__checksum")
+  @@index([approvalRequestId], map: "ix_style_import_runs__approval_request_id")
+  @@index([createdById], map: "ix_style_import_runs__created_by")
+  @@map("style_import_runs")
+}

@@ -40,6 +40,7 @@ import { QUOTES_ADMIN_CONTROLLERS } from '@modules/quotes/quotes.registry';
 import { RECEIVABLES_ADMIN_CONTROLLERS } from '@modules/receivables/receivables.registry';
 import { REPORTS_ADMIN_CONTROLLERS } from '@modules/reports/reports.registry';
 import { SHIPPING_ADMIN_CONTROLLERS } from '@modules/shipping/shipping.registry';
+import { STYLES_ADMIN_CONTROLLERS } from '@modules/styles/styles.registry';
 import { TAX_ADMIN_CONTROLLERS } from '@modules/tax/tax.registry';
 import { TIMELINE_ADMIN_CONTROLLERS } from '@modules/timeline/timeline.registry';
 import { Module } from '@nestjs/common';
@@ -102,6 +103,7 @@ import { SettingsAdminModule } from '@platform/settings/settings-admin.module';
     ...SHIPPING_ADMIN_CONTROLLERS,
     ...QUOTES_ADMIN_CONTROLLERS,
     ...ADVISORY_ADMIN_CONTROLLERS,
+    ...STYLES_ADMIN_CONTROLLERS,
     ...CUSTOMERS_ADMIN_CONTROLLERS,
     ...CARTS_ADMIN_CONTROLLERS,
     ...CHECKOUT_ADMIN_CONTROLLERS,

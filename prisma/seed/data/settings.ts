@@ -829,6 +829,18 @@ export const SETTINGS: readonly SettingSeed[] = [
     ownerRole: 'superadmin',
   },
 
+  // --- Style library (U3, D-212, D-243)
+  {
+    key: 'styles.published_wave',
+    valueType: 'integer',
+    value: 1,
+    valueSchema: { minimum: 1, maximum: 9 },
+    description:
+      'D-212 / D-243 highest style-library wave whose variants may be published (wave 1 at launch: only variants the launch factory can make)',
+    decisions: ['D-212', 'D-243'],
+    ownerRole: 'superadmin',
+  },
+
   // --- Structure Advisor (U2.2, D-237): definition only — not seeded in production; the advisor answers
   // `advisory.not_configured` until a Superadmin sets it (the proposal is in docs/advisory-validation.md).
   {

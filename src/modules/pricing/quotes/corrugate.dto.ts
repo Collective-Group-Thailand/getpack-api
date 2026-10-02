@@ -1,6 +1,7 @@
 import { DecimalField, EnumField, IntField, RefField } from '@modules/catalog/crud/dto-fields';
 import { type MeasurementBasis } from '@modules/specs/dimension-conversion';
 import { BasisField } from '@modules/specs/specs.dto';
+import { StyleVariantField } from '@modules/styles/style-variant-field';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { Type } from 'class-transformer';
 import {
@@ -144,6 +145,9 @@ export class CorrugateConfigurationDto {
 
   @BasisField('box')
   basis?: MeasurementBasis;
+
+  @StyleVariantField()
+  styleVariantCode?: string;
 
   @DecimalField({ example: 300, positive: true, ...MM, description: 'Box width' })
   w!: number;

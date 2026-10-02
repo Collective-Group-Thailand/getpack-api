@@ -54,6 +54,10 @@ export const API_TAGS: Record<string, string> = {
   'admin.privacyRequests': 'The Data Protection Officer answers PDPA export and deletion requests (D-222).',
   'store.configurations':
     'Draft configurations (D-185): keep an incomplete configuration with its completeness, resume, share, turn it into a quotation or an RFQ.',
+  'admin.styles':
+    'Style library for staff (D-241–D-243): bases, generated variants and why they are not publishable; Prepress approves recipes and verifies references, Marketing and Prepress approve names.',
+  'admin.styleImports':
+    'Style-library imports (D-242): master files and recipe bundles, their diffs and approvals.',
   'store.advisory':
     'Structure Advisor (D-188, D-189, D-235–D-240): recommended corrugated board from load, stacking and storage, as an indicative BCT range with priced alternatives; choose a board on record.',
   'admin.advisory':

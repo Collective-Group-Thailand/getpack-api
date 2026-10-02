@@ -5,7 +5,7 @@
 > (a new effective-dated version, audited — D-063) and signs item 5 of `docs/LAUNCH-CHECKLIST.md`. A *proposed* or
 > *pending* value is not a decision: it goes live only once its owner confirms it.
 
-**75 settings** — 42 confirmed · 16 proposed · 4 pending the CPA (⚖) · 1 pending the business · 12 defined without a value (not set until their owner sets them).
+**76 settings** — 43 confirmed · 16 proposed · 4 pending the CPA (⚖) · 1 pending the business · 12 defined without a value (not set until their owner sets them).
 
 ## Settings
 
@@ -81,6 +81,7 @@
 | `shipping.pallet_spec` | `— (not set)` | not set | superadmin | D-013 | D-013 pallet used to count cartons per pallet (no legacy rule exists); not seeded — no pallet count until set |
 | `shipping.target_margin_pct` | `— (not set)` | not set | superadmin | D-040, D-013 | D-040 group 5 target shipping margin: suggested factory payout = customer rate × (1 − margin); not seeded — no group-5 suggestion until set |
 | `storefront.support_channels` | `— (not set)` | not set | cs_lead | D-221, D-005 | D-221 Packio support contacts on the storefront (LINE OA id, phone, e-mail, opening hours); Packio’s own accounts (D-005) — not seeded, every field null until the CS Lead sets it |
+| `styles.published_wave` | `1` | confirmed | superadmin | D-212, D-243 | D-212 / D-243 highest style-library wave whose variants may be published (wave 1 at launch: only variants the launch factory can make) |
 | `support.first_response_business_days` | `1` | confirmed | cs_lead | D-221, D-175 | D-221 first-response target of a contact-form or guided-help conversation, in business days (business hours D-175, calendar D-161) |
 | `tax.calendar` | `{"pp30":{"dayOfNextMonth":15},"pnd3":{"dayOfNextMonth":7},"pnd53":{"dayOfNextMonth":7},"reminderDaysBefore":3}` | proposed | finance_manager | D-033 | D-033 / accounting-design §6 tax calendar: filing due day of the following month per form (paper-filing days; e-filing extensions are a Finance choice) and the reminder lead time (proposed) |
 | `tax.gl_accounts` | `{"output_vat":["2210"],"input_vat":["1241"],"wht_pnd3":["2232"],"wht_pnd53":["2231"],"wht_receivable":["1230"]}` | proposed | finance_manager | D-033 | D-033 / accounting-design §7 step 7: GL control accounts each tax report and working paper reconciles to (difference must be 0); follows the chart of accounts (proposed) |
@@ -127,6 +128,7 @@ Seeded per entity from the `SEED_ENTITY_*` environment variables — never from 
 | `document_series_change` | document_series | Finance Manager approval: **finance_manager** | D-033, D-169 | Seed from D-169 — Finance Manager approves |
 | `company_order_approval` | order_group | Company approver: **company_approver** (subject_company) | D-123 | Seed from D-123 |
 | `referral_review` | referral_attribution | Marketing review: **marketing** | D-136 | Seed from D-136 |
+| `style_library_change` | style_import_run | Prepress approval: **prepress**<br>Marketing approval: **marketing** | D-242, D-212 | Seed from D-242 — Prepress then Marketing approve |
 
 ## Feature flags (seeded off)
 

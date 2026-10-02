@@ -10,6 +10,7 @@ import { PRICING_PARTNER_CONTROLLERS } from '@modules/pricing/pricing.registry';
 import { PRODUCTION_PARTNER_CONTROLLERS } from '@modules/production/production.registry';
 import { QUOTES_PARTNER_CONTROLLERS } from '@modules/quotes/quotes.registry';
 import { SHIPPING_PARTNER_CONTROLLERS } from '@modules/shipping/shipping.registry';
+import { STYLES_PARTNER_CONTROLLERS } from '@modules/styles/styles.registry';
 import { Module } from '@nestjs/common';
 import { PartnerFilesController } from '@platform/files/files.controllers';
 import {
@@ -39,6 +40,7 @@ import { RealtimeModule } from '@platform/realtime/realtime.module';
     ...SHIPPING_PARTNER_CONTROLLERS,
     ...QUOTES_PARTNER_CONTROLLERS,
     ...ADVISORY_PARTNER_CONTROLLERS,
+    ...STYLES_PARTNER_CONTROLLERS,
     ...PRODUCTION_PARTNER_CONTROLLERS,
     ...LOGISTICS_PARTNER_CONTROLLERS,
     ...CLAIMS_PARTNER_CONTROLLERS,

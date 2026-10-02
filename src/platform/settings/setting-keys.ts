@@ -168,6 +168,8 @@ export interface SettingValues {
   'fulfilment.colour_tolerance_delta_e': { standard: string; flexo: string };
   /** Not seeded (D-237): the Structure Advisor rule set; `advisory.not_configured` until a Superadmin sets it. */
   'advisory.rule_set': AdvisoryRuleSet;
+  /** D-212 / D-243 highest style-library wave that may be published. */
+  'styles.published_wave': number;
 }
 
 /** D-237 Structure Advisor rule set (decimal strings; factors 0 < f ≤ 1, applied as retained strength). */

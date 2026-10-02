@@ -26,6 +26,7 @@ import { StoreQuotePathController } from '@modules/pricing/quotes/store-quote-pa
 import { PROMOTIONS_STORE_CONTROLLERS } from '@modules/promotions/promotions.registry';
 import { QUOTES_STORE_CONTROLLERS } from '@modules/quotes/quotes.registry';
 import { RECEIVABLES_STORE_CONTROLLERS } from '@modules/receivables/receivables.registry';
+import { STYLES_STORE_CONTROLLERS } from '@modules/styles/styles.registry';
 import { TIMELINE_STORE_CONTROLLERS } from '@modules/timeline/timeline.registry';
 import { Module } from '@nestjs/common';
 import { StoreFilesController } from '@platform/files/files.controllers';
@@ -56,6 +57,7 @@ import { RealtimeModule } from '@platform/realtime/realtime.module';
     ...PRICING_STORE_CONTROLLERS,
     ...QUOTES_STORE_CONTROLLERS,
     ...ADVISORY_STORE_CONTROLLERS,
+    ...STYLES_STORE_CONTROLLERS,
     ...CUSTOMERS_STORE_CONTROLLERS,
     ...CARTS_STORE_CONTROLLERS,
     ...CHECKOUT_STORE_CONTROLLERS,

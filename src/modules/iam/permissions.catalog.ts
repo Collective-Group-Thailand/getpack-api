@@ -137,6 +137,45 @@ export const PERMISSIONS = [
     decisionRefs: ['D-011', 'D-041', 'D-171'],
   },
 
+  // --- Style library (U3, D-241–D-246)
+  {
+    key: 'styles.read',
+    audience: 'staff',
+    description: 'Read the style library: bases, variants, recipes, imports',
+  },
+  {
+    key: 'styles.import',
+    audience: 'staff',
+    description: 'Import the style master file and recipe bundles (dry run, then confirm)',
+    decisionRefs: ['D-242'],
+  },
+  {
+    key: 'styles.curate',
+    audience: 'staff',
+    description: 'Curate the style library: featured, hidden, order, copy, product type',
+    decisionRefs: ['D-246'],
+  },
+  {
+    key: 'styles.approve_recipe',
+    audience: 'staff',
+    description: 'Approve a style recipe version (Prepress)',
+    decisionRefs: ['D-243'],
+  },
+  {
+    key: 'styles.approve_names',
+    audience: 'staff',
+    description:
+      'Approve the Thai / English names of a style (Marketing: wording, Prepress: technical terms)',
+    decisionRefs: ['D-212'],
+  },
+  {
+    key: 'styles.verify_reference',
+    audience: 'staff',
+    description:
+      'Verify an industry reference code (FEFCO / ECMA) against the edition Packio holds (Prepress)',
+    decisionRefs: ['D-211'],
+  },
+
   // --- Structure Advisor (U2.2, D-188, D-189, D-235–D-240)
   {
     key: 'advisory.read',

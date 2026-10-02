@@ -275,6 +275,8 @@ model ProductType {
 
   advisoryRecommendations AdvisoryRecommendation[] @relation("AdvisoryRecommendationProductType")
 
+  styleBases StyleBase[] @relation("StyleBaseProductType")
+
   @@index([categoryId], map: "ix_product_types__category_id")
   @@map("product_types")
 }
@@ -593,6 +595,8 @@ model Pattern {
   // --- end Corrugate price components
 
   advisoryRecommendations AdvisoryRecommendation[] @relation("AdvisoryRecommendationPattern")
+
+  styleBase StyleBase? @relation("StyleBasePattern")
 
   @@index([productTypeId], map: "ix_patterns__product_type_id")
   @@index([imageFileId], map: "ix_patterns__image_file_id")

@@ -3158,6 +3158,50 @@
           "type": "https://errors.packio/specs.unit_not_accepted"
         }
       },
+      "problem.styles.maker_checker": {
+        "summary": "styles.maker_checker",
+        "value": {
+          "code": "styles.maker_checker",
+          "detail": "ผู้ที่นำเข้าสูตรโครงสร้างไม่สามารถอนุมัติสูตรนั้นเองได้",
+          "requestId": "6f1c2d8e-2c7b-4d0e-9d1c-3f1a2b3c4d5e",
+          "status": 403,
+          "title": "ผู้นำเข้าอนุมัติเองไม่ได้",
+          "type": "https://errors.packio/styles.maker_checker"
+        }
+      },
+      "problem.styles.recipe_approved": {
+        "summary": "styles.recipe_approved",
+        "value": {
+          "code": "styles.recipe_approved",
+          "detail": "สูตรโครงสร้างเวอร์ชันนี้ได้รับการอนุมัติแล้ว",
+          "requestId": "6f1c2d8e-2c7b-4d0e-9d1c-3f1a2b3c4d5e",
+          "status": 409,
+          "title": "อนุมัติสูตรนี้แล้ว",
+          "type": "https://errors.packio/styles.recipe_approved"
+        }
+      },
+      "problem.styles.reference_mismatch": {
+        "summary": "styles.reference_mismatch",
+        "value": {
+          "code": "styles.reference_mismatch",
+          "detail": "รหัสอ้างอิงที่ยืนยันไม่ตรงกับรหัสปัจจุบันของแบบนี้",
+          "requestId": "6f1c2d8e-2c7b-4d0e-9d1c-3f1a2b3c4d5e",
+          "status": 409,
+          "title": "รหัสอ้างอิงไม่ตรง",
+          "type": "https://errors.packio/styles.reference_mismatch"
+        }
+      },
+      "problem.styles.role_required": {
+        "summary": "styles.role_required",
+        "value": {
+          "code": "styles.role_required",
+          "detail": "การอนุมัตินี้ต้องทำโดยผู้มีบทบาทตามที่ระบุ",
+          "requestId": "6f1c2d8e-2c7b-4d0e-9d1c-3f1a2b3c4d5e",
+          "status": 403,
+          "title": "ต้องมีบทบาทที่กำหนด",
+          "type": "https://errors.packio/styles.role_required"
+        }
+      },
       "problem.support.contact_required": {
         "summary": "support.contact_required",
         "value": {
@@ -8487,6 +8531,440 @@
         ],
         "type": "object"
       },
+      "AdminStyleBaseDetailDto": {
+        "properties": {
+          "category": {
+            "example": "folding_carton",
+            "type": "string"
+          },
+          "code": {
+            "example": "PK-TE-01",
+            "type": "string"
+          },
+          "complexity": {
+            "example": "M",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "construction": {
+            "example": "Four side panels + glue flap; …",
+            "type": "string"
+          },
+          "descriptionEn": {
+            "example": null,
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "descriptionTh": {
+            "example": null,
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "family": {
+            "example": "tuck_end",
+            "type": "string"
+          },
+          "featured": {
+            "example": false,
+            "type": "boolean"
+          },
+          "hidden": {
+            "example": false,
+            "type": "boolean"
+          },
+          "id": {
+            "example": "0192f3a0-7c1e-7d2a-9b1f-0000000ae001",
+            "format": "uuid",
+            "type": "string"
+          },
+          "materialClass": {
+            "example": "paperboard",
+            "type": "string"
+          },
+          "nameEn": {
+            "example": "Tuck-end carton (configurable ends)",
+            "type": "string"
+          },
+          "nameTh": {
+            "example": "กล่องฝาเสียบ (ปรับฝาบน-ล่างได้)",
+            "type": "string"
+          },
+          "namesApproval": {
+            "$ref": "#/components/schemas/StyleNamesApprovalDto"
+          },
+          "patternId": {
+            "description": "Linked pattern (same style code)",
+            "example": "0192f3a0-7c1e-7d2a-9b1f-0000000ae007",
+            "format": "uuid",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "pricingPathAtLaunch": {
+            "example": "instant_after_signoff",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "productTypeCode": {
+            "description": "Null: no pricing path yet",
+            "example": "folding_carton",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "publishedAt": {
+            "example": null,
+            "format": "date-time",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "reasonCounts": {
+            "description": "Why active variants are not publishable (D-243)",
+            "items": {
+              "$ref": "#/components/schemas/StyleReasonCountDto"
+            },
+            "type": "array"
+          },
+          "recipeApproved": {
+            "description": "A recipe version is approved by Prepress",
+            "example": false,
+            "type": "boolean"
+          },
+          "recipeVersion": {
+            "description": "Latest recipe version",
+            "example": 1,
+            "type": [
+              "integer",
+              "null"
+            ]
+          },
+          "recipes": {
+            "description": "Newest first",
+            "items": {
+              "$ref": "#/components/schemas/StyleRecipeDto"
+            },
+            "type": "array"
+          },
+          "referenceCode": {
+            "description": "Shown to customers only once verified (D-211)",
+            "example": "FEFCO 0201",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "referenceVerifiedAt": {
+            "example": null,
+            "format": "date-time",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "sort": {
+            "example": 0,
+            "type": "integer"
+          },
+          "sourceProductType": {
+            "description": "As in the master file",
+            "example": "folding",
+            "type": "string"
+          },
+          "status": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/StyleStatus"
+              }
+            ],
+            "example": "active"
+          },
+          "synonyms": {
+            "items": {
+              "$ref": "#/components/schemas/StyleSynonymDto"
+            },
+            "type": "array"
+          },
+          "useCases": {
+            "example": [
+              "cosmetics"
+            ],
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "variantAxes": {
+            "example": [
+              "tuck_top",
+              "tuck_bottom",
+              "hang",
+              "window"
+            ],
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "variants": {
+            "$ref": "#/components/schemas/StyleVariantCountsDto"
+          },
+          "wave": {
+            "example": 1,
+            "type": "integer"
+          }
+        },
+        "required": [
+          "id",
+          "code",
+          "family",
+          "category",
+          "sourceProductType",
+          "productTypeCode",
+          "nameTh",
+          "nameEn",
+          "materialClass",
+          "wave",
+          "status",
+          "featured",
+          "hidden",
+          "sort",
+          "variants",
+          "publishedAt",
+          "namesApproval",
+          "referenceCode",
+          "referenceVerifiedAt",
+          "recipeVersion",
+          "recipeApproved",
+          "construction",
+          "variantAxes",
+          "complexity",
+          "pricingPathAtLaunch",
+          "patternId",
+          "descriptionTh",
+          "descriptionEn",
+          "synonyms",
+          "useCases",
+          "recipes",
+          "reasonCounts"
+        ],
+        "type": "object"
+      },
+      "AdminStyleBaseDto": {
+        "properties": {
+          "category": {
+            "example": "folding_carton",
+            "type": "string"
+          },
+          "code": {
+            "example": "PK-TE-01",
+            "type": "string"
+          },
+          "family": {
+            "example": "tuck_end",
+            "type": "string"
+          },
+          "featured": {
+            "example": false,
+            "type": "boolean"
+          },
+          "hidden": {
+            "example": false,
+            "type": "boolean"
+          },
+          "id": {
+            "example": "0192f3a0-7c1e-7d2a-9b1f-0000000ae001",
+            "format": "uuid",
+            "type": "string"
+          },
+          "materialClass": {
+            "example": "paperboard",
+            "type": "string"
+          },
+          "nameEn": {
+            "example": "Tuck-end carton (configurable ends)",
+            "type": "string"
+          },
+          "nameTh": {
+            "example": "กล่องฝาเสียบ (ปรับฝาบน-ล่างได้)",
+            "type": "string"
+          },
+          "namesApproval": {
+            "$ref": "#/components/schemas/StyleNamesApprovalDto"
+          },
+          "productTypeCode": {
+            "description": "Null: no pricing path yet",
+            "example": "folding_carton",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "publishedAt": {
+            "example": null,
+            "format": "date-time",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "recipeApproved": {
+            "description": "A recipe version is approved by Prepress",
+            "example": false,
+            "type": "boolean"
+          },
+          "recipeVersion": {
+            "description": "Latest recipe version",
+            "example": 1,
+            "type": [
+              "integer",
+              "null"
+            ]
+          },
+          "referenceCode": {
+            "description": "Shown to customers only once verified (D-211)",
+            "example": "FEFCO 0201",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "referenceVerifiedAt": {
+            "example": null,
+            "format": "date-time",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "sort": {
+            "example": 0,
+            "type": "integer"
+          },
+          "sourceProductType": {
+            "description": "As in the master file",
+            "example": "folding",
+            "type": "string"
+          },
+          "status": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/StyleStatus"
+              }
+            ],
+            "example": "active"
+          },
+          "variants": {
+            "$ref": "#/components/schemas/StyleVariantCountsDto"
+          },
+          "wave": {
+            "example": 1,
+            "type": "integer"
+          }
+        },
+        "required": [
+          "id",
+          "code",
+          "family",
+          "category",
+          "sourceProductType",
+          "productTypeCode",
+          "nameTh",
+          "nameEn",
+          "materialClass",
+          "wave",
+          "status",
+          "featured",
+          "hidden",
+          "sort",
+          "variants",
+          "publishedAt",
+          "namesApproval",
+          "referenceCode",
+          "referenceVerifiedAt",
+          "recipeVersion",
+          "recipeApproved"
+        ],
+        "type": "object"
+      },
+      "AdminStyleVariantDto": {
+        "properties": {
+          "code": {
+            "example": "PK-TE-01-K7QD",
+            "type": "string"
+          },
+          "id": {
+            "example": "0192f3a0-7c1e-7d2a-9b1f-0000000ae002",
+            "format": "uuid",
+            "type": "string"
+          },
+          "optionKey": {
+            "example": "tuck_top=reverse_tuck;tuck_bottom=crash_lock;hang=none;window=none",
+            "type": "string"
+          },
+          "options": {
+            "additionalProperties": true,
+            "example": {
+              "hang": "none",
+              "tuck_bottom": "crash_lock",
+              "tuck_top": "reverse_tuck",
+              "window": "none"
+            },
+            "type": "object"
+          },
+          "publishable": {
+            "example": false,
+            "type": "boolean"
+          },
+          "publishedAt": {
+            "example": null,
+            "format": "date-time",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "reasons": {
+            "example": [
+              "no_recipe"
+            ],
+            "items": {
+              "$ref": "#/components/schemas/StylePublishReason"
+            },
+            "type": "array"
+          },
+          "status": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/StyleStatus"
+              }
+            ],
+            "example": "active"
+          }
+        },
+        "required": [
+          "id",
+          "code",
+          "optionKey",
+          "options",
+          "publishable",
+          "reasons",
+          "status",
+          "publishedAt"
+        ],
+        "type": "object"
+      },
       "AdvisoryAlternativeDto": {
         "properties": {
           "boardId": {
@@ -10473,6 +10951,23 @@
             "type": "string"
           }
         },
+        "type": "object"
+      },
+      "ApproveNamesDto": {
+        "properties": {
+          "as": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/StyleNameApproverRole"
+              }
+            ],
+            "description": "Which approval this is (D-212): Marketing for the wording, Prepress for technical terms",
+            "example": "marketing"
+          }
+        },
+        "required": [
+          "as"
+        ],
         "type": "object"
       },
       "ApproveProofDto": {
@@ -19454,6 +19949,12 @@
             "minItems": 1,
             "type": "array"
           },
+          "styleVariantCode": {
+            "description": "The style-library variant this configuration builds (D-241). It must be publishable and belong to the configuration’s pattern; otherwise no quantity is priced instantly (reason `style_variant_not_publishable`, D-243), so the configuration cannot be saved, carted or ordered",
+            "example": "PK-TE-01-K7QD",
+            "pattern": "^PK-[A-Z0-9]{2,8}-[0-9]{2,3}-[A-Z2-7]{4,8}$",
+            "type": "string"
+          },
           "w": {
             "description": "Box width Unit: mm.",
             "example": 300,
@@ -25204,6 +25705,12 @@
             },
             "minItems": 1,
             "type": "array"
+          },
+          "styleVariantCode": {
+            "description": "The style-library variant this configuration builds (D-241). It must be publishable and belong to the configuration’s pattern; otherwise no quantity is priced instantly (reason `style_variant_not_publishable`, D-243), so the configuration cannot be saved, carted or ordered",
+            "example": "PK-TE-01-K7QD",
+            "pattern": "^PK-[A-Z0-9]{2,8}-[0-9]{2,3}-[A-Z2-7]{4,8}$",
+            "type": "string"
           },
           "w": {
             "description": "Box width Unit: mm.",
@@ -32261,6 +32768,12 @@
             },
             "minItems": 1,
             "type": "array"
+          },
+          "styleVariantCode": {
+            "description": "The style-library variant this configuration builds (D-241). It must be publishable and belong to the configuration’s pattern; otherwise no quantity is priced instantly (reason `style_variant_not_publishable`, D-243), so the configuration cannot be saved, carted or ordered",
+            "example": "PK-TE-01-K7QD",
+            "pattern": "^PK-[A-Z0-9]{2,8}-[0-9]{2,3}-[A-Z2-7]{4,8}$",
+            "type": "string"
           },
           "w": {
             "description": "Box width Unit: mm.",
@@ -62576,6 +63089,290 @@
         ],
         "type": "object"
       },
+      "StyleImportKind": {
+        "enum": [
+          "master",
+          "recipes"
+        ],
+        "type": "string"
+      },
+      "StyleImportRunDto": {
+        "properties": {
+          "approvalRequestId": {
+            "example": null,
+            "format": "uuid",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "checksum": {
+            "description": "sha256 of the file (hex)",
+            "example": "b1946ac9…",
+            "type": "string"
+          },
+          "createdAt": {
+            "example": "2026-10-03T10:00:00+07:00",
+            "format": "date-time",
+            "type": "string"
+          },
+          "createdById": {
+            "example": "0192f3a0-7c1e-7d2a-9b1f-0000000ae005",
+            "format": "uuid",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "decidedAt": {
+            "example": "2026-10-03T10:00:00+07:00",
+            "format": "date-time",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "diff": {
+            "additionalProperties": true,
+            "description": "Counts and the changes applied / held for approval",
+            "example": {
+              "summary": {
+                "basesCreated": 105,
+                "variantsCreated": 960
+              }
+            },
+            "type": "object"
+          },
+          "fileName": {
+            "example": "style-library-master.json",
+            "type": "string"
+          },
+          "id": {
+            "example": "0192f3a0-7c1e-7d2a-9b1f-0000000ae004",
+            "format": "uuid",
+            "type": "string"
+          },
+          "kind": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/StyleImportKind"
+              }
+            ],
+            "example": "master"
+          },
+          "status": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/StyleImportStatus"
+              }
+            ],
+            "example": "applied"
+          }
+        },
+        "required": [
+          "id",
+          "kind",
+          "fileName",
+          "checksum",
+          "status",
+          "diff",
+          "approvalRequestId",
+          "createdById",
+          "createdAt",
+          "decidedAt"
+        ],
+        "type": "object"
+      },
+      "StyleImportStatus": {
+        "enum": [
+          "applied",
+          "pending_approval",
+          "rejected"
+        ],
+        "type": "string"
+      },
+      "StyleNameApproverRole": {
+        "description": "Which approval this is (D-212): Marketing for the wording, Prepress for technical terms",
+        "enum": [
+          "marketing",
+          "prepress"
+        ],
+        "type": "string"
+      },
+      "StyleNamesApprovalDto": {
+        "properties": {
+          "marketingAt": {
+            "example": null,
+            "format": "date-time",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "prepressAt": {
+            "example": null,
+            "format": "date-time",
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "marketingAt",
+          "prepressAt"
+        ],
+        "type": "object"
+      },
+      "StylePublishReason": {
+        "enum": [
+          "retired",
+          "hidden",
+          "wave_not_open",
+          "no_product_type",
+          "no_recipe",
+          "recipe_not_approved",
+          "names_not_approved",
+          "not_makeable"
+        ],
+        "type": "string"
+      },
+      "StyleReasonCountDto": {
+        "properties": {
+          "count": {
+            "description": "Active variants with this reason",
+            "example": 228,
+            "type": "integer"
+          },
+          "reason": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/StylePublishReason"
+              }
+            ],
+            "example": "no_recipe"
+          }
+        },
+        "required": [
+          "reason",
+          "count"
+        ],
+        "type": "object"
+      },
+      "StyleRecipeDto": {
+        "properties": {
+          "approvedAt": {
+            "example": null,
+            "format": "date-time",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "approvedById": {
+            "example": null,
+            "format": "uuid",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "checksum": {
+            "description": "sha256 of the canonical recipe JSON (hex)",
+            "example": "9f2c…",
+            "type": "string"
+          },
+          "createdAt": {
+            "example": "2026-10-03T10:00:00+07:00",
+            "format": "date-time",
+            "type": "string"
+          },
+          "id": {
+            "example": "0192f3a0-7c1e-7d2a-9b1f-0000000ae003",
+            "format": "uuid",
+            "type": "string"
+          },
+          "processes": {
+            "example": [
+              "die_cut_flatbed",
+              "folder_gluer_straight_line"
+            ],
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "schemaVersion": {
+            "example": "1.0",
+            "type": "string"
+          },
+          "version": {
+            "example": 1,
+            "type": "integer"
+          }
+        },
+        "required": [
+          "id",
+          "version",
+          "schemaVersion",
+          "checksum",
+          "processes",
+          "approvedAt",
+          "approvedById",
+          "createdAt"
+        ],
+        "type": "object"
+      },
+      "StyleStatus": {
+        "enum": [
+          "active",
+          "retired"
+        ],
+        "type": "string"
+      },
+      "StyleSynonymDto": {
+        "properties": {
+          "locale": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/LocaleCode"
+              }
+            ],
+            "example": "th"
+          },
+          "term": {
+            "example": "กล่องครีม",
+            "type": "string"
+          }
+        },
+        "required": [
+          "locale",
+          "term"
+        ],
+        "type": "object"
+      },
+      "StyleVariantCountsDto": {
+        "properties": {
+          "active": {
+            "example": 228,
+            "type": "integer"
+          },
+          "publishable": {
+            "example": 0,
+            "type": "integer"
+          },
+          "total": {
+            "example": 228,
+            "type": "integer"
+          }
+        },
+        "required": [
+          "total",
+          "active",
+          "publishable"
+        ],
+        "type": "object"
+      },
       "SubPatternDto": {
         "properties": {
           "conditions": {
@@ -68864,6 +69661,21 @@
           "outcome",
           "calledAt",
           "calledNumberMasked"
+        ],
+        "type": "object"
+      },
+      "VerifyReferenceDto": {
+        "properties": {
+          "referenceCode": {
+            "description": "Must equal the base’s current reference code",
+            "example": "FEFCO 0201",
+            "maxLength": 64,
+            "pattern": "\\S",
+            "type": "string"
+          }
+        },
+        "required": [
+          "referenceCode"
         ],
         "type": "object"
       },
@@ -255015,6 +255827,2108 @@
         ]
       }
     },
+    "/v1/admin/style-imports": {
+      "get": {
+        "description": "Every confirmed `pnpm styles:import` run (D-242), newest first: kind, file, checksum, status (applied, held for the `style_library_change` approval, rejected) and its diff.\n\nImplements: D-242.",
+        "operationId": "admin.styleImports.list",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "page",
+            "required": false,
+            "schema": {
+              "default": 1,
+              "minimum": 1,
+              "type": "integer"
+            }
+          },
+          {
+            "in": "query",
+            "name": "perPage",
+            "required": false,
+            "schema": {
+              "default": 25,
+              "maximum": 100,
+              "minimum": 1,
+              "type": "integer"
+            }
+          },
+          {
+            "description": "Sort field; each endpoint validates it against its own allow-list.",
+            "in": "query",
+            "name": "sort",
+            "required": false,
+            "schema": {
+              "example": "createdAt",
+              "maxLength": 64,
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "order",
+            "required": false,
+            "schema": {
+              "$ref": "#/components/schemas/SortOrder"
+            }
+          },
+          {
+            "description": "Free-text search",
+            "in": "query",
+            "name": "q",
+            "required": false,
+            "schema": {
+              "maxLength": 200,
+              "type": "string"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "data": [
+                    {
+                      "approvalRequestId": null,
+                      "checksum": "b1946ac92492d2347c6235b4d2611184",
+                      "createdAt": "2026-10-03T10:00:00+07:00",
+                      "createdById": "0192f3a0-7c1e-7d2a-9b1f-0000000ae005",
+                      "decidedAt": "2026-10-03T10:00:00+07:00",
+                      "diff": {
+                        "summary": {
+                          "basesCreated": 105,
+                          "variantsCreated": 960
+                        }
+                      },
+                      "fileName": "style-library-master.json",
+                      "id": "0192f3a0-7c1e-7d2a-9b1f-0000000ae004",
+                      "kind": "master",
+                      "status": "applied"
+                    }
+                  ],
+                  "meta": {
+                    "page": 1,
+                    "perPage": 25,
+                    "total": 1
+                  }
+                },
+                "schema": {
+                  "properties": {
+                    "data": {
+                      "items": {
+                        "$ref": "#/components/schemas/StyleImportRunDto"
+                      },
+                      "type": "array"
+                    },
+                    "meta": {
+                      "$ref": "#/components/schemas/PageMeta"
+                    }
+                  },
+                  "required": [
+                    "data",
+                    "meta"
+                  ],
+                  "type": "object"
+                }
+              }
+            },
+            "description": "One page of results",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.unauthenticated": {
+                    "$ref": "#/components/examples/problem.auth.unauthenticated"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.unauthenticated`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.forbidden": {
+                    "$ref": "#/components/examples/problem.auth.forbidden"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.forbidden`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "validation.failed": {
+                    "$ref": "#/components/examples/problem.validation.failed"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `validation.failed`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "staff": []
+          }
+        ],
+        "summary": "List style imports",
+        "tags": [
+          "admin.styleImports"
+        ],
+        "x-required-permissions": [
+          "styles.read"
+        ]
+      }
+    },
+    "/v1/admin/style-imports/{runId}": {
+      "get": {
+        "description": "One import run with its diff and approval request (D-242).\n\nImplements: D-242.",
+        "operationId": "admin.styleImports.get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "runId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "approvalRequestId": null,
+                  "checksum": "b1946ac92492d2347c6235b4d2611184",
+                  "createdAt": "2026-10-03T10:00:00+07:00",
+                  "createdById": "0192f3a0-7c1e-7d2a-9b1f-0000000ae005",
+                  "decidedAt": "2026-10-03T10:00:00+07:00",
+                  "diff": {
+                    "summary": {
+                      "basesCreated": 105,
+                      "variantsCreated": 960
+                    }
+                  },
+                  "fileName": "style-library-master.json",
+                  "id": "0192f3a0-7c1e-7d2a-9b1f-0000000ae004",
+                  "kind": "master",
+                  "status": "applied"
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/StyleImportRunDto"
+                }
+              }
+            },
+            "description": "The run",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.unauthenticated": {
+                    "$ref": "#/components/examples/problem.auth.unauthenticated"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.unauthenticated`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.forbidden": {
+                    "$ref": "#/components/examples/problem.auth.forbidden"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.forbidden`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "404": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.not_found": {
+                    "$ref": "#/components/examples/problem.http.not_found"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.not_found`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "validation.failed": {
+                    "$ref": "#/components/examples/problem.validation.failed"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `validation.failed`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "staff": []
+          }
+        ],
+        "summary": "Get a style import",
+        "tags": [
+          "admin.styleImports"
+        ],
+        "x-required-permissions": [
+          "styles.read"
+        ]
+      }
+    },
+    "/v1/admin/styles": {
+      "get": {
+        "description": "Base structures of the style library (D-241) with their variant counts (total, active, publishable), name approvals (D-212), reference verification (D-211) and recipe state; filter by category, status, published.\n\nImplements: D-241, D-242, D-243.",
+        "operationId": "admin.styles.list",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "page",
+            "required": false,
+            "schema": {
+              "default": 1,
+              "minimum": 1,
+              "type": "integer"
+            }
+          },
+          {
+            "in": "query",
+            "name": "perPage",
+            "required": false,
+            "schema": {
+              "default": 25,
+              "maximum": 100,
+              "minimum": 1,
+              "type": "integer"
+            }
+          },
+          {
+            "description": "Sort field; each endpoint validates it against its own allow-list.",
+            "in": "query",
+            "name": "sort",
+            "required": false,
+            "schema": {
+              "example": "createdAt",
+              "maxLength": 64,
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "order",
+            "required": false,
+            "schema": {
+              "$ref": "#/components/schemas/SortOrder"
+            }
+          },
+          {
+            "description": "Free-text search",
+            "in": "query",
+            "name": "q",
+            "required": false,
+            "schema": {
+              "maxLength": 200,
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "category",
+            "required": false,
+            "schema": {
+              "example": "folding_carton",
+              "maxLength": 64,
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "status",
+            "required": false,
+            "schema": {
+              "$ref": "#/components/schemas/StyleStatus"
+            }
+          },
+          {
+            "description": "Only bases with (true) or without (false) a publishable variant",
+            "in": "query",
+            "name": "published",
+            "required": false,
+            "schema": {
+              "example": true,
+              "type": "boolean"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "data": [
+                    {
+                      "category": "folding_carton",
+                      "code": "PK-TE-01",
+                      "family": "tuck_end",
+                      "featured": false,
+                      "hidden": false,
+                      "id": "0192f3a0-7c1e-7d2a-9b1f-0000000ae001",
+                      "materialClass": "paperboard",
+                      "nameEn": "Tuck-end carton (configurable ends)",
+                      "nameTh": "กล่องฝาเสียบ (ปรับฝาบน-ล่างได้)",
+                      "namesApproval": {
+                        "marketingAt": null,
+                        "prepressAt": null
+                      },
+                      "productTypeCode": "folding_carton",
+                      "publishedAt": null,
+                      "recipeApproved": false,
+                      "recipeVersion": null,
+                      "referenceCode": null,
+                      "referenceVerifiedAt": null,
+                      "sort": 0,
+                      "sourceProductType": "folding",
+                      "status": "active",
+                      "variants": {
+                        "active": 228,
+                        "publishable": 0,
+                        "total": 228
+                      },
+                      "wave": 1
+                    }
+                  ],
+                  "meta": {
+                    "page": 1,
+                    "perPage": 25,
+                    "total": 1
+                  }
+                },
+                "schema": {
+                  "properties": {
+                    "data": {
+                      "items": {
+                        "$ref": "#/components/schemas/AdminStyleBaseDto"
+                      },
+                      "type": "array"
+                    },
+                    "meta": {
+                      "$ref": "#/components/schemas/PageMeta"
+                    }
+                  },
+                  "required": [
+                    "data",
+                    "meta"
+                  ],
+                  "type": "object"
+                }
+              }
+            },
+            "description": "One page of results",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.unauthenticated": {
+                    "$ref": "#/components/examples/problem.auth.unauthenticated"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.unauthenticated`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.forbidden": {
+                    "$ref": "#/components/examples/problem.auth.forbidden"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.forbidden`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "validation.failed": {
+                    "$ref": "#/components/examples/problem.validation.failed"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `validation.failed`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "staff": []
+          }
+        ],
+        "summary": "List style-library bases",
+        "tags": [
+          "admin.styles"
+        ],
+        "x-required-permissions": [
+          "styles.read"
+        ]
+      }
+    },
+    "/v1/admin/styles/{styleId}": {
+      "get": {
+        "description": "A base with its construction, axes, recipes (newest first), synonyms, use cases and why its active variants are not publishable (reason counts, D-243).\n\nImplements: D-241, D-242, D-243.",
+        "operationId": "admin.styles.get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "styleId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "category": "folding_carton",
+                  "code": "PK-TE-01",
+                  "complexity": "M",
+                  "construction": "Four side panels + glue flap; top and bottom closures chosen from the tuck/lock/seal set.",
+                  "descriptionEn": null,
+                  "descriptionTh": null,
+                  "family": "tuck_end",
+                  "featured": false,
+                  "hidden": false,
+                  "id": "0192f3a0-7c1e-7d2a-9b1f-0000000ae001",
+                  "materialClass": "paperboard",
+                  "nameEn": "Tuck-end carton (configurable ends)",
+                  "nameTh": "กล่องฝาเสียบ (ปรับฝาบน-ล่างได้)",
+                  "namesApproval": {
+                    "marketingAt": null,
+                    "prepressAt": null
+                  },
+                  "patternId": null,
+                  "pricingPathAtLaunch": "instant_after_signoff",
+                  "productTypeCode": "folding_carton",
+                  "publishedAt": null,
+                  "reasonCounts": [
+                    {
+                      "count": 228,
+                      "reason": "no_recipe"
+                    },
+                    {
+                      "count": 228,
+                      "reason": "names_not_approved"
+                    },
+                    {
+                      "count": 228,
+                      "reason": "not_makeable"
+                    }
+                  ],
+                  "recipeApproved": false,
+                  "recipeVersion": null,
+                  "recipes": [],
+                  "referenceCode": null,
+                  "referenceVerifiedAt": null,
+                  "sort": 0,
+                  "sourceProductType": "folding",
+                  "status": "active",
+                  "synonyms": [],
+                  "useCases": [],
+                  "variantAxes": [
+                    "tuck_top",
+                    "tuck_bottom",
+                    "hang",
+                    "window"
+                  ],
+                  "variants": {
+                    "active": 228,
+                    "publishable": 0,
+                    "total": 228
+                  },
+                  "wave": 1
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/AdminStyleBaseDetailDto"
+                }
+              }
+            },
+            "description": "The base",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.unauthenticated": {
+                    "$ref": "#/components/examples/problem.auth.unauthenticated"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.unauthenticated`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.forbidden": {
+                    "$ref": "#/components/examples/problem.auth.forbidden"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.forbidden`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "404": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.not_found": {
+                    "$ref": "#/components/examples/problem.http.not_found"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.not_found`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "validation.failed": {
+                    "$ref": "#/components/examples/problem.validation.failed"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `validation.failed`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "staff": []
+          }
+        ],
+        "summary": "Get a style-library base",
+        "tags": [
+          "admin.styles"
+        ],
+        "x-required-permissions": [
+          "styles.read"
+        ]
+      }
+    },
+    "/v1/admin/styles/{styleId}/actions/approve-names": {
+      "post": {
+        "description": "Marketing approves the wording and Prepress the technical terms of the Thai / English names (D-212); both are needed to publish (D-243). The caller must hold the role named in `as`. A later name change clears both.\n\nImplements: D-241, D-242, D-243, D-212.",
+        "operationId": "admin.styles.approveNames",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "styleId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "examples": {
+                "default": {
+                  "value": {
+                    "as": "marketing"
+                  }
+                }
+              },
+              "schema": {
+                "$ref": "#/components/schemas/ApproveNamesDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "category": "folding_carton",
+                  "code": "PK-TE-01",
+                  "complexity": "M",
+                  "construction": "Four side panels + glue flap; top and bottom closures chosen from the tuck/lock/seal set.",
+                  "descriptionEn": null,
+                  "descriptionTh": null,
+                  "family": "tuck_end",
+                  "featured": false,
+                  "hidden": false,
+                  "id": "0192f3a0-7c1e-7d2a-9b1f-0000000ae001",
+                  "materialClass": "paperboard",
+                  "nameEn": "Tuck-end carton (configurable ends)",
+                  "nameTh": "กล่องฝาเสียบ (ปรับฝาบน-ล่างได้)",
+                  "namesApproval": {
+                    "marketingAt": null,
+                    "prepressAt": null
+                  },
+                  "patternId": null,
+                  "pricingPathAtLaunch": "instant_after_signoff",
+                  "productTypeCode": "folding_carton",
+                  "publishedAt": null,
+                  "reasonCounts": [
+                    {
+                      "count": 228,
+                      "reason": "no_recipe"
+                    },
+                    {
+                      "count": 228,
+                      "reason": "names_not_approved"
+                    },
+                    {
+                      "count": 228,
+                      "reason": "not_makeable"
+                    }
+                  ],
+                  "recipeApproved": false,
+                  "recipeVersion": null,
+                  "recipes": [],
+                  "referenceCode": null,
+                  "referenceVerifiedAt": null,
+                  "sort": 0,
+                  "sourceProductType": "folding",
+                  "status": "active",
+                  "synonyms": [],
+                  "useCases": [],
+                  "variantAxes": [
+                    "tuck_top",
+                    "tuck_bottom",
+                    "hang",
+                    "window"
+                  ],
+                  "variants": {
+                    "active": 228,
+                    "publishable": 0,
+                    "total": 228
+                  },
+                  "wave": 1
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/AdminStyleBaseDetailDto"
+                }
+              }
+            },
+            "description": "The base",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "400": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.bad_request": {
+                    "$ref": "#/components/examples/problem.http.bad_request"
+                  },
+                  "http.malformed_json": {
+                    "$ref": "#/components/examples/problem.http.malformed_json"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.bad_request`, `http.malformed_json`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.unauthenticated": {
+                    "$ref": "#/components/examples/problem.auth.unauthenticated"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.unauthenticated`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.forbidden": {
+                    "$ref": "#/components/examples/problem.auth.forbidden"
+                  },
+                  "styles.role_required": {
+                    "$ref": "#/components/examples/problem.styles.role_required"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.forbidden`, `styles.role_required`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "404": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.not_found": {
+                    "$ref": "#/components/examples/problem.http.not_found"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.not_found`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "validation.failed": {
+                    "$ref": "#/components/examples/problem.validation.failed"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `validation.failed`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "staff": []
+          }
+        ],
+        "summary": "Approve the names of a base",
+        "tags": [
+          "admin.styles"
+        ],
+        "x-required-permissions": [
+          "styles.approve_names"
+        ]
+      }
+    },
+    "/v1/admin/styles/{styleId}/actions/verify-reference": {
+      "post": {
+        "description": "Prepress confirms the FEFCO / ECMA reference against the edition Packio holds (D-211); unverified codes are never shown to customers. The body repeats the current code, so a stale screen cannot verify a changed one.\n\nImplements: D-241, D-242, D-243, D-211.",
+        "operationId": "admin.styles.verifyReference",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "styleId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "examples": {
+                "default": {
+                  "value": {
+                    "referenceCode": "FEFCO 0201"
+                  }
+                }
+              },
+              "schema": {
+                "$ref": "#/components/schemas/VerifyReferenceDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "category": "folding_carton",
+                  "code": "PK-TE-01",
+                  "complexity": "M",
+                  "construction": "Four side panels + glue flap; top and bottom closures chosen from the tuck/lock/seal set.",
+                  "descriptionEn": null,
+                  "descriptionTh": null,
+                  "family": "tuck_end",
+                  "featured": false,
+                  "hidden": false,
+                  "id": "0192f3a0-7c1e-7d2a-9b1f-0000000ae001",
+                  "materialClass": "paperboard",
+                  "nameEn": "Tuck-end carton (configurable ends)",
+                  "nameTh": "กล่องฝาเสียบ (ปรับฝาบน-ล่างได้)",
+                  "namesApproval": {
+                    "marketingAt": null,
+                    "prepressAt": null
+                  },
+                  "patternId": null,
+                  "pricingPathAtLaunch": "instant_after_signoff",
+                  "productTypeCode": "folding_carton",
+                  "publishedAt": null,
+                  "reasonCounts": [
+                    {
+                      "count": 228,
+                      "reason": "no_recipe"
+                    },
+                    {
+                      "count": 228,
+                      "reason": "names_not_approved"
+                    },
+                    {
+                      "count": 228,
+                      "reason": "not_makeable"
+                    }
+                  ],
+                  "recipeApproved": false,
+                  "recipeVersion": null,
+                  "recipes": [],
+                  "referenceCode": null,
+                  "referenceVerifiedAt": null,
+                  "sort": 0,
+                  "sourceProductType": "folding",
+                  "status": "active",
+                  "synonyms": [],
+                  "useCases": [],
+                  "variantAxes": [
+                    "tuck_top",
+                    "tuck_bottom",
+                    "hang",
+                    "window"
+                  ],
+                  "variants": {
+                    "active": 228,
+                    "publishable": 0,
+                    "total": 228
+                  },
+                  "wave": 1
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/AdminStyleBaseDetailDto"
+                }
+              }
+            },
+            "description": "The base",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "400": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.bad_request": {
+                    "$ref": "#/components/examples/problem.http.bad_request"
+                  },
+                  "http.malformed_json": {
+                    "$ref": "#/components/examples/problem.http.malformed_json"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.bad_request`, `http.malformed_json`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.unauthenticated": {
+                    "$ref": "#/components/examples/problem.auth.unauthenticated"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.unauthenticated`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.forbidden": {
+                    "$ref": "#/components/examples/problem.auth.forbidden"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.forbidden`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "404": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.not_found": {
+                    "$ref": "#/components/examples/problem.http.not_found"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.not_found`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "409": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "styles.reference_mismatch": {
+                    "$ref": "#/components/examples/problem.styles.reference_mismatch"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `styles.reference_mismatch`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "validation.failed": {
+                    "$ref": "#/components/examples/problem.validation.failed"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `validation.failed`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "staff": []
+          }
+        ],
+        "summary": "Verify the industry reference code of a base",
+        "tags": [
+          "admin.styles"
+        ],
+        "x-required-permissions": [
+          "styles.verify_reference"
+        ]
+      }
+    },
+    "/v1/admin/styles/{styleId}/recipes/{recipeId}/actions/approve": {
+      "post": {
+        "description": "Prepress approves an imported recipe version (D-243) — never the person who imported it (maker ≠ checker). The latest approved version is the base’s recipe; publishability is recomputed. Audited.\n\nImplements: D-241, D-242, D-243.",
+        "operationId": "admin.styles.approveRecipe",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "styleId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "recipeId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "category": "folding_carton",
+                  "code": "PK-TE-01",
+                  "complexity": "M",
+                  "construction": "Four side panels + glue flap; top and bottom closures chosen from the tuck/lock/seal set.",
+                  "descriptionEn": null,
+                  "descriptionTh": null,
+                  "family": "tuck_end",
+                  "featured": false,
+                  "hidden": false,
+                  "id": "0192f3a0-7c1e-7d2a-9b1f-0000000ae001",
+                  "materialClass": "paperboard",
+                  "nameEn": "Tuck-end carton (configurable ends)",
+                  "nameTh": "กล่องฝาเสียบ (ปรับฝาบน-ล่างได้)",
+                  "namesApproval": {
+                    "marketingAt": null,
+                    "prepressAt": null
+                  },
+                  "patternId": null,
+                  "pricingPathAtLaunch": "instant_after_signoff",
+                  "productTypeCode": "folding_carton",
+                  "publishedAt": null,
+                  "reasonCounts": [
+                    {
+                      "count": 228,
+                      "reason": "no_recipe"
+                    },
+                    {
+                      "count": 228,
+                      "reason": "names_not_approved"
+                    },
+                    {
+                      "count": 228,
+                      "reason": "not_makeable"
+                    }
+                  ],
+                  "recipeApproved": false,
+                  "recipeVersion": null,
+                  "recipes": [],
+                  "referenceCode": null,
+                  "referenceVerifiedAt": null,
+                  "sort": 0,
+                  "sourceProductType": "folding",
+                  "status": "active",
+                  "synonyms": [],
+                  "useCases": [],
+                  "variantAxes": [
+                    "tuck_top",
+                    "tuck_bottom",
+                    "hang",
+                    "window"
+                  ],
+                  "variants": {
+                    "active": 228,
+                    "publishable": 0,
+                    "total": 228
+                  },
+                  "wave": 1
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/AdminStyleBaseDetailDto"
+                }
+              }
+            },
+            "description": "The base",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.unauthenticated": {
+                    "$ref": "#/components/examples/problem.auth.unauthenticated"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.unauthenticated`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.forbidden": {
+                    "$ref": "#/components/examples/problem.auth.forbidden"
+                  },
+                  "styles.maker_checker": {
+                    "$ref": "#/components/examples/problem.styles.maker_checker"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.forbidden`, `styles.maker_checker`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "404": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.not_found": {
+                    "$ref": "#/components/examples/problem.http.not_found"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.not_found`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "409": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "styles.recipe_approved": {
+                    "$ref": "#/components/examples/problem.styles.recipe_approved"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `styles.recipe_approved`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "validation.failed": {
+                    "$ref": "#/components/examples/problem.validation.failed"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `validation.failed`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "staff": []
+          }
+        ],
+        "summary": "Approve a recipe version",
+        "tags": [
+          "admin.styles"
+        ],
+        "x-required-permissions": [
+          "styles.approve_recipe"
+        ]
+      }
+    },
+    "/v1/admin/styles/{styleId}/variants": {
+      "get": {
+        "description": "Generated structural variants (D-241) with their code, option key, publishability and reasons (D-243).\n\nImplements: D-241, D-242, D-243.",
+        "operationId": "admin.styles.listVariants",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "styleId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "page",
+            "required": false,
+            "schema": {
+              "default": 1,
+              "minimum": 1,
+              "type": "integer"
+            }
+          },
+          {
+            "in": "query",
+            "name": "perPage",
+            "required": false,
+            "schema": {
+              "default": 25,
+              "maximum": 100,
+              "minimum": 1,
+              "type": "integer"
+            }
+          },
+          {
+            "description": "Sort field; each endpoint validates it against its own allow-list.",
+            "in": "query",
+            "name": "sort",
+            "required": false,
+            "schema": {
+              "example": "createdAt",
+              "maxLength": 64,
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "order",
+            "required": false,
+            "schema": {
+              "$ref": "#/components/schemas/SortOrder"
+            }
+          },
+          {
+            "description": "Free-text search",
+            "in": "query",
+            "name": "q",
+            "required": false,
+            "schema": {
+              "maxLength": 200,
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "reason",
+            "required": false,
+            "schema": {
+              "$ref": "#/components/schemas/StylePublishReason"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "data": [
+                    {
+                      "code": "PK-TE-01-K7QD",
+                      "id": "0192f3a0-7c1e-7d2a-9b1f-0000000ae002",
+                      "optionKey": "tuck_top=reverse_tuck;tuck_bottom=crash_lock;hang=none;window=none",
+                      "options": {
+                        "hang": "none",
+                        "tuck_bottom": "crash_lock",
+                        "tuck_top": "reverse_tuck",
+                        "window": "none"
+                      },
+                      "publishable": false,
+                      "publishedAt": null,
+                      "reasons": [
+                        "no_recipe",
+                        "names_not_approved",
+                        "not_makeable"
+                      ],
+                      "status": "active"
+                    }
+                  ],
+                  "meta": {
+                    "page": 1,
+                    "perPage": 25,
+                    "total": 1
+                  }
+                },
+                "schema": {
+                  "properties": {
+                    "data": {
+                      "items": {
+                        "$ref": "#/components/schemas/AdminStyleVariantDto"
+                      },
+                      "type": "array"
+                    },
+                    "meta": {
+                      "$ref": "#/components/schemas/PageMeta"
+                    }
+                  },
+                  "required": [
+                    "data",
+                    "meta"
+                  ],
+                  "type": "object"
+                }
+              }
+            },
+            "description": "One page of results",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.unauthenticated": {
+                    "$ref": "#/components/examples/problem.auth.unauthenticated"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.unauthenticated`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.forbidden": {
+                    "$ref": "#/components/examples/problem.auth.forbidden"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.forbidden`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "404": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.not_found": {
+                    "$ref": "#/components/examples/problem.http.not_found"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.not_found`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "validation.failed": {
+                    "$ref": "#/components/examples/problem.validation.failed"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `validation.failed`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "staff": []
+          }
+        ],
+        "summary": "List the variants of a base",
+        "tags": [
+          "admin.styles"
+        ],
+        "x-required-permissions": [
+          "styles.read"
+        ]
+      }
+    },
     "/v1/admin/tax-calendar": {
       "get": {
         "description": "ภ.พ.30 and ภ.ง.ด.3 / 53 due dates per month (setting `tax.calendar`), reminded ahead, done when filed.\n\nImplements: D-033.",
@@ -347959,6 +350873,14 @@
     {
       "description": "Zones and their postcodes (D-013, D-114).",
       "name": "admin.shippingZones"
+    },
+    {
+      "description": "Style-library imports (D-242): master files and recipe bundles, their diffs and approvals.",
+      "name": "admin.styleImports"
+    },
+    {
+      "description": "Style library for staff (D-241–D-243): bases, generated variants and why they are not publishable; Prepress approves recipes and verifies references, Marketing and Prepress approve names.",
+      "name": "admin.styles"
     },
     {
       "description": "Sales / purchase tax reports, ภ.พ.30 and ภ.ง.ด.3 / 53 working papers with attachments, WHT registers, GL reconciliation and the tax calendar (§6, §7).",

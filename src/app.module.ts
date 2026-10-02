@@ -49,6 +49,7 @@ import { ReceivablesModule } from '@modules/receivables/receivables.module';
 import { ReportsModule } from '@modules/reports/reports.module';
 import { RfqModule } from '@modules/rfq/rfq.module';
 import { ShippingModule } from '@modules/shipping/shipping.module';
+import { StylesModule } from '@modules/styles/styles.module';
 import { SurfacesModule } from '@modules/surfaces/surfaces.module';
 import { TaxModule } from '@modules/tax/tax.module';
 import { TimelineModule } from '@modules/timeline/timeline.module';
@@ -109,6 +110,7 @@ import { LoggerModule } from 'nestjs-pino';
     ShippingModule,
     QuotesModule,
     AdvisoryModule,
+    StylesModule,
     RfqModule,
     CustomersModule,
     CartsModule,

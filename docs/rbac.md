@@ -21,7 +21,7 @@ Legend: ● granted · ◆ granted and sensitive (cost/margin data, D-141).
 | `calendars.manage` — Key in public holidays and factory closures (D-161) | ● |  |  |  | ● |  |  |  |  |  |  |  |  |  |  |
 | `consent_purposes.manage` — Manage consent purposes and their texts | ● |  |  |  |  |  |  |  |  |  |  |  |  |  |  |
 | `approvals.read` — Read approval requests | ● | ● | ● | ● | ● | ● | ● | ● | ● | ● | ● | ● | ● | ● | ● |
-| `approvals.act` — Approve or reject requests routed to the role | ● | ● | ● | ● |  |  |  |  | ● | ● |  | ● | ● |  |  |
+| `approvals.act` — Approve or reject requests routed to the role | ● | ● | ● | ● |  |  |  | ● | ● | ● |  | ● | ● |  |  |
 | `approvals.delegate` — Delegate own approvals for a period | ● | ● | ● | ● | ● | ● | ● | ● | ● | ● | ● | ● | ● |  | ● |
 | `approval_policies.manage` — Create approval policy versions (D-063) | ● |  |  |  |  |  |  |  |  |  |  |  |  |  |  |
 | `users.read` — Read staff, partner and customer accounts | ● |  |  |  | ● |  |  |  |  |  |  |  |  | ● |  |
@@ -45,6 +45,12 @@ Legend: ● granted · ◆ granted and sensitive (cost/margin data, D-141).
 | `geography.manage` — Maintain provinces, districts, subdistricts and postcodes (D-161, D-170) | ● |  |  |  | ● |  |  |  |  |  |  |  |  |  |  |
 | `partners.read` — Read partner factories and their onboarding | ● | ● | ● |  | ● |  |  |  | ● | ● |  |  | ● | ● |  |
 | `partners.manage` — Create factories, run onboarding, capability, tiers, capacity and status changes (D-011, D-041, D-171) | ● |  |  |  |  |  |  |  |  |  |  |  | ● |  |  |
+| `styles.read` — Read the style library: bases, variants, recipes, imports | ● |  |  |  | ● | ● | ● | ● |  |  |  | ● | ● | ● |  |
+| `styles.import` — Import the style master file and recipe bundles (dry run, then confirm) (D-242) | ● |  |  |  | ● |  |  | ● |  |  |  |  |  |  |  |
+| `styles.curate` — Curate the style library: featured, hidden, order, copy, product type (D-246) | ● |  |  |  | ● |  |  |  |  |  |  | ● |  |  |  |
+| `styles.approve_recipe` — Approve a style recipe version (Prepress) (D-243) | ● |  |  |  |  |  |  | ● |  |  |  |  |  |  |  |
+| `styles.approve_names` — Approve the Thai / English names of a style (Marketing: wording, Prepress: technical terms) (D-212) | ● |  |  |  |  |  |  | ● |  |  |  | ● |  |  |  |
+| `styles.verify_reference` — Verify an industry reference code (FEFCO / ECMA) against the edition Packio holds (Prepress) (D-211) | ● |  |  |  |  |  |  | ● |  |  |  |  |  |  |  |
 | `advisory.read` — Read Structure Advisor recommendations (inputs, rule set, board data, choices) and replay them (D-240) | ● |  |  |  | ● | ● | ● | ● |  |  |  |  | ● | ● |  |
 | `advisory.evaluate` — Run the Structure Advisor for a configuration, also while it is off for customers (D-237, D-239) | ● |  |  |  | ● | ● | ● | ● |  |  |  |  | ● |  |  |
 | `partners.site_visits.record` — Record site visits of partner factories (D-041) | ● |  |  |  |  |  |  |  |  |  |  |  | ● |  |  |

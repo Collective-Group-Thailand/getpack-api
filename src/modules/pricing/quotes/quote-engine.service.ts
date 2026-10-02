@@ -233,7 +233,11 @@ export class QuoteEngineService {
     const measured = await this.measure(key, cfg, db);
     cfg = measured.cfg;
     const resolved = (await adapter.resolve(cfg, db)) as ResolvedBase;
-    const candidates = await this.quotePath.instantCandidates(resolved.productTypeId, at, db);
+    // D-243: a configuration naming an unpublishable style variant gets no instant price at all.
+    const styleBlock = await this.styleVariantBlock(cfg as Record<string, unknown>, db);
+    const candidates = styleBlock
+      ? []
+      : await this.quotePath.instantCandidates(resolved.productTypeId, at, db);
     // Tier B prices only inside its envelope (D-043, D-234): per quantity and print type, below.
     const envelopes = new Map(
       candidates.filter((c) => c.tier === 'B').map((c) => [c.factoryPublicId, c.envelope!] as const),
@@ -314,11 +318,13 @@ export class QuoteEngineService {
       let chosen: ((typeof ranked)[number] & { shipDate: string }) | null = null;
       const reason =
         priceable.length === 0
-          ? candidates.length === 0
-            ? 'no_price_path'
-            : computed.length > 0
-              ? 'envelope_not_covered'
-              : 'not_priceable'
+          ? styleBlock
+            ? styleBlock
+            : candidates.length === 0
+              ? 'no_price_path'
+              : computed.length > 0
+                ? 'envelope_not_covered'
+                : 'not_priceable'
           : ranked.length === 0
             ? 'delivery_unavailable'
             : 'capacity_unavailable';
@@ -603,6 +609,29 @@ export class QuoteEngineService {
    * D-013), and costed for the factory the quotation selected (its fleet payout or a fallback carrier).
    * A leg without a customer price or without a delivery path for that factory is not available.
    */
+  /**
+   * D-243: `styleVariantCode` must name a publishable, active variant whose base is linked to the configuration's
+   * pattern; anything else blocks instant pricing (the reason routes the customer to RFQ).
+   */
+  private async styleVariantBlock(cfg: Record<string, unknown>, db: Tx): Promise<string | null> {
+    const code = cfg['styleVariantCode'];
+    if (typeof code !== 'string') return null;
+    const variant = await db.styleVariant.findUnique({
+      where: { code },
+      select: {
+        publishable: true,
+        status: true,
+        base: { select: { pattern: { select: { publicId: true } } } },
+      },
+    });
+    const ok =
+      variant !== null &&
+      variant.publishable &&
+      variant.status === 'active' &&
+      variant.base.pattern?.publicId === cfg['patternId'];
+    return ok ? null : 'style_variant_not_publishable';
+  }
+
   async destinationShipping(
     key: CalculatorKey,
     cfg: unknown,

@@ -3,6 +3,7 @@ import { RATE_MISS_REASONS } from '@modules/shipping/rates/customer-rates.dto';
 import { type MeasurementBasis } from '@modules/specs/dimension-conversion';
 import { QUOTE_DIMENSIONS_EXAMPLE, QuoteDimensionsDto } from '@modules/specs/specs.dto';
 import { BasisField } from '@modules/specs/specs.dto';
+import { StyleVariantField } from '@modules/styles/style-variant-field';
 import { ApiProperty, ApiPropertyOptional, getSchemaPath } from '@nestjs/swagger';
 import { Type } from 'class-transformer';
 import {
@@ -178,6 +179,9 @@ export class FoldingConfigurationDto {
 
   @BasisField('box')
   basis?: MeasurementBasis;
+
+  @StyleVariantField()
+  styleVariantCode?: string;
 
   @DecimalField({ example: 60, positive: true, ...MM, description: 'Box width' })
   w!: number;

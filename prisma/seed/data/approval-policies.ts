@@ -239,4 +239,16 @@ export const APPROVAL_POLICIES: readonly PolicySeed[] = [
     reason: 'Seed from D-136',
     steps: [{ name: 'Marketing review', role: 'marketing' }],
   },
+  {
+    key: 'style_library_change',
+    subjectType: 'style_import_run',
+    description:
+      'Changes an import makes to published style-library bases or variants (copy, axes, recipe, retirement): Prepress, then Marketing (D-242, D-212)',
+    decisions: ['D-242', 'D-212'],
+    reason: 'Seed from D-242 — Prepress then Marketing approve',
+    steps: [
+      { name: 'Prepress approval', role: 'prepress' },
+      { name: 'Marketing approval', role: 'marketing' },
+    ],
+  },
 ];
