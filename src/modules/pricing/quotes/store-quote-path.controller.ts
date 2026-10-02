@@ -1,6 +1,7 @@
 import { Public } from '@common/auth/auth.decorators';
 import { DomainException } from '@common/errors/domain.exception';
 import { ApiEndpoint, ApiStandardErrors, ApiSuccess } from '@common/openapi/decorators';
+import { refuseUnits } from '@common/validation/units';
 import { PrismaService } from '@database/prisma.service';
 import { type EnvelopeFacts } from '@modules/partners/configuration/tier-b-envelope';
 import {
@@ -65,12 +66,19 @@ export class StoreQuotePathController {
     type: QuotePathDto,
     example: { productTypeCode: 'folding_carton', mode: 'rfq', reason: 'type_rfq_only' },
   })
-  @ApiStandardErrors('http.bad_request', 'http.malformed_json', 'http.not_found', 'validation.failed')
+  @ApiStandardErrors(
+    'http.bad_request',
+    'http.malformed_json',
+    'http.not_found',
+    'validation.failed',
+    'specs.unit_not_accepted',
+  )
   async resolve(@Body() body: QuotePathRequestDto): Promise<QuotePathDto> {
     const type = await this.prisma.productType.findFirst({
       where: { code: body.productTypeCode, status: 'active' },
     });
     if (!type) throw new DomainException('http.not_found');
+    if (body.configuration) refuseUnits(body.configuration, 'configuration'); // D-183
     let facts: EnvelopeFacts | null = null;
     let quantities: readonly number[] | null = null;
     if (type.calculatorKey && this.engine.hasCalculator(type.calculatorKey) && body.configuration) {

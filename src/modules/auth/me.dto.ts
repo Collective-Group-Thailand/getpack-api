@@ -1,6 +1,9 @@
+import { EnumField } from '@modules/catalog/crud/dto-fields';
 import { ApiProperty } from '@nestjs/swagger';
 
 export const LOCALES = ['th', 'en'] as const;
+/** D-183: the unit the web shows sizes in; every size in the API is millimetres. */
+export const DISPLAY_UNITS = ['mm', 'cm', 'in'] as const;
 export const IDENTITY_PROVIDERS = ['phone_otp', 'firebase_google', 'firebase_apple', 'line'] as const;
 
 const USER_ID = '0192f3a0-7c1e-7d2a-9b1f-3c4d5e6f7a8b';
@@ -17,6 +20,14 @@ class MeBaseDto {
 
   @ApiProperty({ enum: LOCALES, enumName: 'LocaleCode', example: 'th' })
   locale!: (typeof LOCALES)[number];
+
+  @ApiProperty({
+    enum: DISPLAY_UNITS,
+    enumName: 'DisplayUnit',
+    example: 'mm',
+    description: 'The unit the web shows sizes in (D-183); every size in the API is millimetres',
+  })
+  displayUnit!: (typeof DISPLAY_UNITS)[number];
 
   @ApiProperty({ type: [String], example: [] })
   roles!: string[];
@@ -99,6 +110,7 @@ export const STORE_ME_EXAMPLE: StoreMeDto = {
   email: 'customer.one@example.com',
   phone: '+66810001234',
   locale: 'th',
+  displayUnit: 'mm',
   roles: [],
   permissions: [],
   scopes: [],
@@ -110,6 +122,7 @@ export const ADMIN_ME_EXAMPLE: AdminMeDto = {
   displayName: 'การเงิน ทดสอบ',
   email: 'finance.one@example.com',
   locale: 'th',
+  displayUnit: 'mm',
   roles: ['finance'],
   permissions: ['approvals.act', 'approvals.read', 'audit_logs.read'],
   menu: [
@@ -125,6 +138,7 @@ export const PARTNER_ME_EXAMPLE: PartnerMeDto = {
   displayName: 'โรงงาน ทดสอบ',
   email: 'planner@factory.example',
   locale: 'th',
+  displayUnit: 'mm',
   roles: ['factory_planner'],
   permissions: ['factory_profile.read'],
   factories: [
@@ -136,3 +150,11 @@ export const PARTNER_ME_EXAMPLE: PartnerMeDto = {
     },
   ],
 };
+
+export class UpdatePreferencesDto {
+  @EnumField(DISPLAY_UNITS, 'DisplayUnit', {
+    example: 'cm',
+    description: 'The unit the web shows sizes in (D-183); sizes are still sent and stored in millimetres',
+  })
+  displayUnit!: (typeof DISPLAY_UNITS)[number];
+}

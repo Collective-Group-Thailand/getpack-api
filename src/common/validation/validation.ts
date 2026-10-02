@@ -4,6 +4,7 @@ import { validate, type ValidationError } from 'class-validator';
 
 import { DomainException } from '../errors/domain.exception';
 import { type ProblemFieldError } from '../errors/problem-details.dto';
+import { unitRefusal } from './units';
 
 function joinPath(parent: string, property: string): string {
   if (/^\d+$/.test(property)) return `${parent}[${property}]`;
@@ -28,8 +29,10 @@ export function createValidationPipe(): ValidationPipe {
     transformOptions: { enableImplicitConversion: false },
     validationError: { target: false, value: false },
     stopAtFirstError: false,
-    exceptionFactory: (errors) =>
-      new DomainException('validation.failed', { errors: flattenValidationErrors(errors) }),
+    exceptionFactory: (errors) => {
+      const flat = flattenValidationErrors(errors);
+      return unitRefusal(flat) ?? new DomainException('validation.failed', { errors: flat });
+    },
   });
 }
 
@@ -51,7 +54,8 @@ export async function validateAs<T extends object>(dto: Type<T>, value: unknown,
     stopAtFirstError: false,
   });
   if (errors.length > 0) {
-    throw new DomainException('validation.failed', { errors: flattenValidationErrors(errors, path) });
+    const flat = flattenValidationErrors(errors, path);
+    throw unitRefusal(flat) ?? new DomainException('validation.failed', { errors: flat });
   }
   return instance;
 }

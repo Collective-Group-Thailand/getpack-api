@@ -3,6 +3,7 @@ import { sha256 } from '@common/crypto/hashing';
 import { DomainException } from '@common/errors/domain.exception';
 import { assertIfMatch, etagOf } from '@common/etag/etag';
 import { MoneyDecimal } from '@common/money/money';
+import { refuseUnits } from '@common/validation/units';
 import { PrismaService, type Tx } from '@database/prisma.service';
 import { Prisma, type RfqStatus, type SalesChannel } from '@generated/prisma/client';
 import { canonical } from '@modules/catalog/imports/import-engine';
@@ -156,6 +157,8 @@ export class RfqsService implements OnModuleInit {
     input: SubmitRfqInput,
     createdBy?: UserActor,
   ): Promise<RfqRow> {
+    // D-183: sizes are millimetres; a spec naming a unit is refused, never read in it.
+    refuseUnits(input.spec, 'spec');
     const type = await this.prisma.productType.findFirst({
       where: { code: input.productTypeCode, status: 'active' },
     });

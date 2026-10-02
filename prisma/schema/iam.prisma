@@ -125,32 +125,34 @@ enum ConsentSource {
 
 /// Every human principal; the audience is `kind` (ADR-0004). PDPA erasure = anonymise in place.
 model User {
-  id                BigInt     @id(map: "pk_users") @default(autoincrement())
-  publicId          String     @unique(map: "ux_users__public_id") @default(dbgenerated("uuidv7()")) @map("public_id") @db.Uuid
+  id                BigInt      @id(map: "pk_users") @default(autoincrement())
+  publicId          String      @unique(map: "ux_users__public_id") @default(dbgenerated("uuidv7()")) @map("public_id") @db.Uuid
   kind              UserKind
-  status            UserStatus @default(pending_verification)
-  email             String?    @db.Citext
-  emailVerifiedAt   DateTime?  @map("email_verified_at") @db.Timestamptz(6)
+  status            UserStatus  @default(pending_verification)
+  email             String?     @db.Citext
+  emailVerifiedAt   DateTime?   @map("email_verified_at") @db.Timestamptz(6)
   /// E.164 (+66…).
   phone             String?
-  phoneVerifiedAt   DateTime?  @map("phone_verified_at") @db.Timestamptz(6)
-  displayName       String     @map("display_name")
-  firstName         String?    @map("first_name")
-  lastName          String?    @map("last_name")
-  locale            LocaleCode @default(th)
+  phoneVerifiedAt   DateTime?   @map("phone_verified_at") @db.Timestamptz(6)
+  displayName       String      @map("display_name")
+  firstName         String?     @map("first_name")
+  lastName          String?     @map("last_name")
+  locale            LocaleCode  @default(th)
+  /// D-183: the unit the web shows sizes in; the API is millimetre-only.
+  displayUnit       DisplayUnit @default(mm) @map("display_unit")
   /// argon2id; never set for customers (passwordless).
-  passwordHash      String?    @map("password_hash")
-  passwordChangedAt DateTime?  @map("password_changed_at") @db.Timestamptz(6)
-  failedLoginCount  Int        @default(0) @map("failed_login_count") @db.SmallInt
-  lockedUntil       DateTime?  @map("locked_until") @db.Timestamptz(6)
-  lastLoginAt       DateTime?  @map("last_login_at") @db.Timestamptz(6)
-  anonymisedAt      DateTime?  @map("anonymised_at") @db.Timestamptz(6)
-  deletedAt         DateTime?  @map("deleted_at") @db.Timestamptz(6)
-  createdAt         DateTime   @default(now()) @map("created_at") @db.Timestamptz(6)
-  createdById       BigInt?    @map("created_by")
-  updatedAt         DateTime   @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
-  updatedById       BigInt?    @map("updated_by")
-  rowVersion        Int        @default(1) @map("row_version")
+  passwordHash      String?     @map("password_hash")
+  passwordChangedAt DateTime?   @map("password_changed_at") @db.Timestamptz(6)
+  failedLoginCount  Int         @default(0) @map("failed_login_count") @db.SmallInt
+  lockedUntil       DateTime?   @map("locked_until") @db.Timestamptz(6)
+  lastLoginAt       DateTime?   @map("last_login_at") @db.Timestamptz(6)
+  anonymisedAt      DateTime?   @map("anonymised_at") @db.Timestamptz(6)
+  deletedAt         DateTime?   @map("deleted_at") @db.Timestamptz(6)
+  createdAt         DateTime    @default(now()) @map("created_at") @db.Timestamptz(6)
+  createdById       BigInt?     @map("created_by")
+  updatedAt         DateTime    @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+  updatedById       BigInt?     @map("updated_by")
+  rowVersion        Int         @default(1) @map("row_version")
 
   createdBy User? @relation("UserCreatedBy", fields: [createdById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_users__created_by")
   updatedBy User? @relation("UserUpdatedBy", fields: [updatedById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_users__updated_by")
@@ -1098,4 +1100,13 @@ model SavedView {
   @@unique([ownerUserId, resource, name], map: "ux_saved_views__owner_user_id__resource__name")
   @@index([resource, shared], map: "ix_saved_views__resource__shared")
   @@map("saved_views")
+}
+
+/// Display unit of sizes (D-183); stored values are always millimetres.
+enum DisplayUnit {
+  mm
+  cm
+  in
+
+  @@map("display_unit")
 }

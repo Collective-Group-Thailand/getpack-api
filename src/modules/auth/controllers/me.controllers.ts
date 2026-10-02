@@ -9,7 +9,7 @@ import { menuFor } from '@modules/iam/menu.catalog';
 import { PermissionResolver } from '@modules/iam/permission-resolver.service';
 import { ScopeDirectory } from '@modules/iam/scope-directory';
 import { ApiSurface } from '@modules/surfaces/surfaces';
-import { Body, Controller, Delete, Get, HttpCode, Param, Post } from '@nestjs/common';
+import { Body, Controller, Delete, Get, HttpCode, Param, Patch, Post } from '@nestjs/common';
 import { ApiBody, ApiParam } from '@nestjs/swagger';
 import { AuditService } from '@platform/audit/audit.service';
 import { DomainEvents } from '@platform/domain-events/domain-events.service';
@@ -25,6 +25,7 @@ import {
   PartnerMeDto,
   STORE_ME_EXAMPLE,
   StoreMeDto,
+  UpdatePreferencesDto,
 } from '../me.dto';
 
 function userActor(actor: Actor): UserActor {
@@ -43,11 +44,55 @@ async function baseOf(prisma: PrismaService, resolver: PermissionResolver, actor
       displayName: user.displayName,
       email: user.email,
       locale: user.locale,
+      displayUnit: user.displayUnit,
       roles: [...new Set(access.roles.map((r) => r.key))].sort(),
       permissions: [...access.permissions].sort(),
     },
   };
 }
+
+/** D-183: the display unit is the user's own preference (the API stays millimetre-only); audited and evented. */
+async function savePreferences(
+  prisma: PrismaService,
+  audit: AuditService,
+  events: DomainEvents,
+  me: UserActor,
+  body: UpdatePreferencesDto,
+): Promise<void> {
+  await prisma.withTx(async (tx) => {
+    await tx.user.update({ where: { id: me.userId }, data: { displayUnit: body.displayUnit } });
+    await audit.record(tx, {
+      category: 'config',
+      action: 'user.preferences_updated',
+      resourceType: 'user',
+      resourcePublicId: me.publicId,
+      data: { displayUnit: body.displayUnit },
+      actor: me,
+    });
+    await events.record(
+      tx,
+      {
+        type: 'user.preferences_updated',
+        aggregateType: 'user',
+        aggregateId: me.publicId,
+        payload: { userId: me.publicId, displayUnit: body.displayUnit },
+      },
+      me,
+    );
+  });
+}
+
+const PREFERENCES_BODY = {
+  type: UpdatePreferencesDto,
+  examples: { default: { value: { displayUnit: 'cm' } } },
+};
+const PREFERENCES_DOC = {
+  summary: 'Set my display unit',
+  description:
+    'The unit the web shows sizes in: mm, cm or in (D-183). Every size in the API stays in millimetres — a request ' +
+    'that sends a unit is refused with `specs.unit_not_accepted`. Audited.',
+  implements: ['D-183'],
+};
 
 /** The sessions each sign-in identity opens (an unlinked identity's sessions are revoked). */
 const LOGIN_METHODS: Record<string, LoginMethod[]> = {
@@ -125,6 +170,19 @@ export class StoreMeController {
     return this.get(actor);
   }
 
+  @Patch('preferences')
+  @ApiEndpoint({ id: 'store.me.updatePreferences', ...PREFERENCES_DOC })
+  @ApiBody(PREFERENCES_BODY)
+  @ApiSuccess(200, { description: 'The customer', type: StoreMeDto, example: STORE_ME_EXAMPLE })
+  @ApiStandardErrors('http.bad_request', 'http.malformed_json', 'validation.failed', 'auth.token_expired')
+  async updatePreferences(
+    @CurrentActor() actor: Actor,
+    @Body() body: UpdatePreferencesDto,
+  ): Promise<StoreMeDto> {
+    await savePreferences(this.prisma, this.audit, this.events, userActor(actor), body);
+    return this.get(actor);
+  }
+
   @Get()
   @ApiEndpoint({
     id: 'store.me.get',
@@ -157,7 +215,22 @@ export class AdminMeController {
     private readonly prisma: PrismaService,
     private readonly resolver: PermissionResolver,
     private readonly flags: FeatureFlagsService,
+    private readonly audit: AuditService,
+    private readonly events: DomainEvents,
   ) {}
+
+  @Patch('preferences')
+  @ApiEndpoint({ id: 'admin.me.updatePreferences', ...PREFERENCES_DOC })
+  @ApiBody(PREFERENCES_BODY)
+  @ApiSuccess(200, { description: 'The staff member', type: AdminMeDto, example: ADMIN_ME_EXAMPLE })
+  @ApiStandardErrors('http.bad_request', 'http.malformed_json', 'validation.failed', 'auth.token_expired')
+  async updatePreferences(
+    @CurrentActor() actor: Actor,
+    @Body() body: UpdatePreferencesDto,
+  ): Promise<AdminMeDto> {
+    await savePreferences(this.prisma, this.audit, this.events, userActor(actor), body);
+    return this.get(actor);
+  }
 
   @Get()
   @ApiEndpoint({
@@ -185,7 +258,22 @@ export class PartnerMeController {
     private readonly resolver: PermissionResolver,
     private readonly scopes: ScopeDirectory,
     private readonly logins: PasswordLoginService,
+    private readonly audit: AuditService,
+    private readonly events: DomainEvents,
   ) {}
+
+  @Patch('preferences')
+  @ApiEndpoint({ id: 'partner.me.updatePreferences', ...PREFERENCES_DOC })
+  @ApiBody(PREFERENCES_BODY)
+  @ApiSuccess(200, { description: 'The factory user', type: PartnerMeDto, example: PARTNER_ME_EXAMPLE })
+  @ApiStandardErrors('http.bad_request', 'http.malformed_json', 'validation.failed', 'auth.token_expired')
+  async updatePreferences(
+    @CurrentActor() actor: Actor,
+    @Body() body: UpdatePreferencesDto,
+  ): Promise<PartnerMeDto> {
+    await savePreferences(this.prisma, this.audit, this.events, userActor(actor), body);
+    return this.get(actor);
+  }
 
   @Get()
   @ApiEndpoint({

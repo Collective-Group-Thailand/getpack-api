@@ -268,7 +268,7 @@ export class StoreRfqsController {
     type: RfqDto,
     example: { ...RFQ_EXAMPLE, status: 'submitted', messages: [], quotations: [] },
   })
-  @ApiStandardErrors(...WRITE, 'numbering.series_missing')
+  @ApiStandardErrors(...WRITE, 'numbering.series_missing', 'specs.unit_not_accepted')
   async submit(@CurrentActor() actor: Actor, @Body() body: SubmitRfqDto): Promise<RfqDto> {
     return this.view(await this.rfqs.submit(customerOf(actor), 'web', body));
   }

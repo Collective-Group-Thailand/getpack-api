@@ -3026,6 +3026,17 @@
           "type": "https://errors.packio/shipping.version_open"
         }
       },
+      "problem.specs.unit_not_accepted": {
+        "summary": "specs.unit_not_accepted",
+        "value": {
+          "code": "specs.unit_not_accepted",
+          "detail": "ขนาดทั้งหมดส่งเป็นมิลลิเมตรเท่านั้น ระบบไม่รับฟิลด์หน่วย หน่วยที่แสดงผลเป็นการตั้งค่าของผู้ใช้",
+          "requestId": "6f1c2d8e-2c7b-4d0e-9d1c-3f1a2b3c4d5e",
+          "status": 422,
+          "title": "ไม่รับหน่วยวัด",
+          "type": "https://errors.packio/specs.unit_not_accepted"
+        }
+      },
       "problem.support.contact_required": {
         "summary": "support.contact_required",
         "value": {
@@ -5975,6 +5986,15 @@
             "example": "ผู้ใช้ ทดสอบ",
             "type": "string"
           },
+          "displayUnit": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/DisplayUnit"
+              }
+            ],
+            "description": "The unit the web shows sizes in (D-183); every size in the API is millimetres",
+            "example": "mm"
+          },
           "email": {
             "example": "user.one@example.com",
             "type": [
@@ -6030,6 +6050,7 @@
           "displayName",
           "email",
           "locale",
+          "displayUnit",
           "roles",
           "permissions",
           "menu",
@@ -26567,6 +26588,15 @@
         ],
         "type": "string"
       },
+      "DisplayUnit": {
+        "description": "The unit the web shows sizes in (D-183); every size in the API is millimetres",
+        "enum": [
+          "mm",
+          "cm",
+          "in"
+        ],
+        "type": "string"
+      },
       "DisposeAssetDto": {
         "properties": {
           "disposedOn": {
@@ -37807,6 +37837,15 @@
             "example": "ผู้ใช้ ทดสอบ",
             "type": "string"
           },
+          "displayUnit": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/DisplayUnit"
+              }
+            ],
+            "description": "The unit the web shows sizes in (D-183); every size in the API is millimetres",
+            "example": "mm"
+          },
           "email": {
             "example": "user.one@example.com",
             "type": [
@@ -37854,6 +37893,7 @@
           "displayName",
           "email",
           "locale",
+          "displayUnit",
           "roles",
           "permissions",
           "factories"
@@ -58157,6 +58197,15 @@
             "example": "ผู้ใช้ ทดสอบ",
             "type": "string"
           },
+          "displayUnit": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/DisplayUnit"
+              }
+            ],
+            "description": "The unit the web shows sizes in (D-183); every size in the API is millimetres",
+            "example": "mm"
+          },
           "email": {
             "example": "user.one@example.com",
             "type": [
@@ -58219,6 +58268,7 @@
           "displayName",
           "email",
           "locale",
+          "displayUnit",
           "roles",
           "permissions",
           "phone",
@@ -64298,6 +64348,23 @@
             ]
           }
         },
+        "type": "object"
+      },
+      "UpdatePreferencesDto": {
+        "properties": {
+          "displayUnit": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/DisplayUnit"
+              }
+            ],
+            "description": "The unit the web shows sizes in (D-183); sizes are still sent and stored in millimetres",
+            "example": "cm"
+          }
+        },
+        "required": [
+          "displayUnit"
+        ],
         "type": "object"
       },
       "UpdatePrintTypeDto": {
@@ -190266,6 +190333,7 @@
               "application/json": {
                 "example": {
                   "displayName": "การเงิน ทดสอบ",
+                  "displayUnit": "mm",
                   "email": "finance.one@example.com",
                   "featureFlags": [],
                   "id": "0192f3a0-7c1e-7d2a-9b1f-3c4d5e6f7a8b",
@@ -190413,6 +190481,228 @@
           }
         ],
         "summary": "The signed-in staff member with menu entitlements",
+        "tags": [
+          "admin.me"
+        ]
+      }
+    },
+    "/v1/admin/me/preferences": {
+      "patch": {
+        "description": "The unit the web shows sizes in: mm, cm or in (D-183). Every size in the API stays in millimetres — a request that sends a unit is refused with `specs.unit_not_accepted`. Audited.\n\nImplements: D-183.",
+        "operationId": "admin.me.updatePreferences",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "examples": {
+                "default": {
+                  "value": {
+                    "displayUnit": "cm"
+                  }
+                }
+              },
+              "schema": {
+                "$ref": "#/components/schemas/UpdatePreferencesDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "displayName": "การเงิน ทดสอบ",
+                  "displayUnit": "mm",
+                  "email": "finance.one@example.com",
+                  "featureFlags": [],
+                  "id": "0192f3a0-7c1e-7d2a-9b1f-3c4d5e6f7a8b",
+                  "locale": "th",
+                  "menu": [
+                    {
+                      "key": "dashboard",
+                      "path": "/admin"
+                    },
+                    {
+                      "key": "approvals",
+                      "path": "/admin/approvals"
+                    },
+                    {
+                      "key": "audit_logs",
+                      "path": "/admin/audit-logs"
+                    }
+                  ],
+                  "permissions": [
+                    "approvals.act",
+                    "approvals.read",
+                    "audit_logs.read"
+                  ],
+                  "roles": [
+                    "finance"
+                  ]
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/AdminMeDto"
+                }
+              }
+            },
+            "description": "The staff member",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "400": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.bad_request": {
+                    "$ref": "#/components/examples/problem.http.bad_request"
+                  },
+                  "http.malformed_json": {
+                    "$ref": "#/components/examples/problem.http.malformed_json"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.bad_request`, `http.malformed_json`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.token_expired": {
+                    "$ref": "#/components/examples/problem.auth.token_expired"
+                  },
+                  "auth.unauthenticated": {
+                    "$ref": "#/components/examples/problem.auth.unauthenticated"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.token_expired`, `auth.unauthenticated`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.forbidden": {
+                    "$ref": "#/components/examples/problem.auth.forbidden"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.forbidden`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "validation.failed": {
+                    "$ref": "#/components/examples/problem.validation.failed"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `validation.failed`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "staff": []
+          }
+        ],
+        "summary": "Set my display unit",
         "tags": [
           "admin.me"
         ]
@@ -278785,6 +279075,7 @@
               "application/json": {
                 "example": {
                   "displayName": "โรงงาน ทดสอบ",
+                  "displayUnit": "mm",
                   "email": "planner@factory.example",
                   "factories": [
                     {
@@ -279668,6 +279959,221 @@
           }
         ],
         "summary": "Change my notification channel choices",
+        "tags": [
+          "partner.me"
+        ]
+      }
+    },
+    "/v1/partner/me/preferences": {
+      "patch": {
+        "description": "The unit the web shows sizes in: mm, cm or in (D-183). Every size in the API stays in millimetres — a request that sends a unit is refused with `specs.unit_not_accepted`. Audited.\n\nImplements: D-183.",
+        "operationId": "partner.me.updatePreferences",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "examples": {
+                "default": {
+                  "value": {
+                    "displayUnit": "cm"
+                  }
+                }
+              },
+              "schema": {
+                "$ref": "#/components/schemas/UpdatePreferencesDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "displayName": "โรงงาน ทดสอบ",
+                  "displayUnit": "mm",
+                  "email": "planner@factory.example",
+                  "factories": [
+                    {
+                      "code": "F-0001",
+                      "factoryId": "0192f3a0-7c1e-7d2a-9b1f-000000000f01",
+                      "name": "โรงงาน ทดสอบ",
+                      "roles": [
+                        "factory_planner"
+                      ]
+                    }
+                  ],
+                  "id": "0192f3a0-7c1e-7d2a-9b1f-3c4d5e6f7a8b",
+                  "locale": "th",
+                  "permissions": [
+                    "factory_profile.read"
+                  ],
+                  "roles": [
+                    "factory_planner"
+                  ]
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/PartnerMeDto"
+                }
+              }
+            },
+            "description": "The factory user",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "400": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.bad_request": {
+                    "$ref": "#/components/examples/problem.http.bad_request"
+                  },
+                  "http.malformed_json": {
+                    "$ref": "#/components/examples/problem.http.malformed_json"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.bad_request`, `http.malformed_json`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.token_expired": {
+                    "$ref": "#/components/examples/problem.auth.token_expired"
+                  },
+                  "auth.unauthenticated": {
+                    "$ref": "#/components/examples/problem.auth.unauthenticated"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.token_expired`, `auth.unauthenticated`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.forbidden": {
+                    "$ref": "#/components/examples/problem.auth.forbidden"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.forbidden`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "validation.failed": {
+                    "$ref": "#/components/examples/problem.validation.failed"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `validation.failed`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "partner": []
+          }
+        ],
+        "summary": "Set my display unit",
         "tags": [
           "partner.me"
         ]
@@ -295443,6 +295949,9 @@
             "content": {
               "application/problem+json": {
                 "examples": {
+                  "specs.unit_not_accepted": {
+                    "$ref": "#/components/examples/problem.specs.unit_not_accepted"
+                  },
                   "validation.failed": {
                     "$ref": "#/components/examples/problem.validation.failed"
                   }
@@ -295452,7 +295961,7 @@
                 }
               }
             },
-            "description": "Problem: `validation.failed`",
+            "description": "Problem: `specs.unit_not_accepted`, `validation.failed`",
             "headers": {
               "X-Request-Id": {
                 "$ref": "#/components/headers/XRequestId"
@@ -313733,6 +314242,7 @@
               "application/json": {
                 "example": {
                   "displayName": "ลูกค้า ทดสอบ",
+                  "displayUnit": "mm",
                   "email": "customer.one@example.com",
                   "id": "0192f3a0-7c1e-7d2a-9b1f-3c4d5e6f7a8b",
                   "identities": [
@@ -314301,6 +314811,7 @@
               "application/json": {
                 "example": {
                   "displayName": "ลูกค้า ทดสอบ",
+                  "displayUnit": "mm",
                   "email": "customer.one@example.com",
                   "id": "0192f3a0-7c1e-7d2a-9b1f-3c4d5e6f7a8b",
                   "identities": [
@@ -314851,6 +315362,215 @@
           }
         ],
         "summary": "Change my notification channel choices",
+        "tags": [
+          "store.me"
+        ]
+      }
+    },
+    "/v1/store/me/preferences": {
+      "patch": {
+        "description": "The unit the web shows sizes in: mm, cm or in (D-183). Every size in the API stays in millimetres — a request that sends a unit is refused with `specs.unit_not_accepted`. Audited.\n\nImplements: D-183.",
+        "operationId": "store.me.updatePreferences",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "examples": {
+                "default": {
+                  "value": {
+                    "displayUnit": "cm"
+                  }
+                }
+              },
+              "schema": {
+                "$ref": "#/components/schemas/UpdatePreferencesDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "displayName": "ลูกค้า ทดสอบ",
+                  "displayUnit": "mm",
+                  "email": "customer.one@example.com",
+                  "id": "0192f3a0-7c1e-7d2a-9b1f-3c4d5e6f7a8b",
+                  "identities": [
+                    {
+                      "linkedAt": "2026-09-23T14:05:00+07:00",
+                      "provider": "phone_otp"
+                    }
+                  ],
+                  "locale": "th",
+                  "permissions": [],
+                  "phone": "+66810001234",
+                  "roles": [],
+                  "scopes": []
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/StoreMeDto"
+                }
+              }
+            },
+            "description": "The customer",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "400": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.bad_request": {
+                    "$ref": "#/components/examples/problem.http.bad_request"
+                  },
+                  "http.malformed_json": {
+                    "$ref": "#/components/examples/problem.http.malformed_json"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.bad_request`, `http.malformed_json`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.token_expired": {
+                    "$ref": "#/components/examples/problem.auth.token_expired"
+                  },
+                  "auth.unauthenticated": {
+                    "$ref": "#/components/examples/problem.auth.unauthenticated"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.token_expired`, `auth.unauthenticated`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.forbidden": {
+                    "$ref": "#/components/examples/problem.auth.forbidden"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.forbidden`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "validation.failed": {
+                    "$ref": "#/components/examples/problem.validation.failed"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `validation.failed`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "customer": []
+          }
+        ],
+        "summary": "Set my display unit",
         "tags": [
           "store.me"
         ]
@@ -326717,6 +327437,9 @@
                   "pricing.not_instant": {
                     "$ref": "#/components/examples/problem.pricing.not_instant"
                   },
+                  "specs.unit_not_accepted": {
+                    "$ref": "#/components/examples/problem.specs.unit_not_accepted"
+                  },
                   "validation.failed": {
                     "$ref": "#/components/examples/problem.validation.failed"
                   }
@@ -326726,7 +327449,7 @@
                 }
               }
             },
-            "description": "Problem: `pricing.not_instant`, `validation.failed`",
+            "description": "Problem: `pricing.not_instant`, `specs.unit_not_accepted`, `validation.failed`",
             "headers": {
               "X-Request-Id": {
                 "$ref": "#/components/headers/XRequestId"
@@ -330249,6 +330972,9 @@
                   "idempotency.key_reused": {
                     "$ref": "#/components/examples/problem.idempotency.key_reused"
                   },
+                  "specs.unit_not_accepted": {
+                    "$ref": "#/components/examples/problem.specs.unit_not_accepted"
+                  },
                   "validation.failed": {
                     "$ref": "#/components/examples/problem.validation.failed"
                   }
@@ -330258,7 +330984,7 @@
                 }
               }
             },
-            "description": "Problem: `idempotency.key_reused`, `validation.failed`",
+            "description": "Problem: `idempotency.key_reused`, `specs.unit_not_accepted`, `validation.failed`",
             "headers": {
               "X-Request-Id": {
                 "$ref": "#/components/headers/XRequestId"

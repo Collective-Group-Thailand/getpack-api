@@ -181,6 +181,7 @@ export class StoreQuotesController {
     'validation.failed',
     'pricing.not_instant',
     'pricing.vat_rate_missing',
+    'specs.unit_not_accepted',
   )
   async calculate(
     @OptionalActor() actor: Actor | undefined,

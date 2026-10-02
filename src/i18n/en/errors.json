@@ -419,6 +419,20 @@
       "detail": "This product type is not quoted instantly yet; send a request for quote instead (D-100)."
     }
   },
+  "specs": {
+    "unit_not_accepted": {
+      "title": "Units are not accepted",
+      "detail": "Every size is sent in millimetres; a unit field is refused. The display unit is a user preference (D-183)."
+    },
+    "basis_not_accepted": {
+      "title": "Measurement basis not accepted",
+      "detail": "This product is not measured on the given basis; choose one of the bases its calculator takes (D-182)."
+    },
+    "caliper_missing": {
+      "title": "Material thickness unknown",
+      "detail": "The material has no caliper yet, so the size cannot be converted to internal dimensions; give internal dimensions (D-182)."
+    }
+  },
   "shipping": {
     "version_not_draft": {
       "title": "Not a draft",
