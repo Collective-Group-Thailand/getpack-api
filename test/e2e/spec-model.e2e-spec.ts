@@ -1,3 +1,4 @@
+import { ConfigurationDraftsService } from '@modules/quotes/configuration-drafts.service';
 import request from 'supertest';
 
 import { type DevCorrugate, seedDevCorrugate } from '../../prisma/seed/dev-corrugate';
@@ -271,5 +272,101 @@ describe('specification model v2 (e2e, U2.1)', () => {
       data: { shareExpiresAt: new Date(Date.now() - 1000) },
     });
     await open(second.body.sharePath as string).expect(404);
+  });
+
+  it('keeps, completes, shares and converts draft configurations (D-185)', async () => {
+    const other = (await customerToken(ctx, 62)).token;
+    const drafts = '/v1/store/configurations';
+    const partial = await as(ctx, customer)
+      .post(drafts, {
+        productTypeCode: 'folding_carton',
+        title: 'กล่องทดสอบ',
+        configuration: { patternId: fixture.patternPublicId },
+      })
+      .expect(201);
+    expect(partial.body).toMatchObject({ status: 'open', complete: false, title: 'กล่องทดสอบ' });
+    expect(partial.body.completenessPct).toBeGreaterThan(0);
+    expect(partial.body.completenessPct).toBeLessThan(100);
+    expect(partial.body.missingFields).toEqual(
+      expect.arrayContaining(['basis', 'materialId', 'quantities', 'w']),
+    );
+    const days = (new Date(partial.body.expiresAt as string).getTime() - Date.now()) / 86_400_000;
+    expect(Math.round(days)).toBe(90);
+    const id = partial.body.id as string;
+    await as(ctx, other).get(`${drafts}/${id}`).expect(404);
+    expect(
+      (
+        await as(ctx, customer)
+          .post(drafts, { productTypeCode: 'folding_carton', configuration: { unit: 'cm' } })
+          .expect(422)
+      ).body.code,
+    ).toBe('specs.unit_not_accepted');
+    const incomplete = await as(ctx, customer)
+      .post(`${drafts}/${id}/actions/convert-to-quote`, {})
+      .expect(422);
+    expect(incomplete.body.code).toBe('configurations.incomplete');
+
+    const full = { ...foldingConfiguration(fixture, [1000]), basis: 'product' };
+    const done = await as(ctx, customer).patch(`${drafts}/${id}`, { configuration: full }).expect(200);
+    expect(done.body).toMatchObject({
+      complete: true,
+      completenessPct: 100,
+      missingFields: [],
+      invalidFields: [],
+    });
+    expect((await as(ctx, customer).get(`${drafts}?perPage=100`).expect(200)).body.data).toContainEqual(
+      expect.objectContaining({ id }),
+    );
+
+    const shared = await as(ctx, customer).post(`${drafts}/${id}/actions/share`, {}).expect(200);
+    const opened = await request(ctx.server)
+      .get(shared.body.sharePath as string)
+      .expect(200);
+    expect(opened.body).toMatchObject({ productTypeCode: 'folding_carton', completenessPct: 100 });
+    expect(JSON.stringify(opened.body)).not.toMatch(/owner|customer/i);
+    await as(ctx, customer).delete(`${drafts}/${id}/share`).expect(200);
+    await request(ctx.server)
+      .get(shared.body.sharePath as string)
+      .expect(404);
+
+    const converted = await as(ctx, customer)
+      .post(`${drafts}/${id}/actions/convert-to-quote`, {})
+      .expect(200);
+    expect(converted.body.draft).toMatchObject({
+      status: 'converted',
+      convertedQuoteId: converted.body.quote.id,
+    });
+    expect(converted.body.quote.dimensions).toMatchObject({ basis: 'product' });
+    expect((await as(ctx, customer).patch(`${drafts}/${id}`, { title: 'x' }).expect(409)).body.code).toBe(
+      'configurations.converted',
+    );
+
+    const second = await as(ctx, customer)
+      .post(drafts, {
+        productTypeCode: 'folding_carton',
+        configuration: { ...full, quantities: [500, 2000] },
+      })
+      .expect(201);
+    const rfq = await as(ctx, customer)
+      .post(`${drafts}/${second.body.id}/actions/convert-to-rfq`, { deliveryPostcode: '99999' })
+      .expect(200);
+    expect(rfq.body.rfqCode).toEqual(expect.any(String));
+    expect(rfq.body.draft).toMatchObject({ status: 'converted', convertedRfqId: rfq.body.rfqId });
+    const row = await ctx.prisma.rfq.findUniqueOrThrow({
+      where: { publicId: rfq.body.rfqId },
+      include: { tiers: true },
+    });
+    expect(row.measurementBasis).toBe('product');
+    expect(row.tiers.map((x) => x.quantity).sort((a, b) => a - b)).toEqual([500, 2000]);
+
+    const stale = await as(ctx, customer)
+      .post(drafts, { productTypeCode: 'folding_carton', configuration: {} })
+      .expect(201);
+    await ctx.prisma.configurationDraft.update({
+      where: { publicId: stale.body.id },
+      data: { expiresAt: new Date(Date.now() - 1000) },
+    });
+    expect(await ctx.app.get(ConfigurationDraftsService).purgeExpired()).toBeGreaterThanOrEqual(1);
+    await as(ctx, customer).get(`${drafts}/${stale.body.id}`).expect(404);
   });
 });

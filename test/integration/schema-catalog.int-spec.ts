@@ -833,6 +833,12 @@ const CHECKS = [
   'ck_patterns__style_code',
   'ck_patterns__international_name',
   'ck_quotes__share_expiry',
+  // --- U2.1 draft configurations (A-83)
+  'ck_configuration_drafts__completeness',
+  'ck_configuration_drafts__converted',
+  'ck_configuration_drafts__share',
+  'ck_configuration_drafts__title',
+  'ck_configuration_drafts__configuration',
 ];
 
 const TRIGGERS = [

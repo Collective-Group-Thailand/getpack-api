@@ -580,6 +580,8 @@ model Quote {
   company       Company?       @relation("QuoteCompany", fields: [companyId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_quotes__company_id")
   discountMemos DiscountMemo[] @relation("DiscountMemoQuote")
 
+  configurationDrafts ConfigurationDraft[] @relation("ConfigurationDraftQuote")
+
   @@index([companyId], map: "ix_quotes__company_id")
   @@index([customerUserId, createdAt(sort: Desc)], map: "ix_quotes__customer_user_id__created_at")
   @@index([status, validUntil], map: "ix_quotes__status__valid_until")
@@ -739,6 +741,8 @@ model Rfq {
   consultations RfqFactoryConsultation[]
   quotes        RfqQuote[]
   unmetDemand   UnmetDemandRecord[]
+
+  configurationDrafts ConfigurationDraft[] @relation("ConfigurationDraftRfq")
 
   @@index([customerUserId, submittedAt(sort: Desc)], map: "ix_rfqs__customer_user_id__submitted_at")
   @@index([status, slaDueAt], map: "ix_rfqs__status__sla_due_at")
@@ -915,4 +919,52 @@ model UnmetDemandRecord {
   @@index([rfqId], map: "ix_unmet_demand_records__rfq_id")
   @@index([occurredAt], map: "ix_unmet_demand_records__occurred_at")
   @@map("unmet_demand_records")
+}
+
+/// D-185: a draft is `open` until it becomes a quote or an RFQ (`converted`).
+enum ConfigurationDraftStatus {
+  open
+  converted
+
+  @@map("configuration_draft_status")
+}
+
+/// D-185 (U2.1, A-83): an incomplete configuration a signed-in customer keeps, resumes, shares and converts to a quote
+/// or an RFQ; deleted `configurations.draft_retention_days` after its last change.
+model ConfigurationDraft {
+  id               BigInt                   @id(map: "pk_configuration_drafts") @default(autoincrement())
+  publicId         String                   @unique(map: "ux_configuration_drafts__public_id") @default(dbgenerated("uuidv7()")) @map("public_id") @db.Uuid
+  ownerUserId      BigInt                   @map("owner_user_id")
+  productTypeId    BigInt                   @map("product_type_id")
+  catalogProductId BigInt?                  @map("catalog_product_id")
+  title            String?
+  configuration    Json                     @default("{}")
+  /// 0–100: the share of the calculator's required fields given (D-185).
+  completenessPct  Decimal                  @default(0) @map("completeness_pct") @db.Decimal(5, 2)
+  missingFields    String[]                 @default([]) @map("missing_fields")
+  status           ConfigurationDraftStatus @default(open)
+  convertedQuoteId BigInt?                  @map("converted_quote_id")
+  convertedRfqId   BigInt?                  @map("converted_rfq_id")
+  shareTokenHash   Bytes?                   @unique(map: "ux_configuration_drafts__share_token_hash") @map("share_token_hash")
+  sharedAt         DateTime?                @map("shared_at") @db.Timestamptz(6)
+  shareExpiresAt   DateTime?                @map("share_expires_at") @db.Timestamptz(6)
+  lastChangedAt    DateTime                 @default(now()) @map("last_changed_at") @db.Timestamptz(6)
+  expiresAt        DateTime                 @map("expires_at") @db.Timestamptz(6)
+  createdAt        DateTime                 @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt        DateTime                 @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+  rowVersion       Int                      @default(1) @map("row_version")
+
+  owner          User            @relation("ConfigurationDraftOwner", fields: [ownerUserId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_configuration_drafts__owner_user_id")
+  productType    ProductType     @relation("ConfigurationDraftProductType", fields: [productTypeId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_configuration_drafts__product_type_id")
+  catalogProduct CatalogProduct? @relation("ConfigurationDraftCatalogProduct", fields: [catalogProductId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_configuration_drafts__catalog_product_id")
+  convertedQuote Quote?          @relation("ConfigurationDraftQuote", fields: [convertedQuoteId], references: [id], onDelete: SetNull, onUpdate: Restrict, map: "fk_configuration_drafts__converted_quote_id")
+  convertedRfq   Rfq?            @relation("ConfigurationDraftRfq", fields: [convertedRfqId], references: [id], onDelete: SetNull, onUpdate: Restrict, map: "fk_configuration_drafts__converted_rfq_id")
+
+  @@index([ownerUserId, status, lastChangedAt], map: "ix_configuration_drafts__owner_user_id__status__last_changed_at")
+  @@index([expiresAt], map: "ix_configuration_drafts__expires_at")
+  @@index([productTypeId], map: "ix_configuration_drafts__product_type_id")
+  @@index([catalogProductId], map: "ix_configuration_drafts__catalog_product_id")
+  @@index([convertedQuoteId], map: "ix_configuration_drafts__converted_quote_id")
+  @@index([convertedRfqId], map: "ix_configuration_drafts__converted_rfq_id")
+  @@map("configuration_drafts")
 }

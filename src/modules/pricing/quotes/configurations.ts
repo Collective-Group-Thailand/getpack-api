@@ -1,9 +1,11 @@
 import { DomainException } from '@common/errors/domain.exception';
+import { type ProblemFieldError } from '@common/errors/problem-details.dto';
 import { validateAs } from '@common/validation/validation';
 import { type Tx } from '@database/prisma.service';
 import { type CalculatorKey, type ProductUnit } from '@generated/prisma/client';
 import { gussetViolation, sizeRulesOf, sizeViolation } from '@modules/catalog/store/size-rules';
 import { type Type } from '@nestjs/common';
+import { getMetadataStorage, ValidationTypes } from 'class-validator';
 
 import { CorrugateConfigurationDto, CsCorrugateConfigurationDto } from './corrugate.dto';
 import { LabelConfigurationDto } from './label.dto';
@@ -115,4 +117,68 @@ export async function assertStoreRules(
     const gusset = gussetViolation(pattern.constraints, configuration);
     if (gusset) throw new DomainException('validation.failed', { errors: [gusset] });
   }
+}
+
+/** The calculators whose sizes carry a measurement basis the customer must choose (D-182). */
+const SIZED: ReadonlySet<CalculatorKey> = new Set<CalculatorKey>([
+  'folding',
+  'corrugate',
+  'tag_sleeve',
+  'label',
+  'pouch',
+]);
+
+/** The required top-level fields of a DTO: those validated without `@IsOptional` (class-validator metadata). */
+function requiredFields(dto: Type<object>): string[] {
+  const metas = getMetadataStorage().getTargetValidationMetadatas(dto, '', true, false);
+  const optional = new Set(
+    metas.filter((m) => m.type === ValidationTypes.CONDITIONAL_VALIDATION).map((m) => m.propertyName),
+  );
+  return [...new Set(metas.map((m) => m.propertyName))].filter((p) => !optional.has(p)).sort();
+}
+
+const blank = (v: unknown): boolean =>
+  v === undefined || v === null || v === '' || (Array.isArray(v) && v.length === 0);
+
+export interface Completeness {
+  /** 0–100: the share of the required fields given. */
+  completenessPct: number;
+  /** Required fields not given yet (top level). */
+  missingFields: string[];
+  /** Fields given with a value the calculator refuses. */
+  invalidFields: ProblemFieldError[];
+  /** Every required field given and every value valid: the draft can be priced or sent as an RFQ. */
+  complete: boolean;
+}
+
+/**
+ * How complete a draft configuration is (D-185): the calculator's required fields — and the measurement basis of a
+ * sized product, which the customer must choose (D-182) — given or missing, and the invalid values. Nothing is priced.
+ */
+export async function assessConfiguration(
+  key: CalculatorKey,
+  configuration: Record<string, unknown>,
+): Promise<Completeness> {
+  const dtos = DTOS[key];
+  if (!dtos) throw new DomainException('pricing.not_instant');
+  const required = [...requiredFields(dtos.store), ...(SIZED.has(key) ? ['basis'] : [])];
+  const missingFields = required.filter((f) => blank(configuration[f]));
+  let invalidFields: ProblemFieldError[] = [];
+  try {
+    await validateAs(dtos.store, configuration, 'configuration');
+  } catch (error) {
+    if (!(error instanceof DomainException) || error.code !== 'validation.failed') throw error;
+    const missing = new Set(missingFields.map((f) => `configuration.${f}`));
+    invalidFields = (error.errors ?? []).filter(
+      (e) =>
+        ![...missing].some((m) => e.path === m || e.path.startsWith(`${m}.`) || e.path.startsWith(`${m}[`)),
+    );
+  }
+  const given = required.length - missingFields.length;
+  return {
+    completenessPct: required.length === 0 ? 100 : Math.round((given / required.length) * 10000) / 100,
+    missingFields,
+    invalidFields,
+    complete: missingFields.length === 0 && invalidFields.length === 0,
+  };
 }

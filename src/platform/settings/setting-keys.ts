@@ -160,6 +160,8 @@ export interface SettingValues {
   'privacy.export_link_days': number;
   /** D-185 / D-226 days a share link (design, later configuration) stays valid. */
   'configurations.share_link_days': number;
+  /** D-185 days a draft configuration is kept after its last change. */
+  'configurations.draft_retention_days': number;
 }
 
 export type SettingKey = keyof SettingValues;

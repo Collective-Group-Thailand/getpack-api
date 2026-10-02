@@ -102,6 +102,8 @@ export const ERROR_CODES = {
   'partners.price_line_conflict': HttpStatus.CONFLICT,
   'pricing.vat_rate_missing': HttpStatus.SERVICE_UNAVAILABLE,
   'pricing.not_instant': HttpStatus.UNPROCESSABLE_ENTITY,
+  'configurations.incomplete': HttpStatus.UNPROCESSABLE_ENTITY,
+  'configurations.converted': HttpStatus.CONFLICT,
   'specs.unit_not_accepted': HttpStatus.UNPROCESSABLE_ENTITY,
   'specs.basis_not_accepted': HttpStatus.UNPROCESSABLE_ENTITY,
   'specs.caliper_missing': HttpStatus.UNPROCESSABLE_ENTITY,

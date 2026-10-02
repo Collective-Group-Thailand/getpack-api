@@ -969,6 +969,28 @@
           "type": "https://errors.packio/concurrency.stale"
         }
       },
+      "problem.configurations.converted": {
+        "summary": "configurations.converted",
+        "value": {
+          "code": "configurations.converted",
+          "detail": "ฉบับร่างนี้ถูกสร้างเป็นใบเสนอราคาหรือคำขอใบเสนอราคาแล้ว",
+          "requestId": "6f1c2d8e-2c7b-4d0e-9d1c-3f1a2b3c4d5e",
+          "status": 409,
+          "title": "แปลงไปแล้ว",
+          "type": "https://errors.packio/configurations.converted"
+        }
+      },
+      "problem.configurations.incomplete": {
+        "summary": "configurations.incomplete",
+        "value": {
+          "code": "configurations.incomplete",
+          "detail": "กรุณากรอกข้อมูลที่ขาดก่อนสร้างใบเสนอราคาจากฉบับร่าง",
+          "requestId": "6f1c2d8e-2c7b-4d0e-9d1c-3f1a2b3c4d5e",
+          "status": 422,
+          "title": "ข้อมูลยังไม่ครบ",
+          "type": "https://errors.packio/configurations.incomplete"
+        }
+      },
       "problem.consent.purpose_unavailable": {
         "summary": "consent.purpose_unavailable",
         "value": {
@@ -17171,6 +17193,157 @@
         ],
         "type": "string"
       },
+      "ConfigurationDraftDto": {
+        "properties": {
+          "catalogProductId": {
+            "example": "0192f3a0-7c1e-7d2a-9b1f-00000000cd02",
+            "format": "uuid",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "complete": {
+            "description": "Ready to be priced or sent as an RFQ",
+            "example": false,
+            "type": "boolean"
+          },
+          "completenessPct": {
+            "description": "Share of the required fields given, 0–100 (D-185)",
+            "example": 62.5,
+            "type": "number"
+          },
+          "configuration": {
+            "additionalProperties": true,
+            "example": {
+              "basis": "internal",
+              "d": 50,
+              "l": 150,
+              "patternId": "0192f3a0-7c1e-7d2a-9b1f-00000000a101",
+              "w": 100
+            },
+            "type": "object"
+          },
+          "convertedQuoteId": {
+            "example": null,
+            "format": "uuid",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "convertedRfqId": {
+            "example": null,
+            "format": "uuid",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "createdAt": {
+            "example": "2026-10-02T10:00:00+07:00",
+            "format": "date-time",
+            "type": "string"
+          },
+          "expiresAt": {
+            "description": "Deleted after this unless changed again (`configurations.draft_retention_days`, D-185)",
+            "example": "2026-12-31T10:00:00+07:00",
+            "format": "date-time",
+            "type": "string"
+          },
+          "id": {
+            "example": "0192f3a0-7c1e-7d2a-9b1f-00000000cd01",
+            "format": "uuid",
+            "type": "string"
+          },
+          "invalidFields": {
+            "description": "Values given that the calculator refuses",
+            "example": [],
+            "items": {
+              "$ref": "#/components/schemas/ProblemFieldError"
+            },
+            "type": "array"
+          },
+          "lastChangedAt": {
+            "example": "2026-10-02T10:00:00+07:00",
+            "format": "date-time",
+            "type": "string"
+          },
+          "missingFields": {
+            "description": "Required fields not given yet",
+            "example": [
+              "materialId",
+              "quantities"
+            ],
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "productTypeCode": {
+            "example": "folding_carton",
+            "type": "string"
+          },
+          "shareExpiresAt": {
+            "example": null,
+            "format": "date-time",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "sharedAt": {
+            "example": null,
+            "format": "date-time",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "status": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ConfigurationDraftStatus"
+              }
+            ],
+            "example": "open"
+          },
+          "title": {
+            "example": "กล่องครีม 50 มล.",
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "id",
+          "productTypeCode",
+          "catalogProductId",
+          "title",
+          "configuration",
+          "completenessPct",
+          "missingFields",
+          "invalidFields",
+          "complete",
+          "status",
+          "convertedQuoteId",
+          "convertedRfqId",
+          "sharedAt",
+          "shareExpiresAt",
+          "lastChangedAt",
+          "expiresAt",
+          "createdAt"
+        ],
+        "type": "object"
+      },
+      "ConfigurationDraftStatus": {
+        "enum": [
+          "open",
+          "converted"
+        ],
+        "type": "string"
+      },
       "ConfirmExtraRoundDto": {
         "properties": {
           "changeRequest": {
@@ -17719,6 +17892,57 @@
           "basis",
           "w",
           "l"
+        ],
+        "type": "object"
+      },
+      "ConvertDraftToQuoteDto": {
+        "properties": {
+          "deliveryPostcode": {
+            "description": "Delivery postcode for the shipping line",
+            "example": "10110",
+            "pattern": "^[0-9]{5}$",
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "ConvertDraftToRfqDto": {
+        "properties": {
+          "deliveryPostcode": {
+            "example": "10110",
+            "pattern": "^[0-9]{5}$",
+            "type": "string"
+          },
+          "notes": {
+            "example": "ต้องการพิมพ์ทองด้านหน้า",
+            "type": "string"
+          },
+          "quantities": {
+            "description": "Quantity tiers; default: the draft’s quantities",
+            "example": [
+              500,
+              1000
+            ],
+            "items": {
+              "maximum": 10000000,
+              "minimum": 1,
+              "type": "number"
+            },
+            "maxItems": 10,
+            "minItems": 1,
+            "type": "array"
+          },
+          "spec": {
+            "additionalProperties": true,
+            "description": "The type’s RFQ spec fields (`store.rfqs.submit`); default: none",
+            "example": {
+              "material": "อาร์ตการ์ด 350 แกรม"
+            },
+            "type": "object"
+          }
+        },
+        "required": [
+          "deliveryPostcode"
         ],
         "type": "object"
       },
@@ -19352,6 +19576,43 @@
           "slug",
           "nameTh",
           "nameEn"
+        ],
+        "type": "object"
+      },
+      "CreateConfigurationDraftDto": {
+        "properties": {
+          "catalogProductId": {
+            "description": "The catalogue product being configured",
+            "example": "0192f3a0-7c1e-7d2a-9b1f-00000000cd02",
+            "format": "uuid",
+            "type": "string"
+          },
+          "configuration": {
+            "additionalProperties": true,
+            "description": "The configurator state so far, in the shape of the type’s calculator configuration (`store.quotes.calculate`); incomplete is fine. Millimetres only (D-183)",
+            "example": {
+              "basis": "internal",
+              "d": 50,
+              "l": 150,
+              "patternId": "0192f3a0-7c1e-7d2a-9b1f-00000000a101",
+              "w": 100
+            },
+            "type": "object"
+          },
+          "productTypeCode": {
+            "example": "folding_carton",
+            "maxLength": 64,
+            "pattern": "^[a-z][a-z0-9_]*$",
+            "type": "string"
+          },
+          "title": {
+            "example": "กล่องครีม 50 มล.",
+            "type": "string"
+          }
+        },
+        "required": [
+          "productTypeCode",
+          "configuration"
         ],
         "type": "object"
       },
@@ -27291,6 +27552,21 @@
         ],
         "type": "object"
       },
+      "DraftQuoteResultDto": {
+        "properties": {
+          "draft": {
+            "$ref": "#/components/schemas/ConfigurationDraftDto"
+          },
+          "quote": {
+            "$ref": "#/components/schemas/SavedQuoteDto"
+          }
+        },
+        "required": [
+          "draft",
+          "quote"
+        ],
+        "type": "object"
+      },
       "DraftRfqQuoteDto": {
         "properties": {
           "lines": {
@@ -27309,6 +27585,28 @@
         },
         "required": [
           "lines"
+        ],
+        "type": "object"
+      },
+      "DraftRfqResultDto": {
+        "properties": {
+          "draft": {
+            "$ref": "#/components/schemas/ConfigurationDraftDto"
+          },
+          "rfqCode": {
+            "example": "RFQ-2026-000101",
+            "type": "string"
+          },
+          "rfqId": {
+            "example": "0192f3a0-7c1e-7d2a-9b1f-00000000cd04",
+            "format": "uuid",
+            "type": "string"
+          }
+        },
+        "required": [
+          "draft",
+          "rfqId",
+          "rfqCode"
         ],
         "type": "object"
       },
@@ -54017,6 +54315,34 @@
         ],
         "type": "string"
       },
+      "ShareConfigurationDraftResultDto": {
+        "properties": {
+          "draft": {
+            "$ref": "#/components/schemas/ConfigurationDraftDto"
+          },
+          "expiresAt": {
+            "example": "2026-10-17T10:00:00+07:00",
+            "format": "date-time",
+            "type": "string"
+          },
+          "sharePath": {
+            "example": "/v1/store/shared-configurations/bX2k…",
+            "type": "string"
+          },
+          "shareToken": {
+            "description": "Shown once; only its hash is kept",
+            "example": "bX2k…",
+            "type": "string"
+          }
+        },
+        "required": [
+          "draft",
+          "shareToken",
+          "sharePath",
+          "expiresAt"
+        ],
+        "type": "object"
+      },
       "ShareDesignResultDto": {
         "properties": {
           "expiresAt": {
@@ -54072,6 +54398,68 @@
           "quote",
           "shareToken",
           "sharePath",
+          "expiresAt"
+        ],
+        "type": "object"
+      },
+      "SharedConfigurationDraftDto": {
+        "properties": {
+          "catalogProductId": {
+            "example": "0192f3a0-7c1e-7d2a-9b1f-00000000cd02",
+            "format": "uuid",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "completenessPct": {
+            "example": 62.5,
+            "type": "number"
+          },
+          "configuration": {
+            "additionalProperties": true,
+            "example": {
+              "basis": "internal",
+              "d": 50,
+              "l": 150,
+              "patternId": "0192f3a0-7c1e-7d2a-9b1f-00000000a101",
+              "w": 100
+            },
+            "type": "object"
+          },
+          "expiresAt": {
+            "example": "2026-10-17T10:00:00+07:00",
+            "format": "date-time",
+            "type": "string"
+          },
+          "missingFields": {
+            "example": [
+              "materialId"
+            ],
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "productTypeCode": {
+            "example": "folding_carton",
+            "type": "string"
+          },
+          "title": {
+            "example": "กล่องครีม 50 มล.",
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "productTypeCode",
+          "catalogProductId",
+          "title",
+          "configuration",
+          "completenessPct",
+          "missingFields",
           "expiresAt"
         ],
         "type": "object"
@@ -63757,6 +64145,27 @@
           "withholdsTax": {
             "example": true,
             "type": "boolean"
+          }
+        },
+        "type": "object"
+      },
+      "UpdateConfigurationDraftDto": {
+        "properties": {
+          "configuration": {
+            "additionalProperties": true,
+            "description": "Replaces the configuration; the completeness is re-assessed and the 90-day retention restarts",
+            "example": {
+              "basis": "internal",
+              "d": 50,
+              "l": 150,
+              "patternId": "0192f3a0-7c1e-7d2a-9b1f-00000000a101",
+              "w": 100
+            },
+            "type": "object"
+          },
+          "title": {
+            "example": "กล่องครีม 50 มล.",
+            "type": "string"
           }
         },
         "type": "object"
@@ -307486,6 +307895,2236 @@
         ]
       }
     },
+    "/v1/store/configurations": {
+      "get": {
+        "description": "Open drafts, most recently changed first, each with its completeness (D-185).\n\nImplements: D-185, D-182, D-183.",
+        "operationId": "store.configurations.list",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "page",
+            "required": false,
+            "schema": {
+              "default": 1,
+              "minimum": 1,
+              "type": "integer"
+            }
+          },
+          {
+            "in": "query",
+            "name": "perPage",
+            "required": false,
+            "schema": {
+              "default": 25,
+              "maximum": 100,
+              "minimum": 1,
+              "type": "integer"
+            }
+          },
+          {
+            "description": "Sort field; each endpoint validates it against its own allow-list.",
+            "in": "query",
+            "name": "sort",
+            "required": false,
+            "schema": {
+              "example": "createdAt",
+              "maxLength": 64,
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "order",
+            "required": false,
+            "schema": {
+              "$ref": "#/components/schemas/SortOrder"
+            }
+          },
+          {
+            "description": "Free-text search",
+            "in": "query",
+            "name": "q",
+            "required": false,
+            "schema": {
+              "maxLength": 200,
+              "type": "string"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "data": [
+                    {
+                      "catalogProductId": "0192f3a0-7c1e-7d2a-9b1f-00000000cd02",
+                      "complete": false,
+                      "completenessPct": 62.5,
+                      "configuration": {
+                        "basis": "internal",
+                        "d": 50,
+                        "l": 150,
+                        "patternId": "0192f3a0-7c1e-7d2a-9b1f-00000000a101",
+                        "w": 100
+                      },
+                      "convertedQuoteId": null,
+                      "convertedRfqId": null,
+                      "createdAt": "2026-10-02T10:00:00+07:00",
+                      "expiresAt": "2026-12-31T10:00:00+07:00",
+                      "id": "0192f3a0-7c1e-7d2a-9b1f-00000000cd01",
+                      "invalidFields": [],
+                      "lastChangedAt": "2026-10-02T10:00:00+07:00",
+                      "missingFields": [
+                        "materialId",
+                        "quantities"
+                      ],
+                      "productTypeCode": "folding_carton",
+                      "shareExpiresAt": null,
+                      "sharedAt": null,
+                      "status": "open",
+                      "title": "กล่องครีม 50 มล."
+                    }
+                  ],
+                  "meta": {
+                    "page": 1,
+                    "perPage": 25,
+                    "total": 1
+                  }
+                },
+                "schema": {
+                  "properties": {
+                    "data": {
+                      "items": {
+                        "$ref": "#/components/schemas/ConfigurationDraftDto"
+                      },
+                      "type": "array"
+                    },
+                    "meta": {
+                      "$ref": "#/components/schemas/PageMeta"
+                    }
+                  },
+                  "required": [
+                    "data",
+                    "meta"
+                  ],
+                  "type": "object"
+                }
+              }
+            },
+            "description": "One page of results",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.unauthenticated": {
+                    "$ref": "#/components/examples/problem.auth.unauthenticated"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.unauthenticated`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.forbidden": {
+                    "$ref": "#/components/examples/problem.auth.forbidden"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.forbidden`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "validation.failed": {
+                    "$ref": "#/components/examples/problem.validation.failed"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `validation.failed`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "customer": []
+          }
+        ],
+        "summary": "List my draft configurations",
+        "tags": [
+          "store.configurations"
+        ]
+      },
+      "post": {
+        "description": "Saves the configurator state so far — incomplete is fine — with its completeness: the share of the calculator’s required fields given, the missing ones and the values the calculator refuses. Kept `configurations.draft_retention_days` (90) after the last change, then deleted (D-185). Millimetres only (D-183).\n\nImplements: D-185, D-182, D-183.",
+        "operationId": "store.configurations.create",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "examples": {
+                "default": {
+                  "value": {
+                    "configuration": {
+                      "basis": "internal",
+                      "d": 50,
+                      "l": 150,
+                      "patternId": "0192f3a0-7c1e-7d2a-9b1f-00000000a101",
+                      "w": 100
+                    },
+                    "productTypeCode": "folding_carton",
+                    "title": "กล่องครีม 50 มล."
+                  }
+                }
+              },
+              "schema": {
+                "$ref": "#/components/schemas/CreateConfigurationDraftDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "catalogProductId": "0192f3a0-7c1e-7d2a-9b1f-00000000cd02",
+                  "complete": false,
+                  "completenessPct": 62.5,
+                  "configuration": {
+                    "basis": "internal",
+                    "d": 50,
+                    "l": 150,
+                    "patternId": "0192f3a0-7c1e-7d2a-9b1f-00000000a101",
+                    "w": 100
+                  },
+                  "convertedQuoteId": null,
+                  "convertedRfqId": null,
+                  "createdAt": "2026-10-02T10:00:00+07:00",
+                  "expiresAt": "2026-12-31T10:00:00+07:00",
+                  "id": "0192f3a0-7c1e-7d2a-9b1f-00000000cd01",
+                  "invalidFields": [],
+                  "lastChangedAt": "2026-10-02T10:00:00+07:00",
+                  "missingFields": [
+                    "materialId",
+                    "quantities"
+                  ],
+                  "productTypeCode": "folding_carton",
+                  "shareExpiresAt": null,
+                  "sharedAt": null,
+                  "status": "open",
+                  "title": "กล่องครีม 50 มล."
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ConfigurationDraftDto"
+                }
+              }
+            },
+            "description": "Draft kept",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "400": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.bad_request": {
+                    "$ref": "#/components/examples/problem.http.bad_request"
+                  },
+                  "http.malformed_json": {
+                    "$ref": "#/components/examples/problem.http.malformed_json"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.bad_request`, `http.malformed_json`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.unauthenticated": {
+                    "$ref": "#/components/examples/problem.auth.unauthenticated"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.unauthenticated`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.forbidden": {
+                    "$ref": "#/components/examples/problem.auth.forbidden"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.forbidden`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "specs.unit_not_accepted": {
+                    "$ref": "#/components/examples/problem.specs.unit_not_accepted"
+                  },
+                  "validation.failed": {
+                    "$ref": "#/components/examples/problem.validation.failed"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `specs.unit_not_accepted`, `validation.failed`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "customer": []
+          }
+        ],
+        "summary": "Keep a draft configuration",
+        "tags": [
+          "store.configurations"
+        ]
+      }
+    },
+    "/v1/store/configurations/{draftId}": {
+      "delete": {
+        "description": "Deletes the draft at once; its share link stops opening (D-185).\n\nImplements: D-185, D-182, D-183.",
+        "operationId": "store.configurations.delete",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "draftId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Deleted",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.unauthenticated": {
+                    "$ref": "#/components/examples/problem.auth.unauthenticated"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.unauthenticated`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.forbidden": {
+                    "$ref": "#/components/examples/problem.auth.forbidden"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.forbidden`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "404": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.not_found": {
+                    "$ref": "#/components/examples/problem.http.not_found"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.not_found`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "validation.failed": {
+                    "$ref": "#/components/examples/problem.validation.failed"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `validation.failed`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "customer": []
+          }
+        ],
+        "summary": "Delete a draft configuration",
+        "tags": [
+          "store.configurations"
+        ]
+      },
+      "get": {
+        "description": "One of my drafts with its completeness (D-185); another customer’s draft is 404.\n\nImplements: D-185, D-182, D-183.",
+        "operationId": "store.configurations.get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "draftId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "catalogProductId": "0192f3a0-7c1e-7d2a-9b1f-00000000cd02",
+                  "complete": false,
+                  "completenessPct": 62.5,
+                  "configuration": {
+                    "basis": "internal",
+                    "d": 50,
+                    "l": 150,
+                    "patternId": "0192f3a0-7c1e-7d2a-9b1f-00000000a101",
+                    "w": 100
+                  },
+                  "convertedQuoteId": null,
+                  "convertedRfqId": null,
+                  "createdAt": "2026-10-02T10:00:00+07:00",
+                  "expiresAt": "2026-12-31T10:00:00+07:00",
+                  "id": "0192f3a0-7c1e-7d2a-9b1f-00000000cd01",
+                  "invalidFields": [],
+                  "lastChangedAt": "2026-10-02T10:00:00+07:00",
+                  "missingFields": [
+                    "materialId",
+                    "quantities"
+                  ],
+                  "productTypeCode": "folding_carton",
+                  "shareExpiresAt": null,
+                  "sharedAt": null,
+                  "status": "open",
+                  "title": "กล่องครีม 50 มล."
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ConfigurationDraftDto"
+                }
+              }
+            },
+            "description": "Draft",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.unauthenticated": {
+                    "$ref": "#/components/examples/problem.auth.unauthenticated"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.unauthenticated`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.forbidden": {
+                    "$ref": "#/components/examples/problem.auth.forbidden"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.forbidden`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "404": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.not_found": {
+                    "$ref": "#/components/examples/problem.http.not_found"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.not_found`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "validation.failed": {
+                    "$ref": "#/components/examples/problem.validation.failed"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `validation.failed`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "customer": []
+          }
+        ],
+        "summary": "Resume a draft configuration",
+        "tags": [
+          "store.configurations"
+        ]
+      },
+      "patch": {
+        "description": "Replaces the title and / or the configuration; the completeness is re-assessed and the 90-day retention restarts (D-185). A converted draft is 409.\n\nImplements: D-185, D-182, D-183.",
+        "operationId": "store.configurations.update",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "draftId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "examples": {
+                "default": {
+                  "value": {
+                    "configuration": {
+                      "basis": "internal",
+                      "d": 50,
+                      "l": 150,
+                      "patternId": "0192f3a0-7c1e-7d2a-9b1f-00000000a101",
+                      "w": 100
+                    }
+                  }
+                }
+              },
+              "schema": {
+                "$ref": "#/components/schemas/UpdateConfigurationDraftDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "catalogProductId": "0192f3a0-7c1e-7d2a-9b1f-00000000cd02",
+                  "complete": false,
+                  "completenessPct": 62.5,
+                  "configuration": {
+                    "basis": "internal",
+                    "d": 50,
+                    "l": 150,
+                    "patternId": "0192f3a0-7c1e-7d2a-9b1f-00000000a101",
+                    "w": 100
+                  },
+                  "convertedQuoteId": null,
+                  "convertedRfqId": null,
+                  "createdAt": "2026-10-02T10:00:00+07:00",
+                  "expiresAt": "2026-12-31T10:00:00+07:00",
+                  "id": "0192f3a0-7c1e-7d2a-9b1f-00000000cd01",
+                  "invalidFields": [],
+                  "lastChangedAt": "2026-10-02T10:00:00+07:00",
+                  "missingFields": [
+                    "materialId",
+                    "quantities"
+                  ],
+                  "productTypeCode": "folding_carton",
+                  "shareExpiresAt": null,
+                  "sharedAt": null,
+                  "status": "open",
+                  "title": "กล่องครีม 50 มล."
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ConfigurationDraftDto"
+                }
+              }
+            },
+            "description": "Draft",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "400": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.bad_request": {
+                    "$ref": "#/components/examples/problem.http.bad_request"
+                  },
+                  "http.malformed_json": {
+                    "$ref": "#/components/examples/problem.http.malformed_json"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.bad_request`, `http.malformed_json`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.unauthenticated": {
+                    "$ref": "#/components/examples/problem.auth.unauthenticated"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.unauthenticated`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.forbidden": {
+                    "$ref": "#/components/examples/problem.auth.forbidden"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.forbidden`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "404": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.not_found": {
+                    "$ref": "#/components/examples/problem.http.not_found"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.not_found`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "409": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "configurations.converted": {
+                    "$ref": "#/components/examples/problem.configurations.converted"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `configurations.converted`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "specs.unit_not_accepted": {
+                    "$ref": "#/components/examples/problem.specs.unit_not_accepted"
+                  },
+                  "validation.failed": {
+                    "$ref": "#/components/examples/problem.validation.failed"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `specs.unit_not_accepted`, `validation.failed`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "customer": []
+          }
+        ],
+        "summary": "Change a draft configuration",
+        "tags": [
+          "store.configurations"
+        ]
+      }
+    },
+    "/v1/store/configurations/{draftId}/actions/convert-to-quote": {
+      "post": {
+        "description": "A complete draft is priced and saved as a quotation (15-day price lock, D-051); the draft is converted and can no longer change. An incomplete draft is 422 `configurations.incomplete` naming the missing fields (D-185).\n\nImplements: D-185, D-182, D-183, D-051.",
+        "operationId": "store.configurations.convertToQuote",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "draftId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "examples": {
+                "default": {
+                  "value": {
+                    "deliveryPostcode": "10110"
+                  }
+                }
+              },
+              "schema": {
+                "$ref": "#/components/schemas/ConvertDraftToQuoteDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "draft": {
+                    "catalogProductId": "0192f3a0-7c1e-7d2a-9b1f-00000000cd02",
+                    "complete": true,
+                    "completenessPct": 62.5,
+                    "configuration": {
+                      "basis": "internal",
+                      "d": 50,
+                      "l": 150,
+                      "patternId": "0192f3a0-7c1e-7d2a-9b1f-00000000a101",
+                      "w": 100
+                    },
+                    "convertedQuoteId": null,
+                    "convertedRfqId": null,
+                    "createdAt": "2026-10-02T10:00:00+07:00",
+                    "expiresAt": "2026-12-31T10:00:00+07:00",
+                    "id": "0192f3a0-7c1e-7d2a-9b1f-00000000cd01",
+                    "invalidFields": [],
+                    "lastChangedAt": "2026-10-02T10:00:00+07:00",
+                    "missingFields": [
+                      "materialId",
+                      "quantities"
+                    ],
+                    "productTypeCode": "folding_carton",
+                    "shareExpiresAt": null,
+                    "sharedAt": null,
+                    "status": "converted",
+                    "title": "กล่องครีม 50 มล."
+                  },
+                  "quote": {
+                    "configuration": {
+                      "d": 120,
+                      "design": {
+                        "graphic": false,
+                        "structure": false
+                      },
+                      "difficultyLevelId": "0192f3a0-7c1e-7d2a-9b1f-00000000a103",
+                      "l": 40,
+                      "materialId": "0192f3a0-7c1e-7d2a-9b1f-00000000a102",
+                      "parts": [
+                        {
+                          "diecutTypeId": "0192f3a0-7c1e-7d2a-9b1f-00000000a106",
+                          "finish1FrontId": "0192f3a0-7c1e-7d2a-9b1f-00000000a105",
+                          "printFront": [
+                            {
+                              "inkColourId": "0192f3a0-7c1e-7d2a-9b1f-00000000a104",
+                              "percent": 100
+                            },
+                            {
+                              "inkColourId": "0192f3a0-7c1e-7d2a-9b1f-00000000a104",
+                              "percent": 100
+                            },
+                            {
+                              "inkColourId": "0192f3a0-7c1e-7d2a-9b1f-00000000a104",
+                              "percent": 100
+                            },
+                            {
+                              "inkColourId": "0192f3a0-7c1e-7d2a-9b1f-00000000a104",
+                              "percent": 100
+                            }
+                          ]
+                        }
+                      ],
+                      "patternId": "0192f3a0-7c1e-7d2a-9b1f-00000000a101",
+                      "quantities": [
+                        1000
+                      ],
+                      "w": 60
+                    },
+                    "createdAt": "2026-10-01T09:00:00+07:00",
+                    "currency": "THB",
+                    "deliveryPostcode": "10110",
+                    "dimensions": null,
+                    "id": "0192f3a0-7c1e-7d2a-9b1f-00000000e601",
+                    "options": [
+                      {
+                        "designFeeAmount": "0.00",
+                        "earliestDeliveryDate": "2026-10-10",
+                        "earliestShipDate": "2026-10-09",
+                        "grossAmount": "13508.40",
+                        "id": "0192f3a0-7c1e-7d2a-9b1f-00000000e602",
+                        "leadTimeDays": 7,
+                        "netAmount": "12624.67",
+                        "productAmount": "13380.00",
+                        "quantity": 1000,
+                        "shippingAmount": "128.40",
+                        "shippingPending": false,
+                        "shippingPendingReason": null,
+                        "structureDesignFeeAmount": "0.00",
+                        "toleranceOveragePct": "5.0000",
+                        "toleranceShortagePct": "5.0000",
+                        "toolingAmount": "0.00",
+                        "unitPrice": "13.38",
+                        "vatAmount": "883.73"
+                      }
+                    ],
+                    "pdfStatus": "none",
+                    "priceLocked": true,
+                    "productTypeCode": "folding_carton",
+                    "quoteCode": null,
+                    "shareExpiresAt": null,
+                    "sharedAt": null,
+                    "source": "instant",
+                    "status": "saved",
+                    "summary": {
+                      "product": {
+                        "imageUrl": "/v1/store/catalog/images/0192f3a0-7c1e-7d2a-9b1f-00000000c009",
+                        "nameEn": "Tuck-end box",
+                        "nameTh": "กล่องฝาเสียบ",
+                        "slug": "tuck-end-box"
+                      },
+                      "productTypeCode": "folding_carton",
+                      "productTypeNameEn": "Folding carton",
+                      "productTypeNameTh": "กล่องกระดาษแข็ง",
+                      "specs": [
+                        {
+                          "key": "style",
+                          "labelEn": "Style",
+                          "labelTh": "แบบกล่อง",
+                          "valueEn": "ฝาเสียบ",
+                          "valueTh": "ฝาเสียบ"
+                        },
+                        {
+                          "key": "size",
+                          "labelEn": "Size",
+                          "labelTh": "ขนาด",
+                          "valueEn": "60 × 60 × 150 mm",
+                          "valueTh": "60 × 60 × 150 มม."
+                        },
+                        {
+                          "key": "material",
+                          "labelEn": "Material",
+                          "labelTh": "วัสดุ",
+                          "valueEn": "Art card 350 gsm",
+                          "valueTh": "อาร์ตการ์ด 350 แกรม"
+                        }
+                      ],
+                      "unit": "piece"
+                    },
+                    "validUntil": "2026-10-16T09:00:00+07:00"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/DraftQuoteResultDto"
+                }
+              }
+            },
+            "description": "Quotation saved",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "400": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.bad_request": {
+                    "$ref": "#/components/examples/problem.http.bad_request"
+                  },
+                  "http.malformed_json": {
+                    "$ref": "#/components/examples/problem.http.malformed_json"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.bad_request`, `http.malformed_json`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.unauthenticated": {
+                    "$ref": "#/components/examples/problem.auth.unauthenticated"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.unauthenticated`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.forbidden": {
+                    "$ref": "#/components/examples/problem.auth.forbidden"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.forbidden`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "404": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.not_found": {
+                    "$ref": "#/components/examples/problem.http.not_found"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.not_found`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "409": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "configurations.converted": {
+                    "$ref": "#/components/examples/problem.configurations.converted"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `configurations.converted`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "configurations.incomplete": {
+                    "$ref": "#/components/examples/problem.configurations.incomplete"
+                  },
+                  "pricing.not_instant": {
+                    "$ref": "#/components/examples/problem.pricing.not_instant"
+                  },
+                  "quotes.nothing_to_save": {
+                    "$ref": "#/components/examples/problem.quotes.nothing_to_save"
+                  },
+                  "validation.failed": {
+                    "$ref": "#/components/examples/problem.validation.failed"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `configurations.incomplete`, `pricing.not_instant`, `quotes.nothing_to_save`, `validation.failed`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "customer": []
+          }
+        ],
+        "summary": "Turn a draft into a quotation",
+        "tags": [
+          "store.configurations"
+        ]
+      }
+    },
+    "/v1/store/configurations/{draftId}/actions/convert-to-rfq": {
+      "post": {
+        "description": "Submits an RFQ pre-filled with the draft’s sizes, measurement basis and quantities (D-185, D-100, D-182); the customer adds the delivery postcode and the type’s RFQ spec fields. The draft is converted.\n\nImplements: D-185, D-182, D-183, D-100.",
+        "operationId": "store.configurations.convertToRfq",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "draftId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "examples": {
+                "default": {
+                  "value": {
+                    "deliveryPostcode": "10110",
+                    "spec": {
+                      "material": "อาร์ตการ์ด 350 แกรม"
+                    }
+                  }
+                }
+              },
+              "schema": {
+                "$ref": "#/components/schemas/ConvertDraftToRfqDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "draft": {
+                    "catalogProductId": "0192f3a0-7c1e-7d2a-9b1f-00000000cd02",
+                    "complete": false,
+                    "completenessPct": 62.5,
+                    "configuration": {
+                      "basis": "internal",
+                      "d": 50,
+                      "l": 150,
+                      "patternId": "0192f3a0-7c1e-7d2a-9b1f-00000000a101",
+                      "w": 100
+                    },
+                    "convertedQuoteId": null,
+                    "convertedRfqId": null,
+                    "createdAt": "2026-10-02T10:00:00+07:00",
+                    "expiresAt": "2026-12-31T10:00:00+07:00",
+                    "id": "0192f3a0-7c1e-7d2a-9b1f-00000000cd01",
+                    "invalidFields": [],
+                    "lastChangedAt": "2026-10-02T10:00:00+07:00",
+                    "missingFields": [
+                      "materialId",
+                      "quantities"
+                    ],
+                    "productTypeCode": "folding_carton",
+                    "shareExpiresAt": null,
+                    "sharedAt": null,
+                    "status": "converted",
+                    "title": "กล่องครีม 50 มล."
+                  },
+                  "rfqCode": "RFQ-2026-000101",
+                  "rfqId": "0192f3a0-7c1e-7d2a-9b1f-00000000cd04"
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/DraftRfqResultDto"
+                }
+              }
+            },
+            "description": "RFQ submitted",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "400": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.bad_request": {
+                    "$ref": "#/components/examples/problem.http.bad_request"
+                  },
+                  "http.malformed_json": {
+                    "$ref": "#/components/examples/problem.http.malformed_json"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.bad_request`, `http.malformed_json`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.unauthenticated": {
+                    "$ref": "#/components/examples/problem.auth.unauthenticated"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.unauthenticated`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.forbidden": {
+                    "$ref": "#/components/examples/problem.auth.forbidden"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.forbidden`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "404": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.not_found": {
+                    "$ref": "#/components/examples/problem.http.not_found"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.not_found`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "409": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "configurations.converted": {
+                    "$ref": "#/components/examples/problem.configurations.converted"
+                  },
+                  "numbering.series_missing": {
+                    "$ref": "#/components/examples/problem.numbering.series_missing"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `configurations.converted`, `numbering.series_missing`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "specs.unit_not_accepted": {
+                    "$ref": "#/components/examples/problem.specs.unit_not_accepted"
+                  },
+                  "validation.failed": {
+                    "$ref": "#/components/examples/problem.validation.failed"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `specs.unit_not_accepted`, `validation.failed`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "customer": []
+          }
+        ],
+        "summary": "Turn a draft into a request for quote",
+        "tags": [
+          "store.configurations"
+        ]
+      }
+    },
+    "/v1/store/configurations/{draftId}/actions/share": {
+      "post": {
+        "description": "A new link (the previous one stops opening), valid `configurations.share_link_days` (15); the token is shown once and only its hash is kept. The link shows the configuration, never its owner (D-185).\n\nImplements: D-185, D-182, D-183.",
+        "operationId": "store.configurations.share",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "draftId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "draft": {
+                    "catalogProductId": "0192f3a0-7c1e-7d2a-9b1f-00000000cd02",
+                    "complete": false,
+                    "completenessPct": 62.5,
+                    "configuration": {
+                      "basis": "internal",
+                      "d": 50,
+                      "l": 150,
+                      "patternId": "0192f3a0-7c1e-7d2a-9b1f-00000000a101",
+                      "w": 100
+                    },
+                    "convertedQuoteId": null,
+                    "convertedRfqId": null,
+                    "createdAt": "2026-10-02T10:00:00+07:00",
+                    "expiresAt": "2026-12-31T10:00:00+07:00",
+                    "id": "0192f3a0-7c1e-7d2a-9b1f-00000000cd01",
+                    "invalidFields": [],
+                    "lastChangedAt": "2026-10-02T10:00:00+07:00",
+                    "missingFields": [
+                      "materialId",
+                      "quantities"
+                    ],
+                    "productTypeCode": "folding_carton",
+                    "shareExpiresAt": null,
+                    "sharedAt": null,
+                    "status": "open",
+                    "title": "กล่องครีม 50 มล."
+                  },
+                  "expiresAt": "2026-10-17T10:00:00+07:00",
+                  "sharePath": "/v1/store/shared-configurations/bX2k…",
+                  "shareToken": "bX2k…"
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ShareConfigurationDraftResultDto"
+                }
+              }
+            },
+            "description": "Shared",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.unauthenticated": {
+                    "$ref": "#/components/examples/problem.auth.unauthenticated"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.unauthenticated`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.forbidden": {
+                    "$ref": "#/components/examples/problem.auth.forbidden"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.forbidden`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "404": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.not_found": {
+                    "$ref": "#/components/examples/problem.http.not_found"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.not_found`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "409": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "configurations.converted": {
+                    "$ref": "#/components/examples/problem.configurations.converted"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `configurations.converted`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "validation.failed": {
+                    "$ref": "#/components/examples/problem.validation.failed"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `validation.failed`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "customer": []
+          }
+        ],
+        "summary": "Share a draft configuration",
+        "tags": [
+          "store.configurations"
+        ]
+      }
+    },
+    "/v1/store/configurations/{draftId}/share": {
+      "delete": {
+        "description": "Revokes the link at once (D-185).\n\nImplements: D-185, D-182, D-183.",
+        "operationId": "store.configurations.unshare",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "draftId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "catalogProductId": "0192f3a0-7c1e-7d2a-9b1f-00000000cd02",
+                  "complete": false,
+                  "completenessPct": 62.5,
+                  "configuration": {
+                    "basis": "internal",
+                    "d": 50,
+                    "l": 150,
+                    "patternId": "0192f3a0-7c1e-7d2a-9b1f-00000000a101",
+                    "w": 100
+                  },
+                  "convertedQuoteId": null,
+                  "convertedRfqId": null,
+                  "createdAt": "2026-10-02T10:00:00+07:00",
+                  "expiresAt": "2026-12-31T10:00:00+07:00",
+                  "id": "0192f3a0-7c1e-7d2a-9b1f-00000000cd01",
+                  "invalidFields": [],
+                  "lastChangedAt": "2026-10-02T10:00:00+07:00",
+                  "missingFields": [
+                    "materialId",
+                    "quantities"
+                  ],
+                  "productTypeCode": "folding_carton",
+                  "shareExpiresAt": null,
+                  "sharedAt": null,
+                  "status": "open",
+                  "title": "กล่องครีม 50 มล."
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ConfigurationDraftDto"
+                }
+              }
+            },
+            "description": "Draft",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.unauthenticated": {
+                    "$ref": "#/components/examples/problem.auth.unauthenticated"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.unauthenticated`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.forbidden": {
+                    "$ref": "#/components/examples/problem.auth.forbidden"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.forbidden`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "404": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.not_found": {
+                    "$ref": "#/components/examples/problem.http.not_found"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.not_found`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "validation.failed": {
+                    "$ref": "#/components/examples/problem.validation.failed"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `validation.failed`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "customer": []
+          }
+        ],
+        "summary": "Stop sharing a draft configuration",
+        "tags": [
+          "store.configurations"
+        ]
+      }
+    },
     "/v1/store/conversation": {
       "get": {
         "description": "The latest web / LIFF conversation, or 404 before the first message (D-151).\n\nImplements: D-151.",
@@ -334290,6 +336929,178 @@
         ]
       }
     },
+    "/v1/store/shared-configurations/{token}": {
+      "get": {
+        "description": "Anyone with the link sees the configuration and its completeness, never its owner, while the link is live and the draft open; 404 once expired, revoked, replaced, deleted or converted (D-185).\n\nImplements: D-185, D-182, D-183.",
+        "operationId": "store.configurations.getShared",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "token",
+            "required": true,
+            "schema": {
+              "pattern": "^[A-Za-z0-9_-]{43}$",
+              "type": "string"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "catalogProductId": "0192f3a0-7c1e-7d2a-9b1f-00000000cd02",
+                  "completenessPct": 62.5,
+                  "configuration": {
+                    "basis": "internal",
+                    "d": 50,
+                    "l": 150,
+                    "patternId": "0192f3a0-7c1e-7d2a-9b1f-00000000a101",
+                    "w": 100
+                  },
+                  "expiresAt": "2026-10-17T10:00:00+07:00",
+                  "missingFields": [
+                    "materialId",
+                    "quantities"
+                  ],
+                  "productTypeCode": "folding_carton",
+                  "title": "กล่องครีม 50 มล."
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/SharedConfigurationDraftDto"
+                }
+              }
+            },
+            "description": "Draft",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.unauthenticated": {
+                    "$ref": "#/components/examples/problem.auth.unauthenticated"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.unauthenticated`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.forbidden": {
+                    "$ref": "#/components/examples/problem.auth.forbidden"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.forbidden`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "404": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.not_found": {
+                    "$ref": "#/components/examples/problem.http.not_found"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.not_found`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [],
+        "summary": "Open a shared draft configuration",
+        "tags": [
+          "store.configurations"
+        ]
+      }
+    },
     "/v1/store/shared-designs/{token}": {
       "get": {
         "description": "Anyone with the link sees the current version of the design with signed asset URLs — never its owner. Revoked, expired or deleted answers 404 (D-226). Rate-limited per client.\n\nImplements: D-226.",
@@ -339372,6 +342183,10 @@
     {
       "description": "My company’s credit, receivables, statements and spend (D-121, D-122, D-125).",
       "name": "store.companyCredit"
+    },
+    {
+      "description": "Draft configurations (D-185): keep an incomplete configuration with its completeness, resume, share, turn it into a quotation or an RFQ.",
+      "name": "store.configurations"
     },
     {
       "description": "My chat with Packio CS from the web or LINE LIFF (D-151).",

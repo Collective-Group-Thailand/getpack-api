@@ -271,6 +271,8 @@ model ProductType {
 
   factoryChangeRequests FactoryChangeRequest[] @relation("FactoryChangeRequestProductType")
 
+  configurationDrafts ConfigurationDraft[] @relation("ConfigurationDraftProductType")
+
   @@index([categoryId], map: "ix_product_types__category_id")
   @@map("product_types")
 }
@@ -420,6 +422,8 @@ model CatalogProduct {
   // --- end Fulfilment B4.1
 
   plServicePrices PlServicePrice[] @relation("PlServicePriceCatalogProduct")
+
+  configurationDrafts ConfigurationDraft[] @relation("ConfigurationDraftCatalogProduct")
 
   @@index([productTypeId], map: "ix_catalog_products__product_type_id")
   @@index([seoPageId], map: "ix_catalog_products__seo_page_id")

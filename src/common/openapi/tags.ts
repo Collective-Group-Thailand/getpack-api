@@ -52,6 +52,8 @@ export const API_TAGS: Record<string, string> = {
     'Discounts above the CS limit, routed to the matching tier only; company discounts (D-052, D-124, D-162).',
   'admin.customers': 'CS finds or creates customers and keeps their addresses and tax profiles (D-092).',
   'admin.privacyRequests': 'The Data Protection Officer answers PDPA export and deletion requests (D-222).',
+  'store.configurations':
+    'Draft configurations (D-185): keep an incomplete configuration with its completeness, resume, share, turn it into a quotation or an RFQ.',
   'store.specs':
     'Measurement bases of a size (D-182): inside, outside and score-to-score sizes from the material caliper; millimetres only (D-183).',
   'store.quotes':

@@ -1288,5 +1288,15 @@
       "title": "Contact details required",
       "detail": "Give your name and a phone number or e-mail so CS can reach you"
     }
+  },
+  "configurations": {
+    "incomplete": {
+      "title": "Configuration incomplete",
+      "detail": "Fill in the missing fields before turning the draft into a quotation (D-185)."
+    },
+    "converted": {
+      "title": "Already converted",
+      "detail": "This draft has already become a quotation or a request for quote (D-185)."
+    }
   }
 }

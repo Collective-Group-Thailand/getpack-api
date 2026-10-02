@@ -785,6 +785,15 @@ export const SETTINGS: readonly SettingSeed[] = [
     decisions: ['D-185', 'D-226'],
     ownerRole: 'superadmin',
   },
+  {
+    key: 'configurations.draft_retention_days',
+    valueType: 'integer',
+    value: 90,
+    valueSchema: { minimum: 1, maximum: 730 },
+    description: 'D-185 days a draft configuration is kept after its last change, then deleted',
+    decisions: ['D-185'],
+    ownerRole: 'superadmin',
+  },
 
   // --- Support (U-B0.1, D-221): owned by the CS Lead.
   {

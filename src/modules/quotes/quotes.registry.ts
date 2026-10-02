@@ -6,11 +6,13 @@ import {
   StoreRfqFormsController,
   StoreRfqsController,
 } from '../rfq/rfqs.controller';
+import { StoreConfigurationDraftsController } from './configuration-drafts.controller';
 import { AdminQuotesController, StoreSavedQuotesController } from './quotes.controller';
 
 /** `/v1/store/*` controllers of the quotes & RFQ context. */
 export const QUOTES_STORE_CONTROLLERS: Type<unknown>[] = [
   StoreSavedQuotesController,
+  StoreConfigurationDraftsController,
   StoreRfqFormsController,
   StoreRfqsController,
 ];
