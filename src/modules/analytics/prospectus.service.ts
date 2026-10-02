@@ -514,13 +514,12 @@ export class ProspectusService {
 
   /**
    * Style-library coverage (U3.B3, D-244): per category the variants partners can and cannot make yet (recruitment
-   * targets), and the processes the network lacks. Capability coverage is public (D-201), so variant counts are not
-   * suppressed; the factories count per process is a factory figure and needs k factories (D-044).
+   * targets), and the processes the network lacks. Every figure describes the factories' capabilities, so its
+   * contributors are the active factories holding verified capabilities — suppressed below k (D-044, D-201).
    */
   private async styleCoverageTables(): Promise<ProspectusTable[]> {
     const coverage = await this.styleCoverage.coverage();
     if (coverage.categories.length === 0) return [];
-    const open = Number.MAX_SAFE_INTEGER;
     const capable = (
       await this.prisma.factoryProcessCapability.findMany({
         where: { status: 'verified', factory: { status: 'active' } },
@@ -543,9 +542,13 @@ export class ProspectusService {
         ],
         rows: coverage.categories.map((c) => ({
           labels: [c.category],
-          cells: [cell(c.variants, open), cell(c.makeable, open), cell(c.notMakeable, open)],
+          cells: [cell(c.variants, capable), cell(c.makeable, capable), cell(c.notMakeable, capable)],
         })),
-        totals: [cell(sum('variants'), open), cell(sum('makeable'), open), cell(sum('notMakeable'), open)],
+        totals: [
+          cell(sum('variants'), capable),
+          cell(sum('makeable'), capable),
+          cell(sum('notMakeable'), capable),
+        ],
       },
       {
         key: 'style_process_gaps',
@@ -560,12 +563,12 @@ export class ProspectusService {
           .filter((p) => p.variantsNeeding > 0)
           .map((p) => ({
             labels: [`${p.nameTh} / ${p.nameEn}`],
-            cells: [cell(p.variantsNeeding, open), cell(p.factories, p.factories)],
+            cells: [cell(p.variantsNeeding, capable), cell(p.factories, p.factories)],
           })),
         totals: [
           cell(
             coverage.processes.reduce((a, p) => a + p.variantsNeeding, 0),
-            open,
+            capable,
           ),
           cell(capable, capable),
         ],
