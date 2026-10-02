@@ -294,17 +294,22 @@ export class SavedQuotesService {
     return this.prisma.withTx(async (tx) => {
       const quote = await this.live(tx, owner, publicId);
       const token = randomBytes(32).toString('base64url');
+      const now = new Date();
+      // D-185 / F5: a share link expires like a design link (setting `configurations.share_link_days`).
+      const days = Number((await this.settings.at('configurations.share_link_days', { at: now })).value);
+      const expiresAt = new Date(now.getTime() + days * DAY_MS);
       await tx.quote.update({
         where: { id: quote.id },
         data: {
           quoteCode: quote.quoteCode ?? (await this.numbering.next(tx, 'qt')),
           shareTokenHash: sha256(token),
-          sharedAt: new Date(),
+          sharedAt: now,
+          shareExpiresAt: expiresAt,
           status: 'shared',
           rowVersion: { increment: 1 },
         },
       });
-      await this.record(tx, quote.publicId, 'quote.shared', {});
+      await this.record(tx, quote.publicId, 'quote.shared', { expiresAt: expiresAt.toISOString() });
       return {
         quote: await tx.quote.findUniqueOrThrow({ where: { id: quote.id }, include: QUOTE_INCLUDE }),
         token,
@@ -312,15 +317,37 @@ export class SavedQuotesService {
     });
   }
 
-  /** The quote behind a share link, while it is shared or saved and the link not revoked. */
+  /** Revokes the share link (D-185): the link stops resolving; the quotation is saved again. */
+  async unshare(owner: QuoteOwner, publicId: string): Promise<QuoteRow> {
+    return this.prisma.withTx(async (tx) => {
+      const quote = await this.get(owner, publicId, tx);
+      if (!quote.shareTokenHash) return quote;
+      await tx.quote.update({
+        where: { id: quote.id },
+        data: {
+          shareTokenHash: null,
+          shareExpiresAt: null,
+          ...(quote.status === 'shared' && { status: 'saved' }),
+          rowVersion: { increment: 1 },
+        },
+      });
+      await this.record(tx, quote.publicId, 'quote.share_revoked', {});
+      return tx.quote.findUniqueOrThrow({ where: { id: quote.id }, include: QUOTE_INCLUDE });
+    });
+  }
+
+  /**
+   * The quote behind a share link (D-185, F5): only while it is shared and the link has neither expired nor been
+   * revoked — a converted, expired or superseded quotation is no longer shown. 404 either way (no existence oracle).
+   */
   async shared(token: string): Promise<QuoteRow> {
     if (!/^[A-Za-z0-9_-]{43}$/.test(token)) throw new DomainException('http.not_found');
     const quote = await this.prisma.quote.findUnique({
       where: { shareTokenHash: sha256(token) },
       include: QUOTE_INCLUDE,
     });
-    if (!quote || !['shared', 'expired', 'converted'].includes(quote.status))
-      throw new DomainException('http.not_found');
+    const live = quote?.shareExpiresAt && quote.shareExpiresAt > new Date();
+    if (!quote || quote.status !== 'shared' || !live) throw new DomainException('http.not_found');
     return quote;
   }
 

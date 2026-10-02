@@ -245,4 +245,31 @@ describe('specification model v2 (e2e, U2.1)', () => {
     });
     await ctx.prisma.pattern.update({ where: { publicId: created.body.id }, data: { status: 'archived' } });
   });
+
+  it('expires and revokes quotation share links (D-185, F5)', async () => {
+    const saved = await as(ctx, customer)
+      .post('/v1/store/quotes', {
+        productTypeCode: 'folding_carton',
+        configuration: foldingConfiguration(fixture, [1000]),
+      })
+      .expect(201);
+    const share = () => as(ctx, customer).post(`/v1/store/quotes/${saved.body.id}/actions/share`).expect(200);
+    const open = (path: string) => request(ctx.server).get(path);
+    const first = await share();
+    const days = (new Date(first.body.expiresAt as string).getTime() - Date.now()) / 86_400_000;
+    expect(days).toBeGreaterThan(14.9);
+    expect(days).toBeLessThanOrEqual(15);
+    expect(first.body.quote.shareExpiresAt).toEqual(expect.any(String));
+    await open(first.body.sharePath as string).expect(200);
+    const revoked = await as(ctx, customer).delete(`/v1/store/quotes/${saved.body.id}/share`).expect(200);
+    expect(revoked.body).toMatchObject({ status: 'saved', shareExpiresAt: null });
+    await open(first.body.sharePath as string).expect(404);
+    const second = await share();
+    await open(second.body.sharePath as string).expect(200);
+    await ctx.prisma.quote.update({
+      where: { publicId: saved.body.id },
+      data: { shareExpiresAt: new Date(Date.now() - 1000) },
+    });
+    await open(second.body.sharePath as string).expect(404);
+  });
 });

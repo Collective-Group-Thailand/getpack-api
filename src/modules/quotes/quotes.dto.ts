@@ -276,6 +276,15 @@ export class SavedQuoteDto {
   @ApiProperty({ type: String, format: 'date-time', nullable: true, example: null })
   sharedAt!: string | null;
 
+  @ApiProperty({
+    type: String,
+    format: 'date-time',
+    nullable: true,
+    example: null,
+    description: 'The share link stops resolving after this (D-185)',
+  })
+  shareExpiresAt!: string | null;
+
   @ApiProperty({ format: 'date-time', example: '2026-10-01T09:00:00+07:00' })
   createdAt!: string;
 }
@@ -312,6 +321,14 @@ export class ShareQuoteResultDto {
 
   @ApiProperty({ example: '/v1/store/quotes/shared/bX2k…' })
   sharePath!: string;
+
+  @ApiProperty({
+    type: String,
+    format: 'date-time',
+    example: '2026-10-17T10:00:00+07:00',
+    description: 'The link stops resolving after this (D-185)',
+  })
+  expiresAt!: string;
 }
 
 // --- examples ---------------------------------------------------------------------------------------
@@ -360,6 +377,7 @@ export const QUOTE_EXAMPLE: SavedQuoteDto = {
   pdfStatus: 'none',
   currency: 'THB',
   dimensions: null,
+  shareExpiresAt: null,
   sharedAt: null,
   createdAt: '2026-10-01T09:00:00+07:00',
 };

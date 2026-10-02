@@ -832,6 +832,7 @@ const CHECKS = [
   // --- U2.1 style codes (A-81)
   'ck_patterns__style_code',
   'ck_patterns__international_name',
+  'ck_quotes__share_expiry',
 ];
 
 const TRIGGERS = [

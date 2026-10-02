@@ -9,8 +9,10 @@ import { toBangkokIso } from '@common/time/bangkok';
 import { type Prisma } from '@generated/prisma/client';
 import { PermissionResolver } from '@modules/iam/permission-resolver.service';
 import { ApiSurface } from '@modules/surfaces/surfaces';
-import { Body, Controller, Get, HttpCode, Param, ParseUUIDPipe, Post, Query } from '@nestjs/common';
+import { TRACKING_THROTTLE } from '@modules/timeline/timeline.controller';
+import { Body, Controller, Delete, Get, HttpCode, Param, ParseUUIDPipe, Post, Query } from '@nestjs/common';
 import { ApiBody, ApiParam, ApiPropertyOptional, ApiQuery } from '@nestjs/swagger';
+import { Throttle } from '@nestjs/throttler';
 import { IsIn, IsOptional, IsUUID } from 'class-validator';
 
 import { QuotePdfService } from './quote-pdf.service';
@@ -125,20 +127,23 @@ export class StoreSavedQuotesController {
 
   @Get('shared/:token')
   @Public()
+  @Throttle(TRACKING_THROTTLE)
   @ApiParam({ name: 'token', schema: { type: 'string', pattern: '^[A-Za-z0-9_-]{43}$' } })
   @ApiEndpoint({
     id: 'store.quotes.getShared',
     summary: 'Open a shared quotation',
     description:
-      'Anyone with the link sees the quotation, never its owner; sharing again revokes the link (D-051).',
-    implements: DECISIONS,
+      'Anyone with the link sees the quotation, never its owner, while it is shared and the link is live: 404 once ' +
+      'the link expired (`configurations.share_link_days`), was revoked or replaced, or the quotation was converted ' +
+      'or expired (D-185, D-051).',
+    implements: [...DECISIONS, 'D-185'],
   })
   @ApiSuccess(200, {
     description: 'Quotation',
     type: SavedQuoteDto,
     example: { ...QUOTE_EXAMPLE, status: 'shared', quoteCode: 'QT-2026-000042' },
   })
-  @ApiStandardErrors('http.not_found')
+  @ApiStandardErrors('http.not_found', 'http.too_many_requests')
   async shared(@Param('token') token: string): Promise<SavedQuoteDto> {
     return quoteDto(await this.quotes.shared(token));
   }
@@ -210,6 +215,7 @@ export class StoreSavedQuotesController {
       quote: { ...QUOTE_EXAMPLE, status: 'shared', quoteCode: 'QT-2026-000042' },
       shareToken: 'bX2k…',
       sharePath: '/v1/store/quotes/shared/bX2k…',
+      expiresAt: '2026-10-17T10:00:00+07:00',
     },
   })
   @ApiStandardErrors('http.not_found', 'validation.failed', 'quotes.not_live', 'numbering.series_missing')
@@ -219,7 +225,32 @@ export class StoreSavedQuotesController {
     @Query('anonymousId') anonymousId?: string,
   ): Promise<ShareQuoteResultDto> {
     const { quote, token } = await this.quotes.share(ownerOf(actor, anonymousId), quoteId);
-    return { quote: quoteDto(quote), shareToken: token, sharePath: `/v1/store/quotes/shared/${token}` };
+    return {
+      quote: quoteDto(quote),
+      shareToken: token,
+      sharePath: `/v1/store/quotes/shared/${token}`,
+      expiresAt: toBangkokIso(quote.shareExpiresAt!),
+    };
+  }
+
+  @Delete(':quoteId/share')
+  @Public()
+  @quoteParam
+  @anonymousQuery
+  @ApiEndpoint({
+    id: 'store.quotes.unshare',
+    summary: 'Stop sharing a quotation',
+    description: 'Revokes the share link at once; the quotation stays saved (D-185).',
+    implements: [...DECISIONS, 'D-185'],
+  })
+  @ApiSuccess(200, { description: 'Not shared any more', type: SavedQuoteDto, example: QUOTE_EXAMPLE })
+  @ApiStandardErrors('http.not_found', 'validation.failed')
+  async unshare(
+    @OptionalActor() actor: Actor | undefined,
+    @Param('quoteId', ParseUUIDPipe) quoteId: string,
+    @Query('anonymousId') anonymousId?: string,
+  ): Promise<SavedQuoteDto> {
+    return quoteDto(await this.quotes.unshare(ownerOf(actor, anonymousId), quoteId));
   }
 
   @Post(':quoteId/actions/reprice')
@@ -410,6 +441,7 @@ export class AdminQuotesController {
       quote: { ...QUOTE_EXAMPLE, status: 'shared', quoteCode: 'QT-2026-000042' },
       shareToken: 'bX2k…',
       sharePath: '/v1/store/quotes/shared/bX2k…',
+      expiresAt: '2026-10-17T10:00:00+07:00',
     },
   })
   @ApiStandardErrors('http.not_found', 'validation.failed', 'quotes.not_live', 'numbering.series_missing')
@@ -418,7 +450,30 @@ export class AdminQuotesController {
     @Param('quoteId', ParseUUIDPipe) quoteId: string,
   ): Promise<ShareQuoteResultDto> {
     const { quote, token } = await this.quotes.share({ kind: 'staff', actor: actor as UserActor }, quoteId);
-    return { quote: quoteDto(quote), shareToken: token, sharePath: `/v1/store/quotes/shared/${token}` };
+    return {
+      quote: quoteDto(quote),
+      shareToken: token,
+      sharePath: `/v1/store/quotes/shared/${token}`,
+      expiresAt: toBangkokIso(quote.shareExpiresAt!),
+    };
+  }
+
+  @Delete(':quoteId/share')
+  @Can('quotes.manage')
+  @quoteParam
+  @ApiEndpoint({
+    id: 'admin.quotes.unshare',
+    summary: 'Stop sharing a quotation',
+    description: 'Revokes the share link at once; the quotation stays saved (D-185).',
+    implements: [...DECISIONS, 'D-185'],
+  })
+  @ApiSuccess(200, { description: 'Not shared any more', type: SavedQuoteDto, example: QUOTE_EXAMPLE })
+  @ApiStandardErrors('http.not_found', 'validation.failed')
+  async unshare(
+    @CurrentActor() actor: Actor,
+    @Param('quoteId', ParseUUIDPipe) quoteId: string,
+  ): Promise<SavedQuoteDto> {
+    return quoteDto(await this.quotes.unshare({ kind: 'staff', actor: actor as UserActor }, quoteId));
   }
 
   @Post(':quoteId/actions/reprice')

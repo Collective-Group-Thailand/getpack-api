@@ -7604,6 +7604,15 @@
             ],
             "description": "The RFQ it answers (source `rfq`)"
           },
+          "shareExpiresAt": {
+            "description": "The share link stops resolving after this (D-185)",
+            "example": null,
+            "format": "date-time",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
           "sharedAt": {
             "example": null,
             "format": "date-time",
@@ -7660,6 +7669,7 @@
           "currency",
           "dimensions",
           "sharedAt",
+          "shareExpiresAt",
           "createdAt",
           "channel",
           "customer",
@@ -51897,6 +51907,15 @@
               "null"
             ]
           },
+          "shareExpiresAt": {
+            "description": "The share link stops resolving after this (D-185)",
+            "example": null,
+            "format": "date-time",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
           "sharedAt": {
             "example": null,
             "format": "date-time",
@@ -51953,6 +51972,7 @@
           "currency",
           "dimensions",
           "sharedAt",
+          "shareExpiresAt",
           "createdAt"
         ],
         "type": "object"
@@ -54029,6 +54049,12 @@
       },
       "ShareQuoteResultDto": {
         "properties": {
+          "expiresAt": {
+            "description": "The link stops resolving after this (D-185)",
+            "example": "2026-10-17T10:00:00+07:00",
+            "format": "date-time",
+            "type": "string"
+          },
           "quote": {
             "$ref": "#/components/schemas/SavedQuoteDto"
           },
@@ -54045,7 +54071,8 @@
         "required": [
           "quote",
           "shareToken",
-          "sharePath"
+          "sharePath",
+          "expiresAt"
         ],
         "type": "object"
       },
@@ -222871,6 +222898,7 @@
                       "productTypeCode": "folding_carton",
                       "quoteCode": null,
                       "rfq": null,
+                      "shareExpiresAt": null,
                       "sharedAt": null,
                       "source": "instant",
                       "status": "saved",
@@ -223253,6 +223281,7 @@
                   "productTypeCode": "folding_carton",
                   "quoteCode": null,
                   "rfq": null,
+                  "shareExpiresAt": null,
                   "sharedAt": null,
                   "source": "instant",
                   "status": "saved",
@@ -223616,6 +223645,7 @@
                   "productTypeCode": "folding_carton",
                   "quoteCode": null,
                   "rfq": null,
+                  "shareExpiresAt": null,
                   "sharedAt": null,
                   "source": "instant",
                   "status": "saved",
@@ -223950,6 +223980,7 @@
                   "productTypeCode": "folding_carton",
                   "quoteCode": null,
                   "rfq": null,
+                  "shareExpiresAt": null,
                   "sharedAt": null,
                   "source": "instant",
                   "status": "saved",
@@ -224313,6 +224344,7 @@
                   "productTypeCode": "folding_carton",
                   "quoteCode": null,
                   "rfq": null,
+                  "shareExpiresAt": null,
                   "sharedAt": null,
                   "source": "instant",
                   "status": "saved",
@@ -224555,6 +224587,7 @@
             "content": {
               "application/json": {
                 "example": {
+                  "expiresAt": "2026-10-17T10:00:00+07:00",
                   "quote": {
                     "configuration": {
                       "d": 120,
@@ -224626,6 +224659,7 @@
                     "priceLocked": true,
                     "productTypeCode": "folding_carton",
                     "quoteCode": "QT-2026-000042",
+                    "shareExpiresAt": null,
                     "sharedAt": null,
                     "source": "instant",
                     "status": "shared",
@@ -225034,6 +225068,299 @@
         ],
         "x-required-permissions": [
           "quotes.read"
+        ]
+      }
+    },
+    "/v1/admin/quotes/{quoteId}/share": {
+      "delete": {
+        "description": "Revokes the share link at once; the quotation stays saved (D-185).\n\nImplements: D-051, D-010, D-050, D-185.",
+        "operationId": "admin.quotes.unshare",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "quoteId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "configuration": {
+                    "d": 120,
+                    "design": {
+                      "graphic": false,
+                      "structure": false
+                    },
+                    "difficultyLevelId": "0192f3a0-7c1e-7d2a-9b1f-00000000a103",
+                    "l": 40,
+                    "materialId": "0192f3a0-7c1e-7d2a-9b1f-00000000a102",
+                    "parts": [
+                      {
+                        "diecutTypeId": "0192f3a0-7c1e-7d2a-9b1f-00000000a106",
+                        "finish1FrontId": "0192f3a0-7c1e-7d2a-9b1f-00000000a105",
+                        "printFront": [
+                          {
+                            "inkColourId": "0192f3a0-7c1e-7d2a-9b1f-00000000a104",
+                            "percent": 100
+                          },
+                          {
+                            "inkColourId": "0192f3a0-7c1e-7d2a-9b1f-00000000a104",
+                            "percent": 100
+                          },
+                          {
+                            "inkColourId": "0192f3a0-7c1e-7d2a-9b1f-00000000a104",
+                            "percent": 100
+                          },
+                          {
+                            "inkColourId": "0192f3a0-7c1e-7d2a-9b1f-00000000a104",
+                            "percent": 100
+                          }
+                        ]
+                      }
+                    ],
+                    "patternId": "0192f3a0-7c1e-7d2a-9b1f-00000000a101",
+                    "quantities": [
+                      1000
+                    ],
+                    "w": 60
+                  },
+                  "createdAt": "2026-10-01T09:00:00+07:00",
+                  "currency": "THB",
+                  "deliveryPostcode": "10110",
+                  "dimensions": null,
+                  "id": "0192f3a0-7c1e-7d2a-9b1f-00000000e601",
+                  "options": [
+                    {
+                      "designFeeAmount": "0.00",
+                      "earliestDeliveryDate": "2026-10-10",
+                      "earliestShipDate": "2026-10-09",
+                      "grossAmount": "13508.40",
+                      "id": "0192f3a0-7c1e-7d2a-9b1f-00000000e602",
+                      "leadTimeDays": 7,
+                      "netAmount": "12624.67",
+                      "productAmount": "13380.00",
+                      "quantity": 1000,
+                      "shippingAmount": "128.40",
+                      "shippingPending": false,
+                      "shippingPendingReason": null,
+                      "structureDesignFeeAmount": "0.00",
+                      "toleranceOveragePct": "5.0000",
+                      "toleranceShortagePct": "5.0000",
+                      "toolingAmount": "0.00",
+                      "unitPrice": "13.38",
+                      "vatAmount": "883.73"
+                    }
+                  ],
+                  "pdfStatus": "none",
+                  "priceLocked": true,
+                  "productTypeCode": "folding_carton",
+                  "quoteCode": null,
+                  "shareExpiresAt": null,
+                  "sharedAt": null,
+                  "source": "instant",
+                  "status": "saved",
+                  "summary": {
+                    "product": {
+                      "imageUrl": "/v1/store/catalog/images/0192f3a0-7c1e-7d2a-9b1f-00000000c009",
+                      "nameEn": "Tuck-end box",
+                      "nameTh": "กล่องฝาเสียบ",
+                      "slug": "tuck-end-box"
+                    },
+                    "productTypeCode": "folding_carton",
+                    "productTypeNameEn": "Folding carton",
+                    "productTypeNameTh": "กล่องกระดาษแข็ง",
+                    "specs": [
+                      {
+                        "key": "style",
+                        "labelEn": "Style",
+                        "labelTh": "แบบกล่อง",
+                        "valueEn": "ฝาเสียบ",
+                        "valueTh": "ฝาเสียบ"
+                      },
+                      {
+                        "key": "size",
+                        "labelEn": "Size",
+                        "labelTh": "ขนาด",
+                        "valueEn": "60 × 60 × 150 mm",
+                        "valueTh": "60 × 60 × 150 มม."
+                      },
+                      {
+                        "key": "material",
+                        "labelEn": "Material",
+                        "labelTh": "วัสดุ",
+                        "valueEn": "Art card 350 gsm",
+                        "valueTh": "อาร์ตการ์ด 350 แกรม"
+                      }
+                    ],
+                    "unit": "piece"
+                  },
+                  "validUntil": "2026-10-16T09:00:00+07:00"
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/SavedQuoteDto"
+                }
+              }
+            },
+            "description": "Not shared any more",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.unauthenticated": {
+                    "$ref": "#/components/examples/problem.auth.unauthenticated"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.unauthenticated`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.forbidden": {
+                    "$ref": "#/components/examples/problem.auth.forbidden"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.forbidden`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "404": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.not_found": {
+                    "$ref": "#/components/examples/problem.http.not_found"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.not_found`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "validation.failed": {
+                    "$ref": "#/components/examples/problem.validation.failed"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `validation.failed`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "staff": []
+          }
+        ],
+        "summary": "Stop sharing a quotation",
+        "tags": [
+          "admin.quotes"
+        ],
+        "x-required-permissions": [
+          "quotes.manage"
         ]
       }
     },
@@ -327802,6 +328129,7 @@
                       "priceLocked": true,
                       "productTypeCode": "folding_carton",
                       "quoteCode": null,
+                      "shareExpiresAt": null,
                       "sharedAt": null,
                       "source": "instant",
                       "status": "saved",
@@ -328139,6 +328467,7 @@
                   "priceLocked": true,
                   "productTypeCode": "folding_carton",
                   "quoteCode": null,
+                  "shareExpiresAt": null,
                   "sharedAt": null,
                   "source": "instant",
                   "status": "saved",
@@ -328720,7 +329049,7 @@
     },
     "/v1/store/quotes/shared/{token}": {
       "get": {
-        "description": "Anyone with the link sees the quotation, never its owner; sharing again revokes the link (D-051).\n\nImplements: D-051, D-010, D-050.",
+        "description": "Anyone with the link sees the quotation, never its owner, while it is shared and the link is live: 404 once the link expired (`configurations.share_link_days`), was revoked or replaced, or the quotation was converted or expired (D-185, D-051).\n\nImplements: D-051, D-010, D-050, D-185.",
         "operationId": "store.quotes.getShared",
         "parameters": [
           {
@@ -328811,6 +329140,7 @@
                   "priceLocked": true,
                   "productTypeCode": "folding_carton",
                   "quoteCode": "QT-2026-000042",
+                  "shareExpiresAt": null,
                   "sharedAt": null,
                   "source": "instant",
                   "status": "shared",
@@ -329086,6 +329416,7 @@
                   "priceLocked": true,
                   "productTypeCode": "folding_carton",
                   "quoteCode": null,
+                  "shareExpiresAt": null,
                   "sharedAt": null,
                   "source": "instant",
                   "status": "saved",
@@ -329388,6 +329719,7 @@
                   "priceLocked": true,
                   "productTypeCode": "folding_carton",
                   "quoteCode": null,
+                  "shareExpiresAt": null,
                   "sharedAt": null,
                   "source": "instant",
                   "status": "saved",
@@ -329710,6 +330042,7 @@
                   "priceLocked": true,
                   "productTypeCode": "folding_carton",
                   "quoteCode": null,
+                  "shareExpiresAt": null,
                   "sharedAt": null,
                   "source": "instant",
                   "status": "saved",
@@ -330024,6 +330357,7 @@
                   "priceLocked": true,
                   "productTypeCode": "folding_carton",
                   "quoteCode": "QT-2026-000042",
+                  "shareExpiresAt": null,
                   "sharedAt": null,
                   "source": "instant",
                   "status": "saved",
@@ -330273,6 +330607,7 @@
             "content": {
               "application/json": {
                 "example": {
+                  "expiresAt": "2026-10-17T10:00:00+07:00",
                   "quote": {
                     "configuration": {
                       "d": 120,
@@ -330344,6 +330679,7 @@
                     "priceLocked": true,
                     "productTypeCode": "folding_carton",
                     "quoteCode": "QT-2026-000042",
+                    "shareExpiresAt": null,
                     "sharedAt": null,
                     "source": "instant",
                     "status": "shared",
@@ -330740,6 +331076,302 @@
           }
         ],
         "summary": "Get the quotation PDF",
+        "tags": [
+          "store.savedQuotes"
+        ]
+      }
+    },
+    "/v1/store/quotes/{quoteId}/share": {
+      "delete": {
+        "description": "Revokes the share link at once; the quotation stays saved (D-185).\n\nImplements: D-051, D-010, D-050, D-185.",
+        "operationId": "store.quotes.unshare",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "quoteId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "description": "The configurator session that saved the quote, when not signed in",
+            "in": "query",
+            "name": "anonymousId",
+            "required": false,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "configuration": {
+                    "d": 120,
+                    "design": {
+                      "graphic": false,
+                      "structure": false
+                    },
+                    "difficultyLevelId": "0192f3a0-7c1e-7d2a-9b1f-00000000a103",
+                    "l": 40,
+                    "materialId": "0192f3a0-7c1e-7d2a-9b1f-00000000a102",
+                    "parts": [
+                      {
+                        "diecutTypeId": "0192f3a0-7c1e-7d2a-9b1f-00000000a106",
+                        "finish1FrontId": "0192f3a0-7c1e-7d2a-9b1f-00000000a105",
+                        "printFront": [
+                          {
+                            "inkColourId": "0192f3a0-7c1e-7d2a-9b1f-00000000a104",
+                            "percent": 100
+                          },
+                          {
+                            "inkColourId": "0192f3a0-7c1e-7d2a-9b1f-00000000a104",
+                            "percent": 100
+                          },
+                          {
+                            "inkColourId": "0192f3a0-7c1e-7d2a-9b1f-00000000a104",
+                            "percent": 100
+                          },
+                          {
+                            "inkColourId": "0192f3a0-7c1e-7d2a-9b1f-00000000a104",
+                            "percent": 100
+                          }
+                        ]
+                      }
+                    ],
+                    "patternId": "0192f3a0-7c1e-7d2a-9b1f-00000000a101",
+                    "quantities": [
+                      1000
+                    ],
+                    "w": 60
+                  },
+                  "createdAt": "2026-10-01T09:00:00+07:00",
+                  "currency": "THB",
+                  "deliveryPostcode": "10110",
+                  "dimensions": null,
+                  "id": "0192f3a0-7c1e-7d2a-9b1f-00000000e601",
+                  "options": [
+                    {
+                      "designFeeAmount": "0.00",
+                      "earliestDeliveryDate": "2026-10-10",
+                      "earliestShipDate": "2026-10-09",
+                      "grossAmount": "13508.40",
+                      "id": "0192f3a0-7c1e-7d2a-9b1f-00000000e602",
+                      "leadTimeDays": 7,
+                      "netAmount": "12624.67",
+                      "productAmount": "13380.00",
+                      "quantity": 1000,
+                      "shippingAmount": "128.40",
+                      "shippingPending": false,
+                      "shippingPendingReason": null,
+                      "structureDesignFeeAmount": "0.00",
+                      "toleranceOveragePct": "5.0000",
+                      "toleranceShortagePct": "5.0000",
+                      "toolingAmount": "0.00",
+                      "unitPrice": "13.38",
+                      "vatAmount": "883.73"
+                    }
+                  ],
+                  "pdfStatus": "none",
+                  "priceLocked": true,
+                  "productTypeCode": "folding_carton",
+                  "quoteCode": null,
+                  "shareExpiresAt": null,
+                  "sharedAt": null,
+                  "source": "instant",
+                  "status": "saved",
+                  "summary": {
+                    "product": {
+                      "imageUrl": "/v1/store/catalog/images/0192f3a0-7c1e-7d2a-9b1f-00000000c009",
+                      "nameEn": "Tuck-end box",
+                      "nameTh": "กล่องฝาเสียบ",
+                      "slug": "tuck-end-box"
+                    },
+                    "productTypeCode": "folding_carton",
+                    "productTypeNameEn": "Folding carton",
+                    "productTypeNameTh": "กล่องกระดาษแข็ง",
+                    "specs": [
+                      {
+                        "key": "style",
+                        "labelEn": "Style",
+                        "labelTh": "แบบกล่อง",
+                        "valueEn": "ฝาเสียบ",
+                        "valueTh": "ฝาเสียบ"
+                      },
+                      {
+                        "key": "size",
+                        "labelEn": "Size",
+                        "labelTh": "ขนาด",
+                        "valueEn": "60 × 60 × 150 mm",
+                        "valueTh": "60 × 60 × 150 มม."
+                      },
+                      {
+                        "key": "material",
+                        "labelEn": "Material",
+                        "labelTh": "วัสดุ",
+                        "valueEn": "Art card 350 gsm",
+                        "valueTh": "อาร์ตการ์ด 350 แกรม"
+                      }
+                    ],
+                    "unit": "piece"
+                  },
+                  "validUntil": "2026-10-16T09:00:00+07:00"
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/SavedQuoteDto"
+                }
+              }
+            },
+            "description": "Not shared any more",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.unauthenticated": {
+                    "$ref": "#/components/examples/problem.auth.unauthenticated"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.unauthenticated`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.forbidden": {
+                    "$ref": "#/components/examples/problem.auth.forbidden"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.forbidden`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "404": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.not_found": {
+                    "$ref": "#/components/examples/problem.http.not_found"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.not_found`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "validation.failed": {
+                    "$ref": "#/components/examples/problem.validation.failed"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `validation.failed`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [],
+        "summary": "Stop sharing a quotation",
         "tags": [
           "store.savedQuotes"
         ]
