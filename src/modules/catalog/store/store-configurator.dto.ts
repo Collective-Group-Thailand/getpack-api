@@ -99,6 +99,22 @@ export class StoreConfiguratorPatternDto {
   dielineKey!: string | null;
 
   @ApiProperty({
+    type: String,
+    nullable: true,
+    example: 'PK-RTE-01',
+    description: 'Public style code (D-184), fixed once published',
+  })
+  styleCode!: string | null;
+
+  @ApiProperty({
+    type: String,
+    nullable: true,
+    example: null,
+    description: 'International name (RSC, FOL …), only once verified (D-211)',
+  })
+  internationalName!: string | null;
+
+  @ApiProperty({
     type: [StoreConfiguratorPartDto],
     description:
       'The parts to configure (a Tele body and lid…); empty = one part, sent without `subPatternId`',
@@ -279,6 +295,8 @@ export const CONFIGURATOR_EXAMPLE: StoreConfiguratorDto = {
     {
       id: ID('002'),
       code: 'RSC-01',
+      styleCode: 'PK-RSC-01',
+      internationalName: null,
       name: 'กล่องฝาชน',
       dielineKey: 'rsc',
       parts: [],

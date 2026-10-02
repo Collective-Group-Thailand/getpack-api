@@ -829,6 +829,9 @@ const CHECKS = [
   'ck_factory_change_requests__participation',
   // --- U2.1 measurement basis (A-80)
   'ck_materials__caliper',
+  // --- U2.1 style codes (A-81)
+  'ck_patterns__style_code',
+  'ck_patterns__international_name',
 ];
 
 const TRIGGERS = [
@@ -1063,6 +1066,8 @@ const TRIGGERS = [
   'tg_pl_foil_prices__version_frozen',
   'tg_pl_b_assembly_prices__version_frozen',
   'tg_pl_code_margins__version_frozen',
+  // --- U2.1 style codes (A-81)
+  'tg_patterns__publication',
 ];
 
 /** Expression (hand-written) and partial (Prisma preview) indexes. */

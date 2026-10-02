@@ -9661,6 +9661,14 @@
             "example": "RTE-01",
             "type": "string"
           },
+          "styleCode": {
+            "description": "Public style code (D-184)",
+            "example": "PK-RTE-01",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
           "widthMm": {
             "example": 60,
             "type": "number"
@@ -9668,6 +9676,7 @@
         },
         "required": [
           "patternCode",
+          "styleCode",
           "dielineKey",
           "widthMm",
           "lengthMm",
@@ -21159,6 +21168,14 @@
               "null"
             ]
           },
+          "internationalName": {
+            "description": "International name (RSC, FOL …) — only after Prepress verified it against an edition Packio holds (D-211); the time of verification is recorded and the audit log names who",
+            "example": null,
+            "type": [
+              "string",
+              "null"
+            ]
+          },
           "name": {
             "example": "ฝาเสียบกลับด้าน",
             "type": "string"
@@ -21185,6 +21202,15 @@
             ],
             "description": "`archived` replaces deletion (schema-design §1.6)",
             "example": "active"
+          },
+          "styleCode": {
+            "description": "Public style code (D-184): required to publish, set once, fixed once published",
+            "example": "PK-RTE-01",
+            "pattern": "^PK-[A-Z0-9]{2,8}-[0-9]{2,3}$",
+            "type": [
+              "string",
+              "null"
+            ]
           },
           "technicalName": {
             "example": "Reverse tuck end",
@@ -39046,6 +39072,22 @@
               "null"
             ]
           },
+          "internationalName": {
+            "description": "International name (RSC, FOL …), shown only once verified (D-211); empty rather than guessed",
+            "example": null,
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "internationalNameVerifiedAt": {
+            "example": null,
+            "format": "date-time",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
           "name": {
             "example": "ฝาเสียบกลับด้าน",
             "type": "string"
@@ -39063,6 +39105,15 @@
             "format": "uuid",
             "type": "string"
           },
+          "publishedAt": {
+            "description": "First activation: from then on `code` and `styleCode` never change (D-184)",
+            "example": "2026-10-01T09:00:00+07:00",
+            "format": "date-time",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
           "status": {
             "allOf": [
               {
@@ -39070,6 +39121,14 @@
               }
             ],
             "example": "active"
+          },
+          "styleCode": {
+            "description": "Public style code (D-184), carried on quotes, orders, proofs and job sheets; fixed once published",
+            "example": "PK-RTE-01",
+            "type": [
+              "string",
+              "null"
+            ]
           },
           "technicalName": {
             "example": "Reverse tuck end",
@@ -39090,6 +39149,10 @@
           "code",
           "name",
           "technicalName",
+          "styleCode",
+          "internationalName",
+          "internationalNameVerifiedAt",
+          "publishedAt",
           "patternKind",
           "constraints",
           "dielineKey",
@@ -58271,6 +58334,14 @@
               "null"
             ]
           },
+          "internationalName": {
+            "description": "International name (RSC, FOL …), only once verified (D-211)",
+            "example": null,
+            "type": [
+              "string",
+              "null"
+            ]
+          },
           "name": {
             "example": "กล่องฝาชน",
             "type": "string"
@@ -58295,6 +58366,14 @@
           },
           "rules": {
             "$ref": "#/components/schemas/StoreSizeRulesDto"
+          },
+          "styleCode": {
+            "description": "Public style code (D-184), fixed once published",
+            "example": "PK-RTE-01",
+            "type": [
+              "string",
+              "null"
+            ]
           }
         },
         "required": [
@@ -58302,6 +58381,8 @@
           "code",
           "name",
           "dielineKey",
+          "styleCode",
+          "internationalName",
           "parts",
           "fluteTypeIds",
           "rules",
@@ -59049,16 +59130,34 @@
               "null"
             ]
           },
+          "internationalName": {
+            "description": "International name (RSC, FOL …), only once verified (D-211)",
+            "example": null,
+            "type": [
+              "string",
+              "null"
+            ]
+          },
           "name": {
             "example": "ฝาเสียบกลับด้าน",
             "type": "string"
+          },
+          "styleCode": {
+            "description": "Public style code (D-184), fixed once published",
+            "example": "PK-RTE-01",
+            "type": [
+              "string",
+              "null"
+            ]
           }
         },
         "required": [
           "code",
           "name",
           "constraints",
-          "dielineKey"
+          "dielineKey",
+          "styleCode",
+          "internationalName"
         ],
         "type": "object"
       },
@@ -64987,6 +65086,14 @@
               "null"
             ]
           },
+          "internationalName": {
+            "description": "International name (RSC, FOL …) — only after Prepress verified it against an edition Packio holds (D-211); the time of verification is recorded and the audit log names who",
+            "example": null,
+            "type": [
+              "string",
+              "null"
+            ]
+          },
           "name": {
             "example": "ฝาเสียบกลับด้าน",
             "type": "string"
@@ -65013,6 +65120,15 @@
             ],
             "description": "`archived` replaces deletion (schema-design §1.6)",
             "example": "active"
+          },
+          "styleCode": {
+            "description": "Public style code (D-184): required to publish, set once, fixed once published",
+            "example": "PK-RTE-01",
+            "pattern": "^PK-[A-Z0-9]{2,8}-[0-9]{2,3}$",
+            "type": [
+              "string",
+              "null"
+            ]
           },
           "technicalName": {
             "example": "Reverse tuck end",
@@ -103636,10 +103752,14 @@
                       "geometryFormula": "tuck_top",
                       "id": "0192f3a0-7c1e-7d2a-9b1f-00000000c006",
                       "imageFileId": null,
+                      "internationalName": null,
+                      "internationalNameVerifiedAt": null,
                       "name": "ฝาเสียบกลับด้าน",
                       "patternKind": null,
                       "productTypeId": "0192f3a0-7c1e-7d2a-9b1f-00000000c002",
+                      "publishedAt": "2026-09-25T10:00:00+07:00",
                       "status": "active",
+                      "styleCode": "PK-RTE-01",
                       "technicalName": "Reverse tuck end",
                       "updatedAt": "2026-09-25T10:00:00+07:00"
                     }
@@ -103854,10 +103974,14 @@
                   "geometryFormula": "tuck_top",
                   "id": "0192f3a0-7c1e-7d2a-9b1f-00000000c006",
                   "imageFileId": null,
+                  "internationalName": null,
+                  "internationalNameVerifiedAt": null,
                   "name": "ฝาเสียบกลับด้าน",
                   "patternKind": null,
                   "productTypeId": "0192f3a0-7c1e-7d2a-9b1f-00000000c002",
+                  "publishedAt": "2026-09-25T10:00:00+07:00",
                   "status": "active",
+                  "styleCode": "PK-RTE-01",
                   "technicalName": "Reverse tuck end",
                   "updatedAt": "2026-09-25T10:00:00+07:00"
                 },
@@ -104088,10 +104212,14 @@
                   "geometryFormula": "tuck_top",
                   "id": "0192f3a0-7c1e-7d2a-9b1f-00000000c006",
                   "imageFileId": null,
+                  "internationalName": null,
+                  "internationalNameVerifiedAt": null,
                   "name": "ฝาเสียบกลับด้าน",
                   "patternKind": null,
                   "productTypeId": "0192f3a0-7c1e-7d2a-9b1f-00000000c002",
+                  "publishedAt": "2026-09-25T10:00:00+07:00",
                   "status": "active",
+                  "styleCode": "PK-RTE-01",
                   "technicalName": "Reverse tuck end",
                   "updatedAt": "2026-09-25T10:00:00+07:00"
                 },
@@ -104314,10 +104442,14 @@
                   "geometryFormula": "tuck_top",
                   "id": "0192f3a0-7c1e-7d2a-9b1f-00000000c006",
                   "imageFileId": null,
+                  "internationalName": null,
+                  "internationalNameVerifiedAt": null,
                   "name": "ฝาเสียบกลับด้าน",
                   "patternKind": null,
                   "productTypeId": "0192f3a0-7c1e-7d2a-9b1f-00000000c002",
+                  "publishedAt": "2026-09-25T10:00:00+07:00",
                   "status": "active",
+                  "styleCode": "PK-RTE-01",
                   "technicalName": "Reverse tuck end",
                   "updatedAt": "2026-09-25T10:00:00+07:00"
                 },
@@ -104625,10 +104757,14 @@
                   "geometryFormula": "tuck_top",
                   "id": "0192f3a0-7c1e-7d2a-9b1f-00000000c006",
                   "imageFileId": null,
+                  "internationalName": null,
+                  "internationalNameVerifiedAt": null,
                   "name": "ฝาเสียบกลับด้าน",
                   "patternKind": null,
                   "productTypeId": "0192f3a0-7c1e-7d2a-9b1f-00000000c002",
+                  "publishedAt": "2026-09-25T10:00:00+07:00",
                   "status": "active",
+                  "styleCode": "PK-RTE-01",
                   "technicalName": "Reverse tuck end",
                   "updatedAt": "2026-09-25T10:00:00+07:00"
                 },
@@ -296399,6 +296535,7 @@
                       ],
                       "id": "0192f3a0-7c1e-7d2a-9b1f-00000000e002",
                       "imageUrl": null,
+                      "internationalName": null,
                       "name": "กล่องฝาชน",
                       "parts": [],
                       "pouch": null,
@@ -296412,7 +296549,8 @@
                         "minLMm": 100,
                         "minWMm": 100,
                         "widthMustExceedHeight": true
-                      }
+                      },
+                      "styleCode": "PK-RSC-01"
                     }
                   ],
                   "printAreas": [
@@ -320735,6 +320873,7 @@
                     "dielineKey": "rte",
                     "lengthMm": 60,
                     "patternCode": "RTE-01",
+                    "styleCode": "PK-RTE-01",
                     "widthMm": 60
                   },
                   "maxBytes": 2147483648,

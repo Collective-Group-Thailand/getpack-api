@@ -622,6 +622,17 @@ function oneFormula(
   }
 }
 
+/** D-184: a style is published (activated) only with its public style code. */
+function publishable(status: string | undefined, styleCode: string | null | undefined): void {
+  if (status === 'active' && !styleCode) {
+    throw new DomainException('catalog.style_code_required', {
+      errors: [
+        { path: 'styleCode', code: 'required', message: 'a style needs its style code to be published' },
+      ],
+    });
+  }
+}
+
 const PATTERN_INCLUDE = {
   ...CONTENT_INCLUDE,
   productType: { select: { publicId: true } },
@@ -655,6 +666,10 @@ export const patterns = defineResource({
     code: 'RTE-01',
     name: 'ฝาเสียบกลับด้าน',
     technicalName: 'Reverse tuck end',
+    styleCode: 'PK-RTE-01',
+    internationalName: null,
+    internationalNameVerifiedAt: null,
+    publishedAt: TS,
     patternKind: null,
     constraints: { minW: 30, maxW: 500 },
     dielineKey: 'rte',
@@ -678,6 +693,12 @@ export const patterns = defineResource({
     code: row.code,
     name: row.name,
     technicalName: row.technicalName,
+    styleCode: row.styleCode,
+    internationalName: row.internationalName,
+    internationalNameVerifiedAt: row.internationalNameVerifiedAt
+      ? toBangkokIso(row.internationalNameVerifiedAt)
+      : null,
+    publishedAt: row.publishedAt ? toBangkokIso(row.publishedAt) : null,
     patternKind: row.patternKind,
     constraints: row.constraints as Record<string, unknown>,
     dielineKey: row.dielineKey,
@@ -689,11 +710,15 @@ export const patterns = defineResource({
   }),
   createData: async (input: CreatePatternDto, refs) => {
     oneFormula(input);
+    publishable(input.status, input.styleCode);
     return {
       productTypeId: await refs.id('productType', input.productTypeId, 'productTypeId'),
       code: input.code,
       name: input.name,
       technicalName: input.technicalName ?? null,
+      styleCode: input.styleCode ?? null,
+      internationalName: input.internationalName ?? null,
+      internationalNameVerifiedAt: input.internationalName ? new Date() : null,
       patternKind: input.patternKind ?? null,
       constraints: (input.constraints ?? {}) as Prisma.InputJsonValue,
       dielineKey: input.dielineKey ?? null,
@@ -707,6 +732,17 @@ export const patterns = defineResource({
   },
   updateData: async (input: UpdatePatternDto, refs, current) => {
     oneFormula(input, current);
+    // D-184 / F6: a published style keeps its code and its style code (the database trigger enforces it too).
+    if (current.publishedAt) {
+      const codeChange = input.code !== undefined && input.code !== current.code;
+      const styleChange =
+        input.styleCode !== undefined && current.styleCode !== null && input.styleCode !== current.styleCode;
+      if (codeChange || styleChange) throw new DomainException('catalog.style_code_immutable');
+    }
+    publishable(
+      input.status ?? current.status,
+      input.styleCode === undefined ? current.styleCode : input.styleCode,
+    );
     return compact({
       productTypeId:
         input.productTypeId === undefined
@@ -715,6 +751,10 @@ export const patterns = defineResource({
       code: input.code,
       name: input.name,
       technicalName: input.technicalName,
+      styleCode: input.styleCode,
+      internationalName: input.internationalName,
+      internationalNameVerifiedAt:
+        input.internationalName === undefined ? undefined : input.internationalName ? new Date() : null,
       patternKind: input.patternKind,
       constraints: input.constraints as Prisma.InputJsonValue | undefined,
       dielineKey: input.dielineKey,

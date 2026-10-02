@@ -158,6 +158,12 @@ describe('specification model v2 (e2e, U2.1)', () => {
       expect(outside.body.steps[0].grossAmount).toBe(inside.body.steps[0].grossAmount);
       await calc(box({ basis: 'product', w: 300, l: 400, d: 250 })).expect(422);
 
+      const rsc = await ctx.prisma.pattern.findUniqueOrThrow({
+        where: { publicId: corrugate.rscPatternPublicId },
+      });
+      const rscCode = rsc.styleCode ?? 'PK-DEVRSC-01';
+      if (!rsc.styleCode)
+        await ctx.prisma.pattern.update({ where: { id: rsc.id }, data: { styleCode: rscCode } });
       await ctx.prisma.productType.update({ where: { code: 'corrugated' }, data: { quoteMode: 'instant' } });
       const saved = await as(ctx, customer)
         .post('/v1/store/quotes', {
@@ -170,6 +176,9 @@ describe('specification model v2 (e2e, U2.1)', () => {
         ['size', 'priced_size'].includes(l.key),
       );
       expect(size.map((l) => l.valueEn)).toEqual(['304 × 404 × 254 mm (outside)', '300 × 400 × 250 mm']);
+      expect(saved.body.summary.specs).toContainEqual(
+        expect.objectContaining({ key: 'style_code', valueEn: rscCode }),
+      );
       // A later caliper change never changes what the saved quote means.
       await ctx.prisma.material.update({ where: { id: board.id }, data: { caliperMm: 3 } });
       const again = await as(ctx, customer).get(`/v1/store/quotes/${saved.body.id}`).expect(200);
@@ -193,5 +202,47 @@ describe('specification model v2 (e2e, U2.1)', () => {
       basis: 'product',
       pricedBasis: 'product',
     });
+  });
+
+  it('publishes a style only with its public style code, and never changes it afterwards (D-184, F6)', async () => {
+    const admin = await staffToken(ctx, 'admin');
+    const type = await ctx.prisma.productType.findUniqueOrThrow({ where: { code: 'folding_carton' } });
+    const run = `${Date.now() % 1_000_000}`;
+    const patch = (id: string, body: object, etag: string) =>
+      as(ctx, admin).patch(`/v1/admin/catalog/patterns/${id}`, body).set('If-Match', etag);
+    const created = await as(ctx, admin)
+      .post('/v1/admin/catalog/patterns', {
+        productTypeId: type.publicId,
+        code: `E2E-SC-${run}`,
+        name: 'ทดสอบรหัสแบบ',
+      })
+      .expect(201);
+    expect(created.body).toMatchObject({ styleCode: null, publishedAt: null });
+    let etag = created.headers['etag'] as string;
+    const noCode = await patch(created.body.id, { status: 'active' }, etag).expect(422);
+    expect(noCode.body.code).toBe('catalog.style_code_required');
+    await patch(created.body.id, { styleCode: 'RTE-01' }, etag).expect(422);
+    const styleCode = `PK-E2E-${run.slice(-2).padStart(2, '0')}`;
+    await ctx.prisma.pattern
+      .updateMany({ where: { styleCode }, data: { styleCode: null } })
+      .catch(() => undefined);
+    const published = await patch(created.body.id, { styleCode, status: 'active' }, etag).expect(200);
+    expect(published.body.styleCode).toBe(styleCode);
+    expect(published.body.publishedAt).toEqual(expect.any(String));
+    etag = published.headers['etag'] as string;
+    expect((await patch(created.body.id, { styleCode: 'PK-E2E-99' }, etag).expect(409)).body.code).toBe(
+      'catalog.style_code_immutable',
+    );
+    await patch(created.body.id, { code: `E2E-SC2-${run}` }, etag).expect(409);
+    // The database refuses it too, whoever writes the row (import, seed).
+    await expect(
+      ctx.prisma.pattern.update({ where: { publicId: created.body.id }, data: { code: `E2E-SC3-${run}` } }),
+    ).rejects.toThrow();
+    const named = await patch(created.body.id, { internationalName: 'RTE' }, etag).expect(200);
+    expect(named.body).toMatchObject({
+      internationalName: 'RTE',
+      internationalNameVerifiedAt: expect.any(String),
+    });
+    await ctx.prisma.pattern.update({ where: { publicId: created.body.id }, data: { status: 'archived' } });
   });
 });

@@ -527,32 +527,39 @@ model StandardSize {
 
 /// `pattern_kind` and `constraints` are indicative (schema-design §0): validated by the calculator ports.
 model Pattern {
-  id               BigInt            @id(map: "pk_patterns") @default(autoincrement())
-  publicId         String            @unique(map: "ux_patterns__public_id") @default(dbgenerated("uuidv7()")) @map("public_id") @db.Uuid
-  productTypeId    BigInt            @map("product_type_id")
-  code             String            @unique(map: "ux_patterns__code")
-  name             String
-  technicalName    String?           @map("technical_name")
-  patternKind      Int?              @map("pattern_kind") @db.SmallInt
+  id                          BigInt            @id(map: "pk_patterns") @default(autoincrement())
+  publicId                    String            @unique(map: "ux_patterns__public_id") @default(dbgenerated("uuidv7()")) @map("public_id") @db.Uuid
+  productTypeId               BigInt            @map("product_type_id")
+  code                        String            @unique(map: "ux_patterns__code")
+  name                        String
+  technicalName               String?           @map("technical_name")
+  /// D-184: public style code `PK-<FAMILY>-<NN>`, unique, immutable once the style is published (A-81).
+  styleCode                   String?           @unique(map: "ux_patterns__style_code") @map("style_code")
+  /// D-184 / D-211: international name (RSC, FOL …), set only once verified; empty rather than guessed.
+  internationalName           String?           @map("international_name")
+  internationalNameVerifiedAt DateTime?         @map("international_name_verified_at") @db.Timestamptz(6)
+  /// First activation; from then on the code and the style code never change (D-184, F6).
+  publishedAt                 DateTime?         @map("published_at") @db.Timestamptz(6)
+  patternKind                 Int?              @map("pattern_kind") @db.SmallInt
   /// min/max w/l/h/b/s/cs/dl/dw, required_x/c (legacy `pattern` size constraints).
-  constraints      Json              @default("{}")
+  constraints                 Json              @default("{}")
   /// Key understood by `@packio/dieline`.
-  dielineKey       String?           @map("dieline_key")
+  dielineKey                  String?           @map("dieline_key")
   /// Blank formula of the folding calculator (B2.3, schema-design A-25); null = not priceable.
-  geometryFormula  GeometryFormula?  @map("geometry_formula")
+  geometryFormula             GeometryFormula?  @map("geometry_formula")
   /// Blank formula of the corrugate calculator (U-B6, schema-design A-49); never together with `geometry_formula`.
-  corrugateFormula CorrugateFormula? @map("corrugate_formula")
+  corrugateFormula            CorrugateFormula? @map("corrugate_formula")
   /// Shape of the pouch calculator (U-B6 pouch, schema-design A-73); never together with the other formulas.
-  pouchFormula     PouchFormula?     @map("pouch_formula")
-  status           CatalogStatus     @default(draft)
-  descriptionTh    String?           @map("description_th")
-  descriptionEn    String?           @map("description_en")
-  imageFileId      BigInt?           @map("image_file_id")
-  createdAt        DateTime          @default(now()) @map("created_at") @db.Timestamptz(6)
-  createdById      BigInt?           @map("created_by")
-  updatedAt        DateTime          @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
-  updatedById      BigInt?           @map("updated_by")
-  rowVersion       Int               @default(1) @map("row_version")
+  pouchFormula                PouchFormula?     @map("pouch_formula")
+  status                      CatalogStatus     @default(draft)
+  descriptionTh               String?           @map("description_th")
+  descriptionEn               String?           @map("description_en")
+  imageFileId                 BigInt?           @map("image_file_id")
+  createdAt                   DateTime          @default(now()) @map("created_at") @db.Timestamptz(6)
+  createdById                 BigInt?           @map("created_by")
+  updatedAt                   DateTime          @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+  updatedById                 BigInt?           @map("updated_by")
+  rowVersion                  Int               @default(1) @map("row_version")
 
   productType         ProductType                @relation(fields: [productTypeId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_patterns__product_type_id")
   subPatterns         SubPattern[]

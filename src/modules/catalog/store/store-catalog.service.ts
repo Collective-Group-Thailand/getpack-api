@@ -254,6 +254,8 @@ export class StoreCatalogService {
       isCombination: p.isCombination,
       patterns: p.patterns.map(({ pattern }) => ({
         code: pattern.code,
+        styleCode: pattern.styleCode,
+        internationalName: pattern.internationalName,
         name: pattern.name,
         constraints: pattern.constraints as Record<string, unknown>,
         dielineKey: pattern.dielineKey,

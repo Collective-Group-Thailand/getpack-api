@@ -9,7 +9,9 @@ import {
   IsInt,
   IsObject,
   IsOptional,
+  IsString,
   IsUUID,
+  Matches,
   Max,
   Min,
   ValidateNested,
@@ -747,6 +749,36 @@ export class PatternDto {
   technicalName!: string | null;
 
   @ApiProperty({
+    type: String,
+    nullable: true,
+    example: 'PK-RTE-01',
+    description:
+      'Public style code (D-184), carried on quotes, orders, proofs and job sheets; fixed once published',
+  })
+  styleCode!: string | null;
+
+  @ApiProperty({
+    type: String,
+    nullable: true,
+    example: null,
+    description:
+      'International name (RSC, FOL …), shown only once verified (D-211); empty rather than guessed',
+  })
+  internationalName!: string | null;
+
+  @ApiProperty({ type: String, format: 'date-time', nullable: true, example: null })
+  internationalNameVerifiedAt!: string | null;
+
+  @ApiProperty({
+    type: String,
+    format: 'date-time',
+    nullable: true,
+    example: '2026-10-01T09:00:00+07:00',
+    description: 'First activation: from then on `code` and `styleCode` never change (D-184)',
+  })
+  publishedAt!: string | null;
+
+  @ApiProperty({
     type: 'integer',
     nullable: true,
     example: null,
@@ -837,6 +869,28 @@ export class CreatePatternDto {
 
   @TextField({ example: 'Reverse tuck end', nullable: true })
   technicalName?: string | null;
+
+  @ApiPropertyOptional({
+    type: String,
+    nullable: true,
+    example: 'PK-RTE-01',
+    pattern: '^PK-[A-Z0-9]{2,8}-[0-9]{2,3}$',
+    description: 'Public style code (D-184): required to publish, set once, fixed once published',
+  })
+  @IsOptional()
+  @IsString()
+  @Matches(/^PK-[A-Z0-9]{2,8}-[0-9]{2,3}$/)
+  styleCode?: string | null;
+
+  @TextField({
+    example: null,
+    nullable: true,
+    max: 64,
+    description:
+      'International name (RSC, FOL …) — only after Prepress verified it against an edition Packio holds (D-211); ' +
+      'the time of verification is recorded and the audit log names who',
+  })
+  internationalName?: string | null;
 
   @IntField({ example: null, nullable: true, min: 0, max: 32_767 })
   patternKind?: number | null;

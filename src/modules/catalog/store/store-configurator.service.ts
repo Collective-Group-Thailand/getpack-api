@@ -70,6 +70,8 @@ export class StoreConfiguratorService {
       patterns: p.patterns.map(({ pattern }) => ({
         id: pattern.publicId,
         code: pattern.code,
+        styleCode: pattern.styleCode,
+        internationalName: pattern.internationalName,
         name: pattern.name,
         dielineKey: pattern.dielineKey,
         parts: pattern.subPatterns.map((s) => ({ subPatternId: s.publicId, seq: s.seq, name: s.name })),

@@ -1,3 +1,4 @@
+import { pricedConfiguration } from '@modules/quotes/quote-input';
 import { type Actor, type UserActor } from '@common/context/actor';
 import { DomainException } from '@common/errors/domain.exception';
 import { toBangkokIso } from '@common/time/bangkok';
@@ -99,13 +100,17 @@ export class ArtworkService implements OnModuleInit {
     } catch (error) {
       if (!(error instanceof SettingNotFoundError)) throw error;
     }
-    const cfg = (
-      order.quote.input as { configuration?: { patternId?: string; w?: number; l?: number; d?: number } }
-    ).configuration;
+    // The size priced — inside dimensions for a box (D-182), what the dieline is drawn from.
+    const cfg = pricedConfiguration(order.quote.input) as {
+      patternId?: string;
+      w?: number;
+      l?: number;
+      d?: number;
+    } | null;
     const pattern = cfg?.patternId
       ? await this.prisma.pattern.findUnique({
           where: { publicId: cfg.patternId },
-          select: { code: true, dielineKey: true },
+          select: { code: true, styleCode: true, dielineKey: true },
         })
       : null;
     const purpose = FILE_PURPOSES.artwork;
@@ -125,6 +130,7 @@ export class ArtworkService implements OnModuleInit {
         pattern && cfg
           ? {
               patternCode: pattern.code,
+              styleCode: pattern.styleCode,
               dielineKey: pattern.dielineKey,
               widthMm: Number(cfg.w),
               lengthMm: Number(cfg.l),

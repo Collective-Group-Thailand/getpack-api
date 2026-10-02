@@ -51,6 +51,11 @@ async function* pages<T extends { id: bigint }>(fetch: (after: bigint) => Promis
   }
 }
 
+const styleCodeOf = (summary: unknown): string | null =>
+  (Array.isArray(summary) ? (summary as { key?: string; valueEn?: string }[]) : []).find(
+    (l) => l.key === 'style_code',
+  )?.valueEn ?? null;
+
 const startOf = (d: string) => new Date(`${d}T00:00:00+07:00`);
 const isDay = (v: string | undefined) => v !== undefined && /^\d{4}-\d{2}-\d{2}$/.test(v);
 
@@ -68,6 +73,7 @@ export const LIST_EXPORTS: readonly ListExport[] = [
       c('customerCode', 'รหัสลูกค้า', 'Customer code'),
       c('customerName', 'ลูกค้า', 'Customer'),
       c('productType', 'ประเภทสินค้า', 'Product type'),
+      c('styleCode', 'รหัสแบบ', 'Style code'),
       c('quantity', 'จำนวน', 'Quantity', 'integer'),
       c('gross', 'รวมทั้งสิ้น', 'Gross', 'money'),
       c('placedAt', 'วันที่สั่ง', 'Placed', 'datetime'),
@@ -103,6 +109,7 @@ export const LIST_EXPORTS: readonly ListExport[] = [
                 },
               },
               productType: { select: { code: true } },
+              quote: { select: { specSummary: true } },
             },
             orderBy: { id: 'asc' },
             take: 500,
@@ -115,6 +122,8 @@ export const LIST_EXPORTS: readonly ListExport[] = [
             customerCode: o.orderGroup.customer.customerProfile?.customerCode ?? null,
             customerName: o.orderGroup.customer.displayName,
             productType: o.productType.code,
+            // D-184: the style code frozen with the quote's specification.
+            styleCode: styleCodeOf(o.quote?.specSummary),
             quantity: o.quantityOrdered,
             gross: money(o.grossAmount),
             placedAt: iso(o.orderGroup.placedAt),

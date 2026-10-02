@@ -278,6 +278,16 @@ export class ProductionService {
           );
     const proof = order.proofs[0] ?? null;
     const internal = (order.quoteOption.internalBreakdown ?? {}) as Record<string, unknown>;
+    // D-184: the job sheet names the style by its public code (frozen in the snapshot).
+    const stylePatternId = ((order.quote.input ?? {}) as { configuration?: { patternId?: unknown } })
+      .configuration?.patternId;
+    const style =
+      typeof stylePatternId === 'string'
+        ? await tx.pattern.findUnique({
+            where: { publicId: stylePatternId },
+            select: { code: true, styleCode: true, internationalName: true, name: true },
+          })
+        : null;
     const job = await tx.productionJob.create({
       data: {
         jobNo: await this.numbering.next(tx, 'job', at, order.entityId),
@@ -305,6 +315,12 @@ export class ProductionService {
           // D-182: the sizes as priced (instant quotes) or as requested (RFQ quotes), with their basis.
           dimensions: ((order.quote.input ?? {}) as { dimensions?: unknown }).dimensions ?? null,
           size: ((order.quote.input ?? {}) as { size?: unknown }).size ?? null,
+          style: style && {
+            code: style.code,
+            styleCode: style.styleCode,
+            internationalName: style.internationalName,
+            name: style.name,
+          },
           quantity,
           unit: kind === 'mockup' ? 'set' : order.unit,
           designOption: order.designOption,

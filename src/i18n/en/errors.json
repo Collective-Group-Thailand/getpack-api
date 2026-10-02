@@ -309,6 +309,14 @@
     "import_unreadable": {
       "title": "Import file unreadable",
       "detail": "The file must be an Excel workbook (.xlsx) in the exported template layout."
+    },
+    "style_code_immutable": {
+      "title": "Published style",
+      "detail": "A published style keeps its code and its style code; create a new style instead (D-184)."
+    },
+    "style_code_required": {
+      "title": "Style code required",
+      "detail": "A style needs its public style code (PK-<FAMILY>-<NN>) before it is published (D-184)."
     }
   },
   "partners": {

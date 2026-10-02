@@ -42,6 +42,7 @@ export interface BoxConfiguration {
 type Named = { publicId: string; th: string; en: string };
 const LABELS = {
   style: ['แบบกล่อง', 'Style'],
+  style_code: ['รหัสแบบ', 'Style code'],
   size: ['ขนาด (กว้าง × ยาว × ลึก)', 'Size (W × L × D)'],
   material: ['วัสดุ', 'Material'],
   print_front: ['พิมพ์ด้านนอก', 'Print (outside)'],
@@ -100,7 +101,9 @@ export async function boxSpecLines(
   });
   const byIds = (ids: string[]) => ({ where: { publicId: { in: ids } } });
   const [patterns, subPatterns, materials, inks, finishNames, diecuts, assemblies] = await Promise.all([
-    names([cfg.patternId], async (ids) => (await db.pattern.findMany(byIds(ids))).map(single)),
+    names([cfg.patternId], async (ids) =>
+      (await db.pattern.findMany(byIds(ids))).map((r) => ({ ...single(r), code: r.styleCode })),
+    ),
     names(uniq(parts.map((p) => p.subPatternId)), async (ids) =>
       (await db.subPattern.findMany(byIds(ids))).map(single),
     ),
@@ -139,6 +142,9 @@ export async function boxSpecLines(
 
   const pattern = patterns.get(cfg.patternId);
   if (pattern) push('style', pattern.th, pattern.en);
+  // D-184: the public style code travels with the spec to the cart, order, proof, job sheet and exports.
+  const styleCode = (pattern as (Named & { code?: string | null }) | undefined)?.code;
+  if (styleCode) push('style_code', styleCode, styleCode);
   const size = opts.flat ? `${mm(cfg.w)} × ${mm(cfg.l)}` : `${mm(cfg.w)} × ${mm(cfg.l)} × ${mm(cfg.d)}`;
   push('size', `${size} มม.`, `${size} mm`);
   const material = materials.get(cfg.materialId);
@@ -286,6 +292,7 @@ export interface PouchSpecConfiguration {
 
 const POUCH_LINES = {
   style: ['แบบซอง', 'Style'],
+  style_code: ['รหัสแบบ', 'Style code'],
   size: ['ขนาด (กว้าง × สูง)', 'Size (W × H)'],
   gusset: ['ขยายข้าง / ก้น / ซีลกลาง', 'Gussets / centre seal'],
   material: ['วัสดุ', 'Material'],
@@ -307,7 +314,9 @@ export async function pouchSpecLines(db: Tx, cfg: PouchSpecConfiguration): Promi
     en: r.name,
   });
   const [patterns, materials, inks, options] = await Promise.all([
-    names([cfg.patternId], async (ids) => (await db.pattern.findMany(byIds(ids))).map(single)),
+    names([cfg.patternId], async (ids) =>
+      (await db.pattern.findMany(byIds(ids))).map((r) => ({ ...single(r), code: r.styleCode })),
+    ),
     names([cfg.materialId], async (ids) => (await db.material.findMany(byIds(ids))).map(pair)),
     names(uniq([cfg.printColourId]), async (ids) => (await db.inkColour.findMany(byIds(ids))).map(single)),
     names(uniq(cfg.optionIds ?? []), async (ids) => (await db.assembly.findMany(byIds(ids))).map(pair)),
@@ -324,6 +333,8 @@ export async function pouchSpecLines(db: Tx, cfg: PouchSpecConfiguration): Promi
     if (found.length) push(key, found.map((n) => n.th).join(', '), found.map((n) => n.en).join(', '));
   };
   list(patterns, [cfg.patternId], 'style');
+  const styleCode = (patterns.get(cfg.patternId) as (Named & { code?: string | null }) | undefined)?.code;
+  if (styleCode) push('style_code', styleCode, styleCode);
   push('size', `${mm(cfg.w)} × ${mm(cfg.l)} มม.`, `${mm(cfg.w)} × ${mm(cfg.l)} mm`);
   const gussets = (
     [

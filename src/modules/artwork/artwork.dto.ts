@@ -472,6 +472,14 @@ export class ArtworkDielineDto {
   @ApiProperty({
     type: String,
     nullable: true,
+    example: 'PK-RTE-01',
+    description: 'Public style code (D-184)',
+  })
+  styleCode!: string | null;
+
+  @ApiProperty({
+    type: String,
+    nullable: true,
     example: 'rte',
     description: 'Dieline drawing key (designer / drawing service)',
   })
@@ -551,5 +559,12 @@ export const ARTWORK_RULES_EXAMPLE: ArtworkRulesDto = {
     { check: 'rgb_colour', severity: 'warn' },
   ],
   approvalChecklist: [],
-  dieline: { patternCode: 'RTE-01', dielineKey: 'rte', widthMm: 60, lengthMm: 60, depthMm: 150 },
+  dieline: {
+    patternCode: 'RTE-01',
+    styleCode: 'PK-RTE-01',
+    dielineKey: 'rte',
+    widthMm: 60,
+    lengthMm: 60,
+    depthMm: 150,
+  },
 };

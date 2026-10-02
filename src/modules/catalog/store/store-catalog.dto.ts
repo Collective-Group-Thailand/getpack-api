@@ -85,6 +85,22 @@ export class StorePatternDto {
 
   @ApiProperty({ type: String, nullable: true, example: 'rte', description: 'Key for `@packio/dieline`' })
   dielineKey!: string | null;
+
+  @ApiProperty({
+    type: String,
+    nullable: true,
+    example: 'PK-RTE-01',
+    description: 'Public style code (D-184), fixed once published',
+  })
+  styleCode!: string | null;
+
+  @ApiProperty({
+    type: String,
+    nullable: true,
+    example: null,
+    description: 'International name (RSC, FOL …), only once verified (D-211)',
+  })
+  internationalName!: string | null;
 }
 
 export class StoreOptionDto {

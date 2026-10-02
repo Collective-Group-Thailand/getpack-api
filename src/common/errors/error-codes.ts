@@ -70,6 +70,8 @@ export const ERROR_CODES = {
   'catalog.code_taken': HttpStatus.CONFLICT,
   'catalog.slug_taken': HttpStatus.CONFLICT,
   'catalog.calculator_required': HttpStatus.UNPROCESSABLE_ENTITY,
+  'catalog.style_code_immutable': HttpStatus.CONFLICT,
+  'catalog.style_code_required': HttpStatus.UNPROCESSABLE_ENTITY,
   'catalog.import_stale': HttpStatus.CONFLICT,
   'catalog.import_invalid': HttpStatus.UNPROCESSABLE_ENTITY,
   'catalog.import_too_large': HttpStatus.UNPROCESSABLE_ENTITY,
