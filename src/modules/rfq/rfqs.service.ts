@@ -9,6 +9,7 @@ import { type MeasurementBasis } from '@generated/prisma/client';
 import { Prisma, type RfqStatus, type SalesChannel } from '@generated/prisma/client';
 import { canonical } from '@modules/catalog/imports/import-engine';
 import { FactoryAccess } from '@modules/partners/factories/factory-access';
+import { ToleranceService } from '@modules/pricing/quotes/tolerance.service';
 import { rfqSpecLines } from '@modules/quotes/line-summary';
 import { SavedQuotesService } from '@modules/quotes/saved-quotes.service';
 import { Injectable, type OnModuleInit } from '@nestjs/common';
@@ -125,6 +126,7 @@ export class RfqsService implements OnModuleInit {
     private readonly files: FilesService,
     private readonly access: FactoryAccess,
     private readonly quotes: SavedQuotesService,
+    private readonly tolerances: ToleranceService,
     private readonly audit: AuditService,
   ) {}
 
@@ -347,8 +349,24 @@ export class RfqsService implements OnModuleInit {
         rfqQuoteVersion: quote.versionNo,
         vatRateVersionId: vat.versionId.toString(),
       };
-      const options = lines.map((l) => {
+      const type = await tx.productType.findUniqueOrThrow({
+        where: { id: rfq.productTypeId },
+        select: { rfqSpecSchema: true, calculatorKey: true },
+      });
+      // D-187 (F2): the accepted quote freezes the line factory's tolerance, or the platform default — never 0 %.
+      const now = new Date();
+      const tolerances = await Promise.all(
+        lines.map((l) =>
+          this.tolerances.resolve(
+            { factoryId: l.factoryId, productTypeId: rfq.productTypeId, calculatorKey: type.calculatorKey },
+            now,
+            tx,
+          ),
+        ),
+      );
+      const options = lines.map((l, i) => {
         const shippingVat = l.shippingNetAmount.mul(vat.ratePct).div(100).toDecimalPlaces(2);
+        const tolerance = tolerances[i]!;
         return {
           quantity: l.quantity,
           unit: 'piece' as const,
@@ -363,6 +381,10 @@ export class RfqsService implements OnModuleInit {
             leadTimeDays: l.leadTimeDays,
             earliestShipDate: null,
             earliestDeliveryDate: null,
+            toleranceShortagePct: tolerance.shortage,
+            toleranceOveragePct: tolerance.overage,
+            toleranceDimensionalMm: tolerance.dimensionalMm,
+            toleranceColourDeltaE: tolerance.colourDeltaE,
             shippingPending: false,
             shippingPendingReason: null,
           },
@@ -373,6 +395,10 @@ export class RfqsService implements OnModuleInit {
           shippingAmount: l.shippingNetAmount.add(shippingVat),
           unitPrice: l.unitPrice,
           leadTimeDays: l.leadTimeDays,
+          toleranceShortagePct: tolerance.shortage,
+          toleranceOveragePct: tolerance.overage,
+          toleranceDimensionalMm: tolerance.dimensionalMm,
+          toleranceColourDeltaE: tolerance.colourDeltaE,
           selectedFactoryId: l.factoryId,
           buyCostNet: l.buyUnitPrice ? l.buyUnitPrice.mul(l.quantity).toDecimalPlaces(2) : null,
           marginPct: l.marginPct,
@@ -380,10 +406,6 @@ export class RfqsService implements OnModuleInit {
         };
       });
       const snapshotSha256 = sha256(JSON.stringify(canonical({ input, configRefs, options })));
-      const type = await tx.productType.findUniqueOrThrow({
-        where: { id: rfq.productTypeId },
-        select: { rfqSpecSchema: true },
-      });
       const specSummary = rfqSpecLines(type.rfqSpecSchema, (rfq.spec ?? {}) as Record<string, unknown>, {
         lengthMm: rfq.lengthMm === null ? null : Number(rfq.lengthMm),
         widthMm: rfq.widthMm === null ? null : Number(rfq.widthMm),

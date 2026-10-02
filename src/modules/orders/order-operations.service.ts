@@ -192,6 +192,8 @@ export class OrderOperationsService {
             designOption: designOption as DesignOption,
             toleranceShortagePct: draft.toleranceShortagePct,
             toleranceOveragePct: draft.toleranceOveragePct,
+            toleranceDimensionalMm: draft.toleranceDimensionalMm,
+            toleranceColourDeltaE: draft.toleranceColourDeltaE,
             taxNature: draft.lines[0]!.taxNature,
             pricingSnapshot: pricingSnapshot as unknown as Prisma.InputJsonValue,
             configRefs: configRefs as Prisma.InputJsonValue,

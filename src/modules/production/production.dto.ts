@@ -287,6 +287,23 @@ export class JobToleranceDto {
 
   @ApiProperty({ example: '5.0000' })
   overagePct!: string;
+
+  @ApiProperty({
+    type: String,
+    nullable: true,
+    example: '1.00',
+    description: 'Dimensional tolerance ± mm, frozen with the job (D-186); null = none published',
+  })
+  dimensionalMm!: string | null;
+
+  @ApiProperty({
+    type: String,
+    nullable: true,
+    example: '3.00',
+    description:
+      'Colour tolerance, ΔE2000 against the approved proof, frozen with the job (D-186); null = not printed',
+  })
+  colourDeltaE!: string | null;
 }
 
 export class JobArtworkDto {
@@ -582,7 +599,7 @@ export const PARTNER_JOB_EXAMPLE: PartnerJobDto = {
   rejectedAt: null,
   rejectReasonCode: null,
   rejectNote: null,
-  tolerance: { shortagePct: '5.0000', overagePct: '5.0000' },
+  tolerance: { shortagePct: '5.0000', overagePct: '5.0000', dimensionalMm: '1.00', colourDeltaE: '3.00' },
   artwork: {
     proofId: '0192f3a0-7c1e-7d2a-9b1f-0000000f1012',
     versionNo: 2,

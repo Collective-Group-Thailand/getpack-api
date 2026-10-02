@@ -839,6 +839,11 @@ const CHECKS = [
   'ck_configuration_drafts__share',
   'ck_configuration_drafts__title',
   'ck_configuration_drafts__configuration',
+  // --- U2.1 spec tolerances (A-84)
+  'ck_factory_tolerance_policy_versions__spec',
+  'ck_quote_options__spec_tolerance',
+  'ck_orders__spec_tolerance',
+  'ck_production_jobs__spec_tolerance',
 ];
 
 const TRIGGERS = [

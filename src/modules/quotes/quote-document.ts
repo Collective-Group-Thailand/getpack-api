@@ -31,6 +31,9 @@ export interface QuoteDocument {
     grossAmount: string;
     leadTimeDays: number | null;
     tolerance: string | null;
+    /** D-186: ± mm and ΔE2000, when published for the line. */
+    dimensionalMm?: string | null;
+    colourDeltaE?: string | null;
   }[];
   validityDays: number;
 }
@@ -79,7 +82,7 @@ const TEMPLATE = Handlebars.compile(
 <table>
   <thead><tr><th>จำนวน / Qty</th><th>ราคาต่อชิ้น</th><th>ค่าสินค้า</th><th>ค่าออกแบบ</th><th>ค่าขนส่ง</th><th>VAT</th><th>รวม / Total</th><th>ระยะผลิต (วัน)</th></tr></thead>
   <tbody>
-  {{#each lines}}<tr><td>{{quantity}}{{#if tolerance}} (±{{tolerance}}%){{/if}}</td><td>{{unitPrice}}</td><td>{{productAmount}}</td><td>{{designFeeAmount}}</td><td>{{shippingAmount}}</td><td>{{vatAmount}}</td><td><strong>{{grossAmount}}</strong></td><td>{{leadTimeDays}}</td></tr>{{/each}}
+  {{#each lines}}<tr><td>{{quantity}}{{#if tolerance}} (±{{tolerance}}%){{/if}}{{#if dimensionalMm}}<br>±{{dimensionalMm}} mm{{/if}}{{#if colourDeltaE}}<br>ΔE ≤ {{colourDeltaE}}{{/if}}</td><td>{{unitPrice}}</td><td>{{productAmount}}</td><td>{{designFeeAmount}}</td><td>{{shippingAmount}}</td><td>{{vatAmount}}</td><td><strong>{{grossAmount}}</strong></td><td>{{leadTimeDays}}</td></tr>{{/each}}
   </tbody>
 </table>
 <div class="notes">
@@ -103,6 +106,8 @@ export function renderQuoteDocument(doc: QuoteDocument): string {
       grossAmount: money(l.grossAmount),
       leadTimeDays: l.leadTimeDays ?? '—',
       tolerance: l.tolerance,
+      dimensionalMm: l.dimensionalMm ? String(Number(l.dimensionalMm)) : null,
+      colourDeltaE: l.colourDeltaE ? String(Number(l.colourDeltaE)) : null,
     })),
   });
 }

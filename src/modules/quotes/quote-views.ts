@@ -29,6 +29,8 @@ function option(o: QuoteRow['options'][number]): SavedQuoteOptionDto {
     earliestDeliveryDate: r.earliestDeliveryDate ?? null,
     toleranceShortagePct: o.toleranceShortagePct?.toFixed(4) ?? null,
     toleranceOveragePct: o.toleranceOveragePct?.toFixed(4) ?? null,
+    toleranceDimensionalMm: o.toleranceDimensionalMm?.toFixed(2) ?? null,
+    toleranceColourDeltaE: o.toleranceColourDeltaE?.toFixed(2) ?? null,
     shippingPending: r.shippingPending ?? o.shippingAmount === null,
     shippingPendingReason: r.shippingPendingReason ?? null,
   };

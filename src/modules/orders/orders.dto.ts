@@ -277,6 +277,24 @@ export class OrderDto {
   @ApiProperty({ type: String, nullable: true, example: '5.0000' })
   toleranceOveragePct!: string | null;
 
+  @ApiProperty({
+    type: String,
+    nullable: true,
+    example: '1.00',
+    description:
+      'Frozen dimensional tolerance ± mm (D-186); null = none published, or an order placed before it',
+  })
+  toleranceDimensionalMm!: string | null;
+
+  @ApiProperty({
+    type: String,
+    nullable: true,
+    example: '3.00',
+    description:
+      'Frozen colour tolerance, ΔE2000 against the approved proof (D-186); null = not printed or earlier',
+  })
+  toleranceColourDeltaE!: string | null;
+
   @ApiProperty({ type: 'integer', nullable: true, example: 7 })
   leadTimeDays!: number | null;
 
@@ -500,6 +518,8 @@ export const ORDER_EXAMPLE: OrderDto = {
   mockupOption: 'none',
   toleranceShortagePct: '5.0000',
   toleranceOveragePct: '5.0000',
+  toleranceDimensionalMm: '1.00',
+  toleranceColourDeltaE: '3.00',
   leadTimeDays: 7,
   promisedShipDate: '2026-10-12',
   estimatedDeliveryDate: '2026-10-14',

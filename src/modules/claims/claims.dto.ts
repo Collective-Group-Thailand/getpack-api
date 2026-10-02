@@ -428,6 +428,32 @@ export class ClaimPhotosDto {
   carton!: string[];
 }
 
+/** The tolerances frozen on the order the claim is judged against (D-021, D-186). */
+export class ClaimToleranceDto {
+  @ApiProperty({ type: String, nullable: true, example: '5.0000', description: 'Quantity shortage %' })
+  shortagePct!: string | null;
+
+  @ApiProperty({ type: String, nullable: true, example: '5.0000', description: 'Quantity overage %' })
+  overagePct!: string | null;
+
+  @ApiProperty({
+    type: String,
+    nullable: true,
+    example: '1.00',
+    description: 'Dimensional ± mm (D-186); null = none published, or an order placed before it',
+  })
+  dimensionalMm!: string | null;
+
+  @ApiProperty({
+    type: String,
+    nullable: true,
+    example: '3.00',
+    description:
+      'Colour ΔE2000 against the approved proof (D-186); null = not printed, or an order placed before it',
+  })
+  colourDeltaE!: string | null;
+}
+
 /** The customer's view: no factory, no internal liability reasoning. */
 export class StoreClaimDto {
   @ApiProperty({ format: 'uuid', example: CLAIM_IDS.claim })
@@ -484,6 +510,12 @@ export class StoreClaimDto {
 
   @ApiProperty({ type: ClaimPhotosDto })
   photos!: ClaimPhotosDto;
+
+  @ApiProperty({
+    type: ClaimToleranceDto,
+    description: 'What a wrong-spec, print-defect or quantity claim is judged against (D-186, D-021)',
+  })
+  tolerance!: ClaimToleranceDto;
 
   @ApiProperty({ type: [ClaimResolutionDto] })
   resolutions!: ClaimResolutionDto[];
@@ -654,6 +686,7 @@ const BASE = {
   infoRequest: null,
   decisionNote: null,
   photos: { product: [CLAIM_IDS.photo], carton: [CLAIM_IDS.carton] },
+  tolerance: { shortagePct: '5.0000', overagePct: '5.0000', dimensionalMm: '1.00', colourDeltaE: '3.00' },
   resolutions: [],
   nextActions: [] as NextActionDto[],
 };

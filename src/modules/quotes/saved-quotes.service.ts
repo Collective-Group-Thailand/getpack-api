@@ -471,6 +471,8 @@ export class SavedQuotesService {
       earliestShipDate: s.earliestShipDate ? new Date(`${s.earliestShipDate}T00:00:00Z`) : null,
       toleranceShortagePct: s.toleranceShortagePct,
       toleranceOveragePct: s.toleranceOveragePct,
+      toleranceDimensionalMm: s.toleranceDimensionalMm,
+      toleranceColourDeltaE: s.toleranceColourDeltaE,
       selectedFactoryId: factories.get(internal!.factoryId) ?? null,
       priceListVersionId: versions.get(internal!.priceListVersionId) ?? null,
       internalBreakdown: internal as unknown as Prisma.InputJsonValue,

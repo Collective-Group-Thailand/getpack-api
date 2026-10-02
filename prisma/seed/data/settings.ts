@@ -795,6 +795,38 @@ export const SETTINGS: readonly SettingSeed[] = [
     ownerRole: 'superadmin',
   },
 
+  // --- Specification tolerances (U2.1, D-186): platform defaults until a factory override is approved (D-173).
+  {
+    key: 'fulfilment.dimensional_tolerance_mm',
+    valueType: 'json',
+    value: { folding: '1', corrugate: '3' },
+    valueSchema: {
+      type: 'object',
+      additionalProperties: { type: 'string', pattern: '^\\d{1,4}(\\.\\d{1,2})?$' },
+    },
+    description:
+      'D-186 published dimensional tolerance ± mm per calculator (folding cartons ± 1, corrugated ± 3); a calculator not listed publishes none',
+    decisions: ['D-186'],
+    ownerRole: 'superadmin',
+  },
+  {
+    key: 'fulfilment.colour_tolerance_delta_e',
+    valueType: 'json',
+    value: { standard: '3', flexo: '5' },
+    valueSchema: {
+      type: 'object',
+      required: ['standard', 'flexo'],
+      properties: {
+        standard: { type: 'string', pattern: '^\\d{1,4}(\\.\\d{1,2})?$' },
+        flexo: { type: 'string', pattern: '^\\d{1,4}(\\.\\d{1,2})?$' },
+      },
+    },
+    description:
+      'D-186 published colour tolerance, ΔE2000 against the approved proof, for printed products (≤ 3; ≤ 5 for flexo)',
+    decisions: ['D-186'],
+    ownerRole: 'superadmin',
+  },
+
   // --- Support (U-B0.1, D-221): owned by the CS Lead.
   {
     key: 'storefront.support_channels',

@@ -16,6 +16,8 @@ import { ApiBody, ApiParam, ApiTags } from '@nestjs/swagger';
 
 import { validateConfiguration } from './configurations';
 import { QuoteEngineService } from './quote-engine.service';
+import { ProductTypeTolerancesDto, TYPE_TOLERANCES_EXAMPLE } from './tolerance.dto';
+import { ToleranceService } from './tolerance.service';
 
 /**
  * The store's quote-path answers (D-043, D-100, D-234): whether a configuration, or a product type, has an instant
@@ -28,6 +30,7 @@ export class StoreQuotePathController {
     private readonly prisma: PrismaService,
     private readonly quotePath: QuotePathService,
     private readonly engine: QuoteEngineService,
+    private readonly tolerances: ToleranceService,
   ) {}
 
   @Post('quote-path')
@@ -116,5 +119,37 @@ export class StoreQuotePathController {
   @ApiStandardErrors('http.bad_request', 'http.not_found', 'validation.failed')
   availability(@Param('typeId', ParseUUIDPipe) typeId: string): Promise<ProductTypeAvailabilityDto> {
     return this.quotePath.availability(typeId);
+  }
+
+  @Get('types/:typeId/tolerances')
+  @Public()
+  @ApiParam({ name: 'typeId', format: 'uuid', description: 'Product type' })
+  @ApiEndpoint({
+    id: 'store.catalog.getTypeTolerances',
+    summary: 'Show the published tolerances of a product type',
+    description:
+      'The platform defaults in force now, shown before purchase (D-186): quantity ± % (D-163), dimensional ± mm per ' +
+      'construction and colour ΔE2000 against the approved proof (flexo apart). A factory may hold its own approved ' +
+      'tolerance (D-173): the quote step shows, and freezes, the one that applies. Never names a factory (D-050).',
+    implements: ['D-186', 'D-163', 'D-021', 'D-050'],
+  })
+  @ApiSuccess(200, {
+    description: 'Published tolerances',
+    type: ProductTypeTolerancesDto,
+    example: TYPE_TOLERANCES_EXAMPLE,
+  })
+  @ApiStandardErrors('http.bad_request', 'http.not_found', 'validation.failed')
+  async typeTolerances(@Param('typeId', ParseUUIDPipe) typeId: string): Promise<ProductTypeTolerancesDto> {
+    const type = await this.prisma.productType.findFirst({ where: { publicId: typeId, status: 'active' } });
+    if (!type) throw new DomainException('http.not_found');
+    const t = await this.tolerances.platform(type.calculatorKey, new Date());
+    return {
+      productTypeId: type.publicId,
+      productTypeCode: type.code,
+      quantityShortagePct: t.shortage,
+      quantityOveragePct: t.overage,
+      dimensionalMm: t.dimensionalMm,
+      colourDeltaE: t.colourDeltaE,
+    };
   }
 }

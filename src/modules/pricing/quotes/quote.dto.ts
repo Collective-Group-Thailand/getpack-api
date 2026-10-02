@@ -393,6 +393,24 @@ export class QuoteStepDto {
   })
   toleranceOveragePct!: string | null;
 
+  @ApiProperty({
+    type: String,
+    nullable: true,
+    example: '1.00',
+    description:
+      'The selected factory’s dimensional tolerance ± mm (D-186); null = none published for the product',
+  })
+  toleranceDimensionalMm!: string | null;
+
+  @ApiProperty({
+    type: String,
+    nullable: true,
+    example: '3.00',
+    description:
+      'The selected factory’s colour tolerance, ΔE2000 against the approved proof (D-186); null = not printed',
+  })
+  toleranceColourDeltaE!: string | null;
+
   @ApiProperty({ example: false, description: 'Shipping is not priced (no postcode, zone or band)' })
   shippingPending!: boolean;
 
@@ -608,6 +626,8 @@ export const STORE_CALCULATION_EXAMPLE: QuoteCalculationDto = {
       earliestDeliveryDate: '2026-10-10',
       toleranceShortagePct: '5.0000',
       toleranceOveragePct: '5.0000',
+      toleranceDimensionalMm: '1.00',
+      toleranceColourDeltaE: '3.00',
       shippingPending: false,
       shippingPendingReason: null,
     },

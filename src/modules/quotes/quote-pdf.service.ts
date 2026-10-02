@@ -27,6 +27,8 @@ interface StepResult {
   grossAmount: string;
   leadTimeDays: number | null;
   toleranceShortagePct: string | null;
+  toleranceDimensionalMm?: string | null;
+  toleranceColourDeltaE?: string | null;
 }
 
 /**
@@ -98,6 +100,8 @@ export class QuotePdfService {
           grossAmount: o.grossAmount.toFixed(2),
           leadTimeDays: r.leadTimeDays,
           tolerance: r.toleranceShortagePct ? String(Number(r.toleranceShortagePct)) : null,
+          dimensionalMm: o.toleranceDimensionalMm?.toFixed(2) ?? r.toleranceDimensionalMm ?? null,
+          colourDeltaE: o.toleranceColourDeltaE?.toFixed(2) ?? r.toleranceColourDeltaE ?? null,
         };
       }),
       validityDays: Math.round((quote.validUntil.getTime() - quote.createdAt.getTime()) / DAY_MS),

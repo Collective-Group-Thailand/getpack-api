@@ -123,6 +123,8 @@ export function partnerJobDto(
         ? {
             shortagePct: row.order.toleranceShortagePct.toFixed(4),
             overagePct: row.order.toleranceOveragePct.toFixed(4),
+            dimensionalMm: row.toleranceDimensionalMm?.toFixed(2) ?? null,
+            colourDeltaE: row.toleranceColourDeltaE?.toFixed(2) ?? null,
           }
         : null,
     artwork:

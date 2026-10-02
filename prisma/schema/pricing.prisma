@@ -603,29 +603,32 @@ model Quote {
  * One priced quantity of a quote; immutable. Staff-only columns never reach the customer (D-050).
  */
 model QuoteOption {
-  id                   BigInt      @id(map: "pk_quote_options") @default(autoincrement())
-  publicId             String      @unique(map: "ux_quote_options__public_id") @default(dbgenerated("uuidv7()")) @map("public_id") @db.Uuid
-  quoteId              BigInt      @map("quote_id")
-  quantity             Int
-  unit                 ProductUnit
-  result               Json
-  netAmount            Decimal     @map("net_amount") @db.Decimal(14, 2)
-  discountAmount       Decimal     @default(0) @map("discount_amount") @db.Decimal(14, 2)
-  vatAmount            Decimal     @map("vat_amount") @db.Decimal(14, 2)
-  grossAmount          Decimal     @map("gross_amount") @db.Decimal(14, 2)
-  shippingAmount       Decimal?    @map("shipping_amount") @db.Decimal(14, 2)
-  unitPrice            Decimal     @map("unit_price") @db.Decimal(18, 6)
-  leadTimeDays         Int?        @map("lead_time_days") @db.SmallInt
-  earliestShipDate     DateTime?   @map("earliest_ship_date") @db.Date
-  toleranceShortagePct Decimal?    @map("tolerance_shortage_pct") @db.Decimal(7, 4)
-  toleranceOveragePct  Decimal?    @map("tolerance_overage_pct") @db.Decimal(7, 4)
-  selectedFactoryId    BigInt?     @map("selected_factory_id")
-  priceListVersionId   BigInt?     @map("price_list_version_id")
-  internalBreakdown    Json?       @map("internal_breakdown")
-  buyCostNet           Decimal?    @map("buy_cost_net") @db.Decimal(14, 2)
-  marginPct            Decimal?    @map("margin_pct") @db.Decimal(9, 4)
-  belowMarginFloor     Boolean     @default(false) @map("below_margin_floor")
-  createdAt            DateTime    @default(now()) @map("created_at") @db.Timestamptz(6)
+  id                     BigInt      @id(map: "pk_quote_options") @default(autoincrement())
+  publicId               String      @unique(map: "ux_quote_options__public_id") @default(dbgenerated("uuidv7()")) @map("public_id") @db.Uuid
+  quoteId                BigInt      @map("quote_id")
+  quantity               Int
+  unit                   ProductUnit
+  result                 Json
+  netAmount              Decimal     @map("net_amount") @db.Decimal(14, 2)
+  discountAmount         Decimal     @default(0) @map("discount_amount") @db.Decimal(14, 2)
+  vatAmount              Decimal     @map("vat_amount") @db.Decimal(14, 2)
+  grossAmount            Decimal     @map("gross_amount") @db.Decimal(14, 2)
+  shippingAmount         Decimal?    @map("shipping_amount") @db.Decimal(14, 2)
+  unitPrice              Decimal     @map("unit_price") @db.Decimal(18, 6)
+  leadTimeDays           Int?        @map("lead_time_days") @db.SmallInt
+  earliestShipDate       DateTime?   @map("earliest_ship_date") @db.Date
+  toleranceShortagePct   Decimal?    @map("tolerance_shortage_pct") @db.Decimal(7, 4)
+  toleranceOveragePct    Decimal?    @map("tolerance_overage_pct") @db.Decimal(7, 4)
+  /// D-186: published dimensional (± mm) and colour (ΔE2000 vs the approved proof) tolerances, frozen; null = none.
+  toleranceDimensionalMm Decimal?    @map("tolerance_dimensional_mm") @db.Decimal(6, 2)
+  toleranceColourDeltaE  Decimal?    @map("tolerance_colour_delta_e") @db.Decimal(5, 2)
+  selectedFactoryId      BigInt?     @map("selected_factory_id")
+  priceListVersionId     BigInt?     @map("price_list_version_id")
+  internalBreakdown      Json?       @map("internal_breakdown")
+  buyCostNet             Decimal?    @map("buy_cost_net") @db.Decimal(14, 2)
+  marginPct              Decimal?    @map("margin_pct") @db.Decimal(9, 4)
+  belowMarginFloor       Boolean     @default(false) @map("below_margin_floor")
+  createdAt              DateTime    @default(now()) @map("created_at") @db.Timestamptz(6)
 
   quote            Quote             @relation(fields: [quoteId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_quote_options__quote_id")
   selectedFactory  Factory?          @relation("QuoteOptionFactory", fields: [selectedFactoryId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_quote_options__selected_factory_id")

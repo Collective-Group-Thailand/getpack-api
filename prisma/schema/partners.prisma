@@ -978,6 +978,9 @@ model FactoryTolerancePolicyVersion {
   status            ConfigVersionStatus @default(draft)
   shortagePct       Decimal             @map("shortage_pct") @db.Decimal(7, 4)
   overagePct        Decimal             @map("overage_pct") @db.Decimal(7, 4)
+  /// D-186: the factory's dimensional (± mm) and colour (ΔE2000) tolerances; null = the platform default.
+  dimensionalMm     Decimal?            @map("dimensional_mm") @db.Decimal(6, 2)
+  colourDeltaE      Decimal?            @map("colour_delta_e") @db.Decimal(5, 2)
   reason            String
   approvalRequestId BigInt?             @map("approval_request_id")
   createdAt         DateTime            @default(now()) @map("created_at") @db.Timestamptz(6)

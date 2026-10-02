@@ -157,6 +157,18 @@ describe('specification model v2 (e2e, U2.1)', () => {
         sizes: { overCrease: { w: 302, l: 402, d: 254 } },
       });
       expect(outside.body.steps[0].grossAmount).toBe(inside.body.steps[0].grossAmount);
+      // D-186: corrugated is ± 3 mm; colour ≤ 5 ΔE on flexo, ≤ 3 otherwise.
+      const internal = inside.body.steps[0].internal as { printTypeId: string; priceListVersionId: string };
+      const terms = await ctx.prisma.plCorrugatePrintTypeTerm.findFirstOrThrow({
+        where: {
+          printType: { publicId: internal.printTypeId },
+          priceListVersion: { publicId: internal.priceListVersionId },
+        },
+      });
+      expect(inside.body.steps[0]).toMatchObject({
+        toleranceDimensionalMm: '3.00',
+        toleranceColourDeltaE: terms.engineVariant === 'flexo' ? '5.00' : '3.00',
+      });
       await calc(box({ basis: 'product', w: 300, l: 400, d: 250 })).expect(422);
 
       const rsc = await ctx.prisma.pattern.findUniqueOrThrow({
@@ -245,6 +257,57 @@ describe('specification model v2 (e2e, U2.1)', () => {
       internationalNameVerifiedAt: expect.any(String),
     });
     await ctx.prisma.pattern.update({ where: { publicId: created.body.id }, data: { status: 'archived' } });
+  });
+
+  it('publishes dimensional and colour tolerances before purchase and freezes them (D-186)', async () => {
+    const tolerances = async (code: string) => {
+      const type = await ctx.prisma.productType.findUniqueOrThrow({ where: { code } });
+      return request(ctx.server).get(`/v1/store/catalog/types/${type.publicId}/tolerances`).expect(200);
+    };
+    expect((await tolerances('folding_carton')).body).toMatchObject({
+      productTypeCode: 'folding_carton',
+      quantityShortagePct: '5.0000',
+      dimensionalMm: '1.00',
+      colourDeltaE: { standard: '3.00', flexo: '3.00' },
+    });
+    expect((await tolerances('corrugated')).body).toMatchObject({
+      dimensionalMm: '3.00',
+      colourDeltaE: { standard: '3.00', flexo: '5.00' },
+    });
+    // No calculator: nothing published beyond the quantity.
+    expect((await tolerances('paper_bag')).body).toMatchObject({
+      dimensionalMm: null,
+      colourDeltaE: null,
+    });
+    await request(ctx.server)
+      .get('/v1/store/catalog/types/0192f3a0-7c1e-7d2a-9b1f-00000000ffff/tolerances')
+      .expect(404);
+
+    const priced = await as(ctx, customer)
+      .post('/v1/store/quotes/actions/calculate', {
+        productTypeCode: 'folding_carton',
+        configuration: foldingConfiguration(fixture, [1000]),
+      })
+      .expect(200);
+    expect(priced.body.steps[0]).toMatchObject({
+      toleranceDimensionalMm: '1.00',
+      toleranceColourDeltaE: '3.00',
+    });
+    const saved = await as(ctx, customer)
+      .post('/v1/store/quotes', {
+        productTypeCode: 'folding_carton',
+        configuration: foldingConfiguration(fixture, [1000]),
+      })
+      .expect(201);
+    expect(saved.body.options[0]).toMatchObject({
+      toleranceDimensionalMm: '1.00',
+      toleranceColourDeltaE: '3.00',
+    });
+    const option = await ctx.prisma.quoteOption.findFirstOrThrow({
+      where: { quote: { publicId: saved.body.id as string } },
+    });
+    expect(option.toleranceDimensionalMm?.toFixed(2)).toBe('1.00');
+    expect(option.toleranceColourDeltaE?.toFixed(2)).toBe('3.00');
   });
 
   it('expires and revokes quotation share links (D-185, F5)', async () => {

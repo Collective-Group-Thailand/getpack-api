@@ -4693,6 +4693,14 @@
             "format": "date-time",
             "type": "string"
           },
+          "tolerance": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ClaimToleranceDto"
+              }
+            ],
+            "description": "What a wrong-spec, print-defect or quantity claim is judged against (D-186, D-021)"
+          },
           "type": {
             "allOf": [
               {
@@ -4725,6 +4733,7 @@
           "infoRequest",
           "decisionNote",
           "photos",
+          "tolerance",
           "resolutions",
           "nextActions",
           "jobId",
@@ -6254,6 +6263,22 @@
             ],
             "description": "Product, product type, sales unit and spec lines to display (from the quote it was made from)"
           },
+          "toleranceColourDeltaE": {
+            "description": "Frozen colour tolerance, ΔE2000 against the approved proof (D-186); null = not printed or earlier",
+            "example": "3.00",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "toleranceDimensionalMm": {
+            "description": "Frozen dimensional tolerance ± mm (D-186); null = none published, or an order placed before it",
+            "example": "1.00",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
           "toleranceOutcome": {
             "anyOf": [
               {
@@ -6297,6 +6322,8 @@
           "mockupOption",
           "toleranceShortagePct",
           "toleranceOveragePct",
+          "toleranceDimensionalMm",
+          "toleranceColourDeltaE",
           "leadTimeDays",
           "promisedShipDate",
           "estimatedDeliveryDate",
@@ -7207,6 +7234,22 @@
               "null"
             ]
           },
+          "toleranceColourDeltaE": {
+            "description": "The selected factory’s colour tolerance, ΔE2000 against the approved proof (D-186); null = not printed",
+            "example": "3.00",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "toleranceDimensionalMm": {
+            "description": "The selected factory’s dimensional tolerance ± mm (D-186); null = none published for the product",
+            "example": "1.00",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
           "toleranceOveragePct": {
             "description": "Quantity tolerance, overage % (D-021)",
             "example": "5.0000",
@@ -7267,6 +7310,8 @@
           "earliestDeliveryDate",
           "toleranceShortagePct",
           "toleranceOveragePct",
+          "toleranceDimensionalMm",
+          "toleranceColourDeltaE",
           "shippingPending",
           "shippingPendingReason",
           "internal"
@@ -7793,6 +7838,22 @@
             "example": "0.00",
             "type": "string"
           },
+          "toleranceColourDeltaE": {
+            "description": "Frozen colour tolerance, ΔE2000 against the approved proof (D-186); null = not printed",
+            "example": "3.00",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "toleranceDimensionalMm": {
+            "description": "Frozen dimensional tolerance ± mm (D-186); null = none published for the product",
+            "example": "1.00",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
           "toleranceOveragePct": {
             "description": "Frozen tolerance, overage % (D-021)",
             "example": "5.0000",
@@ -7845,6 +7906,8 @@
           "earliestDeliveryDate",
           "toleranceShortagePct",
           "toleranceOveragePct",
+          "toleranceDimensionalMm",
+          "toleranceColourDeltaE",
           "shippingPending",
           "shippingPendingReason",
           "internal"
@@ -15252,6 +15315,49 @@
         ],
         "type": "string"
       },
+      "ClaimToleranceDto": {
+        "properties": {
+          "colourDeltaE": {
+            "description": "Colour ΔE2000 against the approved proof (D-186); null = not printed, or an order placed before it",
+            "example": "3.00",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "dimensionalMm": {
+            "description": "Dimensional ± mm (D-186); null = none published, or an order placed before it",
+            "example": "1.00",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "overagePct": {
+            "description": "Quantity overage %",
+            "example": "5.0000",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "shortagePct": {
+            "description": "Quantity shortage %",
+            "example": "5.0000",
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "shortagePct",
+          "overagePct",
+          "dimensionalMm",
+          "colourDeltaE"
+        ],
+        "type": "object"
+      },
       "ClaimType": {
         "enum": [
           "damaged",
@@ -15728,6 +15834,25 @@
           "id",
           "code",
           "name"
+        ],
+        "type": "object"
+      },
+      "ColourToleranceDto": {
+        "properties": {
+          "flexo": {
+            "description": "ΔE2000 for flexo printing (corrugated); otherwise the standard",
+            "example": "5.00",
+            "type": "string"
+          },
+          "standard": {
+            "description": "ΔE2000 against the approved proof",
+            "example": "3.00",
+            "type": "string"
+          }
+        },
+        "required": [
+          "standard",
+          "flexo"
         ],
         "type": "object"
       },
@@ -34057,6 +34182,22 @@
       },
       "JobToleranceDto": {
         "properties": {
+          "colourDeltaE": {
+            "description": "Colour tolerance, ΔE2000 against the approved proof, frozen with the job (D-186); null = not printed",
+            "example": "3.00",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "dimensionalMm": {
+            "description": "Dimensional tolerance ± mm, frozen with the job (D-186); null = none published",
+            "example": "1.00",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
           "overagePct": {
             "example": "5.0000",
             "type": "string"
@@ -34069,7 +34210,9 @@
         },
         "required": [
           "shortagePct",
-          "overagePct"
+          "overagePct",
+          "dimensionalMm",
+          "colourDeltaE"
         ],
         "type": "object"
       },
@@ -36974,6 +37117,22 @@
             ],
             "description": "Product, product type, sales unit and spec lines to display (from the quote it was made from)"
           },
+          "toleranceColourDeltaE": {
+            "description": "Frozen colour tolerance, ΔE2000 against the approved proof (D-186); null = not printed or earlier",
+            "example": "3.00",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "toleranceDimensionalMm": {
+            "description": "Frozen dimensional tolerance ± mm (D-186); null = none published, or an order placed before it",
+            "example": "1.00",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
           "toleranceOutcome": {
             "anyOf": [
               {
@@ -37017,6 +37176,8 @@
           "mockupOption",
           "toleranceShortagePct",
           "toleranceOveragePct",
+          "toleranceDimensionalMm",
+          "toleranceColourDeltaE",
           "leadTimeDays",
           "promisedShipDate",
           "estimatedDeliveryDate",
@@ -38192,6 +38353,14 @@
             "format": "date-time",
             "type": "string"
           },
+          "tolerance": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ClaimToleranceDto"
+              }
+            ],
+            "description": "What a wrong-spec, print-defect or quantity claim is judged against (D-186, D-021)"
+          },
           "type": {
             "allOf": [
               {
@@ -38224,6 +38393,7 @@
           "infoRequest",
           "decisionNote",
           "photos",
+          "tolerance",
           "resolutions",
           "nextActions",
           "jobId",
@@ -44397,6 +44567,57 @@
         ],
         "type": "object"
       },
+      "ProductTypeTolerancesDto": {
+        "properties": {
+          "colourDeltaE": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ColourToleranceDto"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Colour ΔE2000 (D-186); null = the type is not printed"
+          },
+          "dimensionalMm": {
+            "description": "Dimensional ± mm (D-186); null = none published for the type",
+            "example": "1.00",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "productTypeCode": {
+            "example": "folding_carton",
+            "type": "string"
+          },
+          "productTypeId": {
+            "example": "0192f3a0-7c1e-7d2a-9b1f-00000000a001",
+            "format": "uuid",
+            "type": "string"
+          },
+          "quantityOveragePct": {
+            "description": "Quantity overage accepted, % (D-163)",
+            "example": "5.0000",
+            "type": "string"
+          },
+          "quantityShortagePct": {
+            "description": "Quantity shortage accepted, % (D-163)",
+            "example": "5.0000",
+            "type": "string"
+          }
+        },
+        "required": [
+          "productTypeId",
+          "productTypeCode",
+          "quantityShortagePct",
+          "quantityOveragePct",
+          "dimensionalMm",
+          "colourDeltaE"
+        ],
+        "type": "object"
+      },
       "ProductUnit": {
         "description": "Sales unit of a quantity",
         "enum": [
@@ -47044,6 +47265,22 @@
               "null"
             ]
           },
+          "toleranceColourDeltaE": {
+            "description": "The selected factory’s colour tolerance, ΔE2000 against the approved proof (D-186); null = not printed",
+            "example": "3.00",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "toleranceDimensionalMm": {
+            "description": "The selected factory’s dimensional tolerance ± mm (D-186); null = none published for the product",
+            "example": "1.00",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
           "toleranceOveragePct": {
             "description": "Quantity tolerance, overage % (D-021)",
             "example": "5.0000",
@@ -47104,6 +47341,8 @@
           "earliestDeliveryDate",
           "toleranceShortagePct",
           "toleranceOveragePct",
+          "toleranceDimensionalMm",
+          "toleranceColourDeltaE",
           "shippingPending",
           "shippingPendingReason"
         ],
@@ -52355,6 +52594,22 @@
             "example": "0.00",
             "type": "string"
           },
+          "toleranceColourDeltaE": {
+            "description": "Frozen colour tolerance, ΔE2000 against the approved proof (D-186); null = not printed",
+            "example": "3.00",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "toleranceDimensionalMm": {
+            "description": "Frozen dimensional tolerance ± mm (D-186); null = none published for the product",
+            "example": "1.00",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
           "toleranceOveragePct": {
             "description": "Frozen tolerance, overage % (D-021)",
             "example": "5.0000",
@@ -52407,6 +52662,8 @@
           "earliestDeliveryDate",
           "toleranceShortagePct",
           "toleranceOveragePct",
+          "toleranceDimensionalMm",
+          "toleranceColourDeltaE",
           "shippingPending",
           "shippingPendingReason"
         ],
@@ -53724,6 +53981,26 @@
       },
       "SetToleranceDto": {
         "properties": {
+          "colourDeltaE": {
+            "description": "Colour tolerance against the approved proof (D-186); omitted or null = the platform default Unit: ΔE2000.",
+            "example": 3,
+            "maximum": 100,
+            "minimum": 0,
+            "type": [
+              "number",
+              "null"
+            ]
+          },
+          "dimensionalMm": {
+            "description": "Dimensional tolerance ± mm (D-186); omitted or null = the platform default Unit: mm.",
+            "example": 1,
+            "maximum": 9999.99,
+            "minimum": 0,
+            "type": [
+              "number",
+              "null"
+            ]
+          },
           "effectiveFrom": {
             "description": "Defaults to now; never in the past (history is not rewritten, ADR-0005)",
             "example": "2026-10-01T00:00:00+07:00",
@@ -58499,6 +58776,14 @@
             "format": "date-time",
             "type": "string"
           },
+          "tolerance": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ClaimToleranceDto"
+              }
+            ],
+            "description": "What a wrong-spec, print-defect or quantity claim is judged against (D-186, D-021)"
+          },
           "type": {
             "allOf": [
               {
@@ -58531,6 +58816,7 @@
           "infoRequest",
           "decisionNote",
           "photos",
+          "tolerance",
           "resolutions",
           "nextActions"
         ],
@@ -62888,6 +63174,22 @@
               "null"
             ]
           },
+          "colourDeltaE": {
+            "description": "Colour tolerance, ΔE2000 against the approved proof (D-186); null = the platform default",
+            "example": "3.00",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "dimensionalMm": {
+            "description": "Dimensional tolerance ± mm (D-186); null = the platform default",
+            "example": "1.00",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
           "effectiveFrom": {
             "example": "2026-09-26T10:00:00+07:00",
             "format": "date-time",
@@ -62927,7 +63229,9 @@
           "reason",
           "approvalRequestId",
           "shortagePct",
-          "overagePct"
+          "overagePct",
+          "dimensionalMm",
+          "colourDeltaE"
         ],
         "type": "object"
       },
@@ -120227,6 +120531,12 @@
                       "shipmentNo": "SH-2610-0001",
                       "status": "under_review",
                       "submittedAt": "2026-10-22T09:00:00+07:00",
+                      "tolerance": {
+                        "colourDeltaE": "3.00",
+                        "dimensionalMm": "1.00",
+                        "overagePct": "5.0000",
+                        "shortagePct": "5.0000"
+                      },
                       "type": "damaged",
                       "windowEndsAt": "2026-10-28T14:05:00+07:00"
                     }
@@ -120471,6 +120781,12 @@
                   "shipmentNo": "SH-2610-0001",
                   "status": "under_review",
                   "submittedAt": "2026-10-22T09:00:00+07:00",
+                  "tolerance": {
+                    "colourDeltaE": "3.00",
+                    "dimensionalMm": "1.00",
+                    "overagePct": "5.0000",
+                    "shortagePct": "5.0000"
+                  },
                   "type": "damaged",
                   "windowEndsAt": "2026-10-28T14:05:00+07:00"
                 },
@@ -120728,6 +121044,12 @@
                   "shipmentNo": "SH-2610-0001",
                   "status": "closed",
                   "submittedAt": "2026-10-22T09:00:00+07:00",
+                  "tolerance": {
+                    "colourDeltaE": "3.00",
+                    "dimensionalMm": "1.00",
+                    "overagePct": "5.0000",
+                    "shortagePct": "5.0000"
+                  },
                   "type": "damaged",
                   "windowEndsAt": "2026-10-28T14:05:00+07:00"
                 },
@@ -121043,6 +121365,12 @@
                   "shipmentNo": "SH-2610-0001",
                   "status": "approved",
                   "submittedAt": "2026-10-22T09:00:00+07:00",
+                  "tolerance": {
+                    "colourDeltaE": "3.00",
+                    "dimensionalMm": "1.00",
+                    "overagePct": "5.0000",
+                    "shortagePct": "5.0000"
+                  },
                   "type": "damaged",
                   "windowEndsAt": "2026-10-28T14:05:00+07:00"
                 },
@@ -121367,6 +121695,12 @@
                   "shipmentNo": "SH-2610-0001",
                   "status": "under_review",
                   "submittedAt": "2026-10-22T09:00:00+07:00",
+                  "tolerance": {
+                    "colourDeltaE": "3.00",
+                    "dimensionalMm": "1.00",
+                    "overagePct": "5.0000",
+                    "shortagePct": "5.0000"
+                  },
                   "type": "damaged",
                   "windowEndsAt": "2026-10-28T14:05:00+07:00"
                 },
@@ -121690,6 +122024,12 @@
                   "shipmentNo": "SH-2610-0001",
                   "status": "need_info",
                   "submittedAt": "2026-10-22T09:00:00+07:00",
+                  "tolerance": {
+                    "colourDeltaE": "3.00",
+                    "dimensionalMm": "1.00",
+                    "overagePct": "5.0000",
+                    "shortagePct": "5.0000"
+                  },
                   "type": "damaged",
                   "windowEndsAt": "2026-10-28T14:05:00+07:00"
                 },
@@ -122024,6 +122364,12 @@
                   "shipmentNo": "SH-2610-0001",
                   "status": "resolved",
                   "submittedAt": "2026-10-22T09:00:00+07:00",
+                  "tolerance": {
+                    "colourDeltaE": "3.00",
+                    "dimensionalMm": "1.00",
+                    "overagePct": "5.0000",
+                    "shortagePct": "5.0000"
+                  },
                   "type": "damaged",
                   "windowEndsAt": "2026-10-28T14:05:00+07:00"
                 },
@@ -122339,6 +122685,12 @@
                   "shipmentNo": "SH-2610-0001",
                   "status": "under_review",
                   "submittedAt": "2026-10-22T09:00:00+07:00",
+                  "tolerance": {
+                    "colourDeltaE": "3.00",
+                    "dimensionalMm": "1.00",
+                    "overagePct": "5.0000",
+                    "shortagePct": "5.0000"
+                  },
                   "type": "damaged",
                   "windowEndsAt": "2026-10-28T14:05:00+07:00"
                 },
@@ -122636,6 +122988,12 @@
                   "shipmentNo": "SH-2610-0001",
                   "status": "factory_review",
                   "submittedAt": "2026-10-22T09:00:00+07:00",
+                  "tolerance": {
+                    "colourDeltaE": "3.00",
+                    "dimensionalMm": "1.00",
+                    "overagePct": "5.0000",
+                    "shortagePct": "5.0000"
+                  },
                   "type": "damaged",
                   "windowEndsAt": "2026-10-28T14:05:00+07:00"
                 },
@@ -142790,6 +143148,8 @@
                       "shippingPendingReason": null,
                       "shippingVatAmount": "8.40",
                       "structureDesignFeeAmount": "0.00",
+                      "toleranceColourDeltaE": "3.00",
+                      "toleranceDimensionalMm": "1.00",
                       "toleranceOveragePct": "5.0000",
                       "toleranceShortagePct": "5.0000",
                       "toolingAmount": "0.00",
@@ -143393,6 +143753,8 @@
                       "shippingPendingReason": null,
                       "shippingVatAmount": "8.40",
                       "structureDesignFeeAmount": "0.00",
+                      "toleranceColourDeltaE": "3.00",
+                      "toleranceDimensionalMm": "1.00",
                       "toleranceOveragePct": "5.0000",
                       "toleranceShortagePct": "5.0000",
                       "toolingAmount": "0.00",
@@ -143970,6 +144332,8 @@
                       "shippingPendingReason": null,
                       "shippingVatAmount": "8.40",
                       "structureDesignFeeAmount": "0.00",
+                      "toleranceColourDeltaE": "3.00",
+                      "toleranceDimensionalMm": "1.00",
                       "toleranceOveragePct": "5.0000",
                       "toleranceShortagePct": "5.0000",
                       "toolingAmount": "0.00",
@@ -144480,6 +144844,8 @@
                       "shippingPendingReason": null,
                       "shippingVatAmount": "8.40",
                       "structureDesignFeeAmount": "0.00",
+                      "toleranceColourDeltaE": "3.00",
+                      "toleranceDimensionalMm": "1.00",
                       "toleranceOveragePct": "5.0000",
                       "toleranceShortagePct": "5.0000",
                       "toolingAmount": "0.00",
@@ -145231,6 +145597,8 @@
                       "shippingPendingReason": null,
                       "shippingVatAmount": "8.40",
                       "structureDesignFeeAmount": "0.00",
+                      "toleranceColourDeltaE": "3.00",
+                      "toleranceDimensionalMm": "1.00",
                       "toleranceOveragePct": "5.0000",
                       "toleranceShortagePct": "5.0000",
                       "toolingAmount": "0.00",
@@ -145711,6 +146079,8 @@
                       "shippingPendingReason": null,
                       "shippingVatAmount": "8.40",
                       "structureDesignFeeAmount": "0.00",
+                      "toleranceColourDeltaE": "3.00",
+                      "toleranceDimensionalMm": "1.00",
                       "toleranceOveragePct": "5.0000",
                       "toleranceShortagePct": "5.0000",
                       "toolingAmount": "0.00",
@@ -146226,6 +146596,8 @@
                       "shippingPendingReason": null,
                       "shippingVatAmount": "8.40",
                       "structureDesignFeeAmount": "0.00",
+                      "toleranceColourDeltaE": "3.00",
+                      "toleranceDimensionalMm": "1.00",
                       "toleranceOveragePct": "5.0000",
                       "toleranceShortagePct": "5.0000",
                       "toolingAmount": "0.00",
@@ -153791,6 +154163,8 @@
                         ],
                         "unit": "piece"
                       },
+                      "toleranceColourDeltaE": "3.00",
+                      "toleranceDimensionalMm": "1.00",
                       "toleranceOutcome": null,
                       "toleranceOveragePct": "5.0000",
                       "toleranceShortagePct": "5.0000",
@@ -167508,6 +167882,8 @@
                       "upcoming": [
                         {
                           "approvalRequestId": "0192f3a0-7c1e-7d2a-9b1f-00000000f301",
+                          "colourDeltaE": null,
+                          "dimensionalMm": null,
                           "effectiveFrom": "2026-09-26T10:00:00+07:00",
                           "overagePct": "5.0000",
                           "reason": "Agreed with the factory at onboarding",
@@ -175394,7 +175770,7 @@
     },
     "/v1/admin/factories/{factoryId}/tolerance-versions": {
       "post": {
-        "description": "Factory default (no product type) or per product type (D-021); the platform default is ± 5 % (D-163). Opens the `factory_tolerance_change` approval (Superadmin, D-173) and applies once approved.\n\nImplements: D-021, D-163, D-173.",
+        "description": "Factory default (no product type) or per product type (D-021): quantity ± % (platform default ± 5 %, D-163) and, optionally, dimensional ± mm and colour ΔE2000 (platform defaults `fulfilment.dimensional_tolerance_mm` and `fulfilment.colour_tolerance_delta_e`, D-186); omitted or null keeps the platform default. Opens the `factory_tolerance_change` approval (Superadmin, D-173) and applies once approved.\n\nImplements: D-021, D-163, D-173, D-186.",
         "operationId": "admin.factories.setTolerance",
         "parameters": [
           {
@@ -175416,6 +175792,15 @@
               "examples": {
                 "default": {
                   "value": {
+                    "overagePct": 5,
+                    "reason": "Agreed at onboarding",
+                    "shortagePct": 3
+                  }
+                },
+                "dimensionalAndColour": {
+                  "value": {
+                    "colourDeltaE": 3,
+                    "dimensionalMm": 1.5,
                     "overagePct": 5,
                     "reason": "Agreed at onboarding",
                     "shortagePct": 3
@@ -175640,7 +176025,7 @@
             "staff": []
           }
         ],
-        "summary": "Propose a quantity-tolerance override for a factory",
+        "summary": "Propose a tolerance override for a factory",
         "tags": [
           "admin.factories"
         ],
@@ -196088,6 +196473,8 @@
                             ],
                             "unit": "piece"
                           },
+                          "toleranceColourDeltaE": "3.00",
+                          "toleranceDimensionalMm": "1.00",
                           "toleranceOutcome": null,
                           "toleranceOveragePct": "5.0000",
                           "toleranceShortagePct": "5.0000",
@@ -196437,6 +196824,8 @@
                         ],
                         "unit": "piece"
                       },
+                      "toleranceColourDeltaE": "3.00",
+                      "toleranceDimensionalMm": "1.00",
                       "toleranceOutcome": null,
                       "toleranceOveragePct": "5.0000",
                       "toleranceShortagePct": "5.0000",
@@ -196805,6 +197194,8 @@
                         ],
                         "unit": "piece"
                       },
+                      "toleranceColourDeltaE": "3.00",
+                      "toleranceDimensionalMm": "1.00",
                       "toleranceOutcome": null,
                       "toleranceOveragePct": "5.0000",
                       "toleranceShortagePct": "5.0000",
@@ -197241,6 +197632,8 @@
                         ],
                         "unit": "piece"
                       },
+                      "toleranceColourDeltaE": "3.00",
+                      "toleranceDimensionalMm": "1.00",
                       "toleranceOutcome": null,
                       "toleranceOveragePct": "5.0000",
                       "toleranceShortagePct": "5.0000",
@@ -197706,6 +198099,8 @@
                         ],
                         "unit": "piece"
                       },
+                      "toleranceColourDeltaE": "3.00",
+                      "toleranceDimensionalMm": "1.00",
                       "toleranceOutcome": null,
                       "toleranceOveragePct": "5.0000",
                       "toleranceShortagePct": "5.0000",
@@ -199871,6 +200266,8 @@
                     ],
                     "unit": "piece"
                   },
+                  "toleranceColourDeltaE": "3.00",
+                  "toleranceDimensionalMm": "1.00",
                   "toleranceOutcome": null,
                   "toleranceOveragePct": "5.0000",
                   "toleranceShortagePct": "5.0000",
@@ -200416,6 +200813,8 @@
                     ],
                     "unit": "piece"
                   },
+                  "toleranceColourDeltaE": "3.00",
+                  "toleranceDimensionalMm": "1.00",
                   "toleranceOutcome": null,
                   "toleranceOveragePct": "5.0000",
                   "toleranceShortagePct": "5.0000",
@@ -200801,6 +201200,8 @@
                     ],
                     "unit": "piece"
                   },
+                  "toleranceColourDeltaE": "3.00",
+                  "toleranceDimensionalMm": "1.00",
                   "toleranceOutcome": null,
                   "toleranceOveragePct": "5.0000",
                   "toleranceShortagePct": "5.0000",
@@ -201452,6 +201853,8 @@
                   "status": "released",
                   "title": "กล่องพับ · 1000 ชิ้น",
                   "tolerance": {
+                    "colourDeltaE": "3.00",
+                    "dimensionalMm": "1.00",
                     "overagePct": "5.0000",
                     "shortagePct": "5.0000"
                   }
@@ -202299,6 +202702,12 @@
                   "shipmentNo": "SH-2610-0001",
                   "status": "submitted",
                   "submittedAt": "2026-10-22T09:00:00+07:00",
+                  "tolerance": {
+                    "colourDeltaE": "3.00",
+                    "dimensionalMm": "1.00",
+                    "overagePct": "5.0000",
+                    "shortagePct": "5.0000"
+                  },
                   "type": "damaged",
                   "windowEndsAt": "2026-10-28T14:05:00+07:00"
                 },
@@ -216225,6 +216634,8 @@
                       "status": "released",
                       "title": "กล่องพับ · 1000 ชิ้น",
                       "tolerance": {
+                        "colourDeltaE": "3.00",
+                        "dimensionalMm": "1.00",
                         "overagePct": "5.0000",
                         "shortagePct": "5.0000"
                       }
@@ -216515,6 +216926,8 @@
                   "status": "released",
                   "title": "กล่องพับ · 1000 ชิ้น",
                   "tolerance": {
+                    "colourDeltaE": "3.00",
+                    "dimensionalMm": "1.00",
                     "overagePct": "5.0000",
                     "shortagePct": "5.0000"
                   }
@@ -216820,6 +217233,8 @@
                   "status": "on_hold",
                   "title": "กล่องพับ · 1000 ชิ้น",
                   "tolerance": {
+                    "colourDeltaE": "3.00",
+                    "dimensionalMm": "1.00",
                     "overagePct": "5.0000",
                     "shortagePct": "5.0000"
                   }
@@ -217169,6 +217584,8 @@
                   "status": "released",
                   "title": "กล่องพับ · 1000 ชิ้น",
                   "tolerance": {
+                    "colourDeltaE": "3.00",
+                    "dimensionalMm": "1.00",
                     "overagePct": "5.0000",
                     "shortagePct": "5.0000"
                   }
@@ -217509,6 +217926,8 @@
                   "status": "in_progress",
                   "title": "กล่องพับ · 1000 ชิ้น",
                   "tolerance": {
+                    "colourDeltaE": "3.00",
+                    "dimensionalMm": "1.00",
                     "overagePct": "5.0000",
                     "shortagePct": "5.0000"
                   }
@@ -223295,6 +223714,8 @@
                           "shippingPending": false,
                           "shippingPendingReason": null,
                           "structureDesignFeeAmount": "0.00",
+                          "toleranceColourDeltaE": "3.00",
+                          "toleranceDimensionalMm": "1.00",
                           "toleranceOveragePct": "5.0000",
                           "toleranceShortagePct": "5.0000",
                           "toolingAmount": "0.00",
@@ -223678,6 +224099,8 @@
                       "shippingPending": false,
                       "shippingPendingReason": null,
                       "structureDesignFeeAmount": "0.00",
+                      "toleranceColourDeltaE": "3.00",
+                      "toleranceDimensionalMm": "1.00",
                       "toleranceOveragePct": "5.0000",
                       "toleranceShortagePct": "5.0000",
                       "toolingAmount": "0.00",
@@ -224042,6 +224465,8 @@
                       "shippingPending": false,
                       "shippingPendingReason": null,
                       "structureDesignFeeAmount": "0.00",
+                      "toleranceColourDeltaE": "3.00",
+                      "toleranceDimensionalMm": "1.00",
                       "toleranceOveragePct": "5.0000",
                       "toleranceShortagePct": "5.0000",
                       "toolingAmount": "0.00",
@@ -224377,6 +224802,8 @@
                       "shippingPending": false,
                       "shippingPendingReason": null,
                       "structureDesignFeeAmount": "0.00",
+                      "toleranceColourDeltaE": "3.00",
+                      "toleranceDimensionalMm": "1.00",
                       "toleranceOveragePct": "5.0000",
                       "toleranceShortagePct": "5.0000",
                       "toolingAmount": "0.00",
@@ -224741,6 +225168,8 @@
                       "shippingPending": false,
                       "shippingPendingReason": null,
                       "structureDesignFeeAmount": "0.00",
+                      "toleranceColourDeltaE": "3.00",
+                      "toleranceDimensionalMm": "1.00",
                       "toleranceOveragePct": "5.0000",
                       "toleranceShortagePct": "5.0000",
                       "toolingAmount": "0.00",
@@ -225057,6 +225486,8 @@
                         "shippingPending": false,
                         "shippingPendingReason": null,
                         "structureDesignFeeAmount": "0.00",
+                        "toleranceColourDeltaE": "3.00",
+                        "toleranceDimensionalMm": "1.00",
                         "toleranceOveragePct": "5.0000",
                         "toleranceShortagePct": "5.0000",
                         "toolingAmount": "0.00",
@@ -225562,6 +225993,8 @@
                       "shippingPending": false,
                       "shippingPendingReason": null,
                       "structureDesignFeeAmount": "0.00",
+                      "toleranceColourDeltaE": "3.00",
+                      "toleranceDimensionalMm": "1.00",
                       "toleranceOveragePct": "5.0000",
                       "toleranceShortagePct": "5.0000",
                       "toolingAmount": "0.00",
@@ -262118,6 +262551,12 @@
                       "shipmentNo": "SH-2610-0001",
                       "status": "factory_review",
                       "submittedAt": "2026-10-22T09:00:00+07:00",
+                      "tolerance": {
+                        "colourDeltaE": "3.00",
+                        "dimensionalMm": "1.00",
+                        "overagePct": "5.0000",
+                        "shortagePct": "5.0000"
+                      },
                       "type": "damaged",
                       "windowEndsAt": "2026-10-28T14:05:00+07:00"
                     }
@@ -262339,6 +262778,12 @@
                   "shipmentNo": "SH-2610-0001",
                   "status": "factory_review",
                   "submittedAt": "2026-10-22T09:00:00+07:00",
+                  "tolerance": {
+                    "colourDeltaE": "3.00",
+                    "dimensionalMm": "1.00",
+                    "overagePct": "5.0000",
+                    "shortagePct": "5.0000"
+                  },
                   "type": "damaged",
                   "windowEndsAt": "2026-10-28T14:05:00+07:00"
                 },
@@ -262579,6 +263024,12 @@
                   "shipmentNo": "SH-2610-0001",
                   "status": "under_review",
                   "submittedAt": "2026-10-22T09:00:00+07:00",
+                  "tolerance": {
+                    "colourDeltaE": "3.00",
+                    "dimensionalMm": "1.00",
+                    "overagePct": "5.0000",
+                    "shortagePct": "5.0000"
+                  },
                   "type": "damaged",
                   "windowEndsAt": "2026-10-28T14:05:00+07:00"
                 },
@@ -267024,6 +267475,8 @@
                       "upcoming": [
                         {
                           "approvalRequestId": "0192f3a0-7c1e-7d2a-9b1f-00000000f301",
+                          "colourDeltaE": null,
+                          "dimensionalMm": null,
                           "effectiveFrom": "2026-09-26T10:00:00+07:00",
                           "overagePct": "5.0000",
                           "reason": "Agreed with the factory at onboarding",
@@ -278298,6 +278751,8 @@
                       "status": "released",
                       "title": "กล่องพับ · 1000 ชิ้น",
                       "tolerance": {
+                        "colourDeltaE": "3.00",
+                        "dimensionalMm": "1.00",
                         "overagePct": "5.0000",
                         "shortagePct": "5.0000"
                       }
@@ -282897,6 +283352,8 @@
                       "status": "released",
                       "title": "กล่องพับ · 1000 ชิ้น",
                       "tolerance": {
+                        "colourDeltaE": "3.00",
+                        "dimensionalMm": "1.00",
                         "overagePct": "5.0000",
                         "shortagePct": "5.0000"
                       }
@@ -283354,6 +283811,8 @@
                   "status": "released",
                   "title": "กล่องพับ · 1000 ชิ้น",
                   "tolerance": {
+                    "colourDeltaE": "3.00",
+                    "dimensionalMm": "1.00",
                     "overagePct": "5.0000",
                     "shortagePct": "5.0000"
                   }
@@ -283624,6 +284083,8 @@
                   "status": "accepted",
                   "title": "กล่องพับ · 1000 ชิ้น",
                   "tolerance": {
+                    "colourDeltaE": "3.00",
+                    "dimensionalMm": "1.00",
                     "overagePct": "5.0000",
                     "shortagePct": "5.0000"
                   }
@@ -283964,6 +284425,8 @@
                   "status": "rejected",
                   "title": "กล่องพับ · 1000 ชิ้น",
                   "tolerance": {
+                    "colourDeltaE": "3.00",
+                    "dimensionalMm": "1.00",
                     "overagePct": "5.0000",
                     "shortagePct": "5.0000"
                   }
@@ -285078,6 +285541,8 @@
                     "status": "in_progress",
                     "title": "กล่องพับ · 1000 ชิ้น",
                     "tolerance": {
+                      "colourDeltaE": "3.00",
+                      "dimensionalMm": "1.00",
                       "overagePct": "5.0000",
                       "shortagePct": "5.0000"
                     }
@@ -299089,6 +299554,172 @@
         ]
       }
     },
+    "/v1/store/catalog/types/{typeId}/tolerances": {
+      "get": {
+        "description": "The platform defaults in force now, shown before purchase (D-186): quantity ± % (D-163), dimensional ± mm per construction and colour ΔE2000 against the approved proof (flexo apart). A factory may hold its own approved tolerance (D-173): the quote step shows, and freezes, the one that applies. Never names a factory (D-050).\n\nImplements: D-186, D-163, D-021, D-050.",
+        "operationId": "store.catalog.getTypeTolerances",
+        "parameters": [
+          {
+            "description": "Product type",
+            "in": "path",
+            "name": "typeId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "colourDeltaE": {
+                    "flexo": "3.00",
+                    "standard": "3.00"
+                  },
+                  "dimensionalMm": "1.00",
+                  "productTypeCode": "folding_carton",
+                  "productTypeId": "0192f3a0-7c1e-7d2a-9b1f-00000000a001",
+                  "quantityOveragePct": "5.0000",
+                  "quantityShortagePct": "5.0000"
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProductTypeTolerancesDto"
+                }
+              }
+            },
+            "description": "Published tolerances",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "400": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.bad_request": {
+                    "$ref": "#/components/examples/problem.http.bad_request"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.bad_request`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "404": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.not_found": {
+                    "$ref": "#/components/examples/problem.http.not_found"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.not_found`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "validation.failed": {
+                    "$ref": "#/components/examples/problem.validation.failed"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `validation.failed`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [],
+        "summary": "Show the published tolerances of a product type",
+        "tags": [
+          "store.catalog"
+        ]
+      }
+    },
     "/v1/store/checkout": {
       "post": {
         "description": "Re-prices the cart on the server and writes one order group with one order per cart item (legacy rule), lines, destinations (snapshot, D-142), the pricing snapshot with every version id, the expected withholding (D-174) and the unpaid expiry (`orders.unpaid_expiry_days`, D-060). The cart is checked out and its quotations converted. Requires `Idempotency-Key`; a replay returns the same group. `expectedGrossAmount` guards against a total that changed since the preview.\n\nImplements: D-051, D-060, D-013, D-142, D-174, D-010.",
@@ -299241,6 +299872,8 @@
                         ],
                         "unit": "piece"
                       },
+                      "toleranceColourDeltaE": "3.00",
+                      "toleranceDimensionalMm": "1.00",
                       "toleranceOutcome": null,
                       "toleranceOveragePct": "5.0000",
                       "toleranceShortagePct": "5.0000",
@@ -300062,6 +300695,12 @@
                       "resolutions": [],
                       "status": "under_review",
                       "submittedAt": "2026-10-22T09:00:00+07:00",
+                      "tolerance": {
+                        "colourDeltaE": "3.00",
+                        "dimensionalMm": "1.00",
+                        "overagePct": "5.0000",
+                        "shortagePct": "5.0000"
+                      },
                       "type": "damaged",
                       "windowEndsAt": "2026-10-28T14:05:00+07:00"
                     }
@@ -300270,6 +300909,12 @@
                   "resolutions": [],
                   "status": "under_review",
                   "submittedAt": "2026-10-22T09:00:00+07:00",
+                  "tolerance": {
+                    "colourDeltaE": "3.00",
+                    "dimensionalMm": "1.00",
+                    "overagePct": "5.0000",
+                    "shortagePct": "5.0000"
+                  },
                   "type": "damaged",
                   "windowEndsAt": "2026-10-28T14:05:00+07:00"
                 },
@@ -300499,6 +301144,12 @@
                   "resolutions": [],
                   "status": "under_review",
                   "submittedAt": "2026-10-22T09:00:00+07:00",
+                  "tolerance": {
+                    "colourDeltaE": "3.00",
+                    "dimensionalMm": "1.00",
+                    "overagePct": "5.0000",
+                    "shortagePct": "5.0000"
+                  },
                   "type": "damaged",
                   "windowEndsAt": "2026-10-28T14:05:00+07:00"
                 },
@@ -309148,6 +309799,8 @@
                         "shippingPending": false,
                         "shippingPendingReason": null,
                         "structureDesignFeeAmount": "0.00",
+                        "toleranceColourDeltaE": "3.00",
+                        "toleranceDimensionalMm": "1.00",
                         "toleranceOveragePct": "5.0000",
                         "toleranceShortagePct": "5.0000",
                         "toolingAmount": "0.00",
@@ -320759,6 +321412,8 @@
                             ],
                             "unit": "piece"
                           },
+                          "toleranceColourDeltaE": "3.00",
+                          "toleranceDimensionalMm": "1.00",
                           "toleranceOutcome": null,
                           "toleranceOveragePct": "5.0000",
                           "toleranceShortagePct": "5.0000",
@@ -321083,6 +321738,8 @@
                         ],
                         "unit": "piece"
                       },
+                      "toleranceColourDeltaE": "3.00",
+                      "toleranceDimensionalMm": "1.00",
                       "toleranceOutcome": null,
                       "toleranceOveragePct": "5.0000",
                       "toleranceShortagePct": "5.0000",
@@ -321429,6 +322086,8 @@
                         ],
                         "unit": "piece"
                       },
+                      "toleranceColourDeltaE": "3.00",
+                      "toleranceDimensionalMm": "1.00",
                       "toleranceOutcome": null,
                       "toleranceOveragePct": "5.0000",
                       "toleranceShortagePct": "5.0000",
@@ -322628,6 +323287,8 @@
                     ],
                     "unit": "piece"
                   },
+                  "toleranceColourDeltaE": "3.00",
+                  "toleranceDimensionalMm": "1.00",
                   "toleranceOutcome": null,
                   "toleranceOveragePct": "5.0000",
                   "toleranceShortagePct": "5.0000",
@@ -322906,6 +323567,8 @@
                     ],
                     "unit": "piece"
                   },
+                  "toleranceColourDeltaE": "3.00",
+                  "toleranceDimensionalMm": "1.00",
                   "toleranceOutcome": null,
                   "toleranceOveragePct": "5.0000",
                   "toleranceShortagePct": "5.0000",
@@ -323207,6 +323870,8 @@
                     ],
                     "unit": "piece"
                   },
+                  "toleranceColourDeltaE": "3.00",
+                  "toleranceDimensionalMm": "1.00",
                   "toleranceOutcome": null,
                   "toleranceOveragePct": "5.0000",
                   "toleranceShortagePct": "5.0000",
@@ -325343,6 +326008,12 @@
                   "resolutions": [],
                   "status": "submitted",
                   "submittedAt": "2026-10-22T09:00:00+07:00",
+                  "tolerance": {
+                    "colourDeltaE": "3.00",
+                    "dimensionalMm": "1.00",
+                    "overagePct": "5.0000",
+                    "shortagePct": "5.0000"
+                  },
                   "type": "damaged",
                   "windowEndsAt": "2026-10-28T14:05:00+07:00"
                 },
@@ -330757,6 +331428,8 @@
                           "shippingPending": false,
                           "shippingPendingReason": null,
                           "structureDesignFeeAmount": "0.00",
+                          "toleranceColourDeltaE": "3.00",
+                          "toleranceDimensionalMm": "1.00",
                           "toleranceOveragePct": "5.0000",
                           "toleranceShortagePct": "5.0000",
                           "toolingAmount": "0.00",
@@ -331095,6 +331768,8 @@
                       "shippingPending": false,
                       "shippingPendingReason": null,
                       "structureDesignFeeAmount": "0.00",
+                      "toleranceColourDeltaE": "3.00",
+                      "toleranceDimensionalMm": "1.00",
                       "toleranceOveragePct": "5.0000",
                       "toleranceShortagePct": "5.0000",
                       "toolingAmount": "0.00",
@@ -331537,6 +332212,8 @@
                       "shippingPendingReason": null,
                       "shippingVatAmount": "8.40",
                       "structureDesignFeeAmount": "0.00",
+                      "toleranceColourDeltaE": "3.00",
+                      "toleranceDimensionalMm": "1.00",
                       "toleranceOveragePct": "5.0000",
                       "toleranceShortagePct": "5.0000",
                       "toolingAmount": "0.00",
@@ -331768,6 +332445,8 @@
                       "shippingPending": false,
                       "shippingPendingReason": null,
                       "structureDesignFeeAmount": "0.00",
+                      "toleranceColourDeltaE": "3.00",
+                      "toleranceDimensionalMm": "1.00",
                       "toleranceOveragePct": "5.0000",
                       "toleranceShortagePct": "5.0000",
                       "toolingAmount": "0.00",
@@ -332044,6 +332723,8 @@
                       "shippingPending": false,
                       "shippingPendingReason": null,
                       "structureDesignFeeAmount": "0.00",
+                      "toleranceColourDeltaE": "3.00",
+                      "toleranceDimensionalMm": "1.00",
                       "toleranceOveragePct": "5.0000",
                       "toleranceShortagePct": "5.0000",
                       "toolingAmount": "0.00",
@@ -332347,6 +333028,8 @@
                       "shippingPending": false,
                       "shippingPendingReason": null,
                       "structureDesignFeeAmount": "0.00",
+                      "toleranceColourDeltaE": "3.00",
+                      "toleranceDimensionalMm": "1.00",
                       "toleranceOveragePct": "5.0000",
                       "toleranceShortagePct": "5.0000",
                       "toolingAmount": "0.00",
@@ -332670,6 +333353,8 @@
                       "shippingPending": false,
                       "shippingPendingReason": null,
                       "structureDesignFeeAmount": "0.00",
+                      "toleranceColourDeltaE": "3.00",
+                      "toleranceDimensionalMm": "1.00",
                       "toleranceOveragePct": "5.0000",
                       "toleranceShortagePct": "5.0000",
                       "toolingAmount": "0.00",
@@ -332985,6 +333670,8 @@
                       "shippingPending": false,
                       "shippingPendingReason": null,
                       "structureDesignFeeAmount": "0.00",
+                      "toleranceColourDeltaE": "3.00",
+                      "toleranceDimensionalMm": "1.00",
                       "toleranceOveragePct": "5.0000",
                       "toleranceShortagePct": "5.0000",
                       "toolingAmount": "0.00",
@@ -333307,6 +333994,8 @@
                         "shippingPending": false,
                         "shippingPendingReason": null,
                         "structureDesignFeeAmount": "0.00",
+                        "toleranceColourDeltaE": "3.00",
+                        "toleranceDimensionalMm": "1.00",
                         "toleranceOveragePct": "5.0000",
                         "toleranceShortagePct": "5.0000",
                         "toolingAmount": "0.00",
@@ -333812,6 +334501,8 @@
                       "shippingPending": false,
                       "shippingPendingReason": null,
                       "structureDesignFeeAmount": "0.00",
+                      "toleranceColourDeltaE": "3.00",
+                      "toleranceDimensionalMm": "1.00",
                       "toleranceOveragePct": "5.0000",
                       "toleranceShortagePct": "5.0000",
                       "toolingAmount": "0.00",

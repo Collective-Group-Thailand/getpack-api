@@ -164,6 +164,8 @@ export function orderDto(row: OrderRow, ctx: OrderViewContext = { autoCompleteDa
     mockupOption: row.mockupOption,
     toleranceShortagePct: row.toleranceShortagePct?.toFixed(4) ?? null,
     toleranceOveragePct: row.toleranceOveragePct?.toFixed(4) ?? null,
+    toleranceDimensionalMm: row.toleranceDimensionalMm?.toFixed(2) ?? null,
+    toleranceColourDeltaE: row.toleranceColourDeltaE?.toFixed(2) ?? null,
     leadTimeDays: row.leadTimeDays,
     promisedShipDate: row.promisedShipDate ? bangkokDate(row.promisedShipDate) : null,
     estimatedDeliveryDate: estimatedDeliveryDate(row.promisedShipDate, row.quoteOption),

@@ -64,6 +64,10 @@ export const CLAIM_INCLUDE = {
     select: {
       publicId: true,
       orderCode: true,
+      toleranceShortagePct: true,
+      toleranceOveragePct: true,
+      toleranceDimensionalMm: true,
+      toleranceColourDeltaE: true,
       orderGroup: { select: { company: { select: { legalName: true } } } },
       proofs: {
         where: { status: 'approved' },

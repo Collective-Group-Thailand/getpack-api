@@ -365,6 +365,15 @@ describe('requests for quote (e2e, B2.5)', () => {
       configuration: null,
     });
     expect(quote.body.options[0]).toMatchObject({ quantity: 1000, netAmount: '12500.00' });
+    // D-187 (F2): the accepted quote freezes a tolerance like an instant quote — never none, never 0 %.
+    expect(quote.body.options[0]).toMatchObject({
+      toleranceShortagePct: expect.stringMatching(/^\d+\.\d{4}$/),
+      toleranceOveragePct: expect.stringMatching(/^\d+\.\d{4}$/),
+      // A paper bag has no calculator: no dimensional or colour tolerance is published for it (D-186).
+      toleranceDimensionalMm: null,
+      toleranceColourDeltaE: null,
+    });
+    expect(Number(quote.body.options[0].toleranceShortagePct)).toBeGreaterThan(0);
     // The RFQ's spec and dimensions become the quote's spec lines (U-B0.1).
     expect(quote.body.summary).toMatchObject({
       product: null,

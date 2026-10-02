@@ -175,6 +175,8 @@ export class ConfigurationService {
           ...versionMeta(v),
           shortagePct: v.shortagePct.toFixed(4),
           overagePct: v.overagePct.toFixed(4),
+          dimensionalMm: v.dimensionalMm?.toFixed(2) ?? null,
+          colourDeltaE: v.colourDeltaE?.toFixed(2) ?? null,
         });
         return {
           productTypeId: t.productType?.publicId ?? null,
@@ -310,6 +312,8 @@ export class ConfigurationService {
         values: {
           shortagePct: new Prisma.Decimal(input.shortagePct),
           overagePct: new Prisma.Decimal(input.overagePct),
+          dimensionalMm: input.dimensionalMm == null ? null : new Prisma.Decimal(input.dimensionalMm),
+          colourDeltaE: input.colourDeltaE == null ? null : new Prisma.Decimal(input.colourDeltaE),
         },
         effectiveFrom: input.effectiveFrom,
         reason: input.reason,

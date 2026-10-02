@@ -72,6 +72,8 @@ export interface DraftOrder {
   earliestShipDate: Date | null;
   toleranceShortagePct: string | null;
   toleranceOveragePct: string | null;
+  toleranceDimensionalMm: string | null;
+  toleranceColourDeltaE: string | null;
   selectedFactoryId: bigint | null;
   lines: LineDraft[];
   discounts: DiscountDraft[];

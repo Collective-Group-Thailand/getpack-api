@@ -28,6 +28,7 @@ import {
   type ResolvedBase,
 } from '../calculators/adapter';
 import { CalculatorRegistry } from '../calculators/calculator';
+import { ToleranceService } from './tolerance.service';
 
 /**
  * Prices a configuration for a channel (B2.3) with the calculator adapter of its `calculator_key`:
@@ -73,6 +74,10 @@ export interface QuoteStepView {
   earliestDeliveryDate: string | null;
   toleranceShortagePct: string | null;
   toleranceOveragePct: string | null;
+  /** ± mm (D-186); null = none published for the product. */
+  toleranceDimensionalMm: string | null;
+  /** ΔE2000 against the approved proof (D-186); null = not printed. */
+  toleranceColourDeltaE: string | null;
   shippingPending: boolean;
   shippingPendingReason: RateMissReason | null;
   /** Staff only (D-044, D-050). */
@@ -190,6 +195,7 @@ export class QuoteEngineService {
     private readonly shipping: ShippingQuoteService,
     private readonly events: DomainEvents,
     private readonly specs: SpecsService,
+    private readonly tolerances: ToleranceService,
   ) {}
 
   hasCalculator(key: CalculatorKey): boolean {
@@ -329,7 +335,17 @@ export class QuoteEngineService {
       }
       const option = byKey.get(chosen.optionKey)!;
       const factoryId = factoryIds.get(option.factoryId)!;
-      const tolerance = await this.tolerance(factoryId, resolved.productTypeId, at, db);
+      const tolerance = await this.tolerances.resolve(
+        {
+          factoryId,
+          productTypeId: resolved.productTypeId,
+          calculatorKey: key,
+          printTypePublicId: option.printTypePublicId,
+          priceListVersionId: option.priceListVersionId,
+        },
+        at,
+        db,
+      );
       const s = chosen.step;
       const delivery = chosen.delivery?.available ? chosen.delivery : null;
       const customer = prepared?.customer.priced ? prepared.customer : null;
@@ -361,6 +377,8 @@ export class QuoteEngineService {
             : null,
         toleranceShortagePct: tolerance.shortage,
         toleranceOveragePct: tolerance.overage,
+        toleranceDimensionalMm: tolerance.dimensionalMm,
+        toleranceColourDeltaE: tolerance.colourDeltaE,
         shippingPending: !nothingToShip && !shipGross,
         shippingPendingReason:
           nothingToShip || shipGross
@@ -526,6 +544,8 @@ export class QuoteEngineService {
       earliestDeliveryDate: null,
       toleranceShortagePct: null,
       toleranceOveragePct: null,
+      toleranceDimensionalMm: null,
+      toleranceColourDeltaE: null,
       shippingPending: false,
       shippingPendingReason: null,
       internal: null,
@@ -635,28 +655,6 @@ export class QuoteEngineService {
     });
     const calendar = await this.calendars.calendar(factory.calendar?.code);
     return bangkokDate(calendar.addWorkingDays(new Date(`${date}T00:00:00+07:00`), days));
-  }
-
-  /** The factory's tolerance for the type, else its default, else the platform default (D-021, D-163). */
-  private async tolerance(
-    factoryId: bigint,
-    productTypeId: bigint,
-    at: Date,
-    db: Tx,
-  ): Promise<{ shortage: string; overage: string }> {
-    const inForce = { status: 'approved' as const, effectiveFrom: { lte: at } };
-    const latest = [{ effectiveFrom: 'desc' as const }, { versionNo: 'desc' as const }];
-    for (const scope of [productTypeId, null]) {
-      const version = await db.factoryTolerancePolicyVersion.findFirst({
-        where: { ...inForce, policy: { factoryId, productTypeId: scope } },
-        orderBy: latest,
-      });
-      if (version)
-        return { shortage: version.shortagePct.toFixed(4), overage: version.overagePct.toFixed(4) };
-    }
-    const fallback = (await this.settings.at('fulfilment.tolerance_default_pct', { at })).value;
-    const pct = Number(fallback).toFixed(4);
-    return { shortage: pct, overage: pct };
   }
 
   /** One `calculate_logs` row per calculation (B6 analytics, D-102 unmet demand); no PII. */

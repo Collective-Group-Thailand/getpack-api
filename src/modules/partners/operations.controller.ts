@@ -323,15 +323,28 @@ export class AdminFactoryOperationsController extends FactoryReads {
   @factoryParam
   @ApiEndpoint({
     id: 'admin.factories.setTolerance',
-    summary: 'Propose a quantity-tolerance override for a factory',
+    summary: 'Propose a tolerance override for a factory',
     description:
-      'Factory default (no product type) or per product type (D-021); the platform default is ± 5 % (D-163). Opens the ' +
+      'Factory default (no product type) or per product type (D-021): quantity ± % (platform default ± 5 %, D-163) ' +
+      'and, optionally, dimensional ± mm and colour ΔE2000 (platform defaults `fulfilment.dimensional_tolerance_mm` and ' +
+      '`fulfilment.colour_tolerance_delta_e`, D-186); omitted or null keeps the platform default. Opens the ' +
       '`factory_tolerance_change` approval (Superadmin, D-173) and applies once approved.',
-    implements: ['D-021', 'D-163', 'D-173'],
+    implements: ['D-021', 'D-163', 'D-173', 'D-186'],
   })
   @ApiBody({
     type: SetToleranceDto,
-    examples: { default: { value: { shortagePct: 3, overagePct: 5, reason: 'Agreed at onboarding' } } },
+    examples: {
+      default: { value: { shortagePct: 3, overagePct: 5, reason: 'Agreed at onboarding' } },
+      dimensionalAndColour: {
+        value: {
+          shortagePct: 3,
+          overagePct: 5,
+          dimensionalMm: 1.5,
+          colourDeltaE: 3,
+          reason: 'Agreed at onboarding',
+        },
+      },
+    },
   })
   @ApiSuccess(201, {
     description: 'Version proposed',

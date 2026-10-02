@@ -19,6 +19,10 @@ const claim = {
   order: {
     publicId: '0192f3a0-7c1e-7d2a-9b1f-0000000f1002',
     orderCode: 'DEV-2610-00001',
+    toleranceShortagePct: null,
+    toleranceOveragePct: null,
+    toleranceDimensionalMm: null,
+    toleranceColourDeltaE: null,
     orderGroup: { company: null },
     proofs: [],
   },

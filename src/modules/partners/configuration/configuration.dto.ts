@@ -1,7 +1,7 @@
 import { DecimalField, EnumField, IntField, RefField, TextField } from '@modules/catalog/crud/dto-fields';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { Type } from 'class-transformer';
-import { IsDate, IsOptional, ValidateNested } from 'class-validator';
+import { IsDate, IsOptional, Max, ValidateNested } from 'class-validator';
 
 import { ENVELOPE_EXAMPLE, TierBEnvelopeDto } from './tier-b-envelope.dto';
 
@@ -157,6 +157,22 @@ export class ToleranceVersionDto extends VersionMetaDto {
 
   @ApiProperty({ example: '5.0000', description: 'Percent' })
   overagePct!: string;
+
+  @ApiProperty({
+    type: String,
+    nullable: true,
+    example: '1.00',
+    description: 'Dimensional tolerance ± mm (D-186); null = the platform default',
+  })
+  dimensionalMm!: string | null;
+
+  @ApiProperty({
+    type: String,
+    nullable: true,
+    example: '3.00',
+    description: 'Colour tolerance, ΔE2000 against the approved proof (D-186); null = the platform default',
+  })
+  colourDeltaE!: string | null;
 }
 
 export class SetToleranceDto extends VersionInput {
@@ -172,6 +188,27 @@ export class SetToleranceDto extends VersionInput {
 
   @DecimalField({ example: 5, scale: 4, unit: '%' })
   overagePct!: number;
+
+  @DecimalField({
+    example: 1,
+    scale: 2,
+    nullable: true,
+    unit: 'mm',
+    description: 'Dimensional tolerance ± mm (D-186); omitted or null = the platform default',
+  })
+  @Max(9999.99)
+  dimensionalMm?: number | null;
+
+  @DecimalField({
+    example: 3,
+    scale: 2,
+    nullable: true,
+    unit: 'ΔE2000',
+    description:
+      'Colour tolerance against the approved proof (D-186); omitted or null = the platform default',
+  })
+  @Max(100)
+  colourDeltaE?: number | null;
 }
 
 // --- payout policy (D-022, D-164, D-173) -----------------------------------------------------------
@@ -346,6 +383,8 @@ export const CONFIGURATION_EXAMPLE: FactoryConfigurationDto = {
           status: 'proposed',
           shortagePct: '3.0000',
           overagePct: '5.0000',
+          dimensionalMm: null,
+          colourDeltaE: null,
           approvalRequestId: APPROVAL,
         },
       ],

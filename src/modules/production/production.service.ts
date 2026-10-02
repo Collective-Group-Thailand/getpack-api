@@ -351,6 +351,8 @@ export class ProductionService {
               })) as Prisma.InputJsonValue,
         toleranceShortagePct: order.toleranceShortagePct,
         toleranceOveragePct: order.toleranceOveragePct,
+        toleranceDimensionalMm: order.toleranceDimensionalMm,
+        toleranceColourDeltaE: order.toleranceColourDeltaE,
       },
     });
     await this.createMilestones(

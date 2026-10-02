@@ -158,6 +158,22 @@ export class SavedQuoteOptionDto {
   })
   toleranceOveragePct!: string | null;
 
+  @ApiProperty({
+    type: String,
+    nullable: true,
+    example: '1.00',
+    description: 'Frozen dimensional tolerance ± mm (D-186); null = none published for the product',
+  })
+  toleranceDimensionalMm!: string | null;
+
+  @ApiProperty({
+    type: String,
+    nullable: true,
+    example: '3.00',
+    description: 'Frozen colour tolerance, ΔE2000 against the approved proof (D-186); null = not printed',
+  })
+  toleranceColourDeltaE!: string | null;
+
   @ApiProperty({ example: false })
   shippingPending!: boolean;
 
@@ -358,6 +374,8 @@ export const OPTION_EXAMPLE: SavedQuoteOptionDto = {
   earliestDeliveryDate: step.earliestDeliveryDate,
   toleranceShortagePct: step.toleranceShortagePct,
   toleranceOveragePct: step.toleranceOveragePct,
+  toleranceDimensionalMm: step.toleranceDimensionalMm,
+  toleranceColourDeltaE: step.toleranceColourDeltaE,
   shippingPending: false,
   shippingPendingReason: null,
 };

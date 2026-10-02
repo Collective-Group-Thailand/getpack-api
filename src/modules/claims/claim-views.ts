@@ -31,6 +31,12 @@ export function storeClaimDto(c: ClaimRow, photos: Photos = { product: [], carto
     infoRequest: c.infoRequest,
     decisionNote: c.decisionNote,
     photos: { product: photos.product, carton: photos.carton },
+    tolerance: {
+      shortagePct: c.order.toleranceShortagePct?.toFixed(4) ?? null,
+      overagePct: c.order.toleranceOveragePct?.toFixed(4) ?? null,
+      dimensionalMm: c.order.toleranceDimensionalMm?.toFixed(2) ?? null,
+      colourDeltaE: c.order.toleranceColourDeltaE?.toFixed(2) ?? null,
+    },
     // The customer sees what was done for them, not which job made it (D-050) nor what Packio
     // recovers from the factory or the carrier (D-083, D-044).
     resolutions: c.resolutions.filter((r) => !INTERNAL_ACTIONS.has(r.action)).map(resolutionView),

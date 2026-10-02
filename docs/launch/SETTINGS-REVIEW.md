@@ -5,7 +5,7 @@
 > (a new effective-dated version, audited — D-063) and signs item 5 of `docs/LAUNCH-CHECKLIST.md`. A *proposed* or
 > *pending* value is not a decision: it goes live only once its owner confirms it.
 
-**72 settings** — 40 confirmed · 16 proposed · 4 pending the CPA (⚖) · 1 pending the business · 11 defined without a value (not set until their owner sets them).
+**74 settings** — 42 confirmed · 16 proposed · 4 pending the CPA (⚖) · 1 pending the business · 11 defined without a value (not set until their owner sets them).
 
 ## Settings
 
@@ -38,6 +38,8 @@
 | `discounts.cs_limit_pct` | `5` | confirmed | superadmin | D-052 | D-052 discount CS may give without a discount memo |
 | `documents.retention_years` | `10` | confirmed | finance_manager | D-033 | D-033 / accounting-design §2 record retention of documents and ledgers (≥ 10 years, above the 5-year statutory minimum) |
 | `fixed_assets.depreciation_start` | `acquisition_month` | pending_cpa | finance_manager | D-150 | D-150 first month of straight-line depreciation: the month the asset is acquired (full month) or the month after (⚖ pro-rata by days is not used) |
+| `fulfilment.colour_tolerance_delta_e` | `{"standard":"3","flexo":"5"}` | confirmed | superadmin | D-186 | D-186 published colour tolerance, ΔE2000 against the approved proof, for printed products (≤ 3; ≤ 5 for flexo) |
+| `fulfilment.dimensional_tolerance_mm` | `{"folding":"1","corrugate":"3"}` | confirmed | superadmin | D-186 | D-186 published dimensional tolerance ± mm per calculator (folding cartons ± 1, corrugated ± 3); a calculator not listed publishes none |
 | `fulfilment.tolerance_default_pct` | `5` | confirmed | superadmin | D-163, D-021 | D-163 default quantity tolerance ± % (shortage and overage) until a factory sets its own |
 | `loyalty.activity_rewards` | `{"signupBaht":"50.00","lineLinkingBaht":"20.00","reviewBaht":"10.00"}` | confirmed | superadmin | D-135, D-131 | D-135 activity rewards in baht, converted to points at the point value (rounded down) |
 | `loyalty.earn_rate` | `{"bahtPerPoint":"500.00","basis":"paid_before_vat_excluding_shipping"}` | confirmed | superadmin | D-130 | D-130 one point per THB 500 paid (before VAT, excluding shipping) |

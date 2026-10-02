@@ -162,6 +162,10 @@ export interface SettingValues {
   'configurations.share_link_days': number;
   /** D-185 days a draft configuration is kept after its last change. */
   'configurations.draft_retention_days': number;
+  /** D-186 dimensional tolerance ± mm per calculator key (decimal strings); a key not listed publishes none. */
+  'fulfilment.dimensional_tolerance_mm': Partial<Record<string, string>>;
+  /** D-186 colour tolerance ΔE2000 for printed products (decimal strings). */
+  'fulfilment.colour_tolerance_delta_e': { standard: string; flexo: string };
 }
 
 export type SettingKey = keyof SettingValues;

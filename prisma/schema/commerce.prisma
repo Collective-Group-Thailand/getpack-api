@@ -553,6 +553,9 @@ model Order {
   unit                    ProductUnit
   toleranceShortagePct    Decimal?             @map("tolerance_shortage_pct") @db.Decimal(7, 4)
   toleranceOveragePct     Decimal?             @map("tolerance_overage_pct") @db.Decimal(7, 4)
+  /// D-186: published dimensional (± mm) and colour (ΔE2000 vs the approved proof) tolerances, frozen; null = none.
+  toleranceDimensionalMm  Decimal?             @map("tolerance_dimensional_mm") @db.Decimal(6, 2)
+  toleranceColourDeltaE   Decimal?             @map("tolerance_colour_delta_e") @db.Decimal(5, 2)
   taxNature               TaxNature            @map("tax_nature")
   pricingSnapshot         Json                 @map("pricing_snapshot")
   configRefs              Json                 @map("config_refs")

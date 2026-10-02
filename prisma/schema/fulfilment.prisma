@@ -752,63 +752,66 @@ model MilestoneRouteStep {
 
 /// One job per (order, factory) and kind (D-073): what the factory is asked to make, with its snapshots.
 model ProductionJob {
-  id                   BigInt              @id(map: "pk_production_jobs") @default(autoincrement())
-  publicId             String              @unique(map: "ux_production_jobs__public_id") @default(dbgenerated("uuidv7()")) @map("public_id") @db.Uuid
-  jobNo                String              @unique(map: "ux_production_jobs__job_no") @map("job_no")
-  entityId             BigInt              @map("entity_id")
-  orderId              BigInt              @map("order_id")
-  factoryId            BigInt              @map("factory_id")
-  jobKind              JobKind             @map("job_kind")
-  reproductionOfJobId  BigInt?             @map("reproduction_of_job_id")
+  id                     BigInt              @id(map: "pk_production_jobs") @default(autoincrement())
+  publicId               String              @unique(map: "ux_production_jobs__public_id") @default(dbgenerated("uuidv7()")) @map("public_id") @db.Uuid
+  jobNo                  String              @unique(map: "ux_production_jobs__job_no") @map("job_no")
+  entityId               BigInt              @map("entity_id")
+  orderId                BigInt              @map("order_id")
+  factoryId              BigInt              @map("factory_id")
+  jobKind                JobKind             @map("job_kind")
+  reproductionOfJobId    BigInt?             @map("reproduction_of_job_id")
   /// P24 re-production for a claim.
-  claimId              BigInt?             @map("claim_id")
+  claimId                BigInt?             @map("claim_id")
   /// The factory PO (FK added with purchase orders, B5.3).
-  purchaseOrderId      BigInt?             @map("purchase_order_id")
+  purchaseOrderId        BigInt?             @map("purchase_order_id")
   /// The add-on line a mockup job makes (D-072).
-  orderLineId          BigInt?             @map("order_line_id")
-  status               ProductionJobStatus @default(released)
-  statusChangedAt      DateTime            @default(now()) @map("status_changed_at") @db.Timestamptz(6)
-  releasedAt           DateTime            @default(now()) @map("released_at") @db.Timestamptz(6)
-  releaseMode          ProductionStartMode @map("release_mode")
-  releaseReason        String?             @map("release_reason")
-  releasedById         BigInt?             @map("released_by")
-  acceptDueAt          DateTime            @map("accept_due_at") @db.Timestamptz(6)
-  acceptedAt           DateTime?           @map("accepted_at") @db.Timestamptz(6)
-  acceptedById         BigInt?             @map("accepted_by")
-  rejectedAt           DateTime?           @map("rejected_at") @db.Timestamptz(6)
-  rejectedById         BigInt?             @map("rejected_by")
-  rejectReasonCode     String?             @map("reject_reason_code")
-  rejectNote           String?             @map("reject_note")
+  orderLineId            BigInt?             @map("order_line_id")
+  status                 ProductionJobStatus @default(released)
+  statusChangedAt        DateTime            @default(now()) @map("status_changed_at") @db.Timestamptz(6)
+  releasedAt             DateTime            @default(now()) @map("released_at") @db.Timestamptz(6)
+  releaseMode            ProductionStartMode @map("release_mode")
+  releaseReason          String?             @map("release_reason")
+  releasedById           BigInt?             @map("released_by")
+  acceptDueAt            DateTime            @map("accept_due_at") @db.Timestamptz(6)
+  acceptedAt             DateTime?           @map("accepted_at") @db.Timestamptz(6)
+  acceptedById           BigInt?             @map("accepted_by")
+  rejectedAt             DateTime?           @map("rejected_at") @db.Timestamptz(6)
+  rejectedById           BigInt?             @map("rejected_by")
+  rejectReasonCode       String?             @map("reject_reason_code")
+  rejectNote             String?             @map("reject_note")
   /// Set once the acceptance SLA passed and the job was escalated (D-074).
-  escalatedAt          DateTime?           @map("escalated_at") @db.Timestamptz(6)
-  plannedStartOn       DateTime?           @map("planned_start_on") @db.Date
-  plannedFinishOn      DateTime?           @map("planned_finish_on") @db.Date
-  promisedShipDate     DateTime?           @map("promised_ship_date") @db.Date
-  predictedFinishOn    DateTime?           @map("predicted_finish_on") @db.Date
-  atRiskSince          DateTime?           @map("at_risk_since") @db.Timestamptz(6)
-  actualStartAt        DateTime?           @map("actual_start_at") @db.Timestamptz(6)
-  actualFinishAt       DateTime?           @map("actual_finish_at") @db.Timestamptz(6)
-  priority             Int                 @default(0) @db.SmallInt
-  lotNo                String?             @map("lot_no")
-  quantityOrdered      Int                 @map("quantity_ordered")
-  quantityGood         Int?                @map("quantity_good")
-  quantityScrap        Int?                @map("quantity_scrap")
-  specSnapshot         Json                @map("spec_snapshot")
-  routeVersionId       BigInt              @map("route_version_id")
-  routeSnapshot        Json                @map("route_snapshot")
-  priceListVersionId   BigInt?             @map("price_list_version_id")
+  escalatedAt            DateTime?           @map("escalated_at") @db.Timestamptz(6)
+  plannedStartOn         DateTime?           @map("planned_start_on") @db.Date
+  plannedFinishOn        DateTime?           @map("planned_finish_on") @db.Date
+  promisedShipDate       DateTime?           @map("promised_ship_date") @db.Date
+  predictedFinishOn      DateTime?           @map("predicted_finish_on") @db.Date
+  atRiskSince            DateTime?           @map("at_risk_since") @db.Timestamptz(6)
+  actualStartAt          DateTime?           @map("actual_start_at") @db.Timestamptz(6)
+  actualFinishAt         DateTime?           @map("actual_finish_at") @db.Timestamptz(6)
+  priority               Int                 @default(0) @db.SmallInt
+  lotNo                  String?             @map("lot_no")
+  quantityOrdered        Int                 @map("quantity_ordered")
+  quantityGood           Int?                @map("quantity_good")
+  quantityScrap          Int?                @map("quantity_scrap")
+  specSnapshot           Json                @map("spec_snapshot")
+  routeVersionId         BigInt              @map("route_version_id")
+  routeSnapshot          Json                @map("route_snapshot")
+  priceListVersionId     BigInt?             @map("price_list_version_id")
   /// Staff-only (D-141): the factory's buy price for this job.
-  buyPriceSnapshot     Json                @map("buy_price_snapshot")
-  toleranceShortagePct Decimal?            @map("tolerance_shortage_pct") @db.Decimal(7, 4)
-  toleranceOveragePct  Decimal?            @map("tolerance_overage_pct") @db.Decimal(7, 4)
-  inspectionRequired   Boolean             @default(false) @map("inspection_required")
-  inspectionReasons    String[]            @default([]) @map("inspection_reasons")
-  holdReason           String?             @map("hold_reason")
-  cancelReason         String?             @map("cancel_reason")
-  createdAt            DateTime            @default(now()) @map("created_at") @db.Timestamptz(6)
-  updatedAt            DateTime            @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
-  updatedById          BigInt?             @map("updated_by")
-  rowVersion           Int                 @default(1) @map("row_version")
+  buyPriceSnapshot       Json                @map("buy_price_snapshot")
+  toleranceShortagePct   Decimal?            @map("tolerance_shortage_pct") @db.Decimal(7, 4)
+  toleranceOveragePct    Decimal?            @map("tolerance_overage_pct") @db.Decimal(7, 4)
+  /// D-186: published dimensional (± mm) and colour (ΔE2000 vs the approved proof) tolerances, frozen; null = none.
+  toleranceDimensionalMm Decimal?            @map("tolerance_dimensional_mm") @db.Decimal(6, 2)
+  toleranceColourDeltaE  Decimal?            @map("tolerance_colour_delta_e") @db.Decimal(5, 2)
+  inspectionRequired     Boolean             @default(false) @map("inspection_required")
+  inspectionReasons      String[]            @default([]) @map("inspection_reasons")
+  holdReason             String?             @map("hold_reason")
+  cancelReason           String?             @map("cancel_reason")
+  createdAt              DateTime            @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt              DateTime            @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+  updatedById            BigInt?             @map("updated_by")
+  rowVersion             Int                 @default(1) @map("row_version")
 
   entity           Entity                @relation("ProductionJobEntity", fields: [entityId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_production_jobs__entity_id")
   order            Order                 @relation("ProductionJobOrder", fields: [orderId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_production_jobs__order_id")
