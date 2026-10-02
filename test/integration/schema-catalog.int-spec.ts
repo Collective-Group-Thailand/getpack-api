@@ -809,6 +809,21 @@ const CHECKS = [
   'ck_saved_views__query',
   'ck_saved_views__columns',
   'ck_shipments__carrier_request',
+  // --- U-B6 tail folding engine B components (A-76)
+  'ck_pl_b_print_wastes__colour_count',
+  'ck_pl_b_print_wastes__waste',
+  'ck_pl_b_print_prices__colour_count',
+  'ck_pl_b_print_prices__non_negative',
+  'ck_pl_foil_prices__non_negative',
+  'ck_pl_foil_prices__roll',
+  'ck_pl_foil_prices__block',
+  'ck_pl_b_assembly_prices__type',
+  'ck_pl_b_assembly_prices__range',
+  'ck_pl_b_assembly_prices__rate',
+  'ck_pl_b_assembly_prices__non_negative',
+  'ck_pl_code_margins__range',
+  'ck_pl_code_margins__min_cont',
+  'ck_pl_code_margins__code_name',
 ];
 
 const TRIGGERS = [
@@ -1037,6 +1052,12 @@ const TRIGGERS = [
   'tg_pbc_exports__append_only',
   // --- U-B0.2 POD reviews (D-229)
   'tg_proof_of_delivery_reviews__append_only',
+  // --- U-B6 tail folding engine B components (A-76)
+  'tg_pl_b_print_wastes__version_frozen',
+  'tg_pl_b_print_prices__version_frozen',
+  'tg_pl_foil_prices__version_frozen',
+  'tg_pl_b_assembly_prices__version_frozen',
+  'tg_pl_code_margins__version_frozen',
 ];
 
 /** Expression (hand-written) and partial (Prisma preview) indexes. */

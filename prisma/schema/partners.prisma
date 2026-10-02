@@ -226,6 +226,9 @@ enum PriceComponent {
   pouch_min_quantities
   pouch_factory_margins
   pouch_option_rules
+  b_print_wastes
+  b_print_prices
+  b_assembly_prices
 
   @@map("price_component")
 }
@@ -731,6 +734,7 @@ model FactoryMachine {
   plPrintPlatesMachine       PlPrintPlate[]       @relation("PlPrintPlateMachine")
   plPrintPricesMachine       PlPrintPrice[]       @relation("PlPrintPriceMachine")
   plFinishPricesMachine      PlFinishPrice[]      @relation("PlFinishPriceMachine")
+  plBPrintPricesMachine      PlBPrintPrice[]      @relation("PlBPrintPriceMachine")
   plFinishPlatesMachine      PlFinishPlate[]      @relation("PlFinishPlateMachine")
   plDiecutPricesMachine      PlDiecutPrice[]      @relation("PlDiecutPriceMachine")
   plDiecutBlockPricesMachine PlDiecutBlockPrice[] @relation("PlDiecutBlockPriceMachine")
@@ -1164,6 +1168,11 @@ model PriceListVersion {
   pouchOptionRules           PlPouchOptionRule[]           @relation("PlPouchOptionRulePriceListVersion")
   stockProductPrices         PlStockProductPrice[]         @relation("PlStockProductPricePriceListVersion")
   servicePrices              PlServicePrice[]              @relation("PlServicePricePriceListVersion")
+  bPrintWastes               PlBPrintWaste[]               @relation("PlBPrintWasteVersion")
+  bPrintPrices               PlBPrintPrice[]               @relation("PlBPrintPriceVersion")
+  foilPrices                 PlFoilPrice[]                 @relation("PlFoilPriceVersion")
+  bAssemblyPrices            PlBAssemblyPrice[]            @relation("PlBAssemblyPriceVersion")
+  codeMargins                PlCodeMargin[]                @relation("PlCodeMarginVersion")
   // --- end Corrugate price components
 
   @@unique([priceListId, versionNo], map: "ux_price_list_versions__price_list_id__version_no")
@@ -2684,3 +2693,146 @@ model PlServicePrice {
   @@index([catalogProductId], map: "ix_pl_service_prices__catalog_product_id")
   @@map("pl_service_prices")
 }
+
+// --- Folding engine B price components (U-B6 tail, schema-design A-76, D-233)
+
+/// Engine B print waste by ink colour and colour count (legacy `print_wastes` read by `Process/Printing`: one row per side,
+/// keyed by the side's last distinct colour and its colour count); waste.
+model PlBPrintWaste {
+  id                 BigInt   @id(map: "pk_pl_b_print_wastes") @default(autoincrement())
+  priceListVersionId BigInt   @map("price_list_version_id")
+  lineKey            String   @map("line_key")
+  difficultyLevelId  BigInt   @map("difficulty_level_id")
+  printTypeId        BigInt   @map("print_type_id")
+  inkColourId        BigInt   @map("ink_colour_id")
+  colourCount        Int      @map("colour_count") @db.SmallInt
+  percentWaste       Decimal  @map("percent_waste") @db.Decimal(7, 4)
+  setupWaste         Int      @map("setup_waste")
+  createdAt          DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  priceListVersion PriceListVersion @relation("PlBPrintWasteVersion", fields: [priceListVersionId], references: [id], onDelete: Cascade, onUpdate: Restrict, map: "fk_pl_b_print_wastes__price_list_version_id")
+  difficultyLevel  DifficultyLevel  @relation("PlBPrintWasteDifficultyLevel", fields: [difficultyLevelId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_pl_b_print_wastes__difficulty_level_id")
+  printType        PrintType        @relation("PlBPrintWastePrintType", fields: [printTypeId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_pl_b_print_wastes__print_type_id")
+  inkColour        InkColour        @relation("PlBPrintWasteInkColour", fields: [inkColourId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_pl_b_print_wastes__ink_colour_id")
+
+  @@unique([priceListVersionId, lineKey], map: "ux_pl_b_print_wastes__price_list_version_id__line_key")
+  @@index([difficultyLevelId], map: "ix_pl_b_print_wastes__difficulty_level_id")
+  @@index([printTypeId], map: "ix_pl_b_print_wastes__print_type_id")
+  @@index([inkColourId], map: "ix_pl_b_print_wastes__ink_colour_id")
+  @@map("pl_b_print_wastes")
+}
+
+/// Engine B ink price per m² of the print area, by machine, ink colour and the count of that colour in the side
+/// (legacy `print_prices` read by `B/CalculateCost::calPrintPriceCost`); process rate.
+model PlBPrintPrice {
+  id                            BigInt   @id(map: "pk_pl_b_print_prices") @default(autoincrement())
+  priceListVersionId            BigInt   @map("price_list_version_id")
+  lineKey                       String   @map("line_key")
+  difficultyLevelId             BigInt   @map("difficulty_level_id")
+  printTypeId                   BigInt   @map("print_type_id")
+  machineId                     BigInt   @map("machine_id")
+  inkColourId                   BigInt   @map("ink_colour_id")
+  colourCount                   Int      @map("colour_count") @db.SmallInt
+  priceInkPerM2                 Decimal  @map("price_ink_per_m2") @db.Decimal(18, 6)
+  priceColorCombineSpecialColor Decimal  @map("price_color_combine_special_color") @db.Decimal(18, 6)
+  createdAt                     DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  priceListVersion PriceListVersion @relation("PlBPrintPriceVersion", fields: [priceListVersionId], references: [id], onDelete: Cascade, onUpdate: Restrict, map: "fk_pl_b_print_prices__price_list_version_id")
+  difficultyLevel  DifficultyLevel  @relation("PlBPrintPriceDifficultyLevel", fields: [difficultyLevelId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_pl_b_print_prices__difficulty_level_id")
+  printType        PrintType        @relation("PlBPrintPricePrintType", fields: [printTypeId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_pl_b_print_prices__print_type_id")
+  machine          FactoryMachine   @relation("PlBPrintPriceMachine", fields: [machineId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_pl_b_print_prices__machine_id")
+  inkColour        InkColour        @relation("PlBPrintPriceInkColour", fields: [inkColourId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_pl_b_print_prices__ink_colour_id")
+
+  @@unique([priceListVersionId, lineKey], map: "ux_pl_b_print_prices__price_list_version_id__line_key")
+  @@index([difficultyLevelId], map: "ix_pl_b_print_prices__difficulty_level_id")
+  @@index([printTypeId], map: "ix_pl_b_print_prices__print_type_id")
+  @@index([machineId], map: "ix_pl_b_print_prices__machine_id")
+  @@index([inkColourId], map: "ix_pl_b_print_prices__ink_colour_id")
+  @@map("pl_b_print_prices")
+}
+
+/// Engine B foil (a finish-2 of kind `foil`): wage per in² of the print area, foil roll price and size, the sheet
+/// sizes the foil block takes (legacy `finish_price` + the per-factory `finish` foil columns); process rate.
+model PlFoilPrice {
+  id                 BigInt   @id(map: "pk_pl_foil_prices") @default(autoincrement())
+  priceListVersionId BigInt   @map("price_list_version_id")
+  lineKey            String   @map("line_key")
+  difficultyLevelId  BigInt   @map("difficulty_level_id")
+  printTypeId        BigInt   @map("print_type_id")
+  finishId           BigInt   @map("finish_id")
+  priceByAreaPerIn2  Decimal  @map("price_by_area_per_in2") @db.Decimal(18, 6)
+  bahtPerRoll        Decimal  @map("baht_per_roll") @db.Decimal(18, 6)
+  rollWidthIn        Decimal  @map("roll_width_in") @db.Decimal(10, 4)
+  rollLengthIn       Decimal  @map("roll_length_in") @db.Decimal(12, 4)
+  blockWMinIn        Decimal  @map("block_w_min_in") @db.Decimal(10, 4)
+  blockWMaxIn        Decimal  @map("block_w_max_in") @db.Decimal(10, 4)
+  blockLMinIn        Decimal  @map("block_l_min_in") @db.Decimal(10, 4)
+  blockLMaxIn        Decimal  @map("block_l_max_in") @db.Decimal(10, 4)
+  toolingPrice       Decimal? @map("tooling_price") @db.Decimal(18, 6)
+  createdAt          DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  priceListVersion PriceListVersion @relation("PlFoilPriceVersion", fields: [priceListVersionId], references: [id], onDelete: Cascade, onUpdate: Restrict, map: "fk_pl_foil_prices__price_list_version_id")
+  difficultyLevel  DifficultyLevel  @relation("PlFoilPriceDifficultyLevel", fields: [difficultyLevelId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_pl_foil_prices__difficulty_level_id")
+  printType        PrintType        @relation("PlFoilPricePrintType", fields: [printTypeId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_pl_foil_prices__print_type_id")
+  finish           Finish           @relation("PlFoilPriceFinish", fields: [finishId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_pl_foil_prices__finish_id")
+
+  @@unique([priceListVersionId, lineKey], map: "ux_pl_foil_prices__price_list_version_id__line_key")
+  @@index([difficultyLevelId], map: "ix_pl_foil_prices__difficulty_level_id")
+  @@index([printTypeId], map: "ix_pl_foil_prices__print_type_id")
+  @@index([finishId], map: "ix_pl_foil_prices__finish_id")
+  @@map("pl_foil_prices")
+}
+
+/// Engine B assembly prices by run band (legacy `assembly_prices` read by `B/CalculateCost::calCostAssembly`; B's
+/// types: 1 width × price per metre, 2 window area, 3 / 4 per piece); process rate.
+model PlBAssemblyPrice {
+  id                  BigInt   @id(map: "pk_pl_b_assembly_prices") @default(autoincrement())
+  priceListVersionId  BigInt   @map("price_list_version_id")
+  lineKey             String   @map("line_key")
+  difficultyLevelId   BigInt   @map("difficulty_level_id")
+  printTypeId         BigInt   @map("print_type_id")
+  assemblyId          BigInt   @map("assembly_id")
+  rangeAmountMin      Int?     @map("range_amount_min")
+  rangeAmountMax      Int?     @map("range_amount_max")
+  assemblyType        Int      @map("assembly_type") @db.SmallInt
+  pricePerDepthM      Decimal? @map("price_per_depth_m") @db.Decimal(18, 6)
+  minPricePerAreaIn2  Decimal? @map("min_price_per_area_in2") @db.Decimal(18, 6)
+  pricePerPcs         Decimal? @map("price_per_pcs") @db.Decimal(18, 6)
+  minPrice            Decimal? @map("min_price") @db.Decimal(18, 6)
+  blockPrice          Decimal? @map("block_price") @db.Decimal(18, 6)
+  materialPricePerIn2 Decimal? @map("material_price_per_in2") @db.Decimal(18, 6)
+  createdAt           DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  priceListVersion PriceListVersion @relation("PlBAssemblyPriceVersion", fields: [priceListVersionId], references: [id], onDelete: Cascade, onUpdate: Restrict, map: "fk_pl_b_assembly_prices__price_list_version_id")
+  difficultyLevel  DifficultyLevel  @relation("PlBAssemblyPriceDifficultyLevel", fields: [difficultyLevelId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_pl_b_assembly_prices__difficulty_level_id")
+  printType        PrintType        @relation("PlBAssemblyPricePrintType", fields: [printTypeId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_pl_b_assembly_prices__print_type_id")
+  assembly         Assembly         @relation("PlBAssemblyPriceAssembly", fields: [assemblyId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_pl_b_assembly_prices__assembly_id")
+
+  @@unique([priceListVersionId, lineKey], map: "ux_pl_b_assembly_prices__price_list_version_id__line_key")
+  @@index([difficultyLevelId], map: "ix_pl_b_assembly_prices__difficulty_level_id")
+  @@index([printTypeId], map: "ix_pl_b_assembly_prices__print_type_id")
+  @@index([assemblyId], map: "ix_pl_b_assembly_prices__assembly_id")
+  @@map("pl_b_assembly_prices")
+}
+
+/// Engine B contribution codes (legacy `code_margin`): the line with the smallest `max_range_cont_pct` above the print
+/// type's factory margin % floors the factory's contribution per lot (`Object/Margin`); commercial term.
+model PlCodeMargin {
+  id                 BigInt   @id(map: "pk_pl_code_margins") @default(autoincrement())
+  priceListVersionId BigInt   @map("price_list_version_id")
+  lineKey            String   @map("line_key")
+  printTypeId        BigInt   @map("print_type_id")
+  maxRangeContPct    Decimal  @map("max_range_cont_pct") @db.Decimal(7, 4)
+  codeName           String?  @map("code_name")
+  minContBahtPerLot  Decimal  @map("min_cont_baht_per_lot") @db.Decimal(18, 6)
+  createdAt          DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  priceListVersion PriceListVersion @relation("PlCodeMarginVersion", fields: [priceListVersionId], references: [id], onDelete: Cascade, onUpdate: Restrict, map: "fk_pl_code_margins__price_list_version_id")
+  printType        PrintType        @relation("PlCodeMarginPrintType", fields: [printTypeId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_pl_code_margins__print_type_id")
+
+  @@unique([priceListVersionId, lineKey], map: "ux_pl_code_margins__price_list_version_id__line_key")
+  @@index([printTypeId], map: "ix_pl_code_margins__print_type_id")
+  @@map("pl_code_margins")
+}
+
+// --- end Folding engine B price components

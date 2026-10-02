@@ -1,4 +1,7 @@
-import { type PriceComponentDescriptor } from '@modules/partners/pricing/price-component.registry';
+import {
+  type PriceComponentDescriptor,
+  type PriceFieldError,
+} from '@modules/partners/pricing/price-component.registry';
 
 import { materialFamily } from '../shared/material-family';
 
@@ -384,6 +387,131 @@ export const PL_PROCESS_EXCLUSIONS: PriceComponentDescriptor = {
   values: [],
 };
 
+// --- Engine B (U-B6 tail, A-76, D-233): components only legacy `B/*` reads; engine A's tables stay unchanged.
+
+export const PL_B_PRINT_WASTES: PriceComponentDescriptor = {
+  component: 'b_print_wastes',
+  table: 'pl_b_print_wastes',
+  group: 'waste',
+  dimensions: [
+    { key: 'difficultyLevelId', type: 'ref', ref: 'difficulty_levels' },
+    { key: 'printTypeId', type: 'ref', ref: 'print_types' },
+    { key: 'inkColourId', type: 'ref', ref: 'ink_colours' },
+    { key: 'colourCount', type: 'integer', min: 1 },
+  ],
+  values: [
+    { key: 'percentWaste', type: 'decimal', scale: 4 },
+    { key: 'setupWaste', type: 'integer' },
+  ],
+};
+
+export const PL_B_PRINT_PRICES: PriceComponentDescriptor = {
+  component: 'b_print_prices',
+  table: 'pl_b_print_prices',
+  group: 'process_rates',
+  dimensions: [
+    { key: 'difficultyLevelId', type: 'ref', ref: 'difficulty_levels' },
+    { key: 'printTypeId', type: 'ref', ref: 'print_types' },
+    { key: 'machineId', type: 'ref', ref: 'factory_machines' },
+    { key: 'inkColourId', type: 'ref', ref: 'ink_colours' },
+    { key: 'colourCount', type: 'integer', min: 1 },
+  ],
+  values: [
+    { key: 'priceInkPerM2', type: 'decimal', scale: 6 },
+    { key: 'priceColorCombineSpecialColor', type: 'decimal', scale: 6 },
+  ],
+};
+
+export const PL_FOIL_PRICES: PriceComponentDescriptor = {
+  component: 'foil_prices',
+  table: 'pl_foil_prices',
+  group: 'process_rates',
+  dimensions: [
+    { key: 'difficultyLevelId', type: 'ref', ref: 'difficulty_levels' },
+    { key: 'printTypeId', type: 'ref', ref: 'print_types' },
+    { key: 'finishId', type: 'ref', ref: 'finishes' },
+  ],
+  values: [
+    { key: 'priceByAreaPerIn2', type: 'decimal', scale: 6 },
+    { key: 'bahtPerRoll', type: 'decimal', scale: 6 },
+    { key: 'rollWidthIn', type: 'decimal', scale: 4 },
+    { key: 'rollLengthIn', type: 'decimal', scale: 4 },
+    { key: 'blockWMinIn', type: 'decimal', scale: 4 },
+    { key: 'blockWMaxIn', type: 'decimal', scale: 4 },
+    { key: 'blockLMinIn', type: 'decimal', scale: 4 },
+    { key: 'blockLMaxIn', type: 'decimal', scale: 4 },
+    { key: 'toolingPrice', type: 'decimal', scale: 6, nullable: true },
+  ],
+  validate(v) {
+    const errors: PriceFieldError[] = [];
+    // A zero roll would divide by zero (legacy hid it under `@`, port map QB18).
+    for (const key of ['bahtPerRoll', 'rollWidthIn', 'rollLengthIn'] as const) {
+      if (Number(v[key]) <= 0)
+        errors.push({ path: key, code: 'positive', message: `${key} must be above 0` });
+    }
+    for (const [min, max] of [
+      ['blockWMinIn', 'blockWMaxIn'],
+      ['blockLMinIn', 'blockLMaxIn'],
+    ] as const) {
+      if (Number(v[max]) < Number(v[min])) {
+        errors.push({ path: max, code: 'band', message: `${max} must be at least ${min}` });
+      }
+    }
+    return errors;
+  },
+};
+
+/** The rate column each B assembly type prices with (legacy `B/CalculateCost::calCostAssembly` switch). */
+const B_ASSEMBLY_RATE: Record<number, string> = {
+  1: 'pricePerDepthM',
+  2: 'minPricePerAreaIn2',
+  3: 'pricePerPcs',
+  4: 'pricePerPcs',
+};
+
+export const PL_B_ASSEMBLY_PRICES: PriceComponentDescriptor = {
+  component: 'b_assembly_prices',
+  table: 'pl_b_assembly_prices',
+  group: 'process_rates',
+  dimensions: [
+    { key: 'difficultyLevelId', type: 'ref', ref: 'difficulty_levels' },
+    { key: 'printTypeId', type: 'ref', ref: 'print_types' },
+    { key: 'assemblyId', type: 'ref', ref: 'assemblies' },
+    { key: 'rangeAmountMin', type: 'integer', nullable: true },
+    { key: 'rangeAmountMax', type: 'integer', nullable: true },
+  ],
+  values: [
+    { key: 'assemblyType', type: 'integer', min: 1 },
+    { key: 'pricePerDepthM', type: 'decimal', scale: 6, nullable: true },
+    { key: 'minPricePerAreaIn2', type: 'decimal', scale: 6, nullable: true },
+    { key: 'pricePerPcs', type: 'decimal', scale: 6, nullable: true },
+    { key: 'minPrice', type: 'decimal', scale: 6, nullable: true },
+    { key: 'blockPrice', type: 'decimal', scale: 6, nullable: true },
+    { key: 'materialPricePerIn2', type: 'decimal', scale: 6, nullable: true },
+  ],
+  validate(v) {
+    const rate = B_ASSEMBLY_RATE[Number(v.assemblyType)];
+    if (!rate) return [{ path: 'assemblyType', code: 'enum', message: 'assemblyType must be 1, 2, 3 or 4' }];
+    return v[rate] === null || v[rate] === undefined
+      ? [{ path: rate, code: 'required', message: `${rate} is required for assembly type ${v.assemblyType}` }]
+      : [];
+  },
+};
+
+export const PL_CODE_MARGINS: PriceComponentDescriptor = {
+  component: 'code_margins',
+  table: 'pl_code_margins',
+  group: 'commercial_terms',
+  dimensions: [
+    { key: 'printTypeId', type: 'ref', ref: 'print_types' },
+    { key: 'maxRangeContPct', type: 'decimal', scale: 4 },
+  ],
+  values: [
+    { key: 'codeName', type: 'text', nullable: true },
+    { key: 'minContBahtPerLot', type: 'decimal', scale: 6 },
+  ],
+};
+
 export const FOLDING_PRICE_COMPONENTS: readonly PriceComponentDescriptor[] = [
   PL_ASSEMBLY_PRICES,
   PL_ASSEMBLY_SHEETS,
@@ -405,4 +533,9 @@ export const FOLDING_PRICE_COMPONENTS: readonly PriceComponentDescriptor[] = [
   PL_PRINT_TYPE_TERMS,
   PL_PRINT_WASTES,
   PL_PROCESS_EXCLUSIONS,
+  PL_B_PRINT_WASTES,
+  PL_B_PRINT_PRICES,
+  PL_FOIL_PRICES,
+  PL_B_ASSEMBLY_PRICES,
+  PL_CODE_MARGINS,
 ];

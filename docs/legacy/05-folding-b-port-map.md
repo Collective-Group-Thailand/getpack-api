@@ -102,14 +102,16 @@ A rect `{x, y, width, length}` (mm on the blank, x from the left, y from the top
 | QB35 | — | no hard-coded factory ids in B |
 | QB41 | unauthenticated E1 with any factory | n/a: Packio prices only the configuration's candidate factories |
 
-**Data** (new or extended `pl_*`, migration in slice 2):
+**Data** (migration `20261107000001_folding_engine_b_components`, schema-design A-76) — B's own tables, so engine A's tables, line keys and version digests stay as they are:
 | Legacy | Packio |
 |---|---|
-| `print_wastes` by colour id + count | `pl_print_wastes` + nullable `ink_colour_id`, `colour_count` (B lines; A lines leave them null) |
-| `print_prices` by colour + count of that colour, `price_ink_thb_per_m2`, `price_color_combine_special_color` | `pl_print_prices` + nullable `colour_count` |
-| `finish_price.finish_price_baht_per_roll`, `finish.{width,length}_of_roll_foil_inch`, `min/max_block_w/l_inch`, `required_location` | `pl_finish_prices` + nullable foil roll and block columns, `required_location` |
-| `assembly_prices.price_per_depth_m`, `min_price_per_area_in2` | `pl_assembly_prices` + nullable columns |
-| `code_margin` (`max_range_cont`, `percent_cont`, `min_cont_baht_per_lot`) | new `pl_code_margins` |
+| `print_wastes` by colour id + total count | `pl_b_print_wastes` |
+| `print_prices` by colour + count of that colour, `price_ink_thb_per_m2`, `price_color_combine_special_color` | `pl_b_print_prices` |
+| `finish_price` (foil row) + `finish.{width,length}_of_roll_foil_inch`, `min/max_block_w/l_inch` (`FLOAT(10,0)`: whole numbers) | `pl_foil_prices` (finish of kind `foil`) |
+| `assembly_prices` with B's types (`price_per_depth_m`, `min_price_per_area_in2`, `assembly_price_per_pcs`) | `pl_b_assembly_prices` |
+| `code_margin` (`max_range_cont`, `min_cont_baht_per_lot`, `code_name`) | `pl_code_margins` |
+| `print_plate`, `diecut_price`, `diecut_block_price`, `finish_price` (F1, non-foil F2), `finish_wastes`, `diecut_wastes`, `assembly_wastes`, paper | engine A's `pl_*` lines of the B print type (one line read where legacy took `[0]`: the first in price-list order) |
+| `finish.required_location` | not stored: legacy NULL = 0 (sizes / amount used when the finish requires them) |
 | `semi_plate_waste`, `sorting`, `packing_price`, `delivery_cost` | not created (inputs none, D-233) |
 
 **Gate**: feature flag `pricing.folding_engine_b` (off): customer and CS quotes refuse B options; staff and factory breakdowns price them. Tags & sleeves keep refusing B.
