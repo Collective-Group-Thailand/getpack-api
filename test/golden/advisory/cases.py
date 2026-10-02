@@ -1,7 +1,7 @@
 """Golden cases of the Structure Advisor (U2.2, D-188, D-189, D-235-D-239).
 
 An independent transcription of the rule in docs/decisions.md D-239 (not of the TypeScript port): it writes
-golden.json with the inputs and the expected outcome. Run: python3 test/golden/advisory/cases.py
+golden.json with the inputs and the expected outcome. Run: python3 test/golden/advisory/cases.py && npx prettier --write test/golden/advisory/golden.json
 
 The rule set is the literature-based PROPOSAL of docs/advisory-validation.md (not a production value, D-237) and the
 boards are made up (D-005): the cases check the method, the signers check the factors and the expected boards.

@@ -2,10 +2,7 @@
   "ruleSet": {
     "mckeeConstant": "5.87",
     "uncertaintyPct": "15",
-    "formulas": [
-      "rsc",
-      "full_overlap"
-    ],
+    "formulas": ["rsc", "full_overlap"],
     "thinMarginPct": "10",
     "factors": {
       "humidity": {
@@ -137,14 +134,8 @@
         "leadHighN": 2187.4,
         "leadMarginPct": 252.2,
         "warnings": [],
-        "passing": [
-          "dev-ki230-bc",
-          "dev-ka185-b",
-          "dev-ka125-b"
-        ],
-        "excluded": [
-          "dev-kt-c"
-        ]
+        "passing": ["dev-ki230-bc", "dev-ka185-b", "dev-ka125-b"],
+        "excluded": ["dev-kt-c"]
       }
     },
     {
@@ -241,12 +232,8 @@
         "leadHighN": 6603.7,
         "leadMarginPct": 10.5,
         "warnings": [],
-        "passing": [
-          "dev-ki230-bc"
-        ],
-        "excluded": [
-          "dev-kt-c"
-        ]
+        "passing": ["dev-ki230-bc"],
+        "excluded": ["dev-kt-c"]
       }
     },
     {
@@ -340,14 +327,8 @@
         "leadHighN": 2187.4,
         "leadMarginPct": 21.4,
         "warnings": [],
-        "passing": [
-          "dev-ki230-bc",
-          "dev-ka185-b",
-          "dev-ka125-b"
-        ],
-        "excluded": [
-          "dev-kt-c"
-        ]
+        "passing": ["dev-ki230-bc", "dev-ka185-b", "dev-ka125-b"],
+        "excluded": ["dev-kt-c"]
       }
     },
     {
@@ -443,13 +424,9 @@
         "leadLowN": 4881.0,
         "leadHighN": 6603.7,
         "leadMarginPct": -87.4,
-        "warnings": [
-          "no_board_meets_load"
-        ],
+        "warnings": ["no_board_meets_load"],
         "passing": [],
-        "excluded": [
-          "dev-kt-c"
-        ]
+        "excluded": ["dev-kt-c"]
       }
     },
     {
@@ -543,14 +520,8 @@
         "leadHighN": 2187.4,
         "leadMarginPct": null,
         "warnings": [],
-        "passing": [
-          "dev-ki230-bc",
-          "dev-ka185-b",
-          "dev-ka125-b"
-        ],
-        "excluded": [
-          "dev-kt-c"
-        ]
+        "passing": ["dev-ki230-bc", "dev-ka185-b", "dev-ka125-b"],
+        "excluded": ["dev-kt-c"]
       }
     },
     {
@@ -647,14 +618,8 @@
         "leadHighN": 2187.4,
         "leadMarginPct": 92.2,
         "warnings": [],
-        "passing": [
-          "dev-ki230-bc",
-          "dev-ka185-b",
-          "dev-ka125-b"
-        ],
-        "excluded": [
-          "dev-kt-c"
-        ]
+        "passing": ["dev-ki230-bc", "dev-ka185-b", "dev-ka125-b"],
+        "excluded": ["dev-kt-c"]
       }
     },
     {
@@ -751,12 +716,8 @@
         "leadHighN": 6603.7,
         "leadMarginPct": 10.5,
         "warnings": [],
-        "passing": [
-          "dev-ki230-bc"
-        ],
-        "excluded": [
-          "dev-kt-c"
-        ]
+        "passing": ["dev-ki230-bc"],
+        "excluded": ["dev-kt-c"]
       }
     },
     {
@@ -849,17 +810,9 @@
         "leadLowN": 1616.8,
         "leadHighN": 2187.4,
         "leadMarginPct": 4.0,
-        "warnings": [
-          "thin_margin"
-        ],
-        "passing": [
-          "dev-ki230-bc",
-          "dev-ka185-b",
-          "dev-ka125-b"
-        ],
-        "excluded": [
-          "dev-kt-c"
-        ]
+        "warnings": ["thin_margin"],
+        "passing": ["dev-ki230-bc", "dev-ka185-b", "dev-ka125-b"],
+        "excluded": ["dev-kt-c"]
       }
     },
     {
@@ -953,13 +906,8 @@
         "leadHighN": 3024.1,
         "leadMarginPct": 34.2,
         "warnings": [],
-        "passing": [
-          "dev-ki230-bc",
-          "dev-ka185-b"
-        ],
-        "excluded": [
-          "dev-kt-c"
-        ]
+        "passing": ["dev-ki230-bc", "dev-ka185-b"],
+        "excluded": ["dev-kt-c"]
       }
     }
   ]
