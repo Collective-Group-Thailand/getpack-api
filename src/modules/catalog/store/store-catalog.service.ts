@@ -299,6 +299,7 @@ export class StoreCatalogService {
           kind: m.kind,
           gsm: num(m.gsm),
           micron: num(m.micron),
+          caliperMm: num(m.caliperMm),
           flute: m.fluteType?.code ?? null,
           isFoodGrade: m.isFoodGrade,
           coatable: m.coatable,

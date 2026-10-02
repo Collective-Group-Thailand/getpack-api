@@ -827,6 +827,8 @@ const CHECKS = [
   // --- U-B6 tail tier-B envelope (A-77)
   'ck_factory_participation_versions__envelope',
   'ck_factory_change_requests__participation',
+  // --- U2.1 measurement basis (A-80)
+  'ck_materials__caliper',
 ];
 
 const TRIGGERS = [

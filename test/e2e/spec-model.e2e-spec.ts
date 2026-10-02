@@ -62,4 +62,58 @@ describe('specification model v2 (e2e, U2.1)', () => {
         .displayUnit,
     ).toBe('cm');
   });
+
+  it('shows a size on every measurement basis from the material caliper (D-182)', async () => {
+    const convert = (body: object) =>
+      request(ctx.server).post('/v1/store/specs/actions/convert-dimensions').send(body);
+    // Without a style the size is a closed box; DEV-FLAT (geometry `flat`) is a flat blank.
+    const base = {
+      productTypeCode: 'folding_carton',
+      w: 100,
+      l: 150,
+      d: 50,
+    };
+    await ctx.prisma.material.update({ where: { code: 'dev-art-350' }, data: { caliperMm: null } });
+    const unknown = await convert({
+      ...base,
+      materialId: fixture.materialPublicId,
+      basis: 'external',
+    }).expect(200);
+    expect(unknown.body).toMatchObject({
+      caliperMm: null,
+      sizes: { internal: null, external: { w: 100, l: 150, d: 50 } },
+    });
+    await ctx.prisma.material.update({ where: { code: 'dev-art-350' }, data: { caliperMm: 0.5 } });
+    try {
+      const res = await convert({ ...base, materialId: fixture.materialPublicId, basis: 'internal' }).expect(
+        200,
+      );
+      expect(res.body).toMatchObject({
+        caliperMm: 0.5,
+        conversionVersion: '1.0.0',
+        sizes: {
+          internal: { w: 100, l: 150, d: 50 },
+          external: { w: 101, l: 151, d: 51 },
+          overCrease: { w: 100.5, l: 150.5, d: 51 },
+        },
+      });
+      const flat = await convert({ ...base, patternId: fixture.patternPublicId, basis: 'product' }).expect(
+        200,
+      );
+      expect(flat.body).toMatchObject({
+        family: 'flat',
+        bases: ['product'],
+        sizes: { product: { w: 100, l: 150, d: 50 } },
+      });
+      const wrong = await convert({ ...base, patternId: fixture.patternPublicId, basis: 'internal' }).expect(
+        422,
+      );
+      expect(wrong.body.code).toBe('specs.basis_not_accepted');
+      expect((await convert({ ...base, basis: 'internal', unit: 'in' }).expect(422)).body.code).toBe(
+        'specs.unit_not_accepted',
+      );
+    } finally {
+      await ctx.prisma.material.update({ where: { code: 'dev-art-350' }, data: { caliperMm: null } });
+    }
+  });
 });

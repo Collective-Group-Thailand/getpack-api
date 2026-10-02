@@ -3026,6 +3026,17 @@
           "type": "https://errors.packio/shipping.version_open"
         }
       },
+      "problem.specs.basis_not_accepted": {
+        "summary": "specs.basis_not_accepted",
+        "value": {
+          "code": "specs.basis_not_accepted",
+          "detail": "สินค้านี้ไม่วัดขนาดด้วยวิธีที่ระบุ กรุณาเลือกวิธีวัดที่สินค้านี้รองรับ",
+          "requestId": "6f1c2d8e-2c7b-4d0e-9d1c-3f1a2b3c4d5e",
+          "status": 422,
+          "title": "ไม่รองรับการวัดแบบนี้",
+          "type": "https://errors.packio/specs.basis_not_accepted"
+        }
+      },
       "problem.specs.unit_not_accepted": {
         "summary": "specs.unit_not_accepted",
         "value": {
@@ -11110,6 +11121,77 @@
         ],
         "type": "string"
       },
+      "BasisSizesDto": {
+        "properties": {
+          "external": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/SizeDto"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Outside size",
+            "example": {
+              "d": 51,
+              "l": 151,
+              "w": 101
+            }
+          },
+          "internal": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/SizeDto"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Inside size",
+            "example": {
+              "d": 50,
+              "l": 150,
+              "w": 100
+            }
+          },
+          "overCrease": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/SizeDto"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Score-to-score size of the blank",
+            "example": {
+              "d": 51,
+              "l": 150.5,
+              "w": 100.5
+            }
+          },
+          "product": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/SizeDto"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Finished size of a flat product",
+            "example": null
+          }
+        },
+        "required": [
+          "internal",
+          "external",
+          "overCrease",
+          "product"
+        ],
+        "type": "object"
+      },
       "BenefitTierBasis": {
         "enum": [
           "quantity",
@@ -17215,6 +17297,15 @@
         ],
         "type": "string"
       },
+      "ConstructionFamily": {
+        "enum": [
+          "box",
+          "tray",
+          "sleeve",
+          "flat"
+        ],
+        "type": "string"
+      },
       "ConsultationLineDto": {
         "properties": {
           "buyUnitPrice": {
@@ -17476,6 +17567,115 @@
           "respondBy",
           "firstRespondedAt",
           "overdue"
+        ],
+        "type": "object"
+      },
+      "ConvertDimensionsDto": {
+        "properties": {
+          "basis": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/MeasurementBasis"
+              }
+            ],
+            "description": "The basis the sizes are given on (D-182)",
+            "example": "internal"
+          },
+          "d": {
+            "description": "Depth; 0 or absent for a flat product Unit: mm.",
+            "example": 50,
+            "minimum": 0,
+            "type": "number"
+          },
+          "l": {
+            "description": "Length Unit: mm.",
+            "example": 150,
+            "minimum": 0,
+            "type": "number"
+          },
+          "materialId": {
+            "description": "The material, whose caliper converts between bases; without one only the given basis is known",
+            "example": "0192f3a0-7c1e-7d2a-9b1f-00000000a201",
+            "format": "uuid",
+            "type": "string"
+          },
+          "patternId": {
+            "description": "The style; it decides how the box closes (box, tray, sleeve or flat). Without one: a closed box",
+            "example": "0192f3a0-7c1e-7d2a-9b1f-00000000a101",
+            "format": "uuid",
+            "type": "string"
+          },
+          "productTypeCode": {
+            "description": "The product type",
+            "example": "folding_carton",
+            "maxLength": 64,
+            "pattern": "^[a-z][a-z0-9_]*$",
+            "type": "string"
+          },
+          "w": {
+            "description": "Width Unit: mm.",
+            "example": 100,
+            "minimum": 0,
+            "type": "number"
+          }
+        },
+        "required": [
+          "productTypeCode",
+          "basis",
+          "w",
+          "l"
+        ],
+        "type": "object"
+      },
+      "ConvertedDimensionsDto": {
+        "properties": {
+          "bases": {
+            "example": [
+              "internal",
+              "external",
+              "over_crease"
+            ],
+            "items": {
+              "$ref": "#/components/schemas/MeasurementBasis"
+            },
+            "type": "array"
+          },
+          "caliperMm": {
+            "description": "Caliper used, mm; null when unknown",
+            "example": 0.5,
+            "type": [
+              "number",
+              "null"
+            ]
+          },
+          "conversionVersion": {
+            "description": "Conversion rules version (frozen on quotes)",
+            "example": "1.0.0",
+            "type": "string"
+          },
+          "family": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ConstructionFamily"
+              }
+            ],
+            "example": "box"
+          },
+          "sizes": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/BasisSizesDto"
+              }
+            ],
+            "description": "Each basis; null where a caliper is needed and unknown"
+          }
+        },
+        "required": [
+          "family",
+          "bases",
+          "caliperMm",
+          "conversionVersion",
+          "sizes"
         ],
         "type": "object"
       },
@@ -20530,6 +20730,15 @@
       },
       "CreateMaterialDto": {
         "properties": {
+          "caliperMm": {
+            "description": "Board caliper, at most 50 mm (D-182) Unit: mm.",
+            "example": 0.45,
+            "minimum": 0,
+            "type": [
+              "number",
+              "null"
+            ]
+          },
           "coatable": {
             "example": false,
             "type": "boolean"
@@ -34587,6 +34796,14 @@
       },
       "MaterialDto": {
         "properties": {
+          "caliperMm": {
+            "description": "Board caliper (mm) — converts a box size between inside, outside and score-to-score (D-182)",
+            "example": 0.45,
+            "type": [
+              "number",
+              "null"
+            ]
+          },
           "coatable": {
             "description": "The board takes a coating (legacy `paper_grade.can_finish`; the corrugate calculator refuses coating otherwise)",
             "example": false,
@@ -34729,6 +34946,7 @@
           "nameEn",
           "gsm",
           "micron",
+          "caliperMm",
           "fluteTypeId",
           "paperGroup",
           "insideColour",
@@ -34802,6 +35020,15 @@
           "foil",
           "label_stock",
           "other"
+        ],
+        "type": "string"
+      },
+      "MeasurementBasis": {
+        "enum": [
+          "internal",
+          "external",
+          "over_crease",
+          "product"
         ],
         "type": "string"
       },
@@ -54537,6 +54764,31 @@
         ],
         "type": "string"
       },
+      "SizeDto": {
+        "properties": {
+          "d": {
+            "description": "Depth, mm",
+            "example": 50,
+            "type": "number"
+          },
+          "l": {
+            "description": "Length, mm",
+            "example": 150,
+            "type": "number"
+          },
+          "w": {
+            "description": "Width, mm",
+            "example": 100,
+            "type": "number"
+          }
+        },
+        "required": [
+          "w",
+          "l",
+          "d"
+        ],
+        "type": "object"
+      },
       "SkippedDesignDto": {
         "properties": {
           "localId": {
@@ -63894,6 +64146,15 @@
       },
       "UpdateMaterialDto": {
         "properties": {
+          "caliperMm": {
+            "description": "Board caliper, at most 50 mm (D-182) Unit: mm.",
+            "example": 0.45,
+            "minimum": 0,
+            "type": [
+              "number",
+              "null"
+            ]
+          },
           "coatable": {
             "example": false,
             "type": "boolean"
@@ -100964,6 +101225,7 @@
                 "example": {
                   "data": [
                     {
+                      "caliperMm": 0.45,
                       "coatable": false,
                       "code": "art-card-350",
                       "descriptionEn": null,
@@ -101180,6 +101442,7 @@
             "content": {
               "application/json": {
                 "example": {
+                  "caliperMm": 0.45,
                   "coatable": false,
                   "code": "art-card-350",
                   "descriptionEn": null,
@@ -101413,6 +101676,7 @@
             "content": {
               "application/json": {
                 "example": {
+                  "caliperMm": 0.45,
                   "coatable": false,
                   "code": "art-card-350",
                   "descriptionEn": null,
@@ -101638,6 +101902,7 @@
             "content": {
               "application/json": {
                 "example": {
+                  "caliperMm": 0.45,
                   "coatable": false,
                   "code": "art-card-350",
                   "descriptionEn": null,
@@ -332786,6 +333051,250 @@
         ]
       }
     },
+    "/v1/store/specs/actions/convert-dimensions": {
+      "post": {
+        "description": "The inside, outside and score-to-score sizes of a box, tray or sleeve from the size on one basis and the material’s caliper; a flat product has its finished size only (D-182). Millimetres only (D-183). Without a caliper only the given basis is known. The same conversion prices a configuration given on another basis.\n\nImplements: D-182, D-183.",
+        "operationId": "store.specs.convertDimensions",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "examples": {
+                "default": {
+                  "value": {
+                    "basis": "internal",
+                    "d": 50,
+                    "l": 150,
+                    "materialId": "0192f3a0-7c1e-7d2a-9b1f-00000000a201",
+                    "productTypeCode": "folding_carton",
+                    "w": 100
+                  }
+                }
+              },
+              "schema": {
+                "$ref": "#/components/schemas/ConvertDimensionsDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "bases": [
+                    "internal",
+                    "external",
+                    "over_crease"
+                  ],
+                  "caliperMm": 0.5,
+                  "conversionVersion": "1.0.0",
+                  "family": "box",
+                  "sizes": {
+                    "external": {
+                      "d": 51,
+                      "l": 151,
+                      "w": 101
+                    },
+                    "internal": {
+                      "d": 50,
+                      "l": 150,
+                      "w": 100
+                    },
+                    "overCrease": {
+                      "d": 51,
+                      "l": 150.5,
+                      "w": 100.5
+                    },
+                    "product": null
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ConvertedDimensionsDto"
+                }
+              }
+            },
+            "description": "Sizes per basis",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "400": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.bad_request": {
+                    "$ref": "#/components/examples/problem.http.bad_request"
+                  },
+                  "http.malformed_json": {
+                    "$ref": "#/components/examples/problem.http.malformed_json"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.bad_request`, `http.malformed_json`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.unauthenticated": {
+                    "$ref": "#/components/examples/problem.auth.unauthenticated"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.unauthenticated`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.forbidden": {
+                    "$ref": "#/components/examples/problem.auth.forbidden"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.forbidden`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "404": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.not_found": {
+                    "$ref": "#/components/examples/problem.http.not_found"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.not_found`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "specs.basis_not_accepted": {
+                    "$ref": "#/components/examples/problem.specs.basis_not_accepted"
+                  },
+                  "specs.unit_not_accepted": {
+                    "$ref": "#/components/examples/problem.specs.unit_not_accepted"
+                  },
+                  "validation.failed": {
+                    "$ref": "#/components/examples/problem.validation.failed"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `specs.basis_not_accepted`, `specs.unit_not_accepted`, `validation.failed`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [],
+        "summary": "Show a size on every measurement basis",
+        "tags": [
+          "store.specs"
+        ]
+      }
+    },
     "/v1/store/store-credit": {
       "get": {
         "description": "Credits from credit notes (shortages within tolerance D-021, cancellations, claims) and their use or refund.\n\nImplements: D-021, D-033.",
@@ -337375,6 +337884,10 @@
     {
       "description": "Saved quotations: 15-day price lock, share links, PDF in the name of the issuing entity, re-pricing after expiry (D-051).",
       "name": "store.savedQuotes"
+    },
+    {
+      "description": "Measurement bases of a size (D-182): inside, outside and score-to-score sizes from the material caliper; millimetres only (D-183).",
+      "name": "store.specs"
     },
     {
       "description": "How to reach Packio CS: support channels and the contact form (D-221, D-005).",

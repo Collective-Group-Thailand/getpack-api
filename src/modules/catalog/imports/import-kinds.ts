@@ -138,6 +138,7 @@ export const materialsImport: ImportKind = {
         nameEn,
         decimal('gsm', 'gsm'),
         decimal('micron', 'micron'),
+        decimal('caliper_mm', 'caliperMm'),
         {
           header: 'flute_code',
           field: 'fluteTypeId',

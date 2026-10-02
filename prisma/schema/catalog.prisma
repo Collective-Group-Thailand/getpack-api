@@ -717,6 +717,8 @@ model Material {
   nameEn        String        @map("name_en")
   gsm           Decimal?      @db.Decimal(8, 2)
   micron        Decimal?      @db.Decimal(8, 2)
+  /// D-182: board thickness in mm (paperboard, corrugated board) for measurement-basis conversion; empty = unknown.
+  caliperMm     Decimal?      @map("caliper_mm") @db.Decimal(6, 3)
   fluteTypeId   BigInt?       @map("flute_type_id")
   paperGroup    String?       @map("paper_group")
   insideColour  String?       @map("inside_colour")
@@ -2066,4 +2068,14 @@ model CatalogPriceHint {
   catalogProduct CatalogProduct @relation(fields: [catalogProductId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_catalog_price_hints__catalog_product_id")
 
   @@map("catalog_price_hints")
+}
+
+/// D-182: which size a dimension describes — inside, outside, score-to-score (over crease) or the finished flat product.
+enum MeasurementBasis {
+  internal
+  external
+  over_crease
+  product
+
+  @@map("measurement_basis")
 }

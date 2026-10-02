@@ -306,6 +306,7 @@ interface MaterialRow extends Named, WithContent {
   kind: MaterialDto['kind'];
   gsm: Prisma.Decimal | null;
   micron: Prisma.Decimal | null;
+  caliperMm: Prisma.Decimal | null;
   paperGroup: string | null;
   insideColour: string | null;
   outsideColour: string | null;
@@ -326,6 +327,7 @@ export const materialDto = (row: MaterialRow): MaterialDto => ({
   nameEn: row.nameEn,
   gsm: num(row.gsm),
   micron: num(row.micron),
+  caliperMm: num(row.caliperMm),
   fluteTypeId: row.fluteType?.publicId ?? null,
   paperGroup: row.paperGroup,
   insideColour: row.insideColour,
@@ -366,6 +368,7 @@ export const materials = defineResource({
     nameEn: 'Art card 350 gsm',
     gsm: 350,
     micron: null,
+    caliperMm: 0.45,
     fluteTypeId: null,
     paperGroup: 'art',
     insideColour: 'ขาว',

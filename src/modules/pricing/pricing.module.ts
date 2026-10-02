@@ -1,3 +1,4 @@
+import { SpecsService } from '@modules/specs/specs.service';
 import { Global, Module } from '@nestjs/common';
 
 import { CalculatorRegistry } from './calculators/calculator';
@@ -47,6 +48,7 @@ const SERVICES = [
   ServiceSnapshotLoader,
   ServiceQuoteAdapter,
   QuoteEngineService,
+  SpecsService,
   FoldingInputDataService,
   CorrugateInputDataService,
   LabelInputDataService,

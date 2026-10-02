@@ -447,30 +447,32 @@ model DesignRound {
 // --- Designs & drawings ------------------------------------------------------------------------------
 
 model DesignDocument {
-  id                   BigInt    @id(map: "pk_design_documents") @default(autoincrement())
-  publicId             String    @unique(map: "ux_design_documents__public_id") @default(dbgenerated("uuidv7()")) @map("public_id") @db.Uuid
-  ownerUserId          BigInt    @map("owner_user_id")
-  companyId            BigInt?   @map("company_id")
-  catalogProductId     BigInt    @map("catalog_product_id")
-  patternId            BigInt?   @map("pattern_id")
-  lengthMm             Decimal?  @map("length_mm") @db.Decimal(10, 2)
-  widthMm              Decimal?  @map("width_mm") @db.Decimal(10, 2)
-  heightMm             Decimal?  @map("height_mm") @db.Decimal(10, 2)
-  materialId           BigInt?   @map("material_id")
-  semiDesignTemplateId BigInt?   @map("semi_design_template_id")
+  id                   BigInt           @id(map: "pk_design_documents") @default(autoincrement())
+  publicId             String           @unique(map: "ux_design_documents__public_id") @default(dbgenerated("uuidv7()")) @map("public_id") @db.Uuid
+  ownerUserId          BigInt           @map("owner_user_id")
+  companyId            BigInt?          @map("company_id")
+  catalogProductId     BigInt           @map("catalog_product_id")
+  patternId            BigInt?          @map("pattern_id")
+  lengthMm             Decimal?         @map("length_mm") @db.Decimal(10, 2)
+  widthMm              Decimal?         @map("width_mm") @db.Decimal(10, 2)
+  heightMm             Decimal?         @map("height_mm") @db.Decimal(10, 2)
+  /// D-182: the basis of the sizes (existing rows: internal, A-80).
+  measurementBasis     MeasurementBasis @default(internal) @map("measurement_basis")
+  materialId           BigInt?          @map("material_id")
+  semiDesignTemplateId BigInt?          @map("semi_design_template_id")
   title                String
-  thumbnailFileId      BigInt?   @map("thumbnail_file_id")
-  currentVersionId     BigInt?   @unique(map: "ux_design_documents__current_version_id") @map("current_version_id")
+  thumbnailFileId      BigInt?          @map("thumbnail_file_id")
+  currentVersionId     BigInt?          @unique(map: "ux_design_documents__current_version_id") @map("current_version_id")
   /// View-only share link (D-226): SHA-256 of the token, shown once; sharing again replaces it, revoking clears it.
-  shareTokenHash       Bytes?    @unique(map: "ux_design_documents__share_token_hash") @map("share_token_hash")
-  sharedAt             DateTime? @map("shared_at") @db.Timestamptz(6)
-  shareExpiresAt       DateTime? @map("share_expires_at") @db.Timestamptz(6)
+  shareTokenHash       Bytes?           @unique(map: "ux_design_documents__share_token_hash") @map("share_token_hash")
+  sharedAt             DateTime?        @map("shared_at") @db.Timestamptz(6)
+  shareExpiresAt       DateTime?        @map("share_expires_at") @db.Timestamptz(6)
   /// The browser-side id of a guest design imported after sign-in; a replay of the same id is a no-op.
-  importLocalId        String?   @map("import_local_id")
-  deletedAt            DateTime? @map("deleted_at") @db.Timestamptz(6)
-  createdAt            DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
-  updatedAt            DateTime  @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
-  rowVersion           Int       @default(1) @map("row_version")
+  importLocalId        String?          @map("import_local_id")
+  deletedAt            DateTime?        @map("deleted_at") @db.Timestamptz(6)
+  createdAt            DateTime         @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt            DateTime         @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+  rowVersion           Int              @default(1) @map("row_version")
 
   owner              User                    @relation("DesignDocumentOwner", fields: [ownerUserId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_design_documents__owner_user_id")
   company            Company?                @relation("DesignDocumentCompany", fields: [companyId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_design_documents__company_id")
@@ -543,25 +545,27 @@ model DesignAsset {
 
 /// Drawing log: one request to the dieline engine (`@packio/dieline`).
 model DrawingJob {
-  id               BigInt        @id(map: "pk_drawing_jobs") @default(autoincrement())
-  publicId         String        @unique(map: "ux_drawing_jobs__public_id") @default(dbgenerated("uuidv7()")) @map("public_id") @db.Uuid
-  requestedById    BigInt?       @map("requested_by")
-  orderId          BigInt?       @map("order_id")
-  designDocumentId BigInt?       @map("design_document_id")
-  patternId        BigInt        @map("pattern_id")
-  lengthMm         Decimal       @map("length_mm") @db.Decimal(10, 2)
-  widthMm          Decimal       @map("width_mm") @db.Decimal(10, 2)
-  heightMm         Decimal       @map("height_mm") @db.Decimal(10, 2)
+  id               BigInt           @id(map: "pk_drawing_jobs") @default(autoincrement())
+  publicId         String           @unique(map: "ux_drawing_jobs__public_id") @default(dbgenerated("uuidv7()")) @map("public_id") @db.Uuid
+  requestedById    BigInt?          @map("requested_by")
+  orderId          BigInt?          @map("order_id")
+  designDocumentId BigInt?          @map("design_document_id")
+  patternId        BigInt           @map("pattern_id")
+  lengthMm         Decimal          @map("length_mm") @db.Decimal(10, 2)
+  widthMm          Decimal          @map("width_mm") @db.Decimal(10, 2)
+  heightMm         Decimal          @map("height_mm") @db.Decimal(10, 2)
+  /// D-182: the basis of the sizes (existing rows: internal, A-80).
+  measurementBasis MeasurementBasis @default(internal) @map("measurement_basis")
   format           DrawingFormat
-  engineVersion    String?       @map("engine_version")
-  status           DrawingStatus @default(queued)
-  outputFileId     BigInt?       @map("output_file_id")
+  engineVersion    String?          @map("engine_version")
+  status           DrawingStatus    @default(queued)
+  outputFileId     BigInt?          @map("output_file_id")
   error            String?
-  attempts         Int           @default(0) @db.SmallInt
-  lockedUntil      DateTime?     @map("locked_until") @db.Timestamptz(6)
-  completedAt      DateTime?     @map("completed_at") @db.Timestamptz(6)
-  createdAt        DateTime      @default(now()) @map("created_at") @db.Timestamptz(6)
-  updatedAt        DateTime      @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+  attempts         Int              @default(0) @db.SmallInt
+  lockedUntil      DateTime?        @map("locked_until") @db.Timestamptz(6)
+  completedAt      DateTime?        @map("completed_at") @db.Timestamptz(6)
+  createdAt        DateTime         @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt        DateTime         @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
 
   requestedBy       User?             @relation("DrawingJobRequestedBy", fields: [requestedById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_drawing_jobs__requested_by")
   order             Order?            @relation("DrawingJobOrder", fields: [orderId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_drawing_jobs__order_id")

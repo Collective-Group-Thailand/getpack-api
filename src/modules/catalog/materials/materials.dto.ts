@@ -284,6 +284,14 @@ export class MaterialDto {
   @ApiProperty({ type: Number, nullable: true, example: null, description: 'Thickness (µm), films' })
   micron!: number | null;
 
+  @ApiProperty({
+    type: Number,
+    nullable: true,
+    example: 0.45,
+    description: 'Board caliper (mm) — converts a box size between inside, outside and score-to-score (D-182)',
+  })
+  caliperMm!: number | null;
+
   @ApiProperty({ type: String, format: 'uuid', nullable: true, example: null })
   fluteTypeId!: string | null;
 
@@ -362,6 +370,16 @@ export class CreateMaterialDto {
 
   @DecimalField({ example: null, nullable: true, positive: true, unit: 'µm' })
   micron?: number | null;
+
+  @DecimalField({
+    example: 0.45,
+    nullable: true,
+    positive: true,
+    scale: 3,
+    unit: 'mm',
+    description: 'Board caliper, at most 50 mm (D-182)',
+  })
+  caliperMm?: number | null;
 
   @RefField({ example: null, nullable: true })
   fluteTypeId?: string | null;
