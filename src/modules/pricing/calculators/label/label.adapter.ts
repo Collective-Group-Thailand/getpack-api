@@ -6,6 +6,7 @@ import { Injectable, type OnModuleInit } from '@nestjs/common';
 import {
   type CalculationLogInput,
   type CalculatorAdapter,
+  type ConfigurationFacts,
   type PricedOption,
   type ResolvedBase,
 } from '../adapter';
@@ -117,6 +118,16 @@ export class LabelQuoteAdapter
     return [
       { kind: 'label', w: resolved.size.w, l: resolved.size.l, gsm: resolved.materialGsm, roll: false },
     ];
+  }
+
+  envelopeFacts(resolved: ResolvedLabelQuote, cfg: LabelConfiguration): ConfigurationFacts {
+    return {
+      patternId: null,
+      materialIds: [resolved.materialId],
+      size: { w: cfg.w, l: cfg.l, d: null },
+      catalogProductId: resolved.catalogProductId,
+      stockProductId: null,
+    };
   }
 
   logInput(cfg: LabelConfiguration): CalculationLogInput {

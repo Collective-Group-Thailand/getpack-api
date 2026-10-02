@@ -6,6 +6,7 @@ import { Injectable, type OnModuleInit } from '@nestjs/common';
 import {
   type CalculationLogInput,
   type CalculatorAdapter,
+  type ConfigurationFacts,
   type PricedOption,
   type ResolvedBase,
 } from '../adapter';
@@ -111,6 +112,17 @@ export class PouchQuoteAdapter
 
   shipmentParts(): ShipmentPart[] {
     return [{ kind: 'pouch' }];
+  }
+
+  envelopeFacts(resolved: ResolvedPouchQuote, _cfg: PouchConfiguration): ConfigurationFacts {
+    // A pouch is matched on its width and length; gussets are not an envelope dimension.
+    return {
+      patternId: resolved.patternId,
+      materialIds: [resolved.materialId],
+      size: { w: resolved.size.w, l: resolved.size.l, d: null },
+      catalogProductId: resolved.catalogProductId,
+      stockProductId: null,
+    };
   }
 
   logInput(cfg: PouchConfiguration): CalculationLogInput {

@@ -10,6 +10,8 @@ import { dimensionBand, quantityBand } from './rfq-spec';
 const CALCULATION_SOURCES: Record<string, UnmetDemandSource> = {
   no_price_path: 'no_price_path',
   not_priceable: 'capability_missing',
+  // A tier-B path exists but not for this specification (D-234).
+  envelope_not_covered: 'no_price_path',
   delivery_unavailable: 'capability_missing',
   capacity_unavailable: 'capacity_limited',
 };

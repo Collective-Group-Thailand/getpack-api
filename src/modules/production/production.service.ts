@@ -772,10 +772,13 @@ export class ProductionService {
     const cfg = ((order.quote.input ?? {}) as { configuration?: Record<string, unknown> }).configuration;
     const calculator = order.productType.calculatorKey;
     if (!cfg || !calculator || !this.quotes.hasCalculator(calculator)) return null;
+    // Only a path the factory holds for this configuration: tier A, or tier B inside its envelope (D-043, D-234).
     const view = await this.quotes.priceForFactory(
       calculator,
       { ...cfg, quantities: [order.quantityOrdered] },
       factory,
+      new Date(),
+      { honourEnvelope: true },
     );
     const prices = view.options.flatMap((o) => o.steps.flatMap((s) => (s?.buyPrice ? [D(s.buyPrice)] : [])));
     if (prices.length === 0) return null;

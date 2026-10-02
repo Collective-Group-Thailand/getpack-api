@@ -6,6 +6,7 @@ import { Injectable, type OnModuleInit } from '@nestjs/common';
 import {
   type CalculationLogInput,
   type CalculatorAdapter,
+  type ConfigurationFacts,
   type PricedOption,
   type ResolvedBase,
 } from '../adapter';
@@ -115,6 +116,19 @@ export class StandardProductQuoteAdapter
 
   shipmentParts(resolved: ResolvedStandardProductQuote): ShipmentPart[] {
     return [{ kind: 'stock', unit: resolved.unit, weightG: resolved.weightG ?? 0 }];
+  }
+
+  envelopeFacts(
+    resolved: ResolvedStandardProductQuote,
+    _cfg: StandardProductConfiguration,
+  ): ConfigurationFacts {
+    return {
+      patternId: null,
+      materialIds: [],
+      size: null,
+      catalogProductId: null,
+      stockProductId: resolved.stockProductId,
+    };
   }
 
   logInput(cfg: StandardProductConfiguration): CalculationLogInput {

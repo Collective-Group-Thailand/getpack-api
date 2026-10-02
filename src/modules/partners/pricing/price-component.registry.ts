@@ -56,12 +56,6 @@ export interface PriceComponentDescriptor {
   costDriverSeries?: string;
   /** Group 1: material family the line prices, for the index-linked suggestion (D-040). */
   materialFamilyOf?(values: PriceValues, db: Tx): Promise<bigint | null>;
-  /** Tier B: whether this component's lines cover a configuration (D-043), used by quote-path. */
-  coversConfiguration?(
-    versionId: bigint,
-    configuration: Record<string, unknown>,
-    db: Tx,
-  ): Promise<boolean | undefined>;
 }
 
 const IDENTIFIER = /^[a-z][a-z0-9_]*$/;

@@ -7,6 +7,7 @@ import { FeatureFlagsService } from '@platform/feature-flags/feature-flags.servi
 import {
   type CalculationLogInput,
   type CalculatorAdapter,
+  type ConfigurationFacts,
   type LoadOptions,
   type PricedOption,
   type ResolvedBase,
@@ -99,6 +100,16 @@ export class FoldingQuoteAdapter
 
   shipmentParts(resolved: ResolvedFoldingQuote): ShipmentPart[] {
     return foldingShipmentParts(resolved);
+  }
+
+  envelopeFacts(resolved: ResolvedFoldingQuote, cfg: FoldingConfiguration): ConfigurationFacts {
+    return {
+      patternId: resolved.patternId,
+      materialIds: [resolved.materialId],
+      size: { w: cfg.w, l: cfg.l, d: cfg.d },
+      catalogProductId: resolved.catalogProductId,
+      stockProductId: null,
+    };
   }
 
   logInput(cfg: FoldingConfiguration): CalculationLogInput {

@@ -18,10 +18,10 @@ import { LOGISTICS_STORE_CONTROLLERS } from '@modules/logistics/logistics.regist
 import { LOYALTY_STORE_CONTROLLERS } from '@modules/loyalty/loyalty.registry';
 import { OPS_STORE_CONTROLLERS } from '@modules/ops/ops.registry';
 import { ORDERS_STORE_CONTROLLERS } from '@modules/orders/orders.registry';
-import { StoreQuotePathController } from '@modules/partners/quote-path/quote-path.controller';
 import { PAYMENT_SCHEDULES_STORE_CONTROLLERS } from '@modules/payment-schedules/payment-schedules.registry';
 import { PAYMENTS_STORE_CONTROLLERS } from '@modules/payments/payments.registry';
 import { PRICING_STORE_CONTROLLERS } from '@modules/pricing/pricing.registry';
+import { StoreQuotePathController } from '@modules/pricing/quotes/store-quote-path.controller';
 import { PROMOTIONS_STORE_CONTROLLERS } from '@modules/promotions/promotions.registry';
 import { QUOTES_STORE_CONTROLLERS } from '@modules/quotes/quotes.registry';
 import { RECEIVABLES_STORE_CONTROLLERS } from '@modules/receivables/receivables.registry';

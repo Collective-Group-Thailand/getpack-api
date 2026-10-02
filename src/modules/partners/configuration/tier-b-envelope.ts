@@ -166,6 +166,18 @@ export function parseEnvelope(
   return { envelope, errors };
 }
 
+/**
+ * What one configuration offers to a tier-B envelope check (D-043, D-234): internal ids, sizes in mm on the internal
+ * basis (D-182). A fact the configuration does not carry is null / empty, so a restricted dimension fails closed.
+ */
+export interface ConfigurationFacts {
+  patternId: bigint | null;
+  materialIds: bigint[];
+  size: { w: number; l: number; d: number | null } | null;
+  catalogProductId: bigint | null;
+  stockProductId: bigint | null;
+}
+
 /** What one configuration offers to an envelope check; internal ids already mapped to public ids. */
 export interface EnvelopeFacts {
   patternId: string | null;

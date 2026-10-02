@@ -285,9 +285,16 @@ export class QuoteStepDto {
   @ApiProperty({
     nullable: true,
     example: null,
-    enum: ['no_price_path', 'not_priceable', 'capacity_unavailable', 'delivery_unavailable'],
+    enum: [
+      'no_price_path',
+      'not_priceable',
+      'envelope_not_covered',
+      'capacity_unavailable',
+      'delivery_unavailable',
+    ],
     enumName: 'QuoteNoPriceReason',
-    description: 'Why there is no instant price',
+    description:
+      'Why there is no instant price; `envelope_not_covered`: only tier-B paths priced it, outside their envelopes (D-234)',
   })
   reason!: string | null;
 

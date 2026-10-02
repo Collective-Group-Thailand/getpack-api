@@ -3,7 +3,12 @@ import { type Prisma } from '@generated/prisma/client';
 import { type ShipmentPart } from '@modules/shipping/shipping-quote.service';
 import { Injectable, type OnModuleInit } from '@nestjs/common';
 
-import { type CalculationLogInput, type CalculatorAdapter, type PricedOption } from '../adapter';
+import {
+  type CalculationLogInput,
+  type CalculatorAdapter,
+  type ConfigurationFacts,
+  type PricedOption,
+} from '../adapter';
 import { CalculatorRegistry } from '../calculator';
 import {
   foldingShipmentParts,
@@ -115,6 +120,17 @@ export class TagSleeveQuoteAdapter
 
   shipmentParts(resolved: ResolvedFoldingQuote): ShipmentPart[] {
     return foldingShipmentParts(resolved);
+  }
+
+  envelopeFacts(resolved: ResolvedFoldingQuote, cfg: TagSleeveConfiguration): ConfigurationFacts {
+    // A tag is a flat blank: no depth (d = 0 in the folding engine).
+    return {
+      patternId: resolved.patternId,
+      materialIds: [resolved.materialId],
+      size: { w: cfg.w, l: cfg.l, d: null },
+      catalogProductId: resolved.catalogProductId,
+      stockProductId: null,
+    };
   }
 
   logInput(cfg: TagSleeveConfiguration): CalculationLogInput {

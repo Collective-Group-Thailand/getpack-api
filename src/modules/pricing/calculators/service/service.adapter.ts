@@ -6,6 +6,7 @@ import { Injectable, type OnModuleInit } from '@nestjs/common';
 import {
   type CalculationLogInput,
   type CalculatorAdapter,
+  type ConfigurationFacts,
   type PricedOption,
   type ResolvedBase,
 } from '../adapter';
@@ -96,6 +97,16 @@ export class ServiceQuoteAdapter
   /** A service ships nothing: the quote has no shipping line. */
   shipmentParts(): ShipmentPart[] {
     return [];
+  }
+
+  envelopeFacts(resolved: ResolvedServiceQuote, _cfg: ServiceConfiguration): ConfigurationFacts {
+    return {
+      patternId: null,
+      materialIds: [],
+      size: null,
+      catalogProductId: resolved.catalogProductId,
+      stockProductId: null,
+    };
   }
 
   logInput(cfg: ServiceConfiguration): CalculationLogInput {

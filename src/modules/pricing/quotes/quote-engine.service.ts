@@ -5,6 +5,11 @@ import { bangkokDate } from '@common/time/bangkok';
 import { PrismaService, type Tx } from '@database/prisma.service';
 import { type CalculatorKey, type SalesChannel } from '@generated/prisma/client';
 import { CapacityService } from '@modules/partners/capacity/capacity.service';
+import {
+  envelopeCovers,
+  type EnvelopeFacts,
+  type TierBEnvelope,
+} from '@modules/partners/configuration/tier-b-envelope';
 import { QuotePathService } from '@modules/partners/quote-path/quote-path.service';
 import { type RateMissReason } from '@modules/shipping/rates/customer-rates.dto';
 import { type Delivery, ShippingQuoteService } from '@modules/shipping/shipping-quote.service';
@@ -17,6 +22,7 @@ import {
   type AnyCalculatorAdapter,
   type LoadedOptionBase,
   type LoadOptions,
+  type PricedOption,
   type PricedStep,
   type ResolvedBase,
 } from '../calculators/adapter';
@@ -191,6 +197,17 @@ export class QuoteEngineService {
     return this.calculators.get(key);
   }
 
+  /** A configuration's tier-B envelope facts with public ids, and its quantities (D-234). */
+  async envelopeFacts(
+    key: CalculatorKey,
+    cfg: unknown,
+  ): Promise<{ facts: EnvelopeFacts; quantities: readonly number[] }> {
+    const adapter = this.adapter(key);
+    const resolved = (await adapter.resolve(cfg, this.prisma)) as ResolvedBase;
+    const facts = await this.quotePath.publicFacts(adapter.envelopeFacts(resolved, cfg), this.prisma);
+    return { facts, quantities: resolved.quantities };
+  }
+
   async price(key: CalculatorKey, cfg: unknown, ctx: QuoteContext): Promise<QuoteView> {
     const started = Date.now();
     const at = ctx.at ?? new Date();
@@ -198,6 +215,12 @@ export class QuoteEngineService {
     const adapter = this.adapter(key);
     const resolved = (await adapter.resolve(cfg, db)) as ResolvedBase;
     const candidates = await this.quotePath.instantCandidates(resolved.productTypeId, at, db);
+    // Tier B prices only inside its envelope (D-043, D-234): per quantity and print type, below.
+    const envelopes = new Map(
+      candidates.filter((c) => c.tier === 'B').map((c) => [c.factoryPublicId, c.envelope!] as const),
+    );
+    const facts =
+      envelopes.size > 0 ? await this.quotePath.publicFacts(adapter.envelopeFacts(resolved, cfg), db) : null;
     const loaded: LoadedOptionBase[] = [];
     for (const c of candidates) {
       const options = (await adapter.options(
@@ -216,6 +239,10 @@ export class QuoteEngineService {
       'pricing.margin_floor_pct': String(floorSetting.versionId),
     };
     const byKey = new Map(loaded.map((l) => [l.optionKey, l]));
+    const covered = (o: PricedOption, qty: number): boolean => {
+      const envelope = envelopes.get(o.factoryId);
+      return !envelope || envelopeCovers(envelope, facts!, qty, byKey.get(o.optionKey)!.printTypePublicId);
+    };
     const factoryIds = new Map(candidates.map((c) => [c.factoryPublicId, c.factoryId]));
     const vatPct = loaded[0] ? await this.vatPct(loaded[0].vatRateVersionId, db) : null;
     const shipParts = adapter.shipmentParts(resolved);
@@ -238,7 +265,8 @@ export class QuoteEngineService {
       // Effective cost to Collective Group: buy price + delivery cost (fleet payout or carrier), then
       // lead time; an option without a delivery path to the postcode is skipped (fail closed).
       const deliveries = new Map<string, Delivery>();
-      const priceable = options.filter((o) => o.steps[index]);
+      const computed = options.filter((o) => o.steps[index]);
+      const priceable = computed.filter((o) => covered(o, qty));
       const ranked: {
         optionKey: string;
         factoryId: string;
@@ -269,7 +297,9 @@ export class QuoteEngineService {
         priceable.length === 0
           ? candidates.length === 0
             ? 'no_price_path'
-            : 'not_priceable'
+            : computed.length > 0
+              ? 'envelope_not_covered'
+              : 'not_priceable'
           : ranked.length === 0
             ? 'delivery_unavailable'
             : 'capacity_unavailable';
@@ -403,8 +433,30 @@ export class QuoteEngineService {
       orderBy: [{ effectiveFrom: 'desc' }, { versionNo: 'desc' }],
     });
     if (!version) return { calculatorVersion: adapter.version, priceListVersionId: null, options: [] };
+    // Factory selection (production) prices only a path the factory has for this configuration (D-043, D-234).
+    let envelope: TierBEnvelope | null = null;
+    if (opts.honourEnvelope) {
+      const path = (await this.quotePath.instantCandidates(resolved.productTypeId, at, db)).find(
+        (c) => c.factoryId === factory.id,
+      );
+      if (!path)
+        return { calculatorVersion: adapter.version, priceListVersionId: version.publicId, options: [] };
+      envelope = path.envelope;
+    }
+    const facts = envelope
+      ? await this.quotePath.publicFacts(adapter.envelopeFacts(resolved, cfg), db)
+      : null;
     const loaded = (await adapter.options(factory, version.id, resolved, at, db, opts)) as LoadedOptionBase[];
-    const options = adapter.calculate(resolved, loaded, { withDesign: false });
+    const options = adapter.calculate(resolved, loaded, { withDesign: false }).map((o, i) =>
+      envelope
+        ? {
+            ...o,
+            steps: o.steps.map((s) =>
+              s && envelopeCovers(envelope, facts!, s.qty, loaded[i]!.printTypePublicId) ? s : null,
+            ),
+          }
+        : o,
+    );
     return {
       calculatorVersion: adapter.version,
       priceListVersionId: version.publicId,

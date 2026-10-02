@@ -7039,7 +7039,7 @@
                 "type": "null"
               }
             ],
-            "description": "Why there is no instant price",
+            "description": "Why there is no instant price; `envelope_not_covered`: only tier-B paths priced it, outside their envelopes (D-234)",
             "example": null
           },
           "shippingAmount": {
@@ -18314,6 +18314,26 @@
               "null"
             ]
           },
+          "envelope": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/TierBEnvelopeDto"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Tier B: what the path covers (D-234); null for tier A / C",
+            "example": null
+          },
+          "envelopeNote": {
+            "description": "Tier B: human summary",
+            "example": null,
+            "type": [
+              "string",
+              "null"
+            ]
+          },
           "factoryCode": {
             "example": "PRINTCO",
             "type": "string"
@@ -18360,6 +18380,8 @@
           "factoryStatus",
           "capabilityStatus",
           "tier",
+          "envelope",
+          "envelopeNote",
           "priceListVersionNo",
           "weeklyCapacity",
           "capacityUnit"
@@ -27164,6 +27186,102 @@
         },
         "required": [
           "title"
+        ],
+        "type": "object"
+      },
+      "EnvelopeQuantityDto": {
+        "properties": {
+          "max": {
+            "description": "Highest quantity; null = open",
+            "example": 20000,
+            "maximum": 10000000,
+            "minimum": 0,
+            "type": [
+              "integer",
+              "null"
+            ]
+          },
+          "min": {
+            "description": "Lowest quantity; null = open",
+            "example": 500,
+            "maximum": 10000000,
+            "minimum": 0,
+            "type": [
+              "integer",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "min",
+          "max"
+        ],
+        "type": "object"
+      },
+      "EnvelopeSizeRangeDto": {
+        "properties": {
+          "dMax": {
+            "description": "Largest depth Unit: mm (internal, D-182).",
+            "example": null,
+            "minimum": 0,
+            "type": [
+              "number",
+              "null"
+            ]
+          },
+          "dMin": {
+            "description": "Smallest depth Unit: mm (internal, D-182).",
+            "example": null,
+            "minimum": 0,
+            "type": [
+              "number",
+              "null"
+            ]
+          },
+          "lMax": {
+            "description": "Largest length Unit: mm (internal, D-182).",
+            "example": 350,
+            "minimum": 0,
+            "type": [
+              "number",
+              "null"
+            ]
+          },
+          "lMin": {
+            "description": "Smallest length Unit: mm (internal, D-182).",
+            "example": 50,
+            "minimum": 0,
+            "type": [
+              "number",
+              "null"
+            ]
+          },
+          "wMax": {
+            "description": "Largest width Unit: mm (internal, D-182).",
+            "example": 250,
+            "minimum": 0,
+            "type": [
+              "number",
+              "null"
+            ]
+          },
+          "wMin": {
+            "description": "Smallest width Unit: mm (internal, D-182).",
+            "example": 50,
+            "minimum": 0,
+            "type": [
+              "number",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "wMin",
+          "wMax",
+          "lMin",
+          "lMax",
+          "dMin",
+          "dMax"
         ],
         "type": "object"
       },
@@ -43109,6 +43227,15 @@
         ],
         "type": "object"
       },
+      "ProductAvailability": {
+        "description": "instant: priced online · partial: priced online inside `envelope`, RFQ outside it · rfq",
+        "enum": [
+          "instant",
+          "partial",
+          "rfq"
+        ],
+        "type": "string"
+      },
       "ProductCategoryDto": {
         "properties": {
           "code": {
@@ -43166,8 +43293,72 @@
         ],
         "type": "object"
       },
+      "ProductTypeAvailabilityDto": {
+        "properties": {
+          "availability": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ProductAvailability"
+              }
+            ],
+            "description": "instant: priced online · partial: priced online inside `envelope`, RFQ outside it · rfq",
+            "example": "partial"
+          },
+          "envelope": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/TierBEnvelopeDto"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "partial only: what the instant paths cover together (a dimension is listed only when every path restricts it)",
+            "example": {
+              "materialIds": [
+                "0192f3a0-7c1e-7d2a-9b1f-00000000d301"
+              ],
+              "printTypeIds": [
+                "0192f3a0-7c1e-7d2a-9b1f-00000000d101"
+              ],
+              "quantity": {
+                "max": 20000,
+                "min": 500
+              },
+              "standardSizeIds": [
+                "0192f3a0-7c1e-7d2a-9b1f-00000000d201"
+              ]
+            }
+          },
+          "productTypeCode": {
+            "example": "folding_carton",
+            "type": "string"
+          },
+          "productTypeId": {
+            "example": "0192f3a0-7c1e-7d2a-9b1f-00000000c002",
+            "format": "uuid",
+            "type": "string"
+          }
+        },
+        "required": [
+          "productTypeId",
+          "productTypeCode",
+          "availability",
+          "envelope"
+        ],
+        "type": "object"
+      },
       "ProductTypeCoverageDto": {
         "properties": {
+          "availability": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ProductAvailability"
+              }
+            ],
+            "description": "instant (a tier-A path) · partial (tier-B paths only, D-234) · rfq",
+            "example": "rfq"
+          },
           "factories": {
             "description": "Factories with a capability for the type",
             "items": {
@@ -43207,6 +43398,7 @@
           "productTypeCode",
           "quoteMode",
           "instantPath",
+          "availability",
           "factories"
         ],
         "type": "object"
@@ -45392,10 +45584,11 @@
         "type": "string"
       },
       "QuoteNoPriceReason": {
-        "description": "Why there is no instant price",
+        "description": "Why there is no instant price; `envelope_not_covered`: only tier-B paths priced it, outside their envelopes (D-234)",
         "enum": [
           "no_price_path",
           "not_priceable",
+          "envelope_not_covered",
           "capacity_unavailable",
           "delivery_unavailable"
         ],
@@ -45750,7 +45943,7 @@
                 "type": "null"
               }
             ],
-            "description": "Why there is no instant price",
+            "description": "Why there is no instant price; `envelope_not_covered`: only tier-B paths priced it, outside their envelopes (D-234)",
             "example": null
           },
           "shippingAmount": {
@@ -60968,6 +61161,94 @@
         "required": [
           "sentTo"
         ],
+        "type": "object"
+      },
+      "TierBEnvelopeDto": {
+        "properties": {
+          "catalogProductIds": {
+            "description": "Service items covered (services)",
+            "example": [
+              "0192f3a0-7c1e-7d2a-9b1f-00000000d601"
+            ],
+            "items": {
+              "format": "uuid",
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "materialIds": {
+            "description": "Materials covered",
+            "example": [
+              "0192f3a0-7c1e-7d2a-9b1f-00000000d301"
+            ],
+            "items": {
+              "format": "uuid",
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "patternIds": {
+            "description": "Patterns covered",
+            "example": [
+              "0192f3a0-7c1e-7d2a-9b1f-00000000d401"
+            ],
+            "items": {
+              "format": "uuid",
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "printTypeIds": {
+            "description": "Print types covered",
+            "example": [
+              "0192f3a0-7c1e-7d2a-9b1f-00000000d101"
+            ],
+            "items": {
+              "format": "uuid",
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "quantity": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/EnvelopeQuantityDto"
+              }
+            ],
+            "description": "Quantities covered"
+          },
+          "sizeRanges": {
+            "description": "Sizes covered (one size dimension with the standard sizes)",
+            "items": {
+              "$ref": "#/components/schemas/EnvelopeSizeRangeDto"
+            },
+            "maxItems": 50,
+            "minItems": 1,
+            "type": "array"
+          },
+          "standardSizeIds": {
+            "description": "Standard sizes covered",
+            "example": [
+              "0192f3a0-7c1e-7d2a-9b1f-00000000d201"
+            ],
+            "items": {
+              "format": "uuid",
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "stockProductIds": {
+            "description": "Stock products covered (standard products)",
+            "example": [
+              "0192f3a0-7c1e-7d2a-9b1f-00000000d501"
+            ],
+            "items": {
+              "format": "uuid",
+              "type": "string"
+            },
+            "type": "array"
+          }
+        },
         "type": "object"
       },
       "TimelineActorDto": {
@@ -204236,7 +204517,7 @@
     },
     "/v1/admin/partners/coverage": {
       "get": {
-        "description": "Per active type: quote mode, whether an instant path exists, and every factory with a capability for it — status, tier, price-list version and weekly capacity in force (D-043, D-100, D-101).\n\nImplements: D-043, D-100, D-101.",
+        "description": "Per active type: quote mode, whether an instant path exists, availability (instant / partial / rfq) and every factory with a capability for it — status, tier, tier-B envelope, price-list version and weekly capacity in force (D-043, D-234, D-100, D-101).\n\nImplements: D-043, D-234, D-100, D-101.",
         "operationId": "admin.partnerCoverage.get",
         "parameters": [
           {
@@ -204259,10 +204540,13 @@
               "application/json": {
                 "example": [
                   {
+                    "availability": "rfq",
                     "factories": [
                       {
                         "capabilityStatus": "active",
                         "capacityUnit": "sheets",
+                        "envelope": null,
+                        "envelopeNote": null,
                         "factoryCode": "PRINTCO",
                         "factoryId": "0192f3a0-7c1e-7d2a-9b1f-00000000f001",
                         "factoryStatus": "active",
@@ -294894,7 +295178,7 @@
     },
     "/v1/store/catalog/quote-path": {
       "post": {
-        "description": "Instant only when the type is quoted instantly and an active factory prices it: tier A, or tier B whose lines cover the configuration; otherwise the configurator routes to RFQ (D-043, D-100). Carries no factory data (D-050).\n\nImplements: D-043, D-100, D-050.",
+        "description": "Instant only when the type is quoted instantly and an active factory prices it: tier A, or tier B whose envelope covers the configuration (D-234); otherwise the configurator routes to RFQ (D-043, D-100). A tier-B envelope is matched only on a complete configuration of the type’s calculator (the body of `store.quotes.calculate`); a partial configurator state cannot be matched yet. The price itself decides per quantity. Carries no factory data (D-050).\n\nImplements: D-043, D-234, D-100, D-050.",
         "operationId": "store.catalog.resolveQuotePath",
         "parameters": [
           {
@@ -296087,6 +296371,181 @@
         },
         "security": [],
         "summary": "Get a stock product",
+        "tags": [
+          "store.catalog"
+        ]
+      }
+    },
+    "/v1/store/catalog/types/{typeId}/availability": {
+      "get": {
+        "description": "`instant`: an active factory holds a full (tier A) price path; `partial`: only tier-B paths — instant inside the summarised envelope, RFQ outside it; `rfq`: no instant path or the type is quoted on request (D-043, D-234, D-100). Never names a factory (D-050, D-044).\n\nImplements: D-043, D-234, D-100, D-050.",
+        "operationId": "store.catalog.getTypeAvailability",
+        "parameters": [
+          {
+            "description": "Product type",
+            "in": "path",
+            "name": "typeId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "availability": "partial",
+                  "envelope": {
+                    "materialIds": [
+                      "0192f3a0-7c1e-7d2a-9b1f-00000000d301"
+                    ],
+                    "printTypeIds": [
+                      "0192f3a0-7c1e-7d2a-9b1f-00000000d101"
+                    ],
+                    "quantity": {
+                      "max": 20000,
+                      "min": 500
+                    },
+                    "standardSizeIds": [
+                      "0192f3a0-7c1e-7d2a-9b1f-00000000d201"
+                    ]
+                  },
+                  "productTypeCode": "folding_carton",
+                  "productTypeId": "0192f3a0-7c1e-7d2a-9b1f-00000000c002"
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProductTypeAvailabilityDto"
+                }
+              }
+            },
+            "description": "Availability of the type",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "400": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.bad_request": {
+                    "$ref": "#/components/examples/problem.http.bad_request"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.bad_request`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "404": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.not_found": {
+                    "$ref": "#/components/examples/problem.http.not_found"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.not_found`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "validation.failed": {
+                    "$ref": "#/components/examples/problem.validation.failed"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `validation.failed`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [],
+        "summary": "Tell how a product type can be priced: instant, partial or RFQ",
         "tags": [
           "store.catalog"
         ]

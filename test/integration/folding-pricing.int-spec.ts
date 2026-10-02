@@ -26,7 +26,7 @@ describe('folding pricing on the database (PostgreSQL 18)', () => {
     const registry = new PriceComponentRegistry();
     for (const d of FOLDING_PRICE_COMPONENTS) registry.register(d);
     loader = new FoldingSnapshotLoader(prisma as never);
-    quotePath = new QuotePathService(prisma as never, registry);
+    quotePath = new QuotePathService(prisma as never);
   });
 
   afterAll(async () => {

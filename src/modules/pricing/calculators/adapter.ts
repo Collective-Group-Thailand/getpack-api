@@ -1,5 +1,6 @@
 import { type Tx } from '@database/prisma.service';
 import { type CalculatorKey, type Prisma } from '@generated/prisma/client';
+import { type ConfigurationFacts } from '@modules/partners/configuration/tier-b-envelope';
 import { type ShipmentPart } from '@modules/shipping/shipping-quote.service';
 
 import { type PricingError } from './shared/pricing-error';
@@ -80,6 +81,8 @@ export interface PricedOption {
 }
 
 /** The `calculate_logs` columns that depend on the configuration (B6, no PII). */
+export type { ConfigurationFacts } from '@modules/partners/configuration/tier-b-envelope';
+
 export interface CalculationLogInput {
   quantities: number[];
   lengthMm: number | null;
@@ -92,6 +95,8 @@ export interface CalculationLogInput {
 /** How options are loaded: `preview` also prices print types not yet released for quotes (factory breakdowns, D-233). */
 export interface LoadOptions {
   preview?: boolean;
+  /** Price only a path the factory holds for the configuration: tier A, or tier B inside its envelope (D-234). */
+  honourEnvelope?: boolean;
 }
 
 export interface CalculatorAdapter<
@@ -116,6 +121,8 @@ export interface CalculatorAdapter<
   /** Pure: no database or clock. `withDesign` false prices the factory side only. */
   calculate(resolved: Resolved, loaded: readonly Loaded[], opts: { withDesign: boolean }): PricedOption[];
   shipmentParts(resolved: Resolved): ShipmentPart[];
+  /** The configuration's facts for a tier-B envelope (D-234). */
+  envelopeFacts(resolved: Resolved, cfg: Cfg): ConfigurationFacts;
   logInput(cfg: Cfg): CalculationLogInput;
   /** The configuration asked at other quantities (re-pricing, factory margin checks). */
   withQuantities(cfg: Cfg, quantities: readonly number[]): Cfg;

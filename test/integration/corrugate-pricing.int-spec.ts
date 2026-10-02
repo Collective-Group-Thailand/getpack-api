@@ -33,7 +33,7 @@ describe('corrugate pricing on the database (PostgreSQL 18)', () => {
       new CorrugateSnapshotLoader(prisma as never),
       new CalculatorRegistry(),
     );
-    quotePath = new QuotePathService(prisma as never, registry);
+    quotePath = new QuotePathService(prisma as never);
   });
 
   afterAll(async () => {

@@ -7,6 +7,7 @@ import { phpRound } from '../../engine/php';
 import {
   type CalculationLogInput,
   type CalculatorAdapter,
+  type ConfigurationFacts,
   type PricedOption,
   type ResolvedBase,
 } from '../adapter';
@@ -141,6 +142,16 @@ export class CorrugateQuoteAdapter
         flute: { g: resolved.flute.g, c: resolved.flute.c, fh: resolved.flute.fh },
       };
     });
+  }
+
+  envelopeFacts(resolved: ResolvedCorrugateQuote, cfg: CorrugateConfiguration): ConfigurationFacts {
+    return {
+      patternId: resolved.patternId,
+      materialIds: [resolved.materialId],
+      size: { w: cfg.w, l: cfg.l, d: cfg.d },
+      catalogProductId: resolved.catalogProductId,
+      stockProductId: null,
+    };
   }
 
   logInput(cfg: CorrugateConfiguration): CalculationLogInput {
