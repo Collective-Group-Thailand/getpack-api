@@ -54,6 +54,14 @@ export const API_TAGS: Record<string, string> = {
   'admin.privacyRequests': 'The Data Protection Officer answers PDPA export and deletion requests (D-222).',
   'store.configurations':
     'Draft configurations (D-185): keep an incomplete configuration with its completeness, resume, share, turn it into a quotation or an RFQ.',
+  'store.advisory':
+    'Structure Advisor (D-188, D-189, D-235–D-240): recommended corrugated board from load, stacking and storage, as an indicative BCT range with priced alternatives; choose a board on record.',
+  'admin.advisory':
+    'Structure Advisor for staff: evaluate a configuration, read and replay the recommendation log (D-237, D-240).',
+  'admin.boardStrengthSheets':
+    'Partners’ signed board data sheets (ECT, caliper, grammage) per factory × corrugated board — the only board strength the advisor reads (D-188, D-236).',
+  'partner.boardStrengthSheets':
+    'The signed board data sheets Packio keeps for the factory’s boards (D-236, D-044).',
   'store.specs':
     'Measurement bases of a size (D-182): inside, outside and score-to-score sizes from the material caliper; millimetres only (D-183).',
   'store.quotes':

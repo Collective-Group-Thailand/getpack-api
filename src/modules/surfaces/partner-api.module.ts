@@ -1,3 +1,4 @@
+import { ADVISORY_PARTNER_CONTROLLERS } from '@modules/advisory/advisory.registry';
 import { PartnerMeController } from '@modules/auth/controllers/me.controllers';
 import { CLAIMS_PARTNER_CONTROLLERS } from '@modules/claims/claims.registry';
 import { LOGISTICS_PARTNER_CONTROLLERS } from '@modules/logistics/logistics.registry';
@@ -37,6 +38,7 @@ import { RealtimeModule } from '@platform/realtime/realtime.module';
     ...PRICING_PARTNER_CONTROLLERS,
     ...SHIPPING_PARTNER_CONTROLLERS,
     ...QUOTES_PARTNER_CONTROLLERS,
+    ...ADVISORY_PARTNER_CONTROLLERS,
     ...PRODUCTION_PARTNER_CONTROLLERS,
     ...LOGISTICS_PARTNER_CONTROLLERS,
     ...CLAIMS_PARTNER_CONTROLLERS,

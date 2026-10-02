@@ -11,6 +11,7 @@ import { AppConfigModule } from '@config/app-config.module';
 import { DatabaseModule } from '@database/database.module';
 import { RedisModule } from '@database/redis.module';
 import { IntegrationsModule } from '@integrations/integrations.module';
+import { AdvisoryModule } from '@modules/advisory/advisory.module';
 import { AnalyticsModule } from '@modules/analytics/analytics.module';
 import { ArtworkModule } from '@modules/artwork/artwork.module';
 import { AuditSupportModule } from '@modules/audit-support/audit-support.module';
@@ -107,6 +108,7 @@ import { LoggerModule } from 'nestjs-pino';
     PricingModule,
     ShippingModule,
     QuotesModule,
+    AdvisoryModule,
     RfqModule,
     CustomersModule,
     CartsModule,

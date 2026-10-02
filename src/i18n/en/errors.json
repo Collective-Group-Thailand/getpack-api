@@ -1298,5 +1298,39 @@
       "title": "Already converted",
       "detail": "This draft has already become a quotation or a request for quote (D-185)."
     }
+  },
+  "advisory": {
+    "not_supported": {
+      "title": "Not covered by the Structure Advisor",
+      "detail": "The Structure Advisor covers corrugated boxes of the styles its rule set lists (D-235); this configuration gets no advice."
+    },
+    "not_configured": {
+      "title": "Structure Advisor not configured",
+      "detail": "No rule set is in force yet (advisory.rule_set, D-237); a Superadmin sets it after the D-189 sign-off."
+    },
+    "disabled": {
+      "title": "Structure Advisor not available",
+      "detail": "The Structure Advisor is not open to customers yet (flag advisory.structure_advisor, D-237)."
+    },
+    "option_unknown": {
+      "title": "Not an option of this recommendation",
+      "detail": "Choose one of the boards the recommendation lists (D-240)."
+    },
+    "acknowledgement_required": {
+      "title": "Warning not acknowledged",
+      "detail": "This board carries structural warnings; acknowledge every warning code to proceed (D-189)."
+    },
+    "choice_required": {
+      "title": "No board chosen",
+      "detail": "Choose a board from the recommendation before saving the quotation with it (D-240)."
+    },
+    "choice_mismatch": {
+      "title": "Different board",
+      "detail": "The quotation uses a different board from the one chosen on the recommendation (D-240)."
+    },
+    "material_not_board": {
+      "title": "Not a corrugated board",
+      "detail": "Board strength sheets are kept for corrugated boards only (D-236)."
+    }
   }
 }

@@ -1,3 +1,4 @@
+import { ADVISORY_STORE_CONTROLLERS } from '@modules/advisory/advisory.registry';
 import { ANALYTICS_STORE_CONTROLLERS } from '@modules/analytics/analytics.registry';
 import { ARTWORK_STORE_CONTROLLERS } from '@modules/artwork/artwork.registry';
 import { StoreMeController } from '@modules/auth/controllers/me.controllers';
@@ -54,6 +55,7 @@ import { RealtimeModule } from '@platform/realtime/realtime.module';
     StoreQuotePathController,
     ...PRICING_STORE_CONTROLLERS,
     ...QUOTES_STORE_CONTROLLERS,
+    ...ADVISORY_STORE_CONTROLLERS,
     ...CUSTOMERS_STORE_CONTROLLERS,
     ...CARTS_STORE_CONTROLLERS,
     ...CHECKOUT_STORE_CONTROLLERS,
