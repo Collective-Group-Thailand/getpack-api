@@ -799,6 +799,8 @@ model FactoryParticipationVersion {
   tier              ParticipationTier
   /// Tier B: what the lines cover (the envelope itself is which price lines exist).
   envelopeNote      String?             @map("envelope_note")
+  /// Tier B envelope (D-234, A-77): the structured allow-list a tier-B price path covers; validated per calculator.
+  envelope          Json?               @map("envelope")
   reason            String
   approvalRequestId BigInt?             @map("approval_request_id")
   createdAt         DateTime            @default(now()) @map("created_at") @db.Timestamptz(6)
