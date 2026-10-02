@@ -799,13 +799,13 @@ export const SETTINGS: readonly SettingSeed[] = [
   {
     key: 'fulfilment.dimensional_tolerance_mm',
     valueType: 'json',
-    value: { folding: '1', corrugate: '3' },
+    value: { folding: '1', tag_sleeve: '1', corrugate: '3' },
     valueSchema: {
       type: 'object',
       additionalProperties: { type: 'string', pattern: '^\\d{1,4}(\\.\\d{1,2})?$' },
     },
     description:
-      'D-186 published dimensional tolerance ± mm per calculator (folding cartons ± 1, corrugated ± 3); a calculator not listed publishes none',
+      'D-186 published dimensional tolerance ± mm per calculator (folding cartons incl. tags & sleeves ± 1, corrugated ± 3); a calculator not listed publishes none',
     decisions: ['D-186'],
     ownerRole: 'superadmin',
   },

@@ -6,7 +6,7 @@ import { ToleranceService } from './tolerance.service';
 
 const SETTINGS: Record<string, unknown> = {
   'fulfilment.tolerance_default_pct': '5',
-  'fulfilment.dimensional_tolerance_mm': { folding: '1', corrugate: '3' },
+  'fulfilment.dimensional_tolerance_mm': { folding: '1', tag_sleeve: '1', corrugate: '3' },
   'fulfilment.colour_tolerance_delta_e': { standard: '3', flexo: '5' },
 };
 const settings = {

@@ -130,7 +130,10 @@ describe('line summaries and configurator content (e2e, U-B0.1)', () => {
     expect(keys).toEqual(
       expect.arrayContaining(['style', 'size', 'material', 'print_front', 'coating_front', 'diecut']),
     );
-    expect(summary.specs.find((s) => s.key === 'size')).toMatchObject({ valueEn: '200 × 300 × 50 mm' });
+    // The size names its measurement basis (D-182): the dev style is a flat product, measured finished.
+    expect(summary.specs.find((s) => s.key === 'size')).toMatchObject({
+      valueEn: '200 × 300 × 50 mm (finished size)',
+    });
     expect(saved.body.options[0]).toHaveProperty('toolingAmount');
 
     // Renaming the material later does not rewrite what the customer was quoted.
