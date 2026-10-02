@@ -215,7 +215,14 @@ export class StoreCatalogController {
       descriptionEn: 'Reverse tuck-end folding box',
       isCombination: false,
       patterns: [
-        { code: 'RTE-01', name: 'ฝาเสียบกลับด้าน', constraints: { minW: 30, maxW: 500 }, dielineKey: 'rte' },
+        {
+          code: 'RTE-01',
+          styleCode: 'PK-RTE-01',
+          internationalName: null,
+          name: 'ฝาเสียบกลับด้าน',
+          constraints: { minW: 30, maxW: 500 },
+          dielineKey: 'rte',
+        },
       ],
       optionGroups: [
         {

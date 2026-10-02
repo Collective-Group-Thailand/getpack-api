@@ -296320,7 +296320,9 @@
                         "minW": 30
                       },
                       "dielineKey": "rte",
-                      "name": "ฝาเสียบกลับด้าน"
+                      "internationalName": null,
+                      "name": "ฝาเสียบกลับด้าน",
+                      "styleCode": "PK-RTE-01"
                     }
                   ],
                   "productTypeCode": "folding_carton",

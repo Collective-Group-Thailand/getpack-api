@@ -39,7 +39,8 @@ export interface BoxConfiguration {
   design?: { graphic?: boolean; structure?: boolean };
 }
 
-type Named = { publicId: string; th: string; en: string };
+/** A catalogue name; `code` is the style code of a pattern (D-184). */
+type Named = { publicId: string; th: string; en: string; code?: string | null };
 const LABELS = {
   style: ['แบบกล่อง', 'Style'],
   style_code: ['รหัสแบบ', 'Style code'],
@@ -143,7 +144,7 @@ export async function boxSpecLines(
   const pattern = patterns.get(cfg.patternId);
   if (pattern) push('style', pattern.th, pattern.en);
   // D-184: the public style code travels with the spec to the cart, order, proof, job sheet and exports.
-  const styleCode = (pattern as (Named & { code?: string | null }) | undefined)?.code;
+  const styleCode = pattern?.code;
   if (styleCode) push('style_code', styleCode, styleCode);
   const size = opts.flat ? `${mm(cfg.w)} × ${mm(cfg.l)}` : `${mm(cfg.w)} × ${mm(cfg.l)} × ${mm(cfg.d)}`;
   push('size', `${size} มม.`, `${size} mm`);
@@ -333,7 +334,7 @@ export async function pouchSpecLines(db: Tx, cfg: PouchSpecConfiguration): Promi
     if (found.length) push(key, found.map((n) => n.th).join(', '), found.map((n) => n.en).join(', '));
   };
   list(patterns, [cfg.patternId], 'style');
-  const styleCode = (patterns.get(cfg.patternId) as (Named & { code?: string | null }) | undefined)?.code;
+  const styleCode = patterns.get(cfg.patternId)?.code;
   if (styleCode) push('style_code', styleCode, styleCode);
   push('size', `${mm(cfg.w)} × ${mm(cfg.l)} มม.`, `${mm(cfg.w)} × ${mm(cfg.l)} mm`);
   const gussets = (

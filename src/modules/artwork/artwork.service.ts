@@ -1,4 +1,3 @@
-import { pricedConfiguration } from '@modules/quotes/quote-input';
 import { type Actor, type UserActor } from '@common/context/actor';
 import { DomainException } from '@common/errors/domain.exception';
 import { toBangkokIso } from '@common/time/bangkok';
@@ -10,6 +9,7 @@ import {
   type UploadChannel,
 } from '@generated/prisma/client';
 import { OrdersService } from '@modules/orders/orders.service';
+import { pricedConfiguration } from '@modules/quotes/quote-input';
 import { Injectable, type OnModuleInit } from '@nestjs/common';
 import { ActivityLogService } from '@platform/activity/activity-log.service';
 import { BusinessCalendarService } from '@platform/calendar/business-calendar.service';
