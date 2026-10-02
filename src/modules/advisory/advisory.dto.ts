@@ -261,7 +261,12 @@ export class AdvisoryOptionDto {
   @ApiProperty({ type: String, nullable: true, example: '10700.00' })
   grossAmount!: string | null;
 
-  @ApiProperty({ example: 'THB' })
+  @ApiProperty({
+    enum: ['THB'],
+    enumName: 'Currency',
+    example: 'THB',
+    description: 'Always THB (one currency)',
+  })
   currency!: 'THB';
 
   @ApiProperty({ type: 'integer', nullable: true, example: 10 })

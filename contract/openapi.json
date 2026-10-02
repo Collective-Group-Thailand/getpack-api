@@ -1,6 +1,94 @@
 {
   "components": {
     "examples": {
+      "problem.advisory.acknowledgement_required": {
+        "summary": "advisory.acknowledgement_required",
+        "value": {
+          "code": "advisory.acknowledgement_required",
+          "detail": "กระดาษนี้มีคำเตือนด้านโครงสร้าง กรุณายืนยันรับทราบคำเตือนทุกข้อก่อนดำเนินการต่อ",
+          "requestId": "6f1c2d8e-2c7b-4d0e-9d1c-3f1a2b3c4d5e",
+          "status": 422,
+          "title": "ยังไม่ได้รับทราบคำเตือน",
+          "type": "https://errors.packio/advisory.acknowledgement_required"
+        }
+      },
+      "problem.advisory.choice_mismatch": {
+        "summary": "advisory.choice_mismatch",
+        "value": {
+          "code": "advisory.choice_mismatch",
+          "detail": "ใบเสนอราคานี้ใช้กระดาษคนละชนิดกับที่เลือกไว้ในคำแนะนำ",
+          "requestId": "6f1c2d8e-2c7b-4d0e-9d1c-3f1a2b3c4d5e",
+          "status": 409,
+          "title": "กระดาษไม่ตรงกับที่เลือก",
+          "type": "https://errors.packio/advisory.choice_mismatch"
+        }
+      },
+      "problem.advisory.choice_required": {
+        "summary": "advisory.choice_required",
+        "value": {
+          "code": "advisory.choice_required",
+          "detail": "กรุณาเลือกกระดาษจากคำแนะนำก่อนบันทึกใบเสนอราคา",
+          "requestId": "6f1c2d8e-2c7b-4d0e-9d1c-3f1a2b3c4d5e",
+          "status": 409,
+          "title": "ยังไม่ได้เลือกกระดาษ",
+          "type": "https://errors.packio/advisory.choice_required"
+        }
+      },
+      "problem.advisory.disabled": {
+        "summary": "advisory.disabled",
+        "value": {
+          "code": "advisory.disabled",
+          "detail": "ตัวช่วยแนะนำโครงสร้างยังไม่เปิดให้ลูกค้าใช้งาน",
+          "requestId": "6f1c2d8e-2c7b-4d0e-9d1c-3f1a2b3c4d5e",
+          "status": 409,
+          "title": "ตัวช่วยแนะนำโครงสร้างยังไม่เปิดใช้",
+          "type": "https://errors.packio/advisory.disabled"
+        }
+      },
+      "problem.advisory.material_not_board": {
+        "summary": "advisory.material_not_board",
+        "value": {
+          "code": "advisory.material_not_board",
+          "detail": "ข้อมูลความแข็งแรงของแผ่นบันทึกได้เฉพาะกระดาษลูกฟูกเท่านั้น",
+          "requestId": "6f1c2d8e-2c7b-4d0e-9d1c-3f1a2b3c4d5e",
+          "status": 422,
+          "title": "ไม่ใช่กระดาษลูกฟูก",
+          "type": "https://errors.packio/advisory.material_not_board"
+        }
+      },
+      "problem.advisory.not_configured": {
+        "summary": "advisory.not_configured",
+        "value": {
+          "code": "advisory.not_configured",
+          "detail": "ยังไม่มีชุดกฎที่มีผล ซูเปอร์แอดมินจะตั้งค่าหลังผ่านการลงนามรับรอง",
+          "requestId": "6f1c2d8e-2c7b-4d0e-9d1c-3f1a2b3c4d5e",
+          "status": 409,
+          "title": "ยังไม่ได้ตั้งค่าตัวช่วยแนะนำโครงสร้าง",
+          "type": "https://errors.packio/advisory.not_configured"
+        }
+      },
+      "problem.advisory.not_supported": {
+        "summary": "advisory.not_supported",
+        "value": {
+          "code": "advisory.not_supported",
+          "detail": "ตัวช่วยแนะนำโครงสร้างรองรับเฉพาะกล่องลูกฟูกตามแบบที่กำหนดในชุดกฎ สเปกนี้จึงไม่มีคำแนะนำ",
+          "requestId": "6f1c2d8e-2c7b-4d0e-9d1c-3f1a2b3c4d5e",
+          "status": 422,
+          "title": "ไม่อยู่ในขอบเขตของตัวช่วยแนะนำโครงสร้าง",
+          "type": "https://errors.packio/advisory.not_supported"
+        }
+      },
+      "problem.advisory.option_unknown": {
+        "summary": "advisory.option_unknown",
+        "value": {
+          "code": "advisory.option_unknown",
+          "detail": "กรุณาเลือกกระดาษที่อยู่ในรายการของคำแนะนำนี้",
+          "requestId": "6f1c2d8e-2c7b-4d0e-9d1c-3f1a2b3c4d5e",
+          "status": 422,
+          "title": "ไม่ใช่ตัวเลือกของคำแนะนำนี้",
+          "type": "https://errors.packio/advisory.option_unknown"
+        }
+      },
       "problem.approval.already_acted": {
         "summary": "approval.already_acted",
         "value": {
@@ -4321,6 +4409,193 @@
         ],
         "type": "object"
       },
+      "AdminAdvisoryRecommendationDto": {
+        "properties": {
+          "alternatives": {
+            "items": {
+              "$ref": "#/components/schemas/AdvisoryAlternativeDto"
+            },
+            "type": "array"
+          },
+          "anonymousId": {
+            "description": "Anonymous configurator session",
+            "example": null,
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "boardData": {
+            "description": "Whose sheet each board used (D-236), staff only",
+            "items": {
+              "$ref": "#/components/schemas/AdvisoryBoardDataDto"
+            },
+            "type": "array"
+          },
+          "channel": {
+            "example": "web",
+            "type": "string"
+          },
+          "choice": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/AdvisoryChoiceDto"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "choices": {
+            "description": "Every choice, newest first",
+            "items": {
+              "$ref": "#/components/schemas/AdvisoryChoiceDto"
+            },
+            "type": "array"
+          },
+          "closestBoardId": {
+            "example": null,
+            "format": "uuid",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "createdAt": {
+            "example": "2026-10-03T10:00:00+07:00",
+            "format": "date-time",
+            "type": "string"
+          },
+          "createdById": {
+            "description": "Staff evaluation",
+            "example": null,
+            "format": "uuid",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "customerId": {
+            "example": "0192f3a0-7c1e-7d2a-9b1f-0000000ad107",
+            "format": "uuid",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "engineVersion": {
+            "example": "1.0.0",
+            "type": "string"
+          },
+          "excluded": {
+            "description": "Boards without board data (D-188), staff only",
+            "items": {
+              "$ref": "#/components/schemas/AdvisoryExcludedDto"
+            },
+            "type": "array"
+          },
+          "id": {
+            "example": "0192f3a0-7c1e-7d2a-9b1f-0000000ad101",
+            "format": "uuid",
+            "type": "string"
+          },
+          "inputs": {
+            "additionalProperties": true,
+            "description": "The logged request and load inputs",
+            "type": "object"
+          },
+          "noticeCode": {
+            "description": "Fixed notice: the figures are indicative (D-189)",
+            "example": "advisory.indicative",
+            "type": "string"
+          },
+          "options": {
+            "description": "Every board evaluated, strongest first",
+            "items": {
+              "$ref": "#/components/schemas/AdvisoryOptionDto"
+            },
+            "type": "array"
+          },
+          "outcome": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/AdvisoryOutcome"
+              }
+            ],
+            "example": "recommended"
+          },
+          "quoteIds": {
+            "description": "Quotes saved from it",
+            "example": [
+              "0192f3a0-7c1e-7d2a-9b1f-0000000ad106"
+            ],
+            "items": {
+              "format": "uuid",
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "reasons": {
+            "items": {
+              "$ref": "#/components/schemas/AdvisoryReasonDto"
+            },
+            "type": "array"
+          },
+          "recommendedBoardId": {
+            "example": "0192f3a0-7c1e-7d2a-9b1f-0000000ad102",
+            "format": "uuid",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "requirement": {
+            "$ref": "#/components/schemas/AdvisoryRequirementDto"
+          },
+          "ruleSet": {
+            "additionalProperties": true,
+            "description": "The rule set value used",
+            "type": "object"
+          },
+          "ruleSetVersion": {
+            "$ref": "#/components/schemas/RuleSetVersionRefDto"
+          },
+          "warnings": {
+            "example": [],
+            "items": {
+              "$ref": "#/components/schemas/AdvisoryWarningCode"
+            },
+            "type": "array"
+          }
+        },
+        "required": [
+          "id",
+          "outcome",
+          "noticeCode",
+          "engineVersion",
+          "ruleSetVersion",
+          "requirement",
+          "recommendedBoardId",
+          "closestBoardId",
+          "options",
+          "alternatives",
+          "warnings",
+          "reasons",
+          "choice",
+          "createdAt",
+          "channel",
+          "customerId",
+          "anonymousId",
+          "createdById",
+          "excluded",
+          "boardData",
+          "inputs",
+          "ruleSet",
+          "quoteIds",
+          "choices"
+        ],
+        "type": "object"
+      },
       "AdminCheckoutDto": {
         "properties": {
           "ccEmails": {
@@ -7512,6 +7787,17 @@
       },
       "AdminSavedQuoteDto": {
         "properties": {
+          "advisory": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/QuoteAdvisoryDto"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "The Structure Advisor recommendation and choice it was saved from (D-240)"
+          },
           "channel": {
             "allOf": [
               {
@@ -7737,6 +8023,7 @@
           "dimensions",
           "sharedAt",
           "shareExpiresAt",
+          "advisory",
           "createdAt",
           "channel",
           "customer",
@@ -8199,6 +8486,734 @@
           "splitFrom"
         ],
         "type": "object"
+      },
+      "AdvisoryAlternativeDto": {
+        "properties": {
+          "boardId": {
+            "example": "0192f3a0-7c1e-7d2a-9b1f-0000000ad103",
+            "format": "uuid",
+            "type": "string"
+          },
+          "leadTimeDeltaDays": {
+            "description": "Lead days minus the recommended",
+            "example": 2,
+            "type": [
+              "integer",
+              "null"
+            ]
+          },
+          "roles": {
+            "example": [
+              "strongest"
+            ],
+            "items": {
+              "$ref": "#/components/schemas/AdvisoryOptionRole"
+            },
+            "type": "array"
+          },
+          "unitPriceDelta": {
+            "description": "Unit price minus the recommended",
+            "example": "5.20",
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "boardId",
+          "roles",
+          "unitPriceDelta",
+          "leadTimeDeltaDays"
+        ],
+        "type": "object"
+      },
+      "AdvisoryBoardDataDto": {
+        "properties": {
+          "boardId": {
+            "example": "0192f3a0-7c1e-7d2a-9b1f-0000000ad102",
+            "format": "uuid",
+            "type": "string"
+          },
+          "factoryId": {
+            "example": "0192f3a0-7c1e-7d2a-9b1f-0000000ad108",
+            "format": "uuid",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "sheetId": {
+            "example": "0192f3a0-7c1e-7d2a-9b1f-0000000ad109",
+            "format": "uuid",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "sheetSource": {
+            "description": "Whose sheet: the factory that prices the option, the lowest sheet (unpriced) or none",
+            "example": "priced_factory",
+            "type": "string"
+          }
+        },
+        "required": [
+          "boardId",
+          "sheetId",
+          "factoryId",
+          "sheetSource"
+        ],
+        "type": "object"
+      },
+      "AdvisoryBoardDto": {
+        "properties": {
+          "code": {
+            "example": "ka125-b",
+            "type": "string"
+          },
+          "fluteCode": {
+            "example": "B",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "id": {
+            "example": "0192f3a0-7c1e-7d2a-9b1f-0000000ad102",
+            "format": "uuid",
+            "type": "string"
+          },
+          "layers": {
+            "description": "3 single wall, 5 double wall",
+            "example": 3,
+            "type": [
+              "integer",
+              "null"
+            ]
+          },
+          "nameEn": {
+            "example": "Kraft board KA125 B-flute",
+            "type": "string"
+          },
+          "nameTh": {
+            "example": "กระดาษลัง KA125 ลอน B",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "code",
+          "nameTh",
+          "nameEn",
+          "fluteCode",
+          "layers"
+        ],
+        "type": "object"
+      },
+      "AdvisoryChoiceDto": {
+        "properties": {
+          "acknowledgedWarnings": {
+            "example": [],
+            "items": {
+              "$ref": "#/components/schemas/AdvisoryWarningCode"
+            },
+            "type": "array"
+          },
+          "boardId": {
+            "example": "0192f3a0-7c1e-7d2a-9b1f-0000000ad102",
+            "format": "uuid",
+            "type": "string"
+          },
+          "chosenAt": {
+            "example": "2026-10-03T10:05:00+07:00",
+            "format": "date-time",
+            "type": "string"
+          },
+          "id": {
+            "example": "0192f3a0-7c1e-7d2a-9b1f-0000000ad105",
+            "format": "uuid",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "boardId",
+          "acknowledgedWarnings",
+          "chosenAt"
+        ],
+        "type": "object"
+      },
+      "AdvisoryExcludedDto": {
+        "properties": {
+          "board": {
+            "$ref": "#/components/schemas/AdvisoryBoardDto"
+          },
+          "reason": {
+            "description": "No signed sheet in force for the producing factory",
+            "example": "no_board_data",
+            "type": "string"
+          }
+        },
+        "required": [
+          "board",
+          "reason"
+        ],
+        "type": "object"
+      },
+      "AdvisoryFactor": {
+        "enum": [
+          "humidity",
+          "storage",
+          "palletPattern",
+          "palletOverhang",
+          "transport",
+          "fragility"
+        ],
+        "type": "string"
+      },
+      "AdvisoryFactorDto": {
+        "properties": {
+          "band": {
+            "example": "normal",
+            "type": "string"
+          },
+          "factor": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/AdvisoryFactor"
+              }
+            ],
+            "example": "humidity"
+          },
+          "value": {
+            "description": "Retained strength (0 < f ≤ 1)",
+            "example": 0.8,
+            "type": "number"
+          }
+        },
+        "required": [
+          "factor",
+          "band",
+          "value"
+        ],
+        "type": "object"
+      },
+      "AdvisoryFragility": {
+        "enum": [
+          "low",
+          "medium",
+          "high"
+        ],
+        "type": "string"
+      },
+      "AdvisoryHumidityBand": {
+        "description": "Storage humidity: dry ≤ 50 % RH, normal ≤ 70 %, humid ≤ 85 %, very_humid > 85 % (D-238)",
+        "enum": [
+          "dry",
+          "normal",
+          "humid",
+          "very_humid"
+        ],
+        "type": "string"
+      },
+      "AdvisoryLoadDto": {
+        "properties": {
+          "fragility": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/AdvisoryFragility"
+              }
+            ],
+            "example": "low"
+          },
+          "humidity": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/AdvisoryHumidityBand"
+              }
+            ],
+            "description": "Storage humidity: dry ≤ 50 % RH, normal ≤ 70 %, humid ≤ 85 %, very_humid > 85 % (D-238)",
+            "example": "normal"
+          },
+          "pallet": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/AdvisoryPalletDto"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Omit or null: not palletised"
+          },
+          "productWeightG": {
+            "description": "Product weight per unit Unit: g.",
+            "example": 500,
+            "maximum": 100000,
+            "minimum": 0,
+            "type": "number"
+          },
+          "stackLayers": {
+            "description": "Boxes in the tallest column, the bottom box included (across stacked pallets)",
+            "example": 4,
+            "maximum": 100,
+            "minimum": 1,
+            "type": "integer"
+          },
+          "storage": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/AdvisoryStorageBand"
+              }
+            ],
+            "example": "up_to_30_days"
+          },
+          "transportMode": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/AdvisoryTransportMode"
+              }
+            ],
+            "example": "pallet_domestic"
+          },
+          "unitsPerBox": {
+            "description": "Units packed in one box",
+            "example": 10,
+            "maximum": 10000,
+            "minimum": 1,
+            "type": "integer"
+          }
+        },
+        "required": [
+          "productWeightG",
+          "unitsPerBox",
+          "stackLayers",
+          "fragility",
+          "transportMode",
+          "humidity",
+          "storage"
+        ],
+        "type": "object"
+      },
+      "AdvisoryMethodDto": {
+        "properties": {
+          "available": {
+            "description": "The advisor is open to customers and a rule set is in force",
+            "example": true,
+            "type": "boolean"
+          },
+          "engineVersion": {
+            "example": "1.0.0",
+            "type": "string"
+          },
+          "noticeCode": {
+            "example": "advisory.indicative",
+            "type": "string"
+          },
+          "ruleSet": {
+            "additionalProperties": true,
+            "description": "The rule set in force (D-237): `mckeeConstant`, `uncertaintyPct`, `formulas`, `thinMarginPct` and `factors` per band — the same row the engine reads",
+            "type": [
+              "object",
+              "null"
+            ]
+          },
+          "ruleSetVersion": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/RuleSetVersionRefDto"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "required": [
+          "available",
+          "noticeCode",
+          "engineVersion",
+          "ruleSetVersion",
+          "ruleSet"
+        ],
+        "type": "object"
+      },
+      "AdvisoryOptionDto": {
+        "properties": {
+          "bct": {
+            "$ref": "#/components/schemas/BctRangeDto"
+          },
+          "board": {
+            "$ref": "#/components/schemas/AdvisoryBoardDto"
+          },
+          "caliperMm": {
+            "description": "Unit: mm.",
+            "example": 3,
+            "type": "number"
+          },
+          "currency": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/Currency"
+              }
+            ],
+            "description": "Always THB (one currency)",
+            "example": "THB"
+          },
+          "ectKnPerM": {
+            "description": "From the partner’s signed sheet. Unit: kN/m.",
+            "example": 5,
+            "type": "number"
+          },
+          "grammageGsm": {
+            "description": "Unit: g/m².",
+            "example": 450,
+            "type": "number"
+          },
+          "grossAmount": {
+            "example": "10700.00",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "instant": {
+            "description": "Priced instantly at the first quantity; false routes to CS (RFQ)",
+            "example": true,
+            "type": "boolean"
+          },
+          "leadTimeDays": {
+            "example": 10,
+            "type": [
+              "integer",
+              "null"
+            ]
+          },
+          "marginPct": {
+            "description": "Low end over the requirement, %; null with no top load",
+            "example": 252.2,
+            "type": [
+              "number",
+              "null"
+            ]
+          },
+          "passes": {
+            "example": true,
+            "type": "boolean"
+          },
+          "requiredEctKnPerM": {
+            "description": "ECT the low end would need to meet the requirement. Unit: kN/m.",
+            "example": 1.42,
+            "type": "number"
+          },
+          "roles": {
+            "example": [
+              "recommended"
+            ],
+            "items": {
+              "$ref": "#/components/schemas/AdvisoryOptionRole"
+            },
+            "type": "array"
+          },
+          "unitPrice": {
+            "description": "Per piece, incl. VAT, first quantity",
+            "example": "10.00",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "warnings": {
+            "example": [],
+            "items": {
+              "$ref": "#/components/schemas/AdvisoryWarningCode"
+            },
+            "type": "array"
+          }
+        },
+        "required": [
+          "board",
+          "ectKnPerM",
+          "caliperMm",
+          "grammageGsm",
+          "bct",
+          "requiredEctKnPerM",
+          "marginPct",
+          "passes",
+          "instant",
+          "unitPrice",
+          "grossAmount",
+          "currency",
+          "leadTimeDays",
+          "roles",
+          "warnings"
+        ],
+        "type": "object"
+      },
+      "AdvisoryOptionRole": {
+        "enum": [
+          "recommended",
+          "cheapest",
+          "strongest",
+          "fastest",
+          "closest"
+        ],
+        "type": "string"
+      },
+      "AdvisoryOutcome": {
+        "enum": [
+          "recommended",
+          "no_board_meets_load"
+        ],
+        "type": "string"
+      },
+      "AdvisoryPalletDto": {
+        "properties": {
+          "overhang": {
+            "description": "Boxes overhang the pallet edge",
+            "example": false,
+            "type": "boolean"
+          },
+          "pattern": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/AdvisoryPalletPattern"
+              }
+            ],
+            "example": "column"
+          }
+        },
+        "required": [
+          "pattern",
+          "overhang"
+        ],
+        "type": "object"
+      },
+      "AdvisoryPalletPattern": {
+        "enum": [
+          "column",
+          "interlocked"
+        ],
+        "type": "string"
+      },
+      "AdvisoryReasonDto": {
+        "properties": {
+          "band": {
+            "example": "normal",
+            "type": "string"
+          },
+          "code": {
+            "description": "Reason code: box_weight, top_load, factor, combined_factor, required_bct, no_top_load, cheapest_passing, no_instant_price, estimated_bct_low, estimated_bct_high, margin",
+            "example": "factor",
+            "type": "string"
+          },
+          "factor": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/AdvisoryFactor"
+              }
+            ],
+            "example": "humidity"
+          },
+          "unit": {
+            "example": "N",
+            "type": "string"
+          },
+          "value": {
+            "example": 0.8,
+            "type": "number"
+          }
+        },
+        "required": [
+          "code"
+        ],
+        "type": "object"
+      },
+      "AdvisoryRecommendationDto": {
+        "properties": {
+          "alternatives": {
+            "items": {
+              "$ref": "#/components/schemas/AdvisoryAlternativeDto"
+            },
+            "type": "array"
+          },
+          "choice": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/AdvisoryChoiceDto"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "closestBoardId": {
+            "example": null,
+            "format": "uuid",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "createdAt": {
+            "example": "2026-10-03T10:00:00+07:00",
+            "format": "date-time",
+            "type": "string"
+          },
+          "engineVersion": {
+            "example": "1.0.0",
+            "type": "string"
+          },
+          "id": {
+            "example": "0192f3a0-7c1e-7d2a-9b1f-0000000ad101",
+            "format": "uuid",
+            "type": "string"
+          },
+          "noticeCode": {
+            "description": "Fixed notice: the figures are indicative (D-189)",
+            "example": "advisory.indicative",
+            "type": "string"
+          },
+          "options": {
+            "description": "Every board evaluated, strongest first",
+            "items": {
+              "$ref": "#/components/schemas/AdvisoryOptionDto"
+            },
+            "type": "array"
+          },
+          "outcome": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/AdvisoryOutcome"
+              }
+            ],
+            "example": "recommended"
+          },
+          "reasons": {
+            "items": {
+              "$ref": "#/components/schemas/AdvisoryReasonDto"
+            },
+            "type": "array"
+          },
+          "recommendedBoardId": {
+            "example": "0192f3a0-7c1e-7d2a-9b1f-0000000ad102",
+            "format": "uuid",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "requirement": {
+            "$ref": "#/components/schemas/AdvisoryRequirementDto"
+          },
+          "ruleSetVersion": {
+            "$ref": "#/components/schemas/RuleSetVersionRefDto"
+          },
+          "warnings": {
+            "example": [],
+            "items": {
+              "$ref": "#/components/schemas/AdvisoryWarningCode"
+            },
+            "type": "array"
+          }
+        },
+        "required": [
+          "id",
+          "outcome",
+          "noticeCode",
+          "engineVersion",
+          "ruleSetVersion",
+          "requirement",
+          "recommendedBoardId",
+          "closestBoardId",
+          "options",
+          "alternatives",
+          "warnings",
+          "reasons",
+          "choice",
+          "createdAt"
+        ],
+        "type": "object"
+      },
+      "AdvisoryRequirementDto": {
+        "properties": {
+          "boxWeightKg": {
+            "description": "Unit: kg.",
+            "example": 5.711,
+            "type": "number"
+          },
+          "combinedFactor": {
+            "example": 0.3672,
+            "type": "number"
+          },
+          "factors": {
+            "items": {
+              "$ref": "#/components/schemas/AdvisoryFactorDto"
+            },
+            "type": "array"
+          },
+          "layers": {
+            "example": 4,
+            "type": "integer"
+          },
+          "loadN": {
+            "description": "Load on the bottom box. Unit: N.",
+            "example": 168,
+            "type": "number"
+          },
+          "perimeterMm": {
+            "description": "Inside perimeter. Unit: mm.",
+            "example": 1400,
+            "type": "number"
+          },
+          "requiredBctN": {
+            "description": "Unit: N.",
+            "example": 459,
+            "type": "number"
+          },
+          "tareKg": {
+            "description": "Box weight (heaviest candidate board). Unit: kg.",
+            "example": 0.711,
+            "type": "number"
+          }
+        },
+        "required": [
+          "perimeterMm",
+          "tareKg",
+          "boxWeightKg",
+          "layers",
+          "loadN",
+          "factors",
+          "combinedFactor",
+          "requiredBctN"
+        ],
+        "type": "object"
+      },
+      "AdvisoryStorageBand": {
+        "enum": [
+          "up_to_10_days",
+          "up_to_30_days",
+          "up_to_90_days",
+          "over_90_days"
+        ],
+        "type": "string"
+      },
+      "AdvisoryTransportMode": {
+        "enum": [
+          "pickup",
+          "parcel_domestic",
+          "pallet_domestic",
+          "sea_export"
+        ],
+        "type": "string"
+      },
+      "AdvisoryWarningCode": {
+        "enum": [
+          "no_board_meets_load",
+          "thin_margin",
+          "below_requirement"
+        ],
+        "type": "string"
       },
       "AgingBucketsDto": {
         "properties": {
@@ -11372,6 +12387,31 @@
         ],
         "type": "object"
       },
+      "BctRangeDto": {
+        "properties": {
+          "estimate": {
+            "description": "McKee estimate. Unit: N.",
+            "example": 1902.1,
+            "type": "number"
+          },
+          "high": {
+            "description": "High end. Unit: N.",
+            "example": 2187.4,
+            "type": "number"
+          },
+          "low": {
+            "description": "Low end (decides). Unit: N.",
+            "example": 1616.8,
+            "type": "number"
+          }
+        },
+        "required": [
+          "estimate",
+          "low",
+          "high"
+        ],
+        "type": "object"
+      },
       "BenefitTierBasis": {
         "enum": [
           "quantity",
@@ -11781,6 +12821,163 @@
           "labelEn",
           "total",
           "atRisk"
+        ],
+        "type": "object"
+      },
+      "BoardSheetFluteDto": {
+        "properties": {
+          "code": {
+            "example": "B",
+            "type": "string"
+          },
+          "layers": {
+            "description": "Paper layers: 3 single wall, 5 double wall, 7 triple wall",
+            "example": 3,
+            "type": "integer"
+          }
+        },
+        "required": [
+          "code",
+          "layers"
+        ],
+        "type": "object"
+      },
+      "BoardSheetMaterialDto": {
+        "properties": {
+          "code": {
+            "example": "ka125-b",
+            "type": "string"
+          },
+          "flute": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/BoardSheetFluteDto"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "id": {
+            "example": "0192f3a0-7c1e-7d2a-9b1f-0000000ad003",
+            "format": "uuid",
+            "type": "string"
+          },
+          "nameEn": {
+            "example": "Kraft board KA125 B-flute",
+            "type": "string"
+          },
+          "nameTh": {
+            "example": "กระดาษลัง KA125 ลอน B",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "code",
+          "nameTh",
+          "nameEn",
+          "flute"
+        ],
+        "type": "object"
+      },
+      "BoardStrengthSheetDto": {
+        "properties": {
+          "caliperMm": {
+            "description": "Board caliper. Unit: mm.",
+            "example": 3.1,
+            "type": "number"
+          },
+          "createdAt": {
+            "example": "2026-09-25T10:00:00+07:00",
+            "format": "date-time",
+            "type": "string"
+          },
+          "createdById": {
+            "example": "0192f3a0-7c1e-7d2a-9b1f-0000000ad005",
+            "format": "uuid",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "current": {
+            "description": "The version the advisor reads now for this factory × board (later ones supersede it)",
+            "example": true,
+            "type": "boolean"
+          },
+          "dataSheetFileId": {
+            "description": "The signed data sheet",
+            "example": "0192f3a0-7c1e-7d2a-9b1f-0000000ad004",
+            "format": "uuid",
+            "type": "string"
+          },
+          "ectKnPerM": {
+            "description": "Edge crush test (ECT). Unit: kN/m.",
+            "example": 7.2,
+            "type": "number"
+          },
+          "effectiveFrom": {
+            "example": "2026-10-03T00:00:00+07:00",
+            "format": "date-time",
+            "type": "string"
+          },
+          "factory": {
+            "$ref": "#/components/schemas/CodedRefDto"
+          },
+          "grammageGsm": {
+            "description": "Board grammage. Unit: g/m².",
+            "example": 560,
+            "type": "number"
+          },
+          "id": {
+            "example": "0192f3a0-7c1e-7d2a-9b1f-0000000ad001",
+            "format": "uuid",
+            "type": "string"
+          },
+          "material": {
+            "$ref": "#/components/schemas/BoardSheetMaterialDto"
+          },
+          "note": {
+            "example": null,
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "signedOn": {
+            "description": "When the partner signed the sheet",
+            "example": "2026-09-28",
+            "format": "date",
+            "type": "string"
+          },
+          "testMethod": {
+            "description": "The test standard the sheet states",
+            "example": "ISO 3037",
+            "type": "string"
+          },
+          "versionNo": {
+            "description": "Per factory × board, from 1",
+            "example": 1,
+            "type": "integer"
+          }
+        },
+        "required": [
+          "id",
+          "factory",
+          "material",
+          "versionNo",
+          "ectKnPerM",
+          "caliperMm",
+          "grammageGsm",
+          "testMethod",
+          "dataSheetFileId",
+          "signedOn",
+          "effectiveFrom",
+          "current",
+          "note",
+          "createdAt",
+          "createdById"
         ],
         "type": "object"
       },
@@ -14804,6 +16001,35 @@
           "paymentMethods",
           "points",
           "company"
+        ],
+        "type": "object"
+      },
+      "ChooseBoardDto": {
+        "properties": {
+          "acknowledgedWarnings": {
+            "description": "Every warning code of the chosen board, acknowledged on record (D-189)",
+            "example": [],
+            "items": {
+              "$ref": "#/components/schemas/AdvisoryWarningCode"
+            },
+            "maxItems": 10,
+            "type": "array"
+          },
+          "anonymousId": {
+            "example": "0192f3a0-7c1e-7d2a-9b1f-0000000ad104",
+            "format": "uuid",
+            "type": "string"
+          },
+          "materialId": {
+            "description": "A board the recommendation lists",
+            "example": "0192f3a0-7c1e-7d2a-9b1f-0000000ad102",
+            "format": "uuid",
+            "type": "string"
+          }
+        },
+        "required": [
+          "materialId",
+          "acknowledgedWarnings"
         ],
         "type": "object"
       },
@@ -19409,6 +20635,80 @@
           "position",
           "title",
           "desktopFileId"
+        ],
+        "type": "object"
+      },
+      "CreateBoardStrengthSheetDto": {
+        "properties": {
+          "caliperMm": {
+            "description": "Board caliper Unit: mm.",
+            "example": 3.1,
+            "maximum": 50,
+            "minimum": 0,
+            "type": "number"
+          },
+          "dataSheetFileId": {
+            "description": "The signed sheet, uploaded with purpose `document`",
+            "example": "0192f3a0-7c1e-7d2a-9b1f-0000000ad004",
+            "format": "uuid",
+            "type": "string"
+          },
+          "ectKnPerM": {
+            "description": "Edge crush test (ECT) Unit: kN/m.",
+            "example": 7.2,
+            "maximum": 100,
+            "minimum": 0,
+            "type": "number"
+          },
+          "effectiveFrom": {
+            "description": "Defaults to now; never in the past (D-236)",
+            "example": "2026-10-03T00:00:00+07:00",
+            "format": "date-time",
+            "type": "string"
+          },
+          "factoryId": {
+            "example": "0192f3a0-7c1e-7d2a-9b1f-0000000ad002",
+            "format": "uuid",
+            "type": "string"
+          },
+          "grammageGsm": {
+            "description": "Board grammage Unit: g/m².",
+            "example": 560,
+            "maximum": 5000,
+            "minimum": 0,
+            "type": "number"
+          },
+          "materialId": {
+            "description": "A corrugated board (material kind `corrugated_board`)",
+            "example": "0192f3a0-7c1e-7d2a-9b1f-0000000ad003",
+            "format": "uuid",
+            "type": "string"
+          },
+          "note": {
+            "example": "ใบรับรองจากโรงงานรอบเดือนกันยายน",
+            "type": "string"
+          },
+          "signedOn": {
+            "description": "When the partner signed it",
+            "example": "2026-09-28",
+            "format": "date",
+            "type": "string"
+          },
+          "testMethod": {
+            "description": "The test standard the sheet states",
+            "example": "ISO 3037",
+            "type": "string"
+          }
+        },
+        "required": [
+          "factoryId",
+          "materialId",
+          "ectKnPerM",
+          "caliperMm",
+          "grammageGsm",
+          "testMethod",
+          "dataSheetFileId",
+          "signedOn"
         ],
         "type": "object"
       },
@@ -46549,6 +47849,25 @@
         ],
         "type": "string"
       },
+      "QuoteAdvisoryDto": {
+        "properties": {
+          "choiceId": {
+            "example": "0192f3a0-7c1e-7d2a-9b1f-0000000ad105",
+            "format": "uuid",
+            "type": "string"
+          },
+          "recommendationId": {
+            "example": "0192f3a0-7c1e-7d2a-9b1f-0000000ad101",
+            "format": "uuid",
+            "type": "string"
+          }
+        },
+        "required": [
+          "recommendationId",
+          "choiceId"
+        ],
+        "type": "object"
+      },
       "QuoteAssemblyInputDto": {
         "properties": {
           "amount": {
@@ -47725,6 +49044,62 @@
           "currency",
           "status",
           "writeOffApprovalId"
+        ],
+        "type": "object"
+      },
+      "RecommendDto": {
+        "properties": {
+          "configuration": {
+            "additionalProperties": true,
+            "description": "The corrugate configuration (`CorrugateConfigurationDto`, paths under `configuration`): style, basis, size, board, quantities. Every compatible board is priced with the same configuration.",
+            "example": {
+              "catalogProductId": "0192f3a0-7c1e-7d2a-9b1f-00000000b106",
+              "d": 250,
+              "design": {
+                "graphic": false,
+                "structure": false
+              },
+              "difficultyLevelId": "0192f3a0-7c1e-7d2a-9b1f-00000000a103",
+              "l": 400,
+              "materialId": "0192f3a0-7c1e-7d2a-9b1f-00000000b102",
+              "parts": [
+                {
+                  "printFront": [
+                    {
+                      "area": "top",
+                      "inkColourId": "0192f3a0-7c1e-7d2a-9b1f-00000000a104"
+                    }
+                  ]
+                }
+              ],
+              "patternId": "0192f3a0-7c1e-7d2a-9b1f-00000000b101",
+              "quantities": [
+                1000
+              ],
+              "w": 300
+            },
+            "type": "object"
+          },
+          "deliveryPostcode": {
+            "description": "Prices shipping (D-013)",
+            "example": "10110",
+            "pattern": "^[0-9]{5}$",
+            "type": "string"
+          },
+          "load": {
+            "$ref": "#/components/schemas/AdvisoryLoadDto"
+          },
+          "productTypeCode": {
+            "example": "corrugated",
+            "maxLength": 64,
+            "pattern": "^[a-z][a-z0-9_]*$",
+            "type": "string"
+          }
+        },
+        "required": [
+          "productTypeCode",
+          "configuration",
+          "load"
         ],
         "type": "object"
       },
@@ -49306,6 +50681,34 @@
         },
         "required": [
           "postcodes"
+        ],
+        "type": "object"
+      },
+      "ReplayResultDto": {
+        "properties": {
+          "differences": {
+            "description": "JSON paths that differ",
+            "example": [],
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "engineVersion": {
+            "description": "Engine version of this replay",
+            "example": "1.0.0",
+            "type": "string"
+          },
+          "identical": {
+            "description": "The replay reproduced the logged output exactly (D-240)",
+            "example": true,
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "identical",
+          "differences",
+          "engineVersion"
         ],
         "type": "object"
       },
@@ -51919,6 +53322,24 @@
         ],
         "type": "object"
       },
+      "RuleSetVersionRefDto": {
+        "properties": {
+          "effectiveFrom": {
+            "example": "2026-10-03T00:00:00+07:00",
+            "format": "date-time",
+            "type": "string"
+          },
+          "versionNo": {
+            "example": 1,
+            "type": "integer"
+          }
+        },
+        "required": [
+          "versionNo",
+          "effectiveFrom"
+        ],
+        "type": "object"
+      },
       "RumZone": {
         "enum": [
           "store",
@@ -52258,6 +53679,12 @@
       },
       "SaveQuoteDto": {
         "properties": {
+          "advisoryRecommendationId": {
+            "description": "The Structure Advisor recommendation this quotation follows (D-240): the board chosen on it must be the configuration’s board; stored on the quotation",
+            "example": "0192f3a0-7c1e-7d2a-9b1f-0000000ad101",
+            "format": "uuid",
+            "type": "string"
+          },
           "anonymousId": {
             "description": "Configurator session id when not signed in; claim the quote after login",
             "example": "0192f3a0-7c1e-7d2a-9b1f-00000000e604",
@@ -52341,6 +53768,17 @@
       },
       "SavedQuoteDto": {
         "properties": {
+          "advisory": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/QuoteAdvisoryDto"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "The Structure Advisor recommendation and choice it was saved from (D-240)"
+          },
           "configuration": {
             "additionalProperties": true,
             "anyOf": [
@@ -52510,6 +53948,7 @@
           "dimensions",
           "sharedAt",
           "shareExpiresAt",
+          "advisory",
           "createdAt"
         ],
         "type": "object"
@@ -60217,6 +61656,68 @@
           "nameEn",
           "categoryCode",
           "quoteMode"
+        ],
+        "type": "object"
+      },
+      "StoreRecommendDto": {
+        "properties": {
+          "anonymousId": {
+            "description": "Configurator session id when not signed in",
+            "example": "0192f3a0-7c1e-7d2a-9b1f-0000000ad104",
+            "format": "uuid",
+            "type": "string"
+          },
+          "configuration": {
+            "additionalProperties": true,
+            "description": "The corrugate configuration (`CorrugateConfigurationDto`, paths under `configuration`): style, basis, size, board, quantities. Every compatible board is priced with the same configuration.",
+            "example": {
+              "catalogProductId": "0192f3a0-7c1e-7d2a-9b1f-00000000b106",
+              "d": 250,
+              "design": {
+                "graphic": false,
+                "structure": false
+              },
+              "difficultyLevelId": "0192f3a0-7c1e-7d2a-9b1f-00000000a103",
+              "l": 400,
+              "materialId": "0192f3a0-7c1e-7d2a-9b1f-00000000b102",
+              "parts": [
+                {
+                  "printFront": [
+                    {
+                      "area": "top",
+                      "inkColourId": "0192f3a0-7c1e-7d2a-9b1f-00000000a104"
+                    }
+                  ]
+                }
+              ],
+              "patternId": "0192f3a0-7c1e-7d2a-9b1f-00000000b101",
+              "quantities": [
+                1000
+              ],
+              "w": 300
+            },
+            "type": "object"
+          },
+          "deliveryPostcode": {
+            "description": "Prices shipping (D-013)",
+            "example": "10110",
+            "pattern": "^[0-9]{5}$",
+            "type": "string"
+          },
+          "load": {
+            "$ref": "#/components/schemas/AdvisoryLoadDto"
+          },
+          "productTypeCode": {
+            "example": "corrugated",
+            "maxLength": 64,
+            "pattern": "^[a-z][a-z0-9_]*$",
+            "type": "string"
+          }
+        },
+        "required": [
+          "productTypeCode",
+          "configuration",
+          "load"
         ],
         "type": "object"
       },
@@ -67968,7 +69469,7 @@
     "contact": {},
     "description": "Packio — Your Packaging Production Partner, operated by Collective Group (Thailand).\nRules: `docs/contract/api-conventions.md` (shared with packio-web).\n\n- **Surfaces:** `/v1/auth`, `/v1/store` (customer), `/v1/admin` (staff), `/v1/partner` (factories), `/webhooks`. A token is accepted only on its own audience's prefix.\n- **Money:** decimal strings with exactly 2 decimals (`\"1234.50\"`) plus `currency: \"THB\"` on the object; never JSON numbers. Clients never compute prices.\n- **Dates:** ISO 8601 with offset, rendered in `Asia/Bangkok` (`2026-09-22T14:05:00+07:00`); date-only fields `YYYY-MM-DD`.\n- **IDs:** uuid only; business keys (`orderCode`) are separate fields.\n- **Errors:** RFC 9457 `application/problem+json` with a stable `code`; `title`/`detail` localised by `Accept-Language` (`th` default, `en`).\n- **Lists:** `?page&perPage(≤100)&sort&order&q` → `{ data, meta: { page, perPage, total } }`; feeds use `?cursor&limit` → `{ data, meta: { nextCursor } }`.\n- **Idempotency:** irreversible POSTs require `Idempotency-Key` (uuid); replays within 24 h return the original response.\n- **Concurrency:** editable resources return `ETag`; updates send `If-Match` (412 `concurrency.stale`).\n- **Files:** presign → PUT to the returned URL → reference the `fileId`.",
     "title": "Packio API",
-    "version": "0.13.0"
+    "version": "0.14.0"
   },
   "openapi": "3.1.0",
   "paths": {
@@ -68068,6 +69569,1307 @@
         "summary": "Check the API and its dependencies",
         "tags": [
           "ops.health"
+        ]
+      }
+    },
+    "/v1/admin/advisory/actions/evaluate": {
+      "post": {
+        "description": "Staff run the advisor as customers would (D-239), also while the flag is off — for validation and CS advice. Needs a rule set in force (D-237). The run is logged with the staff member (channel `cs`, D-240). The staff view adds the board data used and the boards excluded for missing data (D-236).\n\nImplements: D-188, D-189, D-235, D-236, D-237, D-238, D-239, D-240.",
+        "operationId": "admin.advisory.evaluate",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "examples": {
+                "default": {
+                  "value": {
+                    "configuration": {
+                      "catalogProductId": "0192f3a0-7c1e-7d2a-9b1f-00000000b106",
+                      "d": 250,
+                      "design": {
+                        "graphic": false,
+                        "structure": false
+                      },
+                      "difficultyLevelId": "0192f3a0-7c1e-7d2a-9b1f-00000000a103",
+                      "l": 400,
+                      "materialId": "0192f3a0-7c1e-7d2a-9b1f-00000000b102",
+                      "parts": [
+                        {
+                          "printFront": [
+                            {
+                              "area": "top",
+                              "inkColourId": "0192f3a0-7c1e-7d2a-9b1f-00000000a104"
+                            }
+                          ]
+                        }
+                      ],
+                      "patternId": "0192f3a0-7c1e-7d2a-9b1f-00000000b101",
+                      "quantities": [
+                        1000
+                      ],
+                      "w": 300
+                    },
+                    "load": {
+                      "fragility": "low",
+                      "humidity": "normal",
+                      "pallet": {
+                        "overhang": false,
+                        "pattern": "column"
+                      },
+                      "productWeightG": 500,
+                      "stackLayers": 4,
+                      "storage": "up_to_30_days",
+                      "transportMode": "pallet_domestic",
+                      "unitsPerBox": 10
+                    },
+                    "productTypeCode": "corrugated"
+                  }
+                }
+              },
+              "schema": {
+                "$ref": "#/components/schemas/RecommendDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "alternatives": [
+                    {
+                      "boardId": "0192f3a0-7c1e-7d2a-9b1f-0000000ad103",
+                      "leadTimeDeltaDays": 2,
+                      "roles": [
+                        "strongest"
+                      ],
+                      "unitPriceDelta": "5.20"
+                    }
+                  ],
+                  "anonymousId": null,
+                  "boardData": [
+                    {
+                      "boardId": "0192f3a0-7c1e-7d2a-9b1f-0000000ad102",
+                      "factoryId": "0192f3a0-7c1e-7d2a-9b1f-0000000ad108",
+                      "sheetId": "0192f3a0-7c1e-7d2a-9b1f-0000000ad109",
+                      "sheetSource": "priced_factory"
+                    }
+                  ],
+                  "channel": "web",
+                  "choice": null,
+                  "choices": [],
+                  "closestBoardId": null,
+                  "createdAt": "2026-10-03T10:00:00+07:00",
+                  "createdById": null,
+                  "customerId": "0192f3a0-7c1e-7d2a-9b1f-0000000ad107",
+                  "engineVersion": "1.0.0",
+                  "excluded": [],
+                  "id": "0192f3a0-7c1e-7d2a-9b1f-0000000ad101",
+                  "inputs": {
+                    "productTypeCode": "corrugated"
+                  },
+                  "noticeCode": "advisory.indicative",
+                  "options": [
+                    {
+                      "bct": {
+                        "estimate": 1902.1,
+                        "high": 2187.4,
+                        "low": 1616.8
+                      },
+                      "board": {
+                        "code": "ka125-b",
+                        "fluteCode": "B",
+                        "id": "0192f3a0-7c1e-7d2a-9b1f-0000000ad102",
+                        "layers": 3,
+                        "nameEn": "Kraft board KA125 B-flute",
+                        "nameTh": "กระดาษลัง KA125 ลอน B"
+                      },
+                      "caliperMm": 3,
+                      "currency": "THB",
+                      "ectKnPerM": 5,
+                      "grammageGsm": 450,
+                      "grossAmount": "10700.00",
+                      "instant": true,
+                      "leadTimeDays": 10,
+                      "marginPct": 252.2,
+                      "passes": true,
+                      "requiredEctKnPerM": 1.42,
+                      "roles": [
+                        "recommended",
+                        "cheapest"
+                      ],
+                      "unitPrice": "10.00",
+                      "warnings": []
+                    }
+                  ],
+                  "outcome": "recommended",
+                  "quoteIds": [
+                    "0192f3a0-7c1e-7d2a-9b1f-0000000ad106"
+                  ],
+                  "reasons": [
+                    {
+                      "code": "top_load",
+                      "unit": "N",
+                      "value": 168
+                    },
+                    {
+                      "band": "normal",
+                      "code": "factor",
+                      "factor": "humidity",
+                      "value": 0.8
+                    },
+                    {
+                      "code": "required_bct",
+                      "unit": "N",
+                      "value": 459
+                    },
+                    {
+                      "code": "cheapest_passing"
+                    }
+                  ],
+                  "recommendedBoardId": "0192f3a0-7c1e-7d2a-9b1f-0000000ad102",
+                  "requirement": {
+                    "boxWeightKg": 5.711,
+                    "combinedFactor": 0.3672,
+                    "factors": [
+                      {
+                        "band": "normal",
+                        "factor": "humidity",
+                        "value": 0.8
+                      },
+                      {
+                        "band": "up_to_30_days",
+                        "factor": "storage",
+                        "value": 0.6
+                      },
+                      {
+                        "band": "column",
+                        "factor": "palletPattern",
+                        "value": 0.9
+                      },
+                      {
+                        "band": "none",
+                        "factor": "palletOverhang",
+                        "value": 1
+                      },
+                      {
+                        "band": "pallet_domestic",
+                        "factor": "transport",
+                        "value": 0.85
+                      },
+                      {
+                        "band": "low",
+                        "factor": "fragility",
+                        "value": 1
+                      }
+                    ],
+                    "layers": 4,
+                    "loadN": 168,
+                    "perimeterMm": 1400,
+                    "requiredBctN": 459,
+                    "tareKg": 0.711
+                  },
+                  "ruleSet": {
+                    "mckeeConstant": "5.87"
+                  },
+                  "ruleSetVersion": {
+                    "effectiveFrom": "2026-10-03T00:00:00+07:00",
+                    "versionNo": 1
+                  },
+                  "warnings": []
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/AdminAdvisoryRecommendationDto"
+                }
+              }
+            },
+            "description": "The recommendation",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "400": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.bad_request": {
+                    "$ref": "#/components/examples/problem.http.bad_request"
+                  },
+                  "http.malformed_json": {
+                    "$ref": "#/components/examples/problem.http.malformed_json"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.bad_request`, `http.malformed_json`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.unauthenticated": {
+                    "$ref": "#/components/examples/problem.auth.unauthenticated"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.unauthenticated`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.forbidden": {
+                    "$ref": "#/components/examples/problem.auth.forbidden"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.forbidden`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "409": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "advisory.not_configured": {
+                    "$ref": "#/components/examples/problem.advisory.not_configured"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `advisory.not_configured`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "advisory.not_supported": {
+                    "$ref": "#/components/examples/problem.advisory.not_supported"
+                  },
+                  "pricing.not_instant": {
+                    "$ref": "#/components/examples/problem.pricing.not_instant"
+                  },
+                  "specs.unit_not_accepted": {
+                    "$ref": "#/components/examples/problem.specs.unit_not_accepted"
+                  },
+                  "validation.failed": {
+                    "$ref": "#/components/examples/problem.validation.failed"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `advisory.not_supported`, `pricing.not_instant`, `specs.unit_not_accepted`, `validation.failed`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "staff": []
+          }
+        ],
+        "summary": "Run the Structure Advisor for a configuration",
+        "tags": [
+          "admin.advisory"
+        ],
+        "x-required-permissions": [
+          "advisory.evaluate"
+        ]
+      }
+    },
+    "/v1/admin/advisory/recommendations": {
+      "get": {
+        "description": "The recommendation log, newest first (D-240), filtered by outcome or customer.\n\nImplements: D-188, D-189, D-235, D-236, D-237, D-238, D-239, D-240.",
+        "operationId": "admin.advisory.listRecommendations",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "page",
+            "required": false,
+            "schema": {
+              "default": 1,
+              "minimum": 1,
+              "type": "integer"
+            }
+          },
+          {
+            "in": "query",
+            "name": "perPage",
+            "required": false,
+            "schema": {
+              "default": 25,
+              "maximum": 100,
+              "minimum": 1,
+              "type": "integer"
+            }
+          },
+          {
+            "description": "Sort field; each endpoint validates it against its own allow-list.",
+            "in": "query",
+            "name": "sort",
+            "required": false,
+            "schema": {
+              "example": "createdAt",
+              "maxLength": 64,
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "order",
+            "required": false,
+            "schema": {
+              "$ref": "#/components/schemas/SortOrder"
+            }
+          },
+          {
+            "description": "Free-text search",
+            "in": "query",
+            "name": "q",
+            "required": false,
+            "schema": {
+              "maxLength": 200,
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "outcome",
+            "required": false,
+            "schema": {
+              "$ref": "#/components/schemas/AdvisoryOutcome"
+            }
+          },
+          {
+            "description": "The customer",
+            "in": "query",
+            "name": "customerId",
+            "required": false,
+            "schema": {
+              "example": "0192f3a0-7c1e-7d2a-9b1f-0000000ad107",
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "data": [
+                    {
+                      "alternatives": [
+                        {
+                          "boardId": "0192f3a0-7c1e-7d2a-9b1f-0000000ad103",
+                          "leadTimeDeltaDays": 2,
+                          "roles": [
+                            "strongest"
+                          ],
+                          "unitPriceDelta": "5.20"
+                        }
+                      ],
+                      "anonymousId": null,
+                      "boardData": [
+                        {
+                          "boardId": "0192f3a0-7c1e-7d2a-9b1f-0000000ad102",
+                          "factoryId": "0192f3a0-7c1e-7d2a-9b1f-0000000ad108",
+                          "sheetId": "0192f3a0-7c1e-7d2a-9b1f-0000000ad109",
+                          "sheetSource": "priced_factory"
+                        }
+                      ],
+                      "channel": "web",
+                      "choice": null,
+                      "choices": [],
+                      "closestBoardId": null,
+                      "createdAt": "2026-10-03T10:00:00+07:00",
+                      "createdById": null,
+                      "customerId": "0192f3a0-7c1e-7d2a-9b1f-0000000ad107",
+                      "engineVersion": "1.0.0",
+                      "excluded": [],
+                      "id": "0192f3a0-7c1e-7d2a-9b1f-0000000ad101",
+                      "inputs": {
+                        "productTypeCode": "corrugated"
+                      },
+                      "noticeCode": "advisory.indicative",
+                      "options": [
+                        {
+                          "bct": {
+                            "estimate": 1902.1,
+                            "high": 2187.4,
+                            "low": 1616.8
+                          },
+                          "board": {
+                            "code": "ka125-b",
+                            "fluteCode": "B",
+                            "id": "0192f3a0-7c1e-7d2a-9b1f-0000000ad102",
+                            "layers": 3,
+                            "nameEn": "Kraft board KA125 B-flute",
+                            "nameTh": "กระดาษลัง KA125 ลอน B"
+                          },
+                          "caliperMm": 3,
+                          "currency": "THB",
+                          "ectKnPerM": 5,
+                          "grammageGsm": 450,
+                          "grossAmount": "10700.00",
+                          "instant": true,
+                          "leadTimeDays": 10,
+                          "marginPct": 252.2,
+                          "passes": true,
+                          "requiredEctKnPerM": 1.42,
+                          "roles": [
+                            "recommended",
+                            "cheapest"
+                          ],
+                          "unitPrice": "10.00",
+                          "warnings": []
+                        }
+                      ],
+                      "outcome": "recommended",
+                      "quoteIds": [
+                        "0192f3a0-7c1e-7d2a-9b1f-0000000ad106"
+                      ],
+                      "reasons": [
+                        {
+                          "code": "top_load",
+                          "unit": "N",
+                          "value": 168
+                        },
+                        {
+                          "band": "normal",
+                          "code": "factor",
+                          "factor": "humidity",
+                          "value": 0.8
+                        },
+                        {
+                          "code": "required_bct",
+                          "unit": "N",
+                          "value": 459
+                        },
+                        {
+                          "code": "cheapest_passing"
+                        }
+                      ],
+                      "recommendedBoardId": "0192f3a0-7c1e-7d2a-9b1f-0000000ad102",
+                      "requirement": {
+                        "boxWeightKg": 5.711,
+                        "combinedFactor": 0.3672,
+                        "factors": [
+                          {
+                            "band": "normal",
+                            "factor": "humidity",
+                            "value": 0.8
+                          },
+                          {
+                            "band": "up_to_30_days",
+                            "factor": "storage",
+                            "value": 0.6
+                          },
+                          {
+                            "band": "column",
+                            "factor": "palletPattern",
+                            "value": 0.9
+                          },
+                          {
+                            "band": "none",
+                            "factor": "palletOverhang",
+                            "value": 1
+                          },
+                          {
+                            "band": "pallet_domestic",
+                            "factor": "transport",
+                            "value": 0.85
+                          },
+                          {
+                            "band": "low",
+                            "factor": "fragility",
+                            "value": 1
+                          }
+                        ],
+                        "layers": 4,
+                        "loadN": 168,
+                        "perimeterMm": 1400,
+                        "requiredBctN": 459,
+                        "tareKg": 0.711
+                      },
+                      "ruleSet": {
+                        "mckeeConstant": "5.87"
+                      },
+                      "ruleSetVersion": {
+                        "effectiveFrom": "2026-10-03T00:00:00+07:00",
+                        "versionNo": 1
+                      },
+                      "warnings": []
+                    }
+                  ],
+                  "meta": {
+                    "page": 1,
+                    "perPage": 25,
+                    "total": 1
+                  }
+                },
+                "schema": {
+                  "properties": {
+                    "data": {
+                      "items": {
+                        "$ref": "#/components/schemas/AdminAdvisoryRecommendationDto"
+                      },
+                      "type": "array"
+                    },
+                    "meta": {
+                      "$ref": "#/components/schemas/PageMeta"
+                    }
+                  },
+                  "required": [
+                    "data",
+                    "meta"
+                  ],
+                  "type": "object"
+                }
+              }
+            },
+            "description": "One page of results",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.unauthenticated": {
+                    "$ref": "#/components/examples/problem.auth.unauthenticated"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.unauthenticated`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.forbidden": {
+                    "$ref": "#/components/examples/problem.auth.forbidden"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.forbidden`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "validation.failed": {
+                    "$ref": "#/components/examples/problem.validation.failed"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `validation.failed`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "staff": []
+          }
+        ],
+        "summary": "List Structure Advisor recommendations",
+        "tags": [
+          "admin.advisory"
+        ],
+        "x-required-permissions": [
+          "advisory.read"
+        ]
+      }
+    },
+    "/v1/admin/advisory/recommendations/{recommendationId}": {
+      "get": {
+        "description": "Inputs, rule-set version and value, board data used (whose sheet), output, choices and the quotations saved from it (D-240).\n\nImplements: D-188, D-189, D-235, D-236, D-237, D-238, D-239, D-240.",
+        "operationId": "admin.advisory.getRecommendation",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "recommendationId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "alternatives": [
+                    {
+                      "boardId": "0192f3a0-7c1e-7d2a-9b1f-0000000ad103",
+                      "leadTimeDeltaDays": 2,
+                      "roles": [
+                        "strongest"
+                      ],
+                      "unitPriceDelta": "5.20"
+                    }
+                  ],
+                  "anonymousId": null,
+                  "boardData": [
+                    {
+                      "boardId": "0192f3a0-7c1e-7d2a-9b1f-0000000ad102",
+                      "factoryId": "0192f3a0-7c1e-7d2a-9b1f-0000000ad108",
+                      "sheetId": "0192f3a0-7c1e-7d2a-9b1f-0000000ad109",
+                      "sheetSource": "priced_factory"
+                    }
+                  ],
+                  "channel": "web",
+                  "choice": null,
+                  "choices": [],
+                  "closestBoardId": null,
+                  "createdAt": "2026-10-03T10:00:00+07:00",
+                  "createdById": null,
+                  "customerId": "0192f3a0-7c1e-7d2a-9b1f-0000000ad107",
+                  "engineVersion": "1.0.0",
+                  "excluded": [],
+                  "id": "0192f3a0-7c1e-7d2a-9b1f-0000000ad101",
+                  "inputs": {
+                    "productTypeCode": "corrugated"
+                  },
+                  "noticeCode": "advisory.indicative",
+                  "options": [
+                    {
+                      "bct": {
+                        "estimate": 1902.1,
+                        "high": 2187.4,
+                        "low": 1616.8
+                      },
+                      "board": {
+                        "code": "ka125-b",
+                        "fluteCode": "B",
+                        "id": "0192f3a0-7c1e-7d2a-9b1f-0000000ad102",
+                        "layers": 3,
+                        "nameEn": "Kraft board KA125 B-flute",
+                        "nameTh": "กระดาษลัง KA125 ลอน B"
+                      },
+                      "caliperMm": 3,
+                      "currency": "THB",
+                      "ectKnPerM": 5,
+                      "grammageGsm": 450,
+                      "grossAmount": "10700.00",
+                      "instant": true,
+                      "leadTimeDays": 10,
+                      "marginPct": 252.2,
+                      "passes": true,
+                      "requiredEctKnPerM": 1.42,
+                      "roles": [
+                        "recommended",
+                        "cheapest"
+                      ],
+                      "unitPrice": "10.00",
+                      "warnings": []
+                    }
+                  ],
+                  "outcome": "recommended",
+                  "quoteIds": [
+                    "0192f3a0-7c1e-7d2a-9b1f-0000000ad106"
+                  ],
+                  "reasons": [
+                    {
+                      "code": "top_load",
+                      "unit": "N",
+                      "value": 168
+                    },
+                    {
+                      "band": "normal",
+                      "code": "factor",
+                      "factor": "humidity",
+                      "value": 0.8
+                    },
+                    {
+                      "code": "required_bct",
+                      "unit": "N",
+                      "value": 459
+                    },
+                    {
+                      "code": "cheapest_passing"
+                    }
+                  ],
+                  "recommendedBoardId": "0192f3a0-7c1e-7d2a-9b1f-0000000ad102",
+                  "requirement": {
+                    "boxWeightKg": 5.711,
+                    "combinedFactor": 0.3672,
+                    "factors": [
+                      {
+                        "band": "normal",
+                        "factor": "humidity",
+                        "value": 0.8
+                      },
+                      {
+                        "band": "up_to_30_days",
+                        "factor": "storage",
+                        "value": 0.6
+                      },
+                      {
+                        "band": "column",
+                        "factor": "palletPattern",
+                        "value": 0.9
+                      },
+                      {
+                        "band": "none",
+                        "factor": "palletOverhang",
+                        "value": 1
+                      },
+                      {
+                        "band": "pallet_domestic",
+                        "factor": "transport",
+                        "value": 0.85
+                      },
+                      {
+                        "band": "low",
+                        "factor": "fragility",
+                        "value": 1
+                      }
+                    ],
+                    "layers": 4,
+                    "loadN": 168,
+                    "perimeterMm": 1400,
+                    "requiredBctN": 459,
+                    "tareKg": 0.711
+                  },
+                  "ruleSet": {
+                    "mckeeConstant": "5.87"
+                  },
+                  "ruleSetVersion": {
+                    "effectiveFrom": "2026-10-03T00:00:00+07:00",
+                    "versionNo": 1
+                  },
+                  "warnings": []
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/AdminAdvisoryRecommendationDto"
+                }
+              }
+            },
+            "description": "The recommendation",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.unauthenticated": {
+                    "$ref": "#/components/examples/problem.auth.unauthenticated"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.unauthenticated`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.forbidden": {
+                    "$ref": "#/components/examples/problem.auth.forbidden"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.forbidden`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "404": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.not_found": {
+                    "$ref": "#/components/examples/problem.http.not_found"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.not_found`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "validation.failed": {
+                    "$ref": "#/components/examples/problem.validation.failed"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `validation.failed`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "staff": []
+          }
+        ],
+        "summary": "Get a Structure Advisor recommendation",
+        "tags": [
+          "admin.advisory"
+        ],
+        "x-required-permissions": [
+          "advisory.read"
+        ]
+      }
+    },
+    "/v1/admin/advisory/recommendations/{recommendationId}/actions/replay": {
+      "post": {
+        "description": "Re-runs the engine on the logged inputs, board data and rule-set value and compares the result with the logged output (D-240): `identical` must be true; `differences` lists the JSON paths that changed (e.g. after an engine version change). Nothing is written.\n\nImplements: D-188, D-189, D-235, D-236, D-237, D-238, D-239, D-240.",
+        "operationId": "admin.advisory.replayRecommendation",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "recommendationId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "differences": [],
+                  "engineVersion": "1.0.0",
+                  "identical": true
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ReplayResultDto"
+                }
+              }
+            },
+            "description": "The comparison",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.unauthenticated": {
+                    "$ref": "#/components/examples/problem.auth.unauthenticated"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.unauthenticated`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.forbidden": {
+                    "$ref": "#/components/examples/problem.auth.forbidden"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.forbidden`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "404": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.not_found": {
+                    "$ref": "#/components/examples/problem.http.not_found"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.not_found`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "validation.failed": {
+                    "$ref": "#/components/examples/problem.validation.failed"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `validation.failed`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "staff": []
+          }
+        ],
+        "summary": "Replay a Structure Advisor recommendation",
+        "tags": [
+          "admin.advisory"
+        ],
+        "x-required-permissions": [
+          "advisory.read"
         ]
       }
     },
@@ -80531,6 +83333,756 @@
         ],
         "x-required-permissions": [
           "payables.manage"
+        ]
+      }
+    },
+    "/v1/admin/board-strength-sheets": {
+      "get": {
+        "description": "Partners’ signed board data sheets (ECT, caliper, grammage) per factory × corrugated board, newest version first; `current` marks the version the Structure Advisor reads now (D-188, D-236). `currentOnly` keeps one per factory × board.\n\nImplements: D-188, D-236.",
+        "operationId": "admin.boardStrengthSheets.list",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "page",
+            "required": false,
+            "schema": {
+              "default": 1,
+              "minimum": 1,
+              "type": "integer"
+            }
+          },
+          {
+            "in": "query",
+            "name": "perPage",
+            "required": false,
+            "schema": {
+              "default": 25,
+              "maximum": 100,
+              "minimum": 1,
+              "type": "integer"
+            }
+          },
+          {
+            "description": "Sort field; each endpoint validates it against its own allow-list.",
+            "in": "query",
+            "name": "sort",
+            "required": false,
+            "schema": {
+              "example": "createdAt",
+              "maxLength": 64,
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "order",
+            "required": false,
+            "schema": {
+              "$ref": "#/components/schemas/SortOrder"
+            }
+          },
+          {
+            "description": "Free-text search",
+            "in": "query",
+            "name": "q",
+            "required": false,
+            "schema": {
+              "maxLength": 200,
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "factoryId",
+            "required": false,
+            "schema": {
+              "example": "0192f3a0-7c1e-7d2a-9b1f-0000000ad002",
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "materialId",
+            "required": false,
+            "schema": {
+              "example": "0192f3a0-7c1e-7d2a-9b1f-0000000ad003",
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "description": "Only the version in force now per factory × board",
+            "in": "query",
+            "name": "currentOnly",
+            "required": false,
+            "schema": {
+              "example": true,
+              "type": "boolean"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "data": [
+                    {
+                      "caliperMm": 3.1,
+                      "createdAt": "2026-10-03T09:00:00+07:00",
+                      "createdById": "0192f3a0-7c1e-7d2a-9b1f-0000000ad005",
+                      "current": true,
+                      "dataSheetFileId": "0192f3a0-7c1e-7d2a-9b1f-0000000ad004",
+                      "ectKnPerM": 7.2,
+                      "effectiveFrom": "2026-10-03T00:00:00+07:00",
+                      "factory": {
+                        "code": "F0001",
+                        "id": "0192f3a0-7c1e-7d2a-9b1f-0000000ad002",
+                        "name": "โรงงานตัวอย่าง จำกัด"
+                      },
+                      "grammageGsm": 560,
+                      "id": "0192f3a0-7c1e-7d2a-9b1f-0000000ad001",
+                      "material": {
+                        "code": "ka125-b",
+                        "flute": {
+                          "code": "B",
+                          "layers": 3
+                        },
+                        "id": "0192f3a0-7c1e-7d2a-9b1f-0000000ad003",
+                        "nameEn": "Kraft board KA125 B-flute",
+                        "nameTh": "กระดาษลัง KA125 ลอน B"
+                      },
+                      "note": null,
+                      "signedOn": "2026-09-28",
+                      "testMethod": "ISO 3037",
+                      "versionNo": 1
+                    }
+                  ],
+                  "meta": {
+                    "page": 1,
+                    "perPage": 25,
+                    "total": 1
+                  }
+                },
+                "schema": {
+                  "properties": {
+                    "data": {
+                      "items": {
+                        "$ref": "#/components/schemas/BoardStrengthSheetDto"
+                      },
+                      "type": "array"
+                    },
+                    "meta": {
+                      "$ref": "#/components/schemas/PageMeta"
+                    }
+                  },
+                  "required": [
+                    "data",
+                    "meta"
+                  ],
+                  "type": "object"
+                }
+              }
+            },
+            "description": "One page of results",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.unauthenticated": {
+                    "$ref": "#/components/examples/problem.auth.unauthenticated"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.unauthenticated`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.forbidden": {
+                    "$ref": "#/components/examples/problem.auth.forbidden"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.forbidden`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "validation.failed": {
+                    "$ref": "#/components/examples/problem.validation.failed"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `validation.failed`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "staff": []
+          }
+        ],
+        "summary": "List board strength sheets",
+        "tags": [
+          "admin.boardStrengthSheets"
+        ],
+        "x-required-permissions": [
+          "partners.read"
+        ]
+      },
+      "post": {
+        "description": "Keys in a partner’s **signed** board data sheet for one factory × corrugated board as a new version (D-236): ECT (kN/m), caliper (mm), grammage (g/m²), the test method and the signed file (upload purpose `document`). It takes effect at `effectiveFrom` (default now, never in the past) and supersedes the earlier version from then; nothing is edited. A board without a sheet in force is never recommended by the Structure Advisor (D-188). No approval step; audited and published as `factory.board_strength_sheet_recorded`.\n\nImplements: D-188, D-236.",
+        "operationId": "admin.boardStrengthSheets.create",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "examples": {
+                "default": {
+                  "value": {
+                    "caliperMm": 3.1,
+                    "dataSheetFileId": "0192f3a0-7c1e-7d2a-9b1f-0000000ad004",
+                    "ectKnPerM": 7.2,
+                    "factoryId": "0192f3a0-7c1e-7d2a-9b1f-0000000ad002",
+                    "grammageGsm": 560,
+                    "materialId": "0192f3a0-7c1e-7d2a-9b1f-0000000ad003",
+                    "signedOn": "2026-09-28",
+                    "testMethod": "ISO 3037"
+                  }
+                }
+              },
+              "schema": {
+                "$ref": "#/components/schemas/CreateBoardStrengthSheetDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "caliperMm": 3.1,
+                  "createdAt": "2026-10-03T09:00:00+07:00",
+                  "createdById": "0192f3a0-7c1e-7d2a-9b1f-0000000ad005",
+                  "current": true,
+                  "dataSheetFileId": "0192f3a0-7c1e-7d2a-9b1f-0000000ad004",
+                  "ectKnPerM": 7.2,
+                  "effectiveFrom": "2026-10-03T00:00:00+07:00",
+                  "factory": {
+                    "code": "F0001",
+                    "id": "0192f3a0-7c1e-7d2a-9b1f-0000000ad002",
+                    "name": "โรงงานตัวอย่าง จำกัด"
+                  },
+                  "grammageGsm": 560,
+                  "id": "0192f3a0-7c1e-7d2a-9b1f-0000000ad001",
+                  "material": {
+                    "code": "ka125-b",
+                    "flute": {
+                      "code": "B",
+                      "layers": 3
+                    },
+                    "id": "0192f3a0-7c1e-7d2a-9b1f-0000000ad003",
+                    "nameEn": "Kraft board KA125 B-flute",
+                    "nameTh": "กระดาษลัง KA125 ลอน B"
+                  },
+                  "note": null,
+                  "signedOn": "2026-09-28",
+                  "testMethod": "ISO 3037",
+                  "versionNo": 1
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/BoardStrengthSheetDto"
+                }
+              }
+            },
+            "description": "Recorded",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "400": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.bad_request": {
+                    "$ref": "#/components/examples/problem.http.bad_request"
+                  },
+                  "http.malformed_json": {
+                    "$ref": "#/components/examples/problem.http.malformed_json"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.bad_request`, `http.malformed_json`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.unauthenticated": {
+                    "$ref": "#/components/examples/problem.auth.unauthenticated"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.unauthenticated`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.forbidden": {
+                    "$ref": "#/components/examples/problem.auth.forbidden"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.forbidden`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "404": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.not_found": {
+                    "$ref": "#/components/examples/problem.http.not_found"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.not_found`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "advisory.material_not_board": {
+                    "$ref": "#/components/examples/problem.advisory.material_not_board"
+                  },
+                  "partners.backdated": {
+                    "$ref": "#/components/examples/problem.partners.backdated"
+                  },
+                  "validation.failed": {
+                    "$ref": "#/components/examples/problem.validation.failed"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `advisory.material_not_board`, `partners.backdated`, `validation.failed`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "staff": []
+          }
+        ],
+        "summary": "Record a board strength sheet",
+        "tags": [
+          "admin.boardStrengthSheets"
+        ],
+        "x-required-permissions": [
+          "partners.manage"
+        ]
+      }
+    },
+    "/v1/admin/board-strength-sheets/{sheetId}": {
+      "get": {
+        "description": "One version of a partner’s signed board data sheet (D-236).\n\nImplements: D-188, D-236.",
+        "operationId": "admin.boardStrengthSheets.get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "sheetId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "caliperMm": 3.1,
+                  "createdAt": "2026-10-03T09:00:00+07:00",
+                  "createdById": "0192f3a0-7c1e-7d2a-9b1f-0000000ad005",
+                  "current": true,
+                  "dataSheetFileId": "0192f3a0-7c1e-7d2a-9b1f-0000000ad004",
+                  "ectKnPerM": 7.2,
+                  "effectiveFrom": "2026-10-03T00:00:00+07:00",
+                  "factory": {
+                    "code": "F0001",
+                    "id": "0192f3a0-7c1e-7d2a-9b1f-0000000ad002",
+                    "name": "โรงงานตัวอย่าง จำกัด"
+                  },
+                  "grammageGsm": 560,
+                  "id": "0192f3a0-7c1e-7d2a-9b1f-0000000ad001",
+                  "material": {
+                    "code": "ka125-b",
+                    "flute": {
+                      "code": "B",
+                      "layers": 3
+                    },
+                    "id": "0192f3a0-7c1e-7d2a-9b1f-0000000ad003",
+                    "nameEn": "Kraft board KA125 B-flute",
+                    "nameTh": "กระดาษลัง KA125 ลอน B"
+                  },
+                  "note": null,
+                  "signedOn": "2026-09-28",
+                  "testMethod": "ISO 3037",
+                  "versionNo": 1
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/BoardStrengthSheetDto"
+                }
+              }
+            },
+            "description": "The sheet",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.unauthenticated": {
+                    "$ref": "#/components/examples/problem.auth.unauthenticated"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.unauthenticated`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.forbidden": {
+                    "$ref": "#/components/examples/problem.auth.forbidden"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.forbidden`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "404": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.not_found": {
+                    "$ref": "#/components/examples/problem.http.not_found"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.not_found`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "validation.failed": {
+                    "$ref": "#/components/examples/problem.validation.failed"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `validation.failed`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "staff": []
+          }
+        ],
+        "summary": "Get a board strength sheet",
+        "tags": [
+          "admin.boardStrengthSheets"
+        ],
+        "x-required-permissions": [
+          "partners.read"
         ]
       }
     },
@@ -223614,6 +227166,7 @@
                 "example": {
                   "data": [
                     {
+                      "advisory": null,
                       "channel": "cs",
                       "configuration": {
                         "d": 120,
@@ -223999,6 +227552,7 @@
             "content": {
               "application/json": {
                 "example": {
+                  "advisory": null,
                   "channel": "cs",
                   "configuration": {
                     "d": 120,
@@ -224365,6 +227919,7 @@
             "content": {
               "application/json": {
                 "example": {
+                  "advisory": null,
                   "channel": "cs",
                   "configuration": {
                     "d": 120,
@@ -224702,6 +228257,7 @@
             "content": {
               "application/json": {
                 "example": {
+                  "advisory": null,
                   "channel": "cs",
                   "configuration": {
                     "d": 120,
@@ -225068,6 +228624,7 @@
             "content": {
               "application/json": {
                 "example": {
+                  "advisory": null,
                   "channel": "cs",
                   "configuration": {
                     "d": 120,
@@ -225427,6 +228984,7 @@
                 "example": {
                   "expiresAt": "2026-10-17T10:00:00+07:00",
                   "quote": {
+                    "advisory": null,
                     "configuration": {
                       "d": 120,
                       "design": {
@@ -225934,6 +229492,7 @@
             "content": {
               "application/json": {
                 "example": {
+                  "advisory": null,
                   "configuration": {
                     "d": 120,
                     "design": {
@@ -262434,6 +265993,503 @@
         ]
       }
     },
+    "/v1/partner/board-strength-sheets": {
+      "get": {
+        "description": "The signed board data sheets Packio keeps for the factory’s boards (D-236), own factory only (D-044); `current` marks the version in force. To change one, send Packio a new signed sheet.\n\nImplements: D-188, D-236, D-044.",
+        "operationId": "partner.boardStrengthSheets.list",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "page",
+            "required": false,
+            "schema": {
+              "default": 1,
+              "minimum": 1,
+              "type": "integer"
+            }
+          },
+          {
+            "in": "query",
+            "name": "perPage",
+            "required": false,
+            "schema": {
+              "default": 25,
+              "maximum": 100,
+              "minimum": 1,
+              "type": "integer"
+            }
+          },
+          {
+            "description": "Sort field; each endpoint validates it against its own allow-list.",
+            "in": "query",
+            "name": "sort",
+            "required": false,
+            "schema": {
+              "example": "createdAt",
+              "maxLength": 64,
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "order",
+            "required": false,
+            "schema": {
+              "$ref": "#/components/schemas/SortOrder"
+            }
+          },
+          {
+            "description": "Free-text search",
+            "in": "query",
+            "name": "q",
+            "required": false,
+            "schema": {
+              "maxLength": 200,
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "factoryId",
+            "required": false,
+            "schema": {
+              "example": "0192f3a0-7c1e-7d2a-9b1f-0000000ad002",
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "materialId",
+            "required": false,
+            "schema": {
+              "example": "0192f3a0-7c1e-7d2a-9b1f-0000000ad003",
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "description": "Only the version in force now per factory × board",
+            "in": "query",
+            "name": "currentOnly",
+            "required": false,
+            "schema": {
+              "example": true,
+              "type": "boolean"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "data": [
+                    {
+                      "caliperMm": 3.1,
+                      "createdAt": "2026-10-03T09:00:00+07:00",
+                      "createdById": "0192f3a0-7c1e-7d2a-9b1f-0000000ad005",
+                      "current": true,
+                      "dataSheetFileId": "0192f3a0-7c1e-7d2a-9b1f-0000000ad004",
+                      "ectKnPerM": 7.2,
+                      "effectiveFrom": "2026-10-03T00:00:00+07:00",
+                      "factory": {
+                        "code": "F0001",
+                        "id": "0192f3a0-7c1e-7d2a-9b1f-0000000ad002",
+                        "name": "โรงงานตัวอย่าง จำกัด"
+                      },
+                      "grammageGsm": 560,
+                      "id": "0192f3a0-7c1e-7d2a-9b1f-0000000ad001",
+                      "material": {
+                        "code": "ka125-b",
+                        "flute": {
+                          "code": "B",
+                          "layers": 3
+                        },
+                        "id": "0192f3a0-7c1e-7d2a-9b1f-0000000ad003",
+                        "nameEn": "Kraft board KA125 B-flute",
+                        "nameTh": "กระดาษลัง KA125 ลอน B"
+                      },
+                      "note": null,
+                      "signedOn": "2026-09-28",
+                      "testMethod": "ISO 3037",
+                      "versionNo": 1
+                    }
+                  ],
+                  "meta": {
+                    "page": 1,
+                    "perPage": 25,
+                    "total": 1
+                  }
+                },
+                "schema": {
+                  "properties": {
+                    "data": {
+                      "items": {
+                        "$ref": "#/components/schemas/BoardStrengthSheetDto"
+                      },
+                      "type": "array"
+                    },
+                    "meta": {
+                      "$ref": "#/components/schemas/PageMeta"
+                    }
+                  },
+                  "required": [
+                    "data",
+                    "meta"
+                  ],
+                  "type": "object"
+                }
+              }
+            },
+            "description": "One page of results",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.unauthenticated": {
+                    "$ref": "#/components/examples/problem.auth.unauthenticated"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.unauthenticated`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.forbidden": {
+                    "$ref": "#/components/examples/problem.auth.forbidden"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.forbidden`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "validation.failed": {
+                    "$ref": "#/components/examples/problem.validation.failed"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `validation.failed`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "partner": []
+          }
+        ],
+        "summary": "List my factory’s board strength sheets",
+        "tags": [
+          "partner.boardStrengthSheets"
+        ],
+        "x-required-permissions": [
+          "factory_profile.read"
+        ]
+      }
+    },
+    "/v1/partner/board-strength-sheets/{sheetId}": {
+      "get": {
+        "description": "One version of a signed board data sheet of the factory (D-236), own factory only (D-044).\n\nImplements: D-188, D-236, D-044.",
+        "operationId": "partner.boardStrengthSheets.get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "sheetId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "caliperMm": 3.1,
+                  "createdAt": "2026-10-03T09:00:00+07:00",
+                  "createdById": "0192f3a0-7c1e-7d2a-9b1f-0000000ad005",
+                  "current": true,
+                  "dataSheetFileId": "0192f3a0-7c1e-7d2a-9b1f-0000000ad004",
+                  "ectKnPerM": 7.2,
+                  "effectiveFrom": "2026-10-03T00:00:00+07:00",
+                  "factory": {
+                    "code": "F0001",
+                    "id": "0192f3a0-7c1e-7d2a-9b1f-0000000ad002",
+                    "name": "โรงงานตัวอย่าง จำกัด"
+                  },
+                  "grammageGsm": 560,
+                  "id": "0192f3a0-7c1e-7d2a-9b1f-0000000ad001",
+                  "material": {
+                    "code": "ka125-b",
+                    "flute": {
+                      "code": "B",
+                      "layers": 3
+                    },
+                    "id": "0192f3a0-7c1e-7d2a-9b1f-0000000ad003",
+                    "nameEn": "Kraft board KA125 B-flute",
+                    "nameTh": "กระดาษลัง KA125 ลอน B"
+                  },
+                  "note": null,
+                  "signedOn": "2026-09-28",
+                  "testMethod": "ISO 3037",
+                  "versionNo": 1
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/BoardStrengthSheetDto"
+                }
+              }
+            },
+            "description": "The sheet",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.unauthenticated": {
+                    "$ref": "#/components/examples/problem.auth.unauthenticated"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.unauthenticated`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.forbidden": {
+                    "$ref": "#/components/examples/problem.auth.forbidden"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.forbidden`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "404": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.not_found": {
+                    "$ref": "#/components/examples/problem.http.not_found"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.not_found`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "validation.failed": {
+                    "$ref": "#/components/examples/problem.validation.failed"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `validation.failed`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "partner": []
+          }
+        ],
+        "summary": "Get one of my factory’s board strength sheets",
+        "tags": [
+          "partner.boardStrengthSheets"
+        ],
+        "x-required-permissions": [
+          "factory_profile.read"
+        ]
+      }
+    },
     "/v1/partner/claims": {
       "get": {
         "description": "Those Packio sent for review or decided against the factory (D-083).\n\nImplements: D-083.",
@@ -291829,6 +295885,1178 @@
         ]
       }
     },
+    "/v1/store/advisory/method": {
+      "get": {
+        "description": "The rule set in force (D-237) — McKee constant, uncertainty band, eligible styles, thin-margin threshold and the retained-strength factor of every band — read from the same setting the engine uses, and whether the advisor is open to customers. `available: false` and `ruleSet: null` until a Superadmin sets it.\n\nImplements: D-188, D-189, D-235, D-236, D-237, D-238, D-239, D-240.",
+        "operationId": "store.advisory.getMethod",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "available": true,
+                  "engineVersion": "1.0.0",
+                  "noticeCode": "advisory.indicative",
+                  "ruleSet": {
+                    "factors": {
+                      "humidity": {
+                        "dry": "1",
+                        "humid": "0.6",
+                        "normal": "0.8",
+                        "very_humid": "0.5"
+                      }
+                    },
+                    "formulas": [
+                      "rsc",
+                      "full_overlap"
+                    ],
+                    "mckeeConstant": "5.87",
+                    "thinMarginPct": "10",
+                    "uncertaintyPct": "15"
+                  },
+                  "ruleSetVersion": {
+                    "effectiveFrom": "2026-10-03T00:00:00+07:00",
+                    "versionNo": 1
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/AdvisoryMethodDto"
+                }
+              }
+            },
+            "description": "The method",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.unauthenticated": {
+                    "$ref": "#/components/examples/problem.auth.unauthenticated"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.unauthenticated`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.forbidden": {
+                    "$ref": "#/components/examples/problem.auth.forbidden"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.forbidden`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [],
+        "summary": "How the Structure Advisor decides",
+        "tags": [
+          "store.advisory"
+        ]
+      }
+    },
+    "/v1/store/advisory/recommendations": {
+      "post": {
+        "description": "For a corrugate configuration and its load (product weight, units per box, boxes stacked high, pallet, fragility, transport, humidity, storage time — D-238) the advisor prices every compatible board that has a partner’s signed board data sheet (D-188) through the real quote engine and recommends the cheapest one whose **low** estimated BCT meets the requirement, with cheapest / strongest / fastest alternatives and their price and lead-time differences (D-239). BCT is a range (simplified McKee ± the rule set’s band), never a promise. Logged for replay (D-240). Corrugated boxes of the listed styles only (`advisory.not_supported`, D-235); answers `advisory.disabled` until the flag is on and `advisory.not_configured` until a rule set is in force (D-237). Signed in or with `anonymousId`. Reason codes and numbers only; the fixed notice `advisory.indicative` applies (D-189).\n\nImplements: D-188, D-189, D-235, D-236, D-237, D-238, D-239, D-240.",
+        "operationId": "store.advisory.recommend",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "examples": {
+                "default": {
+                  "value": {
+                    "configuration": {
+                      "catalogProductId": "0192f3a0-7c1e-7d2a-9b1f-00000000b106",
+                      "d": 250,
+                      "design": {
+                        "graphic": false,
+                        "structure": false
+                      },
+                      "difficultyLevelId": "0192f3a0-7c1e-7d2a-9b1f-00000000a103",
+                      "l": 400,
+                      "materialId": "0192f3a0-7c1e-7d2a-9b1f-00000000b102",
+                      "parts": [
+                        {
+                          "printFront": [
+                            {
+                              "area": "top",
+                              "inkColourId": "0192f3a0-7c1e-7d2a-9b1f-00000000a104"
+                            }
+                          ]
+                        }
+                      ],
+                      "patternId": "0192f3a0-7c1e-7d2a-9b1f-00000000b101",
+                      "quantities": [
+                        1000
+                      ],
+                      "w": 300
+                    },
+                    "load": {
+                      "fragility": "low",
+                      "humidity": "normal",
+                      "pallet": {
+                        "overhang": false,
+                        "pattern": "column"
+                      },
+                      "productWeightG": 500,
+                      "stackLayers": 4,
+                      "storage": "up_to_30_days",
+                      "transportMode": "pallet_domestic",
+                      "unitsPerBox": 10
+                    },
+                    "productTypeCode": "corrugated"
+                  }
+                }
+              },
+              "schema": {
+                "$ref": "#/components/schemas/StoreRecommendDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "alternatives": [
+                    {
+                      "boardId": "0192f3a0-7c1e-7d2a-9b1f-0000000ad103",
+                      "leadTimeDeltaDays": 2,
+                      "roles": [
+                        "strongest"
+                      ],
+                      "unitPriceDelta": "5.20"
+                    }
+                  ],
+                  "choice": null,
+                  "closestBoardId": null,
+                  "createdAt": "2026-10-03T10:00:00+07:00",
+                  "engineVersion": "1.0.0",
+                  "id": "0192f3a0-7c1e-7d2a-9b1f-0000000ad101",
+                  "noticeCode": "advisory.indicative",
+                  "options": [
+                    {
+                      "bct": {
+                        "estimate": 1902.1,
+                        "high": 2187.4,
+                        "low": 1616.8
+                      },
+                      "board": {
+                        "code": "ka125-b",
+                        "fluteCode": "B",
+                        "id": "0192f3a0-7c1e-7d2a-9b1f-0000000ad102",
+                        "layers": 3,
+                        "nameEn": "Kraft board KA125 B-flute",
+                        "nameTh": "กระดาษลัง KA125 ลอน B"
+                      },
+                      "caliperMm": 3,
+                      "currency": "THB",
+                      "ectKnPerM": 5,
+                      "grammageGsm": 450,
+                      "grossAmount": "10700.00",
+                      "instant": true,
+                      "leadTimeDays": 10,
+                      "marginPct": 252.2,
+                      "passes": true,
+                      "requiredEctKnPerM": 1.42,
+                      "roles": [
+                        "recommended",
+                        "cheapest"
+                      ],
+                      "unitPrice": "10.00",
+                      "warnings": []
+                    }
+                  ],
+                  "outcome": "recommended",
+                  "reasons": [
+                    {
+                      "code": "top_load",
+                      "unit": "N",
+                      "value": 168
+                    },
+                    {
+                      "band": "normal",
+                      "code": "factor",
+                      "factor": "humidity",
+                      "value": 0.8
+                    },
+                    {
+                      "code": "required_bct",
+                      "unit": "N",
+                      "value": 459
+                    },
+                    {
+                      "code": "cheapest_passing"
+                    }
+                  ],
+                  "recommendedBoardId": "0192f3a0-7c1e-7d2a-9b1f-0000000ad102",
+                  "requirement": {
+                    "boxWeightKg": 5.711,
+                    "combinedFactor": 0.3672,
+                    "factors": [
+                      {
+                        "band": "normal",
+                        "factor": "humidity",
+                        "value": 0.8
+                      },
+                      {
+                        "band": "up_to_30_days",
+                        "factor": "storage",
+                        "value": 0.6
+                      },
+                      {
+                        "band": "column",
+                        "factor": "palletPattern",
+                        "value": 0.9
+                      },
+                      {
+                        "band": "none",
+                        "factor": "palletOverhang",
+                        "value": 1
+                      },
+                      {
+                        "band": "pallet_domestic",
+                        "factor": "transport",
+                        "value": 0.85
+                      },
+                      {
+                        "band": "low",
+                        "factor": "fragility",
+                        "value": 1
+                      }
+                    ],
+                    "layers": 4,
+                    "loadN": 168,
+                    "perimeterMm": 1400,
+                    "requiredBctN": 459,
+                    "tareKg": 0.711
+                  },
+                  "ruleSetVersion": {
+                    "effectiveFrom": "2026-10-03T00:00:00+07:00",
+                    "versionNo": 1
+                  },
+                  "warnings": []
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/AdvisoryRecommendationDto"
+                }
+              }
+            },
+            "description": "The recommendation",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "400": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.bad_request": {
+                    "$ref": "#/components/examples/problem.http.bad_request"
+                  },
+                  "http.malformed_json": {
+                    "$ref": "#/components/examples/problem.http.malformed_json"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.bad_request`, `http.malformed_json`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.unauthenticated": {
+                    "$ref": "#/components/examples/problem.auth.unauthenticated"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.unauthenticated`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.forbidden": {
+                    "$ref": "#/components/examples/problem.auth.forbidden"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.forbidden`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "409": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "advisory.disabled": {
+                    "$ref": "#/components/examples/problem.advisory.disabled"
+                  },
+                  "advisory.not_configured": {
+                    "$ref": "#/components/examples/problem.advisory.not_configured"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `advisory.disabled`, `advisory.not_configured`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "advisory.not_supported": {
+                    "$ref": "#/components/examples/problem.advisory.not_supported"
+                  },
+                  "pricing.not_instant": {
+                    "$ref": "#/components/examples/problem.pricing.not_instant"
+                  },
+                  "specs.unit_not_accepted": {
+                    "$ref": "#/components/examples/problem.specs.unit_not_accepted"
+                  },
+                  "validation.failed": {
+                    "$ref": "#/components/examples/problem.validation.failed"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `advisory.not_supported`, `pricing.not_instant`, `specs.unit_not_accepted`, `validation.failed`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [],
+        "summary": "Recommend a corrugated board",
+        "tags": [
+          "store.advisory"
+        ]
+      }
+    },
+    "/v1/store/advisory/recommendations/{recommendationId}": {
+      "get": {
+        "description": "A recommendation of the signed-in customer or of the same `anonymousId` (D-240). Reason codes and numbers only; the fixed notice `advisory.indicative` applies (D-189).\n\nImplements: D-188, D-189, D-235, D-236, D-237, D-238, D-239, D-240.",
+        "operationId": "store.advisory.get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "recommendationId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "anonymousId",
+            "required": false,
+            "schema": {
+              "example": "0192f3a0-7c1e-7d2a-9b1f-0000000ad104",
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "alternatives": [
+                    {
+                      "boardId": "0192f3a0-7c1e-7d2a-9b1f-0000000ad103",
+                      "leadTimeDeltaDays": 2,
+                      "roles": [
+                        "strongest"
+                      ],
+                      "unitPriceDelta": "5.20"
+                    }
+                  ],
+                  "choice": null,
+                  "closestBoardId": null,
+                  "createdAt": "2026-10-03T10:00:00+07:00",
+                  "engineVersion": "1.0.0",
+                  "id": "0192f3a0-7c1e-7d2a-9b1f-0000000ad101",
+                  "noticeCode": "advisory.indicative",
+                  "options": [
+                    {
+                      "bct": {
+                        "estimate": 1902.1,
+                        "high": 2187.4,
+                        "low": 1616.8
+                      },
+                      "board": {
+                        "code": "ka125-b",
+                        "fluteCode": "B",
+                        "id": "0192f3a0-7c1e-7d2a-9b1f-0000000ad102",
+                        "layers": 3,
+                        "nameEn": "Kraft board KA125 B-flute",
+                        "nameTh": "กระดาษลัง KA125 ลอน B"
+                      },
+                      "caliperMm": 3,
+                      "currency": "THB",
+                      "ectKnPerM": 5,
+                      "grammageGsm": 450,
+                      "grossAmount": "10700.00",
+                      "instant": true,
+                      "leadTimeDays": 10,
+                      "marginPct": 252.2,
+                      "passes": true,
+                      "requiredEctKnPerM": 1.42,
+                      "roles": [
+                        "recommended",
+                        "cheapest"
+                      ],
+                      "unitPrice": "10.00",
+                      "warnings": []
+                    }
+                  ],
+                  "outcome": "recommended",
+                  "reasons": [
+                    {
+                      "code": "top_load",
+                      "unit": "N",
+                      "value": 168
+                    },
+                    {
+                      "band": "normal",
+                      "code": "factor",
+                      "factor": "humidity",
+                      "value": 0.8
+                    },
+                    {
+                      "code": "required_bct",
+                      "unit": "N",
+                      "value": 459
+                    },
+                    {
+                      "code": "cheapest_passing"
+                    }
+                  ],
+                  "recommendedBoardId": "0192f3a0-7c1e-7d2a-9b1f-0000000ad102",
+                  "requirement": {
+                    "boxWeightKg": 5.711,
+                    "combinedFactor": 0.3672,
+                    "factors": [
+                      {
+                        "band": "normal",
+                        "factor": "humidity",
+                        "value": 0.8
+                      },
+                      {
+                        "band": "up_to_30_days",
+                        "factor": "storage",
+                        "value": 0.6
+                      },
+                      {
+                        "band": "column",
+                        "factor": "palletPattern",
+                        "value": 0.9
+                      },
+                      {
+                        "band": "none",
+                        "factor": "palletOverhang",
+                        "value": 1
+                      },
+                      {
+                        "band": "pallet_domestic",
+                        "factor": "transport",
+                        "value": 0.85
+                      },
+                      {
+                        "band": "low",
+                        "factor": "fragility",
+                        "value": 1
+                      }
+                    ],
+                    "layers": 4,
+                    "loadN": 168,
+                    "perimeterMm": 1400,
+                    "requiredBctN": 459,
+                    "tareKg": 0.711
+                  },
+                  "ruleSetVersion": {
+                    "effectiveFrom": "2026-10-03T00:00:00+07:00",
+                    "versionNo": 1
+                  },
+                  "warnings": []
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/AdvisoryRecommendationDto"
+                }
+              }
+            },
+            "description": "The recommendation",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.unauthenticated": {
+                    "$ref": "#/components/examples/problem.auth.unauthenticated"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.unauthenticated`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.forbidden": {
+                    "$ref": "#/components/examples/problem.auth.forbidden"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.forbidden`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "404": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.not_found": {
+                    "$ref": "#/components/examples/problem.http.not_found"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.not_found`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "validation.failed": {
+                    "$ref": "#/components/examples/problem.validation.failed"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `validation.failed`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [],
+        "summary": "Get one of my recommendations",
+        "tags": [
+          "store.advisory"
+        ]
+      }
+    },
+    "/v1/store/advisory/recommendations/{recommendationId}/actions/choose": {
+      "post": {
+        "description": "Records the board chosen — the recommended one or any listed option, even one with a structural warning — with every warning code of that board acknowledged on record (who, when, codes; D-189). A later choice replaces it; the history is kept. Save the quotation with `advisoryRecommendationId` to store the choice on it (D-240).\n\nImplements: D-188, D-189, D-235, D-236, D-237, D-238, D-239, D-240.",
+        "operationId": "store.advisory.choose",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "recommendationId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "examples": {
+                "default": {
+                  "value": {
+                    "acknowledgedWarnings": [],
+                    "materialId": "0192f3a0-7c1e-7d2a-9b1f-0000000ad102"
+                  }
+                }
+              },
+              "schema": {
+                "$ref": "#/components/schemas/ChooseBoardDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "alternatives": [
+                    {
+                      "boardId": "0192f3a0-7c1e-7d2a-9b1f-0000000ad103",
+                      "leadTimeDeltaDays": 2,
+                      "roles": [
+                        "strongest"
+                      ],
+                      "unitPriceDelta": "5.20"
+                    }
+                  ],
+                  "choice": null,
+                  "closestBoardId": null,
+                  "createdAt": "2026-10-03T10:00:00+07:00",
+                  "engineVersion": "1.0.0",
+                  "id": "0192f3a0-7c1e-7d2a-9b1f-0000000ad101",
+                  "noticeCode": "advisory.indicative",
+                  "options": [
+                    {
+                      "bct": {
+                        "estimate": 1902.1,
+                        "high": 2187.4,
+                        "low": 1616.8
+                      },
+                      "board": {
+                        "code": "ka125-b",
+                        "fluteCode": "B",
+                        "id": "0192f3a0-7c1e-7d2a-9b1f-0000000ad102",
+                        "layers": 3,
+                        "nameEn": "Kraft board KA125 B-flute",
+                        "nameTh": "กระดาษลัง KA125 ลอน B"
+                      },
+                      "caliperMm": 3,
+                      "currency": "THB",
+                      "ectKnPerM": 5,
+                      "grammageGsm": 450,
+                      "grossAmount": "10700.00",
+                      "instant": true,
+                      "leadTimeDays": 10,
+                      "marginPct": 252.2,
+                      "passes": true,
+                      "requiredEctKnPerM": 1.42,
+                      "roles": [
+                        "recommended",
+                        "cheapest"
+                      ],
+                      "unitPrice": "10.00",
+                      "warnings": []
+                    }
+                  ],
+                  "outcome": "recommended",
+                  "reasons": [
+                    {
+                      "code": "top_load",
+                      "unit": "N",
+                      "value": 168
+                    },
+                    {
+                      "band": "normal",
+                      "code": "factor",
+                      "factor": "humidity",
+                      "value": 0.8
+                    },
+                    {
+                      "code": "required_bct",
+                      "unit": "N",
+                      "value": 459
+                    },
+                    {
+                      "code": "cheapest_passing"
+                    }
+                  ],
+                  "recommendedBoardId": "0192f3a0-7c1e-7d2a-9b1f-0000000ad102",
+                  "requirement": {
+                    "boxWeightKg": 5.711,
+                    "combinedFactor": 0.3672,
+                    "factors": [
+                      {
+                        "band": "normal",
+                        "factor": "humidity",
+                        "value": 0.8
+                      },
+                      {
+                        "band": "up_to_30_days",
+                        "factor": "storage",
+                        "value": 0.6
+                      },
+                      {
+                        "band": "column",
+                        "factor": "palletPattern",
+                        "value": 0.9
+                      },
+                      {
+                        "band": "none",
+                        "factor": "palletOverhang",
+                        "value": 1
+                      },
+                      {
+                        "band": "pallet_domestic",
+                        "factor": "transport",
+                        "value": 0.85
+                      },
+                      {
+                        "band": "low",
+                        "factor": "fragility",
+                        "value": 1
+                      }
+                    ],
+                    "layers": 4,
+                    "loadN": 168,
+                    "perimeterMm": 1400,
+                    "requiredBctN": 459,
+                    "tareKg": 0.711
+                  },
+                  "ruleSetVersion": {
+                    "effectiveFrom": "2026-10-03T00:00:00+07:00",
+                    "versionNo": 1
+                  },
+                  "warnings": []
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/AdvisoryRecommendationDto"
+                }
+              }
+            },
+            "description": "The recommendation with the choice",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "400": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.bad_request": {
+                    "$ref": "#/components/examples/problem.http.bad_request"
+                  },
+                  "http.malformed_json": {
+                    "$ref": "#/components/examples/problem.http.malformed_json"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.bad_request`, `http.malformed_json`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.unauthenticated": {
+                    "$ref": "#/components/examples/problem.auth.unauthenticated"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.unauthenticated`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.forbidden": {
+                    "$ref": "#/components/examples/problem.auth.forbidden"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.forbidden`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "404": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.not_found": {
+                    "$ref": "#/components/examples/problem.http.not_found"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.not_found`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "advisory.acknowledgement_required": {
+                    "$ref": "#/components/examples/problem.advisory.acknowledgement_required"
+                  },
+                  "advisory.option_unknown": {
+                    "$ref": "#/components/examples/problem.advisory.option_unknown"
+                  },
+                  "validation.failed": {
+                    "$ref": "#/components/examples/problem.validation.failed"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `advisory.acknowledgement_required`, `advisory.option_unknown`, `validation.failed`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [],
+        "summary": "Choose a board from a recommendation",
+        "tags": [
+          "store.advisory"
+        ]
+      }
+    },
     "/v1/store/analytics/consent": {
       "post": {
         "description": "Packio’s own consent management (D-005, PDPA): appends a consent record for the anonymous visitor (and for the signed-in customer, when a token is sent) against the text in force; the latest record wins. `consent.purpose_unavailable` until the consent text has an approved version.\n\nImplements: D-102, D-005.",
@@ -309740,6 +314968,7 @@
                     "title": "กล่องครีม 50 มล."
                   },
                   "quote": {
+                    "advisory": null,
                     "configuration": {
                       "d": 120,
                       "design": {
@@ -331369,6 +336598,7 @@
                 "example": {
                   "data": [
                     {
+                      "advisory": null,
                       "configuration": {
                         "d": 120,
                         "design": {
@@ -331640,7 +336870,7 @@
         ]
       },
       "post": {
-        "description": "Re-prices the configuration on the server and saves every instant quantity with the versions used (snapshot); valid for `quotes.validity_days` (15) days with the price locked (D-051). Signed in, or anonymously with `anonymousId` (claim it after login). No factory data (D-050).\n\nImplements: D-051, D-010, D-050.",
+        "description": "Re-prices the configuration on the server and saves every instant quantity with the versions used (snapshot); valid for `quotes.validity_days` (15) days with the price locked (D-051). Signed in, or anonymously with `anonymousId` (claim it after login). No factory data (D-050). With `advisoryRecommendationId` the quotation stores the Structure Advisor recommendation and the board chosen on it, which must be the configuration’s board (D-240).\n\nImplements: D-051, D-010, D-050, D-240.",
         "operationId": "store.quotes.save",
         "parameters": [
           {
@@ -331709,6 +336939,7 @@
             "content": {
               "application/json": {
                 "example": {
+                  "advisory": null,
                   "configuration": {
                     "d": 120,
                     "design": {
@@ -331900,6 +337131,29 @@
               }
             },
             "description": "Problem: `auth.forbidden`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "409": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "advisory.choice_mismatch": {
+                    "$ref": "#/components/examples/problem.advisory.choice_mismatch"
+                  },
+                  "advisory.choice_required": {
+                    "$ref": "#/components/examples/problem.advisory.choice_required"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `advisory.choice_mismatch`, `advisory.choice_required`",
             "headers": {
               "X-Request-Id": {
                 "$ref": "#/components/headers/XRequestId"
@@ -332386,6 +337640,7 @@
             "content": {
               "application/json": {
                 "example": {
+                  "advisory": null,
                   "configuration": {
                     "d": 120,
                     "design": {
@@ -332664,6 +337919,7 @@
             "content": {
               "application/json": {
                 "example": {
+                  "advisory": null,
                   "configuration": {
                     "d": 120,
                     "design": {
@@ -332969,6 +338225,7 @@
             "content": {
               "application/json": {
                 "example": {
+                  "advisory": null,
                   "configuration": {
                     "d": 120,
                     "design": {
@@ -333294,6 +338551,7 @@
             "content": {
               "application/json": {
                 "example": {
+                  "advisory": null,
                   "configuration": {
                     "d": 120,
                     "design": {
@@ -333611,6 +338869,7 @@
             "content": {
               "application/json": {
                 "example": {
+                  "advisory": null,
                   "configuration": {
                     "d": 120,
                     "design": {
@@ -333935,6 +339194,7 @@
                 "example": {
                   "expiresAt": "2026-10-17T10:00:00+07:00",
                   "quote": {
+                    "advisory": null,
                     "configuration": {
                       "d": 120,
                       "design": {
@@ -334442,6 +339702,7 @@
             "content": {
               "application/json": {
                 "example": {
+                  "advisory": null,
                   "configuration": {
                     "d": 120,
                     "design": {
@@ -342180,6 +347441,10 @@
   ],
   "tags": [
     {
+      "description": "Structure Advisor for staff: evaluate a configuration, read and replay the recommendation log (D-237, D-240).",
+      "name": "admin.advisory"
+    },
+    {
       "description": "Versioned partner agreement texts (D-011; confidentiality both directions, D-044).",
       "name": "admin.agreementTemplates"
     },
@@ -342210,6 +347475,10 @@
     {
       "description": "Company bank accounts, statement imports, auto / manual matching, unidentified receipts, gateway settlements and the cash position (D-061, D-093).",
       "name": "admin.banking"
+    },
+    {
+      "description": "Partners’ signed board data sheets (ECT, caliper, grammage) per factory × corrugated board — the only board strength the advisor reads (D-188, D-236).",
+      "name": "admin.boardStrengthSheets"
     },
     {
       "description": "Business calendars (D-161, D-209): the national holidays keyed in once a year and each factory’s closures.",
@@ -342736,6 +348005,10 @@
       "name": "ops.health"
     },
     {
+      "description": "The signed board data sheets Packio keeps for the factory’s boards (D-236, D-044).",
+      "name": "partner.boardStrengthSheets"
+    },
+    {
       "description": "Requests to the Partner team for changes only staff make, or a site visit; with the team’s answer (U-B0.3).",
       "name": "partner.changeRequests"
     },
@@ -342834,6 +348107,10 @@
     {
       "description": "Delivery and billing addresses of the signed-in customer; orders keep a snapshot (D-142).",
       "name": "store.addresses"
+    },
+    {
+      "description": "Structure Advisor (D-188, D-189, D-235–D-240): recommended corrugated board from load, stacking and storage, as an indicative BCT range with priced alternatives; choose a board on record.",
+      "name": "store.advisory"
     },
     {
       "description": "Analytics events posted by the BFF with consent mode, and the visitor’s analytics-cookie consent (D-102, PDPA): no identifier is kept without consent.",

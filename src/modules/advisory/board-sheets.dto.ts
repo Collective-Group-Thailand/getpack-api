@@ -1,3 +1,4 @@
+import { FactoryRefDto } from '@common/dto/factory-ref.dto';
 import { PageQuery } from '@common/pagination/pagination.dto';
 import { DecimalField, IdField, RefField, TextField, TimestampField } from '@modules/catalog/crud/dto-fields';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
@@ -13,17 +14,6 @@ export const BOARD_SHEET_IDS = {
   file: '0192f3a0-7c1e-7d2a-9b1f-0000000ad004',
   user: '0192f3a0-7c1e-7d2a-9b1f-0000000ad005',
 };
-
-export class BoardSheetFactoryDto {
-  @IdField(BOARD_SHEET_IDS.factory)
-  id!: string;
-
-  @ApiProperty({ example: 'F0001' })
-  code!: string;
-
-  @ApiProperty({ example: 'โรงงานตัวอย่าง จำกัด' })
-  name!: string;
-}
 
 export class BoardSheetFluteDto {
   @ApiProperty({ example: 'B' })
@@ -58,8 +48,8 @@ export class BoardStrengthSheetDto {
   @IdField(BOARD_SHEET_IDS.sheet)
   id!: string;
 
-  @ApiProperty({ type: BoardSheetFactoryDto })
-  factory!: BoardSheetFactoryDto;
+  @ApiProperty({ type: FactoryRefDto })
+  factory!: FactoryRefDto;
 
   @ApiProperty({ type: BoardSheetMaterialDto })
   material!: BoardSheetMaterialDto;
