@@ -1,0 +1,966 @@
+{
+  "ruleSet": {
+    "mckeeConstant": "5.87",
+    "uncertaintyPct": "15",
+    "formulas": [
+      "rsc",
+      "full_overlap"
+    ],
+    "thinMarginPct": "10",
+    "factors": {
+      "humidity": {
+        "dry": "1",
+        "normal": "0.8",
+        "humid": "0.6",
+        "very_humid": "0.5"
+      },
+      "storage": {
+        "up_to_10_days": "0.63",
+        "up_to_30_days": "0.6",
+        "up_to_90_days": "0.55",
+        "over_90_days": "0.5"
+      },
+      "palletPattern": {
+        "none": "0.85",
+        "column": "0.9",
+        "interlocked": "0.55"
+      },
+      "palletOverhang": {
+        "none": "1",
+        "overhang": "0.7"
+      },
+      "transport": {
+        "pickup": "1",
+        "parcel_domestic": "0.7",
+        "pallet_domestic": "0.85",
+        "sea_export": "0.75"
+      },
+      "fragility": {
+        "low": "1",
+        "medium": "0.9",
+        "high": "0.8"
+      }
+    }
+  },
+  "cases": [
+    {
+      "key": "01-light-short-stack",
+      "title": "5 kg per box, 4 high on a column pallet, 30 days, normal humidity",
+      "inputs": {
+        "productWeightG": 500,
+        "unitsPerBox": 10,
+        "stackLayers": 4,
+        "pallet": {
+          "pattern": "column",
+          "overhang": false
+        },
+        "fragility": "low",
+        "transportMode": "pallet_domestic",
+        "humidity": "normal",
+        "storage": "up_to_30_days"
+      },
+      "boards": [
+        {
+          "materialId": "dev-ka125-b",
+          "sheet": {
+            "sheetId": "sheet-1",
+            "ectKnPerM": 5.0,
+            "caliperMm": 3.0,
+            "grammageGsm": 450
+          },
+          "blankAreaSqm": 0.79,
+          "price": {
+            "instant": true,
+            "unitPrice": "10.00",
+            "grossAmount": "10700.00",
+            "leadTimeDays": 10
+          }
+        },
+        {
+          "materialId": "dev-ka185-b",
+          "sheet": {
+            "sheetId": "sheet-2",
+            "ectKnPerM": 6.8,
+            "caliperMm": 3.1,
+            "grammageGsm": 560
+          },
+          "blankAreaSqm": 0.79,
+          "price": {
+            "instant": true,
+            "unitPrice": "11.50",
+            "grossAmount": "12305.00",
+            "leadTimeDays": 8
+          }
+        },
+        {
+          "materialId": "dev-ki230-bc",
+          "sheet": {
+            "sheetId": "sheet-3",
+            "ectKnPerM": 10.5,
+            "caliperMm": 6.2,
+            "grammageGsm": 900
+          },
+          "blankAreaSqm": 0.81,
+          "price": {
+            "instant": true,
+            "unitPrice": "15.20",
+            "grossAmount": "16264.00",
+            "leadTimeDays": 12
+          }
+        },
+        {
+          "materialId": "dev-kt-c",
+          "sheet": null,
+          "blankAreaSqm": 0.8,
+          "price": {
+            "instant": true,
+            "unitPrice": "9.00",
+            "grossAmount": "9630.00",
+            "leadTimeDays": 10
+          }
+        }
+      ],
+      "box": {
+        "l": 400,
+        "w": 300,
+        "d": 250
+      },
+      "expected": {
+        "outcome": "recommended",
+        "recommendedMaterialId": "dev-ka125-b",
+        "closestMaterialId": null,
+        "boxWeightKg": 5.729,
+        "loadN": 168.5,
+        "combinedFactor": 0.3672,
+        "requiredBctN": 459.0,
+        "leadLowN": 1616.8,
+        "leadHighN": 2187.4,
+        "leadMarginPct": 252.2,
+        "warnings": [],
+        "passing": [
+          "dev-ki230-bc",
+          "dev-ka185-b",
+          "dev-ka125-b"
+        ],
+        "excluded": [
+          "dev-kt-c"
+        ]
+      }
+    },
+    {
+      "key": "02-heavy-interlocked",
+      "title": "9 kg per box, 6 high, interlocked with overhang, 90 days, humid",
+      "inputs": {
+        "productWeightG": 900,
+        "unitsPerBox": 10,
+        "stackLayers": 6,
+        "pallet": {
+          "pattern": "interlocked",
+          "overhang": true
+        },
+        "fragility": "low",
+        "transportMode": "pallet_domestic",
+        "humidity": "humid",
+        "storage": "up_to_90_days"
+      },
+      "boards": [
+        {
+          "materialId": "dev-ka125-b",
+          "sheet": {
+            "sheetId": "sheet-1",
+            "ectKnPerM": 5.0,
+            "caliperMm": 3.0,
+            "grammageGsm": 450
+          },
+          "blankAreaSqm": 0.79,
+          "price": {
+            "instant": true,
+            "unitPrice": "10.00",
+            "grossAmount": "10700.00",
+            "leadTimeDays": 10
+          }
+        },
+        {
+          "materialId": "dev-ka185-b",
+          "sheet": {
+            "sheetId": "sheet-2",
+            "ectKnPerM": 6.8,
+            "caliperMm": 3.1,
+            "grammageGsm": 560
+          },
+          "blankAreaSqm": 0.79,
+          "price": {
+            "instant": true,
+            "unitPrice": "11.50",
+            "grossAmount": "12305.00",
+            "leadTimeDays": 8
+          }
+        },
+        {
+          "materialId": "dev-ki230-bc",
+          "sheet": {
+            "sheetId": "sheet-3",
+            "ectKnPerM": 10.5,
+            "caliperMm": 6.2,
+            "grammageGsm": 900
+          },
+          "blankAreaSqm": 0.81,
+          "price": {
+            "instant": true,
+            "unitPrice": "15.20",
+            "grossAmount": "16264.00",
+            "leadTimeDays": 12
+          }
+        },
+        {
+          "materialId": "dev-kt-c",
+          "sheet": null,
+          "blankAreaSqm": 0.8,
+          "price": {
+            "instant": true,
+            "unitPrice": "9.00",
+            "grossAmount": "9630.00",
+            "leadTimeDays": 10
+          }
+        }
+      ],
+      "box": {
+        "l": 400,
+        "w": 300,
+        "d": 250
+      },
+      "expected": {
+        "outcome": "recommended",
+        "recommendedMaterialId": "dev-ki230-bc",
+        "closestMaterialId": null,
+        "boxWeightKg": 9.729,
+        "loadN": 477.0,
+        "combinedFactor": 0.108,
+        "requiredBctN": 4417.4,
+        "leadLowN": 4881.0,
+        "leadHighN": 6603.7,
+        "leadMarginPct": 10.5,
+        "warnings": [],
+        "passing": [
+          "dev-ki230-bc"
+        ],
+        "excluded": [
+          "dev-kt-c"
+        ]
+      }
+    },
+    {
+      "key": "03-mid-stack-parcel",
+      "title": "8 kg per box, 5 high, not palletised, parcel, medium fragility",
+      "inputs": {
+        "productWeightG": 800,
+        "unitsPerBox": 10,
+        "stackLayers": 5,
+        "pallet": null,
+        "fragility": "medium",
+        "transportMode": "parcel_domestic",
+        "humidity": "normal",
+        "storage": "up_to_30_days"
+      },
+      "boards": [
+        {
+          "materialId": "dev-ka125-b",
+          "sheet": {
+            "sheetId": "sheet-1",
+            "ectKnPerM": 5.0,
+            "caliperMm": 3.0,
+            "grammageGsm": 450
+          },
+          "blankAreaSqm": 0.79,
+          "price": {
+            "instant": true,
+            "unitPrice": "10.00",
+            "grossAmount": "10700.00",
+            "leadTimeDays": 10
+          }
+        },
+        {
+          "materialId": "dev-ka185-b",
+          "sheet": {
+            "sheetId": "sheet-2",
+            "ectKnPerM": 6.8,
+            "caliperMm": 3.1,
+            "grammageGsm": 560
+          },
+          "blankAreaSqm": 0.79,
+          "price": {
+            "instant": true,
+            "unitPrice": "11.50",
+            "grossAmount": "12305.00",
+            "leadTimeDays": 8
+          }
+        },
+        {
+          "materialId": "dev-ki230-bc",
+          "sheet": {
+            "sheetId": "sheet-3",
+            "ectKnPerM": 10.5,
+            "caliperMm": 6.2,
+            "grammageGsm": 900
+          },
+          "blankAreaSqm": 0.81,
+          "price": {
+            "instant": true,
+            "unitPrice": "15.20",
+            "grossAmount": "16264.00",
+            "leadTimeDays": 12
+          }
+        },
+        {
+          "materialId": "dev-kt-c",
+          "sheet": null,
+          "blankAreaSqm": 0.8,
+          "price": {
+            "instant": true,
+            "unitPrice": "9.00",
+            "grossAmount": "9630.00",
+            "leadTimeDays": 10
+          }
+        }
+      ],
+      "box": {
+        "l": 400,
+        "w": 300,
+        "d": 250
+      },
+      "expected": {
+        "outcome": "recommended",
+        "recommendedMaterialId": "dev-ka125-b",
+        "closestMaterialId": null,
+        "boxWeightKg": 8.729,
+        "loadN": 342.4,
+        "combinedFactor": 0.257,
+        "requiredBctN": 1332.1,
+        "leadLowN": 1616.8,
+        "leadHighN": 2187.4,
+        "leadMarginPct": 21.4,
+        "warnings": [],
+        "passing": [
+          "dev-ki230-bc",
+          "dev-ka185-b",
+          "dev-ka125-b"
+        ],
+        "excluded": [
+          "dev-kt-c"
+        ]
+      }
+    },
+    {
+      "key": "04-nothing-passes",
+      "title": "20 kg per box, 12 high, very humid, over 90 days, sea export, fragile",
+      "inputs": {
+        "productWeightG": 2000,
+        "unitsPerBox": 10,
+        "stackLayers": 12,
+        "pallet": {
+          "pattern": "interlocked",
+          "overhang": true
+        },
+        "fragility": "high",
+        "transportMode": "sea_export",
+        "humidity": "very_humid",
+        "storage": "over_90_days"
+      },
+      "boards": [
+        {
+          "materialId": "dev-ka125-b",
+          "sheet": {
+            "sheetId": "sheet-1",
+            "ectKnPerM": 5.0,
+            "caliperMm": 3.0,
+            "grammageGsm": 450
+          },
+          "blankAreaSqm": 0.79,
+          "price": {
+            "instant": true,
+            "unitPrice": "10.00",
+            "grossAmount": "10700.00",
+            "leadTimeDays": 10
+          }
+        },
+        {
+          "materialId": "dev-ka185-b",
+          "sheet": {
+            "sheetId": "sheet-2",
+            "ectKnPerM": 6.8,
+            "caliperMm": 3.1,
+            "grammageGsm": 560
+          },
+          "blankAreaSqm": 0.79,
+          "price": {
+            "instant": true,
+            "unitPrice": "11.50",
+            "grossAmount": "12305.00",
+            "leadTimeDays": 8
+          }
+        },
+        {
+          "materialId": "dev-ki230-bc",
+          "sheet": {
+            "sheetId": "sheet-3",
+            "ectKnPerM": 10.5,
+            "caliperMm": 6.2,
+            "grammageGsm": 900
+          },
+          "blankAreaSqm": 0.81,
+          "price": {
+            "instant": true,
+            "unitPrice": "15.20",
+            "grossAmount": "16264.00",
+            "leadTimeDays": 12
+          }
+        },
+        {
+          "materialId": "dev-kt-c",
+          "sheet": null,
+          "blankAreaSqm": 0.8,
+          "price": {
+            "instant": true,
+            "unitPrice": "9.00",
+            "grossAmount": "9630.00",
+            "leadTimeDays": 10
+          }
+        }
+      ],
+      "box": {
+        "l": 400,
+        "w": 300,
+        "d": 250
+      },
+      "expected": {
+        "outcome": "no_board_meets_load",
+        "recommendedMaterialId": null,
+        "closestMaterialId": "dev-ki230-bc",
+        "boxWeightKg": 20.729,
+        "loadN": 2236.1,
+        "combinedFactor": 0.0578,
+        "requiredBctN": 38720.4,
+        "leadLowN": 4881.0,
+        "leadHighN": 6603.7,
+        "leadMarginPct": -87.4,
+        "warnings": [
+          "no_board_meets_load"
+        ],
+        "passing": [],
+        "excluded": [
+          "dev-kt-c"
+        ]
+      }
+    },
+    {
+      "key": "05-stack-of-one",
+      "title": "One box, no top load",
+      "inputs": {
+        "productWeightG": 3000,
+        "unitsPerBox": 10,
+        "stackLayers": 1,
+        "pallet": null,
+        "fragility": "low",
+        "transportMode": "pickup",
+        "humidity": "normal",
+        "storage": "up_to_30_days"
+      },
+      "boards": [
+        {
+          "materialId": "dev-ka125-b",
+          "sheet": {
+            "sheetId": "sheet-1",
+            "ectKnPerM": 5.0,
+            "caliperMm": 3.0,
+            "grammageGsm": 450
+          },
+          "blankAreaSqm": 0.79,
+          "price": {
+            "instant": true,
+            "unitPrice": "10.00",
+            "grossAmount": "10700.00",
+            "leadTimeDays": 10
+          }
+        },
+        {
+          "materialId": "dev-ka185-b",
+          "sheet": {
+            "sheetId": "sheet-2",
+            "ectKnPerM": 6.8,
+            "caliperMm": 3.1,
+            "grammageGsm": 560
+          },
+          "blankAreaSqm": 0.79,
+          "price": {
+            "instant": true,
+            "unitPrice": "11.50",
+            "grossAmount": "12305.00",
+            "leadTimeDays": 8
+          }
+        },
+        {
+          "materialId": "dev-ki230-bc",
+          "sheet": {
+            "sheetId": "sheet-3",
+            "ectKnPerM": 10.5,
+            "caliperMm": 6.2,
+            "grammageGsm": 900
+          },
+          "blankAreaSqm": 0.81,
+          "price": {
+            "instant": true,
+            "unitPrice": "15.20",
+            "grossAmount": "16264.00",
+            "leadTimeDays": 12
+          }
+        },
+        {
+          "materialId": "dev-kt-c",
+          "sheet": null,
+          "blankAreaSqm": 0.8,
+          "price": {
+            "instant": true,
+            "unitPrice": "9.00",
+            "grossAmount": "9630.00",
+            "leadTimeDays": 10
+          }
+        }
+      ],
+      "box": {
+        "l": 400,
+        "w": 300,
+        "d": 250
+      },
+      "expected": {
+        "outcome": "recommended",
+        "recommendedMaterialId": "dev-ka125-b",
+        "closestMaterialId": null,
+        "boxWeightKg": 30.729,
+        "loadN": 0.0,
+        "combinedFactor": 0.408,
+        "requiredBctN": 0.0,
+        "leadLowN": 1616.8,
+        "leadHighN": 2187.4,
+        "leadMarginPct": null,
+        "warnings": [],
+        "passing": [
+          "dev-ki230-bc",
+          "dev-ka185-b",
+          "dev-ka125-b"
+        ],
+        "excluded": [
+          "dev-kt-c"
+        ]
+      }
+    },
+    {
+      "key": "06-dry-pickup",
+      "title": "Air-conditioned store, 10 days, picked up, 6 high",
+      "inputs": {
+        "productWeightG": 900,
+        "unitsPerBox": 10,
+        "stackLayers": 6,
+        "pallet": {
+          "pattern": "column",
+          "overhang": false
+        },
+        "fragility": "low",
+        "transportMode": "pickup",
+        "humidity": "dry",
+        "storage": "up_to_10_days"
+      },
+      "boards": [
+        {
+          "materialId": "dev-ka125-b",
+          "sheet": {
+            "sheetId": "sheet-1",
+            "ectKnPerM": 5.0,
+            "caliperMm": 3.0,
+            "grammageGsm": 450
+          },
+          "blankAreaSqm": 0.79,
+          "price": {
+            "instant": true,
+            "unitPrice": "10.00",
+            "grossAmount": "10700.00",
+            "leadTimeDays": 10
+          }
+        },
+        {
+          "materialId": "dev-ka185-b",
+          "sheet": {
+            "sheetId": "sheet-2",
+            "ectKnPerM": 6.8,
+            "caliperMm": 3.1,
+            "grammageGsm": 560
+          },
+          "blankAreaSqm": 0.79,
+          "price": {
+            "instant": true,
+            "unitPrice": "11.50",
+            "grossAmount": "12305.00",
+            "leadTimeDays": 8
+          }
+        },
+        {
+          "materialId": "dev-ki230-bc",
+          "sheet": {
+            "sheetId": "sheet-3",
+            "ectKnPerM": 10.5,
+            "caliperMm": 6.2,
+            "grammageGsm": 900
+          },
+          "blankAreaSqm": 0.81,
+          "price": {
+            "instant": true,
+            "unitPrice": "15.20",
+            "grossAmount": "16264.00",
+            "leadTimeDays": 12
+          }
+        },
+        {
+          "materialId": "dev-kt-c",
+          "sheet": null,
+          "blankAreaSqm": 0.8,
+          "price": {
+            "instant": true,
+            "unitPrice": "9.00",
+            "grossAmount": "9630.00",
+            "leadTimeDays": 10
+          }
+        }
+      ],
+      "box": {
+        "l": 400,
+        "w": 300,
+        "d": 250
+      },
+      "expected": {
+        "outcome": "recommended",
+        "recommendedMaterialId": "dev-ka125-b",
+        "closestMaterialId": null,
+        "boxWeightKg": 9.729,
+        "loadN": 477.0,
+        "combinedFactor": 0.567,
+        "requiredBctN": 841.3,
+        "leadLowN": 1616.8,
+        "leadHighN": 2187.4,
+        "leadMarginPct": 92.2,
+        "warnings": [],
+        "passing": [
+          "dev-ki230-bc",
+          "dev-ka185-b",
+          "dev-ka125-b"
+        ],
+        "excluded": [
+          "dev-kt-c"
+        ]
+      }
+    },
+    {
+      "key": "07-no-instant-price",
+      "title": "Case 02 when the double-wall board, the only one that passes, has no instant price",
+      "inputs": {
+        "productWeightG": 900,
+        "unitsPerBox": 10,
+        "stackLayers": 6,
+        "pallet": {
+          "pattern": "interlocked",
+          "overhang": true
+        },
+        "fragility": "low",
+        "transportMode": "pallet_domestic",
+        "humidity": "humid",
+        "storage": "up_to_90_days"
+      },
+      "boards": [
+        {
+          "materialId": "dev-ka125-b",
+          "sheet": {
+            "sheetId": "sheet-1",
+            "ectKnPerM": 5.0,
+            "caliperMm": 3.0,
+            "grammageGsm": 450
+          },
+          "blankAreaSqm": 0.79,
+          "price": {
+            "instant": true,
+            "unitPrice": "10.00",
+            "grossAmount": "10700.00",
+            "leadTimeDays": 10
+          }
+        },
+        {
+          "materialId": "dev-ka185-b",
+          "sheet": {
+            "sheetId": "sheet-2",
+            "ectKnPerM": 6.8,
+            "caliperMm": 3.1,
+            "grammageGsm": 560
+          },
+          "blankAreaSqm": 0.79,
+          "price": {
+            "instant": true,
+            "unitPrice": "11.50",
+            "grossAmount": "12305.00",
+            "leadTimeDays": 8
+          }
+        },
+        {
+          "materialId": "dev-ki230-bc",
+          "sheet": {
+            "sheetId": "sheet-3",
+            "ectKnPerM": 10.5,
+            "caliperMm": 6.2,
+            "grammageGsm": 900
+          },
+          "blankAreaSqm": 0.81,
+          "price": {
+            "instant": false,
+            "unitPrice": null,
+            "grossAmount": null,
+            "leadTimeDays": null
+          }
+        },
+        {
+          "materialId": "dev-kt-c",
+          "sheet": null,
+          "blankAreaSqm": 0.8,
+          "price": {
+            "instant": true,
+            "unitPrice": "9.00",
+            "grossAmount": "9630.00",
+            "leadTimeDays": 10
+          }
+        }
+      ],
+      "box": {
+        "l": 400,
+        "w": 300,
+        "d": 250
+      },
+      "expected": {
+        "outcome": "recommended",
+        "recommendedMaterialId": "dev-ki230-bc",
+        "closestMaterialId": null,
+        "boxWeightKg": 9.729,
+        "loadN": 477.0,
+        "combinedFactor": 0.108,
+        "requiredBctN": 4417.4,
+        "leadLowN": 4881.0,
+        "leadHighN": 6603.7,
+        "leadMarginPct": 10.5,
+        "warnings": [],
+        "passing": [
+          "dev-ki230-bc"
+        ],
+        "excluded": [
+          "dev-kt-c"
+        ]
+      }
+    },
+    {
+      "key": "08-thin-margin",
+      "title": "A load just under the single-wall B board's low end",
+      "inputs": {
+        "productWeightG": 1370,
+        "unitsPerBox": 10,
+        "stackLayers": 5,
+        "pallet": null,
+        "fragility": "low",
+        "transportMode": "pallet_domestic",
+        "humidity": "normal",
+        "storage": "up_to_10_days"
+      },
+      "boards": [
+        {
+          "materialId": "dev-ka125-b",
+          "sheet": {
+            "sheetId": "sheet-1",
+            "ectKnPerM": 5.0,
+            "caliperMm": 3.0,
+            "grammageGsm": 450
+          },
+          "blankAreaSqm": 0.79,
+          "price": {
+            "instant": true,
+            "unitPrice": "10.00",
+            "grossAmount": "10700.00",
+            "leadTimeDays": 10
+          }
+        },
+        {
+          "materialId": "dev-ka185-b",
+          "sheet": {
+            "sheetId": "sheet-2",
+            "ectKnPerM": 6.8,
+            "caliperMm": 3.1,
+            "grammageGsm": 560
+          },
+          "blankAreaSqm": 0.79,
+          "price": {
+            "instant": true,
+            "unitPrice": "11.50",
+            "grossAmount": "12305.00",
+            "leadTimeDays": 8
+          }
+        },
+        {
+          "materialId": "dev-ki230-bc",
+          "sheet": {
+            "sheetId": "sheet-3",
+            "ectKnPerM": 10.5,
+            "caliperMm": 6.2,
+            "grammageGsm": 900
+          },
+          "blankAreaSqm": 0.81,
+          "price": {
+            "instant": true,
+            "unitPrice": "15.20",
+            "grossAmount": "16264.00",
+            "leadTimeDays": 12
+          }
+        },
+        {
+          "materialId": "dev-kt-c",
+          "sheet": null,
+          "blankAreaSqm": 0.8,
+          "price": {
+            "instant": true,
+            "unitPrice": "9.00",
+            "grossAmount": "9630.00",
+            "leadTimeDays": 10
+          }
+        }
+      ],
+      "box": {
+        "l": 400,
+        "w": 300,
+        "d": 250
+      },
+      "expected": {
+        "outcome": "recommended",
+        "recommendedMaterialId": "dev-ka125-b",
+        "closestMaterialId": null,
+        "boxWeightKg": 14.429,
+        "loadN": 566.0,
+        "combinedFactor": 0.3641,
+        "requiredBctN": 1554.3,
+        "leadLowN": 1616.8,
+        "leadHighN": 2187.4,
+        "leadMarginPct": 4.0,
+        "warnings": [
+          "thin_margin"
+        ],
+        "passing": [
+          "dev-ki230-bc",
+          "dev-ka185-b",
+          "dev-ka125-b"
+        ],
+        "excluded": [
+          "dev-kt-c"
+        ]
+      }
+    },
+    {
+      "key": "09-parcel-six-high",
+      "title": "8 kg per box, 6 high, not palletised, parcel, medium fragility",
+      "inputs": {
+        "productWeightG": 800,
+        "unitsPerBox": 10,
+        "stackLayers": 6,
+        "pallet": null,
+        "fragility": "medium",
+        "transportMode": "parcel_domestic",
+        "humidity": "normal",
+        "storage": "up_to_30_days"
+      },
+      "boards": [
+        {
+          "materialId": "dev-ka125-b",
+          "sheet": {
+            "sheetId": "sheet-1",
+            "ectKnPerM": 5.0,
+            "caliperMm": 3.0,
+            "grammageGsm": 450
+          },
+          "blankAreaSqm": 0.79,
+          "price": {
+            "instant": true,
+            "unitPrice": "10.00",
+            "grossAmount": "10700.00",
+            "leadTimeDays": 10
+          }
+        },
+        {
+          "materialId": "dev-ka185-b",
+          "sheet": {
+            "sheetId": "sheet-2",
+            "ectKnPerM": 6.8,
+            "caliperMm": 3.1,
+            "grammageGsm": 560
+          },
+          "blankAreaSqm": 0.79,
+          "price": {
+            "instant": true,
+            "unitPrice": "11.50",
+            "grossAmount": "12305.00",
+            "leadTimeDays": 8
+          }
+        },
+        {
+          "materialId": "dev-ki230-bc",
+          "sheet": {
+            "sheetId": "sheet-3",
+            "ectKnPerM": 10.5,
+            "caliperMm": 6.2,
+            "grammageGsm": 900
+          },
+          "blankAreaSqm": 0.81,
+          "price": {
+            "instant": true,
+            "unitPrice": "15.20",
+            "grossAmount": "16264.00",
+            "leadTimeDays": 12
+          }
+        },
+        {
+          "materialId": "dev-kt-c",
+          "sheet": null,
+          "blankAreaSqm": 0.8,
+          "price": {
+            "instant": true,
+            "unitPrice": "9.00",
+            "grossAmount": "9630.00",
+            "leadTimeDays": 10
+          }
+        }
+      ],
+      "box": {
+        "l": 400,
+        "w": 300,
+        "d": 250
+      },
+      "expected": {
+        "outcome": "recommended",
+        "recommendedMaterialId": "dev-ka185-b",
+        "closestMaterialId": null,
+        "boxWeightKg": 8.729,
+        "loadN": 428.0,
+        "combinedFactor": 0.257,
+        "requiredBctN": 1665.2,
+        "leadLowN": 2235.2,
+        "leadHighN": 3024.1,
+        "leadMarginPct": 34.2,
+        "warnings": [],
+        "passing": [
+          "dev-ki230-bc",
+          "dev-ka185-b"
+        ],
+        "excluded": [
+          "dev-kt-c"
+        ]
+      }
+    }
+  ]
+}
