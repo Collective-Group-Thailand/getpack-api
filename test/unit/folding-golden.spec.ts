@@ -103,7 +103,7 @@ function renderDoc(results: { c: GoldenCase; s: Summary }[]): string {
     '  when every part is; Q2 design fees once per quote; Q3 VAT from the dated rate; Q6 process exclusions enforced; Q9/Q10 no',
     '  caches, deterministic first match; Q11 legacy factory ids replaced by terms; Q12 no thousands-comma truncation; Q13 flip',
     '  sheets work; Q14/Q16 missing data refuses the configuration instead of pricing with 0; Q17 finish-2 waste by position;',
-    "  Q19 4-colour price from the factory's own list; Q20 open NULL bounds; engine B and shipping are not part of B2.3.",
+    "  Q19 4-colour price from the factory's own list; Q20 open NULL bounds; shipping is not part of B2.3; engine B has its own cases (`docs/pricing-validation-folding-b.md`).",
     '',
     '| Business sign-off | Name | Date |',
     '|---|---|---|',

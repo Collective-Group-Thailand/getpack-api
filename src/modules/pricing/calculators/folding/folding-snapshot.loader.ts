@@ -312,6 +312,7 @@ export class FoldingSnapshotLoader {
           requiresAmount: row.requiresAmount,
           requiresWidth: row.requiresWidth,
           requiresLength: row.requiresLength,
+          ...(row.finishKind === 'foil' ? { isFoil: true } : {}),
           // Legacy carries the locations only for finishes that need an amount (`CSCombinetoFactory:709-716`).
           ...(row.requiresAmount ? { amount: f.amount, w: f.w, l: f.l } : {}),
         },

@@ -17,6 +17,8 @@ export interface Finish2Request {
   requiresAmount: boolean;
   requiresWidth: boolean;
   requiresLength: boolean;
+  /** Catalogue `finish_kind = foil`: engine B prices it on the foil roll (legacy `finish.is_foil`, D-233). */
+  isFoil?: boolean;
   /** Only carried when the finish requires an amount, as legacy (`CSCombinetoFactory:709-716`). */
   amount?: number;
   /** mm per location. */

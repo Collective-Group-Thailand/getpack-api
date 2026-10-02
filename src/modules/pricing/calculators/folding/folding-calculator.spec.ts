@@ -1,5 +1,6 @@
 import { convertTo2Decimal } from '../../engine/php';
 import { saleMargin, sellMargins, type SellSnapshot } from '../shared/sell';
+import { type BTables } from './b/tables';
 import { foldingCalculator, type FoldingOption } from './folding-calculator';
 import { type GeometrySnapshot } from './geometry/types';
 import { type PartRequest, PricingError } from './request';
@@ -166,14 +167,35 @@ describe('folding calculator (FoldingCalculator::calculate_cs)', () => {
     expect(result.selection).toEqual(['fast']);
   });
 
-  it('reports why an option has no price, and never offers engine B (PROGRESS B2.3 slice 6)', () => {
+  it('reports why an option has no price; engine B prices on its own tables (D-233)', () => {
+    const bTables: BTables = {
+      terms: { factoryMarginPct: 10 },
+      printWastes: [],
+      finishWastes: [],
+      diecutWastes: [],
+      assemblyWastes: [],
+      printPlates: [],
+      printPrices: [],
+      finishPrices: [],
+      foilPrices: [],
+      diecutPrices: [],
+      diecutBlocks: [],
+      assemblyPrices: [],
+      codeMargins: [],
+    };
     const result = foldingCalculator.calculate(input, {
       options: [
-        option('b', 10, { engine: 'b' }),
+        option('b', 10, { engine: 'b', tables: bTables }),
         option('bare', 10, { tables: { ...tables(10), printPlates: [] } }),
+        option('refused', 10, { refusal: 'engine B awaits sign-off' }),
       ],
     });
-    expect(result.options.map((o) => o.error?.code)).toEqual(['process_not_possible', 'price_line_missing']);
+    expect(result.options.map((o) => o.error?.code)).toEqual([
+      'price_line_missing',
+      'price_line_missing',
+      'process_not_possible',
+    ]);
+    expect(result.options[0]!.error?.detail).toContain('code_margins');
     expect(result.selection).toEqual([null]);
   });
 

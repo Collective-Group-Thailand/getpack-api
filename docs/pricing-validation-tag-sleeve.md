@@ -9350,7 +9350,7 @@ Legacy: `FoldingCalculator.php:414`
 | Option | Qty | Run | Layout | Press sheets | Buy price | Per piece (VAT incl.) | Total (VAT incl.) | Lead time |
 |---|---|---|---|---|---|---|---|---|
 | F1:offset | 1000 | 1000 | 31x43/2 rot ×70 | 131 | 6755.18 | 9.86 | 9860.00 | 8 d |
-| F1:typeB | — | — | — | — | process_not_possible: engine B is not available for instant quotes | — | — | — |
+| F1:typeB | — | — | — | — | process_not_possible: engine B is not offered for tags & sleeves: legacy priced them on type-A factories only (`FoldingCalculator::getFactories:410-424`, D-233) | — | — | — |
 
 Selected per quantity: F1:offset
 

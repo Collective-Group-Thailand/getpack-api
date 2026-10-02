@@ -22,8 +22,12 @@ export const TAG_SLEEVE_CALCULATOR_VERSION = '1.0.0';
 const FINISH2_DIGITAL =
   'special finishes (finish 2) are printed offset only (legacy CStoFactoryFolding:632-634, port map T9)';
 
+const ENGINE_B =
+  'engine B is not offered for tags & sleeves: legacy priced them on type-A factories only (`FoldingCalculator::getFactories:410-424`, D-233)';
+
 /** The tag rule that refuses an option before pricing, or undefined. */
 export function tagSleeveRefusal(input: FoldingInput, option: FoldingOption): string | undefined {
+  if (option.engine === 'b') return ENGINE_B;
   const finish2 = input.parts.some((p) => p.request.finish2.length > 0);
   return finish2 && option.engine === 'a_digital' ? FINISH2_DIGITAL : undefined;
 }

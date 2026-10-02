@@ -3,6 +3,9 @@ import { type ForSale, saleMargin, type SellSnapshot } from '../shared/sell';
 import { type PricedLayout } from './a/cost';
 import { type DigitalPricedLayout } from './a/digital';
 import { priceDigitalPart, priceOffsetPart } from './a/engine';
+import { type BPricedLayout } from './b/cost';
+import { priceBPart } from './b/engine';
+import { type BTables } from './b/tables';
 import { type GeometryInput, type GeometrySnapshot } from './geometry/types';
 import { type PartRequest, PricingError, type ProcessExclusion } from './request';
 import { type DigitalTables, type OffsetTables } from './tables';
@@ -15,7 +18,7 @@ import { type DigitalTables, type OffsetTables } from './tables';
  * legacy mixed print types across parts). Selection follows D-043/D-101: lowest buy price, then lead time.
  */
 
-export const FOLDING_CALCULATOR_VERSION = '1.0.0';
+export const FOLDING_CALCULATOR_VERSION = '1.1.0';
 
 export type FoldingEngine = 'a_offset' | 'a_digital' | 'b';
 
@@ -41,7 +44,7 @@ export interface FoldingOption {
   /** From this quantity the lead time is `days` (legacy factories 9 and 16, `getCustomLeadTime`). */
   bulkLeadTime: { minQty: number; days: number } | null;
   minOrderForProduction: number | null;
-  tables: OffsetTables | DigitalTables;
+  tables: OffsetTables | DigitalTables | BTables;
   parts: Readonly<Record<string, { geometry: GeometrySnapshot; exclusions: readonly ProcessExclusion[] }>>;
   sell: SellSnapshot;
   /** Price lines the factory lacks for this configuration (the loader's checks); non-empty = no price. */
@@ -62,7 +65,7 @@ export interface FoldingSnapshot {
 
 export interface PartStep {
   partKey: string;
-  layout: PricedLayout | DigitalPricedLayout;
+  layout: PricedLayout | DigitalPricedLayout | BPricedLayout;
   /** The factory's price for the part's lot (legacy `margin.salePrice`), part of the buy price (D-042). */
   buyPrice: number;
   forSale: ForSale;
@@ -102,16 +105,11 @@ export interface FoldingResult {
   selection: (string | null)[];
 }
 
-type PartLayouts = { boxAmount: number; layouts: (PricedLayout | DigitalPricedLayout)[] }[];
+type PartLayouts = { boxAmount: number; layouts: (PricedLayout | DigitalPricedLayout | BPricedLayout)[] }[];
 
 function priceParts(input: FoldingInput, option: FoldingOption): Map<string, PartLayouts> {
   if (option.refusal) throw new PricingError('process_not_possible', option.refusal);
   if (option.unavailable?.length) throw new PricingError('price_line_missing', option.unavailable.join(', '));
-  if (option.engine === 'b') {
-    // Legacy prices type-B factories only in the factory tools (`FoldingCalculator.php:414`); engine B is
-    // not ported (PROGRESS, B2.3 slice 6), so a B print type is no instant price path.
-    throw new PricingError('process_not_possible', 'engine B is not available for instant quotes');
-  }
   const byPart = new Map<string, PartLayouts>();
   for (const part of input.parts) {
     const partSnapshot = option.parts[part.key];
@@ -122,10 +120,13 @@ function priceParts(input: FoldingInput, option: FoldingOption): Map<string, Par
       minOrderForProduction: option.minOrderForProduction,
     };
     const partInput = { geometry: part.geometry, quantities: input.quantities, request: part.request };
+    // Engine B (U-B6 tail, D-233): legacy type-2 factories (`FoldingCalculator.php:1304-1355`).
     const result =
-      option.engine === 'a_digital'
-        ? priceDigitalPart(partInput, { ...snapshot, tables: option.tables as DigitalTables })
-        : priceOffsetPart(partInput, { ...snapshot, tables: option.tables as OffsetTables });
+      option.engine === 'b'
+        ? priceBPart(partInput, { ...snapshot, tables: option.tables as BTables })
+        : option.engine === 'a_digital'
+          ? priceDigitalPart(partInput, { ...snapshot, tables: option.tables as DigitalTables })
+          : priceOffsetPart(partInput, { ...snapshot, tables: option.tables as OffsetTables });
     byPart.set(part.key, result.steps);
   }
   return byPart;

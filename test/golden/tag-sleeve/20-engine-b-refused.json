@@ -35,7 +35,7 @@
     },
     {
       "optionKey": "F1:typeB",
-      "error": "process_not_possible: engine B is not available for instant quotes",
+      "error": "process_not_possible: engine B is not offered for tags & sleeves: legacy priced them on type-A factories only (`FoldingCalculator::getFactories:410-424`, D-233)",
       "steps": [null]
     }
   ]
