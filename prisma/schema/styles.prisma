@@ -251,3 +251,100 @@ model StyleFavourite {
   @@index([baseId], map: "ix_style_favourites__base_id")
   @@map("style_favourites")
 }
+
+enum ProcessCapabilityStatus {
+  proposed
+  verified
+  rejected
+  withdrawn
+  superseded
+
+  @@map("process_capability_status")
+}
+
+enum StyleProcessScope {
+  source_product_type
+  category
+  family
+  option
+
+  @@map("style_process_scope")
+}
+
+/// D-244: the manufacturing process taxonomy (seeded reference data).
+model ProcessType {
+  id        BigInt   @id(map: "pk_process_types") @default(autoincrement())
+  publicId  String   @unique(map: "ux_process_types__public_id") @default(dbgenerated("uuidv7()")) @map("public_id") @db.Uuid
+  code      String   @unique(map: "ux_process_types__code")
+  nameTh    String   @map("name_th")
+  nameEn    String   @map("name_en")
+  sort      Int      @default(0)
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  capabilities FactoryProcessCapability[]
+  rules        StyleProcessRule[]
+
+  @@map("process_types")
+}
+
+/// D-244: what a factory can make per material class × process, proposed by the factory (Owner / Planner) or the
+/// Partner team and verified by the Partner Manager against a passing site visit; only verified rows count.
+model FactoryProcessCapability {
+  id              BigInt                  @id(map: "pk_factory_process_capabilities") @default(autoincrement())
+  publicId        String                  @unique(map: "ux_factory_process_capabilities__public_id") @default(dbgenerated("uuidv7()")) @map("public_id") @db.Uuid
+  factoryId       BigInt                  @map("factory_id")
+  processTypeId   BigInt                  @map("process_type_id")
+  materialClass   String                  @map("material_class")
+  minBlankWMm     Decimal?                @map("min_blank_w_mm") @db.Decimal(10, 2)
+  minBlankLMm     Decimal?                @map("min_blank_l_mm") @db.Decimal(10, 2)
+  maxBlankWMm     Decimal?                @map("max_blank_w_mm") @db.Decimal(10, 2)
+  maxBlankLMm     Decimal?                @map("max_blank_l_mm") @db.Decimal(10, 2)
+  maxCaliperMm    Decimal?                @map("max_caliper_mm") @db.Decimal(6, 3)
+  minRun          Int?                    @map("min_run")
+  leadTimeMinDays Int                     @map("lead_time_min_days") @db.SmallInt
+  leadTimeMaxDays Int                     @map("lead_time_max_days") @db.SmallInt
+  status          ProcessCapabilityStatus @default(proposed)
+  note            String?
+  proposedById    BigInt                  @map("proposed_by")
+  proposedAt      DateTime                @default(now()) @map("proposed_at") @db.Timestamptz(6)
+  verifiedById    BigInt?                 @map("verified_by")
+  verifiedAt      DateTime?               @map("verified_at") @db.Timestamptz(6)
+  siteVisitId     BigInt?                 @map("site_visit_id")
+  decisionNote    String?                 @map("decision_note")
+  decidedAt       DateTime?               @map("decided_at") @db.Timestamptz(6)
+  rowVersion      Int                     @default(1) @map("row_version")
+
+  factory     Factory     @relation("FactoryProcessCapabilityFactory", fields: [factoryId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_factory_process_capabilities__factory_id")
+  processType ProcessType @relation(fields: [processTypeId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_factory_process_capabilities__process_type_id")
+  proposedBy  User        @relation("FactoryProcessCapabilityProposedBy", fields: [proposedById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_factory_process_capabilities__proposed_by")
+  verifiedBy  User?       @relation("FactoryProcessCapabilityVerifiedBy", fields: [verifiedById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_factory_process_capabilities__verified_by")
+  siteVisit   SiteVisit?  @relation("FactoryProcessCapabilitySiteVisit", fields: [siteVisitId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_factory_process_capabilities__site_visit_id")
+
+  @@unique([factoryId, processTypeId, materialClass], map: "ux_factory_process_capabilities__verified", where: raw("(status = 'verified'::process_capability_status)"))
+  @@index([factoryId, status], map: "ix_factory_process_capabilities__factory_id__status")
+  @@index([processTypeId, materialClass], map: "ix_factory_process_capabilities__process__material")
+  @@index([proposedById], map: "ix_factory_process_capabilities__proposed_by")
+  @@index([verifiedById], map: "ix_factory_process_capabilities__verified_by")
+  @@index([siteVisitId], map: "ix_factory_process_capabilities__site_visit_id")
+  @@map("factory_process_capabilities")
+}
+
+/// D-244: which processes a style needs when its recipe declares none — by master product type, category, family or
+/// option value (`axis:value`). Seeded as a proposal that Prepress confirms.
+model StyleProcessRule {
+  id            BigInt            @id(map: "pk_style_process_rules") @default(autoincrement())
+  publicId      String            @unique(map: "ux_style_process_rules__public_id") @default(dbgenerated("uuidv7()")) @map("public_id") @db.Uuid
+  scope         StyleProcessScope
+  scopeValue    String            @map("scope_value")
+  processTypeId BigInt            @map("process_type_id")
+  createdAt     DateTime          @default(now()) @map("created_at") @db.Timestamptz(6)
+  createdById   BigInt?           @map("created_by")
+
+  processType ProcessType @relation(fields: [processTypeId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_style_process_rules__process_type_id")
+  createdBy   User?       @relation("StyleProcessRuleCreatedBy", fields: [createdById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_style_process_rules__created_by")
+
+  @@unique([scope, scopeValue, processTypeId], map: "ux_style_process_rules__scope__value__process")
+  @@index([processTypeId], map: "ix_style_process_rules__process_type_id")
+  @@index([createdById], map: "ix_style_process_rules__created_by")
+  @@map("style_process_rules")
+}

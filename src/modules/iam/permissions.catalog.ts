@@ -176,6 +176,19 @@ export const PERMISSIONS = [
     decisionRefs: ['D-211'],
   },
 
+  {
+    key: 'styles.process_rules',
+    audience: 'staff',
+    description: 'Maintain which processes a style needs (style process rules, Prepress)',
+    decisionRefs: ['D-244'],
+  },
+  {
+    key: 'factory_process_capabilities.propose',
+    audience: 'partner',
+    description: 'Propose or withdraw the factory’s process capabilities (verified by the Partner team)',
+    decisionRefs: ['D-244'],
+  },
+
   // --- Structure Advisor (U2.2, D-188, D-189, D-235–D-240)
   {
     key: 'advisory.read',

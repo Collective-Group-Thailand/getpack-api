@@ -61,6 +61,7 @@ export class StylePublishingService {
           .map((v) => ({
             variantId: v.id,
             baseId: base.id,
+            sourceProductType: base.sourceProductType,
             category: base.category,
             family: base.family,
             materialClass: base.materialClass,

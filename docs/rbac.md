@@ -51,6 +51,7 @@ Legend: ● granted · ◆ granted and sensitive (cost/margin data, D-141).
 | `styles.approve_recipe` — Approve a style recipe version (Prepress) (D-243) | ● |  |  |  |  |  |  | ● |  |  |  |  |  |  |  |
 | `styles.approve_names` — Approve the Thai / English names of a style (Marketing: wording, Prepress: technical terms) (D-212) | ● |  |  |  |  |  |  | ● |  |  |  | ● |  |  |  |
 | `styles.verify_reference` — Verify an industry reference code (FEFCO / ECMA) against the edition Packio holds (Prepress) (D-211) | ● |  |  |  |  |  |  | ● |  |  |  |  |  |  |  |
+| `styles.process_rules` — Maintain which processes a style needs (style process rules, Prepress) (D-244) | ● |  |  |  |  |  |  | ● |  |  |  |  |  |  |  |
 | `advisory.read` — Read Structure Advisor recommendations (inputs, rule set, board data, choices) and replay them (D-240) | ● |  |  |  | ● | ● | ● | ● |  |  |  |  | ● | ● |  |
 | `advisory.evaluate` — Run the Structure Advisor for a configuration, also while it is off for customers (D-237, D-239) | ● |  |  |  | ● | ● | ● | ● |  |  |  |  | ● |  |  |
 | `partners.site_visits.record` — Record site visits of partner factories (D-041) | ● |  |  |  |  |  |  |  |  |  |  |  | ● |  |  |
@@ -186,6 +187,7 @@ Legend: ● granted · ◆ granted and sensitive (cost/margin data, D-141).
 
 | Permission | `factory_owner` | `factory_planner` | `factory_operator` | `factory_qc` | `factory_shipping` | `factory_accountant` |
 |---|:-:|:-:|:-:|:-:|:-:|:-:|
+| `factory_process_capabilities.propose` — Propose or withdraw the factory’s process capabilities (verified by the Partner team) (D-244) | ● | ● |  |  |  |  |
 | `factory_profile.read` — Read the own factory profile | ● | ● | ● | ● | ● | ● |
 | `factory_users.manage` — Manage users of the own factory | ● |  |  |  |  |  |
 | `factory_profile.manage` — Edit the own factory profile, addresses, contacts and KYC documents | ● |  |  |  |  |  |

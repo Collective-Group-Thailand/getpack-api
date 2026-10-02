@@ -408,6 +408,8 @@ model Factory {
 
   boardStrengthSheets BoardStrengthSheet[] @relation("BoardStrengthSheetFactory")
 
+  processCapabilities FactoryProcessCapability[] @relation("FactoryProcessCapabilityFactory")
+
   @@unique([taxId, branchCode], map: "ux_factories__tax_id__branch_code")
   @@index([status], map: "ix_factories__status")
   @@index([calendarId], map: "ix_factories__calendar_id")
@@ -557,6 +559,8 @@ model SiteVisit {
   factory    Factory              @relation(fields: [factoryId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_site_visits__factory_id")
   recordedBy User                 @relation("SiteVisitRecordedBy", fields: [recordedById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_site_visits__recorded_by")
   inspectors SiteVisitInspector[]
+
+  processCapabilities FactoryProcessCapability[] @relation("FactoryProcessCapabilitySiteVisit")
 
   @@index([factoryId, visitedOn], map: "ix_site_visits__factory_id__visited_on")
   @@index([recordedById], map: "ix_site_visits__recorded_by")

@@ -99,7 +99,11 @@ describe('style library (e2e, U3.B1)', () => {
     const mailer = await ctx.prisma.styleBase.findFirstOrThrow({ where: { sourceProductType: 'mailer' } });
     expect(mailer.productTypeId).toBeNull();
     const runs = await as(ctx, tokens['admin']!).get('/v1/admin/style-imports').expect(200);
-    expect(runs.body.data[0]).toMatchObject({ kind: 'master', status: 'applied' });
+    expect(
+      (runs.body.data as { kind: string; status: string }[]).find((r) => r.kind === 'master'),
+    ).toMatchObject({
+      status: 'applied',
+    });
   });
 
   it('is idempotent: the same file, or one that changes nothing, writes nothing (D-242)', async () => {

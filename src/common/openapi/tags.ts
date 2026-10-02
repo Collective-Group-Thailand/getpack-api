@@ -57,6 +57,11 @@ export const API_TAGS: Record<string, string> = {
   'store.styles':
     'The style library (D-245): published styles with facets, search, sorts and detail — combinations, size ranges, starting price, lead time; compare up to three (D-246).',
   'store.styleFavourites': 'The signed-in customer’s favourite styles (D-246).',
+  'admin.processTypes': 'The manufacturing process taxonomy (D-244).',
+  'partner.processTypes': 'The manufacturing process taxonomy (D-244).',
+  'admin.styleProcessRules': 'Which processes a style needs when its recipe declares none (D-244, Prepress).',
+  'admin.styleCoverage':
+    'What the partner network can and cannot make yet, per category and process (D-243, D-244).',
   'admin.styles':
     'Style library for staff (D-241–D-243): bases, generated variants and why they are not publishable; Prepress approves recipes and verifies references, Marketing and Prepress approve names.',
   'admin.styleImports':

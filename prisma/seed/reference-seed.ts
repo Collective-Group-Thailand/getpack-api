@@ -25,6 +25,7 @@ import { CREDIT_NOTE_REASONS, FINANCE_FEATURE_FLAGS } from './data/receivables';
 import { CONSENT_PURPOSES, NATIONAL_CALENDAR, SOD_RULES, TAX_RATES, TEAMS } from './data/reference';
 import { ENTITY_SETTING_KEYS, SETTINGS, type SettingSeed } from './data/settings';
 import { CARRIERS, CUSTOMER_SHIPPING_RATE_CARDS, ZONE_SCHEMES } from './data/shipping';
+import { PROCESS_TYPES, STYLE_PROCESS_RULES } from './data/styles';
 
 type Tx = Prisma.TransactionClient;
 
@@ -79,6 +80,7 @@ export async function seedReference(prisma: PrismaClient, entity: EntitySeedInpu
       await ensureTaxRates(tx, count);
       await ensureShipping(tx, count);
       await ensureUnmetDemandReasons(tx, count);
+      await ensureStyleProcesses(tx, count);
       await ensureOrderCancelReasons(tx, count);
       await ensurePaymentScheduleTemplates(tx, count);
       await ensurePaymentFeatureFlags(tx, count);
@@ -578,6 +580,23 @@ async function ensureMilestoneRoutes(tx: Tx, count: (what: string) => void): Pro
       });
       count('milestone_routes');
     }
+  }
+}
+
+/** The process taxonomy and the proposed style process rules (U3.B3, D-244). */
+async function ensureStyleProcesses(tx: Tx, count: (what: string) => void): Promise<void> {
+  for (const [sort, p] of PROCESS_TYPES.entries()) {
+    if (await tx.processType.findUnique({ where: { code: p.code } })) continue;
+    await tx.processType.create({ data: { ...p, sort } });
+    count('process_types');
+  }
+  const ids = new Map((await tx.processType.findMany()).map((p) => [p.code, p.id]));
+  for (const r of STYLE_PROCESS_RULES) {
+    const processTypeId = ids.get(r.process)!;
+    const key = { scope: r.scope, scopeValue: r.value, processTypeId };
+    if (await tx.styleProcessRule.findFirst({ where: key })) continue;
+    await tx.styleProcessRule.create({ data: key });
+    count('style_process_rules');
   }
 }
 

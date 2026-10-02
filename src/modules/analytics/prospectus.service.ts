@@ -6,6 +6,7 @@ import { addCalendarDays, startOfBangkokDay } from '@common/time/bangkok';
 import { PrismaService } from '@database/prisma.service';
 import { Prisma } from '@generated/prisma/client';
 import { PDF_RENDERER, type PdfRenderer } from '@integrations/pdf/pdf-renderer.port';
+import { StyleCoverageService } from '@modules/styles/style-coverage.service';
 import { Inject, Injectable, Logger } from '@nestjs/common';
 import { AuditService } from '@platform/audit/audit.service';
 import { DomainEvents } from '@platform/domain-events/domain-events.service';
@@ -86,6 +87,7 @@ export class ProspectusService {
     private readonly audit: AuditService,
     private readonly events: DomainEvents,
     @Inject(PDF_RENDERER) private readonly renderer: PdfRenderer,
+    private readonly styleCoverage: StyleCoverageService,
   ) {}
 
   async request(
@@ -241,6 +243,7 @@ export class ProspectusService {
       await this.unmetDemand(start, end, types),
       await this.monthlyTrend(start, end, types),
       await this.factorySupply(types),
+      ...(await this.styleCoverageTables()),
     ];
     let suppressed = 0;
     const published = tables.map((t) => {
@@ -507,6 +510,67 @@ export class ProspectusService {
       rows: rows.map((r) => ({ labels: [String(r['month'])], cells: cells(r) })),
       totals: cells(t ?? {}),
     };
+  }
+
+  /**
+   * Style-library coverage (U3.B3, D-244): per category the variants partners can and cannot make yet (recruitment
+   * targets), and the processes the network lacks. Capability coverage is public (D-201), so variant counts are not
+   * suppressed; the factories count per process is a factory figure and needs k factories (D-044).
+   */
+  private async styleCoverageTables(): Promise<ProspectusTable[]> {
+    const coverage = await this.styleCoverage.coverage();
+    if (coverage.categories.length === 0) return [];
+    const open = Number.MAX_SAFE_INTEGER;
+    const capable = (
+      await this.prisma.factoryProcessCapability.findMany({
+        where: { status: 'verified', factory: { status: 'active' } },
+        distinct: ['factoryId'],
+        select: { factoryId: true },
+      })
+    ).length;
+    const sum = (key: 'variants' | 'makeable' | 'notMakeable') =>
+      coverage.categories.reduce((a, c) => a + c[key], 0);
+    return [
+      {
+        key: 'style_coverage',
+        titleTh: 'แบบกล่องที่เครือข่ายผลิตได้และยังผลิตไม่ได้',
+        titleEn: 'Styles the network can and cannot make yet',
+        labels: [{ th: 'หมวด', en: 'Category' }],
+        metrics: [
+          COUNT('variants', 'แบบย่อยทั้งหมด', 'Variants'),
+          COUNT('makeable', 'ผลิตได้', 'Makeable'),
+          COUNT('not_makeable', 'ยังผลิตไม่ได้', 'Not makeable yet'),
+        ],
+        rows: coverage.categories.map((c) => ({
+          labels: [c.category],
+          cells: [cell(c.variants, open), cell(c.makeable, open), cell(c.notMakeable, open)],
+        })),
+        totals: [cell(sum('variants'), open), cell(sum('makeable'), open), cell(sum('notMakeable'), open)],
+      },
+      {
+        key: 'style_process_gaps',
+        titleTh: 'กระบวนการผลิตที่แบบกล่องต้องการ',
+        titleEn: 'Processes the styles need',
+        labels: [{ th: 'กระบวนการ', en: 'Process' }],
+        metrics: [
+          COUNT('variants_needing', 'แบบย่อยที่ต้องใช้', 'Variants needing it'),
+          COUNT('factories', 'จำนวนโรงงาน', 'Factories'),
+        ],
+        rows: coverage.processes
+          .filter((p) => p.variantsNeeding > 0)
+          .map((p) => ({
+            labels: [`${p.nameTh} / ${p.nameEn}`],
+            cells: [cell(p.variantsNeeding, open), cell(p.factories, p.factories)],
+          })),
+        totals: [
+          cell(
+            coverage.processes.reduce((a, p) => a + p.variantsNeeding, 0),
+            open,
+          ),
+          cell(capable, capable),
+        ],
+      },
+    ];
   }
 
   /** Supply side: active factories per product type — a count below k factories is itself suppressed (D-044). */

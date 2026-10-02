@@ -117,6 +117,8 @@ export const ERROR_CODES = {
   'styles.role_required': HttpStatus.FORBIDDEN,
   'styles.reference_mismatch': HttpStatus.CONFLICT,
   'styles.variant_not_found': HttpStatus.NOT_FOUND,
+  'styles.site_visit_not_passed': HttpStatus.CONFLICT,
+  'styles.capability_decided': HttpStatus.CONFLICT,
   'specs.unit_not_accepted': HttpStatus.UNPROCESSABLE_ENTITY,
   'specs.basis_not_accepted': HttpStatus.UNPROCESSABLE_ENTITY,
   'specs.caliper_missing': HttpStatus.UNPROCESSABLE_ENTITY,

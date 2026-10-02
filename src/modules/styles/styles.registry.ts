@@ -1,5 +1,14 @@
 import { type Type } from '@nestjs/common';
 
+import {
+  AdminFactoryProcessCapabilitiesController,
+  AdminProcessCapabilityDecisionsController,
+  AdminProcessTypesController,
+  AdminStyleCoverageController,
+  AdminStyleProcessRulesController,
+  PartnerFactoryProcessCapabilitiesController,
+  PartnerProcessTypesController,
+} from './process-capabilities.controller';
 import { AdminStyleImportsController, AdminStylesController } from './styles-admin.controller';
 import { StoreStyleFavouritesController, StoreStylesController } from './styles-store.controller';
 
@@ -10,7 +19,18 @@ export const STYLES_STORE_CONTROLLERS: Type<unknown>[] = [
 ];
 
 /** `/v1/admin/*` controllers of the style library. */
-export const STYLES_ADMIN_CONTROLLERS: Type<unknown>[] = [AdminStylesController, AdminStyleImportsController];
+export const STYLES_ADMIN_CONTROLLERS: Type<unknown>[] = [
+  AdminStylesController,
+  AdminStyleImportsController,
+  AdminProcessTypesController,
+  AdminFactoryProcessCapabilitiesController,
+  AdminProcessCapabilityDecisionsController,
+  AdminStyleProcessRulesController,
+  AdminStyleCoverageController,
+];
 
 /** `/v1/partner/*` controllers of the style library. */
-export const STYLES_PARTNER_CONTROLLERS: Type<unknown>[] = [];
+export const STYLES_PARTNER_CONTROLLERS: Type<unknown>[] = [
+  PartnerProcessTypesController,
+  PartnerFactoryProcessCapabilitiesController,
+];

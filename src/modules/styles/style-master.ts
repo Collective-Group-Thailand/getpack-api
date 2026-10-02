@@ -31,8 +31,10 @@ export interface MasterBase {
   complexity: string | null;
   referenceCode: string | null;
   pricingPathAtLaunch: string | null;
-  synonyms: { locale: 'th' | 'en'; term: string }[];
-  useCases: string[];
+  /** Null when the file carries none: an import then keeps the curated synonyms (D-246). */
+  synonyms: { locale: 'th' | 'en'; term: string }[] | null;
+  /** Null when the file carries none: an import then keeps the curated use cases. */
+  useCases: string[] | null;
   distinctVariants: number;
 }
 
@@ -106,13 +108,16 @@ export function parseMaster(raw: unknown): ParsedMaster {
     ])
       if (!str(s[field])) problems.push(`${at}: ${field} is empty`);
     const synonyms = Array.isArray(s['synonyms'])
-      ? (s['synonyms'] as { locale?: unknown; term?: unknown }[]).map((x) => ({
-          locale: str(x.locale) === 'en' ? ('en' as const) : ('th' as const),
-          term: str(x.term),
-        }))
-      : [];
-    const useCases = Array.isArray(s['use_cases']) ? (s['use_cases'] as unknown[]).map(str) : [];
-    for (const u of useCases) if (!AXIS.test(u)) problems.push(`${at}: use case ${u} is not snake_case`);
+      ? (s['synonyms'] as { locale?: unknown; term?: unknown }[])
+          .map((x) => ({
+            locale: str(x.locale) === 'en' ? ('en' as const) : ('th' as const),
+            term: str(x.term),
+          }))
+          .filter((x) => x.term)
+      : null;
+    const useCases = Array.isArray(s['use_cases']) ? (s['use_cases'] as unknown[]).map(str) : null;
+    for (const u of useCases ?? [])
+      if (!AXIS.test(u)) problems.push(`${at}: use case ${u} is not snake_case`);
     bases.push({
       code,
       family: str(s['family']),
@@ -127,8 +132,8 @@ export function parseMaster(raw: unknown): ParsedMaster {
       complexity: str(s['complexity']) || null,
       referenceCode: str(s['reference']) || null,
       pricingPathAtLaunch: str(s['pricing_path_at_launch']) || null,
-      synonyms: synonyms.filter((x) => x.term),
-      useCases: [...new Set(useCases)].sort(),
+      synonyms,
+      useCases: useCases ? [...new Set(useCases)].sort() : null,
       distinctVariants: Number(s['distinct_variants']),
     });
   }

@@ -1,8 +1,11 @@
 import { Global, Module } from '@nestjs/common';
 
+import { ProcessCapabilitiesService } from './process-capabilities.service';
+import { StyleCoverageService } from './style-coverage.service';
 import { StyleImportService } from './style-import.service';
 import { StyleMakeabilityService } from './style-makeability.service';
 import { StylePublishingService } from './style-publishing.service';
+import { StylesJobs } from './styles.jobs';
 import { StylesAdminService } from './styles-admin.service';
 import { StylesStoreService } from './styles-store.service';
 
@@ -12,6 +15,8 @@ const SERVICES = [
   StyleImportService,
   StylesAdminService,
   StylesStoreService,
+  ProcessCapabilitiesService,
+  StyleCoverageService,
 ];
 
 /**
@@ -20,5 +25,5 @@ const SERVICES = [
  * runs the nightly recompute.
  */
 @Global()
-@Module({ providers: SERVICES, exports: SERVICES })
+@Module({ providers: [...SERVICES, StylesJobs], exports: SERVICES })
 export class StylesModule {}

@@ -24,6 +24,8 @@ import { StylePublishingService } from './style-publishing.service';
 /** D-242: the approval policy for changes to published style-library rows. */
 export const STYLE_CHANGE_POLICY = 'style_library_change';
 export const STYLE_IMPORT_SUBJECT = 'style_import_run';
+/** A full master import creates ~1 000 rows and recomputes them: a bulk transaction (like catalogue imports). */
+const BULK = { timeout: 120_000 };
 
 /**
  * Master product types → the Packio product type they are sold as (catalogue codes, D-100). `mailer` and
@@ -213,7 +215,7 @@ export class StyleImportService {
         },
       });
       return tx.styleImportRun.findUniqueOrThrow({ where: { id: run.id } });
-    });
+    }, BULK);
   }
 
   /** D-242: an approved run applies its held changes; a rejected, withdrawn or expired one drops them. */
@@ -283,8 +285,8 @@ export class StyleImportService {
           productTypeCode: PRODUCT_TYPE_OF[base.productType] ?? null,
           sourceSha256: sha,
           variants,
-          synonyms: base.synonyms,
-          useCases: base.useCases,
+          synonyms: base.synonyms ?? [],
+          useCases: base.useCases ?? [],
         });
         summary.basesCreated++;
         summary.variantsCreated += variants.length;
@@ -299,11 +301,17 @@ export class StyleImportService {
       const addVariants = variants.filter((v) => !known.has(v.optionKey));
       const retireVariants = [...known].filter(([k, s]) => s === 'active' && !keys.has(k)).map(([k]) => k);
       const reviveVariants = [...known].filter(([k, s]) => s === 'retired' && keys.has(k)).map(([k]) => k);
-      const synonymsNow = current.synonyms.map((s) => `${s.locale}:${s.term}`).sort();
-      const synonymsNew = base.synonyms.map((s) => `${s.locale}:${s.term}`).sort();
-      const synonyms = JSON.stringify(synonymsNow) === JSON.stringify(synonymsNew) ? null : base.synonyms;
+      // The file's synonyms / use cases replace the curated ones only when it carries them (D-246).
+      const synonymsNow = current.synonyms.map((x) => `${x.locale}:${x.term}`).sort();
+      const synonyms =
+        base.synonyms &&
+        JSON.stringify(synonymsNow) !==
+          JSON.stringify(base.synonyms.map((x) => `${x.locale}:${x.term}`).sort())
+          ? base.synonyms
+          : null;
       const useCasesNow = current.useCases.map((u) => u.code).sort();
-      const useCases = JSON.stringify(useCasesNow) === JSON.stringify(base.useCases) ? null : base.useCases;
+      const useCases =
+        base.useCases && JSON.stringify(useCasesNow) !== JSON.stringify(base.useCases) ? base.useCases : null;
       const revive = current.status === 'retired';
       if (
         Object.keys(changed).length === 0 &&

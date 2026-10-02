@@ -1353,6 +1353,14 @@
     "variant_not_found": {
       "title": "Style not found",
       "detail": "No published style has this code (D-245)."
+    },
+    "site_visit_not_passed": {
+      "title": "Site visit did not pass",
+      "detail": "A process capability is verified only against a passing site visit of the factory (D-244, D-041)."
+    },
+    "capability_decided": {
+      "title": "Capability already decided",
+      "detail": "This process capability is verified, rejected, withdrawn or replaced already (D-244)."
     }
   }
 }

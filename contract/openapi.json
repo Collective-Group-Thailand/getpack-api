@@ -3158,6 +3158,17 @@
           "type": "https://errors.packio/specs.unit_not_accepted"
         }
       },
+      "problem.styles.capability_decided": {
+        "summary": "styles.capability_decided",
+        "value": {
+          "code": "styles.capability_decided",
+          "detail": "ความสามารถการผลิตรายการนี้ได้รับการพิจารณาแล้ว",
+          "requestId": "6f1c2d8e-2c7b-4d0e-9d1c-3f1a2b3c4d5e",
+          "status": 409,
+          "title": "พิจารณาแล้ว",
+          "type": "https://errors.packio/styles.capability_decided"
+        }
+      },
       "problem.styles.maker_checker": {
         "summary": "styles.maker_checker",
         "value": {
@@ -3200,6 +3211,17 @@
           "status": 403,
           "title": "ต้องมีบทบาทที่กำหนด",
           "type": "https://errors.packio/styles.role_required"
+        }
+      },
+      "problem.styles.site_visit_not_passed": {
+        "summary": "styles.site_visit_not_passed",
+        "value": {
+          "code": "styles.site_visit_not_passed",
+          "detail": "ยืนยันความสามารถการผลิตได้เฉพาะกับผลการตรวจโรงงานที่ผ่านเท่านั้น",
+          "requestId": "6f1c2d8e-2c7b-4d0e-9d1c-3f1a2b3c4d5e",
+          "status": 409,
+          "title": "การตรวจโรงงานไม่ผ่าน",
+          "type": "https://errors.packio/styles.site_visit_not_passed"
         }
       },
       "problem.styles.variant_not_found": {
@@ -16142,6 +16164,53 @@
         ],
         "type": "object"
       },
+      "CategoryCoverageDto": {
+        "properties": {
+          "bases": {
+            "example": 40,
+            "type": "integer"
+          },
+          "category": {
+            "example": "folding_carton",
+            "type": "string"
+          },
+          "makeable": {
+            "description": "At least one active partner can make it",
+            "example": 300,
+            "type": "integer"
+          },
+          "notMakeable": {
+            "description": "No active partner can make it yet (recruitment targets)",
+            "example": 225,
+            "type": "integer"
+          },
+          "publishable": {
+            "example": 120,
+            "type": "integer"
+          },
+          "reasons": {
+            "items": {
+              "$ref": "#/components/schemas/StyleReasonCountDto"
+            },
+            "type": "array"
+          },
+          "variants": {
+            "description": "Active variants",
+            "example": 525,
+            "type": "integer"
+          }
+        },
+        "required": [
+          "category",
+          "bases",
+          "variants",
+          "publishable",
+          "makeable",
+          "notMakeable",
+          "reasons"
+        ],
+        "type": "object"
+      },
       "ChangeCustomerDto": {
         "properties": {
           "customerId": {
@@ -24775,6 +24844,35 @@
         ],
         "type": "object"
       },
+      "CreateStyleProcessRuleDto": {
+        "properties": {
+          "processCode": {
+            "example": "folder_gluer_crash_lock",
+            "maxLength": 64,
+            "type": "string"
+          },
+          "scope": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/StyleProcessScope"
+              }
+            ],
+            "example": "option"
+          },
+          "scopeValue": {
+            "example": "tuck_bottom:crash_lock",
+            "maxLength": 128,
+            "pattern": "^[a-z][a-z0-9_]*(:[a-z0-9][a-z0-9_]*)?$",
+            "type": "string"
+          }
+        },
+        "required": [
+          "scope",
+          "scopeValue",
+          "processCode"
+        ],
+        "type": "object"
+      },
       "CreateSubPatternDto": {
         "properties": {
           "conditions": {
@@ -26848,6 +26946,18 @@
           "cs_on_behalf"
         ],
         "type": "string"
+      },
+      "DecisionNoteDto": {
+        "properties": {
+          "note": {
+            "example": "ไม่พบเครื่องจักรตามที่แจ้งระหว่างการตรวจโรงงาน",
+            "type": "string"
+          }
+        },
+        "required": [
+          "note"
+        ],
+        "type": "object"
       },
       "DeclineConsultationDto": {
         "properties": {
@@ -46152,6 +46262,214 @@
         ],
         "type": "object"
       },
+      "ProcessCapabilityDto": {
+        "properties": {
+          "decidedAt": {
+            "example": "2026-10-03T10:00:00+07:00",
+            "format": "date-time",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "decisionNote": {
+            "example": null,
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "factory": {
+            "$ref": "#/components/schemas/CodedRefDto"
+          },
+          "id": {
+            "example": "0192f3a0-7c1e-7d2a-9b1f-0000000ae101",
+            "format": "uuid",
+            "type": "string"
+          },
+          "leadTimeMaxDays": {
+            "example": 12,
+            "type": "integer"
+          },
+          "leadTimeMinDays": {
+            "example": 7,
+            "type": "integer"
+          },
+          "materialClass": {
+            "description": "The style material class it covers",
+            "example": "paperboard",
+            "type": "string"
+          },
+          "maxBlankLMm": {
+            "description": "Unit: mm.",
+            "example": 1020,
+            "type": [
+              "number",
+              "null"
+            ]
+          },
+          "maxBlankWMm": {
+            "description": "Unit: mm.",
+            "example": 720,
+            "type": [
+              "number",
+              "null"
+            ]
+          },
+          "maxCaliperMm": {
+            "description": "Unit: mm.",
+            "example": 0.8,
+            "type": [
+              "number",
+              "null"
+            ]
+          },
+          "minBlankLMm": {
+            "description": "Unit: mm.",
+            "example": 100,
+            "type": [
+              "number",
+              "null"
+            ]
+          },
+          "minBlankWMm": {
+            "description": "Unit: mm.",
+            "example": 100,
+            "type": [
+              "number",
+              "null"
+            ]
+          },
+          "minRun": {
+            "example": 1000,
+            "type": [
+              "integer",
+              "null"
+            ]
+          },
+          "note": {
+            "example": null,
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "process": {
+            "$ref": "#/components/schemas/CodeNameRefDto"
+          },
+          "proposedAt": {
+            "example": "2026-10-03T10:00:00+07:00",
+            "format": "date-time",
+            "type": "string"
+          },
+          "proposedById": {
+            "example": "0192f3a0-7c1e-7d2a-9b1f-0000000ae103",
+            "format": "uuid",
+            "type": "string"
+          },
+          "siteVisitId": {
+            "description": "The passing site visit (D-041)",
+            "example": "0192f3a0-7c1e-7d2a-9b1f-0000000ae104",
+            "format": "uuid",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "status": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ProcessCapabilityStatus"
+              }
+            ],
+            "example": "verified"
+          },
+          "verifiedAt": {
+            "example": "2026-10-03T10:00:00+07:00",
+            "format": "date-time",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "verifiedById": {
+            "example": "0192f3a0-7c1e-7d2a-9b1f-0000000ae103",
+            "format": "uuid",
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "id",
+          "factory",
+          "process",
+          "materialClass",
+          "minBlankWMm",
+          "minBlankLMm",
+          "maxBlankWMm",
+          "maxBlankLMm",
+          "maxCaliperMm",
+          "minRun",
+          "leadTimeMinDays",
+          "leadTimeMaxDays",
+          "status",
+          "note",
+          "proposedAt",
+          "proposedById",
+          "verifiedAt",
+          "verifiedById",
+          "siteVisitId",
+          "decisionNote",
+          "decidedAt"
+        ],
+        "type": "object"
+      },
+      "ProcessCapabilityStatus": {
+        "enum": [
+          "proposed",
+          "verified",
+          "rejected",
+          "withdrawn",
+          "superseded"
+        ],
+        "type": "string"
+      },
+      "ProcessCoverageDto": {
+        "properties": {
+          "code": {
+            "example": "folder_gluer_crash_lock",
+            "type": "string"
+          },
+          "factories": {
+            "description": "Active factories with a verified capability (staff only)",
+            "example": 1,
+            "type": "integer"
+          },
+          "nameEn": {
+            "example": "Folder-gluer (crash-lock)",
+            "type": "string"
+          },
+          "nameTh": {
+            "example": "เครื่องพับทากาว (ก้นล็อก)",
+            "type": "string"
+          },
+          "variantsNeeding": {
+            "description": "Active variants that need it",
+            "example": 60,
+            "type": "integer"
+          }
+        },
+        "required": [
+          "code",
+          "nameTh",
+          "nameEn",
+          "variantsNeeding",
+          "factories"
+        ],
+        "type": "object"
+      },
       "ProductAvailability": {
         "description": "instant: priced online · partial: priced online inside `envelope`, RFQ outside it · rfq",
         "enum": [
@@ -47748,6 +48066,89 @@
           "effectiveFrom",
           "reason",
           "steps"
+        ],
+        "type": "object"
+      },
+      "ProposeProcessCapabilityDto": {
+        "properties": {
+          "leadTimeMaxDays": {
+            "description": "Lead time band, to (days)",
+            "example": 12,
+            "maximum": 365,
+            "minimum": 0,
+            "type": "integer"
+          },
+          "leadTimeMinDays": {
+            "description": "Lead time band, from (days)",
+            "example": 7,
+            "maximum": 365,
+            "minimum": 0,
+            "type": "integer"
+          },
+          "materialClass": {
+            "description": "A style material class (as in the style library)",
+            "example": "paperboard",
+            "maxLength": 64,
+            "type": "string"
+          },
+          "maxBlankLMm": {
+            "description": "Maximum blank length Unit: mm.",
+            "example": 1020,
+            "maximum": 10000,
+            "minimum": 0,
+            "type": "number"
+          },
+          "maxBlankWMm": {
+            "description": "Maximum blank width Unit: mm.",
+            "example": 720,
+            "maximum": 10000,
+            "minimum": 0,
+            "type": "number"
+          },
+          "maxCaliperMm": {
+            "description": "Maximum caliper Unit: mm.",
+            "example": 0.8,
+            "maximum": 50,
+            "minimum": 0,
+            "type": "number"
+          },
+          "minBlankLMm": {
+            "description": "Minimum blank length Unit: mm.",
+            "example": 100,
+            "maximum": 10000,
+            "minimum": 0,
+            "type": "number"
+          },
+          "minBlankWMm": {
+            "description": "Minimum blank width Unit: mm.",
+            "example": 100,
+            "maximum": 10000,
+            "minimum": 0,
+            "type": "number"
+          },
+          "minRun": {
+            "description": "Minimum run (pieces)",
+            "example": 1000,
+            "maximum": 10000000,
+            "minimum": 1,
+            "type": "integer"
+          },
+          "note": {
+            "example": "เครื่อง Bobst 102 ใหม่",
+            "type": "string"
+          },
+          "processCode": {
+            "description": "A process type code",
+            "example": "folder_gluer_crash_lock",
+            "maxLength": 64,
+            "type": "string"
+          }
+        },
+        "required": [
+          "processCode",
+          "materialClass",
+          "leadTimeMinDays",
+          "leadTimeMaxDays"
         ],
         "type": "object"
       },
@@ -63286,6 +63687,34 @@
         ],
         "type": "object"
       },
+      "StyleCoverageDto": {
+        "properties": {
+          "categories": {
+            "items": {
+              "$ref": "#/components/schemas/CategoryCoverageDto"
+            },
+            "type": "array"
+          },
+          "generatedAt": {
+            "example": "2026-10-03T10:00:00+07:00",
+            "format": "date-time",
+            "type": "string"
+          },
+          "processes": {
+            "description": "Uncovered processes first",
+            "items": {
+              "$ref": "#/components/schemas/ProcessCoverageDto"
+            },
+            "type": "array"
+          }
+        },
+        "required": [
+          "categories",
+          "processes",
+          "generatedAt"
+        ],
+        "type": "object"
+      },
       "StyleDetailDto": {
         "properties": {
           "assets": {
@@ -63747,6 +64176,53 @@
           "computedAt"
         ],
         "type": "object"
+      },
+      "StyleProcessRuleDto": {
+        "properties": {
+          "createdAt": {
+            "example": "2026-10-03T10:00:00+07:00",
+            "format": "date-time",
+            "type": "string"
+          },
+          "id": {
+            "example": "0192f3a0-7c1e-7d2a-9b1f-0000000ae105",
+            "format": "uuid",
+            "type": "string"
+          },
+          "process": {
+            "$ref": "#/components/schemas/CodeNameRefDto"
+          },
+          "scope": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/StyleProcessScope"
+              }
+            ],
+            "example": "option"
+          },
+          "scopeValue": {
+            "description": "Product type, category, family, or `axis:value`",
+            "example": "tuck_bottom:crash_lock",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "scope",
+          "scopeValue",
+          "process",
+          "createdAt"
+        ],
+        "type": "object"
+      },
+      "StyleProcessScope": {
+        "enum": [
+          "source_product_type",
+          "category",
+          "family",
+          "option"
+        ],
+        "type": "string"
       },
       "StylePublishReason": {
         "enum": [
@@ -70395,6 +70871,20 @@
           "outcome",
           "calledAt",
           "calledNumberMasked"
+        ],
+        "type": "object"
+      },
+      "VerifyProcessCapabilityDto": {
+        "properties": {
+          "siteVisitId": {
+            "description": "A passing site visit of the same factory (D-041)",
+            "example": "0192f3a0-7c1e-7d2a-9b1f-0000000ae104",
+            "format": "uuid",
+            "type": "string"
+          }
+        },
+        "required": [
+          "siteVisitId"
         ],
         "type": "object"
       },
@@ -177566,6 +178056,1342 @@
         ]
       }
     },
+    "/v1/admin/factories/{factoryId}/process-capabilities": {
+      "get": {
+        "description": "Per process × material class: blank sizes, caliper, minimum run, lead-time band and status — only `verified` rows count for what the factory can make (D-244). Staff with `partners.manage` propose for the factory (assisted onboarding) and decide.\n\nImplements: D-244, D-041, D-243.",
+        "operationId": "admin.factories.listProcessCapabilities",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "factoryId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "status",
+            "required": false,
+            "schema": {
+              "$ref": "#/components/schemas/ProcessCapabilityStatus"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "example": [
+                  {
+                    "decidedAt": "2026-10-03T10:00:00+07:00",
+                    "decisionNote": null,
+                    "factory": {
+                      "code": "F0001",
+                      "id": "0192f3a0-7c1e-7d2a-9b1f-0000000ae102",
+                      "name": "โรงงานตัวอย่าง จำกัด"
+                    },
+                    "id": "0192f3a0-7c1e-7d2a-9b1f-0000000ae101",
+                    "leadTimeMaxDays": 12,
+                    "leadTimeMinDays": 7,
+                    "materialClass": "paperboard",
+                    "maxBlankLMm": 1020,
+                    "maxBlankWMm": 720,
+                    "maxCaliperMm": 0.8,
+                    "minBlankLMm": 100,
+                    "minBlankWMm": 100,
+                    "minRun": 1000,
+                    "note": null,
+                    "process": {
+                      "code": "folder_gluer_crash_lock",
+                      "id": "0192f3a0-7c1e-7d2a-9b1f-0000000ae106",
+                      "nameEn": "Folder-gluer (crash-lock)",
+                      "nameTh": "เครื่องพับทากาว (ก้นล็อก)"
+                    },
+                    "proposedAt": "2026-10-03T10:00:00+07:00",
+                    "proposedById": "0192f3a0-7c1e-7d2a-9b1f-0000000ae103",
+                    "siteVisitId": "0192f3a0-7c1e-7d2a-9b1f-0000000ae104",
+                    "status": "verified",
+                    "verifiedAt": "2026-10-03T10:00:00+07:00",
+                    "verifiedById": "0192f3a0-7c1e-7d2a-9b1f-0000000ae103"
+                  }
+                ],
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/ProcessCapabilityDto"
+                  },
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Capabilities",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.unauthenticated": {
+                    "$ref": "#/components/examples/problem.auth.unauthenticated"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.unauthenticated`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.forbidden": {
+                    "$ref": "#/components/examples/problem.auth.forbidden"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.forbidden`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "404": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.not_found": {
+                    "$ref": "#/components/examples/problem.http.not_found"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.not_found`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "validation.failed": {
+                    "$ref": "#/components/examples/problem.validation.failed"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `validation.failed`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "staff": []
+          }
+        ],
+        "summary": "List the process capabilities of a factory",
+        "tags": [
+          "admin.factories"
+        ],
+        "x-required-permissions": [
+          "partners.read"
+        ]
+      },
+      "post": {
+        "description": "A new capability starts `proposed`; it counts only once the Partner Manager verifies it against a passing site visit (D-244, D-041). A change to a verified capability is a new proposal. Staff with `partners.manage` propose for the factory (assisted onboarding) and decide.\n\nImplements: D-244, D-041, D-243.",
+        "operationId": "admin.factories.proposeProcessCapability",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "factoryId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "examples": {
+                "default": {
+                  "value": {
+                    "leadTimeMaxDays": 12,
+                    "leadTimeMinDays": 7,
+                    "materialClass": "paperboard",
+                    "maxBlankLMm": 1020,
+                    "maxBlankWMm": 720,
+                    "maxCaliperMm": 0.8,
+                    "minRun": 1000,
+                    "processCode": "folder_gluer_crash_lock"
+                  }
+                }
+              },
+              "schema": {
+                "$ref": "#/components/schemas/ProposeProcessCapabilityDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "decidedAt": null,
+                  "decisionNote": null,
+                  "factory": {
+                    "code": "F0001",
+                    "id": "0192f3a0-7c1e-7d2a-9b1f-0000000ae102",
+                    "name": "โรงงานตัวอย่าง จำกัด"
+                  },
+                  "id": "0192f3a0-7c1e-7d2a-9b1f-0000000ae101",
+                  "leadTimeMaxDays": 12,
+                  "leadTimeMinDays": 7,
+                  "materialClass": "paperboard",
+                  "maxBlankLMm": 1020,
+                  "maxBlankWMm": 720,
+                  "maxCaliperMm": 0.8,
+                  "minBlankLMm": 100,
+                  "minBlankWMm": 100,
+                  "minRun": 1000,
+                  "note": null,
+                  "process": {
+                    "code": "folder_gluer_crash_lock",
+                    "id": "0192f3a0-7c1e-7d2a-9b1f-0000000ae106",
+                    "nameEn": "Folder-gluer (crash-lock)",
+                    "nameTh": "เครื่องพับทากาว (ก้นล็อก)"
+                  },
+                  "proposedAt": "2026-10-03T10:00:00+07:00",
+                  "proposedById": "0192f3a0-7c1e-7d2a-9b1f-0000000ae103",
+                  "siteVisitId": null,
+                  "status": "proposed",
+                  "verifiedAt": null,
+                  "verifiedById": null
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProcessCapabilityDto"
+                }
+              }
+            },
+            "description": "Proposed",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "400": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.bad_request": {
+                    "$ref": "#/components/examples/problem.http.bad_request"
+                  },
+                  "http.malformed_json": {
+                    "$ref": "#/components/examples/problem.http.malformed_json"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.bad_request`, `http.malformed_json`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.unauthenticated": {
+                    "$ref": "#/components/examples/problem.auth.unauthenticated"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.unauthenticated`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.forbidden": {
+                    "$ref": "#/components/examples/problem.auth.forbidden"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.forbidden`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "404": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.not_found": {
+                    "$ref": "#/components/examples/problem.http.not_found"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.not_found`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "validation.failed": {
+                    "$ref": "#/components/examples/problem.validation.failed"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `validation.failed`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "staff": []
+          }
+        ],
+        "summary": "Propose a process capability",
+        "tags": [
+          "admin.factories"
+        ],
+        "x-required-permissions": [
+          "partners.manage"
+        ]
+      }
+    },
+    "/v1/admin/factories/{factoryId}/process-capabilities/{capabilityId}/actions/reject": {
+      "post": {
+        "description": "A proposed capability is rejected with a reason the factory sees (D-244). Final.\n\nImplements: D-244, D-041, D-243.",
+        "operationId": "admin.factories.rejectProcessCapability",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "factoryId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "capabilityId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "examples": {
+                "default": {
+                  "value": {
+                    "note": "ไม่พบเครื่องจักรตามที่แจ้งระหว่างการตรวจโรงงาน"
+                  }
+                }
+              },
+              "schema": {
+                "$ref": "#/components/schemas/DecisionNoteDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "decidedAt": "2026-10-03T10:00:00+07:00",
+                  "decisionNote": null,
+                  "factory": {
+                    "code": "F0001",
+                    "id": "0192f3a0-7c1e-7d2a-9b1f-0000000ae102",
+                    "name": "โรงงานตัวอย่าง จำกัด"
+                  },
+                  "id": "0192f3a0-7c1e-7d2a-9b1f-0000000ae101",
+                  "leadTimeMaxDays": 12,
+                  "leadTimeMinDays": 7,
+                  "materialClass": "paperboard",
+                  "maxBlankLMm": 1020,
+                  "maxBlankWMm": 720,
+                  "maxCaliperMm": 0.8,
+                  "minBlankLMm": 100,
+                  "minBlankWMm": 100,
+                  "minRun": 1000,
+                  "note": null,
+                  "process": {
+                    "code": "folder_gluer_crash_lock",
+                    "id": "0192f3a0-7c1e-7d2a-9b1f-0000000ae106",
+                    "nameEn": "Folder-gluer (crash-lock)",
+                    "nameTh": "เครื่องพับทากาว (ก้นล็อก)"
+                  },
+                  "proposedAt": "2026-10-03T10:00:00+07:00",
+                  "proposedById": "0192f3a0-7c1e-7d2a-9b1f-0000000ae103",
+                  "siteVisitId": "0192f3a0-7c1e-7d2a-9b1f-0000000ae104",
+                  "status": "rejected",
+                  "verifiedAt": "2026-10-03T10:00:00+07:00",
+                  "verifiedById": "0192f3a0-7c1e-7d2a-9b1f-0000000ae103"
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProcessCapabilityDto"
+                }
+              }
+            },
+            "description": "Rejected",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "400": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.bad_request": {
+                    "$ref": "#/components/examples/problem.http.bad_request"
+                  },
+                  "http.malformed_json": {
+                    "$ref": "#/components/examples/problem.http.malformed_json"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.bad_request`, `http.malformed_json`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.unauthenticated": {
+                    "$ref": "#/components/examples/problem.auth.unauthenticated"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.unauthenticated`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.forbidden": {
+                    "$ref": "#/components/examples/problem.auth.forbidden"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.forbidden`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "404": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.not_found": {
+                    "$ref": "#/components/examples/problem.http.not_found"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.not_found`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "409": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "styles.capability_decided": {
+                    "$ref": "#/components/examples/problem.styles.capability_decided"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `styles.capability_decided`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "validation.failed": {
+                    "$ref": "#/components/examples/problem.validation.failed"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `validation.failed`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "staff": []
+          }
+        ],
+        "summary": "Reject a process capability",
+        "tags": [
+          "admin.factories"
+        ],
+        "x-required-permissions": [
+          "partners.manage"
+        ]
+      }
+    },
+    "/v1/admin/factories/{factoryId}/process-capabilities/{capabilityId}/actions/verify": {
+      "post": {
+        "description": "The Partner Manager verifies a proposed capability against a **passing** site visit of the same factory (D-244, D-041) — not the person who proposed it. It replaces the earlier verified row for the same process × material class, and publishability is recomputed (D-243). Audited.\n\nImplements: D-244, D-041, D-243.",
+        "operationId": "admin.factories.verifyProcessCapability",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "factoryId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "capabilityId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "examples": {
+                "default": {
+                  "value": {
+                    "siteVisitId": "0192f3a0-7c1e-7d2a-9b1f-0000000ae104"
+                  }
+                }
+              },
+              "schema": {
+                "$ref": "#/components/schemas/VerifyProcessCapabilityDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "decidedAt": "2026-10-03T10:00:00+07:00",
+                  "decisionNote": null,
+                  "factory": {
+                    "code": "F0001",
+                    "id": "0192f3a0-7c1e-7d2a-9b1f-0000000ae102",
+                    "name": "โรงงานตัวอย่าง จำกัด"
+                  },
+                  "id": "0192f3a0-7c1e-7d2a-9b1f-0000000ae101",
+                  "leadTimeMaxDays": 12,
+                  "leadTimeMinDays": 7,
+                  "materialClass": "paperboard",
+                  "maxBlankLMm": 1020,
+                  "maxBlankWMm": 720,
+                  "maxCaliperMm": 0.8,
+                  "minBlankLMm": 100,
+                  "minBlankWMm": 100,
+                  "minRun": 1000,
+                  "note": null,
+                  "process": {
+                    "code": "folder_gluer_crash_lock",
+                    "id": "0192f3a0-7c1e-7d2a-9b1f-0000000ae106",
+                    "nameEn": "Folder-gluer (crash-lock)",
+                    "nameTh": "เครื่องพับทากาว (ก้นล็อก)"
+                  },
+                  "proposedAt": "2026-10-03T10:00:00+07:00",
+                  "proposedById": "0192f3a0-7c1e-7d2a-9b1f-0000000ae103",
+                  "siteVisitId": "0192f3a0-7c1e-7d2a-9b1f-0000000ae104",
+                  "status": "verified",
+                  "verifiedAt": "2026-10-03T10:00:00+07:00",
+                  "verifiedById": "0192f3a0-7c1e-7d2a-9b1f-0000000ae103"
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProcessCapabilityDto"
+                }
+              }
+            },
+            "description": "Verified",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "400": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.bad_request": {
+                    "$ref": "#/components/examples/problem.http.bad_request"
+                  },
+                  "http.malformed_json": {
+                    "$ref": "#/components/examples/problem.http.malformed_json"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.bad_request`, `http.malformed_json`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.unauthenticated": {
+                    "$ref": "#/components/examples/problem.auth.unauthenticated"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.unauthenticated`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.forbidden": {
+                    "$ref": "#/components/examples/problem.auth.forbidden"
+                  },
+                  "partners.maker_checker": {
+                    "$ref": "#/components/examples/problem.partners.maker_checker"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.forbidden`, `partners.maker_checker`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "404": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.not_found": {
+                    "$ref": "#/components/examples/problem.http.not_found"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.not_found`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "409": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "styles.capability_decided": {
+                    "$ref": "#/components/examples/problem.styles.capability_decided"
+                  },
+                  "styles.site_visit_not_passed": {
+                    "$ref": "#/components/examples/problem.styles.site_visit_not_passed"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `styles.capability_decided`, `styles.site_visit_not_passed`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "validation.failed": {
+                    "$ref": "#/components/examples/problem.validation.failed"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `validation.failed`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "staff": []
+          }
+        ],
+        "summary": "Verify a process capability",
+        "tags": [
+          "admin.factories"
+        ],
+        "x-required-permissions": [
+          "partners.manage"
+        ]
+      }
+    },
+    "/v1/admin/factories/{factoryId}/process-capabilities/{capabilityId}/actions/withdraw": {
+      "post": {
+        "description": "A proposed or verified capability is withdrawn (e.g. the machine is gone); a verified one stops counting at once and publishability is recomputed (D-243). Staff with `partners.manage` propose for the factory (assisted onboarding) and decide.\n\nImplements: D-244, D-041, D-243.",
+        "operationId": "admin.factories.withdrawProcessCapability",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "factoryId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "capabilityId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "examples": {
+                "default": {
+                  "value": {
+                    "note": "เครื่องจักรขายออกไปแล้ว"
+                  }
+                }
+              },
+              "schema": {
+                "$ref": "#/components/schemas/OptionalNoteDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "decidedAt": "2026-10-03T10:00:00+07:00",
+                  "decisionNote": null,
+                  "factory": {
+                    "code": "F0001",
+                    "id": "0192f3a0-7c1e-7d2a-9b1f-0000000ae102",
+                    "name": "โรงงานตัวอย่าง จำกัด"
+                  },
+                  "id": "0192f3a0-7c1e-7d2a-9b1f-0000000ae101",
+                  "leadTimeMaxDays": 12,
+                  "leadTimeMinDays": 7,
+                  "materialClass": "paperboard",
+                  "maxBlankLMm": 1020,
+                  "maxBlankWMm": 720,
+                  "maxCaliperMm": 0.8,
+                  "minBlankLMm": 100,
+                  "minBlankWMm": 100,
+                  "minRun": 1000,
+                  "note": null,
+                  "process": {
+                    "code": "folder_gluer_crash_lock",
+                    "id": "0192f3a0-7c1e-7d2a-9b1f-0000000ae106",
+                    "nameEn": "Folder-gluer (crash-lock)",
+                    "nameTh": "เครื่องพับทากาว (ก้นล็อก)"
+                  },
+                  "proposedAt": "2026-10-03T10:00:00+07:00",
+                  "proposedById": "0192f3a0-7c1e-7d2a-9b1f-0000000ae103",
+                  "siteVisitId": "0192f3a0-7c1e-7d2a-9b1f-0000000ae104",
+                  "status": "withdrawn",
+                  "verifiedAt": "2026-10-03T10:00:00+07:00",
+                  "verifiedById": "0192f3a0-7c1e-7d2a-9b1f-0000000ae103"
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProcessCapabilityDto"
+                }
+              }
+            },
+            "description": "Withdrawn",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "400": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.bad_request": {
+                    "$ref": "#/components/examples/problem.http.bad_request"
+                  },
+                  "http.malformed_json": {
+                    "$ref": "#/components/examples/problem.http.malformed_json"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.bad_request`, `http.malformed_json`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.unauthenticated": {
+                    "$ref": "#/components/examples/problem.auth.unauthenticated"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.unauthenticated`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.forbidden": {
+                    "$ref": "#/components/examples/problem.auth.forbidden"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.forbidden`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "404": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.not_found": {
+                    "$ref": "#/components/examples/problem.http.not_found"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.not_found`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "409": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "styles.capability_decided": {
+                    "$ref": "#/components/examples/problem.styles.capability_decided"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `styles.capability_decided`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "validation.failed": {
+                    "$ref": "#/components/examples/problem.validation.failed"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `validation.failed`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "staff": []
+          }
+        ],
+        "summary": "Withdraw a process capability",
+        "tags": [
+          "admin.factories"
+        ],
+        "x-required-permissions": [
+          "partners.manage"
+        ]
+      }
+    },
     "/v1/admin/factories/{factoryId}/scorecards": {
       "get": {
         "description": "Latest 12 months (D-155).\n\nImplements: D-155.",
@@ -221316,6 +223142,169 @@
         ]
       }
     },
+    "/v1/admin/process-types": {
+      "get": {
+        "description": "The process taxonomy factory capabilities and style process rules use (D-244).\n\nImplements: D-244.",
+        "operationId": "admin.processTypes.list",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "example": [
+                  {
+                    "code": "folder_gluer_crash_lock",
+                    "id": "0192f3a0-7c1e-7d2a-9b1f-0000000ae106",
+                    "nameEn": "Folder-gluer (crash-lock)",
+                    "nameTh": "เครื่องพับทากาว (ก้นล็อก)"
+                  }
+                ],
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/CodeNameRefDto"
+                  },
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Processes",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.unauthenticated": {
+                    "$ref": "#/components/examples/problem.auth.unauthenticated"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.unauthenticated`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.forbidden": {
+                    "$ref": "#/components/examples/problem.auth.forbidden"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.forbidden`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "validation.failed": {
+                    "$ref": "#/components/examples/problem.validation.failed"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `validation.failed`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "staff": []
+          }
+        ],
+        "summary": "List the manufacturing processes",
+        "tags": [
+          "admin.processTypes"
+        ],
+        "x-required-permissions": [
+          "partners.read"
+        ]
+      }
+    },
     "/v1/admin/production-board": {
       "get": {
         "description": "Open jobs grouped by the step they are at (released, not accepted yet: `awaiting_acceptance`) with totals and the ones predicted to miss the promised date (D-074, D-075); filter by factory and product type. The jobs of a column: `admin.production.list`.\n\nImplements: D-074, D-075.",
@@ -256561,6 +258550,190 @@
         ]
       }
     },
+    "/v1/admin/style-coverage": {
+      "get": {
+        "description": "Per category: bases, active variants, publishable, makeable and not yet makeable (recruitment targets) with the reasons; per process: variants needing it and active factories holding it, uncovered first (D-243, D-244).\n\nImplements: D-243, D-244, D-102.",
+        "operationId": "admin.styleCoverage.get",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "categories": [
+                    {
+                      "bases": 40,
+                      "category": "folding_carton",
+                      "makeable": 300,
+                      "notMakeable": 225,
+                      "publishable": 0,
+                      "reasons": [
+                        {
+                          "count": 525,
+                          "reason": "no_recipe"
+                        },
+                        {
+                          "count": 225,
+                          "reason": "not_makeable"
+                        }
+                      ],
+                      "variants": 525
+                    }
+                  ],
+                  "generatedAt": "2026-10-03T10:00:00+07:00",
+                  "processes": [
+                    {
+                      "code": "window_patching",
+                      "factories": 0,
+                      "nameEn": "Window patching",
+                      "nameTh": "ติดหน้าต่างฟิล์ม",
+                      "variantsNeeding": 140
+                    }
+                  ]
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/StyleCoverageDto"
+                }
+              }
+            },
+            "description": "Coverage",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.unauthenticated": {
+                    "$ref": "#/components/examples/problem.auth.unauthenticated"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.unauthenticated`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.forbidden": {
+                    "$ref": "#/components/examples/problem.auth.forbidden"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.forbidden`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "validation.failed": {
+                    "$ref": "#/components/examples/problem.validation.failed"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `validation.failed`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "staff": []
+          }
+        ],
+        "summary": "Style-library coverage",
+        "tags": [
+          "admin.styleCoverage"
+        ],
+        "x-required-permissions": [
+          "styles.read"
+        ]
+      }
+    },
     "/v1/admin/style-imports": {
       "get": {
         "description": "Every confirmed `pnpm styles:import` run (D-242), newest first: kind, file, checksum, status (applied, held for the `style_library_change` approval, rejected) and its diff.\n\nImplements: D-242.",
@@ -256999,6 +259172,573 @@
         ],
         "x-required-permissions": [
           "styles.read"
+        ]
+      }
+    },
+    "/v1/admin/style-process-rules": {
+      "get": {
+        "description": "Which processes a style needs when its recipe declares none — by master product type, category, family or option value (D-244); seeded as a proposal Prepress confirms.\n\nImplements: D-244.",
+        "operationId": "admin.styleProcessRules.list",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "example": [
+                  {
+                    "createdAt": "2026-10-03T10:00:00+07:00",
+                    "id": "0192f3a0-7c1e-7d2a-9b1f-0000000ae105",
+                    "process": {
+                      "code": "folder_gluer_crash_lock",
+                      "id": "0192f3a0-7c1e-7d2a-9b1f-0000000ae106",
+                      "nameEn": "Folder-gluer (crash-lock)",
+                      "nameTh": "เครื่องพับทากาว (ก้นล็อก)"
+                    },
+                    "scope": "option",
+                    "scopeValue": "tuck_bottom:crash_lock"
+                  }
+                ],
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/StyleProcessRuleDto"
+                  },
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Rules",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.unauthenticated": {
+                    "$ref": "#/components/examples/problem.auth.unauthenticated"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.unauthenticated`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.forbidden": {
+                    "$ref": "#/components/examples/problem.auth.forbidden"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.forbidden`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "validation.failed": {
+                    "$ref": "#/components/examples/problem.validation.failed"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `validation.failed`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "staff": []
+          }
+        ],
+        "summary": "List the style process rules",
+        "tags": [
+          "admin.styleProcessRules"
+        ],
+        "x-required-permissions": [
+          "styles.read"
+        ]
+      },
+      "post": {
+        "description": "Prepress adds a rule (D-244); publishability is recomputed. Audited.\n\nImplements: D-244.",
+        "operationId": "admin.styleProcessRules.create",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "examples": {
+                "default": {
+                  "value": {
+                    "processCode": "folder_gluer_crash_lock",
+                    "scope": "option",
+                    "scopeValue": "tuck_bottom:crash_lock"
+                  }
+                }
+              },
+              "schema": {
+                "$ref": "#/components/schemas/CreateStyleProcessRuleDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "createdAt": "2026-10-03T10:00:00+07:00",
+                  "id": "0192f3a0-7c1e-7d2a-9b1f-0000000ae105",
+                  "process": {
+                    "code": "folder_gluer_crash_lock",
+                    "id": "0192f3a0-7c1e-7d2a-9b1f-0000000ae106",
+                    "nameEn": "Folder-gluer (crash-lock)",
+                    "nameTh": "เครื่องพับทากาว (ก้นล็อก)"
+                  },
+                  "scope": "option",
+                  "scopeValue": "tuck_bottom:crash_lock"
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/StyleProcessRuleDto"
+                }
+              }
+            },
+            "description": "Added",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "400": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.bad_request": {
+                    "$ref": "#/components/examples/problem.http.bad_request"
+                  },
+                  "http.malformed_json": {
+                    "$ref": "#/components/examples/problem.http.malformed_json"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.bad_request`, `http.malformed_json`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.unauthenticated": {
+                    "$ref": "#/components/examples/problem.auth.unauthenticated"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.unauthenticated`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.forbidden": {
+                    "$ref": "#/components/examples/problem.auth.forbidden"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.forbidden`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "409": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.conflict": {
+                    "$ref": "#/components/examples/problem.http.conflict"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.conflict`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "validation.failed": {
+                    "$ref": "#/components/examples/problem.validation.failed"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `validation.failed`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "staff": []
+          }
+        ],
+        "summary": "Add a style process rule",
+        "tags": [
+          "admin.styleProcessRules"
+        ],
+        "x-required-permissions": [
+          "styles.process_rules"
+        ]
+      }
+    },
+    "/v1/admin/style-process-rules/{ruleId}": {
+      "delete": {
+        "description": "Prepress removes a rule (D-244); publishability is recomputed. Audited.\n\nImplements: D-244.",
+        "operationId": "admin.styleProcessRules.remove",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "ruleId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Removed",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.unauthenticated": {
+                    "$ref": "#/components/examples/problem.auth.unauthenticated"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.unauthenticated`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.forbidden": {
+                    "$ref": "#/components/examples/problem.auth.forbidden"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.forbidden`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "404": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.not_found": {
+                    "$ref": "#/components/examples/problem.http.not_found"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.not_found`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "validation.failed": {
+                    "$ref": "#/components/examples/problem.validation.failed"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `validation.failed`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "staff": []
+          }
+        ],
+        "summary": "Remove a style process rule",
+        "tags": [
+          "admin.styleProcessRules"
+        ],
+        "x-required-permissions": [
+          "styles.process_rules"
         ]
       }
     },
@@ -283909,6 +286649,772 @@
         ]
       }
     },
+    "/v1/partner/factories/{factoryId}/process-capabilities": {
+      "get": {
+        "description": "Per process × material class: blank sizes, caliper, minimum run, lead-time band and status — only `verified` rows count for what the factory can make (D-244). Own factory only (D-044); proposed by the Owner or Planner.\n\nImplements: D-244, D-041, D-243.",
+        "operationId": "partner.factories.listProcessCapabilities",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "factoryId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "status",
+            "required": false,
+            "schema": {
+              "$ref": "#/components/schemas/ProcessCapabilityStatus"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "example": [
+                  {
+                    "decidedAt": "2026-10-03T10:00:00+07:00",
+                    "decisionNote": null,
+                    "factory": {
+                      "code": "F0001",
+                      "id": "0192f3a0-7c1e-7d2a-9b1f-0000000ae102",
+                      "name": "โรงงานตัวอย่าง จำกัด"
+                    },
+                    "id": "0192f3a0-7c1e-7d2a-9b1f-0000000ae101",
+                    "leadTimeMaxDays": 12,
+                    "leadTimeMinDays": 7,
+                    "materialClass": "paperboard",
+                    "maxBlankLMm": 1020,
+                    "maxBlankWMm": 720,
+                    "maxCaliperMm": 0.8,
+                    "minBlankLMm": 100,
+                    "minBlankWMm": 100,
+                    "minRun": 1000,
+                    "note": null,
+                    "process": {
+                      "code": "folder_gluer_crash_lock",
+                      "id": "0192f3a0-7c1e-7d2a-9b1f-0000000ae106",
+                      "nameEn": "Folder-gluer (crash-lock)",
+                      "nameTh": "เครื่องพับทากาว (ก้นล็อก)"
+                    },
+                    "proposedAt": "2026-10-03T10:00:00+07:00",
+                    "proposedById": "0192f3a0-7c1e-7d2a-9b1f-0000000ae103",
+                    "siteVisitId": "0192f3a0-7c1e-7d2a-9b1f-0000000ae104",
+                    "status": "verified",
+                    "verifiedAt": "2026-10-03T10:00:00+07:00",
+                    "verifiedById": "0192f3a0-7c1e-7d2a-9b1f-0000000ae103"
+                  }
+                ],
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/ProcessCapabilityDto"
+                  },
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Capabilities",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.unauthenticated": {
+                    "$ref": "#/components/examples/problem.auth.unauthenticated"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.unauthenticated`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.forbidden": {
+                    "$ref": "#/components/examples/problem.auth.forbidden"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.forbidden`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "404": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.not_found": {
+                    "$ref": "#/components/examples/problem.http.not_found"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.not_found`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "validation.failed": {
+                    "$ref": "#/components/examples/problem.validation.failed"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `validation.failed`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "partner": []
+          }
+        ],
+        "summary": "List the process capabilities of a factory",
+        "tags": [
+          "partner.factories"
+        ],
+        "x-required-permissions": [
+          "factory_profile.read"
+        ]
+      },
+      "post": {
+        "description": "A new capability starts `proposed`; it counts only once the Partner Manager verifies it against a passing site visit (D-244, D-041). A change to a verified capability is a new proposal. Own factory only (D-044); proposed by the Owner or Planner.\n\nImplements: D-244, D-041, D-243.",
+        "operationId": "partner.factories.proposeProcessCapability",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "factoryId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "examples": {
+                "default": {
+                  "value": {
+                    "leadTimeMaxDays": 12,
+                    "leadTimeMinDays": 7,
+                    "materialClass": "paperboard",
+                    "maxBlankLMm": 1020,
+                    "maxBlankWMm": 720,
+                    "maxCaliperMm": 0.8,
+                    "minRun": 1000,
+                    "processCode": "folder_gluer_crash_lock"
+                  }
+                }
+              },
+              "schema": {
+                "$ref": "#/components/schemas/ProposeProcessCapabilityDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "decidedAt": null,
+                  "decisionNote": null,
+                  "factory": {
+                    "code": "F0001",
+                    "id": "0192f3a0-7c1e-7d2a-9b1f-0000000ae102",
+                    "name": "โรงงานตัวอย่าง จำกัด"
+                  },
+                  "id": "0192f3a0-7c1e-7d2a-9b1f-0000000ae101",
+                  "leadTimeMaxDays": 12,
+                  "leadTimeMinDays": 7,
+                  "materialClass": "paperboard",
+                  "maxBlankLMm": 1020,
+                  "maxBlankWMm": 720,
+                  "maxCaliperMm": 0.8,
+                  "minBlankLMm": 100,
+                  "minBlankWMm": 100,
+                  "minRun": 1000,
+                  "note": null,
+                  "process": {
+                    "code": "folder_gluer_crash_lock",
+                    "id": "0192f3a0-7c1e-7d2a-9b1f-0000000ae106",
+                    "nameEn": "Folder-gluer (crash-lock)",
+                    "nameTh": "เครื่องพับทากาว (ก้นล็อก)"
+                  },
+                  "proposedAt": "2026-10-03T10:00:00+07:00",
+                  "proposedById": "0192f3a0-7c1e-7d2a-9b1f-0000000ae103",
+                  "siteVisitId": null,
+                  "status": "proposed",
+                  "verifiedAt": null,
+                  "verifiedById": null
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProcessCapabilityDto"
+                }
+              }
+            },
+            "description": "Proposed",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "400": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.bad_request": {
+                    "$ref": "#/components/examples/problem.http.bad_request"
+                  },
+                  "http.malformed_json": {
+                    "$ref": "#/components/examples/problem.http.malformed_json"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.bad_request`, `http.malformed_json`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.unauthenticated": {
+                    "$ref": "#/components/examples/problem.auth.unauthenticated"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.unauthenticated`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.forbidden": {
+                    "$ref": "#/components/examples/problem.auth.forbidden"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.forbidden`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "404": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.not_found": {
+                    "$ref": "#/components/examples/problem.http.not_found"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.not_found`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "validation.failed": {
+                    "$ref": "#/components/examples/problem.validation.failed"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `validation.failed`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "partner": []
+          }
+        ],
+        "summary": "Propose a process capability",
+        "tags": [
+          "partner.factories"
+        ],
+        "x-required-permissions": [
+          "factory_process_capabilities.propose"
+        ]
+      }
+    },
+    "/v1/partner/factories/{factoryId}/process-capabilities/{capabilityId}/actions/withdraw": {
+      "post": {
+        "description": "A proposed or verified capability is withdrawn (e.g. the machine is gone); a verified one stops counting at once and publishability is recomputed (D-243). Own factory only (D-044); proposed by the Owner or Planner.\n\nImplements: D-244, D-041, D-243.",
+        "operationId": "partner.factories.withdrawProcessCapability",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "factoryId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "capabilityId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "examples": {
+                "default": {
+                  "value": {
+                    "note": "เครื่องจักรขายออกไปแล้ว"
+                  }
+                }
+              },
+              "schema": {
+                "$ref": "#/components/schemas/OptionalNoteDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "decidedAt": "2026-10-03T10:00:00+07:00",
+                  "decisionNote": null,
+                  "factory": {
+                    "code": "F0001",
+                    "id": "0192f3a0-7c1e-7d2a-9b1f-0000000ae102",
+                    "name": "โรงงานตัวอย่าง จำกัด"
+                  },
+                  "id": "0192f3a0-7c1e-7d2a-9b1f-0000000ae101",
+                  "leadTimeMaxDays": 12,
+                  "leadTimeMinDays": 7,
+                  "materialClass": "paperboard",
+                  "maxBlankLMm": 1020,
+                  "maxBlankWMm": 720,
+                  "maxCaliperMm": 0.8,
+                  "minBlankLMm": 100,
+                  "minBlankWMm": 100,
+                  "minRun": 1000,
+                  "note": null,
+                  "process": {
+                    "code": "folder_gluer_crash_lock",
+                    "id": "0192f3a0-7c1e-7d2a-9b1f-0000000ae106",
+                    "nameEn": "Folder-gluer (crash-lock)",
+                    "nameTh": "เครื่องพับทากาว (ก้นล็อก)"
+                  },
+                  "proposedAt": "2026-10-03T10:00:00+07:00",
+                  "proposedById": "0192f3a0-7c1e-7d2a-9b1f-0000000ae103",
+                  "siteVisitId": "0192f3a0-7c1e-7d2a-9b1f-0000000ae104",
+                  "status": "withdrawn",
+                  "verifiedAt": "2026-10-03T10:00:00+07:00",
+                  "verifiedById": "0192f3a0-7c1e-7d2a-9b1f-0000000ae103"
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProcessCapabilityDto"
+                }
+              }
+            },
+            "description": "Withdrawn",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "400": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.bad_request": {
+                    "$ref": "#/components/examples/problem.http.bad_request"
+                  },
+                  "http.malformed_json": {
+                    "$ref": "#/components/examples/problem.http.malformed_json"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.bad_request`, `http.malformed_json`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.unauthenticated": {
+                    "$ref": "#/components/examples/problem.auth.unauthenticated"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.unauthenticated`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.forbidden": {
+                    "$ref": "#/components/examples/problem.auth.forbidden"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.forbidden`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "404": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.not_found": {
+                    "$ref": "#/components/examples/problem.http.not_found"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.not_found`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "409": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "styles.capability_decided": {
+                    "$ref": "#/components/examples/problem.styles.capability_decided"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `styles.capability_decided`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "validation.failed": {
+                    "$ref": "#/components/examples/problem.validation.failed"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `validation.failed`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "partner": []
+          }
+        ],
+        "summary": "Withdraw a process capability",
+        "tags": [
+          "partner.factories"
+        ],
+        "x-required-permissions": [
+          "factory_process_capabilities.propose"
+        ]
+      }
+    },
     "/v1/partner/factories/{factoryId}/references": {
       "get": {
         "description": "The product types and catalogue rows (materials, print types, finishes…) my own price lines and capabilities refer to, with their codes and names — to label the ids a price line carries. Never a price; own factory only (U-B0.3, D-040, D-044).\n\nImplements: D-040, D-044.",
@@ -291187,6 +294693,169 @@
         ],
         "x-required-permissions": [
           "factory_prices.read"
+        ]
+      }
+    },
+    "/v1/partner/process-types": {
+      "get": {
+        "description": "The process taxonomy factory capabilities and style process rules use (D-244).\n\nImplements: D-244.",
+        "operationId": "partner.processTypes.list",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "example": [
+                  {
+                    "code": "folder_gluer_crash_lock",
+                    "id": "0192f3a0-7c1e-7d2a-9b1f-0000000ae106",
+                    "nameEn": "Folder-gluer (crash-lock)",
+                    "nameTh": "เครื่องพับทากาว (ก้นล็อก)"
+                  }
+                ],
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/CodeNameRefDto"
+                  },
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Processes",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.unauthenticated": {
+                    "$ref": "#/components/examples/problem.auth.unauthenticated"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.unauthenticated`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.forbidden": {
+                    "$ref": "#/components/examples/problem.auth.forbidden"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.forbidden`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "validation.failed": {
+                    "$ref": "#/components/examples/problem.validation.failed"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `validation.failed`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "partner": []
+          }
+        ],
+        "summary": "List the manufacturing processes",
+        "tags": [
+          "partner.processTypes"
+        ],
+        "x-required-permissions": [
+          "factory_profile.read"
         ]
       }
     },
@@ -353129,6 +356798,10 @@
       "name": "admin.privacyRequests"
     },
     {
+      "description": "The manufacturing process taxonomy (D-244).",
+      "name": "admin.processTypes"
+    },
+    {
       "description": "Production jobs: automatic release (D-073), manual exceptions, acceptance SLA and escalations (D-074), reassignment within the margin floor (D-012, D-101).",
       "name": "admin.production"
     },
@@ -353197,8 +356870,16 @@
       "name": "admin.shippingZones"
     },
     {
+      "description": "What the partner network can and cannot make yet, per category and process (D-243, D-244).",
+      "name": "admin.styleCoverage"
+    },
+    {
       "description": "Style-library imports (D-242): master files and recipe bundles, their diffs and approvals.",
       "name": "admin.styleImports"
+    },
+    {
+      "description": "Which processes a style needs when its recipe declares none (D-244, Prepress).",
+      "name": "admin.styleProcessRules"
     },
     {
       "description": "Style library for staff (D-241–D-243): bases, generated variants and why they are not publishable; Prepress approves recipes and verifies references, Marketing and Prepress approve names.",
@@ -353323,6 +357004,10 @@
     {
       "description": "A factory prices a tag & sleeve configuration on its own price list (D-044).",
       "name": "partner.pricingTagSleeve"
+    },
+    {
+      "description": "The manufacturing process taxonomy (D-244).",
+      "name": "partner.processTypes"
     },
     {
       "description": "My factory’s jobs: accept / reject, milestones with photos and quantities, QC, issues, capacity and scorecard (D-074…D-076, D-142, D-155).",
