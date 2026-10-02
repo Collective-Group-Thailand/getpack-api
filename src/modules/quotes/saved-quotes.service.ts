@@ -25,6 +25,7 @@ import { EntitiesService } from '@platform/entities/entities.service';
 import { DocumentNumberingService } from '@platform/numbering/document-numbering.service';
 import { SettingsService } from '@platform/settings/settings.service';
 
+import { resolveAdvisoryLink } from './advisory-link';
 import {
   type BoxConfiguration,
   boxSpecLines,
@@ -53,6 +54,8 @@ export const QUOTE_INCLUDE = {
   createdBy: { select: { publicId: true, displayName: true } },
   pdfFile: { select: { publicId: true } },
   rfqQuote: { select: { rfq: { select: { publicId: true, rfqCode: true } } } },
+  advisoryRecommendation: { select: { publicId: true } },
+  advisoryChoice: { select: { publicId: true } },
 } satisfies Prisma.QuoteInclude;
 export type QuoteRow = Prisma.QuoteGetPayload<{ include: typeof QUOTE_INCLUDE }>;
 
@@ -62,6 +65,8 @@ export interface SaveQuoteInput {
   configuration: Record<string, unknown>;
   deliveryPostcode?: string;
   anonymousId?: string;
+  /** D-240: the Structure Advisor recommendation the quotation follows (store only). */
+  advisoryRecommendationId?: string;
 }
 
 /** Who asks: a signed-in customer, an anonymous configurator session, or staff (CS). */
@@ -153,6 +158,9 @@ export class SavedQuotesService {
                   )
                 : null;
     const specSummary = specLines ? withBasisLines(specLines, view.dimensions) : null;
+    const advisory = input.advisoryRecommendationId
+      ? await resolveAdvisoryLink(this.prisma, owner, input.advisoryRecommendationId, configuration)
+      : null;
     return this.prisma.withTx(async (tx) => {
       const quote = await tx.quote.create({
         data: {
@@ -176,6 +184,8 @@ export class SavedQuotesService {
           deliveryPostcode: input.deliveryPostcode ?? null,
           snapshotSha256,
           options: { create: options },
+          advisoryRecommendationId: advisory?.recommendationId ?? null,
+          advisoryChoiceId: advisory?.choiceId ?? null,
         },
       });
       if (extra.supersedes) {
@@ -196,6 +206,7 @@ export class SavedQuotesService {
         quantities: steps.map((s) => s.quantity),
         validUntil: quote.validUntil.toISOString(),
         supersedes: extra.supersedes ? true : undefined,
+        advisoryRecommendationId: input.advisoryRecommendationId,
       });
       return tx.quote.findUniqueOrThrow({ where: { id: quote.id }, include: QUOTE_INCLUDE });
     });

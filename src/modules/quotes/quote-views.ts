@@ -62,6 +62,10 @@ export function quoteDto(q: QuoteRow, now = new Date()): SavedQuoteDto {
     sharedAt: q.sharedAt ? toBangkokIso(q.sharedAt) : null,
     shareExpiresAt: q.shareExpiresAt ? toBangkokIso(q.shareExpiresAt) : null,
     dimensions: input.dimensions ?? null,
+    advisory:
+      q.advisoryRecommendation && q.advisoryChoice
+        ? { recommendationId: q.advisoryRecommendation.publicId, choiceId: q.advisoryChoice.publicId }
+        : null,
     createdAt: toBangkokIso(q.createdAt),
   };
 }

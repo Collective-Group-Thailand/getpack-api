@@ -45,6 +45,17 @@ export class SaveQuoteDto extends CalculateQuoteDto {
   @IsOptional()
   @IsUUID()
   anonymousId?: string;
+
+  @ApiPropertyOptional({
+    format: 'uuid',
+    example: '0192f3a0-7c1e-7d2a-9b1f-0000000ad101',
+    description:
+      'The Structure Advisor recommendation this quotation follows (D-240): the board chosen on it must be the ' +
+      'configuration’s board; stored on the quotation',
+  })
+  @IsOptional()
+  @IsUUID()
+  advisoryRecommendationId?: string;
 }
 
 export class StaffSaveQuoteDto extends CalculateQuoteDto {
@@ -205,6 +216,14 @@ export class QuotePdfDto {
   expiresAt!: string | null;
 }
 
+export class QuoteAdvisoryDto {
+  @ApiProperty({ format: 'uuid', example: '0192f3a0-7c1e-7d2a-9b1f-0000000ad101' })
+  recommendationId!: string;
+
+  @ApiProperty({ format: 'uuid', example: '0192f3a0-7c1e-7d2a-9b1f-0000000ad105' })
+  choiceId!: string;
+}
+
 export class SavedQuoteDto {
   @ApiProperty({ format: 'uuid', example: IDS.quote })
   id!: string;
@@ -300,6 +319,13 @@ export class SavedQuoteDto {
     description: 'The share link stops resolving after this (D-185)',
   })
   shareExpiresAt!: string | null;
+
+  @ApiProperty({
+    type: QuoteAdvisoryDto,
+    nullable: true,
+    description: 'The Structure Advisor recommendation and choice it was saved from (D-240)',
+  })
+  advisory!: QuoteAdvisoryDto | null;
 
   @ApiProperty({ format: 'date-time', example: '2026-10-01T09:00:00+07:00' })
   createdAt!: string;
@@ -397,6 +423,7 @@ export const QUOTE_EXAMPLE: SavedQuoteDto = {
   dimensions: null,
   shareExpiresAt: null,
   sharedAt: null,
+  advisory: null,
   createdAt: '2026-10-01T09:00:00+07:00',
 };
 

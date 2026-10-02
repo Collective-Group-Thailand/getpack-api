@@ -77,8 +77,10 @@ export class StoreSavedQuotesController {
     description:
       'Re-prices the configuration on the server and saves every instant quantity with the versions used ' +
       '(snapshot); valid for `quotes.validity_days` (15) days with the price locked (D-051). Signed in, or ' +
-      'anonymously with `anonymousId` (claim it after login). No factory data (D-050).',
-    implements: DECISIONS,
+      'anonymously with `anonymousId` (claim it after login). No factory data (D-050). With ' +
+      '`advisoryRecommendationId` the quotation stores the Structure Advisor recommendation and the board chosen on ' +
+      'it, which must be the configuration’s board (D-240).',
+    implements: [...DECISIONS, 'D-240'],
   })
   @ApiBody({ type: SaveQuoteDto, examples: { default: { value: SAVE_EXAMPLE } } })
   @ApiSuccess(201, { description: 'Saved', type: SavedQuoteDto, example: QUOTE_EXAMPLE })
@@ -89,6 +91,8 @@ export class StoreSavedQuotesController {
     'pricing.not_instant',
     'pricing.vat_rate_missing',
     'quotes.nothing_to_save',
+    'advisory.choice_required',
+    'advisory.choice_mismatch',
   )
   async save(@OptionalActor() actor: Actor | undefined, @Body() body: SaveQuoteDto): Promise<SavedQuoteDto> {
     const owner =

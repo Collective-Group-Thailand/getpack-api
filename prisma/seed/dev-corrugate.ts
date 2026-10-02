@@ -21,6 +21,8 @@ export interface DevCorrugate {
   teleLidPublicId: string;
   openTopPatternPublicId: string;
   boardPublicId: string;
+  /** Heavier fake boards KA185 and KI230 (U2.2). */
+  heavierBoardPublicIds: [string, string];
   fluteTypePublicId: string;
   difficultyLevelPublicId: string;
   inkColourPublicId: string;
@@ -83,6 +85,29 @@ export async function seedDevCorrugate(tx: Tx): Promise<{ created: boolean; fixt
       status: 'active',
     },
   });
+  // Two heavier fake B-flute boards, so the Structure Advisor (U2.2) has a choice to make.
+  const heavier: { id: bigint; publicId: string }[] = [];
+  for (const [code, name, gsm] of [
+    ['dev-ka185-b', 'KA185', 560],
+    ['dev-ki230-b', 'KI230', 700],
+  ] as const) {
+    heavier.push(
+      await tx.material.create({
+        data: {
+          code,
+          kind: 'corrugated_board',
+          nameTh: `[DEV] กระดาษลัง ${name} ลอน B`,
+          nameEn: `[DEV] Kraft board ${name} B-flute`,
+          gsm,
+          fluteTypeId: flute.id,
+          insideColour: 'น้ำตาล',
+          outsideColour: 'น้ำตาล',
+          coatable: false,
+          status: 'active',
+        },
+      }),
+    );
+  }
   const packing = await tx.assembly.create({
     data: {
       code: 'dev-packing',
@@ -172,7 +197,12 @@ export async function seedDevCorrugate(tx: Tx): Promise<{ created: boolean; fixt
       status: 'active',
       defaultDifficultyLevelId: difficulty.id,
       patterns: { create: { patternId: rsc.id } },
-      options: { create: [{ optionKind: 'material', optionId: board.id, isDefault: true }] },
+      options: {
+        create: [
+          { optionKind: 'material', optionId: board.id, isDefault: true },
+          ...heavier.map((m, i) => ({ optionKind: 'material' as const, optionId: m.id, sort: i + 1 })),
+        ],
+      },
       standardSizes: {
         create: {
           code: 'M',
@@ -273,13 +303,15 @@ export async function seedDevCorrugate(tx: Tx): Promise<{ created: boolean; fixt
   const boards = (printTypeId: string): [FinalLine['component'], PriceValues][] =>
     (
       [
-        [null, 499, '5.2'],
-        [500, 1999, '4.6'],
-        [2000, null, '4.1'],
+        [board.publicId, null, 499, '5.2'],
+        [board.publicId, 500, 1999, '4.6'],
+        [board.publicId, 2000, null, '4.1'],
+        [heavier[0]!.publicId, null, null, '5.6'],
+        [heavier[1]!.publicId, null, null, '6.4'],
       ] as const
-    ).map(([minSheet, maxSheet, pricePerSqft]) => [
+    ).map(([materialId, minSheet, maxSheet, pricePerSqft]) => [
       'board_prices',
-      { materialId: board.publicId, printTypeId, minSheet, maxSheet, pricePerSqft },
+      { materialId, printTypeId, minSheet, maxSheet, pricePerSqft },
     ]);
   const level = (printTypeId: string): PriceValues => ({
     difficultyLevelId: difficulty.publicId,
@@ -397,7 +429,10 @@ export async function seedDevCorrugate(tx: Tx): Promise<{ created: boolean; fixt
         pricePerM2: null,
       },
     ],
-    ['paper_sizes', { materialId: board.publicId, printTypeId: dg, sizeWIn: '40', sizeLIn: '60' }],
+    ...[board, ...heavier].map((m): [FinalLine['component'], PriceValues] => [
+      'paper_sizes',
+      { materialId: m.publicId, printTypeId: dg, sizeWIn: '40', sizeLIn: '60' },
+    ]),
     ...[fx, dg].map((printTypeId): [FinalLine['component'], PriceValues] => [
       'corrugate_assembly_prices',
       {
@@ -496,6 +531,10 @@ async function describe(tx: Tx, factoryId: bigint): Promise<DevCorrugate> {
     teleLidPublicId: tele.subPatterns[1]!.publicId,
     openTopPatternPublicId: await one(tx.pattern.findUniqueOrThrow({ where: { code: 'DEV-OPEN-TOP' } })),
     boardPublicId: await one(tx.material.findUniqueOrThrow({ where: { code: 'dev-ka125-b' } })),
+    heavierBoardPublicIds: [
+      await one(tx.material.findUniqueOrThrow({ where: { code: 'dev-ka185-b' } })),
+      await one(tx.material.findUniqueOrThrow({ where: { code: 'dev-ki230-b' } })),
+    ],
     fluteTypePublicId: await one(tx.fluteType.findUniqueOrThrow({ where: { code: 'DEV-B' } })),
     difficultyLevelPublicId: await one(
       tx.difficultyLevel.findUniqueOrThrow({ where: { code: 'dev-normal' } }),

@@ -7,6 +7,7 @@ import { PrismaPg } from '@prisma/adapter-pg';
 import { config } from 'dotenv';
 
 import { PrismaClient } from '../../src/generated/prisma/client';
+import { seedDevAdvisory } from './dev-advisory';
 import { seedDevCorrugate } from './dev-corrugate';
 import { seedDevFolding } from './dev-folding';
 import { seedDevFoldingB } from './dev-folding-b';
@@ -81,6 +82,9 @@ async function main(): Promise<void> {
       // Its service price list (U-B6 service).
       const service = await prisma.$transaction((tx) => seedDevService(tx), { timeout: 60_000 });
       if (service.created) report['dev_service_price_list'] = 1;
+      // Structure Advisor rule-set proposal and fake board sheets (U2.2; the flag stays off).
+      const advisory = await prisma.$transaction((tx) => seedDevAdvisory(tx), { timeout: 60_000 });
+      if (advisory.created) report['dev_advisory'] = 1;
     }
     const created = Object.entries(report)
       .map(([what, n]) => `${what}=${n}`)

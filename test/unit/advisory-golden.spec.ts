@@ -12,6 +12,8 @@ import {
 } from '@modules/advisory/structure-engine';
 import { type AdvisoryRuleSet } from '@platform/settings/setting-keys';
 
+import { DEV_ADVISORY_RULE_SET } from '../../prisma/seed/dev-advisory';
+
 /**
  * Golden Structure Advisor cases (U2.2, D-189). Inputs and expected values are in `test/golden/advisory/golden.json`,
  * written by `test/golden/advisory/cases.py` — an independent transcription of the D-239 rule, not of this port — on
@@ -97,6 +99,10 @@ describe('Structure Advisor golden cases (U2.2, D-189)', () => {
     ] as const) {
       expect(near(got, want)).toBe(true);
     }
+  });
+
+  it('uses the same rule-set proposal as the dev seed', () => {
+    expect(golden.ruleSet).toEqual(DEV_ADVISORY_RULE_SET);
   });
 
   it('writes docs/advisory-validation.md from the port (UPDATE_GOLDEN=1) and keeps it current', () => {
