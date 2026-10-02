@@ -2,6 +2,29 @@
 
 Session 0 of every U-B session (`docs/prompts/U1-update-2026-09-29.md`) and every U2 session (`docs/prompts/U2-benchmark-2026-09-29.md`): one row per requirement → `met | partial | missing`, the evidence, and what the session changes. Requirements already `met` are not touched. Newest session on top.
 
+## U-B6 folding engine B + tier-B envelopes — the U-B6 tail (2026-10-02, planning)
+
+Legacy traced from `/Users/superball/Abbon/Loco_Pack/locopack-web` (port map `docs/legacy/05-folding-b-port-map.md`). Engine B (`B/CalculateWaste`, `B/CalculateCost`, `Process/*`, `Object/Foil`) is a different model from A — additive waste on the net sheets, ink per m² of the print area, roll-area foil over merged strips, its own assembly rates and a contribution margin floored by code-margin lines — and **no live legacy screen reaches it** (CS, web and the factory tool select `factory_type_id = 1`, `FoldingCalculator.php:410-424`; the B view is unreachable after `FoldingBoxController.php:120`). The tier-B envelope is today only the free text `envelope_note`; the quote engine prices tier-A factories only.
+
+| # | Requirement | Before | Evidence | This session |
+|---|---|---|---|---|
+| FB.1 | Engine B maths (waste, print, die-cut, F1, F2 non-foil, foil strips and axis, assembly 1–4, code-margin margin, layout sort) | missing | no `calculators/folding/b/`; refusal `folding-calculator.ts:110-114` (`process_not_possible`) | Pure port `calculators/folding/b/` (slice 3) |
+| FB.2 | Geometry with the plain paper trim | met | `folding-snapshot.loader.ts:461` `useMaxMinPaperTrim: engine !== 'b'` | Reused unchanged |
+| FB.3 | B price data | partial | `pl_*` A components exist; no code margins, no colour-count dimensions, no foil roll / block terms, no `required_location`, no B assembly rates (port map §7) | `pl_code_margins` + nullable columns on four A tables (slice 2); A results unchanged |
+| FB.4 | Loader, adapter, CS / partner / store endpoints | partial | endpoints exist and carry B options; the loader builds offset tables for `b` | B tables in the loader, no new endpoint (slice 4) |
+| FB.5 | Port map, golden cases, validation doc | missing | port map §9 "not ported" | `05-folding-b-port-map.md` (slice 1), 20 golden cases from a Python transcription (slice 3), `docs/pricing-validation-folding-b.md` (slice 5) |
+| FB.6 | Instant only after sign-off (A-16, D-100 note) | n/a | — | Feature flag `pricing.folding_engine_b` (off, Superadmin): customer and CS quotes refuse B options (slice 4) |
+| TB.1 | Structured envelope per product type | missing | `partners.prisma:796` `envelopeNote` text only | `factory_participation_versions.envelope jsonb` + validator per calculator (slice 6) |
+| TB.2 | Quote path honours the envelope (store / CS quotes, cart re-pricing, reorder, hints, factory selection) | missing | `quote-path.service.ts:98-116` tier A only; no `coversConfiguration` implementation; `production.service.ts:757` counts any participation | `envelopeFacts` per adapter, pure matcher, engine per quantity × print type, `resolve()`, production selection, unmet demand (slice 7) |
+| TB.3 | Admin endpoints | partial | `admin.factories.setParticipation` takes `envelopeNote` only; `admin.partnerCoverage.get` has no envelope | `envelope` on set / read, envelope summary in coverage (slice 8) |
+| TB.4 | Partner endpoints | partial | `partner.factories.getConfiguration` without envelope; change-request topic `participation_tier` is free text | own envelope on read; structured `envelope` on the change request (slice 8) |
+| TB.5 | Store availability `instant / rfq / partial` | missing | only `store.catalog.resolveQuotePath` (instant / rfq) | `GET /v1/store/catalog/types/{typeId}/availability` (slice 8) |
+| — | Coverage % of the last 90 days, RFQ volume, price-data protection tests, "cost" → "price" renaming (U-B3 items 5–7) | missing | — | **Left for U-B3** (its own gap-check session) |
+
+**Decisions (accepted by the user, 2026-10-02):** **D-233** engine B is ported and fed only by what a configuration carries (colour count = colours; no semi-tones; automatic foil axis; no sorting / packing / delivery; margin type 2 with code margins; one-location foil from w × l, 2+ locations refused; missing data refuses), shipped behind `pricing.folding_engine_b` until its validation doc is signed; tags & sleeves keep refusing B. **D-234** the tier-B envelope is a structured allow-list on the participation version (quantity, print types, size ranges, patterns, standard sizes, materials; stock products; service items), set with the tier by `partners.manage` without approval; instant needs envelope coverage **and** pricing lines; the store sees `instant / rfq / partial` without factory identity.
+
+**Plan (slices):** 1 port map + this analysis + D-233 / D-234 (docs) · 2 B price components (migration) · 3 pure B port + golden cases · 4 loader, switch, flag, dev fixture, e2e · 5 B validation doc · 6 envelope column + validator · 7 envelope matching through the quote path · 8 admin / partner / store endpoints, contract · 9 release `v0.12.0`.
+
 ## U-B0.3 — `admin.*` platform / finance / analytics, `partner.*`, cross-cutting, B6.3 launch gaps (2026-10-01, planning)
 
 Source: `docs/contract-requests-triage.md` §U-B0.3 (51 ids: 25 admin, 26 partner / cross-cutting), *Known contract defects* (two left: `RateCardLineResponse`, `PriceSimulationDto.result`) and *Also in U-B0.3: launch gaps from B6.3*. Status is against `v0.5.0`; each slice re-checks its rows in the code before changing anything. **Out of U-B0.3:** `admin.analytics-journeys` (built in U5.B6, D-219 — carried over), renaming the background `JobStatus` enum (contract-breaking; stays, documented), the partner-side write of factory hours / closures (U2.9, D-209), the five other CS calculators (U-B6). Business values come from settings or decisions; none is invented.
