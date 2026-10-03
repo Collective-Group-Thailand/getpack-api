@@ -1,3 +1,4 @@
+import { StoreDeepLinksController } from '@platform/notifications/deep-links.controller';
 import { ADVISORY_STORE_CONTROLLERS } from '@modules/advisory/advisory.registry';
 import { ANALYTICS_STORE_CONTROLLERS } from '@modules/analytics/analytics.registry';
 import { ARTWORK_STORE_CONTROLLERS } from '@modules/artwork/artwork.registry';
@@ -17,6 +18,7 @@ import { CONVERSATIONS_STORE_CONTROLLERS } from '@modules/conversations/conversa
 import { CUSTOMERS_STORE_CONTROLLERS } from '@modules/customers/customers.registry';
 import { DESIGN_SERVICES_STORE_CONTROLLERS } from '@modules/design-services/design-services.registry';
 import { DESIGNS_STORE_CONTROLLERS } from '@modules/designs/designs.registry';
+import { LAUNCHPAD_STORE_CONTROLLERS } from '@modules/launchpad/launchpad.registry';
 import { LOGISTICS_STORE_CONTROLLERS } from '@modules/logistics/logistics.registry';
 import { LOYALTY_STORE_CONTROLLERS } from '@modules/loyalty/loyalty.registry';
 import { OPS_STORE_CONTROLLERS } from '@modules/ops/ops.registry';
@@ -54,6 +56,7 @@ import { RealtimeModule } from '@platform/realtime/realtime.module';
     StoreMeController,
     StoreMyNotificationSettingsController,
     StoreInboxController,
+    StoreDeepLinksController,
 
     StoreCatalogController,
     StoreSitemapController,
@@ -72,6 +75,7 @@ import { RealtimeModule } from '@platform/realtime/realtime.module';
     ...CALL_OFFS_STORE_CONTROLLERS,
     ...B2B_STORE_CONTROLLERS,
     ...REORDERS_STORE_CONTROLLERS,
+    ...LAUNCHPAD_STORE_CONTROLLERS,
     ...LOGISTICS_STORE_CONTROLLERS,
     ...CLAIMS_STORE_CONTROLLERS,
     ...CONVERSATIONS_STORE_CONTROLLERS,

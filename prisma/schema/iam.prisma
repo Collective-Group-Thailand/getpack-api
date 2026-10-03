@@ -219,6 +219,7 @@ model User {
   notificationRoutesUpdated             NotificationRoute[]           @relation("NotificationRouteUpdatedBy")
   notificationPreferences               NotificationPreference[]
   notifications                         Notification[]
+  deepLinkTokens                        DeepLinkToken[]               @relation("DeepLinkTokenUser")
   webPushSubscriptions                  WebPushSubscription[]
   businessCalendarsCreated              BusinessCalendar[]            @relation("BusinessCalendarCreatedBy")
   businessCalendarsUpdated              BusinessCalendar[]            @relation("BusinessCalendarUpdatedBy")

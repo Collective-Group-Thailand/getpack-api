@@ -892,6 +892,27 @@ const FOOTER = {
 
 const keyOf = (r: Row) => `${r.event}:${r.audience}${r.team ? `:${r.team}` : ''}`;
 
+/** D-299: a message to one person (customer, factory user) ends with its deep link when the event has a page. */
+const LINK = {
+  th: {
+    email: '{{#if link}}<a href="{{link}}">เปิดใน Packio</a>{{/if}}',
+    text: '{{#if link}}\n{{link}}{{/if}}',
+  },
+  en: {
+    email: '{{#if link}}<a href="{{link}}">Open in Packio</a>{{/if}}',
+    text: '{{#if link}}\n{{link}}{{/if}}',
+  },
+};
+const linked = (r: Row, channel: Channel) =>
+  r.audience !== 'staff_team' && ['email', 'line', 'sms'].includes(channel);
+function bodyOf(r: Row, channel: Channel, lang: 'th' | 'en'): string {
+  const withLink = (body: string, kind: 'email' | 'text') =>
+    linked(r, channel) ? `${body}${kind === 'email' ? '<br/>' : ''}${LINK[lang][kind]}` : body;
+  return channel === 'email'
+    ? email(GREETING[lang], withLink(r.body[lang], 'email'), FOOTER[lang])
+    : withLink(r.body[lang], 'text');
+}
+
 export const MATRIX_TEMPLATES: NotificationTemplateSeed[] = ROWS.flatMap((r) =>
   r.channels.map((channel) => ({
     key: keyOf(r),
@@ -899,14 +920,8 @@ export const MATRIX_TEMPLATES: NotificationTemplateSeed[] = ROWS.flatMap((r) =>
     category: r.category ?? ('transactional' as const),
     description: r.description,
     versions: {
-      th: {
-        subject: r.subject.th,
-        body: channel === 'email' ? email(GREETING.th, r.body.th, FOOTER.th) : r.body.th,
-      },
-      en: {
-        subject: r.subject.en,
-        body: channel === 'email' ? email(GREETING.en, r.body.en, FOOTER.en) : r.body.en,
-      },
+      th: { subject: r.subject.th, body: bodyOf(r, channel, 'th') },
+      en: { subject: r.subject.en, body: bodyOf(r, channel, 'en') },
     },
   })),
 );

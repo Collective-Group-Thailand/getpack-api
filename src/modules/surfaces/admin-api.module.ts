@@ -1,3 +1,4 @@
+import { AdminDeepLinksController } from '@platform/notifications/deep-links.controller';
 import { ADVISORY_ADMIN_CONTROLLERS } from '@modules/advisory/advisory.registry';
 import { ANALYTICS_ADMIN_CONTROLLERS } from '@modules/analytics/analytics.registry';
 import { ARTWORK_ADMIN_CONTROLLERS } from '@modules/artwork/artwork.registry';
@@ -99,6 +100,7 @@ import { SettingsAdminModule } from '@platform/settings/settings-admin.module';
     ConsentPurposesController,
     AdminCustomerConsentsController,
     AdminInboxController,
+    AdminDeepLinksController,
     AuditLogsController,
     DocumentSeriesController,
 

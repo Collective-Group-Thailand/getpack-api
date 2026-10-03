@@ -14,7 +14,8 @@ const MAX_TEXT = 5_000;
 /**
  * Notification templates are Handlebars; e-mail bodies may be MJML (`<mjml>…`), compiled to
  * responsive HTML. Values are HTML-escaped in e-mail and left as-is in text channels. Templates see
- * `{{event.type}}`, `{{event.occurredAt}}`, `{{payload.*}}` and `{{recipient.displayName}}`.
+ * `{{event.type}}`, `{{event.occurredAt}}`, `{{payload.*}}`, `{{recipient.displayName}}` and `{{link}}` — the
+ * recipient's deep link to the event's page (D-299), absent when the event has no page in their zone.
  */
 export async function renderTemplate(
   channel: string,

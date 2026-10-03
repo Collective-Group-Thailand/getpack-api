@@ -49,6 +49,7 @@ import { PromotionsModule } from '@modules/promotions/promotions.module';
 import { QuotesModule } from '@modules/quotes/quotes.module';
 import { ReceivablesModule } from '@modules/receivables/receivables.module';
 import { ReordersModule } from '@modules/reorders/reorders.module';
+import { LaunchpadModule } from '@modules/launchpad/launchpad.module';
 import { ReportsModule } from '@modules/reports/reports.module';
 import { RfqModule } from '@modules/rfq/rfq.module';
 import { SamplesModule } from '@modules/samples/samples.module';
@@ -126,6 +127,7 @@ import { LoggerModule } from 'nestjs-pino';
     OrdersModule,
     ToolingModule,
     ReordersModule,
+    LaunchpadModule,
     CallOffsModule,
     B2bModule,
     PaymentSchedulesModule,

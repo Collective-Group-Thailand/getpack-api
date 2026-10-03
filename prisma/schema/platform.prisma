@@ -1259,12 +1259,37 @@ model Notification {
   route           NotificationRoute?           @relation(fields: [routeId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_notifications__route_id")
   recipient       User?                        @relation(fields: [recipientUserId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_notifications__recipient_user_id")
   templateVersion NotificationTemplateVersion? @relation(fields: [templateVersionId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_notifications__template_version_id")
+  deepLink        DeepLinkToken?
 
   @@index([recipientUserId, channel, createdAt(sort: Desc)], map: "ix_notifications__recipient__channel__created_at")
   @@index([status, scheduledFor], map: "ix_notifications__status__scheduled_for")
   @@index([routeId], map: "ix_notifications__route_id")
   @@index([templateVersionId], map: "ix_notifications__template_version_id")
   @@map("notifications")
+}
+
+/// D-299 a notification's deep link: opens one page of the recipient's zone, never signs in. The token is shown once
+/// (in the message) and stored as SHA-256; a retried delivery replaces it. Valid `notifications.deep_link_ttl_hours`.
+model DeepLinkToken {
+  id             BigInt    @id(map: "pk_deep_link_tokens") @default(autoincrement())
+  tokenHash      Bytes     @unique(map: "ux_deep_link_tokens__token_hash") @map("token_hash")
+  notificationId BigInt    @unique(map: "ux_deep_link_tokens__notification_id") @map("notification_id")
+  userId         BigInt    @map("user_id")
+  /// The zone of packio-web: `store`, `admin` or `partner`.
+  surface        String
+  /// The page, relative to the zone (`/account/orders/{id}`).
+  path           String
+  expiresAt      DateTime  @map("expires_at") @db.Timestamptz(6)
+  openCount      Int       @default(0) @map("open_count")
+  lastOpenedAt   DateTime? @map("last_opened_at") @db.Timestamptz(6)
+  createdAt      DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  notification Notification @relation(fields: [notificationId], references: [id], onDelete: Cascade, onUpdate: Restrict, map: "fk_deep_link_tokens__notification_id")
+  user         User         @relation("DeepLinkTokenUser", fields: [userId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_deep_link_tokens__user_id")
+
+  @@index([userId], map: "ix_deep_link_tokens__user_id")
+  @@index([expiresAt], map: "ix_deep_link_tokens__expires_at")
+  @@map("deep_link_tokens")
 }
 
 model WebPushSubscription {

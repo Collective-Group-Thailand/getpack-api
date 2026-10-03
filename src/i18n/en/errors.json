@@ -1582,5 +1582,11 @@
       "title": "Development-only flag",
       "detail": "{key} is a development aid and cannot be switched on in production."
     }
+  },
+  "deep_links": {
+    "expired": {
+      "title": "Link expired",
+      "detail": "This link has expired; open the page from your account instead."
+    }
   }
 }

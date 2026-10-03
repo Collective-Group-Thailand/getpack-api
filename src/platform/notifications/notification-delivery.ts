@@ -14,6 +14,7 @@ import { Inject, Injectable, Logger } from '@nestjs/common';
 import { ScheduledJob } from '@platform/maintenance/scheduled-job.decorator';
 import { RealtimePublisher } from '@platform/realtime/realtime.publisher';
 
+import { DeepLinksService } from './deep-links.service';
 import { renderTemplate } from './template-renderer';
 
 const BATCH = 100;
@@ -24,6 +25,9 @@ const RETRY_MS = 5 * 60_000;
 const GIVE_UP_MS = 24 * 60 * 60_000;
 
 export class NoAddressError extends Error {}
+
+/** D-299 channels whose messages carry `{{link}}` (a team's LINE group or Teams channel has no single recipient). */
+const LINKED_CHANNELS = new Set(['email', 'line', 'sms', 'web_push']);
 
 const DELIVERY_INCLUDE = {
   event: true,
@@ -58,6 +62,7 @@ export class NotificationDelivery {
     @Inject(LINE_MESSAGING) private readonly line: LineMessaging,
     @Inject(WEB_PUSH) private readonly webPush: WebPushSender,
     @Inject(TEAMS_WEBHOOK) private readonly teams: TeamsWebhook,
+    private readonly deepLinks: DeepLinksService,
   ) {}
 
   @ScheduledJob({ name: 'notifications.deliver', every: 5_000 })
@@ -88,12 +93,15 @@ export class NotificationDelivery {
     });
     try {
       if (!row.templateVersion) throw new NoAddressError('template version missing');
+      // D-299: messages that leave the app carry a deep link to the event's page (the in-app inbox has its own url).
+      const link = LINKED_CHANNELS.has(row.channel) ? await this.deepLinks.issue(row, now) : null;
       const rendered = await renderTemplate(row.channel, row.templateVersion, {
         event: { type: row.event.type, occurredAt: toBangkokIso(row.event.occurredAt) },
         payload: row.event.payload,
         recipient: { displayName: row.recipient?.displayName ?? row.route?.staffTeam?.nameTh ?? '' },
+        link,
       });
-      const { providerMessageId, masked } = await this.send(row, rendered);
+      const { providerMessageId, masked } = await this.send(row, rendered, link);
       await this.prisma.notification.update({
         where: { id },
         data: {
@@ -164,6 +172,7 @@ export class NotificationDelivery {
   private async send(
     row: DeliveryRow,
     rendered: { subject: string | null; body: string; text: string },
+    link: string | null,
   ): Promise<{ providerMessageId: string | null; masked?: string }> {
     const user = row.recipient;
     switch (row.channel) {
@@ -212,6 +221,7 @@ export class NotificationDelivery {
           body: rendered.text,
           type: row.event.type,
           eventId: row.eventId,
+          url: link,
         });
         for (const subscription of subscriptions) {
           const result = await this.webPush.send(

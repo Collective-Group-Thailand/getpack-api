@@ -1231,6 +1231,16 @@ export const SETTINGS: readonly SettingSeed[] = [
     decisions: ['D-221', 'D-175'],
     ownerRole: 'cs_lead',
   },
+  {
+    key: 'notifications.deep_link_ttl_hours',
+    valueType: 'integer',
+    value: 72,
+    valueSchema: { minimum: 1, maximum: 720 },
+    description:
+      'D-299 hours a notification deep link (one page of the recipient’s zone, never a sign-in) stays valid',
+    decisions: ['D-299'],
+    ownerRole: 'superadmin',
+  },
 ];
 
 /** Entity-scoped legal data (D-092) — values come from SEED_ENTITY_* env vars, never from code. */

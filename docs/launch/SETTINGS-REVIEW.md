@@ -5,7 +5,7 @@
 > (a new effective-dated version, audited — D-063) and signs item 5 of `docs/LAUNCH-CHECKLIST.md`. A *proposed* or
 > *pending* value is not a decision: it goes live only once its owner confirms it.
 
-**98 settings** — 58 confirmed · 19 proposed · 4 pending the CPA (⚖) · 1 pending the business · 16 defined without a value (not set until their owner sets them).
+**99 settings** — 59 confirmed · 19 proposed · 4 pending the CPA (⚖) · 1 pending the business · 16 defined without a value (not set until their owner sets them).
 
 ## Settings
 
@@ -55,6 +55,7 @@
 | `loyalty.points_expiry` | `{"monthsPerEarning":12,"reminderDaysBefore":30}` | confirmed | superadmin | D-132 | D-132 points expire 12 months per earning, reminder 30 days before |
 | `loyalty.redemption_limits` | `{"minimumBaht":"10.00","maxPctOfOrder":"20"}` | confirmed | superadmin | D-133 | D-133 minimum redemption (THB equivalent) and maximum share of the order value |
 | `loyalty.tiers` | `[{"tier":"member","minSpend12m":"0.00","multiplier":"1"},{"tier":"silver","minSpend12m":"50000.00","multiplier":"1.25"},{"tier":"gold","minSpend12m":"200000.00","multiplier":"1.5"}]` | confirmed | superadmin | D-134 | D-134 tiers by 12-month spend with earn multipliers |
+| `notifications.deep_link_ttl_hours` | `72` | confirmed | superadmin | D-299 | D-299 hours a notification deep link (one page of the recipient’s zone, never a sign-in) stays valid |
 | `notifications.marketing_window` | `{"from":"09:00","to":"20:00","timezone":"Asia/Bangkok"}` | confirmed | superadmin | D-144 | D-144 marketing messages are sent only inside this window (transactional anytime) |
 | `ops.alert_thresholds` | `{"outbox_dead_letters":1,"outbox_backlog_minutes":15,"queue_depth":1000,"webhook_failures_24h":5,"payout_item_failures_7d":1,"ledger_posting_failures":1,"acceptance_overdue":1,"production_at_risk":5,"rfq_first_response_overdue":1,"approvals_overdue":5,"slip_verification_wait_hours":4,"claim_response_overdue":1,"claim_decision_overdue":1}` | proposed | superadmin | D-113, D-061, D-074 | D-113 launch monitoring: value at which each operational signal raises an alert to superadmins and admins (slip wait mirrors the D-061 4-hour SLA in wall-clock hours; the rest proposed) |
 | `orders.auto_complete_days` | `7` | confirmed | superadmin | D-081 | D-081 days after delivery until an order completes automatically |

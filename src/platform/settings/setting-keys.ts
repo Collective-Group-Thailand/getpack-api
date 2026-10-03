@@ -171,6 +171,8 @@ export interface SettingValues {
   };
   /** D-221 first-response target of a contact-form / hand-off conversation, in business days. */
   'support.first_response_business_days': number;
+  /** D-299 hours a notification deep link stays valid. */
+  'notifications.deep_link_ttl_hours': number;
   /** U-B0.1 items a customer confirms when approving a proof (approval evidence, B4.1); none until set. */
   'artwork.approval_checklist': { key: string; labelTh: string; labelEn: string }[];
   /** D-222 calendar days to answer a PDPA request. */

@@ -1189,6 +1189,17 @@
           "type": "https://errors.packio/conversations.unreachable"
         }
       },
+      "problem.deep_links.expired": {
+        "summary": "deep_links.expired",
+        "value": {
+          "code": "deep_links.expired",
+          "detail": "ลิงก์นี้หมดอายุแล้ว เปิดหน้านี้จากบัญชีของคุณแทน",
+          "requestId": "6f1c2d8e-2c7b-4d0e-9d1c-3f1a2b3c4d5e",
+          "status": 410,
+          "title": "ลิงก์หมดอายุ",
+          "type": "https://errors.packio/deep_links.expired"
+        }
+      },
       "problem.design_services.fee_changed": {
         "summary": "design_services.fee_changed",
         "value": {
@@ -21132,6 +21143,57 @@
         ],
         "type": "string"
       },
+      "CompanyDefaultsDto": {
+        "properties": {
+          "defaultBranchId": {
+            "description": "The branch the tax invoice names by default (D-125)",
+            "example": "0192f3a0-7c1e-7d2a-9b1f-0000000e730d",
+            "format": "uuid",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "hasBrandKit": {
+            "description": "It has an active brand kit (U4)",
+            "example": true,
+            "type": "boolean"
+          },
+          "id": {
+            "example": "0192f3a0-7c1e-7d2a-9b1f-0000000e7309",
+            "format": "uuid",
+            "type": "string"
+          },
+          "legalName": {
+            "example": "บริษัท ตัวอย่าง จำกัด",
+            "type": "string"
+          },
+          "mayOrder": {
+            "description": "I may place orders for it (`company_orders.place`)",
+            "example": true,
+            "type": "boolean"
+          },
+          "taxId": {
+            "example": "0000000000019",
+            "type": "string"
+          },
+          "withholdsTax": {
+            "description": "The company withholds tax on payments (P03)",
+            "example": false,
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "id",
+          "legalName",
+          "taxId",
+          "defaultBranchId",
+          "withholdsTax",
+          "mayOrder",
+          "hasBrandKit"
+        ],
+        "type": "object"
+      },
       "CompanyDiscountDto": {
         "properties": {
           "discountMemoId": {
@@ -30353,6 +30415,127 @@
           "cancelled"
         ],
         "type": "string"
+      },
+      "DeepLinkTargetDto": {
+        "properties": {
+          "expiresAt": {
+            "example": "2026-10-07T09:00:00+07:00",
+            "format": "date-time",
+            "type": "string"
+          },
+          "path": {
+            "description": "Page of this zone",
+            "example": "/account/orders/0192f3a0-7c1e-7d2a-9b1f-0000000e7303",
+            "type": "string"
+          }
+        },
+        "required": [
+          "path",
+          "expiresAt"
+        ],
+        "type": "object"
+      },
+      "DefaultAddressBasis": {
+        "enum": [
+          "default",
+          "last_used"
+        ],
+        "type": "string"
+      },
+      "DefaultAddressDto": {
+        "properties": {
+          "basis": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/DefaultAddressBasis"
+              }
+            ],
+            "example": "default"
+          },
+          "id": {
+            "example": "0192f3a0-7c1e-7d2a-9b1f-0000000e7307",
+            "format": "uuid",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "basis"
+        ],
+        "type": "object"
+      },
+      "DefaultTaxProfileDto": {
+        "properties": {
+          "branchCode": {
+            "description": "Head office `00000` or the branch number",
+            "example": "00000",
+            "type": "string"
+          },
+          "id": {
+            "example": "0192f3a0-7c1e-7d2a-9b1f-0000000e7308",
+            "format": "uuid",
+            "type": "string"
+          },
+          "name": {
+            "example": "บริษัท ตัวอย่าง จำกัด",
+            "type": "string"
+          },
+          "taxId": {
+            "example": "0000000000019",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "taxId",
+          "branchCode"
+        ],
+        "type": "object"
+      },
+      "DefaultsDto": {
+        "properties": {
+          "companies": {
+            "items": {
+              "$ref": "#/components/schemas/CompanyDefaultsDto"
+            },
+            "type": "array"
+          },
+          "deliveryAddress": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/DefaultAddressDto"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "productTypes": {
+            "description": "Only types I have a quotation of",
+            "items": {
+              "$ref": "#/components/schemas/ProductTypeDefaultsDto"
+            },
+            "type": "array"
+          },
+          "taxProfile": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/DefaultTaxProfileDto"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "required": [
+          "deliveryAddress",
+          "taxProfile",
+          "companies",
+          "productTypes"
+        ],
+        "type": "object"
       },
       "DefectCountsDto": {
         "properties": {
@@ -41671,6 +41854,207 @@
         ],
         "type": "object"
       },
+      "LaunchpadAction": {
+        "enum": [
+          "pay",
+          "approve_proof",
+          "upload_artwork",
+          "confirm_receipt"
+        ],
+        "type": "string"
+      },
+      "LaunchpadActionItemDto": {
+        "properties": {
+          "action": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/LaunchpadAction"
+              }
+            ],
+            "example": "approve_proof"
+          },
+          "amount": {
+            "description": "`pay`: the amount to pay",
+            "example": "12500.00",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "code": {
+            "description": "Order code, or group code for `pay`",
+            "example": "PK-2610-0003-01",
+            "type": "string"
+          },
+          "dueAt": {
+            "description": "`pay`: when the unpaid group expires (D-060); `confirm_receipt`: auto-completion is not shown here",
+            "example": null,
+            "format": "date-time",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "id": {
+            "example": "0192f3a0-7c1e-7d2a-9b1f-0000000e7303",
+            "format": "uuid",
+            "type": "string"
+          },
+          "productType": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/CodeNameRefDto"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Null for an order group"
+          },
+          "subject": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/LaunchpadActionSubject"
+              }
+            ],
+            "example": "order"
+          }
+        },
+        "required": [
+          "action",
+          "subject",
+          "id",
+          "code",
+          "productType",
+          "dueAt",
+          "amount"
+        ],
+        "type": "object"
+      },
+      "LaunchpadActionSubject": {
+        "enum": [
+          "order",
+          "order_group"
+        ],
+        "type": "string"
+      },
+      "LaunchpadDesignDto": {
+        "properties": {
+          "catalogProductId": {
+            "example": "0192f3a0-7c1e-7d2a-9b1f-0000000e7302",
+            "format": "uuid",
+            "type": "string"
+          },
+          "catalogProductNameEn": {
+            "example": "Folding carton",
+            "type": "string"
+          },
+          "catalogProductNameTh": {
+            "example": "กล่องพับ",
+            "type": "string"
+          },
+          "id": {
+            "example": "0192f3a0-7c1e-7d2a-9b1f-0000000e7301",
+            "format": "uuid",
+            "type": "string"
+          },
+          "lockedByOrderCode": {
+            "description": "The order the current version is locked by (D-276)",
+            "example": null,
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "thumbnailFileId": {
+            "description": "Preview image (`store.files.get`)",
+            "example": "0192f3a0-7c1e-7d2a-9b1f-0000000e730c",
+            "format": "uuid",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "title": {
+            "example": "กล่องขนมไหว้พระจันทร์",
+            "type": "string"
+          },
+          "updatedAt": {
+            "example": "2026-10-03T16:20:00+07:00",
+            "format": "date-time",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "title",
+          "catalogProductId",
+          "catalogProductNameTh",
+          "catalogProductNameEn",
+          "thumbnailFileId",
+          "lockedByOrderCode",
+          "updatedAt"
+        ],
+        "type": "object"
+      },
+      "LaunchpadDto": {
+        "properties": {
+          "designs": {
+            "description": "Up to 5, latest change first",
+            "items": {
+              "$ref": "#/components/schemas/LaunchpadDesignDto"
+            },
+            "type": "array"
+          },
+          "needsAction": {
+            "description": "Everything waiting for me, in recommendation order",
+            "items": {
+              "$ref": "#/components/schemas/LaunchpadActionItemDto"
+            },
+            "type": "array"
+          },
+          "nextStep": {
+            "$ref": "#/components/schemas/NextStepDto"
+          },
+          "reorderCandidates": {
+            "description": "Up to 5: suggestions soonest first, then past orders",
+            "items": {
+              "$ref": "#/components/schemas/ReorderCandidateDto"
+            },
+            "type": "array"
+          }
+        },
+        "required": [
+          "designs",
+          "reorderCandidates",
+          "needsAction",
+          "nextStep"
+        ],
+        "type": "object"
+      },
+      "LaunchpadNextStep": {
+        "enum": [
+          "pay",
+          "approve_proof",
+          "upload_artwork",
+          "confirm_receipt",
+          "reorder",
+          "resume_design",
+          "start_configuration"
+        ],
+        "type": "string"
+      },
+      "LaunchpadTarget": {
+        "description": "What the step opens; null for `start_configuration`",
+        "enum": [
+          "order",
+          "order_group",
+          "reorder_suggestion",
+          "order_reorder",
+          "design"
+        ],
+        "type": "string"
+      },
       "LeadTimeRangeDto": {
         "properties": {
           "maxDays": {
@@ -43214,6 +43598,44 @@
           "chargeable",
           "feeNet",
           "feeGross"
+        ],
+        "type": "object"
+      },
+      "NextStepDto": {
+        "properties": {
+          "kind": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/LaunchpadNextStep"
+              }
+            ],
+            "example": "approve_proof"
+          },
+          "target": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/LaunchpadTarget"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "What the step opens; null for `start_configuration`",
+            "example": "order"
+          },
+          "targetId": {
+            "example": "0192f3a0-7c1e-7d2a-9b1f-0000000e7303",
+            "format": "uuid",
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "kind",
+          "target",
+          "targetId"
         ],
         "type": "object"
       },
@@ -52266,6 +52688,43 @@
         ],
         "type": "object"
       },
+      "ProductTypeDefaultsDto": {
+        "properties": {
+          "materialId": {
+            "example": "0192f3a0-7c1e-7d2a-9b1f-0000000e730a",
+            "format": "uuid",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "printTypeId": {
+            "example": "0192f3a0-7c1e-7d2a-9b1f-0000000e730b",
+            "format": "uuid",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "productTypeCode": {
+            "example": "folding",
+            "type": "string"
+          },
+          "quotedAt": {
+            "description": "When that quotation was made",
+            "example": "2026-09-28T10:00:00+07:00",
+            "format": "date-time",
+            "type": "string"
+          }
+        },
+        "required": [
+          "productTypeCode",
+          "materialId",
+          "printTypeId",
+          "quotedAt"
+        ],
+        "type": "object"
+      },
       "ProductTypeDto": {
         "properties": {
           "calculatorKey": {
@@ -57481,6 +57940,85 @@
         ],
         "type": "object"
       },
+      "ReorderCandidateDto": {
+        "properties": {
+          "due": {
+            "description": "A suggestion whose date has come",
+            "example": true,
+            "type": "boolean"
+          },
+          "orderCode": {
+            "example": "PK-2610-0001-01",
+            "type": "string"
+          },
+          "orderId": {
+            "description": "The order to reorder",
+            "example": "0192f3a0-7c1e-7d2a-9b1f-0000000e7303",
+            "format": "uuid",
+            "type": "string"
+          },
+          "productType": {
+            "$ref": "#/components/schemas/CodeNameRefDto"
+          },
+          "quantity": {
+            "description": "Quantity of that order",
+            "example": 1000,
+            "type": "integer"
+          },
+          "source": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ReorderCandidateSource"
+              }
+            ],
+            "description": "`suggestion` — a D-288 reorder suggestion; `past_order` — a delivered order that can be reordered",
+            "example": "suggestion"
+          },
+          "suggestedOn": {
+            "example": "2026-10-15",
+            "format": "date",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "suggestedQuantity": {
+            "example": 1500,
+            "type": [
+              "integer",
+              "null"
+            ]
+          },
+          "suggestionId": {
+            "example": "0192f3a0-7c1e-7d2a-9b1f-0000000e7305",
+            "format": "uuid",
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "source",
+          "suggestionId",
+          "orderId",
+          "orderCode",
+          "productType",
+          "quantity",
+          "suggestedOn",
+          "suggestedQuantity",
+          "due"
+        ],
+        "type": "object"
+      },
+      "ReorderCandidateSource": {
+        "description": "`suggestion` — a D-288 reorder suggestion; `past_order` — a delivered order that can be reordered",
+        "enum": [
+          "suggestion",
+          "past_order"
+        ],
+        "type": "string"
+      },
       "ReorderDto": {
         "properties": {
           "ids": {
@@ -59070,6 +59608,19 @@
         },
         "required": [
           "actions"
+        ],
+        "type": "object"
+      },
+      "ResolveDeepLinkDto": {
+        "properties": {
+          "token": {
+            "description": "The token of `<web>/l/<token>`; its first letter names the zone (`s` store, `a` admin, `p` partner)",
+            "example": "sQ2hlY2tUaGlzSXNBRmFrZVRva2VuMDAw",
+            "type": "string"
+          }
+        },
+        "required": [
+          "token"
         ],
         "type": "object"
       },
@@ -173311,6 +173862,239 @@
         "summary": "My work queues",
         "tags": [
           "admin.ops"
+        ]
+      }
+    },
+    "/v1/admin/deep-links/actions/resolve": {
+      "post": {
+        "description": "The page a notification link opens (D-299), for its recipient only: a link is bound to one person and one page of one zone, valid `notifications.deep_link_ttl_hours`, and never signs anyone in — the web signs the recipient in first, then resolves it here. Someone else’s or an unknown link → 404; an expired one → 410. Opening it again before it expires is allowed.\n\nImplements: D-299.",
+        "operationId": "admin.deepLinks.resolve",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "examples": {
+                "default": {
+                  "value": {
+                    "token": "sQ2hlY2tUaGlzSXNBRmFrZVRva2VuMDAw"
+                  }
+                }
+              },
+              "schema": {
+                "$ref": "#/components/schemas/ResolveDeepLinkDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "expiresAt": "2026-10-07T09:00:00+07:00",
+                  "path": "/orders/0192f3a0-7c1e-7d2a-9b1f-0000000e7303"
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/DeepLinkTargetDto"
+                }
+              }
+            },
+            "description": "Where the link goes",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "400": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.bad_request": {
+                    "$ref": "#/components/examples/problem.http.bad_request"
+                  },
+                  "http.malformed_json": {
+                    "$ref": "#/components/examples/problem.http.malformed_json"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.bad_request`, `http.malformed_json`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.unauthenticated": {
+                    "$ref": "#/components/examples/problem.auth.unauthenticated"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.unauthenticated`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.forbidden": {
+                    "$ref": "#/components/examples/problem.auth.forbidden"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.forbidden`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "404": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.not_found": {
+                    "$ref": "#/components/examples/problem.http.not_found"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.not_found`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "410": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "deep_links.expired": {
+                    "$ref": "#/components/examples/problem.deep_links.expired"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `deep_links.expired`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "validation.failed": {
+                    "$ref": "#/components/examples/problem.validation.failed"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `validation.failed`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "staff": []
+          }
+        ],
+        "summary": "Open a notification link",
+        "tags": [
+          "admin.notifications"
         ]
       }
     },
@@ -301066,6 +301850,239 @@
         ]
       }
     },
+    "/v1/partner/deep-links/actions/resolve": {
+      "post": {
+        "description": "The page a notification link opens (D-299), for its recipient only: a link is bound to one person and one page of one zone, valid `notifications.deep_link_ttl_hours`, and never signs anyone in — the web signs the recipient in first, then resolves it here. Someone else’s or an unknown link → 404; an expired one → 410. Opening it again before it expires is allowed.\n\nImplements: D-299.",
+        "operationId": "partner.deepLinks.resolve",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "examples": {
+                "default": {
+                  "value": {
+                    "token": "sQ2hlY2tUaGlzSXNBRmFrZVRva2VuMDAw"
+                  }
+                }
+              },
+              "schema": {
+                "$ref": "#/components/schemas/ResolveDeepLinkDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "expiresAt": "2026-10-07T09:00:00+07:00",
+                  "path": "/jobs/0192f3a0-7c1e-7d2a-9b1f-0000000e7310"
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/DeepLinkTargetDto"
+                }
+              }
+            },
+            "description": "Where the link goes",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "400": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.bad_request": {
+                    "$ref": "#/components/examples/problem.http.bad_request"
+                  },
+                  "http.malformed_json": {
+                    "$ref": "#/components/examples/problem.http.malformed_json"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.bad_request`, `http.malformed_json`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.unauthenticated": {
+                    "$ref": "#/components/examples/problem.auth.unauthenticated"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.unauthenticated`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.forbidden": {
+                    "$ref": "#/components/examples/problem.auth.forbidden"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.forbidden`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "404": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.not_found": {
+                    "$ref": "#/components/examples/problem.http.not_found"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.not_found`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "410": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "deep_links.expired": {
+                    "$ref": "#/components/examples/problem.deep_links.expired"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `deep_links.expired`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "validation.failed": {
+                    "$ref": "#/components/examples/problem.validation.failed"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `validation.failed`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "partner": []
+          }
+        ],
+        "summary": "Open a notification link",
+        "tags": [
+          "partner.notifications"
+        ]
+      }
+    },
     "/v1/partner/factories": {
       "get": {
         "description": "The factories of the signed-in user’s factory scopes (D-044: never another factory).\n\nImplements: D-044, D-011.",
@@ -360114,6 +361131,239 @@
         ]
       }
     },
+    "/v1/store/deep-links/actions/resolve": {
+      "post": {
+        "description": "The page a notification link opens (D-299), for its recipient only: a link is bound to one person and one page of one zone, valid `notifications.deep_link_ttl_hours`, and never signs anyone in — the web signs the recipient in first, then resolves it here. Someone else’s or an unknown link → 404; an expired one → 410. Opening it again before it expires is allowed.\n\nImplements: D-299.",
+        "operationId": "store.deepLinks.resolve",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "examples": {
+                "default": {
+                  "value": {
+                    "token": "sQ2hlY2tUaGlzSXNBRmFrZVRva2VuMDAw"
+                  }
+                }
+              },
+              "schema": {
+                "$ref": "#/components/schemas/ResolveDeepLinkDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "expiresAt": "2026-10-07T09:00:00+07:00",
+                  "path": "/account/orders/0192f3a0-7c1e-7d2a-9b1f-0000000e7303"
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/DeepLinkTargetDto"
+                }
+              }
+            },
+            "description": "Where the link goes",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "400": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.bad_request": {
+                    "$ref": "#/components/examples/problem.http.bad_request"
+                  },
+                  "http.malformed_json": {
+                    "$ref": "#/components/examples/problem.http.malformed_json"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.bad_request`, `http.malformed_json`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.unauthenticated": {
+                    "$ref": "#/components/examples/problem.auth.unauthenticated"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.unauthenticated`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.forbidden": {
+                    "$ref": "#/components/examples/problem.auth.forbidden"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.forbidden`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "404": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.not_found": {
+                    "$ref": "#/components/examples/problem.http.not_found"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.not_found`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "410": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "deep_links.expired": {
+                    "$ref": "#/components/examples/problem.deep_links.expired"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `deep_links.expired`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "validation.failed": {
+                    "$ref": "#/components/examples/problem.validation.failed"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `validation.failed`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "customer": []
+          }
+        ],
+        "summary": "Open a notification link",
+        "tags": [
+          "store.notifications"
+        ]
+      }
+    },
     "/v1/store/designer/catalog": {
       "get": {
         "description": "The box styles with dieline keys and size rules, the materials with caliper and flute allowances, the semi-design templates, the fonts and the artwork rules (bleed, safe zone, resolution — D-070) plus what an asset upload accepts. Catalogue data only: no prices or factories (D-050). Cacheable for 5 minutes.\n\nImplements: D-070, D-152, D-050.",
@@ -369068,6 +370318,197 @@
         ]
       }
     },
+    "/v1/store/me/defaults": {
+      "get": {
+        "description": "What the configurator, studio and checkout pre-fill (D-298): my default delivery address (else the one I last shipped to), my default tax profile, the companies I belong to with their tax data, default branch, whether I may order for them and whether they have a brand kit, and per product type the material and print type of my latest quotation of it. Read only; nothing is applied on the server.\n\nImplements: D-298.",
+        "operationId": "store.me.getDefaults",
+        "parameters": [
+          {
+            "description": "Product type codes (comma-separated); all types I have quoted when absent",
+            "in": "query",
+            "name": "productTypes",
+            "required": false,
+            "schema": {
+              "example": "folding,corrugate",
+              "pattern": "^[a-z0-9_]{1,40}(,[a-z0-9_]{1,40}){0,19}$",
+              "type": "string"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "companies": [
+                    {
+                      "defaultBranchId": "0192f3a0-7c1e-7d2a-9b1f-0000000e730d",
+                      "hasBrandKit": true,
+                      "id": "0192f3a0-7c1e-7d2a-9b1f-0000000e7309",
+                      "legalName": "บริษัท ตัวอย่าง จำกัด",
+                      "mayOrder": true,
+                      "taxId": "0000000000019",
+                      "withholdsTax": false
+                    }
+                  ],
+                  "deliveryAddress": {
+                    "basis": "default",
+                    "id": "0192f3a0-7c1e-7d2a-9b1f-0000000e7307"
+                  },
+                  "productTypes": [
+                    {
+                      "materialId": "0192f3a0-7c1e-7d2a-9b1f-0000000e730a",
+                      "printTypeId": "0192f3a0-7c1e-7d2a-9b1f-0000000e730b",
+                      "productTypeCode": "folding",
+                      "quotedAt": "2026-09-28T10:00:00+07:00"
+                    }
+                  ],
+                  "taxProfile": {
+                    "branchCode": "00000",
+                    "id": "0192f3a0-7c1e-7d2a-9b1f-0000000e7308",
+                    "name": "บริษัท ตัวอย่าง จำกัด",
+                    "taxId": "0000000000019"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/DefaultsDto"
+                }
+              }
+            },
+            "description": "Defaults",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.unauthenticated": {
+                    "$ref": "#/components/examples/problem.auth.unauthenticated"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.unauthenticated`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.forbidden": {
+                    "$ref": "#/components/examples/problem.auth.forbidden"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.forbidden`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "validation.failed": {
+                    "$ref": "#/components/examples/problem.validation.failed"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `validation.failed`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "customer": []
+          }
+        ],
+        "summary": "My defaults for pre-filling",
+        "tags": [
+          "store.me"
+        ]
+      }
+    },
     "/v1/store/me/identities/{provider}": {
       "delete": {
         "description": "Google, Apple or LINE. The account phone cannot be removed (409 `auth.identity_not_unlinkable`: it is the account’s key for OTP sign-in), nor the last method (409 `auth.identity_last_method`). Sessions opened with that method are signed out; audited (D-143).\n\nImplements: ADR-0004, D-143.",
@@ -369280,6 +370721,188 @@
           }
         ],
         "summary": "Remove one of my sign-in methods",
+        "tags": [
+          "store.me"
+        ]
+      }
+    },
+    "/v1/store/me/launchpad": {
+      "get": {
+        "description": "The signed-in home in one call (D-297): my 5 latest designs, up to 5 reorder candidates (open reorder suggestions soonest first, then delivered orders), every order or order group waiting for me with the action it waits for (pay → approve proof → upload artwork → confirm receipt) and one recommended next step — the first waiting action, else a due reorder, else resuming the latest design, else starting a configuration. Only my own records and those of companies I may order for.\n\nImplements: D-297, D-288, D-153.",
+        "operationId": "store.me.getLaunchpad",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "designs": [
+                    {
+                      "catalogProductId": "0192f3a0-7c1e-7d2a-9b1f-0000000e7302",
+                      "catalogProductNameEn": "Folding carton",
+                      "catalogProductNameTh": "กล่องพับ",
+                      "id": "0192f3a0-7c1e-7d2a-9b1f-0000000e7301",
+                      "lockedByOrderCode": null,
+                      "thumbnailFileId": "0192f3a0-7c1e-7d2a-9b1f-0000000e730c",
+                      "title": "กล่องขนมไหว้พระจันทร์",
+                      "updatedAt": "2026-10-03T16:20:00+07:00"
+                    }
+                  ],
+                  "needsAction": [
+                    {
+                      "action": "approve_proof",
+                      "amount": null,
+                      "code": "PK-2610-0003-01",
+                      "dueAt": null,
+                      "id": "0192f3a0-7c1e-7d2a-9b1f-0000000e7303",
+                      "productType": {
+                        "code": "folding",
+                        "id": "0192f3a0-7c1e-7d2a-9b1f-0000000e7306",
+                        "nameEn": "Folding carton",
+                        "nameTh": "กล่องพับ"
+                      },
+                      "subject": "order"
+                    }
+                  ],
+                  "nextStep": {
+                    "kind": "approve_proof",
+                    "target": "order",
+                    "targetId": "0192f3a0-7c1e-7d2a-9b1f-0000000e7303"
+                  },
+                  "reorderCandidates": [
+                    {
+                      "due": false,
+                      "orderCode": "PK-2610-0001-01",
+                      "orderId": "0192f3a0-7c1e-7d2a-9b1f-0000000e7303",
+                      "productType": {
+                        "code": "folding",
+                        "id": "0192f3a0-7c1e-7d2a-9b1f-0000000e7306",
+                        "nameEn": "Folding carton",
+                        "nameTh": "กล่องพับ"
+                      },
+                      "quantity": 1000,
+                      "source": "suggestion",
+                      "suggestedOn": "2026-10-15",
+                      "suggestedQuantity": 1500,
+                      "suggestionId": "0192f3a0-7c1e-7d2a-9b1f-0000000e7305"
+                    }
+                  ]
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/LaunchpadDto"
+                }
+              }
+            },
+            "description": "Launchpad",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.unauthenticated": {
+                    "$ref": "#/components/examples/problem.auth.unauthenticated"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.unauthenticated`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.forbidden": {
+                    "$ref": "#/components/examples/problem.auth.forbidden"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.forbidden`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "customer": []
+          }
+        ],
+        "summary": "My launchpad",
         "tags": [
           "store.me"
         ]

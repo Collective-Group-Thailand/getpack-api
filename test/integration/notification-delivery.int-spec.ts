@@ -9,8 +9,10 @@ import { FakeSmsSender } from '@integrations/sms/fake-sms-sender';
 import { FakeTeamsWebhook } from '@integrations/teams/fake-teams';
 import { FakeWebPush } from '@integrations/web-push/fake-web-push';
 import { DomainEvents } from '@platform/domain-events/domain-events.service';
+import { DeepLinksService } from '@platform/notifications/deep-links.service';
 import { NotificationDelivery } from '@platform/notifications/notification-delivery';
 import { type RealtimePublisher } from '@platform/realtime/realtime.publisher';
+import { SettingsService } from '@platform/settings/settings.service';
 
 import { seedDev } from '../../prisma/seed/dev-seed';
 import { type MigratedDatabase, startMigratedDatabase, stopMigratedDatabase } from '../support/database';
@@ -19,6 +21,7 @@ describe('notification delivery per channel (PostgreSQL 18, fake providers)', ()
   let db: MigratedDatabase;
   let prisma: PrismaService;
   let delivery: NotificationDelivery;
+  let deepLinks: DeepLinksService;
   const email = new FakeEmailSender();
   const sms = new FakeSmsSender();
   const line = new FakeLineMessaging();
@@ -39,6 +42,9 @@ describe('notification delivery per channel (PostgreSQL 18, fake providers)', ()
       publish: (channel: string, signal: { type: string }) =>
         Promise.resolve(void published.push({ channel, type: signal.type })),
     };
+    deepLinks = new DeepLinksService(prisma, new SettingsService(prisma), {
+      get: () => 'https://web.packio.invalid',
+    } as unknown as AppConfig);
     delivery = new NotificationDelivery(
       prisma,
       encryption,
@@ -48,6 +54,7 @@ describe('notification delivery per channel (PostgreSQL 18, fake providers)', ()
       line,
       webPush,
       teams,
+      deepLinks,
     );
 
     staffId = (await prisma.user.findFirstOrThrow({ where: { email: 'finance@example.invalid' } })).id;
@@ -89,7 +96,7 @@ describe('notification delivery per channel (PostgreSQL 18, fake providers)', ()
     await stopMigratedDatabase(db);
   });
 
-  const templateVersion = async (channel: NotificationChannel) => {
+  const templateVersion = async (channel: NotificationChannel, body = 'ข้อความ {{payload.code}}') => {
     const template = await prisma.notificationTemplate.create({
       data: {
         key: `delivery.test.n${seq}:${channel}`,
@@ -101,7 +108,7 @@ describe('notification delivery per channel (PostgreSQL 18, fake providers)', ()
             versionNo: 1,
             locale: 'th',
             subject: 'เรื่อง {{payload.code}}',
-            body: 'ข้อความ {{payload.code}}',
+            body,
             status: 'published',
             publishedAt: new Date(),
           },
@@ -113,17 +120,24 @@ describe('notification delivery per channel (PostgreSQL 18, fake providers)', ()
   };
 
   /** One event, template and route per queued row (all three are unique per key/channel/event). */
-  const queue = async (channel: NotificationChannel, recipient: { userId?: bigint; teamRoute?: boolean }) => {
+  const queue = async (
+    channel: NotificationChannel,
+    recipient: { userId?: bigint; teamRoute?: boolean },
+    about: { aggregateType: string; aggregateId: string; body?: string } = {
+      aggregateType: 'user',
+      aggregateId: customerPublicId,
+    },
+  ) => {
     seq += 1;
     const event = await prisma.withTx((tx) =>
       new DomainEvents().record(tx, {
         type: `delivery.test.n${seq}`,
-        aggregateType: 'user',
-        aggregateId: customerPublicId,
+        aggregateType: about.aggregateType,
+        aggregateId: about.aggregateId,
         payload: { code: 'PK-0001' },
       }),
     );
-    const template = await templateVersion(channel);
+    const template = await templateVersion(channel, about.body);
     const team = recipient.teamRoute
       ? await prisma.team.findUniqueOrThrow({ where: { code: 'finance' } })
       : null;
@@ -187,6 +201,63 @@ describe('notification delivery per channel (PostgreSQL 18, fake providers)', ()
     ]);
     expect((await statusOf(team.id)).status).toBe('sent');
     expect(teams.posted[0]).toEqual({ secretRef: 'packio/teams/finance', text: 'ข้อความ PK-0001' });
+  });
+
+  it('gives a message about a page a deep link bound to its recipient (D-299)', async () => {
+    const orderId = '0192f3a0-7c1e-7d2a-9b1f-0000000e7399';
+    const chat = await queue(
+      'line',
+      { userId: customerId },
+      {
+        aggregateType: 'order',
+        aggregateId: orderId,
+        body: 'ข้อความ {{payload.code}}{{#if link}} {{link}}{{/if}}',
+      },
+    );
+    const before = line.sent.length;
+    await delivery.deliverDue();
+    expect((await statusOf(chat.id)).status).toBe('sent');
+    const text = line.sent[before]!.text;
+    const token = /https:\/\/web\.packio\.invalid\/l\/(s[A-Za-z0-9_-]{32})$/.exec(text)?.[1];
+    expect(token).toBeDefined();
+    const row = await prisma.deepLinkToken.findUniqueOrThrow({ where: { notificationId: chat.id } });
+    expect(row).toMatchObject({ userId: customerId, surface: 'store', path: `/account/orders/${orderId}` });
+    expect(row.tokenHash).not.toEqual(Buffer.from(token!)); // stored hashed
+    const hours = (row.expiresAt.getTime() - row.createdAt.getTime()) / 3_600_000;
+    expect(Math.round(hours)).toBe(72); // notifications.deep_link_ttl_hours
+
+    const customer = { type: 'user', userId: customerId, audience: 'customer' } as never;
+    await expect(deepLinks.resolve(customer, 'store', token!)).resolves.toMatchObject({
+      path: `/account/orders/${orderId}`,
+    });
+    // Someone else, another zone or an unknown token: not found; after expiry: gone.
+    const other = { type: 'user', userId: staffId, audience: 'staff' } as never;
+    await expect(deepLinks.resolve(other, 'store', token!)).rejects.toMatchObject({ code: 'http.not_found' });
+    await expect(deepLinks.resolve(customer, 'admin', token!)).rejects.toMatchObject({
+      code: 'http.not_found',
+    });
+    await expect(deepLinks.resolve(customer, 'store', `s${'x'.repeat(32)}`)).rejects.toMatchObject({
+      code: 'http.not_found',
+    });
+    await expect(
+      deepLinks.resolve(customer, 'store', token!, new Date(row.expiresAt.getTime() + 1)),
+    ).rejects.toMatchObject({ code: 'deep_links.expired' });
+    expect((await prisma.deepLinkToken.findUniqueOrThrow({ where: { id: row.id } })).openCount).toBe(1);
+
+    // A message without a page for its event carries no link.
+    const plain = await queue(
+      'line',
+      { userId: customerId },
+      {
+        aggregateType: 'user',
+        aggregateId: customerPublicId,
+        body: 'x{{#if link}} {{link}}{{/if}}',
+      },
+    );
+    const n = line.sent.length;
+    await delivery.deliverDue();
+    expect(line.sent[n]!.text).toBe('x');
+    expect(await prisma.deepLinkToken.count({ where: { notificationId: plain.id } })).toBe(0);
   });
 
   it('fails a row without an address and retries provider outages for a day', async () => {

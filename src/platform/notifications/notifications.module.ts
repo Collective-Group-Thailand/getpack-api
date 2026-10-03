@@ -2,6 +2,7 @@ import { Global, Module } from '@nestjs/common';
 import { RealtimePublisher } from '@platform/realtime/realtime.publisher';
 
 import { ConsentPurposesAdminService } from './consent-purposes-admin.service';
+import { DeepLinksService } from './deep-links.service';
 import { MyNotificationsService } from './my-notifications.service';
 import { NotificationDelivery } from './notification-delivery';
 import { NotificationRouter } from './notification-router';
@@ -16,6 +17,7 @@ const PROVIDERS = [
   NotificationsAdminService,
   ConsentPurposesAdminService,
   MyNotificationsService,
+  DeepLinksService,
 ];
 
 /**
