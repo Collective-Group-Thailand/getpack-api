@@ -122,6 +122,37 @@ export interface DielineEngine {
   thumbnails(request: RecipeBuildRequest, size: number): Promise<Thumbnails>;
   /** The engine's own recipes, grouped by the base code they name (for the recipe bundle, ADR-0010). */
   recipesByBase(): Promise<Record<string, unknown[]>>;
+  /**
+   * ADR-0011: the print PDF of a variant — the vector die on its Separation layers, TrimBox = the dieline, BleedBox = +
+   * bleed — with the studio's artwork tiles under it (sheet millimetres, y down).
+   */
+  printPdf(request: RecipeBuildRequest, options: PrintPdfOptions): Promise<PrintPdf>;
   /** The engine's reference material of a material class (the first it lists), null for a class it does not know (D-270). */
   referenceMaterial(materialClass: string): Promise<DielineMaterial | null>;
+}
+
+/** A JPEG tile placed on the sheet (mm, y down from the dieline's top-left). */
+export interface PrintTile {
+  jpeg: Buffer;
+  widthPx: number;
+  heightPx: number;
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+}
+
+export interface PrintPdfOptions {
+  bleedMm: number;
+  tiles: PrintTile[];
+  title?: string;
+}
+
+export interface PrintPdf {
+  pdf: Buffer;
+  /** The dieline's bounding box and the paper margin around it, mm (to place further pages the same way). */
+  sheetWidthMm: number;
+  sheetHeightMm: number;
+  marginMm: number;
+  engineVersion: string;
 }

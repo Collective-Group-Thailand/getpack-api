@@ -346,6 +346,10 @@ export const ERROR_CODES = {
   'studio.rate_limited': HttpStatus.TOO_MANY_REQUESTS,
   'studio.checks_not_run': HttpStatus.CONFLICT,
   'studio.block_not_acknowledgeable': HttpStatus.CONFLICT,
+  'studio.quote_not_of_version': HttpStatus.UNPROCESSABLE_ENTITY,
+  'studio.checks_not_ready': HttpStatus.CONFLICT,
+  'studio.renders_missing': HttpStatus.CONFLICT,
+  'studio.print_unavailable': HttpStatus.CONFLICT,
 } as const satisfies Record<string, HttpStatus>;
 
 export type ErrorCode = keyof typeof ERROR_CODES;

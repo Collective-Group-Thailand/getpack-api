@@ -1491,6 +1491,22 @@
     "block_not_acknowledgeable": {
       "title": "This must be fixed",
       "detail": "A blocking problem cannot be accepted; fix it in the design."
+    },
+    "quote_not_of_version": {
+      "title": "Price is for another version",
+      "detail": "The quotation was not priced from this version of the design; price it again."
+    },
+    "checks_not_ready": {
+      "title": "Checks not passed",
+      "detail": "Fix the blocking problems and accept the warnings of this version before ordering."
+    },
+    "renders_missing": {
+      "title": "Artwork not rendered",
+      "detail": "The studio has not uploaded the print rendering of this version yet."
+    },
+    "print_unavailable": {
+      "title": "Print file not available",
+      "detail": "This design cannot be turned into a print file automatically (no drawable style or engine off)."
     }
   }
 }

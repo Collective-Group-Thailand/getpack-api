@@ -2,6 +2,8 @@ import { copyFile, mkdir, mkdtemp, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 
+import sharp from 'sharp';
+
 import { DielineBuildError } from './dieline-engine.port';
 import { PackioDielineEngine } from './packio-dieline.engine';
 
@@ -124,8 +126,31 @@ describe('PackioDielineEngine (vendored bundle, ADR-0010)', () => {
     expect(drawing.engineVersion).toMatch(/^@packio\/dieline@/);
   });
 
+  it('writes the print PDF with the artwork tiles under the die (ADR-0011)', async () => {
+    const recipe = { engine: (await engine.recipesByBase())['PK-TE-01']! };
+    const jpeg = await sharp({ create: { width: 64, height: 64, channels: 3, background: '#c0392b' } })
+      .jpeg()
+      .toBuffer();
+    const print = await engine.printPdf(
+      { recipe, options: { window: 'none' }, sizes: { length: 60, width: 40, height: 120 }, material: BOARD },
+      {
+        bleedMm: 3,
+        tiles: [{ jpeg, widthPx: 64, heightPx: 64, x: 0, y: 0, width: 50, height: 50 }],
+        title: 'test',
+      },
+    );
+    expect(print.pdf.subarray(0, 5).toString()).toBe('%PDF-');
+    expect(print.pdf.toString('latin1')).toContain('/CutContour');
+    expect(print.pdf.toString('latin1')).toContain('/DCTDecode');
+    expect(print.sheetWidthMm).toBeGreaterThan(200);
+    expect(print.marginMm).toBe(10);
+  });
+
   it('names the reference material of a material class (D-270)', async () => {
-    expect(await engine.referenceMaterial('corrugated')).toMatchObject({ kind: 'corrugated', caliperMm: 1.6 });
+    expect(await engine.referenceMaterial('corrugated')).toMatchObject({
+      kind: 'corrugated',
+      caliperMm: 1.6,
+    });
     expect(await engine.referenceMaterial('paperboard')).toMatchObject({ kind: 'paperboard' });
     expect(await engine.referenceMaterial('unobtainium')).toBeNull();
   });

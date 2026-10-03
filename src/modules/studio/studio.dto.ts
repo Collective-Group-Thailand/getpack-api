@@ -1,3 +1,4 @@
+import { DestinationInputDto } from '@modules/carts/carts.dto';
 import { QuoteCalculationDto, STORE_CALCULATION_EXAMPLE } from '@modules/pricing/quotes/quote.dto';
 import { TargetPriceField } from '@modules/pricing/quotes/target-price';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
@@ -6,7 +7,9 @@ import {
   ArrayMaxSize,
   ArrayMinSize,
   IsArray,
+  IsIn,
   IsInt,
+  IsNumber,
   IsObject,
   IsOptional,
   IsString,
@@ -15,6 +18,7 @@ import {
   Max,
   MaxLength,
   Min,
+  ValidateNested,
 } from 'class-validator';
 
 import { PRICE_CHANGE_REASONS } from './studio-spec';
@@ -422,4 +426,236 @@ export const CHECK_RUN_EXAMPLE: CheckRunDto = {
   ],
   ready: false,
   evaluatedAt: '2026-10-03T10:00:00+07:00',
+};
+
+// --- Print file and order hand-off (U4.B4, D-280, D-281) ----------------------------------------------------
+
+export class AddRenderDto {
+  @ApiProperty({ enum: ['outside', 'inside'], enumName: 'RenderSide', example: 'outside' })
+  @IsIn(['outside', 'inside'])
+  side!: 'outside' | 'inside';
+
+  @ApiProperty({
+    enum: ['tile', 'finish_mask'],
+    enumName: 'DesignRenderKind',
+    example: 'tile',
+    description: '`tile`: 300 dpi JPEG of the artwork; `finish_mask`: PNG of a finish area',
+  })
+  @IsIn(['tile', 'finish_mask'])
+  kind!: 'tile' | 'finish_mask';
+
+  @ApiPropertyOptional({
+    example: 'Foil',
+    description: 'For a finish mask: its separation (Foil, SpotUV, Emboss, Window)',
+  })
+  @IsOptional()
+  @IsString()
+  @Matches(/^[A-Za-z][A-Za-z0-9]{1,31}$/)
+  separation?: string;
+
+  @ApiProperty({ example: 0, description: 'mm from the dieline’s left' })
+  @Type(() => Number)
+  @IsNumber({ maxDecimalPlaces: 2 })
+  @Min(-100)
+  @Max(5000)
+  xMm!: number;
+
+  @ApiProperty({ example: 0, description: 'mm from the dieline’s top' })
+  @Type(() => Number)
+  @IsNumber({ maxDecimalPlaces: 2 })
+  @Min(-100)
+  @Max(5000)
+  yMm!: number;
+
+  @ApiProperty({ example: 340.5 })
+  @Type(() => Number)
+  @IsNumber({ maxDecimalPlaces: 2 })
+  @Min(0.01)
+  @Max(5000)
+  widthMm!: number;
+
+  @ApiProperty({ example: 180 })
+  @Type(() => Number)
+  @IsNumber({ maxDecimalPlaces: 2 })
+  @Min(0.01)
+  @Max(5000)
+  heightMm!: number;
+
+  @ApiProperty({
+    format: 'uuid',
+    example: '0192f3a0-7c1e-7d2a-9b1f-00000000f701',
+    description: 'My uploaded image',
+  })
+  @IsUUID()
+  fileId!: string;
+}
+
+export class DesignRenderDto {
+  @ApiProperty({ format: 'uuid', example: '0192f3a0-7c1e-7d2a-9b1f-00000000f702' })
+  id!: string;
+
+  @ApiProperty({ enum: ['outside', 'inside'], enumName: 'RenderSide', example: 'outside' })
+  side!: string;
+
+  @ApiProperty({ enum: ['tile', 'finish_mask'], enumName: 'DesignRenderKind', example: 'tile' })
+  kind!: string;
+
+  @ApiProperty({ type: String, nullable: true, example: null })
+  separation!: string | null;
+
+  @ApiProperty({ example: 0 })
+  xMm!: number;
+
+  @ApiProperty({ example: 0 })
+  yMm!: number;
+
+  @ApiProperty({ example: 340.5 })
+  widthMm!: number;
+
+  @ApiProperty({ example: 180 })
+  heightMm!: number;
+
+  @ApiProperty({ format: 'uuid', example: '0192f3a0-7c1e-7d2a-9b1f-00000000f701' })
+  fileId!: string;
+}
+
+export class StudioOrderDto {
+  @ApiProperty({
+    format: 'uuid',
+    example: '0192f3a0-7c1e-7d2a-9b1f-00000000a201',
+    description: 'The studio quotation of the version',
+  })
+  @IsUUID()
+  quoteId!: string;
+
+  @ApiProperty({ format: 'uuid', example: '0192f3a0-7c1e-7d2a-9b1f-00000000a202' })
+  @IsUUID()
+  quoteOptionId!: string;
+
+  @ApiPropertyOptional({ type: 'integer', example: 3, description: 'Absent: the current version' })
+  @IsOptional()
+  @Type(() => Number)
+  @IsInt()
+  @Min(1)
+  versionNo?: number;
+
+  @ApiPropertyOptional({ type: [DestinationInputDto], description: 'As `store.cart.addItem`' })
+  @IsOptional()
+  @IsArray()
+  @ArrayMinSize(1)
+  @ArrayMaxSize(20)
+  @ValidateNested({ each: true })
+  @Type(() => DestinationInputDto)
+  destinations?: DestinationInputDto[];
+}
+
+export class StudioPrintJobDto {
+  @ApiProperty({ format: 'uuid', example: '0192f3a0-7c1e-7d2a-9b1f-00000000a301' })
+  id!: string;
+
+  @ApiProperty({
+    enum: ['queued', 'running', 'succeeded', 'failed'],
+    enumName: 'JobStatus',
+    example: 'queued',
+  })
+  status!: string;
+
+  @ApiProperty({ format: 'uuid', example: '0192f3a0-7c1e-7d2a-9b1f-00000000d101' })
+  designId!: string;
+
+  @ApiProperty({ type: 'integer', example: 3 })
+  versionNo!: number;
+
+  @ApiProperty({
+    type: String,
+    format: 'uuid',
+    nullable: true,
+    example: '0192f3a0-7c1e-7d2a-9b1f-00000000c901',
+  })
+  cartItemId!: string | null;
+
+  @ApiProperty({ type: String, format: 'uuid', nullable: true, example: null })
+  orderId!: string | null;
+
+  @ApiProperty({
+    type: String,
+    format: 'uuid',
+    nullable: true,
+    example: null,
+    description: 'The artwork submission it became',
+  })
+  submissionId!: string | null;
+
+  @ApiProperty({ type: String, nullable: true, example: null, description: 'Signed URL (5 minutes)' })
+  printFileUrl!: string | null;
+
+  @ApiProperty({ type: String, nullable: true, example: null, description: 'The digital proof, signed URL' })
+  proofFileUrl!: string | null;
+
+  @ApiProperty({ type: String, nullable: true, example: null, description: 'The 3D snapshot, signed URL' })
+  snapshotUrl!: string | null;
+
+  @ApiProperty({ type: String, nullable: true, example: null })
+  error!: string | null;
+
+  @ApiProperty({
+    example: '/v1/store/studio/jobs/0192f3a0-7c1e-7d2a-9b1f-00000000a301',
+    description: 'Poll this',
+  })
+  statusUrl!: string;
+
+  @ApiProperty({ format: 'date-time', example: '2026-10-03T10:00:00+07:00' })
+  createdAt!: string;
+
+  @ApiProperty({ type: String, format: 'date-time', nullable: true, example: null })
+  completedAt!: string | null;
+}
+
+export class StudioApprovalViewDto {
+  @ApiProperty({ format: 'uuid', example: '0192f3a0-7c1e-7d2a-9b1f-00000000a401' })
+  orderId!: string;
+
+  @ApiProperty({ example: 'PK-2610-0001-01' })
+  orderCode!: string;
+
+  @ApiProperty({ example: 'pending_company_approval' })
+  groupStatus!: string;
+
+  @ApiProperty({ format: 'uuid', example: '0192f3a0-7c1e-7d2a-9b1f-00000000d101' })
+  designId!: string;
+
+  @ApiProperty({ example: 'กล่องกาแฟ' })
+  title!: string;
+
+  @ApiProperty({ type: 'integer', example: 3 })
+  versionNo!: number;
+
+  @ApiProperty({ type: 'object', additionalProperties: true, nullable: true, example: null })
+  box!: Record<string, unknown> | null;
+
+  @ApiProperty({ type: 'object', additionalProperties: true, example: { content: { elements: [] } } })
+  document!: Record<string, unknown>;
+
+  @ApiProperty({ example: '13718.40', description: 'The order line incl. VAT and shipping' })
+  grossAmount!: string;
+
+  @ApiProperty({ type: CheckRunDto, nullable: true })
+  checks!: CheckRunDto | null;
+}
+
+export const PRINT_JOB_EXAMPLE: StudioPrintJobDto = {
+  id: '0192f3a0-7c1e-7d2a-9b1f-00000000a301',
+  status: 'queued',
+  designId: '0192f3a0-7c1e-7d2a-9b1f-00000000d101',
+  versionNo: 3,
+  cartItemId: '0192f3a0-7c1e-7d2a-9b1f-00000000c901',
+  orderId: null,
+  submissionId: null,
+  printFileUrl: null,
+  proofFileUrl: null,
+  snapshotUrl: null,
+  error: null,
+  statusUrl: '/v1/store/studio/jobs/0192f3a0-7c1e-7d2a-9b1f-00000000a301',
+  createdAt: '2026-10-03T10:00:00+07:00',
+  completedAt: null,
 };

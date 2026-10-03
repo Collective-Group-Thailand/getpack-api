@@ -40,6 +40,7 @@ import { ReportsModule } from '@modules/reports/reports.module';
 import { RfqModule } from '@modules/rfq/rfq.module';
 import { SamplesModule } from '@modules/samples/samples.module';
 import { ShippingModule } from '@modules/shipping/shipping.module';
+import { StudioModule } from '@modules/studio/studio.module';
 import { StylesModule } from '@modules/styles/styles.module';
 import { TaxModule } from '@modules/tax/tax.module';
 import { TimelineModule } from '@modules/timeline/timeline.module';
@@ -91,6 +92,7 @@ import { WorkerLifecycle } from './worker.lifecycle';
     QuotesModule,
     SamplesModule,
     StylesModule,
+    StudioModule,
     RfqModule,
     CustomersModule,
     CartsModule,

@@ -14,6 +14,8 @@ import {
   type DielineMaterial,
   type DielineQuantities,
   type DielineRequest,
+  type PrintPdf,
+  type PrintPdfOptions,
   type RecipeBuild,
   type RecipeBuildRequest,
   type RecipeFacts,
@@ -75,7 +77,23 @@ interface DielinePackage {
   flattenContour(contour: unknown): Pt[];
   dielineToSvg(d: Dieline, opts?: Values): string;
   dielineToDxf(d: Dieline): string;
-  dielineToPdf(d: Dieline, opts?: Values): Uint8Array;
+  dielineToPdf(
+    d: Dieline,
+    opts?: {
+      margin?: number;
+      bleedMm?: number;
+      title?: string;
+      images?: {
+        jpeg: Uint8Array;
+        widthPx: number;
+        heightPx: number;
+        x: number;
+        y: number;
+        width: number;
+        height: number;
+      }[];
+    },
+  ): Uint8Array;
   render2D(d: Dieline, tone: 'kraft' | 'white', opts?: { size?: number }): Image;
   render3D(
     d: Dieline,
@@ -212,6 +230,26 @@ export class PackioDielineEngine implements DielineEngine {
     const out: Record<string, unknown[]> = {};
     for (const r of pkg.RECIPES) if (r.base) (out[r.base] ??= []).push(r);
     return out;
+  }
+
+  async printPdf(request: RecipeBuildRequest, options: PrintPdfOptions): Promise<PrintPdf> {
+    const { pkg, version } = await this.engine();
+    const { recipe, values } = this.pick(pkg, request);
+    const { dieline } = pkg.buildFromRecipe(recipe, values, request.material);
+    const margin = 10;
+    const pdf = pkg.dielineToPdf(dieline, {
+      margin,
+      bleedMm: options.bleedMm,
+      title: options.title,
+      images: options.tiles.map((t) => ({ ...t, jpeg: new Uint8Array(t.jpeg) })),
+    });
+    return {
+      pdf: Buffer.from(pdf),
+      sheetWidthMm: dieline.width,
+      sheetHeightMm: dieline.height,
+      marginMm: margin,
+      engineVersion: version,
+    };
   }
 
   async referenceMaterial(materialClass: string): Promise<DielineMaterial | null> {

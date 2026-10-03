@@ -381,6 +381,8 @@ model CartItem {
   reuseArtworkProof     Proof?                 @relation("CartItemReuseProof", fields: [reuseArtworkProofId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_cart_items__reuse_artwork_proof_id")
   destinations          CartItemDestination[]
 
+  studioPrintJob StudioPrintJob? @relation("StudioPrintJobCartItem")
+
   @@index([cartId], map: "ix_cart_items__cart_id")
   @@index([quoteId], map: "ix_cart_items__quote_id")
   @@index([quoteOptionId], map: "ix_cart_items__quote_option_id")
@@ -683,6 +685,8 @@ model Order {
 
   samples         Sample[] @relation("SampleOrder")
   samplesCredited Sample[] @relation("SampleCreditOrder")
+
+  studioPrintJob StudioPrintJob? @relation("StudioPrintJobOrder")
 
   @@index([companyId, createdAt(sort: Desc)], map: "ix_orders__company_id__created_at")
   @@index([orderGroupId], map: "ix_orders__order_group_id")

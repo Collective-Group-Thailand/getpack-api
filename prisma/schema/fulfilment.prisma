@@ -201,6 +201,8 @@ model ArtworkSubmission {
   proofs                Proof[]
   designRounds          DesignRound[]           @relation("DesignRoundSubmission")
 
+  studioPrintJob StudioPrintJob? @relation("StudioPrintJobSubmission")
+
   @@unique([orderId, versionNo], map: "ux_artwork_submissions__order_id__version_no")
   @@index([designDocumentVersionId], map: "ix_artwork_submissions__design_document_version_id")
   @@index([submittedById], map: "ix_artwork_submissions__submitted_by")
@@ -566,6 +568,8 @@ model DesignDocumentVersion {
   orders              Order[]                      @relation("OrderDesignVersion")
   quotes              Quote[]                      @relation("QuoteDesignVersion")
   checkRuns           DesignCheckRun[]             @relation("DesignCheckRunVersion")
+  renders             DesignVersionRender[]        @relation("DesignVersionRenderVersion")
+  printJobs           StudioPrintJob[]             @relation("StudioPrintJobVersion")
   checkAcks           DesignCheckAcknowledgement[] @relation("DesignCheckAckVersion")
   rfqs                Rfq[]                        @relation("RfqDesignVersion")
 
@@ -1905,4 +1909,91 @@ model DesignCheckAcknowledgement {
   @@unique([versionId, ruleId, elementId], map: "ux_design_check_acknowledgements__version__rule__element")
   @@index([userId], map: "ix_design_check_acknowledgements__user_id")
   @@map("design_check_acknowledgements")
+}
+
+// --- Studio print file (U4.B4, D-280, ADR-0011) -------------------------------------------------------
+
+enum DesignRenderKind {
+  /// Artwork at 300 dpi, a JPEG tile of the sheet.
+  tile
+  /// A finish area as a PNG mask (foil, spot UV, emboss, window film).
+  finish_mask
+
+  @@map("design_render_kind")
+}
+
+/// ADR-0011: what the studio rendered for a version (its one renderer), placed on the sheet in mm.
+model DesignVersionRender {
+  id         BigInt           @id(map: "pk_design_version_renders") @default(autoincrement())
+  publicId   String           @unique(map: "ux_design_version_renders__public_id") @default(dbgenerated("uuidv7()")) @map("public_id") @db.Uuid
+  versionId  BigInt           @map("version_id")
+  side       PrintSides
+  kind       DesignRenderKind
+  /// The separation a finish mask prints on (`Foil`, `SpotUV`, `Emboss`, `Window`).
+  separation String?
+  xMm        Decimal          @map("x_mm") @db.Decimal(10, 2)
+  yMm        Decimal          @map("y_mm") @db.Decimal(10, 2)
+  widthMm    Decimal          @map("width_mm") @db.Decimal(10, 2)
+  heightMm   Decimal          @map("height_mm") @db.Decimal(10, 2)
+  fileId     BigInt           @map("file_id")
+  createdAt  DateTime         @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  version DesignDocumentVersion @relation("DesignVersionRenderVersion", fields: [versionId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_design_version_renders__version_id")
+  file    FileObject            @relation("DesignVersionRenderFile", fields: [fileId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_design_version_renders__file_id")
+
+  @@index([versionId], map: "ix_design_version_renders__version_id")
+  @@index([fileId], map: "ix_design_version_renders__file_id")
+  @@map("design_version_renders")
+}
+
+enum StudioPrintJobStatus {
+  queued
+  running
+  succeeded
+  failed
+
+  @@map("studio_print_job_status")
+}
+
+/// D-280 "order this version": the print PDF assembled on the server, its digital proof and 3D snapshot, attached to
+/// the order line's artwork once the order exists.
+model StudioPrintJob {
+  id             BigInt               @id(map: "pk_studio_print_jobs") @default(autoincrement())
+  publicId       String               @unique(map: "ux_studio_print_jobs__public_id") @default(dbgenerated("uuidv7()")) @map("public_id") @db.Uuid
+  versionId      BigInt               @map("version_id")
+  customerUserId BigInt               @map("customer_user_id")
+  quoteId        BigInt               @map("quote_id")
+  cartItemId     BigInt?              @unique(map: "ux_studio_print_jobs__cart_item_id") @map("cart_item_id")
+  orderId        BigInt?              @unique(map: "ux_studio_print_jobs__order_id") @map("order_id")
+  status         StudioPrintJobStatus @default(queued)
+  attempts       Int                  @default(0) @db.SmallInt
+  lockedUntil    DateTime?            @map("locked_until") @db.Timestamptz(6)
+  printFileId    BigInt?              @map("print_file_id")
+  proofFileId    BigInt?              @map("proof_file_id")
+  snapshotFileId BigInt?              @map("snapshot_file_id")
+  engineVersion  String?              @map("engine_version")
+  error          String?
+  submissionId   BigInt?              @unique(map: "ux_studio_print_jobs__submission_id") @map("submission_id")
+  createdAt      DateTime             @default(now()) @map("created_at") @db.Timestamptz(6)
+  completedAt    DateTime?            @map("completed_at") @db.Timestamptz(6)
+  updatedAt      DateTime             @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  version      DesignDocumentVersion @relation("StudioPrintJobVersion", fields: [versionId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_studio_print_jobs__version_id")
+  customer     User                  @relation("StudioPrintJobCustomer", fields: [customerUserId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_studio_print_jobs__customer_user_id")
+  quote        Quote                 @relation("StudioPrintJobQuote", fields: [quoteId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_studio_print_jobs__quote_id")
+  cartItem     CartItem?             @relation("StudioPrintJobCartItem", fields: [cartItemId], references: [id], onDelete: SetNull, onUpdate: Restrict, map: "fk_studio_print_jobs__cart_item_id")
+  order        Order?                @relation("StudioPrintJobOrder", fields: [orderId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_studio_print_jobs__order_id")
+  printFile    FileObject?           @relation("StudioPrintJobPrintFile", fields: [printFileId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_studio_print_jobs__print_file_id")
+  proofFile    FileObject?           @relation("StudioPrintJobProofFile", fields: [proofFileId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_studio_print_jobs__proof_file_id")
+  snapshotFile FileObject?           @relation("StudioPrintJobSnapshotFile", fields: [snapshotFileId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_studio_print_jobs__snapshot_file_id")
+  submission   ArtworkSubmission?    @relation("StudioPrintJobSubmission", fields: [submissionId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_studio_print_jobs__submission_id")
+
+  @@index([versionId], map: "ix_studio_print_jobs__version_id")
+  @@index([customerUserId], map: "ix_studio_print_jobs__customer_user_id")
+  @@index([quoteId], map: "ix_studio_print_jobs__quote_id")
+  @@index([printFileId], map: "ix_studio_print_jobs__print_file_id")
+  @@index([proofFileId], map: "ix_studio_print_jobs__proof_file_id")
+  @@index([snapshotFileId], map: "ix_studio_print_jobs__snapshot_file_id")
+  @@index([status, lockedUntil], map: "ix_studio_print_jobs__queue", where: raw("(status = ANY (ARRAY['queued'::studio_print_job_status, 'running'::studio_print_job_status]))"))
+  @@map("studio_print_jobs")
 }

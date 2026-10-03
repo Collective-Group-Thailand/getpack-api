@@ -3356,6 +3356,17 @@
           "type": "https://errors.packio/studio.block_not_acknowledgeable"
         }
       },
+      "problem.studio.checks_not_ready": {
+        "summary": "studio.checks_not_ready",
+        "value": {
+          "code": "studio.checks_not_ready",
+          "detail": "กรุณาแก้ไขปัญหาที่ต้องแก้และยอมรับคำเตือนของเวอร์ชันนี้ก่อนสั่งผลิต",
+          "requestId": "6f1c2d8e-2c7b-4d0e-9d1c-3f1a2b3c4d5e",
+          "status": 409,
+          "title": "ยังตรวจงานไม่ผ่าน",
+          "type": "https://errors.packio/studio.checks_not_ready"
+        }
+      },
       "problem.studio.checks_not_run": {
         "summary": "studio.checks_not_run",
         "value": {
@@ -3367,6 +3378,28 @@
           "type": "https://errors.packio/studio.checks_not_run"
         }
       },
+      "problem.studio.print_unavailable": {
+        "summary": "studio.print_unavailable",
+        "value": {
+          "code": "studio.print_unavailable",
+          "detail": "แบบนี้ยังสร้างไฟล์พิมพ์อัตโนมัติไม่ได้ (ไม่มีสไตล์ที่วาดได้หรือระบบวาดปิดอยู่)",
+          "requestId": "6f1c2d8e-2c7b-4d0e-9d1c-3f1a2b3c4d5e",
+          "status": 409,
+          "title": "สร้างไฟล์พิมพ์อัตโนมัติไม่ได้",
+          "type": "https://errors.packio/studio.print_unavailable"
+        }
+      },
+      "problem.studio.quote_not_of_version": {
+        "summary": "studio.quote_not_of_version",
+        "value": {
+          "code": "studio.quote_not_of_version",
+          "detail": "ใบเสนอราคานี้ไม่ได้คำนวณจากเวอร์ชันนี้ของแบบ กรุณาคำนวณราคาใหม่",
+          "requestId": "6f1c2d8e-2c7b-4d0e-9d1c-3f1a2b3c4d5e",
+          "status": 422,
+          "title": "ราคาเป็นของเวอร์ชันอื่น",
+          "type": "https://errors.packio/studio.quote_not_of_version"
+        }
+      },
       "problem.studio.rate_limited": {
         "summary": "studio.rate_limited",
         "value": {
@@ -3376,6 +3409,17 @@
           "status": 429,
           "title": "ตรวจราคาบ่อยเกินไป",
           "type": "https://errors.packio/studio.rate_limited"
+        }
+      },
+      "problem.studio.renders_missing": {
+        "summary": "studio.renders_missing",
+        "value": {
+          "code": "studio.renders_missing",
+          "detail": "สตูดิโอยังไม่ได้อัปโหลดภาพสำหรับพิมพ์ของเวอร์ชันนี้",
+          "requestId": "6f1c2d8e-2c7b-4d0e-9d1c-3f1a2b3c4d5e",
+          "status": 409,
+          "title": "ยังไม่มีไฟล์ภาพสำหรับพิมพ์",
+          "type": "https://errors.packio/studio.renders_missing"
         }
       },
       "problem.studio.spec_mismatch": {
@@ -4445,6 +4489,75 @@
           }
         },
         "required": [
+          "fileId"
+        ],
+        "type": "object"
+      },
+      "AddRenderDto": {
+        "properties": {
+          "fileId": {
+            "description": "My uploaded image",
+            "example": "0192f3a0-7c1e-7d2a-9b1f-00000000f701",
+            "format": "uuid",
+            "type": "string"
+          },
+          "heightMm": {
+            "example": 180,
+            "maximum": 5000,
+            "minimum": 0.01,
+            "type": "number"
+          },
+          "kind": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/DesignRenderKind"
+              }
+            ],
+            "description": "`tile`: 300 dpi JPEG of the artwork; `finish_mask`: PNG of a finish area",
+            "example": "tile"
+          },
+          "separation": {
+            "description": "For a finish mask: its separation (Foil, SpotUV, Emboss, Window)",
+            "example": "Foil",
+            "pattern": "^[A-Za-z][A-Za-z0-9]{1,31}$",
+            "type": "string"
+          },
+          "side": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/RenderSide"
+              }
+            ],
+            "example": "outside"
+          },
+          "widthMm": {
+            "example": 340.5,
+            "maximum": 5000,
+            "minimum": 0.01,
+            "type": "number"
+          },
+          "xMm": {
+            "description": "mm from the dieline’s left",
+            "example": 0,
+            "maximum": 5000,
+            "minimum": -100,
+            "type": "number"
+          },
+          "yMm": {
+            "description": "mm from the dieline’s top",
+            "example": 0,
+            "maximum": 5000,
+            "minimum": -100,
+            "type": "number"
+          }
+        },
+        "required": [
+          "side",
+          "kind",
+          "xMm",
+          "yMm",
+          "widthMm",
+          "heightMm",
           "fileId"
         ],
         "type": "object"
@@ -29736,6 +29849,78 @@
         ],
         "type": "object"
       },
+      "DesignRenderDto": {
+        "properties": {
+          "fileId": {
+            "example": "0192f3a0-7c1e-7d2a-9b1f-00000000f701",
+            "format": "uuid",
+            "type": "string"
+          },
+          "heightMm": {
+            "example": 180,
+            "type": "number"
+          },
+          "id": {
+            "example": "0192f3a0-7c1e-7d2a-9b1f-00000000f702",
+            "format": "uuid",
+            "type": "string"
+          },
+          "kind": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/DesignRenderKind"
+              }
+            ],
+            "example": "tile"
+          },
+          "separation": {
+            "example": null,
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "side": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/RenderSide"
+              }
+            ],
+            "example": "outside"
+          },
+          "widthMm": {
+            "example": 340.5,
+            "type": "number"
+          },
+          "xMm": {
+            "example": 0,
+            "type": "number"
+          },
+          "yMm": {
+            "example": 0,
+            "type": "number"
+          }
+        },
+        "required": [
+          "id",
+          "side",
+          "kind",
+          "separation",
+          "xMm",
+          "yMm",
+          "widthMm",
+          "heightMm",
+          "fileId"
+        ],
+        "type": "object"
+      },
+      "DesignRenderKind": {
+        "enum": [
+          "tile",
+          "finish_mask"
+        ],
+        "type": "string"
+      },
       "DesignRoundDto": {
         "properties": {
           "changeRequest": {
@@ -54809,6 +54994,13 @@
         ],
         "type": "object"
       },
+      "RenderSide": {
+        "enum": [
+          "outside",
+          "inside"
+        ],
+        "type": "string"
+      },
       "RenderedMessageDto": {
         "properties": {
           "body": {
@@ -68591,6 +68783,233 @@
           "widthMm",
           "heightMm",
           "measurementBasis"
+        ],
+        "type": "object"
+      },
+      "StudioApprovalViewDto": {
+        "properties": {
+          "box": {
+            "additionalProperties": true,
+            "example": null,
+            "type": [
+              "object",
+              "null"
+            ]
+          },
+          "checks": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/CheckRunDto"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "designId": {
+            "example": "0192f3a0-7c1e-7d2a-9b1f-00000000d101",
+            "format": "uuid",
+            "type": "string"
+          },
+          "document": {
+            "additionalProperties": true,
+            "example": {
+              "content": {
+                "elements": []
+              }
+            },
+            "type": "object"
+          },
+          "grossAmount": {
+            "description": "The order line incl. VAT and shipping",
+            "example": "13718.40",
+            "type": "string"
+          },
+          "groupStatus": {
+            "example": "pending_company_approval",
+            "type": "string"
+          },
+          "orderCode": {
+            "example": "PK-2610-0001-01",
+            "type": "string"
+          },
+          "orderId": {
+            "example": "0192f3a0-7c1e-7d2a-9b1f-00000000a401",
+            "format": "uuid",
+            "type": "string"
+          },
+          "title": {
+            "example": "กล่องกาแฟ",
+            "type": "string"
+          },
+          "versionNo": {
+            "example": 3,
+            "type": "integer"
+          }
+        },
+        "required": [
+          "orderId",
+          "orderCode",
+          "groupStatus",
+          "designId",
+          "title",
+          "versionNo",
+          "box",
+          "document",
+          "grossAmount",
+          "checks"
+        ],
+        "type": "object"
+      },
+      "StudioOrderDto": {
+        "properties": {
+          "destinations": {
+            "description": "As `store.cart.addItem`",
+            "items": {
+              "$ref": "#/components/schemas/DestinationInputDto"
+            },
+            "maxItems": 20,
+            "minItems": 1,
+            "type": "array"
+          },
+          "quoteId": {
+            "description": "The studio quotation of the version",
+            "example": "0192f3a0-7c1e-7d2a-9b1f-00000000a201",
+            "format": "uuid",
+            "type": "string"
+          },
+          "quoteOptionId": {
+            "example": "0192f3a0-7c1e-7d2a-9b1f-00000000a202",
+            "format": "uuid",
+            "type": "string"
+          },
+          "versionNo": {
+            "description": "Absent: the current version",
+            "example": 3,
+            "minimum": 1,
+            "type": "integer"
+          }
+        },
+        "required": [
+          "quoteId",
+          "quoteOptionId"
+        ],
+        "type": "object"
+      },
+      "StudioPrintJobDto": {
+        "properties": {
+          "cartItemId": {
+            "example": "0192f3a0-7c1e-7d2a-9b1f-00000000c901",
+            "format": "uuid",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "completedAt": {
+            "example": null,
+            "format": "date-time",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "createdAt": {
+            "example": "2026-10-03T10:00:00+07:00",
+            "format": "date-time",
+            "type": "string"
+          },
+          "designId": {
+            "example": "0192f3a0-7c1e-7d2a-9b1f-00000000d101",
+            "format": "uuid",
+            "type": "string"
+          },
+          "error": {
+            "example": null,
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "id": {
+            "example": "0192f3a0-7c1e-7d2a-9b1f-00000000a301",
+            "format": "uuid",
+            "type": "string"
+          },
+          "orderId": {
+            "example": null,
+            "format": "uuid",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "printFileUrl": {
+            "description": "Signed URL (5 minutes)",
+            "example": null,
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "proofFileUrl": {
+            "description": "The digital proof, signed URL",
+            "example": null,
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "snapshotUrl": {
+            "description": "The 3D snapshot, signed URL",
+            "example": null,
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "status": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/JobStatus"
+              }
+            ],
+            "example": "queued"
+          },
+          "statusUrl": {
+            "description": "Poll this",
+            "example": "/v1/store/studio/jobs/0192f3a0-7c1e-7d2a-9b1f-00000000a301",
+            "type": "string"
+          },
+          "submissionId": {
+            "description": "The artwork submission it became",
+            "example": null,
+            "format": "uuid",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "versionNo": {
+            "example": 3,
+            "type": "integer"
+          }
+        },
+        "required": [
+          "id",
+          "status",
+          "designId",
+          "versionNo",
+          "cartItemId",
+          "orderId",
+          "submissionId",
+          "printFileUrl",
+          "proofFileUrl",
+          "snapshotUrl",
+          "error",
+          "statusUrl",
+          "createdAt",
+          "completedAt"
         ],
         "type": "object"
       },
@@ -373025,6 +373444,416 @@
         ]
       }
     },
+    "/v1/store/studio/approvals/{orderId}": {
+      "get": {
+        "description": "For a company approver (`company_orders.approve`) of the order’s company: the ordered version (document and box for the 3D view), the price and the print checks (D-281). A signed-in link, never a token in a message.\n\nImplements: D-281, D-123.",
+        "operationId": "store.studio.getApprovalView",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "orderId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "box": null,
+                  "checks": {
+                    "counts": {
+                      "block": 0,
+                      "info": 0,
+                      "warn": 1
+                    },
+                    "evaluatedAt": "2026-10-03T10:00:00+07:00",
+                    "findings": [
+                      {
+                        "acknowledged": false,
+                        "details": {
+                          "ppi": 212
+                        },
+                        "elementId": "el-7",
+                        "ruleId": "image_resolution",
+                        "severity": "warn"
+                      }
+                    ],
+                    "ready": false,
+                    "rulesVersion": 1,
+                    "source": "document",
+                    "versionNo": 3
+                  },
+                  "designId": "0192f3a0-7c1e-7d2a-9b1f-00000000d101",
+                  "document": {
+                    "content": {
+                      "elements": []
+                    }
+                  },
+                  "grossAmount": "13718.40",
+                  "groupStatus": "pending_company_approval",
+                  "orderCode": "PK-2610-0001-01",
+                  "orderId": "0192f3a0-7c1e-7d2a-9b1f-00000000a401",
+                  "title": "กล่องกาแฟ",
+                  "versionNo": 3
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/StudioApprovalViewDto"
+                }
+              }
+            },
+            "description": "Approval view",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.unauthenticated": {
+                    "$ref": "#/components/examples/problem.auth.unauthenticated"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.unauthenticated`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.forbidden": {
+                    "$ref": "#/components/examples/problem.auth.forbidden"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.forbidden`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "404": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.not_found": {
+                    "$ref": "#/components/examples/problem.http.not_found"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.not_found`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "validation.failed": {
+                    "$ref": "#/components/examples/problem.validation.failed"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `validation.failed`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "customer": []
+          }
+        ],
+        "summary": "See a studio order waiting for my approval",
+        "tags": [
+          "store.studio"
+        ]
+      }
+    },
+    "/v1/store/studio/jobs/{jobId}": {
+      "get": {
+        "description": "Its status and, once done, signed URLs of the print file, the digital proof and the 3D snapshot (D-280).\n\nImplements: D-280.",
+        "operationId": "store.studio.getPrintJob",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "jobId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "cartItemId": "0192f3a0-7c1e-7d2a-9b1f-00000000c901",
+                  "completedAt": null,
+                  "createdAt": "2026-10-03T10:00:00+07:00",
+                  "designId": "0192f3a0-7c1e-7d2a-9b1f-00000000d101",
+                  "error": null,
+                  "id": "0192f3a0-7c1e-7d2a-9b1f-00000000a301",
+                  "orderId": null,
+                  "printFileUrl": null,
+                  "proofFileUrl": null,
+                  "snapshotUrl": null,
+                  "status": "queued",
+                  "statusUrl": "/v1/store/studio/jobs/0192f3a0-7c1e-7d2a-9b1f-00000000a301",
+                  "submissionId": null,
+                  "versionNo": 3
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/StudioPrintJobDto"
+                }
+              }
+            },
+            "description": "Print job",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.unauthenticated": {
+                    "$ref": "#/components/examples/problem.auth.unauthenticated"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.unauthenticated`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.forbidden": {
+                    "$ref": "#/components/examples/problem.auth.forbidden"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.forbidden`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "404": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.not_found": {
+                    "$ref": "#/components/examples/problem.http.not_found"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.not_found`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "validation.failed": {
+                    "$ref": "#/components/examples/problem.validation.failed"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `validation.failed`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "customer": []
+          }
+        ],
+        "summary": "Follow the print job of an ordered version",
+        "tags": [
+          "store.studio"
+        ]
+      }
+    },
     "/v1/store/studio/rules": {
       "get": {
         "description": "The rule catalogue in force — ids, severities, where each runs, the print methods and material classes it applies to and its thresholds (null: off until Prepress sets it) — so the web checks with exactly the server’s thresholds, and the soft-proof profiles per material class, always labelled “preview, not a contract proof” (D-278, D-279, D-215).\n\nImplements: D-278, D-279, D-215.",
@@ -373685,6 +374514,295 @@
           }
         ],
         "summary": "Accept a print-check warning",
+        "tags": [
+          "store.studio"
+        ]
+      }
+    },
+    "/v1/store/studio/{designId}/order": {
+      "post": {
+        "description": "One step from the studio (D-280): the version must be checked ready (no block, warnings accepted, D-278), rendered, and priced by its studio quotation (`store.studio.saveQuote`); it goes in the cart pinned to that version — checkout as usual — and its print job starts: the print PDF (vector die on its spot layers, artwork with bleed, a separation page per finish), the 3D snapshot and the digital proof. 202 with the job to poll; once the order is placed the files become its artwork. For a company order needing approval, approvers read it with `store.studio.getApprovalView` (D-281).\n\nImplements: D-280, D-278, D-276, D-281.",
+        "operationId": "store.studio.order",
+        "parameters": [
+          {
+            "description": "My studio design",
+            "in": "path",
+            "name": "designId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/IdempotencyKey"
+          },
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "examples": {
+                "default": {
+                  "value": {
+                    "quoteId": "0192f3a0-7c1e-7d2a-9b1f-00000000a201",
+                    "quoteOptionId": "0192f3a0-7c1e-7d2a-9b1f-00000000a202"
+                  }
+                }
+              },
+              "schema": {
+                "$ref": "#/components/schemas/StudioOrderDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "202": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "cartItemId": "0192f3a0-7c1e-7d2a-9b1f-00000000c901",
+                  "completedAt": null,
+                  "createdAt": "2026-10-03T10:00:00+07:00",
+                  "designId": "0192f3a0-7c1e-7d2a-9b1f-00000000d101",
+                  "error": null,
+                  "id": "0192f3a0-7c1e-7d2a-9b1f-00000000a301",
+                  "orderId": null,
+                  "printFileUrl": null,
+                  "proofFileUrl": null,
+                  "snapshotUrl": null,
+                  "status": "queued",
+                  "statusUrl": "/v1/store/studio/jobs/0192f3a0-7c1e-7d2a-9b1f-00000000a301",
+                  "submissionId": null,
+                  "versionNo": 3
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/StudioPrintJobDto"
+                }
+              }
+            },
+            "description": "Print job queued",
+            "headers": {
+              "Idempotent-Replayed": {
+                "$ref": "#/components/headers/IdempotentReplayed"
+              },
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "400": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.bad_request": {
+                    "$ref": "#/components/examples/problem.http.bad_request"
+                  },
+                  "http.malformed_json": {
+                    "$ref": "#/components/examples/problem.http.malformed_json"
+                  },
+                  "idempotency.key_invalid": {
+                    "$ref": "#/components/examples/problem.idempotency.key_invalid"
+                  },
+                  "idempotency.key_required": {
+                    "$ref": "#/components/examples/problem.idempotency.key_required"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.bad_request`, `http.malformed_json`, `idempotency.key_invalid`, `idempotency.key_required`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.unauthenticated": {
+                    "$ref": "#/components/examples/problem.auth.unauthenticated"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.unauthenticated`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.forbidden": {
+                    "$ref": "#/components/examples/problem.auth.forbidden"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.forbidden`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "404": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.not_found": {
+                    "$ref": "#/components/examples/problem.http.not_found"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.not_found`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "409": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "cart.item_exists": {
+                    "$ref": "#/components/examples/problem.cart.item_exists"
+                  },
+                  "idempotency.in_progress": {
+                    "$ref": "#/components/examples/problem.idempotency.in_progress"
+                  },
+                  "studio.checks_not_ready": {
+                    "$ref": "#/components/examples/problem.studio.checks_not_ready"
+                  },
+                  "studio.print_unavailable": {
+                    "$ref": "#/components/examples/problem.studio.print_unavailable"
+                  },
+                  "studio.renders_missing": {
+                    "$ref": "#/components/examples/problem.studio.renders_missing"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `cart.item_exists`, `idempotency.in_progress`, `studio.checks_not_ready`, `studio.print_unavailable`, `studio.renders_missing`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "designs.version_required": {
+                    "$ref": "#/components/examples/problem.designs.version_required"
+                  },
+                  "idempotency.key_reused": {
+                    "$ref": "#/components/examples/problem.idempotency.key_reused"
+                  },
+                  "studio.quote_not_of_version": {
+                    "$ref": "#/components/examples/problem.studio.quote_not_of_version"
+                  },
+                  "validation.failed": {
+                    "$ref": "#/components/examples/problem.validation.failed"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `designs.version_required`, `idempotency.key_reused`, `studio.quote_not_of_version`, `validation.failed`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "customer": []
+          }
+        ],
+        "summary": "Order my design version",
         "tags": [
           "store.studio"
         ]
@@ -374805,6 +375923,275 @@
           }
         ],
         "summary": "Ask for a quotation of my studio design",
+        "tags": [
+          "store.studio"
+        ]
+      }
+    },
+    "/v1/store/studio/{designId}/versions/{versionNo}/renders": {
+      "post": {
+        "description": "The studio renders a version once (ADR-0011): 300 dpi JPEG tiles of the outside / inside artwork and PNG masks of finish areas, each placed on the sheet in mm. The server assembles the print file from them under the engine’s vector die; it never renders the scene itself (D-280).\n\nImplements: D-280.",
+        "operationId": "store.studio.addRender",
+        "parameters": [
+          {
+            "description": "My studio design",
+            "in": "path",
+            "name": "designId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "versionNo",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "examples": {
+                "tile": {
+                  "value": {
+                    "fileId": "0192f3a0-7c1e-7d2a-9b1f-00000000f701",
+                    "heightMm": 180,
+                    "kind": "tile",
+                    "side": "outside",
+                    "widthMm": 340.5,
+                    "xMm": 0,
+                    "yMm": 0
+                  }
+                }
+              },
+              "schema": {
+                "$ref": "#/components/schemas/AddRenderDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "example": [
+                  {
+                    "fileId": "0192f3a0-7c1e-7d2a-9b1f-00000000f701",
+                    "heightMm": 180,
+                    "id": "0192f3a0-7c1e-7d2a-9b1f-00000000f702",
+                    "kind": "tile",
+                    "separation": null,
+                    "side": "outside",
+                    "widthMm": 340.5,
+                    "xMm": 0,
+                    "yMm": 0
+                  }
+                ],
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/DesignRenderDto"
+                  },
+                  "type": "array"
+                }
+              }
+            },
+            "description": "The version’s renders",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "400": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.bad_request": {
+                    "$ref": "#/components/examples/problem.http.bad_request"
+                  },
+                  "http.malformed_json": {
+                    "$ref": "#/components/examples/problem.http.malformed_json"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.bad_request`, `http.malformed_json`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.unauthenticated": {
+                    "$ref": "#/components/examples/problem.auth.unauthenticated"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.unauthenticated`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.forbidden": {
+                    "$ref": "#/components/examples/problem.auth.forbidden"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.forbidden`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "404": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.not_found": {
+                    "$ref": "#/components/examples/problem.http.not_found"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.not_found`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "409": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "file.not_ready": {
+                    "$ref": "#/components/examples/problem.file.not_ready"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `file.not_ready`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "validation.failed": {
+                    "$ref": "#/components/examples/problem.validation.failed"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `validation.failed`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "customer": []
+          }
+        ],
+        "summary": "Upload the print rendering of a version",
         "tags": [
           "store.studio"
         ]

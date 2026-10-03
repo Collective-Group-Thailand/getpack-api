@@ -7,6 +7,8 @@ import {
   type DielineFormat,
   type DielineMaterial,
   type DielineRequest,
+  type PrintPdf,
+  type PrintPdfOptions,
   type RecipeBuild,
   type RecipeBuildRequest,
   type RecipeFacts,
@@ -97,6 +99,44 @@ export class FakeDielineEngine implements DielineEngine {
 
   recipesByBase(): Promise<Record<string, unknown[]>> {
     return Promise.resolve({});
+  }
+
+  /** A page of the fake blank with the tiles placed on it (no die lines): exercises the print pipeline only. */
+  async printPdf(request: RecipeBuildRequest, options: PrintPdfOptions): Promise<PrintPdf> {
+    const l = request.sizes['length'] ?? 100;
+    const w = request.sizes['width'] ?? 50;
+    const h = request.sizes['height'] ?? 100;
+    const sheetWidthMm = 2 * l + 2 * w;
+    const sheetHeightMm = h + w;
+    const margin = 10;
+    const doc = await PDFDocument.create();
+    doc.setTitle(options.title ?? 'fake print file');
+    const page = doc.addPage([
+      (sheetWidthMm + 2 * margin) * PT_PER_MM,
+      (sheetHeightMm + 2 * margin) * PT_PER_MM,
+    ]);
+    for (const t of options.tiles) {
+      const image = await doc.embedJpg(new Uint8Array(t.jpeg));
+      page.drawImage(image, {
+        x: (margin + t.x) * PT_PER_MM,
+        y: page.getHeight() - (margin + t.y + t.height) * PT_PER_MM,
+        width: t.width * PT_PER_MM,
+        height: t.height * PT_PER_MM,
+      });
+    }
+    page.setTrimBox(
+      margin * PT_PER_MM,
+      margin * PT_PER_MM,
+      sheetWidthMm * PT_PER_MM,
+      sheetHeightMm * PT_PER_MM,
+    );
+    return {
+      pdf: Buffer.from(await doc.save()),
+      sheetWidthMm,
+      sheetHeightMm,
+      marginMm: margin,
+      engineVersion: 'fake-dieline@0',
+    };
   }
 
   /** Obviously fake calipers per class. */

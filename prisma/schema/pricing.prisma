@@ -625,6 +625,8 @@ model Quote {
 
   designDocumentVersion DesignDocumentVersion? @relation("QuoteDesignVersion", fields: [designDocumentVersionId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_quotes__design_document_version_id")
 
+  studioPrintJobs StudioPrintJob[] @relation("StudioPrintJobQuote")
+
   @@index([designDocumentVersionId], map: "ix_quotes__design_document_version_id")
   @@index([specHash], map: "ix_quotes__spec_hash")
   @@index([advisoryRecommendationId], map: "ix_quotes__advisory_recommendation_id")
