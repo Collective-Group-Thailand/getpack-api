@@ -33,6 +33,7 @@
     "contract:lint": "spectral lint contract/openapi.json --ruleset contract/spectral/.spectral.yaml --fail-severity warn",
     "rbac:build": "nest build && node dist/scripts/rbac-build.js",
     "launch:settings": "nest build && node dist/scripts/launch-settings-build.js",
+    "release:check": "nest build && node dist/scripts/release-hygiene.js",
     "styles:import": "nest build && node dist/scripts/styles-import.js",
     "dieline:vendor": "bash scripts/dieline-vendor.sh",
     "styles:recipes-from-engine": "nest build && node dist/scripts/styles-recipes-from-engine.js"

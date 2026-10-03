@@ -644,9 +644,22 @@ async function ensurePaymentFeatureFlags(tx: Tx, count: (what: string) => void):
     ...FINANCE_FEATURE_FLAGS,
     ...PRICING_FEATURE_FLAGS,
   ]) {
-    if (await tx.featureFlag.findUnique({ where: { key: flag.key } })) continue;
+    const devOnly = 'devOnly' in flag && flag.devOnly === true;
+    const existing = await tx.featureFlag.findUnique({ where: { key: flag.key } });
+    if (existing) {
+      // D-296: whether a flag is a development aid is the code's to say, never an admin's.
+      if (existing.devOnly !== devOnly)
+        await tx.featureFlag.update({ where: { key: flag.key }, data: { devOnly } });
+      continue;
+    }
     await tx.featureFlag.create({
-      data: { key: flag.key, description: flag.description, enabled: false, ownerRoleKey: 'superadmin' },
+      data: {
+        key: flag.key,
+        description: flag.description,
+        enabled: false,
+        devOnly,
+        ownerRoleKey: 'superadmin',
+      },
     });
     count('feature_flags');
   }

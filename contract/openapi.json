@@ -1431,6 +1431,17 @@
           "type": "https://errors.packio/factory_users.role_not_allowed"
         }
       },
+      "problem.feature_flags.dev_only": {
+        "summary": "feature_flags.dev_only",
+        "value": {
+          "code": "feature_flags.dev_only",
+          "detail": "{key} ใช้สำหรับการพัฒนาเท่านั้น เปิดในระบบจริงไม่ได้",
+          "requestId": "6f1c2d8e-2c7b-4d0e-9d1c-3f1a2b3c4d5e",
+          "status": 409,
+          "title": "ฟีเจอร์สำหรับพัฒนาเท่านั้น",
+          "type": "https://errors.packio/feature_flags.dev_only"
+        }
+      },
       "problem.file.infected": {
         "summary": "file.infected",
         "value": {
@@ -36017,6 +36028,11 @@
             "example": "Deliveree carrier adapter (D-114)",
             "type": "string"
           },
+          "devOnly": {
+            "description": "A development aid (e.g. a stubbed adapter): never on in production (D-296); set by the code",
+            "example": false,
+            "type": "boolean"
+          },
           "enabled": {
             "example": true,
             "type": "boolean"
@@ -36038,6 +36054,7 @@
           "key",
           "description",
           "enabled",
+          "devOnly",
           "rules",
           "updatedAt"
         ],
@@ -48373,7 +48390,7 @@
           },
           "dimension": {
             "description": "The dimension value, `(none)` when the lines carry none",
-            "example": "F9001 [DEV] บริษัท โรงงานทดสอบ จำกัด",
+            "example": "F0001 บริษัท โรงงานตัวอย่าง จำกัด",
             "type": "string"
           },
           "expenses": {
@@ -195362,6 +195379,7 @@
                 "example": [
                   {
                     "description": "Deliveree carrier adapter (D-114)",
+                    "devOnly": false,
                     "enabled": true,
                     "key": "carriers.deliveree",
                     "rules": {
@@ -195517,7 +195535,7 @@
     },
     "/v1/admin/feature-flags/{key}": {
       "put": {
-        "description": "Audited; takes effect on every process within seconds.\n\nImplements: ADR-0005, D-063.",
+        "description": "Audited; takes effect on every process within seconds. A development-only flag cannot be switched on in production (409 `feature_flags.dev_only`, D-296).\n\nImplements: ADR-0005, D-063, D-296.",
         "operationId": "admin.featureFlags.set",
         "parameters": [
           {
@@ -195560,6 +195578,7 @@
               "application/json": {
                 "example": {
                   "description": "Deliveree carrier adapter (D-114)",
+                  "devOnly": false,
                   "enabled": true,
                   "key": "carriers.deliveree",
                   "rules": {
@@ -195648,6 +195667,26 @@
               }
             },
             "description": "Problem: `auth.forbidden`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "409": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "feature_flags.dev_only": {
+                    "$ref": "#/components/examples/problem.feature_flags.dev_only"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `feature_flags.dev_only`",
             "headers": {
               "X-Request-Id": {
                 "$ref": "#/components/headers/XRequestId"
@@ -197740,7 +197779,7 @@
                         }
                       ],
                       "costOfSales": "8000.00",
-                      "dimension": "F9001 [DEV] บริษัท โรงงานทดสอบ จำกัด",
+                      "dimension": "F0001 บริษัท โรงงานตัวอย่าง จำกัด",
                       "expenses": "100.00",
                       "grossMargin": "2000.00",
                       "grossMarginPct": "20.00",
@@ -280385,7 +280424,7 @@
                     "factory": {
                       "code": "FAC-0001",
                       "id": "0192f3a0-7c1e-7d2a-9b1f-00000000a001",
-                      "name": "[DEV] Folding Factory"
+                      "name": "โรงพิมพ์ ทดสอบ"
                     },
                     "file": {
                       "id": "0192f3a0-7c1e-7d2a-9b1f-00000000f901",
@@ -280578,7 +280617,7 @@
                   "factory": {
                     "code": "FAC-0001",
                     "id": "0192f3a0-7c1e-7d2a-9b1f-00000000a001",
-                    "name": "[DEV] Folding Factory"
+                    "name": "โรงพิมพ์ ทดสอบ"
                   },
                   "file": {
                     "id": "0192f3a0-7c1e-7d2a-9b1f-00000000f901",
@@ -280791,7 +280830,7 @@
                   "factory": {
                     "code": "FAC-0001",
                     "id": "0192f3a0-7c1e-7d2a-9b1f-00000000a001",
-                    "name": "[DEV] Folding Factory"
+                    "name": "โรงพิมพ์ ทดสอบ"
                   },
                   "file": {
                     "id": "0192f3a0-7c1e-7d2a-9b1f-00000000f901",
@@ -281074,7 +281113,7 @@
                   "factory": {
                     "code": "FAC-0001",
                     "id": "0192f3a0-7c1e-7d2a-9b1f-00000000a001",
-                    "name": "[DEV] Folding Factory"
+                    "name": "โรงพิมพ์ ทดสอบ"
                   },
                   "file": {
                     "id": "0192f3a0-7c1e-7d2a-9b1f-00000000f901",
@@ -281350,7 +281389,7 @@
                   "factory": {
                     "code": "FAC-0001",
                     "id": "0192f3a0-7c1e-7d2a-9b1f-00000000a001",
-                    "name": "[DEV] Folding Factory"
+                    "name": "โรงพิมพ์ ทดสอบ"
                   },
                   "file": {
                     "id": "0192f3a0-7c1e-7d2a-9b1f-00000000f901",
@@ -319801,7 +319840,7 @@
                     "factory": {
                       "code": "FAC-0001",
                       "id": "0192f3a0-7c1e-7d2a-9b1f-00000000a001",
-                      "name": "[DEV] Folding Factory"
+                      "name": "โรงพิมพ์ ทดสอบ"
                     },
                     "file": {
                       "id": "0192f3a0-7c1e-7d2a-9b1f-00000000f901",
@@ -320032,7 +320071,7 @@
                   "factory": {
                     "code": "FAC-0001",
                     "id": "0192f3a0-7c1e-7d2a-9b1f-00000000a001",
-                    "name": "[DEV] Folding Factory"
+                    "name": "โรงพิมพ์ ทดสอบ"
                   },
                   "file": {
                     "id": "0192f3a0-7c1e-7d2a-9b1f-00000000f901",

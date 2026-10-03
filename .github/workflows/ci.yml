@@ -25,6 +25,10 @@ jobs:
           NODE_OPTIONS: --max-old-space-size=6144
       - run: pnpm format:check
       - run: pnpm typecheck
+      # D-296: no debug markers, test tax ids or switched-on flags in production code and reference seeds.
+      - run: pnpm release:check
+        env:
+          NODE_OPTIONS: --max-old-space-size=6144
 
   unit:
     name: unit

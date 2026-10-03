@@ -400,7 +400,7 @@ export class PlAccountDto {
 
 export class PlLineDto {
   @ApiProperty({
-    example: 'F9001 [DEV] บริษัท โรงงานทดสอบ จำกัด',
+    example: 'F0001 บริษัท โรงงานตัวอย่าง จำกัด',
     description: 'The dimension value, `(none)` when the lines carry none',
   })
   dimension!: string;
@@ -467,7 +467,7 @@ export const PL_EXAMPLE: ProfitAndLossDto = {
   dimension: 'factory',
   lines: [
     {
-      dimension: 'F9001 [DEV] บริษัท โรงงานทดสอบ จำกัด',
+      dimension: 'F0001 บริษัท โรงงานตัวอย่าง จำกัด',
       revenue: '10000.00',
       costOfSales: '8000.00',
       grossMargin: '2000.00',

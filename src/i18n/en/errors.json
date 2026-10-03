@@ -1576,5 +1576,11 @@
       "title": "Owner may not order",
       "detail": "The admin who issued this API client may no longer order for the company."
     }
+  },
+  "feature_flags": {
+    "dev_only": {
+      "title": "Development-only flag",
+      "detail": "{key} is a development aid and cannot be switched on in production."
+    }
   }
 }

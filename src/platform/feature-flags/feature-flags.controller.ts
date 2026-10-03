@@ -62,6 +62,13 @@ export class FeatureFlagDto {
   @ApiProperty({ example: true })
   enabled!: boolean;
 
+  @ApiProperty({
+    example: false,
+    description:
+      'A development aid (e.g. a stubbed adapter): never on in production (D-296); set by the code',
+  })
+  devOnly!: boolean;
+
   @ApiProperty({ type: FeatureFlagRulesDto })
   rules!: FeatureFlagRulesDto;
 
@@ -91,6 +98,7 @@ const EXAMPLE: FeatureFlagDto = {
   key: 'carriers.deliveree',
   description: 'Deliveree carrier adapter (D-114)',
   enabled: true,
+  devOnly: false,
   rules: { audiences: ['staff'], percentage: 100 },
   updatedAt: '2026-09-23T14:05:00+07:00',
 };
@@ -100,6 +108,7 @@ const toDto = (f: Row): FeatureFlagDto => ({
   key: f.key,
   description: f.description,
   enabled: f.enabled,
+  devOnly: f.devOnly,
   rules: (f.rules ?? {}) as FeatureFlagRulesDto,
   updatedAt: toBangkokIso(f.updatedAt),
 });
@@ -129,15 +138,17 @@ export class FeatureFlagsController {
   @ApiEndpoint({
     id: 'admin.featureFlags.set',
     summary: 'Create or change a feature flag',
-    description: 'Audited; takes effect on every process within seconds.',
-    implements: ['ADR-0005', 'D-063'],
+    description:
+      'Audited; takes effect on every process within seconds. A development-only flag cannot be switched on in ' +
+      'production (409 `feature_flags.dev_only`, D-296).',
+    implements: ['ADR-0005', 'D-063', 'D-296'],
   })
   @ApiBody({
     type: UpdateFeatureFlagDto,
     examples: { default: { value: { enabled: true, rules: { audiences: ['staff'] } } } },
   })
   @ApiSuccess(200, { description: 'Saved', type: FeatureFlagDto, example: EXAMPLE })
-  @ApiStandardErrors('http.bad_request', 'http.malformed_json', 'validation.failed')
+  @ApiStandardErrors('http.bad_request', 'http.malformed_json', 'validation.failed', 'feature_flags.dev_only')
   async set(
     @CurrentActor() actor: Actor,
     @Param('key') key: string,

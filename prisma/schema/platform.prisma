@@ -511,6 +511,8 @@ model FeatureFlag {
   key          String   @unique(map: "ux_feature_flags__key")
   description  String
   enabled      Boolean  @default(false)
+  /// D-296 a development aid (e.g. a stubbed adapter): never on in production — the API refuses to boot with it on.
+  devOnly      Boolean  @default(false) @map("dev_only")
   rules        Json     @default("{}")
   ownerRoleKey String   @map("owner_role_key")
   createdAt    DateTime @default(now()) @map("created_at") @db.Timestamptz(6)

@@ -1,8 +1,9 @@
 import { createHash } from 'node:crypto';
 
 import { type Actor } from '@common/context/actor';
+import { AppConfig } from '@config/app-config';
 import { PrismaService } from '@database/prisma.service';
-import { Injectable } from '@nestjs/common';
+import { Injectable, type OnApplicationBootstrap } from '@nestjs/common';
 
 /** `feature_flags.rules` (schema-design §3.1). All present conditions must hold. */
 export interface FeatureFlagRules {
@@ -20,10 +21,26 @@ const CACHE_TTL_MS = 30_000;
  * effective-dated settings (ADR-0005). Evaluated per actor.
  */
 @Injectable()
-export class FeatureFlagsService {
+export class FeatureFlagsService implements OnApplicationBootstrap {
   private cache?: { flags: { key: string; enabled: boolean; rules: FeatureFlagRules }[]; loadedAt: number };
 
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly config: AppConfig,
+  ) {}
+
+  /** D-296: in production the API (and the worker) refuse to start with a development-only flag on. */
+  async onApplicationBootstrap(): Promise<void> {
+    if (!this.config.isProduction) return;
+    const on = await this.prisma.featureFlag.findMany({
+      where: { devOnly: true, enabled: true },
+      select: { key: true },
+    });
+    if (on.length > 0)
+      throw new Error(
+        `refusing to start in production with development-only flags on: ${on.map((f) => f.key).join(', ')}`,
+      );
+  }
 
   async isEnabled(key: string, actor?: Actor): Promise<boolean> {
     const flag = (await this.flags()).find((f) => f.key === key);

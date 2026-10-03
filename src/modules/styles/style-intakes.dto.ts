@@ -205,7 +205,7 @@ export class StyleIntakeDto {
 
 export const INTAKE_EXAMPLE: StyleIntakeDto = {
   id: IDS.intake,
-  factory: { id: IDS.factory, code: 'FAC-0001', name: '[DEV] Folding Factory' },
+  factory: { id: IDS.factory, code: 'FAC-0001', name: 'โรงพิมพ์ ทดสอบ' },
   title: 'กล่องฝาเสียบ 2 ด้าน พร้อมหน้าต่าง',
   note: null,
   file: { id: IDS.file, originalName: 'tuck-window.dxf', mimeType: 'application/dxf', sizeBytes: 48211 },
