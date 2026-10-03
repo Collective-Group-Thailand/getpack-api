@@ -107,24 +107,28 @@ model StyleBase {
 
 /// D-241 / D-243: one structural variant (a combination of option values) with its publishability and reasons.
 model StyleVariant {
-  id          BigInt      @id(map: "pk_style_variants") @default(autoincrement())
-  publicId    String      @unique(map: "ux_style_variants__public_id") @default(dbgenerated("uuidv7()")) @map("public_id") @db.Uuid
-  baseId      BigInt      @map("base_id")
-  code        String      @unique(map: "ux_style_variants__code")
-  codeSuffix  String      @map("code_suffix")
+  id           BigInt         @id(map: "pk_style_variants") @default(autoincrement())
+  publicId     String         @unique(map: "ux_style_variants__public_id") @default(dbgenerated("uuidv7()")) @map("public_id") @db.Uuid
+  baseId       BigInt         @map("base_id")
+  code         String         @unique(map: "ux_style_variants__code")
+  codeSuffix   String         @map("code_suffix")
   /// Normalised `axis=value;axis=value` in the base's axis order (a multi-select value joins with `+`).
-  optionKey   String      @map("option_key")
-  options     Json
-  publishable Boolean     @default(false)
-  reasons     String[]    @default([])
-  evaluatedAt DateTime?   @map("evaluated_at") @db.Timestamptz(6)
-  publishedAt DateTime?   @map("published_at") @db.Timestamptz(6)
-  status      StyleStatus @default(active)
-  createdAt   DateTime    @default(now()) @map("created_at") @db.Timestamptz(6)
-  updatedAt   DateTime    @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+  optionKey    String         @map("option_key")
+  options      Json
+  publishable  Boolean        @default(false)
+  reasons      String[]       @default([])
+  /// D-266: `instant` only with a signed calculator and every option priced; else `rfq` with `price_reasons`.
+  pricePath    StylePricePath @default(rfq) @map("price_path")
+  priceReasons String[]       @default([]) @map("price_reasons")
+  evaluatedAt  DateTime?      @map("evaluated_at") @db.Timestamptz(6)
+  publishedAt  DateTime?      @map("published_at") @db.Timestamptz(6)
+  status       StyleStatus    @default(active)
+  createdAt    DateTime       @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt    DateTime       @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
 
   base   StyleBase    @relation(fields: [baseId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_style_variants__base_id")
   assets StyleAsset[]
+  rfqs   Rfq[]        @relation("RfqStyleVariant")
 
   @@unique([baseId, optionKey], map: "ux_style_variants__base_id__option_key")
   @@index([baseId, publishable], map: "ix_style_variants__base_id__publishable")
@@ -347,4 +351,49 @@ model StyleProcessRule {
   @@index([processTypeId], map: "ix_style_process_rules__process_type_id")
   @@index([createdById], map: "ix_style_process_rules__created_by")
   @@map("style_process_rules")
+}
+
+/// D-266: how a published variant is priced.
+enum StylePricePath {
+  instant
+  rfq
+
+  @@map("style_price_path")
+}
+
+/// D-268: what an option value does to a calculator's price.
+enum StyleOptionPriceEffect {
+  /// The option does not change the price (e.g. a tuck direction).
+  neutral
+  /// The option is priced through a configuration change (`patch`).
+  configuration
+
+  @@map("style_option_price_effect")
+}
+
+/// D-268 (A-92): an option value (`axis:value`) of a calculator mapped to its price — neutral or a configuration patch
+/// the configurator applies; maintained by Prepress with the Pricing owner, audited; never edited (retire + new).
+model StyleOptionPriceRule {
+  id            BigInt                 @id(map: "pk_style_option_price_rules") @default(autoincrement())
+  publicId      String                 @unique(map: "ux_style_option_price_rules__public_id") @default(dbgenerated("uuidv7()")) @map("public_id") @db.Uuid
+  calculatorKey CalculatorKey          @map("calculator_key")
+  axis          String
+  value         String
+  effect        StyleOptionPriceEffect
+  /// `{ config?: {...}, part?: {...} }` merged into the configuration / each part; null for `neutral`.
+  patch         Json?
+  note          String
+  status        StyleStatus            @default(active)
+  createdById   BigInt?                @map("created_by")
+  createdAt     DateTime               @default(now()) @map("created_at") @db.Timestamptz(6)
+  retiredAt     DateTime?              @map("retired_at") @db.Timestamptz(6)
+  retiredById   BigInt?                @map("retired_by")
+
+  createdBy User? @relation("StyleOptionPriceRuleCreatedBy", fields: [createdById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_style_option_price_rules__created_by")
+  retiredBy User? @relation("StyleOptionPriceRuleRetiredBy", fields: [retiredById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_style_option_price_rules__retired_by")
+
+  @@unique([calculatorKey, axis, value], map: "ux_style_option_price_rules__active", where: raw("(status = 'active'::style_status)"))
+  @@index([createdById], map: "ix_style_option_price_rules__created_by")
+  @@index([retiredById], map: "ix_style_option_price_rules__retired_by")
+  @@map("style_option_price_rules")
 }

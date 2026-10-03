@@ -37,4 +37,9 @@ export const PRICING_FEATURE_FLAGS = [
     description:
       'Structure Advisor for customers (store.advisory.recommend / choose, D-237) — off until the golden cases of docs/advisory-validation.md are signed by the Partner Manager and Prepress (D-189); staff evaluate meanwhile',
   },
+  {
+    key: 'pricing.dieline_quantities',
+    description:
+      "Dieline-derived quantities in calculator prices (D-267) — off until a calculator's validation document is signed with them; quotes freeze the quantities meanwhile without a price effect",
+  },
 ] as const;

@@ -342,6 +342,7 @@ export const ROLES: readonly RoleDefinition[] = [
       'styles.approve_names',
       'styles.verify_reference',
       'styles.process_rules',
+      'styles.price_rules',
       'advisory.read',
       'advisory.evaluate',
       'orders.read',

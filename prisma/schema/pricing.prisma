@@ -571,6 +571,8 @@ model Quote {
   targetPricePerUnit       Decimal?     @map("target_price_per_unit") @db.Decimal(14, 2)
   /// D-249: the lever of an earlier quotation this one was saved from; set once.
   fromLeverId              BigInt?      @unique(map: "ux_quotes__from_lever_id") @map("from_lever_id")
+  /// D-267: the dieline-derived quantities of the style variant priced (engine version), frozen; no price effect yet.
+  dielineQuantities        Json?        @map("dieline_quantities")
   /// D-248: when the levers were computed (once; none found is still computed).
   leversComputedAt         DateTime?    @map("levers_computed_at") @db.Timestamptz(6)
 
@@ -757,6 +759,8 @@ model Rfq {
   routedFromCalculateLogId BigInt?          @map("routed_from_calculate_log_id")
   /// D-251: the saved quotation the customer sent to CS (store.quotes.sendToCs).
   routedFromQuoteId        BigInt?          @unique(map: "ux_rfqs__routed_from_quote_id") @map("routed_from_quote_id")
+  /// D-269: the published style variant the request is for (style code and options travel with it).
+  styleVariantId           BigInt?          @map("style_variant_id")
   /// D-247: the customer's target per unit (THB incl. VAT, excl. shipping); staff only, never shown to a partner (D-190).
   targetPricePerUnit       Decimal?         @map("target_price_per_unit") @db.Decimal(14, 2)
   acceptedQuoteId          BigInt?          @unique(map: "ux_rfqs__accepted_quote_id") @map("accepted_quote_id")
@@ -775,6 +779,7 @@ model Rfq {
   declineReason   UnmetDemandReason?       @relation(fields: [declineReasonId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_rfqs__decline_reason_id")
   acceptedQuote   Quote?                   @relation("RfqAcceptedQuote", fields: [acceptedQuoteId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_rfqs__accepted_quote_id")
   routedFromQuote Quote?                   @relation("RfqRoutedFromQuote", fields: [routedFromQuoteId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_rfqs__routed_from_quote_id")
+  styleVariant    StyleVariant?            @relation("RfqStyleVariant", fields: [styleVariantId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_rfqs__style_variant_id")
   tiers           RfqQuantityTier[]
   messages        RfqMessage[]
   consultations   RfqFactoryConsultation[]
@@ -795,6 +800,7 @@ model Rfq {
   @@index([submittedAt], map: "ix_rfqs__submitted_at")
   @@index([closedAt], map: "ix_rfqs__closed_at", where: raw("(closed_at IS NOT NULL)"))
   @@index([rfqCode(ops: raw("gin_trgm_ops"))], type: Gin, map: "ix_rfqs__rfq_code_trgm")
+  @@index([styleVariantId], map: "ix_rfqs__style_variant_id")
   @@map("rfqs")
 }
 

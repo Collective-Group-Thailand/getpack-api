@@ -177,6 +177,12 @@ export const PERMISSIONS = [
   },
 
   {
+    key: 'styles.price_rules',
+    audience: 'staff',
+    description: 'Maintain the option price rules of styles (Prepress with the Pricing owner, D-268)',
+    decisionRefs: ['D-268', 'D-266'],
+  },
+  {
     key: 'styles.process_rules',
     audience: 'staff',
     description: 'Maintain which processes a style needs (style process rules, Prepress)',

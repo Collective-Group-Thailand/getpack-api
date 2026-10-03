@@ -672,6 +672,9 @@ model User {
   guaranteePolicyVersions GuaranteePolicyVersion[] @relation("GuaranteePolicyVersionCreatedBy")
   reviewReplies           OrderReview[]            @relation("OrderReviewRepliedBy")
 
+  styleOptionPriceRulesCreated StyleOptionPriceRule[] @relation("StyleOptionPriceRuleCreatedBy")
+  styleOptionPriceRulesRetired StyleOptionPriceRule[] @relation("StyleOptionPriceRuleRetiredBy")
+
   @@unique([kind, email], map: "ux_users__kind__email", where: raw("((email IS NOT NULL) AND (anonymised_at IS NULL))"))
   @@unique([kind, phone], map: "ux_users__kind__phone", where: raw("((phone IS NOT NULL) AND (anonymised_at IS NULL))"))
   @@index([createdById], map: "ix_users__created_by")

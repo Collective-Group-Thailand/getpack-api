@@ -155,3 +155,4 @@ Every integration flag is seeded **off** and switched on by a superadmin once it
 | `e_tax.sending` | Send e-Tax invoices / e-Receipts to the Revenue Department (D-091): XML and PDF are generated in R1; sending is enabled in R2 after registration |
 | `pricing.folding_engine_b` | Folding engine B (type-B factories, D-233) in customer and CS quotes — off until docs/pricing-validation-folding-b.md is signed; factory breakdowns price B meanwhile |
 | `advisory.structure_advisor` | Structure Advisor for customers (store.advisory.recommend / choose, D-237) — off until the golden cases of docs/advisory-validation.md are signed by the Partner Manager and Prepress (D-189); staff evaluate meanwhile |
+| `pricing.dieline_quantities` | Dieline-derived quantities in calculator prices (D-267) — off until a calculator's validation document is signed with them; quotes freeze the quantities meanwhile without a price effect |
