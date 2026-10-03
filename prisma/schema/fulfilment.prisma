@@ -911,6 +911,8 @@ model ProductionJob {
 
   sample Sample? @relation("SampleJob")
 
+  toolingRemakes ToolingRemake[] @relation("ToolingRemakeJob")
+
   @@unique([orderId], map: "ux_production_jobs__one_live_production", where: raw("((job_kind = 'production'::job_kind) AND (status <> ALL (ARRAY['rejected'::production_job_status, 'cancelled'::production_job_status])))"))
   @@unique([orderId], map: "ux_production_jobs__one_live_mockup", where: raw("((job_kind = 'mockup'::job_kind) AND (status <> ALL (ARRAY['rejected'::production_job_status, 'cancelled'::production_job_status, 'completed'::production_job_status])))"))
   @@index([orderId], map: "ix_production_jobs__order_id")
@@ -2089,4 +2091,78 @@ model OrderSpecSheet {
   @@unique([orderId, lang, contentSha256], map: "ux_order_spec_sheets__order__lang__content")
   @@index([fileId], map: "ix_order_spec_sheets__file_id")
   @@map("order_spec_sheets")
+}
+
+// --- U2.7 tooling register (A-102; D-205, D-289) ---------------------------------------------------------------
+
+enum ToolingKind {
+  plates
+  die_block
+
+  @@map("tooling_kind")
+}
+
+enum ToolingStatus {
+  active
+  /// The factory reported it unusable when accepting a job that reused it (D-205); active again once remade.
+  unusable
+
+  @@map("tooling_status")
+}
+
+/// D-289 a print plate set or die block a delivered order paid for, kept at the factory that made it: plates bound to the
+/// specification and the artwork, a die block to the specification. Usable for `tooling.reuse_months` after the last
+/// use; ownership open (D-205).
+model ToolingItem {
+  id            BigInt        @id(map: "pk_tooling_items") @default(autoincrement())
+  publicId      String        @unique(map: "ux_tooling_items__public_id") @default(dbgenerated("uuidv7()")) @map("public_id") @db.Uuid
+  factoryId     BigInt        @map("factory_id")
+  kind          ToolingKind
+  /// sha256 of the canonical specification: product type + configuration without quantities or delivery.
+  specSha256    Bytes         @map("spec_sha256")
+  /// The approved artwork's sha256 (plates only).
+  artworkSha256 Bytes?        @map("artwork_sha256")
+  /// sha256 of kind + specification + artwork: one register row per tool and factory.
+  keySha256     Bytes         @map("key_sha256")
+  status        ToolingStatus @default(active)
+  sourceOrderId BigInt        @map("source_order_id")
+  lastOrderId   BigInt        @map("last_order_id")
+  lastUsedAt    DateTime      @map("last_used_at") @db.Timestamptz(6)
+  createdAt     DateTime      @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt     DateTime      @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  factory     Factory         @relation("ToolingFactory", fields: [factoryId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_tooling_items__factory_id")
+  sourceOrder Order           @relation("ToolingSourceOrder", fields: [sourceOrderId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_tooling_items__source_order_id")
+  lastOrder   Order           @relation("ToolingLastOrder", fields: [lastOrderId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_tooling_items__last_order_id")
+  remakes     ToolingRemake[]
+
+  @@unique([factoryId, keySha256], map: "ux_tooling_items__factory_id__key")
+  @@index([specSha256], map: "ix_tooling_items__spec_sha256")
+  @@index([sourceOrderId], map: "ix_tooling_items__source_order_id")
+  @@index([lastOrderId], map: "ix_tooling_items__last_order_id")
+  @@map("tooling_items")
+}
+
+/// D-205 a waived tool the factory reported unusable when accepting a job: Packio absorbs the remake (its buy price is
+/// paid with the job's goods receipt — the purchase order keeps its snapshot; the customer price is unchanged, D-012).
+/// Write-once.
+model ToolingRemake {
+  id              BigInt   @id(map: "pk_tooling_remakes") @default(autoincrement())
+  publicId        String   @unique(map: "ux_tooling_remakes__public_id") @default(dbgenerated("uuidv7()")) @map("public_id") @db.Uuid
+  toolingId       BigInt   @map("tooling_id")
+  productionJobId BigInt   @map("production_job_id")
+  reason          String
+  /// The tool's buy price net of VAT on the job's price list, as waived in the quotation.
+  buyNetAmount    Decimal  @map("buy_net_amount") @db.Decimal(14, 2)
+  reportedById    BigInt   @map("reported_by")
+  createdAt       DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  tooling       ToolingItem   @relation(fields: [toolingId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_tooling_remakes__tooling_id")
+  productionJob ProductionJob @relation("ToolingRemakeJob", fields: [productionJobId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_tooling_remakes__production_job_id")
+  reportedBy    User          @relation("ToolingRemakeReporter", fields: [reportedById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_tooling_remakes__reported_by")
+
+  @@unique([toolingId, productionJobId], map: "ux_tooling_remakes__tooling_id__job")
+  @@index([productionJobId], map: "ix_tooling_remakes__production_job_id")
+  @@index([reportedById], map: "ix_tooling_remakes__reported_by")
+  @@map("tooling_remakes")
 }

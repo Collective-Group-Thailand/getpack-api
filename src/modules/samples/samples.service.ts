@@ -403,6 +403,7 @@ export class SamplesService {
         designFeeAmount: '0.00',
         structureDesignFeeAmount: '0.00',
         toolingAmount: null,
+        toolingWaiver: null,
         shippingAmount: formatMoney(shipNet.add(shipVat)),
         shippingNetAmount: formatMoney(shipNet),
         shippingVatAmount: formatMoney(shipVat),

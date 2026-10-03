@@ -7,6 +7,7 @@ import {
   FoldingConfigurationDto,
   QuoteInternalDto,
   STORE_CALCULATION_EXAMPLE,
+  ToolingWaiverDto,
 } from '@modules/pricing/quotes/quote.dto';
 import { TargetGapDto } from '@modules/pricing/quotes/target-price';
 import { RATE_MISS_REASONS } from '@modules/shipping/rates/customer-rates.dto';
@@ -130,6 +131,14 @@ export class SavedQuoteOptionDto {
       'Plates and die blocks included in `productAmount` (one-off charges, incl. VAT); null when the calculator does not split them out or for RFQ quotes',
   })
   toolingAmount!: string | null;
+
+  @ApiProperty({
+    type: ToolingWaiverDto,
+    nullable: true,
+    description:
+      'A reorder reusing the tooling the factory keeps: what is not charged again (D-289); null otherwise',
+  })
+  toolingWaiver!: ToolingWaiverDto | null;
 
   @ApiProperty({
     type: String,
@@ -451,6 +460,7 @@ export const OPTION_EXAMPLE: SavedQuoteOptionDto = {
   designFeeAmount: step.designFeeAmount!,
   structureDesignFeeAmount: step.structureDesignFeeAmount!,
   toolingAmount: step.toolingAmount,
+  toolingWaiver: null,
   shippingAmount: step.shippingAmount,
   vatAmount: step.vatAmount!,
   netAmount: '12624.67',

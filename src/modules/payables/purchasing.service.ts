@@ -255,7 +255,31 @@ export class PurchasingService {
         shipmentId: s.id,
       });
     });
-    const net = productionNet.add(shippingNet);
+    // D-205: a reused tool the factory found unusable was remade at Packio's cost (the PO keeps its snapshot): it is
+    // received in full with the goods; the customer price is unchanged (D-012).
+    let toolingNet = ZERO();
+    const remakes = await tx.toolingRemake.findMany({
+      where: { productionJobId: po.productionJobId },
+      include: { tooling: { select: { kind: true } } },
+      orderBy: { id: 'asc' },
+    });
+    for (const r of remakes) {
+      const tNet = D(r.buyNetAmount);
+      if (!tNet.gt(0)) continue;
+      toolingNet = toolingNet.add(tNet);
+      lines.push({
+        lineNo: lines.length + 1,
+        lineType: 'tooling',
+        description: `ทำ${r.tooling.kind === 'plates' ? 'เพลท' : 'บล็อกไดคัท'}ใหม่ (เครื่องมือเดิมใช้ไม่ได้)`,
+        quantity: 1,
+        unitPrice: tNet.toFixed(6),
+        netAmount: formatMoney(tNet),
+        vatAmount: formatMoney(vatOf(tNet)),
+        grossAmount: formatMoney(tNet.add(vatOf(tNet))),
+        whtCategory: 'hire_of_work',
+      });
+    }
+    const net = productionNet.add(shippingNet).add(toolingNet);
     const vat = lines.reduce((a, l) => a.add(l.vatAmount as string), ZERO());
     const gr = await tx.goodsReceipt.create({
       data: {
@@ -299,7 +323,7 @@ export class PurchasingService {
           payableQuantity: payable,
           productionNet: formatMoney(productionNet),
           shippingNet: formatMoney(shippingNet),
-          otherNet: '0.00',
+          otherNet: formatMoney(toolingNet),
           vatAmount: formatMoney(vat),
         },
       },
@@ -350,7 +374,7 @@ export class PurchasingService {
           vatAmount: formatMoney(balanceVat),
           openNetAmount: formatMoney(balanceNet),
           openVatAmount: formatMoney(balanceVat),
-          whtBaseHire: formatMoney(MoneyDecimal.max(productionNet.sub(advanceNet), 0)),
+          whtBaseHire: formatMoney(MoneyDecimal.max(productionNet.add(toolingNet).sub(advanceNet), 0)),
           whtBaseTransport: formatMoney(shippingNet),
           retentionPct: policy.retentionPct,
           eligibleAt,

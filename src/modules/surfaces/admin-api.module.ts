@@ -45,6 +45,7 @@ import { STUDIO_ADMIN_CONTROLLERS } from '@modules/studio/studio.registry';
 import { STYLES_ADMIN_CONTROLLERS } from '@modules/styles/styles.registry';
 import { TAX_ADMIN_CONTROLLERS } from '@modules/tax/tax.registry';
 import { TIMELINE_ADMIN_CONTROLLERS } from '@modules/timeline/timeline.registry';
+import { TOOLING_ADMIN_CONTROLLERS } from '@modules/tooling/tooling.registry';
 import { Module } from '@nestjs/common';
 import { AdminApprovalPoliciesController } from '@platform/approvals/approval-policies.controller';
 import { ApprovalDelegationsController, ApprovalsController } from '@platform/approvals/approvals.controller';
@@ -112,6 +113,7 @@ import { SettingsAdminModule } from '@platform/settings/settings-admin.module';
     ...CARTS_ADMIN_CONTROLLERS,
     ...CHECKOUT_ADMIN_CONTROLLERS,
     ...ORDERS_ADMIN_CONTROLLERS,
+    ...TOOLING_ADMIN_CONTROLLERS,
     ...PAYMENT_SCHEDULES_ADMIN_CONTROLLERS,
     ...PROMOTIONS_ADMIN_CONTROLLERS,
     ...LOYALTY_ADMIN_CONTROLLERS,

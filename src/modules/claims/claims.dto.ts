@@ -2,6 +2,7 @@ import { NextActionDto } from '@common/next-actions/next-action.dto';
 import { PageQuery } from '@common/pagination/pagination.dto';
 import { DECISION_CHANNELS } from '@modules/artwork/proofs.dto';
 import { OrderCustomerRefDto } from '@modules/orders/orders.dto';
+import { ToolingWaiverDto } from '@modules/pricing/quotes/quote.dto';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { UserRefDto } from '@platform/approvals/approvals.dto';
 import { Transform, Type } from 'class-transformer';
@@ -1087,6 +1088,14 @@ export class ReorderPreviewDto {
   toolingAmount!: string | null;
 
   @ApiProperty({
+    type: ToolingWaiverDto,
+    nullable: true,
+    description:
+      'The factory keeps the plates / die block of an earlier order of this specification: not charged again (D-289)',
+  })
+  toolingWaiver!: ToolingWaiverDto | null;
+
+  @ApiProperty({
     type: String,
     nullable: true,
     example: '535.00',
@@ -1135,6 +1144,7 @@ export const REORDER_PREVIEW_EXAMPLE: ReorderPreviewDto = {
   productAmount: '8500.00',
   designFeeAmount: '0.00',
   toolingAmount: null,
+  toolingWaiver: null,
   shippingAmount: '535.00',
   vatAmount: '630.00',
   grossAmount: '9630.00',

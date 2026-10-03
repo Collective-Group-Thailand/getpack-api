@@ -3697,6 +3697,17 @@
           "type": "https://errors.packio/tax.report_not_payable"
         }
       },
+      "problem.tooling.already_reported": {
+        "summary": "tooling.already_reported",
+        "value": {
+          "code": "tooling.already_reported",
+          "detail": "เครื่องมือนี้ถูกแจ้งว่าใช้ไม่ได้สำหรับงานนี้แล้ว",
+          "requestId": "6f1c2d8e-2c7b-4d0e-9d1c-3f1a2b3c4d5e",
+          "status": 409,
+          "title": "แจ้งเครื่องมือนี้แล้ว",
+          "type": "https://errors.packio/tooling.already_reported"
+        }
+      },
       "problem.validation.failed": {
         "summary": "validation.failed",
         "value": {
@@ -8283,6 +8294,17 @@
               "null"
             ]
           },
+          "toolingWaiver": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ToolingWaiverDto"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "A reorder reusing the tooling the factory keeps: what is not charged again (D-289); null otherwise"
+          },
           "unitPrice": {
             "description": "Per piece incl. VAT, excluding shipping (its own line, D-013)",
             "example": "13.38",
@@ -8309,6 +8331,7 @@
           "designFeeAmount",
           "structureDesignFeeAmount",
           "toolingAmount",
+          "toolingWaiver",
           "shippingAmount",
           "shippingNetAmount",
           "shippingVatAmount",
@@ -9261,6 +9284,17 @@
               "null"
             ]
           },
+          "toolingWaiver": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ToolingWaiverDto"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "A reorder reusing the tooling the factory keeps: what is not charged again (D-289); null otherwise"
+          },
           "unitPrice": {
             "description": "Per piece incl. VAT, excluding shipping",
             "example": "13.38",
@@ -9280,6 +9314,7 @@
           "designFeeAmount",
           "structureDesignFeeAmount",
           "toolingAmount",
+          "toolingWaiver",
           "shippingAmount",
           "vatAmount",
           "netAmount",
@@ -53327,6 +53362,17 @@
               }
             ],
             "description": "Null while shipping is not priced"
+          },
+          "tooling": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/QuoteToolingInternalDto"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Corrugate flexo plates and die blocks, charged and waived (D-289); null for the other calculators"
           }
         },
         "required": [
@@ -53338,7 +53384,8 @@
           "belowMarginFloor",
           "productionRun",
           "parts",
-          "shipping"
+          "shipping",
+          "tooling"
         ],
         "type": "object"
       },
@@ -54144,6 +54191,17 @@
               "null"
             ]
           },
+          "toolingWaiver": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ToolingWaiverDto"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "A reorder reusing the tooling the factory keeps: what is not charged again (D-289); null otherwise"
+          },
           "unitPrice": {
             "description": "Per piece incl. VAT, excluding shipping (its own line, D-013)",
             "example": "13.38",
@@ -54170,6 +54228,7 @@
           "designFeeAmount",
           "structureDesignFeeAmount",
           "toolingAmount",
+          "toolingWaiver",
           "shippingAmount",
           "shippingNetAmount",
           "shippingVatAmount",
@@ -54235,6 +54294,31 @@
         "required": [
           "targetPricePerUnit",
           "steps"
+        ],
+        "type": "object"
+      },
+      "QuoteToolingInternalDto": {
+        "properties": {
+          "charged": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ToolingAmountsDto"
+              }
+            ],
+            "description": "Charged with this quotation"
+          },
+          "waived": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ToolingAmountsDto"
+              }
+            ],
+            "description": "Waived for a reorder (D-289); zeros otherwise"
+          }
+        },
+        "required": [
+          "charged",
+          "waived"
         ],
         "type": "object"
       },
@@ -55933,6 +56017,17 @@
               "null"
             ]
           },
+          "toolingWaiver": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ToolingWaiverDto"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "The factory keeps the plates / die block of an earlier order of this specification: not charged again (D-289)"
+          },
           "unitPrice": {
             "example": "4.250000",
             "type": "string"
@@ -55952,6 +56047,7 @@
           "productAmount",
           "designFeeAmount",
           "toolingAmount",
+          "toolingWaiver",
           "shippingAmount",
           "vatAmount",
           "grossAmount",
@@ -56859,6 +56955,25 @@
           "nextRunAt",
           "lastRunAt",
           "createdAt"
+        ],
+        "type": "object"
+      },
+      "ReportToolingUnusableDto": {
+        "properties": {
+          "reason": {
+            "example": "Die block warped in storage; cutting lines no longer close",
+            "type": "string"
+          },
+          "toolingId": {
+            "description": "A register entry the job reuses",
+            "example": "0192f3a0-7c1e-7d2a-9b1f-0000000e7101",
+            "format": "uuid",
+            "type": "string"
+          }
+        },
+        "required": [
+          "toolingId",
+          "reason"
         ],
         "type": "object"
       },
@@ -60649,6 +60764,17 @@
               "null"
             ]
           },
+          "toolingWaiver": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ToolingWaiverDto"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "A reorder reusing the tooling the factory keeps: what is not charged again (D-289); null otherwise"
+          },
           "unitPrice": {
             "description": "Per piece incl. VAT, excluding shipping",
             "example": "13.38",
@@ -60668,6 +60794,7 @@
           "designFeeAmount",
           "structureDesignFeeAmount",
           "toolingAmount",
+          "toolingWaiver",
           "shippingAmount",
           "vatAmount",
           "netAmount",
@@ -74198,6 +74325,255 @@
           "colourDeltaE"
         ],
         "type": "object"
+      },
+      "ToolingAmountsDto": {
+        "properties": {
+          "dieBlockBuy": {
+            "description": "Needs `factory_cost.read` (D-141)",
+            "example": "2500.00",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "dieBlockSale": {
+            "description": "Die blocks, incl. VAT",
+            "example": "2675.00",
+            "type": "string"
+          },
+          "platesBuy": {
+            "description": "Needs `factory_cost.read` (D-141)",
+            "example": "0.00",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "platesSale": {
+            "description": "Plates, incl. VAT",
+            "example": "0.00",
+            "type": "string"
+          }
+        },
+        "required": [
+          "platesSale",
+          "dieBlockSale",
+          "platesBuy",
+          "dieBlockBuy"
+        ],
+        "type": "object"
+      },
+      "ToolingItemDto": {
+        "properties": {
+          "artworkSha256": {
+            "description": "Plates: the sha256 (hex) of the approved artwork they print; null for a die block",
+            "example": null,
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "createdAt": {
+            "example": "2026-10-01T15:00:00+07:00",
+            "format": "date-time",
+            "type": "string"
+          },
+          "factory": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/CodedRefDto"
+              }
+            ],
+            "description": "The factory keeping it (location, D-205)"
+          },
+          "id": {
+            "example": "0192f3a0-7c1e-7d2a-9b1f-0000000e7101",
+            "format": "uuid",
+            "type": "string"
+          },
+          "kind": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ToolingKind"
+              }
+            ],
+            "example": "die_block"
+          },
+          "lastOrder": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/OrderRefDto"
+              }
+            ],
+            "description": "The last delivered order that used it"
+          },
+          "lastUsedAt": {
+            "example": "2026-10-01T15:00:00+07:00",
+            "format": "date-time",
+            "type": "string"
+          },
+          "remakes": {
+            "description": "Remakes Packio absorbed (D-205), newest first",
+            "items": {
+              "$ref": "#/components/schemas/ToolingRemakeDto"
+            },
+            "type": "array"
+          },
+          "reusableUntil": {
+            "description": "Last use + `tooling.reuse_months` (D-289): a reorder at this factory waives it until then",
+            "example": "2027-10-01T15:00:00+07:00",
+            "format": "date-time",
+            "type": "string"
+          },
+          "sourceOrder": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/OrderRefDto"
+              }
+            ],
+            "description": "The order that paid for it"
+          },
+          "status": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ToolingStatus"
+              }
+            ],
+            "description": "`unusable` once the factory reported it at acceptance; active again when the remade tool is delivered",
+            "example": "active"
+          }
+        },
+        "required": [
+          "id",
+          "kind",
+          "status",
+          "factory",
+          "sourceOrder",
+          "lastOrder",
+          "lastUsedAt",
+          "reusableUntil",
+          "artworkSha256",
+          "remakes",
+          "createdAt"
+        ],
+        "type": "object"
+      },
+      "ToolingKind": {
+        "enum": [
+          "plates",
+          "die_block"
+        ],
+        "type": "string"
+      },
+      "ToolingRefDto": {
+        "properties": {
+          "id": {
+            "example": "0192f3a0-7c1e-7d2a-9b1f-0000000e7101",
+            "format": "uuid",
+            "type": "string"
+          },
+          "kind": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ToolingKind"
+              }
+            ],
+            "example": "die_block"
+          }
+        },
+        "required": [
+          "id",
+          "kind"
+        ],
+        "type": "object"
+      },
+      "ToolingRemakeDto": {
+        "properties": {
+          "buyNetAmount": {
+            "description": "The remake at the job’s price list, net of VAT, paid with the job’s goods receipt (D-205)",
+            "example": "2500.00",
+            "type": "string"
+          },
+          "id": {
+            "example": "0192f3a0-7c1e-7d2a-9b1f-0000000e7102",
+            "format": "uuid",
+            "type": "string"
+          },
+          "productionJobId": {
+            "example": "0192f3a0-7c1e-7d2a-9b1f-0000000e7103",
+            "format": "uuid",
+            "type": "string"
+          },
+          "reason": {
+            "example": "Die block warped in storage; cutting lines no longer close",
+            "type": "string"
+          },
+          "reportedAt": {
+            "example": "2026-10-03T10:00:00+07:00",
+            "format": "date-time",
+            "type": "string"
+          },
+          "toolingId": {
+            "example": "0192f3a0-7c1e-7d2a-9b1f-0000000e7101",
+            "format": "uuid",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "toolingId",
+          "productionJobId",
+          "reason",
+          "buyNetAmount",
+          "reportedAt"
+        ],
+        "type": "object"
+      },
+      "ToolingStatus": {
+        "description": "`unusable` once the factory reported it at acceptance; active again when the remade tool is delivered",
+        "enum": [
+          "active",
+          "unusable"
+        ],
+        "type": "string"
+      },
+      "ToolingWaiverDto": {
+        "properties": {
+          "reason": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ToolingWaiverReason"
+              }
+            ],
+            "description": "The factory keeps the plates / die block of an earlier order of this specification (D-289)",
+            "example": "tooling_reuse"
+          },
+          "tooling": {
+            "description": "The register entries reused",
+            "items": {
+              "$ref": "#/components/schemas/ToolingRefDto"
+            },
+            "type": "array"
+          },
+          "waivedAmount": {
+            "description": "Plates and die blocks not charged, incl. VAT",
+            "example": "2675.00",
+            "type": "string"
+          }
+        },
+        "required": [
+          "waivedAmount",
+          "reason",
+          "tooling"
+        ],
+        "type": "object"
+      },
+      "ToolingWaiverReason": {
+        "description": "The factory keeps the plates / die block of an earlier order of this specification (D-289)",
+        "enum": [
+          "tooling_reuse"
+        ],
+        "type": "string"
       },
       "TrackingLinkDto": {
         "properties": {
@@ -156932,7 +157308,8 @@
                           "volumeCm3": 61776,
                           "weightG": 31000,
                           "zoneCode": "bkk"
-                        }
+                        },
+                        "tooling": null
                       },
                       "leadTimeDays": 7,
                       "productAmount": "13380.00",
@@ -156949,6 +157326,7 @@
                       "toleranceOveragePct": "5.0000",
                       "toleranceShortagePct": "5.0000",
                       "toolingAmount": "0.00",
+                      "toolingWaiver": null,
                       "unitPrice": "13.38",
                       "vatAmount": "883.73"
                     }
@@ -157537,7 +157915,8 @@
                           "volumeCm3": 61776,
                           "weightG": 31000,
                           "zoneCode": "bkk"
-                        }
+                        },
+                        "tooling": null
                       },
                       "leadTimeDays": 7,
                       "productAmount": "13380.00",
@@ -157554,6 +157933,7 @@
                       "toleranceOveragePct": "5.0000",
                       "toleranceShortagePct": "5.0000",
                       "toolingAmount": "0.00",
+                      "toolingWaiver": null,
                       "unitPrice": "13.38",
                       "vatAmount": "883.73"
                     }
@@ -158116,7 +158496,8 @@
                           "volumeCm3": 61776,
                           "weightG": 31000,
                           "zoneCode": "bkk"
-                        }
+                        },
+                        "tooling": null
                       },
                       "leadTimeDays": 7,
                       "productAmount": "13380.00",
@@ -158133,6 +158514,7 @@
                       "toleranceOveragePct": "5.0000",
                       "toleranceShortagePct": "5.0000",
                       "toolingAmount": "0.00",
+                      "toolingWaiver": null,
                       "unitPrice": "13.38",
                       "vatAmount": "883.73"
                     }
@@ -158628,7 +159010,8 @@
                           "volumeCm3": 61776,
                           "weightG": 31000,
                           "zoneCode": "bkk"
-                        }
+                        },
+                        "tooling": null
                       },
                       "leadTimeDays": 7,
                       "productAmount": "13380.00",
@@ -158645,6 +159028,7 @@
                       "toleranceOveragePct": "5.0000",
                       "toleranceShortagePct": "5.0000",
                       "toolingAmount": "0.00",
+                      "toolingWaiver": null,
                       "unitPrice": "13.38",
                       "vatAmount": "883.73"
                     }
@@ -159381,7 +159765,8 @@
                           "volumeCm3": 61776,
                           "weightG": 31000,
                           "zoneCode": "bkk"
-                        }
+                        },
+                        "tooling": null
                       },
                       "leadTimeDays": 7,
                       "productAmount": "13380.00",
@@ -159398,6 +159783,7 @@
                       "toleranceOveragePct": "5.0000",
                       "toleranceShortagePct": "5.0000",
                       "toolingAmount": "0.00",
+                      "toolingWaiver": null,
                       "unitPrice": "13.38",
                       "vatAmount": "883.73"
                     }
@@ -159863,7 +160249,8 @@
                           "volumeCm3": 61776,
                           "weightG": 31000,
                           "zoneCode": "bkk"
-                        }
+                        },
+                        "tooling": null
                       },
                       "leadTimeDays": 7,
                       "productAmount": "13380.00",
@@ -159880,6 +160267,7 @@
                       "toleranceOveragePct": "5.0000",
                       "toleranceShortagePct": "5.0000",
                       "toolingAmount": "0.00",
+                      "toolingWaiver": null,
                       "unitPrice": "13.38",
                       "vatAmount": "883.73"
                     }
@@ -160380,7 +160768,8 @@
                           "volumeCm3": 61776,
                           "weightG": 31000,
                           "zoneCode": "bkk"
-                        }
+                        },
+                        "tooling": null
                       },
                       "leadTimeDays": 7,
                       "productAmount": "13380.00",
@@ -160397,6 +160786,7 @@
                       "toleranceOveragePct": "5.0000",
                       "toleranceShortagePct": "5.0000",
                       "toolingAmount": "0.00",
+                      "toolingWaiver": null,
                       "unitPrice": "13.38",
                       "vatAmount": "883.73"
                     }
@@ -241064,7 +241454,8 @@
                               "volumeCm3": 61776,
                               "weightG": 31000,
                               "zoneCode": "bkk"
-                            }
+                            },
+                            "tooling": null
                           },
                           "leadTimeDays": 7,
                           "netAmount": "12624.67",
@@ -241084,6 +241475,7 @@
                           "toleranceOveragePct": "5.0000",
                           "toleranceShortagePct": "5.0000",
                           "toolingAmount": "0.00",
+                          "toolingWaiver": null,
                           "unitPrice": "13.38",
                           "vatAmount": "883.73"
                         }
@@ -241459,7 +241851,8 @@
                           "volumeCm3": 61776,
                           "weightG": 31000,
                           "zoneCode": "bkk"
-                        }
+                        },
+                        "tooling": null
                       },
                       "leadTimeDays": 7,
                       "netAmount": "12624.67",
@@ -241479,6 +241872,7 @@
                       "toleranceOveragePct": "5.0000",
                       "toleranceShortagePct": "5.0000",
                       "toolingAmount": "0.00",
+                      "toolingWaiver": null,
                       "unitPrice": "13.38",
                       "vatAmount": "883.73"
                     }
@@ -241835,7 +242229,8 @@
                           "volumeCm3": 61776,
                           "weightG": 31000,
                           "zoneCode": "bkk"
-                        }
+                        },
+                        "tooling": null
                       },
                       "leadTimeDays": 7,
                       "netAmount": "12624.67",
@@ -241855,6 +242250,7 @@
                       "toleranceOveragePct": "5.0000",
                       "toleranceShortagePct": "5.0000",
                       "toolingAmount": "0.00",
+                      "toolingWaiver": null,
                       "unitPrice": "13.38",
                       "vatAmount": "883.73"
                     }
@@ -242182,7 +242578,8 @@
                           "volumeCm3": 61776,
                           "weightG": 31000,
                           "zoneCode": "bkk"
-                        }
+                        },
+                        "tooling": null
                       },
                       "leadTimeDays": 7,
                       "netAmount": "12624.67",
@@ -242202,6 +242599,7 @@
                       "toleranceOveragePct": "5.0000",
                       "toleranceShortagePct": "5.0000",
                       "toolingAmount": "0.00",
+                      "toolingWaiver": null,
                       "unitPrice": "13.38",
                       "vatAmount": "883.73"
                     }
@@ -242558,7 +242956,8 @@
                           "volumeCm3": 61776,
                           "weightG": 31000,
                           "zoneCode": "bkk"
-                        }
+                        },
+                        "tooling": null
                       },
                       "leadTimeDays": 7,
                       "netAmount": "12624.67",
@@ -242578,6 +242977,7 @@
                       "toleranceOveragePct": "5.0000",
                       "toleranceShortagePct": "5.0000",
                       "toolingAmount": "0.00",
+                      "toolingWaiver": null,
                       "unitPrice": "13.38",
                       "vatAmount": "883.73"
                     }
@@ -242906,6 +243306,7 @@
                         "toleranceOveragePct": "5.0000",
                         "toleranceShortagePct": "5.0000",
                         "toolingAmount": "0.00",
+                        "toolingWaiver": null,
                         "unitPrice": "13.38",
                         "vatAmount": "883.73"
                       }
@@ -243654,6 +244055,7 @@
                       "toleranceOveragePct": "5.0000",
                       "toleranceShortagePct": "5.0000",
                       "toolingAmount": "0.00",
+                      "toolingWaiver": null,
                       "unitPrice": "13.38",
                       "vatAmount": "883.73"
                     }
@@ -283082,6 +283484,281 @@
         ]
       }
     },
+    "/v1/admin/tooling": {
+      "get": {
+        "description": "Plates and die blocks a delivered order paid for or reused, kept at the factory that made them (D-205): plates bound to the specification and the approved artwork, a die block to the specification; reusable until last use + `tooling.reuse_months` (D-289). Most recently used first; filter by factory, kind and status.\n\nImplements: D-289, D-205.",
+        "operationId": "admin.tooling.list",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "page",
+            "required": false,
+            "schema": {
+              "default": 1,
+              "minimum": 1,
+              "type": "integer"
+            }
+          },
+          {
+            "in": "query",
+            "name": "perPage",
+            "required": false,
+            "schema": {
+              "default": 25,
+              "maximum": 100,
+              "minimum": 1,
+              "type": "integer"
+            }
+          },
+          {
+            "description": "Sort field; each endpoint validates it against its own allow-list.",
+            "in": "query",
+            "name": "sort",
+            "required": false,
+            "schema": {
+              "example": "createdAt",
+              "maxLength": 64,
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "order",
+            "required": false,
+            "schema": {
+              "$ref": "#/components/schemas/SortOrder"
+            }
+          },
+          {
+            "description": "Free-text search",
+            "in": "query",
+            "name": "q",
+            "required": false,
+            "schema": {
+              "maxLength": 200,
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "factoryId",
+            "required": false,
+            "schema": {
+              "example": "0192f3a0-7c1e-7d2a-9b1f-0000000d1003",
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "kind",
+            "required": false,
+            "schema": {
+              "$ref": "#/components/schemas/ToolingKind"
+            }
+          },
+          {
+            "in": "query",
+            "name": "status",
+            "required": false,
+            "schema": {
+              "$ref": "#/components/schemas/ToolingStatus"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "data": [
+                    {
+                      "artworkSha256": null,
+                      "createdAt": "2026-10-01T15:00:00+07:00",
+                      "factory": {
+                        "code": "F0001",
+                        "id": "0192f3a0-7c1e-7d2a-9b1f-0000000d1003",
+                        "name": "โรงพิมพ์ ทดสอบ"
+                      },
+                      "id": "0192f3a0-7c1e-7d2a-9b1f-0000000e7101",
+                      "kind": "die_block",
+                      "lastOrder": {
+                        "orderCode": "PK-2610-0001-01",
+                        "orderId": "0192f3a0-7c1e-7d2a-9b1f-0000000f1002"
+                      },
+                      "lastUsedAt": "2026-10-01T15:00:00+07:00",
+                      "remakes": [],
+                      "reusableUntil": "2027-10-01T15:00:00+07:00",
+                      "sourceOrder": {
+                        "orderCode": "PK-2610-0001-01",
+                        "orderId": "0192f3a0-7c1e-7d2a-9b1f-0000000f1002"
+                      },
+                      "status": "active"
+                    }
+                  ],
+                  "meta": {
+                    "page": 1,
+                    "perPage": 25,
+                    "total": 1
+                  }
+                },
+                "schema": {
+                  "properties": {
+                    "data": {
+                      "items": {
+                        "$ref": "#/components/schemas/ToolingItemDto"
+                      },
+                      "type": "array"
+                    },
+                    "meta": {
+                      "$ref": "#/components/schemas/PageMeta"
+                    }
+                  },
+                  "required": [
+                    "data",
+                    "meta"
+                  ],
+                  "type": "object"
+                }
+              }
+            },
+            "description": "One page of results",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.unauthenticated": {
+                    "$ref": "#/components/examples/problem.auth.unauthenticated"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.unauthenticated`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.forbidden": {
+                    "$ref": "#/components/examples/problem.auth.forbidden"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.forbidden`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "validation.failed": {
+                    "$ref": "#/components/examples/problem.validation.failed"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `validation.failed`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "staff": []
+          }
+        ],
+        "summary": "List the tooling register",
+        "tags": [
+          "admin.tooling"
+        ],
+        "x-required-permissions": [
+          "production.read"
+        ]
+      }
+    },
     "/v1/admin/unidentified-receipts": {
       "get": {
         "description": "Money parked in 1140 (P29) and what became of it (§6).\n\nImplements: D-061, D-093.",
@@ -310562,6 +311239,215 @@
         ]
       }
     },
+    "/v1/partner/factories/{factoryId}/tooling": {
+      "get": {
+        "description": "The plates and die blocks my factory keeps for Packio orders (D-205, own factory only, D-044), with the last use and until when a reorder reuses them without a new charge (D-289).\n\nImplements: D-289, D-205, D-044.",
+        "operationId": "partner.tooling.list",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "factoryId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "example": [
+                  {
+                    "artworkSha256": null,
+                    "createdAt": "2026-10-01T15:00:00+07:00",
+                    "factory": {
+                      "code": "F0001",
+                      "id": "0192f3a0-7c1e-7d2a-9b1f-0000000d1003",
+                      "name": "โรงพิมพ์ ทดสอบ"
+                    },
+                    "id": "0192f3a0-7c1e-7d2a-9b1f-0000000e7101",
+                    "kind": "die_block",
+                    "lastOrder": {
+                      "orderCode": "PK-2610-0001-01",
+                      "orderId": "0192f3a0-7c1e-7d2a-9b1f-0000000f1002"
+                    },
+                    "lastUsedAt": "2026-10-01T15:00:00+07:00",
+                    "remakes": [],
+                    "reusableUntil": "2027-10-01T15:00:00+07:00",
+                    "sourceOrder": {
+                      "orderCode": "PK-2610-0001-01",
+                      "orderId": "0192f3a0-7c1e-7d2a-9b1f-0000000f1002"
+                    },
+                    "status": "active"
+                  }
+                ],
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/ToolingItemDto"
+                  },
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Register",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.unauthenticated": {
+                    "$ref": "#/components/examples/problem.auth.unauthenticated"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.unauthenticated`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.forbidden": {
+                    "$ref": "#/components/examples/problem.auth.forbidden"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.forbidden`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "404": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.not_found": {
+                    "$ref": "#/components/examples/problem.http.not_found"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.not_found`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "validation.failed": {
+                    "$ref": "#/components/examples/problem.validation.failed"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `validation.failed`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "partner": []
+          }
+        ],
+        "summary": "List my factory’s tooling register",
+        "tags": [
+          "partner.tooling"
+        ],
+        "x-required-permissions": [
+          "factory_jobs.read"
+        ]
+      }
+    },
     "/v1/partner/factories/{factoryId}/users": {
       "get": {
         "description": "Everyone with a role in the factory (D-140), with the last sign-in and whether it is the signed-in user; `?status=deactivated` lists those whose roles were all revoked (U-B0.3).\n\nImplements: D-140.",
@@ -316891,6 +317777,277 @@
         ]
       }
     },
+    "/v1/partner/production-jobs/{jobId}/actions/report-tooling-unusable": {
+      "post": {
+        "description": "Before accepting a job (status `released`), the factory reports that a plate set or die block the order reuses cannot be used. Packio absorbs the remake: its buy price as waived in the quotation is paid with the job’s goods receipt (the purchase order keeps its snapshot); the customer price does not change (D-205, D-012). The tool is unusable until the remade one is delivered. Once per tool and job.\n\nImplements: D-289, D-205, D-012.",
+        "operationId": "partner.tooling.reportUnusable",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "jobId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/IdempotencyKey"
+          },
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "examples": {
+                "default": {
+                  "value": {
+                    "reason": "Die block warped in storage; cutting lines no longer close",
+                    "toolingId": "0192f3a0-7c1e-7d2a-9b1f-0000000e7101"
+                  }
+                }
+              },
+              "schema": {
+                "$ref": "#/components/schemas/ReportToolingUnusableDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "buyNetAmount": "2500.00",
+                  "id": "0192f3a0-7c1e-7d2a-9b1f-0000000e7102",
+                  "productionJobId": "0192f3a0-7c1e-7d2a-9b1f-0000000e7103",
+                  "reason": "Die block warped in storage; cutting lines no longer close",
+                  "reportedAt": "2026-10-03T10:00:00+07:00",
+                  "toolingId": "0192f3a0-7c1e-7d2a-9b1f-0000000e7101"
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ToolingRemakeDto"
+                }
+              }
+            },
+            "description": "Remake recorded",
+            "headers": {
+              "Idempotent-Replayed": {
+                "$ref": "#/components/headers/IdempotentReplayed"
+              },
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "400": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.bad_request": {
+                    "$ref": "#/components/examples/problem.http.bad_request"
+                  },
+                  "http.malformed_json": {
+                    "$ref": "#/components/examples/problem.http.malformed_json"
+                  },
+                  "idempotency.key_invalid": {
+                    "$ref": "#/components/examples/problem.idempotency.key_invalid"
+                  },
+                  "idempotency.key_required": {
+                    "$ref": "#/components/examples/problem.idempotency.key_required"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.bad_request`, `http.malformed_json`, `idempotency.key_invalid`, `idempotency.key_required`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.unauthenticated": {
+                    "$ref": "#/components/examples/problem.auth.unauthenticated"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.unauthenticated`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.forbidden": {
+                    "$ref": "#/components/examples/problem.auth.forbidden"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.forbidden`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "404": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.not_found": {
+                    "$ref": "#/components/examples/problem.http.not_found"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.not_found`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "409": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "idempotency.in_progress": {
+                    "$ref": "#/components/examples/problem.idempotency.in_progress"
+                  },
+                  "production.invalid_status": {
+                    "$ref": "#/components/examples/problem.production.invalid_status"
+                  },
+                  "tooling.already_reported": {
+                    "$ref": "#/components/examples/problem.tooling.already_reported"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `idempotency.in_progress`, `production.invalid_status`, `tooling.already_reported`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "idempotency.key_reused": {
+                    "$ref": "#/components/examples/problem.idempotency.key_reused"
+                  },
+                  "validation.failed": {
+                    "$ref": "#/components/examples/problem.validation.failed"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `idempotency.key_reused`, `validation.failed`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "partner": []
+          }
+        ],
+        "summary": "Report a reused tool unusable",
+        "tags": [
+          "partner.tooling"
+        ],
+        "x-required-permissions": [
+          "factory_jobs.respond"
+        ]
+      }
+    },
     "/v1/partner/production-jobs/{jobId}/issues": {
       "get": {
         "description": "Open and resolved.\n\nImplements: D-074.",
@@ -318517,6 +319674,215 @@
         ],
         "x-required-permissions": [
           "factory_qc.record"
+        ]
+      }
+    },
+    "/v1/partner/production-jobs/{jobId}/tooling": {
+      "get": {
+        "description": "The register entries whose plates / die block this job’s order reuses and was not charged for (D-289). Check them before accepting: one that cannot be used is reported, not accepted silently (D-205).\n\nImplements: D-289, D-205.",
+        "operationId": "partner.tooling.listForJob",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "jobId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "example": [
+                  {
+                    "artworkSha256": null,
+                    "createdAt": "2026-10-01T15:00:00+07:00",
+                    "factory": {
+                      "code": "F0001",
+                      "id": "0192f3a0-7c1e-7d2a-9b1f-0000000d1003",
+                      "name": "โรงพิมพ์ ทดสอบ"
+                    },
+                    "id": "0192f3a0-7c1e-7d2a-9b1f-0000000e7101",
+                    "kind": "die_block",
+                    "lastOrder": {
+                      "orderCode": "PK-2610-0001-01",
+                      "orderId": "0192f3a0-7c1e-7d2a-9b1f-0000000f1002"
+                    },
+                    "lastUsedAt": "2026-10-01T15:00:00+07:00",
+                    "remakes": [],
+                    "reusableUntil": "2027-10-01T15:00:00+07:00",
+                    "sourceOrder": {
+                      "orderCode": "PK-2610-0001-01",
+                      "orderId": "0192f3a0-7c1e-7d2a-9b1f-0000000f1002"
+                    },
+                    "status": "active"
+                  }
+                ],
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/ToolingItemDto"
+                  },
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Reused tooling",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.unauthenticated": {
+                    "$ref": "#/components/examples/problem.auth.unauthenticated"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.unauthenticated`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.forbidden": {
+                    "$ref": "#/components/examples/problem.auth.forbidden"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.forbidden`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "404": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.not_found": {
+                    "$ref": "#/components/examples/problem.http.not_found"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.not_found`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "validation.failed": {
+                    "$ref": "#/components/examples/problem.validation.failed"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `validation.failed`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "partner": []
+          }
+        ],
+        "summary": "List the tooling a job reuses",
+        "tags": [
+          "partner.tooling"
+        ],
+        "x-required-permissions": [
+          "factory_jobs.read"
         ]
       }
     },
@@ -344792,6 +346158,7 @@
                         "toleranceOveragePct": "5.0000",
                         "toleranceShortagePct": "5.0000",
                         "toolingAmount": "0.00",
+                        "toolingWaiver": null,
                         "unitPrice": "13.38",
                         "vatAmount": "883.73"
                       }
@@ -360475,7 +361842,7 @@
     },
     "/v1/store/orders/{orderId}/actions/reorder": {
       "post": {
-        "description": "Same specification priced again at today’s cost (a new quote), quantity editable, added to my cart. With the artwork unchanged the approved proof carries over and no new proof is needed (D-153). With the `previewToken` of a preview: 409 `orders.reorder_repriced` when today’s price differs from it, 409 `orders.reorder_preview_expired` when it expired or was for another quantity or artwork choice.\n\nImplements: D-153.",
+        "description": "Same specification priced again at today’s cost (a new quote), quantity editable, added to my cart. With the artwork unchanged the approved proof carries over and no new proof is needed (D-153). With the `previewToken` of a preview: 409 `orders.reorder_repriced` when today’s price differs from it, 409 `orders.reorder_preview_expired` when it expired or was for another quantity or artwork choice. Tooling the factory keeps is waived in the new quotation as in the preview (D-289).\n\nImplements: D-153, D-289.",
         "operationId": "store.claims.reorder",
         "parameters": [
           {
@@ -363882,7 +365249,7 @@
     },
     "/v1/store/orders/{orderId}/reorder": {
       "get": {
-        "description": "The same specification priced at today’s cost for `quantity` (default: the past quantity) — nothing is saved; whether the approved artwork carries over (no new proof, D-153); the catalogue quantity limits, lead time and earliest dates. The `previewToken` (30 minutes) makes the reorder refuse a changed price. Plate / die-block reuse is shown once the tooling register exists (D-205).\n\nImplements: D-153.",
+        "description": "The same specification priced at today’s cost for `quantity` (default: the past quantity) — nothing is saved; whether the approved artwork carries over (no new proof, D-153); the catalogue quantity limits, lead time and earliest dates. The `previewToken` (30 minutes) makes the reorder refuse a changed price. Plates (with the artwork unchanged) and a die block the factory keeps from an earlier order of the specification within `tooling.reuse_months` are not charged again: `toolingWaiver` shows the amount and the register entries (D-289).\n\nImplements: D-153, D-289.",
         "operationId": "store.claims.previewReorder",
         "parameters": [
           {
@@ -363944,6 +365311,7 @@
                   },
                   "shippingAmount": "535.00",
                   "toolingAmount": null,
+                  "toolingWaiver": null,
                   "unitPrice": "4.250000",
                   "vatAmount": "630.00"
                 },
@@ -368049,6 +369417,7 @@
                           "toleranceOveragePct": "5.0000",
                           "toleranceShortagePct": "5.0000",
                           "toolingAmount": "0.00",
+                          "toolingWaiver": null,
                           "unitPrice": "13.38",
                           "vatAmount": "883.73"
                         }
@@ -368399,6 +369768,7 @@
                       "toleranceOveragePct": "5.0000",
                       "toleranceShortagePct": "5.0000",
                       "toolingAmount": "0.00",
+                      "toolingWaiver": null,
                       "unitPrice": "13.38",
                       "vatAmount": "883.73"
                     }
@@ -368868,6 +370238,7 @@
                       "toleranceOveragePct": "5.0000",
                       "toleranceShortagePct": "5.0000",
                       "toolingAmount": "0.00",
+                      "toolingWaiver": null,
                       "unitPrice": "13.38",
                       "vatAmount": "883.73"
                     }
@@ -369120,6 +370491,7 @@
                       "toleranceOveragePct": "5.0000",
                       "toleranceShortagePct": "5.0000",
                       "toolingAmount": "0.00",
+                      "toolingWaiver": null,
                       "unitPrice": "13.38",
                       "vatAmount": "883.73"
                     }
@@ -369408,6 +370780,7 @@
                       "toleranceOveragePct": "5.0000",
                       "toleranceShortagePct": "5.0000",
                       "toolingAmount": "0.00",
+                      "toolingWaiver": null,
                       "unitPrice": "13.38",
                       "vatAmount": "883.73"
                     }
@@ -369723,6 +371096,7 @@
                       "toleranceOveragePct": "5.0000",
                       "toleranceShortagePct": "5.0000",
                       "toolingAmount": "0.00",
+                      "toolingWaiver": null,
                       "unitPrice": "13.38",
                       "vatAmount": "883.73"
                     }
@@ -370076,6 +371450,7 @@
                       "toleranceOveragePct": "5.0000",
                       "toleranceShortagePct": "5.0000",
                       "toolingAmount": "0.00",
+                      "toolingWaiver": null,
                       "unitPrice": "13.38",
                       "vatAmount": "883.73"
                     }
@@ -370432,6 +371807,7 @@
                       "toleranceOveragePct": "5.0000",
                       "toleranceShortagePct": "5.0000",
                       "toolingAmount": "0.00",
+                      "toolingWaiver": null,
                       "unitPrice": "13.38",
                       "vatAmount": "883.73"
                     }
@@ -370759,6 +372135,7 @@
                       "toleranceOveragePct": "5.0000",
                       "toleranceShortagePct": "5.0000",
                       "toolingAmount": "0.00",
+                      "toolingWaiver": null,
                       "unitPrice": "13.38",
                       "vatAmount": "883.73"
                     }
@@ -371342,6 +372719,7 @@
                         "toleranceOveragePct": "5.0000",
                         "toleranceShortagePct": "5.0000",
                         "toolingAmount": "0.00",
+                        "toolingWaiver": null,
                         "unitPrice": "13.38",
                         "vatAmount": "883.73"
                       }
@@ -371939,6 +373317,7 @@
                       "toleranceOveragePct": "5.0000",
                       "toleranceShortagePct": "5.0000",
                       "toolingAmount": "0.00",
+                      "toolingWaiver": null,
                       "unitPrice": "13.38",
                       "vatAmount": "883.73"
                     }
@@ -372456,6 +373835,7 @@
                       "toleranceOveragePct": "5.0000",
                       "toleranceShortagePct": "5.0000",
                       "toolingAmount": "0.00",
+                      "toolingWaiver": null,
                       "unitPrice": "13.38",
                       "vatAmount": "883.73"
                     }
@@ -383885,6 +385265,7 @@
                         "toleranceOveragePct": "5.0000",
                         "toleranceShortagePct": "5.0000",
                         "toolingAmount": "0.00",
+                        "toolingWaiver": null,
                         "unitPrice": "13.38",
                         "vatAmount": "883.73"
                       }
@@ -384248,6 +385629,7 @@
                       "toleranceOveragePct": "5.0000",
                       "toleranceShortagePct": "5.0000",
                       "toolingAmount": "0.00",
+                      "toolingWaiver": null,
                       "unitPrice": "13.38",
                       "vatAmount": "883.73"
                     }
@@ -391269,6 +392651,10 @@
       "name": "admin.timeline"
     },
     {
+      "description": "The tooling register (D-205, D-289): plates and die blocks kept at the factory that made them, their last use, reuse window and the remakes Packio absorbed.",
+      "name": "admin.tooling"
+    },
+    {
       "description": "Staff, partner and customer accounts, role grants and sessions (D-140, D-168).",
       "name": "admin.users"
     },
@@ -391407,6 +392793,10 @@
     {
       "description": "The factory offers its dielines to the style library under the intake terms; Prepress decides (D-272).",
       "name": "partner.styleIntakes"
+    },
+    {
+      "description": "My factory’s tooling register (D-205, D-289, D-044): the plates and die blocks Packio’s reorders reuse at no new charge.",
+      "name": "partner.tooling"
     },
     {
       "description": "Web push subscriptions of the signed-in factory user (D-143).",

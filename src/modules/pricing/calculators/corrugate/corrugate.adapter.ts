@@ -5,6 +5,7 @@ import { Injectable, type OnModuleInit } from '@nestjs/common';
 
 import { phpRound } from '../../engine/php';
 import {
+  type CalculateOptions,
   type CalculationLogInput,
   type CalculatorAdapter,
   type ConfigurationFacts,
@@ -65,7 +66,7 @@ export class CorrugateQuoteAdapter
   calculate(
     resolved: ResolvedCorrugateQuote,
     loaded: readonly LoadedCorrugateOption[],
-    opts: { withDesign: boolean },
+    opts: CalculateOptions,
   ): PricedOption[] {
     const result = corrugateCalculator.calculate(
       {
@@ -80,6 +81,7 @@ export class CorrugateQuoteAdapter
         standardSize: resolved.standardSize,
         autoAssemblies: resolved.autoAssemblies,
         digitalFrontCoveragePct: resolved.digitalFrontCoveragePct,
+        ...(opts.waiveTooling && { waiveTooling: opts.waiveTooling }),
       },
       { options: loaded.map((l) => l.option) },
     );
@@ -102,6 +104,7 @@ export class CorrugateQuoteAdapter
               designFee: s.designFee,
               structureDesignFee: s.structureDesignFee,
               toolingAmount: s.tooling,
+              tooling: { charged: s.toolingCharged, waived: s.toolingWaived },
               vatAmount: s.vatPrice,
               total: s.total,
               parts: s.parts.map((p) => {

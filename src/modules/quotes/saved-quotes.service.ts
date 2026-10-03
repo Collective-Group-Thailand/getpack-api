@@ -16,6 +16,7 @@ import {
   QuoteEngineService,
   type QuoteStepView,
   type QuoteView,
+  type ToolingCredit,
 } from '@modules/pricing/quotes/quote-engine.service';
 import { StyleDielinesService } from '@modules/styles/style-dielines.service';
 import { Injectable } from '@nestjs/common';
@@ -122,11 +123,14 @@ export class SavedQuotesService {
       fromLeverId?: bigint;
       /** D-277: the studio design version and spec hash the quotation is priced from. */
       studio?: { designDocumentVersionId: bigint; specHash: Buffer };
+      /** D-289: register tooling a reorder reuses (the reorder path only). */
+      toolingCredits?: readonly ToolingCredit[];
     } = {},
   ): Promise<QuoteRow> {
     const now = new Date();
     const { type, calculatorKey, configuration, view } = await this.priced(owner, channel, input, now, {
       ip: extra.ip,
+      toolingCredits: extra.toolingCredits,
     });
     const steps = view.steps.filter((s) => s.instant && s.internal);
     if (steps.length === 0) throw new DomainException('quotes.nothing_to_save');
@@ -296,8 +300,13 @@ export class SavedQuotesService {
    * Prices a specification exactly as saving it would, without saving or logging a calculation (a preview, e.g. of a
    * reorder, D-153).
    */
-  async preview(owner: QuoteOwner, channel: SalesChannel, input: SaveQuoteInput): Promise<QuoteView> {
-    return (await this.priced(owner, channel, input, new Date(), { log: false })).view;
+  async preview(
+    owner: QuoteOwner,
+    channel: SalesChannel,
+    input: SaveQuoteInput,
+    extra: { toolingCredits?: readonly ToolingCredit[] } = {},
+  ): Promise<QuoteView> {
+    return (await this.priced(owner, channel, input, new Date(), { ...extra, log: false })).view;
   }
 
   private async priced(
@@ -305,7 +314,7 @@ export class SavedQuotesService {
     channel: SalesChannel,
     input: SaveQuoteInput,
     now: Date,
-    extra: { ip?: string; log?: boolean },
+    extra: { ip?: string; log?: boolean; toolingCredits?: readonly ToolingCredit[] },
   ) {
     const type = await this.prisma.productType.findFirst({
       where: { code: input.productTypeCode, status: 'active' },
@@ -330,6 +339,7 @@ export class SavedQuotesService {
       deliveryPostcode: input.deliveryPostcode,
       ip: extra.ip,
       ...(extra.log === false && { log: false }),
+      ...(extra.toolingCredits?.length && { toolingCredits: extra.toolingCredits }),
     });
     return { type, calculatorKey: type.calculatorKey, configuration, view };
   }

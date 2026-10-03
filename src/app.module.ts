@@ -55,6 +55,7 @@ import { StylesModule } from '@modules/styles/styles.module';
 import { SurfacesModule } from '@modules/surfaces/surfaces.module';
 import { TaxModule } from '@modules/tax/tax.module';
 import { TimelineModule } from '@modules/timeline/timeline.module';
+import { ToolingModule } from '@modules/tooling/tooling.module';
 import { type MiddlewareConsumer, Module, type NestModule } from '@nestjs/common';
 import { APP_FILTER, APP_GUARD, APP_INTERCEPTOR } from '@nestjs/core';
 import { seconds, ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler';
@@ -120,6 +121,7 @@ import { LoggerModule } from 'nestjs-pino';
     CartsModule,
     CheckoutModule,
     OrdersModule,
+    ToolingModule,
     PaymentSchedulesModule,
     PromotionsModule,
     LoyaltyModule,

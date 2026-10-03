@@ -65,6 +65,10 @@ export const API_TAGS: Record<string, string> = {
     'Company brand kits — logos, palette, font pairs, usage notes — managed by the Company Admin, used by every member (D-282, D-227).',
   'store.dielines':
     'Free dieline downloads of published style variants (D-271, D-203): signed-in customers, within the style’s size range, rate-limited and logged.',
+  'admin.tooling':
+    'The tooling register (D-205, D-289): plates and die blocks kept at the factory that made them, their last use, reuse window and the remakes Packio absorbed.',
+  'partner.tooling':
+    'My factory’s tooling register (D-205, D-289, D-044): the plates and die blocks Packio’s reorders reuse at no new charge.',
   'admin.processTypes': 'The manufacturing process taxonomy (D-244).',
   'partner.processTypes': 'The manufacturing process taxonomy (D-244).',
   'partner.styleIntakes':

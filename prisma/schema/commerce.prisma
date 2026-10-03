@@ -690,6 +690,9 @@ model Order {
 
   specSheets OrderSpecSheet[] @relation("OrderSpecSheetOrder")
 
+  toolingSourced  ToolingItem[] @relation("ToolingSourceOrder")
+  toolingLastUsed ToolingItem[] @relation("ToolingLastOrder")
+
   @@index([companyId, createdAt(sort: Desc)], map: "ix_orders__company_id__created_at")
   @@index([orderGroupId], map: "ix_orders__order_group_id")
   @@index([status, promisedShipDate], map: "ix_orders__status__promised_ship_date")

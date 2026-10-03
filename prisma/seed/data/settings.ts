@@ -1077,6 +1077,17 @@ export const SETTINGS: readonly SettingSeed[] = [
     ownerRole: 'marketing',
   },
 
+  // --- Tooling register (U2.7, D-205 / D-289): plates and die blocks kept at the factory that made them.
+  {
+    key: 'tooling.reuse_months',
+    valueType: 'integer',
+    value: 12,
+    valueSchema: { minimum: 1, maximum: 60 },
+    description:
+      'D-205 / D-289 months after its last use that a registered plate set or die block is reused (the reorder waives it)',
+    decisions: ['D-205', 'D-289'],
+    ownerRole: 'superadmin',
+  },
   // --- Free dieline download (U3.B5, D-203 / D-271): per signed-in customer; staff are not limited.
   {
     key: 'dielines.downloads_per_day',

@@ -1304,6 +1304,8 @@ enum PoLineType {
   mockup
   design
   reproduction
+  /// D-289: a waived tool the factory found unusable, remade at Packio's cost.
+  tooling
 
   @@map("po_line_type")
 }

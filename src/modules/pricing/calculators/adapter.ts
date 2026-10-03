@@ -4,6 +4,7 @@ import { type ConfigurationFacts } from '@modules/partners/configuration/tier-b-
 import { type ShipmentPart } from '@modules/shipping/shipping-quote.service';
 
 import { type PricingError } from './shared/pricing-error';
+import { type ToolingAmounts, type ToolingWaive } from './shared/tooling';
 
 /**
  * What the quote engine needs from a calculator port (B2.3, U-B6): turning an API configuration into
@@ -65,6 +66,8 @@ export interface PricedStep {
   structureDesignFee: number;
   /** Print plates and die blocks charged apart, VAT included (corrugate flexo; 0 otherwise). */
   toolingAmount: number;
+  /** Corrugate flexo: the plates and die blocks charged, and what a reorder waiver took out (D-289). */
+  tooling?: { charged: ToolingAmounts; waived: ToolingAmounts };
   vatAmount: number;
   /** Customer price, VAT included, shipping excluded (its own line, D-013). */
   total: number;
@@ -99,6 +102,12 @@ export interface LoadOptions {
   honourEnvelope?: boolean;
 }
 
+/** `withDesign` false prices the factory side only; `waiveTooling` (per factory public id) only from a reorder (D-289). */
+export interface CalculateOptions {
+  withDesign: boolean;
+  waiveTooling?: Readonly<Record<string, ToolingWaive>>;
+}
+
 export interface CalculatorAdapter<
   Cfg = unknown,
   Resolved extends ResolvedBase = ResolvedBase,
@@ -119,7 +128,7 @@ export interface CalculatorAdapter<
     opts?: LoadOptions,
   ): Promise<Loaded[]>;
   /** Pure: no database or clock. `withDesign` false prices the factory side only. */
-  calculate(resolved: Resolved, loaded: readonly Loaded[], opts: { withDesign: boolean }): PricedOption[];
+  calculate(resolved: Resolved, loaded: readonly Loaded[], opts: CalculateOptions): PricedOption[];
   shipmentParts(resolved: Resolved): ShipmentPart[];
   /** The configuration's facts for a tier-B envelope (D-234). */
   envelopeFacts(resolved: Resolved, cfg: Cfg): ConfigurationFacts;

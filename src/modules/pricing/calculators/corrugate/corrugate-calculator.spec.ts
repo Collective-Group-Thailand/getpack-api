@@ -232,4 +232,35 @@ describe('corrugate calculator (CorrugateCalculator::calculate_cs)', () => {
     expect(standard.dieBlock).toBe(0);
     expect(standard.dieBlockSale).toBe(0);
   });
+
+  it('waives reused plates and die block at the factory keeping them, sale and buy alike (D-289)', () => {
+    const i = input({ size: { w: 150, l: 220, d: 90 }, parts: [part({ formula: 'single_tuck' })] });
+    const full = run(i).steps[1]!;
+    const p = full.parts[0]!;
+    expect(p.platesSale).toBeGreaterThan(0);
+    expect(p.dieBlockSale).toBeGreaterThan(0);
+    expect(full.toolingWaived).toEqual({ platesSale: 0, dieBlockSale: 0, platesBuy: 0, dieBlockBuy: 0 });
+
+    const dieOnly = run({ ...i, waiveTooling: { F1: { plates: false, dieBlock: true } } }).steps[1]!;
+    expect(dieOnly.tooling).toBe(p.platesSale);
+    expect(dieOnly.total).toBeCloseTo(full.total - p.dieBlockSale, 9);
+    expect(dieOnly.buyPrice).toBeCloseTo(full.buyPrice - p.dieBlock, 9);
+    expect(dieOnly.toolingWaived).toEqual({
+      platesSale: 0,
+      dieBlockSale: p.dieBlockSale,
+      platesBuy: 0,
+      dieBlockBuy: p.dieBlock,
+    });
+    expect(dieOnly.toolingCharged.dieBlockSale).toBe(0);
+
+    const both = run({ ...i, waiveTooling: { F1: { plates: true, dieBlock: true } } }).steps[1]!;
+    expect(both.tooling).toBe(0);
+    expect(both.total).toBeCloseTo(full.total - p.platesSale - p.dieBlockSale, 9);
+    expect(both.vatPrice).toBeCloseTo(full.vatPrice - (full.tooling - full.tooling / 1.07), 9);
+
+    // Another factory's tooling waives nothing here.
+    const other = run({ ...i, waiveTooling: { F2: { plates: true, dieBlock: true } } }).steps[1]!;
+    expect(other.total).toBe(full.total);
+    expect(other.buyPrice).toBe(full.buyPrice);
+  });
 });

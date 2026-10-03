@@ -2,6 +2,7 @@ import { phpRound } from '../../engine/php';
 import { type Calculator } from '../calculator';
 import { PricingError } from '../shared/pricing-error';
 import { type ForSale, saleMargin, type SellSnapshot } from '../shared/sell';
+import { type ToolingAmounts, type ToolingWaive } from '../shared/tooling';
 import { assemblyCost, type AssemblyLine, type AssemblyRequest, type PackingTerms } from './assemblies';
 import { type DigitalLayout, type DigitalTables, priceDigitalPart } from './digital';
 import { type FlexoLayout, type FlexoTables, priceFlexoPart } from './flexo';
@@ -74,6 +75,11 @@ export interface CorrugateInput {
   autoAssemblies: readonly AssemblyRequest[];
   /** Digital front coverage % (legacy CS `printing_calculate_type` 2); null = type 1. */
   digitalFrontCoveragePct: number | null;
+  /**
+   * D-289: tooling a reorder reuses, per factory public id — those plates / die blocks are neither charged nor
+   * bought at that factory. Set only by the reorder path.
+   */
+  waiveTooling?: Readonly<Record<string, ToolingWaive>>;
 }
 
 export type CorrugateEngine = 'flexo' | 'digital';
@@ -154,6 +160,9 @@ export interface CorrugateStep {
   sum: number;
   /** Plates + die blocks charged to the customer, VAT included. */
   tooling: number;
+  /** Plates and die blocks charged, and what a reorder waiver took out (D-289); zeros when none. */
+  toolingCharged: ToolingAmounts;
+  toolingWaived: ToolingAmounts;
   vatPrice: number;
   designFee: number;
   structureDesignFee: number;
@@ -367,7 +376,24 @@ function optionResult(input: CorrugateInput, option: CorrugateOption): Corrugate
       if (option.minOrderAmount !== null && qty < option.minOrderAmount) {
         throw new PricingError('process_not_possible', `minimum order ${option.minOrderAmount}`);
       }
-      const parts = prepared.map((p) => pricePart(input, option, p, qty));
+      const priced = prepared.map((p) => pricePart(input, option, p, qty));
+      // D-289: reused tooling is taken out of every part before the sums, so the sums keep their order.
+      const waive = input.waiveTooling?.[option.factoryId];
+      const toolingWaived = amounts(
+        priced.map((p) => ({
+          platesSale: waive?.plates ? p.platesSale : 0,
+          dieBlockSale: waive?.dieBlock ? p.dieBlockSale : 0,
+          platesBuy: waive?.plates ? p.plates : 0,
+          dieBlockBuy: waive?.dieBlock ? p.dieBlock : 0,
+        })),
+      );
+      const parts = waive
+        ? priced.map((p) => ({
+            ...p,
+            ...(waive.plates && { plates: 0, platesSale: 0 }),
+            ...(waive.dieBlock && { dieBlock: 0, dieBlockSale: 0 }),
+          }))
+        : priced;
       stepErrors.push(null);
       const sum = (f: (p: CorrugatePartStep) => number) => parts.reduce((a, p) => a + f(p), 0);
       const designFee = input.design.graphic ? (option.sell.designFee ?? 0) : 0;
@@ -386,6 +412,15 @@ function optionResult(input: CorrugateInput, option: CorrugateOption): Corrugate
         perPcsWithDelivery: sum((p) => p.forSale.perPcsWithDelivery),
         sum: sum((p) => p.forSale.sum),
         tooling,
+        toolingCharged: amounts(
+          parts.map((p) => ({
+            platesSale: p.platesSale,
+            dieBlockSale: p.dieBlockSale,
+            platesBuy: p.plates,
+            dieBlockBuy: p.dieBlock,
+          })),
+        ),
+        toolingWaived,
         // Product VAT per part plus the VAT inside the plates and die blocks charged.
         vatPrice: sum((p) => p.forSale.vatPrice) + (tooling - tooling / vatInclude),
         designFee,
@@ -402,6 +437,18 @@ function optionResult(input: CorrugateInput, option: CorrugateOption): Corrugate
   });
   const firstError = stepErrors.find((e) => e !== null) ?? null;
   return { ...head, steps, stepErrors, error: steps.every((s) => s === null) ? firstError : null };
+}
+
+function amounts(rows: ToolingAmounts[]): ToolingAmounts {
+  return rows.reduce(
+    (a, r) => ({
+      platesSale: a.platesSale + r.platesSale,
+      dieBlockSale: a.dieBlockSale + r.dieBlockSale,
+      platesBuy: a.platesBuy + r.platesBuy,
+      dieBlockBuy: a.dieBlockBuy + r.dieBlockBuy,
+    }),
+    { platesSale: 0, dieBlockSale: 0, platesBuy: 0, dieBlockBuy: 0 },
+  );
 }
 
 export const corrugateCalculator: Calculator<CorrugateInput, CorrugateSnapshot, CorrugateResult> = {

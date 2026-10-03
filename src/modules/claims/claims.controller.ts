@@ -300,9 +300,11 @@ export class StoreClaimsController extends ClaimViews {
     description:
       'The same specification priced at today’s cost for `quantity` (default: the past quantity) — nothing is ' +
       'saved; whether the approved artwork carries over (no new proof, D-153); the catalogue quantity limits, lead ' +
-      'time and earliest dates. The `previewToken` (30 minutes) makes the reorder refuse a changed price. Plate / ' +
-      'die-block reuse is shown once the tooling register exists (D-205).',
-    implements: ['D-153'],
+      'time and earliest dates. The `previewToken` (30 minutes) makes the reorder refuse a changed price. Plates ' +
+      '(with the artwork unchanged) and a die block the factory keeps from an earlier order of the specification ' +
+      'within `tooling.reuse_months` are not charged again: `toolingWaiver` shows the amount and the register ' +
+      'entries (D-289).',
+    implements: ['D-153', 'D-289'],
   })
   @ApiSuccess(200, { description: 'The preview', type: ReorderPreviewDto, example: REORDER_PREVIEW_EXAMPLE })
   @ApiStandardErrors(
@@ -329,8 +331,9 @@ export class StoreClaimsController extends ClaimViews {
       'Same specification priced again at today’s cost (a new quote), quantity editable, added to my cart. With ' +
       'the artwork unchanged the approved proof carries over and no new proof is needed (D-153). With the ' +
       '`previewToken` of a preview: 409 `orders.reorder_repriced` when today’s price differs from it, 409 ' +
-      '`orders.reorder_preview_expired` when it expired or was for another quantity or artwork choice.',
-    implements: ['D-153'],
+      '`orders.reorder_preview_expired` when it expired or was for another quantity or artwork choice. Tooling the ' +
+      'factory keeps is waived in the new quotation as in the preview (D-289).',
+    implements: ['D-153', 'D-289'],
   })
   @ApiBody({
     type: ReorderOrderDto,

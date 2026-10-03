@@ -1,6 +1,7 @@
 import { toBangkokIso } from '@common/time/bangkok';
 import { type QuoteStepView } from '@modules/pricing/quotes/quote-engine.service';
 import { targetGap, targetString } from '@modules/pricing/quotes/target-price';
+import { toolingView } from '@modules/pricing/quotes/tooling-view';
 
 import { type QuoteLeverDto, type QuoteLeversDto } from './levers/levers.dto';
 import { type LeverSet } from './levers/quote-levers.service';
@@ -23,6 +24,7 @@ function option(o: QuoteRow['options'][number], target: QuoteRow['targetPricePer
     designFeeAmount: r.designFeeAmount ?? '0.00',
     structureDesignFeeAmount: r.structureDesignFeeAmount ?? '0.00',
     toolingAmount: r.toolingAmount ?? null,
+    toolingWaiver: r.toolingWaiver ?? null,
     shippingAmount: o.shippingAmount?.toFixed(2) ?? null,
     vatAmount: o.vatAmount.toFixed(2),
     netAmount: o.netAmount.toFixed(2),
@@ -110,6 +112,12 @@ export function adminQuoteDto(q: QuoteRow, grants: { cost: boolean; margin: bool
             costAmount: grants.cost ? internal.shipping.costAmount : null,
             marginAmount: grants.margin ? internal.shipping.marginAmount : null,
           },
+          tooling: internal.tooling
+            ? {
+                charged: toolingView(internal.tooling.charged, grants.cost),
+                waived: toolingView(internal.tooling.waived, grants.cost),
+              }
+            : null,
         },
       };
     }),

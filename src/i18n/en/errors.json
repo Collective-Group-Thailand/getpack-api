@@ -1532,5 +1532,11 @@
       "title": "No right needed",
       "detail": "This element can be used without declaring a right."
     }
+  },
+  "tooling": {
+    "already_reported": {
+      "title": "Tool already reported",
+      "detail": "This tool was already reported unusable for this job."
+    }
   }
 }

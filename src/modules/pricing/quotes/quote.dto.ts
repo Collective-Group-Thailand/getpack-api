@@ -287,6 +287,37 @@ export class CalculateQuoteDto {
 
 // --- responses -----------------------------------------------------------------------------------
 
+export class ToolingRefDto {
+  @ApiProperty({ format: 'uuid', example: '0192f3a0-7c1e-7d2a-9b1f-0000000e7101' })
+  id!: string;
+
+  @ApiProperty({ enum: ['plates', 'die_block'], enumName: 'ToolingKind', example: 'die_block' })
+  kind!: 'plates' | 'die_block';
+}
+
+/** D-289: tooling a reorder reuses at the factory that keeps it — not charged again. */
+export class ToolingWaiverDto {
+  @ApiProperty({ example: '2675.00', description: 'Plates and die blocks not charged, incl. VAT' })
+  waivedAmount!: string;
+
+  @ApiProperty({
+    enum: ['tooling_reuse'],
+    enumName: 'ToolingWaiverReason',
+    example: 'tooling_reuse',
+    description: 'The factory keeps the plates / die block of an earlier order of this specification (D-289)',
+  })
+  reason!: 'tooling_reuse';
+
+  @ApiProperty({ type: [ToolingRefDto], description: 'The register entries reused' })
+  tooling!: ToolingRefDto[];
+}
+
+export const TOOLING_WAIVER_EXAMPLE: ToolingWaiverDto = {
+  waivedAmount: '2675.00',
+  reason: 'tooling_reuse',
+  tooling: [{ id: '0192f3a0-7c1e-7d2a-9b1f-0000000e7101', kind: 'die_block' }],
+};
+
 export class QuoteStepDto {
   @ApiProperty({ example: 1000 })
   quantity!: number;
@@ -341,6 +372,14 @@ export class QuoteStepDto {
       '`calculate_cs:835-837`); 0.00 for the other calculators',
   })
   toolingAmount!: string | null;
+
+  @ApiProperty({
+    type: ToolingWaiverDto,
+    nullable: true,
+    description:
+      'A reorder reusing the tooling the factory keeps: what is not charged again (D-289); null otherwise',
+  })
+  toolingWaiver!: ToolingWaiverDto | null;
 
   @ApiProperty({
     type: String,
@@ -564,6 +603,38 @@ export class QuoteShippingInternalDto {
   factoryPayoutVersionId!: string | null;
 }
 
+export class ToolingAmountsDto {
+  @ApiProperty({ example: '0.00', description: 'Plates, incl. VAT' })
+  platesSale!: string;
+
+  @ApiProperty({ example: '2675.00', description: 'Die blocks, incl. VAT' })
+  dieBlockSale!: string;
+
+  @ApiProperty({
+    type: String,
+    nullable: true,
+    example: '0.00',
+    description: 'Needs `factory_cost.read` (D-141)',
+  })
+  platesBuy!: string | null;
+
+  @ApiProperty({
+    type: String,
+    nullable: true,
+    example: '2500.00',
+    description: 'Needs `factory_cost.read` (D-141)',
+  })
+  dieBlockBuy!: string | null;
+}
+
+export class QuoteToolingInternalDto {
+  @ApiProperty({ type: ToolingAmountsDto, description: 'Charged with this quotation' })
+  charged!: ToolingAmountsDto;
+
+  @ApiProperty({ type: ToolingAmountsDto, description: 'Waived for a reorder (D-289); zeros otherwise' })
+  waived!: ToolingAmountsDto;
+}
+
 export class QuoteInternalDto {
   @ApiProperty({ format: 'uuid', example: IDS.factory })
   factoryId!: string;
@@ -609,6 +680,14 @@ export class QuoteInternalDto {
     description: 'Null while shipping is not priced',
   })
   shipping!: QuoteShippingInternalDto | null;
+
+  @ApiProperty({
+    type: QuoteToolingInternalDto,
+    nullable: true,
+    description:
+      'Corrugate flexo plates and die blocks, charged and waived (D-289); null for the other calculators',
+  })
+  tooling!: QuoteToolingInternalDto | null;
 }
 
 export class AdminQuoteStepDto extends QuoteStepDto {
@@ -658,6 +737,7 @@ export const STORE_CALCULATION_EXAMPLE: QuoteCalculationDto = {
       designFeeAmount: '0.00',
       structureDesignFeeAmount: '0.00',
       toolingAmount: '0.00',
+      toolingWaiver: null,
       shippingAmount: '128.40',
       shippingNetAmount: '120.00',
       shippingVatAmount: '8.40',
@@ -705,6 +785,7 @@ export const ADMIN_CALCULATION_EXAMPLE: AdminQuoteCalculationDto = {
           customerRateVersionId: '0192f3a0-7c1e-7d2a-9b1f-00000000d402',
           factoryPayoutVersionId: '0192f3a0-7c1e-7d2a-9b1f-00000000d412',
         },
+        tooling: null,
       },
     },
   ],

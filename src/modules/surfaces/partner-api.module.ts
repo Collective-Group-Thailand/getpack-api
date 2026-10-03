@@ -13,6 +13,7 @@ import { QUOTES_PARTNER_CONTROLLERS } from '@modules/quotes/quotes.registry';
 import { SAMPLES_PARTNER_CONTROLLERS } from '@modules/samples/samples.registry';
 import { SHIPPING_PARTNER_CONTROLLERS } from '@modules/shipping/shipping.registry';
 import { STYLES_PARTNER_CONTROLLERS } from '@modules/styles/styles.registry';
+import { TOOLING_PARTNER_CONTROLLERS } from '@modules/tooling/tooling.registry';
 import { Module } from '@nestjs/common';
 import { PartnerFilesController } from '@platform/files/files.controllers';
 import {
@@ -45,6 +46,7 @@ import { RealtimeModule } from '@platform/realtime/realtime.module';
     ...SAMPLES_PARTNER_CONTROLLERS,
     ...STYLES_PARTNER_CONTROLLERS,
     ...ORDERS_PARTNER_CONTROLLERS,
+    ...TOOLING_PARTNER_CONTROLLERS,
     ...PRODUCTION_PARTNER_CONTROLLERS,
     ...LOGISTICS_PARTNER_CONTROLLERS,
     ...CLAIMS_PARTNER_CONTROLLERS,

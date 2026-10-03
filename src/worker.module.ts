@@ -44,6 +44,7 @@ import { StudioModule } from '@modules/studio/studio.module';
 import { StylesModule } from '@modules/styles/styles.module';
 import { TaxModule } from '@modules/tax/tax.module';
 import { TimelineModule } from '@modules/timeline/timeline.module';
+import { ToolingModule } from '@modules/tooling/tooling.module';
 import { BullModule } from '@nestjs/bullmq';
 import { Module } from '@nestjs/common';
 import { ApprovalsModule } from '@platform/approvals/approvals.module';
@@ -98,6 +99,7 @@ import { WorkerLifecycle } from './worker.lifecycle';
     CartsModule,
     CheckoutModule,
     OrdersModule,
+    ToolingModule,
     PaymentSchedulesModule,
     PromotionsModule,
     LoyaltyModule,

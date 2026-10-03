@@ -28,6 +28,7 @@ import {
   type ResolvedBase,
 } from '../calculators/adapter';
 import { CalculatorRegistry } from '../calculators/calculator';
+import { type ToolingAmounts, type ToolingWaive } from '../calculators/shared/tooling';
 import { ToleranceService } from './tolerance.service';
 
 /**
@@ -49,7 +50,24 @@ export interface QuoteContext {
   deliveryPostcode?: string;
   /** false: not a customer calculation (e.g. the price-hint refresh, D-220), so no calculate log (D-102). */
   log?: boolean;
+  /** D-289: tooling in the register a reorder may reuse; set only by the reorder path. */
+  toolingCredits?: readonly ToolingCredit[];
 }
+
+export interface ToolingCredit {
+  toolingId: string;
+  /** The factory holding it (public id); waived only when that factory makes the order. */
+  factoryId: string;
+  kind: 'plates' | 'die_block';
+}
+
+/** D-289: what a reorder did not pay again because the factory keeps the tooling. */
+export type ToolingWaiverView = {
+  /** Plates and die blocks not charged, incl. VAT. */
+  waivedAmount: string;
+  reason: 'tooling_reuse';
+  tooling: { id: string; kind: 'plates' | 'die_block' }[];
+};
 
 export interface QuoteStepView {
   quantity: number;
@@ -62,6 +80,8 @@ export interface QuoteStepView {
   structureDesignFeeAmount: string | null;
   /** Print plates and die blocks charged apart, incl. VAT (corrugate flexo). */
   toolingAmount: string | null;
+  /** D-289: tooling a reorder reuses, not charged; null when none. */
+  toolingWaiver: ToolingWaiverView | null;
   /** Shipping incl. VAT; null while shipping is not priced. */
   shippingAmount: string | null;
   shippingNetAmount: string | null;
@@ -96,6 +116,8 @@ export interface QuoteStepView {
       sheets: number;
       layoutStandard: boolean;
     }[];
+    /** Corrugate flexo plates and die blocks: charged, and waived for a reorder (D-289); sale incl. VAT, buy net. */
+    tooling?: { charged: ToolingAmountsView; waived: ToolingAmountsView } | null;
     shipping: {
       method: 'factory_fleet' | 'flash_express' | 'deliveree';
       costAmount: string;
@@ -110,6 +132,13 @@ export interface QuoteStepView {
     } | null;
   } | null;
 }
+
+export type ToolingAmountsView = {
+  platesSale: string;
+  dieBlockSale: string;
+  platesBuy: string;
+  dieBlockBuy: string;
+};
 
 export interface QuoteView {
   calculatorVersion: string;
@@ -255,7 +284,12 @@ export class QuoteEngineService {
       )) as LoadedOptionBase[];
       loaded.push(...options);
     }
-    const options = adapter.calculate(resolved, loaded, { withDesign: true });
+    const credits = ctx.toolingCredits ?? [];
+    const waiveTooling = credits.length > 0 ? toolingWaives(credits) : undefined;
+    const options = adapter.calculate(resolved, loaded, {
+      withDesign: true,
+      ...(waiveTooling && { waiveTooling }),
+    });
     const floorSetting = await this.settings.at('pricing.margin_floor_pct', { at });
     const floor = Number(floorSetting.value);
     const settingVersionIds: Record<string, string> = {
@@ -370,6 +404,7 @@ export class QuoteEngineService {
         designFeeAmount: formatMoney(s.designFee),
         structureDesignFeeAmount: formatMoney(s.structureDesignFee),
         toolingAmount: formatMoney(s.toolingAmount),
+        toolingWaiver: toolingWaiver(s, option.factoryId, credits),
         shippingAmount: shipGross ? formatMoney(shipGross) : null,
         shippingNetAmount: shipNet ? formatMoney(shipNet) : null,
         shippingVatAmount: shipVat ? formatMoney(shipVat) : null,
@@ -405,6 +440,9 @@ export class QuoteEngineService {
             sheets: p.sheets,
             layoutStandard: p.layoutStandard,
           })),
+          tooling: s.tooling
+            ? { charged: toolingAmounts(s.tooling.charged), waived: toolingAmounts(s.tooling.waived) }
+            : null,
           shipping:
             prepared && delivery && customer && shipNet
               ? {
@@ -540,6 +578,7 @@ export class QuoteEngineService {
       designFeeAmount: null,
       structureDesignFeeAmount: null,
       toolingAmount: null,
+      toolingWaiver: null,
       shippingAmount: null,
       shippingNetAmount: null,
       shippingVatAmount: null,
@@ -774,3 +813,43 @@ const styleVariantCodeOf = (cfg: unknown): string | null => {
 
 const extraDays = (delivery: Delivery | null): number =>
   delivery?.available ? (delivery.extraDays ?? 0) : 0;
+
+/** D-289: per factory, which tooling the reorder's register credits waive. */
+function toolingWaives(credits: readonly ToolingCredit[]): Record<string, ToolingWaive> {
+  const out: Record<string, ToolingWaive> = {};
+  for (const c of credits) {
+    const w = (out[c.factoryId] ??= { plates: false, dieBlock: false });
+    if (c.kind === 'plates') w.plates = true;
+    else w.dieBlock = true;
+  }
+  return out;
+}
+
+function toolingWaiver(
+  step: PricedStep,
+  factoryId: string,
+  credits: readonly ToolingCredit[],
+): ToolingWaiverView | null {
+  const waived = step.tooling?.waived;
+  if (!waived || waived.platesSale + waived.dieBlockSale <= 0) return null;
+  return {
+    waivedAmount: formatMoney(waived.platesSale + waived.dieBlockSale),
+    reason: 'tooling_reuse',
+    tooling: credits
+      .filter(
+        (c) =>
+          c.factoryId === factoryId &&
+          (c.kind === 'plates' ? waived.platesSale > 0 : waived.dieBlockSale > 0),
+      )
+      .map((c) => ({ id: c.toolingId, kind: c.kind })),
+  };
+}
+
+function toolingAmounts(a: ToolingAmounts): ToolingAmountsView {
+  return {
+    platesSale: formatMoney(a.platesSale),
+    dieBlockSale: formatMoney(a.dieBlockSale),
+    platesBuy: formatMoney(a.platesBuy),
+    dieBlockBuy: formatMoney(a.dieBlockBuy),
+  };
+}

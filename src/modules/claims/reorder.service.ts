@@ -11,6 +11,7 @@ import { type CartRow, CartsService } from '@modules/carts/carts.service';
 import { OrdersService } from '@modules/orders/orders.service';
 import { type FoldingConfiguration } from '@modules/pricing/calculators/folding/folding-snapshot.loader';
 import { SavedQuotesService } from '@modules/quotes/saved-quotes.service';
+import { ToolingService } from '@modules/tooling/tooling.service';
 import { Inject, Injectable } from '@nestjs/common';
 import { ActivityLogService } from '@platform/activity/activity-log.service';
 import { type DomainEventEnvelope } from '@platform/domain-events/domain-event';
@@ -51,6 +52,7 @@ export class ReorderService {
     private readonly carts: CartsService,
     private readonly orders: OrdersService,
     private readonly activity: ActivityLogService,
+    private readonly tooling: ToolingService,
     @Inject(REDIS) private readonly redis: Redis,
   ) {}
 
@@ -62,7 +64,7 @@ export class ReorderService {
   ): Promise<ReorderPreviewDto> {
     const { order, spec, proof } = await this.source(actor, orderPublicId, input.reuseArtwork);
     const quantity = input.quantity ?? order.quantityOrdered;
-    const step = await this.price(actor, spec, quantity);
+    const step = await this.price(actor, spec, quantity, proof);
     const token = randomBytes(24).toString('base64url');
     const binding: PreviewBinding = {
       orderId: order.publicId,
@@ -85,6 +87,7 @@ export class ReorderService {
       productAmount: step.productAmount!,
       designFeeAmount: step.designFeeAmount ?? '0.00',
       toolingAmount: step.toolingAmount,
+      toolingWaiver: step.toolingWaiver ?? null,
       shippingAmount: step.shippingAmount,
       vatAmount: step.vatAmount!,
       grossAmount: step.grossAmount!,
@@ -116,7 +119,7 @@ export class ReorderService {
         bound.reuseArtwork !== (proof !== null)
       )
         throw new DomainException('orders.reorder_preview_expired');
-      const step = await this.price(actor, spec, quantity);
+      const step = await this.price(actor, spec, quantity, proof);
       if (step.grossAmount !== bound.grossAmount)
         throw new DomainException('orders.reorder_repriced', { params: { grossAmount: step.grossAmount! } });
     }
@@ -137,7 +140,7 @@ export class ReorderService {
       { kind: 'customer', userId: actor.userId },
       'web',
       { ...spec, configuration: { ...spec.configuration, quantities: [quantity] } },
-      { customerUserId: actor.userId },
+      { customerUserId: actor.userId, toolingCredits: await this.credits(spec, proof) },
     );
     const cart = await this.carts.addItem(
       { actor, customerUserId: actor.userId, channel: 'web', csUserId: null },
@@ -174,7 +177,7 @@ export class ReorderService {
           orderCode: row.orderCode,
         });
         const quantity = row.quantity ?? order.quantityOrdered;
-        const step = await this.price(actor, spec, quantity);
+        const step = await this.price(actor, spec, quantity, proof);
         total = total.add(step.grossAmount!);
         results.push({
           line: row.line,
@@ -245,7 +248,7 @@ export class ReorderService {
         companyId: company.id,
         orderCode: row.orderCode,
       });
-      const step = await this.price(actor, source.spec, row.quantity);
+      const step = await this.price(actor, source.spec, row.quantity, source.proof);
       if (step.grossAmount !== row.grossAmount)
         throw new DomainException('orders.reorder_repriced', { params: { grossAmount: step.grossAmount! } });
       sources.push({ row, ...source });
@@ -305,19 +308,39 @@ export class ReorderService {
     return { order, spec, proof };
   }
 
-  /** The same specification at `quantity`, priced as saving the quote would (never the old price). */
+  /**
+   * The same specification at `quantity`, priced as saving the quote would (never the old price); the tooling the
+   * factory keeps for it is waived there (D-289).
+   */
   private async price(
     actor: UserActor,
     spec: { productTypeCode: string; configuration: FoldingConfiguration; deliveryPostcode?: string },
     quantity: number,
+    proof: { approvedFileSha256: Uint8Array | null } | null,
   ) {
-    const view = await this.quotes.preview({ kind: 'customer', userId: actor.userId }, 'web', {
-      ...spec,
-      configuration: { ...spec.configuration, quantities: [quantity] },
-    });
+    const view = await this.quotes.preview(
+      { kind: 'customer', userId: actor.userId },
+      'web',
+      { ...spec, configuration: { ...spec.configuration, quantities: [quantity] } },
+      { toolingCredits: await this.credits(spec, proof) },
+    );
     const step = view.steps[0];
     if (!step?.instant || step.grossAmount === null) throw new DomainException('pricing.not_instant');
     return step;
+  }
+
+  /** D-289: register tooling for this specification; plates only with the unchanged artwork. */
+  private credits(
+    spec: { productTypeCode: string; configuration: FoldingConfiguration },
+    proof: { approvedFileSha256: Uint8Array | null } | null,
+  ) {
+    return this.tooling.credits(
+      {
+        productTypeCode: spec.productTypeCode,
+        configuration: spec.configuration as unknown as Record<string, unknown>,
+      },
+      proof?.approvedFileSha256 ?? null,
+    );
   }
 
   private key(token: string): string {

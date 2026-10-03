@@ -77,6 +77,7 @@ import {
 import { StandardProductInputDataService } from './standard-product-input-data.service';
 import { TAG_SLEEVE_CONFIGURATION_EXAMPLE, TagSleeveConfigurationDto } from './tag-sleeve.dto';
 import { targetGap, targetString } from './target-price';
+import { toolingView } from './tooling-view';
 
 const CALCULATION = ['D-100', 'D-043', 'D-050', 'D-051', 'D-101'];
 
@@ -136,6 +137,12 @@ async function adminView(
           costAmount: cost ? s.internal.shipping.costAmount : null,
           marginAmount: margin ? s.internal.shipping.marginAmount : null,
         },
+        tooling: s.internal.tooling
+          ? {
+              charged: toolingView(s.internal.tooling.charged, cost),
+              waived: toolingView(s.internal.tooling.waived, cost),
+            }
+          : null,
       },
     })),
   };

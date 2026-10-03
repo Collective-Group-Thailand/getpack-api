@@ -5,7 +5,7 @@
 > (a new effective-dated version, audited — D-063) and signs item 5 of `docs/LAUNCH-CHECKLIST.md`. A *proposed* or
 > *pending* value is not a decision: it goes live only once its owner confirms it.
 
-**91 settings** — 52 confirmed · 19 proposed · 4 pending the CPA (⚖) · 1 pending the business · 15 defined without a value (not set until their owner sets them).
+**92 settings** — 53 confirmed · 19 proposed · 4 pending the CPA (⚖) · 1 pending the business · 15 defined without a value (not set until their owner sets them).
 
 ## Settings
 
@@ -98,6 +98,7 @@
 | `tax.gl_accounts` | `{"output_vat":["2210"],"input_vat":["1241"],"wht_pnd3":["2232"],"wht_pnd53":["2231"],"wht_receivable":["1230"]}` | proposed | finance_manager | D-033 | D-033 / accounting-design §7 step 7: GL control accounts each tax report and working paper reconciles to (difference must be 0); follows the chart of accounts (proposed) |
 | `tax.nature_by_product_type` | `{"default":"hire_of_work","overrides":{"standard_product":"sale_of_goods"}}` | pending_cpa | finance_manager | D-033 | D-033 / accounting-design §2 nature of the sale per product type code (⚖): hire of work for made-to-order packaging, sale of goods for standard products; snapshotted on every order |
 | `tax.rounding_mode` | `line` | pending_cpa | finance_manager | D-033 | D-033 / accounting-design §1.5 VAT and WHT rounding per line or per document (⚖); a document-level difference is an explicit rounding amount |
+| `tooling.reuse_months` | `12` | confirmed | superadmin | D-205, D-289 | D-205 / D-289 months after its last use that a registered plate set or die block is reused (the reorder waives it) |
 | `trust.audit_criteria` | `— (not set)` | not set | partner_manager | D-201, D-264, D-041 | D-201 / D-264 the factory audit criteria published on the network page (th / en); not seeded — written by the Partner Manager |
 | `trust.network_min_factories` | `3` | confirmed | superadmin | D-201, D-264, D-044 | D-201 / D-264 active factories needed before partner counts and rates are published (also the style library partners count) |
 | `trust.network_min_jobs` | `30` | confirmed | superadmin | D-201, D-264 | D-201 / D-264 production jobs completed in the window needed before rates are published |
