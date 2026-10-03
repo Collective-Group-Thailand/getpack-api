@@ -3,6 +3,7 @@ import { Global, Module } from '@nestjs/common';
 import { CatalogCrudService } from './crud/catalog-crud.service';
 import { GeometryService } from './geometry/geometry.service';
 import { CatalogImportsService } from './imports/imports.service';
+import { KnowledgeBaseService } from './knowledge-base/knowledge-base';
 import { ProductStructureService } from './product-structure/product-structure.service';
 import { StockProductsService } from './stock/stock.service';
 import { StoreCatalogService } from './store/store-catalog.service';
@@ -21,6 +22,7 @@ import { StoreMediaService } from './store/store-media.service';
     StoreCatalogService,
     StoreConfiguratorService,
     StoreMediaService,
+    KnowledgeBaseService,
   ],
   exports: [
     CatalogCrudService,
@@ -31,6 +33,7 @@ import { StoreMediaService } from './store/store-media.service';
     StoreCatalogService,
     StoreConfiguratorService,
     StoreMediaService,
+    KnowledgeBaseService,
   ],
 })
 export class CatalogModule {}

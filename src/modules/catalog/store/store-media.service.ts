@@ -55,7 +55,7 @@ export class StoreMediaService {
         OR EXISTS (SELECT 1 FROM banners b WHERE (b.desktop_file_id = fo.id OR b.mobile_file_id = fo.id)
                     AND b.status = 'published' AND b.deleted_at IS NULL)
         OR EXISTS (SELECT 1 FROM articles a WHERE a.cover_file_id = fo.id
-                    AND a.status = 'published' AND a.deleted_at IS NULL)
+                    AND a.status = 'published' AND a.audience = 'public' AND a.deleted_at IS NULL)
         OR EXISTS (SELECT 1 FROM seo_pages s WHERE s.og_image_file_id = fo.id)
         OR EXISTS (SELECT 1 FROM materials o WHERE o.image_file_id = fo.id AND o.status = 'active')
         OR EXISTS (SELECT 1 FROM finishes o WHERE o.image_file_id = fo.id AND o.status = 'active')

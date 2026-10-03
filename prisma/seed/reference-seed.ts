@@ -3,7 +3,7 @@ import { PERMISSIONS } from '../../src/modules/iam/permissions.catalog';
 import { ROLES } from '../../src/modules/iam/roles.catalog';
 import { settingValueError } from '../../src/platform/settings/setting-value';
 import { APPROVAL_POLICIES } from './data/approval-policies';
-import { PRODUCT_TYPES } from './data/catalog';
+import { PARTNER_KNOWLEDGE_CATEGORIES, PRODUCT_TYPES } from './data/catalog';
 import {
   ORDER_CANCEL_REASONS,
   PAYMENT_FEATURE_FLAGS,
@@ -16,11 +16,11 @@ import {
   MILESTONE_ROUTE_FAMILIES,
   MILESTONE_ROUTE_FAMILY_BY_TYPE,
 } from './data/fulfilment';
+import { GUARANTEE_POLICY_V1 } from './data/guarantee';
 import { NOTIFICATION_ROUTES, NOTIFICATION_TEMPLATES } from './data/notifications';
 import { AGREEMENT_TEMPLATES } from './data/partners';
 import { CUSTOMER_POSTING_RULES } from './data/posting-rules-customer';
 import { VENDOR_POSTING_RULES } from './data/posting-rules-vendor';
-import { GUARANTEE_POLICY_V1 } from './data/guarantee';
 import { PRICING_FEATURE_FLAGS, QUOTE_LOSS_REASONS, UNMET_DEMAND_REASONS } from './data/quotes';
 import { CREDIT_NOTE_REASONS, FINANCE_FEATURE_FLAGS } from './data/receivables';
 import { CONSENT_PURPOSES, NATIONAL_CALENDAR, SOD_RULES, TAX_RATES, TEAMS } from './data/reference';
@@ -81,6 +81,7 @@ export async function seedReference(prisma: PrismaClient, entity: EntitySeedInpu
       await ensureTaxRates(tx, count);
       await ensureShipping(tx, count);
       await ensureUnmetDemandReasons(tx, count);
+      await ensurePartnerKnowledgeCategories(tx, count);
       await ensureGuaranteePolicy(tx, count);
       await ensureStyleProcesses(tx, count);
       await ensureOrderCancelReasons(tx, count);
@@ -486,6 +487,17 @@ async function ensureUnmetDemandReasons(tx: Tx, count: (what: string) => void): 
     if (await tx.quoteLossReason.findUnique({ where: { code: reason.code } })) continue;
     await tx.quoteLossReason.create({ data: { ...reason, sort: (index + 1) * 10 } });
     count('quote_loss_reasons');
+  }
+}
+
+/** D-295 the partner knowledge-base categories (names from the decision); their articles are written in the CMS. */
+async function ensurePartnerKnowledgeCategories(tx: Tx, count: (what: string) => void): Promise<void> {
+  for (const [index, c] of PARTNER_KNOWLEDGE_CATEGORIES.entries()) {
+    if (await tx.articleCategory.findUnique({ where: { slug: c.slug } })) continue;
+    await tx.articleCategory.create({
+      data: { ...c, audience: 'partner', status: 'published', sort: (index + 1) * 10 },
+    });
+    count('article_categories');
   }
 }
 

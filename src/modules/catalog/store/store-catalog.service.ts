@@ -602,14 +602,15 @@ export class StoreCatalogService {
     }));
   }
 
+  /** D-295: the store serves `public` articles only — partner knowledge-base articles never reach it. */
   private articleWhere(now = new Date()): Prisma.ArticleWhereInput {
-    return { status: 'published', deletedAt: null, publishedAt: { lte: now } };
+    return { status: 'published', audience: 'public', deletedAt: null, publishedAt: { lte: now } };
   }
 
   private readonly articleInclude = {
     coverFile: { select: { publicId: true } },
     categories: {
-      where: { category: { status: 'published' } },
+      where: { category: { status: 'published', audience: 'public' } },
       include: { category: { select: { slug: true } } },
     },
   } satisfies Prisma.ArticleInclude;
@@ -632,7 +633,11 @@ export class StoreCatalogService {
     const where: Prisma.ArticleWhereInput = {
       ...this.articleWhere(),
       ...(query.category
-        ? { categories: { some: { category: { slug: query.category, status: 'published' } } } }
+        ? {
+            categories: {
+              some: { category: { slug: query.category, status: 'published', audience: 'public' } },
+            },
+          }
         : {}),
     };
     const [rows, total] = await Promise.all([
@@ -663,7 +668,7 @@ export class StoreCatalogService {
 
   async articleCategories(): Promise<StoreArticleCategoryDto[]> {
     const rows = await this.prisma.articleCategory.findMany({
-      where: { status: 'published' },
+      where: { status: 'published', audience: 'public' },
       orderBy: [{ sort: 'asc' }, { slug: 'asc' }],
     });
     return rows.map((c) => ({ slug: c.slug, nameTh: c.nameTh, nameEn: c.nameEn }));
@@ -932,7 +937,7 @@ export class StoreCatalogService {
                (SELECT fo.public_id::text FROM file_objects fo WHERE fo.id = a.cover_file_id),
                GREATEST(similarity(a.title_th, ${q}), similarity(coalesce(a.title_en, ''), ${q}))::float8
           FROM articles a
-         WHERE a.status = 'published' AND a.deleted_at IS NULL AND a.published_at <= now()
+         WHERE a.status = 'published' AND a.audience = 'public' AND a.deleted_at IS NULL AND a.published_at <= now()
            AND (a.title_th % ${q} OR a.title_en % ${q} OR a.title_th ILIKE ${like} OR a.title_en ILIKE ${like})
       ) hits
       ORDER BY score DESC, key ASC

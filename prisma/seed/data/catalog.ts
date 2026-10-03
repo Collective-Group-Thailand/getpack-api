@@ -50,3 +50,12 @@ export const PRODUCT_TYPES: readonly ProductTypeSeed[] = [
   { code: 'pop_display', nameTh: 'ชั้นวางสินค้า POP', nameEn: 'POP displays', calculatorKey: null },
   { code: 'other', nameTh: 'บรรจุภัณฑ์อื่น ๆ', nameEn: 'Other packaging', calculatorKey: null },
 ];
+
+/** D-295 the partner knowledge-base categories (Thai / English names from the decision). */
+export const PARTNER_KNOWLEDGE_CATEGORIES = [
+  { slug: 'kb-print-spec', nameTh: 'สเปกงานพิมพ์', nameEn: 'Print specifications' },
+  { slug: 'kb-file-handling', nameTh: 'การจัดการไฟล์งาน', nameEn: 'File handling' },
+  { slug: 'kb-qc-photo-standard', nameTh: 'มาตรฐานภาพถ่าย QC', nameEn: 'QC photo standard' },
+  { slug: 'kb-packing-labels', nameTh: 'การแพ็กและฉลาก', nameEn: 'Packing & labels' },
+  { slug: 'kb-payouts', nameTh: 'การรับเงิน', nameEn: 'Payouts' },
+] as const;

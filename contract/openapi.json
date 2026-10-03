@@ -12684,8 +12684,25 @@
         ],
         "type": "string"
       },
+      "ArticleAudience": {
+        "description": "`partner`: the partner knowledge base only, never the store (D-295)",
+        "enum": [
+          "public",
+          "partner"
+        ],
+        "type": "string"
+      },
       "ArticleCategoryDto": {
         "properties": {
+          "audience": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ArticleAudience"
+              }
+            ],
+            "description": "`partner`: the partner knowledge base only, never the store (D-295)",
+            "example": "public"
+          },
           "id": {
             "example": "0192f3a0-7c1e-7d2a-9b1f-00000000a103",
             "format": "uuid",
@@ -12737,12 +12754,22 @@
           "seoPageId",
           "sort",
           "status",
+          "audience",
           "updatedAt"
         ],
         "type": "object"
       },
       "ArticleDto": {
         "properties": {
+          "audience": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ArticleAudience"
+              }
+            ],
+            "description": "`partner`: the partner knowledge base only, never the store (D-295)",
+            "example": "public"
+          },
           "body": {
             "additionalProperties": true,
             "description": "Rich text per language (versioned schema, `bodySchemaVersion`)",
@@ -12854,6 +12881,7 @@
           "publishedAt",
           "seoPageId",
           "categoryIds",
+          "audience",
           "updatedAt"
         ],
         "type": "object"
@@ -23725,6 +23753,15 @@
       },
       "CreateArticleCategoryDto": {
         "properties": {
+          "audience": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ArticleAudience"
+              }
+            ],
+            "description": "Default `public`; `partner`: the partner knowledge base only, never the store (D-295)",
+            "example": "public"
+          },
           "nameEn": {
             "example": "Packaging tips",
             "type": "string"
@@ -23771,6 +23808,15 @@
       },
       "CreateArticleDto": {
         "properties": {
+          "audience": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ArticleAudience"
+              }
+            ],
+            "description": "Default `public`; `partner`: the partner knowledge base only, never the store (D-295)",
+            "example": "public"
+          },
           "body": {
             "additionalProperties": true,
             "example": {
@@ -41189,6 +41235,137 @@
         "required": [
           "brandAssetId",
           "role"
+        ],
+        "type": "object"
+      },
+      "KnowledgeArticleCardDto": {
+        "properties": {
+          "categorySlugs": {
+            "example": [
+              "qc-photo-standard"
+            ],
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "excerptEn": {
+            "example": "How to photograph a job so Packio can check it",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "excerptTh": {
+            "example": "ถ่ายภาพงานก่อนส่งอย่างไรให้ Packio ตรวจได้",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "publishedAt": {
+            "example": "2026-10-03T09:00:00+07:00",
+            "format": "date-time",
+            "type": "string"
+          },
+          "slug": {
+            "example": "qc-photo-standard",
+            "type": "string"
+          },
+          "titleEn": {
+            "example": "QC photo standard",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "titleTh": {
+            "example": "มาตรฐานภาพถ่าย QC",
+            "type": "string"
+          }
+        },
+        "required": [
+          "slug",
+          "titleTh",
+          "titleEn",
+          "excerptTh",
+          "excerptEn",
+          "publishedAt",
+          "categorySlugs"
+        ],
+        "type": "object"
+      },
+      "KnowledgeArticleDto": {
+        "properties": {
+          "body": {
+            "additionalProperties": true,
+            "description": "Rich text per language (versioned schema, `bodySchemaVersion`)",
+            "example": {
+              "th": {
+                "content": [],
+                "type": "doc"
+              }
+            },
+            "type": "object"
+          },
+          "bodySchemaVersion": {
+            "example": 1,
+            "type": "integer"
+          },
+          "categorySlugs": {
+            "example": [
+              "qc-photo-standard"
+            ],
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "excerptEn": {
+            "example": "How to photograph a job so Packio can check it",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "excerptTh": {
+            "example": "ถ่ายภาพงานก่อนส่งอย่างไรให้ Packio ตรวจได้",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "publishedAt": {
+            "example": "2026-10-03T09:00:00+07:00",
+            "format": "date-time",
+            "type": "string"
+          },
+          "slug": {
+            "example": "qc-photo-standard",
+            "type": "string"
+          },
+          "titleEn": {
+            "example": "QC photo standard",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "titleTh": {
+            "example": "มาตรฐานภาพถ่าย QC",
+            "type": "string"
+          }
+        },
+        "required": [
+          "slug",
+          "titleTh",
+          "titleEn",
+          "excerptTh",
+          "excerptEn",
+          "publishedAt",
+          "categorySlugs",
+          "body",
+          "bodySchemaVersion"
         ],
         "type": "object"
       },
@@ -76779,6 +76956,15 @@
       },
       "UpdateArticleCategoryDto": {
         "properties": {
+          "audience": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ArticleAudience"
+              }
+            ],
+            "description": "Default `public`; `partner`: the partner knowledge base only, never the store (D-295)",
+            "example": "public"
+          },
           "nameEn": {
             "example": "Packaging tips",
             "type": "string"
@@ -76820,6 +77006,15 @@
       },
       "UpdateArticleDto": {
         "properties": {
+          "audience": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ArticleAudience"
+              }
+            ],
+            "description": "Default `public`; `partner`: the partner knowledge base only, never the store (D-295)",
+            "example": "public"
+          },
           "body": {
             "additionalProperties": true,
             "example": {
@@ -143140,6 +143335,14 @@
             }
           },
           {
+            "in": "query",
+            "name": "audience",
+            "required": false,
+            "schema": {
+              "$ref": "#/components/schemas/ArticleAudience"
+            }
+          },
+          {
             "$ref": "#/components/parameters/AcceptLanguage"
           }
         ],
@@ -143150,6 +143353,7 @@
                 "example": {
                   "data": [
                     {
+                      "audience": "public",
                       "id": "0192f3a0-7c1e-7d2a-9b1f-00000000a103",
                       "nameEn": "Packaging tips",
                       "nameTh": "เคล็ดลับบรรจุภัณฑ์",
@@ -143351,6 +143555,7 @@
             "content": {
               "application/json": {
                 "example": {
+                  "audience": "public",
                   "id": "0192f3a0-7c1e-7d2a-9b1f-00000000a103",
                   "nameEn": "Packaging tips",
                   "nameTh": "เคล็ดลับบรรจุภัณฑ์",
@@ -143572,6 +143777,7 @@
             "content": {
               "application/json": {
                 "example": {
+                  "audience": "public",
                   "id": "0192f3a0-7c1e-7d2a-9b1f-00000000a103",
                   "nameEn": "Packaging tips",
                   "nameTh": "เคล็ดลับบรรจุภัณฑ์",
@@ -143785,6 +143991,7 @@
             "content": {
               "application/json": {
                 "example": {
+                  "audience": "public",
                   "id": "0192f3a0-7c1e-7d2a-9b1f-00000000a103",
                   "nameEn": "Packaging tips",
                   "nameTh": "เคล็ดลับบรรจุภัณฑ์",
@@ -144113,6 +144320,14 @@
             }
           },
           {
+            "in": "query",
+            "name": "audience",
+            "required": false,
+            "schema": {
+              "$ref": "#/components/schemas/ArticleAudience"
+            }
+          },
+          {
             "$ref": "#/components/parameters/AcceptLanguage"
           }
         ],
@@ -144123,6 +144338,7 @@
                 "example": {
                   "data": [
                     {
+                      "audience": "public",
                       "body": {
                         "th": {
                           "content": [],
@@ -144342,6 +144558,7 @@
             "content": {
               "application/json": {
                 "example": {
+                  "audience": "public",
                   "body": {
                     "th": {
                       "content": [],
@@ -144795,6 +145012,7 @@
             "content": {
               "application/json": {
                 "example": {
+                  "audience": "public",
                   "body": {
                     "th": {
                       "content": [],
@@ -145021,6 +145239,7 @@
             "content": {
               "application/json": {
                 "example": {
+                  "audience": "public",
                   "body": {
                     "th": {
                       "content": [],
@@ -145332,6 +145551,7 @@
             "content": {
               "application/json": {
                 "example": {
+                  "audience": "public",
                   "body": {
                     "th": {
                       "content": [],
@@ -323227,6 +323447,565 @@
         ]
       }
     },
+    "/v1/partner/knowledge-base/articles": {
+      "get": {
+        "description": "Published partner articles, newest first; by category and title words (D-295).\n\nImplements: D-295.",
+        "operationId": "partner.knowledgeBase.listArticles",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "page",
+            "required": false,
+            "schema": {
+              "default": 1,
+              "minimum": 1,
+              "type": "integer"
+            }
+          },
+          {
+            "in": "query",
+            "name": "perPage",
+            "required": false,
+            "schema": {
+              "default": 25,
+              "maximum": 100,
+              "minimum": 1,
+              "type": "integer"
+            }
+          },
+          {
+            "description": "Sort field; each endpoint validates it against its own allow-list.",
+            "in": "query",
+            "name": "sort",
+            "required": false,
+            "schema": {
+              "example": "createdAt",
+              "maxLength": 64,
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "order",
+            "required": false,
+            "schema": {
+              "$ref": "#/components/schemas/SortOrder"
+            }
+          },
+          {
+            "description": "Free-text search",
+            "in": "query",
+            "name": "q",
+            "required": false,
+            "schema": {
+              "maxLength": 200,
+              "type": "string"
+            }
+          },
+          {
+            "description": "A category slug",
+            "in": "query",
+            "name": "category",
+            "required": false,
+            "schema": {
+              "example": "qc-photo-standard",
+              "type": "string"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "data": [
+                    {
+                      "categorySlugs": [
+                        "qc-photo-standard"
+                      ],
+                      "excerptEn": "How to photograph a job so Packio can check it",
+                      "excerptTh": "ถ่ายภาพงานก่อนส่งอย่างไรให้ Packio ตรวจได้",
+                      "publishedAt": "2026-10-03T09:00:00+07:00",
+                      "slug": "qc-photo-standard",
+                      "titleEn": "QC photo standard",
+                      "titleTh": "มาตรฐานภาพถ่าย QC"
+                    }
+                  ],
+                  "meta": {
+                    "page": 1,
+                    "perPage": 25,
+                    "total": 1
+                  }
+                },
+                "schema": {
+                  "properties": {
+                    "data": {
+                      "items": {
+                        "$ref": "#/components/schemas/KnowledgeArticleCardDto"
+                      },
+                      "type": "array"
+                    },
+                    "meta": {
+                      "$ref": "#/components/schemas/PageMeta"
+                    }
+                  },
+                  "required": [
+                    "data",
+                    "meta"
+                  ],
+                  "type": "object"
+                }
+              }
+            },
+            "description": "One page of results",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.unauthenticated": {
+                    "$ref": "#/components/examples/problem.auth.unauthenticated"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.unauthenticated`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.forbidden": {
+                    "$ref": "#/components/examples/problem.auth.forbidden"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.forbidden`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "validation.failed": {
+                    "$ref": "#/components/examples/problem.validation.failed"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `validation.failed`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "partner": []
+          }
+        ],
+        "summary": "Knowledge-base articles",
+        "tags": [
+          "partner.knowledgeBase"
+        ]
+      }
+    },
+    "/v1/partner/knowledge-base/articles/{slug}": {
+      "get": {
+        "description": "One published partner article with its body, Thai / English (D-295).\n\nImplements: D-295.",
+        "operationId": "partner.knowledgeBase.getArticle",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "slug",
+            "required": true,
+            "schema": {
+              "example": "qc-photo-standard",
+              "type": "string"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "body": {
+                    "th": {
+                      "content": [],
+                      "type": "doc"
+                    }
+                  },
+                  "bodySchemaVersion": 1,
+                  "categorySlugs": [
+                    "qc-photo-standard"
+                  ],
+                  "excerptEn": "How to photograph a job so Packio can check it",
+                  "excerptTh": "ถ่ายภาพงานก่อนส่งอย่างไรให้ Packio ตรวจได้",
+                  "publishedAt": "2026-10-03T09:00:00+07:00",
+                  "slug": "qc-photo-standard",
+                  "titleEn": "QC photo standard",
+                  "titleTh": "มาตรฐานภาพถ่าย QC"
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/KnowledgeArticleDto"
+                }
+              }
+            },
+            "description": "Article",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.unauthenticated": {
+                    "$ref": "#/components/examples/problem.auth.unauthenticated"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.unauthenticated`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.forbidden": {
+                    "$ref": "#/components/examples/problem.auth.forbidden"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.forbidden`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "404": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.not_found": {
+                    "$ref": "#/components/examples/problem.http.not_found"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.not_found`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "partner": []
+          }
+        ],
+        "summary": "A knowledge-base article",
+        "tags": [
+          "partner.knowledgeBase"
+        ]
+      }
+    },
+    "/v1/partner/knowledge-base/categories": {
+      "get": {
+        "description": "Published partner categories — print spec, file handling, QC photo standard, packing & labels, payouts (D-295).\n\nImplements: D-295.",
+        "operationId": "partner.knowledgeBase.listCategories",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "example": [
+                  {
+                    "nameEn": "QC photo standard",
+                    "nameTh": "มาตรฐานภาพถ่าย QC",
+                    "slug": "qc-photo-standard"
+                  }
+                ],
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/StoreArticleCategoryDto"
+                  },
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Categories",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.unauthenticated": {
+                    "$ref": "#/components/examples/problem.auth.unauthenticated"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.unauthenticated`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.forbidden": {
+                    "$ref": "#/components/examples/problem.auth.forbidden"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.forbidden`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "partner": []
+          }
+        ],
+        "summary": "Knowledge-base categories",
+        "tags": [
+          "partner.knowledgeBase"
+        ]
+      }
+    },
     "/v1/partner/me": {
       "get": {
         "description": "Roles per factory (D-140). Only the factories in the token scope are listed.\n\nImplements: ADR-0004, D-140.",
@@ -404278,6 +405057,10 @@
     {
       "description": "Factory uploads (evidence, documents): presign → PUT → complete → signed download.",
       "name": "partner.files"
+    },
+    {
+      "description": "The partner knowledge base (D-295): Thai / English articles on print specs, file handling, the QC photo standard, packing & labels and payouts — partner users only, never the store.",
+      "name": "partner.knowledgeBase"
     },
     {
       "description": "My factory’s shipments: create from completed jobs, labels and packing lists, dispatch behind the shipping gate, delivery steps and proof of delivery (D-013, D-142).",

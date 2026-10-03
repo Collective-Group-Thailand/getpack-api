@@ -234,6 +234,8 @@ export class ReorderDto {
 // Articles & categories
 // ------------------------------------------------------------------------------------------------
 
+export const ARTICLE_AUDIENCES = ['public', 'partner'] as const;
+
 export class ArticleCategoryDto {
   @IdField(CMS_IDS.articleCategory)
   id!: string;
@@ -255,6 +257,14 @@ export class ArticleCategoryDto {
 
   @ApiProperty({ enum: CONTENT_STATUSES, enumName: 'ContentStatus', example: 'published' })
   status!: Content;
+
+  @ApiProperty({
+    enum: ARTICLE_AUDIENCES,
+    enumName: 'ArticleAudience',
+    example: 'public',
+    description: '`partner`: the partner knowledge base only, never the store (D-295)',
+  })
+  audience!: (typeof ARTICLE_AUDIENCES)[number];
 
   @TimestampField(TS)
   updatedAt!: string;
@@ -278,11 +288,21 @@ export class CreateArticleCategoryDto {
 
   @ContentStatusField()
   status?: Content;
+
+  @EnumField(ARTICLE_AUDIENCES, 'ArticleAudience', {
+    example: 'public',
+    optional: true,
+    description: 'Default `public`; `partner`: the partner knowledge base only, never the store (D-295)',
+  })
+  audience?: (typeof ARTICLE_AUDIENCES)[number];
 }
 
 export class UpdateArticleCategoryDto extends PartialType(CreateArticleCategoryDto) {}
 
-export class ArticleCategoryListQuery extends ContentStatusQuery {}
+export class ArticleCategoryListQuery extends ContentStatusQuery {
+  @EnumField(ARTICLE_AUDIENCES, 'ArticleAudience', { example: 'partner', optional: true })
+  audience?: (typeof ARTICLE_AUDIENCES)[number];
+}
 
 export class HomeSectionListQuery extends ContentStatusQuery {}
 
@@ -331,6 +351,14 @@ export class ArticleDto {
   @ApiProperty({ type: [String], format: 'uuid', example: [CMS_IDS.articleCategory] })
   categoryIds!: string[];
 
+  @ApiProperty({
+    enum: ARTICLE_AUDIENCES,
+    enumName: 'ArticleAudience',
+    example: 'public',
+    description: '`partner`: the partner knowledge base only, never the store (D-295)',
+  })
+  audience!: (typeof ARTICLE_AUDIENCES)[number];
+
   @TimestampField(TS)
   updatedAt!: string;
 }
@@ -372,6 +400,13 @@ export class CreateArticleDto {
 
   @RefField({ example: null, nullable: true })
   seoPageId?: string | null;
+
+  @EnumField(ARTICLE_AUDIENCES, 'ArticleAudience', {
+    example: 'public',
+    optional: true,
+    description: 'Default `public`; `partner`: the partner knowledge base only, never the store (D-295)',
+  })
+  audience?: (typeof ARTICLE_AUDIENCES)[number];
 }
 
 export class UpdateArticleDto extends PartialType(CreateArticleDto) {}
@@ -379,6 +414,9 @@ export class UpdateArticleDto extends PartialType(CreateArticleDto) {}
 export class ArticleListQuery extends ContentStatusQuery {
   @RefField({ example: CMS_IDS.articleCategory, optional: true })
   categoryId?: string;
+
+  @EnumField(ARTICLE_AUDIENCES, 'ArticleAudience', { example: 'partner', optional: true })
+  audience?: (typeof ARTICLE_AUDIENCES)[number];
 }
 
 export class ReplaceArticleCategoriesDto {

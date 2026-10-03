@@ -1585,20 +1585,29 @@ model HomeSection {
   @@map("home_sections")
 }
 
+enum ArticleAudience {
+  public
+  partner
+
+  @@map("article_audience")
+}
+
 model ArticleCategory {
-  id          BigInt        @id(map: "pk_article_categories") @default(autoincrement())
-  publicId    String        @unique(map: "ux_article_categories__public_id") @default(dbgenerated("uuidv7()")) @map("public_id") @db.Uuid
-  slug        String        @unique(map: "ux_article_categories__slug")
-  nameTh      String        @map("name_th")
-  nameEn      String        @map("name_en")
-  seoPageId   BigInt?       @map("seo_page_id")
-  sort        Int           @default(0)
-  status      ContentStatus @default(draft)
-  createdAt   DateTime      @default(now()) @map("created_at") @db.Timestamptz(6)
-  createdById BigInt?       @map("created_by")
-  updatedAt   DateTime      @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
-  updatedById BigInt?       @map("updated_by")
-  rowVersion  Int           @default(1) @map("row_version")
+  id          BigInt          @id(map: "pk_article_categories") @default(autoincrement())
+  publicId    String          @unique(map: "ux_article_categories__public_id") @default(dbgenerated("uuidv7()")) @map("public_id") @db.Uuid
+  slug        String          @unique(map: "ux_article_categories__slug")
+  nameTh      String          @map("name_th")
+  nameEn      String          @map("name_en")
+  seoPageId   BigInt?         @map("seo_page_id")
+  sort        Int             @default(0)
+  status      ContentStatus   @default(draft)
+  /// D-295 `partner` categories hold the partner knowledge base; never listed in the store.
+  audience    ArticleAudience @default(public)
+  createdAt   DateTime        @default(now()) @map("created_at") @db.Timestamptz(6)
+  createdById BigInt?         @map("created_by")
+  updatedAt   DateTime        @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+  updatedById BigInt?         @map("updated_by")
+  rowVersion  Int             @default(1) @map("row_version")
 
   seoPage   SeoPage?              @relation(fields: [seoPageId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_article_categories__seo_page_id")
   articles  ArticleCategoryLink[]
@@ -1610,26 +1619,28 @@ model ArticleCategory {
 }
 
 model Article {
-  id                BigInt        @id(map: "pk_articles") @default(autoincrement())
-  publicId          String        @unique(map: "ux_articles__public_id") @default(dbgenerated("uuidv7()")) @map("public_id") @db.Uuid
+  id                BigInt          @id(map: "pk_articles") @default(autoincrement())
+  publicId          String          @unique(map: "ux_articles__public_id") @default(dbgenerated("uuidv7()")) @map("public_id") @db.Uuid
   slug              String
-  titleTh           String        @map("title_th")
-  titleEn           String?       @map("title_en")
-  excerptTh         String?       @map("excerpt_th")
-  excerptEn         String?       @map("excerpt_en")
-  coverFileId       BigInt?       @map("cover_file_id")
+  titleTh           String          @map("title_th")
+  titleEn           String?         @map("title_en")
+  excerptTh         String?         @map("excerpt_th")
+  excerptEn         String?         @map("excerpt_en")
+  coverFileId       BigInt?         @map("cover_file_id")
   /// Rich text `{ th, en }` (versioned JSON schema, §1.3).
-  body              Json          @default("{}")
-  bodySchemaVersion Int           @default(1) @map("body_schema_version") @db.SmallInt
-  status            ContentStatus @default(draft)
-  publishedAt       DateTime?     @map("published_at") @db.Timestamptz(6)
-  seoPageId         BigInt?       @map("seo_page_id")
-  deletedAt         DateTime?     @map("deleted_at") @db.Timestamptz(6)
-  createdAt         DateTime      @default(now()) @map("created_at") @db.Timestamptz(6)
-  createdById       BigInt?       @map("created_by")
-  updatedAt         DateTime      @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
-  updatedById       BigInt?       @map("updated_by")
-  rowVersion        Int           @default(1) @map("row_version")
+  body              Json            @default("{}")
+  bodySchemaVersion Int             @default(1) @map("body_schema_version") @db.SmallInt
+  status            ContentStatus   @default(draft)
+  /// D-295 `partner`: served only to partner users (knowledge base), never to the store.
+  audience          ArticleAudience @default(public)
+  publishedAt       DateTime?       @map("published_at") @db.Timestamptz(6)
+  seoPageId         BigInt?         @map("seo_page_id")
+  deletedAt         DateTime?       @map("deleted_at") @db.Timestamptz(6)
+  createdAt         DateTime        @default(now()) @map("created_at") @db.Timestamptz(6)
+  createdById       BigInt?         @map("created_by")
+  updatedAt         DateTime        @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+  updatedById       BigInt?         @map("updated_by")
+  rowVersion        Int             @default(1) @map("row_version")
 
   coverFile  FileObject?           @relation("ArticleCoverFile", fields: [coverFileId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_articles__cover_file_id")
   seoPage    SeoPage?              @relation(fields: [seoPageId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_articles__seo_page_id")

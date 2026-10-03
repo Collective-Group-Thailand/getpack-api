@@ -168,6 +168,19 @@ export class ArticleActionsController extends ChildrenController {
       ['categoryIds'],
       async (tx, article) => {
         const ids = await resolveAll(new RefResolver(tx), 'articleCategory', body.categoryIds, 'categoryIds');
+        // D-295: a partner article lives in partner categories, a public one in public categories.
+        const mismatched = await tx.articleCategory.count({
+          where: {
+            id: { in: ids },
+            audience: { not: (article as unknown as { audience: 'public' | 'partner' }).audience },
+          },
+        });
+        if (mismatched > 0)
+          throw new DomainException('validation.failed', {
+            errors: [
+              { path: 'categoryIds', code: 'audience', message: 'categories of the article’s audience only' },
+            ],
+          });
         await tx.articleCategoryLink.deleteMany({ where: { articleId: article.id } });
         await tx.articleCategoryLink.createMany({
           data: ids.map((categoryId) => ({ articleId: article.id, categoryId, createdById: user.userId })),

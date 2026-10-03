@@ -215,6 +215,7 @@ export const articleCategories = defineResource({
     seoPageId: null,
     sort: 10,
     status: 'published',
+    audience: 'public',
     updatedAt: TS,
   },
   createExample: { slug: 'packaging-tips', nameTh: 'เคล็ดลับบรรจุภัณฑ์', nameEn: 'Packaging tips' },
@@ -227,6 +228,7 @@ export const articleCategories = defineResource({
     seoPageId: row.seoPage?.publicId ?? null,
     sort: row.sort,
     status: row.status,
+    audience: row.audience,
     updatedAt: toBangkokIso(row.updatedAt),
   }),
   createData: async (input: CreateArticleCategoryDto, refs) => ({
@@ -235,7 +237,7 @@ export const articleCategories = defineResource({
   }),
   updateData: async (input: UpdateArticleCategoryDto, refs) =>
     compact({ ...input, seoPageId: await refs.optional('seoPage', input.seoPageId, 'seoPageId') }),
-  where: (q: ArticleCategoryListQuery) => compact({ status: q.status }),
+  where: (q: ArticleCategoryListQuery) => compact({ status: q.status, audience: q.audience }),
   search: ['slug', 'nameTh', 'nameEn'],
   sort: { sort: 'sort', updatedAt: 'updatedAt' },
   conflict: 'catalog.slug_taken',
@@ -264,6 +266,7 @@ export const articleDto = (row: ArticleRow): ArticleDto => ({
   publishedAt: iso(row.publishedAt),
   seoPageId: row.seoPage?.publicId ?? null,
   categoryIds: row.categories.map((c) => c.category.publicId),
+  audience: row.audience,
   updatedAt: toBangkokIso(row.updatedAt),
 });
 
@@ -281,6 +284,7 @@ export const ARTICLE_EXAMPLE: ArticleDto = {
   publishedAt: '2026-09-25T09:00:00+07:00',
   seoPageId: null,
   categoryIds: [CMS_IDS.articleCategory],
+  audience: 'public',
   updatedAt: TS,
 };
 
@@ -333,6 +337,7 @@ export const articles = defineResource({
   where: (q: ArticleListQuery) =>
     compact({
       status: q.status,
+      audience: q.audience,
       categories: q.categoryId ? { some: { category: { publicId: q.categoryId } } } : undefined,
     }),
   search: ['slug', 'titleTh', 'titleEn'],

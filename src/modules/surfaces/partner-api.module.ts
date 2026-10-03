@@ -1,6 +1,7 @@
 import { ADVISORY_PARTNER_CONTROLLERS } from '@modules/advisory/advisory.registry';
 import { PartnerMeController } from '@modules/auth/controllers/me.controllers';
 import { CALL_OFFS_PARTNER_CONTROLLERS } from '@modules/call-offs/call-offs.registry';
+import { CATALOG_PARTNER_CONTROLLERS } from '@modules/catalog/catalog.registry';
 import { CLAIMS_PARTNER_CONTROLLERS } from '@modules/claims/claims.registry';
 import { LOGISTICS_PARTNER_CONTROLLERS } from '@modules/logistics/logistics.registry';
 import { OPS_PARTNER_CONTROLLERS } from '@modules/ops/ops.registry';
@@ -48,6 +49,7 @@ import { RealtimeModule } from '@platform/realtime/realtime.module';
     ...STYLES_PARTNER_CONTROLLERS,
     ...ORDERS_PARTNER_CONTROLLERS,
     ...CALL_OFFS_PARTNER_CONTROLLERS,
+    ...CATALOG_PARTNER_CONTROLLERS,
     ...TOOLING_PARTNER_CONTROLLERS,
     ...PRODUCTION_PARTNER_CONTROLLERS,
     ...LOGISTICS_PARTNER_CONTROLLERS,

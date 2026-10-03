@@ -26,6 +26,7 @@ import {
 } from './geometry/geometry.controller';
 import { geometryBandTables, geometryConditions } from './geometry/geometry.resources';
 import { CatalogImportsController } from './imports/imports.controller';
+import { PartnerKnowledgeBaseController } from './knowledge-base/knowledge-base';
 import {
   assemblies,
   assemblyGroups,
@@ -134,3 +135,6 @@ export const CATALOG_ADMIN_CONTROLLERS: Type<unknown>[] = [
   SemiDesignTemplateActionsController,
   ...CATALOG_RESOURCES.map(catalogCrudController),
 ];
+
+/** `/v1/partner/*` controllers of the catalogue & CMS: the partner knowledge base (D-295). */
+export const CATALOG_PARTNER_CONTROLLERS: Type<unknown>[] = [PartnerKnowledgeBaseController];
