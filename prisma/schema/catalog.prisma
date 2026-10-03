@@ -281,6 +281,8 @@ model ProductType {
 
   structuralRequests StructuralDesignRequest[] @relation("StructuralRequestProductType")
 
+  studioQuoteSnapshots StudioQuoteSnapshot[] @relation("StudioQuoteSnapshotProductType")
+
   @@index([categoryId], map: "ix_product_types__category_id")
   @@map("product_types")
 }

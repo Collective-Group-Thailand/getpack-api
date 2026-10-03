@@ -12,7 +12,6 @@ import { DatabaseModule } from '@database/database.module';
 import { RedisModule } from '@database/redis.module';
 import { IntegrationsModule } from '@integrations/integrations.module';
 import { AdvisoryModule } from '@modules/advisory/advisory.module';
-import { SamplesModule } from '@modules/samples/samples.module';
 import { AnalyticsModule } from '@modules/analytics/analytics.module';
 import { ArtworkModule } from '@modules/artwork/artwork.module';
 import { AuditSupportModule } from '@modules/audit-support/audit-support.module';
@@ -49,7 +48,9 @@ import { QuotesModule } from '@modules/quotes/quotes.module';
 import { ReceivablesModule } from '@modules/receivables/receivables.module';
 import { ReportsModule } from '@modules/reports/reports.module';
 import { RfqModule } from '@modules/rfq/rfq.module';
+import { SamplesModule } from '@modules/samples/samples.module';
 import { ShippingModule } from '@modules/shipping/shipping.module';
+import { StudioModule } from '@modules/studio/studio.module';
 import { StylesModule } from '@modules/styles/styles.module';
 import { SurfacesModule } from '@modules/surfaces/surfaces.module';
 import { TaxModule } from '@modules/tax/tax.module';
@@ -113,6 +114,7 @@ import { LoggerModule } from 'nestjs-pino';
     AdvisoryModule,
     SamplesModule,
     StylesModule,
+    StudioModule,
     RfqModule,
     CustomersModule,
     CartsModule,

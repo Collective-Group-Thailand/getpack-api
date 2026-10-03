@@ -85,7 +85,7 @@ const QUOTATION = {
     },
   ],
 };
-const RFQ_EXAMPLE: RfqDto = {
+export const RFQ_EXAMPLE: RfqDto = {
   id: RFQ_IDS.rfq,
   rfqCode: 'RFQ-2610-00001',
   status: 'quoted',
@@ -100,6 +100,7 @@ const RFQ_EXAMPLE: RfqDto = {
   targetDate: '2026-11-15',
   targetPricePerUnit: null,
   style: null,
+  design: null,
   deliveryPostcode: '10110',
   notes: 'Logo on both sides (fake)',
   slaDueAt: null,

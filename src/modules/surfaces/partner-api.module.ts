@@ -1,5 +1,4 @@
 import { ADVISORY_PARTNER_CONTROLLERS } from '@modules/advisory/advisory.registry';
-import { SAMPLES_PARTNER_CONTROLLERS } from '@modules/samples/samples.registry';
 import { PartnerMeController } from '@modules/auth/controllers/me.controllers';
 import { CLAIMS_PARTNER_CONTROLLERS } from '@modules/claims/claims.registry';
 import { LOGISTICS_PARTNER_CONTROLLERS } from '@modules/logistics/logistics.registry';
@@ -10,6 +9,7 @@ import { PAYOUTS_PARTNER_CONTROLLERS } from '@modules/payouts/payouts.registry';
 import { PRICING_PARTNER_CONTROLLERS } from '@modules/pricing/pricing.registry';
 import { PRODUCTION_PARTNER_CONTROLLERS } from '@modules/production/production.registry';
 import { QUOTES_PARTNER_CONTROLLERS } from '@modules/quotes/quotes.registry';
+import { SAMPLES_PARTNER_CONTROLLERS } from '@modules/samples/samples.registry';
 import { SHIPPING_PARTNER_CONTROLLERS } from '@modules/shipping/shipping.registry';
 import { STYLES_PARTNER_CONTROLLERS } from '@modules/styles/styles.registry';
 import { Module } from '@nestjs/common';

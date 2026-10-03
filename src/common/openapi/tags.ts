@@ -59,6 +59,8 @@ export const API_TAGS: Record<string, string> = {
   'store.styleFavourites': 'The signed-in customer’s favourite styles (D-246).',
   'store.structuralRequests':
     'Requests for a structure the style library lacks (D-273): designed by Prepress, a fee quoted as a service RFQ when one applies, notified at every step.',
+  'store.studio':
+    'The 3D studio (U4): price a design version with a spec hash and the reasons a price changed, save its quotation, ask for a quotation of a non-instant type (D-277).',
   'store.dielines':
     'Free dieline downloads of published style variants (D-271, D-203): signed-in customers, within the style’s size range, rate-limited and logged.',
   'admin.processTypes': 'The manufacturing process taxonomy (D-244).',

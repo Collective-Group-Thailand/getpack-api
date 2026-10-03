@@ -35,6 +35,7 @@ export const RFQ_INCLUDE = {
     select: { code: true, options: true, base: { select: { code: true, nameTh: true, nameEn: true } } },
   },
   province: { select: { nameTh: true, nameEn: true } },
+  designDocumentVersion: { select: { versionNo: true, designDocument: { select: { publicId: true } } } },
   customer: {
     select: {
       publicId: true,

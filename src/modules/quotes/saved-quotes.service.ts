@@ -120,6 +120,8 @@ export class SavedQuotesService {
       staffNote?: string;
       /** D-249: the lever this quotation is saved from (its original is superseded). */
       fromLeverId?: bigint;
+      /** D-277: the studio design version and spec hash the quotation is priced from. */
+      studio?: { designDocumentVersionId: bigint; specHash: Buffer };
     } = {},
   ): Promise<QuoteRow> {
     const now = new Date();
@@ -211,6 +213,8 @@ export class SavedQuotesService {
           advisoryChoiceId: advisory?.choiceId ?? null,
           targetPricePerUnit: input.targetPricePerUnit ?? null,
           fromLeverId: extra.fromLeverId ?? null,
+          designDocumentVersionId: extra.studio?.designDocumentVersionId ?? null,
+          specHash: extra.studio ? Uint8Array.from(extra.studio.specHash) : null,
           ...(dielines ? { dielineQuantities: dielines as unknown as Prisma.InputJsonValue } : {}),
         },
       });

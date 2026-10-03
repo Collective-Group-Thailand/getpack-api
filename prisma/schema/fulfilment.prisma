@@ -564,6 +564,8 @@ model DesignDocumentVersion {
   lockedOf            DesignDocument[]     @relation("DesignDocumentLockedVersion")
   cartItems           CartItem[]           @relation("CartItemDesignVersion")
   orders              Order[]              @relation("OrderDesignVersion")
+  quotes              Quote[]              @relation("QuoteDesignVersion")
+  rfqs                Rfq[]                @relation("RfqDesignVersion")
 
   @@unique([documentId, versionNo], map: "ux_design_document_versions__document_id__version_no")
   @@index([createdById], map: "ix_design_document_versions__created_by")

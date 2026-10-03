@@ -1470,5 +1470,19 @@
       "title": "Not possible at this step",
       "detail": "The structural design request is not at a step that allows this action."
     }
+  },
+  "studio": {
+    "spec_missing": {
+      "title": "Box not configured",
+      "detail": "The design has no box specification yet; choose the box in the studio first."
+    },
+    "spec_mismatch": {
+      "title": "Box and price spec differ",
+      "detail": "The price specification does not match the box of the design; choose the box again."
+    },
+    "rate_limited": {
+      "title": "Too many price checks",
+      "detail": "Prices are checked too often; wait a moment and try again."
+    }
   }
 }

@@ -341,6 +341,9 @@ export const ERROR_CODES = {
   'dielines.material_class_not_offered': HttpStatus.UNPROCESSABLE_ENTITY,
   'dielines.not_drawable': HttpStatus.UNPROCESSABLE_ENTITY,
   'structural_requests.invalid_transition': HttpStatus.CONFLICT,
+  'studio.spec_missing': HttpStatus.UNPROCESSABLE_ENTITY,
+  'studio.spec_mismatch': HttpStatus.UNPROCESSABLE_ENTITY,
+  'studio.rate_limited': HttpStatus.TOO_MANY_REQUESTS,
 } as const satisfies Record<string, HttpStatus>;
 
 export type ErrorCode = keyof typeof ERROR_CODES;

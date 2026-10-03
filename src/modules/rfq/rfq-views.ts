@@ -65,6 +65,12 @@ export function rfqDto(r: RfqRow, files: RfqFiles = NO_FILES): RfqDto {
     targetDate: date(r.targetDate),
     targetPricePerUnit: targetString(r.targetPricePerUnit),
     style: styleOf(r.styleVariant),
+    design: r.designDocumentVersion
+      ? {
+          designId: r.designDocumentVersion.designDocument.publicId,
+          versionNo: r.designDocumentVersion.versionNo,
+        }
+      : null,
     deliveryPostcode: r.deliveryPostcode,
     notes: r.notes,
     slaDueAt: iso(r.slaDueAt),

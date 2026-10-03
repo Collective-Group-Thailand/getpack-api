@@ -1,5 +1,4 @@
 import { ADVISORY_STORE_CONTROLLERS } from '@modules/advisory/advisory.registry';
-import { SAMPLES_STORE_CONTROLLERS } from '@modules/samples/samples.registry';
 import { ANALYTICS_STORE_CONTROLLERS } from '@modules/analytics/analytics.registry';
 import { ARTWORK_STORE_CONTROLLERS } from '@modules/artwork/artwork.registry';
 import { StoreMeController } from '@modules/auth/controllers/me.controllers';
@@ -27,6 +26,8 @@ import { StoreQuotePathController } from '@modules/pricing/quotes/store-quote-pa
 import { PROMOTIONS_STORE_CONTROLLERS } from '@modules/promotions/promotions.registry';
 import { QUOTES_STORE_CONTROLLERS } from '@modules/quotes/quotes.registry';
 import { RECEIVABLES_STORE_CONTROLLERS } from '@modules/receivables/receivables.registry';
+import { SAMPLES_STORE_CONTROLLERS } from '@modules/samples/samples.registry';
+import { STUDIO_STORE_CONTROLLERS } from '@modules/studio/studio.registry';
 import { STYLES_STORE_CONTROLLERS } from '@modules/styles/styles.registry';
 import { TIMELINE_STORE_CONTROLLERS } from '@modules/timeline/timeline.registry';
 import { Module } from '@nestjs/common';
@@ -60,6 +61,7 @@ import { RealtimeModule } from '@platform/realtime/realtime.module';
     ...ADVISORY_STORE_CONTROLLERS,
     ...SAMPLES_STORE_CONTROLLERS,
     ...STYLES_STORE_CONTROLLERS,
+    ...STUDIO_STORE_CONTROLLERS,
     ...CUSTOMERS_STORE_CONTROLLERS,
     ...CARTS_STORE_CONTROLLERS,
     ...CHECKOUT_STORE_CONTROLLERS,

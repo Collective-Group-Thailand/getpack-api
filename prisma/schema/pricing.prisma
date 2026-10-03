@@ -582,6 +582,9 @@ model Quote {
   fromLeverId              BigInt?      @unique(map: "ux_quotes__from_lever_id") @map("from_lever_id")
   /// D-267: the dieline-derived quantities of the style variant priced (engine version), frozen; no price effect yet.
   dielineQuantities        Json?        @map("dieline_quantities")
+  /// D-277 the studio design version priced and its spec hash (write-once).
+  designDocumentVersionId  BigInt?      @map("design_document_version_id")
+  specHash                 Bytes?       @map("spec_hash")
   /// D-248: when the levers were computed (once; none found is still computed).
   leversComputedAt         DateTime?    @map("levers_computed_at") @db.Timestamptz(6)
 
@@ -620,6 +623,10 @@ model Quote {
   sample         Sample?  @relation("SampleQuote")
   sampleForBulk  Sample?  @relation("SampleBulkQuote")
 
+  designDocumentVersion DesignDocumentVersion? @relation("QuoteDesignVersion", fields: [designDocumentVersionId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_quotes__design_document_version_id")
+
+  @@index([designDocumentVersionId], map: "ix_quotes__design_document_version_id")
+  @@index([specHash], map: "ix_quotes__spec_hash")
   @@index([advisoryRecommendationId], map: "ix_quotes__advisory_recommendation_id")
   @@index([advisoryChoiceId], map: "ix_quotes__advisory_choice_id")
   @@index([companyId], map: "ix_quotes__company_id")
@@ -772,6 +779,8 @@ model Rfq {
   routedFromQuoteId        BigInt?          @unique(map: "ux_rfqs__routed_from_quote_id") @map("routed_from_quote_id")
   /// D-269: the published style variant the request is for (style code and options travel with it).
   styleVariantId           BigInt?          @map("style_variant_id")
+  /// D-277 the studio design version an RFQ was asked from (non-instant types).
+  designDocumentVersionId  BigInt?          @map("design_document_version_id")
   /// D-247: the customer's target per unit (THB incl. VAT, excl. shipping); staff only, never shown to a partner (D-190).
   targetPricePerUnit       Decimal?         @map("target_price_per_unit") @db.Decimal(14, 2)
   acceptedQuoteId          BigInt?          @unique(map: "ux_rfqs__accepted_quote_id") @map("accepted_quote_id")
@@ -781,27 +790,29 @@ model Rfq {
   updatedAt                DateTime         @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
   rowVersion               Int              @default(1) @map("row_version")
 
-  entity          Entity                   @relation("RfqEntity", fields: [entityId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_rfqs__entity_id")
-  customer        User                     @relation("RfqCustomer", fields: [customerUserId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_rfqs__customer_user_id")
-  createdBy       User?                    @relation("RfqCreatedBy", fields: [createdById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_rfqs__created_by")
-  assignedTo      User?                    @relation("RfqAssignedTo", fields: [assignedToUserId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_rfqs__assigned_to_user_id")
-  productType     ProductType              @relation("RfqProductType", fields: [productTypeId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_rfqs__product_type_id")
-  province        GeoProvince?             @relation("RfqProvince", fields: [provinceId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_rfqs__province_id")
-  declineReason   UnmetDemandReason?       @relation(fields: [declineReasonId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_rfqs__decline_reason_id")
-  acceptedQuote   Quote?                   @relation("RfqAcceptedQuote", fields: [acceptedQuoteId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_rfqs__accepted_quote_id")
-  routedFromQuote Quote?                   @relation("RfqRoutedFromQuote", fields: [routedFromQuoteId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_rfqs__routed_from_quote_id")
-  styleVariant    StyleVariant?            @relation("RfqStyleVariant", fields: [styleVariantId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_rfqs__style_variant_id")
-  tiers           RfqQuantityTier[]
-  messages        RfqMessage[]
-  consultations   RfqFactoryConsultation[]
-  quotes          RfqQuote[]
-  unmetDemand     UnmetDemandRecord[]
+  entity                Entity                   @relation("RfqEntity", fields: [entityId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_rfqs__entity_id")
+  customer              User                     @relation("RfqCustomer", fields: [customerUserId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_rfqs__customer_user_id")
+  createdBy             User?                    @relation("RfqCreatedBy", fields: [createdById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_rfqs__created_by")
+  assignedTo            User?                    @relation("RfqAssignedTo", fields: [assignedToUserId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_rfqs__assigned_to_user_id")
+  productType           ProductType              @relation("RfqProductType", fields: [productTypeId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_rfqs__product_type_id")
+  province              GeoProvince?             @relation("RfqProvince", fields: [provinceId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_rfqs__province_id")
+  declineReason         UnmetDemandReason?       @relation(fields: [declineReasonId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_rfqs__decline_reason_id")
+  acceptedQuote         Quote?                   @relation("RfqAcceptedQuote", fields: [acceptedQuoteId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_rfqs__accepted_quote_id")
+  routedFromQuote       Quote?                   @relation("RfqRoutedFromQuote", fields: [routedFromQuoteId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_rfqs__routed_from_quote_id")
+  styleVariant          StyleVariant?            @relation("RfqStyleVariant", fields: [styleVariantId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_rfqs__style_variant_id")
+  designDocumentVersion DesignDocumentVersion?   @relation("RfqDesignVersion", fields: [designDocumentVersionId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_rfqs__design_document_version_id")
+  tiers                 RfqQuantityTier[]
+  messages              RfqMessage[]
+  consultations         RfqFactoryConsultation[]
+  quotes                RfqQuote[]
+  unmetDemand           UnmetDemandRecord[]
 
   configurationDrafts ConfigurationDraft[] @relation("ConfigurationDraftRfq")
   quoteOutcomes       QuoteOutcome[]       @relation("QuoteOutcomeRfq")
 
   structuralRequest StructuralDesignRequest? @relation("StructuralRequestServiceRfq")
 
+  @@index([designDocumentVersionId], map: "ix_rfqs__design_document_version_id")
   @@index([customerUserId, submittedAt(sort: Desc)], map: "ix_rfqs__customer_user_id__submitted_at")
   @@index([status, slaDueAt], map: "ix_rfqs__status__sla_due_at")
   @@index([assignedToUserId], map: "ix_rfqs__assigned_to_user_id")
@@ -1143,4 +1154,22 @@ model QuoteOutcome {
   @@index([orderId], map: "ix_quote_outcomes__order_id")
   @@index([rfqId], map: "ix_quote_outcomes__rfq_id")
   @@map("quote_outcomes")
+}
+
+/// D-277 a studio quote by its spec hash (sha256 of the canonical product type, configuration, quantities, postcode):
+/// the input (to explain the next price change) and the last calculation (served again within the cache window).
+model StudioQuoteSnapshot {
+  id            BigInt   @id(map: "pk_studio_quote_snapshots") @default(autoincrement())
+  specHash      Bytes    @unique(map: "ux_studio_quote_snapshots__spec_hash") @map("spec_hash")
+  productTypeId BigInt   @map("product_type_id")
+  input         Json
+  result        Json
+  pricedAt      DateTime @map("priced_at") @db.Timestamptz(6)
+  createdAt     DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  productType ProductType @relation("StudioQuoteSnapshotProductType", fields: [productTypeId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_studio_quote_snapshots__product_type_id")
+
+  @@index([productTypeId], map: "ix_studio_quote_snapshots__product_type_id")
+  @@index([createdAt], map: "ix_studio_quote_snapshots__created_at")
+  @@map("studio_quote_snapshots")
 }

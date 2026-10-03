@@ -1,5 +1,4 @@
 import { ADVISORY_ADMIN_CONTROLLERS } from '@modules/advisory/advisory.registry';
-import { SAMPLES_ADMIN_CONTROLLERS } from '@modules/samples/samples.registry';
 import { ANALYTICS_ADMIN_CONTROLLERS } from '@modules/analytics/analytics.registry';
 import { ARTWORK_ADMIN_CONTROLLERS } from '@modules/artwork/artwork.registry';
 import { AUDIT_SUPPORT_ADMIN_CONTROLLERS } from '@modules/audit-support/audit-support.registry';
@@ -40,6 +39,7 @@ import { PROMOTIONS_ADMIN_CONTROLLERS } from '@modules/promotions/promotions.reg
 import { QUOTES_ADMIN_CONTROLLERS } from '@modules/quotes/quotes.registry';
 import { RECEIVABLES_ADMIN_CONTROLLERS } from '@modules/receivables/receivables.registry';
 import { REPORTS_ADMIN_CONTROLLERS } from '@modules/reports/reports.registry';
+import { SAMPLES_ADMIN_CONTROLLERS } from '@modules/samples/samples.registry';
 import { SHIPPING_ADMIN_CONTROLLERS } from '@modules/shipping/shipping.registry';
 import { STYLES_ADMIN_CONTROLLERS } from '@modules/styles/styles.registry';
 import { TAX_ADMIN_CONTROLLERS } from '@modules/tax/tax.registry';

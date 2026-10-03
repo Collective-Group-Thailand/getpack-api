@@ -633,6 +633,14 @@ export class RfqConsultationDto {
   requestedBy!: UserRefDto;
 }
 
+export class RfqDesignRefDto {
+  @ApiProperty({ format: 'uuid', example: '0192f3a0-7c1e-7d2a-9b1f-00000000d101' })
+  designId!: string;
+
+  @ApiProperty({ type: 'integer', example: 3 })
+  versionNo!: number;
+}
+
 export class RfqDto {
   @ApiProperty({ format: 'uuid', example: IDS.rfq })
   id!: string;
@@ -690,6 +698,13 @@ export class RfqDto {
     description: 'The style variant asked for (D-269)',
   })
   style!: RfqStyleDto | null;
+
+  @ApiProperty({
+    type: () => RfqDesignRefDto,
+    nullable: true,
+    description: 'D-277 the studio design version the RFQ was asked from',
+  })
+  design!: RfqDesignRefDto | null;
 
   @ApiProperty({ example: '10110' })
   deliveryPostcode!: string;

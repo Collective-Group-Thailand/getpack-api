@@ -1211,6 +1211,17 @@
           "type": "https://errors.packio/designs.template_without_design"
         }
       },
+      "problem.designs.version_required": {
+        "summary": "designs.version_required",
+        "value": {
+          "code": "designs.version_required",
+          "detail": "แบบจะใส่ตะกร้าได้เมื่อมีเวอร์ชันที่บันทึกแล้ว กรุณาบันทึกแล้วเพิ่มอีกครั้ง",
+          "requestId": "6f1c2d8e-2c7b-4d0e-9d1c-3f1a2b3c4d5e",
+          "status": 422,
+          "title": "กรุณาบันทึกแบบก่อน",
+          "type": "https://errors.packio/designs.version_required"
+        }
+      },
       "problem.dielines.material_class_not_offered": {
         "summary": "dielines.material_class_not_offered",
         "value": {
@@ -3332,6 +3343,39 @@
           "status": 409,
           "title": "ทำรายการนี้ไม่ได้ในขั้นตอนนี้",
           "type": "https://errors.packio/structural_requests.invalid_transition"
+        }
+      },
+      "problem.studio.rate_limited": {
+        "summary": "studio.rate_limited",
+        "value": {
+          "code": "studio.rate_limited",
+          "detail": "มีการตรวจราคาถี่เกินไป กรุณารอสักครู่แล้วลองใหม่",
+          "requestId": "6f1c2d8e-2c7b-4d0e-9d1c-3f1a2b3c4d5e",
+          "status": 429,
+          "title": "ตรวจราคาบ่อยเกินไป",
+          "type": "https://errors.packio/studio.rate_limited"
+        }
+      },
+      "problem.studio.spec_mismatch": {
+        "summary": "studio.spec_mismatch",
+        "value": {
+          "code": "studio.spec_mismatch",
+          "detail": "รายละเอียดราคาไม่ตรงกับกล่องของแบบ กรุณาเลือกกล่องใหม่อีกครั้ง",
+          "requestId": "6f1c2d8e-2c7b-4d0e-9d1c-3f1a2b3c4d5e",
+          "status": 422,
+          "title": "รายละเอียดกล่องไม่ตรงกัน",
+          "type": "https://errors.packio/studio.spec_mismatch"
+        }
+      },
+      "problem.studio.spec_missing": {
+        "summary": "studio.spec_missing",
+        "value": {
+          "code": "studio.spec_missing",
+          "detail": "แบบนี้ยังไม่มีรายละเอียดกล่อง กรุณาเลือกกล่องในสตูดิโอก่อน",
+          "requestId": "6f1c2d8e-2c7b-4d0e-9d1c-3f1a2b3c4d5e",
+          "status": 422,
+          "title": "ยังไม่ได้ตั้งค่ากล่อง",
+          "type": "https://errors.packio/studio.spec_missing"
         }
       },
       "problem.styles.capability_decided": {
@@ -47363,6 +47407,21 @@
         ],
         "type": "object"
       },
+      "PriceChangeReason": {
+        "description": "Why the price differs from the quote of `previousSpecHash`",
+        "enum": [
+          "style_changed",
+          "size_changed",
+          "material_changed",
+          "print_changed",
+          "finishes_changed",
+          "quantity_changed",
+          "delivery_changed",
+          "options_changed",
+          "prices_changed"
+        ],
+        "type": "string"
+      },
       "PriceColumnDto": {
         "properties": {
           "key": {
@@ -56536,6 +56595,24 @@
         ],
         "type": "object"
       },
+      "RfqDesignRefDto": {
+        "properties": {
+          "designId": {
+            "example": "0192f3a0-7c1e-7d2a-9b1f-00000000d101",
+            "format": "uuid",
+            "type": "string"
+          },
+          "versionNo": {
+            "example": 3,
+            "type": "integer"
+          }
+        },
+        "required": [
+          "designId",
+          "versionNo"
+        ],
+        "type": "object"
+      },
       "RfqDto": {
         "properties": {
           "acceptedQuoteId": {
@@ -56565,6 +56642,17 @@
           "deliveryPostcode": {
             "example": "10110",
             "type": "string"
+          },
+          "design": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/RfqDesignRefDto"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "D-277 the studio design version the RFQ was asked from"
           },
           "files": {
             "description": "Files sent with the request (purpose `artwork`)",
@@ -56729,6 +56817,7 @@
           "targetDate",
           "targetPricePerUnit",
           "style",
+          "design",
           "deliveryPostcode",
           "notes",
           "slaDueAt",
@@ -58866,6 +58955,43 @@
           "audience",
           "providerMenuId",
           "active"
+        ],
+        "type": "object"
+      },
+      "SaveStudioQuoteDto": {
+        "properties": {
+          "deliveryPostcode": {
+            "example": "10110",
+            "type": "string"
+          },
+          "quantities": {
+            "example": [
+              1000,
+              3000
+            ],
+            "items": {
+              "maximum": 100000000,
+              "minimum": 1,
+              "type": "number"
+            },
+            "maxItems": 10,
+            "minItems": 1,
+            "type": "array"
+          },
+          "targetPricePerUnit": {
+            "description": "Target price per unit (THB incl. VAT, excluding shipping — the basis of `unitPrice`), > 0; never shown to a factory (D-247, D-190)",
+            "example": "11.50",
+            "pattern": "^(?!0+(\\.0{1,2})?$)\\d{1,9}(\\.\\d{1,2})?$",
+            "type": "string"
+          },
+          "versionNo": {
+            "example": 3,
+            "minimum": 1,
+            "type": "integer"
+          }
+        },
+        "required": [
+          "quantities"
         ],
         "type": "object"
       },
@@ -63613,6 +63739,17 @@
             "example": "10110",
             "type": "string"
           },
+          "design": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/RfqDesignRefDto"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "D-277 the studio design version the RFQ was asked from"
+          },
           "files": {
             "description": "Files sent with the request (purpose `artwork`)",
             "items": {
@@ -63814,6 +63951,7 @@
           "targetDate",
           "targetPricePerUnit",
           "style",
+          "design",
           "deliveryPostcode",
           "notes",
           "slaDueAt",
@@ -68115,6 +68253,196 @@
         ],
         "type": "object"
       },
+      "StudioQuoteDto": {
+        "properties": {
+          "cached": {
+            "description": "Served from the snapshot of the same `specHash`",
+            "example": false,
+            "type": "boolean"
+          },
+          "calculation": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/QuoteCalculationDto"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "The same object `store.quotes.calculate` answers; null for `rfq`"
+          },
+          "changes": {
+            "description": "Unit price before and now, per quantity in both",
+            "items": {
+              "$ref": "#/components/schemas/UnitPriceChangeDto"
+            },
+            "type": "array"
+          },
+          "mode": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/QuoteMode"
+              }
+            ],
+            "description": "`rfq`: the type has no instant price — ask for a quotation (`store.studio.requestQuote`)",
+            "example": "instant"
+          },
+          "previousSpecHash": {
+            "example": null,
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "reasons": {
+            "description": "Why the price differs from the quote of `previousSpecHash`",
+            "example": [
+              "print_changed"
+            ],
+            "items": {
+              "$ref": "#/components/schemas/PriceChangeReason"
+            },
+            "type": "array"
+          },
+          "specHash": {
+            "description": "sha256 of the canonical (product type, configuration, quantities, postcode) — D-277",
+            "example": "9f86d081884c7d659a2feaa0c55ad015a3bf4f1b2b0b822cd15d6c15b0f00a08",
+            "type": "string"
+          },
+          "versionNo": {
+            "description": "The design version priced",
+            "example": 3,
+            "type": "integer"
+          }
+        },
+        "required": [
+          "specHash",
+          "versionNo",
+          "mode",
+          "calculation",
+          "cached",
+          "reasons",
+          "previousSpecHash",
+          "changes"
+        ],
+        "type": "object"
+      },
+      "StudioQuoteRequestDto": {
+        "properties": {
+          "deliveryPostcode": {
+            "description": "Delivery postcode (prices shipping)",
+            "example": "10110",
+            "type": "string"
+          },
+          "previousSpecHash": {
+            "description": "The `specHash` of the quote shown before this change: the answer explains the difference",
+            "example": "9f86d081884c7d659a2feaa0c55ad015a3bf4f1b2b0b822cd15d6c15b0f00a08",
+            "pattern": "^[0-9a-f]{64}$",
+            "type": "string"
+          },
+          "quantities": {
+            "description": "Quantities to price (1–10, different)",
+            "example": [
+              1000,
+              3000
+            ],
+            "items": {
+              "maximum": 100000000,
+              "minimum": 1,
+              "type": "number"
+            },
+            "maxItems": 10,
+            "minItems": 1,
+            "type": "array"
+          },
+          "targetPricePerUnit": {
+            "description": "Target price per unit (THB incl. VAT, excluding shipping — the basis of `unitPrice`), > 0; never shown to a factory (D-247, D-190)",
+            "example": "11.50",
+            "pattern": "^(?!0+(\\.0{1,2})?$)\\d{1,9}(\\.\\d{1,2})?$",
+            "type": "string"
+          },
+          "versionNo": {
+            "description": "A saved version; absent: the current one",
+            "example": 3,
+            "minimum": 1,
+            "type": "integer"
+          }
+        },
+        "required": [
+          "quantities"
+        ],
+        "type": "object"
+      },
+      "StudioRfqDto": {
+        "properties": {
+          "deliveryPostcode": {
+            "example": "10110",
+            "type": "string"
+          },
+          "fileIds": {
+            "example": [],
+            "items": {
+              "format": "uuid",
+              "type": "string"
+            },
+            "maxItems": 20,
+            "type": "array"
+          },
+          "notes": {
+            "example": "ขอราคาแบบพิมพ์ด้านใน",
+            "maxLength": 2000,
+            "type": "string"
+          },
+          "quantities": {
+            "example": [
+              1000,
+              3000
+            ],
+            "items": {
+              "maximum": 100000000,
+              "minimum": 1,
+              "type": "number"
+            },
+            "maxItems": 10,
+            "minItems": 1,
+            "type": "array"
+          },
+          "spec": {
+            "additionalProperties": true,
+            "description": "The product type’s RFQ form answers (`store.rfqs.getForm`); the studio pre-fills them",
+            "example": {
+              "printing": "cmyk"
+            },
+            "type": "object"
+          },
+          "targetDate": {
+            "example": "2026-11-15",
+            "format": "date",
+            "pattern": "^\\d{4}-\\d{2}-\\d{2}$",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "targetPricePerUnit": {
+            "description": "Target price per unit (THB incl. VAT, excluding shipping — the basis of `unitPrice`), > 0; never shown to a factory (D-247, D-190)",
+            "example": "11.50",
+            "pattern": "^(?!0+(\\.0{1,2})?$)\\d{1,9}(\\.\\d{1,2})?$",
+            "type": "string"
+          },
+          "versionNo": {
+            "example": 3,
+            "minimum": 1,
+            "type": "integer"
+          }
+        },
+        "required": [
+          "quantities",
+          "deliveryPostcode",
+          "spec"
+        ],
+        "type": "object"
+      },
       "StyleAssetDto": {
         "properties": {
           "contentType": {
@@ -72039,6 +72367,28 @@
           "refunded"
         ],
         "type": "string"
+      },
+      "UnitPriceChangeDto": {
+        "properties": {
+          "previousUnitPrice": {
+            "example": "12.96",
+            "type": "string"
+          },
+          "quantity": {
+            "example": 1000,
+            "type": "integer"
+          },
+          "unitPrice": {
+            "example": "13.38",
+            "type": "string"
+          }
+        },
+        "required": [
+          "quantity",
+          "previousUnitPrice",
+          "unitPrice"
+        ],
+        "type": "object"
       },
       "UnmetCountDto": {
         "properties": {
@@ -246808,6 +247158,7 @@
                   "customerCode": "CU-000042",
                   "declineReasonCode": null,
                   "deliveryPostcode": "10110",
+                  "design": null,
                   "files": [
                     {
                       "id": "0192f3a0-7c1e-7d2a-9b1f-00000000f001",
@@ -247236,6 +247587,7 @@
                   "customerCode": "CU-000042",
                   "declineReasonCode": null,
                   "deliveryPostcode": "10110",
+                  "design": null,
                   "files": [
                     {
                       "id": "0192f3a0-7c1e-7d2a-9b1f-00000000f001",
@@ -247598,6 +247950,7 @@
                   "customerCode": "CU-000042",
                   "declineReasonCode": null,
                   "deliveryPostcode": "10110",
+                  "design": null,
                   "files": [
                     {
                       "id": "0192f3a0-7c1e-7d2a-9b1f-00000000f001",
@@ -247978,6 +248331,7 @@
                   "customerCode": "CU-000042",
                   "declineReasonCode": null,
                   "deliveryPostcode": "10110",
+                  "design": null,
                   "files": [
                     {
                       "id": "0192f3a0-7c1e-7d2a-9b1f-00000000f001",
@@ -248473,6 +248827,7 @@
                       "customerCode": "CU-000042",
                       "declineReasonCode": null,
                       "deliveryPostcode": "10110",
+                      "design": null,
                       "files": [
                         {
                           "id": "0192f3a0-7c1e-7d2a-9b1f-00000000f001",
@@ -248821,6 +249176,7 @@
                   "customerCode": "CU-000042",
                   "declineReasonCode": null,
                   "deliveryPostcode": "10110",
+                  "design": null,
                   "files": [
                     {
                       "id": "0192f3a0-7c1e-7d2a-9b1f-00000000f001",
@@ -249198,6 +249554,7 @@
                   "customerCode": "CU-000042",
                   "declineReasonCode": null,
                   "deliveryPostcode": "10110",
+                  "design": null,
                   "files": [
                     {
                       "id": "0192f3a0-7c1e-7d2a-9b1f-00000000f001",
@@ -249537,6 +249894,7 @@
                   "customerCode": "CU-000042",
                   "declineReasonCode": null,
                   "deliveryPostcode": "10110",
+                  "design": null,
                   "files": [
                     {
                       "id": "0192f3a0-7c1e-7d2a-9b1f-00000000f001",
@@ -249923,6 +250281,7 @@
                   "customerCode": "CU-000042",
                   "declineReasonCode": "capability_missing",
                   "deliveryPostcode": "10110",
+                  "design": null,
                   "files": [
                     {
                       "id": "0192f3a0-7c1e-7d2a-9b1f-00000000f001",
@@ -250314,6 +250673,7 @@
                   "customerCode": "CU-000042",
                   "declineReasonCode": null,
                   "deliveryPostcode": "10110",
+                  "design": null,
                   "files": [
                     {
                       "id": "0192f3a0-7c1e-7d2a-9b1f-00000000f001",
@@ -250679,6 +251039,7 @@
                   "customerCode": "CU-000042",
                   "declineReasonCode": null,
                   "deliveryPostcode": "10110",
+                  "design": null,
                   "files": [
                     {
                       "id": "0192f3a0-7c1e-7d2a-9b1f-00000000f001",
@@ -251240,6 +251601,7 @@
                   "customerCode": "CU-000042",
                   "declineReasonCode": null,
                   "deliveryPostcode": "10110",
+                  "design": null,
                   "files": [
                     {
                       "id": "0192f3a0-7c1e-7d2a-9b1f-00000000f001",
@@ -251635,6 +251997,7 @@
                   "customerCode": "CU-000042",
                   "declineReasonCode": null,
                   "deliveryPostcode": "10110",
+                  "design": null,
                   "files": [
                     {
                       "id": "0192f3a0-7c1e-7d2a-9b1f-00000000f001",
@@ -252026,6 +252389,7 @@
                   "customerCode": "CU-000042",
                   "declineReasonCode": null,
                   "deliveryPostcode": "10110",
+                  "design": null,
                   "files": [
                     {
                       "id": "0192f3a0-7c1e-7d2a-9b1f-00000000f001",
@@ -366695,6 +367059,7 @@
                       "closedAt": null,
                       "declineReasonCode": null,
                       "deliveryPostcode": "10110",
+                      "design": null,
                       "files": [
                         {
                           "id": "0192f3a0-7c1e-7d2a-9b1f-00000000f001",
@@ -366977,6 +367342,7 @@
                   "closedAt": null,
                   "declineReasonCode": null,
                   "deliveryPostcode": "10110",
+                  "design": null,
                   "files": [
                     {
                       "id": "0192f3a0-7c1e-7d2a-9b1f-00000000f001",
@@ -367264,6 +367630,7 @@
                   "closedAt": null,
                   "declineReasonCode": null,
                   "deliveryPostcode": "10110",
+                  "design": null,
                   "files": [
                     {
                       "id": "0192f3a0-7c1e-7d2a-9b1f-00000000f001",
@@ -367541,6 +367908,7 @@
                   "closedAt": "2026-10-02T09:00:00+07:00",
                   "declineReasonCode": null,
                   "deliveryPostcode": "10110",
+                  "design": null,
                   "files": [
                     {
                       "id": "0192f3a0-7c1e-7d2a-9b1f-00000000f001",
@@ -367890,6 +368258,7 @@
                   "closedAt": null,
                   "declineReasonCode": "customer_declined",
                   "deliveryPostcode": "10110",
+                  "design": null,
                   "files": [
                     {
                       "id": "0192f3a0-7c1e-7d2a-9b1f-00000000f001",
@@ -368204,6 +368573,7 @@
                   "closedAt": null,
                   "declineReasonCode": null,
                   "deliveryPostcode": "10110",
+                  "design": null,
                   "files": [
                     {
                       "id": "0192f3a0-7c1e-7d2a-9b1f-00000000f001",
@@ -372281,6 +372651,1126 @@
         "summary": "Cancel a structure request",
         "tags": [
           "store.structuralRequests"
+        ]
+      }
+    },
+    "/v1/store/studio/{designId}/quote": {
+      "post": {
+        "description": "Prices a version of my design (default: the current one) from its calculator spec — checked against its box: style, sizes and basis, material, print sides — through the same engine and rules as `store.quotes.calculate`, and answers the same calculation object with a `specHash`. The same hash is served from its snapshot for 5 minutes. With `previousSpecHash` the answer explains the change (reason codes and unit prices before / now). A type without an instant price answers `mode: rfq` — ask for a quotation instead. Limited to 60 a minute (D-277).\n\nImplements: D-277, D-275, D-051.",
+        "operationId": "store.studio.quote",
+        "parameters": [
+          {
+            "description": "My studio design",
+            "in": "path",
+            "name": "designId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "examples": {
+                "default": {
+                  "value": {
+                    "deliveryPostcode": "10110",
+                    "quantities": [
+                      1000,
+                      3000
+                    ]
+                  }
+                }
+              },
+              "schema": {
+                "$ref": "#/components/schemas/StudioQuoteRequestDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "cached": false,
+                  "calculation": {
+                    "calculationId": "0192f3a0-7c1e-7d2a-9b1f-0000000c1001",
+                    "calculatorVersion": "1.0.0",
+                    "dimensions": {
+                      "bases": [
+                        "internal",
+                        "external",
+                        "over_crease"
+                      ],
+                      "basis": "internal",
+                      "basisAssumed": false,
+                      "caliperMm": 0.5,
+                      "conversionVersion": "1.0.0",
+                      "entered": {
+                        "d": 50,
+                        "l": 150,
+                        "w": 100
+                      },
+                      "family": "box",
+                      "priced": {
+                        "d": 50,
+                        "l": 150,
+                        "w": 100
+                      },
+                      "pricedBasis": "internal",
+                      "sizes": {
+                        "external": {
+                          "d": 51,
+                          "l": 151,
+                          "w": 101
+                        },
+                        "internal": {
+                          "d": 50,
+                          "l": 150,
+                          "w": 100
+                        },
+                        "overCrease": {
+                          "d": 51,
+                          "l": 150.5,
+                          "w": 100.5
+                        },
+                        "product": null
+                      }
+                    },
+                    "steps": [
+                      {
+                        "designFeeAmount": "0.00",
+                        "earliestDeliveryDate": "2026-10-10",
+                        "earliestShipDate": "2026-10-09",
+                        "grossAmount": "13508.40",
+                        "instant": true,
+                        "leadTimeDays": 7,
+                        "productAmount": "13380.00",
+                        "quantity": 1000,
+                        "reason": null,
+                        "shippingAmount": "128.40",
+                        "shippingNetAmount": "120.00",
+                        "shippingPending": false,
+                        "shippingPendingReason": null,
+                        "shippingVatAmount": "8.40",
+                        "structureDesignFeeAmount": "0.00",
+                        "toleranceColourDeltaE": "3.00",
+                        "toleranceDimensionalMm": "1.00",
+                        "toleranceOveragePct": "5.0000",
+                        "toleranceShortagePct": "5.0000",
+                        "toolingAmount": "0.00",
+                        "unitPrice": "13.38",
+                        "vatAmount": "883.73"
+                      }
+                    ],
+                    "target": {
+                      "steps": [
+                        {
+                          "gapPct": "16.35",
+                          "gapPerUnit": "1.88",
+                          "meetsTarget": false,
+                          "quantity": 1000
+                        }
+                      ],
+                      "targetPricePerUnit": "11.50"
+                    }
+                  },
+                  "changes": [
+                    {
+                      "previousUnitPrice": "12.96",
+                      "quantity": 1000,
+                      "unitPrice": "13.38"
+                    }
+                  ],
+                  "mode": "instant",
+                  "previousSpecHash": "a3f1c2d4e5b60718293a4b5c6d7e8f90a1b2c3d4e5f60718293a4b5c6d7e8f90",
+                  "reasons": [
+                    "print_changed"
+                  ],
+                  "specHash": "9f86d081884c7d659a2feaa0c55ad015a3bf4f1b2b0b822cd15d6c15b0f00a08",
+                  "versionNo": 3
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/StudioQuoteDto"
+                }
+              }
+            },
+            "description": "Studio quote",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "400": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.bad_request": {
+                    "$ref": "#/components/examples/problem.http.bad_request"
+                  },
+                  "http.malformed_json": {
+                    "$ref": "#/components/examples/problem.http.malformed_json"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.bad_request`, `http.malformed_json`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.unauthenticated": {
+                    "$ref": "#/components/examples/problem.auth.unauthenticated"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.unauthenticated`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.forbidden": {
+                    "$ref": "#/components/examples/problem.auth.forbidden"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.forbidden`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "404": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.not_found": {
+                    "$ref": "#/components/examples/problem.http.not_found"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.not_found`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "designs.version_required": {
+                    "$ref": "#/components/examples/problem.designs.version_required"
+                  },
+                  "specs.unit_not_accepted": {
+                    "$ref": "#/components/examples/problem.specs.unit_not_accepted"
+                  },
+                  "studio.spec_mismatch": {
+                    "$ref": "#/components/examples/problem.studio.spec_mismatch"
+                  },
+                  "studio.spec_missing": {
+                    "$ref": "#/components/examples/problem.studio.spec_missing"
+                  },
+                  "validation.failed": {
+                    "$ref": "#/components/examples/problem.validation.failed"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `designs.version_required`, `specs.unit_not_accepted`, `studio.spec_mismatch`, `studio.spec_missing`, `validation.failed`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  },
+                  "studio.rate_limited": {
+                    "$ref": "#/components/examples/problem.studio.rate_limited"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`, `studio.rate_limited`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "503": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "pricing.vat_rate_missing": {
+                    "$ref": "#/components/examples/problem.pricing.vat_rate_missing"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `pricing.vat_rate_missing`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "customer": []
+          }
+        ],
+        "summary": "Price my studio design",
+        "tags": [
+          "store.studio"
+        ]
+      }
+    },
+    "/v1/store/studio/{designId}/quote/actions/save": {
+      "post": {
+        "description": "Saves the quotation of the studio quote — the same input, priced on save like every quotation (D-051) — with the design version and `specHash`; added to the cart with the same design version, checkout charges exactly this quotation (D-277, spec §1).\n\nImplements: D-277, D-275, D-051.",
+        "operationId": "store.studio.saveQuote",
+        "parameters": [
+          {
+            "description": "My studio design",
+            "in": "path",
+            "name": "designId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/IdempotencyKey"
+          },
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "examples": {
+                "default": {
+                  "value": {
+                    "quantities": [
+                      1000
+                    ]
+                  }
+                }
+              },
+              "schema": {
+                "$ref": "#/components/schemas/SaveStudioQuoteDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "advisory": null,
+                  "configuration": {
+                    "d": 120,
+                    "design": {
+                      "graphic": false,
+                      "structure": false
+                    },
+                    "difficultyLevelId": "0192f3a0-7c1e-7d2a-9b1f-00000000a103",
+                    "l": 40,
+                    "materialId": "0192f3a0-7c1e-7d2a-9b1f-00000000a102",
+                    "parts": [
+                      {
+                        "diecutTypeId": "0192f3a0-7c1e-7d2a-9b1f-00000000a106",
+                        "finish1FrontId": "0192f3a0-7c1e-7d2a-9b1f-00000000a105",
+                        "printFront": [
+                          {
+                            "inkColourId": "0192f3a0-7c1e-7d2a-9b1f-00000000a104",
+                            "percent": 100
+                          },
+                          {
+                            "inkColourId": "0192f3a0-7c1e-7d2a-9b1f-00000000a104",
+                            "percent": 100
+                          },
+                          {
+                            "inkColourId": "0192f3a0-7c1e-7d2a-9b1f-00000000a104",
+                            "percent": 100
+                          },
+                          {
+                            "inkColourId": "0192f3a0-7c1e-7d2a-9b1f-00000000a104",
+                            "percent": 100
+                          }
+                        ]
+                      }
+                    ],
+                    "patternId": "0192f3a0-7c1e-7d2a-9b1f-00000000a101",
+                    "quantities": [
+                      1000
+                    ],
+                    "w": 60
+                  },
+                  "createdAt": "2026-10-01T09:00:00+07:00",
+                  "currency": "THB",
+                  "deliveryPostcode": "10110",
+                  "dielineQuantities": null,
+                  "dimensions": null,
+                  "fromLever": null,
+                  "id": "0192f3a0-7c1e-7d2a-9b1f-00000000e601",
+                  "options": [
+                    {
+                      "designFeeAmount": "0.00",
+                      "earliestDeliveryDate": "2026-10-10",
+                      "earliestShipDate": "2026-10-09",
+                      "grossAmount": "13508.40",
+                      "id": "0192f3a0-7c1e-7d2a-9b1f-00000000e602",
+                      "leadTimeDays": 7,
+                      "netAmount": "12624.67",
+                      "productAmount": "13380.00",
+                      "quantity": 1000,
+                      "shippingAmount": "128.40",
+                      "shippingPending": false,
+                      "shippingPendingReason": null,
+                      "structureDesignFeeAmount": "0.00",
+                      "targetGap": {
+                        "gapPct": "16.35",
+                        "gapPerUnit": "1.88",
+                        "meetsTarget": false
+                      },
+                      "toleranceColourDeltaE": "3.00",
+                      "toleranceDimensionalMm": "1.00",
+                      "toleranceOveragePct": "5.0000",
+                      "toleranceShortagePct": "5.0000",
+                      "toolingAmount": "0.00",
+                      "unitPrice": "13.38",
+                      "vatAmount": "883.73"
+                    }
+                  ],
+                  "outcome": null,
+                  "pdfStatus": "none",
+                  "priceLocked": true,
+                  "productTypeCode": "folding_carton",
+                  "quoteCode": null,
+                  "shareExpiresAt": null,
+                  "sharedAt": null,
+                  "source": "instant",
+                  "status": "saved",
+                  "summary": {
+                    "product": {
+                      "imageUrl": "/v1/store/catalog/images/0192f3a0-7c1e-7d2a-9b1f-00000000c009",
+                      "nameEn": "Tuck-end box",
+                      "nameTh": "กล่องฝาเสียบ",
+                      "slug": "tuck-end-box"
+                    },
+                    "productTypeCode": "folding_carton",
+                    "productTypeNameEn": "Folding carton",
+                    "productTypeNameTh": "กล่องกระดาษแข็ง",
+                    "specs": [
+                      {
+                        "key": "style",
+                        "labelEn": "Style",
+                        "labelTh": "แบบกล่อง",
+                        "valueEn": "ฝาเสียบ",
+                        "valueTh": "ฝาเสียบ"
+                      },
+                      {
+                        "key": "size",
+                        "labelEn": "Size",
+                        "labelTh": "ขนาด",
+                        "valueEn": "60 × 60 × 150 mm",
+                        "valueTh": "60 × 60 × 150 มม."
+                      },
+                      {
+                        "key": "material",
+                        "labelEn": "Material",
+                        "labelTh": "วัสดุ",
+                        "valueEn": "Art card 350 gsm",
+                        "valueTh": "อาร์ตการ์ด 350 แกรม"
+                      }
+                    ],
+                    "unit": "piece"
+                  },
+                  "targetPricePerUnit": "11.50",
+                  "validUntil": "2026-10-16T09:00:00+07:00"
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/SavedQuoteDto"
+                }
+              }
+            },
+            "description": "Saved quotation",
+            "headers": {
+              "Idempotent-Replayed": {
+                "$ref": "#/components/headers/IdempotentReplayed"
+              },
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "400": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.bad_request": {
+                    "$ref": "#/components/examples/problem.http.bad_request"
+                  },
+                  "http.malformed_json": {
+                    "$ref": "#/components/examples/problem.http.malformed_json"
+                  },
+                  "idempotency.key_invalid": {
+                    "$ref": "#/components/examples/problem.idempotency.key_invalid"
+                  },
+                  "idempotency.key_required": {
+                    "$ref": "#/components/examples/problem.idempotency.key_required"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.bad_request`, `http.malformed_json`, `idempotency.key_invalid`, `idempotency.key_required`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.unauthenticated": {
+                    "$ref": "#/components/examples/problem.auth.unauthenticated"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.unauthenticated`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.forbidden": {
+                    "$ref": "#/components/examples/problem.auth.forbidden"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.forbidden`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "404": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.not_found": {
+                    "$ref": "#/components/examples/problem.http.not_found"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.not_found`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "409": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "idempotency.in_progress": {
+                    "$ref": "#/components/examples/problem.idempotency.in_progress"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `idempotency.in_progress`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "designs.version_required": {
+                    "$ref": "#/components/examples/problem.designs.version_required"
+                  },
+                  "idempotency.key_reused": {
+                    "$ref": "#/components/examples/problem.idempotency.key_reused"
+                  },
+                  "pricing.not_instant": {
+                    "$ref": "#/components/examples/problem.pricing.not_instant"
+                  },
+                  "quotes.nothing_to_save": {
+                    "$ref": "#/components/examples/problem.quotes.nothing_to_save"
+                  },
+                  "specs.unit_not_accepted": {
+                    "$ref": "#/components/examples/problem.specs.unit_not_accepted"
+                  },
+                  "studio.spec_mismatch": {
+                    "$ref": "#/components/examples/problem.studio.spec_mismatch"
+                  },
+                  "studio.spec_missing": {
+                    "$ref": "#/components/examples/problem.studio.spec_missing"
+                  },
+                  "validation.failed": {
+                    "$ref": "#/components/examples/problem.validation.failed"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `designs.version_required`, `idempotency.key_reused`, `pricing.not_instant`, `quotes.nothing_to_save`, `specs.unit_not_accepted`, `studio.spec_mismatch`, `studio.spec_missing`, `validation.failed`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "503": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "pricing.vat_rate_missing": {
+                    "$ref": "#/components/examples/problem.pricing.vat_rate_missing"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `pricing.vat_rate_missing`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "customer": []
+          }
+        ],
+        "summary": "Save the quotation of my studio design",
+        "tags": [
+          "store.studio"
+        ]
+      }
+    },
+    "/v1/store/studio/{designId}/rfq": {
+      "post": {
+        "description": "For a type without an instant price: an RFQ that names the design version, with the sizes, basis and style variant taken from it and the form answers the studio pre-filled (D-277, D-269).\n\nImplements: D-277, D-275, D-051, D-269, D-100.",
+        "operationId": "store.studio.requestQuote",
+        "parameters": [
+          {
+            "description": "My studio design",
+            "in": "path",
+            "name": "designId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/IdempotencyKey"
+          },
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "examples": {
+                "default": {
+                  "value": {
+                    "deliveryPostcode": "10110",
+                    "quantities": [
+                      1000
+                    ],
+                    "spec": {}
+                  }
+                }
+              },
+              "schema": {
+                "$ref": "#/components/schemas/StudioRfqDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "acceptedQuoteId": null,
+                  "closedAt": null,
+                  "declineReasonCode": null,
+                  "deliveryPostcode": "10110",
+                  "design": {
+                    "designId": "0192f3a0-7c1e-7d2a-9b1f-00000000d101",
+                    "versionNo": 3
+                  },
+                  "files": [
+                    {
+                      "id": "0192f3a0-7c1e-7d2a-9b1f-00000000f001",
+                      "mimeType": "application/pdf",
+                      "originalName": "brief.pdf",
+                      "sizeBytes": 245760
+                    }
+                  ],
+                  "heightMm": 320,
+                  "id": "0192f3a0-7c1e-7d2a-9b1f-00000000e701",
+                  "lengthMm": 250,
+                  "measurementBasis": "internal",
+                  "messages": [],
+                  "nextActions": [
+                    {
+                      "disabledReason": null,
+                      "irreversible": false,
+                      "key": "rfq.post_message"
+                    }
+                  ],
+                  "notes": "Logo on both sides (fake)",
+                  "productTypeCode": "paper_bag",
+                  "productTypeName": "ถุงกระดาษ",
+                  "quantities": [
+                    500,
+                    1000,
+                    3000
+                  ],
+                  "quotations": [],
+                  "rfqCode": "RFQ-2610-00001",
+                  "slaDueAt": null,
+                  "spec": {
+                    "handles": "twisted paper",
+                    "material": "kraft 150 gsm (fake)",
+                    "print": "1 colour one side"
+                  },
+                  "status": "submitted",
+                  "style": null,
+                  "submittedAt": "2026-09-30T15:00:00+07:00",
+                  "targetDate": "2026-11-15",
+                  "targetPricePerUnit": null,
+                  "widthMm": 120
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/RfqDto"
+                }
+              }
+            },
+            "description": "Submitted",
+            "headers": {
+              "Idempotent-Replayed": {
+                "$ref": "#/components/headers/IdempotentReplayed"
+              },
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "400": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.bad_request": {
+                    "$ref": "#/components/examples/problem.http.bad_request"
+                  },
+                  "http.malformed_json": {
+                    "$ref": "#/components/examples/problem.http.malformed_json"
+                  },
+                  "idempotency.key_invalid": {
+                    "$ref": "#/components/examples/problem.idempotency.key_invalid"
+                  },
+                  "idempotency.key_required": {
+                    "$ref": "#/components/examples/problem.idempotency.key_required"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.bad_request`, `http.malformed_json`, `idempotency.key_invalid`, `idempotency.key_required`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.unauthenticated": {
+                    "$ref": "#/components/examples/problem.auth.unauthenticated"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.unauthenticated`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.forbidden": {
+                    "$ref": "#/components/examples/problem.auth.forbidden"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.forbidden`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "404": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.not_found": {
+                    "$ref": "#/components/examples/problem.http.not_found"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.not_found`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "409": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "idempotency.in_progress": {
+                    "$ref": "#/components/examples/problem.idempotency.in_progress"
+                  },
+                  "numbering.series_missing": {
+                    "$ref": "#/components/examples/problem.numbering.series_missing"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `idempotency.in_progress`, `numbering.series_missing`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "designs.version_required": {
+                    "$ref": "#/components/examples/problem.designs.version_required"
+                  },
+                  "idempotency.key_reused": {
+                    "$ref": "#/components/examples/problem.idempotency.key_reused"
+                  },
+                  "specs.unit_not_accepted": {
+                    "$ref": "#/components/examples/problem.specs.unit_not_accepted"
+                  },
+                  "studio.spec_mismatch": {
+                    "$ref": "#/components/examples/problem.studio.spec_mismatch"
+                  },
+                  "studio.spec_missing": {
+                    "$ref": "#/components/examples/problem.studio.spec_missing"
+                  },
+                  "validation.failed": {
+                    "$ref": "#/components/examples/problem.validation.failed"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `designs.version_required`, `idempotency.key_reused`, `specs.unit_not_accepted`, `studio.spec_mismatch`, `studio.spec_missing`, `validation.failed`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "503": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "pricing.vat_rate_missing": {
+                    "$ref": "#/components/examples/problem.pricing.vat_rate_missing"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `pricing.vat_rate_missing`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "customer": []
+          }
+        ],
+        "summary": "Ask for a quotation of my studio design",
+        "tags": [
+          "store.studio"
         ]
       }
     },
@@ -378095,6 +379585,10 @@
     {
       "description": "Requests for a structure the style library lacks (D-273): designed by Prepress, a fee quoted as a service RFQ when one applies, notified at every step.",
       "name": "store.structuralRequests"
+    },
+    {
+      "description": "The 3D studio (U4): price a design version with a spec hash and the reasons a price changed, save its quotation, ask for a quotation of a non-instant type (D-277).",
+      "name": "store.studio"
     },
     {
       "description": "The signed-in customer’s favourite styles (D-246).",
