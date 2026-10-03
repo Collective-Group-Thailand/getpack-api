@@ -288,7 +288,16 @@ describe('store designs (e2e, U-B0.1)', () => {
     const fontFile = await uploadFile(ctx, token, 'fake-font', 'design_asset');
     const file = await ctx.prisma.fileObject.findUniqueOrThrow({ where: { publicId: fontFile } });
     const font = await ctx.prisma.designFont.create({
-      data: { name: '[DEV] Fake Sans', fileObjectId: file.id, licenceNote: 'fake licence', status: 'active' },
+      data: {
+        name: '[DEV] Fake Sans',
+        fileObjectId: file.id,
+        licenceNote: 'fake licence',
+        status: 'active',
+        // D-284: only OFL fonts licensed for print and embedding reach the studio.
+        licence: 'ofl',
+        printAllowed: true,
+        embeddingAllowed: true,
+      },
     });
     const hidden = await ctx.prisma.designFont.create({
       data: { name: '[DEV] Draft Sans', fileObjectId: file.id, licenceNote: 'fake licence' },

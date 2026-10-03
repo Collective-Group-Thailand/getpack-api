@@ -1996,6 +1996,9 @@ model Company {
   statements              CompanyStatement[]       @relation("CompanyStatementCompany")
   // --- end Finance B5.2
 
+  brandKits     BrandKit[]                @relation("BrandKitCompany")
+  elementRights ElementRightDeclaration[] @relation("ElementRightCompany")
+
   @@unique([taxId], map: "ux_companies__tax_id", where: raw("(status <> 'closed'::company_status)"))
   @@index([status], map: "ix_companies__status")
   @@index([entityId], map: "ix_companies__entity_id")
@@ -2097,6 +2100,8 @@ model CompanyBrandAsset {
   fileObject FileObject @relation("CompanyBrandAssetFile", fields: [fileObjectId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_company_brand_assets__file_object_id")
   createdBy  User       @relation("CompanyBrandAssetCreatedBy", fields: [createdById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_company_brand_assets__created_by")
   removedBy  User?      @relation("CompanyBrandAssetRemovedBy", fields: [removedById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_company_brand_assets__removed_by")
+
+  kitLogos BrandKitLogo[] @relation("BrandKitLogoAsset")
 
   @@unique([companyId, fileObjectId], map: "ux_company_brand_assets__live_file", where: raw("(removed_at IS NULL)"))
   @@index([companyId], map: "ix_company_brand_assets__company_id")

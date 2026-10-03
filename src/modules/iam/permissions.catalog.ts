@@ -183,6 +183,18 @@ export const PERMISSIONS = [
     decisionRefs: ['D-268', 'D-266'],
   },
   {
+    key: 'studio_catalog.manage',
+    audience: 'staff',
+    description: 'Maintain Packio’s studio templates and elements (D-216, D-282)',
+    decisionRefs: ['D-216', 'D-282'],
+  },
+  {
+    key: 'studio_catalog.approve',
+    audience: 'staff',
+    description: 'Approve a studio template for publication — Marketing, never its author (D-216, D-282)',
+    decisionRefs: ['D-216', 'D-282'],
+  },
+  {
     key: 'structural_requests.manage',
     audience: 'staff',
     description: 'Assign structural design requests, link their service RFQ, decline them (CS, D-273)',

@@ -1867,13 +1867,15 @@ model DesignCheckRun {
   blockCount     Int               @map("block_count")
   warnCount      Int               @map("warn_count")
   infoCount      Int               @map("info_count")
+  /// What else the evaluation depended on (the studio elements lacking a declared right, D-282): a change re-evaluates.
+  contextKey     String            @default("") @map("context_key")
   evaluatedAt    DateTime          @default(now()) @map("evaluated_at") @db.Timestamptz(6)
 
   version      DesignDocumentVersion @relation("DesignCheckRunVersion", fields: [versionId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_design_check_runs__version_id")
   rulesVersion SettingVersion        @relation("DesignCheckRunRules", fields: [rulesVersionId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_design_check_runs__rules_version_id")
   findings     DesignCheckFinding[]
 
-  @@unique([versionId, rulesVersionId, source], map: "ux_design_check_runs__version__rules__source")
+  @@unique([versionId, rulesVersionId, source, contextKey], map: "ux_design_check_runs__version__rules__source__context")
   @@index([rulesVersionId], map: "ix_design_check_runs__rules_version_id")
   @@map("design_check_runs")
 }

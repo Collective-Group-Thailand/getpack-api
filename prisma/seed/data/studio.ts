@@ -4,7 +4,8 @@ import { type RuleCatalogue } from '../../../src/modules/studio/print-rules';
  * D-278 the first studio print-check catalogue (setting `studio.print_rules`, owned by Prepress, proposed). Thresholds
  * are seeded only where a decision or an accepted value gives them: 300 / 150 ppi (studio spec §④), bleed 3 mm, safe
  * zone 3 mm and hairline 0.25 pt (the ADR-0009 preflight values). Every other threshold is null: the rule is off until
- * Prepress sets it. Severities the spec states are kept (barcode across a fold blocks, glue / crease crossings warn);
+ * Prepress sets it. Severities the spec states are kept (barcode across a fold blocks, glue / crease crossings warn); a mark with
+ * legal meaning without a declared right blocks (D-282);
  * the others start as warnings. Rule ids are shared with the web (`contract/studio-rules.json`) and the PDF preflight.
  */
 export const STUDIO_PRINT_RULES: RuleCatalogue = {
@@ -120,6 +121,14 @@ export const STUDIO_PRINT_RULES: RuleCatalogue = {
       printMethods: null,
       materialClasses: null,
       thresholds: null,
+    },
+    {
+      id: 'element_right_missing',
+      severity: 'block',
+      evaluatedOn: ['document', 'web'],
+      printMethods: null,
+      materialClasses: null,
+      thresholds: {},
     },
   ],
 };

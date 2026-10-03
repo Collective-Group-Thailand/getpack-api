@@ -1,8 +1,11 @@
 import { PageQuery } from '@common/pagination/pagination.dto';
+
+export const FONT_LICENCES = ['ofl', 'proprietary', 'unknown'] as const;
 import { ApiProperty, ApiPropertyOptional, OmitType, PartialType } from '@nestjs/swagger';
 import { IsObject, IsOptional, IsUUID, Matches } from 'class-validator';
 
 import {
+  BoolField,
   CATALOG_STATUSES,
   EnumField,
   IdField,
@@ -302,6 +305,21 @@ export class DesignFontDto {
   @ApiProperty({ example: 'SIL Open Font License 1.1' })
   licenceNote!: string;
 
+  @ApiProperty({ enum: FONT_LICENCES, enumName: 'FontLicence', example: 'ofl' })
+  licence!: string;
+
+  @ApiProperty({ example: true, description: 'The licence allows print production' })
+  printAllowed!: boolean;
+
+  @ApiProperty({ example: true, description: 'The licence allows embedding in a PDF' })
+  embeddingAllowed!: boolean;
+
+  @ApiProperty({
+    example: true,
+    description: 'D-284: served to the studio — active, OFL, print and embedding allowed',
+  })
+  studioServed!: boolean;
+
   @ApiProperty({ enum: CATALOG_STATUSES, enumName: 'CatalogStatus', example: 'active' })
   status!: Status;
 
@@ -318,6 +336,23 @@ export class CreateDesignFontDto {
 
   @TextField({ example: 'SIL Open Font License 1.1', max: 1000 })
   licenceNote!: string;
+
+  @EnumField(FONT_LICENCES, 'FontLicence', {
+    example: 'ofl',
+    optional: true,
+    description: 'D-284: only `ofl` fonts reach the studio (default `unknown`)',
+  })
+  licence?: (typeof FONT_LICENCES)[number];
+
+  @BoolField({
+    example: true,
+    optional: true,
+    description: 'The licence allows print production (default false)',
+  })
+  printAllowed?: boolean;
+
+  @BoolField({ example: true, optional: true, description: 'The licence allows embedding (default false)' })
+  embeddingAllowed?: boolean;
 
   @StatusField()
   status?: Status;

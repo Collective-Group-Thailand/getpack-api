@@ -133,6 +133,7 @@ export const ROLES: readonly RoleDefinition[] = [
     nameTh: 'ผู้ดูแลระบบ',
     nameEn: 'Admin',
     permissions: [
+      'studio_catalog.manage',
       'guarantee_policies.read',
       'ops.read',
       'reports.export',
@@ -336,6 +337,7 @@ export const ROLES: readonly RoleDefinition[] = [
     nameTh: 'ฝ่ายเตรียมพิมพ์',
     nameEn: 'Prepress',
     permissions: [
+      'studio_catalog.manage',
       ...EVERY_STAFF_MEMBER,
       'catalog.read',
       'approvals.act',
@@ -514,6 +516,8 @@ export const ROLES: readonly RoleDefinition[] = [
     nameEn: 'Marketing',
     // CMS and SEO go to Marketing (no SEO role in D-140, schema-design §7 C-6).
     permissions: [
+      'studio_catalog.manage',
+      'studio_catalog.approve',
       'guarantee_policies.read',
       'reports.export',
       'reports.schedule',

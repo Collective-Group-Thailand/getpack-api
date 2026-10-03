@@ -1507,6 +1507,18 @@
     "print_unavailable": {
       "title": "Print file not available",
       "detail": "This design cannot be turned into a print file automatically (no drawable style or engine off)."
+    },
+    "template_not_editable": {
+      "title": "Template not at this step",
+      "detail": "The template is not in a state that allows this action."
+    },
+    "maker_checker": {
+      "title": "Approve someone else's work",
+      "detail": "A template is approved by someone other than its author."
+    },
+    "right_not_required": {
+      "title": "No right needed",
+      "detail": "This element can be used without declaring a right."
     }
   }
 }

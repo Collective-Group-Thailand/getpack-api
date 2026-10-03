@@ -1,3 +1,5 @@
+import { createHash } from 'node:crypto';
+
 import { type UserActor } from '@common/context/actor';
 import { DomainException } from '@common/errors/domain.exception';
 import { toBangkokIso } from '@common/time/bangkok';
@@ -8,6 +10,7 @@ import { DomainEvents } from '@platform/domain-events/domain-events.service';
 import { SettingNotFoundError, SettingsService } from '@platform/settings/settings.service';
 
 import { activeRules, evaluateDocument, type PrintRule } from './print-rules';
+import { StudioCatalogService } from './studio-catalog.service';
 
 /** D-215: what every soft proof says about itself. */
 export const SOFT_PROOF_LABEL = {
@@ -50,6 +53,7 @@ export class StudioChecksService {
     private readonly prisma: PrismaService,
     private readonly settings: SettingsService,
     private readonly events: DomainEvents,
+    private readonly catalog: StudioCatalogService,
   ) {}
 
   async rules() {
@@ -72,12 +76,21 @@ export class StudioChecksService {
   async run(actor: UserActor, designId: string, versionNo?: number): Promise<CheckRunView> {
     const { doc, version } = await this.version(actor, designId, versionNo);
     const catalogue = await this.settings.at('studio.print_rules');
+    // What the evaluation depends on besides the document and the catalogue: the rights still missing (D-282).
+    const undeclared = await this.undeclaredElements(version.document, doc.ownerUserId);
+    const contextKey =
+      undeclared.size === 0
+        ? ''
+        : createHash('sha256')
+            .update([...undeclared].sort().join(','))
+            .digest('hex');
     const existing = await this.prisma.designCheckRun.findUnique({
       where: {
-        versionId_rulesVersionId_source: {
+        versionId_rulesVersionId_source_contextKey: {
           versionId: version.id,
           rulesVersionId: catalogue.versionId,
           source: 'document',
+          contextKey,
         },
       },
       include: RUN_INCLUDE,
@@ -93,6 +106,7 @@ export class StudioChecksService {
     });
     const findings = evaluateDocument(version.document, rules, {
       assetPx: new Map(assets.map((a) => [a.publicId, a.fileObject])),
+      undeclaredElements: undeclared,
     });
     const count = (s: string) => findings.filter((f) => f.severity === s).length;
     const run = await this.prisma.withTx(async (tx) => {
@@ -101,6 +115,7 @@ export class StudioChecksService {
           versionId: version.id,
           rulesVersionId: catalogue.versionId,
           source: 'document',
+          contextKey,
           blockCount: count('block'),
           warnCount: count('warn'),
           infoCount: count('info'),
@@ -199,6 +214,27 @@ export class StudioChecksService {
   }
 
   // --- helpers -----------------------------------------------------------------------------------------------
+
+  /** D-282: the studio elements placed in the document that need a right the owner (or a company of theirs) lacks. */
+  private async undeclaredElements(document: unknown, ownerUserId: bigint): Promise<Set<string>> {
+    const elements = (document as { content?: { elements?: unknown } } | null)?.content?.elements;
+    const ids = Array.isArray(elements)
+      ? [
+          ...new Set(
+            (elements as Record<string, unknown>[])
+              .map((e) => e['studioElementId'])
+              .filter((v): v is string => typeof v === 'string' && /^[0-9a-f-]{36}$/.test(v)),
+          ),
+        ]
+      : [];
+    if (ids.length === 0) return new Set();
+    const needing = await this.prisma.studioElement.findMany({
+      where: { publicId: { in: ids }, requiresRight: true },
+      select: { id: true, publicId: true },
+    });
+    const declared = await this.catalog.declaredElementIds(ownerUserId);
+    return new Set(needing.filter((e) => !declared.has(e.id)).map((e) => e.publicId));
+  }
 
   private async version(actor: UserActor, designId: string, versionNo?: number) {
     const doc = await this.prisma.designDocument.findFirst({

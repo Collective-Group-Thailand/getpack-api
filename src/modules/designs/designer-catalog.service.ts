@@ -54,6 +54,14 @@ export interface FontFile {
  * rules, its materials with caliper and flute allowances, the semi-design templates, the fonts and the artwork
  * rules. Public and cacheable: catalogue data only, never prices or factories (D-050).
  */
+/** D-213 / D-284: fonts the studio may use — active, OFL, licensed for print and embedding. */
+const STUDIO_FONT = {
+  status: ACTIVE,
+  licence: 'ofl',
+  printAllowed: true,
+  embeddingAllowed: true,
+} satisfies Prisma.DesignFontWhereInput;
+
 @Injectable()
 export class DesignerCatalogService {
   constructor(
@@ -89,7 +97,7 @@ export class DesignerCatalogService {
         include: TEMPLATE_INCLUDE,
         orderBy: [{ semiDesign: { name: 'asc' } }, { standardSize: { sort: 'asc' } }],
       }),
-      this.prisma.designFont.findMany({ where: { status: ACTIVE }, orderBy: { name: 'asc' } }),
+      this.prisma.designFont.findMany({ where: STUDIO_FONT, orderBy: { name: 'asc' } }),
       this.rules(),
     ]);
     materials.sort((a, b) => materialOrder.indexOf(a.id) - materialOrder.indexOf(b.id));
@@ -168,7 +176,7 @@ export class DesignerCatalogService {
   /** The file of an active design font, once scanned clean; anything else is 404. */
   async font(publicId: string): Promise<FontFile> {
     const font = await this.prisma.designFont.findFirst({
-      where: { publicId, status: ACTIVE },
+      where: { publicId, ...STUDIO_FONT },
       include: { fileObject: true },
     });
     const file = font?.fileObject;

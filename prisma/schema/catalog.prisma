@@ -1465,17 +1465,21 @@ model SemiDesignTemplate {
 }
 
 model DesignFont {
-  id           BigInt        @id(map: "pk_design_fonts") @default(autoincrement())
-  publicId     String        @unique(map: "ux_design_fonts__public_id") @default(dbgenerated("uuidv7()")) @map("public_id") @db.Uuid
-  name         String
-  fileObjectId BigInt        @map("file_object_id")
-  licenceNote  String        @map("licence_note")
-  status       CatalogStatus @default(draft)
-  createdAt    DateTime      @default(now()) @map("created_at") @db.Timestamptz(6)
-  createdById  BigInt?       @map("created_by")
-  updatedAt    DateTime      @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
-  updatedById  BigInt?       @map("updated_by")
-  rowVersion   Int           @default(1) @map("row_version")
+  id               BigInt        @id(map: "pk_design_fonts") @default(autoincrement())
+  publicId         String        @unique(map: "ux_design_fonts__public_id") @default(dbgenerated("uuidv7()")) @map("public_id") @db.Uuid
+  name             String
+  fileObjectId     BigInt        @map("file_object_id")
+  licenceNote      String        @map("licence_note")
+  /// D-284 the licence and what it allows; only `ofl` with print and embedding allowed reaches the studio.
+  licence          FontLicence   @default(unknown)
+  printAllowed     Boolean       @default(false) @map("print_allowed")
+  embeddingAllowed Boolean       @default(false) @map("embedding_allowed")
+  status           CatalogStatus @default(draft)
+  createdAt        DateTime      @default(now()) @map("created_at") @db.Timestamptz(6)
+  createdById      BigInt?       @map("created_by")
+  updatedAt        DateTime      @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+  updatedById      BigInt?       @map("updated_by")
+  rowVersion       Int           @default(1) @map("row_version")
 
   fileObject FileObject               @relation("DesignFontFile", fields: [fileObjectId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_design_fonts__file_object_id")
   templates  SemiDesignTemplateFont[]
@@ -2109,4 +2113,156 @@ enum MeasurementBasis {
   product
 
   @@map("measurement_basis")
+}
+
+// --- Studio brand kits, templates, elements (U4.B5, D-282) --------------------------------------------
+
+/// D-282 a company's brand kit: logos from its brand-asset library, a palette, font pairs, usage notes.
+model BrandKit {
+  id          BigInt        @id(map: "pk_brand_kits") @default(autoincrement())
+  publicId    String        @unique(map: "ux_brand_kits__public_id") @default(dbgenerated("uuidv7()")) @map("public_id") @db.Uuid
+  companyId   BigInt        @map("company_id")
+  name        String
+  /// `[{ name, hex, cmyk? }]` — the brand's colours.
+  palette     Json          @default("[]")
+  /// `[{ heading, body }]` — studio font public ids (D-284: print-licensed fonts only).
+  fontPairs   Json          @default("[]") @map("font_pairs")
+  usageNotes  String?       @map("usage_notes")
+  status      CatalogStatus @default(active)
+  createdById BigInt        @map("created_by")
+  createdAt   DateTime      @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt   DateTime      @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+  rowVersion  Int           @default(1) @map("row_version")
+
+  company   Company        @relation("BrandKitCompany", fields: [companyId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_brand_kits__company_id")
+  createdBy User           @relation("BrandKitCreatedBy", fields: [createdById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_brand_kits__created_by")
+  logos     BrandKitLogo[]
+
+  @@index([companyId], map: "ix_brand_kits__company_id")
+  @@index([createdById], map: "ix_brand_kits__created_by")
+  @@map("brand_kits")
+}
+
+/// A logo of a brand kit: one of the company's brand assets, in a role.
+model BrandKitLogo {
+  kitId        BigInt @map("kit_id")
+  brandAssetId BigInt @map("brand_asset_id")
+  /// `primary`, `secondary` or `mark`.
+  role         String
+  sort         Int    @default(0) @db.SmallInt
+
+  kit        BrandKit          @relation(fields: [kitId], references: [id], onDelete: Cascade, onUpdate: Restrict, map: "fk_brand_kit_logos__kit_id")
+  brandAsset CompanyBrandAsset @relation("BrandKitLogoAsset", fields: [brandAssetId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_brand_kit_logos__brand_asset_id")
+
+  @@id([kitId, brandAssetId], map: "pk_brand_kit_logos")
+  @@index([brandAssetId], map: "ix_brand_kit_logos__brand_asset_id")
+  @@map("brand_kit_logos")
+}
+
+enum StudioCatalogStatus {
+  draft
+  pending_approval
+  published
+  retired
+
+  @@map("studio_catalog_status")
+}
+
+/// D-216 / D-282 Packio's own studio templates: a constraint layout that re-flows to any size of its style families,
+/// tagged by use case; published only after Marketing approves it (not its author).
+model StudioTemplate {
+  id                  BigInt              @id(map: "pk_studio_templates") @default(autoincrement())
+  publicId            String              @unique(map: "ux_studio_templates__public_id") @default(dbgenerated("uuidv7()")) @map("public_id") @db.Uuid
+  code                String              @unique(map: "ux_studio_templates__code")
+  nameTh              String              @map("name_th")
+  nameEn              String              @map("name_en")
+  useCases            String[]            @default([]) @map("use_cases")
+  styleFamilies       String[]            @default([]) @map("style_families")
+  layoutSchemaVersion Int                 @map("layout_schema_version") @db.SmallInt
+  layout              Json
+  thumbnailFileId     BigInt?             @map("thumbnail_file_id")
+  status              StudioCatalogStatus @default(draft)
+  createdById         BigInt              @map("created_by")
+  submittedAt         DateTime?           @map("submitted_at") @db.Timestamptz(6)
+  approvedById        BigInt?             @map("approved_by")
+  approvedAt          DateTime?           @map("approved_at") @db.Timestamptz(6)
+  createdAt           DateTime            @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt           DateTime            @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  thumbnailFile FileObject? @relation("StudioTemplateThumbnail", fields: [thumbnailFileId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_studio_templates__thumbnail_file_id")
+  createdBy     User        @relation("StudioTemplateCreatedBy", fields: [createdById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_studio_templates__created_by")
+  approvedBy    User?       @relation("StudioTemplateApprovedBy", fields: [approvedById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_studio_templates__approved_by")
+
+  @@index([status], map: "ix_studio_templates__status")
+  @@index([thumbnailFileId], map: "ix_studio_templates__thumbnail_file_id")
+  @@index([createdById], map: "ix_studio_templates__created_by")
+  @@index([approvedById], map: "ix_studio_templates__approved_by")
+  @@map("studio_templates")
+}
+
+enum StudioElementKind {
+  shape
+  icon
+  mark
+
+  @@map("studio_element_kind")
+}
+
+/// D-282 Packio's own studio elements; a mark with legal meaning (`requires_right`) is placed only after the company
+/// (or the customer) declares the right to use it.
+model StudioElement {
+  id            BigInt              @id(map: "pk_studio_elements") @default(autoincrement())
+  publicId      String              @unique(map: "ux_studio_elements__public_id") @default(dbgenerated("uuidv7()")) @map("public_id") @db.Uuid
+  code          String              @unique(map: "ux_studio_elements__code")
+  kind          StudioElementKind
+  nameTh        String              @map("name_th")
+  nameEn        String              @map("name_en")
+  /// SVG path data in a 100 × 100 box (our own drawing).
+  path          String
+  tags          String[]            @default([])
+  requiresRight Boolean             @default(false) @map("requires_right")
+  status        StudioCatalogStatus @default(draft)
+  createdById   BigInt              @map("created_by")
+  createdAt     DateTime            @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt     DateTime            @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  createdBy    User                      @relation("StudioElementCreatedBy", fields: [createdById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_studio_elements__created_by")
+  declarations ElementRightDeclaration[]
+
+  @@index([status], map: "ix_studio_elements__status")
+  @@index([createdById], map: "ix_studio_elements__created_by")
+  @@map("studio_elements")
+}
+
+/// D-282 the right to use a mark with legal meaning, declared by a company's admin (or a customer for themselves).
+model ElementRightDeclaration {
+  id           BigInt    @id(map: "pk_element_right_declarations") @default(autoincrement())
+  publicId     String    @unique(map: "ux_element_right_declarations__public_id") @default(dbgenerated("uuidv7()")) @map("public_id") @db.Uuid
+  elementId    BigInt    @map("element_id")
+  companyId    BigInt?   @map("company_id")
+  userId       BigInt?   @map("user_id")
+  statement    String
+  declaredById BigInt    @map("declared_by")
+  declaredAt   DateTime  @default(now()) @map("declared_at") @db.Timestamptz(6)
+  revokedAt    DateTime? @map("revoked_at") @db.Timestamptz(6)
+
+  element    StudioElement @relation(fields: [elementId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_element_right_declarations__element_id")
+  company    Company?      @relation("ElementRightCompany", fields: [companyId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_element_right_declarations__company_id")
+  user       User?         @relation("ElementRightUser", fields: [userId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_element_right_declarations__user_id")
+  declaredBy User          @relation("ElementRightDeclaredBy", fields: [declaredById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_element_right_declarations__declared_by")
+
+  @@index([elementId], map: "ix_element_right_declarations__element_id")
+  @@index([companyId], map: "ix_element_right_declarations__company_id")
+  @@index([userId], map: "ix_element_right_declarations__user_id")
+  @@index([declaredById], map: "ix_element_right_declarations__declared_by")
+  @@map("element_right_declarations")
+}
+
+/// D-284 what a font's licence allows; the studio serves OFL fonts with print and embedding allowed only.
+enum FontLicence {
+  ofl
+  proprietary
+  unknown
+
+  @@map("font_licence")
 }

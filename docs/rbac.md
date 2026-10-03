@@ -52,6 +52,8 @@ Legend: ● granted · ◆ granted and sensitive (cost/margin data, D-141).
 | `styles.approve_names` — Approve the Thai / English names of a style (Marketing: wording, Prepress: technical terms) (D-212) | ● |  |  |  |  |  |  | ● |  |  |  | ● |  |  |  |
 | `styles.verify_reference` — Verify an industry reference code (FEFCO / ECMA) against the edition Packio holds (Prepress) (D-211) | ● |  |  |  |  |  |  | ● |  |  |  |  |  |  |  |
 | `styles.price_rules` — Maintain the option price rules of styles (Prepress with the Pricing owner, D-268) (D-268, D-266) | ● |  |  |  |  |  |  | ● |  |  |  |  |  |  |  |
+| `studio_catalog.manage` — Maintain Packio’s studio templates and elements (D-216, D-282) (D-216, D-282) | ● |  |  |  | ● |  |  | ● |  |  |  | ● |  |  |  |
+| `studio_catalog.approve` — Approve a studio template for publication — Marketing, never its author (D-216, D-282) (D-216, D-282) | ● |  |  |  |  |  |  |  |  |  |  | ● |  |  |  |
 | `structural_requests.manage` — Assign structural design requests, link their service RFQ, decline them (CS, D-273) (D-273) | ● |  |  |  | ● | ● | ● |  |  |  |  |  |  |  |  |
 | `structural_requests.design` — Deliver, approve and publish structural designs (structural designers in Prepress, D-273) (D-273) | ● |  |  |  |  |  |  | ● |  |  |  |  |  |  |  |
 | `styles.process_rules` — Maintain which processes a style needs (style process rules, Prepress) (D-244) | ● |  |  |  |  |  |  | ● |  |  |  |  |  |  |  |

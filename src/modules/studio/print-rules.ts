@@ -58,7 +58,11 @@ type El = Record<string, unknown> & { id?: unknown; type?: unknown };
 export function evaluateDocument(
   document: unknown,
   rules: PrintRule[],
-  ctx: { assetPx: Map<string, { widthPx: number | null; heightPx: number | null }> },
+  ctx: {
+    assetPx: Map<string, { widthPx: number | null; heightPx: number | null }>;
+    /** Studio elements (public ids) needing a right the design's owner has not declared (D-282). */
+    undeclaredElements?: Set<string>;
+  },
 ): Finding[] {
   const content = (document as { content?: { elements?: unknown; pattern?: unknown } } | null)?.content;
   const elements = Array.isArray(content?.elements) ? (content.elements as El[]) : [];
@@ -135,6 +139,19 @@ export function evaluateDocument(
           severity: barcode.severity,
           elementId: id(el),
           details: { problems },
+        });
+    }
+
+  const rights = on('element_right_missing');
+  if (rights && ctx.undeclaredElements?.size)
+    for (const el of elements) {
+      const studioElementId = el['studioElementId'];
+      if (typeof studioElementId === 'string' && ctx.undeclaredElements.has(studioElementId))
+        findings.push({
+          ruleId: rights.id,
+          severity: rights.severity,
+          elementId: id(el),
+          details: { studioElementId },
         });
     }
 

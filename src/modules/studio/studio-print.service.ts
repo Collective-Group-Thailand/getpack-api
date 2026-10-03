@@ -419,10 +419,11 @@ export class StudioPrintService {
     const rules = await this.settings.at('studio.print_rules', { tx });
     const exists = await tx.designCheckRun.findUnique({
       where: {
-        versionId_rulesVersionId_source: {
+        versionId_rulesVersionId_source_contextKey: {
           versionId: job.versionId,
           rulesVersionId: rules.versionId,
           source: 'pdf',
+          contextKey: '',
         },
       },
     });

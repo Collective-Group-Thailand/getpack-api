@@ -610,7 +610,9 @@ export class StoreDesignsController {
     if (!design) throw new DomainException('http.not_found');
     // D-276: the order's pinned version, unless the customer names another design to submit.
     const versionId =
-      !body.designId && order.designDocumentVersionId ? order.designDocumentVersionId : design.currentVersionId;
+      !body.designId && order.designDocumentVersionId
+        ? order.designDocumentVersionId
+        : design.currentVersionId;
     if (!versionId) throw new DomainException('designs.template_without_design');
     const submission = await this.artwork.submit(
       me,

@@ -41,6 +41,7 @@ import { RECEIVABLES_ADMIN_CONTROLLERS } from '@modules/receivables/receivables.
 import { REPORTS_ADMIN_CONTROLLERS } from '@modules/reports/reports.registry';
 import { SAMPLES_ADMIN_CONTROLLERS } from '@modules/samples/samples.registry';
 import { SHIPPING_ADMIN_CONTROLLERS } from '@modules/shipping/shipping.registry';
+import { STUDIO_ADMIN_CONTROLLERS } from '@modules/studio/studio.registry';
 import { STYLES_ADMIN_CONTROLLERS } from '@modules/styles/styles.registry';
 import { TAX_ADMIN_CONTROLLERS } from '@modules/tax/tax.registry';
 import { TIMELINE_ADMIN_CONTROLLERS } from '@modules/timeline/timeline.registry';
@@ -106,6 +107,7 @@ import { SettingsAdminModule } from '@platform/settings/settings-admin.module';
     ...ADVISORY_ADMIN_CONTROLLERS,
     ...SAMPLES_ADMIN_CONTROLLERS,
     ...STYLES_ADMIN_CONTROLLERS,
+    ...STUDIO_ADMIN_CONTROLLERS,
     ...CUSTOMERS_ADMIN_CONTROLLERS,
     ...CARTS_ADMIN_CONTROLLERS,
     ...CHECKOUT_ADMIN_CONTROLLERS,

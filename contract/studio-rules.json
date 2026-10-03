@@ -164,6 +164,17 @@
       "printMethods": null,
       "materialClasses": null,
       "thresholds": null
+    },
+    {
+      "id": "element_right_missing",
+      "severity": "block",
+      "evaluatedOn": [
+        "document",
+        "web"
+      ],
+      "printMethods": null,
+      "materialClasses": null,
+      "thresholds": {}
     }
   ]
 }

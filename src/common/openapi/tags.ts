@@ -61,6 +61,8 @@ export const API_TAGS: Record<string, string> = {
     'Requests for a structure the style library lacks (D-273): designed by Prepress, a fee quoted as a service RFQ when one applies, notified at every step.',
   'store.studio':
     'The 3D studio (U4): price a design version with a spec hash and the reasons a price changed, save its quotation, ask for a quotation of a non-instant type (D-277).',
+  'store.brandKits':
+    'Company brand kits — logos, palette, font pairs, usage notes — managed by the Company Admin, used by every member (D-282, D-227).',
   'store.dielines':
     'Free dieline downloads of published style variants (D-271, D-203): signed-in customers, within the style’s size range, rate-limited and logged.',
   'admin.processTypes': 'The manufacturing process taxonomy (D-244).',
@@ -88,6 +90,10 @@ export const API_TAGS: Record<string, string> = {
     'Dielines offered by factories under the intake terms (D-272): match with a deviation report, approve as a recipe or a fixed template, or reject.',
   'admin.structuralRequests':
     'Structural design requests of customers (D-273): assign, quote through a service RFQ, deliver, approve, link to the published style, decline.',
+  'admin.studioTemplates':
+    'Packio’s own studio templates: drafts, submission, Marketing approval (never the author), retirement (D-216, D-282).',
+  'admin.studioElements':
+    'Packio’s own studio shapes, icons and packaging marks; marks with legal meaning need a declared right (D-282).',
   'admin.dielines':
     'Dieline downloads of any style variant with an approved recipe, for staff (D-271, D-270).',
   'admin.stylePriceRules':
