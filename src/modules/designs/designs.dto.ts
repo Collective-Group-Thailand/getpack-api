@@ -36,6 +36,57 @@ export const MAX_IMPORT_DESIGNS = 20;
 /** Versions one page of the history returns at most. */
 export const MAX_VERSION_PAGE = 100;
 export const DRAWING_FORMATS = ['svg', 'dxf', 'pdf'] as const;
+export const PRINT_METHODS = ['digital', 'offset', 'flexo', 'none'] as const;
+export const PRINT_SIDES = ['outside', 'inside', 'both', 'none'] as const;
+export const JSON_PATCH_OPS = ['add', 'remove', 'replace', 'move', 'copy', 'test'] as const;
+/** Operations one autosave takes (technical bound; the patch is also ≤ 256 KiB, D-276). */
+export const MAX_PATCH_OPERATIONS = 2000;
+const STYLE_VARIANT_CODE = /^PK-[A-Z0-9]{2,8}-[0-9]{2,3}-[A-Z2-7]{4,8}$/;
+
+function StyleVariantCodeField() {
+  return applyDecorators(
+    ApiPropertyOptional({
+      example: 'PK-TE-01-K7QD',
+      pattern: STYLE_VARIANT_CODE.source,
+      description: 'D-275 the style-library variant the box is (its base must be the design’s pattern)',
+    }),
+    IsOptional(),
+    IsString(),
+    Matches(STYLE_VARIANT_CODE),
+  );
+}
+
+function FinishesField() {
+  return applyDecorators(
+    ApiPropertyOptional({
+      type: [String],
+      example: ['dev-matt'],
+      description: 'D-275 finish codes (`store.catalog` finishes); replaces the list',
+    }),
+    IsOptional(),
+    IsString({ each: true }),
+    ArrayMaxSize(20),
+    Matches(/^[a-z0-9][a-z0-9_-]{0,63}$/, { each: true }),
+  );
+}
+
+function SpecField() {
+  return applyDecorators(
+    ApiPropertyOptional({
+      type: 'object',
+      additionalProperties: true,
+      example: {
+        patternId: '0192f3a0-7c1e-7d2a-9b1f-00000000d001',
+        materialId: '0192f3a0-7c1e-7d2a-9b1f-00000000d002',
+      },
+      description:
+        'D-275 the calculator configuration the configurator built (no quantities), priced by the studio quote; ' +
+        'absent = the previous version’s',
+    }),
+    IsOptional(),
+    IsObject(),
+  );
+}
 export const DRAWING_STATUSES = ['queued', 'running', 'succeeded', 'failed', 'engine_unavailable'] as const;
 
 export const DESIGN_IDS = {
@@ -132,6 +183,29 @@ export class CreateDesignDto {
   @IsOptional()
   @IsObject()
   document?: Record<string, unknown>;
+
+  @StyleVariantCodeField()
+  styleVariantCode?: string;
+
+  @EnumField(PRINT_METHODS, 'PrintMethod', {
+    example: 'digital',
+    optional: true,
+    description: 'D-275 how it is printed',
+  })
+  printMethod?: (typeof PRINT_METHODS)[number];
+
+  @EnumField(PRINT_SIDES, 'PrintSides', {
+    example: 'outside',
+    optional: true,
+    description: 'D-275 which sides carry print',
+  })
+  printSides?: (typeof PRINT_SIDES)[number];
+
+  @FinishesField()
+  finishes?: string[];
+
+  @SpecField()
+  spec?: Record<string, unknown>;
 }
 
 export class SaveDesignDto {
@@ -208,6 +282,105 @@ export class SaveDesignDto {
     description: 'Basis of the sizes (D-182). Absent: internal (assumed, deprecated)',
   })
   measurementBasis?: (typeof MEASUREMENT_BASES)[number];
+
+  @StyleVariantCodeField()
+  styleVariantCode?: string;
+
+  @EnumField(PRINT_METHODS, 'PrintMethod', {
+    example: 'digital',
+    optional: true,
+    description: 'D-275 how it is printed',
+  })
+  printMethod?: (typeof PRINT_METHODS)[number];
+
+  @EnumField(PRINT_SIDES, 'PrintSides', {
+    example: 'outside',
+    optional: true,
+    description: 'D-275 which sides carry print',
+  })
+  printSides?: (typeof PRINT_SIDES)[number];
+
+  @FinishesField()
+  finishes?: string[];
+
+  @SpecField()
+  spec?: Record<string, unknown>;
+}
+
+export class JsonPatchOperationDto {
+  @ApiProperty({ enum: JSON_PATCH_OPS, enumName: 'JsonPatchOp', example: 'replace' })
+  @IsIn(JSON_PATCH_OPS)
+  op!: (typeof JSON_PATCH_OPS)[number];
+
+  @ApiProperty({ example: '/faces/front/objects/0/text', description: 'JSON Pointer (RFC 6901)' })
+  @IsString()
+  @MaxLength(1000)
+  path!: string;
+
+  @ApiPropertyOptional({ example: '/faces/front/objects/1', description: 'For move / copy (JSON Pointer)' })
+  @IsOptional()
+  @IsString()
+  @MaxLength(1000)
+  from?: string;
+
+  @ApiPropertyOptional({
+    nullable: true,
+    oneOf: [
+      { type: 'string' },
+      { type: 'number' },
+      { type: 'boolean' },
+      { type: 'object', additionalProperties: true },
+      { type: 'array', items: {} },
+    ],
+    example: 'กาแฟคั่วเข้ม',
+    description: 'For add / replace / test: any JSON value',
+  })
+  @IsOptional()
+  value?: unknown;
+}
+
+export class PatchDesignDocumentDto {
+  @ApiProperty({
+    type: [JsonPatchOperationDto],
+    description: `JSON Patch (RFC 6902) on the current version's document, applied in order, all or nothing; ≤ ${MAX_PATCH_OPERATIONS} operations, ≤ 256 KiB`,
+  })
+  @ValidateNested({ each: true })
+  @Type(() => JsonPatchOperationDto)
+  @ArrayMinSize(1)
+  @ArrayMaxSize(MAX_PATCH_OPERATIONS)
+  operations!: JsonPatchOperationDto[];
+
+  @ApiPropertyOptional({
+    type: 'integer',
+    example: 1,
+    minimum: 1,
+    description: 'Absent: the current version’s',
+  })
+  @IsOptional()
+  @Type(() => Number)
+  @IsInt()
+  @Min(1)
+  schemaVersion?: number;
+
+  @ApiPropertyOptional({
+    enum: DESIGN_SAVE_KINDS,
+    enumName: 'DesignSaveKind',
+    default: 'autosave',
+    example: 'autosave',
+  })
+  @IsOptional()
+  @IsIn(DESIGN_SAVE_KINDS)
+  kind?: (typeof DESIGN_SAVE_KINDS)[number];
+
+  @ApiPropertyOptional({ example: 'ก่อนเปลี่ยนสีพื้น', maxLength: 100 })
+  @IsOptional()
+  @IsString()
+  @MinLength(1)
+  @MaxLength(100)
+  label?: string;
+
+  @SpecField()
+  spec?: Record<string, unknown>;
 }
 
 export class DesignListQuery extends PageQuery {
@@ -529,6 +702,20 @@ export class DesignShareStateDto {
   expiresAt!: string;
 }
 
+export class DesignLockDto {
+  @ApiProperty({ type: 'integer', example: 3 })
+  versionNo!: number;
+
+  @ApiProperty({ format: 'uuid', example: '0192f3a0-7c1e-7d2a-9b1f-00000000a301' })
+  orderId!: string;
+
+  @ApiProperty({ example: 'PK-2610-0001-01' })
+  orderCode!: string;
+
+  @ApiProperty({ format: 'date-time', example: '2026-10-03T10:00:00+07:00' })
+  lockedAt!: string;
+}
+
 export class DesignDocumentDto {
   @ApiProperty({ format: 'uuid', example: DESIGN_IDS.design })
   id!: string;
@@ -606,6 +793,34 @@ export class DesignDocumentDto {
   @ApiProperty({ type: DesignShareStateDto, nullable: true, description: 'The live view-only link (D-226)' })
   share!: DesignShareStateDto | null;
 
+  @ApiProperty({ type: String, nullable: true, example: 'PK-TE-01-K7QD' })
+  styleVariantCode!: string | null;
+
+  @ApiProperty({ enum: PRINT_METHODS, enumName: 'PrintMethod', nullable: true, example: 'digital' })
+  printMethod!: string | null;
+
+  @ApiProperty({ enum: PRINT_SIDES, enumName: 'PrintSides', nullable: true, example: 'outside' })
+  printSides!: string | null;
+
+  @ApiProperty({ type: [String], example: ['dev-matt'] })
+  finishes!: string[];
+
+  @ApiProperty({
+    type: 'object',
+    additionalProperties: true,
+    nullable: true,
+    example: null,
+    description: 'D-275 the current version’s calculator spec (null in lists)',
+  })
+  spec!: Record<string, unknown> | null;
+
+  @ApiProperty({
+    type: DesignLockDto,
+    nullable: true,
+    description: 'D-276 the version the latest order locked; editing always makes a new version',
+  })
+  lock!: DesignLockDto | null;
+
   @ApiProperty({ example: '2026-09-20T10:00:00+07:00' })
   createdAt!: string;
 
@@ -669,6 +884,25 @@ export class DesignVersionDto {
 
   @ApiProperty({ type: String, nullable: true, example: null, description: 'Signed URL (5 minutes)' })
   thumbnailUrl!: string | null;
+
+  @ApiProperty({
+    type: 'object',
+    additionalProperties: true,
+    nullable: true,
+    example: null,
+    description:
+      'D-275 the box at this version (style variant, sizes + basis, material, print method / sides, finishes)',
+  })
+  box!: Record<string, unknown> | null;
+
+  @ApiProperty({
+    type: 'object',
+    additionalProperties: true,
+    nullable: true,
+    example: null,
+    description: 'D-275 the calculator spec at this version (only when one version is read)',
+  })
+  spec!: Record<string, unknown> | null;
 
   @ApiProperty({ example: '2026-09-27T10:00:00+07:00' })
   createdAt!: string;
@@ -828,6 +1062,17 @@ export const DESIGN_EXAMPLE: DesignDocumentDto = {
   thumbnailUrl: null,
   orders: [{ orderId: DESIGN_IDS.order, orderCode: 'PK-2610-0001-01' }],
   share: null,
+  styleVariantCode: 'PK-TE-01-K7QD',
+  printMethod: 'digital',
+  printSides: 'outside',
+  finishes: ['dev-matt'],
+  spec: null,
+  lock: {
+    versionNo: 3,
+    orderId: DESIGN_IDS.order,
+    orderCode: 'PK-2610-0001-01',
+    lockedAt: '2026-09-27T11:00:00+07:00',
+  },
   createdAt: '2026-09-20T10:00:00+07:00',
   updatedAt: '2026-09-27T10:00:00+07:00',
 };

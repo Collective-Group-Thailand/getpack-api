@@ -26,6 +26,7 @@ import {
   FileDto,
   PresignedUploadDto,
   PresignFileDto,
+  ResumedUploadDto,
 } from './files.dto';
 import { FilesService } from './files.service';
 
@@ -153,6 +154,45 @@ function filesController(surface: ZoneSurface): Type<unknown> {
       @Body() body: CompleteUploadDto,
     ): Promise<FileDto> {
       return this.toDto(await this.files.complete(actor, id, body.parts));
+    }
+
+    @Post(':fileId/actions/resume')
+    @HttpCode(200)
+    @ApiEndpoint({
+      id: `${surface}.files.resume`,
+      summary: 'Resume a large upload',
+      description:
+        'For an unfinished multipart upload of mine: the parts already stored (their ETags go to `complete`) and ' +
+        'fresh signed URLs for every part, so only the missing parts are sent again (U4.B1, ADR-0003).',
+      implements: ['ADR-0003'],
+    })
+    @ApiSuccess(200, {
+      description: 'Upload state',
+      type: ResumedUploadDto,
+      example: {
+        fileId: FILE_EXAMPLE.id,
+        partSize: 8_388_608,
+        uploaded: [{ partNumber: 1, etag: '"etag-1"', sizeBytes: 8_388_608 }],
+        parts: [
+          { partNumber: 1, url: 'https://packio-files.s3.example.com/…&partNumber=1' },
+          { partNumber: 2, url: 'https://packio-files.s3.example.com/…&partNumber=2' },
+        ],
+        expiresAt: '2026-09-23T14:20:00+07:00',
+      },
+    })
+    @ApiStandardErrors('http.not_found', 'http.conflict', 'validation.failed', 'file.not_multipart')
+    async resume(
+      @CurrentActor() actor: Actor,
+      @Param('fileId', ParseUUIDPipe) id: string,
+    ): Promise<ResumedUploadDto> {
+      const r = await this.files.resume(actor, id);
+      return {
+        fileId: r.file.publicId,
+        partSize: r.partSize,
+        uploaded: r.uploaded,
+        parts: r.parts,
+        expiresAt: toBangkokIso(r.expiresAt),
+      };
     }
 
     @Post(':fileId/actions/abort')

@@ -160,6 +160,46 @@ export class FilesService {
     };
   }
 
+  /**
+   * Resumes an open multipart upload of mine (U4.B1): the parts already stored (with their ETags for `complete`) and
+   * fresh signed URLs for every part, so the client re-sends only what is missing.
+   */
+  async resume(
+    actor: Actor,
+    publicId: string,
+  ): Promise<{
+    file: FileObject;
+    partSize: number;
+    uploaded: { partNumber: number; etag: string; sizeBytes: number }[];
+    parts: { partNumber: number; url: string }[];
+    expiresAt: Date;
+  }> {
+    const file = await this.ownPending(actor, publicId);
+    if (!file.multipartUploadId) throw new DomainException('file.not_multipart');
+    const size = Number(file.sizeBytes);
+    const partSize = Math.max(MIN_PART_SIZE, Math.ceil(size / MAX_PARTS));
+    const partCount = Math.ceil(size / partSize);
+    const uploaded = await this.storage.listParts(file.storageKey, file.multipartUploadId);
+    const parts = await Promise.all(
+      Array.from({ length: partCount }, async (_, i) => ({
+        partNumber: i + 1,
+        url: await this.storage.presignPart(
+          file.storageKey,
+          file.multipartUploadId!,
+          i + 1,
+          UPLOAD_URL_TTL_SECONDS * 4,
+        ),
+      })),
+    );
+    return {
+      file,
+      partSize,
+      uploaded,
+      parts,
+      expiresAt: new Date(Date.now() + UPLOAD_URL_TTL_SECONDS * 4000),
+    };
+  }
+
   /** The client finished the PUT(s): check the stored object and queue scanning. */
   async complete(
     actor: Actor,

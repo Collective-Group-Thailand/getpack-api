@@ -25,6 +25,7 @@ export function cartItemDto(item: CartItemRow, now = new Date()): CartItemDto {
     designOption: item.designOption,
     designNote: item.designNote,
     designDocumentId: item.designDocument?.publicId ?? null,
+    designVersionNo: item.designDocumentVersion?.versionNo ?? null,
     mockupOption: item.mockupOption,
     reorderOf: item.reorderOfOrder
       ? { orderId: item.reorderOfOrder.publicId, orderCode: item.reorderOfOrder.orderCode }

@@ -8,17 +8,26 @@ import { DomainException } from '../errors/domain.exception';
 export type RawBodyRequest = IncomingMessage & { rawBody?: Buffer };
 
 /**
+ * Routes whose bodies may be larger than the default: a design document is up to 2 MiB of JSON (D-276), so its saves
+ * need room for the document plus the request around it. Technical bounds, not business values.
+ */
+export const LARGE_BODY_ROUTES: readonly { pattern: RegExp; limit: string }[] = [
+  { pattern: /^\/v1\/(store|admin)\/designs(\/|\?|$)/, limit: '3mb' },
+];
+
+/**
  * JSON body parser registered before Nest's own (body-parser skips already-parsed requests), so that
  * parse failures become stable problem codes instead of Nest's generic 400 with the parser message.
  */
 export function jsonBodyParser(options: { limit?: string } = {}): RequestHandler {
-  const parse = json({
-    limit: options.limit ?? '1mb',
-    verify: (req: RawBodyRequest, _res, buf) => {
-      if (req.url?.startsWith('/webhooks/')) req.rawBody = Buffer.from(buf);
-    },
-  });
+  const verify = (req: RawBodyRequest, _res: unknown, buf: Buffer) => {
+    if (req.url?.startsWith('/webhooks/')) req.rawBody = Buffer.from(buf);
+  };
+  const standard = json({ limit: options.limit ?? '1mb', verify });
+  const large = new Map(LARGE_BODY_ROUTES.map((r) => [r, json({ limit: r.limit, verify })]));
   return (req, res, next) => {
+    const route = LARGE_BODY_ROUTES.find((r) => r.pattern.test(req.url ?? ''));
+    const parse = route ? large.get(route)! : standard;
     parse(req, res, (error?: unknown) => {
       if (!error) return next();
       const type = (error as { type?: unknown }).type;

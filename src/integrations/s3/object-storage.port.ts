@@ -32,6 +32,11 @@ export interface ObjectStorage {
     parts: { partNumber: number; etag: string }[],
   ): Promise<void>;
   abortMultipart(key: string, uploadId: string): Promise<void>;
+  /** Parts already stored of an open multipart upload (resume, U4.B1). */
+  listParts(
+    key: string,
+    uploadId: string,
+  ): Promise<{ partNumber: number; etag: string; sizeBytes: number }[]>;
   head(key: string): Promise<StoredObjectInfo | null>;
   getStream(key: string): Promise<Readable>;
   put(key: string, body: Buffer, contentType: string): Promise<void>;

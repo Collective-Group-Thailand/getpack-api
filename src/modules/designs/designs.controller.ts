@@ -28,6 +28,7 @@ import {
   Param,
   ParseIntPipe,
   ParseUUIDPipe,
+  Patch,
   Post,
   Put,
   Query,
@@ -55,6 +56,7 @@ import {
   ImportDesignsDto,
   ImportDesignsResultDto,
   OrderDrawingDto,
+  PatchDesignDocumentDto,
   RequestDrawingDto,
   SaveDesignDto,
   SetTemplateDesignDto,
@@ -83,6 +85,18 @@ const VERSION_EXAMPLE: DesignVersionDto = {
   kind: 'manual',
   label: 'ก่อนเปลี่ยนสีพื้น',
   thumbnailFileId: null,
+  box: {
+    styleVariantCode: 'PK-TE-01-K7QD',
+    lengthMm: 100,
+    widthMm: 60,
+    heightMm: 40,
+    measurementBasis: 'internal',
+    materialId: null,
+    printMethod: 'digital',
+    printSides: 'outside',
+    finishes: ['dev-matt'],
+  },
+  spec: null,
   thumbnailUrl: null,
   createdAt: '2026-09-27T10:00:00+07:00',
 };
@@ -197,8 +211,9 @@ export class StoreDesignsController {
     description:
       'Versions are immutable; `If-Match` is required — a stale ETag is refused with 412. `kind` tells the ' +
       'editor’s autosaves from the customer’s saves (the history can hide autosaves) and `label` names the version; ' +
-      'the box style, material and size can change with the save.',
-    implements: DECISIONS,
+      'the box style, material and size can change with the save, and the studio box — style variant, print method ' +
+      'and sides, finishes — and the calculator spec (D-275). Every version keeps its box and spec.',
+    implements: [...DECISIONS, 'D-275', 'D-276'],
   })
   @ApiConcurrency()
   @ApiBody({ type: SaveDesignDto, examples: { default: { value: SAVE_EXAMPLE } } })
@@ -220,6 +235,55 @@ export class StoreDesignsController {
   ) {
     const me = customer(actor);
     const row = await this.designs.save(me, id, ifMatch, body, me.userId);
+    res.setHeader('ETag', designEtag(row));
+    return this.designs.view(row);
+  }
+
+  @Patch('designs/:designId/document')
+  @designParam
+  @ApiEndpoint({
+    id: 'store.designs.patchDocument',
+    summary: 'Autosave changes to my design',
+    description:
+      'A JSON Patch (RFC 6902) on the current version’s document — small and frequent, applied all or nothing as a ' +
+      'new version (`kind` autosave by default). `If-Match` is required; a stale ETag is refused with 412 and the ' +
+      'studio reloads. ≤ 256 KiB of operations, the document ≤ 2 MiB (D-276).',
+    implements: [...DECISIONS, 'D-276'],
+  })
+  @ApiConcurrency()
+  @ApiBody({
+    type: PatchDesignDocumentDto,
+    examples: {
+      default: {
+        value: {
+          operations: [
+            { op: 'test', path: '/version', value: 1 },
+            { op: 'replace', path: '/faces/front/objects/0/text', value: 'กาแฟคั่วเข้ม' },
+          ],
+        },
+      },
+    },
+  })
+  @ApiSuccess(200, { description: 'Saved', type: DesignDocumentDto, example: DESIGN_EXAMPLE })
+  @ApiStandardErrors(
+    'http.bad_request',
+    'http.malformed_json',
+    'http.not_found',
+    'validation.failed',
+    'designs.patch_failed',
+    'designs.patch_too_large',
+    'designs.nothing_to_patch',
+    'designs.document_too_large',
+  )
+  async patchDocument(
+    @CurrentActor() actor: Actor,
+    @Param('designId', ParseUUIDPipe) id: string,
+    @IfMatch() ifMatch: string | undefined,
+    @Body() body: PatchDesignDocumentDto,
+    @Res({ passthrough: true }) res: Response,
+  ) {
+    const me = customer(actor);
+    const row = await this.designs.patch(me, id, ifMatch, body, me.userId);
     res.setHeader('ETag', designEtag(row));
     return this.designs.view(row);
   }
@@ -504,9 +568,10 @@ export class StoreDesignsController {
     id: 'store.designs.submitForOrder',
     summary: 'Submit my online design as the order’s artwork',
     description:
-      'The current version of the design (default: the one the order was placed with) becomes an artwork version ' +
-      '(source `designer`); Prepress exports it for the proof (D-070).',
-    implements: ['D-070'],
+      'A version of the design becomes an artwork version (source `designer`); Prepress exports it for the proof ' +
+      '(D-070). Without `designId`: the version the order was placed with (D-276), else its design’s current one; ' +
+      'with `designId`: that design’s current version.',
+    implements: ['D-070', 'D-276'],
   })
   @ApiBody({ type: SubmitFromDesignDto, examples: { default: { value: { designId: DESIGN_IDS.design } } } })
   @ApiSuccess(201, {
@@ -543,7 +608,10 @@ export class StoreDesignsController {
         ? await this.prisma.designDocument.findUnique({ where: { id: order.designDocumentId } })
         : null;
     if (!design) throw new DomainException('http.not_found');
-    if (!design.currentVersionId) throw new DomainException('designs.template_without_design');
+    // D-276: the order's pinned version, unless the customer names another design to submit.
+    const versionId =
+      !body.designId && order.designDocumentVersionId ? order.designDocumentVersionId : design.currentVersionId;
+    if (!versionId) throw new DomainException('designs.template_without_design');
     const submission = await this.artwork.submit(
       me,
       orderId,
@@ -552,7 +620,7 @@ export class StoreDesignsController {
         customerUserId: me.userId,
         channel: 'web',
         source: 'designer',
-        designDocumentVersionId: design.currentVersionId,
+        designDocumentVersionId: versionId,
       },
     );
     return submissionDto(submission);

@@ -57,6 +57,8 @@ export interface PricingItem {
   mockupOption: string;
   reorderOfOrderId: bigint | null;
   designDocumentId: bigint | null;
+  /** D-276 the design version pinned on the cart item (absent when re-pricing an existing order). */
+  designDocumentVersionId?: bigint | null;
   reuseArtworkProofId: bigint | null;
 }
 
@@ -226,6 +228,7 @@ export class CheckoutService {
               quoteOptionId: o.quoteOptionId,
               reorderOfOrderId: o.reorderOfOrderId,
               designDocumentId: o.designDocumentId,
+              designDocumentVersionId: o.designDocumentVersionId,
               reuseArtworkProofId: o.reuseArtworkProofId,
               artworkStatus: 'awaiting_template',
               designOption: o.designOption as DesignOption,
@@ -409,6 +412,7 @@ export class CheckoutService {
       mockupOption: item.mockupOption,
       reorderOfOrderId: item.reorderOfOrderId,
       designDocumentId: item.designDocumentId,
+      designDocumentVersionId: item.designDocumentVersionId ?? null,
       reuseArtworkProofId: item.reuseArtworkProofId,
       leadTimeDays: option.leadTimeDays,
       earliestShipDate: option.earliestShipDate,

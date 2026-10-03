@@ -9,7 +9,16 @@ import {
 import { LINE_SUMMARY_EXAMPLE, LineSummaryDto } from '@modules/quotes/line-summary.dto';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { Type } from 'class-transformer';
-import { ArrayMaxSize, ArrayMinSize, IsArray, IsOptional, IsUUID, ValidateNested } from 'class-validator';
+import {
+  ArrayMaxSize,
+  ArrayMinSize,
+  IsArray,
+  IsInt,
+  IsOptional,
+  IsUUID,
+  Min,
+  ValidateNested,
+} from 'class-validator';
 
 /** Carts (schema-design §3.6, B3.1): price-locked quote options with destinations (D-051, D-072). */
 
@@ -65,6 +74,19 @@ export class AddCartItemDto {
   @IsUUID()
   designDocumentId?: string | null;
 
+  @ApiPropertyOptional({
+    type: 'integer',
+    minimum: 1,
+    example: 3,
+    description:
+      'D-276 the design version to order; absent: the current version (pinned now, never changed by later edits)',
+  })
+  @IsOptional()
+  @Type(() => Number)
+  @IsInt()
+  @Min(1)
+  designVersionNo?: number;
+
   @EnumField(MOCKUP_OPTIONS, 'MockupOption', {
     example: 'none',
     optional: true,
@@ -103,6 +125,19 @@ export class UpdateCartItemDto {
   @IsOptional()
   @IsUUID()
   designDocumentId?: string | null;
+
+  @ApiPropertyOptional({
+    type: 'integer',
+    minimum: 1,
+    example: 3,
+    description:
+      'D-276 the design version to order; absent: the current version (pinned now, never changed by later edits)',
+  })
+  @IsOptional()
+  @Type(() => Number)
+  @IsInt()
+  @Min(1)
+  designVersionNo?: number;
 
   @EnumField(MOCKUP_OPTIONS, 'MockupOption', { example: 'none', optional: true })
   mockupOption?: (typeof MOCKUP_OPTIONS)[number];
@@ -263,6 +298,14 @@ export class CartItemDto {
   })
   designDocumentId!: string | null;
 
+  @ApiProperty({
+    type: 'integer',
+    nullable: true,
+    example: null,
+    description: 'D-276 the design version this item orders (pinned; later edits make new versions)',
+  })
+  designVersionNo!: number | null;
+
   @ApiProperty({ enum: MOCKUP_OPTIONS, enumName: 'MockupOption', example: 'none' })
   mockupOption!: string;
 
@@ -371,6 +414,7 @@ export const CART_ITEM_EXAMPLE: CartItemDto = {
   designOption: 'own_file',
   designNote: null,
   designDocumentId: null,
+  designVersionNo: null,
   mockupOption: 'none',
   reorderOf: null,
   reusesApprovedArtwork: false,

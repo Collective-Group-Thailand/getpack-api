@@ -448,6 +448,26 @@ model DesignRound {
 
 // --- Designs & drawings ------------------------------------------------------------------------------
 
+/// D-275 how a studio design is printed (configures the editor).
+enum PrintMethod {
+  digital
+  offset
+  flexo
+  none
+
+  @@map("print_method")
+}
+
+/// D-275 which sides of the blank carry print.
+enum PrintSides {
+  outside
+  inside
+  both
+  none
+
+  @@map("print_sides")
+}
+
 model DesignDocument {
   id                   BigInt           @id(map: "pk_design_documents") @default(autoincrement())
   publicId             String           @unique(map: "ux_design_documents__public_id") @default(dbgenerated("uuidv7()")) @map("public_id") @db.Uuid
@@ -471,6 +491,15 @@ model DesignDocument {
   shareExpiresAt       DateTime?        @map("share_expires_at") @db.Timestamptz(6)
   /// The browser-side id of a guest design imported after sign-in; a replay of the same id is a no-op.
   importLocalId        String?          @map("import_local_id")
+  /// D-275 the studio box: style variant, print method, print sides, finishes (finish codes).
+  styleVariantId       BigInt?          @map("style_variant_id")
+  printMethod          PrintMethod?     @map("print_method")
+  printSides           PrintSides?      @map("print_sides")
+  finishes             String[]         @default([])
+  /// D-276 the version the latest order locked, and that order.
+  lockedVersionId      BigInt?          @map("locked_version_id")
+  lockedByOrderId      BigInt?          @map("locked_by_order_id")
+  lockedAt             DateTime?        @map("locked_at") @db.Timestamptz(6)
   deletedAt            DateTime?        @map("deleted_at") @db.Timestamptz(6)
   createdAt            DateTime         @default(now()) @map("created_at") @db.Timestamptz(6)
   updatedAt            DateTime         @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
@@ -489,6 +518,9 @@ model DesignDocument {
   drawingJobs        DrawingJob[]            @relation("DrawingJobDesignDocument")
   cartItems          CartItem[]              @relation("CartItemDesignDocument")
   orders             Order[]                 @relation("OrderDesignDocument")
+  styleVariant       StyleVariant?           @relation("DesignDocumentStyleVariant", fields: [styleVariantId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_design_documents__style_variant_id")
+  lockedVersion      DesignDocumentVersion?  @relation("DesignDocumentLockedVersion", fields: [lockedVersionId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_design_documents__locked_version_id")
+  lockedByOrder      Order?                  @relation("DesignDocumentLockedByOrder", fields: [lockedByOrderId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_design_documents__locked_by_order_id")
 
   @@unique([ownerUserId, importLocalId], map: "ux_design_documents__owner__import_local_id", where: raw("(import_local_id IS NOT NULL)"))
   @@index([ownerUserId, updatedAt(sort: Desc)], map: "ix_design_documents__owner_user_id__updated_at")
@@ -498,6 +530,9 @@ model DesignDocument {
   @@index([materialId], map: "ix_design_documents__material_id")
   @@index([semiDesignTemplateId], map: "ix_design_documents__semi_design_template_id")
   @@index([thumbnailFileId], map: "ix_design_documents__thumbnail_file_id")
+  @@index([styleVariantId], map: "ix_design_documents__style_variant_id")
+  @@index([lockedVersionId], map: "ix_design_documents__locked_version_id")
+  @@index([lockedByOrderId], map: "ix_design_documents__locked_by_order_id")
   @@map("design_documents")
 }
 
@@ -513,6 +548,10 @@ model DesignDocumentVersion {
   kind            DesignVersionKind @default(manual)
   label           String?
   thumbnailFileId BigInt?           @map("thumbnail_file_id")
+  /// D-275 the box as it was at this version (style variant code, sizes + basis, material, print method / sides, finishes).
+  box             Json?
+  /// D-275 the calculator configuration the configurator built (no quantities), priced by the studio quote (D-277).
+  spec            Json?
   createdAt       DateTime          @default(now()) @map("created_at") @db.Timestamptz(6)
   createdById     BigInt?           @map("created_by")
 
@@ -522,6 +561,9 @@ model DesignDocumentVersion {
   createdBy           User?                @relation("DesignDocumentVersionCreatedBy", fields: [createdById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_design_document_versions__created_by")
   submissions         ArtworkSubmission[]  @relation("ArtworkSubmissionDesignVersion")
   semiDesignTemplates SemiDesignTemplate[] @relation("SemiDesignTemplateDesignVersion")
+  lockedOf            DesignDocument[]     @relation("DesignDocumentLockedVersion")
+  cartItems           CartItem[]           @relation("CartItemDesignVersion")
+  orders              Order[]              @relation("OrderDesignVersion")
 
   @@unique([documentId, versionNo], map: "ux_design_document_versions__document_id__version_no")
   @@index([createdById], map: "ix_design_document_versions__created_by")

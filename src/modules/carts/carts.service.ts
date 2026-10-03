@@ -24,6 +24,7 @@ export const CART_INCLUDE = {
       pendingQuoteOption: true,
       destinations: { orderBy: [{ sort: 'asc' }, { id: 'asc' }], include: { customerAddress: true } },
       designDocument: { select: { publicId: true } },
+      designDocumentVersion: { select: { versionNo: true } },
       reorderOfOrder: { select: { publicId: true, orderCode: true } },
     },
   },
@@ -130,11 +131,12 @@ export class CartsService {
         throw new DomainException('cart.item_exists');
       const option = await tx.quoteOption.findUniqueOrThrow({ where: { id: snapshot.quoteOptionId } });
       this.checkDesignOption(body.designOption, option.result);
-      const designDocumentId = await this.designDocument(
+      const design = await this.designDocument(
         tx,
         who,
         body.designDocumentId ?? null,
         body.designOption,
+        body.designVersionNo,
       );
       const item = await tx.cartItem.create({
         data: {
@@ -144,7 +146,8 @@ export class CartsService {
           quantity: snapshot.quantity,
           designOption: body.designOption,
           designNote: body.designNote ?? null,
-          designDocumentId,
+          designDocumentId: design?.documentId ?? null,
+          designDocumentVersionId: design?.versionId ?? null,
           mockupOption: body.mockupOption ?? 'none',
           netAmount: snapshot.netAmount,
           vatAmount: snapshot.vatAmount,
@@ -187,15 +190,25 @@ export class CartsService {
       const { cart, item } = await this.item(tx, who, itemId);
       assertIfMatch(ifMatch, cartEtag(cart));
       if (body.designOption) this.checkDesignOption(body.designOption, item.quoteOption.result);
-      const designDocumentId =
+      // D-276: naming a design (or a version of it) pins a version; a new design option keeps the pinned one.
+      const design =
         body.designDocumentId !== undefined
-          ? await this.designDocument(tx, who, body.designDocumentId, body.designOption ?? item.designOption)
+          ? await this.designDocument(
+              tx,
+              who,
+              body.designDocumentId,
+              body.designOption ?? item.designOption,
+              body.designVersionNo,
+            )
           : undefined;
       await tx.cartItem.update({
         where: { id: item.id },
         data: {
           ...(body.designOption !== undefined && { designOption: body.designOption }),
-          ...(designDocumentId !== undefined && { designDocumentId }),
+          ...(design !== undefined && {
+            designDocumentId: design?.documentId ?? null,
+            designDocumentVersionId: design?.versionId ?? null,
+          }),
           ...(body.designNote !== undefined && { designNote: body.designNote }),
           ...(body.mockupOption !== undefined && { mockupOption: body.mockupOption }),
           rowVersion: { increment: 1 },
@@ -338,13 +351,17 @@ export class CartsService {
   }
 
   /** `hired_design` only on a quotation priced with the design fee; `free_design` needs a promotion (B3.3). */
-  /** The customer's own online design (B4.1), only with `designOption = online_designer`. */
+  /**
+   * The customer's own online design (B4.1), only with `designOption = online_designer`, and the version the item
+   * orders (D-276): the one named, else the current one — a design without a saved version cannot be ordered.
+   */
   private async designDocument(
     tx: Tx,
     who: CartActor,
     publicId: string | null,
     designOption: string,
-  ): Promise<bigint | null> {
+    versionNo?: number,
+  ): Promise<{ documentId: bigint; versionId: bigint } | null> {
     if (publicId === null) return null;
     const doc = await tx.designDocument.findFirst({
       where: { publicId, ownerUserId: who.customerUserId, deletedAt: null },
@@ -360,7 +377,18 @@ export class CartsService {
           },
         ],
       });
-    return doc.id;
+    const version =
+      versionNo !== undefined
+        ? await tx.designDocumentVersion.findUnique({
+            where: { documentId_versionNo: { documentId: doc.id, versionNo } },
+            select: { id: true },
+          })
+        : doc.currentVersionId !== null
+          ? { id: doc.currentVersionId }
+          : null;
+    if (versionNo !== undefined && !version) throw new DomainException('http.not_found');
+    if (!version) throw new DomainException('designs.version_required');
+    return { documentId: doc.id, versionId: version.id };
   }
 
   private checkDesignOption(option: string, result: Prisma.JsonValue) {

@@ -279,6 +279,10 @@
     "infected": {
       "title": "File blocked",
       "detail": "The file was found to be malicious and was removed."
+    },
+    "not_multipart": {
+      "title": "Not a multipart upload",
+      "detail": "Only a large upload sent in parts can be resumed; upload the file again."
     }
   },
   "catalog": {
@@ -913,6 +917,22 @@
     "read_only": {
       "title": "Read-only design",
       "detail": "This design belongs to someone else; copy it to edit"
+    },
+    "patch_too_large": {
+      "title": "Change too large",
+      "detail": "One autosave may carry up to {maxKb} KB of changes; save the whole design instead."
+    },
+    "nothing_to_patch": {
+      "title": "Nothing to change yet",
+      "detail": "The design has no saved version to change; save it first."
+    },
+    "patch_failed": {
+      "title": "Change could not be applied",
+      "detail": "The changes do not fit the current design; reload it and try again."
+    },
+    "version_required": {
+      "title": "Save the design first",
+      "detail": "A design goes in the cart as a saved version; save it, then add it again."
     }
   },
   "drawing": {

@@ -4,10 +4,22 @@ import { type UserActor } from '@common/context/actor';
 import { sha256 } from '@common/crypto/hashing';
 import { DomainException } from '@common/errors/domain.exception';
 import { assertIfMatch, etagOf } from '@common/etag/etag';
+import {
+  applyJsonPatch,
+  JsonPatchError,
+  type JsonPatchOperation,
+  type JsonValue,
+} from '@common/json/json-patch';
 import { toBangkokIso } from '@common/time/bangkok';
 import { PrismaService, type Tx } from '@database/prisma.service';
 import { type MeasurementBasis } from '@generated/prisma/client';
-import { type DesignVersionKind, type FileObject, Prisma } from '@generated/prisma/client';
+import {
+  type DesignVersionKind,
+  type FileObject,
+  type PrintMethod,
+  type PrintSides,
+  Prisma,
+} from '@generated/prisma/client';
 import { type OrderRefDto } from '@modules/carts/carts.dto';
 import { canonical } from '@modules/catalog/imports/import-engine';
 import { Injectable, type OnModuleInit } from '@nestjs/common';
@@ -28,6 +40,8 @@ import {
 
 /** Technical bound of one design document (JSON). */
 const MAX_DOCUMENT_BYTES = 2 * 1024 * 1024;
+/** Technical bound of one autosave patch (D-276). */
+const MAX_PATCH_BYTES = 256 * 1024;
 
 const SHARE_TOKEN = /^[A-Za-z0-9_-]{43}$/;
 
@@ -48,12 +62,24 @@ export const DESIGN_INCLUDE = {
   thumbnailFile: true,
   currentVersion: true,
   assets: { include: { fileObject: true }, orderBy: { id: 'asc' } },
+  styleVariant: { select: { code: true } },
+  lockedVersion: { select: { versionNo: true } },
+  lockedByOrder: { select: { publicId: true, orderCode: true } },
 } satisfies Prisma.DesignDocumentInclude;
 export type DesignRow = Prisma.DesignDocumentGetPayload<{ include: typeof DESIGN_INCLUDE }>;
 
 export const designEtag = (d: { publicId: string; rowVersion: number }) => etagOf(d.publicId, d.rowVersion);
 
-export interface CreateDesignInput {
+/** D-275 the studio box; absent fields stay as they are. */
+export interface StudioBoxInput {
+  styleVariantCode?: string;
+  printMethod?: PrintMethod;
+  printSides?: PrintSides;
+  finishes?: string[];
+  spec?: Record<string, unknown>;
+}
+
+export interface CreateDesignInput extends StudioBoxInput {
   catalogProductId: string;
   patternId?: string;
   lengthMm?: number;
@@ -67,7 +93,7 @@ export interface CreateDesignInput {
   document?: Record<string, unknown>;
 }
 
-export interface SaveDesignInput {
+export interface SaveDesignInput extends StudioBoxInput {
   title?: string;
   schemaVersion: number;
   document: Record<string, unknown>;
@@ -82,9 +108,26 @@ export interface SaveDesignInput {
   measurementBasis?: MeasurementBasis;
 }
 
+export interface PatchDesignInput {
+  operations: JsonPatchOperation[];
+  schemaVersion?: number;
+  kind?: 'manual' | 'autosave';
+  label?: string;
+  spec?: Record<string, unknown>;
+}
+
+interface StudioBoxData {
+  styleVariantId?: bigint;
+  printMethod?: PrintMethod;
+  printSides?: PrintSides;
+  finishes?: string[];
+}
+
 interface VersionInput {
   schemaVersion: number;
   document: Record<string, unknown>;
+  /** Absent: the previous version's spec. */
+  spec?: Record<string, unknown>;
   kind?: DesignVersionKind;
   label?: string | null;
   thumbnailFileId?: bigint | null;
@@ -196,6 +239,7 @@ export class DesignsService implements OnModuleInit {
       const product = await tx.catalogProduct.findUnique({ where: { publicId: input.catalogProductId } });
       if (!product) throw new DomainException('http.not_found');
       const { pattern, material } = await this.refs(tx, input);
+      const box = await this.studioBox(tx, input, pattern?.id ?? null);
       let schemaVersion = input.schemaVersion ?? 1;
       let document = input.document ?? null;
       let templateId: bigint | null = null;
@@ -215,7 +259,8 @@ export class DesignsService implements OnModuleInit {
           ownerUserId: actor.userId,
           companyId: opts.companyId ?? null,
           catalogProductId: product.id,
-          patternId: pattern?.id ?? null,
+          patternId: box.patternId ?? pattern?.id ?? null,
+          ...box.data,
           lengthMm: input.lengthMm ?? null,
           widthMm: input.widthMm ?? null,
           heightMm: input.heightMm ?? null,
@@ -225,7 +270,7 @@ export class DesignsService implements OnModuleInit {
           title: input.title,
         },
       });
-      if (document) await this.addVersion(tx, doc.id, { schemaVersion, document }, actor);
+      if (document) await this.addVersion(tx, doc.id, { schemaVersion, document, spec: input.spec }, actor);
       await this.record(tx, doc.publicId, 'design.created', { fromTemplate: templateId !== null }, actor);
       return this.get(doc.publicId, undefined, tx);
     });
@@ -250,12 +295,15 @@ export class DesignsService implements OnModuleInit {
         thumbnailFileId = file.id;
       }
       const { pattern, material } = await this.refs(tx, input);
+      const box = await this.studioBox(tx, input, pattern?.id ?? doc.patternId);
       const { count } = await tx.designDocument.updateMany({
         where: { id: doc.id, rowVersion: doc.rowVersion },
         data: {
           ...(input.title !== undefined && { title: input.title }),
           ...(thumbnailFileId !== undefined && { thumbnailFileId }),
           ...(pattern && { patternId: pattern.id }),
+          ...(box.patternId && { patternId: box.patternId }),
+          ...box.data,
           ...(material && { materialId: material.id }),
           ...(input.lengthMm !== undefined && { lengthMm: input.lengthMm }),
           ...(input.widthMm !== undefined && { widthMm: input.widthMm }),
@@ -274,6 +322,90 @@ export class DesignsService implements OnModuleInit {
       );
       await this.record(tx, doc.publicId, 'design.saved', { versionNo: version.versionNo, kind }, actor);
       return this.get(doc.publicId, undefined, tx);
+    });
+  }
+
+  /**
+   * D-276 autosave: a JSON Patch (RFC 6902) on the current version's document, all or nothing, as a new version
+   * (If-Match the document's ETag). The box stays as it is; `spec` replaces the calculator spec when given.
+   */
+  async patch(
+    actor: UserActor,
+    publicId: string,
+    ifMatch: string | undefined,
+    input: PatchDesignInput,
+    ownerUserId?: bigint,
+  ) {
+    if (Buffer.byteLength(JSON.stringify(input.operations)) > MAX_PATCH_BYTES)
+      throw new DomainException('designs.patch_too_large', { params: { maxKb: MAX_PATCH_BYTES / 1024 } });
+    return this.prisma.withTx(async (tx) => {
+      const doc = await this.get(publicId, ownerUserId, tx);
+      assertIfMatch(ifMatch, designEtag(doc));
+      if (!doc.currentVersion) throw new DomainException('designs.nothing_to_patch');
+      let document: JsonValue;
+      try {
+        document = applyJsonPatch(doc.currentVersion.document as JsonValue, input.operations);
+      } catch (error) {
+        if (!(error instanceof JsonPatchError)) throw error;
+        throw new DomainException('designs.patch_failed', {
+          errors: [{ path: `operations[${error.index}]`, code: 'patch', message: error.message }],
+        });
+      }
+      if (document === null || typeof document !== 'object' || Array.isArray(document))
+        throw new DomainException('designs.patch_failed', {
+          errors: [{ path: 'operations', code: 'patch', message: 'the document must stay an object' }],
+        });
+      const { count } = await tx.designDocument.updateMany({
+        where: { id: doc.id, rowVersion: doc.rowVersion },
+        data: { rowVersion: { increment: 1 } },
+      });
+      if (count === 0) throw new DomainException('concurrency.stale');
+      const kind = input.kind ?? 'autosave';
+      const version = await this.addVersion(
+        tx,
+        doc.id,
+        {
+          schemaVersion: input.schemaVersion ?? doc.currentVersion.schemaVersion,
+          document,
+          spec: input.spec,
+          kind,
+          label: input.label ?? null,
+        },
+        actor,
+      );
+      await this.record(
+        tx,
+        doc.publicId,
+        'design.saved',
+        { versionNo: version.versionNo, kind, operations: input.operations.length },
+        actor,
+      );
+      return this.get(doc.publicId, undefined, tx);
+    });
+  }
+
+  /**
+   * D-276: an order placed with a design locks the version it pinned; the design records the latest lock. The
+   * document's ETag does not change (an open studio keeps saving — into new versions).
+   */
+  async lockForOrder(
+    tx: Tx,
+    order: { id: bigint; publicId: string; designDocumentId: bigint; designDocumentVersionId: bigint },
+  ) {
+    const doc = await tx.designDocument.update({
+      where: { id: order.designDocumentId },
+      data: {
+        lockedVersionId: order.designDocumentVersionId,
+        lockedByOrderId: order.id,
+        lockedAt: new Date(),
+      },
+      include: { lockedVersion: { select: { versionNo: true } } },
+    });
+    await this.events.record(tx, {
+      type: 'design.locked',
+      aggregateType: 'design_document',
+      aggregateId: doc.publicId,
+      payload: { designId: doc.publicId, orderId: order.publicId, versionNo: doc.lockedVersion!.versionNo },
     });
   }
 
@@ -297,12 +429,14 @@ export class DesignsService implements OnModuleInit {
     return this.prisma.withTx(async (tx) => {
       const doc = await this.get(publicId, ownerUserId, tx);
       const file = await tx.fileObject.findUnique({ where: { publicId: input.fileId } });
-      if (
-        !file ||
-        file.ownerUserId !== actor.userId ||
-        file.uploadStatus !== 'uploaded' ||
-        file.scanStatus === 'infected'
-      )
+      // My own upload, or (U4.B1) a file of the design's company — its brand assets — that I may read as a member.
+      const mine = file?.ownerUserId === actor.userId;
+      const company =
+        !!file &&
+        doc.companyId !== null &&
+        file.ownerCompanyId === doc.companyId &&
+        (await this.files.canRead(actor, file));
+      if (!file || !(mine || company) || file.uploadStatus !== 'uploaded' || file.scanStatus === 'infected')
         throw new DomainException('artwork.file_not_usable', { params: { fileId: input.fileId } });
       await tx.designAsset.upsert({
         where: { documentId_fileObjectId: { documentId: doc.id, fileObjectId: file.id } },
@@ -343,6 +477,10 @@ export class DesignsService implements OnModuleInit {
           heightMm: source.heightMm,
           measurementBasis: source.measurementBasis,
           materialId: source.materialId,
+          styleVariantId: source.styleVariantId,
+          printMethod: source.printMethod,
+          printSides: source.printSides,
+          finishes: source.finishes,
           semiDesignTemplateId: source.semiDesignTemplateId,
           thumbnailFileId: source.thumbnailFileId,
           title,
@@ -355,6 +493,7 @@ export class DesignsService implements OnModuleInit {
           {
             schemaVersion: source.currentVersion.schemaVersion,
             document: source.currentVersion.document as Record<string, unknown>,
+            spec: (source.currentVersion.spec as Record<string, unknown> | null) ?? undefined,
             thumbnailFileId: source.currentVersion.thumbnailFileId,
           },
           actor,
@@ -403,6 +542,8 @@ export class DesignsService implements OnModuleInit {
         {
           schemaVersion: from.schemaVersion,
           document: from.document as Record<string, unknown>,
+          // The restored document comes back with the spec it was priced from (D-275); the box stays as it is.
+          spec: (from.spec as Record<string, unknown> | null) ?? undefined,
           kind: 'restore',
           label: from.label,
           thumbnailFileId: from.thumbnailFileId,
@@ -553,6 +694,20 @@ export class DesignsService implements OnModuleInit {
           row.sharedAt && row.shareExpiresAt && row.shareExpiresAt > new Date()
             ? { sharedAt: toBangkokIso(row.sharedAt), expiresAt: toBangkokIso(row.shareExpiresAt) }
             : null,
+        styleVariantCode: row.styleVariant?.code ?? null,
+        printMethod: row.printMethod,
+        printSides: row.printSides,
+        finishes: row.finishes,
+        spec: withDocument ? ((row.currentVersion?.spec as Record<string, unknown> | null) ?? null) : null,
+        lock:
+          row.lockedVersion && row.lockedByOrder && row.lockedAt
+            ? {
+                versionNo: row.lockedVersion.versionNo,
+                orderId: row.lockedByOrder.publicId,
+                orderCode: row.lockedByOrder.orderCode,
+                lockedAt: toBangkokIso(row.lockedAt),
+              }
+            : null,
         createdAt: toBangkokIso(row.createdAt),
         updatedAt: toBangkokIso(row.updatedAt),
       })),
@@ -683,6 +838,38 @@ export class DesignsService implements OnModuleInit {
     return { pattern, material };
   }
 
+  /** D-275: the style variant (its base must be the design's pattern, which it sets when there is none) and finishes. */
+  private async studioBox(
+    tx: Tx,
+    input: StudioBoxInput,
+    patternId: bigint | null,
+  ): Promise<{ patternId: bigint | null; data: StudioBoxData }> {
+    const invalid = (path: string, message: string) =>
+      new DomainException('validation.failed', { errors: [{ path, code: 'invalid', message }] });
+    let variantPattern: bigint | null = null;
+    const data: StudioBoxData = {};
+    if (input.styleVariantCode !== undefined) {
+      const variant = await tx.styleVariant.findUnique({
+        where: { code: input.styleVariantCode },
+        select: { id: true, base: { select: { patternId: true } } },
+      });
+      if (!variant) throw invalid('styleVariantCode', 'no such style variant');
+      if (patternId !== null && variant.base.patternId !== null && variant.base.patternId !== patternId)
+        throw invalid('styleVariantCode', 'the variant is of another box style than the design’s pattern');
+      variantPattern = patternId === null ? variant.base.patternId : null;
+      data.styleVariantId = variant.id;
+    }
+    if (input.finishes !== undefined) {
+      const codes = [...new Set(input.finishes)];
+      const found = await tx.finish.count({ where: { code: { in: codes }, status: 'active' } });
+      if (found !== codes.length) throw invalid('finishes', 'unknown or inactive finish code');
+      data.finishes = codes;
+    }
+    if (input.printMethod !== undefined) data.printMethod = input.printMethod;
+    if (input.printSides !== undefined) data.printSides = input.printSides;
+    return { patternId: variantPattern, data };
+  }
+
   private async addVersion(tx: Tx, documentId: bigint, input: VersionInput, actor: UserActor) {
     const { schemaVersion, document } = input;
     const json = JSON.stringify(canonical(document));
@@ -694,12 +881,31 @@ export class DesignsService implements OnModuleInit {
       where: { documentId },
       orderBy: { versionNo: 'desc' },
     });
+    // D-275: every version keeps the box it was made with and the spec it is priced from.
+    const doc = await tx.designDocument.findUniqueOrThrow({
+      where: { id: documentId },
+      include: { styleVariant: { select: { code: true } }, material: { select: { publicId: true } } },
+    });
+    const box = {
+      styleVariantCode: doc.styleVariant?.code ?? null,
+      lengthMm: num(doc.lengthMm),
+      widthMm: num(doc.widthMm),
+      heightMm: num(doc.heightMm),
+      measurementBasis: doc.measurementBasis,
+      materialId: doc.material?.publicId ?? null,
+      printMethod: doc.printMethod,
+      printSides: doc.printSides,
+      finishes: doc.finishes,
+    };
+    const spec = input.spec !== undefined ? input.spec : (last?.spec ?? null);
     const version = await tx.designDocumentVersion.create({
       data: {
         documentId,
         versionNo: (last?.versionNo ?? 0) + 1,
         schemaVersion,
         document: document as Prisma.InputJsonValue,
+        box,
+        spec: spec === null ? Prisma.DbNull : (spec as Prisma.InputJsonValue),
         contentSha256: createHash('sha256').update(json).digest(),
         kind: input.kind ?? 'manual',
         label: input.label ?? null,
@@ -752,6 +958,8 @@ export function versionDto(
     kind: DesignVersionKind;
     label: string | null;
     thumbnailFile: { publicId: string } | null;
+    box: Prisma.JsonValue;
+    spec: Prisma.JsonValue;
     createdAt: Date;
   },
   withDocument: boolean,
@@ -764,6 +972,8 @@ export function versionDto(
     kind: v.kind,
     label: v.label,
     thumbnailFileId: v.thumbnailFile?.publicId ?? null,
+    box: (v.box as Record<string, unknown> | null) ?? null,
+    spec: withDocument ? ((v.spec as Record<string, unknown> | null) ?? null) : null,
     createdAt: toBangkokIso(v.createdAt),
   };
 }

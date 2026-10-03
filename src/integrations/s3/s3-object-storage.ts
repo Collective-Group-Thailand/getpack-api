@@ -9,6 +9,7 @@ import {
   GetObjectCommand,
   HeadBucketCommand,
   HeadObjectCommand,
+  ListPartsCommand,
   NotFound,
   PutObjectCommand,
   S3Client,
@@ -94,6 +95,24 @@ export class S3ObjectStorage implements ObjectStorage {
         MultipartUpload: { Parts: parts.map((p) => ({ PartNumber: p.partNumber, ETag: p.etag })) },
       }),
     );
+  }
+
+  async listParts(
+    key: string,
+    uploadId: string,
+  ): Promise<{ partNumber: number; etag: string; sizeBytes: number }[]> {
+    const parts: { partNumber: number; etag: string; sizeBytes: number }[] = [];
+    let marker: string | undefined;
+    do {
+      const page = await this.client.send(
+        new ListPartsCommand({ Bucket: this.bucket, Key: key, UploadId: uploadId, PartNumberMarker: marker }),
+      );
+      for (const p of page.Parts ?? [])
+        if (p.PartNumber !== undefined && p.ETag)
+          parts.push({ partNumber: p.PartNumber, etag: p.ETag, sizeBytes: p.Size ?? 0 });
+      marker = page.IsTruncated ? page.NextPartNumberMarker : undefined;
+    } while (marker);
+    return parts;
   }
 
   async abortMultipart(key: string, uploadId: string): Promise<void> {

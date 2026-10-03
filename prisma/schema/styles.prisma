@@ -130,10 +130,11 @@ model StyleVariant {
   createdAt    DateTime       @default(now()) @map("created_at") @db.Timestamptz(6)
   updatedAt    DateTime       @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
 
-  base           StyleBase       @relation(fields: [baseId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_style_variants__base_id")
+  base           StyleBase        @relation(fields: [baseId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_style_variants__base_id")
   assets         StyleAsset[]
-  rfqs           Rfq[]           @relation("RfqStyleVariant")
+  rfqs           Rfq[]            @relation("RfqStyleVariant")
   dielineRenders DielineRender[]
+  designs        DesignDocument[] @relation("DesignDocumentStyleVariant")
 
   @@unique([baseId, optionKey], map: "ux_style_variants__base_id__option_key")
   @@index([baseId, publishable], map: "ix_style_variants__base_id__publishable")

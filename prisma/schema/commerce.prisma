@@ -337,46 +337,49 @@ model Cart {
 
 /// One configuration (a saved quote option, instant or accepted RFQ) with its price lock (D-051).
 model CartItem {
-  id                   BigInt       @id(map: "pk_cart_items") @default(autoincrement())
-  publicId             String       @unique(map: "ux_cart_items__public_id") @default(dbgenerated("uuidv7()")) @map("public_id") @db.Uuid
-  cartId               BigInt       @map("cart_id")
-  quoteId              BigInt       @map("quote_id")
-  quoteOptionId        BigInt       @map("quote_option_id")
-  reorderOfOrderId     BigInt?      @map("reorder_of_order_id")
-  quantity             Int
-  designOption         DesignOption @map("design_option")
+  id                      BigInt       @id(map: "pk_cart_items") @default(autoincrement())
+  publicId                String       @unique(map: "ux_cart_items__public_id") @default(dbgenerated("uuidv7()")) @map("public_id") @db.Uuid
+  cartId                  BigInt       @map("cart_id")
+  quoteId                 BigInt       @map("quote_id")
+  quoteOptionId           BigInt       @map("quote_option_id")
+  reorderOfOrderId        BigInt?      @map("reorder_of_order_id")
+  quantity                Int
+  designOption            DesignOption @map("design_option")
   /// The customer's online design (B4.1).
-  designDocumentId     BigInt?      @map("design_document_id")
+  designDocumentId        BigInt?      @map("design_document_id")
+  /// D-276 the immutable design version this line orders (pinned at add-to-cart).
+  designDocumentVersionId BigInt?      @map("design_document_version_id")
   /// Reorder with unchanged artwork: the approved proof carried over, proof skipped (D-153).
-  reuseArtworkProofId  BigInt?      @map("reuse_artwork_proof_id")
+  reuseArtworkProofId     BigInt?      @map("reuse_artwork_proof_id")
   /// Free-text design reference until design documents exist (B4.1).
-  designNote           String?      @map("design_note")
-  mockupOption         MockupOption @default(none) @map("mockup_option")
-  netAmount            Decimal      @map("net_amount") @db.Decimal(14, 2)
-  vatAmount            Decimal      @map("vat_amount") @db.Decimal(14, 2)
-  grossAmount          Decimal      @map("gross_amount") @db.Decimal(14, 2)
-  shippingAmount       Decimal?     @map("shipping_amount") @db.Decimal(14, 2)
-  unitPrice            Decimal      @map("unit_price") @db.Decimal(18, 6)
-  priceLockedUntil     DateTime     @map("price_locked_until") @db.Timestamptz(6)
-  repricedAt           DateTime?    @map("repriced_at") @db.Timestamptz(6)
+  designNote              String?      @map("design_note")
+  mockupOption            MockupOption @default(none) @map("mockup_option")
+  netAmount               Decimal      @map("net_amount") @db.Decimal(14, 2)
+  vatAmount               Decimal      @map("vat_amount") @db.Decimal(14, 2)
+  grossAmount             Decimal      @map("gross_amount") @db.Decimal(14, 2)
+  shippingAmount          Decimal?     @map("shipping_amount") @db.Decimal(14, 2)
+  unitPrice               Decimal      @map("unit_price") @db.Decimal(18, 6)
+  priceLockedUntil        DateTime     @map("price_locked_until") @db.Timestamptz(6)
+  repricedAt              DateTime?    @map("repriced_at") @db.Timestamptz(6)
   /// Re-priced quote option waiting for the client's confirmation (B3.1).
-  pendingQuoteId       BigInt?      @map("pending_quote_id")
-  pendingQuoteOptionId BigInt?      @map("pending_quote_option_id")
-  pendingPriceDiff     Json?        @map("pending_price_diff")
-  sort                 Int          @default(0) @db.SmallInt
-  createdAt            DateTime     @default(now()) @map("created_at") @db.Timestamptz(6)
-  updatedAt            DateTime     @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
-  rowVersion           Int          @default(1) @map("row_version")
+  pendingQuoteId          BigInt?      @map("pending_quote_id")
+  pendingQuoteOptionId    BigInt?      @map("pending_quote_option_id")
+  pendingPriceDiff        Json?        @map("pending_price_diff")
+  sort                    Int          @default(0) @db.SmallInt
+  createdAt               DateTime     @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt               DateTime     @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+  rowVersion              Int          @default(1) @map("row_version")
 
-  cart               Cart                  @relation(fields: [cartId], references: [id], onDelete: Cascade, onUpdate: Restrict, map: "fk_cart_items__cart_id")
-  quote              Quote                 @relation("CartItemQuote", fields: [quoteId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_cart_items__quote_id")
-  quoteOption        QuoteOption           @relation("CartItemQuoteOption", fields: [quoteOptionId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_cart_items__quote_option_id")
-  reorderOfOrder     Order?                @relation("CartItemReorderOf", fields: [reorderOfOrderId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_cart_items__reorder_of_order_id")
-  pendingQuote       Quote?                @relation("CartItemPendingQuote", fields: [pendingQuoteId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_cart_items__pending_quote_id")
-  pendingQuoteOption QuoteOption?          @relation("CartItemPendingQuoteOption", fields: [pendingQuoteOptionId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_cart_items__pending_quote_option_id")
-  designDocument     DesignDocument?       @relation("CartItemDesignDocument", fields: [designDocumentId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_cart_items__design_document_id")
-  reuseArtworkProof  Proof?                @relation("CartItemReuseProof", fields: [reuseArtworkProofId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_cart_items__reuse_artwork_proof_id")
-  destinations       CartItemDestination[]
+  cart                  Cart                   @relation(fields: [cartId], references: [id], onDelete: Cascade, onUpdate: Restrict, map: "fk_cart_items__cart_id")
+  quote                 Quote                  @relation("CartItemQuote", fields: [quoteId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_cart_items__quote_id")
+  quoteOption           QuoteOption            @relation("CartItemQuoteOption", fields: [quoteOptionId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_cart_items__quote_option_id")
+  reorderOfOrder        Order?                 @relation("CartItemReorderOf", fields: [reorderOfOrderId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_cart_items__reorder_of_order_id")
+  pendingQuote          Quote?                 @relation("CartItemPendingQuote", fields: [pendingQuoteId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_cart_items__pending_quote_id")
+  pendingQuoteOption    QuoteOption?           @relation("CartItemPendingQuoteOption", fields: [pendingQuoteOptionId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_cart_items__pending_quote_option_id")
+  designDocument        DesignDocument?        @relation("CartItemDesignDocument", fields: [designDocumentId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_cart_items__design_document_id")
+  designDocumentVersion DesignDocumentVersion? @relation("CartItemDesignVersion", fields: [designDocumentVersionId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_cart_items__design_document_version_id")
+  reuseArtworkProof     Proof?                 @relation("CartItemReuseProof", fields: [reuseArtworkProofId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_cart_items__reuse_artwork_proof_id")
+  destinations          CartItemDestination[]
 
   @@index([cartId], map: "ix_cart_items__cart_id")
   @@index([quoteId], map: "ix_cart_items__quote_id")
@@ -385,6 +388,7 @@ model CartItem {
   @@index([pendingQuoteId], map: "ix_cart_items__pending_quote_id")
   @@index([pendingQuoteOptionId], map: "ix_cart_items__pending_quote_option_id")
   @@index([designDocumentId], map: "ix_cart_items__design_document_id")
+  @@index([designDocumentVersionId], map: "ix_cart_items__design_document_version_id")
   @@index([reuseArtworkProofId], map: "ix_cart_items__reuse_artwork_proof_id")
   @@map("cart_items")
 }
@@ -547,6 +551,8 @@ model Order {
   designNote              String?              @map("design_note")
   /// The customer's online design (B4.1).
   designDocumentId        BigInt?              @map("design_document_id")
+  /// D-276 the immutable design version ordered.
+  designDocumentVersionId BigInt?              @map("design_document_version_id")
   /// The Prepress member who owns the order's artwork (U-B0.2); null while unassigned.
   prepressAssigneeId      BigInt?              @map("prepress_assignee_id")
   /// Reorder with unchanged artwork: the approved proof carried over, proof skipped (D-153).
@@ -628,9 +634,11 @@ model Order {
 
   company Company? @relation("OrderCompany", fields: [companyId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_orders__company_id")
 
-  designDocument    DesignDocument? @relation("OrderDesignDocument", fields: [designDocumentId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_orders__design_document_id")
-  prepressAssignee  User?           @relation("OrderPrepressAssignee", fields: [prepressAssigneeId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_orders__prepress_assignee_id")
-  reuseArtworkProof Proof?          @relation("OrderReuseProof", fields: [reuseArtworkProofId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_orders__reuse_artwork_proof_id")
+  designDocument        DesignDocument?        @relation("OrderDesignDocument", fields: [designDocumentId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_orders__design_document_id")
+  designDocumentVersion DesignDocumentVersion? @relation("OrderDesignVersion", fields: [designDocumentVersionId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_orders__design_document_version_id")
+  designsLocked         DesignDocument[]       @relation("DesignDocumentLockedByOrder")
+  prepressAssignee      User?                  @relation("OrderPrepressAssignee", fields: [prepressAssigneeId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_orders__prepress_assignee_id")
+  reuseArtworkProof     Proof?                 @relation("OrderReuseProof", fields: [reuseArtworkProofId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_orders__reuse_artwork_proof_id")
 
   // --- Fulfilment B4.1 (generated back-relations)
   artworkSubmissions   ArtworkSubmission[]   @relation("ArtworkSubmissionOrder")
@@ -692,6 +700,7 @@ model Order {
   @@index([selectedFactoryId], map: "ix_orders__selected_factory_id")
   @@index([updatedById], map: "ix_orders__updated_by")
   @@index([designDocumentId], map: "ix_orders__design_document_id")
+  @@index([designDocumentVersionId], map: "ix_orders__design_document_version_id")
   @@index([prepressAssigneeId], map: "ix_orders__prepress_assignee_id")
   @@index([reuseArtworkProofId], map: "ix_orders__reuse_artwork_proof_id")
   @@index([shippedAt], map: "ix_orders__shipped_at", where: raw("(shipped_at IS NOT NULL)"))

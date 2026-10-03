@@ -62,6 +62,19 @@ export class FakeObjectStorage implements ObjectStorage {
     return Promise.resolve();
   }
 
+  listParts(
+    _key: string,
+    uploadId: string,
+  ): Promise<{ partNumber: number; etag: string; sizeBytes: number }[]> {
+    const upload = this.multiparts.get(uploadId);
+    if (!upload) return Promise.reject(new Error('NoSuchUpload'));
+    return Promise.resolve(
+      [...upload.parts.entries()]
+        .sort(([a], [b]) => a - b)
+        .map(([partNumber, body]) => ({ partNumber, etag: `"etag-${partNumber}"`, sizeBytes: body.length })),
+    );
+  }
+
   abortMultipart(_key: string, uploadId: string): Promise<void> {
     this.multiparts.delete(uploadId);
     return Promise.resolve();

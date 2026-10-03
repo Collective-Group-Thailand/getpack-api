@@ -67,6 +67,8 @@ export interface DraftOrder {
   mockupOption: string;
   reorderOfOrderId: bigint | null;
   designDocumentId: bigint | null;
+  /** D-276 the immutable design version ordered. */
+  designDocumentVersionId: bigint | null;
   reuseArtworkProofId: bigint | null;
   leadTimeDays: number | null;
   earliestShipDate: Date | null;

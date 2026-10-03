@@ -117,6 +117,35 @@ export class PresignedUploadDto {
   expiresAt!: string;
 }
 
+export class StoredPartDto {
+  @ApiProperty({ type: 'integer', example: 1 })
+  partNumber!: number;
+
+  @ApiProperty({ example: '"etag-1"', description: 'Send it back with `complete`' })
+  etag!: string;
+
+  @ApiProperty({ type: 'integer', example: 8_388_608 })
+  sizeBytes!: number;
+}
+
+/** Resuming a multipart upload (U4.B1): what is stored and fresh URLs for every part. */
+export class ResumedUploadDto {
+  @ApiProperty({ format: 'uuid', example: FILE_ID })
+  fileId!: string;
+
+  @ApiProperty({ type: 'integer', example: 8_388_608, description: 'Bytes per part (last part smaller)' })
+  partSize!: number;
+
+  @ApiProperty({ type: [StoredPartDto], description: 'Parts already stored; skip them' })
+  uploaded!: StoredPartDto[];
+
+  @ApiProperty({ type: [UploadPartDto], description: 'Fresh signed URLs for every part' })
+  parts!: UploadPartDto[];
+
+  @ApiProperty({ format: 'date-time', example: '2026-09-23T14:20:00+07:00' })
+  expiresAt!: string;
+}
+
 export class CompletedPartDto {
   @ApiProperty({ type: 'integer', example: 1 })
   @IsInt()

@@ -1156,6 +1156,39 @@
           "type": "https://errors.packio/designs.document_too_large"
         }
       },
+      "problem.designs.nothing_to_patch": {
+        "summary": "designs.nothing_to_patch",
+        "value": {
+          "code": "designs.nothing_to_patch",
+          "detail": "แบบนี้ยังไม่มีเวอร์ชันที่บันทึกไว้ กรุณาบันทึกก่อน",
+          "requestId": "6f1c2d8e-2c7b-4d0e-9d1c-3f1a2b3c4d5e",
+          "status": 409,
+          "title": "ยังไม่มีแบบให้แก้ไข",
+          "type": "https://errors.packio/designs.nothing_to_patch"
+        }
+      },
+      "problem.designs.patch_failed": {
+        "summary": "designs.patch_failed",
+        "value": {
+          "code": "designs.patch_failed",
+          "detail": "การเปลี่ยนแปลงไม่ตรงกับแบบปัจจุบัน กรุณาโหลดแบบใหม่แล้วลองอีกครั้ง",
+          "requestId": "6f1c2d8e-2c7b-4d0e-9d1c-3f1a2b3c4d5e",
+          "status": 422,
+          "title": "ใช้การเปลี่ยนแปลงไม่ได้",
+          "type": "https://errors.packio/designs.patch_failed"
+        }
+      },
+      "problem.designs.patch_too_large": {
+        "summary": "designs.patch_too_large",
+        "value": {
+          "code": "designs.patch_too_large",
+          "detail": "การบันทึกอัตโนมัติหนึ่งครั้งรับการเปลี่ยนแปลงได้ไม่เกิน {maxKb} KB กรุณาบันทึกทั้งแบบแทน",
+          "requestId": "6f1c2d8e-2c7b-4d0e-9d1c-3f1a2b3c4d5e",
+          "status": 413,
+          "title": "การเปลี่ยนแปลงใหญ่เกินไป",
+          "type": "https://errors.packio/designs.patch_too_large"
+        }
+      },
       "problem.designs.read_only": {
         "summary": "designs.read_only",
         "value": {
@@ -1297,6 +1330,17 @@
           "status": 409,
           "title": "ไฟล์ไม่ปลอดภัย",
           "type": "https://errors.packio/file.infected"
+        }
+      },
+      "problem.file.not_multipart": {
+        "summary": "file.not_multipart",
+        "value": {
+          "code": "file.not_multipart",
+          "detail": "ต่อการอัปโหลดได้เฉพาะไฟล์ใหญ่ที่ส่งแบบแบ่งส่วน กรุณาอัปโหลดไฟล์ใหม่",
+          "requestId": "6f1c2d8e-2c7b-4d0e-9d1c-3f1a2b3c4d5e",
+          "status": 409,
+          "title": "ไม่ใช่การอัปโหลดแบบแบ่งส่วน",
+          "type": "https://errors.packio/file.not_multipart"
         }
       },
       "problem.file.not_ready": {
@@ -4044,6 +4088,12 @@
             "description": "`hired_design` needs a quotation priced with the design fee; `free_design` only where a promotion offers it (B3.3)",
             "example": "own_file"
           },
+          "designVersionNo": {
+            "description": "D-276 the design version to order; absent: the current version (pinned now, never changed by later edits)",
+            "example": 3,
+            "minimum": 1,
+            "type": "integer"
+          },
           "destinations": {
             "description": "Split of the quantity over addresses; defaults to the default delivery address",
             "items": {
@@ -6008,6 +6058,15 @@
             "example": false,
             "type": "boolean"
           },
+          "finishes": {
+            "example": [
+              "dev-matt"
+            ],
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
           "heightMm": {
             "description": "mm",
             "example": 40,
@@ -6028,6 +6087,17 @@
               "number",
               "null"
             ]
+          },
+          "lock": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/DesignLockDto"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "D-276 the version the latest order locked; editing always makes a new version"
           },
           "materialId": {
             "example": null,
@@ -6064,6 +6134,28 @@
               "null"
             ]
           },
+          "printMethod": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/PrintMethod"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "example": "digital"
+          },
+          "printSides": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/PrintSides"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "example": "outside"
+          },
           "product": {
             "$ref": "#/components/schemas/DesignProductRefDto"
           },
@@ -6092,6 +6184,22 @@
               }
             ],
             "description": "The live view-only link (D-226)"
+          },
+          "spec": {
+            "additionalProperties": true,
+            "description": "D-275 the current version’s calculator spec (null in lists)",
+            "example": null,
+            "type": [
+              "object",
+              "null"
+            ]
+          },
+          "styleVariantCode": {
+            "example": "PK-TE-01-K7QD",
+            "type": [
+              "string",
+              "null"
+            ]
           },
           "thumbnailFileId": {
             "example": null,
@@ -6153,6 +6261,12 @@
           "thumbnailUrl",
           "orders",
           "share",
+          "styleVariantCode",
+          "printMethod",
+          "printSides",
+          "finishes",
+          "spec",
+          "lock",
           "createdAt",
           "updatedAt",
           "owner",
@@ -16161,6 +16275,14 @@
             ],
             "example": "own_file"
           },
+          "designVersionNo": {
+            "description": "D-276 the design version this item orders (pinned; later edits make new versions)",
+            "example": null,
+            "type": [
+              "integer",
+              "null"
+            ]
+          },
           "destinations": {
             "items": {
               "$ref": "#/components/schemas/CartDestinationDto"
@@ -16298,6 +16420,7 @@
           "designOption",
           "designNote",
           "designDocumentId",
+          "designVersionNo",
           "mockupOption",
           "reorderOf",
           "reusesApprovedArtwork",
@@ -22831,6 +22954,16 @@
             },
             "type": "object"
           },
+          "finishes": {
+            "description": "D-275 finish codes (`store.catalog` finishes); replaces the list",
+            "example": [
+              "dev-matt"
+            ],
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
           "heightMm": {
             "description": "Height, mm",
             "example": 100,
@@ -22864,6 +22997,24 @@
             "format": "uuid",
             "type": "string"
           },
+          "printMethod": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/PrintMethod"
+              }
+            ],
+            "description": "D-275 how it is printed",
+            "example": "digital"
+          },
+          "printSides": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/PrintSides"
+              }
+            ],
+            "description": "D-275 which sides carry print",
+            "example": "outside"
+          },
           "schemaVersion": {
             "description": "Version of the document format",
             "example": 1,
@@ -22878,6 +23029,21 @@
               "string",
               "null"
             ]
+          },
+          "spec": {
+            "additionalProperties": true,
+            "description": "D-275 the calculator configuration the configurator built (no quantities), priced by the studio quote; absent = the previous version’s",
+            "example": {
+              "materialId": "0192f3a0-7c1e-7d2a-9b1f-00000000d002",
+              "patternId": "0192f3a0-7c1e-7d2a-9b1f-00000000d001"
+            },
+            "type": "object"
+          },
+          "styleVariantCode": {
+            "description": "D-275 the style-library variant the box is (its base must be the design’s pattern)",
+            "example": "PK-TE-01-K7QD",
+            "pattern": "^PK-[A-Z0-9]{2,8}-[0-9]{2,3}-[A-Z2-7]{4,8}$",
+            "type": "string"
           },
           "title": {
             "example": "กล่องกาแฟของฉัน",
@@ -28959,6 +29125,15 @@
               "null"
             ]
           },
+          "finishes": {
+            "example": [
+              "dev-matt"
+            ],
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
           "heightMm": {
             "description": "mm",
             "example": 40,
@@ -28979,6 +29154,17 @@
               "number",
               "null"
             ]
+          },
+          "lock": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/DesignLockDto"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "D-276 the version the latest order locked; editing always makes a new version"
           },
           "materialId": {
             "example": null,
@@ -29012,6 +29198,28 @@
               "null"
             ]
           },
+          "printMethod": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/PrintMethod"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "example": "digital"
+          },
+          "printSides": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/PrintSides"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "example": "outside"
+          },
           "product": {
             "$ref": "#/components/schemas/DesignProductRefDto"
           },
@@ -29040,6 +29248,22 @@
               }
             ],
             "description": "The live view-only link (D-226)"
+          },
+          "spec": {
+            "additionalProperties": true,
+            "description": "D-275 the current version’s calculator spec (null in lists)",
+            "example": null,
+            "type": [
+              "object",
+              "null"
+            ]
+          },
+          "styleVariantCode": {
+            "example": "PK-TE-01-K7QD",
+            "type": [
+              "string",
+              "null"
+            ]
           },
           "thumbnailFileId": {
             "example": null,
@@ -29101,6 +29325,12 @@
           "thumbnailUrl",
           "orders",
           "share",
+          "styleVariantCode",
+          "printMethod",
+          "printSides",
+          "finishes",
+          "spec",
+          "lock",
           "createdAt",
           "updatedAt"
         ],
@@ -29176,6 +29406,35 @@
           "unlinked"
         ],
         "type": "string"
+      },
+      "DesignLockDto": {
+        "properties": {
+          "lockedAt": {
+            "example": "2026-10-03T10:00:00+07:00",
+            "format": "date-time",
+            "type": "string"
+          },
+          "orderCode": {
+            "example": "PK-2610-0001-01",
+            "type": "string"
+          },
+          "orderId": {
+            "example": "0192f3a0-7c1e-7d2a-9b1f-00000000a301",
+            "format": "uuid",
+            "type": "string"
+          },
+          "versionNo": {
+            "example": 3,
+            "type": "integer"
+          }
+        },
+        "required": [
+          "versionNo",
+          "orderId",
+          "orderCode",
+          "lockedAt"
+        ],
+        "type": "object"
       },
       "DesignOption": {
         "enum": [
@@ -29567,6 +29826,15 @@
       },
       "DesignVersionDto": {
         "properties": {
+          "box": {
+            "additionalProperties": true,
+            "description": "D-275 the box at this version (style variant, sizes + basis, material, print method / sides, finishes)",
+            "example": null,
+            "type": [
+              "object",
+              "null"
+            ]
+          },
           "contentSha256": {
             "description": "SHA-256 (hex) of the document",
             "example": "9f86d081884c7d659a2feaa0c55ad015a3bf4f1b2b0b822cd15d6c15b0f00a08",
@@ -29604,6 +29872,15 @@
             "example": 1,
             "type": "integer"
           },
+          "spec": {
+            "additionalProperties": true,
+            "description": "D-275 the calculator spec at this version (only when one version is read)",
+            "example": null,
+            "type": [
+              "object",
+              "null"
+            ]
+          },
           "thumbnailFileId": {
             "example": null,
             "format": "uuid",
@@ -29634,6 +29911,8 @@
           "label",
           "thumbnailFileId",
           "thumbnailUrl",
+          "box",
+          "spec",
           "createdAt"
         ],
         "type": "object"
@@ -38314,6 +38593,76 @@
         ],
         "type": "string"
       },
+      "JsonPatchOp": {
+        "enum": [
+          "add",
+          "remove",
+          "replace",
+          "move",
+          "copy",
+          "test"
+        ],
+        "type": "string"
+      },
+      "JsonPatchOperationDto": {
+        "properties": {
+          "from": {
+            "description": "For move / copy (JSON Pointer)",
+            "example": "/faces/front/objects/1",
+            "maxLength": 1000,
+            "type": "string"
+          },
+          "op": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/JsonPatchOp"
+              }
+            ],
+            "example": "replace"
+          },
+          "path": {
+            "description": "JSON Pointer (RFC 6901)",
+            "example": "/faces/front/objects/0/text",
+            "maxLength": 1000,
+            "type": "string"
+          },
+          "value": {
+            "anyOf": [
+              {
+                "oneOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "number"
+                  },
+                  {
+                    "type": "boolean"
+                  },
+                  {
+                    "additionalProperties": true,
+                    "type": "object"
+                  },
+                  {
+                    "items": {},
+                    "type": "array"
+                  }
+                ]
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "For add / replace / test: any JSON value",
+            "example": "กาแฟคั่วเข้ม"
+          }
+        },
+        "required": [
+          "op",
+          "path"
+        ],
+        "type": "object"
+      },
       "JuristicType": {
         "enum": [
           "company",
@@ -43602,6 +43951,52 @@
         ],
         "type": "object"
       },
+      "PatchDesignDocumentDto": {
+        "properties": {
+          "kind": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/DesignSaveKind"
+              }
+            ],
+            "default": "autosave",
+            "example": "autosave"
+          },
+          "label": {
+            "example": "ก่อนเปลี่ยนสีพื้น",
+            "maxLength": 100,
+            "minLength": 1,
+            "type": "string"
+          },
+          "operations": {
+            "description": "JSON Patch (RFC 6902) on the current version's document, applied in order, all or nothing; ≤ 2000 operations, ≤ 256 KiB",
+            "items": {
+              "$ref": "#/components/schemas/JsonPatchOperationDto"
+            },
+            "minItems": 1,
+            "type": "array"
+          },
+          "schemaVersion": {
+            "description": "Absent: the current version’s",
+            "example": 1,
+            "minimum": 1,
+            "type": "integer"
+          },
+          "spec": {
+            "additionalProperties": true,
+            "description": "D-275 the calculator configuration the configurator built (no quantities), priced by the studio quote; absent = the previous version’s",
+            "example": {
+              "materialId": "0192f3a0-7c1e-7d2a-9b1f-00000000d002",
+              "patternId": "0192f3a0-7c1e-7d2a-9b1f-00000000d001"
+            },
+            "type": "object"
+          }
+        },
+        "required": [
+          "operations"
+        ],
+        "type": "object"
+      },
       "PatternConditionSlotDto": {
         "properties": {
           "conditionId": {
@@ -48323,6 +48718,24 @@
           "percent"
         ],
         "type": "object"
+      },
+      "PrintMethod": {
+        "enum": [
+          "digital",
+          "offset",
+          "flexo",
+          "none"
+        ],
+        "type": "string"
+      },
+      "PrintSides": {
+        "enum": [
+          "outside",
+          "inside",
+          "both",
+          "none"
+        ],
+        "type": "string"
       },
       "PrintTypeDto": {
         "properties": {
@@ -55703,6 +56116,47 @@
         ],
         "type": "object"
       },
+      "ResumedUploadDto": {
+        "properties": {
+          "expiresAt": {
+            "example": "2026-09-23T14:20:00+07:00",
+            "format": "date-time",
+            "type": "string"
+          },
+          "fileId": {
+            "example": "0192f3a0-7c1e-7d2a-9b1f-00000000f11e",
+            "format": "uuid",
+            "type": "string"
+          },
+          "partSize": {
+            "description": "Bytes per part (last part smaller)",
+            "example": 8388608,
+            "type": "integer"
+          },
+          "parts": {
+            "description": "Fresh signed URLs for every part",
+            "items": {
+              "$ref": "#/components/schemas/UploadPartDto"
+            },
+            "type": "array"
+          },
+          "uploaded": {
+            "description": "Parts already stored; skip them",
+            "items": {
+              "$ref": "#/components/schemas/StoredPartDto"
+            },
+            "type": "array"
+          }
+        },
+        "required": [
+          "fileId",
+          "partSize",
+          "uploaded",
+          "parts",
+          "expiresAt"
+        ],
+        "type": "object"
+      },
       "ReverseJournalDto": {
         "properties": {
           "documentDate": {
@@ -58194,6 +58648,16 @@
             },
             "type": "object"
           },
+          "finishes": {
+            "description": "D-275 finish codes (`store.catalog` finishes); replaces the list",
+            "example": [
+              "dev-matt"
+            ],
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
           "heightMm": {
             "description": "Height, mm",
             "example": 100,
@@ -58246,10 +58710,43 @@
             "format": "uuid",
             "type": "string"
           },
+          "printMethod": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/PrintMethod"
+              }
+            ],
+            "description": "D-275 how it is printed",
+            "example": "digital"
+          },
+          "printSides": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/PrintSides"
+              }
+            ],
+            "description": "D-275 which sides carry print",
+            "example": "outside"
+          },
           "schemaVersion": {
             "example": 1,
             "minimum": 1,
             "type": "integer"
+          },
+          "spec": {
+            "additionalProperties": true,
+            "description": "D-275 the calculator configuration the configurator built (no quantities), priced by the studio quote; absent = the previous version’s",
+            "example": {
+              "materialId": "0192f3a0-7c1e-7d2a-9b1f-00000000d002",
+              "patternId": "0192f3a0-7c1e-7d2a-9b1f-00000000d001"
+            },
+            "type": "object"
+          },
+          "styleVariantCode": {
+            "description": "D-275 the style-library variant the box is (its base must be the design’s pattern)",
+            "example": "PK-TE-01-K7QD",
+            "pattern": "^PK-[A-Z0-9]{2,8}-[0-9]{2,3}-[A-Z2-7]{4,8}$",
+            "type": "string"
           },
           "thumbnailFileId": {
             "description": "A preview image you uploaded",
@@ -67406,6 +67903,29 @@
         ],
         "type": "object"
       },
+      "StoredPartDto": {
+        "properties": {
+          "etag": {
+            "description": "Send it back with `complete`",
+            "example": "\"etag-1\"",
+            "type": "string"
+          },
+          "partNumber": {
+            "example": 1,
+            "type": "integer"
+          },
+          "sizeBytes": {
+            "example": 8388608,
+            "type": "integer"
+          }
+        },
+        "required": [
+          "partNumber",
+          "etag",
+          "sizeBytes"
+        ],
+        "type": "object"
+      },
       "StructuralRequestDto": {
         "properties": {
           "approvedAt": {
@@ -72120,6 +72640,12 @@
               }
             ],
             "example": "hired_design"
+          },
+          "designVersionNo": {
+            "description": "D-276 the design version to order; absent: the current version (pinned now, never changed by later edits)",
+            "example": 3,
+            "minimum": 1,
+            "type": "integer"
           },
           "mockupOption": {
             "allOf": [
@@ -161401,6 +161927,7 @@
                       "designFeeAmount": "0.00",
                       "designNote": null,
                       "designOption": "own_file",
+                      "designVersionNo": null,
                       "destinations": [
                         {
                           "address": {
@@ -161707,6 +162234,7 @@
                       "designFeeAmount": "0.00",
                       "designNote": null,
                       "designOption": "own_file",
+                      "designVersionNo": null,
                       "destinations": [
                         {
                           "address": {
@@ -162065,6 +162593,7 @@
                       "designFeeAmount": "0.00",
                       "designNote": null,
                       "designOption": "own_file",
+                      "designVersionNo": null,
                       "destinations": [
                         {
                           "address": {
@@ -162410,6 +162939,7 @@
                       "designFeeAmount": "0.00",
                       "designNote": null,
                       "designOption": "own_file",
+                      "designVersionNo": null,
                       "destinations": [
                         {
                           "address": {
@@ -163037,6 +163567,7 @@
                       "designFeeAmount": "0.00",
                       "designNote": null,
                       "designOption": "own_file",
+                      "designVersionNo": null,
                       "destinations": [
                         {
                           "address": {
@@ -163395,6 +163926,7 @@
                       "designFeeAmount": "0.00",
                       "designNote": null,
                       "designOption": "own_file",
+                      "designVersionNo": null,
                       "destinations": [
                         {
                           "address": {
@@ -163741,6 +164273,7 @@
                       "designFeeAmount": "0.00",
                       "designNote": null,
                       "designOption": "own_file",
+                      "designVersionNo": null,
                       "destinations": [
                         {
                           "address": {
@@ -164085,6 +164618,7 @@
                       "designFeeAmount": "0.00",
                       "designNote": null,
                       "designOption": "own_file",
+                      "designVersionNo": null,
                       "destinations": [
                         {
                           "address": {
@@ -169477,9 +170011,18 @@
                     ]
                   },
                   "editable": false,
+                  "finishes": [
+                    "dev-matt"
+                  ],
                   "heightMm": 40,
                   "id": "0192f3a0-7c1e-7d2a-9b1f-0000000e5001",
                   "lengthMm": 100,
+                  "lock": {
+                    "lockedAt": "2026-09-27T11:00:00+07:00",
+                    "orderCode": "PK-2610-0001-01",
+                    "orderId": "0192f3a0-7c1e-7d2a-9b1f-0000000e5009",
+                    "versionNo": 3
+                  },
                   "materialId": null,
                   "measurementBasis": "internal",
                   "orders": [
@@ -169494,6 +170037,8 @@
                     "kind": "customer"
                   },
                   "patternId": "0192f3a0-7c1e-7d2a-9b1f-0000000e5003",
+                  "printMethod": "digital",
+                  "printSides": "outside",
                   "product": {
                     "id": "0192f3a0-7c1e-7d2a-9b1f-0000000e5002",
                     "nameEn": "Tuck-end box",
@@ -169504,6 +170049,8 @@
                   "schemaVersion": 1,
                   "semiDesignTemplateId": null,
                   "share": null,
+                  "spec": null,
+                  "styleVariantCode": "PK-TE-01-K7QD",
                   "thumbnailFileId": null,
                   "thumbnailUrl": null,
                   "title": "กล่องกาแฟของฉัน",
@@ -169774,9 +170321,18 @@
                     ]
                   },
                   "editable": false,
+                  "finishes": [
+                    "dev-matt"
+                  ],
                   "heightMm": 40,
                   "id": "0192f3a0-7c1e-7d2a-9b1f-0000000e5001",
                   "lengthMm": 100,
+                  "lock": {
+                    "lockedAt": "2026-09-27T11:00:00+07:00",
+                    "orderCode": "PK-2610-0001-01",
+                    "orderId": "0192f3a0-7c1e-7d2a-9b1f-0000000e5009",
+                    "versionNo": 3
+                  },
                   "materialId": null,
                   "measurementBasis": "internal",
                   "orders": [
@@ -169791,6 +170347,8 @@
                     "kind": "customer"
                   },
                   "patternId": "0192f3a0-7c1e-7d2a-9b1f-0000000e5003",
+                  "printMethod": "digital",
+                  "printSides": "outside",
                   "product": {
                     "id": "0192f3a0-7c1e-7d2a-9b1f-0000000e5002",
                     "nameEn": "Tuck-end box",
@@ -169801,6 +170359,8 @@
                   "schemaVersion": 1,
                   "semiDesignTemplateId": null,
                   "share": null,
+                  "spec": null,
+                  "styleVariantCode": "PK-TE-01-K7QD",
                   "thumbnailFileId": null,
                   "thumbnailUrl": null,
                   "title": "กล่องกาแฟของฉัน",
@@ -170061,9 +170621,18 @@
                     ]
                   },
                   "editable": false,
+                  "finishes": [
+                    "dev-matt"
+                  ],
                   "heightMm": 40,
                   "id": "0192f3a0-7c1e-7d2a-9b1f-0000000e5001",
                   "lengthMm": 100,
+                  "lock": {
+                    "lockedAt": "2026-09-27T11:00:00+07:00",
+                    "orderCode": "PK-2610-0001-01",
+                    "orderId": "0192f3a0-7c1e-7d2a-9b1f-0000000e5009",
+                    "versionNo": 3
+                  },
                   "materialId": null,
                   "measurementBasis": "internal",
                   "orders": [
@@ -170078,6 +170647,8 @@
                     "kind": "customer"
                   },
                   "patternId": "0192f3a0-7c1e-7d2a-9b1f-0000000e5003",
+                  "printMethod": "digital",
+                  "printSides": "outside",
                   "product": {
                     "id": "0192f3a0-7c1e-7d2a-9b1f-0000000e5002",
                     "nameEn": "Tuck-end box",
@@ -170088,6 +170659,8 @@
                   "schemaVersion": 1,
                   "semiDesignTemplateId": null,
                   "share": null,
+                  "spec": null,
+                  "styleVariantCode": "PK-TE-01-K7QD",
                   "thumbnailFileId": null,
                   "thumbnailUrl": null,
                   "title": "กล่องกาแฟของฉัน",
@@ -170421,9 +170994,18 @@
                     ]
                   },
                   "editable": true,
+                  "finishes": [
+                    "dev-matt"
+                  ],
                   "heightMm": 40,
                   "id": "0192f3a0-7c1e-7d2a-9b1f-0000000e5001",
                   "lengthMm": 100,
+                  "lock": {
+                    "lockedAt": "2026-09-27T11:00:00+07:00",
+                    "orderCode": "PK-2610-0001-01",
+                    "orderId": "0192f3a0-7c1e-7d2a-9b1f-0000000e5009",
+                    "versionNo": 3
+                  },
                   "materialId": null,
                   "measurementBasis": "internal",
                   "orders": [
@@ -170438,6 +171020,8 @@
                     "kind": "staff"
                   },
                   "patternId": "0192f3a0-7c1e-7d2a-9b1f-0000000e5003",
+                  "printMethod": "digital",
+                  "printSides": "outside",
                   "product": {
                     "id": "0192f3a0-7c1e-7d2a-9b1f-0000000e5002",
                     "nameEn": "Tuck-end box",
@@ -170448,6 +171032,8 @@
                   "schemaVersion": 1,
                   "semiDesignTemplateId": null,
                   "share": null,
+                  "spec": null,
+                  "styleVariantCode": "PK-TE-01-K7QD",
                   "thumbnailFileId": null,
                   "thumbnailUrl": null,
                   "title": "กล่องกาแฟของฉัน",
@@ -189871,6 +190457,228 @@
           }
         ],
         "summary": "Finish an upload",
+        "tags": [
+          "admin.files"
+        ]
+      }
+    },
+    "/v1/admin/files/{fileId}/actions/resume": {
+      "post": {
+        "description": "For an unfinished multipart upload of mine: the parts already stored (their ETags go to `complete`) and fresh signed URLs for every part, so only the missing parts are sent again (U4.B1, ADR-0003).\n\nImplements: ADR-0003.",
+        "operationId": "admin.files.resume",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "fileId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "expiresAt": "2026-09-23T14:20:00+07:00",
+                  "fileId": "0192f3a0-7c1e-7d2a-9b1f-00000000f11e",
+                  "partSize": 8388608,
+                  "parts": [
+                    {
+                      "partNumber": 1,
+                      "url": "https://packio-files.s3.example.com/…&partNumber=1"
+                    },
+                    {
+                      "partNumber": 2,
+                      "url": "https://packio-files.s3.example.com/…&partNumber=2"
+                    }
+                  ],
+                  "uploaded": [
+                    {
+                      "etag": "\"etag-1\"",
+                      "partNumber": 1,
+                      "sizeBytes": 8388608
+                    }
+                  ]
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ResumedUploadDto"
+                }
+              }
+            },
+            "description": "Upload state",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.unauthenticated": {
+                    "$ref": "#/components/examples/problem.auth.unauthenticated"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.unauthenticated`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.forbidden": {
+                    "$ref": "#/components/examples/problem.auth.forbidden"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.forbidden`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "404": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.not_found": {
+                    "$ref": "#/components/examples/problem.http.not_found"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.not_found`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "409": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "file.not_multipart": {
+                    "$ref": "#/components/examples/problem.file.not_multipart"
+                  },
+                  "http.conflict": {
+                    "$ref": "#/components/examples/problem.http.conflict"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `file.not_multipart`, `http.conflict`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "validation.failed": {
+                    "$ref": "#/components/examples/problem.validation.failed"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `validation.failed`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "staff": []
+          }
+        ],
+        "summary": "Resume a large upload",
         "tags": [
           "admin.files"
         ]
@@ -305920,6 +306728,228 @@
         ]
       }
     },
+    "/v1/partner/files/{fileId}/actions/resume": {
+      "post": {
+        "description": "For an unfinished multipart upload of mine: the parts already stored (their ETags go to `complete`) and fresh signed URLs for every part, so only the missing parts are sent again (U4.B1, ADR-0003).\n\nImplements: ADR-0003.",
+        "operationId": "partner.files.resume",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "fileId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "expiresAt": "2026-09-23T14:20:00+07:00",
+                  "fileId": "0192f3a0-7c1e-7d2a-9b1f-00000000f11e",
+                  "partSize": 8388608,
+                  "parts": [
+                    {
+                      "partNumber": 1,
+                      "url": "https://packio-files.s3.example.com/…&partNumber=1"
+                    },
+                    {
+                      "partNumber": 2,
+                      "url": "https://packio-files.s3.example.com/…&partNumber=2"
+                    }
+                  ],
+                  "uploaded": [
+                    {
+                      "etag": "\"etag-1\"",
+                      "partNumber": 1,
+                      "sizeBytes": 8388608
+                    }
+                  ]
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ResumedUploadDto"
+                }
+              }
+            },
+            "description": "Upload state",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.unauthenticated": {
+                    "$ref": "#/components/examples/problem.auth.unauthenticated"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.unauthenticated`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.forbidden": {
+                    "$ref": "#/components/examples/problem.auth.forbidden"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.forbidden`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "404": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.not_found": {
+                    "$ref": "#/components/examples/problem.http.not_found"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.not_found`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "409": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "file.not_multipart": {
+                    "$ref": "#/components/examples/problem.file.not_multipart"
+                  },
+                  "http.conflict": {
+                    "$ref": "#/components/examples/problem.http.conflict"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `file.not_multipart`, `http.conflict`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "validation.failed": {
+                    "$ref": "#/components/examples/problem.validation.failed"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `validation.failed`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "partner": []
+          }
+        ],
+        "summary": "Resume a large upload",
+        "tags": [
+          "partner.files"
+        ]
+      }
+    },
     "/v1/partner/files/{fileId}/download": {
       "get": {
         "description": "A signed URL valid 5 minutes, after the access check. Files still scanning are `file.not_ready`; infected files are never served.\n\nImplements: ADR-0003.",
@@ -318789,6 +319819,7 @@
                       "designFeeAmount": "0.00",
                       "designNote": null,
                       "designOption": "own_file",
+                      "designVersionNo": null,
                       "destinations": [
                         {
                           "address": {
@@ -319084,6 +320115,7 @@
                       "designFeeAmount": "0.00",
                       "designNote": null,
                       "designOption": "own_file",
+                      "designVersionNo": null,
                       "destinations": [
                         {
                           "address": {
@@ -319431,6 +320463,7 @@
                       "designFeeAmount": "0.00",
                       "designNote": null,
                       "designOption": "own_file",
+                      "designVersionNo": null,
                       "destinations": [
                         {
                           "address": {
@@ -319765,6 +320798,7 @@
                       "designFeeAmount": "0.00",
                       "designNote": null,
                       "designOption": "own_file",
+                      "designVersionNo": null,
                       "destinations": [
                         {
                           "address": {
@@ -320370,6 +321404,7 @@
                       "designFeeAmount": "0.00",
                       "designNote": null,
                       "designOption": "own_file",
+                      "designVersionNo": null,
                       "destinations": [
                         {
                           "address": {
@@ -320717,6 +321752,7 @@
                       "designFeeAmount": "0.00",
                       "designNote": null,
                       "designOption": "own_file",
+                      "designVersionNo": null,
                       "destinations": [
                         {
                           "address": {
@@ -321052,6 +322088,7 @@
                       "designFeeAmount": "0.00",
                       "designNote": null,
                       "designOption": "own_file",
+                      "designVersionNo": null,
                       "destinations": [
                         {
                           "address": {
@@ -321385,6 +322422,7 @@
                       "designFeeAmount": "0.00",
                       "designNote": null,
                       "designOption": "own_file",
+                      "designVersionNo": null,
                       "destinations": [
                         {
                           "address": {
@@ -339333,9 +340371,18 @@
                       "catalogProductId": "0192f3a0-7c1e-7d2a-9b1f-0000000e5002",
                       "createdAt": "2026-09-20T10:00:00+07:00",
                       "document": null,
+                      "finishes": [
+                        "dev-matt"
+                      ],
                       "heightMm": 40,
                       "id": "0192f3a0-7c1e-7d2a-9b1f-0000000e5001",
                       "lengthMm": 100,
+                      "lock": {
+                        "lockedAt": "2026-09-27T11:00:00+07:00",
+                        "orderCode": "PK-2610-0001-01",
+                        "orderId": "0192f3a0-7c1e-7d2a-9b1f-0000000e5009",
+                        "versionNo": 3
+                      },
                       "materialId": null,
                       "measurementBasis": "internal",
                       "orders": [
@@ -339345,6 +340392,8 @@
                         }
                       ],
                       "patternId": "0192f3a0-7c1e-7d2a-9b1f-0000000e5003",
+                      "printMethod": "digital",
+                      "printSides": "outside",
                       "product": {
                         "id": "0192f3a0-7c1e-7d2a-9b1f-0000000e5002",
                         "nameEn": "Tuck-end box",
@@ -339355,6 +340404,8 @@
                       "schemaVersion": 1,
                       "semiDesignTemplateId": null,
                       "share": null,
+                      "spec": null,
+                      "styleVariantCode": "PK-TE-01-K7QD",
                       "thumbnailFileId": null,
                       "thumbnailUrl": null,
                       "title": "กล่องกาแฟของฉัน",
@@ -339605,9 +340656,18 @@
                       }
                     ]
                   },
+                  "finishes": [
+                    "dev-matt"
+                  ],
                   "heightMm": 40,
                   "id": "0192f3a0-7c1e-7d2a-9b1f-0000000e5001",
                   "lengthMm": 100,
+                  "lock": {
+                    "lockedAt": "2026-09-27T11:00:00+07:00",
+                    "orderCode": "PK-2610-0001-01",
+                    "orderId": "0192f3a0-7c1e-7d2a-9b1f-0000000e5009",
+                    "versionNo": 3
+                  },
                   "materialId": null,
                   "measurementBasis": "internal",
                   "orders": [
@@ -339617,6 +340677,8 @@
                     }
                   ],
                   "patternId": "0192f3a0-7c1e-7d2a-9b1f-0000000e5003",
+                  "printMethod": "digital",
+                  "printSides": "outside",
                   "product": {
                     "id": "0192f3a0-7c1e-7d2a-9b1f-0000000e5002",
                     "nameEn": "Tuck-end box",
@@ -339627,6 +340689,8 @@
                   "schemaVersion": 1,
                   "semiDesignTemplateId": null,
                   "share": null,
+                  "spec": null,
+                  "styleVariantCode": "PK-TE-01-K7QD",
                   "thumbnailFileId": null,
                   "thumbnailUrl": null,
                   "title": "กล่องกาแฟของฉัน",
@@ -340335,9 +341399,18 @@
                       }
                     ]
                   },
+                  "finishes": [
+                    "dev-matt"
+                  ],
                   "heightMm": 40,
                   "id": "0192f3a0-7c1e-7d2a-9b1f-0000000e5001",
                   "lengthMm": 100,
+                  "lock": {
+                    "lockedAt": "2026-09-27T11:00:00+07:00",
+                    "orderCode": "PK-2610-0001-01",
+                    "orderId": "0192f3a0-7c1e-7d2a-9b1f-0000000e5009",
+                    "versionNo": 3
+                  },
                   "materialId": null,
                   "measurementBasis": "internal",
                   "orders": [
@@ -340347,6 +341420,8 @@
                     }
                   ],
                   "patternId": "0192f3a0-7c1e-7d2a-9b1f-0000000e5003",
+                  "printMethod": "digital",
+                  "printSides": "outside",
                   "product": {
                     "id": "0192f3a0-7c1e-7d2a-9b1f-0000000e5002",
                     "nameEn": "Tuck-end box",
@@ -340357,6 +341432,8 @@
                   "schemaVersion": 1,
                   "semiDesignTemplateId": null,
                   "share": null,
+                  "spec": null,
+                  "styleVariantCode": "PK-TE-01-K7QD",
                   "thumbnailFileId": null,
                   "thumbnailUrl": null,
                   "title": "กล่องกาแฟของฉัน",
@@ -340523,7 +341600,7 @@
         ]
       },
       "put": {
-        "description": "Versions are immutable; `If-Match` is required — a stale ETag is refused with 412. `kind` tells the editor’s autosaves from the customer’s saves (the history can hide autosaves) and `label` names the version; the box style, material and size can change with the save.\n\nImplements: D-152, D-070.",
+        "description": "Versions are immutable; `If-Match` is required — a stale ETag is refused with 412. `kind` tells the editor’s autosaves from the customer’s saves (the history can hide autosaves) and `label` names the version; the box style, material and size can change with the save, and the studio box — style variant, print method and sides, finishes — and the calculator spec (D-275). Every version keeps its box and spec.\n\nImplements: D-152, D-070, D-275, D-276.",
         "operationId": "store.designs.save",
         "parameters": [
           {
@@ -340613,9 +341690,18 @@
                       }
                     ]
                   },
+                  "finishes": [
+                    "dev-matt"
+                  ],
                   "heightMm": 40,
                   "id": "0192f3a0-7c1e-7d2a-9b1f-0000000e5001",
                   "lengthMm": 100,
+                  "lock": {
+                    "lockedAt": "2026-09-27T11:00:00+07:00",
+                    "orderCode": "PK-2610-0001-01",
+                    "orderId": "0192f3a0-7c1e-7d2a-9b1f-0000000e5009",
+                    "versionNo": 3
+                  },
                   "materialId": null,
                   "measurementBasis": "internal",
                   "orders": [
@@ -340625,6 +341711,8 @@
                     }
                   ],
                   "patternId": "0192f3a0-7c1e-7d2a-9b1f-0000000e5003",
+                  "printMethod": "digital",
+                  "printSides": "outside",
                   "product": {
                     "id": "0192f3a0-7c1e-7d2a-9b1f-0000000e5002",
                     "nameEn": "Tuck-end box",
@@ -340635,6 +341723,8 @@
                   "schemaVersion": 1,
                   "semiDesignTemplateId": null,
                   "share": null,
+                  "spec": null,
+                  "styleVariantCode": "PK-TE-01-K7QD",
                   "thumbnailFileId": null,
                   "thumbnailUrl": null,
                   "title": "กล่องกาแฟของฉัน",
@@ -340944,13 +342034,24 @@
                       }
                     ]
                   },
+                  "finishes": [
+                    "dev-matt"
+                  ],
                   "heightMm": 40,
                   "id": "0192f3a0-7c1e-7d2a-9b1f-0000000e5001",
                   "lengthMm": 100,
+                  "lock": {
+                    "lockedAt": "2026-09-27T11:00:00+07:00",
+                    "orderCode": "PK-2610-0001-01",
+                    "orderId": "0192f3a0-7c1e-7d2a-9b1f-0000000e5009",
+                    "versionNo": 3
+                  },
                   "materialId": null,
                   "measurementBasis": "internal",
                   "orders": [],
                   "patternId": "0192f3a0-7c1e-7d2a-9b1f-0000000e5003",
+                  "printMethod": "digital",
+                  "printSides": "outside",
                   "product": {
                     "id": "0192f3a0-7c1e-7d2a-9b1f-0000000e5002",
                     "nameEn": "Tuck-end box",
@@ -340961,6 +342062,8 @@
                   "schemaVersion": 1,
                   "semiDesignTemplateId": null,
                   "share": null,
+                  "spec": null,
+                  "styleVariantCode": "PK-TE-01-K7QD",
                   "thumbnailFileId": null,
                   "thumbnailUrl": null,
                   "title": "กล่องกาแฟของฉัน (สำเนา)",
@@ -341435,9 +342538,18 @@
                       }
                     ]
                   },
+                  "finishes": [
+                    "dev-matt"
+                  ],
                   "heightMm": 40,
                   "id": "0192f3a0-7c1e-7d2a-9b1f-0000000e5001",
                   "lengthMm": 100,
+                  "lock": {
+                    "lockedAt": "2026-09-27T11:00:00+07:00",
+                    "orderCode": "PK-2610-0001-01",
+                    "orderId": "0192f3a0-7c1e-7d2a-9b1f-0000000e5009",
+                    "versionNo": 3
+                  },
                   "materialId": null,
                   "measurementBasis": "internal",
                   "orders": [
@@ -341447,6 +342559,8 @@
                     }
                   ],
                   "patternId": "0192f3a0-7c1e-7d2a-9b1f-0000000e5003",
+                  "printMethod": "digital",
+                  "printSides": "outside",
                   "product": {
                     "id": "0192f3a0-7c1e-7d2a-9b1f-0000000e5002",
                     "nameEn": "Tuck-end box",
@@ -341457,6 +342571,8 @@
                   "schemaVersion": 1,
                   "semiDesignTemplateId": null,
                   "share": null,
+                  "spec": null,
+                  "styleVariantCode": "PK-TE-01-K7QD",
                   "thumbnailFileId": null,
                   "thumbnailUrl": null,
                   "title": "กล่องกาแฟของฉัน",
@@ -341696,9 +342812,18 @@
                       }
                     ]
                   },
+                  "finishes": [
+                    "dev-matt"
+                  ],
                   "heightMm": 40,
                   "id": "0192f3a0-7c1e-7d2a-9b1f-0000000e5001",
                   "lengthMm": 100,
+                  "lock": {
+                    "lockedAt": "2026-09-27T11:00:00+07:00",
+                    "orderCode": "PK-2610-0001-01",
+                    "orderId": "0192f3a0-7c1e-7d2a-9b1f-0000000e5009",
+                    "versionNo": 3
+                  },
                   "materialId": null,
                   "measurementBasis": "internal",
                   "orders": [
@@ -341708,6 +342833,8 @@
                     }
                   ],
                   "patternId": "0192f3a0-7c1e-7d2a-9b1f-0000000e5003",
+                  "printMethod": "digital",
+                  "printSides": "outside",
                   "product": {
                     "id": "0192f3a0-7c1e-7d2a-9b1f-0000000e5002",
                     "nameEn": "Tuck-end box",
@@ -341718,6 +342845,8 @@
                   "schemaVersion": 1,
                   "semiDesignTemplateId": null,
                   "share": null,
+                  "spec": null,
+                  "styleVariantCode": "PK-TE-01-K7QD",
                   "thumbnailFileId": null,
                   "thumbnailUrl": null,
                   "title": "กล่องกาแฟของฉัน",
@@ -341876,6 +343005,401 @@
           }
         ],
         "summary": "Remove an asset from my design",
+        "tags": [
+          "store.designs"
+        ]
+      }
+    },
+    "/v1/store/designs/{designId}/document": {
+      "patch": {
+        "description": "A JSON Patch (RFC 6902) on the current version’s document — small and frequent, applied all or nothing as a new version (`kind` autosave by default). `If-Match` is required; a stale ETag is refused with 412 and the studio reloads. ≤ 256 KiB of operations, the document ≤ 2 MiB (D-276).\n\nImplements: D-152, D-070, D-276.",
+        "operationId": "store.designs.patchDocument",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "designId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/IfMatch"
+          },
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "examples": {
+                "default": {
+                  "value": {
+                    "operations": [
+                      {
+                        "op": "test",
+                        "path": "/version",
+                        "value": 1
+                      },
+                      {
+                        "op": "replace",
+                        "path": "/faces/front/objects/0/text",
+                        "value": "กาแฟคั่วเข้ม"
+                      }
+                    ]
+                  }
+                }
+              },
+              "schema": {
+                "$ref": "#/components/schemas/PatchDesignDocumentDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "assets": [
+                    {
+                      "createdAt": "2026-09-27T10:00:00+07:00",
+                      "fileId": "0192f3a0-7c1e-7d2a-9b1f-0000000e5006",
+                      "heightPx": 800,
+                      "id": "0192f3a0-7c1e-7d2a-9b1f-0000000e5007",
+                      "kind": "logo",
+                      "mimeType": "image/png",
+                      "sizeBytes": 48213,
+                      "url": "https://files.example.test/customer_content/2026/09/0192f3a0?X-Amz-Signature=fake",
+                      "urlExpiresAt": "2026-09-27T10:05:00+07:00",
+                      "widthPx": 1200
+                    }
+                  ],
+                  "catalogProductId": "0192f3a0-7c1e-7d2a-9b1f-0000000e5002",
+                  "createdAt": "2026-09-20T10:00:00+07:00",
+                  "document": {
+                    "pages": [
+                      {
+                        "objects": [
+                          {
+                            "text": "Packio",
+                            "type": "text",
+                            "x": 10,
+                            "y": 20
+                          }
+                        ],
+                        "side": "front"
+                      }
+                    ]
+                  },
+                  "finishes": [
+                    "dev-matt"
+                  ],
+                  "heightMm": 40,
+                  "id": "0192f3a0-7c1e-7d2a-9b1f-0000000e5001",
+                  "lengthMm": 100,
+                  "lock": {
+                    "lockedAt": "2026-09-27T11:00:00+07:00",
+                    "orderCode": "PK-2610-0001-01",
+                    "orderId": "0192f3a0-7c1e-7d2a-9b1f-0000000e5009",
+                    "versionNo": 3
+                  },
+                  "materialId": null,
+                  "measurementBasis": "internal",
+                  "orders": [
+                    {
+                      "orderCode": "PK-2610-0001-01",
+                      "orderId": "0192f3a0-7c1e-7d2a-9b1f-0000000e5009"
+                    }
+                  ],
+                  "patternId": "0192f3a0-7c1e-7d2a-9b1f-0000000e5003",
+                  "printMethod": "digital",
+                  "printSides": "outside",
+                  "product": {
+                    "id": "0192f3a0-7c1e-7d2a-9b1f-0000000e5002",
+                    "nameEn": "Tuck-end box",
+                    "nameTh": "กล่องฝาเสียบ",
+                    "productTypeCode": "folding_box",
+                    "slug": "tuck-end-box"
+                  },
+                  "schemaVersion": 1,
+                  "semiDesignTemplateId": null,
+                  "share": null,
+                  "spec": null,
+                  "styleVariantCode": "PK-TE-01-K7QD",
+                  "thumbnailFileId": null,
+                  "thumbnailUrl": null,
+                  "title": "กล่องกาแฟของฉัน",
+                  "updatedAt": "2026-09-27T10:00:00+07:00",
+                  "versionNo": 3,
+                  "widthMm": 60
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/DesignDocumentDto"
+                }
+              }
+            },
+            "description": "Saved",
+            "headers": {
+              "ETag": {
+                "$ref": "#/components/headers/ETag"
+              },
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "400": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.bad_request": {
+                    "$ref": "#/components/examples/problem.http.bad_request"
+                  },
+                  "http.malformed_json": {
+                    "$ref": "#/components/examples/problem.http.malformed_json"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.bad_request`, `http.malformed_json`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.unauthenticated": {
+                    "$ref": "#/components/examples/problem.auth.unauthenticated"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.unauthenticated`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.forbidden": {
+                    "$ref": "#/components/examples/problem.auth.forbidden"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.forbidden`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "404": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.not_found": {
+                    "$ref": "#/components/examples/problem.http.not_found"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.not_found`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "409": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "designs.nothing_to_patch": {
+                    "$ref": "#/components/examples/problem.designs.nothing_to_patch"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `designs.nothing_to_patch`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "412": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "concurrency.stale": {
+                    "$ref": "#/components/examples/problem.concurrency.stale"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `concurrency.stale`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "413": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "designs.patch_too_large": {
+                    "$ref": "#/components/examples/problem.designs.patch_too_large"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `designs.patch_too_large`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "designs.document_too_large": {
+                    "$ref": "#/components/examples/problem.designs.document_too_large"
+                  },
+                  "designs.patch_failed": {
+                    "$ref": "#/components/examples/problem.designs.patch_failed"
+                  },
+                  "validation.failed": {
+                    "$ref": "#/components/examples/problem.validation.failed"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `designs.document_too_large`, `designs.patch_failed`, `validation.failed`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "428": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "concurrency.precondition_required": {
+                    "$ref": "#/components/examples/problem.concurrency.precondition_required"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `concurrency.precondition_required`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "customer": []
+          }
+        ],
+        "summary": "Autosave changes to my design",
         "tags": [
           "store.designs"
         ]
@@ -342107,12 +343631,26 @@
               "application/json": {
                 "example": [
                   {
+                    "box": {
+                      "finishes": [
+                        "dev-matt"
+                      ],
+                      "heightMm": 40,
+                      "lengthMm": 100,
+                      "materialId": null,
+                      "measurementBasis": "internal",
+                      "printMethod": "digital",
+                      "printSides": "outside",
+                      "styleVariantCode": "PK-TE-01-K7QD",
+                      "widthMm": 60
+                    },
                     "contentSha256": "9f86d081884c7d659a2feaa0c55ad015a3bf4f1b2b0b822cd15d6c15b0f00a08",
                     "createdAt": "2026-09-27T10:00:00+07:00",
                     "document": null,
                     "kind": "manual",
                     "label": "ก่อนเปลี่ยนสีพื้น",
                     "schemaVersion": 1,
+                    "spec": null,
                     "thumbnailFileId": null,
                     "thumbnailUrl": null,
                     "versionNo": 3
@@ -342309,6 +343847,19 @@
             "content": {
               "application/json": {
                 "example": {
+                  "box": {
+                    "finishes": [
+                      "dev-matt"
+                    ],
+                    "heightMm": 40,
+                    "lengthMm": 100,
+                    "materialId": null,
+                    "measurementBasis": "internal",
+                    "printMethod": "digital",
+                    "printSides": "outside",
+                    "styleVariantCode": "PK-TE-01-K7QD",
+                    "widthMm": 60
+                  },
                   "contentSha256": "9f86d081884c7d659a2feaa0c55ad015a3bf4f1b2b0b822cd15d6c15b0f00a08",
                   "createdAt": "2026-09-27T10:00:00+07:00",
                   "document": {
@@ -342329,6 +343880,7 @@
                   "kind": "manual",
                   "label": "ก่อนเปลี่ยนสีพื้น",
                   "schemaVersion": 1,
+                  "spec": null,
                   "thumbnailFileId": null,
                   "thumbnailUrl": null,
                   "versionNo": 3
@@ -342555,9 +344107,18 @@
                       }
                     ]
                   },
+                  "finishes": [
+                    "dev-matt"
+                  ],
                   "heightMm": 40,
                   "id": "0192f3a0-7c1e-7d2a-9b1f-0000000e5001",
                   "lengthMm": 100,
+                  "lock": {
+                    "lockedAt": "2026-09-27T11:00:00+07:00",
+                    "orderCode": "PK-2610-0001-01",
+                    "orderId": "0192f3a0-7c1e-7d2a-9b1f-0000000e5009",
+                    "versionNo": 3
+                  },
                   "materialId": null,
                   "measurementBasis": "internal",
                   "orders": [
@@ -342567,6 +344128,8 @@
                     }
                   ],
                   "patternId": "0192f3a0-7c1e-7d2a-9b1f-0000000e5003",
+                  "printMethod": "digital",
+                  "printSides": "outside",
                   "product": {
                     "id": "0192f3a0-7c1e-7d2a-9b1f-0000000e5002",
                     "nameEn": "Tuck-end box",
@@ -342577,6 +344140,8 @@
                   "schemaVersion": 1,
                   "semiDesignTemplateId": null,
                   "share": null,
+                  "spec": null,
+                  "styleVariantCode": "PK-TE-01-K7QD",
                   "thumbnailFileId": null,
                   "thumbnailUrl": null,
                   "title": "กล่องกาแฟของฉัน",
@@ -345170,6 +346735,228 @@
           }
         ],
         "summary": "Finish an upload",
+        "tags": [
+          "store.files"
+        ]
+      }
+    },
+    "/v1/store/files/{fileId}/actions/resume": {
+      "post": {
+        "description": "For an unfinished multipart upload of mine: the parts already stored (their ETags go to `complete`) and fresh signed URLs for every part, so only the missing parts are sent again (U4.B1, ADR-0003).\n\nImplements: ADR-0003.",
+        "operationId": "store.files.resume",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "fileId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "expiresAt": "2026-09-23T14:20:00+07:00",
+                  "fileId": "0192f3a0-7c1e-7d2a-9b1f-00000000f11e",
+                  "partSize": 8388608,
+                  "parts": [
+                    {
+                      "partNumber": 1,
+                      "url": "https://packio-files.s3.example.com/…&partNumber=1"
+                    },
+                    {
+                      "partNumber": 2,
+                      "url": "https://packio-files.s3.example.com/…&partNumber=2"
+                    }
+                  ],
+                  "uploaded": [
+                    {
+                      "etag": "\"etag-1\"",
+                      "partNumber": 1,
+                      "sizeBytes": 8388608
+                    }
+                  ]
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ResumedUploadDto"
+                }
+              }
+            },
+            "description": "Upload state",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.unauthenticated": {
+                    "$ref": "#/components/examples/problem.auth.unauthenticated"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.unauthenticated`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.forbidden": {
+                    "$ref": "#/components/examples/problem.auth.forbidden"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.forbidden`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "404": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.not_found": {
+                    "$ref": "#/components/examples/problem.http.not_found"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.not_found`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "409": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "file.not_multipart": {
+                    "$ref": "#/components/examples/problem.file.not_multipart"
+                  },
+                  "http.conflict": {
+                    "$ref": "#/components/examples/problem.http.conflict"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `file.not_multipart`, `http.conflict`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "validation.failed": {
+                    "$ref": "#/components/examples/problem.validation.failed"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `validation.failed`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "customer": []
+          }
+        ],
+        "summary": "Resume a large upload",
         "tags": [
           "store.files"
         ]
@@ -351551,6 +353338,7 @@
                       "designFeeAmount": "0.00",
                       "designNote": null,
                       "designOption": "own_file",
+                      "designVersionNo": null,
                       "destinations": [
                         {
                           "address": {
@@ -352597,7 +354385,7 @@
     },
     "/v1/store/orders/{orderId}/artwork-submissions/from-design": {
       "post": {
-        "description": "The current version of the design (default: the one the order was placed with) becomes an artwork version (source `designer`); Prepress exports it for the proof (D-070).\n\nImplements: D-070.",
+        "description": "A version of the design becomes an artwork version (source `designer`); Prepress exports it for the proof (D-070). Without `designId`: the version the order was placed with (D-276), else its design’s current one; with `designId`: that design’s current version.\n\nImplements: D-070, D-276.",
         "operationId": "store.designs.submitForOrder",
         "parameters": [
           {
