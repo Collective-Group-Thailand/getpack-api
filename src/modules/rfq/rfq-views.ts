@@ -1,6 +1,7 @@
 import { nextActions, NO_PERMISSIONS } from '@common/next-actions/next-actions';
 import { toBangkokIso } from '@common/time/bangkok';
 import { type Prisma } from '@generated/prisma/client';
+import { targetString } from '@modules/pricing/quotes/target-price';
 import { rfqSpecLines } from '@modules/quotes/line-summary';
 
 import {
@@ -62,6 +63,7 @@ export function rfqDto(r: RfqRow, files: RfqFiles = NO_FILES): RfqDto {
     measurementBasis: r.measurementBasis,
     quantities: r.tiers.map((t) => t.quantity),
     targetDate: date(r.targetDate),
+    targetPricePerUnit: targetString(r.targetPricePerUnit),
     deliveryPostcode: r.deliveryPostcode,
     notes: r.notes,
     slaDueAt: iso(r.slaDueAt),

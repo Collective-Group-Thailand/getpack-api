@@ -90,6 +90,8 @@ export interface SubmitRfqInput {
   fileIds?: string[];
   specSchemaVersion?: number;
   routedFrom?: { calculationId: string };
+  /** D-247: the customer's target per unit (THB incl. VAT, excl. shipping); staff only, never to a partner (D-190). */
+  targetPricePerUnit?: string | null;
 }
 
 export interface RfqQuoteLineInput {
@@ -210,6 +212,7 @@ export class RfqsService implements OnModuleInit {
           spec: input.spec as Prisma.InputJsonValue,
           specSchemaVersion: type.rfqSpecSchemaVersion,
           routedFromCalculateLogId: routedFrom,
+          targetPricePerUnit: input.targetPricePerUnit ?? null,
           lengthMm: input.lengthMm ?? null,
           widthMm: input.widthMm ?? null,
           heightMm: input.heightMm ?? null,
@@ -429,6 +432,7 @@ export class RfqsService implements OnModuleInit {
           deliveryPostcode: rfq.deliveryPostcode,
           snapshotSha256,
           options: { create: options },
+          targetPricePerUnit: rfq.targetPricePerUnit, // D-247: the accepted quotation keeps the RFQ's target
         },
       });
       await tx.rfqQuote.update({ where: { id: quote.id }, data: { status: 'accepted' } });

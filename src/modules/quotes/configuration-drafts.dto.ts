@@ -1,6 +1,7 @@
 import { ProblemFieldError } from '@common/errors/problem-details.dto';
 import { PageQuery } from '@common/pagination/pagination.dto';
 import { RefField, TextField } from '@modules/catalog/crud/dto-fields';
+import { TargetPriceField } from '@modules/pricing/quotes/target-price';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import {
   ArrayMaxSize,
@@ -57,6 +58,9 @@ export class CreateConfigurationDraftDto {
   })
   @IsObject()
   configuration!: Record<string, unknown>;
+
+  @TargetPriceField('Carried to the quotation or RFQ the draft becomes')
+  targetPricePerUnit?: string;
 }
 
 export class UpdateConfigurationDraftDto {
@@ -73,6 +77,9 @@ export class UpdateConfigurationDraftDto {
   @IsOptional()
   @IsObject()
   configuration?: Record<string, unknown>;
+
+  @TargetPriceField('`null` removes it; omitted keeps it')
+  targetPricePerUnit?: string | null;
 }
 
 export class ConvertDraftToQuoteDto {
@@ -136,6 +143,14 @@ export class ConfigurationDraftDto {
 
   @ApiProperty({ type: 'object', additionalProperties: true, example: EXAMPLE_CONFIGURATION })
   configuration!: Record<string, unknown>;
+
+  @ApiProperty({
+    type: String,
+    nullable: true,
+    example: '11.50',
+    description: 'The target per unit (THB incl. VAT, excl. shipping, D-247); not shown on a share link',
+  })
+  targetPricePerUnit!: string | null;
 
   @ApiProperty({
     type: Number,
@@ -255,6 +270,7 @@ export const DRAFT_EXAMPLE: ConfigurationDraftDto = {
   catalogProductId: IDS.product,
   title: 'กล่องครีม 50 มล.',
   configuration: EXAMPLE_CONFIGURATION,
+  targetPricePerUnit: '11.50',
   completenessPct: 62.5,
   missingFields: ['materialId', 'quantities'],
   invalidFields: [],

@@ -76,6 +76,7 @@ import {
 } from './standard-product.dto';
 import { StandardProductInputDataService } from './standard-product-input-data.service';
 import { TAG_SLEEVE_CONFIGURATION_EXAMPLE, TagSleeveConfigurationDto } from './tag-sleeve.dto';
+import { targetGap, targetString } from './target-price';
 
 const CALCULATION = ['D-100', 'D-043', 'D-050', 'D-051', 'D-101'];
 
@@ -93,11 +94,20 @@ class ParseOptionalPostcodePipe implements PipeTransform<unknown, string | undef
   }
 }
 
-const storeView = (view: QuoteView): QuoteCalculationDto => ({
+const storeView = (view: QuoteView, target?: string): QuoteCalculationDto => ({
   calculatorVersion: view.calculatorVersion,
   calculationId: view.calculateLog?.publicId ?? null,
   steps: view.steps.map(({ internal: _internal, ...step }) => step),
   dimensions: view.dimensions,
+  // D-247: the gap of each instant quantity against the customer's target (nothing is stored).
+  target: target
+    ? {
+        targetPricePerUnit: targetString(target)!,
+        steps: view.steps
+          .filter((s) => s.instant && s.unitPrice !== null)
+          .map((s) => ({ quantity: s.quantity, ...targetGap(s.unitPrice, target)! })),
+      }
+    : null,
 });
 
 /** The staff view with buy prices only for `factory_cost.read` and margins only for `margin.read` (D-141). */
@@ -159,8 +169,9 @@ export class StoreQuotesController {
       'lead time and earliest ship date within capacity (D-101), quantity tolerance (D-021). A quantity without an ' +
       'instant price carries the reason and routes to RFQ. The configuration is the one of the type’s calculator ' +
       '(folding, corrugate, label, tag & sleeve, pouch, standard product, service). Nothing is saved (quotes are saved with B2.5, D-051); no factory data is returned ' +
-      '(D-050). Works signed in or anonymously.',
-    implements: CALCULATION,
+      '(D-050). Works signed in or anonymously. With `targetPricePerUnit` the response gives each instant ' +
+      'quantity’s gap against it (D-247); the target is not stored here.',
+    implements: [...CALCULATION, 'D-247'],
   })
   @ApiBody({
     type: CalculateQuoteDto,
@@ -208,7 +219,7 @@ export class StoreQuotesController {
       ip: RequestContext.current()?.ip,
       deliveryPostcode: body.deliveryPostcode,
     });
-    return storeView(view);
+    return storeView(view, body.targetPricePerUnit);
   }
 }
 

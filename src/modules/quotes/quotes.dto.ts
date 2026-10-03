@@ -8,6 +8,7 @@ import {
   QuoteInternalDto,
   STORE_CALCULATION_EXAMPLE,
 } from '@modules/pricing/quotes/quote.dto';
+import { TargetGapDto } from '@modules/pricing/quotes/target-price';
 import { RATE_MISS_REASONS } from '@modules/shipping/rates/customer-rates.dto';
 import { QuoteDimensionsDto } from '@modules/specs/specs.dto';
 import { ApiProperty, ApiPropertyOptional, getSchemaPath } from '@nestjs/swagger';
@@ -25,6 +26,8 @@ export const QUOTE_STATUSES = [
   'converted',
   'expired',
   'superseded',
+  'declined',
+  'routed_to_rfq',
 ] as const;
 export const QUOTE_SOURCES = ['instant', 'rfq'] as const;
 export const PDF_STATUSES = ['none', 'pending', 'ready'] as const;
@@ -190,6 +193,14 @@ export class SavedQuoteOptionDto {
 
   @ApiProperty({ nullable: true, example: null, enum: RATE_MISS_REASONS, enumName: 'ShippingRateMissReason' })
   shippingPendingReason!: string | null;
+
+  @ApiProperty({
+    type: TargetGapDto,
+    nullable: true,
+    example: { gapPerUnit: '1.88', gapPct: '16.35', meetsTarget: false },
+    description: 'This quantity against the quotation’s target (D-247); null without a target',
+  })
+  targetGap!: TargetGapDto | null;
 }
 
 export class AdminSavedQuoteOptionDto extends SavedQuoteOptionDto {
@@ -327,6 +338,15 @@ export class SavedQuoteDto {
   })
   advisory!: QuoteAdvisoryDto | null;
 
+  @ApiProperty({
+    type: String,
+    nullable: true,
+    example: '11.50',
+    description:
+      'The customer’s target per unit (THB incl. VAT, excl. shipping, D-247); never shown to a factory',
+  })
+  targetPricePerUnit!: string | null;
+
   @ApiProperty({ format: 'date-time', example: '2026-10-01T09:00:00+07:00' })
   createdAt!: string;
 }
@@ -404,6 +424,7 @@ export const OPTION_EXAMPLE: SavedQuoteOptionDto = {
   toleranceColourDeltaE: step.toleranceColourDeltaE,
   shippingPending: false,
   shippingPendingReason: null,
+  targetGap: { gapPerUnit: '1.88', gapPct: '16.35', meetsTarget: false },
 };
 
 export const QUOTE_EXAMPLE: SavedQuoteDto = {
@@ -424,6 +445,7 @@ export const QUOTE_EXAMPLE: SavedQuoteDto = {
   shareExpiresAt: null,
   sharedAt: null,
   advisory: null,
+  targetPricePerUnit: '11.50',
   createdAt: '2026-10-01T09:00:00+07:00',
 };
 

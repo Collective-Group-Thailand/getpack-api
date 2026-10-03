@@ -1,5 +1,6 @@
 import { toBangkokIso } from '@common/time/bangkok';
 import { type QuoteStepView } from '@modules/pricing/quotes/quote-engine.service';
+import { targetGap, targetString } from '@modules/pricing/quotes/target-price';
 
 import { lineSummary } from './line-summary';
 import { type AdminSavedQuoteDto, type SavedQuoteDto, type SavedQuoteOptionDto } from './quotes.dto';
@@ -10,7 +11,7 @@ type Internal = NonNullable<QuoteStepView['internal']>;
 
 const pdfStatus = (q: QuoteRow) => (q.pdfFileId ? 'ready' : q.pdfRequestedAt ? 'pending' : 'none');
 
-function option(o: QuoteRow['options'][number]): SavedQuoteOptionDto {
+function option(o: QuoteRow['options'][number], target: QuoteRow['targetPricePerUnit']): SavedQuoteOptionDto {
   const r = o.result as unknown as StepResult;
   return {
     id: o.publicId,
@@ -33,6 +34,7 @@ function option(o: QuoteRow['options'][number]): SavedQuoteOptionDto {
     toleranceColourDeltaE: o.toleranceColourDeltaE?.toFixed(2) ?? null,
     shippingPending: r.shippingPending ?? o.shippingAmount === null,
     shippingPendingReason: r.shippingPendingReason ?? null,
+    targetGap: targetGap(o.unitPrice, target),
   };
 }
 
@@ -56,7 +58,7 @@ export function quoteDto(q: QuoteRow, now = new Date()): SavedQuoteDto {
     deliveryPostcode: q.deliveryPostcode,
     validUntil: toBangkokIso(q.validUntil),
     priceLocked: ['saved', 'shared'].includes(q.status) && q.validUntil > now,
-    options: q.options.map(option),
+    options: q.options.map((o) => option(o, q.targetPricePerUnit)),
     pdfStatus: pdfStatus(q),
     currency: 'THB',
     sharedAt: q.sharedAt ? toBangkokIso(q.sharedAt) : null,
@@ -66,6 +68,7 @@ export function quoteDto(q: QuoteRow, now = new Date()): SavedQuoteDto {
       q.advisoryRecommendation && q.advisoryChoice
         ? { recommendationId: q.advisoryRecommendation.publicId, choiceId: q.advisoryChoice.publicId }
         : null,
+    targetPricePerUnit: targetString(q.targetPricePerUnit),
     createdAt: toBangkokIso(q.createdAt),
   };
 }

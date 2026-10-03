@@ -22,6 +22,8 @@ import {
   ValidateNested,
 } from 'class-validator';
 
+import { TargetGapDto, TargetPriceField } from './target-price';
+
 /**
  * Folding configuration and quote calculation DTOs (B2.3; corrugate's configuration in `corrugate.dto.ts`, U-B6).
  * Money is a 2-decimal string (contract §3).
@@ -278,6 +280,9 @@ export class CalculateQuoteDto {
   @IsString()
   @Matches(/^[0-9]{5}$/)
   deliveryPostcode?: string;
+
+  @TargetPriceField('The response compares each instant quantity with it')
+  targetPricePerUnit?: string;
 }
 
 // --- responses -----------------------------------------------------------------------------------
@@ -428,6 +433,27 @@ export class QuoteStepDto {
   shippingPendingReason!: string | null;
 }
 
+export class QuoteStepGapDto extends TargetGapDto {
+  @ApiProperty({ example: 1000 })
+  quantity!: number;
+}
+
+export class QuoteTargetDto {
+  @ApiProperty({
+    example: '11.50',
+    description: 'The target per unit sent (THB incl. VAT, excl. shipping, D-247)',
+  })
+  targetPricePerUnit!: string;
+
+  @ApiProperty({ type: [QuoteStepGapDto], description: 'One per instant quantity' })
+  steps!: QuoteStepGapDto[];
+}
+
+export const QUOTE_TARGET_EXAMPLE: QuoteTargetDto = {
+  targetPricePerUnit: '11.50',
+  steps: [{ quantity: 1000, gapPerUnit: '1.88', gapPct: '16.35', meetsTarget: false }],
+};
+
 export class QuoteCalculationDto {
   @ApiProperty({
     type: String,
@@ -452,6 +478,15 @@ export class QuoteCalculationDto {
     description: 'The sizes on every basis and the size priced (D-182); null for a product without a size',
   })
   dimensions!: QuoteDimensionsDto | null;
+
+  @ApiProperty({
+    type: QuoteTargetDto,
+    nullable: true,
+    example: QUOTE_TARGET_EXAMPLE,
+    description:
+      'The gap of each instant quantity against `targetPricePerUnit` (D-247); null when none was sent',
+  })
+  target!: QuoteTargetDto | null;
 }
 
 export class QuotePartInternalDto {
@@ -608,6 +643,7 @@ export class AdminQuoteCalculationDto {
 
 export const STORE_CALCULATION_EXAMPLE: QuoteCalculationDto = {
   calculatorVersion: '1.0.0',
+  target: QUOTE_TARGET_EXAMPLE,
   dimensions: QUOTE_DIMENSIONS_EXAMPLE,
   calculationId: '0192f3a0-7c1e-7d2a-9b1f-0000000c1001',
   steps: [

@@ -67,6 +67,8 @@ export interface SaveQuoteInput {
   anonymousId?: string;
   /** D-240: the Structure Advisor recommendation the quotation follows (store only). */
   advisoryRecommendationId?: string;
+  /** D-247: the customer's target per unit (THB incl. VAT, excl. shipping); set once on the quotation. */
+  targetPricePerUnit?: string | null;
 }
 
 /** Who asks: a signed-in customer, an anonymous configurator session, or staff (CS). */
@@ -103,7 +105,14 @@ export class SavedQuotesService {
     owner: QuoteOwner,
     channel: SalesChannel,
     input: SaveQuoteInput,
-    extra: { customerUserId?: bigint; supersedes?: bigint; ip?: string; staffNote?: string } = {},
+    extra: {
+      customerUserId?: bigint;
+      supersedes?: bigint;
+      ip?: string;
+      staffNote?: string;
+      /** D-249: the lever this quotation is saved from (its original is superseded). */
+      fromLeverId?: bigint;
+    } = {},
   ): Promise<QuoteRow> {
     const now = new Date();
     const { type, calculatorKey, configuration, view } = await this.priced(owner, channel, input, now, {
@@ -186,6 +195,8 @@ export class SavedQuotesService {
           options: { create: options },
           advisoryRecommendationId: advisory?.recommendationId ?? null,
           advisoryChoiceId: advisory?.choiceId ?? null,
+          targetPricePerUnit: input.targetPricePerUnit ?? null,
+          fromLeverId: extra.fromLeverId ?? null,
         },
       });
       if (extra.supersedes) {
@@ -383,6 +394,8 @@ export class SavedQuotesService {
         configuration: input.configuration,
         deliveryPostcode: input.deliveryPostcode ?? undefined,
         anonymousId: quote.anonymousId ?? undefined,
+        // D-247: the re-priced quotation keeps the customer's target.
+        targetPricePerUnit: quote.targetPricePerUnit?.toFixed(2) ?? null,
       },
       { customerUserId: quote.customerUserId ?? undefined, supersedes: quote.id },
     );

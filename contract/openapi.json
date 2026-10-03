@@ -8076,6 +8076,14 @@
             ],
             "description": "Product, product type, sales unit and spec lines to display (frozen when the quote was made)"
           },
+          "targetPricePerUnit": {
+            "description": "The customer’s target per unit (THB incl. VAT, excl. shipping, D-247); never shown to a factory",
+            "example": "11.50",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
           "validUntil": {
             "description": "Price lock ends (D-051)",
             "example": "2026-10-16T09:00:00+07:00",
@@ -8101,6 +8109,7 @@
           "sharedAt",
           "shareExpiresAt",
           "advisory",
+          "targetPricePerUnit",
           "createdAt",
           "channel",
           "customer",
@@ -8202,6 +8211,22 @@
             "example": "0.00",
             "type": "string"
           },
+          "targetGap": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/TargetGapDto"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "This quantity against the quotation’s target (D-247); null without a target",
+            "example": {
+              "gapPct": "16.35",
+              "gapPerUnit": "1.88",
+              "meetsTarget": false
+            }
+          },
           "toleranceColourDeltaE": {
             "description": "Frozen colour tolerance, ΔE2000 against the approved proof (D-186); null = not printed",
             "example": "3.00",
@@ -8274,6 +8299,7 @@
           "toleranceColourDeltaE",
           "shippingPending",
           "shippingPendingReason",
+          "targetGap",
           "internal"
         ],
         "type": "object"
@@ -13915,6 +13941,12 @@
             "maxLength": 64,
             "pattern": "^[a-z][a-z0-9_]*$",
             "type": "string"
+          },
+          "targetPricePerUnit": {
+            "description": "Target price per unit (THB incl. VAT, excluding shipping — the basis of `unitPrice`), > 0; never shown to a factory (D-247, D-190). The response compares each instant quantity with it",
+            "example": "11.50",
+            "pattern": "^(?!0+(\\.0{1,2})?$)\\d{1,9}(\\.\\d{1,2})?$",
+            "type": "string"
           }
         },
         "required": [
@@ -19246,6 +19278,14 @@
             ],
             "example": "open"
           },
+          "targetPricePerUnit": {
+            "description": "The target per unit (THB incl. VAT, excl. shipping, D-247); not shown on a share link",
+            "example": "11.50",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
           "title": {
             "example": "กล่องครีม 50 มล.",
             "type": [
@@ -19260,6 +19300,7 @@
           "catalogProductId",
           "title",
           "configuration",
+          "targetPricePerUnit",
           "completenessPct",
           "missingFields",
           "invalidFields",
@@ -21621,6 +21662,12 @@
             "example": "folding_carton",
             "maxLength": 64,
             "pattern": "^[a-z][a-z0-9_]*$",
+            "type": "string"
+          },
+          "targetPricePerUnit": {
+            "description": "Target price per unit (THB incl. VAT, excluding shipping — the basis of `unitPrice`), > 0; never shown to a factory (D-247, D-190). Carried to the quotation or RFQ the draft becomes",
+            "example": "11.50",
+            "pattern": "^(?!0+(\\.0{1,2})?$)\\d{1,9}(\\.\\d{1,2})?$",
             "type": "string"
           },
           "title": {
@@ -48939,13 +48986,36 @@
               "$ref": "#/components/schemas/QuoteStepDto"
             },
             "type": "array"
+          },
+          "target": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/QuoteTargetDto"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "The gap of each instant quantity against `targetPricePerUnit` (D-247); null when none was sent",
+            "example": {
+              "steps": [
+                {
+                  "gapPct": "16.35",
+                  "gapPerUnit": "1.88",
+                  "meetsTarget": false,
+                  "quantity": 1000
+                }
+              ],
+              "targetPricePerUnit": "11.50"
+            }
           }
         },
         "required": [
           "calculationId",
           "calculatorVersion",
           "steps",
-          "dimensions"
+          "dimensions",
+          "target"
         ],
         "type": "object"
       },
@@ -49415,7 +49485,9 @@
           "shared",
           "converted",
           "expired",
-          "superseded"
+          "superseded",
+          "declined",
+          "routed_to_rfq"
         ],
         "type": "string"
       },
@@ -49618,6 +49690,57 @@
           "toleranceColourDeltaE",
           "shippingPending",
           "shippingPendingReason"
+        ],
+        "type": "object"
+      },
+      "QuoteStepGapDto": {
+        "properties": {
+          "gapPct": {
+            "description": "The gap in % of the target (2 decimals)",
+            "example": "16.35",
+            "type": "string"
+          },
+          "gapPerUnit": {
+            "description": "Unit price − target, THB (negative = below the target, D-247)",
+            "example": "1.88",
+            "type": "string"
+          },
+          "meetsTarget": {
+            "description": "The unit price is at or below the target",
+            "example": false,
+            "type": "boolean"
+          },
+          "quantity": {
+            "example": 1000,
+            "type": "number"
+          }
+        },
+        "required": [
+          "gapPerUnit",
+          "gapPct",
+          "meetsTarget",
+          "quantity"
+        ],
+        "type": "object"
+      },
+      "QuoteTargetDto": {
+        "properties": {
+          "steps": {
+            "description": "One per instant quantity",
+            "items": {
+              "$ref": "#/components/schemas/QuoteStepGapDto"
+            },
+            "type": "array"
+          },
+          "targetPricePerUnit": {
+            "description": "The target per unit sent (THB incl. VAT, excl. shipping, D-247)",
+            "example": "11.50",
+            "type": "string"
+          }
+        },
+        "required": [
+          "targetPricePerUnit",
+          "steps"
         ],
         "type": "object"
       },
@@ -53145,6 +53268,14 @@
               "null"
             ]
           },
+          "targetPricePerUnit": {
+            "description": "The customer’s target per unit (THB incl. VAT, excl. shipping, D-247); never sent to a factory consultation (D-190)",
+            "example": "11.50",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
           "widthMm": {
             "example": 120,
             "type": [
@@ -53166,6 +53297,7 @@
           "measurementBasis",
           "quantities",
           "targetDate",
+          "targetPricePerUnit",
           "deliveryPostcode",
           "notes",
           "slaDueAt",
@@ -54683,6 +54815,12 @@
             "maxLength": 64,
             "pattern": "^[a-z][a-z0-9_]*$",
             "type": "string"
+          },
+          "targetPricePerUnit": {
+            "description": "Target price per unit (THB incl. VAT, excluding shipping — the basis of `unitPrice`), > 0; never shown to a factory (D-247, D-190). The response compares each instant quantity with it",
+            "example": "11.50",
+            "pattern": "^(?!0+(\\.0{1,2})?$)\\d{1,9}(\\.\\d{1,2})?$",
+            "type": "string"
           }
         },
         "required": [
@@ -54878,6 +55016,14 @@
             ],
             "description": "Product, product type, sales unit and spec lines to display (frozen when the quote was made)"
           },
+          "targetPricePerUnit": {
+            "description": "The customer’s target per unit (THB incl. VAT, excl. shipping, D-247); never shown to a factory",
+            "example": "11.50",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
           "validUntil": {
             "description": "Price lock ends (D-051)",
             "example": "2026-10-16T09:00:00+07:00",
@@ -54903,6 +55049,7 @@
           "sharedAt",
           "shareExpiresAt",
           "advisory",
+          "targetPricePerUnit",
           "createdAt"
         ],
         "type": "object"
@@ -54987,6 +55134,22 @@
             "example": "0.00",
             "type": "string"
           },
+          "targetGap": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/TargetGapDto"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "This quantity against the quotation’s target (D-247); null without a target",
+            "example": {
+              "gapPct": "16.35",
+              "gapPerUnit": "1.88",
+              "meetsTarget": false
+            }
+          },
           "toleranceColourDeltaE": {
             "description": "Frozen colour tolerance, ΔE2000 against the approved proof (D-186); null = not printed",
             "example": "3.00",
@@ -55058,7 +55221,8 @@
           "toleranceDimensionalMm",
           "toleranceColourDeltaE",
           "shippingPending",
-          "shippingPendingReason"
+          "shippingPendingReason",
+          "targetGap"
         ],
         "type": "object"
       },
@@ -59482,6 +59646,14 @@
               "null"
             ]
           },
+          "targetPricePerUnit": {
+            "description": "The customer’s target per unit (THB incl. VAT, excl. shipping, D-247); never sent to a factory consultation (D-190)",
+            "example": "11.50",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
           "widthMm": {
             "example": 120,
             "type": [
@@ -59503,6 +59675,7 @@
           "measurementBasis",
           "quantities",
           "targetDate",
+          "targetPricePerUnit",
           "deliveryPostcode",
           "notes",
           "slaDueAt",
@@ -59804,6 +59977,12 @@
             "maxLength": 64,
             "pattern": "^[a-z][a-z0-9_]*$",
             "type": "string"
+          },
+          "targetPricePerUnit": {
+            "description": "Target price per unit (THB incl. VAT, excluding shipping — the basis of `unitPrice`), > 0; never shown to a factory (D-247, D-190). The response compares each instant quantity with it",
+            "example": "11.50",
+            "pattern": "^(?!0+(\\.0{1,2})?$)\\d{1,9}(\\.\\d{1,2})?$",
+            "type": "string"
           }
         },
         "required": [
@@ -59923,6 +60102,12 @@
               "string",
               "null"
             ]
+          },
+          "targetPricePerUnit": {
+            "description": "Target price per unit (THB incl. VAT, excluding shipping — the basis of `unitPrice`), > 0; never shown to a factory (D-247, D-190). Staff see it; a factory never does (D-190)",
+            "example": "11.50",
+            "pattern": "^(?!0+(\\.0{1,2})?$)\\d{1,9}(\\.\\d{1,2})?$",
+            "type": "string"
           },
           "widthMm": {
             "description": "Unit: mm.",
@@ -64945,6 +65130,12 @@
               "null"
             ]
           },
+          "targetPricePerUnit": {
+            "description": "Target price per unit (THB incl. VAT, excluding shipping — the basis of `unitPrice`), > 0; never shown to a factory (D-247, D-190). Staff see it; a factory never does (D-190)",
+            "example": "11.50",
+            "pattern": "^(?!0+(\\.0{1,2})?$)\\d{1,9}(\\.\\d{1,2})?$",
+            "type": "string"
+          },
           "widthMm": {
             "description": "Unit: mm.",
             "example": 120,
@@ -65303,6 +65494,31 @@
           "difficultyLevelId",
           "quantities",
           "diecutTypeId"
+        ],
+        "type": "object"
+      },
+      "TargetGapDto": {
+        "properties": {
+          "gapPct": {
+            "description": "The gap in % of the target (2 decimals)",
+            "example": "16.35",
+            "type": "string"
+          },
+          "gapPerUnit": {
+            "description": "Unit price − target, THB (negative = below the target, D-247)",
+            "example": "1.88",
+            "type": "string"
+          },
+          "meetsTarget": {
+            "description": "The unit price is at or below the target",
+            "example": false,
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "gapPerUnit",
+          "gapPct",
+          "meetsTarget"
         ],
         "type": "object"
       },
@@ -67897,6 +68113,15 @@
               "w": 100
             },
             "type": "object"
+          },
+          "targetPricePerUnit": {
+            "description": "Target price per unit (THB incl. VAT, excluding shipping — the basis of `unitPrice`), > 0; never shown to a factory (D-247, D-190). `null` removes it; omitted keeps it",
+            "example": "11.50",
+            "pattern": "^(?!0+(\\.0{1,2})?$)\\d{1,9}(\\.\\d{1,2})?$",
+            "type": [
+              "string",
+              "null"
+            ]
           },
           "title": {
             "example": "กล่องครีม 50 มล.",
@@ -230802,6 +231027,11 @@
                           "shippingPending": false,
                           "shippingPendingReason": null,
                           "structureDesignFeeAmount": "0.00",
+                          "targetGap": {
+                            "gapPct": "16.35",
+                            "gapPerUnit": "1.88",
+                            "meetsTarget": false
+                          },
                           "toleranceColourDeltaE": "3.00",
                           "toleranceDimensionalMm": "1.00",
                           "toleranceOveragePct": "5.0000",
@@ -230855,6 +231085,7 @@
                         ],
                         "unit": "piece"
                       },
+                      "targetPricePerUnit": "11.50",
                       "validUntil": "2026-10-16T09:00:00+07:00"
                     }
                   ],
@@ -231188,6 +231419,11 @@
                       "shippingPending": false,
                       "shippingPendingReason": null,
                       "structureDesignFeeAmount": "0.00",
+                      "targetGap": {
+                        "gapPct": "16.35",
+                        "gapPerUnit": "1.88",
+                        "meetsTarget": false
+                      },
                       "toleranceColourDeltaE": "3.00",
                       "toleranceDimensionalMm": "1.00",
                       "toleranceOveragePct": "5.0000",
@@ -231241,6 +231477,7 @@
                     ],
                     "unit": "piece"
                   },
+                  "targetPricePerUnit": "11.50",
                   "validUntil": "2026-10-16T09:00:00+07:00"
                 },
                 "schema": {
@@ -231555,6 +231792,11 @@
                       "shippingPending": false,
                       "shippingPendingReason": null,
                       "structureDesignFeeAmount": "0.00",
+                      "targetGap": {
+                        "gapPct": "16.35",
+                        "gapPerUnit": "1.88",
+                        "meetsTarget": false
+                      },
                       "toleranceColourDeltaE": "3.00",
                       "toleranceDimensionalMm": "1.00",
                       "toleranceOveragePct": "5.0000",
@@ -231608,6 +231850,7 @@
                     ],
                     "unit": "piece"
                   },
+                  "targetPricePerUnit": "11.50",
                   "validUntil": "2026-10-16T09:00:00+07:00"
                 },
                 "schema": {
@@ -231893,6 +232136,11 @@
                       "shippingPending": false,
                       "shippingPendingReason": null,
                       "structureDesignFeeAmount": "0.00",
+                      "targetGap": {
+                        "gapPct": "16.35",
+                        "gapPerUnit": "1.88",
+                        "meetsTarget": false
+                      },
                       "toleranceColourDeltaE": "3.00",
                       "toleranceDimensionalMm": "1.00",
                       "toleranceOveragePct": "5.0000",
@@ -231946,6 +232194,7 @@
                     ],
                     "unit": "piece"
                   },
+                  "targetPricePerUnit": "11.50",
                   "validUntil": "2026-10-16T09:00:00+07:00"
                 },
                 "schema": {
@@ -232260,6 +232509,11 @@
                       "shippingPending": false,
                       "shippingPendingReason": null,
                       "structureDesignFeeAmount": "0.00",
+                      "targetGap": {
+                        "gapPct": "16.35",
+                        "gapPerUnit": "1.88",
+                        "meetsTarget": false
+                      },
                       "toleranceColourDeltaE": "3.00",
                       "toleranceDimensionalMm": "1.00",
                       "toleranceOveragePct": "5.0000",
@@ -232313,6 +232567,7 @@
                     ],
                     "unit": "piece"
                   },
+                  "targetPricePerUnit": "11.50",
                   "validUntil": "2026-10-16T09:00:00+07:00"
                 },
                 "schema": {
@@ -232579,6 +232834,11 @@
                         "shippingPending": false,
                         "shippingPendingReason": null,
                         "structureDesignFeeAmount": "0.00",
+                        "targetGap": {
+                          "gapPct": "16.35",
+                          "gapPerUnit": "1.88",
+                          "meetsTarget": false
+                        },
                         "toleranceColourDeltaE": "3.00",
                         "toleranceDimensionalMm": "1.00",
                         "toleranceOveragePct": "5.0000",
@@ -232631,6 +232891,7 @@
                       ],
                       "unit": "piece"
                     },
+                    "targetPricePerUnit": "11.50",
                     "validUntil": "2026-10-16T09:00:00+07:00"
                   },
                   "sharePath": "/v1/store/quotes/shared/bX2k…",
@@ -233087,6 +233348,11 @@
                       "shippingPending": false,
                       "shippingPendingReason": null,
                       "structureDesignFeeAmount": "0.00",
+                      "targetGap": {
+                        "gapPct": "16.35",
+                        "gapPerUnit": "1.88",
+                        "meetsTarget": false
+                      },
                       "toleranceColourDeltaE": "3.00",
                       "toleranceDimensionalMm": "1.00",
                       "toleranceOveragePct": "5.0000",
@@ -233139,6 +233405,7 @@
                     ],
                     "unit": "piece"
                   },
+                  "targetPricePerUnit": "11.50",
                   "validUntil": "2026-10-16T09:00:00+07:00"
                 },
                 "schema": {
@@ -239178,6 +239445,7 @@
                   "status": "quoted",
                   "submittedAt": "2026-09-30T15:00:00+07:00",
                   "targetDate": "2026-11-15",
+                  "targetPricePerUnit": null,
                   "widthMm": 120
                 },
                 "schema": {
@@ -239604,6 +239872,7 @@
                   "status": "quoted",
                   "submittedAt": "2026-09-30T15:00:00+07:00",
                   "targetDate": "2026-11-15",
+                  "targetPricePerUnit": null,
                   "widthMm": 120
                 },
                 "schema": {
@@ -239964,6 +240233,7 @@
                   "status": "accepted",
                   "submittedAt": "2026-09-30T15:00:00+07:00",
                   "targetDate": "2026-11-15",
+                  "targetPricePerUnit": null,
                   "widthMm": 120
                 },
                 "schema": {
@@ -240342,6 +240612,7 @@
                   "status": "quoted",
                   "submittedAt": "2026-09-30T15:00:00+07:00",
                   "targetDate": "2026-11-15",
+                  "targetPricePerUnit": null,
                   "widthMm": 120
                 },
                 "schema": {
@@ -240835,6 +241106,7 @@
                       "status": "quoted",
                       "submittedAt": "2026-09-30T15:00:00+07:00",
                       "targetDate": "2026-11-15",
+                      "targetPricePerUnit": null,
                       "widthMm": 120
                     }
                   ],
@@ -241181,6 +241453,7 @@
                   "status": "submitted",
                   "submittedAt": "2026-09-30T15:00:00+07:00",
                   "targetDate": "2026-11-15",
+                  "targetPricePerUnit": null,
                   "widthMm": 120
                 },
                 "schema": {
@@ -241556,6 +241829,7 @@
                   "status": "quoted",
                   "submittedAt": "2026-09-30T15:00:00+07:00",
                   "targetDate": "2026-11-15",
+                  "targetPricePerUnit": null,
                   "widthMm": 120
                 },
                 "schema": {
@@ -241893,6 +242167,7 @@
                   "status": "quoted",
                   "submittedAt": "2026-09-30T15:00:00+07:00",
                   "targetDate": "2026-11-15",
+                  "targetPricePerUnit": null,
                   "widthMm": 120
                 },
                 "schema": {
@@ -242277,6 +242552,7 @@
                   "status": "declined",
                   "submittedAt": "2026-09-30T15:00:00+07:00",
                   "targetDate": "2026-11-15",
+                  "targetPricePerUnit": null,
                   "widthMm": 120
                 },
                 "schema": {
@@ -242666,6 +242942,7 @@
                   "status": "need_info",
                   "submittedAt": "2026-09-30T15:00:00+07:00",
                   "targetDate": "2026-11-15",
+                  "targetPricePerUnit": null,
                   "widthMm": 120
                 },
                 "schema": {
@@ -243029,6 +243306,7 @@
                   "status": "quoted",
                   "submittedAt": "2026-09-30T15:00:00+07:00",
                   "targetDate": "2026-11-15",
+                  "targetPricePerUnit": null,
                   "widthMm": 120
                 },
                 "schema": {
@@ -243588,6 +243866,7 @@
                   "status": "quoted",
                   "submittedAt": "2026-09-30T15:00:00+07:00",
                   "targetDate": "2026-11-15",
+                  "targetPricePerUnit": null,
                   "widthMm": 120
                 },
                 "schema": {
@@ -243981,6 +244260,7 @@
                   "status": "quoted",
                   "submittedAt": "2026-09-30T15:00:00+07:00",
                   "targetDate": "2026-11-15",
+                  "targetPricePerUnit": null,
                   "widthMm": 120
                 },
                 "schema": {
@@ -244370,6 +244650,7 @@
                   "status": "quoted",
                   "submittedAt": "2026-09-30T15:00:00+07:00",
                   "targetDate": "2026-11-15",
+                  "targetPricePerUnit": null,
                   "widthMm": 120
                 },
                 "schema": {
@@ -321519,6 +321800,7 @@
                       "shareExpiresAt": null,
                       "sharedAt": null,
                       "status": "open",
+                      "targetPricePerUnit": "11.50",
                       "title": "กล่องครีม 50 มล."
                     }
                   ],
@@ -321741,6 +322023,7 @@
                   "shareExpiresAt": null,
                   "sharedAt": null,
                   "status": "open",
+                  "targetPricePerUnit": "11.50",
                   "title": "กล่องครีม 50 มล."
                 },
                 "schema": {
@@ -322122,6 +322405,7 @@
                   "shareExpiresAt": null,
                   "sharedAt": null,
                   "status": "open",
+                  "targetPricePerUnit": "11.50",
                   "title": "กล่องครีม 50 มล."
                 },
                 "schema": {
@@ -322349,6 +322633,7 @@
                   "shareExpiresAt": null,
                   "sharedAt": null,
                   "status": "open",
+                  "targetPricePerUnit": "11.50",
                   "title": "กล่องครีม 50 มล."
                 },
                 "schema": {
@@ -322619,6 +322904,7 @@
                     "shareExpiresAt": null,
                     "sharedAt": null,
                     "status": "converted",
+                    "targetPricePerUnit": "11.50",
                     "title": "กล่องครีม 50 มล."
                   },
                   "quote": {
@@ -322682,6 +322968,11 @@
                         "shippingPending": false,
                         "shippingPendingReason": null,
                         "structureDesignFeeAmount": "0.00",
+                        "targetGap": {
+                          "gapPct": "16.35",
+                          "gapPerUnit": "1.88",
+                          "meetsTarget": false
+                        },
                         "toleranceColourDeltaE": "3.00",
                         "toleranceDimensionalMm": "1.00",
                         "toleranceOveragePct": "5.0000",
@@ -322734,6 +323025,7 @@
                       ],
                       "unit": "piece"
                     },
+                    "targetPricePerUnit": "11.50",
                     "validUntil": "2026-10-16T09:00:00+07:00"
                   }
                 },
@@ -323014,6 +323306,7 @@
                     "shareExpiresAt": null,
                     "sharedAt": null,
                     "status": "converted",
+                    "targetPricePerUnit": "11.50",
                     "title": "กล่องครีม 50 มล."
                   },
                   "rfqCode": "RFQ-2026-000101",
@@ -323273,6 +323566,7 @@
                     "shareExpiresAt": null,
                     "sharedAt": null,
                     "status": "open",
+                    "targetPricePerUnit": "11.50",
                     "title": "กล่องครีม 50 มล."
                   },
                   "expiresAt": "2026-10-17T10:00:00+07:00",
@@ -323503,6 +323797,7 @@
                   "shareExpiresAt": null,
                   "sharedAt": null,
                   "status": "open",
+                  "targetPricePerUnit": "11.50",
                   "title": "กล่องครีม 50 มล."
                 },
                 "schema": {
@@ -344312,6 +344607,11 @@
                           "shippingPending": false,
                           "shippingPendingReason": null,
                           "structureDesignFeeAmount": "0.00",
+                          "targetGap": {
+                            "gapPct": "16.35",
+                            "gapPerUnit": "1.88",
+                            "meetsTarget": false
+                          },
                           "toleranceColourDeltaE": "3.00",
                           "toleranceDimensionalMm": "1.00",
                           "toleranceOveragePct": "5.0000",
@@ -344364,6 +344664,7 @@
                         ],
                         "unit": "piece"
                       },
+                      "targetPricePerUnit": "11.50",
                       "validUntil": "2026-10-16T09:00:00+07:00"
                     }
                   ],
@@ -344653,6 +344954,11 @@
                       "shippingPending": false,
                       "shippingPendingReason": null,
                       "structureDesignFeeAmount": "0.00",
+                      "targetGap": {
+                        "gapPct": "16.35",
+                        "gapPerUnit": "1.88",
+                        "meetsTarget": false
+                      },
                       "toleranceColourDeltaE": "3.00",
                       "toleranceDimensionalMm": "1.00",
                       "toleranceOveragePct": "5.0000",
@@ -344705,6 +345011,7 @@
                     ],
                     "unit": "piece"
                   },
+                  "targetPricePerUnit": "11.50",
                   "validUntil": "2026-10-16T09:00:00+07:00"
                 },
                 "schema": {
@@ -344913,7 +345220,7 @@
     },
     "/v1/store/quotes/actions/calculate": {
       "post": {
-        "description": "Prices each quantity from the active factories that hold an instant price path (D-043, D-100): price incl. VAT, lead time and earliest ship date within capacity (D-101), quantity tolerance (D-021). A quantity without an instant price carries the reason and routes to RFQ. The configuration is the one of the type’s calculator (folding, corrugate, label, tag & sleeve, pouch, standard product, service). Nothing is saved (quotes are saved with B2.5, D-051); no factory data is returned (D-050). Works signed in or anonymously.\n\nImplements: D-100, D-043, D-050, D-051, D-101.",
+        "description": "Prices each quantity from the active factories that hold an instant price path (D-043, D-100): price incl. VAT, lead time and earliest ship date within capacity (D-101), quantity tolerance (D-021). A quantity without an instant price carries the reason and routes to RFQ. The configuration is the one of the type’s calculator (folding, corrugate, label, tag & sleeve, pouch, standard product, service). Nothing is saved (quotes are saved with B2.5, D-051); no factory data is returned (D-050). Works signed in or anonymously. With `targetPricePerUnit` the response gives each instant quantity’s gap against it (D-247); the target is not stored here.\n\nImplements: D-100, D-043, D-050, D-051, D-101, D-247.",
         "operationId": "store.quotes.calculate",
         "parameters": [
           {
@@ -345128,7 +345435,18 @@
                       "unitPrice": "13.38",
                       "vatAmount": "883.73"
                     }
-                  ]
+                  ],
+                  "target": {
+                    "steps": [
+                      {
+                        "gapPct": "16.35",
+                        "gapPerUnit": "1.88",
+                        "meetsTarget": false,
+                        "quantity": 1000
+                      }
+                    ],
+                    "targetPricePerUnit": "11.50"
+                  }
                 },
                 "schema": {
                   "$ref": "#/components/schemas/QuoteCalculationDto"
@@ -345354,6 +345672,11 @@
                       "shippingPending": false,
                       "shippingPendingReason": null,
                       "structureDesignFeeAmount": "0.00",
+                      "targetGap": {
+                        "gapPct": "16.35",
+                        "gapPerUnit": "1.88",
+                        "meetsTarget": false
+                      },
                       "toleranceColourDeltaE": "3.00",
                       "toleranceDimensionalMm": "1.00",
                       "toleranceOveragePct": "5.0000",
@@ -345406,6 +345729,7 @@
                     ],
                     "unit": "piece"
                   },
+                  "targetPricePerUnit": "11.50",
                   "validUntil": "2026-10-16T09:00:00+07:00"
                 },
                 "schema": {
@@ -345633,6 +345957,11 @@
                       "shippingPending": false,
                       "shippingPendingReason": null,
                       "structureDesignFeeAmount": "0.00",
+                      "targetGap": {
+                        "gapPct": "16.35",
+                        "gapPerUnit": "1.88",
+                        "meetsTarget": false
+                      },
                       "toleranceColourDeltaE": "3.00",
                       "toleranceDimensionalMm": "1.00",
                       "toleranceOveragePct": "5.0000",
@@ -345685,6 +346014,7 @@
                     ],
                     "unit": "piece"
                   },
+                  "targetPricePerUnit": "11.50",
                   "validUntil": "2026-10-16T09:00:00+07:00"
                 },
                 "schema": {
@@ -345939,6 +346269,11 @@
                       "shippingPending": false,
                       "shippingPendingReason": null,
                       "structureDesignFeeAmount": "0.00",
+                      "targetGap": {
+                        "gapPct": "16.35",
+                        "gapPerUnit": "1.88",
+                        "meetsTarget": false
+                      },
                       "toleranceColourDeltaE": "3.00",
                       "toleranceDimensionalMm": "1.00",
                       "toleranceOveragePct": "5.0000",
@@ -345991,6 +346326,7 @@
                     ],
                     "unit": "piece"
                   },
+                  "targetPricePerUnit": "11.50",
                   "validUntil": "2026-10-16T09:00:00+07:00"
                 },
                 "schema": {
@@ -346265,6 +346601,11 @@
                       "shippingPending": false,
                       "shippingPendingReason": null,
                       "structureDesignFeeAmount": "0.00",
+                      "targetGap": {
+                        "gapPct": "16.35",
+                        "gapPerUnit": "1.88",
+                        "meetsTarget": false
+                      },
                       "toleranceColourDeltaE": "3.00",
                       "toleranceDimensionalMm": "1.00",
                       "toleranceOveragePct": "5.0000",
@@ -346317,6 +346658,7 @@
                     ],
                     "unit": "piece"
                   },
+                  "targetPricePerUnit": "11.50",
                   "validUntil": "2026-10-16T09:00:00+07:00"
                 },
                 "schema": {
@@ -346583,6 +346925,11 @@
                       "shippingPending": false,
                       "shippingPendingReason": null,
                       "structureDesignFeeAmount": "0.00",
+                      "targetGap": {
+                        "gapPct": "16.35",
+                        "gapPerUnit": "1.88",
+                        "meetsTarget": false
+                      },
                       "toleranceColourDeltaE": "3.00",
                       "toleranceDimensionalMm": "1.00",
                       "toleranceOveragePct": "5.0000",
@@ -346635,6 +346982,7 @@
                     ],
                     "unit": "piece"
                   },
+                  "targetPricePerUnit": "11.50",
                   "validUntil": "2026-10-16T09:00:00+07:00"
                 },
                 "schema": {
@@ -346908,6 +347256,11 @@
                         "shippingPending": false,
                         "shippingPendingReason": null,
                         "structureDesignFeeAmount": "0.00",
+                        "targetGap": {
+                          "gapPct": "16.35",
+                          "gapPerUnit": "1.88",
+                          "meetsTarget": false
+                        },
                         "toleranceColourDeltaE": "3.00",
                         "toleranceDimensionalMm": "1.00",
                         "toleranceOveragePct": "5.0000",
@@ -346960,6 +347313,7 @@
                       ],
                       "unit": "piece"
                     },
+                    "targetPricePerUnit": "11.50",
                     "validUntil": "2026-10-16T09:00:00+07:00"
                   },
                   "sharePath": "/v1/store/quotes/shared/bX2k…",
@@ -347416,6 +347770,11 @@
                       "shippingPending": false,
                       "shippingPendingReason": null,
                       "structureDesignFeeAmount": "0.00",
+                      "targetGap": {
+                        "gapPct": "16.35",
+                        "gapPerUnit": "1.88",
+                        "meetsTarget": false
+                      },
                       "toleranceColourDeltaE": "3.00",
                       "toleranceDimensionalMm": "1.00",
                       "toleranceOveragePct": "5.0000",
@@ -347468,6 +347827,7 @@
                     ],
                     "unit": "piece"
                   },
+                  "targetPricePerUnit": "11.50",
                   "validUntil": "2026-10-16T09:00:00+07:00"
                 },
                 "schema": {
@@ -348652,6 +349012,7 @@
                       "status": "quoted",
                       "submittedAt": "2026-09-30T15:00:00+07:00",
                       "targetDate": "2026-11-15",
+                      "targetPricePerUnit": null,
                       "widthMm": 120
                     }
                   ],
@@ -348904,6 +349265,7 @@
                   "status": "submitted",
                   "submittedAt": "2026-09-30T15:00:00+07:00",
                   "targetDate": "2026-11-15",
+                  "targetPricePerUnit": null,
                   "widthMm": 120
                 },
                 "schema": {
@@ -349217,6 +349579,7 @@
                   "status": "quoted",
                   "submittedAt": "2026-09-30T15:00:00+07:00",
                   "targetDate": "2026-11-15",
+                  "targetPricePerUnit": null,
                   "widthMm": 120
                 },
                 "schema": {
@@ -349492,6 +349855,7 @@
                   "status": "accepted",
                   "submittedAt": "2026-09-30T15:00:00+07:00",
                   "targetDate": "2026-11-15",
+                  "targetPricePerUnit": null,
                   "widthMm": 120
                 },
                 "schema": {
@@ -349839,6 +350203,7 @@
                   "status": "declined",
                   "submittedAt": "2026-09-30T15:00:00+07:00",
                   "targetDate": "2026-11-15",
+                  "targetPricePerUnit": null,
                   "widthMm": 120
                 },
                 "schema": {
@@ -350151,6 +350516,7 @@
                   "status": "quoted",
                   "submittedAt": "2026-09-30T15:00:00+07:00",
                   "targetDate": "2026-11-15",
+                  "targetPricePerUnit": null,
                   "widthMm": 120
                 },
                 "schema": {

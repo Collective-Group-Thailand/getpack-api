@@ -98,6 +98,7 @@ const RFQ_EXAMPLE: RfqDto = {
   measurementBasis: 'internal',
   quantities: [500, 1000, 3000],
   targetDate: '2026-11-15',
+  targetPricePerUnit: null,
   deliveryPostcode: '10110',
   notes: 'Logo on both sides (fake)',
   slaDueAt: null,

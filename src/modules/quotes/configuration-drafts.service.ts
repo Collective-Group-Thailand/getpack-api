@@ -7,6 +7,7 @@ import { refuseUnits } from '@common/validation/units';
 import { PrismaService, type Tx } from '@database/prisma.service';
 import { Prisma } from '@generated/prisma/client';
 import { assessConfiguration, type Completeness } from '@modules/pricing/quotes/configurations';
+import { targetString } from '@modules/pricing/quotes/target-price';
 import { RfqsService } from '@modules/rfq/rfqs.service';
 import { Injectable } from '@nestjs/common';
 import { DomainEvents } from '@platform/domain-events/domain-events.service';
@@ -49,6 +50,7 @@ export class ConfigurationDraftsService {
       catalogProductId?: string;
       title?: string;
       configuration: Record<string, unknown>;
+      targetPricePerUnit?: string;
     },
   ): Promise<ConfigurationDraftDto> {
     refuseUnits(input.configuration, 'configuration'); // D-183
@@ -90,6 +92,7 @@ export class ConfigurationDraftsService {
           catalogProductId: catalogProductId ?? null,
           title: input.title?.trim() || null,
           configuration: input.configuration as Prisma.InputJsonValue,
+          targetPricePerUnit: input.targetPricePerUnit ?? null,
           completenessPct: assessed.completenessPct,
           missingFields: assessed.missingFields,
           lastChangedAt: now,
@@ -127,7 +130,7 @@ export class ConfigurationDraftsService {
   async update(
     ownerUserId: bigint,
     publicId: string,
-    input: { title?: string; configuration?: Record<string, unknown> },
+    input: { title?: string; configuration?: Record<string, unknown>; targetPricePerUnit?: string | null },
   ): Promise<ConfigurationDraftDto> {
     if (input.configuration) refuseUnits(input.configuration, 'configuration'); // D-183
     return this.prisma.withTx(async (tx) => {
@@ -139,6 +142,7 @@ export class ConfigurationDraftsService {
         where: { id: draft.id },
         data: {
           ...(input.title !== undefined && { title: input.title.trim() || null }),
+          ...(input.targetPricePerUnit !== undefined && { targetPricePerUnit: input.targetPricePerUnit }),
           configuration: configuration as Prisma.InputJsonValue,
           completenessPct: assessed.completenessPct,
           missingFields: assessed.missingFields,
@@ -236,6 +240,7 @@ export class ConfigurationDraftsService {
       productTypeCode: draft.productType.code,
       configuration: draft.configuration as Record<string, unknown>,
       deliveryPostcode: input.deliveryPostcode,
+      targetPricePerUnit: targetString(draft.targetPricePerUnit), // D-247
     });
     const row = await this.converted(
       draft,
@@ -284,6 +289,7 @@ export class ConfigurationDraftsService {
       quantities,
       deliveryPostcode: input.deliveryPostcode,
       notes: input.notes,
+      targetPricePerUnit: targetString(draft.targetPricePerUnit), // D-247
     });
     const row = await this.converted(
       draft,
@@ -385,6 +391,7 @@ export class ConfigurationDraftsService {
       catalogProductId: row.catalogProduct?.publicId ?? null,
       title: row.title,
       configuration: row.configuration as Record<string, unknown>,
+      targetPricePerUnit: targetString(row.targetPricePerUnit),
       completenessPct: a.completenessPct,
       missingFields: a.missingFields,
       invalidFields: a.invalidFields,

@@ -2,6 +2,7 @@ import { OptionalNoteDto } from '@common/dto/optional-note.dto';
 import { NextActionDto } from '@common/next-actions/next-action.dto';
 import { PageQuery } from '@common/pagination/pagination.dto';
 import { EnumField, IntField, RefField, TextField } from '@modules/catalog/crud/dto-fields';
+import { TargetPriceField } from '@modules/pricing/quotes/target-price';
 import { SpecLineDto } from '@modules/quotes/line-summary.dto';
 import { MONEY, POSTCODE, RATE } from '@modules/shipping/rates/customer-rates.dto';
 import { MEASUREMENT_BASES } from '@modules/specs/dimension-conversion';
@@ -173,6 +174,9 @@ export class SubmitRfqDto {
   @ValidateNested()
   @Type(() => RfqRoutedFromDto)
   routedFrom?: RfqRoutedFromDto;
+
+  @TargetPriceField('Staff see it; a factory never does (D-190)')
+  targetPricePerUnit?: string;
 }
 
 export class StaffSubmitRfqDto extends SubmitRfqDto {
@@ -645,6 +649,15 @@ export class RfqDto {
 
   @ApiProperty({ type: String, format: 'date', nullable: true, example: '2026-11-15' })
   targetDate!: string | null;
+
+  @ApiProperty({
+    type: String,
+    nullable: true,
+    example: '11.50',
+    description:
+      'The customer’s target per unit (THB incl. VAT, excl. shipping, D-247); never sent to a factory consultation (D-190)',
+  })
+  targetPricePerUnit!: string | null;
 
   @ApiProperty({ example: '10110' })
   deliveryPostcode!: string;
