@@ -57,6 +57,8 @@ export const API_TAGS: Record<string, string> = {
   'store.styles':
     'The style library (D-245): published styles with facets, search, sorts and detail — combinations, size ranges, starting price, lead time; compare up to three (D-246).',
   'store.styleFavourites': 'The signed-in customer’s favourite styles (D-246).',
+  'store.dielines':
+    'Free dieline downloads of published style variants (D-271, D-203): signed-in customers, within the style’s size range, rate-limited and logged.',
   'admin.processTypes': 'The manufacturing process taxonomy (D-244).',
   'partner.processTypes': 'The manufacturing process taxonomy (D-244).',
   'admin.styleProcessRules': 'Which processes a style needs when its recipe declares none (D-244, Prepress).',
@@ -76,6 +78,8 @@ export const API_TAGS: Record<string, string> = {
     'The signed board data sheets Packio keeps for the factory’s boards (D-236, D-044).',
   'store.publicReviews':
     'Verified customer reviews (D-202, D-265): published reviews with the product type and Packio’s reply, and the rating summary — never fabricated.',
+  'admin.dielines':
+    'Dieline downloads of any style variant with an approved recipe, for staff (D-271, D-270).',
   'admin.stylePriceRules':
     'Option price rules of styles (D-266, D-268): which option values a calculator prices and how; a variant prices instantly only when all its options are covered.',
   'store.network':

@@ -1414,5 +1414,23 @@
       "title": "Not in approval",
       "detail": "Only a version waiting for approval can be withdrawn (D-260)."
     }
+  },
+  "dielines": {
+    "rate_limited": {
+      "title": "Download limit reached",
+      "detail": "You have reached the dieline download limit. Try again after the time in Retry-After."
+    },
+    "size_out_of_range": {
+      "title": "Size outside the style's range",
+      "detail": "The size is outside the range this style can be made in for the material class."
+    },
+    "material_class_not_offered": {
+      "title": "Material class not offered",
+      "detail": "This style has no dieline for the material class."
+    },
+    "not_drawable": {
+      "title": "Dieline cannot be drawn",
+      "detail": "This style variant has no approved recipe the engine can draw."
+    }
   }
 }

@@ -214,6 +214,10 @@ export class PackioDielineEngine implements DielineEngine {
     return out;
   }
 
+  async referenceMaterial(materialClass: string): Promise<DielineMaterial | null> {
+    return this.reference((await this.engine()).pkg, materialClass);
+  }
+
   // --- helpers ---------------------------------------------------------------------------------------------
 
   private parse(pkg: DielinePackage, stored: StoredRecipe): EngineRecipe[] {

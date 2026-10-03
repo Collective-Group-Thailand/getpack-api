@@ -5,7 +5,7 @@
 > (a new effective-dated version, audited — D-063) and signs item 5 of `docs/LAUNCH-CHECKLIST.md`. A *proposed* or
 > *pending* value is not a decision: it goes live only once its owner confirms it.
 
-**85 settings** — 49 confirmed · 18 proposed · 4 pending the CPA (⚖) · 1 pending the business · 13 defined without a value (not set until their owner sets them).
+**87 settings** — 51 confirmed · 18 proposed · 4 pending the CPA (⚖) · 1 pending the business · 13 defined without a value (not set until their owner sets them).
 
 ## Settings
 
@@ -38,6 +38,8 @@
 | `design.extra_revision_fee` | `{"minimumAmount":"500.00","pctOfDesignFee":"20"}` | confirmed | superadmin | D-071 | D-071 fee per revision round from round 4: max(minimum, % of the design fee) |
 | `design.free_revision_rounds` | `3` | confirmed | superadmin | D-071 | D-071 free revision rounds per hired design |
 | `design.hired_design_sla` | `{"targetBusinessDays":5,"maxBusinessDays":10}` | confirmed | superadmin | D-071 | D-071 hired design delivery target and maximum |
+| `dielines.downloads_per_day` | `20` | confirmed | superadmin | D-203, D-271 | D-203 / D-271 dieline downloads a signed-in customer may take per Bangkok calendar day (staff are not limited) |
+| `dielines.downloads_per_minute` | `5` | confirmed | superadmin | D-203, D-271 | D-203 / D-271 dieline downloads a signed-in customer may take in any 60 seconds |
 | `discounts.cs_limit_pct` | `5` | confirmed | superadmin | D-052 | D-052 discount CS may give without a discount memo |
 | `documents.retention_years` | `10` | confirmed | finance_manager | D-033 | D-033 / accounting-design §2 record retention of documents and ledgers (≥ 10 years, above the 5-year statutory minimum) |
 | `fixed_assets.depreciation_start` | `acquisition_month` | pending_cpa | finance_manager | D-150 | D-150 first month of straight-line depreciation: the month the asset is acquired (full month) or the month after (⚖ pro-rata by days is not used) |

@@ -516,6 +516,7 @@ model User {
   designDocuments          DesignDocument[]        @relation("DesignDocumentOwner")
   designVersionsCreated    DesignDocumentVersion[] @relation("DesignDocumentVersionCreatedBy")
   drawingJobsRequested     DrawingJob[]            @relation("DrawingJobRequestedBy")
+  dielineDownloads         DielineDownload[]       @relation("DielineDownloadUser")
   // --- end Fulfilment B4.1
 
   // --- Fulfilment B4.2 (generated back-relations)

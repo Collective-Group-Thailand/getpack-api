@@ -328,6 +328,10 @@ export const ERROR_CODES = {
   'samples.freight_unavailable': HttpStatus.CONFLICT,
   'guarantee.version_pending': HttpStatus.CONFLICT,
   'guarantee.version_not_proposed': HttpStatus.CONFLICT,
+  'dielines.rate_limited': HttpStatus.TOO_MANY_REQUESTS,
+  'dielines.size_out_of_range': HttpStatus.UNPROCESSABLE_ENTITY,
+  'dielines.material_class_not_offered': HttpStatus.UNPROCESSABLE_ENTITY,
+  'dielines.not_drawable': HttpStatus.UNPROCESSABLE_ENTITY,
 } as const satisfies Record<string, HttpStatus>;
 
 export type ErrorCode = keyof typeof ERROR_CODES;

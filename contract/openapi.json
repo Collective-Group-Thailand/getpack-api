@@ -1178,6 +1178,50 @@
           "type": "https://errors.packio/designs.template_without_design"
         }
       },
+      "problem.dielines.material_class_not_offered": {
+        "summary": "dielines.material_class_not_offered",
+        "value": {
+          "code": "dielines.material_class_not_offered",
+          "detail": "สไตล์นี้ไม่มีไดคัทสำหรับกลุ่มวัสดุที่เลือก",
+          "requestId": "6f1c2d8e-2c7b-4d0e-9d1c-3f1a2b3c4d5e",
+          "status": 422,
+          "title": "ไม่มีกลุ่มวัสดุนี้",
+          "type": "https://errors.packio/dielines.material_class_not_offered"
+        }
+      },
+      "problem.dielines.not_drawable": {
+        "summary": "dielines.not_drawable",
+        "value": {
+          "code": "dielines.not_drawable",
+          "detail": "สไตล์ย่อยนี้ยังไม่มีสูตรที่อนุมัติแล้วซึ่งระบบวาดได้",
+          "requestId": "6f1c2d8e-2c7b-4d0e-9d1c-3f1a2b3c4d5e",
+          "status": 422,
+          "title": "วาดไดคัทไม่ได้",
+          "type": "https://errors.packio/dielines.not_drawable"
+        }
+      },
+      "problem.dielines.rate_limited": {
+        "summary": "dielines.rate_limited",
+        "value": {
+          "code": "dielines.rate_limited",
+          "detail": "คุณดาวน์โหลดไดคัทครบจำนวนที่กำหนดแล้ว กรุณาลองใหม่หลังเวลาที่ระบุใน Retry-After",
+          "requestId": "6f1c2d8e-2c7b-4d0e-9d1c-3f1a2b3c4d5e",
+          "status": 429,
+          "title": "ดาวน์โหลดครบจำนวนแล้ว",
+          "type": "https://errors.packio/dielines.rate_limited"
+        }
+      },
+      "problem.dielines.size_out_of_range": {
+        "summary": "dielines.size_out_of_range",
+        "value": {
+          "code": "dielines.size_out_of_range",
+          "detail": "ขนาดที่ระบุอยู่นอกช่วงที่สไตล์นี้ผลิตได้สำหรับกลุ่มวัสดุนี้",
+          "requestId": "6f1c2d8e-2c7b-4d0e-9d1c-3f1a2b3c4d5e",
+          "status": 422,
+          "title": "ขนาดอยู่นอกช่วงของสไตล์",
+          "type": "https://errors.packio/dielines.size_out_of_range"
+        }
+      },
       "problem.discount_memos.not_usable": {
         "summary": "discount_memos.not_usable",
         "value": {
@@ -29921,6 +29965,215 @@
         ],
         "type": "object"
       },
+      "DielineDownloadDto": {
+        "properties": {
+          "cached": {
+            "description": "Served from the render cache (D-270)",
+            "example": false,
+            "type": "boolean"
+          },
+          "createdAt": {
+            "example": "2026-10-03T14:10:00+07:00",
+            "format": "date-time",
+            "type": "string"
+          },
+          "drawn": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/DielineSizesDto"
+              }
+            ],
+            "description": "The inside sizes drawn (D-182)"
+          },
+          "engineVersion": {
+            "example": "fake-dieline@0",
+            "type": "string"
+          },
+          "entered": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/DielineSizesDto"
+              }
+            ],
+            "description": "The sizes as entered, in `measurementBasis`"
+          },
+          "expiresAt": {
+            "example": "2026-10-03T14:15:00+07:00",
+            "format": "date-time",
+            "type": "string"
+          },
+          "fileName": {
+            "example": "PK-TE-01-K7QD-60x40x120-paperboard.pdf",
+            "type": "string"
+          },
+          "format": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/DrawingFormat"
+              }
+            ],
+            "example": "pdf"
+          },
+          "id": {
+            "description": "The download",
+            "example": "0192f3a0-7c1e-7d2a-9b1f-00000000d701",
+            "format": "uuid",
+            "type": "string"
+          },
+          "materialClass": {
+            "example": "paperboard",
+            "type": "string"
+          },
+          "measurementBasis": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/MeasurementBasis"
+              }
+            ],
+            "example": "internal"
+          },
+          "mimeType": {
+            "example": "application/pdf",
+            "type": "string"
+          },
+          "quantities": {
+            "$ref": "#/components/schemas/DielineQuantitiesDto"
+          },
+          "remainingToday": {
+            "description": "Downloads left today (Bangkok day) for a customer; null for staff (not limited)",
+            "example": 19,
+            "type": [
+              "number",
+              "null"
+            ]
+          },
+          "sizeBytes": {
+            "example": 18234,
+            "type": "number"
+          },
+          "url": {
+            "description": "Short-lived signed URL of the file",
+            "example": "https://files.example.invalid/signed",
+            "type": "string"
+          },
+          "variantCode": {
+            "example": "PK-TE-01-K7QD",
+            "type": "string"
+          },
+          "violations": {
+            "description": "Engine rules the size breaks (staff downloads may be outside the published ranges)",
+            "example": [],
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          }
+        },
+        "required": [
+          "id",
+          "variantCode",
+          "format",
+          "materialClass",
+          "measurementBasis",
+          "entered",
+          "drawn",
+          "fileName",
+          "mimeType",
+          "sizeBytes",
+          "url",
+          "expiresAt",
+          "quantities",
+          "violations",
+          "engineVersion",
+          "cached",
+          "remainingToday",
+          "createdAt"
+        ],
+        "type": "object"
+      },
+      "DielineQuantitiesDto": {
+        "properties": {
+          "blankAreaMm2": {
+            "description": "Blank area net of cut-outs, mm²",
+            "example": 31845.2,
+            "type": "number"
+          },
+          "blankHeightMm": {
+            "description": "Flat blank height, mm",
+            "example": 187.2,
+            "type": "number"
+          },
+          "blankWidthMm": {
+            "description": "Flat blank width, mm",
+            "example": 231.4,
+            "type": "number"
+          },
+          "creaseMm": {
+            "example": 902.3,
+            "type": "number"
+          },
+          "cutMm": {
+            "example": 1412.6,
+            "type": "number"
+          },
+          "cutoutAreaMm2": {
+            "description": "Window and other cut-out area, mm²",
+            "example": 0,
+            "type": "number"
+          },
+          "glueOutlineMm": {
+            "example": 240,
+            "type": "number"
+          },
+          "halfCutMm": {
+            "example": 0,
+            "type": "number"
+          },
+          "perforationMm": {
+            "example": 0,
+            "type": "number"
+          },
+          "pieces": {
+            "example": 1,
+            "type": "number"
+          }
+        },
+        "required": [
+          "blankWidthMm",
+          "blankHeightMm",
+          "blankAreaMm2",
+          "cutMm",
+          "creaseMm",
+          "perforationMm",
+          "halfCutMm",
+          "glueOutlineMm",
+          "cutoutAreaMm2",
+          "pieces"
+        ],
+        "type": "object"
+      },
+      "DielineSizesDto": {
+        "properties": {
+          "heightMm": {
+            "example": 120,
+            "type": "number"
+          },
+          "lengthMm": {
+            "example": 60,
+            "type": "number"
+          },
+          "widthMm": {
+            "example": 40,
+            "type": "number"
+          }
+        },
+        "required": [
+          "lengthMm",
+          "widthMm",
+          "heightMm"
+        ],
+        "type": "object"
+      },
       "DielineTrigger": {
         "enum": [
           "auto_after_payment",
@@ -30476,6 +30729,69 @@
           "support_ticket"
         ],
         "type": "string"
+      },
+      "DownloadDielineDto": {
+        "properties": {
+          "format": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/DrawingFormat"
+              }
+            ],
+            "example": "pdf"
+          },
+          "heightMm": {
+            "description": "Height (depth), mm, in the basis given; 0 for a flat item",
+            "example": 100,
+            "maximum": 5000,
+            "minimum": 0,
+            "type": "number"
+          },
+          "lengthMm": {
+            "description": "Length, mm, in the basis given",
+            "example": 100,
+            "maximum": 5000,
+            "minimum": 1,
+            "type": "number"
+          },
+          "materialClass": {
+            "description": "A material class of the style’s size ranges (`store.styles.get` → `sizeRanges[].materialClass`)",
+            "example": "paperboard",
+            "pattern": "^[a-z][a-z0-9_]{1,39}$",
+            "type": "string"
+          },
+          "measurementBasis": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/MeasurementBasis"
+              }
+            ],
+            "description": "Basis of the sizes (D-182), default internal. Outside or over-crease sizes are converted to inside sizes with the reference caliper of the material class before drawing",
+            "example": "internal"
+          },
+          "variantCode": {
+            "description": "A style variant code",
+            "example": "PK-TE-01-K7QD",
+            "pattern": "^PK-[A-Z0-9]{2,8}-[0-9]{2,3}-[A-Z2-7]{4,8}$",
+            "type": "string"
+          },
+          "widthMm": {
+            "description": "Width, mm, in the basis given",
+            "example": 100,
+            "maximum": 5000,
+            "minimum": 1,
+            "type": "number"
+          }
+        },
+        "required": [
+          "variantCode",
+          "lengthMm",
+          "widthMm",
+          "heightMm",
+          "materialClass",
+          "format"
+        ],
+        "type": "object"
       },
       "DownloadUrlDto": {
         "properties": {
@@ -66442,6 +66758,10 @@
       },
       "StyleAssetDto": {
         "properties": {
+          "contentType": {
+            "example": "image/png",
+            "type": "string"
+          },
           "kind": {
             "allOf": [
               {
@@ -66453,6 +66773,11 @@
           "sha256": {
             "description": "sha256 of the asset (hex)",
             "example": "b2f1…",
+            "type": "string"
+          },
+          "url": {
+            "description": "Short-lived signed URL of the rendered asset (D-270)",
+            "example": "https://files.example.invalid/signed",
             "type": "string"
           },
           "variantCode": {
@@ -66467,7 +66792,9 @@
         "required": [
           "kind",
           "variantCode",
-          "sha256"
+          "sha256",
+          "contentType",
+          "url"
         ],
         "type": "object"
       },
@@ -169105,6 +169432,292 @@
         ],
         "x-required-permissions": [
           "prepress.review"
+        ]
+      }
+    },
+    "/v1/admin/dielines/downloads": {
+      "post": {
+        "description": "Any style variant with an approved recipe — published or not, to check it before publishing — at any size the engine draws (rules the size breaks are listed in `violations`), on a material class the engine knows. Not limited; logged like a customer download (D-271, D-270).\n\nImplements: D-271, D-270, D-203, D-182.",
+        "operationId": "admin.dielines.download",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "examples": {
+                "default": {
+                  "value": {
+                    "format": "pdf",
+                    "heightMm": 120,
+                    "lengthMm": 60,
+                    "materialClass": "paperboard",
+                    "measurementBasis": "internal",
+                    "variantCode": "PK-TE-01-K7QD",
+                    "widthMm": 40
+                  }
+                }
+              },
+              "schema": {
+                "$ref": "#/components/schemas/DownloadDielineDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "cached": false,
+                  "createdAt": "2026-10-03T14:10:00+07:00",
+                  "drawn": {
+                    "heightMm": 120,
+                    "lengthMm": 60,
+                    "widthMm": 40
+                  },
+                  "engineVersion": "fake-dieline@0",
+                  "entered": {
+                    "heightMm": 120,
+                    "lengthMm": 60,
+                    "widthMm": 40
+                  },
+                  "expiresAt": "2026-10-03T14:15:00+07:00",
+                  "fileName": "PK-TE-01-K7QD-60x40x120-paperboard.pdf",
+                  "format": "pdf",
+                  "id": "0192f3a0-7c1e-7d2a-9b1f-00000000d701",
+                  "materialClass": "paperboard",
+                  "measurementBasis": "internal",
+                  "mimeType": "application/pdf",
+                  "quantities": {
+                    "blankAreaMm2": 31845.2,
+                    "blankHeightMm": 187.2,
+                    "blankWidthMm": 231.4,
+                    "creaseMm": 902.3,
+                    "cutMm": 1412.6,
+                    "cutoutAreaMm2": 0,
+                    "glueOutlineMm": 240,
+                    "halfCutMm": 0,
+                    "perforationMm": 0,
+                    "pieces": 1
+                  },
+                  "remainingToday": null,
+                  "sizeBytes": 18234,
+                  "url": "https://files.example.invalid/signed",
+                  "variantCode": "PK-TE-01-K7QD",
+                  "violations": []
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/DielineDownloadDto"
+                }
+              }
+            },
+            "description": "The download",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "400": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.bad_request": {
+                    "$ref": "#/components/examples/problem.http.bad_request"
+                  },
+                  "http.malformed_json": {
+                    "$ref": "#/components/examples/problem.http.malformed_json"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.bad_request`, `http.malformed_json`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.unauthenticated": {
+                    "$ref": "#/components/examples/problem.auth.unauthenticated"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.unauthenticated`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.forbidden": {
+                    "$ref": "#/components/examples/problem.auth.forbidden"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.forbidden`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "404": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "styles.variant_not_found": {
+                    "$ref": "#/components/examples/problem.styles.variant_not_found"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `styles.variant_not_found`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "dielines.material_class_not_offered": {
+                    "$ref": "#/components/examples/problem.dielines.material_class_not_offered"
+                  },
+                  "dielines.not_drawable": {
+                    "$ref": "#/components/examples/problem.dielines.not_drawable"
+                  },
+                  "specs.basis_not_accepted": {
+                    "$ref": "#/components/examples/problem.specs.basis_not_accepted"
+                  },
+                  "validation.failed": {
+                    "$ref": "#/components/examples/problem.validation.failed"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `dielines.material_class_not_offered`, `dielines.not_drawable`, `specs.basis_not_accepted`, `validation.failed`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "501": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "drawing.engine_unavailable": {
+                    "$ref": "#/components/examples/problem.drawing.engine_unavailable"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `drawing.engine_unavailable`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "staff": []
+          }
+        ],
+        "summary": "Download a style variant’s dieline (staff)",
+        "tags": [
+          "admin.dielines"
+        ],
+        "x-required-permissions": [
+          "drawings.generate"
         ]
       }
     },
@@ -337032,6 +337645,295 @@
         ]
       }
     },
+    "/v1/store/dielines/downloads": {
+      "post": {
+        "description": "The dieline of a published style variant at my sizes (inside, or converted from outside / over-crease with the reference caliper, D-182) on a material class the style offers, as PDF, DXF or SVG — watermark-free, no plan gating, only within the style’s size range for that class. Signed-in customers only, at most `dielines.downloads_per_minute` (5) a minute and `dielines.downloads_per_day` (20) a Bangkok day; beyond them 429 with `Retry-After`. Every download is logged; identical requests reuse the cached drawing (D-271, D-270, D-203). Answers a short-lived signed URL and the dieline quantities.\n\nImplements: D-271, D-270, D-203, D-182.",
+        "operationId": "store.dielines.download",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "examples": {
+                "default": {
+                  "value": {
+                    "format": "pdf",
+                    "heightMm": 120,
+                    "lengthMm": 60,
+                    "materialClass": "paperboard",
+                    "measurementBasis": "internal",
+                    "variantCode": "PK-TE-01-K7QD",
+                    "widthMm": 40
+                  }
+                }
+              },
+              "schema": {
+                "$ref": "#/components/schemas/DownloadDielineDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "cached": false,
+                  "createdAt": "2026-10-03T14:10:00+07:00",
+                  "drawn": {
+                    "heightMm": 120,
+                    "lengthMm": 60,
+                    "widthMm": 40
+                  },
+                  "engineVersion": "fake-dieline@0",
+                  "entered": {
+                    "heightMm": 120,
+                    "lengthMm": 60,
+                    "widthMm": 40
+                  },
+                  "expiresAt": "2026-10-03T14:15:00+07:00",
+                  "fileName": "PK-TE-01-K7QD-60x40x120-paperboard.pdf",
+                  "format": "pdf",
+                  "id": "0192f3a0-7c1e-7d2a-9b1f-00000000d701",
+                  "materialClass": "paperboard",
+                  "measurementBasis": "internal",
+                  "mimeType": "application/pdf",
+                  "quantities": {
+                    "blankAreaMm2": 31845.2,
+                    "blankHeightMm": 187.2,
+                    "blankWidthMm": 231.4,
+                    "creaseMm": 902.3,
+                    "cutMm": 1412.6,
+                    "cutoutAreaMm2": 0,
+                    "glueOutlineMm": 240,
+                    "halfCutMm": 0,
+                    "perforationMm": 0,
+                    "pieces": 1
+                  },
+                  "remainingToday": 19,
+                  "sizeBytes": 18234,
+                  "url": "https://files.example.invalid/signed",
+                  "variantCode": "PK-TE-01-K7QD",
+                  "violations": []
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/DielineDownloadDto"
+                }
+              }
+            },
+            "description": "The download",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "400": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.bad_request": {
+                    "$ref": "#/components/examples/problem.http.bad_request"
+                  },
+                  "http.malformed_json": {
+                    "$ref": "#/components/examples/problem.http.malformed_json"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.bad_request`, `http.malformed_json`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.unauthenticated": {
+                    "$ref": "#/components/examples/problem.auth.unauthenticated"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.unauthenticated`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.forbidden": {
+                    "$ref": "#/components/examples/problem.auth.forbidden"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.forbidden`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "404": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "styles.variant_not_found": {
+                    "$ref": "#/components/examples/problem.styles.variant_not_found"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `styles.variant_not_found`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "dielines.material_class_not_offered": {
+                    "$ref": "#/components/examples/problem.dielines.material_class_not_offered"
+                  },
+                  "dielines.not_drawable": {
+                    "$ref": "#/components/examples/problem.dielines.not_drawable"
+                  },
+                  "dielines.size_out_of_range": {
+                    "$ref": "#/components/examples/problem.dielines.size_out_of_range"
+                  },
+                  "specs.basis_not_accepted": {
+                    "$ref": "#/components/examples/problem.specs.basis_not_accepted"
+                  },
+                  "validation.failed": {
+                    "$ref": "#/components/examples/problem.validation.failed"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `dielines.material_class_not_offered`, `dielines.not_drawable`, `dielines.size_out_of_range`, `specs.basis_not_accepted`, `validation.failed`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "dielines.rate_limited": {
+                    "$ref": "#/components/examples/problem.dielines.rate_limited"
+                  },
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `dielines.rate_limited`, `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "501": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "drawing.engine_unavailable": {
+                    "$ref": "#/components/examples/problem.drawing.engine_unavailable"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `drawing.engine_unavailable`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "customer": []
+          }
+        ],
+        "summary": "Download a free dieline",
+        "tags": [
+          "store.dielines"
+        ]
+      }
+    },
     "/v1/store/documents": {
       "get": {
         "description": "Documents issued to me by the entity under the Packio brand (D-010), or with `companyId` those of a company I may read documents of (`company_documents.read`, D-125); `orderId` narrows them to one order.\n\nImplements: D-010, D-125.",
@@ -368812,6 +369714,10 @@
       "name": "admin.designs"
     },
     {
+      "description": "Dieline downloads of any style variant with an approved recipe, for staff (D-271, D-270).",
+      "name": "admin.dielines"
+    },
+    {
       "description": "Discounts above the CS limit, routed to the matching tier only; company discounts (D-052, D-124, D-162).",
       "name": "admin.discountMemos"
     },
@@ -369286,6 +370192,10 @@
     {
       "description": "My online designs (immutable versions, ETag, assets, from semi-design templates) and dieline drawings (D-152).",
       "name": "store.designs"
+    },
+    {
+      "description": "Free dieline downloads of published style variants (D-271, D-203): signed-in customers, within the style’s size range, rate-limited and logged.",
+      "name": "store.dielines"
     },
     {
       "description": "My tax invoices, receipts and notes (and my company’s), my credit balance and company statements (D-010, D-125).",

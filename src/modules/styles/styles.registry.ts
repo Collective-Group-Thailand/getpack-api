@@ -1,5 +1,6 @@
 import { type Type } from '@nestjs/common';
 
+import { AdminDielinesController, StoreDielinesController } from './dieline-downloads.controller';
 import {
   AdminFactoryProcessCapabilitiesController,
   AdminProcessCapabilityDecisionsController,
@@ -17,6 +18,7 @@ import { StoreStyleFavouritesController, StoreStylesController } from './styles-
 export const STYLES_STORE_CONTROLLERS: Type<unknown>[] = [
   StoreStylesController,
   StoreStyleFavouritesController,
+  StoreDielinesController,
 ];
 
 /** `/v1/admin/*` controllers of the style library. */
@@ -29,6 +31,7 @@ export const STYLES_ADMIN_CONTROLLERS: Type<unknown>[] = [
   AdminStyleProcessRulesController,
   AdminStyleCoverageController,
   AdminStylePriceRulesController,
+  AdminDielinesController,
 ];
 
 /** `/v1/partner/*` controllers of the style library. */

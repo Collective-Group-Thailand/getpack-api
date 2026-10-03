@@ -322,6 +322,15 @@ export class StyleAssetDto {
 
   @ApiProperty({ example: 'b2f1…', description: 'sha256 of the asset (hex)' })
   sha256!: string;
+
+  @ApiProperty({ example: 'image/png' })
+  contentType!: string;
+
+  @ApiProperty({
+    example: 'https://files.example.invalid/signed',
+    description: 'Short-lived signed URL of the rendered asset (D-270)',
+  })
+  url!: string;
 }
 
 export class StyleDetailDto extends StyleCardDto {

@@ -126,9 +126,10 @@ model StyleVariant {
   createdAt    DateTime       @default(now()) @map("created_at") @db.Timestamptz(6)
   updatedAt    DateTime       @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
 
-  base   StyleBase    @relation(fields: [baseId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_style_variants__base_id")
-  assets StyleAsset[]
-  rfqs   Rfq[]        @relation("RfqStyleVariant")
+  base           StyleBase       @relation(fields: [baseId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_style_variants__base_id")
+  assets         StyleAsset[]
+  rfqs           Rfq[]           @relation("RfqStyleVariant")
+  dielineRenders DielineRender[]
 
   @@unique([baseId, optionKey], map: "ux_style_variants__base_id__option_key")
   @@index([baseId, publishable], map: "ix_style_variants__base_id__publishable")
@@ -153,9 +154,10 @@ model StyleRecipe {
   importRunId   BigInt?   @map("import_run_id")
   createdAt     DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
 
-  base       StyleBase       @relation(fields: [baseId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_style_recipes__base_id")
-  approvedBy User?           @relation("StyleRecipeApprovedBy", fields: [approvedById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_style_recipes__approved_by")
-  importRun  StyleImportRun? @relation("StyleRecipeImportRun", fields: [importRunId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_style_recipes__import_run_id")
+  base           StyleBase       @relation(fields: [baseId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_style_recipes__base_id")
+  approvedBy     User?           @relation("StyleRecipeApprovedBy", fields: [approvedById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_style_recipes__approved_by")
+  importRun      StyleImportRun? @relation("StyleRecipeImportRun", fields: [importRunId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_style_recipes__import_run_id")
+  dielineRenders DielineRender[]
 
   @@unique([baseId, version], map: "ux_style_recipes__base_id__version")
   @@index([approvedById], map: "ix_style_recipes__approved_by")
@@ -174,6 +176,8 @@ model StyleAsset {
   sha256        Bytes
   contentType   String         @map("content_type")
   recipeVersion Int?           @map("recipe_version")
+  /// D-270: the engine bundle that rendered it (a new bundle re-renders).
+  engineVersion String?        @map("engine_version")
   createdAt     DateTime       @default(now()) @map("created_at") @db.Timestamptz(6)
 
   base    StyleBase     @relation(fields: [baseId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_style_assets__base_id")
@@ -396,4 +400,61 @@ model StyleOptionPriceRule {
   @@index([createdById], map: "ix_style_option_price_rules__created_by")
   @@index([retiredById], map: "ix_style_option_price_rules__retired_by")
   @@map("style_option_price_rules")
+}
+
+/// D-270: a dieline the engine drew for a variant at inside sizes, on a material class's reference material, in one
+/// format — cached by sha256 of (engine version, recipe checksum, options, sizes, material, format); a new recipe
+/// version or engine bundle gives a new key. Written once.
+model DielineRender {
+  id            BigInt        @id(map: "pk_dieline_renders") @default(autoincrement())
+  publicId      String        @unique(map: "ux_dieline_renders__public_id") @default(dbgenerated("uuidv7()")) @map("public_id") @db.Uuid
+  cacheKey      Bytes         @unique(map: "ux_dieline_renders__cache_key") @map("cache_key")
+  variantId     BigInt        @map("variant_id")
+  recipeId      BigInt        @map("recipe_id")
+  engineVersion String        @map("engine_version")
+  materialClass String        @map("material_class")
+  /// Inside sizes drawn (D-182), mm.
+  lengthMm      Decimal       @map("length_mm") @db.Decimal(10, 2)
+  widthMm       Decimal       @map("width_mm") @db.Decimal(10, 2)
+  heightMm      Decimal       @map("height_mm") @db.Decimal(10, 2)
+  format        DrawingFormat
+  fileId        BigInt        @map("file_id")
+  /// D-267 quantities of the drawn dieline.
+  quantities    Json
+  /// Engine rule codes the size breaks (empty when it builds cleanly).
+  violations    String[]      @default([])
+  createdAt     DateTime      @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  variant   StyleVariant      @relation(fields: [variantId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_dieline_renders__variant_id")
+  recipe    StyleRecipe       @relation(fields: [recipeId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_dieline_renders__recipe_id")
+  file      FileObject        @relation("DielineRenderFile", fields: [fileId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_dieline_renders__file_id")
+  downloads DielineDownload[]
+
+  @@index([variantId], map: "ix_dieline_renders__variant_id")
+  @@index([recipeId], map: "ix_dieline_renders__recipe_id")
+  @@index([fileId], map: "ix_dieline_renders__file_id")
+  @@map("dieline_renders")
+}
+
+/// D-271: every dieline download (customers within the D-203 limits, staff unlimited). Append-only.
+model DielineDownload {
+  id               BigInt           @id(map: "pk_dieline_downloads") @default(autoincrement())
+  publicId         String           @unique(map: "ux_dieline_downloads__public_id") @default(dbgenerated("uuidv7()")) @map("public_id") @db.Uuid
+  userId           BigInt           @map("user_id")
+  renderId         BigInt           @map("render_id")
+  /// A staff download: not counted against the D-203 limits.
+  staff            Boolean
+  /// D-182: the basis and sizes as entered (the render holds the inside sizes drawn).
+  measurementBasis MeasurementBasis @map("measurement_basis")
+  enteredLengthMm  Decimal          @map("entered_length_mm") @db.Decimal(10, 2)
+  enteredWidthMm   Decimal          @map("entered_width_mm") @db.Decimal(10, 2)
+  enteredHeightMm  Decimal          @map("entered_height_mm") @db.Decimal(10, 2)
+  createdAt        DateTime         @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  user   User          @relation("DielineDownloadUser", fields: [userId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_dieline_downloads__user_id")
+  render DielineRender @relation(fields: [renderId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_dieline_downloads__render_id")
+
+  @@index([userId, createdAt], map: "ix_dieline_downloads__user_id__created_at")
+  @@index([renderId], map: "ix_dieline_downloads__render_id")
+  @@map("dieline_downloads")
 }

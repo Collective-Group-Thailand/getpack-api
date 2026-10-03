@@ -958,6 +958,27 @@ export const SETTINGS: readonly SettingSeed[] = [
     ownerRole: 'superadmin',
   },
 
+  // --- Free dieline download (U3.B5, D-203 / D-271): per signed-in customer; staff are not limited.
+  {
+    key: 'dielines.downloads_per_day',
+    valueType: 'integer',
+    value: 20,
+    valueSchema: { minimum: 1, maximum: 1000 },
+    description:
+      'D-203 / D-271 dieline downloads a signed-in customer may take per Bangkok calendar day (staff are not limited)',
+    decisions: ['D-203', 'D-271'],
+    ownerRole: 'superadmin',
+  },
+  {
+    key: 'dielines.downloads_per_minute',
+    valueType: 'integer',
+    value: 5,
+    valueSchema: { minimum: 1, maximum: 100 },
+    description: 'D-203 / D-271 dieline downloads a signed-in customer may take in any 60 seconds',
+    decisions: ['D-203', 'D-271'],
+    ownerRole: 'superadmin',
+  },
+
   // --- Structure Advisor (U2.2, D-237): definition only — not seeded in production; the advisor answers
   // `advisory.not_configured` until a Superadmin sets it (the proposal is in docs/advisory-validation.md).
   {

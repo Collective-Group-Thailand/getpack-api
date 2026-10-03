@@ -8,6 +8,7 @@ import { Injectable } from '@nestjs/common';
 import { SettingsService } from '@platform/settings/settings.service';
 
 import { optionValues as priceOptions, PRICE_REASONS } from './publishability';
+import { StyleAssetsService } from './style-assets.service';
 import { StyleMakeabilityService } from './style-makeability.service';
 import { MULTI_SELECT_AXES } from './style-master';
 import {
@@ -63,7 +64,17 @@ const LIBRARY_INCLUDE = {
     take: 1,
     select: { sizeRanges: true },
   },
-  assets: { select: { kind: true, sha256: true, variant: { select: { code: true } } } },
+  assets: {
+    where: { OR: [{ variantId: null }, { variant: { publishable: true, status: 'active' } }] },
+    select: {
+      kind: true,
+      sha256: true,
+      storageKey: true,
+      contentType: true,
+      variant: { select: { code: true } },
+    },
+    orderBy: { id: 'asc' },
+  },
 } satisfies Prisma.StyleBaseInclude;
 type LibraryRow = Prisma.StyleBaseGetPayload<{ include: typeof LIBRARY_INCLUDE }>;
 
@@ -86,6 +97,7 @@ export class StylesStoreService {
     private readonly prisma: PrismaService,
     private readonly makeability: StyleMakeabilityService,
     private readonly settings: SettingsService,
+    private readonly assets: StyleAssetsService,
   ) {}
 
   async list(query: StyleListQuery, userId: bigint | null): Promise<StyleListDto> {
@@ -258,11 +270,15 @@ export class StylesStoreService {
           ? factories.length
           : null,
       useCases: row.useCases.map((u) => u.code),
-      assets: row.assets.map((a) => ({
-        kind: a.kind,
-        variantCode: a.variant?.code ?? null,
-        sha256: Buffer.from(a.sha256).toString('hex'),
-      })),
+      assets: await Promise.all(
+        row.assets.map(async (a) => ({
+          kind: a.kind,
+          variantCode: a.variant?.code ?? null,
+          sha256: Buffer.from(a.sha256).toString('hex'),
+          contentType: a.contentType,
+          url: await this.assets.url(a),
+        })),
+      ),
     };
   }
 

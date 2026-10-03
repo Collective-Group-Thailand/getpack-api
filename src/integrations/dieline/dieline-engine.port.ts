@@ -122,4 +122,6 @@ export interface DielineEngine {
   thumbnails(request: RecipeBuildRequest, size: number): Promise<Thumbnails>;
   /** The engine's own recipes, grouped by the base code they name (for the recipe bundle, ADR-0010). */
   recipesByBase(): Promise<Record<string, unknown[]>>;
+  /** The engine's reference material of a material class (the first it lists), null for a class it does not know (D-270). */
+  referenceMaterial(materialClass: string): Promise<DielineMaterial | null>;
 }

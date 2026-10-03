@@ -5,6 +5,7 @@ import {
   type DielineDrawing,
   type DielineEngine,
   type DielineFormat,
+  type DielineMaterial,
   type DielineRequest,
   type RecipeBuild,
   type RecipeBuildRequest,
@@ -96,6 +97,13 @@ export class FakeDielineEngine implements DielineEngine {
 
   recipesByBase(): Promise<Record<string, unknown[]>> {
     return Promise.resolve({});
+  }
+
+  /** Obviously fake calipers per class. */
+  referenceMaterial(materialClass: string): Promise<DielineMaterial | null> {
+    const caliper: Record<string, number> = { paperboard: 0.45, corrugated: 3, rigid: 2, label_stock: 0.1 };
+    const c = caliper[materialClass];
+    return Promise.resolve(c === undefined ? null : { kind: materialClass, caliperMm: c });
   }
 
   async draw(request: DielineRequest): Promise<DielineDrawing> {

@@ -124,6 +124,12 @@ describe('PackioDielineEngine (vendored bundle, ADR-0010)', () => {
     expect(drawing.engineVersion).toMatch(/^@packio\/dieline@/);
   });
 
+  it('names the reference material of a material class (D-270)', async () => {
+    expect(await engine.referenceMaterial('corrugated')).toMatchObject({ kind: 'corrugated', caliperMm: 1.6 });
+    expect(await engine.referenceMaterial('paperboard')).toMatchObject({ kind: 'paperboard' });
+    expect(await engine.referenceMaterial('unobtainium')).toBeNull();
+  });
+
   it('never loads a bundle whose checksum differs from VERSION.json', async () => {
     const root = await mkdtemp(join(tmpdir(), 'dieline-'));
     await mkdir(join(root, 'vendor', 'packio-dieline'), { recursive: true });

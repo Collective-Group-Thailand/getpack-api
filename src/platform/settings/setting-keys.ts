@@ -188,6 +188,8 @@ export interface SettingValues {
   'advisory.rule_set': AdvisoryRuleSet;
   /** D-212 / D-243 highest style-library wave that may be published. */
   'styles.published_wave': number;
+  'dielines.downloads_per_day': number;
+  'dielines.downloads_per_minute': number;
 }
 
 /** D-237 Structure Advisor rule set (decimal strings; factors 0 < f ≤ 1, applied as retained strength). */

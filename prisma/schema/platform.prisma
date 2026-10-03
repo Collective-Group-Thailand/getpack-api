@@ -853,6 +853,7 @@ model FileObject {
   companyBrandAssets      CompanyBrandAsset[]     @relation("CompanyBrandAssetFile")
   designAssets            DesignAsset[]           @relation("DesignAssetFile")
   drawingOutputs          DrawingJob[]            @relation("DrawingJobOutputFile")
+  dielineRenders          DielineRender[]         @relation("DielineRenderFile")
   // --- end Fulfilment B4.1
 
   // --- Fulfilment B4.3 (generated back-relations)
