@@ -36,10 +36,11 @@ describe('packio-api (e2e: AppModule + PostgreSQL 18 + Redis, fake integrations)
     expect(Object.keys(res.body.details as object).sort()).toEqual(['database', 'redis', 'storage']);
   });
 
-  it('GET /docs-json serves an OpenAPI 3.1 document with the three audience schemes', async () => {
+  it('GET /docs-json serves an OpenAPI 3.1 document with the four audience schemes (b2b: D-291)', async () => {
     const res = await request(server).get('/docs-json').expect(200);
     expect(res.body.openapi).toBe('3.1.0');
     expect(Object.keys(res.body.components.securitySchemes as object).sort()).toEqual([
+      'b2b',
       'customer',
       'partner',
       'staff',
