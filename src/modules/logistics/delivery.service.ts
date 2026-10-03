@@ -3,6 +3,7 @@ import { DomainException } from '@common/errors/domain.exception';
 import { formatMoney, MoneyDecimal } from '@common/money/money';
 import { PrismaService, type Tx } from '@database/prisma.service';
 import { type Shipment } from '@generated/prisma/client';
+import { mainJobKind } from '@modules/orders/main-job';
 import { OrderLifecycleHooks, OrdersService } from '@modules/orders/orders.service';
 import { Injectable, Logger } from '@nestjs/common';
 import { ActivityLogService } from '@platform/activity/activity-log.service';
@@ -213,7 +214,7 @@ export class DeliveryService {
     const order = await tx.order.findUniqueOrThrow({ where: { id: orderId } });
     if (order.deliveredAt || order.cancelledAt) return false;
     const job = await tx.productionJob.findFirst({
-      where: { orderId, jobKind: 'production', status: { notIn: ['rejected', 'cancelled'] } },
+      where: { orderId, jobKind: mainJobKind(order.kind), status: { notIn: ['rejected', 'cancelled'] } },
     });
     if (!job || job.status !== 'completed') return false;
     const items = await tx.shipmentItem.findMany({
@@ -235,7 +236,8 @@ export class DeliveryService {
         claimWindowEndsAt: new Date(deliveredAt.getTime() + windowDays * DAY_MS),
       },
     });
-    await this.reconcile(tx, order.id, delivered, deliveredAt, actor);
+    // D-258: a sample carries no quantity tolerance — nothing to reconcile.
+    if (order.kind !== 'sample') await this.reconcile(tx, order.id, delivered, deliveredAt, actor);
     return true;
   }
 

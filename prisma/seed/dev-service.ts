@@ -16,6 +16,8 @@ export interface DevService {
   factoryPublicId: string;
   platePublicId: string;
   designPublicId: string;
+  /** U2.4: the service item CS prices samples with (D-194, D-254). */
+  mockupPublicId: string;
   printTypePublicId: string;
 }
 
@@ -28,6 +30,18 @@ export interface DevService {
 export async function seedDevService(tx: Tx): Promise<{ created: boolean; fixture: DevService }> {
   const type = await tx.productType.findUniqueOrThrow({ where: { code: 'service' } });
   const factory = await tx.factory.findUniqueOrThrow({ where: { code: 'F9001' } });
+  // U2.4: added after the first fixtures, so created on its own (idempotent).
+  if (!(await tx.catalogProduct.findUnique({ where: { slug: 'dev-mockup' } })))
+    await tx.catalogProduct.create({
+      data: {
+        productTypeId: type.id,
+        slug: 'dev-mockup',
+        nameTh: '[DEV] ตัวอย่างจริง (ม็อกอัพ)',
+        nameEn: '[DEV] Sample (mockup)',
+        templateAvailability: 'none',
+        status: 'active',
+      },
+    });
   if (await tx.printType.findUnique({ where: { code: 'dev_service' } })) {
     return { created: false, fixture: await describe(tx, factory.id) };
   }
@@ -136,6 +150,7 @@ async function describe(tx: Tx, factoryId: bigint): Promise<DevService> {
     factoryPublicId: factory.publicId,
     platePublicId: await one(tx.catalogProduct.findUniqueOrThrow({ where: { slug: 'dev-print-plate' } })),
     designPublicId: await one(tx.catalogProduct.findUniqueOrThrow({ where: { slug: 'dev-graphic-design' } })),
+    mockupPublicId: await one(tx.catalogProduct.findUniqueOrThrow({ where: { slug: 'dev-mockup' } })),
     printTypePublicId: await one(tx.printType.findUniqueOrThrow({ where: { code: 'dev_service' } })),
   };
 }

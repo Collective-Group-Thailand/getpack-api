@@ -411,8 +411,12 @@ const VIEWS: Record<NonNullable<JobListQuery['view']>, Prisma.ProductionJobWhere
   in_production: { status: { in: ['accepted', 'in_progress', 'on_hold'] } },
   ready_to_ship: {
     status: 'completed',
-    jobKind: 'production',
-    order: { deliveredAt: null, cancelledAt: null },
+    order: { cancelledAt: null },
+    // D-258: a sample's job is ready to ship too.
+    OR: [
+      { jobKind: 'production', order: { deliveredAt: null } },
+      { jobKind: 'mockup', sample: { is: { status: { in: ['paid', 'in_production'] } } } },
+    ],
   },
   late: { atRiskSince: { not: null }, status: { in: ['accepted', 'in_progress', 'on_hold'] } },
 };

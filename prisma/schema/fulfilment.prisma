@@ -851,7 +851,7 @@ model ProductionJob {
   sample Sample? @relation("SampleJob")
 
   @@unique([orderId], map: "ux_production_jobs__one_live_production", where: raw("((job_kind = 'production'::job_kind) AND (status <> ALL (ARRAY['rejected'::production_job_status, 'cancelled'::production_job_status])))"))
-  @@unique([orderId], map: "ux_production_jobs__one_live_mockup", where: raw("((job_kind = 'mockup'::job_kind) AND (status <> ALL (ARRAY['rejected'::production_job_status, 'cancelled'::production_job_status])))"))
+  @@unique([orderId], map: "ux_production_jobs__one_live_mockup", where: raw("((job_kind = 'mockup'::job_kind) AND (status <> ALL (ARRAY['rejected'::production_job_status, 'cancelled'::production_job_status, 'completed'::production_job_status])))"))
   @@index([orderId], map: "ix_production_jobs__order_id")
   @@index([factoryId, status], map: "ix_production_jobs__factory_id__status")
   @@index([status, acceptDueAt], map: "ix_production_jobs__status__accept_due_at")

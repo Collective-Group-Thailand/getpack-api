@@ -14,6 +14,7 @@ import {
   type Prisma,
 } from '@generated/prisma/client';
 import { ScopingService } from '@modules/iam/scoping.service';
+import { mainJobKind } from '@modules/orders/main-job';
 import { OrderLifecycleHooks } from '@modules/orders/orders.service';
 import { RefundsService } from '@modules/payments/refunds.service';
 import { ProductionService } from '@modules/production/production.service';
@@ -363,9 +364,29 @@ export class ClaimsService implements OnModuleInit {
     actor: Actor,
   ): Promise<Claim> {
     const windowDays = (await this.settings.at('claims.window_days', { at: c.receivedAt, tx })).value;
-    const job = await tx.productionJob.findFirst({
-      where: { orderId: order.id, jobKind: 'production', status: { notIn: ['rejected', 'cancelled'] } },
-    });
+    // D-259: a claim naming a shipment is about the job that shipped (a sample's, for a sample shipment); otherwise
+    // the order's own job (a standalone sample order's is its mockup job).
+    const shippedJob = c.shipmentId
+      ? (
+          await tx.shipmentItem.findFirst({
+            where: { shipmentId: c.shipmentId, orderId: order.id },
+            include: { productionJob: true },
+            orderBy: { id: 'asc' },
+          })
+        )?.productionJob
+      : null;
+    const job =
+      shippedJob ??
+      (await tx.productionJob.findFirst({
+        where: {
+          orderId: order.id,
+          jobKind: mainJobKind(order.kind),
+          status: { notIn: ['rejected', 'cancelled'] },
+        },
+      }));
+    const sample = job
+      ? await tx.sample.findUnique({ where: { productionJobId: job.id }, select: { id: true } })
+      : null;
     // Without a shipment named, the order's own deliveries decide who shipped it.
     const shippedBy =
       c.shippedBy ??
@@ -391,6 +412,7 @@ export class ClaimsService implements OnModuleInit {
         orderId: order.id,
         shipmentId: c.shipmentId,
         productionJobId: job?.id ?? null,
+        sampleId: sample?.id ?? null,
         customerUserId: order.customerUserId,
         type: c.type,
         origin: c.origin,

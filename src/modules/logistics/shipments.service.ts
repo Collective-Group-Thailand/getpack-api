@@ -11,6 +11,7 @@ import {
   type FallbackCarrierCode,
 } from '@integrations/carriers/carrier-adapter.port';
 import { PDF_RENDERER, type PdfRenderer } from '@integrations/pdf/pdf-renderer.port';
+import { mainJobKind } from '@modules/orders/main-job';
 import { OrdersService } from '@modules/orders/orders.service';
 import { PaymentSchedulesService } from '@modules/payment-schedules/payment-schedules.service';
 import { JobsQueryService } from '@modules/production/jobs-query.service';
@@ -115,8 +116,15 @@ export class ShipmentsService {
       if (factoryIds.size !== 1)
         throw new DomainException('validation.failed', { params: { detail: 'one factory per shipment' } });
       for (const job of jobs.values()) {
-        if (job.status !== 'completed' || job.jobKind === 'mockup')
+        if (job.status !== 'completed')
           throw new DomainException('shipments.job_not_shippable', { params: { status: job.status } });
+        if (job.jobKind === 'mockup') {
+          // D-255 / D-258: a sample ships once its evidence is on record; other mockup jobs never ship.
+          const sample = await tx.sample.findUnique({ where: { productionJobId: job.id } });
+          if (!sample || !['paid', 'in_production'].includes(sample.status))
+            throw new DomainException('shipments.job_not_shippable', { params: { status: job.status } });
+          if (!sample.evidenceRecordedAt) throw new DomainException('samples.evidence_missing');
+        }
       }
       const rows = input.items.map((item) => {
         const job = jobs.get(item.jobId)!;
@@ -329,9 +337,12 @@ export class ShipmentsService {
   async assertShippable(tx: Tx, shipmentId: bigint): Promise<void> {
     const items = await tx.shipmentItem.findMany({
       where: { shipmentId },
-      include: { productionJob: { include: { inspections: true } } },
+      include: { productionJob: { include: { inspections: true } }, order: { select: { kind: true } } },
     });
-    for (const orderId of new Set(items.map((i) => i.orderId))) {
+    // D-258: an attached sample is paid by its own charge (its job was released on payment); only the orders
+    // whose own goods travel must be paid for shipping.
+    const gated = items.filter((i) => i.productionJob.jobKind === mainJobKind(i.order.kind));
+    for (const orderId of new Set(gated.map((i) => i.orderId))) {
       if (!(await this.schedules.canShip(orderId, tx)))
         throw new DomainException('shipments.payment_pending');
     }
@@ -362,11 +373,19 @@ export class ShipmentsService {
       },
     });
     await this.addEvent(tx, shipment.id, 'picked_up', at, actor, extra, source);
-    const orderIds = await tx.shipmentItem.findMany({
+    const items = await tx.shipmentItem.findMany({
       where: { shipmentId: shipment.id },
-      select: { orderId: true },
+      select: {
+        orderId: true,
+        productionJob: { select: { jobKind: true } },
+        order: { select: { kind: true } },
+      },
     });
-    for (const orderId of new Set(orderIds.map((o) => o.orderId)))
+    // D-258 (T5): an attached sample travelling alone never marks its bulk order shipped.
+    const shippedOrders = items
+      .filter((i) => i.productionJob.jobKind === mainJobKind(i.order.kind))
+      .map((i) => i.orderId);
+    for (const orderId of new Set(shippedOrders))
       await this.orders.applyFact(tx, orderId, { kind: 'shipped' }, actor, at);
     await this.record(tx, shipment, 'shipment.picked_up', { source }, actor);
   }
@@ -796,13 +815,18 @@ export class ShipmentsService {
       where: {
         factoryId,
         status: 'completed',
-        jobKind: 'production',
-        order: { deliveredAt: null, cancelledAt: null },
+        order: { cancelledAt: null },
+        // D-258: a sample's job ships too (attached or standalone), until the sample has gone.
+        OR: [
+          { jobKind: 'production', order: { deliveredAt: null } },
+          { jobKind: 'mockup', sample: { is: { status: { in: ['paid', 'in_production'] } } } },
+        ],
       },
       include: {
         order: {
           select: {
             id: true,
+            kind: true,
             orderCode: true,
             destinations: {
               orderBy: [{ sort: 'asc' }, { id: 'asc' }],
@@ -827,7 +851,9 @@ export class ShipmentsService {
       : [];
     const out = [];
     for (const job of jobs) {
-      const paid = await this.schedules.canShip(job.order.id);
+      // An attached sample is paid by its own charge; the bulk order's balance does not hold it (D-258).
+      const attachedSample = job.jobKind !== mainJobKind(job.order.kind);
+      const paid = attachedSample || (await this.schedules.canShip(job.order.id));
       const inspected =
         !job.inspectionRequired ||
         job.inspections.some((i) => i.selected && (i.status === 'passed' || i.status === 'waived'));
@@ -838,7 +864,9 @@ export class ShipmentsService {
           const done =
             shipped.find((x) => x.productionJobId === job.id && x.orderDestinationId === d.id)?._sum
               .quantity ?? 0;
-          return { destination: d, shipped: done, remaining: Math.max(d.quantity - done, 0) };
+          // A sample job ships its own quantity, to any one destination of the order.
+          const cap = job.jobKind === 'mockup' ? job.quantityOrdered : d.quantity;
+          return { destination: d, shipped: done, remaining: Math.max(cap - done, 0) };
         }),
       });
     }

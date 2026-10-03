@@ -35,6 +35,8 @@ export interface ApiEndpointOptions {
   description: string;
   /** Decision ids (`D-052`) — or ADR ids for platform endpoints — this operation implements. */
   implements: string[];
+  /** Kept for one release while clients move to its replacement (named in the description). */
+  deprecated?: boolean;
 }
 
 /** Operation id, summary and a description that cites the decisions it implements. */
@@ -49,6 +51,7 @@ export function ApiEndpoint(options: ApiEndpointOptions) {
     operationId: options.id,
     summary: options.summary,
     description: `${options.description}\n\nImplements: ${options.implements.join(', ')}.`,
+    ...(options.deprecated && { deprecated: true }),
   });
 }
 

@@ -2916,6 +2916,50 @@
           "type": "https://errors.packio/rfq.reminder_recent"
         }
       },
+      "problem.samples.evidence_recorded": {
+        "summary": "samples.evidence_recorded",
+        "value": {
+          "code": "samples.evidence_recorded",
+          "detail": "บันทึกขนาด วัสดุ และรูปถ่ายของตัวอย่างนี้ไว้แล้ว",
+          "requestId": "6f1c2d8e-2c7b-4d0e-9d1c-3f1a2b3c4d5e",
+          "status": 409,
+          "title": "บันทึกหลักฐานแล้ว",
+          "type": "https://errors.packio/samples.evidence_recorded"
+        }
+      },
+      "problem.samples.exists": {
+        "summary": "samples.exists",
+        "value": {
+          "code": "samples.exists",
+          "detail": "คำสั่งซื้อนี้มีตัวอย่างที่กำลังดำเนินการอยู่แล้ว",
+          "requestId": "6f1c2d8e-2c7b-4d0e-9d1c-3f1a2b3c4d5e",
+          "status": 409,
+          "title": "มีตัวอย่างที่กำลังดำเนินการอยู่",
+          "type": "https://errors.packio/samples.exists"
+        }
+      },
+      "problem.samples.freight_unavailable": {
+        "summary": "samples.freight_unavailable",
+        "value": {
+          "code": "samples.freight_unavailable",
+          "detail": "อัตราค่าขนส่งของลูกค้าไม่มีราคาสำหรับรหัสไปรษณีย์และน้ำหนักนี้",
+          "requestId": "6f1c2d8e-2c7b-4d0e-9d1c-3f1a2b3c4d5e",
+          "status": 409,
+          "title": "ไม่มีค่าขนส่ง",
+          "type": "https://errors.packio/samples.freight_unavailable"
+        }
+      },
+      "problem.samples.invalid_status": {
+        "summary": "samples.invalid_status",
+        "value": {
+          "code": "samples.invalid_status",
+          "detail": "สถานะของตัวอย่างไม่อนุญาตให้ทำรายการนี้",
+          "requestId": "6f1c2d8e-2c7b-4d0e-9d1c-3f1a2b3c4d5e",
+          "status": 409,
+          "title": "ทำรายการนี้ไม่ได้ในสถานะปัจจุบัน",
+          "type": "https://errors.packio/samples.invalid_status"
+        }
+      },
       "problem.service.unavailable": {
         "summary": "service.unavailable",
         "value": {
@@ -7870,6 +7914,289 @@
           "rewardPoints",
           "createdAt",
           "customer"
+        ],
+        "type": "object"
+      },
+      "AdminSampleDto": {
+        "properties": {
+          "approvedProofId": {
+            "description": "The proof locked by the approval (D-255)",
+            "example": null,
+            "format": "uuid",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "buyNetAmount": {
+            "description": "Factory buy amount (D-141 `factory_cost.read`)",
+            "example": "600.00",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "cancelReason": {
+            "example": null,
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "configuration": {
+            "additionalProperties": true,
+            "example": {
+              "patternId": "0192f3a0-7c1e-7d2a-9b1f-00000000f103",
+              "quantities": [
+                1000
+              ]
+            },
+            "type": "object"
+          },
+          "createdAt": {
+            "example": "2026-10-03T10:00:00+07:00",
+            "format": "date-time",
+            "type": "string"
+          },
+          "credit": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/SampleCreditDto"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Standalone samples only (D-257)"
+          },
+          "customerId": {
+            "description": "The customer",
+            "example": "0192f3a0-7c1e-7d2a-9b1f-00000000f102",
+            "format": "uuid",
+            "type": "string"
+          },
+          "customerName": {
+            "example": "Fake Customer",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "customerNote": {
+            "example": null,
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "decision": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/SampleDecisionViewDto"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "decisionIp": {
+            "example": null,
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "decisionUserAgent": {
+            "example": null,
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "deliveredAt": {
+            "example": null,
+            "format": "date-time",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "deliveryPostcode": {
+            "example": "10110",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "evidence": {
+            "$ref": "#/components/schemas/SampleEvidenceViewDto"
+          },
+          "id": {
+            "example": "0192f3a0-7c1e-7d2a-9b1f-00000000f101",
+            "format": "uuid",
+            "type": "string"
+          },
+          "kind": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/SampleKind"
+              }
+            ],
+            "example": "attached"
+          },
+          "leadTimeDays": {
+            "example": 7,
+            "type": [
+              "number",
+              "null"
+            ]
+          },
+          "mockupOption": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/MockupKind"
+              }
+            ],
+            "example": "with_print"
+          },
+          "orderCode": {
+            "example": "PK-2610-00012",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "orderId": {
+            "description": "Bulk order (attached) or sample order (standalone)",
+            "example": "0192f3a0-7c1e-7d2a-9b1f-00000000f102",
+            "format": "uuid",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "parcelWeightG": {
+            "example": 800,
+            "type": [
+              "number",
+              "null"
+            ]
+          },
+          "previousSampleId": {
+            "example": null,
+            "format": "uuid",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "productTypeCode": {
+            "example": "folding_carton",
+            "type": "string"
+          },
+          "productionJobId": {
+            "example": "0192f3a0-7c1e-7d2a-9b1f-00000000f107",
+            "format": "uuid",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "quantity": {
+            "example": 1,
+            "type": "number"
+          },
+          "quotation": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/SampleQuotationRefDto"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Standalone: the sample quotation to buy"
+          },
+          "sellGrossAmount": {
+            "description": "Product price incl. VAT",
+            "example": "856.00",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "sellNetAmount": {
+            "description": "Product price excl. VAT (freight apart)",
+            "example": "800.00",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "shippedAt": {
+            "example": null,
+            "format": "date-time",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "status": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/SampleStatus"
+              }
+            ],
+            "example": "delivered"
+          },
+          "statusChangedAt": {
+            "example": "2026-10-10T10:00:00+07:00",
+            "format": "date-time",
+            "type": "string"
+          },
+          "validUntil": {
+            "example": null,
+            "format": "date-time",
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "id",
+          "kind",
+          "status",
+          "statusChangedAt",
+          "productTypeCode",
+          "configuration",
+          "mockupOption",
+          "quantity",
+          "deliveryPostcode",
+          "customerNote",
+          "orderId",
+          "orderCode",
+          "quotation",
+          "sellNetAmount",
+          "sellGrossAmount",
+          "leadTimeDays",
+          "validUntil",
+          "evidence",
+          "decision",
+          "approvedProofId",
+          "previousSampleId",
+          "credit",
+          "shippedAt",
+          "deliveredAt",
+          "createdAt",
+          "buyNetAmount",
+          "parcelWeightG",
+          "productionJobId",
+          "customerId",
+          "customerName",
+          "decisionIp",
+          "decisionUserAgent",
+          "cancelReason"
         ],
         "type": "object"
       },
@@ -21224,6 +21551,64 @@
         ],
         "type": "object"
       },
+      "CreateAttachedSampleDto": {
+        "properties": {
+          "amount": {
+            "description": "The amount per unit Unit: THB.",
+            "example": 800,
+            "minimum": 0,
+            "type": "number"
+          },
+          "basis": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ServiceAmountBasis"
+              }
+            ],
+            "description": "What CS entered: the factory’s net cost or the VAT-inclusive sell price (D-194, D-254)",
+            "example": "buy_cost_net"
+          },
+          "mockupOption": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/MockupKind"
+              }
+            ],
+            "example": "with_print"
+          },
+          "previousSampleId": {
+            "description": "The earlier sample of this order the customer asked to change or rejected (D-253)",
+            "example": "0192f3a0-7c1e-7d2a-9b1f-00000000f101",
+            "format": "uuid",
+            "type": "string"
+          },
+          "quantity": {
+            "description": "Sets (default 1)",
+            "example": 1,
+            "maximum": 100,
+            "minimum": 1,
+            "type": "integer"
+          },
+          "reason": {
+            "example": "ลูกค้าขอตัวอย่างจริงก่อนผลิต 1 ชิ้น",
+            "type": "string"
+          },
+          "serviceItemId": {
+            "description": "The service item whose sell table prices the amount (e.g. the mockup item, D-194)",
+            "example": "0192f3a0-7c1e-7d2a-9b1f-00000000f105",
+            "format": "uuid",
+            "type": "string"
+          }
+        },
+        "required": [
+          "serviceItemId",
+          "basis",
+          "amount",
+          "mockupOption",
+          "reason"
+        ],
+        "type": "object"
+      },
       "CreateBannerDto": {
         "properties": {
           "desktopFileId": {
@@ -31699,6 +32084,27 @@
               "string",
               "null"
             ]
+          },
+          "sampleAvgLeadDays": {
+            "description": "Average days from release to completion of the sample jobs (D-259)",
+            "example": "4.50",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "sampleJobsCount": {
+            "description": "Sample jobs completed in the month (D-259)",
+            "example": 2,
+            "type": "integer"
+          },
+          "sampleOnTimePct": {
+            "description": "Sample jobs completed by their planned finish (D-259)",
+            "example": "100.0000",
+            "type": [
+              "string",
+              "null"
+            ]
           }
         },
         "required": [
@@ -31709,6 +32115,9 @@
           "claimRatePct",
           "onTimeUpdatesPct",
           "jobsCount",
+          "sampleJobsCount",
+          "sampleOnTimePct",
+          "sampleAvgLeadDays",
           "computedAt",
           "factory"
         ],
@@ -38952,6 +39361,52 @@
         },
         "type": "object"
       },
+      "OrderBulkDto": {
+        "properties": {
+          "deliveryPostcode": {
+            "example": "10110",
+            "pattern": "^[0-9]{5}$",
+            "type": "string"
+          },
+          "quantity": {
+            "description": "Bulk quantity",
+            "example": 3000,
+            "maximum": 10000000,
+            "minimum": 1,
+            "type": "integer"
+          }
+        },
+        "required": [
+          "quantity"
+        ],
+        "type": "object"
+      },
+      "OrderBulkResultDto": {
+        "properties": {
+          "cartId": {
+            "description": "The cart",
+            "example": "0192f3a0-7c1e-7d2a-9b1f-00000000f102",
+            "format": "uuid",
+            "type": "string"
+          },
+          "creditAvailable": {
+            "description": "The credit still applies to a checkout within the window (D-257)",
+            "example": true,
+            "type": "boolean"
+          },
+          "quoteId": {
+            "example": "0192f3a0-7c1e-7d2a-9b1f-00000000f103",
+            "format": "uuid",
+            "type": "string"
+          }
+        },
+        "required": [
+          "quoteId",
+          "cartId",
+          "creditAvailable"
+        ],
+        "type": "object"
+      },
       "OrderCustomerRefDto": {
         "properties": {
           "companyName": {
@@ -41215,6 +41670,76 @@
           "failed"
         ],
         "type": "string"
+      },
+      "PartnerSampleDto": {
+        "properties": {
+          "configuration": {
+            "additionalProperties": true,
+            "example": {
+              "patternId": "0192f3a0-7c1e-7d2a-9b1f-00000000f103"
+            },
+            "type": "object"
+          },
+          "evidence": {
+            "$ref": "#/components/schemas/SampleEvidenceViewDto"
+          },
+          "id": {
+            "example": "0192f3a0-7c1e-7d2a-9b1f-00000000f101",
+            "format": "uuid",
+            "type": "string"
+          },
+          "jobNo": {
+            "example": "JOB-2610-00007",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "mockupOption": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/MockupKind"
+              }
+            ],
+            "example": "with_print"
+          },
+          "productTypeCode": {
+            "example": "folding_carton",
+            "type": "string"
+          },
+          "productionJobId": {
+            "example": "0192f3a0-7c1e-7d2a-9b1f-00000000f107",
+            "format": "uuid",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "quantity": {
+            "example": 1,
+            "type": "number"
+          },
+          "status": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/SampleStatus"
+              }
+            ],
+            "example": "in_production"
+          }
+        },
+        "required": [
+          "id",
+          "status",
+          "productTypeCode",
+          "configuration",
+          "mockupOption",
+          "quantity",
+          "productionJobId",
+          "jobNo",
+          "evidence"
+        ],
+        "type": "object"
       },
       "PartnerShipmentDto": {
         "properties": {
@@ -49804,6 +50329,64 @@
         ],
         "type": "string"
       },
+      "QuoteSampleDto": {
+        "properties": {
+          "amount": {
+            "description": "The amount per unit Unit: THB.",
+            "example": 800,
+            "minimum": 0,
+            "type": "number"
+          },
+          "basis": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ServiceAmountBasis"
+              }
+            ],
+            "description": "What CS entered: the factory’s net cost or the VAT-inclusive sell price (D-194, D-254)",
+            "example": "buy_cost_net"
+          },
+          "deliveryPostcode": {
+            "example": "10110",
+            "pattern": "^[0-9]{5}$",
+            "type": "string"
+          },
+          "factoryId": {
+            "description": "The factory that makes it; default the factory of the customer’s quotation",
+            "example": "0192f3a0-7c1e-7d2a-9b1f-00000000f108",
+            "format": "uuid",
+            "type": "string"
+          },
+          "leadTimeDays": {
+            "description": "Working days to make the sample",
+            "example": 7,
+            "maximum": 120,
+            "minimum": 1,
+            "type": "integer"
+          },
+          "parcelWeightG": {
+            "description": "Parcel weight (g) for the freight (D-195)",
+            "example": 800,
+            "maximum": 100000,
+            "minimum": 1,
+            "type": "integer"
+          },
+          "serviceItemId": {
+            "description": "The service item whose sell table prices the amount (e.g. the mockup item, D-194)",
+            "example": "0192f3a0-7c1e-7d2a-9b1f-00000000f105",
+            "format": "uuid",
+            "type": "string"
+          }
+        },
+        "required": [
+          "serviceItemId",
+          "basis",
+          "amount",
+          "leadTimeDays",
+          "parcelWeightG"
+        ],
+        "type": "object"
+      },
       "QuoteShippingInternalDto": {
         "properties": {
           "cartons": {
@@ -53017,6 +53600,51 @@
         ],
         "type": "object"
       },
+      "RequestSampleDto": {
+        "properties": {
+          "deliveryPostcode": {
+            "description": "Default: the quotation’s",
+            "example": "10110",
+            "pattern": "^[0-9]{5}$",
+            "type": "string"
+          },
+          "draftId": {
+            "description": "One of my draft configurations (or `quoteId`)",
+            "example": "0192f3a0-7c1e-7d2a-9b1f-00000000f103",
+            "format": "uuid",
+            "type": "string"
+          },
+          "mockupOption": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/MockupKind"
+              }
+            ],
+            "example": "with_print"
+          },
+          "note": {
+            "example": "อยากเห็นสีจริงก่อนสั่งผลิต",
+            "type": "string"
+          },
+          "quantity": {
+            "description": "Sets (default 1)",
+            "example": 1,
+            "maximum": 100,
+            "minimum": 1,
+            "type": "integer"
+          },
+          "quoteId": {
+            "description": "One of my saved quotations (or `draftId`)",
+            "example": "0192f3a0-7c1e-7d2a-9b1f-00000000f103",
+            "format": "uuid",
+            "type": "string"
+          }
+        },
+        "required": [
+          "mockupOption"
+        ],
+        "type": "object"
+      },
       "RequiredBefore": {
         "enum": [
           "none",
@@ -55036,6 +55664,435 @@
         ],
         "type": "object"
       },
+      "SampleCreditDto": {
+        "properties": {
+          "availableUntil": {
+            "description": "A bulk order placed until this gets the credit (`samples.credit_window_days`, D-257)",
+            "example": "2026-11-10T10:00:00+07:00",
+            "format": "date-time",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "bulkQuoteId": {
+            "description": "The bulk quotation",
+            "example": null,
+            "format": "uuid",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "creditAmount": {
+            "example": null,
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "creditOrderId": {
+            "description": "The order credited",
+            "example": null,
+            "format": "uuid",
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "bulkQuoteId",
+          "creditOrderId",
+          "creditAmount",
+          "availableUntil"
+        ],
+        "type": "object"
+      },
+      "SampleDecisionDto": {
+        "properties": {
+          "note": {
+            "description": "Required to ask for changes or reject",
+            "example": "สีเข้มไปเล็กน้อย",
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "SampleDecisionViewDto": {
+        "properties": {
+          "decidedAt": {
+            "example": "2026-10-11T10:00:00+07:00",
+            "format": "date-time",
+            "type": "string"
+          },
+          "evidencePhotoSha256": {
+            "description": "Hex sha256 of the evidence photos seen (D-255)",
+            "example": [
+              "a3f1…"
+            ],
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "note": {
+            "example": null,
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "decidedAt",
+          "note",
+          "evidencePhotoSha256"
+        ],
+        "type": "object"
+      },
+      "SampleDto": {
+        "properties": {
+          "approvedProofId": {
+            "description": "The proof locked by the approval (D-255)",
+            "example": null,
+            "format": "uuid",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "configuration": {
+            "additionalProperties": true,
+            "example": {
+              "patternId": "0192f3a0-7c1e-7d2a-9b1f-00000000f103",
+              "quantities": [
+                1000
+              ]
+            },
+            "type": "object"
+          },
+          "createdAt": {
+            "example": "2026-10-03T10:00:00+07:00",
+            "format": "date-time",
+            "type": "string"
+          },
+          "credit": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/SampleCreditDto"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Standalone samples only (D-257)"
+          },
+          "customerNote": {
+            "example": null,
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "decision": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/SampleDecisionViewDto"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "deliveredAt": {
+            "example": null,
+            "format": "date-time",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "deliveryPostcode": {
+            "example": "10110",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "evidence": {
+            "$ref": "#/components/schemas/SampleEvidenceViewDto"
+          },
+          "id": {
+            "example": "0192f3a0-7c1e-7d2a-9b1f-00000000f101",
+            "format": "uuid",
+            "type": "string"
+          },
+          "kind": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/SampleKind"
+              }
+            ],
+            "example": "attached"
+          },
+          "leadTimeDays": {
+            "example": 7,
+            "type": [
+              "number",
+              "null"
+            ]
+          },
+          "mockupOption": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/MockupKind"
+              }
+            ],
+            "example": "with_print"
+          },
+          "orderCode": {
+            "example": "PK-2610-00012",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "orderId": {
+            "description": "Bulk order (attached) or sample order (standalone)",
+            "example": "0192f3a0-7c1e-7d2a-9b1f-00000000f102",
+            "format": "uuid",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "previousSampleId": {
+            "example": null,
+            "format": "uuid",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "productTypeCode": {
+            "example": "folding_carton",
+            "type": "string"
+          },
+          "quantity": {
+            "example": 1,
+            "type": "number"
+          },
+          "quotation": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/SampleQuotationRefDto"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Standalone: the sample quotation to buy"
+          },
+          "sellGrossAmount": {
+            "description": "Product price incl. VAT",
+            "example": "856.00",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "sellNetAmount": {
+            "description": "Product price excl. VAT (freight apart)",
+            "example": "800.00",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "shippedAt": {
+            "example": null,
+            "format": "date-time",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "status": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/SampleStatus"
+              }
+            ],
+            "example": "delivered"
+          },
+          "statusChangedAt": {
+            "example": "2026-10-10T10:00:00+07:00",
+            "format": "date-time",
+            "type": "string"
+          },
+          "validUntil": {
+            "example": null,
+            "format": "date-time",
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "id",
+          "kind",
+          "status",
+          "statusChangedAt",
+          "productTypeCode",
+          "configuration",
+          "mockupOption",
+          "quantity",
+          "deliveryPostcode",
+          "customerNote",
+          "orderId",
+          "orderCode",
+          "quotation",
+          "sellNetAmount",
+          "sellGrossAmount",
+          "leadTimeDays",
+          "validUntil",
+          "evidence",
+          "decision",
+          "approvedProofId",
+          "previousSampleId",
+          "credit",
+          "shippedAt",
+          "deliveredAt",
+          "createdAt"
+        ],
+        "type": "object"
+      },
+      "SampleEvidenceDto": {
+        "properties": {
+          "basis": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/MeasurementBasis"
+              }
+            ],
+            "description": "D-182",
+            "example": "internal"
+          },
+          "depthMm": {
+            "description": "Absent for a flat item Unit: mm.",
+            "example": 50,
+            "minimum": 0,
+            "type": "number"
+          },
+          "lengthMm": {
+            "description": "Unit: mm.",
+            "example": 300,
+            "minimum": 0,
+            "type": "number"
+          },
+          "materialUsed": {
+            "description": "The material actually used",
+            "example": "อาร์ตการ์ด 350 แกรม (fake)",
+            "type": "string"
+          },
+          "photoFileIds": {
+            "description": "Clean photo uploads of the actor (at least one, D-255)",
+            "example": [
+              "0192f3a0-7c1e-7d2a-9b1f-00000000f106"
+            ],
+            "items": {
+              "format": "uuid",
+              "type": "string"
+            },
+            "maxItems": 12,
+            "minItems": 1,
+            "type": "array"
+          },
+          "widthMm": {
+            "description": "Unit: mm.",
+            "example": 200,
+            "minimum": 0,
+            "type": "number"
+          }
+        },
+        "required": [
+          "lengthMm",
+          "widthMm",
+          "basis",
+          "materialUsed",
+          "photoFileIds"
+        ],
+        "type": "object"
+      },
+      "SampleEvidenceViewDto": {
+        "properties": {
+          "basis": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/MeasurementBasis"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "example": "internal"
+          },
+          "depthMm": {
+            "example": "50.00",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "lengthMm": {
+            "example": "300.00",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "materialUsed": {
+            "example": "อาร์ตการ์ด 350 แกรม (fake)",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "photos": {
+            "items": {
+              "$ref": "#/components/schemas/SamplePhotoDto"
+            },
+            "type": "array"
+          },
+          "recordedAt": {
+            "example": "2026-10-08T15:00:00+07:00",
+            "format": "date-time",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "widthMm": {
+            "example": "200.00",
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "lengthMm",
+          "widthMm",
+          "depthMm",
+          "basis",
+          "materialUsed",
+          "photos",
+          "recordedAt"
+        ],
+        "type": "object"
+      },
       "SampleItemDto": {
         "properties": {
           "amount": {
@@ -55065,10 +56122,80 @@
         ],
         "type": "object"
       },
+      "SampleKind": {
+        "enum": [
+          "attached",
+          "standalone"
+        ],
+        "type": "string"
+      },
       "SampleMethod": {
         "enum": [
           "random",
           "stratified"
+        ],
+        "type": "string"
+      },
+      "SamplePhotoDto": {
+        "properties": {
+          "id": {
+            "example": "0192f3a0-7c1e-7d2a-9b1f-00000000f106",
+            "format": "uuid",
+            "type": "string"
+          },
+          "sha256": {
+            "description": "Hex sha256 of the file",
+            "example": "a3f1…",
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "id",
+          "sha256"
+        ],
+        "type": "object"
+      },
+      "SampleQuotationRefDto": {
+        "properties": {
+          "optionId": {
+            "description": "Add this option to the cart",
+            "example": "0192f3a0-7c1e-7d2a-9b1f-00000000f104",
+            "format": "uuid",
+            "type": "string"
+          },
+          "quoteId": {
+            "example": "0192f3a0-7c1e-7d2a-9b1f-00000000f103",
+            "format": "uuid",
+            "type": "string"
+          },
+          "status": {
+            "example": "saved",
+            "type": "string"
+          }
+        },
+        "required": [
+          "quoteId",
+          "optionId",
+          "status"
+        ],
+        "type": "object"
+      },
+      "SampleStatus": {
+        "enum": [
+          "requested",
+          "quoted",
+          "paid",
+          "in_production",
+          "shipped",
+          "delivered",
+          "approved",
+          "changes_requested",
+          "rejected",
+          "cancelled",
+          "expired"
         ],
         "type": "string"
       },
@@ -55846,6 +56973,27 @@
               "string",
               "null"
             ]
+          },
+          "sampleAvgLeadDays": {
+            "description": "Average days from release to completion of the sample jobs (D-259)",
+            "example": "4.50",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "sampleJobsCount": {
+            "description": "Sample jobs completed in the month (D-259)",
+            "example": 2,
+            "type": "integer"
+          },
+          "sampleOnTimePct": {
+            "description": "Sample jobs completed by their planned finish (D-259)",
+            "example": "100.0000",
+            "type": [
+              "string",
+              "null"
+            ]
           }
         },
         "required": [
@@ -55856,6 +57004,9 @@
           "claimRatePct",
           "onTimeUpdatesPct",
           "jobsCount",
+          "sampleJobsCount",
+          "sampleOnTimePct",
+          "sampleAvgLeadDays",
           "computedAt"
         ],
         "type": "object"
@@ -180162,7 +181313,10 @@
                     "onTimeAcceptancePct": "95.0000",
                     "onTimeShippingPct": "90.0000",
                     "onTimeUpdatesPct": "92.0000",
-                    "qcFirstPassPct": "98.0000"
+                    "qcFirstPassPct": "98.0000",
+                    "sampleAvgLeadDays": "4.50",
+                    "sampleJobsCount": 2,
+                    "sampleOnTimePct": "100.0000"
                   }
                 ],
                 "schema": {
@@ -180374,7 +181528,10 @@
                   "onTimeAcceptancePct": "95.0000",
                   "onTimeShippingPct": "90.0000",
                   "onTimeUpdatesPct": "92.0000",
-                  "qcFirstPassPct": "98.0000"
+                  "qcFirstPassPct": "98.0000",
+                  "sampleAvgLeadDays": "4.50",
+                  "sampleJobsCount": 2,
+                  "sampleOnTimePct": "100.0000"
                 },
                 "schema": {
                   "$ref": "#/components/schemas/ScorecardDto"
@@ -211864,7 +213021,8 @@
     },
     "/v1/admin/orders/{orderId}/mockup": {
       "post": {
-        "description": "The optional paid add-on the customer asked for (D-072), at a CS-quoted price (no calculator prices it yet; audited): an order line and an instalment due now; production of the mockup starts once it is paid. Before production only; one per order.\n\nImplements: D-072, D-020.",
+        "deprecated": true,
+        "description": "The optional paid add-on the customer asked for (D-072), at a CS-quoted price (no calculator prices it yet; audited): an order line and an instalment due now; production of the mockup starts once it is paid. Before production only; one per order. **Deprecated** (D-254): use `admin.samples.create`, which also keeps the factory’s buy amount; this one creates the same attached sample without it. Removed in U-B5.\n\nImplements: D-072, D-020, D-254.",
         "operationId": "admin.artwork.addMockup",
         "parameters": [
           {
@@ -213393,6 +214551,310 @@
         ],
         "x-required-permissions": [
           "prepress.review"
+        ]
+      }
+    },
+    "/v1/admin/orders/{orderId}/samples": {
+      "post": {
+        "description": "CS prices a physical sample from an amount through the service sell table (buy cost or sell price, D-194) — an add-on charge on the order with an instalment due now; once paid it goes to the order’s factory as a mockup job at the buy amount. The bulk order does not start production until the customer approves the sample (D-256). One sample in progress per order; after changes requested or a rejection, name it as `previousSampleId` (D-253, D-254). Replaces `admin.artwork.addMockup`.\n\nImplements: D-253, D-192, D-072, D-254, D-256, D-194.",
+        "operationId": "admin.samples.create",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "orderId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "examples": {
+                "default": {
+                  "value": {
+                    "amount": 600,
+                    "basis": "buy_cost_net",
+                    "mockupOption": "with_print",
+                    "reason": "ลูกค้าขอตัวอย่างจริงก่อนผลิต (fake)",
+                    "serviceItemId": "0192f3a0-7c1e-7d2a-9b1f-00000000f105"
+                  }
+                }
+              },
+              "schema": {
+                "$ref": "#/components/schemas/CreateAttachedSampleDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "approvedProofId": null,
+                  "buyNetAmount": "600.00",
+                  "cancelReason": null,
+                  "configuration": {
+                    "patternId": "0192f3a0-7c1e-7d2a-9b1f-00000000f103",
+                    "quantities": [
+                      1000
+                    ]
+                  },
+                  "createdAt": "2026-10-03T10:00:00+07:00",
+                  "credit": null,
+                  "customerId": "0192f3a0-7c1e-7d2a-9b1f-00000000f102",
+                  "customerName": "Fake Customer",
+                  "customerNote": null,
+                  "decision": null,
+                  "decisionIp": null,
+                  "decisionUserAgent": null,
+                  "deliveredAt": "2026-10-10T10:00:00+07:00",
+                  "deliveryPostcode": null,
+                  "evidence": {
+                    "basis": "internal",
+                    "depthMm": "50.00",
+                    "lengthMm": "300.00",
+                    "materialUsed": "อาร์ตการ์ด 350 แกรม (fake)",
+                    "photos": [
+                      {
+                        "id": "0192f3a0-7c1e-7d2a-9b1f-00000000f106",
+                        "sha256": "a3f1c9…"
+                      }
+                    ],
+                    "recordedAt": "2026-10-08T15:00:00+07:00",
+                    "widthMm": "200.00"
+                  },
+                  "id": "0192f3a0-7c1e-7d2a-9b1f-00000000f101",
+                  "kind": "attached",
+                  "leadTimeDays": null,
+                  "mockupOption": "with_print",
+                  "orderCode": "PK-2610-00012",
+                  "orderId": "0192f3a0-7c1e-7d2a-9b1f-00000000f102",
+                  "parcelWeightG": null,
+                  "previousSampleId": null,
+                  "productTypeCode": "folding_carton",
+                  "productionJobId": "0192f3a0-7c1e-7d2a-9b1f-00000000f107",
+                  "quantity": 1,
+                  "quotation": null,
+                  "sellGrossAmount": "856.00",
+                  "sellNetAmount": "800.00",
+                  "shippedAt": "2026-10-09T09:00:00+07:00",
+                  "status": "quoted",
+                  "statusChangedAt": "2026-10-10T10:00:00+07:00",
+                  "validUntil": null
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/AdminSampleDto"
+                }
+              }
+            },
+            "description": "Sample added",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "400": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.bad_request": {
+                    "$ref": "#/components/examples/problem.http.bad_request"
+                  },
+                  "http.malformed_json": {
+                    "$ref": "#/components/examples/problem.http.malformed_json"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.bad_request`, `http.malformed_json`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.unauthenticated": {
+                    "$ref": "#/components/examples/problem.auth.unauthenticated"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.unauthenticated`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.forbidden": {
+                    "$ref": "#/components/examples/problem.auth.forbidden"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.forbidden`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "404": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.not_found": {
+                    "$ref": "#/components/examples/problem.http.not_found"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.not_found`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "409": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "order.invalid_transition": {
+                    "$ref": "#/components/examples/problem.order.invalid_transition"
+                  },
+                  "samples.exists": {
+                    "$ref": "#/components/examples/problem.samples.exists"
+                  },
+                  "samples.invalid_status": {
+                    "$ref": "#/components/examples/problem.samples.invalid_status"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `order.invalid_transition`, `samples.exists`, `samples.invalid_status`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "validation.failed": {
+                    "$ref": "#/components/examples/problem.validation.failed"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `validation.failed`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "staff": []
+          }
+        ],
+        "summary": "Add a sample to an order",
+        "tags": [
+          "admin.samples"
+        ],
+        "x-required-permissions": [
+          "samples.manage"
         ]
       }
     },
@@ -246004,6 +247466,1447 @@
         ]
       }
     },
+    "/v1/admin/samples": {
+      "get": {
+        "description": "Attached and standalone samples, newest first; filter by status, kind or order (D-253).\n\nImplements: D-253, D-192, D-072.",
+        "operationId": "admin.samples.list",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "page",
+            "required": false,
+            "schema": {
+              "default": 1,
+              "minimum": 1,
+              "type": "integer"
+            }
+          },
+          {
+            "in": "query",
+            "name": "perPage",
+            "required": false,
+            "schema": {
+              "default": 25,
+              "maximum": 100,
+              "minimum": 1,
+              "type": "integer"
+            }
+          },
+          {
+            "description": "Sort field; each endpoint validates it against its own allow-list.",
+            "in": "query",
+            "name": "sort",
+            "required": false,
+            "schema": {
+              "example": "createdAt",
+              "maxLength": 64,
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "order",
+            "required": false,
+            "schema": {
+              "$ref": "#/components/schemas/SortOrder"
+            }
+          },
+          {
+            "description": "Free-text search",
+            "in": "query",
+            "name": "q",
+            "required": false,
+            "schema": {
+              "maxLength": 200,
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "status",
+            "required": false,
+            "schema": {
+              "$ref": "#/components/schemas/SampleStatus"
+            }
+          },
+          {
+            "in": "query",
+            "name": "kind",
+            "required": false,
+            "schema": {
+              "$ref": "#/components/schemas/SampleKind"
+            }
+          },
+          {
+            "description": "Samples of this order",
+            "in": "query",
+            "name": "orderId",
+            "required": false,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "data": [
+                    {
+                      "approvedProofId": null,
+                      "buyNetAmount": "600.00",
+                      "cancelReason": null,
+                      "configuration": {
+                        "patternId": "0192f3a0-7c1e-7d2a-9b1f-00000000f103",
+                        "quantities": [
+                          1000
+                        ]
+                      },
+                      "createdAt": "2026-10-03T10:00:00+07:00",
+                      "credit": null,
+                      "customerId": "0192f3a0-7c1e-7d2a-9b1f-00000000f102",
+                      "customerName": "Fake Customer",
+                      "customerNote": null,
+                      "decision": null,
+                      "decisionIp": null,
+                      "decisionUserAgent": null,
+                      "deliveredAt": "2026-10-10T10:00:00+07:00",
+                      "deliveryPostcode": null,
+                      "evidence": {
+                        "basis": "internal",
+                        "depthMm": "50.00",
+                        "lengthMm": "300.00",
+                        "materialUsed": "อาร์ตการ์ด 350 แกรม (fake)",
+                        "photos": [
+                          {
+                            "id": "0192f3a0-7c1e-7d2a-9b1f-00000000f106",
+                            "sha256": "a3f1c9…"
+                          }
+                        ],
+                        "recordedAt": "2026-10-08T15:00:00+07:00",
+                        "widthMm": "200.00"
+                      },
+                      "id": "0192f3a0-7c1e-7d2a-9b1f-00000000f101",
+                      "kind": "attached",
+                      "leadTimeDays": null,
+                      "mockupOption": "with_print",
+                      "orderCode": "PK-2610-00012",
+                      "orderId": "0192f3a0-7c1e-7d2a-9b1f-00000000f102",
+                      "parcelWeightG": null,
+                      "previousSampleId": null,
+                      "productTypeCode": "folding_carton",
+                      "productionJobId": "0192f3a0-7c1e-7d2a-9b1f-00000000f107",
+                      "quantity": 1,
+                      "quotation": null,
+                      "sellGrossAmount": "856.00",
+                      "sellNetAmount": "800.00",
+                      "shippedAt": "2026-10-09T09:00:00+07:00",
+                      "status": "delivered",
+                      "statusChangedAt": "2026-10-10T10:00:00+07:00",
+                      "validUntil": null
+                    }
+                  ],
+                  "meta": {
+                    "page": 1,
+                    "perPage": 25,
+                    "total": 1
+                  }
+                },
+                "schema": {
+                  "properties": {
+                    "data": {
+                      "items": {
+                        "$ref": "#/components/schemas/AdminSampleDto"
+                      },
+                      "type": "array"
+                    },
+                    "meta": {
+                      "$ref": "#/components/schemas/PageMeta"
+                    }
+                  },
+                  "required": [
+                    "data",
+                    "meta"
+                  ],
+                  "type": "object"
+                }
+              }
+            },
+            "description": "One page of results",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.unauthenticated": {
+                    "$ref": "#/components/examples/problem.auth.unauthenticated"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.unauthenticated`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.forbidden": {
+                    "$ref": "#/components/examples/problem.auth.forbidden"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.forbidden`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "validation.failed": {
+                    "$ref": "#/components/examples/problem.validation.failed"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `validation.failed`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "staff": []
+          }
+        ],
+        "summary": "List samples",
+        "tags": [
+          "admin.samples"
+        ],
+        "x-required-permissions": [
+          "samples.read"
+        ]
+      }
+    },
+    "/v1/admin/samples/{sampleId}": {
+      "get": {
+        "description": "With the factory buy amount for `factory_cost.read` (D-141) and the decision evidence (D-255).\n\nImplements: D-253, D-192, D-072, D-141, D-255.",
+        "operationId": "admin.samples.get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "sampleId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "approvedProofId": null,
+                  "buyNetAmount": "600.00",
+                  "cancelReason": null,
+                  "configuration": {
+                    "patternId": "0192f3a0-7c1e-7d2a-9b1f-00000000f103",
+                    "quantities": [
+                      1000
+                    ]
+                  },
+                  "createdAt": "2026-10-03T10:00:00+07:00",
+                  "credit": null,
+                  "customerId": "0192f3a0-7c1e-7d2a-9b1f-00000000f102",
+                  "customerName": "Fake Customer",
+                  "customerNote": null,
+                  "decision": null,
+                  "decisionIp": null,
+                  "decisionUserAgent": null,
+                  "deliveredAt": "2026-10-10T10:00:00+07:00",
+                  "deliveryPostcode": null,
+                  "evidence": {
+                    "basis": "internal",
+                    "depthMm": "50.00",
+                    "lengthMm": "300.00",
+                    "materialUsed": "อาร์ตการ์ด 350 แกรม (fake)",
+                    "photos": [
+                      {
+                        "id": "0192f3a0-7c1e-7d2a-9b1f-00000000f106",
+                        "sha256": "a3f1c9…"
+                      }
+                    ],
+                    "recordedAt": "2026-10-08T15:00:00+07:00",
+                    "widthMm": "200.00"
+                  },
+                  "id": "0192f3a0-7c1e-7d2a-9b1f-00000000f101",
+                  "kind": "attached",
+                  "leadTimeDays": null,
+                  "mockupOption": "with_print",
+                  "orderCode": "PK-2610-00012",
+                  "orderId": "0192f3a0-7c1e-7d2a-9b1f-00000000f102",
+                  "parcelWeightG": null,
+                  "previousSampleId": null,
+                  "productTypeCode": "folding_carton",
+                  "productionJobId": "0192f3a0-7c1e-7d2a-9b1f-00000000f107",
+                  "quantity": 1,
+                  "quotation": null,
+                  "sellGrossAmount": "856.00",
+                  "sellNetAmount": "800.00",
+                  "shippedAt": "2026-10-09T09:00:00+07:00",
+                  "status": "delivered",
+                  "statusChangedAt": "2026-10-10T10:00:00+07:00",
+                  "validUntil": null
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/AdminSampleDto"
+                }
+              }
+            },
+            "description": "Sample",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.unauthenticated": {
+                    "$ref": "#/components/examples/problem.auth.unauthenticated"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.unauthenticated`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.forbidden": {
+                    "$ref": "#/components/examples/problem.auth.forbidden"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.forbidden`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "404": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.not_found": {
+                    "$ref": "#/components/examples/problem.http.not_found"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.not_found`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "validation.failed": {
+                    "$ref": "#/components/examples/problem.validation.failed"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `validation.failed`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "staff": []
+          }
+        ],
+        "summary": "Get a sample",
+        "tags": [
+          "admin.samples"
+        ],
+        "x-required-permissions": [
+          "samples.read"
+        ]
+      }
+    },
+    "/v1/admin/samples/{sampleId}/actions/cancel": {
+      "post": {
+        "description": "With a reason (audited); an attached sample’s hold on its bulk order lifts (D-256). Money already paid is handled through the order’s credit-note flow.\n\nImplements: D-253, D-192, D-072, D-256.",
+        "operationId": "admin.samples.cancel",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "sampleId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "examples": {
+                "default": {
+                  "value": {
+                    "reason": "ลูกค้ายกเลิก (fake)"
+                  }
+                }
+              },
+              "schema": {
+                "$ref": "#/components/schemas/ReasonBodyDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "approvedProofId": null,
+                  "buyNetAmount": "600.00",
+                  "cancelReason": "ลูกค้ายกเลิก (fake)",
+                  "configuration": {
+                    "patternId": "0192f3a0-7c1e-7d2a-9b1f-00000000f103",
+                    "quantities": [
+                      1000
+                    ]
+                  },
+                  "createdAt": "2026-10-03T10:00:00+07:00",
+                  "credit": null,
+                  "customerId": "0192f3a0-7c1e-7d2a-9b1f-00000000f102",
+                  "customerName": "Fake Customer",
+                  "customerNote": null,
+                  "decision": null,
+                  "decisionIp": null,
+                  "decisionUserAgent": null,
+                  "deliveredAt": "2026-10-10T10:00:00+07:00",
+                  "deliveryPostcode": null,
+                  "evidence": {
+                    "basis": "internal",
+                    "depthMm": "50.00",
+                    "lengthMm": "300.00",
+                    "materialUsed": "อาร์ตการ์ด 350 แกรม (fake)",
+                    "photos": [
+                      {
+                        "id": "0192f3a0-7c1e-7d2a-9b1f-00000000f106",
+                        "sha256": "a3f1c9…"
+                      }
+                    ],
+                    "recordedAt": "2026-10-08T15:00:00+07:00",
+                    "widthMm": "200.00"
+                  },
+                  "id": "0192f3a0-7c1e-7d2a-9b1f-00000000f101",
+                  "kind": "attached",
+                  "leadTimeDays": null,
+                  "mockupOption": "with_print",
+                  "orderCode": "PK-2610-00012",
+                  "orderId": "0192f3a0-7c1e-7d2a-9b1f-00000000f102",
+                  "parcelWeightG": null,
+                  "previousSampleId": null,
+                  "productTypeCode": "folding_carton",
+                  "productionJobId": "0192f3a0-7c1e-7d2a-9b1f-00000000f107",
+                  "quantity": 1,
+                  "quotation": null,
+                  "sellGrossAmount": "856.00",
+                  "sellNetAmount": "800.00",
+                  "shippedAt": "2026-10-09T09:00:00+07:00",
+                  "status": "cancelled",
+                  "statusChangedAt": "2026-10-10T10:00:00+07:00",
+                  "validUntil": null
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/AdminSampleDto"
+                }
+              }
+            },
+            "description": "Cancelled",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "400": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.bad_request": {
+                    "$ref": "#/components/examples/problem.http.bad_request"
+                  },
+                  "http.malformed_json": {
+                    "$ref": "#/components/examples/problem.http.malformed_json"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.bad_request`, `http.malformed_json`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.unauthenticated": {
+                    "$ref": "#/components/examples/problem.auth.unauthenticated"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.unauthenticated`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.forbidden": {
+                    "$ref": "#/components/examples/problem.auth.forbidden"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.forbidden`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "404": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.not_found": {
+                    "$ref": "#/components/examples/problem.http.not_found"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.not_found`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "409": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "samples.invalid_status": {
+                    "$ref": "#/components/examples/problem.samples.invalid_status"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `samples.invalid_status`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "validation.failed": {
+                    "$ref": "#/components/examples/problem.validation.failed"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `validation.failed`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "staff": []
+          }
+        ],
+        "summary": "Cancel a sample",
+        "tags": [
+          "admin.samples"
+        ],
+        "x-required-permissions": [
+          "samples.manage"
+        ]
+      }
+    },
+    "/v1/admin/samples/{sampleId}/actions/quote": {
+      "post": {
+        "description": "A sample quotation for the customer: CS amount through the service sell table (D-194), freight from the customer rate card for the parcel weight (D-195), lead time, made by the factory of the customer’s quotation unless named; valid `quotes.validity_days` (D-051). The customer buys it through the cart (D-254).\n\nImplements: D-253, D-192, D-072, D-254, D-195, D-194, D-051.",
+        "operationId": "admin.samples.quote",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "sampleId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "examples": {
+                "default": {
+                  "value": {
+                    "amount": 600,
+                    "basis": "buy_cost_net",
+                    "leadTimeDays": 7,
+                    "parcelWeightG": 800,
+                    "serviceItemId": "0192f3a0-7c1e-7d2a-9b1f-00000000f105"
+                  }
+                }
+              },
+              "schema": {
+                "$ref": "#/components/schemas/QuoteSampleDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "approvedProofId": null,
+                  "buyNetAmount": "600.00",
+                  "cancelReason": null,
+                  "configuration": {
+                    "patternId": "0192f3a0-7c1e-7d2a-9b1f-00000000f103",
+                    "quantities": [
+                      1000
+                    ]
+                  },
+                  "createdAt": "2026-10-03T10:00:00+07:00",
+                  "credit": null,
+                  "customerId": "0192f3a0-7c1e-7d2a-9b1f-00000000f102",
+                  "customerName": "Fake Customer",
+                  "customerNote": null,
+                  "decision": null,
+                  "decisionIp": null,
+                  "decisionUserAgent": null,
+                  "deliveredAt": "2026-10-10T10:00:00+07:00",
+                  "deliveryPostcode": null,
+                  "evidence": {
+                    "basis": "internal",
+                    "depthMm": "50.00",
+                    "lengthMm": "300.00",
+                    "materialUsed": "อาร์ตการ์ด 350 แกรม (fake)",
+                    "photos": [
+                      {
+                        "id": "0192f3a0-7c1e-7d2a-9b1f-00000000f106",
+                        "sha256": "a3f1c9…"
+                      }
+                    ],
+                    "recordedAt": "2026-10-08T15:00:00+07:00",
+                    "widthMm": "200.00"
+                  },
+                  "id": "0192f3a0-7c1e-7d2a-9b1f-00000000f101",
+                  "kind": "standalone",
+                  "leadTimeDays": null,
+                  "mockupOption": "with_print",
+                  "orderCode": "PK-2610-00012",
+                  "orderId": "0192f3a0-7c1e-7d2a-9b1f-00000000f102",
+                  "parcelWeightG": null,
+                  "previousSampleId": null,
+                  "productTypeCode": "folding_carton",
+                  "productionJobId": "0192f3a0-7c1e-7d2a-9b1f-00000000f107",
+                  "quantity": 1,
+                  "quotation": null,
+                  "sellGrossAmount": "856.00",
+                  "sellNetAmount": "800.00",
+                  "shippedAt": "2026-10-09T09:00:00+07:00",
+                  "status": "quoted",
+                  "statusChangedAt": "2026-10-10T10:00:00+07:00",
+                  "validUntil": null
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/AdminSampleDto"
+                }
+              }
+            },
+            "description": "Quoted",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "400": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.bad_request": {
+                    "$ref": "#/components/examples/problem.http.bad_request"
+                  },
+                  "http.malformed_json": {
+                    "$ref": "#/components/examples/problem.http.malformed_json"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.bad_request`, `http.malformed_json`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.unauthenticated": {
+                    "$ref": "#/components/examples/problem.auth.unauthenticated"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.unauthenticated`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.forbidden": {
+                    "$ref": "#/components/examples/problem.auth.forbidden"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.forbidden`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "404": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.not_found": {
+                    "$ref": "#/components/examples/problem.http.not_found"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.not_found`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "409": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "samples.freight_unavailable": {
+                    "$ref": "#/components/examples/problem.samples.freight_unavailable"
+                  },
+                  "samples.invalid_status": {
+                    "$ref": "#/components/examples/problem.samples.invalid_status"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `samples.freight_unavailable`, `samples.invalid_status`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "validation.failed": {
+                    "$ref": "#/components/examples/problem.validation.failed"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `validation.failed`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "staff": []
+          }
+        ],
+        "summary": "Quote a requested sample",
+        "tags": [
+          "admin.samples"
+        ],
+        "x-required-permissions": [
+          "samples.manage"
+        ]
+      }
+    },
+    "/v1/admin/samples/{sampleId}/evidence": {
+      "post": {
+        "description": "Measured size with its basis, the material used and photos (the actor’s own clean uploads), once, before it ships (D-255).\n\nImplements: D-253, D-192, D-072, D-255.",
+        "operationId": "admin.samples.recordEvidence",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "sampleId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "examples": {
+                "default": {
+                  "value": {
+                    "basis": "internal",
+                    "depthMm": 50,
+                    "lengthMm": 300,
+                    "materialUsed": "อาร์ตการ์ด 350 แกรม (fake)",
+                    "photoFileIds": [
+                      "0192f3a0-7c1e-7d2a-9b1f-00000000f106"
+                    ],
+                    "widthMm": 200
+                  }
+                }
+              },
+              "schema": {
+                "$ref": "#/components/schemas/SampleEvidenceDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "approvedProofId": null,
+                  "buyNetAmount": "600.00",
+                  "cancelReason": null,
+                  "configuration": {
+                    "patternId": "0192f3a0-7c1e-7d2a-9b1f-00000000f103",
+                    "quantities": [
+                      1000
+                    ]
+                  },
+                  "createdAt": "2026-10-03T10:00:00+07:00",
+                  "credit": null,
+                  "customerId": "0192f3a0-7c1e-7d2a-9b1f-00000000f102",
+                  "customerName": "Fake Customer",
+                  "customerNote": null,
+                  "decision": null,
+                  "decisionIp": null,
+                  "decisionUserAgent": null,
+                  "deliveredAt": "2026-10-10T10:00:00+07:00",
+                  "deliveryPostcode": null,
+                  "evidence": {
+                    "basis": "internal",
+                    "depthMm": "50.00",
+                    "lengthMm": "300.00",
+                    "materialUsed": "อาร์ตการ์ด 350 แกรม (fake)",
+                    "photos": [
+                      {
+                        "id": "0192f3a0-7c1e-7d2a-9b1f-00000000f106",
+                        "sha256": "a3f1c9…"
+                      }
+                    ],
+                    "recordedAt": "2026-10-08T15:00:00+07:00",
+                    "widthMm": "200.00"
+                  },
+                  "id": "0192f3a0-7c1e-7d2a-9b1f-00000000f101",
+                  "kind": "attached",
+                  "leadTimeDays": null,
+                  "mockupOption": "with_print",
+                  "orderCode": "PK-2610-00012",
+                  "orderId": "0192f3a0-7c1e-7d2a-9b1f-00000000f102",
+                  "parcelWeightG": null,
+                  "previousSampleId": null,
+                  "productTypeCode": "folding_carton",
+                  "productionJobId": "0192f3a0-7c1e-7d2a-9b1f-00000000f107",
+                  "quantity": 1,
+                  "quotation": null,
+                  "sellGrossAmount": "856.00",
+                  "sellNetAmount": "800.00",
+                  "shippedAt": "2026-10-09T09:00:00+07:00",
+                  "status": "delivered",
+                  "statusChangedAt": "2026-10-10T10:00:00+07:00",
+                  "validUntil": null
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/AdminSampleDto"
+                }
+              }
+            },
+            "description": "Recorded",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "400": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.bad_request": {
+                    "$ref": "#/components/examples/problem.http.bad_request"
+                  },
+                  "http.malformed_json": {
+                    "$ref": "#/components/examples/problem.http.malformed_json"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.bad_request`, `http.malformed_json`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.unauthenticated": {
+                    "$ref": "#/components/examples/problem.auth.unauthenticated"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.unauthenticated`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.forbidden": {
+                    "$ref": "#/components/examples/problem.auth.forbidden"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.forbidden`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "404": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.not_found": {
+                    "$ref": "#/components/examples/problem.http.not_found"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.not_found`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "409": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "samples.evidence_recorded": {
+                    "$ref": "#/components/examples/problem.samples.evidence_recorded"
+                  },
+                  "samples.invalid_status": {
+                    "$ref": "#/components/examples/problem.samples.invalid_status"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `samples.evidence_recorded`, `samples.invalid_status`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "artwork.file_not_usable": {
+                    "$ref": "#/components/examples/problem.artwork.file_not_usable"
+                  },
+                  "validation.failed": {
+                    "$ref": "#/components/examples/problem.validation.failed"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `artwork.file_not_usable`, `validation.failed`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "staff": []
+          }
+        ],
+        "summary": "Record a sample’s evidence",
+        "tags": [
+          "admin.samples"
+        ],
+        "x-required-permissions": [
+          "samples.manage"
+        ]
+      }
+    },
     "/v1/admin/saved-views": {
       "get": {
         "description": "My own views of `resource` and those shared by colleagues, mine first, then by name.\n\nImplements: D-140.",
@@ -246691,7 +249594,10 @@
                     "onTimeAcceptancePct": "95.0000",
                     "onTimeShippingPct": "90.0000",
                     "onTimeUpdatesPct": "92.0000",
-                    "qcFirstPassPct": "98.0000"
+                    "qcFirstPassPct": "98.0000",
+                    "sampleAvgLeadDays": "4.50",
+                    "sampleJobsCount": 2,
+                    "sampleOnTimePct": "100.0000"
                   }
                 ],
                 "schema": {
@@ -289455,6 +292361,592 @@
         ]
       }
     },
+    "/v1/partner/factories/{factoryId}/samples": {
+      "get": {
+        "description": "Samples made as the factory’s jobs: what to make and the evidence; no customer or price (D-142, D-050).\n\nImplements: D-253, D-192, D-072, D-142.",
+        "operationId": "partner.samples.list",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "factoryId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "page",
+            "required": false,
+            "schema": {
+              "default": 1,
+              "minimum": 1,
+              "type": "integer"
+            }
+          },
+          {
+            "in": "query",
+            "name": "perPage",
+            "required": false,
+            "schema": {
+              "default": 25,
+              "maximum": 100,
+              "minimum": 1,
+              "type": "integer"
+            }
+          },
+          {
+            "description": "Sort field; each endpoint validates it against its own allow-list.",
+            "in": "query",
+            "name": "sort",
+            "required": false,
+            "schema": {
+              "example": "createdAt",
+              "maxLength": 64,
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "order",
+            "required": false,
+            "schema": {
+              "$ref": "#/components/schemas/SortOrder"
+            }
+          },
+          {
+            "description": "Free-text search",
+            "in": "query",
+            "name": "q",
+            "required": false,
+            "schema": {
+              "maxLength": 200,
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "status",
+            "required": false,
+            "schema": {
+              "$ref": "#/components/schemas/SampleStatus"
+            }
+          },
+          {
+            "in": "query",
+            "name": "kind",
+            "required": false,
+            "schema": {
+              "$ref": "#/components/schemas/SampleKind"
+            }
+          },
+          {
+            "description": "Samples of this order",
+            "in": "query",
+            "name": "orderId",
+            "required": false,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "data": [
+                    {
+                      "configuration": {
+                        "patternId": "0192f3a0-7c1e-7d2a-9b1f-00000000f103"
+                      },
+                      "evidence": {
+                        "basis": "internal",
+                        "depthMm": "50.00",
+                        "lengthMm": "300.00",
+                        "materialUsed": "อาร์ตการ์ด 350 แกรม (fake)",
+                        "photos": [],
+                        "recordedAt": null,
+                        "widthMm": "200.00"
+                      },
+                      "id": "0192f3a0-7c1e-7d2a-9b1f-00000000f101",
+                      "jobNo": "JOB-2610-00007",
+                      "mockupOption": "with_print",
+                      "productTypeCode": "folding_carton",
+                      "productionJobId": "0192f3a0-7c1e-7d2a-9b1f-00000000f107",
+                      "quantity": 1,
+                      "status": "in_production"
+                    }
+                  ],
+                  "meta": {
+                    "page": 1,
+                    "perPage": 25,
+                    "total": 1
+                  }
+                },
+                "schema": {
+                  "properties": {
+                    "data": {
+                      "items": {
+                        "$ref": "#/components/schemas/PartnerSampleDto"
+                      },
+                      "type": "array"
+                    },
+                    "meta": {
+                      "$ref": "#/components/schemas/PageMeta"
+                    }
+                  },
+                  "required": [
+                    "data",
+                    "meta"
+                  ],
+                  "type": "object"
+                }
+              }
+            },
+            "description": "One page of results",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.unauthenticated": {
+                    "$ref": "#/components/examples/problem.auth.unauthenticated"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.unauthenticated`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.forbidden": {
+                    "$ref": "#/components/examples/problem.auth.forbidden"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.forbidden`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "404": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.not_found": {
+                    "$ref": "#/components/examples/problem.http.not_found"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.not_found`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "validation.failed": {
+                    "$ref": "#/components/examples/problem.validation.failed"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `validation.failed`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "partner": []
+          }
+        ],
+        "summary": "List my factory’s samples",
+        "tags": [
+          "partner.samples"
+        ],
+        "x-required-permissions": [
+          "factory_jobs.read"
+        ]
+      }
+    },
+    "/v1/partner/factories/{factoryId}/samples/{sampleId}/evidence": {
+      "post": {
+        "description": "Before the sample ships: the measured size with its basis, the material actually used and at least one photo (own clean uploads), once (D-255). Owner, Planner or QC.\n\nImplements: D-253, D-192, D-072, D-255.",
+        "operationId": "partner.samples.recordEvidence",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "factoryId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "sampleId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "examples": {
+                "default": {
+                  "value": {
+                    "basis": "internal",
+                    "depthMm": 50,
+                    "lengthMm": 300,
+                    "materialUsed": "อาร์ตการ์ด 350 แกรม (fake)",
+                    "photoFileIds": [
+                      "0192f3a0-7c1e-7d2a-9b1f-00000000f106"
+                    ],
+                    "widthMm": 200
+                  }
+                }
+              },
+              "schema": {
+                "$ref": "#/components/schemas/SampleEvidenceDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "configuration": {
+                    "patternId": "0192f3a0-7c1e-7d2a-9b1f-00000000f103"
+                  },
+                  "evidence": {
+                    "basis": "internal",
+                    "depthMm": "50.00",
+                    "lengthMm": "300.00",
+                    "materialUsed": "อาร์ตการ์ด 350 แกรม (fake)",
+                    "photos": [],
+                    "recordedAt": null,
+                    "widthMm": "200.00"
+                  },
+                  "id": "0192f3a0-7c1e-7d2a-9b1f-00000000f101",
+                  "jobNo": "JOB-2610-00007",
+                  "mockupOption": "with_print",
+                  "productTypeCode": "folding_carton",
+                  "productionJobId": "0192f3a0-7c1e-7d2a-9b1f-00000000f107",
+                  "quantity": 1,
+                  "status": "in_production"
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/PartnerSampleDto"
+                }
+              }
+            },
+            "description": "Recorded",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "400": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.bad_request": {
+                    "$ref": "#/components/examples/problem.http.bad_request"
+                  },
+                  "http.malformed_json": {
+                    "$ref": "#/components/examples/problem.http.malformed_json"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.bad_request`, `http.malformed_json`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.unauthenticated": {
+                    "$ref": "#/components/examples/problem.auth.unauthenticated"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.unauthenticated`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.forbidden": {
+                    "$ref": "#/components/examples/problem.auth.forbidden"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.forbidden`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "404": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.not_found": {
+                    "$ref": "#/components/examples/problem.http.not_found"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.not_found`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "409": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "samples.evidence_recorded": {
+                    "$ref": "#/components/examples/problem.samples.evidence_recorded"
+                  },
+                  "samples.invalid_status": {
+                    "$ref": "#/components/examples/problem.samples.invalid_status"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `samples.evidence_recorded`, `samples.invalid_status`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "artwork.file_not_usable": {
+                    "$ref": "#/components/examples/problem.artwork.file_not_usable"
+                  },
+                  "validation.failed": {
+                    "$ref": "#/components/examples/problem.validation.failed"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `artwork.file_not_usable`, `validation.failed`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "partner": []
+          }
+        ],
+        "summary": "Record a sample’s evidence",
+        "tags": [
+          "partner.samples"
+        ],
+        "x-required-permissions": [
+          "factory_samples.record_evidence"
+        ]
+      }
+    },
     "/v1/partner/factories/{factoryId}/scorecards": {
       "get": {
         "description": "On-time acceptance, on-time shipping, QC first pass, claim rate and on-time updates (D-155), newest first — the latest `months` (default 12, at most 24); used in allocation when several factories serve a type (D-075).\n\nImplements: D-155, D-075.",
@@ -289498,7 +292990,10 @@
                     "onTimeAcceptancePct": "95.0000",
                     "onTimeShippingPct": "90.0000",
                     "onTimeUpdatesPct": "92.0000",
-                    "qcFirstPassPct": "98.0000"
+                    "qcFirstPassPct": "98.0000",
+                    "sampleAvgLeadDays": "4.50",
+                    "sampleJobsCount": 2,
+                    "sampleOnTimePct": "100.0000"
                   }
                 ],
                 "schema": {
@@ -352898,6 +356393,1875 @@
         ]
       }
     },
+    "/v1/store/samples": {
+      "get": {
+        "description": "Attached samples of my orders and standalone samples I asked for, newest first (D-253).\n\nImplements: D-253, D-192, D-072.",
+        "operationId": "store.samples.list",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "page",
+            "required": false,
+            "schema": {
+              "default": 1,
+              "minimum": 1,
+              "type": "integer"
+            }
+          },
+          {
+            "in": "query",
+            "name": "perPage",
+            "required": false,
+            "schema": {
+              "default": 25,
+              "maximum": 100,
+              "minimum": 1,
+              "type": "integer"
+            }
+          },
+          {
+            "description": "Sort field; each endpoint validates it against its own allow-list.",
+            "in": "query",
+            "name": "sort",
+            "required": false,
+            "schema": {
+              "example": "createdAt",
+              "maxLength": 64,
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "order",
+            "required": false,
+            "schema": {
+              "$ref": "#/components/schemas/SortOrder"
+            }
+          },
+          {
+            "description": "Free-text search",
+            "in": "query",
+            "name": "q",
+            "required": false,
+            "schema": {
+              "maxLength": 200,
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "status",
+            "required": false,
+            "schema": {
+              "$ref": "#/components/schemas/SampleStatus"
+            }
+          },
+          {
+            "in": "query",
+            "name": "kind",
+            "required": false,
+            "schema": {
+              "$ref": "#/components/schemas/SampleKind"
+            }
+          },
+          {
+            "description": "Samples of this order",
+            "in": "query",
+            "name": "orderId",
+            "required": false,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "data": [
+                    {
+                      "approvedProofId": null,
+                      "configuration": {
+                        "patternId": "0192f3a0-7c1e-7d2a-9b1f-00000000f103",
+                        "quantities": [
+                          1000
+                        ]
+                      },
+                      "createdAt": "2026-10-03T10:00:00+07:00",
+                      "credit": null,
+                      "customerNote": null,
+                      "decision": null,
+                      "deliveredAt": "2026-10-10T10:00:00+07:00",
+                      "deliveryPostcode": null,
+                      "evidence": {
+                        "basis": "internal",
+                        "depthMm": "50.00",
+                        "lengthMm": "300.00",
+                        "materialUsed": "อาร์ตการ์ด 350 แกรม (fake)",
+                        "photos": [
+                          {
+                            "id": "0192f3a0-7c1e-7d2a-9b1f-00000000f106",
+                            "sha256": "a3f1c9…"
+                          }
+                        ],
+                        "recordedAt": "2026-10-08T15:00:00+07:00",
+                        "widthMm": "200.00"
+                      },
+                      "id": "0192f3a0-7c1e-7d2a-9b1f-00000000f101",
+                      "kind": "attached",
+                      "leadTimeDays": null,
+                      "mockupOption": "with_print",
+                      "orderCode": "PK-2610-00012",
+                      "orderId": "0192f3a0-7c1e-7d2a-9b1f-00000000f102",
+                      "previousSampleId": null,
+                      "productTypeCode": "folding_carton",
+                      "quantity": 1,
+                      "quotation": null,
+                      "sellGrossAmount": "856.00",
+                      "sellNetAmount": "800.00",
+                      "shippedAt": "2026-10-09T09:00:00+07:00",
+                      "status": "delivered",
+                      "statusChangedAt": "2026-10-10T10:00:00+07:00",
+                      "validUntil": null
+                    }
+                  ],
+                  "meta": {
+                    "page": 1,
+                    "perPage": 25,
+                    "total": 1
+                  }
+                },
+                "schema": {
+                  "properties": {
+                    "data": {
+                      "items": {
+                        "$ref": "#/components/schemas/SampleDto"
+                      },
+                      "type": "array"
+                    },
+                    "meta": {
+                      "$ref": "#/components/schemas/PageMeta"
+                    }
+                  },
+                  "required": [
+                    "data",
+                    "meta"
+                  ],
+                  "type": "object"
+                }
+              }
+            },
+            "description": "One page of results",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.unauthenticated": {
+                    "$ref": "#/components/examples/problem.auth.unauthenticated"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.unauthenticated`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.forbidden": {
+                    "$ref": "#/components/examples/problem.auth.forbidden"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.forbidden`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "validation.failed": {
+                    "$ref": "#/components/examples/problem.validation.failed"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `validation.failed`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "customer": []
+          }
+        ],
+        "summary": "List my samples",
+        "tags": [
+          "store.samples"
+        ]
+      },
+      "post": {
+        "description": "A standalone sample of one of my saved quotations or draft configurations, printed or not; CS quotes it (price, freight at the customer rate card, lead time) and I buy it like a quotation (D-253, D-254, D-195).\n\nImplements: D-253, D-192, D-072, D-254, D-195.",
+        "operationId": "store.samples.request",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "examples": {
+                "default": {
+                  "value": {
+                    "mockupOption": "with_print",
+                    "quoteId": "0192f3a0-7c1e-7d2a-9b1f-00000000f103"
+                  }
+                }
+              },
+              "schema": {
+                "$ref": "#/components/schemas/RequestSampleDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "approvedProofId": null,
+                  "configuration": {
+                    "patternId": "0192f3a0-7c1e-7d2a-9b1f-00000000f103",
+                    "quantities": [
+                      1000
+                    ]
+                  },
+                  "createdAt": "2026-10-03T10:00:00+07:00",
+                  "credit": null,
+                  "customerNote": null,
+                  "decision": null,
+                  "deliveredAt": "2026-10-10T10:00:00+07:00",
+                  "deliveryPostcode": null,
+                  "evidence": {
+                    "basis": "internal",
+                    "depthMm": "50.00",
+                    "lengthMm": "300.00",
+                    "materialUsed": "อาร์ตการ์ด 350 แกรม (fake)",
+                    "photos": [
+                      {
+                        "id": "0192f3a0-7c1e-7d2a-9b1f-00000000f106",
+                        "sha256": "a3f1c9…"
+                      }
+                    ],
+                    "recordedAt": "2026-10-08T15:00:00+07:00",
+                    "widthMm": "200.00"
+                  },
+                  "id": "0192f3a0-7c1e-7d2a-9b1f-00000000f101",
+                  "kind": "standalone",
+                  "leadTimeDays": null,
+                  "mockupOption": "with_print",
+                  "orderCode": null,
+                  "orderId": null,
+                  "previousSampleId": null,
+                  "productTypeCode": "folding_carton",
+                  "quantity": 1,
+                  "quotation": null,
+                  "sellGrossAmount": "856.00",
+                  "sellNetAmount": "800.00",
+                  "shippedAt": "2026-10-09T09:00:00+07:00",
+                  "status": "requested",
+                  "statusChangedAt": "2026-10-10T10:00:00+07:00",
+                  "validUntil": null
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/SampleDto"
+                }
+              }
+            },
+            "description": "Requested",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "400": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.bad_request": {
+                    "$ref": "#/components/examples/problem.http.bad_request"
+                  },
+                  "http.malformed_json": {
+                    "$ref": "#/components/examples/problem.http.malformed_json"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.bad_request`, `http.malformed_json`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.unauthenticated": {
+                    "$ref": "#/components/examples/problem.auth.unauthenticated"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.unauthenticated`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.forbidden": {
+                    "$ref": "#/components/examples/problem.auth.forbidden"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.forbidden`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "404": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.not_found": {
+                    "$ref": "#/components/examples/problem.http.not_found"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.not_found`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "validation.failed": {
+                    "$ref": "#/components/examples/problem.validation.failed"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `validation.failed`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "customer": []
+          }
+        ],
+        "summary": "Ask for a sample before ordering",
+        "tags": [
+          "store.samples"
+        ]
+      }
+    },
+    "/v1/store/samples/{sampleId}": {
+      "get": {
+        "description": "Its status, price, the factory’s evidence (measured size, material used, photos with their sha256), my decision and, for a standalone sample, the sample quotation to buy and the bulk credit (D-253, D-255, D-257).\n\nImplements: D-253, D-192, D-072, D-255, D-257.",
+        "operationId": "store.samples.get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "sampleId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "approvedProofId": null,
+                  "configuration": {
+                    "patternId": "0192f3a0-7c1e-7d2a-9b1f-00000000f103",
+                    "quantities": [
+                      1000
+                    ]
+                  },
+                  "createdAt": "2026-10-03T10:00:00+07:00",
+                  "credit": null,
+                  "customerNote": null,
+                  "decision": null,
+                  "deliveredAt": "2026-10-10T10:00:00+07:00",
+                  "deliveryPostcode": null,
+                  "evidence": {
+                    "basis": "internal",
+                    "depthMm": "50.00",
+                    "lengthMm": "300.00",
+                    "materialUsed": "อาร์ตการ์ด 350 แกรม (fake)",
+                    "photos": [
+                      {
+                        "id": "0192f3a0-7c1e-7d2a-9b1f-00000000f106",
+                        "sha256": "a3f1c9…"
+                      }
+                    ],
+                    "recordedAt": "2026-10-08T15:00:00+07:00",
+                    "widthMm": "200.00"
+                  },
+                  "id": "0192f3a0-7c1e-7d2a-9b1f-00000000f101",
+                  "kind": "attached",
+                  "leadTimeDays": null,
+                  "mockupOption": "with_print",
+                  "orderCode": "PK-2610-00012",
+                  "orderId": "0192f3a0-7c1e-7d2a-9b1f-00000000f102",
+                  "previousSampleId": null,
+                  "productTypeCode": "folding_carton",
+                  "quantity": 1,
+                  "quotation": null,
+                  "sellGrossAmount": "856.00",
+                  "sellNetAmount": "800.00",
+                  "shippedAt": "2026-10-09T09:00:00+07:00",
+                  "status": "delivered",
+                  "statusChangedAt": "2026-10-10T10:00:00+07:00",
+                  "validUntil": null
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/SampleDto"
+                }
+              }
+            },
+            "description": "Sample",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.unauthenticated": {
+                    "$ref": "#/components/examples/problem.auth.unauthenticated"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.unauthenticated`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.forbidden": {
+                    "$ref": "#/components/examples/problem.auth.forbidden"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.forbidden`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "404": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.not_found": {
+                    "$ref": "#/components/examples/problem.http.not_found"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.not_found`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "validation.failed": {
+                    "$ref": "#/components/examples/problem.validation.failed"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `validation.failed`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "customer": []
+          }
+        ],
+        "summary": "Get one of my samples",
+        "tags": [
+          "store.samples"
+        ]
+      }
+    },
+    "/v1/store/samples/{sampleId}/actions/approve": {
+      "post": {
+        "description": "Keeps who, when, IP, user agent and the sha256 of every evidence photo; locks the specification and the approved proof. An attached sample’s approval lets its bulk order start production (D-255, D-256, D-193).\n\nImplements: D-253, D-192, D-072, D-255, D-256, D-193.",
+        "operationId": "store.samples.approve",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "sampleId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "examples": {
+                "default": {
+                  "value": {}
+                }
+              },
+              "schema": {
+                "$ref": "#/components/schemas/SampleDecisionDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "approvedProofId": null,
+                  "configuration": {
+                    "patternId": "0192f3a0-7c1e-7d2a-9b1f-00000000f103",
+                    "quantities": [
+                      1000
+                    ]
+                  },
+                  "createdAt": "2026-10-03T10:00:00+07:00",
+                  "credit": null,
+                  "customerNote": null,
+                  "decision": null,
+                  "deliveredAt": "2026-10-10T10:00:00+07:00",
+                  "deliveryPostcode": null,
+                  "evidence": {
+                    "basis": "internal",
+                    "depthMm": "50.00",
+                    "lengthMm": "300.00",
+                    "materialUsed": "อาร์ตการ์ด 350 แกรม (fake)",
+                    "photos": [
+                      {
+                        "id": "0192f3a0-7c1e-7d2a-9b1f-00000000f106",
+                        "sha256": "a3f1c9…"
+                      }
+                    ],
+                    "recordedAt": "2026-10-08T15:00:00+07:00",
+                    "widthMm": "200.00"
+                  },
+                  "id": "0192f3a0-7c1e-7d2a-9b1f-00000000f101",
+                  "kind": "attached",
+                  "leadTimeDays": null,
+                  "mockupOption": "with_print",
+                  "orderCode": "PK-2610-00012",
+                  "orderId": "0192f3a0-7c1e-7d2a-9b1f-00000000f102",
+                  "previousSampleId": null,
+                  "productTypeCode": "folding_carton",
+                  "quantity": 1,
+                  "quotation": null,
+                  "sellGrossAmount": "856.00",
+                  "sellNetAmount": "800.00",
+                  "shippedAt": "2026-10-09T09:00:00+07:00",
+                  "status": "approved",
+                  "statusChangedAt": "2026-10-10T10:00:00+07:00",
+                  "validUntil": null
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/SampleDto"
+                }
+              }
+            },
+            "description": "Approved",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "400": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.bad_request": {
+                    "$ref": "#/components/examples/problem.http.bad_request"
+                  },
+                  "http.malformed_json": {
+                    "$ref": "#/components/examples/problem.http.malformed_json"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.bad_request`, `http.malformed_json`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.unauthenticated": {
+                    "$ref": "#/components/examples/problem.auth.unauthenticated"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.unauthenticated`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.forbidden": {
+                    "$ref": "#/components/examples/problem.auth.forbidden"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.forbidden`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "404": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.not_found": {
+                    "$ref": "#/components/examples/problem.http.not_found"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.not_found`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "409": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "samples.invalid_status": {
+                    "$ref": "#/components/examples/problem.samples.invalid_status"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `samples.invalid_status`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "validation.failed": {
+                    "$ref": "#/components/examples/problem.validation.failed"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `validation.failed`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "customer": []
+          }
+        ],
+        "summary": "Approve a delivered sample",
+        "tags": [
+          "store.samples"
+        ]
+      }
+    },
+    "/v1/store/samples/{sampleId}/actions/order-bulk": {
+      "post": {
+        "description": "The locked specification saved as a quotation at today’s prices for my quantity and put in my cart with the approved proof; within `samples.credit_window_days` (30) of the approval the checkout credits `samples.credit_pct` (100) % of the sample’s product price, once (D-257, D-197).\n\nImplements: D-253, D-192, D-072, D-257, D-197, D-153.",
+        "operationId": "store.samples.orderBulk",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "sampleId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "examples": {
+                "default": {
+                  "value": {
+                    "quantity": 3000
+                  }
+                }
+              },
+              "schema": {
+                "$ref": "#/components/schemas/OrderBulkDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "cartId": "0192f3a0-7c1e-7d2a-9b1f-00000000f102",
+                  "creditAvailable": true,
+                  "quoteId": "0192f3a0-7c1e-7d2a-9b1f-00000000f103"
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/OrderBulkResultDto"
+                }
+              }
+            },
+            "description": "In the cart",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "400": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.bad_request": {
+                    "$ref": "#/components/examples/problem.http.bad_request"
+                  },
+                  "http.malformed_json": {
+                    "$ref": "#/components/examples/problem.http.malformed_json"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.bad_request`, `http.malformed_json`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.unauthenticated": {
+                    "$ref": "#/components/examples/problem.auth.unauthenticated"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.unauthenticated`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.forbidden": {
+                    "$ref": "#/components/examples/problem.auth.forbidden"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.forbidden`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "404": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.not_found": {
+                    "$ref": "#/components/examples/problem.http.not_found"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.not_found`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "409": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "cart.item_exists": {
+                    "$ref": "#/components/examples/problem.cart.item_exists"
+                  },
+                  "samples.invalid_status": {
+                    "$ref": "#/components/examples/problem.samples.invalid_status"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `cart.item_exists`, `samples.invalid_status`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "pricing.not_instant": {
+                    "$ref": "#/components/examples/problem.pricing.not_instant"
+                  },
+                  "quotes.nothing_to_save": {
+                    "$ref": "#/components/examples/problem.quotes.nothing_to_save"
+                  },
+                  "validation.failed": {
+                    "$ref": "#/components/examples/problem.validation.failed"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `pricing.not_instant`, `quotes.nothing_to_save`, `validation.failed`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "customer": []
+          }
+        ],
+        "summary": "Order the approved sample in bulk",
+        "tags": [
+          "store.samples"
+        ]
+      }
+    },
+    "/v1/store/samples/{sampleId}/actions/reject": {
+      "post": {
+        "description": "The note says why; an attached sample keeps its bulk order on hold until CS acts (D-255, D-256).\n\nImplements: D-253, D-192, D-072, D-255, D-256.",
+        "operationId": "store.samples.reject",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "sampleId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "examples": {
+                "default": {
+                  "value": {
+                    "note": "ผิดสเปก"
+                  }
+                }
+              },
+              "schema": {
+                "$ref": "#/components/schemas/SampleDecisionDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "approvedProofId": null,
+                  "configuration": {
+                    "patternId": "0192f3a0-7c1e-7d2a-9b1f-00000000f103",
+                    "quantities": [
+                      1000
+                    ]
+                  },
+                  "createdAt": "2026-10-03T10:00:00+07:00",
+                  "credit": null,
+                  "customerNote": null,
+                  "decision": null,
+                  "deliveredAt": "2026-10-10T10:00:00+07:00",
+                  "deliveryPostcode": null,
+                  "evidence": {
+                    "basis": "internal",
+                    "depthMm": "50.00",
+                    "lengthMm": "300.00",
+                    "materialUsed": "อาร์ตการ์ด 350 แกรม (fake)",
+                    "photos": [
+                      {
+                        "id": "0192f3a0-7c1e-7d2a-9b1f-00000000f106",
+                        "sha256": "a3f1c9…"
+                      }
+                    ],
+                    "recordedAt": "2026-10-08T15:00:00+07:00",
+                    "widthMm": "200.00"
+                  },
+                  "id": "0192f3a0-7c1e-7d2a-9b1f-00000000f101",
+                  "kind": "attached",
+                  "leadTimeDays": null,
+                  "mockupOption": "with_print",
+                  "orderCode": "PK-2610-00012",
+                  "orderId": "0192f3a0-7c1e-7d2a-9b1f-00000000f102",
+                  "previousSampleId": null,
+                  "productTypeCode": "folding_carton",
+                  "quantity": 1,
+                  "quotation": null,
+                  "sellGrossAmount": "856.00",
+                  "sellNetAmount": "800.00",
+                  "shippedAt": "2026-10-09T09:00:00+07:00",
+                  "status": "rejected",
+                  "statusChangedAt": "2026-10-10T10:00:00+07:00",
+                  "validUntil": null
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/SampleDto"
+                }
+              }
+            },
+            "description": "Rejected",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "400": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.bad_request": {
+                    "$ref": "#/components/examples/problem.http.bad_request"
+                  },
+                  "http.malformed_json": {
+                    "$ref": "#/components/examples/problem.http.malformed_json"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.bad_request`, `http.malformed_json`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.unauthenticated": {
+                    "$ref": "#/components/examples/problem.auth.unauthenticated"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.unauthenticated`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.forbidden": {
+                    "$ref": "#/components/examples/problem.auth.forbidden"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.forbidden`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "404": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.not_found": {
+                    "$ref": "#/components/examples/problem.http.not_found"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.not_found`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "409": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "samples.invalid_status": {
+                    "$ref": "#/components/examples/problem.samples.invalid_status"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `samples.invalid_status`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "validation.failed": {
+                    "$ref": "#/components/examples/problem.validation.failed"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `validation.failed`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "customer": []
+          }
+        ],
+        "summary": "Reject a delivered sample",
+        "tags": [
+          "store.samples"
+        ]
+      }
+    },
+    "/v1/store/samples/{sampleId}/actions/request-changes": {
+      "post": {
+        "description": "The note says what to change; CS quotes a new sample. An attached sample keeps its bulk order on hold (D-253, D-256).\n\nImplements: D-253, D-192, D-072, D-255, D-256.",
+        "operationId": "store.samples.requestChanges",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "sampleId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "examples": {
+                "default": {
+                  "value": {
+                    "note": "สีเข้มไปเล็กน้อย"
+                  }
+                }
+              },
+              "schema": {
+                "$ref": "#/components/schemas/SampleDecisionDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "approvedProofId": null,
+                  "configuration": {
+                    "patternId": "0192f3a0-7c1e-7d2a-9b1f-00000000f103",
+                    "quantities": [
+                      1000
+                    ]
+                  },
+                  "createdAt": "2026-10-03T10:00:00+07:00",
+                  "credit": null,
+                  "customerNote": null,
+                  "decision": null,
+                  "deliveredAt": "2026-10-10T10:00:00+07:00",
+                  "deliveryPostcode": null,
+                  "evidence": {
+                    "basis": "internal",
+                    "depthMm": "50.00",
+                    "lengthMm": "300.00",
+                    "materialUsed": "อาร์ตการ์ด 350 แกรม (fake)",
+                    "photos": [
+                      {
+                        "id": "0192f3a0-7c1e-7d2a-9b1f-00000000f106",
+                        "sha256": "a3f1c9…"
+                      }
+                    ],
+                    "recordedAt": "2026-10-08T15:00:00+07:00",
+                    "widthMm": "200.00"
+                  },
+                  "id": "0192f3a0-7c1e-7d2a-9b1f-00000000f101",
+                  "kind": "attached",
+                  "leadTimeDays": null,
+                  "mockupOption": "with_print",
+                  "orderCode": "PK-2610-00012",
+                  "orderId": "0192f3a0-7c1e-7d2a-9b1f-00000000f102",
+                  "previousSampleId": null,
+                  "productTypeCode": "folding_carton",
+                  "quantity": 1,
+                  "quotation": null,
+                  "sellGrossAmount": "856.00",
+                  "sellNetAmount": "800.00",
+                  "shippedAt": "2026-10-09T09:00:00+07:00",
+                  "status": "changes_requested",
+                  "statusChangedAt": "2026-10-10T10:00:00+07:00",
+                  "validUntil": null
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/SampleDto"
+                }
+              }
+            },
+            "description": "Changes requested",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "400": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.bad_request": {
+                    "$ref": "#/components/examples/problem.http.bad_request"
+                  },
+                  "http.malformed_json": {
+                    "$ref": "#/components/examples/problem.http.malformed_json"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.bad_request`, `http.malformed_json`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.unauthenticated": {
+                    "$ref": "#/components/examples/problem.auth.unauthenticated"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.unauthenticated`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.forbidden": {
+                    "$ref": "#/components/examples/problem.auth.forbidden"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.forbidden`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "404": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.not_found": {
+                    "$ref": "#/components/examples/problem.http.not_found"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.not_found`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "409": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "samples.invalid_status": {
+                    "$ref": "#/components/examples/problem.samples.invalid_status"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `samples.invalid_status`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "validation.failed": {
+                    "$ref": "#/components/examples/problem.validation.failed"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `validation.failed`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "customer": []
+          }
+        ],
+        "summary": "Ask for changes to a delivered sample",
+        "tags": [
+          "store.samples"
+        ]
+      }
+    },
     "/v1/store/shared-configurations/{token}": {
       "get": {
         "description": "Anyone with the link sees the configuration and its completeness, never its owner, while the link is live and the draft open; 404 once expired, revoked, replaced, deleted or converted (D-185).\n\nImplements: D-185, D-182, D-183.",
@@ -359217,6 +364581,10 @@
       "name": "admin.rum"
     },
     {
+      "description": "Samples for staff (D-253–D-256): add one to an order or quote a requested one at a CS price (D-194), record evidence, cancel; bulk production waits for approval.",
+      "name": "admin.samples"
+    },
+    {
       "description": "Packio's sell margins, fix costs and design fees, effective-dated (D-063).",
       "name": "admin.sellMarginTables"
     },
@@ -359389,6 +364757,10 @@
       "name": "partner.rum"
     },
     {
+      "description": "Samples made as the factory’s jobs (D-255): what to make and the evidence to record before shipping; no customer or price.",
+      "name": "partner.samples"
+    },
+    {
       "description": "The own shipping payout card: read and accept or counter (D-013, D-042).",
       "name": "partner.shippingRates"
     },
@@ -359527,6 +364899,10 @@
     {
       "description": "Real-user monitoring: Core Web Vitals samples by route pattern, anonymous allowed (U-B0.3).",
       "name": "store.rum"
+    },
+    {
+      "description": "Physical samples (D-253–D-257): ask for one before ordering, buy its sample quotation, decide on the delivered sample with evidence, order the approved sample in bulk with its credit.",
+      "name": "store.samples"
     },
     {
       "description": "Saved quotations: 15-day price lock, share links, PDF in the name of the issuing entity, re-pricing after expiry (D-051).",

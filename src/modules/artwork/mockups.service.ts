@@ -1,10 +1,12 @@
 import { type UserActor } from '@common/context/actor';
 import { DomainException } from '@common/errors/domain.exception';
 import { PrismaService } from '@database/prisma.service';
+import { Prisma } from '@generated/prisma/client';
 import { OrdersService } from '@modules/orders/orders.service';
 import { type AddedCharge, OrderChargesService } from '@modules/payment-schedules/order-charges.service';
 import { Injectable } from '@nestjs/common';
 import { AuditService } from '@platform/audit/audit.service';
+import { DomainEvents } from '@platform/domain-events/domain-events.service';
 
 export interface MockupInput {
   mockupOption: 'with_print' | 'without_print';
@@ -26,6 +28,7 @@ export class MockupsService {
     private readonly orders: OrdersService,
     private readonly charges: OrderChargesService,
     private readonly audit: AuditService,
+    private readonly events: DomainEvents,
   ) {}
 
   async add(actor: UserActor, orderPublicId: string, input: MockupInput): Promise<AddedCharge> {
@@ -59,6 +62,41 @@ export class MockupsService {
         where: { id: order.id },
         data: { mockupOption: input.mockupOption, rowVersion: { increment: 1 } },
       });
+      // D-254: the deprecated mockup endpoint creates an attached sample (one sample path, D-192); no buy amount.
+      const quote = await tx.quote.findUniqueOrThrow({
+        where: { id: current.quoteId },
+        select: { input: true },
+      });
+      const stored = (quote.input ?? {}) as { configuration?: unknown; dimensions?: unknown };
+      const sample = await tx.sample.create({
+        data: {
+          entityId: current.entityId,
+          kind: 'attached',
+          status: 'quoted',
+          customerUserId: current.customerUserId,
+          productTypeId: current.productTypeId,
+          configuration: stored.configuration ?? {},
+          dimensions: stored.dimensions ?? Prisma.DbNull,
+          mockupOption: input.mockupOption,
+          orderId: order.id,
+          orderLineId: charge.orderLineId,
+          sellNetAmount: charge.net,
+          sellGrossAmount: charge.gross,
+          quotedAt: new Date(),
+          quotedById: actor.userId,
+          createdById: actor.userId,
+        },
+      });
+      await this.events.record(
+        tx,
+        {
+          type: 'sample.quoted',
+          aggregateType: 'sample',
+          aggregateId: sample.publicId,
+          payload: { sampleId: sample.publicId, kind: 'attached', orderId: order.publicId },
+        },
+        actor,
+      );
       await this.audit.record(tx, {
         category: 'finance',
         action: 'mockup.priced',

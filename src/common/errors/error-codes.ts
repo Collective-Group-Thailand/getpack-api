@@ -317,6 +317,11 @@ export const ERROR_CODES = {
   'privacy.request_open': HttpStatus.CONFLICT,
   'privacy.request_closed': HttpStatus.CONFLICT,
   'privacy.deletion_blocked': HttpStatus.CONFLICT,
+  'samples.exists': HttpStatus.CONFLICT,
+  'samples.invalid_status': HttpStatus.CONFLICT,
+  'samples.evidence_recorded': HttpStatus.CONFLICT,
+  'samples.evidence_missing': HttpStatus.CONFLICT,
+  'samples.freight_unavailable': HttpStatus.CONFLICT,
 } as const satisfies Record<string, HttpStatus>;
 
 export type ErrorCode = keyof typeof ERROR_CODES;

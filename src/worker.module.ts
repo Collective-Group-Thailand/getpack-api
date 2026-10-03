@@ -35,6 +35,7 @@ import { PricingModule } from '@modules/pricing/pricing.module';
 import { ProductionModule } from '@modules/production/production.module';
 import { PromotionsModule } from '@modules/promotions/promotions.module';
 import { QuotesModule } from '@modules/quotes/quotes.module';
+import { SamplesModule } from '@modules/samples/samples.module';
 import { ReceivablesModule } from '@modules/receivables/receivables.module';
 import { ReportsModule } from '@modules/reports/reports.module';
 import { RfqModule } from '@modules/rfq/rfq.module';
@@ -88,6 +89,7 @@ import { WorkerLifecycle } from './worker.lifecycle';
     PricingModule,
     ShippingModule,
     QuotesModule,
+    SamplesModule,
     StylesModule,
     RfqModule,
     CustomersModule,

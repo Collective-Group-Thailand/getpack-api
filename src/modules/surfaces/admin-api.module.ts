@@ -1,4 +1,5 @@
 import { ADVISORY_ADMIN_CONTROLLERS } from '@modules/advisory/advisory.registry';
+import { SAMPLES_ADMIN_CONTROLLERS } from '@modules/samples/samples.registry';
 import { ANALYTICS_ADMIN_CONTROLLERS } from '@modules/analytics/analytics.registry';
 import { ARTWORK_ADMIN_CONTROLLERS } from '@modules/artwork/artwork.registry';
 import { AUDIT_SUPPORT_ADMIN_CONTROLLERS } from '@modules/audit-support/audit-support.registry';
@@ -103,6 +104,7 @@ import { SettingsAdminModule } from '@platform/settings/settings-admin.module';
     ...SHIPPING_ADMIN_CONTROLLERS,
     ...QUOTES_ADMIN_CONTROLLERS,
     ...ADVISORY_ADMIN_CONTROLLERS,
+    ...SAMPLES_ADMIN_CONTROLLERS,
     ...STYLES_ADMIN_CONTROLLERS,
     ...CUSTOMERS_ADMIN_CONTROLLERS,
     ...CARTS_ADMIN_CONTROLLERS,

@@ -1483,6 +1483,25 @@ export class ScorecardDto {
   @ApiProperty({ type: 'integer', example: 20 })
   jobsCount!: number;
 
+  @ApiProperty({ type: 'integer', example: 2, description: 'Sample jobs completed in the month (D-259)' })
+  sampleJobsCount!: number;
+
+  @ApiProperty({
+    type: String,
+    nullable: true,
+    example: '100.0000',
+    description: 'Sample jobs completed by their planned finish (D-259)',
+  })
+  sampleOnTimePct!: string | null;
+
+  @ApiProperty({
+    type: String,
+    nullable: true,
+    example: '4.50',
+    description: 'Average days from release to completion of the sample jobs (D-259)',
+  })
+  sampleAvgLeadDays!: string | null;
+
   @ApiProperty({ example: '2026-10-01T02:00:00+07:00' })
   computedAt!: string;
 }
@@ -1537,6 +1556,9 @@ export const SCORECARD_EXAMPLE: ScorecardDto = {
   claimRatePct: '0.0000',
   onTimeUpdatesPct: '92.0000',
   jobsCount: 20,
+  sampleJobsCount: 2,
+  sampleOnTimePct: '100.0000',
+  sampleAvgLeadDays: '4.50',
   computedAt: '2026-10-01T02:00:00+07:00',
 };
 

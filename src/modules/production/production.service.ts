@@ -9,6 +9,7 @@ import {
   Prisma,
   type ProductionStartMode,
 } from '@generated/prisma/client';
+import { mainJobKind } from '@modules/orders/main-job';
 import { OrdersService } from '@modules/orders/orders.service';
 import { CapacityService } from '@modules/partners/capacity/capacity.service';
 import { QuoteEngineService } from '@modules/pricing/quotes/quote-engine.service';
@@ -37,7 +38,11 @@ export type BlockReason =
   | 'capacity_not_configured'
   | 'capacity_full'
   | 'price_snapshot_invalid'
-  | 'no_route';
+  | 'no_route'
+  /** D-256: the order's attached sample is not approved yet. */
+  | 'sample_not_approved'
+  /** D-256: a proof approved after the printed sample's approval. */
+  | 'sample_artwork_changed';
 
 interface RouteStepSnapshot {
   seq: number;
@@ -132,21 +137,57 @@ export class ProductionService {
     await tx.$queryRaw`SELECT id FROM orders WHERE id = ${orderId} FOR UPDATE`;
     const order = await this.loadOrder(tx, orderId);
     if (order.productionStartedAt || order.cancelledAt) return false;
-    if ((await tx.productionJob.count({ where: { orderId, jobKind: 'production', ...LIVE_JOB } })) > 0)
-      return false;
+    const kind = mainJobKind(order.kind);
+    if ((await tx.productionJob.count({ where: { orderId, jobKind: kind, ...LIVE_JOB } })) > 0) return false;
     const blocked = await this.blockReason(tx, order);
     if (blocked) {
-      await this.recordBlocked(tx, order.publicId, blocked, actor);
+      await this.recordBlocked(tx, order.publicId, blocked, actor, kind);
       return false;
     }
-    await this.release(tx, order, 'production', 'auto', null, actor);
+    await this.release(tx, order, kind, 'auto', null, actor);
     return true;
   }
 
   private async blockReason(tx: Tx, order: OrderForRelease): Promise<BlockReason | null> {
     if (!order.paidForProductionAt) return 'not_paid';
-    if (!order.artworkApprovedAt) return 'artwork_not_approved';
-    return this.factoryBlock(tx, order, true);
+    // An unprinted standalone sample needs no artwork (D-253).
+    if (!order.artworkApprovedAt && !(order.kind === 'sample' && order.mockupOption === 'without_print'))
+      return 'artwork_not_approved';
+    return (await this.sampleBlock(tx, order)) ?? this.factoryBlock(tx, order, true);
+  }
+
+  /**
+   * D-256: bulk production waits for the order's attached sample — the latest one that is not cancelled must be
+   * approved, and for a printed sample the order's approved proof must still be the one approved with it.
+   */
+  private async sampleBlock(tx: Tx, order: OrderForRelease): Promise<BlockReason | null> {
+    if (order.kind !== 'standard') return null;
+    const latest = await tx.sample.findFirst({
+      where: { orderId: order.id, kind: 'attached', status: { not: 'cancelled' } },
+      orderBy: [{ createdAt: 'desc' }, { id: 'desc' }],
+    });
+    if (!latest) return null;
+    if (latest.status !== 'approved') return 'sample_not_approved';
+    const proof = order.proofs[0] ?? null;
+    if (
+      latest.mockupOption === 'with_print' &&
+      latest.approvedProofId &&
+      proof &&
+      proof.id !== latest.approvedProofId
+    )
+      return 'sample_artwork_changed';
+    return null;
+  }
+
+  /** D-256: a sample's approval or cancellation re-opens the gate of its order. */
+  @OnDomainEvent(['sample.approved', 'sample.cancelled'], { consumer: 'production.sample-gate' })
+  async onSampleDecided(event: DomainEventEnvelope, tx: Tx): Promise<void> {
+    const sample = await tx.sample.findUnique({
+      where: { publicId: event.aggregateId },
+      select: { orderId: true, kind: true },
+    });
+    if (sample?.kind === 'attached' && sample.orderId)
+      await this.evaluate(tx, sample.orderId, systemActor('production.sample-gate'));
   }
 
   private async factoryBlock(
@@ -187,17 +228,18 @@ export class ProductionService {
       if (!found) throw new DomainException('http.not_found');
       await tx.$queryRaw`SELECT id FROM orders WHERE id = ${found.id} FOR UPDATE`;
       const order = await this.loadOrder(tx, found.id);
+      const kind = mainJobKind(order.kind);
       if (
         order.productionStartedAt ||
-        (await tx.productionJob.count({ where: { orderId: order.id, jobKind: 'production', ...LIVE_JOB } })) >
-          0
+        (await tx.productionJob.count({ where: { orderId: order.id, jobKind: kind, ...LIVE_JOB } })) > 0
       )
         throw new DomainException('production.already_released');
       if (!order.paidForProductionAt)
         throw new DomainException('production.gate_closed', { params: { reason: 'not_paid' } });
-      const block = await this.factoryBlock(tx, order, false);
+      // D-256: not even CS starts a bulk order before its sample is approved.
+      const block = (await this.sampleBlock(tx, order)) ?? (await this.factoryBlock(tx, order, false));
       if (block) throw new DomainException('production.gate_closed', { params: { reason: block } });
-      const job = await this.release(tx, order, 'production', 'manual_exception', reason, actor);
+      const job = await this.release(tx, order, kind, 'manual_exception', reason, actor);
       await this.audit.record(tx, {
         category: 'finance',
         action: 'production.manual_start',
@@ -265,7 +307,14 @@ export class ProductionService {
     })) as { value: number; versionId: bigint };
     const route = await this.resolveRoute(tx, order, kind === 'mockup' ? 'mockup' : 'standard');
     if (!route) throw new DomainException('production.gate_closed', { params: { reason: 'no_route' } });
-    const quantity = extra.quantity ?? (kind === 'mockup' ? 1 : order.quantityOrdered);
+    // D-254: a sample's job carries its quantity and the factory's buy amount (mockups were priced 0 — T2).
+    const sample =
+      kind === 'mockup' && !extra.reproductionOfJobId
+        ? extra.orderLineId
+          ? await tx.sample.findUnique({ where: { orderLineId: extra.orderLineId } })
+          : await tx.sample.findFirst({ where: { orderId: order.id, kind: 'standalone' } })
+        : null;
+    const quantity = extra.quantity ?? (kind === 'mockup' ? (sample?.quantity ?? 1) : order.quantityOrdered);
     const plannedStart = calendar.isWorkingDay(bangkokDate(at))
       ? bangkokDate(at)
       : calendar.nextWorkingDay(bangkokDate(at));
@@ -297,7 +346,17 @@ export class ProductionService {
         jobKind: kind,
         reproductionOfJobId: extra.reproductionOfJobId ?? null,
         claimId: extra.claimId ?? null,
-        orderLineId: extra.orderLineId ?? null,
+        // A mockup job names its line: the add-on line, or a standalone sample order's own product line (D-253).
+        orderLineId:
+          extra.orderLineId ??
+          (kind === 'mockup' && order.kind === 'sample'
+            ? ((
+                await tx.orderLine.findFirst({
+                  where: { orderId: order.id, lineType: 'product' },
+                  select: { id: true },
+                })
+              )?.id ?? null)
+            : null),
         releasedAt: at,
         releaseMode: mode,
         releaseReason: reason,
@@ -334,10 +393,17 @@ export class ProductionService {
         priceListVersionId: extra.factoryId ? null : order.quoteOption.priceListVersionId,
         buyPriceSnapshot: (extra.buyPrice ??
           (kind === 'mockup'
-            ? {
-                priced: false,
-                note: 'mockup priced by CS (D-072); factory price arranged by the Partner team',
-              }
+            ? sample?.buyNetAmount
+              ? {
+                  priced: true,
+                  buyCostNet: sample.buyNetAmount.toFixed(2),
+                  sampleId: sample.publicId,
+                  note: 'sample priced by CS through the service sell table (D-194, D-254)',
+                }
+              : {
+                  priced: false,
+                  note: 'mockup priced by CS (D-072); factory price arranged by the Partner team',
+                }
             : {
                 priced: order.buyCostNet !== null,
                 buyCostNet: order.buyCostNet?.toFixed(2) ?? null,
@@ -373,7 +439,7 @@ export class ProductionService {
         decidedAt: at,
       },
     });
-    if (kind === 'production')
+    if (kind === mainJobKind(order.kind))
       await this.orders.applyFact(tx, order.id, { kind: 'production_started', mode }, actor, at);
     const customer = await tx.user.findUniqueOrThrow({
       where: { id: order.customerUserId },

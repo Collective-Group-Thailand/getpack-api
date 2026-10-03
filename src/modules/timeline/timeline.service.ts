@@ -8,6 +8,7 @@ import { bangkokDate, toBangkokIso } from '@common/time/bangkok';
 import { PrismaService } from '@database/prisma.service';
 import { type Attachment, type Order, type Prisma } from '@generated/prisma/client';
 import { hashToken, ShipmentsService } from '@modules/logistics/shipments.service';
+import { mainJobKind } from '@modules/orders/main-job';
 import { estimatedDeliveryDate } from '@modules/orders/order-views';
 import { type RouteSnapshot } from '@modules/production/production.service';
 import { Injectable, type OnModuleInit } from '@nestjs/common';
@@ -389,8 +390,14 @@ export class TimelineService implements OnModuleInit {
   }
 
   private async customerSteps(orderId: bigint): Promise<ProgressStepDto[]> {
+    const order = await this.prisma.order.findUnique({ where: { id: orderId }, select: { kind: true } });
     const job = await this.prisma.productionJob.findFirst({
-      where: { orderId, jobKind: 'production', status: { notIn: ['rejected', 'cancelled'] } },
+      // D-253: a standalone sample order shows its mockup job's steps.
+      where: {
+        orderId,
+        jobKind: mainJobKind(order?.kind ?? 'standard'),
+        status: { notIn: ['rejected', 'cancelled'] },
+      },
       include: { milestones: { where: { customerVisible: true }, orderBy: { seq: 'asc' } } },
     });
     if (!job) return [];

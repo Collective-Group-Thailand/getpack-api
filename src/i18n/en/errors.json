@@ -1366,5 +1366,27 @@
       "title": "Capability already decided",
       "detail": "This process capability is verified, rejected, withdrawn or replaced already (D-244)."
     }
+  },
+  "samples": {
+    "exists": {
+      "title": "Sample already in progress",
+      "detail": "This order already has a sample in progress; decide or cancel it first (D-253)."
+    },
+    "invalid_status": {
+      "title": "Not possible in this status",
+      "detail": "The sample's status does not allow this action (D-253)."
+    },
+    "evidence_recorded": {
+      "title": "Evidence already recorded",
+      "detail": "The sample's measurements and photos are already on record (D-255)."
+    },
+    "evidence_missing": {
+      "title": "Sample evidence missing",
+      "detail": "Record the sample's measured size, the material used and a photo before it ships (D-255)."
+    },
+    "freight_unavailable": {
+      "title": "No freight price",
+      "detail": "The customer rate card has no price for this postcode and parcel weight (D-195)."
+    }
   }
 }

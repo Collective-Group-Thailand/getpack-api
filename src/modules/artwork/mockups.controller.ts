@@ -67,8 +67,10 @@ export class AdminMockupsController {
     description:
       'The optional paid add-on the customer asked for (D-072), at a CS-quoted price (no calculator prices it yet; ' +
       'audited): an order line and an instalment due now; production of the mockup starts once it is paid. ' +
-      'Before production only; one per order.',
-    implements: ['D-072', 'D-020'],
+      'Before production only; one per order. **Deprecated** (D-254): use `admin.samples.create`, which also keeps ' +
+      'the factory’s buy amount; this one creates the same attached sample without it. Removed in U-B5.',
+    implements: ['D-072', 'D-020', 'D-254'],
+    deprecated: true,
   })
   @ApiBody({
     type: AddMockupDto,

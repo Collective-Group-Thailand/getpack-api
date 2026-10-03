@@ -74,6 +74,12 @@ export const API_TAGS: Record<string, string> = {
     'Partners’ signed board data sheets (ECT, caliper, grammage) per factory × corrugated board — the only board strength the advisor reads (D-188, D-236).',
   'partner.boardStrengthSheets':
     'The signed board data sheets Packio keeps for the factory’s boards (D-236, D-044).',
+  'store.samples':
+    'Physical samples (D-253–D-257): ask for one before ordering, buy its sample quotation, decide on the delivered sample with evidence, order the approved sample in bulk with its credit.',
+  'admin.samples':
+    'Samples for staff (D-253–D-256): add one to an order or quote a requested one at a CS price (D-194), record evidence, cancel; bulk production waits for approval.',
+  'partner.samples':
+    'Samples made as the factory’s jobs (D-255): what to make and the evidence to record before shipping; no customer or price.',
   'store.specs':
     'Measurement bases of a size (D-182): inside, outside and score-to-score sizes from the material caliper; millimetres only (D-183).',
   'store.quotes':

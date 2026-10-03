@@ -694,6 +694,20 @@ describe('default posting rules (B5.1, accounting-design §5)', () => {
     ]);
   });
 
+  it('posts a sample credit as a sales discount (P09 → 4910, D-257)', () => {
+    const payload = {
+      ...FIXTURES['P09']!.payload,
+      discountTotal: '856.00',
+      discounts: [{ source: 'sample_credit', category: 'made_to_order', amount: '856.00' }],
+    };
+    const journal = renderJournal(rule('P09').template, payload);
+    expect(journal.totalDebit.eq(journal.totalCredit)).toBe(true);
+    expect(rendered('P09', payload)).toEqual([
+      ['4910', 'dr', '856.00'],
+      ['4110', 'cr', '856.00'],
+    ]);
+  });
+
   it('never posts pending points or memo commitments', () => {
     expect(ruleApplies(rule('P10R').conditions, { earningStatus: 'pending' })).toBe(false);
     expect(renderJournal(rule('P13').template, FIXTURES['P13']!.payload).lines).toEqual([]);

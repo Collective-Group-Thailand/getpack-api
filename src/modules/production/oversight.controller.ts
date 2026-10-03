@@ -73,6 +73,9 @@ export function scorecardDto(s: {
   claimRatePct: { toFixed(n: number): string } | null;
   onTimeUpdatesPct: { toFixed(n: number): string } | null;
   jobsCount: number;
+  sampleJobsCount: number;
+  sampleOnTimePct: { toFixed(n: number): string } | null;
+  sampleAvgLeadDays: { toFixed(n: number): string } | null;
   computedAt: Date;
 }): ScorecardDto {
   const f = (v: { toFixed(n: number): string } | null) => v?.toFixed(4) ?? null;
@@ -84,6 +87,9 @@ export function scorecardDto(s: {
     claimRatePct: f(s.claimRatePct),
     onTimeUpdatesPct: f(s.onTimeUpdatesPct),
     jobsCount: s.jobsCount,
+    sampleJobsCount: s.sampleJobsCount,
+    sampleOnTimePct: f(s.sampleOnTimePct),
+    sampleAvgLeadDays: s.sampleAvgLeadDays?.toFixed(2) ?? null,
     computedAt: toBangkokIso(s.computedAt),
   };
 }

@@ -1,4 +1,5 @@
 import { ADVISORY_PARTNER_CONTROLLERS } from '@modules/advisory/advisory.registry';
+import { SAMPLES_PARTNER_CONTROLLERS } from '@modules/samples/samples.registry';
 import { PartnerMeController } from '@modules/auth/controllers/me.controllers';
 import { CLAIMS_PARTNER_CONTROLLERS } from '@modules/claims/claims.registry';
 import { LOGISTICS_PARTNER_CONTROLLERS } from '@modules/logistics/logistics.registry';
@@ -40,6 +41,7 @@ import { RealtimeModule } from '@platform/realtime/realtime.module';
     ...SHIPPING_PARTNER_CONTROLLERS,
     ...QUOTES_PARTNER_CONTROLLERS,
     ...ADVISORY_PARTNER_CONTROLLERS,
+    ...SAMPLES_PARTNER_CONTROLLERS,
     ...STYLES_PARTNER_CONTROLLERS,
     ...PRODUCTION_PARTNER_CONTROLLERS,
     ...LOGISTICS_PARTNER_CONTROLLERS,

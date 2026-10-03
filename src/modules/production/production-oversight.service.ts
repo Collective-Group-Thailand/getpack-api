@@ -436,22 +436,24 @@ export class ProductionOversightService {
     const from = startOfBangkokDay(firstDay);
     const to = startOfBangkokDay(nextMonth(firstDay));
     const inMonth = { gte: from, lt: to };
-    const [released, completed, firstQcs, milestones, shipped] = await Promise.all([
+    const [released, completed, firstQcs, milestones, shipped, samples] = await Promise.all([
       this.prisma.productionJob.findMany({
         where: { factoryId, releasedAt: inMonth, jobKind: { not: 'mockup' } },
         select: { acceptedAt: true, acceptDueAt: true, rejectedAt: true },
       }),
+      // D-259 (T6): mockup / sample jobs are counted apart from production.
       this.prisma.productionJob.findMany({
-        where: { factoryId, status: 'completed', actualFinishAt: inMonth },
+        where: { factoryId, status: 'completed', actualFinishAt: inMonth, jobKind: { not: 'mockup' } },
         select: { id: true },
       }),
       this.prisma.$queryRaw<{ result: string }[]>`
         SELECT DISTINCT ON (q.job_id) q.result::text AS result FROM qc_checks q
          WHERE q.factory_id = ${factoryId}
            AND q.job_id IN (SELECT job_id FROM qc_checks GROUP BY job_id HAVING min(performed_at) >= ${from} AND min(performed_at) < ${to})
+           AND q.job_id IN (SELECT id FROM production_jobs WHERE job_kind <> 'mockup')
          ORDER BY q.job_id, q.performed_at`,
       this.prisma.jobMilestone.findMany({
-        where: { factoryId, completedAt: inMonth, dueAt: { not: null } },
+        where: { factoryId, completedAt: inMonth, dueAt: { not: null }, job: { jobKind: { not: 'mockup' } } },
         select: { onTime: true },
       }),
       // On-time shipping (B4.3): the job's first pickup against its promised ship date.
@@ -463,6 +465,17 @@ export class ProductionOversightService {
          WHERE j.factory_id = ${factoryId} AND s.picked_up_at IS NOT NULL AND j.job_kind <> 'mockup'
          GROUP BY j.id, j.promised_ship_date
         HAVING min(s.picked_up_at) >= ${from} AND min(s.picked_up_at) < ${to}`,
+      // D-259: sample jobs completed in the month — on time against their planned finish, lead days from release.
+      this.prisma.productionJob.findMany({
+        where: {
+          factoryId,
+          status: 'completed',
+          actualFinishAt: inMonth,
+          jobKind: 'mockup',
+          sample: { isNot: null },
+        },
+        select: { releasedAt: true, actualFinishAt: true, plannedFinishOn: true },
+      }),
     ]);
     const responded = released.filter((j) => j.acceptedAt || j.rejectedAt);
     const onTimeAcceptance = released.filter((j) => j.acceptedAt && j.acceptedAt <= j.acceptDueAt).length;
@@ -488,7 +501,17 @@ export class ProductionOversightService {
       factoryClaims: claims,
       milestonesWithDue: milestones.length,
       milestonesOnTime: milestones.filter((m) => m.onTime).length,
+      sampleJobs: samples.length,
+      samplesOnTime: samples.filter(
+        (j) =>
+          j.actualFinishAt &&
+          j.plannedFinishOn &&
+          bangkokDate(j.actualFinishAt) <= j.plannedFinishOn.toISOString().slice(0, 10),
+      ).length,
     };
+    const leadDays = samples
+      .filter((j) => j.actualFinishAt)
+      .map((j) => (j.actualFinishAt!.getTime() - j.releasedAt.getTime()) / 86_400_000);
     const values = {
       onTimeAcceptancePct: pct(onTimeAcceptance, released.length),
       onTimeShippingPct: pct(shippedOnTime, shipped.length),
@@ -496,6 +519,11 @@ export class ProductionOversightService {
       claimRatePct: pct(claims, completed.length),
       onTimeUpdatesPct: pct(inputs.milestonesOnTime, milestones.length),
       jobsCount: released.length,
+      sampleJobsCount: samples.length,
+      sampleOnTimePct: pct(inputs.samplesOnTime, samples.length),
+      sampleAvgLeadDays: leadDays.length
+        ? (leadDays.reduce((a, b) => a + b, 0) / leadDays.length).toFixed(2)
+        : null,
       inputs,
       computedAt: new Date(),
     };
