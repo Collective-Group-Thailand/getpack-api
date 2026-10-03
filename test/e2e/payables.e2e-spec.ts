@@ -16,6 +16,7 @@ import {
   saveQuote,
   seedShipping,
   setFlag,
+  setSetting,
   staffToken,
 } from '../support/commerce-e2e';
 import {
@@ -902,6 +903,55 @@ describe('payables, payouts & banking (e2e, B5.3)', () => {
       D(ledger._sum.credit ?? 0)
         .sub(D(ledger._sum.debit ?? 0))
         .toFixed(2),
+    );
+
+    // D-293: the finance totals reconcile with the statement of account; per purchase order from its documents.
+    await as(ctx, owner).get(`${f}/finance-summary?from=2026-12-01&to=2026-11-01`).expect(422);
+    const summary = (await as(ctx, owner).get(`${f}/finance-summary`).expect(200)).body as {
+      period: Record<'opening' | 'earned' | 'paid' | 'deducted' | 'adjustments' | 'closing', string>;
+      purchaseOrders: {
+        poNumber: string;
+        earned: string;
+        paid: string;
+        retainedHeld: string;
+        deducted: string;
+        owed: string;
+      }[];
+    };
+    const p = summary.period;
+    expect(p.opening).toBe(soa.opening);
+    expect(p.closing).toBe(soa.closing);
+    expect(D(p.opening).add(p.earned).sub(p.paid).sub(p.deducted).add(p.adjustments).toFixed(2)).toBe(
+      p.closing,
+    );
+    const ofPo = summary.purchaseOrders.find((r) => r.poNumber === po.poNumber)!;
+    expect(ofPo).toMatchObject({
+      earned: D(gr.netAmount.toString()).toFixed(2),
+      retainedHeld: D(balance.retentionAmount.toString()).toFixed(2),
+      deducted: '0.00',
+    });
+    // Paid in full but the retention: that is what is still owed.
+    expect(ofPo.owed).toBe(D(balance.retentionAmount.toString()).toFixed(2));
+    expect(D(ofPo.earned).sub(ofPo.paid).sub(ofPo.deducted).toFixed(2)).toBe(ofPo.owed);
+
+    // D-293: the payout calendar — with the run days set, each unpaid payable gets its expected pay-on day.
+    await setSetting(ctx, 'payouts.run_calendar', { weekdays: [1, 2, 3, 4, 5] });
+    const calendar = (await as(ctx, owner).get(`${f}/payout-calendar`).expect(200)).body as {
+      runCalendar: { weekdays: number[] } | null;
+      payables: {
+        source: string;
+        poNumber: string | null;
+        expectedPayOn: string | null;
+        expectedBasis: string;
+      }[];
+      runs: { runNo: string; lines: { payoutId: string; kind: string }[] }[];
+    };
+    expect(calendar.runCalendar).toEqual({ weekdays: [1, 2, 3, 4, 5] });
+    const toRelease = calendar.payables.find((x) => x.source === 'retention' && x.poNumber === po.poNumber);
+    if (D(balance.retentionAmount.toString()).gt(0))
+      expect(toRelease).toMatchObject({ expectedBasis: 'run_calendar', expectedPayOn: expect.any(String) });
+    expect(calendar.runs.flatMap((r) => r.lines.map((l) => l.payoutId))).toEqual(
+      expect.arrayContaining([advance.publicId, balance.publicId]),
     );
   });
 

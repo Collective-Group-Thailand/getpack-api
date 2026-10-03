@@ -15963,6 +15963,228 @@
         ],
         "type": "string"
       },
+      "CalendarPayableDto": {
+        "properties": {
+          "eligibleAt": {
+            "example": "2026-10-13T10:00:00+07:00",
+            "format": "date-time",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "expectedBasis": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ExpectedPayOnBasis"
+              }
+            ],
+            "description": "`scheduled_run`: the pay-on day of the run it is in; `run_calendar`: the first payout-run day on or after its eligibility; `eligibility_pending`: not payable yet (e.g. waiting for delivery or the claim window); `run_calendar_unset`: Finance has not set the run days",
+            "example": "run_calendar"
+          },
+          "expectedPayOn": {
+            "description": "When it is expected to be paid (D-293); null while it cannot be known (`expectedBasis`)",
+            "example": "2026-10-14",
+            "format": "date",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "id": {
+            "example": "0192f3a0-7c1e-7d2a-9b1f-0000000e7601",
+            "format": "uuid",
+            "type": "string"
+          },
+          "netAmount": {
+            "example": "9800.00",
+            "type": "string"
+          },
+          "openNetAmount": {
+            "example": "9800.00",
+            "type": "string"
+          },
+          "openVatAmount": {
+            "example": "686.00",
+            "type": "string"
+          },
+          "poNumber": {
+            "example": "PO-2610-00012",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "purchaseOrderId": {
+            "example": "0192f3a0-7c1e-7d2a-9b1f-0000000e7602",
+            "format": "uuid",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "runId": {
+            "example": null,
+            "format": "uuid",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "source": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/PayableSource"
+              }
+            ],
+            "example": "goods_receipt"
+          },
+          "status": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/PayableStatus"
+              }
+            ],
+            "description": "Unpaid ones only: `open`, `eligible` or `in_run`",
+            "example": "eligible"
+          },
+          "vatAmount": {
+            "example": "686.00",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "source",
+          "status",
+          "purchaseOrderId",
+          "poNumber",
+          "netAmount",
+          "vatAmount",
+          "openNetAmount",
+          "openVatAmount",
+          "eligibleAt",
+          "expectedPayOn",
+          "expectedBasis",
+          "runId"
+        ],
+        "type": "object"
+      },
+      "CalendarRunDto": {
+        "properties": {
+          "id": {
+            "example": "0192f3a0-7c1e-7d2a-9b1f-0000000e7603",
+            "format": "uuid",
+            "type": "string"
+          },
+          "lines": {
+            "description": "My lines only",
+            "items": {
+              "$ref": "#/components/schemas/CalendarRunLineDto"
+            },
+            "type": "array"
+          },
+          "payOn": {
+            "example": "2026-10-14",
+            "format": "date",
+            "type": "string"
+          },
+          "runNo": {
+            "example": "PR-2610-0003",
+            "type": "string"
+          },
+          "status": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/PayoutRunStatus"
+              }
+            ],
+            "description": "Runs from `proposed` on (a draft may still change; rejected and cancelled ones are left out)",
+            "example": "confirmed"
+          }
+        },
+        "required": [
+          "id",
+          "runNo",
+          "payOn",
+          "status",
+          "lines"
+        ],
+        "type": "object"
+      },
+      "CalendarRunLineDto": {
+        "properties": {
+          "apNetAmount": {
+            "example": "9800.00",
+            "type": "string"
+          },
+          "cashAmount": {
+            "example": "9667.70",
+            "type": "string"
+          },
+          "kind": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/PayoutKind"
+              }
+            ],
+            "example": "balance"
+          },
+          "paidOn": {
+            "example": "2026-10-14",
+            "format": "date",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "payoutId": {
+            "example": "0192f3a0-7c1e-7d2a-9b1f-0000000e7604",
+            "format": "uuid",
+            "type": "string"
+          },
+          "pvNumber": {
+            "example": "PV-2610-00008",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "retentionAmount": {
+            "example": "524.30",
+            "type": "string"
+          },
+          "status": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/PayoutItemStatus"
+              }
+            ],
+            "example": "paid"
+          },
+          "vatAmount": {
+            "example": "686.00",
+            "type": "string"
+          },
+          "whtAmount": {
+            "example": "294.00",
+            "type": "string"
+          }
+        },
+        "required": [
+          "payoutId",
+          "pvNumber",
+          "kind",
+          "status",
+          "apNetAmount",
+          "vatAmount",
+          "whtAmount",
+          "retentionAmount",
+          "cashAmount",
+          "paidOn"
+        ],
+        "type": "object"
+      },
       "CalendarSource": {
         "enum": [
           "national",
@@ -33804,6 +34026,16 @@
         ],
         "type": "object"
       },
+      "ExpectedPayOnBasis": {
+        "description": "`scheduled_run`: the pay-on day of the run it is in; `run_calendar`: the first payout-run day on or after its eligibility; `eligibility_pending`: not payable yet (e.g. waiting for delivery or the claim window); `run_calendar_unset`: Finance has not set the run days",
+        "enum": [
+          "scheduled_run",
+          "run_calendar",
+          "eligibility_pending",
+          "run_calendar_unset"
+        ],
+        "type": "string"
+      },
       "ExpiringPointsDto": {
         "properties": {
           "expiresAt": {
@@ -35886,6 +36118,160 @@
           "failed"
         ],
         "type": "string"
+      },
+      "FinancePeriodDto": {
+        "properties": {
+          "adjustments": {
+            "description": "Other postings (manual entries, reversals)",
+            "example": "0.00",
+            "type": "string"
+          },
+          "closing": {
+            "description": "opening + earned − paid − deducted + adjustments",
+            "example": "700.00",
+            "type": "string"
+          },
+          "deducted": {
+            "description": "Claim deductions (P20, D-083)",
+            "example": "0.00",
+            "type": "string"
+          },
+          "earned": {
+            "description": "Goods received (P15)",
+            "example": "14000.00",
+            "type": "string"
+          },
+          "from": {
+            "example": "2026-10-01",
+            "format": "date",
+            "type": "string"
+          },
+          "opening": {
+            "description": "What Packio owed the factory before `from` (net of VAT)",
+            "example": "0.00",
+            "type": "string"
+          },
+          "paid": {
+            "description": "Payouts net of VAT: advances and balances less the retention held, plus retention released",
+            "example": "13300.00",
+            "type": "string"
+          },
+          "retainedHeld": {
+            "description": "Retention held back at payment (D-164)",
+            "example": "700.00",
+            "type": "string"
+          },
+          "retainedReleased": {
+            "description": "Retention paid out after its release period (D-164)",
+            "example": "0.00",
+            "type": "string"
+          },
+          "to": {
+            "example": "2026-10-31",
+            "format": "date",
+            "type": "string"
+          }
+        },
+        "required": [
+          "from",
+          "to",
+          "opening",
+          "earned",
+          "paid",
+          "retainedHeld",
+          "retainedReleased",
+          "deducted",
+          "adjustments",
+          "closing"
+        ],
+        "type": "object"
+      },
+      "FinancePurchaseOrderDto": {
+        "properties": {
+          "deducted": {
+            "example": "0.00",
+            "type": "string"
+          },
+          "earned": {
+            "example": "14000.00",
+            "type": "string"
+          },
+          "owed": {
+            "description": "earned − paid − deducted: what Packio still owes on it",
+            "example": "700.00",
+            "type": "string"
+          },
+          "paid": {
+            "example": "13300.00",
+            "type": "string"
+          },
+          "poNumber": {
+            "example": "PO-2610-00012",
+            "type": "string"
+          },
+          "purchaseOrderId": {
+            "example": "0192f3a0-7c1e-7d2a-9b1f-0000000e7602",
+            "format": "uuid",
+            "type": "string"
+          },
+          "retainedHeld": {
+            "example": "700.00",
+            "type": "string"
+          },
+          "retainedReleased": {
+            "example": "0.00",
+            "type": "string"
+          },
+          "status": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/PoStatus"
+              }
+            ],
+            "example": "received"
+          }
+        },
+        "required": [
+          "purchaseOrderId",
+          "poNumber",
+          "status",
+          "earned",
+          "paid",
+          "retainedHeld",
+          "retainedReleased",
+          "deducted",
+          "owed"
+        ],
+        "type": "object"
+      },
+      "FinanceSummaryDto": {
+        "properties": {
+          "currency": {
+            "example": "THB",
+            "type": "string"
+          },
+          "period": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/FinancePeriodDto"
+              }
+            ],
+            "description": "From the vendor sub-ledger; reconciles to the statement of account"
+          },
+          "purchaseOrders": {
+            "description": "Lifetime, the latest 200 purchase orders, from documents",
+            "items": {
+              "$ref": "#/components/schemas/FinancePurchaseOrderDto"
+            },
+            "type": "array"
+          }
+        },
+        "required": [
+          "period",
+          "purchaseOrders",
+          "currency"
+        ],
+        "type": "object"
       },
       "FindOrCreateCustomerDto": {
         "properties": {
@@ -46899,6 +47285,46 @@
           "bsNumber",
           "netAmount",
           "vatAmount"
+        ],
+        "type": "object"
+      },
+      "PayoutCalendarDto": {
+        "properties": {
+          "currency": {
+            "example": "THB",
+            "type": "string"
+          },
+          "payables": {
+            "description": "Unpaid payables, soonest eligible first",
+            "items": {
+              "$ref": "#/components/schemas/CalendarPayableDto"
+            },
+            "type": "array"
+          },
+          "runCalendar": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/RunCalendarDto"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Null until Finance sets the run days"
+          },
+          "runs": {
+            "description": "Runs of the last 90 days and upcoming, newest first",
+            "items": {
+              "$ref": "#/components/schemas/CalendarRunDto"
+            },
+            "type": "array"
+          }
+        },
+        "required": [
+          "runCalendar",
+          "payables",
+          "runs",
+          "currency"
         ],
         "type": "object"
       },
@@ -60442,6 +60868,25 @@
           "bankCode",
           "accountNoLast4",
           "glAccountCode"
+        ],
+        "type": "object"
+      },
+      "RunCalendarDto": {
+        "properties": {
+          "weekdays": {
+            "description": "Days of week (0 = Sunday) payout runs pay on — `payouts.run_calendar` (Finance)",
+            "example": [
+              2,
+              4
+            ],
+            "items": {
+              "type": "integer"
+            },
+            "type": "array"
+          }
+        },
+        "required": [
+          "weekdays"
         ],
         "type": "object"
       },
@@ -306929,6 +307374,237 @@
         ]
       }
     },
+    "/v1/partner/factories/{factoryId}/finance-summary": {
+      "get": {
+        "description": "Between two days (default: this month to today, at most 366 days), from the vendor sub-ledger: earned (goods received), paid, retained (held and released) and deducted, with the opening and closing balance — they reconcile with the statement of account; and per purchase order (lifetime) from its documents. Net of VAT (D-293, D-022, D-164, D-083).\n\nImplements: D-293, D-022, D-093, D-164, D-166.",
+        "operationId": "partner.payables.financeSummary",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "factoryId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "description": "Default: the first of `to`’s month",
+            "in": "query",
+            "name": "from",
+            "required": false,
+            "schema": {
+              "example": "2026-10-01",
+              "format": "date",
+              "type": "string"
+            }
+          },
+          {
+            "description": "Default: today (Asia/Bangkok)",
+            "in": "query",
+            "name": "to",
+            "required": false,
+            "schema": {
+              "example": "2026-10-31",
+              "format": "date",
+              "type": "string"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "currency": "THB",
+                  "period": {
+                    "adjustments": "0.00",
+                    "closing": "700.00",
+                    "deducted": "0.00",
+                    "earned": "14000.00",
+                    "from": "2026-10-01",
+                    "opening": "0.00",
+                    "paid": "13300.00",
+                    "retainedHeld": "700.00",
+                    "retainedReleased": "0.00",
+                    "to": "2026-10-31"
+                  },
+                  "purchaseOrders": [
+                    {
+                      "deducted": "0.00",
+                      "earned": "14000.00",
+                      "owed": "700.00",
+                      "paid": "13300.00",
+                      "poNumber": "PO-2610-00012",
+                      "purchaseOrderId": "0192f3a0-7c1e-7d2a-9b1f-0000000e7602",
+                      "retainedHeld": "700.00",
+                      "retainedReleased": "0.00",
+                      "status": "received"
+                    }
+                  ]
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/FinanceSummaryDto"
+                }
+              }
+            },
+            "description": "Totals",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.unauthenticated": {
+                    "$ref": "#/components/examples/problem.auth.unauthenticated"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.unauthenticated`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.forbidden": {
+                    "$ref": "#/components/examples/problem.auth.forbidden"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.forbidden`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "404": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.not_found": {
+                    "$ref": "#/components/examples/problem.http.not_found"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.not_found`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "validation.failed": {
+                    "$ref": "#/components/examples/problem.validation.failed"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `validation.failed`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "partner": []
+          }
+        ],
+        "summary": "My finance totals",
+        "tags": [
+          "partner.payables"
+        ],
+        "x-required-permissions": [
+          "factory_payables.read"
+        ]
+      }
+    },
     "/v1/partner/factories/{factoryId}/kyc-documents": {
       "get": {
         "description": "Documents with their review status and expiry. Own factory only; the factory edits its data only while `applied` or `under_review`.\n\nImplements: D-011, D-171.",
@@ -307784,6 +308460,235 @@
         ],
         "x-required-permissions": [
           "factory_onboarding.sign_off"
+        ]
+      }
+    },
+    "/v1/partner/factories/{factoryId}/payout-calendar": {
+      "get": {
+        "description": "Every unpaid payable with its expected pay-on date — the run it is in, else the first payout-run day (`payouts.run_calendar`, a working day) on or after it becomes payable under my payout policy — and the payout runs of the last 90 days and upcoming with my lines (D-293, D-022, D-164).\n\nImplements: D-293, D-022, D-093, D-164, D-166.",
+        "operationId": "partner.payables.payoutCalendar",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "factoryId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "currency": "THB",
+                  "payables": [
+                    {
+                      "eligibleAt": "2026-10-13T10:00:00+07:00",
+                      "expectedBasis": "run_calendar",
+                      "expectedPayOn": "2026-10-14",
+                      "id": "0192f3a0-7c1e-7d2a-9b1f-0000000e7601",
+                      "netAmount": "9800.00",
+                      "openNetAmount": "9800.00",
+                      "openVatAmount": "686.00",
+                      "poNumber": "PO-2610-00012",
+                      "purchaseOrderId": "0192f3a0-7c1e-7d2a-9b1f-0000000e7602",
+                      "runId": null,
+                      "source": "goods_receipt",
+                      "status": "eligible",
+                      "vatAmount": "686.00"
+                    }
+                  ],
+                  "runCalendar": {
+                    "weekdays": [
+                      2,
+                      4
+                    ]
+                  },
+                  "runs": [
+                    {
+                      "id": "0192f3a0-7c1e-7d2a-9b1f-0000000e7603",
+                      "lines": [
+                        {
+                          "apNetAmount": "4200.00",
+                          "cashAmount": "4368.00",
+                          "kind": "advance",
+                          "paidOn": "2026-10-07",
+                          "payoutId": "0192f3a0-7c1e-7d2a-9b1f-0000000e7604",
+                          "pvNumber": "PV-2610-00008",
+                          "retentionAmount": "0.00",
+                          "status": "paid",
+                          "vatAmount": "294.00",
+                          "whtAmount": "126.00"
+                        }
+                      ],
+                      "payOn": "2026-10-07",
+                      "runNo": "PR-2610-0003",
+                      "status": "confirmed"
+                    }
+                  ]
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/PayoutCalendarDto"
+                }
+              }
+            },
+            "description": "Payout calendar",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.unauthenticated": {
+                    "$ref": "#/components/examples/problem.auth.unauthenticated"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.unauthenticated`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.forbidden": {
+                    "$ref": "#/components/examples/problem.auth.forbidden"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.forbidden`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "404": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.not_found": {
+                    "$ref": "#/components/examples/problem.http.not_found"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.not_found`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "validation.failed": {
+                    "$ref": "#/components/examples/problem.validation.failed"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `validation.failed`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "partner": []
+          }
+        ],
+        "summary": "My payout calendar",
+        "tags": [
+          "partner.payables"
+        ],
+        "x-required-permissions": [
+          "factory_payables.read"
         ]
       }
     },

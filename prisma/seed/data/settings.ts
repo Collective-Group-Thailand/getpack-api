@@ -1077,6 +1077,31 @@ export const SETTINGS: readonly SettingSeed[] = [
     ownerRole: 'marketing',
   },
 
+  // --- Payout calendar (U2.9, D-293): definition only — the run days are Finance's to set.
+  {
+    key: 'payouts.run_calendar',
+    valueType: 'json',
+    value: null,
+    unset: true,
+    valueSchema: {
+      type: 'object',
+      additionalProperties: false,
+      required: ['weekdays'],
+      properties: {
+        weekdays: {
+          type: 'array',
+          minItems: 1,
+          maxItems: 7,
+          uniqueItems: true,
+          items: { type: 'integer', minimum: 0, maximum: 6 },
+        },
+      },
+    },
+    description:
+      'D-293 the days of week (0 = Sunday) payout runs pay on, for the partner’s expected pay-on dates (working days of the national calendar); not seeded — set by Finance',
+    decisions: ['D-293', 'D-022'],
+    ownerRole: 'finance_manager',
+  },
   // --- B2B API (U2.7, D-207 / D-291).
   {
     key: 'api.max_keys_per_company',

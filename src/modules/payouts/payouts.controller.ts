@@ -20,6 +20,14 @@ import { ApiBody, ApiParam } from '@nestjs/swagger';
 import { DownloadUrlDto } from '@platform/files/files.dto';
 
 import {
+  FINANCE_SUMMARY_EXAMPLE,
+  FinanceSummaryDto,
+  FinanceSummaryQuery,
+  PAYOUT_CALENDAR_EXAMPLE,
+  PayoutCalendarDto,
+} from './finance-views.dto';
+import { FinanceViewsService } from './finance-views.service';
+import {
   ConfirmPayoutRunDto,
   CreatePayoutRunDto,
   EligibleQuery,
@@ -378,7 +386,63 @@ export class PartnerPayoutsController {
     private readonly payouts: PayoutsService,
     private readonly query: PayablesQueryService,
     private readonly files: DocumentFilesService,
+    private readonly finance: FinanceViewsService,
   ) {}
+
+  @Get('payout-calendar')
+  @Can('factory_payables.read')
+  @ApiParam({ name: 'factoryId', format: 'uuid' })
+  @ApiEndpoint({
+    id: 'partner.payables.payoutCalendar',
+    summary: 'My payout calendar',
+    description:
+      'Every unpaid payable with its expected pay-on date — the run it is in, else the first payout-run day ' +
+      '(`payouts.run_calendar`, a working day) on or after it becomes payable under my payout policy — and the ' +
+      'payout runs of the last 90 days and upcoming with my lines (D-293, D-022, D-164).',
+    implements: ['D-293', ...DOCS],
+  })
+  @ApiSuccess(200, {
+    description: 'Payout calendar',
+    type: PayoutCalendarDto,
+    example: PAYOUT_CALENDAR_EXAMPLE,
+  })
+  @ApiStandardErrors('http.not_found', 'validation.failed')
+  async payoutCalendar(
+    @CurrentActor() actor: Actor,
+    @Param('factoryId', ParseUUIDPipe) factoryId: string,
+  ): Promise<PayoutCalendarDto> {
+    return this.finance.payoutCalendar(await this.query.vendorOfFactory(actor, factoryId));
+  }
+
+  @Get('finance-summary')
+  @Can('factory_payables.read')
+  @ApiParam({ name: 'factoryId', format: 'uuid' })
+  @ApiEndpoint({
+    id: 'partner.payables.financeSummary',
+    summary: 'My finance totals',
+    description:
+      'Between two days (default: this month to today, at most 366 days), from the vendor sub-ledger: earned (goods ' +
+      'received), paid, retained (held and released) and deducted, with the opening and closing balance — they ' +
+      'reconcile with the statement of account; and per purchase order (lifetime) from its documents. Net of VAT ' +
+      '(D-293, D-022, D-164, D-083).',
+    implements: ['D-293', ...DOCS],
+  })
+  @ApiSuccess(200, { description: 'Totals', type: FinanceSummaryDto, example: FINANCE_SUMMARY_EXAMPLE })
+  @ApiStandardErrors('http.not_found', 'validation.failed')
+  async financeSummary(
+    @CurrentActor() actor: Actor,
+    @Param('factoryId', ParseUUIDPipe) factoryId: string,
+    @Query() q: FinanceSummaryQuery,
+  ): Promise<FinanceSummaryDto> {
+    const vendorId = await this.query.vendorOfFactory(actor, factoryId);
+    const to = q.to ?? bangkokDate(new Date());
+    const from = q.from ?? `${to.slice(0, 7)}-01`;
+    if (from > to || addCalendarDays(from, 366) < to)
+      throw new DomainException('validation.failed', {
+        errors: [{ path: 'from', code: 'range', message: 'from ≤ to, at most 366 days' }],
+      });
+    return this.finance.financeSummary(vendorId, from, to);
+  }
 
   @Get('payouts')
   @Can('factory_payables.read')

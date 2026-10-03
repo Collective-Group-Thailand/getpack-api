@@ -189,6 +189,8 @@ export interface SettingValues {
   'advisory.rule_set': AdvisoryRuleSet;
   /** D-212 / D-243 highest style-library wave that may be published. */
   'styles.published_wave': number;
+  /** D-293 payout-run days of week (0 = Sunday); unset until Finance sets them. */
+  'payouts.run_calendar': { weekdays: number[] };
   /** D-291 active API clients per company. */
   'api.max_keys_per_company': number;
   /** D-290 longest a call-off agreement holds a unit price (months). */

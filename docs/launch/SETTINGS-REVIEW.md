@@ -5,7 +5,7 @@
 > (a new effective-dated version, audited — D-063) and signs item 5 of `docs/LAUNCH-CHECKLIST.md`. A *proposed* or
 > *pending* value is not a decision: it goes live only once its owner confirms it.
 
-**97 settings** — 58 confirmed · 19 proposed · 4 pending the CPA (⚖) · 1 pending the business · 15 defined without a value (not set until their owner sets them).
+**98 settings** — 58 confirmed · 19 proposed · 4 pending the CPA (⚖) · 1 pending the business · 16 defined without a value (not set until their owner sets them).
 
 ## Settings
 
@@ -72,6 +72,7 @@
 | `payouts.balance_trigger` | `after_pod_and_claim_window` | confirmed | superadmin | D-022 | D-022 default trigger of the factory balance payout |
 | `payouts.retention_pct` | `5` | confirmed | superadmin | D-022 | D-022 default retention held from the factory balance payout |
 | `payouts.retention_release_days` | `30` | confirmed | superadmin | D-164, D-022 | D-164 days after the claim window closes until the retention is released |
+| `payouts.run_calendar` | `— (not set)` | not set | finance_manager | D-293, D-022 | D-293 the days of week (0 = Sunday) payout runs pay on, for the partner’s expected pay-on dates (working days of the national calendar); not seeded — set by Finance |
 | `pricing.margin_floor_pct` | `10` | confirmed | superadmin | D-012, D-063 | D-012 margin floor: reassignment, discounts and promotions never go below it |
 | `privacy.export_link_days` | `7` | confirmed | superadmin | D-222 | D-222 days a PDPA data export stays downloadable after the Data Protection Officer completes it |
 | `privacy.response_days` | `30` | confirmed | superadmin | D-222 | D-222 calendar days to answer a PDPA data-subject request (export or deletion); ⚖ legal counsel may adjust |
