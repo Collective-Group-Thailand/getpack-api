@@ -1145,6 +1145,17 @@
           "type": "https://errors.packio/design_services.no_extra_round"
         }
       },
+      "problem.designs.comment_not_thread": {
+        "summary": "designs.comment_not_thread",
+        "value": {
+          "code": "designs.comment_not_thread",
+          "detail": "ปิดได้เฉพาะความคิดเห็นแรกของหัวข้อ ไม่ใช่คำตอบ",
+          "requestId": "6f1c2d8e-2c7b-4d0e-9d1c-3f1a2b3c4d5e",
+          "status": 409,
+          "title": "ปิดได้เฉพาะหัวข้อ",
+          "type": "https://errors.packio/designs.comment_not_thread"
+        }
+      },
       "problem.designs.document_too_large": {
         "summary": "designs.document_too_large",
         "value": {
@@ -1198,6 +1209,17 @@
           "status": 409,
           "title": "แก้ไขไม่ได้",
           "type": "https://errors.packio/designs.read_only"
+        }
+      },
+      "problem.designs.share_scope": {
+        "summary": "designs.share_scope",
+        "value": {
+          "code": "designs.share_scope",
+          "detail": "ลิงก์แชร์นี้ไม่อนุญาตให้ทำรายการนี้ (ดู แสดงความคิดเห็น หรือแก้ไข — การแก้ไขสำหรับสมาชิกบริษัทของแบบเท่านั้น)",
+          "requestId": "6f1c2d8e-2c7b-4d0e-9d1c-3f1a2b3c4d5e",
+          "status": 403,
+          "title": "ลิงก์นี้ไม่อนุญาต",
+          "type": "https://errors.packio/designs.share_scope"
         }
       },
       "problem.designs.template_without_design": {
@@ -4297,6 +4319,48 @@
           "quoteId",
           "quoteOptionId",
           "designOption"
+        ],
+        "type": "object"
+      },
+      "AddCommentDto": {
+        "properties": {
+          "anchor": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/FaceAnchorDto"
+              }
+            ],
+            "description": "Where on the box; absent for a reply"
+          },
+          "body": {
+            "example": "โลโก้เล็กไปนิด ขยายอีกหน่อยได้ไหม",
+            "type": "string"
+          },
+          "mentions": {
+            "description": "@mentions: users (public ids) of the design’s owner or company",
+            "example": [],
+            "items": {
+              "format": "uuid",
+              "type": "string"
+            },
+            "maxItems": 20,
+            "type": "array"
+          },
+          "parentId": {
+            "description": "Reply to this thread",
+            "example": "0192f3a0-7c1e-7d2a-9b1f-00000000fc01",
+            "format": "uuid",
+            "type": "string"
+          },
+          "versionNo": {
+            "description": "The version commented on; absent: the current",
+            "example": 3,
+            "minimum": 1,
+            "type": "integer"
+          }
+        },
+        "required": [
+          "body"
         ],
         "type": "object"
       },
@@ -11380,7 +11444,13 @@
           "configurator_step",
           "quote_shown",
           "add_to_cart",
-          "checkout_step"
+          "checkout_step",
+          "studio_started",
+          "studio_box_confirmed",
+          "studio_first_artwork",
+          "studio_checks_clean",
+          "studio_add_to_cart",
+          "studio_ordered"
         ],
         "type": "string"
       },
@@ -19428,6 +19498,93 @@
         ],
         "type": "object"
       },
+      "CommentDto": {
+        "properties": {
+          "anchor": {
+            "additionalProperties": true,
+            "example": {
+              "faceId": "front",
+              "u": 0.42,
+              "v": 0.3
+            },
+            "type": [
+              "object",
+              "null"
+            ]
+          },
+          "author": {
+            "$ref": "#/components/schemas/UserRefDto"
+          },
+          "body": {
+            "example": "โลโก้เล็กไปนิด ขยายอีกหน่อยได้ไหม",
+            "type": "string"
+          },
+          "createdAt": {
+            "example": "2026-10-03T10:00:00+07:00",
+            "format": "date-time",
+            "type": "string"
+          },
+          "id": {
+            "example": "0192f3a0-7c1e-7d2a-9b1f-00000000fc01",
+            "format": "uuid",
+            "type": "string"
+          },
+          "mentions": {
+            "description": "Mentioned users (public ids)",
+            "example": [],
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "parentId": {
+            "example": null,
+            "format": "uuid",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "resolvedAt": {
+            "example": null,
+            "format": "date-time",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "resolvedBy": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/UserRefDto"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "versionNo": {
+            "example": 3,
+            "type": [
+              "integer",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "id",
+          "parentId",
+          "author",
+          "body",
+          "anchor",
+          "mentions",
+          "versionNo",
+          "resolvedAt",
+          "resolvedBy",
+          "createdAt"
+        ],
+        "type": "object"
+      },
       "CompanyAction": {
         "enum": [
           "suspend",
@@ -23596,6 +23753,15 @@
             "format": "uuid",
             "type": "string"
           },
+          "companyId": {
+            "description": "D-285: a design of my company — its members comment, edit through edit links and are mentioned",
+            "example": null,
+            "format": "uuid",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
           "document": {
             "additionalProperties": true,
             "description": "The editor document (JSON, ≤ 2 MB); omitted when starting from a template",
@@ -26285,6 +26451,23 @@
         ],
         "type": "object"
       },
+      "CreateShareLinkDto": {
+        "properties": {
+          "scope": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ShareScope"
+              }
+            ],
+            "description": "`comment` and `edit` need a signed-in user; `edit` only a member of the design’s company",
+            "example": "comment"
+          }
+        },
+        "required": [
+          "scope"
+        ],
+        "type": "object"
+      },
       "CreateShipmentDto": {
         "properties": {
           "cartonsCount": {
@@ -27321,6 +27504,55 @@
         "required": [
           "code",
           "name"
+        ],
+        "type": "object"
+      },
+      "CreatedShareLinkDto": {
+        "properties": {
+          "createdAt": {
+            "example": "2026-10-03T10:00:00+07:00",
+            "format": "date-time",
+            "type": "string"
+          },
+          "expiresAt": {
+            "example": "2026-10-18T10:00:00+07:00",
+            "format": "date-time",
+            "type": "string"
+          },
+          "id": {
+            "example": "0192f3a0-7c1e-7d2a-9b1f-00000000fb01",
+            "format": "uuid",
+            "type": "string"
+          },
+          "revokedAt": {
+            "example": null,
+            "format": "date-time",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "scope": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ShareScope"
+              }
+            ],
+            "example": "comment"
+          },
+          "token": {
+            "description": "Shown once, never stored in clear (`store.designs.getShared` opens it)",
+            "example": "q3Rk0J7d3n2h8xJm1v5yW0b2C4e6G8i0K2m4O6q8S0u",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "scope",
+          "expiresAt",
+          "revokedAt",
+          "createdAt",
+          "token"
         ],
         "type": "object"
       },
@@ -30457,7 +30689,6 @@
         "type": "string"
       },
       "DesignSaveKind": {
-        "description": "The editor’s periodic autosave or a save the customer made; the history can hide autosaves",
         "enum": [
           "manual",
           "autosave"
@@ -32834,6 +33065,42 @@
           "points",
           "expiresAt"
         ],
+        "type": "object"
+      },
+      "FaceAnchorDto": {
+        "properties": {
+          "faceId": {
+            "description": "A face of the 3D box (with `u`, `v`)",
+            "example": "front",
+            "maxLength": 60,
+            "type": "string"
+          },
+          "u": {
+            "example": 0.42,
+            "maximum": 1,
+            "minimum": 0,
+            "type": "number"
+          },
+          "v": {
+            "example": 0.3,
+            "maximum": 1,
+            "minimum": 0,
+            "type": "number"
+          },
+          "xMm": {
+            "description": "A point on the flat, mm (with `yMm`)",
+            "example": 120.5,
+            "maximum": 5000,
+            "minimum": -100,
+            "type": "number"
+          },
+          "yMm": {
+            "example": 40,
+            "maximum": 5000,
+            "minimum": -100,
+            "type": "number"
+          }
+        },
         "type": "object"
       },
       "FactoryAccessDto": {
@@ -62467,6 +62734,49 @@
         ],
         "type": "object"
       },
+      "ShareLinkDto": {
+        "properties": {
+          "createdAt": {
+            "example": "2026-10-03T10:00:00+07:00",
+            "format": "date-time",
+            "type": "string"
+          },
+          "expiresAt": {
+            "example": "2026-10-18T10:00:00+07:00",
+            "format": "date-time",
+            "type": "string"
+          },
+          "id": {
+            "example": "0192f3a0-7c1e-7d2a-9b1f-00000000fb01",
+            "format": "uuid",
+            "type": "string"
+          },
+          "revokedAt": {
+            "example": null,
+            "format": "date-time",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "scope": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ShareScope"
+              }
+            ],
+            "example": "comment"
+          }
+        },
+        "required": [
+          "id",
+          "scope",
+          "expiresAt",
+          "revokedAt",
+          "createdAt"
+        ],
+        "type": "object"
+      },
       "ShareQuoteResultDto": {
         "properties": {
           "expiresAt": {
@@ -62495,6 +62805,14 @@
           "expiresAt"
         ],
         "type": "object"
+      },
+      "ShareScope": {
+        "enum": [
+          "view",
+          "comment",
+          "edit"
+        ],
+        "type": "string"
       },
       "SharedConfigurationDraftDto": {
         "properties": {
@@ -62636,6 +62954,15 @@
               "null"
             ]
           },
+          "scope": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ShareScope"
+              }
+            ],
+            "description": "What the link allows (D-285); the single link of D-226 is view",
+            "example": "view"
+          },
           "sharedAt": {
             "example": "2026-09-30T10:00:00+07:00",
             "format": "date-time",
@@ -62682,7 +63009,8 @@
           "assets",
           "thumbnailUrl",
           "sharedAt",
-          "expiresAt"
+          "expiresAt",
+          "scope"
         ],
         "type": "object"
       },
@@ -69465,6 +69793,24 @@
         ],
         "type": "object"
       },
+      "StudioCartItemRefDto": {
+        "properties": {
+          "cartItemId": {
+            "example": "0192f3a0-7c1e-7d2a-9b1f-00000000c901",
+            "format": "uuid",
+            "type": "string"
+          },
+          "designVersionNo": {
+            "example": 3,
+            "type": "integer"
+          }
+        },
+        "required": [
+          "cartItemId",
+          "designVersionNo"
+        ],
+        "type": "object"
+      },
       "StudioCatalogStatus": {
         "enum": [
           "draft",
@@ -69604,6 +69950,145 @@
           "mark"
         ],
         "type": "string"
+      },
+      "StudioFunnelReportDto": {
+        "properties": {
+          "artworkToCartPct": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/StudioMetricDto"
+              }
+            ],
+            "description": "% of sessions adding artwork that add to cart"
+          },
+          "from": {
+            "example": "2026-10-01",
+            "type": "string"
+          },
+          "medianMinutesToCart": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/StudioMetricDto"
+              }
+            ],
+            "description": "Median minutes from studio start to first add-to-cart"
+          },
+          "preflightPassPct": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/StudioMetricDto"
+              }
+            ],
+            "description": "% of studio print files passing preflight (no block)"
+          },
+          "priceParityPct": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/StudioMetricDto"
+              }
+            ],
+            "description": "% of studio orders whose product total equals the studio price"
+          },
+          "steps": {
+            "items": {
+              "$ref": "#/components/schemas/StudioFunnelStepDto"
+            },
+            "type": "array"
+          },
+          "to": {
+            "example": "2026-10-31",
+            "type": "string"
+          }
+        },
+        "required": [
+          "from",
+          "to",
+          "steps",
+          "medianMinutesToCart",
+          "artworkToCartPct",
+          "preflightPassPct",
+          "priceParityPct"
+        ],
+        "type": "object"
+      },
+      "StudioFunnelStep": {
+        "enum": [
+          "studio_started",
+          "studio_box_confirmed",
+          "studio_first_artwork",
+          "studio_checks_clean",
+          "studio_add_to_cart",
+          "studio_ordered"
+        ],
+        "type": "string"
+      },
+      "StudioFunnelStepDto": {
+        "properties": {
+          "fromPreviousPct": {
+            "description": "% of the previous step",
+            "example": "42.86",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "sessions": {
+            "description": "Consented sessions that reached it",
+            "example": 420,
+            "type": "integer"
+          },
+          "step": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/StudioFunnelStep"
+              }
+            ],
+            "example": "studio_started"
+          }
+        },
+        "required": [
+          "step",
+          "sessions",
+          "fromPreviousPct"
+        ],
+        "type": "object"
+      },
+      "StudioMetricDto": {
+        "properties": {
+          "basis": {
+            "description": "How many it was measured over",
+            "example": 51,
+            "type": "integer"
+          },
+          "met": {
+            "description": "null without data",
+            "example": true,
+            "type": [
+              "boolean",
+              "null"
+            ]
+          },
+          "target": {
+            "description": "Target (setting `studio.funnel_targets`)",
+            "example": "10",
+            "type": "string"
+          },
+          "value": {
+            "description": "null without data",
+            "example": "8.5",
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "value",
+          "target",
+          "met",
+          "basis"
+        ],
+        "type": "object"
       },
       "StudioOrderDto": {
         "properties": {
@@ -83125,6 +83610,238 @@
           }
         ],
         "summary": "Price and lead-time sensitivity",
+        "tags": [
+          "admin.analytics"
+        ],
+        "x-required-permissions": [
+          "analytics.read"
+        ]
+      }
+    },
+    "/v1/admin/analytics/studio-funnel": {
+      "get": {
+        "description": "Consented sessions per studio step (started, box confirmed, first artwork, checks clean, added to cart, ordered), the median minutes to first add-to-cart, artwork → cart conversion, the share of studio print files passing preflight and of studio orders charged exactly the studio price — each against the spec §1 target (`studio.funnel_targets`). Aggregates only (D-286).\n\nImplements: D-286.",
+        "operationId": "admin.analytics.studioFunnel",
+        "parameters": [
+          {
+            "description": "First Bangkok day",
+            "in": "query",
+            "name": "from",
+            "required": true,
+            "schema": {
+              "example": "2026-10-01",
+              "type": "string"
+            }
+          },
+          {
+            "description": "Last Bangkok day",
+            "in": "query",
+            "name": "to",
+            "required": true,
+            "schema": {
+              "example": "2026-10-31",
+              "type": "string"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "artworkToCartPct": {
+                    "basis": 204,
+                    "met": true,
+                    "target": "25",
+                    "value": "25.00"
+                  },
+                  "from": "2026-10-01",
+                  "medianMinutesToCart": {
+                    "basis": 51,
+                    "met": true,
+                    "target": "10",
+                    "value": "8.5"
+                  },
+                  "preflightPassPct": {
+                    "basis": 40,
+                    "met": true,
+                    "target": "90",
+                    "value": "92.50"
+                  },
+                  "priceParityPct": {
+                    "basis": 40,
+                    "met": true,
+                    "target": "100",
+                    "value": "100.00"
+                  },
+                  "steps": [
+                    {
+                      "fromPreviousPct": null,
+                      "sessions": 420,
+                      "step": "studio_started"
+                    },
+                    {
+                      "fromPreviousPct": "71.43",
+                      "sessions": 300,
+                      "step": "studio_box_confirmed"
+                    },
+                    {
+                      "fromPreviousPct": "71.43",
+                      "sessions": 204,
+                      "step": "studio_first_artwork"
+                    },
+                    {
+                      "fromPreviousPct": "71.43",
+                      "sessions": 150,
+                      "step": "studio_checks_clean"
+                    },
+                    {
+                      "fromPreviousPct": "71.43",
+                      "sessions": 51,
+                      "step": "studio_add_to_cart"
+                    },
+                    {
+                      "fromPreviousPct": "71.43",
+                      "sessions": 40,
+                      "step": "studio_ordered"
+                    }
+                  ],
+                  "to": "2026-10-31"
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/StudioFunnelReportDto"
+                }
+              }
+            },
+            "description": "Report",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.unauthenticated": {
+                    "$ref": "#/components/examples/problem.auth.unauthenticated"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.unauthenticated`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.forbidden": {
+                    "$ref": "#/components/examples/problem.auth.forbidden"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.forbidden`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "validation.failed": {
+                    "$ref": "#/components/examples/problem.validation.failed"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `validation.failed`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "staff": []
+          }
+        ],
+        "summary": "Studio funnel against its targets",
         "tags": [
           "admin.analytics"
         ],
@@ -172650,7 +173367,7 @@
         ]
       },
       "put": {
-        "description": "Only my own designs (409 `designs.read_only` for another’s — copy it first with `admin.designs.copy`); `If-Match` required.\n\nImplements: D-005.",
+        "description": "My own designs, or the customer’s studio design of a design-service request I am assigned to (D-286); any other is 409 `designs.read_only` (copy it first with `admin.designs.copy`). `If-Match` required.\n\nImplements: D-005, D-286.",
         "operationId": "admin.designs.save",
         "parameters": [
           {
@@ -173035,7 +173752,7 @@
           "admin.designs"
         ],
         "x-required-permissions": [
-          "catalog.manage"
+          "artwork.read"
         ]
       }
     },
@@ -348299,7 +349016,8 @@
     },
     "/v1/store/designs/{designId}/actions/share": {
       "post": {
-        "description": "A new view-only link to the current version; the token is shown once and only its hash is kept. Sharing again replaces the previous link; it expires after `configurations.share_link_days` (D-185) and can be revoked (D-226).\n\nImplements: D-226, D-185.",
+        "deprecated": true,
+        "description": "A new view-only link to the current version; the token is shown once and only its hash is kept. Sharing again replaces the previous link; it expires after `configurations.share_link_days` (D-185) and can be revoked (D-226). Deprecated: scoped links (`store.studio.createShareLink`, D-285) replace it.\n\nImplements: D-226, D-185.",
         "operationId": "store.designs.share",
         "parameters": [
           {
@@ -349422,7 +350140,8 @@
     },
     "/v1/store/designs/{designId}/share": {
       "delete": {
-        "description": "Revokes the live link: it stops opening at once (D-226). 404 when not shared.\n\nImplements: D-226.",
+        "deprecated": true,
+        "description": "Revokes the live link: it stops opening at once (D-226). 404 when not shared. Deprecated with `store.designs.share` (D-285).\n\nImplements: D-226.",
         "operationId": "store.designs.unshare",
         "parameters": [
           {
@@ -376721,7 +377440,7 @@
     },
     "/v1/store/shared-designs/{token}": {
       "get": {
-        "description": "Anyone with the link sees the current version of the design with signed asset URLs — never its owner. Revoked, expired or deleted answers 404 (D-226). Rate-limited per client.\n\nImplements: D-226.",
+        "description": "Anyone with the link sees the current version of the design with signed asset URLs — never its owner — and what the link allows (`scope`: view, comment, edit; D-285). Revoked, expired or deleted answers 404 (D-226). An edit link also gives the `ETag` for `store.studio.editShared`. Rate-limited per client.\n\nImplements: D-226, D-285.",
         "operationId": "store.designs.getShared",
         "parameters": [
           {
@@ -376784,6 +377503,7 @@
                     "slug": "tuck-end-box"
                   },
                   "schemaVersion": 1,
+                  "scope": "view",
                   "sharedAt": "2026-09-30T10:00:00+07:00",
                   "thumbnailUrl": null,
                   "title": "กล่องกาแฟของฉัน",
@@ -379477,6 +380197,795 @@
         ]
       }
     },
+    "/v1/store/studio/shared/{token}/comments": {
+      "get": {
+        "description": "With a comment or edit link (D-285).\n\nImplements: D-285.",
+        "operationId": "store.studio.listSharedComments",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "token",
+            "required": true,
+            "schema": {
+              "pattern": "^[A-Za-z0-9_-]{43}$",
+              "type": "string"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "example": [
+                  {
+                    "anchor": {
+                      "faceId": "front",
+                      "u": 0.42,
+                      "v": 0.3
+                    },
+                    "author": {
+                      "displayName": "Fake Member",
+                      "id": "0192f3a0-7c1e-7d2a-9b1f-00000000c002"
+                    },
+                    "body": "โลโก้เล็กไปนิด ขยายอีกหน่อยได้ไหม",
+                    "createdAt": "2026-10-03T10:00:00+07:00",
+                    "id": "0192f3a0-7c1e-7d2a-9b1f-00000000fc01",
+                    "mentions": [],
+                    "parentId": null,
+                    "resolvedAt": null,
+                    "resolvedBy": null,
+                    "versionNo": 3
+                  }
+                ],
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/CommentDto"
+                  },
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Comments",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.unauthenticated": {
+                    "$ref": "#/components/examples/problem.auth.unauthenticated"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.unauthenticated`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.forbidden": {
+                    "$ref": "#/components/examples/problem.auth.forbidden"
+                  },
+                  "designs.share_scope": {
+                    "$ref": "#/components/examples/problem.designs.share_scope"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.forbidden`, `designs.share_scope`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "404": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.not_found": {
+                    "$ref": "#/components/examples/problem.http.not_found"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.not_found`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [],
+        "summary": "Comments through a share link",
+        "tags": [
+          "store.studio"
+        ]
+      },
+      "post": {
+        "description": "A signed-in user with a comment or edit link (D-285).\n\nImplements: D-285.",
+        "operationId": "store.studio.addSharedComment",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "token",
+            "required": true,
+            "schema": {
+              "pattern": "^[A-Za-z0-9_-]{43}$",
+              "type": "string"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "examples": {
+                "default": {
+                  "value": {
+                    "body": "โลโก้เล็กไปนิด ขยายอีกหน่อยได้ไหม"
+                  }
+                }
+              },
+              "schema": {
+                "$ref": "#/components/schemas/AddCommentDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "anchor": {
+                    "faceId": "front",
+                    "u": 0.42,
+                    "v": 0.3
+                  },
+                  "author": {
+                    "displayName": "Fake Member",
+                    "id": "0192f3a0-7c1e-7d2a-9b1f-00000000c002"
+                  },
+                  "body": "โลโก้เล็กไปนิด ขยายอีกหน่อยได้ไหม",
+                  "createdAt": "2026-10-03T10:00:00+07:00",
+                  "id": "0192f3a0-7c1e-7d2a-9b1f-00000000fc01",
+                  "mentions": [],
+                  "parentId": null,
+                  "resolvedAt": null,
+                  "resolvedBy": null,
+                  "versionNo": 3
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/CommentDto"
+                }
+              }
+            },
+            "description": "Comment",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "400": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.bad_request": {
+                    "$ref": "#/components/examples/problem.http.bad_request"
+                  },
+                  "http.malformed_json": {
+                    "$ref": "#/components/examples/problem.http.malformed_json"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.bad_request`, `http.malformed_json`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.unauthenticated": {
+                    "$ref": "#/components/examples/problem.auth.unauthenticated"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.unauthenticated`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.forbidden": {
+                    "$ref": "#/components/examples/problem.auth.forbidden"
+                  },
+                  "designs.share_scope": {
+                    "$ref": "#/components/examples/problem.designs.share_scope"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.forbidden`, `designs.share_scope`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "404": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.not_found": {
+                    "$ref": "#/components/examples/problem.http.not_found"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.not_found`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "validation.failed": {
+                    "$ref": "#/components/examples/problem.validation.failed"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `validation.failed`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "customer": []
+          }
+        ],
+        "summary": "Comment through a share link",
+        "tags": [
+          "store.studio"
+        ]
+      }
+    },
+    "/v1/store/studio/shared/{token}/document": {
+      "patch": {
+        "description": "A JSON Patch like `store.designs.patchDocument`, for a signed-in member of the design’s company holding an edit link (ETag from `store.designs.getShared`) (D-285, D-276).\n\nImplements: D-285, D-276.",
+        "operationId": "store.studio.editShared",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "token",
+            "required": true,
+            "schema": {
+              "pattern": "^[A-Za-z0-9_-]{43}$",
+              "type": "string"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/IfMatch"
+          },
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "examples": {
+                "default": {
+                  "value": {
+                    "operations": [
+                      {
+                        "op": "replace",
+                        "path": "/title",
+                        "value": "แก้ไข"
+                      }
+                    ]
+                  }
+                }
+              },
+              "schema": {
+                "$ref": "#/components/schemas/PatchDesignDocumentDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "assets": [
+                    {
+                      "createdAt": "2026-09-27T10:00:00+07:00",
+                      "fileId": "0192f3a0-7c1e-7d2a-9b1f-0000000e5006",
+                      "heightPx": 800,
+                      "id": "0192f3a0-7c1e-7d2a-9b1f-0000000e5007",
+                      "kind": "logo",
+                      "mimeType": "image/png",
+                      "sizeBytes": 48213,
+                      "url": "https://files.example.test/customer_content/2026/09/0192f3a0?X-Amz-Signature=fake",
+                      "urlExpiresAt": "2026-09-27T10:05:00+07:00",
+                      "widthPx": 1200
+                    }
+                  ],
+                  "catalogProductId": "0192f3a0-7c1e-7d2a-9b1f-0000000e5002",
+                  "createdAt": "2026-09-20T10:00:00+07:00",
+                  "document": {
+                    "pages": [
+                      {
+                        "objects": [
+                          {
+                            "text": "Packio",
+                            "type": "text",
+                            "x": 10,
+                            "y": 20
+                          }
+                        ],
+                        "side": "front"
+                      }
+                    ]
+                  },
+                  "finishes": [
+                    "dev-matt"
+                  ],
+                  "heightMm": 40,
+                  "id": "0192f3a0-7c1e-7d2a-9b1f-0000000e5001",
+                  "lengthMm": 100,
+                  "lock": {
+                    "lockedAt": "2026-09-27T11:00:00+07:00",
+                    "orderCode": "PK-2610-0001-01",
+                    "orderId": "0192f3a0-7c1e-7d2a-9b1f-0000000e5009",
+                    "versionNo": 3
+                  },
+                  "materialId": null,
+                  "measurementBasis": "internal",
+                  "orders": [
+                    {
+                      "orderCode": "PK-2610-0001-01",
+                      "orderId": "0192f3a0-7c1e-7d2a-9b1f-0000000e5009"
+                    }
+                  ],
+                  "patternId": "0192f3a0-7c1e-7d2a-9b1f-0000000e5003",
+                  "printMethod": "digital",
+                  "printSides": "outside",
+                  "product": {
+                    "id": "0192f3a0-7c1e-7d2a-9b1f-0000000e5002",
+                    "nameEn": "Tuck-end box",
+                    "nameTh": "กล่องฝาเสียบ",
+                    "productTypeCode": "folding_box",
+                    "slug": "tuck-end-box"
+                  },
+                  "schemaVersion": 1,
+                  "semiDesignTemplateId": null,
+                  "share": null,
+                  "spec": null,
+                  "styleVariantCode": "PK-TE-01-K7QD",
+                  "thumbnailFileId": null,
+                  "thumbnailUrl": null,
+                  "title": "กล่องกาแฟของฉัน",
+                  "updatedAt": "2026-09-27T10:00:00+07:00",
+                  "versionNo": 3,
+                  "widthMm": 60
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/DesignDocumentDto"
+                }
+              }
+            },
+            "description": "Saved",
+            "headers": {
+              "ETag": {
+                "$ref": "#/components/headers/ETag"
+              },
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "400": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.bad_request": {
+                    "$ref": "#/components/examples/problem.http.bad_request"
+                  },
+                  "http.malformed_json": {
+                    "$ref": "#/components/examples/problem.http.malformed_json"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.bad_request`, `http.malformed_json`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.unauthenticated": {
+                    "$ref": "#/components/examples/problem.auth.unauthenticated"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.unauthenticated`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.forbidden": {
+                    "$ref": "#/components/examples/problem.auth.forbidden"
+                  },
+                  "designs.share_scope": {
+                    "$ref": "#/components/examples/problem.designs.share_scope"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.forbidden`, `designs.share_scope`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "404": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.not_found": {
+                    "$ref": "#/components/examples/problem.http.not_found"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.not_found`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "412": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "concurrency.stale": {
+                    "$ref": "#/components/examples/problem.concurrency.stale"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `concurrency.stale`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "413": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "designs.patch_too_large": {
+                    "$ref": "#/components/examples/problem.designs.patch_too_large"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `designs.patch_too_large`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "designs.patch_failed": {
+                    "$ref": "#/components/examples/problem.designs.patch_failed"
+                  },
+                  "validation.failed": {
+                    "$ref": "#/components/examples/problem.validation.failed"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `designs.patch_failed`, `validation.failed`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "428": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "concurrency.precondition_required": {
+                    "$ref": "#/components/examples/problem.concurrency.precondition_required"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `concurrency.precondition_required`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "customer": []
+          }
+        ],
+        "summary": "Edit a design through an edit link",
+        "tags": [
+          "store.studio"
+        ]
+      }
+    },
     "/v1/store/studio/templates": {
       "get": {
         "description": "Packio’s own published templates (D-216), by use case and style family; each layout re-flows to any size of its families (D-282).\n\nImplements: D-216, D-282.",
@@ -380370,6 +381879,932 @@
           }
         ],
         "summary": "Accept a print-check warning",
+        "tags": [
+          "store.studio"
+        ]
+      }
+    },
+    "/v1/store/studio/{designId}/comments": {
+      "get": {
+        "description": "Threads anchored to the 3D box or the flat, oldest first (D-285).\n\nImplements: D-285.",
+        "operationId": "store.studio.listComments",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "designId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "example": [
+                  {
+                    "anchor": {
+                      "faceId": "front",
+                      "u": 0.42,
+                      "v": 0.3
+                    },
+                    "author": {
+                      "displayName": "Fake Member",
+                      "id": "0192f3a0-7c1e-7d2a-9b1f-00000000c002"
+                    },
+                    "body": "โลโก้เล็กไปนิด ขยายอีกหน่อยได้ไหม",
+                    "createdAt": "2026-10-03T10:00:00+07:00",
+                    "id": "0192f3a0-7c1e-7d2a-9b1f-00000000fc01",
+                    "mentions": [],
+                    "parentId": null,
+                    "resolvedAt": null,
+                    "resolvedBy": null,
+                    "versionNo": 3
+                  }
+                ],
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/CommentDto"
+                  },
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Comments",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.unauthenticated": {
+                    "$ref": "#/components/examples/problem.auth.unauthenticated"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.unauthenticated`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.forbidden": {
+                    "$ref": "#/components/examples/problem.auth.forbidden"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.forbidden`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "404": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.not_found": {
+                    "$ref": "#/components/examples/problem.http.not_found"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.not_found`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "validation.failed": {
+                    "$ref": "#/components/examples/problem.validation.failed"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `validation.failed`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "customer": []
+          }
+        ],
+        "summary": "Comments on my (company’s) design",
+        "tags": [
+          "store.studio"
+        ]
+      },
+      "post": {
+        "description": "Anchored to a face (`faceId` + UV) or a point on the flat (mm), or a reply to a thread; @mentions of the owner and the company’s members are notified (D-285).\n\nImplements: D-285.",
+        "operationId": "store.studio.addComment",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "designId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "examples": {
+                "default": {
+                  "value": {
+                    "anchor": {
+                      "faceId": "front",
+                      "u": 0.42,
+                      "v": 0.3
+                    },
+                    "body": "โลโก้เล็กไปนิด ขยายอีกหน่อยได้ไหม"
+                  }
+                }
+              },
+              "schema": {
+                "$ref": "#/components/schemas/AddCommentDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "anchor": {
+                    "faceId": "front",
+                    "u": 0.42,
+                    "v": 0.3
+                  },
+                  "author": {
+                    "displayName": "Fake Member",
+                    "id": "0192f3a0-7c1e-7d2a-9b1f-00000000c002"
+                  },
+                  "body": "โลโก้เล็กไปนิด ขยายอีกหน่อยได้ไหม",
+                  "createdAt": "2026-10-03T10:00:00+07:00",
+                  "id": "0192f3a0-7c1e-7d2a-9b1f-00000000fc01",
+                  "mentions": [],
+                  "parentId": null,
+                  "resolvedAt": null,
+                  "resolvedBy": null,
+                  "versionNo": 3
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/CommentDto"
+                }
+              }
+            },
+            "description": "Comment",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "400": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.bad_request": {
+                    "$ref": "#/components/examples/problem.http.bad_request"
+                  },
+                  "http.malformed_json": {
+                    "$ref": "#/components/examples/problem.http.malformed_json"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.bad_request`, `http.malformed_json`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.unauthenticated": {
+                    "$ref": "#/components/examples/problem.auth.unauthenticated"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.unauthenticated`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.forbidden": {
+                    "$ref": "#/components/examples/problem.auth.forbidden"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.forbidden`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "404": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.not_found": {
+                    "$ref": "#/components/examples/problem.http.not_found"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.not_found`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "validation.failed": {
+                    "$ref": "#/components/examples/problem.validation.failed"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `validation.failed`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "customer": []
+          }
+        ],
+        "summary": "Comment on my (company’s) design",
+        "tags": [
+          "store.studio"
+        ]
+      }
+    },
+    "/v1/store/studio/{designId}/comments/{commentId}/actions/resolve": {
+      "post": {
+        "description": "By the owner, a company member or the thread’s author; once (D-285).\n\nImplements: D-285.",
+        "operationId": "store.studio.resolveComment",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "designId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "commentId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "anchor": {
+                    "faceId": "front",
+                    "u": 0.42,
+                    "v": 0.3
+                  },
+                  "author": {
+                    "displayName": "Fake Member",
+                    "id": "0192f3a0-7c1e-7d2a-9b1f-00000000c002"
+                  },
+                  "body": "โลโก้เล็กไปนิด ขยายอีกหน่อยได้ไหม",
+                  "createdAt": "2026-10-03T10:00:00+07:00",
+                  "id": "0192f3a0-7c1e-7d2a-9b1f-00000000fc01",
+                  "mentions": [],
+                  "parentId": null,
+                  "resolvedAt": "2026-10-03T11:00:00+07:00",
+                  "resolvedBy": {
+                    "displayName": "Fake Member",
+                    "id": "0192f3a0-7c1e-7d2a-9b1f-00000000c002"
+                  },
+                  "versionNo": 3
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/CommentDto"
+                }
+              }
+            },
+            "description": "Comment",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.unauthenticated": {
+                    "$ref": "#/components/examples/problem.auth.unauthenticated"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.unauthenticated`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.forbidden": {
+                    "$ref": "#/components/examples/problem.auth.forbidden"
+                  },
+                  "designs.share_scope": {
+                    "$ref": "#/components/examples/problem.designs.share_scope"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.forbidden`, `designs.share_scope`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "404": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.not_found": {
+                    "$ref": "#/components/examples/problem.http.not_found"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.not_found`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "409": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "designs.comment_not_thread": {
+                    "$ref": "#/components/examples/problem.designs.comment_not_thread"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `designs.comment_not_thread`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "validation.failed": {
+                    "$ref": "#/components/examples/problem.validation.failed"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `validation.failed`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "customer": []
+          }
+        ],
+        "summary": "Resolve a comment thread",
+        "tags": [
+          "store.studio"
+        ]
+      }
+    },
+    "/v1/store/studio/{designId}/design-service": {
+      "post": {
+        "description": "“ให้ทีมออกแบบให้”: the version goes in the cart with the design service, priced by its studio quotation with the graphic design fee; at checkout the design-service request works on this design — its brief starts from it and the assigned designer may edit this document only (D-286).\n\nImplements: D-286, D-071.",
+        "operationId": "store.studio.requestDesignService",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "designId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "examples": {
+                "default": {
+                  "value": {
+                    "quoteId": "0192f3a0-7c1e-7d2a-9b1f-00000000a201",
+                    "quoteOptionId": "0192f3a0-7c1e-7d2a-9b1f-00000000a202"
+                  }
+                }
+              },
+              "schema": {
+                "$ref": "#/components/schemas/StudioOrderDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "cartItemId": "0192f3a0-7c1e-7d2a-9b1f-00000000c901",
+                  "designVersionNo": 3
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/StudioCartItemRefDto"
+                }
+              }
+            },
+            "description": "In the cart",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "400": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.bad_request": {
+                    "$ref": "#/components/examples/problem.http.bad_request"
+                  },
+                  "http.malformed_json": {
+                    "$ref": "#/components/examples/problem.http.malformed_json"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.bad_request`, `http.malformed_json`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.unauthenticated": {
+                    "$ref": "#/components/examples/problem.auth.unauthenticated"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.unauthenticated`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.forbidden": {
+                    "$ref": "#/components/examples/problem.auth.forbidden"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.forbidden`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "404": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.not_found": {
+                    "$ref": "#/components/examples/problem.http.not_found"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.not_found`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "409": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "cart.item_exists": {
+                    "$ref": "#/components/examples/problem.cart.item_exists"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `cart.item_exists`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "cart.design_option_unavailable": {
+                    "$ref": "#/components/examples/problem.cart.design_option_unavailable"
+                  },
+                  "designs.version_required": {
+                    "$ref": "#/components/examples/problem.designs.version_required"
+                  },
+                  "studio.quote_not_of_version": {
+                    "$ref": "#/components/examples/problem.studio.quote_not_of_version"
+                  },
+                  "validation.failed": {
+                    "$ref": "#/components/examples/problem.validation.failed"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `cart.design_option_unavailable`, `designs.version_required`, `studio.quote_not_of_version`, `validation.failed`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "customer": []
+          }
+        ],
+        "summary": "Hand my design to the design service",
         "tags": [
           "store.studio"
         ]
@@ -381779,6 +384214,600 @@
           }
         ],
         "summary": "Ask for a quotation of my studio design",
+        "tags": [
+          "store.studio"
+        ]
+      }
+    },
+    "/v1/store/studio/{designId}/share-links": {
+      "get": {
+        "description": "Every link with its scope, expiry and revocation — never the tokens (D-285).\n\nImplements: D-285.",
+        "operationId": "store.studio.listShareLinks",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "designId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "example": [
+                  {
+                    "createdAt": "2026-10-03T10:00:00+07:00",
+                    "expiresAt": "2026-10-18T10:00:00+07:00",
+                    "id": "0192f3a0-7c1e-7d2a-9b1f-00000000fb01",
+                    "revokedAt": null,
+                    "scope": "comment"
+                  }
+                ],
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/ShareLinkDto"
+                  },
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Links",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.unauthenticated": {
+                    "$ref": "#/components/examples/problem.auth.unauthenticated"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.unauthenticated`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.forbidden": {
+                    "$ref": "#/components/examples/problem.auth.forbidden"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.forbidden`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "404": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.not_found": {
+                    "$ref": "#/components/examples/problem.http.not_found"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.not_found`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "validation.failed": {
+                    "$ref": "#/components/examples/problem.validation.failed"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `validation.failed`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "customer": []
+          }
+        ],
+        "summary": "My design’s share links",
+        "tags": [
+          "store.studio"
+        ]
+      },
+      "post": {
+        "description": "A new link (many may live at once): `view`, `comment` (signed-in users comment) or `edit` (signed-in members of the design’s company edit). The token is shown once and stored hashed; it expires after `configurations.share_link_days` and can be revoked (D-285, D-185).\n\nImplements: D-285, D-185.",
+        "operationId": "store.studio.createShareLink",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "designId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "examples": {
+                "default": {
+                  "value": {
+                    "scope": "comment"
+                  }
+                }
+              },
+              "schema": {
+                "$ref": "#/components/schemas/CreateShareLinkDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "createdAt": "2026-10-03T10:00:00+07:00",
+                  "expiresAt": "2026-10-18T10:00:00+07:00",
+                  "id": "0192f3a0-7c1e-7d2a-9b1f-00000000fb01",
+                  "revokedAt": null,
+                  "scope": "comment",
+                  "token": "q3Rk0J7d3n2h8xJm1v5yW0b2C4e6G8i0K2m4O6q8S0u"
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/CreatedShareLinkDto"
+                }
+              }
+            },
+            "description": "Link (with its token, once)",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "400": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.bad_request": {
+                    "$ref": "#/components/examples/problem.http.bad_request"
+                  },
+                  "http.malformed_json": {
+                    "$ref": "#/components/examples/problem.http.malformed_json"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.bad_request`, `http.malformed_json`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.unauthenticated": {
+                    "$ref": "#/components/examples/problem.auth.unauthenticated"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.unauthenticated`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.forbidden": {
+                    "$ref": "#/components/examples/problem.auth.forbidden"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.forbidden`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "404": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.not_found": {
+                    "$ref": "#/components/examples/problem.http.not_found"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.not_found`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "validation.failed": {
+                    "$ref": "#/components/examples/problem.validation.failed"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `validation.failed`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "customer": []
+          }
+        ],
+        "summary": "Share my design with a scope",
+        "tags": [
+          "store.studio"
+        ]
+      }
+    },
+    "/v1/store/studio/{designId}/share-links/{linkId}/actions/revoke": {
+      "post": {
+        "description": "It stops opening at once (D-285).\n\nImplements: D-285.",
+        "operationId": "store.studio.revokeShareLink",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "designId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "linkId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Revoked",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.unauthenticated": {
+                    "$ref": "#/components/examples/problem.auth.unauthenticated"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.unauthenticated`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.forbidden": {
+                    "$ref": "#/components/examples/problem.auth.forbidden"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.forbidden`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "404": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.not_found": {
+                    "$ref": "#/components/examples/problem.http.not_found"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.not_found`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "validation.failed": {
+                    "$ref": "#/components/examples/problem.validation.failed"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `validation.failed`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "customer": []
+          }
+        ],
+        "summary": "Revoke a share link",
         "tags": [
           "store.studio"
         ]

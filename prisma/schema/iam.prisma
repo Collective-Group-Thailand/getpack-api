@@ -693,6 +693,10 @@ model User {
   elementRights           ElementRightDeclaration[] @relation("ElementRightUser")
   elementRightsDeclared   ElementRightDeclaration[] @relation("ElementRightDeclaredBy")
 
+  designShareLinks       DesignShareLink[] @relation("DesignShareLinkCreatedBy")
+  designComments         DesignComment[]   @relation("DesignCommentAuthor")
+  designCommentsResolved DesignComment[]   @relation("DesignCommentResolvedBy")
+
   @@unique([kind, email], map: "ux_users__kind__email", where: raw("((email IS NOT NULL) AND (anonymised_at IS NULL))"))
   @@unique([kind, phone], map: "ux_users__kind__phone", where: raw("((phone IS NOT NULL) AND (anonymised_at IS NULL))"))
   @@index([createdById], map: "ix_users__created_by")

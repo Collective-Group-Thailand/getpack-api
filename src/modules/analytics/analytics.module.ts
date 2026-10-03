@@ -8,6 +8,7 @@ import { NextStylesService } from './next-styles';
 import { AnalyticsOutboxSubscriber } from './outbox-events.subscriber';
 import { ProspectusService } from './prospectus.service';
 import { AnalyticsRollupService } from './rollups.service';
+import { StudioFunnelService } from './studio-funnel';
 
 /**
  * Demand & growth analytics (B6.1, D-102): BFF and outbox event ingestion, nightly rollups into the `analytics`
@@ -25,6 +26,7 @@ import { AnalyticsRollupService } from './rollups.service';
     AnalyticsJobs,
     NetworkStatsService,
     NextStylesService,
+    StudioFunnelService,
   ],
   exports: [
     AnalyticsIngestionService,
@@ -33,6 +35,7 @@ import { AnalyticsRollupService } from './rollups.service';
     ProspectusService,
     NetworkStatsService,
     NextStylesService,
+    StudioFunnelService,
   ],
 })
 export class AnalyticsModule {}

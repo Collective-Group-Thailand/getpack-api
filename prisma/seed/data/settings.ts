@@ -1055,6 +1055,28 @@ export const SETTINGS: readonly SettingSeed[] = [
     ownerRole: 'prepress',
   },
 
+  // --- Studio funnel targets (U4.B6, D-286): the studio spec §1 launch targets, owned by Marketing.
+  {
+    key: 'studio.funnel_targets',
+    valueType: 'json',
+    value: { medianMinutesToCart: 10, artworkToCartPct: '25', preflightPassPct: '90', priceParityPct: '100' },
+    valueSchema: {
+      type: 'object',
+      additionalProperties: false,
+      required: ['medianMinutesToCart', 'artworkToCartPct', 'preflightPassPct', 'priceParityPct'],
+      properties: {
+        medianMinutesToCart: { type: 'number', minimum: 0, maximum: 1440 },
+        artworkToCartPct: { type: 'string', pattern: '^\\d{1,3}(\\.\\d{1,2})?$' },
+        preflightPassPct: { type: 'string', pattern: '^\\d{1,3}(\\.\\d{1,2})?$' },
+        priceParityPct: { type: 'string', pattern: '^\\d{1,3}(\\.\\d{1,2})?$' },
+      },
+    },
+    description:
+      'D-286 studio launch targets of the spec §1: median minutes from studio start to first add-to-cart, % of sessions adding artwork that add to cart, % of studio print files passing preflight, % of studio orders whose checkout equals the studio price',
+    decisions: ['D-286'],
+    ownerRole: 'marketing',
+  },
+
   // --- Free dieline download (U3.B5, D-203 / D-271): per signed-in customer; staff are not limited.
   {
     key: 'dielines.downloads_per_day',

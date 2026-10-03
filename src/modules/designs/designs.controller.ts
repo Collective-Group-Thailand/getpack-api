@@ -446,8 +446,9 @@ export class StoreDesignsController {
     description:
       'A new view-only link to the current version; the token is shown once and only its hash is kept. Sharing ' +
       'again replaces the previous link; it expires after `configurations.share_link_days` (D-185) and can be ' +
-      'revoked (D-226).',
+      'revoked (D-226). Deprecated: scoped links (`store.studio.createShareLink`, D-285) replace it.',
     implements: ['D-226', 'D-185'],
+    deprecated: true,
   })
   @ApiSuccess(201, {
     description: 'Shared',
@@ -479,8 +480,11 @@ export class StoreDesignsController {
   @ApiEndpoint({
     id: 'store.designs.unshare',
     summary: 'Stop sharing my design',
-    description: 'Revokes the live link: it stops opening at once (D-226). 404 when not shared.',
+    description:
+      'Revokes the live link: it stops opening at once (D-226). 404 when not shared. Deprecated with ' +
+      '`store.designs.share` (D-285).',
     implements: ['D-226'],
+    deprecated: true,
   })
   @ApiSuccess(204, { description: 'Revoked' })
   @ApiStandardErrors('http.not_found', 'validation.failed')
@@ -496,9 +500,10 @@ export class StoreDesignsController {
     id: 'store.designs.getShared',
     summary: 'Open a shared design',
     description:
-      'Anyone with the link sees the current version of the design with signed asset URLs — never its owner. ' +
-      'Revoked, expired or deleted answers 404 (D-226). Rate-limited per client.',
-    implements: ['D-226'],
+      'Anyone with the link sees the current version of the design with signed asset URLs — never its owner — and ' +
+      'what the link allows (`scope`: view, comment, edit; D-285). Revoked, expired or deleted answers 404 (D-226). ' +
+      'An edit link also gives the `ETag` for `store.studio.editShared`. Rate-limited per client.',
+    implements: ['D-226', 'D-285'],
   })
   @ApiSuccess(200, {
     description: 'The shared design',
@@ -506,8 +511,13 @@ export class StoreDesignsController {
     example: SHARED_DESIGN_EXAMPLE,
   })
   @ApiStandardErrors('http.not_found', 'http.too_many_requests')
-  async shared(@Param('token') token: string): Promise<SharedDesignDto> {
-    return this.designs.sharedView(await this.designs.shared(token));
+  async shared(
+    @Param('token') token: string,
+    @Res({ passthrough: true }) res: Response,
+  ): Promise<SharedDesignDto> {
+    const shared = await this.designs.shared(token);
+    if (shared.scope === 'edit') res.setHeader('ETag', designEtag(shared.row));
+    return this.designs.sharedView(shared);
   }
 
   @Post('designs/:designId/assets')
@@ -788,15 +798,15 @@ export class AdminDesignsController {
   }
 
   @Put('designs/:designId')
-  @Can('catalog.manage')
+  @Can('artwork.read')
   @designParam
   @ApiEndpoint({
     id: 'admin.designs.save',
     summary: 'Save a template design as a new version',
     description:
-      'Only my own designs (409 `designs.read_only` for another’s — copy it first with `admin.designs.copy`); ' +
-      '`If-Match` required.',
-    implements: ['D-005'],
+      'My own designs, or the customer’s studio design of a design-service request I am assigned to (D-286); any ' +
+      'other is 409 `designs.read_only` (copy it first with `admin.designs.copy`). `If-Match` required.',
+    implements: ['D-005', 'D-286'],
   })
   @ApiConcurrency()
   @ApiBody({ type: SaveDesignDto, examples: { default: { value: SAVE_EXAMPLE } } })
@@ -818,14 +828,15 @@ export class AdminDesignsController {
     @Res({ passthrough: true }) res: Response,
   ) {
     const me = staff(actor);
-    if ((await this.designs.get(id)).ownerUserId !== me.userId)
+    if (!(await this.designs.staffMayEdit(me.userId, await this.designs.get(id))))
       throw new DomainException('designs.read_only');
-    const row = await this.designs.save(me, id, ifMatch, body, me.userId);
+    const row = await this.designs.save(me, id, ifMatch, body);
     res.setHeader('ETag', designEtag(row));
     return this.adminView(actor, row);
   }
 
   private async adminView(actor: Actor, row: DesignRow): Promise<AdminDesignDocumentDto> {
+    const editable = actor.type === 'user' && (await this.designs.staffMayEdit(actor.userId, row));
     return {
       ...(await this.designs.view(row)),
       owner: {
@@ -833,7 +844,7 @@ export class AdminDesignsController {
         displayName: row.owner.displayName,
         kind: row.owner.kind === 'customer' ? 'customer' : 'staff',
       },
-      editable: actor.type === 'user' && row.ownerUserId === actor.userId,
+      editable,
     };
   }
 

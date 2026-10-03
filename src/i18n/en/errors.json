@@ -933,6 +933,14 @@
     "version_required": {
       "title": "Save the design first",
       "detail": "A design goes in the cart as a saved version; save it, then add it again."
+    },
+    "share_scope": {
+      "title": "Not allowed by this link",
+      "detail": "This share link does not allow this (view, comment or edit — editing is for members of the design's company)."
+    },
+    "comment_not_thread": {
+      "title": "Resolve the thread",
+      "detail": "Only a thread's first comment is resolved, not a reply."
     }
   },
   "drawing": {

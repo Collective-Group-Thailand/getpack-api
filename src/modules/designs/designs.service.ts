@@ -70,6 +70,13 @@ export type DesignRow = Prisma.DesignDocumentGetPayload<{ include: typeof DESIGN
 
 export const designEtag = (d: { publicId: string; rowVersion: number }) => etagOf(d.publicId, d.rowVersion);
 
+export interface SharedDesign {
+  row: DesignRow;
+  scope: 'view' | 'comment' | 'edit';
+  sharedAt: Date;
+  expiresAt: Date;
+}
+
 /** D-275 the studio box; absent fields stay as they are. */
 export interface StudioBoxInput {
   styleVariantCode?: string;
@@ -81,6 +88,8 @@ export interface StudioBoxInput {
 
 export interface CreateDesignInput extends StudioBoxInput {
   catalogProductId: string;
+  /** D-285: a company design (its members comment, edit through edit links, and are mentioned); I must be a member. */
+  companyId?: string;
   patternId?: string;
   lengthMm?: number;
   widthMm?: number;
@@ -199,6 +208,22 @@ export class DesignsService implements OnModuleInit {
     return row;
   }
 
+  /**
+   * Staff may save a design they own, or (D-286) one whose open design-service request they are assigned to — that
+   * document only; a customer's other designs stay read-only (copied first).
+   */
+  async staffMayEdit(userId: bigint, doc: { id: bigint; ownerUserId: bigint }): Promise<boolean> {
+    if (doc.ownerUserId === userId) return true;
+    const assigned = await this.prisma.designServiceRequest.count({
+      where: {
+        designDocumentId: doc.id,
+        assignedUserId: userId,
+        status: { in: ['brief_pending', 'in_progress', 'revision_requested'] },
+      },
+    });
+    return assigned > 0;
+  }
+
   /** Newest first; `before` / `limit` page through a long history, `kind` filters (e.g. hide autosaves). */
   async versions(
     publicId: string,
@@ -238,6 +263,22 @@ export class DesignsService implements OnModuleInit {
     return this.prisma.withTx(async (tx) => {
       const product = await tx.catalogProduct.findUnique({ where: { publicId: input.catalogProductId } });
       if (!product) throw new DomainException('http.not_found');
+      let companyId = opts.companyId ?? null;
+      if (input.companyId) {
+        const member = await tx.companyMember.findFirst({
+          where: {
+            userId: actor.userId,
+            status: 'active',
+            company: { publicId: input.companyId, status: { not: 'closed' } },
+          },
+          select: { companyId: true },
+        });
+        if (!member)
+          throw new DomainException('validation.failed', {
+            errors: [{ path: 'companyId', code: 'invalid', message: 'not a company of mine' }],
+          });
+        companyId = member.companyId;
+      }
       const { pattern, material } = await this.refs(tx, input);
       const box = await this.studioBox(tx, input, pattern?.id ?? null);
       let schemaVersion = input.schemaVersion ?? 1;
@@ -257,7 +298,7 @@ export class DesignsService implements OnModuleInit {
       const doc = await tx.designDocument.create({
         data: {
           ownerUserId: actor.userId,
-          companyId: opts.companyId ?? null,
+          companyId,
           catalogProductId: product.id,
           patternId: box.patternId ?? pattern?.id ?? null,
           ...box.data,
@@ -664,15 +705,24 @@ export class DesignsService implements OnModuleInit {
   }
 
   /** The design behind a live share link; revoked, expired or deleted answers 404. */
-  async shared(token: string): Promise<DesignRow> {
+  /** The design of a live share link: the single view link (D-226) or a scoped link (D-285). */
+  async shared(token: string): Promise<SharedDesign> {
     if (!SHARE_TOKEN.test(token)) throw new DomainException('http.not_found');
+    const hash = sha256(token);
+    const now = new Date();
     const row = await this.prisma.designDocument.findUnique({
-      where: { shareTokenHash: sha256(token) },
+      where: { shareTokenHash: hash },
       include: DESIGN_INCLUDE,
     });
-    if (!row || row.deletedAt || !row.shareExpiresAt || row.shareExpiresAt <= new Date())
+    if (row && !row.deletedAt && row.sharedAt && row.shareExpiresAt && row.shareExpiresAt > now)
+      return { row, scope: 'view', sharedAt: row.sharedAt, expiresAt: row.shareExpiresAt };
+    const link = await this.prisma.designShareLink.findUnique({
+      where: { tokenHash: hash },
+      include: { document: { include: DESIGN_INCLUDE } },
+    });
+    if (!link || link.revokedAt || link.expiresAt <= now || link.document.deletedAt)
       throw new DomainException('http.not_found');
-    return row;
+    return { row: link.document, scope: link.scope, sharedAt: link.createdAt, expiresAt: link.expiresAt };
   }
 
   // --- views ----------------------------------------------------------------------------------------
@@ -719,12 +769,13 @@ export class DesignsService implements OnModuleInit {
   }
 
   /** What a share link shows: the current version, never the owner (D-226). */
-  async sharedView(row: DesignRow): Promise<SharedDesignDto> {
+  async sharedView(shared: SharedDesign): Promise<SharedDesignDto> {
     return {
-      ...(await this.base(row, true)),
-      dielineKey: row.pattern?.dielineKey ?? null,
-      sharedAt: toBangkokIso(row.sharedAt!),
-      expiresAt: toBangkokIso(row.shareExpiresAt!),
+      ...(await this.base(shared.row, true)),
+      dielineKey: shared.row.pattern?.dielineKey ?? null,
+      sharedAt: toBangkokIso(shared.sharedAt),
+      expiresAt: toBangkokIso(shared.expiresAt),
+      scope: shared.scope,
     };
   }
 

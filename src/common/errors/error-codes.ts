@@ -240,6 +240,8 @@ export const ERROR_CODES = {
   'designs.nothing_to_patch': HttpStatus.CONFLICT,
   'designs.patch_failed': HttpStatus.UNPROCESSABLE_ENTITY,
   'designs.version_required': HttpStatus.UNPROCESSABLE_ENTITY,
+  'designs.share_scope': HttpStatus.FORBIDDEN,
+  'designs.comment_not_thread': HttpStatus.CONFLICT,
   'drawing.engine_unavailable': HttpStatus.NOT_IMPLEMENTED,
   'drawing.pattern_not_drawable': HttpStatus.UNPROCESSABLE_ENTITY,
   'production.already_released': HttpStatus.CONFLICT,

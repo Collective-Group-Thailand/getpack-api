@@ -193,6 +193,13 @@ export interface SettingValues {
   'dielines.downloads_per_minute': number;
   /** D-278 the studio print-check rule catalogue (Prepress). */
   'studio.print_rules': RuleCatalogue;
+  /** D-286 studio launch targets (spec §1, Marketing). */
+  'studio.funnel_targets': {
+    medianMinutesToCart: number;
+    artworkToCartPct: string;
+    preflightPassPct: string;
+    priceParityPct: string;
+  };
   /** Not seeded (D-279): simplified soft-proof transforms per material class. */
   'studio.soft_proof_profiles': {
     profiles: { materialClass: string; label?: string; transform: Record<string, number | string> }[];

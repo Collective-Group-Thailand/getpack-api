@@ -376,6 +376,8 @@ model DesignServiceRequest {
   id               BigInt              @id(map: "pk_design_service_requests") @default(autoincrement())
   publicId         String              @unique(map: "ux_design_service_requests__public_id") @default(dbgenerated("uuidv7()")) @map("public_id") @db.Uuid
   orderId          BigInt              @unique(map: "ux_design_service_requests__order_id") @map("order_id")
+  /// D-286 the studio design the service works on (the assigned designer may edit it).
+  designDocumentId BigInt?             @map("design_document_id")
   /// Legacy `brd_*` brief: brand name, brand category, description (+ attachments, schema version 1).
   brief            Json?
   briefSubmittedAt DateTime?           @map("brief_submitted_at") @db.Timestamptz(6)
@@ -403,6 +405,9 @@ model DesignServiceRequest {
   updatedBy      User?         @relation("DesignServiceRequestUpdatedBy", fields: [updatedById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_design_service_requests__updated_by")
   rounds         DesignRound[]
 
+  designDocument DesignDocument? @relation("DesignServiceRequestDocument", fields: [designDocumentId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_design_service_requests__design_document_id")
+
+  @@index([designDocumentId], map: "ix_design_service_requests__design_document_id")
   @@index([assignedUserId], map: "ix_design_service_requests__assigned_user_id")
   @@index([assignedVendorId], map: "ix_design_service_requests__assigned_vendor_id")
   @@index([createdById], map: "ix_design_service_requests__created_by")
@@ -524,6 +529,10 @@ model DesignDocument {
   lockedVersion      DesignDocumentVersion?  @relation("DesignDocumentLockedVersion", fields: [lockedVersionId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_design_documents__locked_version_id")
   lockedByOrder      Order?                  @relation("DesignDocumentLockedByOrder", fields: [lockedByOrderId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_design_documents__locked_by_order_id")
 
+  shareLinks     DesignShareLink[]      @relation("DesignShareLinkDocument")
+  comments       DesignComment[]        @relation("DesignCommentDocument")
+  designServices DesignServiceRequest[] @relation("DesignServiceRequestDocument")
+
   @@unique([ownerUserId, importLocalId], map: "ux_design_documents__owner__import_local_id", where: raw("(import_local_id IS NOT NULL)"))
   @@index([ownerUserId, updatedAt(sort: Desc)], map: "ix_design_documents__owner_user_id__updated_at")
   @@index([companyId], map: "ix_design_documents__company_id")
@@ -572,6 +581,8 @@ model DesignDocumentVersion {
   printJobs           StudioPrintJob[]             @relation("StudioPrintJobVersion")
   checkAcks           DesignCheckAcknowledgement[] @relation("DesignCheckAckVersion")
   rfqs                Rfq[]                        @relation("RfqDesignVersion")
+
+  comments DesignComment[] @relation("DesignCommentVersion")
 
   @@unique([documentId, versionNo], map: "ux_design_document_versions__document_id__version_no")
   @@index([createdById], map: "ix_design_document_versions__created_by")
@@ -1998,4 +2009,67 @@ model StudioPrintJob {
   @@index([snapshotFileId], map: "ix_studio_print_jobs__snapshot_file_id")
   @@index([status, lockedUntil], map: "ix_studio_print_jobs__queue", where: raw("(status = ANY (ARRAY['queued'::studio_print_job_status, 'running'::studio_print_job_status]))"))
   @@map("studio_print_jobs")
+}
+
+// --- Studio collaboration (U4.B6, D-285, D-286) -------------------------------------------------------
+
+enum ShareScope {
+  view
+  comment
+  edit
+
+  @@map("share_scope")
+}
+
+/// D-285 a share link of a design: one of many, each with its scope, expiry and revocation; the token is stored
+/// hashed and shown once.
+model DesignShareLink {
+  id          BigInt     @id(map: "pk_design_share_links") @default(autoincrement())
+  publicId    String     @unique(map: "ux_design_share_links__public_id") @default(dbgenerated("uuidv7()")) @map("public_id") @db.Uuid
+  documentId  BigInt     @map("document_id")
+  scope       ShareScope
+  tokenHash   Bytes      @unique(map: "ux_design_share_links__token_hash") @map("token_hash")
+  createdById BigInt     @map("created_by")
+  expiresAt   DateTime   @map("expires_at") @db.Timestamptz(6)
+  revokedAt   DateTime?  @map("revoked_at") @db.Timestamptz(6)
+  createdAt   DateTime   @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  document  DesignDocument @relation("DesignShareLinkDocument", fields: [documentId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_design_share_links__document_id")
+  createdBy User           @relation("DesignShareLinkCreatedBy", fields: [createdById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_design_share_links__created_by")
+
+  @@index([documentId], map: "ix_design_share_links__document_id")
+  @@index([createdById], map: "ix_design_share_links__created_by")
+  @@map("design_share_links")
+}
+
+/// D-285 a comment on a design version, anchored to a face (`faceId` + UV) or a point on the flat (mm), threaded,
+/// resolvable, with @mentions of company members.
+model DesignComment {
+  id               BigInt    @id(map: "pk_design_comments") @default(autoincrement())
+  publicId         String    @unique(map: "ux_design_comments__public_id") @default(dbgenerated("uuidv7()")) @map("public_id") @db.Uuid
+  documentId       BigInt    @map("document_id")
+  versionId        BigInt?   @map("version_id")
+  parentId         BigInt?   @map("parent_id")
+  authorUserId     BigInt    @map("author_user_id")
+  body             String
+  /// `{ faceId, u, v }` on the 3D box or `{ xMm, yMm }` on the flat; null for a reply.
+  anchor           Json?
+  mentionedUserIds BigInt[]  @default([]) @map("mentioned_user_ids")
+  resolvedAt       DateTime? @map("resolved_at") @db.Timestamptz(6)
+  resolvedById     BigInt?   @map("resolved_by")
+  createdAt        DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  document   DesignDocument         @relation("DesignCommentDocument", fields: [documentId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_design_comments__document_id")
+  version    DesignDocumentVersion? @relation("DesignCommentVersion", fields: [versionId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_design_comments__version_id")
+  parent     DesignComment?         @relation("DesignCommentThread", fields: [parentId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_design_comments__parent_id")
+  replies    DesignComment[]        @relation("DesignCommentThread")
+  author     User                   @relation("DesignCommentAuthor", fields: [authorUserId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_design_comments__author_user_id")
+  resolvedBy User?                  @relation("DesignCommentResolvedBy", fields: [resolvedById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_design_comments__resolved_by")
+
+  @@index([documentId, createdAt], map: "ix_design_comments__document_id__created_at")
+  @@index([versionId], map: "ix_design_comments__version_id")
+  @@index([parentId], map: "ix_design_comments__parent_id")
+  @@index([authorUserId], map: "ix_design_comments__author_user_id")
+  @@index([resolvedById], map: "ix_design_comments__resolved_by")
+  @@map("design_comments")
 }

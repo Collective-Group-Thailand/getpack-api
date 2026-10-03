@@ -731,6 +731,26 @@ const ROWS: Row[] = [
     },
     'Customer: structural design request declined (D-273)',
   ),
+  C(
+    'design.commented',
+    ['email', 'in_app'],
+    { th: 'มีความคิดเห็นใหม่ในแบบ {{payload.title}}', en: 'New comment on {{payload.title}}' },
+    {
+      th: 'มีผู้แสดงความคิดเห็นในแบบ {{payload.title}} ดูได้ที่สตูดิโอ Packio',
+      en: 'Someone commented on {{payload.title}}; see it in the Packio studio',
+    },
+    'Customer: a comment on my studio design (D-285)',
+  ),
+  C(
+    'design.comment_mentioned',
+    ['email', 'in_app'],
+    { th: 'มีผู้กล่าวถึงคุณในแบบ {{payload.title}}', en: 'You were mentioned on {{payload.title}}' },
+    {
+      th: 'มีผู้กล่าวถึงคุณในความคิดเห็นของแบบ {{payload.title}} ในสตูดิโอ Packio',
+      en: 'You were mentioned in a comment on {{payload.title}} in the Packio studio',
+    },
+    'Customer: mentioned in a studio comment (D-285)',
+  ),
   T(
     'structural_request.submitted',
     'cs',

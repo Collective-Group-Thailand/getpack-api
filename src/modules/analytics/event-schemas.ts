@@ -13,6 +13,13 @@ export const ANALYTICS_EVENT_NAMES = [
   'quote_shown',
   'add_to_cart',
   'checkout_step',
+  // D-286 the studio funnel (spec §1): started, box confirmed, first artwork, checks clean, added to cart, ordered.
+  'studio_started',
+  'studio_box_confirmed',
+  'studio_first_artwork',
+  'studio_checks_clean',
+  'studio_add_to_cart',
+  'studio_ordered',
 ] as const;
 export type AnalyticsEventName = (typeof ANALYTICS_EVENT_NAMES)[number];
 
@@ -33,7 +40,31 @@ export const CHECKOUT_STEPS = ['started', 'address', 'payment', 'review', 'place
 const UUID = '^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$';
 const DECIMAL = '^\\d{1,12}(\\.\\d{1,6})?$';
 
+/** D-286: what a studio event may carry — the print method and the style family, nothing that identifies. */
+const STUDIO_PROPERTIES = {
+  type: 'object',
+  additionalProperties: false,
+  properties: {
+    printMethod: { enum: ['digital', 'offset', 'flexo', 'none'] },
+    styleFamily: { type: 'string', pattern: '^[a-z][a-z0-9_]{0,59}$' },
+  },
+};
+
 const SCHEMAS: Record<AnalyticsEventName, object> = {
+  studio_started: STUDIO_PROPERTIES,
+  studio_box_confirmed: STUDIO_PROPERTIES,
+  studio_first_artwork: STUDIO_PROPERTIES,
+  studio_checks_clean: STUDIO_PROPERTIES,
+  studio_add_to_cart: {
+    type: 'object',
+    additionalProperties: false,
+    required: ['quantity'],
+    properties: {
+      ...STUDIO_PROPERTIES.properties,
+      quantity: { type: 'integer', minimum: 1, maximum: 100_000_000 },
+    },
+  },
+  studio_ordered: STUDIO_PROPERTIES,
   page_view: {
     type: 'object',
     additionalProperties: false,

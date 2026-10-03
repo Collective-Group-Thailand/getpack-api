@@ -84,7 +84,7 @@ export class AnalyticsIngestionService {
         ${granted && customer ? customer.publicId : null}::uuid,
         ${granted ? 'granted' : 'denied'}::analytics.consent_state, ${sanitisePagePath(event.pagePath)},
         ${event.productTypeCode ?? null}, ${JSON.stringify(properties)}::jsonb,
-        ${JSON.stringify(sanitiseUtm(event.utm))}::jsonb, ${event.deviceClass ?? null},
+        ${utmJson(sanitiseUtm(event.utm))}::jsonb, ${event.deviceClass ?? null},
         ${granted && event.postcode ? (provinces.get(event.postcode) ?? null) : null})`;
     });
     const inserted = await this.prisma.$queryRaw<{ event_id: string }[]>`
@@ -194,4 +194,9 @@ export class AnalyticsIngestionService {
       return { granted, versionNo: version.versionNo, recordedAt: record.recordedAt };
     });
   }
+}
+
+/** An event without UTM stores SQL NULL, never the JSON `null` the column's check refuses. */
+function utmJson(utm: unknown): string | null {
+  return utm === null || utm === undefined ? null : JSON.stringify(utm);
 }

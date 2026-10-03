@@ -197,6 +197,41 @@ export class StudioPrintService {
     return job;
   }
 
+  /** D-286: the version to the design service — its studio quotation with the design fee, in the cart. */
+  async handOff(
+    actor: UserActor,
+    designId: string,
+    input: {
+      quoteId: string;
+      quoteOptionId: string;
+      versionNo?: number;
+      destinations?: DestinationInputDto[];
+    },
+  ): Promise<{ cartItemId: string; designVersionNo: number }> {
+    const { version } = await this.version(actor, designId, input.versionNo);
+    const quote = await this.prisma.quote.findUnique({
+      where: { publicId: input.quoteId },
+      select: { designDocumentVersionId: true, customerUserId: true },
+    });
+    if (!quote || quote.customerUserId !== actor.userId) throw new DomainException('http.not_found');
+    if (quote.designDocumentVersionId !== version.id)
+      throw new DomainException('studio.quote_not_of_version');
+    const cart = await this.carts.addItem(
+      { actor, customerUserId: actor.userId, channel: 'web', csUserId: null },
+      undefined,
+      {
+        quoteId: input.quoteId,
+        quoteOptionId: input.quoteOptionId,
+        destinations: input.destinations,
+        designOption: 'hired_design',
+        designDocumentId: designId,
+        designVersionNo: version.versionNo,
+      },
+    );
+    const item = cart.items.find((i) => i.quoteOption.publicId === input.quoteOptionId)!;
+    return { cartItemId: item.publicId, designVersionNo: version.versionNo };
+  }
+
   async job(actor: UserActor, jobId: string): Promise<JobRow> {
     const job = await this.prisma.studioPrintJob.findUnique({
       where: { publicId: jobId },

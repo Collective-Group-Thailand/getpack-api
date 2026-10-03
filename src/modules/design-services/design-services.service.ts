@@ -98,9 +98,23 @@ export class DesignServicesService implements OnModuleInit {
         (sum, l) => sum.add(l.netAmount.toString()).sub(l.discountAmount.toString()),
         new MoneyDecimal(0),
       );
+    // D-286: a studio hand-off — the service works on that design; its brief starts from it.
+    const design = order.designDocumentId
+      ? await tx.designDocument.findUnique({ where: { id: order.designDocumentId }, select: { title: true } })
+      : null;
     const request = await tx.designServiceRequest.create({
       data: {
         orderId: order.id,
+        designDocumentId: order.designDocumentId,
+        ...(design && {
+          brief: {
+            schemaVersion: 1,
+            brandName: '',
+            brandCategory: '',
+            description: `Studio design "${design.title}" (handed over from the studio)`,
+            attachmentFileIds: [],
+          },
+        }),
         freeRounds: free.value,
         designFeeNet: formatMoney(fee),
         policyRefs: {

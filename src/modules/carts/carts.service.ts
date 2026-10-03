@@ -367,13 +367,14 @@ export class CartsService {
       where: { publicId, ownerUserId: who.customerUserId, deletedAt: null },
     });
     if (!doc) throw new DomainException('http.not_found');
-    if (designOption !== 'online_designer')
+    // My own design (online designer), or a studio design handed to the design service (D-286).
+    if (designOption !== 'online_designer' && designOption !== 'hired_design')
       throw new DomainException('validation.failed', {
         errors: [
           {
             path: 'designDocumentId',
             code: 'invalid',
-            message: 'a design needs designOption online_designer',
+            message: 'a design needs designOption online_designer or hired_design',
           },
         ],
       });

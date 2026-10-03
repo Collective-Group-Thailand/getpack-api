@@ -120,6 +120,16 @@ export class CreateDesignDto {
   @IsUUID()
   catalogProductId!: string;
 
+  @ApiPropertyOptional({
+    format: 'uuid',
+    example: null,
+    nullable: true,
+    description: 'D-285: a design of my company — its members comment, edit through edit links and are mentioned',
+  })
+  @IsOptional()
+  @IsUUID()
+  companyId?: string;
+
   @ApiPropertyOptional({ format: 'uuid', example: DESIGN_IDS.pattern })
   @IsOptional()
   @IsUUID()
@@ -955,6 +965,14 @@ export class SharedDesignDto {
 
   @ApiProperty({ format: 'date-time', example: '2026-10-15T10:00:00+07:00' })
   expiresAt!: string;
+
+  @ApiProperty({
+    enum: ['view', 'comment', 'edit'],
+    enumName: 'ShareScope',
+    example: 'view',
+    description: 'What the link allows (D-285); the single link of D-226 is view',
+  })
+  scope!: string;
 }
 
 export class DrawingJobDto {
@@ -1098,6 +1116,7 @@ export const SHARED_DESIGN_EXAMPLE: SharedDesignDto = {
   thumbnailUrl: null,
   sharedAt: '2026-09-30T10:00:00+07:00',
   expiresAt: '2026-10-15T10:00:00+07:00',
+  scope: 'view',
 };
 
 export const DRAWING_EXAMPLE: DrawingJobDto = {
