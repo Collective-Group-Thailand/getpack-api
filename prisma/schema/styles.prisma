@@ -80,16 +80,20 @@ model StyleBase {
   updatedById              BigInt?     @map("updated_by")
   rowVersion               Int         @default(1) @map("row_version")
 
-  productType         ProductType?     @relation("StyleBaseProductType", fields: [productTypeId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_style_bases__product_type_id")
-  pattern             Pattern?         @relation("StyleBasePattern", fields: [patternId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_style_bases__pattern_id")
-  referenceVerifiedBy User?            @relation("StyleBaseReferenceVerifiedBy", fields: [referenceVerifiedById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_style_bases__reference_verified_by")
-  marketingApprover   User?            @relation("StyleBaseNamesMarketing", fields: [namesApprovedMarketingBy], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_style_bases__names_approved_marketing_by")
-  prepressApprover    User?            @relation("StyleBaseNamesPrepress", fields: [namesApprovedPrepressBy], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_style_bases__names_approved_prepress_by")
-  updatedBy           User?            @relation("StyleBaseUpdatedBy", fields: [updatedById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_style_bases__updated_by")
-  lastImportRun       StyleImportRun?  @relation("StyleBaseLastImportRun", fields: [lastImportRunId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_style_bases__last_import_run_id")
+  productType         ProductType?              @relation("StyleBaseProductType", fields: [productTypeId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_style_bases__product_type_id")
+  pattern             Pattern?                  @relation("StyleBasePattern", fields: [patternId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_style_bases__pattern_id")
+  referenceVerifiedBy User?                     @relation("StyleBaseReferenceVerifiedBy", fields: [referenceVerifiedById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_style_bases__reference_verified_by")
+  marketingApprover   User?                     @relation("StyleBaseNamesMarketing", fields: [namesApprovedMarketingBy], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_style_bases__names_approved_marketing_by")
+  prepressApprover    User?                     @relation("StyleBaseNamesPrepress", fields: [namesApprovedPrepressBy], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_style_bases__names_approved_prepress_by")
+  updatedBy           User?                     @relation("StyleBaseUpdatedBy", fields: [updatedById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_style_bases__updated_by")
+  lastImportRun       StyleImportRun?           @relation("StyleBaseLastImportRun", fields: [lastImportRunId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_style_bases__last_import_run_id")
   variants            StyleVariant[]
   recipes             StyleRecipe[]
   assets              StyleAsset[]
+  intakesProposed     StyleIntake[]             @relation("StyleIntakeProposedBase")
+  intakeTemplates     StyleIntake[]             @relation("StyleIntakeTemplateBase")
+  structuralRequests  StructuralDesignRequest[] @relation("StructuralRequestPublishedBase")
+  unmetDemand         UnmetDemandRecord[]       @relation("UnmetDemandStyleBase")
   synonyms            StyleSynonym[]
   useCases            StyleUseCase[]
   favourites          StyleFavourite[]
@@ -158,6 +162,8 @@ model StyleRecipe {
   approvedBy     User?           @relation("StyleRecipeApprovedBy", fields: [approvedById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_style_recipes__approved_by")
   importRun      StyleImportRun? @relation("StyleRecipeImportRun", fields: [importRunId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_style_recipes__import_run_id")
   dielineRenders DielineRender[]
+  intakesMatched StyleIntake[]   @relation("StyleIntakeMatchedRecipe")
+  intakesResult  StyleIntake[]   @relation("StyleIntakeResultRecipe")
 
   @@unique([baseId, version], map: "ux_style_recipes__base_id__version")
   @@index([approvedById], map: "ix_style_recipes__approved_by")
@@ -457,4 +463,147 @@ model DielineDownload {
   @@index([userId, createdAt], map: "ix_dieline_downloads__user_id__created_at")
   @@index([renderId], map: "ix_dieline_downloads__render_id")
   @@map("dieline_downloads")
+}
+
+// --- Growth loops (U3.B6, D-272–D-274) ----------------------------------------------------------------
+
+enum StyleIntakeStatus {
+  submitted
+  /// Prepress matched it to an existing recipe with a deviation report.
+  matched
+  approved_recipe
+  approved_template
+  rejected
+
+  @@map("style_intake_status")
+}
+
+/// D-272: a structure a factory offers (DXF / PDF) under the intake terms in force; Prepress matches, approves or
+/// rejects it. Provenance — factory, file sha256, terms version, reviewer — is kept for good.
+model StyleIntake {
+  id              BigInt            @id(map: "pk_style_intakes") @default(autoincrement())
+  publicId        String            @unique(map: "ux_style_intakes__public_id") @default(dbgenerated("uuidv7()")) @map("public_id") @db.Uuid
+  factoryId       BigInt            @map("factory_id")
+  submittedById   BigInt            @map("submitted_by")
+  title           String
+  note            String?
+  fileId          BigInt            @map("file_id")
+  /// sha256 of the file as submitted (provenance).
+  fileSha256      Bytes             @map("file_sha256")
+  /// The `styles.intake_terms` version the factory accepted.
+  termsVersionId  BigInt            @map("terms_version_id")
+  /// The base the factory says it is, if any.
+  proposedBaseId  BigInt?           @map("proposed_base_id")
+  status          StyleIntakeStatus @default(submitted)
+  matchedRecipeId BigInt?           @map("matched_recipe_id")
+  /// Prepress's deviation report against the matched recipe: `[{ aspect, note }]`.
+  deviations      Json?
+  /// Approved as a recipe: the recipe imported from it (D-242).
+  resultRecipeId  BigInt?           @map("result_recipe_id")
+  /// Approved as a fixed template of a base.
+  templateBaseId  BigInt?           @map("template_base_id")
+  rejectReason    String?           @map("reject_reason")
+  reviewedById    BigInt?           @map("reviewed_by")
+  reviewedAt      DateTime?         @map("reviewed_at") @db.Timestamptz(6)
+  createdAt       DateTime          @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt       DateTime          @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  factory       Factory        @relation("StyleIntakeFactory", fields: [factoryId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_style_intakes__factory_id")
+  submittedBy   User           @relation("StyleIntakeSubmittedBy", fields: [submittedById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_style_intakes__submitted_by")
+  file          FileObject     @relation("StyleIntakeFile", fields: [fileId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_style_intakes__file_id")
+  termsVersion  SettingVersion @relation("StyleIntakeTermsVersion", fields: [termsVersionId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_style_intakes__terms_version_id")
+  proposedBase  StyleBase?     @relation("StyleIntakeProposedBase", fields: [proposedBaseId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_style_intakes__proposed_base_id")
+  matchedRecipe StyleRecipe?   @relation("StyleIntakeMatchedRecipe", fields: [matchedRecipeId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_style_intakes__matched_recipe_id")
+  resultRecipe  StyleRecipe?   @relation("StyleIntakeResultRecipe", fields: [resultRecipeId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_style_intakes__result_recipe_id")
+  templateBase  StyleBase?     @relation("StyleIntakeTemplateBase", fields: [templateBaseId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_style_intakes__template_base_id")
+  reviewedBy    User?          @relation("StyleIntakeReviewedBy", fields: [reviewedById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_style_intakes__reviewed_by")
+
+  @@index([factoryId, createdAt], map: "ix_style_intakes__factory_id__created_at")
+  @@index([status], map: "ix_style_intakes__status")
+  @@index([submittedById], map: "ix_style_intakes__submitted_by")
+  @@index([fileId], map: "ix_style_intakes__file_id")
+  @@index([termsVersionId], map: "ix_style_intakes__terms_version_id")
+  @@index([proposedBaseId], map: "ix_style_intakes__proposed_base_id")
+  @@index([matchedRecipeId], map: "ix_style_intakes__matched_recipe_id")
+  @@index([resultRecipeId], map: "ix_style_intakes__result_recipe_id")
+  @@index([templateBaseId], map: "ix_style_intakes__template_base_id")
+  @@index([reviewedById], map: "ix_style_intakes__reviewed_by")
+  @@map("style_intakes")
+}
+
+enum StructuralRequestStatus {
+  submitted
+  assigned
+  /// A design fee is quoted through a service RFQ (D-194 / D-100).
+  quoted
+  delivered
+  approved
+  published
+  declined
+  cancelled
+
+  @@map("structural_request_status")
+}
+
+/// D-273: a customer asks for a structure the library lacks; CS assigns a structural designer (Prepress), a fee is
+/// quoted through a service RFQ when one applies, Prepress approves the delivered dieline and links it to its base
+/// once published. The requester hears of every step.
+model StructuralDesignRequest {
+  id               BigInt                  @id(map: "pk_structural_design_requests") @default(autoincrement())
+  publicId         String                  @unique(map: "ux_structural_design_requests__public_id") @default(dbgenerated("uuidv7()")) @map("public_id") @db.Uuid
+  customerUserId   BigInt                  @map("customer_user_id")
+  productTypeId    BigInt                  @map("product_type_id")
+  description      String
+  /// D-182: sizes and their basis as entered, mm (optional — a new structure may not have them yet).
+  lengthMm         Decimal?                @map("length_mm") @db.Decimal(10, 2)
+  widthMm          Decimal?                @map("width_mm") @db.Decimal(10, 2)
+  heightMm         Decimal?                @map("height_mm") @db.Decimal(10, 2)
+  measurementBasis MeasurementBasis?       @map("measurement_basis")
+  quantity         Int?
+  status           StructuralRequestStatus @default(submitted)
+  assignedToId     BigInt?                 @map("assigned_to")
+  assignedAt       DateTime?               @map("assigned_at") @db.Timestamptz(6)
+  serviceRfqId     BigInt?                 @unique(map: "ux_structural_design_requests__service_rfq_id") @map("service_rfq_id")
+  deliveredFileId  BigInt?                 @map("delivered_file_id")
+  deliveredAt      DateTime?               @map("delivered_at") @db.Timestamptz(6)
+  approvedById     BigInt?                 @map("approved_by")
+  approvedAt       DateTime?               @map("approved_at") @db.Timestamptz(6)
+  publishedBaseId  BigInt?                 @map("published_base_id")
+  publishedAt      DateTime?               @map("published_at") @db.Timestamptz(6)
+  closedReason     String?                 @map("closed_reason")
+  closedAt         DateTime?               @map("closed_at") @db.Timestamptz(6)
+  createdAt        DateTime                @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt        DateTime                @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  customer      User                          @relation("StructuralRequestCustomer", fields: [customerUserId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_structural_design_requests__customer_user_id")
+  productType   ProductType                   @relation("StructuralRequestProductType", fields: [productTypeId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_structural_design_requests__product_type_id")
+  assignedTo    User?                         @relation("StructuralRequestAssignedTo", fields: [assignedToId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_structural_design_requests__assigned_to")
+  serviceRfq    Rfq?                          @relation("StructuralRequestServiceRfq", fields: [serviceRfqId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_structural_design_requests__service_rfq_id")
+  deliveredFile FileObject?                   @relation("StructuralRequestDeliveredFile", fields: [deliveredFileId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_structural_design_requests__delivered_file_id")
+  approvedBy    User?                         @relation("StructuralRequestApprovedBy", fields: [approvedById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_structural_design_requests__approved_by")
+  publishedBase StyleBase?                    @relation("StructuralRequestPublishedBase", fields: [publishedBaseId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_structural_design_requests__published_base_id")
+  files         StructuralDesignRequestFile[]
+
+  @@index([customerUserId, createdAt], map: "ix_structural_design_requests__customer_user_id__created_at")
+  @@index([status], map: "ix_structural_design_requests__status")
+  @@index([productTypeId], map: "ix_structural_design_requests__product_type_id")
+  @@index([assignedToId], map: "ix_structural_design_requests__assigned_to")
+  @@index([deliveredFileId], map: "ix_structural_design_requests__delivered_file_id")
+  @@index([approvedById], map: "ix_structural_design_requests__approved_by")
+  @@index([publishedBaseId], map: "ix_structural_design_requests__published_base_id")
+  @@map("structural_design_requests")
+}
+
+/// The customer's reference files of a structural design request.
+model StructuralDesignRequestFile {
+  requestId BigInt   @map("request_id")
+  fileId    BigInt   @map("file_id")
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  request StructuralDesignRequest @relation(fields: [requestId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_structural_design_request_files__request_id")
+  file    FileObject              @relation("StructuralRequestFile", fields: [fileId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_structural_design_request_files__file_id")
+
+  @@id([requestId, fileId], map: "pk_structural_design_request_files")
+  @@index([fileId], map: "ix_structural_design_request_files__file_id")
+  @@map("structural_design_request_files")
 }

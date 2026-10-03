@@ -1381,6 +1381,18 @@
     "price_rule_retired": {
       "title": "Rule already retired",
       "detail": "This price rule is no longer active (D-268)."
+    },
+    "intake_closed": {
+      "title": "Dieline intake not open",
+      "detail": "Factories can offer dielines once the intake terms are published."
+    },
+    "intake_terms_outdated": {
+      "title": "Intake terms changed",
+      "detail": "The intake terms changed; read and accept the current version."
+    },
+    "intake_decided": {
+      "title": "Intake already decided",
+      "detail": "This dieline intake has already been approved or rejected."
     }
   },
   "samples": {
@@ -1431,6 +1443,12 @@
     "not_drawable": {
       "title": "Dieline cannot be drawn",
       "detail": "This style variant has no approved recipe the engine can draw."
+    }
+  },
+  "structural_requests": {
+    "invalid_transition": {
+      "title": "Not possible at this step",
+      "detail": "The structural design request is not at a step that allows this action."
     }
   }
 }

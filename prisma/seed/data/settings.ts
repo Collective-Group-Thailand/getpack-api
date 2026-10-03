@@ -958,6 +958,27 @@ export const SETTINGS: readonly SettingSeed[] = [
     ownerRole: 'superadmin',
   },
 
+  // --- Partner dieline intake (U3.B6, D-272): definition only — no intake until Legal / the Partner Manager sets it.
+  {
+    key: 'styles.intake_terms',
+    valueType: 'json',
+    value: null,
+    unset: true,
+    valueSchema: {
+      type: 'object',
+      additionalProperties: false,
+      required: ['textTh', 'textEn'],
+      properties: {
+        textTh: { type: 'string', minLength: 1, maxLength: 20000 },
+        textEn: { type: 'string', minLength: 1, maxLength: 20000 },
+      },
+    },
+    description:
+      'D-272 terms a factory accepts when it offers a dieline to the style library (permission to use, adapt and publish the structure); not seeded — factories cannot submit until it is set',
+    decisions: ['D-272'],
+    ownerRole: 'partner_manager',
+  },
+
   // --- Free dieline download (U3.B5, D-203 / D-271): per signed-in customer; staff are not limited.
   {
     key: 'dielines.downloads_per_day',

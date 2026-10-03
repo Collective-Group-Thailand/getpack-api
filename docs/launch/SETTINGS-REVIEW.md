@@ -5,7 +5,7 @@
 > (a new effective-dated version, audited — D-063) and signs item 5 of `docs/LAUNCH-CHECKLIST.md`. A *proposed* or
 > *pending* value is not a decision: it goes live only once its owner confirms it.
 
-**87 settings** — 51 confirmed · 18 proposed · 4 pending the CPA (⚖) · 1 pending the business · 13 defined without a value (not set until their owner sets them).
+**88 settings** — 51 confirmed · 18 proposed · 4 pending the CPA (⚖) · 1 pending the business · 14 defined without a value (not set until their owner sets them).
 
 ## Settings
 
@@ -88,6 +88,7 @@
 | `shipping.pallet_spec` | `— (not set)` | not set | superadmin | D-013 | D-013 pallet used to count cartons per pallet (no legacy rule exists); not seeded — no pallet count until set |
 | `shipping.target_margin_pct` | `— (not set)` | not set | superadmin | D-040, D-013 | D-040 group 5 target shipping margin: suggested factory payout = customer rate × (1 − margin); not seeded — no group-5 suggestion until set |
 | `storefront.support_channels` | `— (not set)` | not set | cs_lead | D-221, D-005 | D-221 Packio support contacts on the storefront (LINE OA id, phone, e-mail, opening hours); Packio’s own accounts (D-005) — not seeded, every field null until the CS Lead sets it |
+| `styles.intake_terms` | `— (not set)` | not set | partner_manager | D-272 | D-272 terms a factory accepts when it offers a dieline to the style library (permission to use, adapt and publish the structure); not seeded — factories cannot submit until it is set |
 | `styles.published_wave` | `1` | confirmed | superadmin | D-212, D-243 | D-212 / D-243 highest style-library wave whose variants may be published (wave 1 at launch: only variants the launch factory can make) |
 | `support.first_response_business_days` | `1` | confirmed | cs_lead | D-221, D-175 | D-221 first-response target of a contact-form or guided-help conversation, in business days (business hours D-175, calendar D-161) |
 | `tax.calendar` | `{"pp30":{"dayOfNextMonth":15},"pnd3":{"dayOfNextMonth":7},"pnd53":{"dayOfNextMonth":7},"reminderDaysBefore":3}` | proposed | finance_manager | D-033 | D-033 / accounting-design §6 tax calendar: filing due day of the following month per form (paper-filing days; e-filing extensions are a Finance choice) and the reminder lead time (proposed) |

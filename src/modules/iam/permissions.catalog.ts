@@ -183,10 +183,28 @@ export const PERMISSIONS = [
     decisionRefs: ['D-268', 'D-266'],
   },
   {
+    key: 'structural_requests.manage',
+    audience: 'staff',
+    description: 'Assign structural design requests, link their service RFQ, decline them (CS, D-273)',
+    decisionRefs: ['D-273'],
+  },
+  {
+    key: 'structural_requests.design',
+    audience: 'staff',
+    description: 'Deliver, approve and publish structural designs (structural designers in Prepress, D-273)',
+    decisionRefs: ['D-273'],
+  },
+  {
     key: 'styles.process_rules',
     audience: 'staff',
     description: 'Maintain which processes a style needs (style process rules, Prepress)',
     decisionRefs: ['D-244'],
+  },
+  {
+    key: 'factory_style_intakes.submit',
+    audience: 'partner',
+    description: 'Offer the factory’s dielines to the style library under the intake terms (D-272)',
+    decisionRefs: ['D-272'],
   },
   {
     key: 'factory_process_capabilities.propose',

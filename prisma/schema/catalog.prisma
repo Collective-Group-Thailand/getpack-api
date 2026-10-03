@@ -279,6 +279,8 @@ model ProductType {
 
   samples Sample[] @relation("SampleProductType")
 
+  structuralRequests StructuralDesignRequest[] @relation("StructuralRequestProductType")
+
   @@index([categoryId], map: "ix_product_types__category_id")
   @@map("product_types")
 }

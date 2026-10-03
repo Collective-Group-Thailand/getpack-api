@@ -121,6 +121,9 @@ export const ERROR_CODES = {
   'styles.capability_decided': HttpStatus.CONFLICT,
   'styles.price_rule_exists': HttpStatus.CONFLICT,
   'styles.price_rule_retired': HttpStatus.CONFLICT,
+  'styles.intake_closed': HttpStatus.CONFLICT,
+  'styles.intake_terms_outdated': HttpStatus.CONFLICT,
+  'styles.intake_decided': HttpStatus.CONFLICT,
   'specs.unit_not_accepted': HttpStatus.UNPROCESSABLE_ENTITY,
   'specs.basis_not_accepted': HttpStatus.UNPROCESSABLE_ENTITY,
   'specs.caliper_missing': HttpStatus.UNPROCESSABLE_ENTITY,
@@ -332,6 +335,7 @@ export const ERROR_CODES = {
   'dielines.size_out_of_range': HttpStatus.UNPROCESSABLE_ENTITY,
   'dielines.material_class_not_offered': HttpStatus.UNPROCESSABLE_ENTITY,
   'dielines.not_drawable': HttpStatus.UNPROCESSABLE_ENTITY,
+  'structural_requests.invalid_transition': HttpStatus.CONFLICT,
 } as const satisfies Record<string, HttpStatus>;
 
 export type ErrorCode = keyof typeof ERROR_CODES;

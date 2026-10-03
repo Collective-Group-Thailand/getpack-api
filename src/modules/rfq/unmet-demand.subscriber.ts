@@ -15,6 +15,8 @@ const CALCULATION_SOURCES: Record<string, UnmetDemandSource> = {
   envelope_not_covered: 'no_price_path',
   delivery_unavailable: 'capability_missing',
   capacity_unavailable: 'capacity_limited',
+  // D-274: the style variant asked for is not publishable (no recipe, nobody makes it, not priced…).
+  style_variant_not_publishable: 'style_not_publishable',
 };
 
 /**
@@ -121,9 +123,15 @@ export class UnmetDemandSubscriber {
           select: { district: { select: { provinceId: true } } },
         })
       : null;
+    const variantCode = event.payload['styleVariantCode'];
+    const styleBase =
+      source === 'style_not_publishable' && typeof variantCode === 'string'
+        ? await tx.styleVariant.findUnique({ where: { code: variantCode }, select: { baseId: true } })
+        : null;
     await this.write(tx, event, {
       occurredAt: new Date((event.payload['occurredAt'] as string | undefined) ?? event.occurredAt),
       source,
+      styleBaseId: styleBase?.baseId ?? null,
       reasonId: null,
       productTypeId: BigInt(String(event.payload['productTypeId'])),
       specBand: {

@@ -190,6 +190,8 @@ export interface SettingValues {
   'styles.published_wave': number;
   'dielines.downloads_per_day': number;
   'dielines.downloads_per_minute': number;
+  /** Not seeded (D-272): no partner dieline intake until set. */
+  'styles.intake_terms': { textTh: string; textEn: string };
 }
 
 /** D-237 Structure Advisor rule set (decimal strings; factors 0 < f ≤ 1, applied as retained strength). */

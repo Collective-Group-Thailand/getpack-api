@@ -56,6 +56,12 @@ export const FILE_PURPOSES = {
     maxBytes: 50 * MiB,
     mimeTypes: [...IMAGES, 'image/svg+xml', 'font/ttf', 'font/otf', 'font/woff', 'font/woff2'],
   },
+  /** Dieline drawings: partner intake (D-272) and delivered structural designs (D-273). */
+  dieline: {
+    retentionClass: 'standard',
+    maxBytes: 50 * MiB,
+    mimeTypes: [...PDF, 'application/dxf', 'image/vnd.dxf', 'image/x-dxf', 'image/svg+xml'],
+  },
 } as const satisfies Record<string, FilePurposeRule>;
 
 export type FilePurpose = keyof typeof FILE_PURPOSES;

@@ -753,6 +753,8 @@ export class QuoteEngineService {
             reasons: [...new Set(view.steps.map((s) => s.reason).filter((r): r is string => r !== null))],
             deliveryPostcode: ctx.deliveryPostcode ?? null,
             dimensionsMm: { w: input.widthMm, l: input.lengthMm, d: input.heightMm },
+            // D-274: the style variant asked for (a refusal for an unpublishable one is "next styles" demand).
+            styleVariantCode: styleVariantCodeOf(cfg),
           },
         }),
       );
@@ -764,6 +766,11 @@ export class QuoteEngineService {
     }
   }
 }
+
+const styleVariantCodeOf = (cfg: unknown): string | null => {
+  const code = cfg && typeof cfg === 'object' ? (cfg as Record<string, unknown>)['styleVariantCode'] : null;
+  return typeof code === 'string' ? code : null;
+};
 
 const extraDays = (delivery: Delivery | null): number =>
   delivery?.available ? (delivery.extraDays ?? 0) : 0;

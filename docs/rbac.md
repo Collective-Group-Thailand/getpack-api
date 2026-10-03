@@ -52,6 +52,8 @@ Legend: ● granted · ◆ granted and sensitive (cost/margin data, D-141).
 | `styles.approve_names` — Approve the Thai / English names of a style (Marketing: wording, Prepress: technical terms) (D-212) | ● |  |  |  |  |  |  | ● |  |  |  | ● |  |  |  |
 | `styles.verify_reference` — Verify an industry reference code (FEFCO / ECMA) against the edition Packio holds (Prepress) (D-211) | ● |  |  |  |  |  |  | ● |  |  |  |  |  |  |  |
 | `styles.price_rules` — Maintain the option price rules of styles (Prepress with the Pricing owner, D-268) (D-268, D-266) | ● |  |  |  |  |  |  | ● |  |  |  |  |  |  |  |
+| `structural_requests.manage` — Assign structural design requests, link their service RFQ, decline them (CS, D-273) (D-273) | ● |  |  |  | ● | ● | ● |  |  |  |  |  |  |  |  |
+| `structural_requests.design` — Deliver, approve and publish structural designs (structural designers in Prepress, D-273) (D-273) | ● |  |  |  |  |  |  | ● |  |  |  |  |  |  |  |
 | `styles.process_rules` — Maintain which processes a style needs (style process rules, Prepress) (D-244) | ● |  |  |  |  |  |  | ● |  |  |  |  |  |  |  |
 | `advisory.read` — Read Structure Advisor recommendations (inputs, rule set, board data, choices) and replay them (D-240) | ● |  |  |  | ● | ● | ● | ● |  |  |  |  | ● | ● |  |
 | `advisory.evaluate` — Run the Structure Advisor for a configuration, also while it is off for customers (D-237, D-239) | ● |  |  |  | ● | ● | ● | ● |  |  |  |  | ● |  |  |
@@ -193,6 +195,7 @@ Legend: ● granted · ◆ granted and sensitive (cost/margin data, D-141).
 
 | Permission | `factory_owner` | `factory_planner` | `factory_operator` | `factory_qc` | `factory_shipping` | `factory_accountant` |
 |---|:-:|:-:|:-:|:-:|:-:|:-:|
+| `factory_style_intakes.submit` — Offer the factory’s dielines to the style library under the intake terms (D-272) (D-272) | ● | ● |  |  |  |  |
 | `factory_process_capabilities.propose` — Propose or withdraw the factory’s process capabilities (verified by the Partner team) (D-244) | ● | ● |  |  |  |  |
 | `factory_profile.read` — Read the own factory profile | ● | ● | ● | ● | ● | ● |
 | `factory_users.manage` — Manage users of the own factory | ● |  |  |  |  |  |

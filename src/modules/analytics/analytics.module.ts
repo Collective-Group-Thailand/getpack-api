@@ -4,6 +4,7 @@ import { AnalyticsJobs } from './analytics.jobs';
 import { AnalyticsDashboardsService } from './dashboards.service';
 import { AnalyticsIngestionService } from './ingestion.service';
 import { NetworkStatsService } from './network-stats';
+import { NextStylesService } from './next-styles';
 import { AnalyticsOutboxSubscriber } from './outbox-events.subscriber';
 import { ProspectusService } from './prospectus.service';
 import { AnalyticsRollupService } from './rollups.service';
@@ -23,6 +24,7 @@ import { AnalyticsRollupService } from './rollups.service';
     AnalyticsOutboxSubscriber,
     AnalyticsJobs,
     NetworkStatsService,
+    NextStylesService,
   ],
   exports: [
     AnalyticsIngestionService,
@@ -30,6 +32,7 @@ import { AnalyticsRollupService } from './rollups.service';
     AnalyticsDashboardsService,
     ProspectusService,
     NetworkStatsService,
+    NextStylesService,
   ],
 })
 export class AnalyticsModule {}

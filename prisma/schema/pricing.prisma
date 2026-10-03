@@ -221,14 +221,23 @@ model CalculateLog {
 }
 
 /// Store searches, for analytics (B6). Partitioned monthly on `occurred_at` (schema-design §1.7).
+enum SearchSurface {
+  catalog
+  styles
+
+  @@map("search_surface")
+}
+
 model SearchLog {
-  id           BigInt       @default(autoincrement())
-  occurredAt   DateTime     @default(now()) @map("occurred_at") @db.Timestamptz(6)
+  id           BigInt        @default(autoincrement())
+  occurredAt   DateTime      @default(now()) @map("occurred_at") @db.Timestamptz(6)
   keyword      String
-  resultsCount Int          @map("results_count")
+  resultsCount Int           @map("results_count")
   channel      SalesChannel
-  actorUserId  BigInt?      @map("actor_user_id")
-  anonymousId  String?      @map("anonymous_id")
+  actorUserId  BigInt?       @map("actor_user_id")
+  anonymousId  String?       @map("anonymous_id")
+  /// D-274: which search it was (the catalogue or the style library).
+  surface      SearchSurface @default(catalog)
 
   actorUser User? @relation("SearchLogActor", fields: [actorUserId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_search_logs__actor_user_id")
 
@@ -723,6 +732,8 @@ enum UnmetDemandSource {
   capacity_limited
   /// D-252: a quotation with a target ended lost / expired / sent to CS above its target.
   price_above_target
+  /// D-274: a calculation refused because its style variant is not publishable.
+  style_not_publishable
 
   @@map("unmet_demand_source")
 }
@@ -788,6 +799,8 @@ model Rfq {
 
   configurationDrafts ConfigurationDraft[] @relation("ConfigurationDraftRfq")
   quoteOutcomes       QuoteOutcome[]       @relation("QuoteOutcomeRfq")
+
+  structuralRequest StructuralDesignRequest? @relation("StructuralRequestServiceRfq")
 
   @@index([customerUserId, submittedAt(sort: Desc)], map: "ix_rfqs__customer_user_id__submitted_at")
   @@index([status, slaDueAt], map: "ix_rfqs__status__sla_due_at")
@@ -959,11 +972,14 @@ model UnmetDemandRecord {
   priceGapBand   String?           @map("price_gap_band")
   /// Distinct-customer key for k-anonymity (`c<company>`, `u<user>`, `a<anonymous id>`, as the prospectus); never exported.
   customerKey    String?           @map("customer_key")
+  /// D-274: the style base wanted (source style_not_publishable).
+  styleBaseId    BigInt?           @map("style_base_id")
 
   reason      UnmetDemandReason? @relation(fields: [reasonId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_unmet_demand_records__reason_id")
   productType ProductType        @relation("UnmetDemandProductType", fields: [productTypeId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_unmet_demand_records__product_type_id")
   province    GeoProvince?       @relation("UnmetDemandProvince", fields: [provinceId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_unmet_demand_records__province_id")
   rfq         Rfq?               @relation(fields: [rfqId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_unmet_demand_records__rfq_id")
+  styleBase   StyleBase?         @relation("UnmetDemandStyleBase", fields: [styleBaseId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_unmet_demand_records__style_base_id")
   quote       Quote?             @relation("UnmetDemandQuote", fields: [quoteId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_unmet_demand_records__quote_id")
 
   @@index([productTypeId, occurredAt], map: "ix_unmet_demand_records__product_type_id__occurred_at")
@@ -972,6 +988,7 @@ model UnmetDemandRecord {
   @@index([rfqId], map: "ix_unmet_demand_records__rfq_id")
   @@index([quoteId], map: "ix_unmet_demand_records__quote_id")
   @@index([occurredAt], map: "ix_unmet_demand_records__occurred_at")
+  @@index([styleBaseId], map: "ix_unmet_demand_records__style_base_id")
   @@map("unmet_demand_records")
 }
 

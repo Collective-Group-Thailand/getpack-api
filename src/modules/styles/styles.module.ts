@@ -2,10 +2,12 @@ import { Global, Module } from '@nestjs/common';
 
 import { DielineDownloadsService } from './dieline-downloads.service';
 import { ProcessCapabilitiesService } from './process-capabilities.service';
+import { StructuralRequestsService } from './structural-requests.service';
 import { StyleAssetsService } from './style-assets.service';
 import { StyleCoverageService } from './style-coverage.service';
 import { StyleDielinesService } from './style-dielines.service';
 import { StyleImportService } from './style-import.service';
+import { StyleIntakesService } from './style-intakes.service';
 import { StyleMakeabilityService } from './style-makeability.service';
 import { StylePriceRulesService } from './style-price-rules';
 import { StylePublishingService } from './style-publishing.service';
@@ -16,6 +18,8 @@ import { StylesStoreService } from './styles-store.service';
 const SERVICES = [
   DielineDownloadsService,
   StyleAssetsService,
+  StyleIntakesService,
+  StructuralRequestsService,
   StyleDielinesService,
   StylePriceRulesService,
   StyleMakeabilityService,

@@ -661,6 +661,139 @@ const ROWS: Row[] = [
     },
     'Factory: claim approved against the factory (D-083)',
   ),
+  C(
+    'structural_request.submitted',
+    ['email', 'in_app'],
+    { th: 'ได้รับคำขอออกแบบโครงสร้างแล้ว', en: 'Structure request received' },
+    {
+      th: 'เราได้รับคำขอออกแบบโครงสร้างของคุณแล้ว ทีมงานจะติดต่อกลับเร็วๆ นี้',
+      en: 'We received your structure request; our team will be in touch shortly',
+    },
+    'Customer: structural design request submitted (D-273)',
+  ),
+  C(
+    'structural_request.assigned',
+    ['email', 'in_app'],
+    { th: 'มีผู้ออกแบบรับคำขอของคุณแล้ว', en: 'A designer took your request' },
+    {
+      th: 'ผู้ออกแบบโครงสร้างของ Packio รับคำขอของคุณแล้ว',
+      en: 'A Packio structural designer is now working on your request',
+    },
+    'Customer: structural design request assigned (D-273)',
+  ),
+  C(
+    'structural_request.quoted',
+    ['email', 'in_app'],
+    { th: 'ใบเสนอราคาค่าออกแบบพร้อมแล้ว', en: 'Design fee quotation ready' },
+    {
+      th: 'ค่าออกแบบโครงสร้างพร้อมให้ตรวจสอบในใบขอใบเสนอราคาของคุณแล้ว',
+      en: 'The structural design fee is ready for you in your quotation requests',
+    },
+    'Customer: structural design request quoted (D-273)',
+  ),
+  C(
+    'structural_request.delivered',
+    ['email', 'in_app'],
+    { th: 'แบบโครงสร้างอยู่ระหว่างตรวจสอบ', en: 'Your design is in review' },
+    {
+      th: 'ผู้ออกแบบส่งแบบโครงสร้างแล้ว ทีม Prepress กำลังตรวจสอบ',
+      en: 'The designer delivered your structure; Prepress is reviewing it',
+    },
+    'Customer: structural design request delivered (D-273)',
+  ),
+  C(
+    'structural_request.approved',
+    ['email', 'in_app'],
+    { th: 'แบบโครงสร้างพร้อมแล้ว', en: 'Your structure is ready' },
+    {
+      th: 'แบบโครงสร้างได้รับการอนุมัติแล้ว ดาวน์โหลดไดคัทได้ที่ Packio',
+      en: 'Your structure was approved; download the dieline on Packio',
+    },
+    'Customer: structural design request approved (D-273)',
+  ),
+  C(
+    'structural_request.published',
+    ['email', 'in_app'],
+    { th: 'แบบของคุณอยู่ในคลังสไตล์แล้ว', en: 'Your structure is in the style library' },
+    {
+      th: 'แบบโครงสร้างของคุณเผยแพร่เป็นสไตล์ {{payload.publishedBaseCode}} แล้ว',
+      en: 'Your structure is now style {{payload.publishedBaseCode}} in the library',
+    },
+    'Customer: structural design request published (D-273)',
+  ),
+  C(
+    'structural_request.declined',
+    ['email', 'in_app'],
+    { th: 'คำขอออกแบบโครงสร้างไม่ได้รับการดำเนินการ', en: 'Structure request declined' },
+    {
+      th: 'ขออภัย เราไม่สามารถดำเนินการคำขอออกแบบโครงสร้างนี้ได้ ดูเหตุผลได้ที่ Packio',
+      en: 'Sorry, we cannot take this structure request; see the reason on Packio',
+    },
+    'Customer: structural design request declined (D-273)',
+  ),
+  T(
+    'structural_request.submitted',
+    'cs',
+    ['in_app'],
+    { th: 'คำขอออกแบบโครงสร้างใหม่', en: 'New structure request' },
+    {
+      th: 'มีคำขอออกแบบโครงสร้างใหม่ ({{payload.productTypeCode}}) รอมอบหมายผู้ออกแบบ',
+      en: 'A new structure request ({{payload.productTypeCode}}) waits for a designer',
+    },
+    'CS: a structural design request to assign (D-273)',
+  ),
+  T(
+    'structural_request.assigned',
+    'prepress',
+    ['in_app'],
+    { th: 'มีคำขอออกแบบโครงสร้างมอบหมายให้ทีม', en: 'Structure request assigned' },
+    {
+      th: 'คำขอออกแบบโครงสร้าง ({{payload.productTypeCode}}) ถูกมอบหมายให้ทีม Prepress',
+      en: 'A structure request ({{payload.productTypeCode}}) was assigned to Prepress',
+    },
+    'Prepress: a structural design request assigned (D-273)',
+  ),
+  T(
+    'style_intake.submitted',
+    'prepress',
+    ['in_app'],
+    { th: 'โรงงานส่งไดคัทใหม่', en: 'A factory offered a dieline' },
+    {
+      th: 'โรงงานส่งไดคัท "{{payload.title}}" รอการตรวจสอบ',
+      en: 'A factory offered the dieline "{{payload.title}}" for review',
+    },
+    'Prepress: a partner dieline to review (D-272)',
+  ),
+  F(
+    'style_intake.matched',
+    ['in_app', 'email'],
+    { th: 'ไดคัทของคุณตรงกับสไตล์ที่มีอยู่', en: 'Your dieline matches a library style' },
+    {
+      th: 'Prepress เทียบไดคัทของคุณกับสไตล์ในคลังแล้ว ดูรายงานความต่างได้ที่ Packio',
+      en: 'Prepress matched your dieline to a library style; see the deviation report on Packio',
+    },
+    'Factory: dieline intake matched (D-272)',
+  ),
+  F(
+    'style_intake.approved',
+    ['in_app', 'email'],
+    { th: 'ไดคัทของคุณได้รับการอนุมัติ', en: 'Your dieline was approved' },
+    {
+      th: 'ไดคัทที่ส่งมาได้รับการอนุมัติเข้าคลังสไตล์แล้ว ขอบคุณครับ',
+      en: 'Your dieline was approved into the style library; thank you',
+    },
+    'Factory: dieline intake approved (D-272)',
+  ),
+  F(
+    'style_intake.rejected',
+    ['in_app', 'email'],
+    { th: 'ไดคัทของคุณไม่ได้รับการอนุมัติ', en: 'Your dieline was not approved' },
+    {
+      th: 'ไดคัทที่ส่งมาไม่ได้รับการอนุมัติ ดูเหตุผลได้ที่ Packio',
+      en: 'Your dieline was not approved; see the reason on Packio',
+    },
+    'Factory: dieline intake rejected (D-272)',
+  ),
   F(
     'factory.daily_digest',
     ['email', 'line'],

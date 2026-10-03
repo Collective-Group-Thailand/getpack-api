@@ -110,6 +110,8 @@ export class StylesStoreService {
         )
       : null;
     let matched = scores ? rows.filter((r) => scores.has(r.id)) : rows;
+    // D-274: one search log per search (its first page), the zero-result ones feed the "next styles" report.
+    if (q && !query.cursor) await this.logSearch(q, matched.length, userId);
     const facetsOf = (list: LibraryRow[]): StyleFacetsDto => facets(list);
     matched = matched.filter((r) => {
       const opts = optionValues(r);
@@ -280,6 +282,23 @@ export class StylesStoreService {
         })),
       ),
     };
+  }
+
+  /** Never fails the search (analytics, D-274). */
+  private async logSearch(keyword: string, resultsCount: number, userId: bigint | null): Promise<void> {
+    try {
+      await this.prisma.searchLog.create({
+        data: {
+          keyword: keyword.slice(0, 200),
+          resultsCount,
+          channel: 'web',
+          surface: 'styles',
+          actorUserId: userId,
+        },
+      });
+    } catch {
+      // Analytics must never fail a search.
+    }
   }
 
   /** Bases matching the query with their score: `simple` full text, trigram word similarity, or a substring. */
