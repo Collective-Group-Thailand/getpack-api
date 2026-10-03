@@ -34649,6 +34649,83 @@
         ],
         "type": "object"
       },
+      "FactoryCountersDto": {
+        "properties": {
+          "acceptanceOverdue": {
+            "description": "Of those, past their acceptance deadline",
+            "example": 0,
+            "type": "integer"
+          },
+          "atRisk": {
+            "example": 0,
+            "type": "integer"
+          },
+          "awaitingAcceptance": {
+            "description": "Jobs released, not accepted yet (D-074)",
+            "example": 1,
+            "type": "integer"
+          },
+          "claimsAwaitingResponse": {
+            "description": "Claims waiting for my factory’s response (D-082)",
+            "example": 0,
+            "type": "integer"
+          },
+          "inspectionsPlanned": {
+            "description": "Packio inspections planned (D-076)",
+            "example": 0,
+            "type": "integer"
+          },
+          "milestonesDueToday": {
+            "description": "Steps due today (Asia/Bangkok)",
+            "example": 2,
+            "type": "integer"
+          },
+          "onHold": {
+            "example": 0,
+            "type": "integer"
+          },
+          "priceProposalsPending": {
+            "description": "Price proposals in progress either way — submitted, under review or countered (D-042)",
+            "example": 0,
+            "type": "integer"
+          },
+          "rfqConsultationsToAnswer": {
+            "description": "RFQ consultations to answer (D-043)",
+            "example": 1,
+            "type": "integer"
+          },
+          "sampleJobsAwaitingAcceptance": {
+            "description": "Sample (mock-up) jobs to accept (D-294)",
+            "example": 1,
+            "type": "integer"
+          },
+          "sampleJobsOpen": {
+            "description": "Sample jobs accepted and not finished",
+            "example": 2,
+            "type": "integer"
+          },
+          "statementsToConfirm": {
+            "description": "Billing statements to confirm (D-090)",
+            "example": 1,
+            "type": "integer"
+          }
+        },
+        "required": [
+          "awaitingAcceptance",
+          "acceptanceOverdue",
+          "milestonesDueToday",
+          "atRisk",
+          "onHold",
+          "inspectionsPlanned",
+          "sampleJobsAwaitingAcceptance",
+          "sampleJobsOpen",
+          "claimsAwaitingResponse",
+          "rfqConsultationsToAnswer",
+          "statementsToConfirm",
+          "priceProposalsPending"
+        ],
+        "type": "object"
+      },
       "FactoryDto": {
         "properties": {
           "activatedAt": {
@@ -307178,6 +307255,201 @@
         ],
         "x-required-permissions": [
           "factory_profile.manage"
+        ]
+      }
+    },
+    "/v1/partner/factories/{factoryId}/counters": {
+      "get": {
+        "description": "Everything waiting for my factory, in one read: jobs to accept (and overdue), steps due today, jobs at risk or on hold, inspections planned — plus sample jobs, claims awaiting our response, RFQ consultations to answer, statements to confirm and price proposals in progress (D-294). Own factory only (D-044).\n\nImplements: D-294, D-074, D-044.",
+        "operationId": "partner.production.getCounters",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "factoryId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "acceptanceOverdue": 0,
+                  "atRisk": 0,
+                  "awaitingAcceptance": 1,
+                  "claimsAwaitingResponse": 0,
+                  "inspectionsPlanned": 0,
+                  "milestonesDueToday": 2,
+                  "onHold": 0,
+                  "priceProposalsPending": 0,
+                  "rfqConsultationsToAnswer": 1,
+                  "sampleJobsAwaitingAcceptance": 1,
+                  "sampleJobsOpen": 2,
+                  "statementsToConfirm": 1
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/FactoryCountersDto"
+                }
+              }
+            },
+            "description": "Counters",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.unauthenticated": {
+                    "$ref": "#/components/examples/problem.auth.unauthenticated"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.unauthenticated`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.forbidden": {
+                    "$ref": "#/components/examples/problem.auth.forbidden"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.forbidden`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "404": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.not_found": {
+                    "$ref": "#/components/examples/problem.http.not_found"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.not_found`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "validation.failed": {
+                    "$ref": "#/components/examples/problem.validation.failed"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `validation.failed`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "partner": []
+          }
+        ],
+        "summary": "My factory’s counters",
+        "tags": [
+          "partner.production"
+        ],
+        "x-required-permissions": [
+          "factory_profile.read"
         ]
       }
     },
