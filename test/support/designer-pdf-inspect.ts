@@ -31,7 +31,7 @@ export async function inspectDesignerPdf(bytes: Uint8Array): Promise<InspectedPd
   });
   const infoRef = doc.context.trailerInfo.Info;
   const info = doc.context.lookup(infoRef, PDFDict);
-  const metadata = catalog.lookup(PDFName.of('Metadata'), PDFRawStream);
+  const metadata = catalog.lookup(PDFName.of('Metadata')) as PDFRawStream;
   const box = (b: { x: number; y: number; width: number; height: number }) =>
     [b.x, b.y, b.x + b.width, b.y + b.height].map((v) => Math.round(v * 100) / 100);
   return {
@@ -41,7 +41,7 @@ export async function inspectDesignerPdf(bytes: Uint8Array): Promise<InspectedPd
     subject: text(info.get(PDFName.of('Subject'))),
     keywords: text(info.get(PDFName.of('Keywords'))),
     styleCode: text(info.get(PDFName.of('PackioStyleCode'))),
-    xmp: Buffer.from((metadata as unknown as { contents: Uint8Array }).contents).toString('utf8'),
+    xmp: Buffer.from(metadata.getContents()).toString('utf8'),
     trimBox: box(page.getTrimBox()),
     bleedBox: box(page.getBleedBox()),
   };
