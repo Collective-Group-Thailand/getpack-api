@@ -256,6 +256,7 @@ model ProductType {
   // --- Quotes & RFQ (generated back-relations)
   quotes             Quote[]             @relation("QuoteProductType")
   rfqs               Rfq[]               @relation("RfqProductType")
+  rfqBasketItems     RfqBasketItem[]     @relation("RfqBasketItemProductType")
   unmetDemandRecords UnmetDemandRecord[] @relation("UnmetDemandProductType")
 
   // --- end Quotes & RFQ

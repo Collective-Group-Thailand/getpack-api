@@ -367,6 +367,8 @@ export const ERROR_CODES = {
   'b2b.owner_cannot_order': HttpStatus.FORBIDDEN,
   'feature_flags.dev_only': HttpStatus.CONFLICT,
   'deep_links.expired': HttpStatus.GONE,
+  'rfq_baskets.changed': HttpStatus.CONFLICT,
+  'rfq_baskets.not_submitted': HttpStatus.CONFLICT,
 } as const satisfies Record<string, HttpStatus>;
 
 export type ErrorCode = keyof typeof ERROR_CODES;

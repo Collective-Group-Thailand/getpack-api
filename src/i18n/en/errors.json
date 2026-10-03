@@ -1588,5 +1588,15 @@
       "title": "Link expired",
       "detail": "This link has expired; open the page from your account instead."
     }
+  },
+  "rfq_baskets": {
+    "changed": {
+      "title": "Basket changed",
+      "detail": "The basket changed while it was being submitted; check it and submit again."
+    },
+    "not_submitted": {
+      "title": "Basket not submitted",
+      "detail": "Items can be accepted only once the basket has been submitted and quoted."
+    }
   }
 }

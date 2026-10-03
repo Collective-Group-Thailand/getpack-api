@@ -119,6 +119,14 @@ const DEV_SERIES = [
     description: '[DEV] fake support ticket series',
   },
   {
+    docType: 'rfq_basket',
+    prefix: 'DEVRB',
+    format: '{prefix}-{yy}{mm}-{seq:5}',
+    resetPeriod: 'monthly',
+    isGapless: false,
+    description: '[DEV] fake RFQ basket series',
+  },
+  {
     docType: 'iv',
     prefix: 'DEVIV',
     format: '{prefix}-{yy}-{seq:5}',

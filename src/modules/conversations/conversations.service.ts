@@ -302,6 +302,29 @@ export class ConversationsService implements OnModuleInit {
     return conversation;
   }
 
+  /** D-301: the conversation of a submitted RFQ basket (in the submission's transaction), with its first message. */
+  async openBasketThread(
+    tx: Tx,
+    customerUserId: bigint,
+    basketId: bigint,
+    body: string,
+  ): Promise<Conversation> {
+    const conversation = await this.openWeb(tx, customerUserId, {
+      type: 'rfq_basket',
+      id: basketId,
+      companyId: null,
+    });
+    await this.inbound(tx, conversation, {
+      kind: 'text',
+      body,
+      providerMessageId: null,
+      sentAt: new Date(),
+      senderUserId: customerUserId,
+      via: 'web',
+    });
+    return conversation;
+  }
+
   private async customerMessages(
     tx: Tx,
     actor: UserActor,

@@ -1171,7 +1171,9 @@ const INDEXES = [
   // --- B4.6 LINE & conversations
   'ux_line_rich_menus__one_active',
   'ux_conversations__one_live_line',
-  'ux_conversations__one_live_web',
+  'ux_conversations__one_live_subject',
+  'ix_conversations__awaiting_first_response',
+  'ux_rfq_baskets__one_draft',
   // --- B5.1 ledger
   'ux_journal_entries__domain_event_id__posting_rule_id',
   'ix_posting_rule_versions__resolution',

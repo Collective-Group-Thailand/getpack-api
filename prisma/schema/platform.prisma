@@ -1425,6 +1425,7 @@ enum DocumentType {
   customer
   company
   support_ticket
+  rfq_basket
 
   @@map("document_type")
 }

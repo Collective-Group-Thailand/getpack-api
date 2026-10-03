@@ -581,6 +581,7 @@ model DesignDocumentVersion {
   printJobs           StudioPrintJob[]             @relation("StudioPrintJobVersion")
   checkAcks           DesignCheckAcknowledgement[] @relation("DesignCheckAckVersion")
   rfqs                Rfq[]                        @relation("RfqDesignVersion")
+  rfqBasketItems      RfqBasketItem[]              @relation("RfqBasketItemDesignVersion")
 
   comments DesignComment[] @relation("DesignCommentVersion")
 
@@ -1833,6 +1834,7 @@ model Conversation {
   messages     ConversationMessage[]
   tickets      SupportTicket[]
   participants ConversationParticipant[]
+  rfqBasket    RfqBasket?                @relation("RfqBasketConversation")
 
   @@unique([lineAccountId], map: "ux_conversations__one_live_line", where: raw("((line_account_id IS NOT NULL) AND (status <> 'closed'::conversation_status))"))
   @@index([companyId], map: "ix_conversations__company_id")

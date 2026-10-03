@@ -3180,6 +3180,28 @@
           "type": "https://errors.packio/rfq.reminder_recent"
         }
       },
+      "problem.rfq_baskets.changed": {
+        "summary": "rfq_baskets.changed",
+        "value": {
+          "code": "rfq_baskets.changed",
+          "detail": "ตะกร้ามีการเปลี่ยนแปลงระหว่างส่ง กรุณาตรวจสอบแล้วส่งอีกครั้ง",
+          "requestId": "6f1c2d8e-2c7b-4d0e-9d1c-3f1a2b3c4d5e",
+          "status": 409,
+          "title": "ตะกร้าเปลี่ยนแปลง",
+          "type": "https://errors.packio/rfq_baskets.changed"
+        }
+      },
+      "problem.rfq_baskets.not_submitted": {
+        "summary": "rfq_baskets.not_submitted",
+        "value": {
+          "code": "rfq_baskets.not_submitted",
+          "detail": "ยอมรับรายการได้หลังส่งตะกร้าและได้รับใบเสนอราคาแล้วเท่านั้น",
+          "requestId": "6f1c2d8e-2c7b-4d0e-9d1c-3f1a2b3c4d5e",
+          "status": 409,
+          "title": "ตะกร้ายังไม่ได้ส่ง",
+          "type": "https://errors.packio/rfq_baskets.not_submitted"
+        }
+      },
       "problem.samples.evidence_recorded": {
         "summary": "samples.evidence_recorded",
         "value": {
@@ -3950,6 +3972,48 @@
       }
     },
     "schemas": {
+      "AcceptBasketItemDto": {
+        "properties": {
+          "itemId": {
+            "example": "0192f3a0-7c1e-7d2a-9b1f-0000000e7402",
+            "format": "uuid",
+            "type": "string"
+          },
+          "quantity": {
+            "description": "One of its quoted quantities",
+            "example": 1000,
+            "minimum": 1,
+            "type": "integer"
+          },
+          "rfqQuoteId": {
+            "description": "The item RFQ’s sent quotation",
+            "example": "0192f3a0-7c1e-7d2a-9b1f-0000000e7406",
+            "format": "uuid",
+            "type": "string"
+          }
+        },
+        "required": [
+          "itemId",
+          "rfqQuoteId",
+          "quantity"
+        ],
+        "type": "object"
+      },
+      "AcceptBasketItemsDto": {
+        "properties": {
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/AcceptBasketItemDto"
+            },
+            "minItems": 1,
+            "type": "array"
+          }
+        },
+        "required": [
+          "items"
+        ],
+        "type": "object"
+      },
       "AcceptRfqQuoteDto": {
         "properties": {
           "quantities": {
@@ -3980,6 +4044,26 @@
           "signed_upload"
         ],
         "type": "string"
+      },
+      "AcceptedBasketDto": {
+        "properties": {
+          "basket": {
+            "$ref": "#/components/schemas/RfqBasketDto"
+          },
+          "cart": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/CartDto"
+              }
+            ],
+            "description": "My cart with the accepted items at the quoted price and validity"
+          }
+        },
+        "required": [
+          "basket",
+          "cart"
+        ],
+        "type": "object"
       },
       "AccountChangeDto": {
         "properties": {
@@ -14727,6 +14811,26 @@
           "external",
           "overCrease",
           "product"
+        ],
+        "type": "object"
+      },
+      "BasketDesignRefDto": {
+        "properties": {
+          "designId": {
+            "description": "One of my designs",
+            "example": "0192f3a0-7c1e-7d2a-9b1f-0000000e7403",
+            "format": "uuid",
+            "type": "string"
+          },
+          "versionNo": {
+            "description": "Default: its current version",
+            "example": 3,
+            "minimum": 1,
+            "type": "integer"
+          }
+        },
+        "required": [
+          "designId"
         ],
         "type": "object"
       },
@@ -33935,7 +34039,8 @@
           "claim",
           "shipment",
           "rfq",
-          "support_ticket"
+          "support_ticket",
+          "rfq_basket"
         ],
         "type": "string"
       },
@@ -60751,6 +60856,276 @@
         ],
         "type": "string"
       },
+      "RfqBasketDto": {
+        "properties": {
+          "basketCode": {
+            "description": "Numbered on submission",
+            "example": "RB-2610-00001",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "conversationId": {
+            "description": "The basket’s thread with Packio (`store.conversations.*`), from submission",
+            "example": null,
+            "format": "uuid",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "createdAt": {
+            "example": "2026-10-04T10:00:00+07:00",
+            "format": "date-time",
+            "type": "string"
+          },
+          "deliveryPostcode": {
+            "example": "10110",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "id": {
+            "example": "0192f3a0-7c1e-7d2a-9b1f-0000000e7401",
+            "format": "uuid",
+            "type": "string"
+          },
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/RfqBasketItemDto"
+            },
+            "type": "array"
+          },
+          "notes": {
+            "example": "",
+            "type": "string"
+          },
+          "status": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/RfqBasketStatus"
+              }
+            ],
+            "example": "draft"
+          },
+          "submittedAt": {
+            "example": null,
+            "format": "date-time",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "targetDate": {
+            "example": "2026-11-15",
+            "format": "date",
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "id",
+          "basketCode",
+          "status",
+          "deliveryPostcode",
+          "targetDate",
+          "notes",
+          "conversationId",
+          "submittedAt",
+          "items",
+          "createdAt"
+        ],
+        "type": "object"
+      },
+      "RfqBasketItemDto": {
+        "properties": {
+          "design": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/BasketDesignRefDto"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "id": {
+            "example": "0192f3a0-7c1e-7d2a-9b1f-0000000e7402",
+            "format": "uuid",
+            "type": "string"
+          },
+          "productType": {
+            "$ref": "#/components/schemas/CodeNameRefDto"
+          },
+          "rfq": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/RfqDto"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Its RFQ once submitted — status, Packio’s quotations per quantity, acceptance"
+          },
+          "sort": {
+            "example": 0,
+            "type": "integer"
+          },
+          "specification": {
+            "additionalProperties": true,
+            "description": "The item as entered (the RFQ form fields)",
+            "example": {
+              "quantities": [
+                500,
+                1000
+              ],
+              "spec": {
+                "material": "kraft 150 gsm (fake)"
+              }
+            },
+            "type": "object"
+          }
+        },
+        "required": [
+          "id",
+          "sort",
+          "productType",
+          "specification",
+          "design",
+          "rfq"
+        ],
+        "type": "object"
+      },
+      "RfqBasketItemInputDto": {
+        "properties": {
+          "design": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/BasketDesignRefDto"
+              }
+            ],
+            "description": "The design version the item is for"
+          },
+          "fileIds": {
+            "description": "Uploaded files (purpose `artwork`)",
+            "example": [
+              "0192f3a0-7c1e-7d2a-9b1f-00000000f003"
+            ],
+            "items": {
+              "format": "uuid",
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "heightMm": {
+            "description": "Unit: mm.",
+            "example": 320,
+            "maximum": 99999,
+            "minimum": 0.01,
+            "type": [
+              "number",
+              "null"
+            ]
+          },
+          "lengthMm": {
+            "description": "Unit: mm.",
+            "example": 250,
+            "maximum": 99999,
+            "minimum": 0.01,
+            "type": [
+              "number",
+              "null"
+            ]
+          },
+          "measurementBasis": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/MeasurementBasis"
+              }
+            ],
+            "description": "Basis of length / width / height (D-182): internal, external, over_crease or product. Absent: internal (assumed, deprecated — becomes required)",
+            "example": "internal"
+          },
+          "productTypeCode": {
+            "example": "paper_bag",
+            "pattern": "^[a-z][a-z0-9_]*$",
+            "type": "string"
+          },
+          "quantities": {
+            "description": "1–10 quantity tiers",
+            "example": [
+              500,
+              1000,
+              3000
+            ],
+            "items": {
+              "maximum": 100000000,
+              "minimum": 1,
+              "type": "number"
+            },
+            "minItems": 1,
+            "type": "array"
+          },
+          "spec": {
+            "additionalProperties": true,
+            "description": "Spec fields of the category, validated against its `rfqSpecSchema` (B2.1)",
+            "example": {
+              "handles": "twisted paper",
+              "material": "kraft 150 gsm (fake)",
+              "print": "1 colour one side"
+            },
+            "type": "object"
+          },
+          "specSchemaVersion": {
+            "description": "The form version it was filled in (`store.rfqs.getForm`); refused (422) when the form changed since",
+            "example": 1,
+            "maximum": 32767,
+            "minimum": 1,
+            "type": "integer"
+          },
+          "styleVariantCode": {
+            "description": "The style-library variant this configuration builds (D-241). It must be publishable and belong to the configuration’s pattern; otherwise no quantity is priced instantly (reason `style_variant_not_publishable`, D-243), so the configuration cannot be saved, carted or ordered",
+            "example": "PK-TE-01-K7QD",
+            "pattern": "^PK-[A-Z0-9]{2,8}-[0-9]{2,3}-[A-Z2-7]{4,8}$",
+            "type": "string"
+          },
+          "targetPricePerUnit": {
+            "description": "Target price per unit (THB incl. VAT, excluding shipping — the basis of `unitPrice`), > 0; never shown to a factory (D-247, D-190). Staff see it; a factory never does (D-190)",
+            "example": "11.50",
+            "pattern": "^(?!0+(\\.0{1,2})?$)\\d{1,9}(\\.\\d{1,2})?$",
+            "type": "string"
+          },
+          "widthMm": {
+            "description": "Unit: mm.",
+            "example": 120,
+            "maximum": 99999,
+            "minimum": 0.01,
+            "type": [
+              "number",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "productTypeCode",
+          "spec",
+          "quantities"
+        ],
+        "type": "object"
+      },
+      "RfqBasketStatus": {
+        "enum": [
+          "draft",
+          "submitted",
+          "discarded"
+        ],
+        "type": "string"
+      },
       "RfqConsultationDto": {
         "properties": {
           "dueAt": {
@@ -64837,6 +65212,30 @@
           "nameTh",
           "nameEn"
         ],
+        "type": "object"
+      },
+      "SetBasketDetailsDto": {
+        "properties": {
+          "deliveryPostcode": {
+            "description": "Where every item is delivered (required to submit)",
+            "example": "10110",
+            "pattern": "^[0-9]{5}$",
+            "type": "string"
+          },
+          "notes": {
+            "example": "ต้องการให้สีโลโก้ตรงกันทุกชิ้น",
+            "maxLength": 2000,
+            "type": "string"
+          },
+          "targetDate": {
+            "example": "2026-11-15",
+            "format": "date",
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        },
         "type": "object"
       },
       "SetCapacityDto": {
@@ -393389,6 +393788,2306 @@
         "summary": "Review ratings at a glance",
         "tags": [
           "store.publicReviews"
+        ]
+      }
+    },
+    "/v1/store/rfq-baskets": {
+      "get": {
+        "description": "Newest first (up to 50); discarded drafts left out (D-301).\n\nImplements: D-301, D-100, D-183.",
+        "operationId": "store.rfqBaskets.list",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "example": [
+                  {
+                    "basketCode": null,
+                    "conversationId": null,
+                    "createdAt": "2026-10-04T10:00:00+07:00",
+                    "deliveryPostcode": "10110",
+                    "id": "0192f3a0-7c1e-7d2a-9b1f-0000000e7401",
+                    "items": [
+                      {
+                        "design": null,
+                        "id": "0192f3a0-7c1e-7d2a-9b1f-0000000e7402",
+                        "productType": {
+                          "code": "paper_bag",
+                          "id": "0192f3a0-7c1e-7d2a-9b1f-0000000e7404",
+                          "nameEn": "Paper bag",
+                          "nameTh": "ถุงกระดาษ"
+                        },
+                        "rfq": null,
+                        "sort": 0,
+                        "specification": {
+                          "quantities": [
+                            500,
+                            1000
+                          ],
+                          "spec": {
+                            "material": "kraft 150 gsm (fake)"
+                          }
+                        }
+                      }
+                    ],
+                    "notes": "",
+                    "status": "draft",
+                    "submittedAt": null,
+                    "targetDate": "2026-11-15"
+                  }
+                ],
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/RfqBasketDto"
+                  },
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Baskets",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.unauthenticated": {
+                    "$ref": "#/components/examples/problem.auth.unauthenticated"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.unauthenticated`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.forbidden": {
+                    "$ref": "#/components/examples/problem.auth.forbidden"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.forbidden`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "customer": []
+          }
+        ],
+        "summary": "My RFQ baskets",
+        "tags": [
+          "store.rfqs"
+        ]
+      }
+    },
+    "/v1/store/rfq-baskets/draft": {
+      "get": {
+        "description": "One per customer, created on first use (D-301).\n\nImplements: D-301, D-100, D-183.",
+        "operationId": "store.rfqBaskets.getDraft",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "basketCode": null,
+                  "conversationId": null,
+                  "createdAt": "2026-10-04T10:00:00+07:00",
+                  "deliveryPostcode": "10110",
+                  "id": "0192f3a0-7c1e-7d2a-9b1f-0000000e7401",
+                  "items": [
+                    {
+                      "design": null,
+                      "id": "0192f3a0-7c1e-7d2a-9b1f-0000000e7402",
+                      "productType": {
+                        "code": "paper_bag",
+                        "id": "0192f3a0-7c1e-7d2a-9b1f-0000000e7404",
+                        "nameEn": "Paper bag",
+                        "nameTh": "ถุงกระดาษ"
+                      },
+                      "rfq": null,
+                      "sort": 0,
+                      "specification": {
+                        "quantities": [
+                          500,
+                          1000
+                        ],
+                        "spec": {
+                          "material": "kraft 150 gsm (fake)"
+                        }
+                      }
+                    }
+                  ],
+                  "notes": "",
+                  "status": "draft",
+                  "submittedAt": null,
+                  "targetDate": "2026-11-15"
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/RfqBasketDto"
+                }
+              }
+            },
+            "description": "Draft",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.unauthenticated": {
+                    "$ref": "#/components/examples/problem.auth.unauthenticated"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.unauthenticated`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.forbidden": {
+                    "$ref": "#/components/examples/problem.auth.forbidden"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.forbidden`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "customer": []
+          }
+        ],
+        "summary": "My draft RFQ basket",
+        "tags": [
+          "store.rfqs"
+        ]
+      },
+      "patch": {
+        "description": "Delivery postcode (required to submit), target date and notes shared by every item (D-301).\n\nImplements: D-301, D-100, D-183.",
+        "operationId": "store.rfqBaskets.setDetails",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "examples": {
+                "default": {
+                  "value": {
+                    "deliveryPostcode": "10110",
+                    "targetDate": "2026-11-15"
+                  }
+                }
+              },
+              "schema": {
+                "$ref": "#/components/schemas/SetBasketDetailsDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "basketCode": null,
+                  "conversationId": null,
+                  "createdAt": "2026-10-04T10:00:00+07:00",
+                  "deliveryPostcode": "10110",
+                  "id": "0192f3a0-7c1e-7d2a-9b1f-0000000e7401",
+                  "items": [
+                    {
+                      "design": null,
+                      "id": "0192f3a0-7c1e-7d2a-9b1f-0000000e7402",
+                      "productType": {
+                        "code": "paper_bag",
+                        "id": "0192f3a0-7c1e-7d2a-9b1f-0000000e7404",
+                        "nameEn": "Paper bag",
+                        "nameTh": "ถุงกระดาษ"
+                      },
+                      "rfq": null,
+                      "sort": 0,
+                      "specification": {
+                        "quantities": [
+                          500,
+                          1000
+                        ],
+                        "spec": {
+                          "material": "kraft 150 gsm (fake)"
+                        }
+                      }
+                    }
+                  ],
+                  "notes": "",
+                  "status": "draft",
+                  "submittedAt": null,
+                  "targetDate": "2026-11-15"
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/RfqBasketDto"
+                }
+              }
+            },
+            "description": "Draft",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "400": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.bad_request": {
+                    "$ref": "#/components/examples/problem.http.bad_request"
+                  },
+                  "http.malformed_json": {
+                    "$ref": "#/components/examples/problem.http.malformed_json"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.bad_request`, `http.malformed_json`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.unauthenticated": {
+                    "$ref": "#/components/examples/problem.auth.unauthenticated"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.unauthenticated`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.forbidden": {
+                    "$ref": "#/components/examples/problem.auth.forbidden"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.forbidden`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "validation.failed": {
+                    "$ref": "#/components/examples/problem.validation.failed"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `validation.failed`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "customer": []
+          }
+        ],
+        "summary": "Set the basket’s delivery and notes",
+        "tags": [
+          "store.rfqs"
+        ]
+      }
+    },
+    "/v1/store/rfq-baskets/draft/actions/discard": {
+      "post": {
+        "description": "The next item starts a new draft (D-301).\n\nImplements: D-301, D-100, D-183.",
+        "operationId": "store.rfqBaskets.discard",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Discarded",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.unauthenticated": {
+                    "$ref": "#/components/examples/problem.auth.unauthenticated"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.unauthenticated`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.forbidden": {
+                    "$ref": "#/components/examples/problem.auth.forbidden"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.forbidden`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "404": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.not_found": {
+                    "$ref": "#/components/examples/problem.http.not_found"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.not_found`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "customer": []
+          }
+        ],
+        "summary": "Discard my draft basket",
+        "tags": [
+          "store.rfqs"
+        ]
+      }
+    },
+    "/v1/store/rfq-baskets/draft/actions/submit": {
+      "post": {
+        "description": "Every item is checked again (errors under `items[i]`), then in one transaction the basket is numbered, one RFQ per item is created with the basket’s delivery, target date and notes, and one conversation opens for the basket (D-301). CS then quotes each item like a single RFQ.\n\nImplements: D-301, D-100, D-183.",
+        "operationId": "store.rfqBaskets.submit",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/IdempotencyKey"
+          },
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "basketCode": "RB-2610-00001",
+                  "conversationId": null,
+                  "createdAt": "2026-10-04T10:00:00+07:00",
+                  "deliveryPostcode": "10110",
+                  "id": "0192f3a0-7c1e-7d2a-9b1f-0000000e7401",
+                  "items": [
+                    {
+                      "design": null,
+                      "id": "0192f3a0-7c1e-7d2a-9b1f-0000000e7402",
+                      "productType": {
+                        "code": "paper_bag",
+                        "id": "0192f3a0-7c1e-7d2a-9b1f-0000000e7404",
+                        "nameEn": "Paper bag",
+                        "nameTh": "ถุงกระดาษ"
+                      },
+                      "rfq": null,
+                      "sort": 0,
+                      "specification": {
+                        "quantities": [
+                          500,
+                          1000
+                        ],
+                        "spec": {
+                          "material": "kraft 150 gsm (fake)"
+                        }
+                      }
+                    }
+                  ],
+                  "notes": "",
+                  "status": "submitted",
+                  "submittedAt": null,
+                  "targetDate": "2026-11-15"
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/RfqBasketDto"
+                }
+              }
+            },
+            "description": "Submitted",
+            "headers": {
+              "Idempotent-Replayed": {
+                "$ref": "#/components/headers/IdempotentReplayed"
+              },
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "400": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "idempotency.key_invalid": {
+                    "$ref": "#/components/examples/problem.idempotency.key_invalid"
+                  },
+                  "idempotency.key_required": {
+                    "$ref": "#/components/examples/problem.idempotency.key_required"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `idempotency.key_invalid`, `idempotency.key_required`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.unauthenticated": {
+                    "$ref": "#/components/examples/problem.auth.unauthenticated"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.unauthenticated`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.forbidden": {
+                    "$ref": "#/components/examples/problem.auth.forbidden"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.forbidden`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "404": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.not_found": {
+                    "$ref": "#/components/examples/problem.http.not_found"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.not_found`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "409": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "idempotency.in_progress": {
+                    "$ref": "#/components/examples/problem.idempotency.in_progress"
+                  },
+                  "numbering.series_missing": {
+                    "$ref": "#/components/examples/problem.numbering.series_missing"
+                  },
+                  "rfq_baskets.changed": {
+                    "$ref": "#/components/examples/problem.rfq_baskets.changed"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `idempotency.in_progress`, `numbering.series_missing`, `rfq_baskets.changed`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "idempotency.key_reused": {
+                    "$ref": "#/components/examples/problem.idempotency.key_reused"
+                  },
+                  "specs.unit_not_accepted": {
+                    "$ref": "#/components/examples/problem.specs.unit_not_accepted"
+                  },
+                  "validation.failed": {
+                    "$ref": "#/components/examples/problem.validation.failed"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `idempotency.key_reused`, `specs.unit_not_accepted`, `validation.failed`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "customer": []
+          }
+        ],
+        "summary": "Submit my basket",
+        "tags": [
+          "store.rfqs"
+        ]
+      }
+    },
+    "/v1/store/rfq-baskets/draft/items": {
+      "post": {
+        "description": "The store RFQ form of a product type (`store.rfqs.getForm`: spec fields checked against its schema, sizes in mm, up to 10 quantities, my files, a published style, a target price) and optionally one of my design versions; up to 20 items (D-301, D-183).\n\nImplements: D-301, D-100, D-183.",
+        "operationId": "store.rfqBaskets.addItem",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/IdempotencyKey"
+          },
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "examples": {
+                "default": {
+                  "value": {
+                    "heightMm": 320,
+                    "lengthMm": 250,
+                    "measurementBasis": "internal",
+                    "productTypeCode": "paper_bag",
+                    "quantities": [
+                      500,
+                      1000
+                    ],
+                    "spec": {
+                      "handles": "twisted paper",
+                      "material": "kraft 150 gsm (fake)",
+                      "print": "1 colour one side"
+                    },
+                    "widthMm": 120
+                  }
+                }
+              },
+              "schema": {
+                "$ref": "#/components/schemas/RfqBasketItemInputDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "basketCode": null,
+                  "conversationId": null,
+                  "createdAt": "2026-10-04T10:00:00+07:00",
+                  "deliveryPostcode": "10110",
+                  "id": "0192f3a0-7c1e-7d2a-9b1f-0000000e7401",
+                  "items": [
+                    {
+                      "design": null,
+                      "id": "0192f3a0-7c1e-7d2a-9b1f-0000000e7402",
+                      "productType": {
+                        "code": "paper_bag",
+                        "id": "0192f3a0-7c1e-7d2a-9b1f-0000000e7404",
+                        "nameEn": "Paper bag",
+                        "nameTh": "ถุงกระดาษ"
+                      },
+                      "rfq": null,
+                      "sort": 0,
+                      "specification": {
+                        "quantities": [
+                          500,
+                          1000
+                        ],
+                        "spec": {
+                          "material": "kraft 150 gsm (fake)"
+                        }
+                      }
+                    }
+                  ],
+                  "notes": "",
+                  "status": "draft",
+                  "submittedAt": null,
+                  "targetDate": "2026-11-15"
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/RfqBasketDto"
+                }
+              }
+            },
+            "description": "Draft",
+            "headers": {
+              "Idempotent-Replayed": {
+                "$ref": "#/components/headers/IdempotentReplayed"
+              },
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "400": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.bad_request": {
+                    "$ref": "#/components/examples/problem.http.bad_request"
+                  },
+                  "http.malformed_json": {
+                    "$ref": "#/components/examples/problem.http.malformed_json"
+                  },
+                  "idempotency.key_invalid": {
+                    "$ref": "#/components/examples/problem.idempotency.key_invalid"
+                  },
+                  "idempotency.key_required": {
+                    "$ref": "#/components/examples/problem.idempotency.key_required"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.bad_request`, `http.malformed_json`, `idempotency.key_invalid`, `idempotency.key_required`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.unauthenticated": {
+                    "$ref": "#/components/examples/problem.auth.unauthenticated"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.unauthenticated`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.forbidden": {
+                    "$ref": "#/components/examples/problem.auth.forbidden"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.forbidden`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "409": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "idempotency.in_progress": {
+                    "$ref": "#/components/examples/problem.idempotency.in_progress"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `idempotency.in_progress`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "idempotency.key_reused": {
+                    "$ref": "#/components/examples/problem.idempotency.key_reused"
+                  },
+                  "specs.unit_not_accepted": {
+                    "$ref": "#/components/examples/problem.specs.unit_not_accepted"
+                  },
+                  "validation.failed": {
+                    "$ref": "#/components/examples/problem.validation.failed"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `idempotency.key_reused`, `specs.unit_not_accepted`, `validation.failed`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "customer": []
+          }
+        ],
+        "summary": "Add an item to my basket",
+        "tags": [
+          "store.rfqs"
+        ]
+      }
+    },
+    "/v1/store/rfq-baskets/draft/items/{itemId}": {
+      "delete": {
+        "description": "Only while the basket is a draft (D-301).\n\nImplements: D-301, D-100, D-183.",
+        "operationId": "store.rfqBaskets.removeItem",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "itemId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "basketCode": null,
+                  "conversationId": null,
+                  "createdAt": "2026-10-04T10:00:00+07:00",
+                  "deliveryPostcode": "10110",
+                  "id": "0192f3a0-7c1e-7d2a-9b1f-0000000e7401",
+                  "items": [],
+                  "notes": "",
+                  "status": "draft",
+                  "submittedAt": null,
+                  "targetDate": "2026-11-15"
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/RfqBasketDto"
+                }
+              }
+            },
+            "description": "Draft",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.unauthenticated": {
+                    "$ref": "#/components/examples/problem.auth.unauthenticated"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.unauthenticated`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.forbidden": {
+                    "$ref": "#/components/examples/problem.auth.forbidden"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.forbidden`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "404": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.not_found": {
+                    "$ref": "#/components/examples/problem.http.not_found"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.not_found`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "validation.failed": {
+                    "$ref": "#/components/examples/problem.validation.failed"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `validation.failed`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "customer": []
+          }
+        ],
+        "summary": "Remove an item from my basket",
+        "tags": [
+          "store.rfqs"
+        ]
+      },
+      "put": {
+        "description": "Replaces the item, checked like adding it (D-301).\n\nImplements: D-301, D-100, D-183.",
+        "operationId": "store.rfqBaskets.updateItem",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "itemId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "examples": {
+                "default": {
+                  "value": {
+                    "heightMm": 320,
+                    "lengthMm": 250,
+                    "measurementBasis": "internal",
+                    "productTypeCode": "paper_bag",
+                    "quantities": [
+                      500,
+                      1000
+                    ],
+                    "spec": {
+                      "handles": "twisted paper",
+                      "material": "kraft 150 gsm (fake)",
+                      "print": "1 colour one side"
+                    },
+                    "widthMm": 120
+                  }
+                }
+              },
+              "schema": {
+                "$ref": "#/components/schemas/RfqBasketItemInputDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "basketCode": null,
+                  "conversationId": null,
+                  "createdAt": "2026-10-04T10:00:00+07:00",
+                  "deliveryPostcode": "10110",
+                  "id": "0192f3a0-7c1e-7d2a-9b1f-0000000e7401",
+                  "items": [
+                    {
+                      "design": null,
+                      "id": "0192f3a0-7c1e-7d2a-9b1f-0000000e7402",
+                      "productType": {
+                        "code": "paper_bag",
+                        "id": "0192f3a0-7c1e-7d2a-9b1f-0000000e7404",
+                        "nameEn": "Paper bag",
+                        "nameTh": "ถุงกระดาษ"
+                      },
+                      "rfq": null,
+                      "sort": 0,
+                      "specification": {
+                        "quantities": [
+                          500,
+                          1000
+                        ],
+                        "spec": {
+                          "material": "kraft 150 gsm (fake)"
+                        }
+                      }
+                    }
+                  ],
+                  "notes": "",
+                  "status": "draft",
+                  "submittedAt": null,
+                  "targetDate": "2026-11-15"
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/RfqBasketDto"
+                }
+              }
+            },
+            "description": "Draft",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "400": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.bad_request": {
+                    "$ref": "#/components/examples/problem.http.bad_request"
+                  },
+                  "http.malformed_json": {
+                    "$ref": "#/components/examples/problem.http.malformed_json"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.bad_request`, `http.malformed_json`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.unauthenticated": {
+                    "$ref": "#/components/examples/problem.auth.unauthenticated"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.unauthenticated`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.forbidden": {
+                    "$ref": "#/components/examples/problem.auth.forbidden"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.forbidden`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "404": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.not_found": {
+                    "$ref": "#/components/examples/problem.http.not_found"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.not_found`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "specs.unit_not_accepted": {
+                    "$ref": "#/components/examples/problem.specs.unit_not_accepted"
+                  },
+                  "validation.failed": {
+                    "$ref": "#/components/examples/problem.validation.failed"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `specs.unit_not_accepted`, `validation.failed`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "customer": []
+          }
+        ],
+        "summary": "Change an item of my basket",
+        "tags": [
+          "store.rfqs"
+        ]
+      }
+    },
+    "/v1/store/rfq-baskets/{basketId}": {
+      "get": {
+        "description": "With each item’s RFQ, Packio’s quotations per quantity and its acceptance; others’ → 404 (D-301).\n\nImplements: D-301, D-100, D-183.",
+        "operationId": "store.rfqBaskets.get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "basketId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "basketCode": null,
+                  "conversationId": null,
+                  "createdAt": "2026-10-04T10:00:00+07:00",
+                  "deliveryPostcode": "10110",
+                  "id": "0192f3a0-7c1e-7d2a-9b1f-0000000e7401",
+                  "items": [
+                    {
+                      "design": null,
+                      "id": "0192f3a0-7c1e-7d2a-9b1f-0000000e7402",
+                      "productType": {
+                        "code": "paper_bag",
+                        "id": "0192f3a0-7c1e-7d2a-9b1f-0000000e7404",
+                        "nameEn": "Paper bag",
+                        "nameTh": "ถุงกระดาษ"
+                      },
+                      "rfq": null,
+                      "sort": 0,
+                      "specification": {
+                        "quantities": [
+                          500,
+                          1000
+                        ],
+                        "spec": {
+                          "material": "kraft 150 gsm (fake)"
+                        }
+                      }
+                    }
+                  ],
+                  "notes": "",
+                  "status": "draft",
+                  "submittedAt": null,
+                  "targetDate": "2026-11-15"
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/RfqBasketDto"
+                }
+              }
+            },
+            "description": "Basket",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.unauthenticated": {
+                    "$ref": "#/components/examples/problem.auth.unauthenticated"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.unauthenticated`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.forbidden": {
+                    "$ref": "#/components/examples/problem.auth.forbidden"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.forbidden`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "404": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.not_found": {
+                    "$ref": "#/components/examples/problem.http.not_found"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.not_found`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "validation.failed": {
+                    "$ref": "#/components/examples/problem.validation.failed"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `validation.failed`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "customer": []
+          }
+        ],
+        "summary": "One of my RFQ baskets",
+        "tags": [
+          "store.rfqs"
+        ]
+      }
+    },
+    "/v1/store/rfq-baskets/{basketId}/actions/accept-items": {
+      "post": {
+        "description": "For each chosen item: one quantity of its sent, valid quotation. Every choice is checked first; then each becomes a quotation (as `store.rfqs.accept`) and a cart line at the quoted price, locked until the quotation’s validity, delivered to my default address (D-301, D-051).\n\nImplements: D-301, D-100, D-183, D-051.",
+        "operationId": "store.rfqBaskets.acceptItems",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "basketId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/IdempotencyKey"
+          },
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "examples": {
+                "default": {
+                  "value": {
+                    "items": [
+                      {
+                        "itemId": "0192f3a0-7c1e-7d2a-9b1f-0000000e7402",
+                        "quantity": 1000,
+                        "rfqQuoteId": "0192f3a0-7c1e-7d2a-9b1f-0000000e7406"
+                      }
+                    ]
+                  }
+                }
+              },
+              "schema": {
+                "$ref": "#/components/schemas/AcceptBasketItemsDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "basket": {
+                    "basketCode": null,
+                    "conversationId": null,
+                    "createdAt": "2026-10-04T10:00:00+07:00",
+                    "deliveryPostcode": "10110",
+                    "id": "0192f3a0-7c1e-7d2a-9b1f-0000000e7401",
+                    "items": [
+                      {
+                        "design": null,
+                        "id": "0192f3a0-7c1e-7d2a-9b1f-0000000e7402",
+                        "productType": {
+                          "code": "paper_bag",
+                          "id": "0192f3a0-7c1e-7d2a-9b1f-0000000e7404",
+                          "nameEn": "Paper bag",
+                          "nameTh": "ถุงกระดาษ"
+                        },
+                        "rfq": null,
+                        "sort": 0,
+                        "specification": {
+                          "quantities": [
+                            500,
+                            1000
+                          ],
+                          "spec": {
+                            "material": "kraft 150 gsm (fake)"
+                          }
+                        }
+                      }
+                    ],
+                    "notes": "",
+                    "status": "submitted",
+                    "submittedAt": null,
+                    "targetDate": "2026-11-15"
+                  },
+                  "cart": {
+                    "channel": "web",
+                    "codes": [
+                      {
+                        "code": "WELCOME10",
+                        "rejectReason": null,
+                        "status": "validated"
+                      }
+                    ],
+                    "currency": "THB",
+                    "customerId": "0192f3a0-7c1e-7d2a-9b1f-0000000c0001",
+                    "id": "0192f3a0-7c1e-7d2a-9b1f-0000000ca001",
+                    "items": [
+                      {
+                        "designDocumentId": null,
+                        "designFeeAmount": "0.00",
+                        "designNote": null,
+                        "designOption": "own_file",
+                        "designVersionNo": null,
+                        "destinations": [
+                          {
+                            "address": {
+                              "districtNameTh": null,
+                              "line1": "99/9 ถนนตัวอย่าง",
+                              "line2": null,
+                              "phone": "+66810001234",
+                              "postcode": "10110",
+                              "provinceId": "0192f3a0-7c1e-7d2a-9b1f-0000000c0004",
+                              "provinceNameTh": "กรุงเทพมหานคร",
+                              "recipientName": "สมชาย ทดสอบ",
+                              "subdistrictId": null,
+                              "subdistrictNameTh": null
+                            },
+                            "addressId": "0192f3a0-7c1e-7d2a-9b1f-0000000c0002",
+                            "id": "0192f3a0-7c1e-7d2a-9b1f-0000000ca003",
+                            "quantity": 1000
+                          }
+                        ],
+                        "destinationsComplete": true,
+                        "id": "0192f3a0-7c1e-7d2a-9b1f-0000000ca002",
+                        "mockupOption": "none",
+                        "pendingReprice": null,
+                        "priceLocked": true,
+                        "priceLockedUntil": "2026-10-16T10:00:00+07:00",
+                        "productGrossAmount": "13380.00",
+                        "productTypeCode": "folding_carton",
+                        "quantity": 1000,
+                        "quoteCode": null,
+                        "quoteId": "0192f3a0-7c1e-7d2a-9b1f-0000000ca004",
+                        "quoteOptionId": "0192f3a0-7c1e-7d2a-9b1f-0000000ca005",
+                        "quoteShippingAmount": "128.40",
+                        "reorderOf": null,
+                        "reusesApprovedArtwork": false,
+                        "source": "instant",
+                        "summary": {
+                          "product": {
+                            "imageUrl": "/v1/store/catalog/images/0192f3a0-7c1e-7d2a-9b1f-00000000c009",
+                            "nameEn": "Tuck-end box",
+                            "nameTh": "กล่องฝาเสียบ",
+                            "slug": "tuck-end-box"
+                          },
+                          "productTypeCode": "folding_carton",
+                          "productTypeNameEn": "Folding carton",
+                          "productTypeNameTh": "กล่องกระดาษแข็ง",
+                          "specs": [
+                            {
+                              "key": "style",
+                              "labelEn": "Style",
+                              "labelTh": "แบบกล่อง",
+                              "valueEn": "ฝาเสียบ",
+                              "valueTh": "ฝาเสียบ"
+                            },
+                            {
+                              "key": "size",
+                              "labelEn": "Size",
+                              "labelTh": "ขนาด",
+                              "valueEn": "60 × 60 × 150 mm",
+                              "valueTh": "60 × 60 × 150 มม."
+                            },
+                            {
+                              "key": "material",
+                              "labelEn": "Material",
+                              "labelTh": "วัสดุ",
+                              "valueEn": "Art card 350 gsm",
+                              "valueTh": "อาร์ตการ์ด 350 แกรม"
+                            }
+                          ],
+                          "unit": "piece"
+                        },
+                        "unitPrice": "13.38"
+                      }
+                    ],
+                    "productGrossAmount": "13380.00",
+                    "updatedAt": "2026-10-01T10:00:00+07:00"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/AcceptedBasketDto"
+                }
+              }
+            },
+            "description": "Accepted",
+            "headers": {
+              "Idempotent-Replayed": {
+                "$ref": "#/components/headers/IdempotentReplayed"
+              },
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "400": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.bad_request": {
+                    "$ref": "#/components/examples/problem.http.bad_request"
+                  },
+                  "http.malformed_json": {
+                    "$ref": "#/components/examples/problem.http.malformed_json"
+                  },
+                  "idempotency.key_invalid": {
+                    "$ref": "#/components/examples/problem.idempotency.key_invalid"
+                  },
+                  "idempotency.key_required": {
+                    "$ref": "#/components/examples/problem.idempotency.key_required"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.bad_request`, `http.malformed_json`, `idempotency.key_invalid`, `idempotency.key_required`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.unauthenticated": {
+                    "$ref": "#/components/examples/problem.auth.unauthenticated"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.unauthenticated`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.forbidden": {
+                    "$ref": "#/components/examples/problem.auth.forbidden"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.forbidden`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "404": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.not_found": {
+                    "$ref": "#/components/examples/problem.http.not_found"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.not_found`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "409": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "cart.item_exists": {
+                    "$ref": "#/components/examples/problem.cart.item_exists"
+                  },
+                  "idempotency.in_progress": {
+                    "$ref": "#/components/examples/problem.idempotency.in_progress"
+                  },
+                  "rfq.quote_not_open": {
+                    "$ref": "#/components/examples/problem.rfq.quote_not_open"
+                  },
+                  "rfq_baskets.not_submitted": {
+                    "$ref": "#/components/examples/problem.rfq_baskets.not_submitted"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `cart.item_exists`, `idempotency.in_progress`, `rfq.quote_not_open`, `rfq_baskets.not_submitted`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "idempotency.key_reused": {
+                    "$ref": "#/components/examples/problem.idempotency.key_reused"
+                  },
+                  "validation.failed": {
+                    "$ref": "#/components/examples/problem.validation.failed"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `idempotency.key_reused`, `validation.failed`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "customer": []
+          }
+        ],
+        "summary": "Accept quoted items into my cart",
+        "tags": [
+          "store.rfqs"
         ]
       }
     },

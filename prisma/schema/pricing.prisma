@@ -793,6 +793,8 @@ model Rfq {
   /// D-247: the customer's target per unit (THB incl. VAT, excl. shipping); staff only, never shown to a partner (D-190).
   targetPricePerUnit       Decimal?         @map("target_price_per_unit") @db.Decimal(14, 2)
   acceptedQuoteId          BigInt?          @unique(map: "ux_rfqs__accepted_quote_id") @map("accepted_quote_id")
+  /// D-301 the basket the request was submitted with (one RFQ per basket item).
+  basketId                 BigInt?          @map("basket_id")
   submittedAt              DateTime         @default(now()) @map("submitted_at") @db.Timestamptz(6)
   closedAt                 DateTime?        @map("closed_at") @db.Timestamptz(6)
   createdAt                DateTime         @default(now()) @map("created_at") @db.Timestamptz(6)
@@ -810,6 +812,8 @@ model Rfq {
   routedFromQuote       Quote?                   @relation("RfqRoutedFromQuote", fields: [routedFromQuoteId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_rfqs__routed_from_quote_id")
   styleVariant          StyleVariant?            @relation("RfqStyleVariant", fields: [styleVariantId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_rfqs__style_variant_id")
   designDocumentVersion DesignDocumentVersion?   @relation("RfqDesignVersion", fields: [designDocumentVersionId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_rfqs__design_document_version_id")
+  basket                RfqBasket?               @relation("RfqBasketRfqs", fields: [basketId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_rfqs__basket_id")
+  basketItem            RfqBasketItem?           @relation("RfqBasketItemRfq")
   tiers                 RfqQuantityTier[]
   messages              RfqMessage[]
   consultations         RfqFactoryConsultation[]
@@ -834,7 +838,75 @@ model Rfq {
   @@index([closedAt], map: "ix_rfqs__closed_at", where: raw("(closed_at IS NOT NULL)"))
   @@index([rfqCode(ops: raw("gin_trgm_ops"))], type: Gin, map: "ix_rfqs__rfq_code_trgm")
   @@index([styleVariantId], map: "ix_rfqs__style_variant_id")
+  @@index([basketId], map: "ix_rfqs__basket_id")
   @@map("rfqs")
+}
+
+enum RfqBasketStatus {
+  draft
+  submitted
+  discarded
+
+  @@map("rfq_basket_status")
+}
+
+/**
+ * D-301 a multi-item RFQ: a draft the customer fills item by item, submitted once — every item becomes an RFQ (same
+ * delivery postcode, target date and notes) with one conversation for the basket.
+ */
+model RfqBasket {
+  id               BigInt          @id(map: "pk_rfq_baskets") @default(autoincrement())
+  publicId         String          @unique(map: "ux_rfq_baskets__public_id") @default(dbgenerated("uuidv7()")) @map("public_id") @db.Uuid
+  /// Numbered on submission.
+  basketCode       String?         @unique(map: "ux_rfq_baskets__basket_code") @map("basket_code")
+  customerUserId   BigInt          @map("customer_user_id")
+  channel          SalesChannel    @default(web)
+  status           RfqBasketStatus @default(draft)
+  deliveryPostcode String?         @map("delivery_postcode") @db.Char(5)
+  targetDate       DateTime?       @map("target_date") @db.Date
+  notes            String          @default("")
+  conversationId   BigInt?         @unique(map: "ux_rfq_baskets__conversation_id") @map("conversation_id")
+  submittedAt      DateTime?       @map("submitted_at") @db.Timestamptz(6)
+  createdAt        DateTime        @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt        DateTime        @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+  rowVersion       Int             @default(1) @map("row_version")
+
+  customer     User            @relation("RfqBasketCustomer", fields: [customerUserId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_rfq_baskets__customer_user_id")
+  conversation Conversation?   @relation("RfqBasketConversation", fields: [conversationId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_rfq_baskets__conversation_id")
+  items        RfqBasketItem[]
+  rfqs         Rfq[]           @relation("RfqBasketRfqs")
+
+  /// One draft per customer and channel.
+  @@unique([customerUserId, channel], map: "ux_rfq_baskets__one_draft", where: raw("(status = 'draft'::rfq_basket_status)"))
+  @@index([customerUserId, createdAt(sort: Desc)], map: "ix_rfq_baskets__customer_user_id__created_at")
+  @@map("rfq_baskets")
+}
+
+/**
+ * D-301 one item of a basket: the RFQ specification snapshot, an optional design version, then its RFQ.
+ */
+model RfqBasketItem {
+  id                      BigInt   @id(map: "pk_rfq_basket_items") @default(autoincrement())
+  publicId                String   @unique(map: "ux_rfq_basket_items__public_id") @default(dbgenerated("uuidv7()")) @map("public_id") @db.Uuid
+  basketId                BigInt   @map("basket_id")
+  sort                    Int      @default(0) @db.SmallInt
+  productTypeId           BigInt   @map("product_type_id")
+  /// The store RFQ form of the product type as submitted (`spec`, sizes in mm, basis, quantities, files, style, target).
+  specification           Json
+  designDocumentVersionId BigInt?  @map("design_document_version_id")
+  rfqId                   BigInt?  @unique(map: "ux_rfq_basket_items__rfq_id") @map("rfq_id")
+  createdAt               DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt               DateTime @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  basket                RfqBasket              @relation(fields: [basketId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_rfq_basket_items__basket_id")
+  productType           ProductType            @relation("RfqBasketItemProductType", fields: [productTypeId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_rfq_basket_items__product_type_id")
+  designDocumentVersion DesignDocumentVersion? @relation("RfqBasketItemDesignVersion", fields: [designDocumentVersionId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_rfq_basket_items__design_document_version_id")
+  rfq                   Rfq?                   @relation("RfqBasketItemRfq", fields: [rfqId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_rfq_basket_items__rfq_id")
+
+  @@index([basketId, sort], map: "ix_rfq_basket_items__basket_id__sort")
+  @@index([productTypeId], map: "ix_rfq_basket_items__product_type_id")
+  @@index([designDocumentVersionId], map: "ix_rfq_basket_items__design_document_version_id")
+  @@map("rfq_basket_items")
 }
 
 model RfqQuantityTier {

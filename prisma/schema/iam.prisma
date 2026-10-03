@@ -567,6 +567,7 @@ model User {
   podReviews                 ProofOfDeliveryReview[]   @relation("ProofOfDeliveryReviewedBy")
   conversationMessagesSent   ConversationMessage[]     @relation("ConversationMessageSender")
   conversationParticipations ConversationParticipant[] @relation("ConversationParticipantUser")
+  rfqBaskets                 RfqBasket[]               @relation("RfqBasketCustomer")
   cannedResponsesCreated     CannedResponse[]          @relation("CannedResponseCreatedBy")
   cannedResponsesUpdated     CannedResponse[]          @relation("CannedResponseUpdatedBy")
   // --- end Fulfilment B4.6

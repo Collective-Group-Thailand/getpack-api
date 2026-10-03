@@ -52,6 +52,7 @@ import { ReordersModule } from '@modules/reorders/reorders.module';
 import { LaunchpadModule } from '@modules/launchpad/launchpad.module';
 import { ReportsModule } from '@modules/reports/reports.module';
 import { RfqModule } from '@modules/rfq/rfq.module';
+import { RfqBasketsModule } from '@modules/rfq/rfq-baskets.module';
 import { SamplesModule } from '@modules/samples/samples.module';
 import { ShippingModule } from '@modules/shipping/shipping.module';
 import { StudioModule } from '@modules/studio/studio.module';
@@ -121,6 +122,7 @@ import { LoggerModule } from 'nestjs-pino';
     StylesModule,
     StudioModule,
     RfqModule,
+    RfqBasketsModule,
     CustomersModule,
     CartsModule,
     CheckoutModule,

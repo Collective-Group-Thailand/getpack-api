@@ -1,5 +1,6 @@
 import { type Type } from '@nestjs/common';
 
+import { StoreRfqBasketsController } from '../rfq/rfq-baskets.controller';
 import {
   AdminRfqsController,
   PartnerRfqConsultationsController,
@@ -15,6 +16,7 @@ export const QUOTES_STORE_CONTROLLERS: Type<unknown>[] = [
   StoreConfigurationDraftsController,
   StoreRfqFormsController,
   StoreRfqsController,
+  StoreRfqBasketsController,
 ];
 
 /** `/v1/admin/*` controllers of the quotes & RFQ context. */

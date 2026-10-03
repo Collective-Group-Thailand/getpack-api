@@ -100,6 +100,22 @@ export interface SubmitRfqInput {
   styleVariantCode?: string | null;
 }
 
+/** A checked submission (`RfqsService.prepare`), written by `RfqsService.create`. */
+export interface RfqPlan {
+  customerUserId: bigint;
+  channel: SalesChannel;
+  input: SubmitRfqInput;
+  createdBy: UserActor | undefined;
+  type: { id: bigint; code: string; rfqSpecSchemaVersion: number };
+  routedFrom: bigint | null;
+  styleVariantId: bigint | null;
+  files: bigint[];
+  provinceId: bigint | null;
+  now: Date;
+  slaDueAt: Date | null;
+  entityId: bigint;
+}
+
 export interface RfqQuoteLineInput {
   quantity: number;
   unitPrice: string;
@@ -174,6 +190,21 @@ export class RfqsService implements OnModuleInit {
       inTx?: (tx: Tx, rfq: { id: bigint; publicId: string }) => Promise<void>;
     } = {},
   ): Promise<RfqRow> {
+    const plan = await this.prepare(customerUserId, channel, input, createdBy);
+    return this.prisma.withTx(async (tx) => {
+      const rfq = await this.create(tx, plan, { routedFromQuoteId: hooks.routedFromQuoteId ?? null });
+      if (hooks.inTx) await hooks.inTx(tx, rfq);
+      return this.load(tx, rfq.id);
+    });
+  }
+
+  /** Every check of a submission, outside any transaction (D-301: a basket checks all its items first). */
+  async prepare(
+    customerUserId: bigint,
+    channel: SalesChannel,
+    input: SubmitRfqInput,
+    createdBy?: UserActor,
+  ): Promise<RfqPlan> {
     // D-183: sizes are millimetres; a spec naming a unit is refused, never read in it.
     refuseUnits(input.spec, 'spec');
     const type = await this.prisma.productType.findFirst({
@@ -234,55 +265,82 @@ export class RfqsService implements OnModuleInit {
     const now = new Date();
     const slaDueAt = await this.slaDueAt(type.id, now);
     const entityId = await this.entities.defaultEntityId();
-    return this.prisma.withTx(async (tx) => {
-      const rfq = await tx.rfq.create({
+    return {
+      customerUserId,
+      channel,
+      input,
+      createdBy,
+      type,
+      routedFrom,
+      styleVariantId: styleVariant?.id ?? null,
+      files,
+      provinceId: province?.district.provinceId ?? null,
+      now,
+      slaDueAt,
+      entityId,
+    };
+  }
+
+  /** Writes a prepared submission in the caller's transaction. */
+  async create(
+    tx: Tx,
+    plan: RfqPlan,
+    extra: {
+      routedFromQuoteId?: bigint | null;
+      basketId?: bigint | null;
+      designDocumentVersionId?: bigint | null;
+    } = {},
+  ): Promise<{ id: bigint; publicId: string; rfqCode: string }> {
+    const { customerUserId, channel, input, createdBy, type, routedFrom, files, now, slaDueAt, entityId } =
+      plan;
+    const rfq = await tx.rfq.create({
+      data: {
+        rfqCode: await this.numbering.next(tx, 'rfq', now),
+        entityId,
+        channel,
+        customerUserId,
+        createdById: createdBy?.userId ?? null,
+        productTypeId: type.id,
+        spec: input.spec as Prisma.InputJsonValue,
+        specSchemaVersion: type.rfqSpecSchemaVersion,
+        routedFromCalculateLogId: routedFrom,
+        routedFromQuoteId: extra.routedFromQuoteId ?? null,
+        styleVariantId: plan.styleVariantId,
+        basketId: extra.basketId ?? null,
+        designDocumentVersionId: extra.designDocumentVersionId ?? null,
+        targetPricePerUnit: input.targetPricePerUnit ?? null,
+        lengthMm: input.lengthMm ?? null,
+        widthMm: input.widthMm ?? null,
+        heightMm: input.heightMm ?? null,
+        measurementBasis: input.measurementBasis ?? 'internal',
+        targetDate: input.targetDate ? new Date(`${input.targetDate}T00:00:00Z`) : null,
+        deliveryPostcode: input.deliveryPostcode,
+        provinceId: plan.provinceId,
+        notes: input.notes ?? '',
+        slaDueAt,
+        submittedAt: now,
+        tiers: { create: [...input.quantities].sort((a, b) => a - b).map((quantity) => ({ quantity })) },
+      },
+    });
+    for (const [index, fileId] of files.entries()) {
+      await tx.attachment.create({
         data: {
-          rfqCode: await this.numbering.next(tx, 'rfq', now),
-          entityId,
-          channel,
-          customerUserId,
-          createdById: createdBy?.userId ?? null,
-          productTypeId: type.id,
-          spec: input.spec as Prisma.InputJsonValue,
-          specSchemaVersion: type.rfqSpecSchemaVersion,
-          routedFromCalculateLogId: routedFrom,
-          routedFromQuoteId: hooks.routedFromQuoteId ?? null,
-          styleVariantId: styleVariant?.id ?? null,
-          targetPricePerUnit: input.targetPricePerUnit ?? null,
-          lengthMm: input.lengthMm ?? null,
-          widthMm: input.widthMm ?? null,
-          heightMm: input.heightMm ?? null,
-          measurementBasis: input.measurementBasis ?? 'internal',
-          targetDate: input.targetDate ? new Date(`${input.targetDate}T00:00:00Z`) : null,
-          deliveryPostcode: input.deliveryPostcode,
-          provinceId: province?.district.provinceId ?? null,
-          notes: input.notes ?? '',
-          slaDueAt,
-          submittedAt: now,
-          tiers: { create: [...input.quantities].sort((a, b) => a - b).map((quantity) => ({ quantity })) },
+          fileObjectId: fileId,
+          subjectType: 'rfq',
+          subjectId: rfq.id,
+          role: 'rfq.spec_file',
+          sort: index,
+          createdById: createdBy?.userId ?? customerUserId,
         },
       });
-      for (const [index, fileId] of files.entries()) {
-        await tx.attachment.create({
-          data: {
-            fileObjectId: fileId,
-            subjectType: 'rfq',
-            subjectId: rfq.id,
-            role: 'rfq.spec_file',
-            sort: index,
-            createdById: createdBy?.userId ?? customerUserId,
-          },
-        });
-      }
-      await this.record(tx, rfq.publicId, 'rfq.submitted', {
-        rfqCode: rfq.rfqCode,
-        productTypeCode: type.code,
-        quantities: input.quantities.length,
-        slaDueAt: slaDueAt?.toISOString() ?? null,
-      });
-      if (hooks.inTx) await hooks.inTx(tx, rfq);
-      return this.load(tx, rfq.id);
+    }
+    await this.record(tx, rfq.publicId, 'rfq.submitted', {
+      rfqCode: rfq.rfqCode,
+      productTypeCode: type.code,
+      quantities: input.quantities.length,
+      slaDueAt: slaDueAt?.toISOString() ?? null,
     });
+    return rfq;
   }
 
   async forCustomer(customerUserId: bigint, publicId: string, db: Tx = this.prisma): Promise<RfqRow> {

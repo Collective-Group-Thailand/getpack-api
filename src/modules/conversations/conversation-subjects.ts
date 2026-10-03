@@ -60,9 +60,15 @@ export async function ownSubject(
         ? { id: r.id, publicId: r.publicId, label: r.rfqCode, companyId: null }
         : invalid(path, 'not an RFQ of the customer');
     }
-    case 'rfq_basket':
-      // Threads of RFQ baskets open with the basket's submission (U5.B3), never from here.
-      return invalid(path, 'an RFQ basket’s conversation opens when the basket is submitted');
+    case 'rfq_basket': {
+      const b = await db.rfqBasket.findFirst({
+        where: { publicId, customerUserId, status: 'submitted' },
+        select: { id: true, publicId: true, basketCode: true },
+      });
+      return b
+        ? { id: b.id, publicId: b.publicId, label: b.basketCode ?? '', companyId: null }
+        : invalid(path, 'not a submitted RFQ basket of the customer');
+    }
   }
 }
 
@@ -90,8 +96,13 @@ export async function subjectRef(
         const r = await db.rfq.findUnique({ where: { id }, select: { publicId: true, rfqCode: true } });
         return r && { publicId: r.publicId, label: r.rfqCode };
       }
-      case 'rfq_basket':
-        return null;
+      case 'rfq_basket': {
+        const b = await db.rfqBasket.findUnique({
+          where: { id },
+          select: { publicId: true, basketCode: true },
+        });
+        return b && { publicId: b.publicId, label: b.basketCode ?? '' };
+      }
     }
   };
   const found = await pick();

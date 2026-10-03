@@ -31,6 +31,7 @@ export const DOCUMENT_TYPES = [
   'shipment',
   'rfq',
   'support_ticket',
+  'rfq_basket',
 ] as const;
 export const SEQUENCE_RESETS = ['never', 'yearly', 'monthly'] as const;
 
