@@ -19,7 +19,8 @@ const MASTER = readFileSync(
   join(__dirname, '..', '..', 'docs', 'design-tool', 'style-library-master.json'),
   'utf8',
 );
-const BASE = 'PK-TE-01';
+/** A base no other style suite uses: the suites share the e2e database (style-library, style-network). */
+const BASE = 'PK-TE-05';
 const RANGES = { paperboard: { minL: 20, maxL: 300, minW: 15, maxW: 200, minH: 20, maxH: 400 } };
 
 /** U3.B5 drawing v2, free dieline downloads and style assets end to end (D-270, D-271, D-203; fake engine). */
@@ -59,9 +60,9 @@ describe('dieline downloads and style assets (e2e, U3.B5)', () => {
     prepress = await staffToken(ctx, 'prepress');
     const base = await ctx.prisma.styleBase.findUniqueOrThrow({
       where: { code: BASE },
-      include: { recipes: true },
+      include: { recipes: { include: { importRun: true } } },
     });
-    for (const r of base.recipes.filter((x) => !x.approvedAt))
+    for (const r of base.recipes.filter((x) => !x.approvedAt && x.importRun?.createdById === user.id))
       await as(ctx, prepress)
         .post(`/v1/admin/styles/${base.publicId}/recipes/${r.publicId}/actions/approve`)
         .expect(200);

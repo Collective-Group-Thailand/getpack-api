@@ -14,6 +14,9 @@ import { FileProcessingJobs } from '../../src/platform/files/file-processing.job
 import { as, customerToken, setSetting, staffToken } from '../support/commerce-e2e';
 import { bootFulfilmentApp, factoryToken, type FulfilmentApp } from '../support/fulfilment-e2e';
 
+/** A base no other style suite gives a recipe: the suites share the e2e database. */
+const GROWTH_BASE = 'PK-TE-04';
+
 type FakeStorage = { putDirect(key: string, body: Buffer, contentType: string): void };
 
 /** U3.B6 growth loops end to end (D-272 intake, D-273 structural requests, D-274 next styles). */
@@ -77,7 +80,7 @@ describe('style library growth loops (e2e, U3.B6)', () => {
       'growth.json',
       JSON.stringify({
         schemaVersion: '1.0',
-        recipes: [{ baseCode: 'PK-TE-01', recipe: { fake: true, baseCode: 'PK-TE-01' } }],
+        recipes: [{ baseCode: GROWTH_BASE, recipe: { fake: true, baseCode: GROWTH_BASE } }],
       }),
     );
     if (!recipes.noop) await imports.apply(adminActor, recipes);
@@ -152,7 +155,7 @@ describe('style library growth loops (e2e, U3.B6)', () => {
 
     it('lets Prepress match with a deviation report, then approve as a template — final, provenance frozen', async () => {
       const recipe = await ctx.prisma.styleRecipe.findFirstOrThrow({
-        where: { base: { code: 'PK-TE-01' } },
+        where: { base: { code: GROWTH_BASE } },
         select: { publicId: true },
       });
       const matched = await as(ctx, prepress)
@@ -314,7 +317,7 @@ describe('style library growth loops (e2e, U3.B6)', () => {
       ).toBeGreaterThan(0);
       // A calculation refused for an unpublishable variant is "next styles" demand for its base.
       const variant = await ctx.prisma.styleVariant.findFirstOrThrow({
-        where: { base: { code: 'PK-TE-01' }, publishable: false },
+        where: { base: { code: GROWTH_BASE }, publishable: false },
         select: { code: true, baseId: true },
       });
       const type = await ctx.prisma.productType.findUniqueOrThrow({ where: { code: 'folding_carton' } });
@@ -340,7 +343,7 @@ describe('style library growth loops (e2e, U3.B6)', () => {
       });
       expect(demand).not.toBeNull();
       const after = await ctx.app.get(NextStylesService).report();
-      expect(after.unpublishableStyles.find((b) => b.baseCode === 'PK-TE-01')?.calculations).toBeGreaterThan(
+      expect(after.unpublishableStyles.find((b) => b.baseCode === GROWTH_BASE)?.calculations).toBeGreaterThan(
         0,
       );
       await as(ctx, cs).get('/v1/admin/analytics/next-styles').expect(403);
