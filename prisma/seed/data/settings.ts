@@ -719,6 +719,8 @@ export const SETTINGS: readonly SettingSeed[] = [
       claim_decision_overdue: 1,
       // D-300: one CS conversation past its D-221 first-response time.
       conversation_first_response_overdue: 1,
+      // D-303: one journey whose conversion fell last week.
+      journey_conversion_drops: 1,
     },
     valueSchema: { type: 'object', additionalProperties: { type: 'integer', minimum: 1 } },
     description:
@@ -1253,6 +1255,26 @@ export const SETTINGS: readonly SettingSeed[] = [
       'D-300 resolution target of a CS conversation, in business days from its first customer message (business hours D-175) — no decision yet: unset until the CS Lead sets it, no resolution due date until then',
     decisions: ['D-300', 'D-221'],
     ownerRole: 'cs_lead',
+  },
+  {
+    key: 'analytics.journey_drop_alert_pct',
+    valueType: 'integer',
+    value: 15,
+    valueSchema: { minimum: 1, maximum: 100 },
+    description:
+      'D-303 a scorecard journey whose first-to-last conversion fell by more than this % against the week before raises ops signal journey_conversion_drops (docs/ux/competitive-scorecard.md §4)',
+    decisions: ['D-303', 'D-217'],
+    ownerRole: 'superadmin',
+  },
+  {
+    key: 'analytics.journey_alert_min_sessions',
+    valueType: 'integer',
+    value: 30,
+    valueSchema: { minimum: 1, maximum: 100000 },
+    description:
+      'D-303 consented sessions at the first step a journey needs in both weeks before a week-over-week drop alerts (small samples swing)',
+    decisions: ['D-303'],
+    ownerRole: 'superadmin',
   },
 ];
 

@@ -57,6 +57,7 @@ describe('ops signals & alerts (e2e, B6.3)', () => {
       'claim_response_overdue',
       'claim_decision_overdue',
       'conversation_first_response_overdue',
+      'journey_conversion_drops',
     ]);
     expect(before.find((s) => s.key === 'outbox_dead_letters')!.threshold).toBe(1);
 

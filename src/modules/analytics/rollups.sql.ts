@@ -9,6 +9,8 @@
  * built from a validated `YYYY-MM-DD` (see `bind`), never by user text.
  */
 
+import { JOURNEYS, stepPredicate } from './journeys';
+
 export const DAY_PATTERN = /^\d{4}-(0[1-9]|1[0-2])-(0[1-9]|[12]\d|3[01])$/;
 
 export function bind(sql: string, day: string): string {
@@ -66,7 +68,26 @@ export interface RollupJob {
   statements: readonly string[];
 }
 
+/** D-303 one row per journey step: consented sessions that reached it that day (`journeys.ts`). */
+const JOURNEY_STEPS_SQL = JOURNEYS.flatMap((journey) =>
+  journey.steps.map(
+    (step, index) =>
+      `SELECT :day, '${journey.key}', '${step.key}', ${index}, count(DISTINCT session_id)::int
+       FROM analytics.raw_events
+       WHERE source = 'bff' AND consent_state = 'granted' AND session_id IS NOT NULL AND ${inDay('occurred_at')}
+         AND ${stepPredicate(journey, step)}`,
+  ),
+).join('\n       UNION ALL\n       ');
+
 export const ROLLUP_JOBS: readonly RollupJob[] = [
+  {
+    key: 'fact_journey_steps',
+    statements: [
+      `DELETE FROM analytics.fact_journey_steps WHERE date_key = :day`,
+      `INSERT INTO analytics.fact_journey_steps (date_key, journey, step, step_index, sessions)
+       ${JOURNEY_STEPS_SQL}`,
+    ],
+  },
   {
     key: 'fact_sessions',
     statements: [

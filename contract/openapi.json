@@ -11832,7 +11832,8 @@
           "studio_first_artwork",
           "studio_checks_clean",
           "studio_add_to_cart",
-          "studio_ordered"
+          "studio_ordered",
+          "journey_step"
         ],
         "type": "string"
       },
@@ -11902,6 +11903,7 @@
       },
       "AnalyticsRollupJob": {
         "enum": [
+          "fact_journey_steps",
           "fact_sessions",
           "fact_funnel",
           "fact_quotes",
@@ -34775,6 +34777,34 @@
         ],
         "type": "object"
       },
+      "ExportJourneysDto": {
+        "properties": {
+          "format": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ReportFormat"
+              }
+            ],
+            "example": "xlsx"
+          },
+          "from": {
+            "description": "First Bangkok day",
+            "example": "2026-10-01",
+            "type": "string"
+          },
+          "to": {
+            "description": "Last Bangkok day (at most 400 days)",
+            "example": "2026-10-31",
+            "type": "string"
+          }
+        },
+        "required": [
+          "from",
+          "to",
+          "format"
+        ],
+        "type": "object"
+      },
       "FaceAnchorDto": {
         "properties": {
           "faceId": {
@@ -41806,6 +41836,180 @@
         ],
         "type": "string"
       },
+      "JourneyFunnelDto": {
+        "properties": {
+          "conversionPct": {
+            "description": "Last step ÷ first step, %",
+            "example": "18.10",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "journey": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ScorecardJourney"
+              }
+            ],
+            "example": "studio"
+          },
+          "steps": {
+            "items": {
+              "$ref": "#/components/schemas/JourneyStepCountDto"
+            },
+            "type": "array"
+          },
+          "task": {
+            "description": "The scorecard task (`docs/ux/competitive-scorecard.md` §2)",
+            "example": "T2",
+            "type": "string"
+          }
+        },
+        "required": [
+          "journey",
+          "task",
+          "steps",
+          "conversionPct"
+        ],
+        "type": "object"
+      },
+      "JourneyStepCountDto": {
+        "properties": {
+          "fromPreviousPct": {
+            "description": "% of the previous step",
+            "example": "62.50",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "sessions": {
+            "description": "Consented sessions that reached it (summed per day)",
+            "example": 420,
+            "type": "integer"
+          },
+          "step": {
+            "example": "started",
+            "type": "string"
+          }
+        },
+        "required": [
+          "step",
+          "sessions",
+          "fromPreviousPct"
+        ],
+        "type": "object"
+      },
+      "JourneyWeekCheckDto": {
+        "properties": {
+          "alert": {
+            "description": "Fell more than the threshold with enough sessions — ops was alerted",
+            "example": true,
+            "type": "boolean"
+          },
+          "conversionPct": {
+            "example": "15.00",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "dropPct": {
+            "description": "Relative fall of the conversion, %",
+            "example": "28.75",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "firstSessions": {
+            "example": 400,
+            "type": "integer"
+          },
+          "journey": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ScorecardJourney"
+              }
+            ],
+            "example": "studio"
+          },
+          "lastSessions": {
+            "example": 60,
+            "type": "integer"
+          },
+          "previousConversionPct": {
+            "example": "21.05",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "previousFirstSessions": {
+            "example": 380,
+            "type": "integer"
+          },
+          "previousLastSessions": {
+            "example": 80,
+            "type": "integer"
+          },
+          "weekStart": {
+            "description": "Monday of the checked week",
+            "example": "2026-09-28",
+            "format": "date",
+            "type": "string"
+          }
+        },
+        "required": [
+          "weekStart",
+          "journey",
+          "firstSessions",
+          "lastSessions",
+          "previousFirstSessions",
+          "previousLastSessions",
+          "conversionPct",
+          "previousConversionPct",
+          "dropPct",
+          "alert"
+        ],
+        "type": "object"
+      },
+      "JourneysReportDto": {
+        "properties": {
+          "from": {
+            "description": "First Bangkok day",
+            "example": "2026-10-01",
+            "type": "string"
+          },
+          "journeys": {
+            "description": "Every journey, in scorecard order",
+            "items": {
+              "$ref": "#/components/schemas/JourneyFunnelDto"
+            },
+            "type": "array"
+          },
+          "to": {
+            "description": "Last Bangkok day (at most 400 days)",
+            "example": "2026-10-31",
+            "type": "string"
+          },
+          "weekChecks": {
+            "description": "The latest Monday week-over-week check",
+            "items": {
+              "$ref": "#/components/schemas/JourneyWeekCheckDto"
+            },
+            "type": "array"
+          }
+        },
+        "required": [
+          "from",
+          "to",
+          "journeys",
+          "weekChecks"
+        ],
+        "type": "object"
+      },
       "JsonPatchOp": {
         "enum": [
           "add",
@@ -44981,7 +45185,8 @@
           "slip_verification_wait_hours",
           "claim_response_overdue",
           "claim_decision_overdue",
-          "conversation_first_response_overdue"
+          "conversation_first_response_overdue",
+          "journey_conversion_drops"
         ],
         "type": "string"
       },
@@ -64372,6 +64577,22 @@
           "computedAt"
         ],
         "type": "object"
+      },
+      "ScorecardJourney": {
+        "enum": [
+          "discovery_price",
+          "studio",
+          "checks",
+          "order",
+          "sample",
+          "target_price",
+          "tracking",
+          "reorder",
+          "claim",
+          "documents",
+          "dieline"
+        ],
+        "type": "string"
       },
       "SearchResultDto": {
         "properties": {
@@ -86061,6 +86282,427 @@
         ],
         "x-required-permissions": [
           "analytics.read"
+        ]
+      }
+    },
+    "/v1/admin/analytics/journeys": {
+      "get": {
+        "description": "Per scorecard journey (discovery → price, studio, checks, order, sample, target price, tracking, reorder, claim, documents, dieline): consented sessions per step over the Bangkok days and the conversion, from the nightly journey facts; and the latest Monday check of last week against the week before — a fall of more than `analytics.journey_drop_alert_pct` with at least `analytics.journey_alert_min_sessions` sessions both weeks raises ops signal `journey_conversion_drops` (D-303). Aggregates only.\n\nImplements: D-303, D-217, D-102.",
+        "operationId": "admin.analytics.journeys",
+        "parameters": [
+          {
+            "description": "First Bangkok day",
+            "in": "query",
+            "name": "from",
+            "required": true,
+            "schema": {
+              "example": "2026-10-01",
+              "type": "string"
+            }
+          },
+          {
+            "description": "Last Bangkok day (at most 400 days)",
+            "in": "query",
+            "name": "to",
+            "required": true,
+            "schema": {
+              "example": "2026-10-31",
+              "type": "string"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "from": "2026-10-01",
+                  "journeys": [
+                    {
+                      "conversionPct": "18.10",
+                      "journey": "studio",
+                      "steps": [
+                        {
+                          "fromPreviousPct": null,
+                          "sessions": 420,
+                          "step": "started"
+                        },
+                        {
+                          "fromPreviousPct": "71.43",
+                          "sessions": 300,
+                          "step": "box_confirmed"
+                        },
+                        {
+                          "fromPreviousPct": "60.00",
+                          "sessions": 180,
+                          "step": "first_artwork"
+                        },
+                        {
+                          "fromPreviousPct": "42.22",
+                          "sessions": 76,
+                          "step": "added_to_cart"
+                        }
+                      ],
+                      "task": "T2"
+                    }
+                  ],
+                  "to": "2026-10-31",
+                  "weekChecks": [
+                    {
+                      "alert": true,
+                      "conversionPct": "15.00",
+                      "dropPct": "28.75",
+                      "firstSessions": 400,
+                      "journey": "studio",
+                      "lastSessions": 60,
+                      "previousConversionPct": "21.05",
+                      "previousFirstSessions": 380,
+                      "previousLastSessions": 80,
+                      "weekStart": "2026-09-28"
+                    }
+                  ]
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/JourneysReportDto"
+                }
+              }
+            },
+            "description": "Report",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.unauthenticated": {
+                    "$ref": "#/components/examples/problem.auth.unauthenticated"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.unauthenticated`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.forbidden": {
+                    "$ref": "#/components/examples/problem.auth.forbidden"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.forbidden`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "validation.failed": {
+                    "$ref": "#/components/examples/problem.validation.failed"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `validation.failed`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "staff": []
+          }
+        ],
+        "summary": "Scorecard journey funnels",
+        "tags": [
+          "admin.analytics"
+        ],
+        "x-required-permissions": [
+          "analytics.read"
+        ]
+      }
+    },
+    "/v1/admin/analytics/journeys/actions/export": {
+      "post": {
+        "description": "Day × journey × step session counts as XLSX or CSV (D-303, D-217): aggregates only — no session, visitor or customer, a cell under `analytics.prospectus_min_group_size` sessions suppressed (D-160) — served by a 5-minute signed URL; audited (`export.generated`).\n\nImplements: D-303, D-217, D-160.",
+        "operationId": "admin.analytics.exportJourneys",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "examples": {
+                "default": {
+                  "value": {
+                    "format": "xlsx",
+                    "from": "2026-10-01",
+                    "to": "2026-10-31"
+                  }
+                }
+              },
+              "schema": {
+                "$ref": "#/components/schemas/ExportJourneysDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "expiresAt": "2026-10-01T10:05:00+07:00",
+                  "fileId": "0192f3a0-7c1e-7d2a-9b1f-0000000e7501",
+                  "rows": 330,
+                  "truncated": false,
+                  "url": "https://packio-files.s3.example.com/…&X-Amz-Expires=300"
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/AuditExportDto"
+                }
+              }
+            },
+            "description": "Export ready",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "400": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.bad_request": {
+                    "$ref": "#/components/examples/problem.http.bad_request"
+                  },
+                  "http.malformed_json": {
+                    "$ref": "#/components/examples/problem.http.malformed_json"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.bad_request`, `http.malformed_json`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.unauthenticated": {
+                    "$ref": "#/components/examples/problem.auth.unauthenticated"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.unauthenticated`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.forbidden": {
+                    "$ref": "#/components/examples/problem.auth.forbidden"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.forbidden`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "validation.failed": {
+                    "$ref": "#/components/examples/problem.validation.failed"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `validation.failed`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "staff": []
+          }
+        ],
+        "summary": "Export journey steps for a scorecard round",
+        "tags": [
+          "admin.analytics"
+        ],
+        "x-required-permissions": [
+          "analytics.read",
+          "reports.export"
         ]
       }
     },

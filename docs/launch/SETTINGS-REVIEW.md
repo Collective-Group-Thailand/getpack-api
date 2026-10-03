@@ -5,13 +5,15 @@
 > (a new effective-dated version, audited — D-063) and signs item 5 of `docs/LAUNCH-CHECKLIST.md`. A *proposed* or
 > *pending* value is not a decision: it goes live only once its owner confirms it.
 
-**100 settings** — 59 confirmed · 19 proposed · 4 pending the CPA (⚖) · 1 pending the business · 17 defined without a value (not set until their owner sets them).
+**102 settings** — 61 confirmed · 19 proposed · 4 pending the CPA (⚖) · 1 pending the business · 17 defined without a value (not set until their owner sets them).
 
 ## Settings
 
 | Key | Seeded value | Status | Owner | Decisions | What it controls |
 |---|---|---|---|---|---|
 | `advisory.rule_set` | `— (not set)` | not set | superadmin | D-188, D-237, D-239 | D-237 Structure Advisor rule set: McKee constant, ± uncertainty band %, eligible corrugate formulas, thin-margin threshold % and one factor (0 < f ≤ 1) per band of humidity, storage time, pallet pattern, pallet overhang, transport mode and fragility; not seeded — no advice until a Superadmin sets it after the D-189 sign-off |
+| `analytics.journey_alert_min_sessions` | `30` | confirmed | superadmin | D-303 | D-303 consented sessions at the first step a journey needs in both weeks before a week-over-week drop alerts (small samples swing) |
+| `analytics.journey_drop_alert_pct` | `15` | confirmed | superadmin | D-303, D-217 | D-303 a scorecard journey whose first-to-last conversion fell by more than this % against the week before raises ops signal journey_conversion_drops (docs/ux/competitive-scorecard.md §4) |
 | `analytics.price_gap_bands_pct` | `[10,25,50]` | proposed | superadmin | D-252 | D-252 upper bounds (% of the target) of the price-gap bands of unmet demand, ascending: [10, 25, 50] → 0-10, 10-25, 25-50, 50+ |
 | `analytics.prospectus_min_group_size` | `3` | confirmed | superadmin | D-160, D-044 | D-160 minimum factories per breakdown in anonymised exports and the partner prospectus |
 | `analytics.target_price_min_group_size` | `5` | confirmed | superadmin | D-190, D-252 | D-190 / D-252 minimum distinct customers per cell for any figure built from customers’ target prices (prospectus and staff views) |
@@ -58,7 +60,7 @@
 | `loyalty.tiers` | `[{"tier":"member","minSpend12m":"0.00","multiplier":"1"},{"tier":"silver","minSpend12m":"50000.00","multiplier":"1.25"},{"tier":"gold","minSpend12m":"200000.00","multiplier":"1.5"}]` | confirmed | superadmin | D-134 | D-134 tiers by 12-month spend with earn multipliers |
 | `notifications.deep_link_ttl_hours` | `72` | confirmed | superadmin | D-299 | D-299 hours a notification deep link (one page of the recipient’s zone, never a sign-in) stays valid |
 | `notifications.marketing_window` | `{"from":"09:00","to":"20:00","timezone":"Asia/Bangkok"}` | confirmed | superadmin | D-144 | D-144 marketing messages are sent only inside this window (transactional anytime) |
-| `ops.alert_thresholds` | `{"outbox_dead_letters":1,"outbox_backlog_minutes":15,"queue_depth":1000,"webhook_failures_24h":5,"payout_item_failures_7d":1,"ledger_posting_failures":1,"acceptance_overdue":1,"production_at_risk":5,"rfq_first_response_overdue":1,"approvals_overdue":5,"slip_verification_wait_hours":4,"claim_response_overdue":1,"claim_decision_overdue":1,"conversation_first_response_overdue":1}` | proposed | superadmin | D-113, D-061, D-074 | D-113 launch monitoring: value at which each operational signal raises an alert to superadmins and admins (slip wait mirrors the D-061 4-hour SLA in wall-clock hours; the rest proposed) |
+| `ops.alert_thresholds` | `{"outbox_dead_letters":1,"outbox_backlog_minutes":15,"queue_depth":1000,"webhook_failures_24h":5,"payout_item_failures_7d":1,"ledger_posting_failures":1,"acceptance_overdue":1,"production_at_risk":5,"rfq_first_response_overdue":1,"approvals_overdue":5,"slip_verification_wait_hours":4,"claim_response_overdue":1,"claim_decision_overdue":1,"conversation_first_response_overdue":1,"journey_conversion_drops":1}` | proposed | superadmin | D-113, D-061, D-074 | D-113 launch monitoring: value at which each operational signal raises an alert to superadmins and admins (slip wait mirrors the D-061 4-hour SLA in wall-clock hours; the rest proposed) |
 | `orders.auto_complete_days` | `7` | confirmed | superadmin | D-081 | D-081 days after delivery until an order completes automatically |
 | `orders.unpaid_expiry_days` | `7` | proposed | superadmin | D-060 | D-060 calendar days after placement until an unpaid order group is cancelled; legacy reads the value from a secret not in the repository, so its 7-day fallback is seeded (B3.1, 2026-09-27) |
 | `partners.auto_selection_min_factories` | `2` | confirmed | superadmin | D-101, D-012 | D-101 active factories per product type before auto-selection and auto-reassignment switch on |

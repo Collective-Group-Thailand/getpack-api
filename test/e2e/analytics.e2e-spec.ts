@@ -5,6 +5,7 @@ import { addCalendarDays, bangkokDate, startOfBangkokDay } from '@common/time/ba
 import { OBJECT_STORAGE, type ObjectStorage } from '@integrations/s3/object-storage.port';
 import { ProspectusService } from '@modules/analytics/prospectus.service';
 import { AnalyticsRollupService } from '@modules/analytics/rollups.service';
+import { ROLLUP_JOBS } from '@modules/analytics/rollups.sql';
 import { readObject } from '@modules/payouts/read-object';
 import ExcelJS from 'exceljs';
 import request from 'supertest';
@@ -220,7 +221,7 @@ describe('analytics (e2e, B6.1)', () => {
     const runs = await ctx.prisma.$queryRaw<
       { job: string; status: string }[]
     >`SELECT job, status FROM analytics.rollup_runs WHERE for_date = ${today}::date`;
-    expect(runs).toHaveLength(12);
+    expect(runs).toHaveLength(ROLLUP_JOBS.length);
     expect(runs.every((r) => r.status === 'succeeded')).toBe(true);
 
     // Funnel: only this suite posts BFF events, so the consented session is the whole funnel.
@@ -327,14 +328,14 @@ describe('analytics (e2e, B6.1)', () => {
     await as(ctx, marketing).post('/v1/admin/analytics/rollups', { from: today, to: today }).expect(403);
     expect(
       (await as(ctx, admin).post('/v1/admin/analytics/rollups', { from: today, to: today }).expect(202)).body,
-    ).toEqual({ queued: 12 });
+    ).toEqual({ queued: ROLLUP_JOBS.length });
     await ctx.app.get(AnalyticsRollupService).processQueue();
     expect(await snapshot()).toEqual(before);
     const runs = (await as(ctx, admin).get(`/v1/admin/analytics/rollups?${range}`).expect(200)).body as {
       status: string;
       attempts: number;
     }[];
-    expect(runs).toHaveLength(12);
+    expect(runs).toHaveLength(ROLLUP_JOBS.length);
     expect(runs.every((r) => r.status === 'succeeded' && r.attempts >= 2)).toBe(true);
   });
 

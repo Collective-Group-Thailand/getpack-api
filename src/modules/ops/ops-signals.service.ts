@@ -29,6 +29,7 @@ export const SIGNAL_KEYS = [
   'claim_response_overdue',
   'claim_decision_overdue',
   'conversation_first_response_overdue',
+  'journey_conversion_drops',
 ] as const;
 export type SignalKey = (typeof SIGNAL_KEYS)[number];
 
@@ -57,11 +58,14 @@ const DESCRIPTIONS: Record<SignalKey, string> = {
   claim_decision_overdue: 'Open claims past the guarantee’s decision time from complete evidence (D-263)',
   conversation_first_response_overdue:
     'Live CS conversations whose first customer message is past its first-response due time (D-221, D-300)',
+  journey_conversion_drops:
+    'Scorecard journeys whose conversion fell more than `analytics.journey_drop_alert_pct` last week (D-303)',
 };
 export const signalDescription = (key: SignalKey) => DESCRIPTIONS[key];
 
-/** One alert per signal per hour at most. */
+/** One alert per signal per hour at most — a weekly signal once a week (its Monday check alerts on its own). */
 const REPEAT_AFTER_MS = 60 * 60_000;
+const REPEAT_AFTER_MS_OF: Partial<Record<SignalKey, number>> = { journey_conversion_drops: 7 * 86_400_000 };
 
 @Injectable()
 export class OpsSignalsService implements OnModuleInit {
@@ -127,6 +131,10 @@ export class OpsSignalsService implements OnModuleInit {
         p.$queryRaw`SELECT count(*) AS n FROM claims WHERE decided_at IS NULL AND decision_due_at < now()
                     AND status IN ('submitted', 'under_review', 'factory_review')`,
       ),
+      journey_conversion_drops: await this.count(
+        p.$queryRaw`SELECT count(*) AS n FROM analytics.journey_week_checks
+                    WHERE alert AND week_start = (SELECT max(week_start) FROM analytics.journey_week_checks)`,
+      ),
       conversation_first_response_overdue: await this.count(
         p.$queryRaw`SELECT count(*) AS n FROM conversations WHERE status <> 'closed' AND first_responded_at IS NULL
                     AND first_response_due_at < now()`,
@@ -165,7 +173,7 @@ export class OpsSignalsService implements OnModuleInit {
     for (const s of (await this.signals()).filter((x) => x.status !== 'ok')) {
       const recent = await this.prisma.$queryRaw<{ n: bigint }[]>`
         SELECT count(*) AS n FROM domain_events
-        WHERE type = 'ops.alert_raised' AND payload->>'signal' = ${s.key} AND occurred_at > ${new Date(now.getTime() - REPEAT_AFTER_MS)}`;
+        WHERE type = 'ops.alert_raised' AND payload->>'signal' = ${s.key} AND occurred_at > ${new Date(now.getTime() - (REPEAT_AFTER_MS_OF[s.key] ?? REPEAT_AFTER_MS))}`;
       if (Number(recent[0]?.n ?? 0) > 0) continue;
       await this.prisma.withTx((tx) =>
         this.events.record(tx, {

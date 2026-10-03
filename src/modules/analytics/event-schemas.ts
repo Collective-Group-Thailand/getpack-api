@@ -1,6 +1,8 @@
 import { quantityBand } from '@modules/rfq/rfq-spec';
 import { Ajv, type ValidateFunction } from 'ajv';
 
+import { JOURNEY_STEP_EVENTS } from './journeys';
+
 /**
  * Frontend analytics events posted through the BFF (B6.1, D-102). Each event name has a closed property
  * schema — nothing else is stored, so no free text (and no personal data) can ride along; exact quantities
@@ -20,6 +22,8 @@ export const ANALYTICS_EVENT_NAMES = [
   'studio_checks_clean',
   'studio_add_to_cart',
   'studio_ordered',
+  // D-303 a scorecard journey step no other event covers (`journeys.ts`).
+  'journey_step',
 ] as const;
 export type AnalyticsEventName = (typeof ANALYTICS_EVENT_NAMES)[number];
 
@@ -51,6 +55,20 @@ const STUDIO_PROPERTIES = {
 };
 
 const SCHEMAS: Record<AnalyticsEventName, object> = {
+  journey_step: {
+    type: 'object',
+    additionalProperties: false,
+    required: ['journey', 'step'],
+    properties: {
+      journey: { enum: Object.keys(JOURNEY_STEP_EVENTS) },
+      step: { type: 'string', pattern: '^[a-z][a-z0-9_]{0,39}$' },
+    },
+    // Only the steps the journey has.
+    allOf: Object.entries(JOURNEY_STEP_EVENTS).map(([journey, steps]) => ({
+      if: { properties: { journey: { const: journey } }, required: ['journey'] },
+      then: { properties: { step: { enum: steps } } },
+    })),
+  },
   studio_started: STUDIO_PROPERTIES,
   studio_box_confirmed: STUDIO_PROPERTIES,
   studio_first_artwork: STUDIO_PROPERTIES,

@@ -3,6 +3,7 @@ import { Global, Module } from '@nestjs/common';
 import { AnalyticsJobs } from './analytics.jobs';
 import { AnalyticsDashboardsService } from './dashboards.service';
 import { AnalyticsIngestionService } from './ingestion.service';
+import { JourneysService } from './journeys.service';
 import { NetworkStatsService } from './network-stats';
 import { NextStylesService } from './next-styles';
 import { AnalyticsOutboxSubscriber } from './outbox-events.subscriber';
@@ -27,6 +28,7 @@ import { StudioFunnelService } from './studio-funnel';
     NetworkStatsService,
     NextStylesService,
     StudioFunnelService,
+    JourneysService,
   ],
   exports: [
     AnalyticsIngestionService,
@@ -36,6 +38,7 @@ import { StudioFunnelService } from './studio-funnel';
     NetworkStatsService,
     NextStylesService,
     StudioFunnelService,
+    JourneysService,
   ],
 })
 export class AnalyticsModule {}

@@ -171,6 +171,10 @@ export interface SettingValues {
   };
   /** D-221 first-response target of a contact-form / hand-off conversation, in business days. */
   'support.first_response_business_days': number;
+  /** D-303 relative week-over-week fall of a journey's conversion that alerts ops, %. */
+  'analytics.journey_drop_alert_pct': number;
+  /** D-303 sessions a journey needs in both weeks before its drop alerts. */
+  'analytics.journey_alert_min_sessions': number;
   /** D-300 resolution target of a CS conversation in business days; unset = no target. */
   'conversations.resolution_business_days': number;
   /** D-299 hours a notification deep link stays valid. */
