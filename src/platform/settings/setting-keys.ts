@@ -171,6 +171,8 @@ export interface SettingValues {
   };
   /** D-221 first-response target of a contact-form / hand-off conversation, in business days. */
   'support.first_response_business_days': number;
+  /** D-300 resolution target of a CS conversation in business days; unset = no target. */
+  'conversations.resolution_business_days': number;
   /** D-299 hours a notification deep link stays valid. */
   'notifications.deep_link_ttl_hours': number;
   /** U-B0.1 items a customer confirms when approving a proof (approval evidence, B4.1); none until set. */

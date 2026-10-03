@@ -16865,6 +16865,59 @@
         ],
         "type": "string"
       },
+      "CannedResponseDto": {
+        "properties": {
+          "archived": {
+            "example": false,
+            "type": "boolean"
+          },
+          "bodyEn": {
+            "example": "Your order takes about 10 business days to produce after the artwork is approved.",
+            "type": "string"
+          },
+          "bodyTh": {
+            "example": "งานของคุณใช้เวลาผลิตประมาณ 10 วันทำการหลังอนุมัติไฟล์ค่ะ",
+            "type": "string"
+          },
+          "id": {
+            "example": "0192f3a0-7c1e-7d2a-9b1f-0000000f4007",
+            "format": "uuid",
+            "type": "string"
+          },
+          "tags": {
+            "example": [
+              "production"
+            ],
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "title": {
+            "example": "แจ้งระยะเวลาผลิต",
+            "type": "string"
+          },
+          "updatedAt": {
+            "example": "2026-10-20T09:00:00+07:00",
+            "format": "date-time",
+            "type": "string"
+          },
+          "updatedBy": {
+            "$ref": "#/components/schemas/UserRefDto"
+          }
+        },
+        "required": [
+          "id",
+          "title",
+          "bodyTh",
+          "bodyEn",
+          "tags",
+          "archived",
+          "updatedBy",
+          "updatedAt"
+        ],
+        "type": "object"
+      },
       "CapabilityDto": {
         "properties": {
           "id": {
@@ -22471,6 +22524,74 @@
         ],
         "type": "string"
       },
+      "ContextCardDto": {
+        "properties": {
+          "id": {
+            "example": "0192f3a0-7c1e-7d2a-9b1f-0000000f4005",
+            "format": "uuid",
+            "type": "string"
+          },
+          "label": {
+            "description": "Order / RFQ / quotation code, design title",
+            "example": "PK-2610-0001-01",
+            "type": "string"
+          },
+          "status": {
+            "description": "Its status now",
+            "example": "in_production",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "type": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ContextCardType"
+              }
+            ],
+            "example": "order"
+          }
+        },
+        "required": [
+          "type",
+          "id",
+          "label",
+          "status"
+        ],
+        "type": "object"
+      },
+      "ContextCardInputDto": {
+        "properties": {
+          "id": {
+            "example": "0192f3a0-7c1e-7d2a-9b1f-0000000f4005",
+            "format": "uuid",
+            "type": "string"
+          },
+          "type": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ContextCardType"
+              }
+            ],
+            "example": "order"
+          }
+        },
+        "required": [
+          "type",
+          "id"
+        ],
+        "type": "object"
+      },
+      "ContextCardType": {
+        "enum": [
+          "order",
+          "design",
+          "rfq",
+          "quote"
+        ],
+        "type": "string"
+      },
       "ConversationAssignee": {
         "enum": [
           "me",
@@ -22507,6 +22628,17 @@
             ],
             "description": "`contact`: a guest’s support ticket, answered by phone or e-mail (D-221)",
             "example": "line"
+          },
+          "company": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/PersonRefDto"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "The company of the subject (id + legal name)"
           },
           "customer": {
             "anyOf": [
@@ -22555,6 +22687,33 @@
             ],
             "example": "followed"
           },
+          "mergedIntoId": {
+            "description": "A LINE thread merged into the customer’s support thread",
+            "example": null,
+            "format": "uuid",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "participants": {
+            "items": {
+              "$ref": "#/components/schemas/ParticipantDto"
+            },
+            "type": "array"
+          },
+          "replyChannel": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ReplyChannel"
+              }
+            ],
+            "description": "Where a reply goes now (D-300)",
+            "example": "line"
+          },
+          "sla": {
+            "$ref": "#/components/schemas/ConversationSlaDto"
+          },
           "status": {
             "allOf": [
               {
@@ -22562,6 +22721,25 @@
               }
             ],
             "example": "open"
+          },
+          "subject": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/SubjectRefDto"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Null for the support chat"
+          },
+          "subjectType": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ConversationSubject"
+              }
+            ],
+            "example": "support"
           },
           "ticket": {
             "anyOf": [
@@ -22585,7 +22763,165 @@
           "lineFriendStatus",
           "assignee",
           "lastMessage",
-          "ticket"
+          "ticket",
+          "subjectType",
+          "subject",
+          "company",
+          "replyChannel",
+          "sla",
+          "participants",
+          "mergedIntoId"
+        ],
+        "type": "object"
+      },
+      "ConversationNoteDto": {
+        "properties": {
+          "body": {
+            "example": "ลูกค้าโทรมาแจ้งเพิ่ม: ต้องการส่งก่อนวันศุกร์",
+            "maxLength": 5000,
+            "minLength": 1,
+            "type": "string"
+          },
+          "fileIds": {
+            "example": [],
+            "items": {
+              "format": "uuid",
+              "type": "string"
+            },
+            "type": "array"
+          }
+        },
+        "required": [
+          "body"
+        ],
+        "type": "object"
+      },
+      "ConversationRecordSubject": {
+        "enum": [
+          "order",
+          "design",
+          "rfq",
+          "rfq_basket"
+        ],
+        "type": "string"
+      },
+      "ConversationSlaDto": {
+        "properties": {
+          "firstRespondedAt": {
+            "example": null,
+            "format": "date-time",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "firstResponseDueAt": {
+            "example": "2026-10-21T10:00:00+07:00",
+            "format": "date-time",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "resolutionDueAt": {
+            "description": "`conversations.resolution_business_days`; null while unset",
+            "example": null,
+            "format": "date-time",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "resolvedAt": {
+            "description": "Closed at",
+            "example": null,
+            "format": "date-time",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "state": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ConversationSlaState"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "First response: waiting (in time), overdue, answered; null before any customer message",
+            "example": "waiting"
+          }
+        },
+        "required": [
+          "state",
+          "firstResponseDueAt",
+          "firstRespondedAt",
+          "resolutionDueAt",
+          "resolvedAt"
+        ],
+        "type": "object"
+      },
+      "ConversationSlaState": {
+        "description": "First response: waiting (in time), overdue, answered; null before any customer message",
+        "enum": [
+          "waiting",
+          "overdue",
+          "answered"
+        ],
+        "type": "string"
+      },
+      "ConversationStatsDto": {
+        "properties": {
+          "closed": {
+            "description": "Threads closed in the period",
+            "example": 44,
+            "type": "integer"
+          },
+          "firstResponse": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/FirstResponseStatsDto"
+              }
+            ],
+            "description": "First customer message → first answer"
+          },
+          "from": {
+            "example": "2026-10-01",
+            "type": "string"
+          },
+          "opened": {
+            "description": "Threads opened in the period",
+            "example": 51,
+            "type": "integer"
+          },
+          "overdueNow": {
+            "description": "Live threads past their first-response due time now",
+            "example": 2,
+            "type": "integer"
+          },
+          "resolution": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/DurationStatsDto"
+              }
+            ],
+            "description": "Opened → closed, of the threads closed in the period"
+          },
+          "to": {
+            "example": "2026-10-31",
+            "type": "string"
+          }
+        },
+        "required": [
+          "from",
+          "to",
+          "opened",
+          "closed",
+          "firstResponse",
+          "resolution",
+          "overdueNow"
         ],
         "type": "object"
       },
@@ -22594,6 +22930,16 @@
           "open",
           "pending",
           "closed"
+        ],
+        "type": "string"
+      },
+      "ConversationSubject": {
+        "enum": [
+          "support",
+          "order",
+          "design",
+          "rfq",
+          "rfq_basket"
         ],
         "type": "string"
       },
@@ -34045,6 +34391,36 @@
         ],
         "type": "object"
       },
+      "DurationStatsDto": {
+        "properties": {
+          "count": {
+            "description": "How many it was measured over",
+            "example": 42,
+            "type": "integer"
+          },
+          "medianMinutes": {
+            "description": "Median minutes; null without data",
+            "example": "35.0",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "p90Minutes": {
+            "example": "180.0",
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "count",
+          "medianMinutes",
+          "p90Minutes"
+        ],
+        "type": "object"
+      },
       "EnvelopeQuantityDto": {
         "properties": {
           "max": {
@@ -36840,6 +37216,45 @@
         },
         "required": [
           "idToken"
+        ],
+        "type": "object"
+      },
+      "FirstResponseStatsDto": {
+        "properties": {
+          "count": {
+            "description": "How many it was measured over",
+            "example": 42,
+            "type": "integer"
+          },
+          "medianMinutes": {
+            "description": "Median minutes; null without data",
+            "example": "35.0",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "p90Minutes": {
+            "example": "180.0",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "withinTargetPct": {
+            "description": "% answered by their due time (D-221)",
+            "example": "92.86",
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "count",
+          "medianMinutes",
+          "p90Minutes",
+          "withinTargetPct"
         ],
         "type": "object"
       },
@@ -42913,6 +43328,17 @@
               "null"
             ]
           },
+          "contextCard": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ContextCardDto"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "D-300 card to a record of the customer"
+          },
           "direction": {
             "allOf": [
               {
@@ -42921,6 +43347,17 @@
             ],
             "description": "Inbound = from the customer",
             "example": "inbound"
+          },
+          "file": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/MessageFileDto"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "`image` / `file` messages"
           },
           "id": {
             "example": "0192f3a0-7c1e-7d2a-9b1f-0000000f4002",
@@ -42958,6 +43395,27 @@
             "example": "2026-10-20T10:00:00+07:00",
             "format": "date-time",
             "type": "string"
+          },
+          "via": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ReplyChannel"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "The channel it came in or went out through",
+            "example": "web"
+          },
+          "visibility": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/MessageVisibility"
+              }
+            ],
+            "description": "`internal`: a staff note (D-300) — never on the store surface",
+            "example": "customer"
           }
         },
         "required": [
@@ -42967,7 +43425,35 @@
           "body",
           "sender",
           "sentAt",
-          "readAt"
+          "readAt",
+          "visibility",
+          "via",
+          "contextCard",
+          "file"
+        ],
+        "type": "object"
+      },
+      "MessageFileDto": {
+        "properties": {
+          "id": {
+            "description": "Download with `*.files.get`",
+            "example": "0192f3a0-7c1e-7d2a-9b1f-0000000f4006",
+            "format": "uuid",
+            "type": "string"
+          },
+          "mimeType": {
+            "example": "image/png",
+            "type": "string"
+          },
+          "name": {
+            "example": "logo.png",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "mimeType"
         ],
         "type": "object"
       },
@@ -42982,6 +43468,7 @@
         "type": "string"
       },
       "MessageVisibility": {
+        "description": "`internal`: a staff note (D-300) — never on the store surface",
         "enum": [
           "customer",
           "internal"
@@ -44251,6 +44738,61 @@
         ],
         "type": "string"
       },
+      "OpenThreadDto": {
+        "properties": {
+          "body": {
+            "example": "ขอแก้ไขสีโลโก้ค่ะ",
+            "maxLength": 5000,
+            "type": "string"
+          },
+          "contextCard": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ContextCardInputDto"
+              }
+            ],
+            "description": "A card to one of the customer’s records"
+          },
+          "fileIds": {
+            "description": "My uploaded, scanned files (`*.files.presign`, purpose `evidence` or `artwork`)",
+            "example": [
+              "0192f3a0-7c1e-7d2a-9b1f-0000000f4006"
+            ],
+            "items": {
+              "format": "uuid",
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "subjectId": {
+            "description": "Required unless `support`",
+            "example": "0192f3a0-7c1e-7d2a-9b1f-0000000f4005",
+            "format": "uuid",
+            "type": "string"
+          },
+          "subjectType": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/OpenableSubject"
+              }
+            ],
+            "example": "order"
+          }
+        },
+        "required": [
+          "subjectType"
+        ],
+        "type": "object"
+      },
+      "OpenableSubject": {
+        "enum": [
+          "support",
+          "order",
+          "design",
+          "rfq"
+        ],
+        "type": "string"
+      },
       "OperatingSectionDto": {
         "properties": {
           "adjustments": {
@@ -44333,7 +44875,8 @@
           "approvals_overdue",
           "slip_verification_wait_hours",
           "claim_response_overdue",
-          "claim_decision_overdue"
+          "claim_decision_overdue",
+          "conversation_first_response_overdue"
         ],
         "type": "string"
       },
@@ -45633,6 +46176,36 @@
         "required": [
           "name",
           "hex"
+        ],
+        "type": "object"
+      },
+      "ParticipantDto": {
+        "properties": {
+          "lastReadAt": {
+            "example": "2026-10-20T10:05:00+07:00",
+            "format": "date-time",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "role": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/AnnotationAuthorKind"
+              }
+            ],
+            "description": "The participant is the customer or Packio staff (shared customer / staff enum)",
+            "example": "staff"
+          },
+          "user": {
+            "$ref": "#/components/schemas/UserRefDto"
+          }
+        },
+        "required": [
+          "user",
+          "role",
+          "lastReadAt"
         ],
         "type": "object"
       },
@@ -49432,6 +50005,35 @@
           "createdAt",
           "decidedAt"
         ],
+        "type": "object"
+      },
+      "PostMessageDto": {
+        "properties": {
+          "body": {
+            "example": "ขอแก้ไขสีโลโก้ค่ะ",
+            "maxLength": 5000,
+            "type": "string"
+          },
+          "contextCard": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ContextCardInputDto"
+              }
+            ],
+            "description": "A card to one of the customer’s records"
+          },
+          "fileIds": {
+            "description": "My uploaded, scanned files (`*.files.presign`, purpose `evidence` or `artwork`)",
+            "example": [
+              "0192f3a0-7c1e-7d2a-9b1f-0000000f4006"
+            ],
+            "items": {
+              "format": "uuid",
+              "type": "string"
+            },
+            "type": "array"
+          }
+        },
         "type": "object"
       },
       "PostingRuleDto": {
@@ -58627,6 +59229,30 @@
         ],
         "type": "object"
       },
+      "ReplyChannel": {
+        "description": "The channel it came in or went out through",
+        "enum": [
+          "web",
+          "line"
+        ],
+        "type": "string"
+      },
+      "ReplyChannelDto": {
+        "properties": {
+          "replyChannel": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ReplyChannel"
+              }
+            ],
+            "example": "line"
+          }
+        },
+        "required": [
+          "replyChannel"
+        ],
+        "type": "object"
+      },
       "ReplyReviewDto": {
         "properties": {
           "body": {
@@ -62419,6 +63045,45 @@
         ],
         "type": "string"
       },
+      "SaveCannedResponseDto": {
+        "properties": {
+          "bodyEn": {
+            "example": "Your order takes about 10 business days to produce after the artwork is approved.",
+            "maxLength": 5000,
+            "minLength": 1,
+            "type": "string"
+          },
+          "bodyTh": {
+            "example": "งานของคุณใช้เวลาผลิตประมาณ 10 วันทำการหลังอนุมัติไฟล์ค่ะ",
+            "maxLength": 5000,
+            "minLength": 1,
+            "type": "string"
+          },
+          "tags": {
+            "example": [
+              "production"
+            ],
+            "items": {
+              "pattern": "^[a-z0-9_]{1,30}$",
+              "type": "string"
+            },
+            "maxItems": 10,
+            "type": "array"
+          },
+          "title": {
+            "example": "แจ้งระยะเวลาผลิต",
+            "maxLength": 120,
+            "minLength": 1,
+            "type": "string"
+          }
+        },
+        "required": [
+          "title",
+          "bodyTh",
+          "bodyEn"
+        ],
+        "type": "object"
+      },
       "SaveDesignDto": {
         "properties": {
           "document": {
@@ -63916,6 +64581,28 @@
           "shown",
           "carted",
           "dropOffPct"
+        ],
+        "type": "object"
+      },
+      "SentDto": {
+        "properties": {
+          "conversationId": {
+            "description": "The thread it went into",
+            "example": "0192f3a0-7c1e-7d2a-9b1f-0000000f4001",
+            "format": "uuid",
+            "type": "string"
+          },
+          "messages": {
+            "description": "The text (with its card) first, then one per file",
+            "items": {
+              "$ref": "#/components/schemas/MessageDto"
+            },
+            "type": "array"
+          }
+        },
+        "required": [
+          "conversationId",
+          "messages"
         ],
         "type": "object"
       },
@@ -67540,6 +68227,41 @@
           "email",
           "password"
         ],
+        "type": "object"
+      },
+      "StaffReplyDto": {
+        "properties": {
+          "body": {
+            "example": "ขอแก้ไขสีโลโก้ค่ะ",
+            "maxLength": 5000,
+            "type": "string"
+          },
+          "cannedResponseId": {
+            "description": "The canned response the text started from (analytics)",
+            "example": "0192f3a0-7c1e-7d2a-9b1f-0000000f4007",
+            "format": "uuid",
+            "type": "string"
+          },
+          "contextCard": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ContextCardInputDto"
+              }
+            ],
+            "description": "A card to one of the customer’s records"
+          },
+          "fileIds": {
+            "description": "My uploaded, scanned files (`*.files.presign`, purpose `evidence` or `artwork`)",
+            "example": [
+              "0192f3a0-7c1e-7d2a-9b1f-0000000f4006"
+            ],
+            "items": {
+              "format": "uuid",
+              "type": "string"
+            },
+            "type": "array"
+          }
+        },
         "type": "object"
       },
       "StaffRfqDto": {
@@ -71959,6 +72681,95 @@
         ],
         "type": "object"
       },
+      "StoreThreadDto": {
+        "properties": {
+          "id": {
+            "example": "0192f3a0-7c1e-7d2a-9b1f-0000000f4001",
+            "format": "uuid",
+            "type": "string"
+          },
+          "lastMessage": {
+            "example": "คำสั่งซื้อของคุณกำลังผลิตค่ะ",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "lastMessageAt": {
+            "example": "2026-10-20T10:05:00+07:00",
+            "format": "date-time",
+            "type": "string"
+          },
+          "readByPackioAt": {
+            "description": "When Packio last read the thread (read receipt)",
+            "example": "2026-10-20T10:06:00+07:00",
+            "format": "date-time",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "replyChannel": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ReplyChannel"
+              }
+            ],
+            "description": "Where replies go",
+            "example": "web"
+          },
+          "replyChannelChosen": {
+            "description": "I chose it (else it follows my last message)",
+            "example": false,
+            "type": "boolean"
+          },
+          "status": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ConversationStatus"
+              }
+            ],
+            "example": "pending"
+          },
+          "subject": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/SubjectRefDto"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Null for the support chat"
+          },
+          "subjectType": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ConversationSubject"
+              }
+            ],
+            "example": "order"
+          },
+          "unread": {
+            "description": "Packio’s messages I have not read",
+            "example": 1,
+            "type": "integer"
+          }
+        },
+        "required": [
+          "id",
+          "status",
+          "subjectType",
+          "subject",
+          "lastMessageAt",
+          "lastMessage",
+          "unread",
+          "replyChannel",
+          "replyChannelChosen",
+          "readByPackioAt"
+        ],
+        "type": "object"
+      },
       "StoreVideoDto": {
         "properties": {
           "provider": {
@@ -74535,6 +75346,33 @@
           "corrugateFormula",
           "swapDimensions",
           "updatedAt"
+        ],
+        "type": "object"
+      },
+      "SubjectRefDto": {
+        "properties": {
+          "id": {
+            "example": "0192f3a0-7c1e-7d2a-9b1f-0000000f4005",
+            "format": "uuid",
+            "type": "string"
+          },
+          "label": {
+            "example": "PK-2610-0001-01",
+            "type": "string"
+          },
+          "type": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ConversationRecordSubject"
+              }
+            ],
+            "example": "order"
+          }
+        },
+        "required": [
+          "type",
+          "id",
+          "label"
         ],
         "type": "object"
       },
@@ -99363,6 +100201,1159 @@
         ],
         "x-required-permissions": [
           "campaigns.manage"
+        ]
+      }
+    },
+    "/v1/admin/canned-responses": {
+      "get": {
+        "description": "By title; `q` searches title and texts, `tag` filters, archived ones only on request (D-300).\n\nImplements: D-300.",
+        "operationId": "admin.cannedResponses.list",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "page",
+            "required": false,
+            "schema": {
+              "default": 1,
+              "minimum": 1,
+              "type": "integer"
+            }
+          },
+          {
+            "in": "query",
+            "name": "perPage",
+            "required": false,
+            "schema": {
+              "default": 25,
+              "maximum": 100,
+              "minimum": 1,
+              "type": "integer"
+            }
+          },
+          {
+            "description": "Sort field; each endpoint validates it against its own allow-list.",
+            "in": "query",
+            "name": "sort",
+            "required": false,
+            "schema": {
+              "example": "createdAt",
+              "maxLength": 64,
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "order",
+            "required": false,
+            "schema": {
+              "$ref": "#/components/schemas/SortOrder"
+            }
+          },
+          {
+            "description": "Free-text search",
+            "in": "query",
+            "name": "q",
+            "required": false,
+            "schema": {
+              "maxLength": 200,
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "tag",
+            "required": false,
+            "schema": {
+              "example": "production",
+              "pattern": "^[a-z0-9_]{1,30}$",
+              "type": "string"
+            }
+          },
+          {
+            "description": "Include archived ones",
+            "in": "query",
+            "name": "archived",
+            "required": false,
+            "schema": {
+              "example": false,
+              "type": "boolean"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "data": [
+                    {
+                      "archived": false,
+                      "bodyEn": "Your order takes about 10 business days to produce after the artwork is approved.",
+                      "bodyTh": "งานของคุณใช้เวลาผลิตประมาณ 10 วันทำการหลังอนุมัติไฟล์ค่ะ",
+                      "id": "0192f3a0-7c1e-7d2a-9b1f-0000000f4007",
+                      "tags": [
+                        "production"
+                      ],
+                      "title": "แจ้งระยะเวลาผลิต",
+                      "updatedAt": "2026-10-20T09:00:00+07:00",
+                      "updatedBy": {
+                        "displayName": "CS Lead ทดสอบ",
+                        "id": "0192f3a0-7c1e-7d2a-9b1f-0000000f4004"
+                      }
+                    }
+                  ],
+                  "meta": {
+                    "page": 1,
+                    "perPage": 25,
+                    "total": 1
+                  }
+                },
+                "schema": {
+                  "properties": {
+                    "data": {
+                      "items": {
+                        "$ref": "#/components/schemas/CannedResponseDto"
+                      },
+                      "type": "array"
+                    },
+                    "meta": {
+                      "$ref": "#/components/schemas/PageMeta"
+                    }
+                  },
+                  "required": [
+                    "data",
+                    "meta"
+                  ],
+                  "type": "object"
+                }
+              }
+            },
+            "description": "One page of results",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.unauthenticated": {
+                    "$ref": "#/components/examples/problem.auth.unauthenticated"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.unauthenticated`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.forbidden": {
+                    "$ref": "#/components/examples/problem.auth.forbidden"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.forbidden`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "validation.failed": {
+                    "$ref": "#/components/examples/problem.validation.failed"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `validation.failed`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "staff": []
+          }
+        ],
+        "summary": "List canned responses",
+        "tags": [
+          "admin.conversations"
+        ],
+        "x-required-permissions": [
+          "conversations.read"
+        ]
+      },
+      "post": {
+        "description": "Thai and English texts; audited (D-300).\n\nImplements: D-300.",
+        "operationId": "admin.cannedResponses.create",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/IdempotencyKey"
+          },
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "examples": {
+                "default": {
+                  "value": {
+                    "archived": false,
+                    "bodyEn": "Your order takes about 10 business days to produce after the artwork is approved.",
+                    "bodyTh": "งานของคุณใช้เวลาผลิตประมาณ 10 วันทำการหลังอนุมัติไฟล์ค่ะ",
+                    "id": "0192f3a0-7c1e-7d2a-9b1f-0000000f4007",
+                    "tags": [
+                      "production"
+                    ],
+                    "title": "แจ้งระยะเวลาผลิต",
+                    "updatedAt": "2026-10-20T09:00:00+07:00",
+                    "updatedBy": {
+                      "displayName": "CS Lead ทดสอบ",
+                      "id": "0192f3a0-7c1e-7d2a-9b1f-0000000f4004"
+                    }
+                  }
+                }
+              },
+              "schema": {
+                "$ref": "#/components/schemas/SaveCannedResponseDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "archived": false,
+                  "bodyEn": "Your order takes about 10 business days to produce after the artwork is approved.",
+                  "bodyTh": "งานของคุณใช้เวลาผลิตประมาณ 10 วันทำการหลังอนุมัติไฟล์ค่ะ",
+                  "id": "0192f3a0-7c1e-7d2a-9b1f-0000000f4007",
+                  "tags": [
+                    "production"
+                  ],
+                  "title": "แจ้งระยะเวลาผลิต",
+                  "updatedAt": "2026-10-20T09:00:00+07:00",
+                  "updatedBy": {
+                    "displayName": "CS Lead ทดสอบ",
+                    "id": "0192f3a0-7c1e-7d2a-9b1f-0000000f4004"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/CannedResponseDto"
+                }
+              }
+            },
+            "description": "Created",
+            "headers": {
+              "Idempotent-Replayed": {
+                "$ref": "#/components/headers/IdempotentReplayed"
+              },
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "400": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.bad_request": {
+                    "$ref": "#/components/examples/problem.http.bad_request"
+                  },
+                  "http.malformed_json": {
+                    "$ref": "#/components/examples/problem.http.malformed_json"
+                  },
+                  "idempotency.key_invalid": {
+                    "$ref": "#/components/examples/problem.idempotency.key_invalid"
+                  },
+                  "idempotency.key_required": {
+                    "$ref": "#/components/examples/problem.idempotency.key_required"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.bad_request`, `http.malformed_json`, `idempotency.key_invalid`, `idempotency.key_required`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.unauthenticated": {
+                    "$ref": "#/components/examples/problem.auth.unauthenticated"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.unauthenticated`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.forbidden": {
+                    "$ref": "#/components/examples/problem.auth.forbidden"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.forbidden`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "409": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "idempotency.in_progress": {
+                    "$ref": "#/components/examples/problem.idempotency.in_progress"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `idempotency.in_progress`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "idempotency.key_reused": {
+                    "$ref": "#/components/examples/problem.idempotency.key_reused"
+                  },
+                  "validation.failed": {
+                    "$ref": "#/components/examples/problem.validation.failed"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `idempotency.key_reused`, `validation.failed`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "staff": []
+          }
+        ],
+        "summary": "Add a canned response",
+        "tags": [
+          "admin.conversations"
+        ],
+        "x-required-permissions": [
+          "conversations.manage_canned"
+        ]
+      }
+    },
+    "/v1/admin/canned-responses/{cannedResponseId}": {
+      "put": {
+        "description": "Replaces its title, texts and tags; audited with the previous title (D-300).\n\nImplements: D-300.",
+        "operationId": "admin.cannedResponses.update",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "cannedResponseId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "examples": {
+                "default": {
+                  "value": {
+                    "archived": false,
+                    "bodyEn": "Your order takes about 10 business days to produce after the artwork is approved.",
+                    "bodyTh": "งานของคุณใช้เวลาผลิตประมาณ 10 วันทำการหลังอนุมัติไฟล์ค่ะ",
+                    "id": "0192f3a0-7c1e-7d2a-9b1f-0000000f4007",
+                    "tags": [
+                      "production"
+                    ],
+                    "title": "แจ้งระยะเวลาผลิต",
+                    "updatedAt": "2026-10-20T09:00:00+07:00",
+                    "updatedBy": {
+                      "displayName": "CS Lead ทดสอบ",
+                      "id": "0192f3a0-7c1e-7d2a-9b1f-0000000f4004"
+                    }
+                  }
+                }
+              },
+              "schema": {
+                "$ref": "#/components/schemas/SaveCannedResponseDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "archived": false,
+                  "bodyEn": "Your order takes about 10 business days to produce after the artwork is approved.",
+                  "bodyTh": "งานของคุณใช้เวลาผลิตประมาณ 10 วันทำการหลังอนุมัติไฟล์ค่ะ",
+                  "id": "0192f3a0-7c1e-7d2a-9b1f-0000000f4007",
+                  "tags": [
+                    "production"
+                  ],
+                  "title": "แจ้งระยะเวลาผลิต",
+                  "updatedAt": "2026-10-20T09:00:00+07:00",
+                  "updatedBy": {
+                    "displayName": "CS Lead ทดสอบ",
+                    "id": "0192f3a0-7c1e-7d2a-9b1f-0000000f4004"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/CannedResponseDto"
+                }
+              }
+            },
+            "description": "Saved",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "400": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.bad_request": {
+                    "$ref": "#/components/examples/problem.http.bad_request"
+                  },
+                  "http.malformed_json": {
+                    "$ref": "#/components/examples/problem.http.malformed_json"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.bad_request`, `http.malformed_json`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.unauthenticated": {
+                    "$ref": "#/components/examples/problem.auth.unauthenticated"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.unauthenticated`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.forbidden": {
+                    "$ref": "#/components/examples/problem.auth.forbidden"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.forbidden`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "404": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.not_found": {
+                    "$ref": "#/components/examples/problem.http.not_found"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.not_found`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "validation.failed": {
+                    "$ref": "#/components/examples/problem.validation.failed"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `validation.failed`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "staff": []
+          }
+        ],
+        "summary": "Change a canned response",
+        "tags": [
+          "admin.conversations"
+        ],
+        "x-required-permissions": [
+          "conversations.manage_canned"
+        ]
+      }
+    },
+    "/v1/admin/canned-responses/{cannedResponseId}/actions/archive": {
+      "post": {
+        "description": "Hidden from the list; messages that used it keep the reference (D-300).\n\nImplements: D-300.",
+        "operationId": "admin.cannedResponses.archive",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "cannedResponseId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "archived": true,
+                  "bodyEn": "Your order takes about 10 business days to produce after the artwork is approved.",
+                  "bodyTh": "งานของคุณใช้เวลาผลิตประมาณ 10 วันทำการหลังอนุมัติไฟล์ค่ะ",
+                  "id": "0192f3a0-7c1e-7d2a-9b1f-0000000f4007",
+                  "tags": [
+                    "production"
+                  ],
+                  "title": "แจ้งระยะเวลาผลิต",
+                  "updatedAt": "2026-10-20T09:00:00+07:00",
+                  "updatedBy": {
+                    "displayName": "CS Lead ทดสอบ",
+                    "id": "0192f3a0-7c1e-7d2a-9b1f-0000000f4004"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/CannedResponseDto"
+                }
+              }
+            },
+            "description": "Archived",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.unauthenticated": {
+                    "$ref": "#/components/examples/problem.auth.unauthenticated"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.unauthenticated`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.forbidden": {
+                    "$ref": "#/components/examples/problem.auth.forbidden"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.forbidden`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "404": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.not_found": {
+                    "$ref": "#/components/examples/problem.http.not_found"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.not_found`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "validation.failed": {
+                    "$ref": "#/components/examples/problem.validation.failed"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `validation.failed`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "staff": []
+          }
+        ],
+        "summary": "Archive a canned response",
+        "tags": [
+          "admin.conversations"
+        ],
+        "x-required-permissions": [
+          "conversations.manage_canned"
+        ]
+      }
+    },
+    "/v1/admin/canned-responses/{cannedResponseId}/actions/restore": {
+      "post": {
+        "description": "Back in the list (D-300).\n\nImplements: D-300.",
+        "operationId": "admin.cannedResponses.restore",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "cannedResponseId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "archived": false,
+                  "bodyEn": "Your order takes about 10 business days to produce after the artwork is approved.",
+                  "bodyTh": "งานของคุณใช้เวลาผลิตประมาณ 10 วันทำการหลังอนุมัติไฟล์ค่ะ",
+                  "id": "0192f3a0-7c1e-7d2a-9b1f-0000000f4007",
+                  "tags": [
+                    "production"
+                  ],
+                  "title": "แจ้งระยะเวลาผลิต",
+                  "updatedAt": "2026-10-20T09:00:00+07:00",
+                  "updatedBy": {
+                    "displayName": "CS Lead ทดสอบ",
+                    "id": "0192f3a0-7c1e-7d2a-9b1f-0000000f4004"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/CannedResponseDto"
+                }
+              }
+            },
+            "description": "Restored",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.unauthenticated": {
+                    "$ref": "#/components/examples/problem.auth.unauthenticated"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.unauthenticated`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.forbidden": {
+                    "$ref": "#/components/examples/problem.auth.forbidden"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.forbidden`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "404": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.not_found": {
+                    "$ref": "#/components/examples/problem.http.not_found"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.not_found`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "validation.failed": {
+                    "$ref": "#/components/examples/problem.validation.failed"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `validation.failed`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "staff": []
+          }
+        ],
+        "summary": "Restore an archived canned response",
+        "tags": [
+          "admin.conversations"
+        ],
+        "x-required-permissions": [
+          "conversations.manage_canned"
         ]
       }
     },
@@ -158314,7 +160305,7 @@
     },
     "/v1/admin/conversations": {
       "get": {
-        "description": "Latest activity first; filter by status and assignee.\n\nImplements: D-151, D-143.",
+        "description": "Latest activity first. Filters: status, assignee, subject (support / order / design / RFQ / RFQ basket, D-300), channel, the subject’s company, first-response state (waiting in time, overdue, answered — D-221) and `q` (customer or LINE name, contains). Each thread carries its SLA timers, reply channel and participants.\n\nImplements: D-151, D-143, D-300, D-221.",
         "operationId": "admin.conversations.list",
         "parameters": [
           {
@@ -158384,6 +160375,41 @@
             }
           },
           {
+            "in": "query",
+            "name": "subjectType",
+            "required": false,
+            "schema": {
+              "$ref": "#/components/schemas/ConversationSubject"
+            }
+          },
+          {
+            "in": "query",
+            "name": "channel",
+            "required": false,
+            "schema": {
+              "$ref": "#/components/schemas/ConversationChannel"
+            }
+          },
+          {
+            "description": "Threads about records of this company",
+            "in": "query",
+            "name": "companyId",
+            "required": false,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "description": "First response: waiting (in time), overdue, answered",
+            "in": "query",
+            "name": "sla",
+            "required": false,
+            "schema": {
+              "$ref": "#/components/schemas/ConversationSlaState"
+            }
+          },
+          {
             "$ref": "#/components/parameters/AcceptLanguage"
           }
         ],
@@ -158396,6 +160422,7 @@
                     {
                       "assignee": null,
                       "channel": "line",
+                      "company": null,
                       "customer": {
                         "displayName": "ลูกค้า ทดสอบ",
                         "id": "0192f3a0-7c1e-7d2a-9b1f-0000000f4003"
@@ -158405,7 +160432,28 @@
                       "lastMessageAt": "2026-10-20T10:00:00+07:00",
                       "lineDisplayName": "ลูกค้า",
                       "lineFriendStatus": "followed",
+                      "mergedIntoId": null,
+                      "participants": [
+                        {
+                          "lastReadAt": "2026-10-20T10:00:00+07:00",
+                          "role": "customer",
+                          "user": {
+                            "displayName": "ลูกค้า ทดสอบ",
+                            "id": "0192f3a0-7c1e-7d2a-9b1f-0000000f4003"
+                          }
+                        }
+                      ],
+                      "replyChannel": "line",
+                      "sla": {
+                        "firstRespondedAt": null,
+                        "firstResponseDueAt": "2026-10-21T10:00:00+07:00",
+                        "resolutionDueAt": null,
+                        "resolvedAt": null,
+                        "state": "waiting"
+                      },
                       "status": "open",
+                      "subject": null,
+                      "subjectType": "support",
                       "ticket": null
                     }
                   ],
@@ -158569,6 +160617,198 @@
         ]
       }
     },
+    "/v1/admin/conversations/stats": {
+      "get": {
+        "description": "Over Bangkok days `from`–`to` (D-300): threads opened and closed; first response — the thread’s first customer message to its first answer: count, median, 90th percentile and the share answered by its D-221 due time; resolution — opened to closed; and the live threads overdue now.\n\nImplements: D-300, D-221.",
+        "operationId": "admin.conversations.stats",
+        "parameters": [
+          {
+            "description": "First Bangkok day",
+            "in": "query",
+            "name": "from",
+            "required": true,
+            "schema": {
+              "example": "2026-10-01",
+              "pattern": "^\\d{4}-\\d{2}-\\d{2}$",
+              "type": "string"
+            }
+          },
+          {
+            "description": "Last Bangkok day",
+            "in": "query",
+            "name": "to",
+            "required": true,
+            "schema": {
+              "example": "2026-10-31",
+              "pattern": "^\\d{4}-\\d{2}-\\d{2}$",
+              "type": "string"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "closed": 44,
+                  "firstResponse": {
+                    "count": 42,
+                    "medianMinutes": "35.0",
+                    "p90Minutes": "180.0",
+                    "withinTargetPct": "92.86"
+                  },
+                  "from": "2026-10-01",
+                  "opened": 51,
+                  "overdueNow": 2,
+                  "resolution": {
+                    "count": 44,
+                    "medianMinutes": "1440.0",
+                    "p90Minutes": "4320.0"
+                  },
+                  "to": "2026-10-31"
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ConversationStatsDto"
+                }
+              }
+            },
+            "description": "Stats",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.unauthenticated": {
+                    "$ref": "#/components/examples/problem.auth.unauthenticated"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.unauthenticated`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.forbidden": {
+                    "$ref": "#/components/examples/problem.auth.forbidden"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.forbidden`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "validation.failed": {
+                    "$ref": "#/components/examples/problem.validation.failed"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `validation.failed`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "staff": []
+          }
+        ],
+        "summary": "Inbox first-response and resolution times",
+        "tags": [
+          "admin.conversations"
+        ],
+        "x-required-permissions": [
+          "conversations.read"
+        ]
+      }
+    },
     "/v1/admin/conversations/{conversationId}": {
       "get": {
         "description": "With the customer when known.\n\nImplements: D-151.",
@@ -158594,6 +160834,7 @@
                 "example": {
                   "assignee": null,
                   "channel": "line",
+                  "company": null,
                   "customer": {
                     "displayName": "ลูกค้า ทดสอบ",
                     "id": "0192f3a0-7c1e-7d2a-9b1f-0000000f4003"
@@ -158603,7 +160844,28 @@
                   "lastMessageAt": "2026-10-20T10:00:00+07:00",
                   "lineDisplayName": "ลูกค้า",
                   "lineFriendStatus": "followed",
+                  "mergedIntoId": null,
+                  "participants": [
+                    {
+                      "lastReadAt": "2026-10-20T10:00:00+07:00",
+                      "role": "customer",
+                      "user": {
+                        "displayName": "ลูกค้า ทดสอบ",
+                        "id": "0192f3a0-7c1e-7d2a-9b1f-0000000f4003"
+                      }
+                    }
+                  ],
+                  "replyChannel": "line",
+                  "sla": {
+                    "firstRespondedAt": null,
+                    "firstResponseDueAt": "2026-10-21T10:00:00+07:00",
+                    "resolutionDueAt": null,
+                    "resolvedAt": null,
+                    "state": "waiting"
+                  },
                   "status": "open",
+                  "subject": null,
+                  "subjectType": "support",
                   "ticket": null
                 },
                 "schema": {
@@ -158805,6 +161067,7 @@
                 "example": {
                   "assignee": null,
                   "channel": "line",
+                  "company": null,
                   "customer": {
                     "displayName": "ลูกค้า ทดสอบ",
                     "id": "0192f3a0-7c1e-7d2a-9b1f-0000000f4003"
@@ -158814,7 +161077,28 @@
                   "lastMessageAt": "2026-10-20T10:00:00+07:00",
                   "lineDisplayName": "ลูกค้า",
                   "lineFriendStatus": "followed",
+                  "mergedIntoId": null,
+                  "participants": [
+                    {
+                      "lastReadAt": "2026-10-20T10:00:00+07:00",
+                      "role": "customer",
+                      "user": {
+                        "displayName": "ลูกค้า ทดสอบ",
+                        "id": "0192f3a0-7c1e-7d2a-9b1f-0000000f4003"
+                      }
+                    }
+                  ],
+                  "replyChannel": "line",
+                  "sla": {
+                    "firstRespondedAt": null,
+                    "firstResponseDueAt": "2026-10-21T10:00:00+07:00",
+                    "resolutionDueAt": null,
+                    "resolvedAt": null,
+                    "state": "waiting"
+                  },
                   "status": "open",
+                  "subject": null,
+                  "subjectType": "support",
                   "ticket": null
                 },
                 "schema": {
@@ -159024,6 +161308,7 @@
                 "example": {
                   "assignee": null,
                   "channel": "line",
+                  "company": null,
                   "customer": {
                     "displayName": "ลูกค้า ทดสอบ",
                     "id": "0192f3a0-7c1e-7d2a-9b1f-0000000f4003"
@@ -159033,7 +161318,28 @@
                   "lastMessageAt": "2026-10-20T10:00:00+07:00",
                   "lineDisplayName": "ลูกค้า",
                   "lineFriendStatus": "followed",
+                  "mergedIntoId": null,
+                  "participants": [
+                    {
+                      "lastReadAt": "2026-10-20T10:00:00+07:00",
+                      "role": "customer",
+                      "user": {
+                        "displayName": "ลูกค้า ทดสอบ",
+                        "id": "0192f3a0-7c1e-7d2a-9b1f-0000000f4003"
+                      }
+                    }
+                  ],
+                  "replyChannel": "line",
+                  "sla": {
+                    "firstRespondedAt": null,
+                    "firstResponseDueAt": "2026-10-21T10:00:00+07:00",
+                    "resolutionDueAt": null,
+                    "resolvedAt": null,
+                    "state": "waiting"
+                  },
                   "status": "closed",
+                  "subject": null,
+                  "subjectType": "support",
                   "ticket": null
                 },
                 "schema": {
@@ -159195,9 +161501,227 @@
         ]
       }
     },
+    "/v1/admin/conversations/{conversationId}/actions/mark-read": {
+      "post": {
+        "description": "Moves my read position to its latest message — the customer sees when Packio read it (D-300).\n\nImplements: D-300.",
+        "operationId": "admin.conversations.markRead",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "conversationId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "assignee": null,
+                  "channel": "line",
+                  "company": null,
+                  "customer": {
+                    "displayName": "ลูกค้า ทดสอบ",
+                    "id": "0192f3a0-7c1e-7d2a-9b1f-0000000f4003"
+                  },
+                  "id": "0192f3a0-7c1e-7d2a-9b1f-0000000f4001",
+                  "lastMessage": "สอบถามสถานะคำสั่งซื้อค่ะ",
+                  "lastMessageAt": "2026-10-20T10:00:00+07:00",
+                  "lineDisplayName": "ลูกค้า",
+                  "lineFriendStatus": "followed",
+                  "mergedIntoId": null,
+                  "participants": [
+                    {
+                      "lastReadAt": "2026-10-20T10:00:00+07:00",
+                      "role": "customer",
+                      "user": {
+                        "displayName": "ลูกค้า ทดสอบ",
+                        "id": "0192f3a0-7c1e-7d2a-9b1f-0000000f4003"
+                      }
+                    }
+                  ],
+                  "replyChannel": "line",
+                  "sla": {
+                    "firstRespondedAt": null,
+                    "firstResponseDueAt": "2026-10-21T10:00:00+07:00",
+                    "resolutionDueAt": null,
+                    "resolvedAt": null,
+                    "state": "waiting"
+                  },
+                  "status": "open",
+                  "subject": null,
+                  "subjectType": "support",
+                  "ticket": null
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ConversationDto"
+                }
+              }
+            },
+            "description": "Read",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.unauthenticated": {
+                    "$ref": "#/components/examples/problem.auth.unauthenticated"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.unauthenticated`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.forbidden": {
+                    "$ref": "#/components/examples/problem.auth.forbidden"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.forbidden`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "404": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.not_found": {
+                    "$ref": "#/components/examples/problem.http.not_found"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.not_found`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "validation.failed": {
+                    "$ref": "#/components/examples/problem.validation.failed"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `validation.failed`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "staff": []
+          }
+        ],
+        "summary": "Mark a thread read",
+        "tags": [
+          "admin.conversations"
+        ],
+        "x-required-permissions": [
+          "conversations.read"
+        ]
+      }
+    },
     "/v1/admin/conversations/{conversationId}/messages": {
       "get": {
-        "description": "Newest first, cursor-paged.\n\nImplements: D-151.",
+        "description": "Newest first, cursor-paged, with internal notes (D-300) and context cards resolved now.\n\nImplements: D-151, D-300.",
         "operationId": "admin.conversations.messages",
         "parameters": [
           {
@@ -159241,12 +161765,21 @@
                   "data": [
                     {
                       "body": "สอบถามสถานะคำสั่งซื้อค่ะ",
+                      "contextCard": {
+                        "id": "0192f3a0-7c1e-7d2a-9b1f-0000000f4005",
+                        "label": "PK-2610-0001-01",
+                        "status": "in_production",
+                        "type": "order"
+                      },
                       "direction": "inbound",
+                      "file": null,
                       "id": "0192f3a0-7c1e-7d2a-9b1f-0000000f4002",
                       "kind": "text",
                       "readAt": null,
                       "sender": null,
-                      "sentAt": "2026-10-20T10:00:00+07:00"
+                      "sentAt": "2026-10-20T10:00:00+07:00",
+                      "via": "web",
+                      "visibility": "customer"
                     }
                   ],
                   "meta": {
@@ -159427,7 +161960,7 @@
         ]
       },
       "post": {
-        "description": "Pushed to the customer’s LINE for LINE conversations; live on the web otherwise. Assigns the conversation to me when unassigned.\n\nImplements: D-151, D-143.",
+        "description": "Text, files and / or a card to one of the customer’s records (D-300). Goes to the customer’s LINE when the thread’s reply channel is LINE (the customer’s choice, else the channel of their last message; files and cards stay in the thread, LINE gets a pointer to it), live on the web otherwise. The first reply answers the D-221 first-response clock and the thread’s support tickets; assigns the thread to me when unassigned.\n\nImplements: D-151, D-143, D-300, D-221.",
         "operationId": "admin.conversations.reply",
         "parameters": [
           {
@@ -159457,7 +161990,7 @@
                 }
               },
               "schema": {
-                "$ref": "#/components/schemas/SendMessageDto"
+                "$ref": "#/components/schemas/StaffReplyDto"
               }
             }
           },
@@ -159469,7 +162002,14 @@
               "application/json": {
                 "example": {
                   "body": "คำสั่งซื้อของคุณกำลังผลิตค่ะ",
+                  "contextCard": {
+                    "id": "0192f3a0-7c1e-7d2a-9b1f-0000000f4005",
+                    "label": "PK-2610-0001-01",
+                    "status": "in_production",
+                    "type": "order"
+                  },
                   "direction": "outbound",
+                  "file": null,
                   "id": "0192f3a0-7c1e-7d2a-9b1f-0000000f4002",
                   "kind": "text",
                   "readAt": null,
@@ -159477,14 +162017,16 @@
                     "displayName": "CS ทดสอบ",
                     "id": "0192f3a0-7c1e-7d2a-9b1f-0000000f4004"
                   },
-                  "sentAt": "2026-10-20T10:00:00+07:00"
+                  "sentAt": "2026-10-20T10:00:00+07:00",
+                  "via": "web",
+                  "visibility": "customer"
                 },
                 "schema": {
                   "$ref": "#/components/schemas/MessageDto"
                 }
               }
             },
-            "description": "Sent",
+            "description": "Sent (the first message of the send)",
             "headers": {
               "Idempotent-Replayed": {
                 "$ref": "#/components/headers/IdempotentReplayed"
@@ -159711,6 +162253,278 @@
           }
         ],
         "summary": "Reply to the customer",
+        "tags": [
+          "admin.conversations"
+        ],
+        "x-required-permissions": [
+          "conversations.reply"
+        ]
+      }
+    },
+    "/v1/admin/conversations/{conversationId}/notes": {
+      "post": {
+        "description": "A note for colleagues on the thread (D-300): never shown or sent to the customer, does not answer the first-response clock.\n\nImplements: D-300.",
+        "operationId": "admin.conversations.addNote",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "conversationId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/IdempotencyKey"
+          },
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "examples": {
+                "default": {
+                  "value": {
+                    "body": "ลูกค้าโทรมาแจ้งเพิ่ม: ต้องการส่งก่อนวันศุกร์"
+                  }
+                }
+              },
+              "schema": {
+                "$ref": "#/components/schemas/ConversationNoteDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "body": "ลูกค้าโทรมาแจ้งเพิ่ม: ต้องการส่งก่อนวันศุกร์",
+                  "contextCard": null,
+                  "direction": "outbound",
+                  "file": null,
+                  "id": "0192f3a0-7c1e-7d2a-9b1f-0000000f4002",
+                  "kind": "text",
+                  "readAt": null,
+                  "sender": {
+                    "displayName": "CS ทดสอบ",
+                    "id": "0192f3a0-7c1e-7d2a-9b1f-0000000f4004"
+                  },
+                  "sentAt": "2026-10-20T10:00:00+07:00",
+                  "via": null,
+                  "visibility": "internal"
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/MessageDto"
+                }
+              }
+            },
+            "description": "Noted",
+            "headers": {
+              "Idempotent-Replayed": {
+                "$ref": "#/components/headers/IdempotentReplayed"
+              },
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "400": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.bad_request": {
+                    "$ref": "#/components/examples/problem.http.bad_request"
+                  },
+                  "http.malformed_json": {
+                    "$ref": "#/components/examples/problem.http.malformed_json"
+                  },
+                  "idempotency.key_invalid": {
+                    "$ref": "#/components/examples/problem.idempotency.key_invalid"
+                  },
+                  "idempotency.key_required": {
+                    "$ref": "#/components/examples/problem.idempotency.key_required"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.bad_request`, `http.malformed_json`, `idempotency.key_invalid`, `idempotency.key_required`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.unauthenticated": {
+                    "$ref": "#/components/examples/problem.auth.unauthenticated"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.unauthenticated`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.forbidden": {
+                    "$ref": "#/components/examples/problem.auth.forbidden"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.forbidden`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "404": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.not_found": {
+                    "$ref": "#/components/examples/problem.http.not_found"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.not_found`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "409": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "idempotency.in_progress": {
+                    "$ref": "#/components/examples/problem.idempotency.in_progress"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `idempotency.in_progress`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "idempotency.key_reused": {
+                    "$ref": "#/components/examples/problem.idempotency.key_reused"
+                  },
+                  "validation.failed": {
+                    "$ref": "#/components/examples/problem.validation.failed"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `idempotency.key_reused`, `validation.failed`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "staff": []
+          }
+        ],
+        "summary": "Add an internal note",
         "tags": [
           "admin.conversations"
         ],
@@ -360286,12 +363100,21 @@
                   "data": [
                     {
                       "body": "สอบถามสถานะคำสั่งซื้อค่ะ",
+                      "contextCard": {
+                        "id": "0192f3a0-7c1e-7d2a-9b1f-0000000f4005",
+                        "label": "PK-2610-0001-01",
+                        "status": "in_production",
+                        "type": "order"
+                      },
                       "direction": "inbound",
+                      "file": null,
                       "id": "0192f3a0-7c1e-7d2a-9b1f-0000000f4002",
                       "kind": "text",
                       "readAt": null,
                       "sender": null,
-                      "sentAt": "2026-10-20T10:00:00+07:00"
+                      "sentAt": "2026-10-20T10:00:00+07:00",
+                      "via": "web",
+                      "visibility": "customer"
                     }
                   ],
                   "meta": {
@@ -360502,12 +363325,21 @@
               "application/json": {
                 "example": {
                   "body": "สอบถามสถานะคำสั่งซื้อค่ะ",
+                  "contextCard": {
+                    "id": "0192f3a0-7c1e-7d2a-9b1f-0000000f4005",
+                    "label": "PK-2610-0001-01",
+                    "status": "in_production",
+                    "type": "order"
+                  },
                   "direction": "inbound",
+                  "file": null,
                   "id": "0192f3a0-7c1e-7d2a-9b1f-0000000f4002",
                   "kind": "text",
                   "readAt": null,
                   "sender": null,
-                  "sentAt": "2026-10-20T10:00:00+07:00"
+                  "sentAt": "2026-10-20T10:00:00+07:00",
+                  "via": "web",
+                  "visibility": "customer"
                 },
                 "schema": {
                   "$ref": "#/components/schemas/MessageDto"
@@ -360695,6 +363527,1363 @@
           }
         ],
         "summary": "Write to Packio CS",
+        "tags": [
+          "store.conversations"
+        ]
+      }
+    },
+    "/v1/store/conversations": {
+      "get": {
+        "description": "Latest activity first (up to 100): the support chat and the threads about my orders, designs, RFQs and RFQ baskets, each with its unread count, where replies go and when Packio last read it (D-300).\n\nImplements: D-300, D-151, D-221.",
+        "operationId": "store.conversations.list",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "example": [
+                  {
+                    "id": "0192f3a0-7c1e-7d2a-9b1f-0000000f4001",
+                    "lastMessage": "คำสั่งซื้อของคุณกำลังผลิตค่ะ",
+                    "lastMessageAt": "2026-10-20T10:05:00+07:00",
+                    "readByPackioAt": "2026-10-20T10:06:00+07:00",
+                    "replyChannel": "web",
+                    "replyChannelChosen": false,
+                    "status": "pending",
+                    "subject": {
+                      "id": "0192f3a0-7c1e-7d2a-9b1f-0000000f4005",
+                      "label": "PK-2610-0001-01",
+                      "type": "order"
+                    },
+                    "subjectType": "order",
+                    "unread": 1
+                  }
+                ],
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/StoreThreadDto"
+                  },
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Threads",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.unauthenticated": {
+                    "$ref": "#/components/examples/problem.auth.unauthenticated"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.unauthenticated`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.forbidden": {
+                    "$ref": "#/components/examples/problem.auth.forbidden"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.forbidden`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "customer": []
+          }
+        ],
+        "summary": "My threads with Packio",
+        "tags": [
+          "store.conversations"
+        ]
+      },
+      "post": {
+        "description": "Opens (or continues) my live thread about the support chat or one of my orders, designs or RFQs, with my first message: text, my uploaded and scanned files (one message each) and / or a card to one of my records. Someone else’s record → 422 (never confirms it exists). The first message waiting for an answer starts the D-221 first-response clock.\n\nImplements: D-300, D-151, D-221.",
+        "operationId": "store.conversations.open",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/IdempotencyKey"
+          },
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "examples": {
+                "default": {
+                  "value": {
+                    "body": "ขอแก้ไขสีโลโก้ค่ะ",
+                    "subjectId": "0192f3a0-7c1e-7d2a-9b1f-0000000f4005",
+                    "subjectType": "order"
+                  }
+                }
+              },
+              "schema": {
+                "$ref": "#/components/schemas/OpenThreadDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "conversationId": "0192f3a0-7c1e-7d2a-9b1f-0000000f4001",
+                  "messages": [
+                    {
+                      "body": "สอบถามสถานะคำสั่งซื้อค่ะ",
+                      "contextCard": {
+                        "id": "0192f3a0-7c1e-7d2a-9b1f-0000000f4005",
+                        "label": "PK-2610-0001-01",
+                        "status": "in_production",
+                        "type": "order"
+                      },
+                      "direction": "inbound",
+                      "file": null,
+                      "id": "0192f3a0-7c1e-7d2a-9b1f-0000000f4002",
+                      "kind": "text",
+                      "readAt": null,
+                      "sender": null,
+                      "sentAt": "2026-10-20T10:00:00+07:00",
+                      "via": "web",
+                      "visibility": "customer"
+                    }
+                  ]
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/SentDto"
+                }
+              }
+            },
+            "description": "Sent",
+            "headers": {
+              "Idempotent-Replayed": {
+                "$ref": "#/components/headers/IdempotentReplayed"
+              },
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "400": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.bad_request": {
+                    "$ref": "#/components/examples/problem.http.bad_request"
+                  },
+                  "http.malformed_json": {
+                    "$ref": "#/components/examples/problem.http.malformed_json"
+                  },
+                  "idempotency.key_invalid": {
+                    "$ref": "#/components/examples/problem.idempotency.key_invalid"
+                  },
+                  "idempotency.key_required": {
+                    "$ref": "#/components/examples/problem.idempotency.key_required"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.bad_request`, `http.malformed_json`, `idempotency.key_invalid`, `idempotency.key_required`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.unauthenticated": {
+                    "$ref": "#/components/examples/problem.auth.unauthenticated"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.unauthenticated`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.forbidden": {
+                    "$ref": "#/components/examples/problem.auth.forbidden"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.forbidden`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "409": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "idempotency.in_progress": {
+                    "$ref": "#/components/examples/problem.idempotency.in_progress"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `idempotency.in_progress`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "idempotency.key_reused": {
+                    "$ref": "#/components/examples/problem.idempotency.key_reused"
+                  },
+                  "validation.failed": {
+                    "$ref": "#/components/examples/problem.validation.failed"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `idempotency.key_reused`, `validation.failed`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "customer": []
+          }
+        ],
+        "summary": "Write to Packio about something",
+        "tags": [
+          "store.conversations"
+        ]
+      }
+    },
+    "/v1/store/conversations/{conversationId}": {
+      "get": {
+        "description": "Another customer’s thread → 404 (D-300).\n\nImplements: D-300, D-151, D-221.",
+        "operationId": "store.conversations.getThread",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "conversationId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "id": "0192f3a0-7c1e-7d2a-9b1f-0000000f4001",
+                  "lastMessage": "คำสั่งซื้อของคุณกำลังผลิตค่ะ",
+                  "lastMessageAt": "2026-10-20T10:05:00+07:00",
+                  "readByPackioAt": "2026-10-20T10:06:00+07:00",
+                  "replyChannel": "web",
+                  "replyChannelChosen": false,
+                  "status": "pending",
+                  "subject": {
+                    "id": "0192f3a0-7c1e-7d2a-9b1f-0000000f4005",
+                    "label": "PK-2610-0001-01",
+                    "type": "order"
+                  },
+                  "subjectType": "order",
+                  "unread": 1
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/StoreThreadDto"
+                }
+              }
+            },
+            "description": "Thread",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.unauthenticated": {
+                    "$ref": "#/components/examples/problem.auth.unauthenticated"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.unauthenticated`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.forbidden": {
+                    "$ref": "#/components/examples/problem.auth.forbidden"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.forbidden`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "404": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.not_found": {
+                    "$ref": "#/components/examples/problem.http.not_found"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.not_found`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "validation.failed": {
+                    "$ref": "#/components/examples/problem.validation.failed"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `validation.failed`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "customer": []
+          }
+        ],
+        "summary": "One of my threads",
+        "tags": [
+          "store.conversations"
+        ]
+      }
+    },
+    "/v1/store/conversations/{conversationId}/messages": {
+      "get": {
+        "description": "Newest first, cursor-paged; never Packio’s internal notes. Reading moves my read position (D-300) — Packio sees it as a read receipt.\n\nImplements: D-300, D-151, D-221.",
+        "operationId": "store.conversations.listThreadMessages",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "conversationId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "cursor",
+            "required": false,
+            "schema": {
+              "maxLength": 512,
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "default": 50,
+              "maximum": 100,
+              "minimum": 1,
+              "type": "integer"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "data": [
+                    {
+                      "body": "สอบถามสถานะคำสั่งซื้อค่ะ",
+                      "contextCard": {
+                        "id": "0192f3a0-7c1e-7d2a-9b1f-0000000f4005",
+                        "label": "PK-2610-0001-01",
+                        "status": "in_production",
+                        "type": "order"
+                      },
+                      "direction": "inbound",
+                      "file": null,
+                      "id": "0192f3a0-7c1e-7d2a-9b1f-0000000f4002",
+                      "kind": "text",
+                      "readAt": null,
+                      "sender": null,
+                      "sentAt": "2026-10-20T10:00:00+07:00",
+                      "via": "web",
+                      "visibility": "customer"
+                    }
+                  ],
+                  "meta": {
+                    "nextCursor": "eyJpZCI6IjEyMyJ9"
+                  }
+                },
+                "schema": {
+                  "properties": {
+                    "data": {
+                      "items": {
+                        "$ref": "#/components/schemas/MessageDto"
+                      },
+                      "type": "array"
+                    },
+                    "meta": {
+                      "$ref": "#/components/schemas/CursorMeta"
+                    }
+                  },
+                  "required": [
+                    "data",
+                    "meta"
+                  ],
+                  "type": "object"
+                }
+              }
+            },
+            "description": "One slice of the feed",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.unauthenticated": {
+                    "$ref": "#/components/examples/problem.auth.unauthenticated"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.unauthenticated`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.forbidden": {
+                    "$ref": "#/components/examples/problem.auth.forbidden"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.forbidden`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "404": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.not_found": {
+                    "$ref": "#/components/examples/problem.http.not_found"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.not_found`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "validation.failed": {
+                    "$ref": "#/components/examples/problem.validation.failed"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `validation.failed`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "customer": []
+          }
+        ],
+        "summary": "Messages of one of my threads",
+        "tags": [
+          "store.conversations"
+        ]
+      },
+      "post": {
+        "description": "Text, files and / or a card, like opening one. A closed thread continues in a new live thread about the same subject — the response names the thread the messages went into.\n\nImplements: D-300, D-151, D-221.",
+        "operationId": "store.conversations.post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "conversationId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/IdempotencyKey"
+          },
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "examples": {
+                "default": {
+                  "value": {
+                    "body": "ขอบคุณค่ะ"
+                  }
+                }
+              },
+              "schema": {
+                "$ref": "#/components/schemas/PostMessageDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "conversationId": "0192f3a0-7c1e-7d2a-9b1f-0000000f4001",
+                  "messages": [
+                    {
+                      "body": "สอบถามสถานะคำสั่งซื้อค่ะ",
+                      "contextCard": {
+                        "id": "0192f3a0-7c1e-7d2a-9b1f-0000000f4005",
+                        "label": "PK-2610-0001-01",
+                        "status": "in_production",
+                        "type": "order"
+                      },
+                      "direction": "inbound",
+                      "file": null,
+                      "id": "0192f3a0-7c1e-7d2a-9b1f-0000000f4002",
+                      "kind": "text",
+                      "readAt": null,
+                      "sender": null,
+                      "sentAt": "2026-10-20T10:00:00+07:00",
+                      "via": "web",
+                      "visibility": "customer"
+                    }
+                  ]
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/SentDto"
+                }
+              }
+            },
+            "description": "Sent",
+            "headers": {
+              "Idempotent-Replayed": {
+                "$ref": "#/components/headers/IdempotentReplayed"
+              },
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "400": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.bad_request": {
+                    "$ref": "#/components/examples/problem.http.bad_request"
+                  },
+                  "http.malformed_json": {
+                    "$ref": "#/components/examples/problem.http.malformed_json"
+                  },
+                  "idempotency.key_invalid": {
+                    "$ref": "#/components/examples/problem.idempotency.key_invalid"
+                  },
+                  "idempotency.key_required": {
+                    "$ref": "#/components/examples/problem.idempotency.key_required"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.bad_request`, `http.malformed_json`, `idempotency.key_invalid`, `idempotency.key_required`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.unauthenticated": {
+                    "$ref": "#/components/examples/problem.auth.unauthenticated"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.unauthenticated`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.forbidden": {
+                    "$ref": "#/components/examples/problem.auth.forbidden"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.forbidden`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "404": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.not_found": {
+                    "$ref": "#/components/examples/problem.http.not_found"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.not_found`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "409": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "idempotency.in_progress": {
+                    "$ref": "#/components/examples/problem.idempotency.in_progress"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `idempotency.in_progress`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "idempotency.key_reused": {
+                    "$ref": "#/components/examples/problem.idempotency.key_reused"
+                  },
+                  "validation.failed": {
+                    "$ref": "#/components/examples/problem.validation.failed"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `idempotency.key_reused`, `validation.failed`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "customer": []
+          }
+        ],
+        "summary": "Write in one of my threads",
+        "tags": [
+          "store.conversations"
+        ]
+      }
+    },
+    "/v1/store/conversations/{conversationId}/reply-channel": {
+      "put": {
+        "description": "On the web / LIFF thread, or on my LINE (D-300) — LINE needs a linked LINE account that follows Packio (`conversations.unreachable` otherwise). Without a choice replies follow the channel of my last message.\n\nImplements: D-300, D-151, D-221.",
+        "operationId": "store.conversations.setReplyChannel",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "conversationId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "examples": {
+                "default": {
+                  "value": {
+                    "replyChannel": "line"
+                  }
+                }
+              },
+              "schema": {
+                "$ref": "#/components/schemas/ReplyChannelDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "id": "0192f3a0-7c1e-7d2a-9b1f-0000000f4001",
+                  "lastMessage": "คำสั่งซื้อของคุณกำลังผลิตค่ะ",
+                  "lastMessageAt": "2026-10-20T10:05:00+07:00",
+                  "readByPackioAt": "2026-10-20T10:06:00+07:00",
+                  "replyChannel": "line",
+                  "replyChannelChosen": true,
+                  "status": "pending",
+                  "subject": {
+                    "id": "0192f3a0-7c1e-7d2a-9b1f-0000000f4005",
+                    "label": "PK-2610-0001-01",
+                    "type": "order"
+                  },
+                  "subjectType": "order",
+                  "unread": 1
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/StoreThreadDto"
+                }
+              }
+            },
+            "description": "Set",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "400": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.bad_request": {
+                    "$ref": "#/components/examples/problem.http.bad_request"
+                  },
+                  "http.malformed_json": {
+                    "$ref": "#/components/examples/problem.http.malformed_json"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.bad_request`, `http.malformed_json`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.unauthenticated": {
+                    "$ref": "#/components/examples/problem.auth.unauthenticated"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.unauthenticated`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.forbidden": {
+                    "$ref": "#/components/examples/problem.auth.forbidden"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.forbidden`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "404": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.not_found": {
+                    "$ref": "#/components/examples/problem.http.not_found"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.not_found`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "409": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "conversations.unreachable": {
+                    "$ref": "#/components/examples/problem.conversations.unreachable"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `conversations.unreachable`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "validation.failed": {
+                    "$ref": "#/components/examples/problem.validation.failed"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `validation.failed`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "customer": []
+          }
+        ],
+        "summary": "Choose where Packio replies",
         "tags": [
           "store.conversations"
         ]

@@ -28,6 +28,7 @@ export const SIGNAL_KEYS = [
   'slip_verification_wait_hours',
   'claim_response_overdue',
   'claim_decision_overdue',
+  'conversation_first_response_overdue',
 ] as const;
 export type SignalKey = (typeof SIGNAL_KEYS)[number];
 
@@ -54,6 +55,8 @@ const DESCRIPTIONS: Record<SignalKey, string> = {
     'Hours the oldest transfer slip has waited for Finance (D-061: 4 business hours)',
   claim_response_overdue: 'Claims without a first response past the guarantee’s response time (D-263)',
   claim_decision_overdue: 'Open claims past the guarantee’s decision time from complete evidence (D-263)',
+  conversation_first_response_overdue:
+    'Live CS conversations whose first customer message is past its first-response due time (D-221, D-300)',
 };
 export const signalDescription = (key: SignalKey) => DESCRIPTIONS[key];
 
@@ -123,6 +126,10 @@ export class OpsSignalsService implements OnModuleInit {
       claim_decision_overdue: await this.count(
         p.$queryRaw`SELECT count(*) AS n FROM claims WHERE decided_at IS NULL AND decision_due_at < now()
                     AND status IN ('submitted', 'under_review', 'factory_review')`,
+      ),
+      conversation_first_response_overdue: await this.count(
+        p.$queryRaw`SELECT count(*) AS n FROM conversations WHERE status <> 'closed' AND first_responded_at IS NULL
+                    AND first_response_due_at < now()`,
       ),
     };
   }

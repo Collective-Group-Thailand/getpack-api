@@ -382,6 +382,7 @@ async function ensureNotifications(tx: Tx, count: (what: string) => void): Promi
         channel: seed.channel,
         templateId: template.id,
         isCritical: seed.isCritical ?? false,
+        ...(seed.conditions && { conditions: seed.conditions }),
       },
     });
     count('notification_routes');

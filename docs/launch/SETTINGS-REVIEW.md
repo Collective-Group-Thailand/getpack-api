@@ -5,7 +5,7 @@
 > (a new effective-dated version, audited — D-063) and signs item 5 of `docs/LAUNCH-CHECKLIST.md`. A *proposed* or
 > *pending* value is not a decision: it goes live only once its owner confirms it.
 
-**99 settings** — 59 confirmed · 19 proposed · 4 pending the CPA (⚖) · 1 pending the business · 16 defined without a value (not set until their owner sets them).
+**100 settings** — 59 confirmed · 19 proposed · 4 pending the CPA (⚖) · 1 pending the business · 17 defined without a value (not set until their owner sets them).
 
 ## Settings
 
@@ -37,6 +37,7 @@
 | `close.unmatched_items_threshold` | `0` | proposed | finance_manager | D-033 | D-033 / accounting-design §7 step 1: unmatched bank / gateway items allowed at close before each must be explained (proposed: none) |
 | `configurations.draft_retention_days` | `90` | confirmed | superadmin | D-185 | D-185 days a draft configuration is kept after its last change, then deleted |
 | `configurations.share_link_days` | `15` | confirmed | superadmin | D-185, D-226 | D-185 days a share link stays valid (as the D-051 quotation validity); design share links use it (D-226) |
+| `conversations.resolution_business_days` | `— (not set)` | not set | cs_lead | D-300, D-221 | D-300 resolution target of a CS conversation, in business days from its first customer message (business hours D-175) — no decision yet: unset until the CS Lead sets it, no resolution due date until then |
 | `design.extra_revision_fee` | `{"minimumAmount":"500.00","pctOfDesignFee":"20"}` | confirmed | superadmin | D-071 | D-071 fee per revision round from round 4: max(minimum, % of the design fee) |
 | `design.free_revision_rounds` | `3` | confirmed | superadmin | D-071 | D-071 free revision rounds per hired design |
 | `design.hired_design_sla` | `{"targetBusinessDays":5,"maxBusinessDays":10}` | confirmed | superadmin | D-071 | D-071 hired design delivery target and maximum |
@@ -57,7 +58,7 @@
 | `loyalty.tiers` | `[{"tier":"member","minSpend12m":"0.00","multiplier":"1"},{"tier":"silver","minSpend12m":"50000.00","multiplier":"1.25"},{"tier":"gold","minSpend12m":"200000.00","multiplier":"1.5"}]` | confirmed | superadmin | D-134 | D-134 tiers by 12-month spend with earn multipliers |
 | `notifications.deep_link_ttl_hours` | `72` | confirmed | superadmin | D-299 | D-299 hours a notification deep link (one page of the recipient’s zone, never a sign-in) stays valid |
 | `notifications.marketing_window` | `{"from":"09:00","to":"20:00","timezone":"Asia/Bangkok"}` | confirmed | superadmin | D-144 | D-144 marketing messages are sent only inside this window (transactional anytime) |
-| `ops.alert_thresholds` | `{"outbox_dead_letters":1,"outbox_backlog_minutes":15,"queue_depth":1000,"webhook_failures_24h":5,"payout_item_failures_7d":1,"ledger_posting_failures":1,"acceptance_overdue":1,"production_at_risk":5,"rfq_first_response_overdue":1,"approvals_overdue":5,"slip_verification_wait_hours":4,"claim_response_overdue":1,"claim_decision_overdue":1}` | proposed | superadmin | D-113, D-061, D-074 | D-113 launch monitoring: value at which each operational signal raises an alert to superadmins and admins (slip wait mirrors the D-061 4-hour SLA in wall-clock hours; the rest proposed) |
+| `ops.alert_thresholds` | `{"outbox_dead_letters":1,"outbox_backlog_minutes":15,"queue_depth":1000,"webhook_failures_24h":5,"payout_item_failures_7d":1,"ledger_posting_failures":1,"acceptance_overdue":1,"production_at_risk":5,"rfq_first_response_overdue":1,"approvals_overdue":5,"slip_verification_wait_hours":4,"claim_response_overdue":1,"claim_decision_overdue":1,"conversation_first_response_overdue":1}` | proposed | superadmin | D-113, D-061, D-074 | D-113 launch monitoring: value at which each operational signal raises an alert to superadmins and admins (slip wait mirrors the D-061 4-hour SLA in wall-clock hours; the rest proposed) |
 | `orders.auto_complete_days` | `7` | confirmed | superadmin | D-081 | D-081 days after delivery until an order completes automatically |
 | `orders.unpaid_expiry_days` | `7` | proposed | superadmin | D-060 | D-060 calendar days after placement until an unpaid order group is cancelled; legacy reads the value from a secret not in the repository, so its 7-day fallback is seeded (B3.1, 2026-09-27) |
 | `partners.auto_selection_min_factories` | `2` | confirmed | superadmin | D-101, D-012 | D-101 active factories per product type before auto-selection and auto-reassignment switch on |

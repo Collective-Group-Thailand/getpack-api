@@ -25,6 +25,8 @@ interface Row {
   description: string;
   /** Marketing rows get the D-144 consent and quiet hours in the router; everything else is transactional. */
   category?: 'marketing';
+  /** Route conditions on the payload (the router's `conditions`). */
+  conditions?: Record<string, string | number | boolean>;
 }
 
 const email = (greeting: string, body: string, footer: string) =>
@@ -589,6 +591,19 @@ const ROWS: Row[] = [
     'CS: factory response on a claim (D-083)',
   ),
 
+  {
+    ...C(
+      'conversation.replied',
+      ['in_app', 'web_push', 'email'],
+      { th: 'Packio ตอบข้อความของคุณแล้ว', en: 'Packio replied to your message' },
+      {
+        th: 'ทีมบริการลูกค้าตอบข้อความของคุณแล้ว เปิดอ่านได้ในแชท Packio',
+        en: 'Customer service replied to your message; read it in your Packio chat',
+      },
+      'Customer: CS replied on the web thread — a reply sent to LINE is the LINE message itself (D-300, D-143)',
+    ),
+    conditions: { 'payload.via': 'web' },
+  },
   T(
     'conversation.opened',
     'cs',
@@ -934,5 +949,6 @@ export const MATRIX_ROUTES: NotificationRouteSeed[] = ROWS.flatMap((r) =>
     channel,
     ...(r.team && { staffTeamCode: r.team }),
     ...(r.critical?.includes(channel) && { isCritical: true }),
+    ...(r.conditions && { conditions: r.conditions }),
   })),
 );

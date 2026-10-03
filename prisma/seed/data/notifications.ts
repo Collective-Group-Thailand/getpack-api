@@ -21,6 +21,8 @@ export interface NotificationRouteSeed {
   isCritical?: boolean;
   /** For `staff_team` routes: the team (TEAMS code). */
   staffTeamCode?: string;
+  /** Payload equality conditions (`{ "payload.field": value }`, the router's `conditions`). */
+  conditions?: Record<string, string | number | boolean>;
 }
 
 const PLATFORM_TEMPLATES: readonly NotificationTemplateSeed[] = [

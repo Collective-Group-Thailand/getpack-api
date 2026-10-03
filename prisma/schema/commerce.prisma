@@ -2006,6 +2006,7 @@ model Company {
   // --- end Finance B5.2
 
   brandKits     BrandKit[]                @relation("BrandKitCompany")
+  conversations Conversation[]            @relation("ConversationCompany")
   elementRights ElementRightDeclaration[] @relation("ElementRightCompany")
 
   reorderSuggestions ReorderSuggestion[] @relation("ReorderSuggestionCompany")

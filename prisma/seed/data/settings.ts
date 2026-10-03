@@ -717,6 +717,8 @@ export const SETTINGS: readonly SettingSeed[] = [
       // D-263: one overdue claim is worth an alert.
       claim_response_overdue: 1,
       claim_decision_overdue: 1,
+      // D-300: one CS conversation past its D-221 first-response time.
+      conversation_first_response_overdue: 1,
     },
     valueSchema: { type: 'object', additionalProperties: { type: 'integer', minimum: 1 } },
     description:
@@ -1240,6 +1242,17 @@ export const SETTINGS: readonly SettingSeed[] = [
       'D-299 hours a notification deep link (one page of the recipient’s zone, never a sign-in) stays valid',
     decisions: ['D-299'],
     ownerRole: 'superadmin',
+  },
+  {
+    key: 'conversations.resolution_business_days',
+    valueType: 'integer',
+    value: null,
+    unset: true,
+    valueSchema: { minimum: 1, maximum: 60 },
+    description:
+      'D-300 resolution target of a CS conversation, in business days from its first customer message (business hours D-175) — no decision yet: unset until the CS Lead sets it, no resolution due date until then',
+    decisions: ['D-300', 'D-221'],
+    ownerRole: 'cs_lead',
   },
 ];
 

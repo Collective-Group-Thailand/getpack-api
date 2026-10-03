@@ -7,6 +7,7 @@ import { Idempotent } from '@common/idempotency/idempotent.decorator';
 import { ApiEndpoint, ApiStandardErrors, ApiSuccess } from '@common/openapi/decorators';
 import { ApiCursorPaginated, ApiPaginated } from '@common/pagination/api-paginated.decorator';
 import { toBangkokIso } from '@common/time/bangkok';
+import { PrismaService } from '@database/prisma.service';
 import { type Prisma } from '@generated/prisma/client';
 import { ApiSurface } from '@modules/surfaces/surfaces';
 import {
@@ -25,6 +26,8 @@ import {
 } from '@nestjs/common';
 import { ApiBody, ApiParam } from '@nestjs/swagger';
 
+import { ConversationStatsService } from './canned-responses.service';
+import { conversationView, messageViews } from './conversation-views';
 import {
   AssignConversationDto,
   CONVERSATION_EXAMPLE,
@@ -41,44 +44,18 @@ import {
   STORE_CONVERSATION_EXAMPLE,
   StoreConversationDto,
 } from './conversations.dto';
-import { type ConversationRow, ConversationsService, type MessageRow } from './conversations.service';
+import { type ConversationRow, ConversationsService } from './conversations.service';
 import { LineWebhookService } from './line-webhook.service';
 import { RichMenusService } from './rich-menus.service';
-import { ticketDto } from './support.service';
+import {
+  ConversationNoteDto,
+  ConversationStatsDto,
+  ConversationStatsQuery,
+  StaffReplyDto,
+  STATS_EXAMPLE,
+} from './threads.dto';
 
 const conversationParam = ApiParam({ name: 'conversationId', format: 'uuid' });
-
-function messageDto(m: MessageRow): MessageDto {
-  return {
-    id: m.publicId,
-    direction: m.direction,
-    kind: m.kind,
-    body: m.body,
-    sender:
-      m.direction === 'outbound' && m.senderUser
-        ? { id: m.senderUser.publicId, displayName: m.senderUser.displayName }
-        : null,
-    sentAt: toBangkokIso(m.sentAt),
-    readAt: m.readAt ? toBangkokIso(m.readAt) : null,
-  };
-}
-
-function conversationDto(c: ConversationRow): ConversationDto {
-  return {
-    id: c.publicId,
-    status: c.status,
-    lastMessageAt: toBangkokIso(c.lastMessageAt),
-    channel: c.channel,
-    customer: c.customer ? { id: c.customer.publicId, displayName: c.customer.displayName } : null,
-    lineDisplayName: c.lineAccount?.displayName ?? null,
-    lineFriendStatus: c.lineAccount?.friendStatus ?? null,
-    assignee: c.assignedUser
-      ? { id: c.assignedUser.publicId, displayName: c.assignedUser.displayName }
-      : null,
-    lastMessage: c.messages[0]?.body ?? null,
-    ticket: c.tickets[0] ? ticketDto(c.tickets[0]) : null,
-  };
-}
 
 function customer(actor: Actor): UserActor {
   if (actor.type !== 'user' || actor.audience !== 'customer') throw new DomainException('auth.forbidden');
@@ -157,7 +134,10 @@ export class LineWebhookController {
 @ApiSurface('store', 'conversations')
 @Controller('conversation')
 export class StoreConversationController {
-  constructor(private readonly conversations: ConversationsService) {}
+  constructor(
+    private readonly conversations: ConversationsService,
+    private readonly prisma: PrismaService,
+  ) {}
 
   @Get()
   @ApiEndpoint({
@@ -191,8 +171,8 @@ export class StoreConversationController {
     const c = await this.conversations.customerConversation(customer(actor).userId);
     if (!c) throw new DomainException('http.not_found');
     const page = await this.conversations.messages(c.id, q.cursor, q.limit);
-    await this.conversations.markReadByCustomer(c.id);
-    return { data: page.data.map(messageDto), meta: page.meta };
+    await this.conversations.markReadByCustomer(c.id, customer(actor).userId);
+    return { data: await messageViews(this.prisma, page.data), meta: page.meta };
   }
 
   @Post('messages')
@@ -208,7 +188,7 @@ export class StoreConversationController {
   @ApiStandardErrors('http.bad_request', 'http.malformed_json', 'validation.failed')
   async send(@CurrentActor() actor: Actor, @Body() body: SendMessageDto) {
     const m = await this.conversations.customerSend(customer(actor), body.body);
-    return messageDto({ ...m, senderUser: null });
+    return (await messageViews(this.prisma, await this.conversations.messageRows([m.id])))[0];
   }
 }
 
@@ -219,27 +199,75 @@ export class StoreConversationController {
 @ApiSurface('admin', 'conversations')
 @Controller('conversations')
 export class AdminConversationsController {
-  constructor(private readonly conversations: ConversationsService) {}
+  constructor(
+    private readonly conversations: ConversationsService,
+    private readonly prisma: PrismaService,
+    private readonly stats_: ConversationStatsService,
+  ) {}
+
+  private view(c: ConversationRow) {
+    return conversationView(this.prisma, c, this.conversations.effectiveReplyChannel(c));
+  }
 
   @Get()
   @Can('conversations.read')
   @ApiEndpoint({
     id: 'admin.conversations.list',
     summary: 'The CS inbox',
-    description: 'Latest activity first; filter by status and assignee.',
-    implements: ['D-151', 'D-143'],
+    description:
+      'Latest activity first. Filters: status, assignee, subject (support / order / design / RFQ / RFQ basket, ' +
+      'D-300), channel, the subject’s company, first-response state (waiting in time, overdue, answered — D-221) and ' +
+      '`q` (customer or LINE name, contains). Each thread carries its SLA timers, reply channel and participants.',
+    implements: ['D-151', 'D-143', 'D-300', 'D-221'],
   })
   @ApiPaginated(ConversationDto, { example: CONVERSATION_EXAMPLE })
   @ApiStandardErrors('validation.failed')
   async list(@CurrentActor() actor: Actor, @Query() q: ConversationListQuery) {
     const me = staff(actor);
+    const now = new Date();
+    const company = q.companyId
+      ? await this.prisma.company.findUnique({ where: { publicId: q.companyId }, select: { id: true } })
+      : null;
     const where: Prisma.ConversationWhereInput = {
+      mergedIntoId: null,
       ...(q.status && { status: q.status }),
       ...(q.assigned === 'me' && { assignedUserId: me.userId }),
       ...(q.assigned === 'unassigned' && { assignedUserId: null }),
+      ...(q.subjectType && { subjectType: q.subjectType }),
+      ...(q.channel && { channel: q.channel }),
+      ...(q.companyId && { companyId: company?.id ?? -1n }),
+      ...(q.sla === 'answered' && { firstRespondedAt: { not: null } }),
+      ...(q.sla === 'waiting' && { firstRespondedAt: null, firstResponseDueAt: { gte: now } }),
+      ...(q.sla === 'overdue' && { firstRespondedAt: null, firstResponseDueAt: { lt: now } }),
+      ...(q.q && {
+        OR: [
+          { customer: { displayName: { contains: q.q, mode: 'insensitive' } } },
+          { lineAccount: { displayName: { contains: q.q, mode: 'insensitive' } } },
+        ],
+      }),
     };
     const [rows, total] = await this.conversations.list(where, q.page, q.perPage);
-    return { data: rows.map(conversationDto), meta: { page: q.page, perPage: q.perPage, total } };
+    return {
+      data: await Promise.all(rows.map((r) => this.view(r))),
+      meta: { page: q.page, perPage: q.perPage, total },
+    };
+  }
+
+  @Get('stats')
+  @Can('conversations.read')
+  @ApiEndpoint({
+    id: 'admin.conversations.stats',
+    summary: 'Inbox first-response and resolution times',
+    description:
+      'Over Bangkok days `from`–`to` (D-300): threads opened and closed; first response — the thread’s first ' +
+      'customer message to its first answer: count, median, 90th percentile and the share answered by its D-221 due ' +
+      'time; resolution — opened to closed; and the live threads overdue now.',
+    implements: ['D-300', 'D-221'],
+  })
+  @ApiSuccess(200, { description: 'Stats', type: ConversationStatsDto, example: STATS_EXAMPLE })
+  @ApiStandardErrors('validation.failed')
+  stats(@Query() q: ConversationStatsQuery) {
+    return this.stats_.stats(q.from, q.to);
   }
 
   @Get(':conversationId')
@@ -254,7 +282,7 @@ export class AdminConversationsController {
   @ApiSuccess(200, { description: 'Conversation', type: ConversationDto, example: CONVERSATION_EXAMPLE })
   @ApiStandardErrors('http.not_found', 'validation.failed')
   async get(@Param('conversationId', ParseUUIDPipe) id: string) {
-    return conversationDto(await this.conversations.get(id));
+    return this.view(await this.conversations.get(id));
   }
 
   @Get(':conversationId/messages')
@@ -263,15 +291,15 @@ export class AdminConversationsController {
   @ApiEndpoint({
     id: 'admin.conversations.messages',
     summary: 'Messages of a conversation',
-    description: 'Newest first, cursor-paged.',
-    implements: ['D-151'],
+    description: 'Newest first, cursor-paged, with internal notes (D-300) and context cards resolved now.',
+    implements: ['D-151', 'D-300'],
   })
   @ApiCursorPaginated(MessageDto, { example: MESSAGE_EXAMPLE })
   @ApiStandardErrors('http.not_found', 'validation.failed')
   async messages(@Param('conversationId', ParseUUIDPipe) id: string, @Query() q: MessagesQuery) {
     const c = await this.conversations.get(id);
-    const page = await this.conversations.messages(c.id, q.cursor, q.limit);
-    return { data: page.data.map(messageDto), meta: page.meta };
+    const page = await this.conversations.messages(c.id, q.cursor, q.limit, { includeInternal: true });
+    return { data: await messageViews(this.prisma, page.data), meta: page.meta };
   }
 
   @Post(':conversationId/messages')
@@ -282,15 +310,18 @@ export class AdminConversationsController {
     id: 'admin.conversations.reply',
     summary: 'Reply to the customer',
     description:
-      'Pushed to the customer’s LINE for LINE conversations; live on the web otherwise. Assigns the conversation to me when unassigned.',
-    implements: ['D-151', 'D-143'],
+      'Text, files and / or a card to one of the customer’s records (D-300). Goes to the customer’s LINE when the ' +
+      'thread’s reply channel is LINE (the customer’s choice, else the channel of their last message; files and cards ' +
+      'stay in the thread, LINE gets a pointer to it), live on the web otherwise. The first reply answers the D-221 ' +
+      'first-response clock and the thread’s support tickets; assigns the thread to me when unassigned.',
+    implements: ['D-151', 'D-143', 'D-300', 'D-221'],
   })
   @ApiBody({
-    type: SendMessageDto,
+    type: StaffReplyDto,
     examples: { default: { value: { body: 'คำสั่งซื้อของคุณกำลังผลิตค่ะ' } } },
   })
   @ApiSuccess(201, {
-    description: 'Sent',
+    description: 'Sent (the first message of the send)',
     type: MessageDto,
     example: {
       ...MESSAGE_EXAMPLE,
@@ -311,12 +342,67 @@ export class AdminConversationsController {
   async reply(
     @CurrentActor() actor: Actor,
     @Param('conversationId', ParseUUIDPipe) id: string,
-    @Body() body: SendMessageDto,
+    @Body() body: StaffReplyDto,
   ) {
-    const me = staff(actor);
-    const m = await this.conversations.reply(me, id, body.body);
-    const user = await this.conversations.sender(me.userId);
-    return messageDto({ ...m, senderUser: user });
+    const m = await this.conversations.reply(staff(actor), id, body);
+    return (await messageViews(this.prisma, await this.conversations.messageRows([m.id])))[0];
+  }
+
+  @Post(':conversationId/notes')
+  @Idempotent()
+  @Can('conversations.reply')
+  @conversationParam
+  @ApiEndpoint({
+    id: 'admin.conversations.addNote',
+    summary: 'Add an internal note',
+    description:
+      'A note for colleagues on the thread (D-300): never shown or sent to the customer, does not answer the ' +
+      'first-response clock.',
+    implements: ['D-300'],
+  })
+  @ApiBody({
+    type: ConversationNoteDto,
+    examples: { default: { value: { body: 'ลูกค้าโทรมาแจ้งเพิ่ม: ต้องการส่งก่อนวันศุกร์' } } },
+  })
+  @ApiSuccess(201, {
+    description: 'Noted',
+    type: MessageDto,
+    example: {
+      ...MESSAGE_EXAMPLE,
+      direction: 'outbound',
+      visibility: 'internal',
+      via: null,
+      contextCard: null,
+      body: 'ลูกค้าโทรมาแจ้งเพิ่ม: ต้องการส่งก่อนวันศุกร์',
+      sender: { id: '0192f3a0-7c1e-7d2a-9b1f-0000000f4004', displayName: 'CS ทดสอบ' },
+    },
+  })
+  @ApiStandardErrors('http.bad_request', 'http.malformed_json', 'http.not_found', 'validation.failed')
+  async addNote(
+    @CurrentActor() actor: Actor,
+    @Param('conversationId', ParseUUIDPipe) id: string,
+    @Body() body: ConversationNoteDto,
+  ) {
+    const m = await this.conversations.note(staff(actor), id, body);
+    return (await messageViews(this.prisma, await this.conversations.messageRows([m.id])))[0];
+  }
+
+  @Post(':conversationId/actions/mark-read')
+  @HttpCode(200)
+  @Can('conversations.read')
+  @conversationParam
+  @ApiEndpoint({
+    id: 'admin.conversations.markRead',
+    summary: 'Mark a thread read',
+    description:
+      'Moves my read position to its latest message — the customer sees when Packio read it (D-300).',
+    implements: ['D-300'],
+  })
+  @ApiSuccess(200, { description: 'Read', type: ConversationDto, example: CONVERSATION_EXAMPLE })
+  @ApiStandardErrors('http.not_found', 'validation.failed')
+  async markRead(@CurrentActor() actor: Actor, @Param('conversationId', ParseUUIDPipe) id: string) {
+    await this.conversations.markReadByStaff(staff(actor), id);
+    return this.view(await this.conversations.get(id));
   }
 
   @Post(':conversationId/actions/assign')
@@ -338,7 +424,7 @@ export class AdminConversationsController {
     @Body() body: AssignConversationDto,
   ) {
     await this.conversations.assign(staff(actor), id, body.userId);
-    return conversationDto(await this.conversations.get(id));
+    return this.view(await this.conversations.get(id));
   }
 
   @Post(':conversationId/actions/close')
@@ -359,7 +445,7 @@ export class AdminConversationsController {
   @ApiStandardErrors('http.not_found', 'validation.failed')
   async close(@CurrentActor() actor: Actor, @Param('conversationId', ParseUUIDPipe) id: string) {
     await this.conversations.close(staff(actor), id);
-    return conversationDto(await this.conversations.get(id));
+    return this.view(await this.conversations.get(id));
   }
 }
 

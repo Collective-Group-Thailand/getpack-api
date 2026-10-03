@@ -11,6 +11,7 @@ const LINKS: Record<InboxSurface, Record<string, Link>> = {
   store: {
     order: (id) => `/account/orders/${id}`,
     rfq: (id) => `/account/rfqs/${id}`,
+    conversation: (id) => `/account/messages/${id}`,
     claim: (id, p) =>
       typeof p['orderId'] === 'string' ? `/account/orders/${p['orderId']}/claims/${id}` : null,
   },
@@ -19,6 +20,7 @@ const LINKS: Record<InboxSurface, Record<string, Link>> = {
     order_group: (id) => `/orders/groups/${id}`,
     quote: (id) => `/quotations/${id}`,
     rfq: (id) => `/rfq/${id}`,
+    conversation: (id) => `/inbox/${id}`,
     claim: (id) => `/claims/${id}`,
     shipment: (id) => `/shipments/${id}`,
     company: (id) => `/companies/${id}`,

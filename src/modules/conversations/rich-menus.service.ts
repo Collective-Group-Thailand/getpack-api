@@ -7,6 +7,8 @@ import { AuditService } from '@platform/audit/audit.service';
 import { type DomainEventEnvelope } from '@platform/domain-events/domain-event';
 import { OnDomainEvent } from '@platform/domain-events/on-domain-event.decorator';
 
+import { ConversationsService } from './conversations.service';
+
 /**
  * The OA rich menus (D-151): designed in LINE, registered here by key with their audience; one active menu
  * per audience. Guests (not signed in with LINE) see the guest menu; once the LINE user is linked to a
@@ -21,6 +23,7 @@ export class RichMenusService {
     private readonly prisma: PrismaService,
     private readonly audit: AuditService,
     @Inject(LINE_MESSAGING) private readonly line: LineMessaging,
+    private readonly conversations: ConversationsService,
   ) {}
 
   list() {
@@ -79,10 +82,8 @@ export class RichMenusService {
         where: { id: account.id },
         data: { userId: user.id, linkedAt: new Date(), unlinkedAt: null },
       });
-      await tx.conversation.updateMany({
-        where: { lineAccountId: account.id, customerUserId: null },
-        data: { customerUserId: user.id },
-      });
+      // D-300: the account's live LINE thread joins (or becomes) the customer's support thread.
+      await this.conversations.mergeLinked(tx, linked, user.id);
       try {
         await this.show(linked, tx);
       } catch (error) {

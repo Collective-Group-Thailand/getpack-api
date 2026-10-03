@@ -82,6 +82,11 @@ async function customersOf(
   switch (event.aggregateType) {
     case 'user':
       return [{ where: { publicId: id } }];
+    case 'conversation':
+      return byId(
+        (await tx.conversation.findUnique({ where: { publicId: id }, select: { customerUserId: true } }))
+          ?.customerUserId,
+      );
     case 'order':
       return byId(
         (await tx.order.findUnique({ where: { publicId: id }, select: { customerUserId: true } }))

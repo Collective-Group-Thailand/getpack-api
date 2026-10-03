@@ -686,6 +686,12 @@ export const PERMISSIONS = [
     decisionRefs: ['D-151'],
   },
   {
+    key: 'conversations.manage_canned',
+    audience: 'staff',
+    description: 'Maintain the canned responses CS reuses in conversations',
+    decisionRefs: ['D-300'],
+  },
+  {
     key: 'line.manage',
     audience: 'staff',
     description: 'Register the LINE official account rich menus',
