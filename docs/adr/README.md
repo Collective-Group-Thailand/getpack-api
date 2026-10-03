@@ -10,3 +10,4 @@
 | 0007 | [Posting-rule engine](0007-posting-rule-engine.md) | Accepted (B5.1) |
 | 0008 | [Payment schedules: instalment amounts and allocation](0008-payment-schedule-allocation.md) | Accepted (B3.2) |
 | 0009 | [Artwork preflight tooling](0009-artwork-preflight.md) | Accepted (B4.1) |
+| 0010 | [Consuming `@packio/dieline` in the API](0010-dieline-engine-vendoring.md) | Accepted (U3.B4 / U3.B5) |
