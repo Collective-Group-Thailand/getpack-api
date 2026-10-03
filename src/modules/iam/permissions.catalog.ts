@@ -564,6 +564,18 @@ export const PERMISSIONS = [
     decisionRefs: ['D-072'],
   },
   {
+    key: 'samples.read',
+    audience: 'staff',
+    description: 'See samples (attached and standalone), their evidence and the customer’s decision',
+    decisionRefs: ['D-253', 'D-255'],
+  },
+  {
+    key: 'samples.manage',
+    audience: 'staff',
+    description: 'Create, quote and cancel samples at a CS-entered price; record their evidence (audited)',
+    decisionRefs: ['D-253', 'D-254', 'D-194'],
+  },
+  {
     key: 'drawings.generate',
     audience: 'staff',
     description: 'Generate dieline drawings and send templates to customers',
@@ -732,6 +744,12 @@ export const PERMISSIONS = [
     audience: 'partner',
     description: 'Accept or reject released jobs within the acceptance time',
     decisionRefs: ['D-074'],
+  },
+  {
+    key: 'factory_samples.record_evidence',
+    audience: 'partner',
+    description: 'Record a sample’s measured size, the material used and its photos before it ships',
+    decisionRefs: ['D-255'],
   },
   {
     key: 'factory_milestones.update',

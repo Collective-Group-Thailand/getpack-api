@@ -5,7 +5,7 @@
 > (a new effective-dated version, audited — D-063) and signs item 5 of `docs/LAUNCH-CHECKLIST.md`. A *proposed* or
 > *pending* value is not a decision: it goes live only once its owner confirms it.
 
-**79 settings** — 44 confirmed · 18 proposed · 4 pending the CPA (⚖) · 1 pending the business · 12 defined without a value (not set until their owner sets them).
+**81 settings** — 46 confirmed · 18 proposed · 4 pending the CPA (⚖) · 1 pending the business · 12 defined without a value (not set until their owner sets them).
 
 ## Settings
 
@@ -80,6 +80,8 @@
 | `receivables.forfeited_deposit_policy` | `{"forfeitPct":"0"}` | pending_business | finance_manager | D-033, D-020 | D-033 / accounting-design §10 forfeited deposit policy (⚖): % of the paid deposit kept when an order is cancelled before production; 0 until the business decides (P23) |
 | `referral.rules` | `{"refereeDiscountPct":"5","refereeDiscountMaxBaht":"500.00","referrerRewardBaht":"500.00","maxRewardedReferralsPerMonth":10}` | confirmed | superadmin | D-136 | D-136 referral rewards and monthly cap |
 | `rfq.sla_business_hours` | `— (not set)` | not set | superadmin | D-100 | D-100 first-response SLA of a request for quote, in business hours; scoped per product type (RFQ category) with a platform fallback; not seeded — no SLA due date until set |
+| `samples.credit_pct` | `100` | confirmed | superadmin | D-197, D-257 | D-197 / D-257 share of an approved standalone sample’s product price (freight excluded) credited on its bulk order |
+| `samples.credit_window_days` | `30` | confirmed | superadmin | D-197, D-257 | D-197 / D-257 days after a sample’s approval within which its bulk order gets the credit |
 | `shipping.carton_spec` | `— (not set)` | not set | superadmin | D-013 | D-013 shipping carton used by the packing helper (legacy parcel logic: square footprint grid, stack height, weight limit); not seeded — no carton count until set |
 | `shipping.pallet_spec` | `— (not set)` | not set | superadmin | D-013 | D-013 pallet used to count cartons per pallet (no legacy rule exists); not seeded — no pallet count until set |
 | `shipping.target_margin_pct` | `— (not set)` | not set | superadmin | D-040, D-013 | D-040 group 5 target shipping margin: suggested factory payout = customer rate × (1 − margin); not seeded — no group-5 suggestion until set |

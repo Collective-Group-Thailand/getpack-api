@@ -277,6 +277,8 @@ model ProductType {
 
   styleBases StyleBase[] @relation("StyleBaseProductType")
 
+  samples Sample[] @relation("SampleProductType")
+
   @@index([categoryId], map: "ix_product_types__category_id")
   @@map("product_types")
 }

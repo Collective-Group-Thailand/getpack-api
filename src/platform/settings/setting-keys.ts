@@ -79,6 +79,10 @@ export interface SettingValues {
   'analytics.target_price_min_group_size': number;
   /** D-252 ascending upper bounds (%) of the price-gap bands. */
   'analytics.price_gap_bands_pct': number[];
+  /** D-197 / D-257 % of an approved standalone sample's product price credited on its bulk order. */
+  'samples.credit_pct': string;
+  /** D-197 / D-257 days after approval within which the credit applies. */
+  'samples.credit_window_days': number;
   /** D-248 quantity-lever multipliers of the largest quoted quantity (no catalogue preset above it). */
   'quotes.lever_quantity_multipliers': number[];
   'claims.window_days': number;

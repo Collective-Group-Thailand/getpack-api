@@ -216,6 +216,8 @@ export class CheckoutService {
               orderCode,
               entityId: entity.id,
               orderGroupId: group.id,
+              // D-253: a standalone sample quotation becomes an order of kind `sample`.
+              kind: o.quoteSource === 'sample' ? 'sample' : 'standard',
               customerUserId: draft.customerUserId,
               productTypeId: o.productTypeId,
               catalogProductId: o.catalogProductId,
@@ -369,7 +371,13 @@ export class CheckoutService {
     const lines = priceOrderLines(optionInput, shippingNet, {
       vatPct,
       nature: natureOf,
-      productRevenue: productTypeCode === 'standard_product' ? 'standard_product' : 'made_to_order',
+      // D-254: a standalone sample is revenue 4140 (mockup / sample fees).
+      productRevenue:
+        item.quote.source === 'sample'
+          ? 'mockup'
+          : productTypeCode === 'standard_product'
+            ? 'standard_product'
+            : 'made_to_order',
       wht: wht?.rates ?? null,
     });
     const internal = (option.internalBreakdown ?? null) as {

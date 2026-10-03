@@ -755,6 +755,25 @@ export const SETTINGS: readonly SettingSeed[] = [
     ownerRole: 'superadmin',
   },
   {
+    key: 'samples.credit_pct',
+    valueType: 'percent',
+    value: '100',
+    valueSchema: { minimum: 0, maximum: 100 },
+    description:
+      'D-197 / D-257 share of an approved standalone sample’s product price (freight excluded) credited on its bulk order',
+    decisions: ['D-197', 'D-257'],
+    ownerRole: 'superadmin',
+  },
+  {
+    key: 'samples.credit_window_days',
+    valueType: 'integer',
+    value: 30,
+    valueSchema: { minimum: 0, maximum: 365 },
+    description: 'D-197 / D-257 days after a sample’s approval within which its bulk order gets the credit',
+    decisions: ['D-197', 'D-257'],
+    ownerRole: 'superadmin',
+  },
+  {
     key: 'quotes.lever_quantity_multipliers',
     valueType: 'json',
     value: [2, 5],

@@ -110,6 +110,8 @@ Legend: ● granted · ◆ granted and sensitive (cost/margin data, D-141).
 | `proofs.decide_on_behalf` — Approve a proof or request changes for the customer, with a reason (audited) (D-070, D-073) | ● |  |  |  |  | ● | ● |  |  |  |  |  |  |  |  |
 | `design_services.manage` — Assign designers, deliver design rounds and re-quote structure or concept changes (D-071) | ● |  |  |  | ● |  |  | ● |  |  |  |  |  |  |  |
 | `mockups.manage` — Add a paid mockup / physical proof to an order at a CS-quoted price (audited) (D-072) | ● |  |  |  | ● |  | ● |  |  |  |  |  |  |  |  |
+| `samples.read` — See samples (attached and standalone), their evidence and the customer’s decision (D-253, D-255) | ● | ● | ● | ● | ● | ● | ● | ● | ● | ● | ● |  | ● | ● |  |
+| `samples.manage` — Create, quote and cancel samples at a CS-entered price; record their evidence (audited) (D-253, D-254, D-194) | ● |  |  |  | ● |  | ● |  |  |  |  |  |  |  |  |
 | `drawings.generate` — Generate dieline drawings and send templates to customers (D-070) | ● |  |  |  | ● | ● | ● | ● |  |  |  |  |  |  |  |
 | `production.read` — Read production jobs, milestones, QC, inspections and factory scorecards (D-073, D-155) | ● | ● | ● | ● | ● | ● | ● | ● | ● | ● | ● |  | ● | ● |  |
 | `production.start_manual` — Start production as an exception, with a reason (audited) (D-073) | ● |  |  |  | ● | ● | ● |  |  |  |  |  |  |  |  |
@@ -202,6 +204,7 @@ Legend: ● granted · ◆ granted and sensitive (cost/margin data, D-141).
 | `factory_rfq.respond` — Answer a request for a buy price per quantity tier, or decline it (D-100) | ● | ● |  |  |  |  |
 | `factory_jobs.read` — Read the own factory’s production jobs: spec, approved artwork, delivery contacts (D-142) | ● | ● | ● | ● | ● | ● |
 | `factory_jobs.respond` — Accept or reject released jobs within the acceptance time (D-074) | ● | ● |  |  |  |  |
+| `factory_samples.record_evidence` — Record a sample’s measured size, the material used and its photos before it ships (D-255) | ● | ● |  | ● |  |  |
 | `factory_milestones.update` — Start and complete milestones with quantities and photos (D-075) | ● | ● | ● | ● | ● |  |
 | `factory_qc.record` — Record QC checklists with photos (D-076) | ● |  |  | ● |  |  |
 | `factory_issues.raise` — Raise production issues on own jobs | ● | ● | ● | ● | ● |  |

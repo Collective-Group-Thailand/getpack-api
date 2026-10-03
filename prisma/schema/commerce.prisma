@@ -162,6 +162,8 @@ enum DiscountSource {
   discount_memo
   company_discount
   points_redemption
+  /// D-257: the approved standalone sample credited on its bulk order.
+  sample_credit
 
   @@map("discount_source")
 }
@@ -529,6 +531,8 @@ model Order {
   orderCode               String               @unique(map: "ux_orders__order_code") @map("order_code")
   entityId                BigInt               @map("entity_id")
   orderGroupId            BigInt               @map("order_group_id")
+  /// D-253: `sample` = a standalone sample bought on its own (its job is a `mockup` job).
+  kind                    OrderKind            @default(standard)
   customerUserId          BigInt               @map("customer_user_id")
   productTypeId           BigInt               @map("product_type_id")
   catalogProductId        BigInt?              @map("catalog_product_id")
@@ -669,6 +673,9 @@ model Order {
   payableItems   PayableItem[]   @relation("PayableItemOrder")
   // --- end Finance B5.3
 
+  samples         Sample[] @relation("SampleOrder")
+  samplesCredited Sample[] @relation("SampleCreditOrder")
+
   @@index([companyId, createdAt(sort: Desc)], map: "ix_orders__company_id__created_at")
   @@index([orderGroupId], map: "ix_orders__order_group_id")
   @@index([status, promisedShipDate], map: "ix_orders__status__promised_ship_date")
@@ -735,6 +742,8 @@ model OrderLine {
   // --- Finance B5.2 (generated back-relations)
   customerDocumentLines CustomerDocumentLine[] @relation("CustomerDocumentLineOrderLine")
   // --- end Finance B5.2
+
+  sample Sample? @relation("SampleOrderLine")
 
   @@unique([orderId, lineNo], map: "ux_order_lines__order_id__line_no")
   @@map("order_lines")

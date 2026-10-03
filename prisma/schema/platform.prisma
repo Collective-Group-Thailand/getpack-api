@@ -157,6 +157,8 @@ enum AttachmentSubject {
   other
   design_service_request
   job_issue
+  /// D-255 sample evidence photos.
+  sample
 
   @@map("attachment_subject")
 }
@@ -432,6 +434,8 @@ model Entity {
   auditSamples    AuditSample[]    @relation("AuditSampleEntity")
   pbcExports      PbcExport[]      @relation("PbcExportEntity")
   // --- end Finance B5.6
+
+  samples Sample[] @relation("SampleEntity")
 
   @@unique([isDefault], map: "ux_entities__is_default", where: raw("is_default"))
   @@map("entities")

@@ -54,7 +54,7 @@ export interface DraftOrder {
   quoteId: bigint;
   quotePublicId: string;
   quoteCode: string | null;
-  quoteSource: 'instant' | 'rfq';
+  quoteSource: 'instant' | 'rfq' | 'sample';
   quoteOptionId: bigint;
   productTypeId: bigint;
   productTypeCode: string;

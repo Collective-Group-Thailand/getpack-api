@@ -297,6 +297,8 @@ model Proof {
   cartReuses    CartItem[]         @relation("CartItemReuseProof")
   orderReuses   Order[]            @relation("OrderReuseProof")
 
+  samplesApproved Sample[] @relation("SampleApprovedProof")
+
   @@unique([orderId, versionNo], map: "ux_proofs__order_id__version_no")
   @@unique([orderId], map: "ux_proofs__one_approved", where: raw("(status = 'approved'::proof_status)"))
   @@index([submissionId], map: "ix_proofs__submission_id")
@@ -846,6 +848,8 @@ model ProductionJob {
   purchaseOrder PurchaseOrder? @relation("PurchaseOrderJob")
   // --- end Finance B5.3
 
+  sample Sample? @relation("SampleJob")
+
   @@unique([orderId], map: "ux_production_jobs__one_live_production", where: raw("((job_kind = 'production'::job_kind) AND (status <> ALL (ARRAY['rejected'::production_job_status, 'cancelled'::production_job_status])))"))
   @@unique([orderId], map: "ux_production_jobs__one_live_mockup", where: raw("((job_kind = 'mockup'::job_kind) AND (status <> ALL (ARRAY['rejected'::production_job_status, 'cancelled'::production_job_status])))"))
   @@index([orderId], map: "ix_production_jobs__order_id")
@@ -1041,6 +1045,10 @@ model FactoryScorecard {
   claimRatePct        Decimal? @map("claim_rate_pct") @db.Decimal(7, 4)
   onTimeUpdatesPct    Decimal? @map("on_time_updates_pct") @db.Decimal(7, 4)
   jobsCount           Int      @map("jobs_count")
+  /// D-259 sample (mockup) jobs, counted apart from production.
+  sampleJobsCount     Int      @default(0) @map("sample_jobs_count")
+  sampleOnTimePct     Decimal? @map("sample_on_time_pct") @db.Decimal(7, 4)
+  sampleAvgLeadDays   Decimal? @map("sample_avg_lead_days") @db.Decimal(7, 2)
   inputs              Json
   computedAt          DateTime @default(now()) @map("computed_at") @db.Timestamptz(6)
 
@@ -1467,6 +1475,8 @@ model Claim {
   orderId                 BigInt                @map("order_id")
   shipmentId              BigInt?               @map("shipment_id")
   /// The job whose goods are claimed (liable factory's job).
+  /// D-259: the sample the claim is about (its job is `production_job_id`).
+  sampleId                BigInt?               @map("sample_id")
   productionJobId         BigInt?               @map("production_job_id")
   customerUserId          BigInt                @map("customer_user_id")
   type                    ClaimType
@@ -1523,6 +1533,8 @@ model Claim {
   vendorDeductions VendorDeduction[] @relation("VendorDeductionClaim")
   // --- end Finance B5.3
 
+  sample Sample? @relation("ClaimSample", fields: [sampleId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_claims__sample_id")
+
   @@index([orderId], map: "ix_claims__order_id")
   @@index([status, statusChangedAt], map: "ix_claims__status__status_changed_at")
   @@index([factoryId, status], map: "ix_claims__factory_id__status")
@@ -1536,6 +1548,7 @@ model Claim {
   @@index([createdById], map: "ix_claims__created_by")
   @@index([submittedAt], map: "ix_claims__submitted_at")
   @@index([claimNo(ops: raw("gin_trgm_ops"))], type: Gin, map: "ix_claims__claim_no_trgm")
+  @@index([sampleId], map: "ix_claims__sample_id")
   @@map("claims")
 }
 

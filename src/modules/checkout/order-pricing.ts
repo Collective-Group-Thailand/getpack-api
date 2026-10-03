@@ -14,10 +14,11 @@ import { formatMoney, MoneyDecimal, type MoneyValue } from '@common/money/money'
 export type LineType = 'product' | 'design_fee' | 'structure_design_fee' | 'shipping';
 export type WhtCategory = 'hire_of_work' | 'transport' | 'service' | 'none';
 export type TaxNature = 'sale_of_goods' | 'hire_of_work';
-export type RevenueCategory = 'made_to_order' | 'standard_product' | 'design_service' | 'shipping';
+export type RevenueCategory = 'made_to_order' | 'standard_product' | 'design_service' | 'shipping' | 'mockup';
 
 export interface QuoteOptionInput {
-  source: 'instant' | 'rfq';
+  /** `sample`: a standalone sample quotation (D-254) — priced like an RFQ quotation, from its option. */
+  source: 'instant' | 'rfq' | 'sample';
   quantity: number;
   netAmount: string;
   vatAmount: string;
@@ -36,7 +37,7 @@ export interface PricingContext {
   vatPct: string;
   nature: TaxNature;
   /** Revenue category of the product line (made to order vs standard product). */
-  productRevenue: 'made_to_order' | 'standard_product';
+  productRevenue: 'made_to_order' | 'standard_product' | 'mockup';
   /** Customer withholding rates by category (percent), or null when the customer does not withhold. */
   wht: Record<'hire_of_work' | 'transport' | 'service', string> | null;
 }

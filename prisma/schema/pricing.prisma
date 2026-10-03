@@ -499,6 +499,8 @@ model CarrierAccount {
 enum QuoteSource {
   instant
   rfq
+  /// D-254: a standalone sample quotation priced by CS (one option).
+  sample
 
   @@map("quote_source")
 }
@@ -602,6 +604,10 @@ model Quote {
   outcome     QuoteOutcome?       @relation("QuoteOutcomeQuote")
   routedRfq   Rfq?                @relation("RfqRoutedFromQuote")
   unmetDemand UnmetDemandRecord[] @relation("UnmetDemandQuote")
+
+  samplesSourced Sample[] @relation("SampleSourceQuote")
+  sample         Sample?  @relation("SampleQuote")
+  sampleForBulk  Sample?  @relation("SampleBulkQuote")
 
   @@index([advisoryRecommendationId], map: "ix_quotes__advisory_recommendation_id")
   @@index([advisoryChoiceId], map: "ix_quotes__advisory_choice_id")
@@ -1003,6 +1009,8 @@ model ConfigurationDraft {
   catalogProduct CatalogProduct? @relation("ConfigurationDraftCatalogProduct", fields: [catalogProductId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_configuration_drafts__catalog_product_id")
   convertedQuote Quote?          @relation("ConfigurationDraftQuote", fields: [convertedQuoteId], references: [id], onDelete: SetNull, onUpdate: Restrict, map: "fk_configuration_drafts__converted_quote_id")
   convertedRfq   Rfq?            @relation("ConfigurationDraftRfq", fields: [convertedRfqId], references: [id], onDelete: SetNull, onUpdate: Restrict, map: "fk_configuration_drafts__converted_rfq_id")
+
+  samples Sample[] @relation("SampleSourceDraft")
 
   @@index([ownerUserId, status, lastChangedAt], map: "ix_configuration_drafts__owner_user_id__status__last_changed_at")
   @@index([expiresAt], map: "ix_configuration_drafts__expires_at")

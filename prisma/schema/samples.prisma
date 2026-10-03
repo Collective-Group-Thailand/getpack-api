@@ -1,0 +1,146 @@
+// --- Samples (U2.4, D-072, D-192–D-197, D-253–D-259, schema-design A-90) ------------------------------
+
+/// D-253: an attached sample sits on a bulk order (the D-072 add-on); a standalone one is bought on its own.
+enum SampleKind {
+  attached
+  standalone
+
+  @@map("sample_kind")
+}
+
+/// D-253 arc; `changes_requested`, `rejected`, `approved`, `cancelled` and `expired` are final.
+enum SampleStatus {
+  requested
+  quoted
+  paid
+  in_production
+  shipped
+  delivered
+  approved
+  changes_requested
+  rejected
+  cancelled
+  expired
+
+  @@map("sample_status")
+}
+
+/// D-253 (A-90): one physical sample / prototype, attached to a bulk order or standalone (its own order of kind
+/// `sample`); priced by CS (D-254), evidenced by the factory, decided by the customer with evidence (D-255).
+model Sample {
+  id                   BigInt            @id(map: "pk_samples") @default(autoincrement())
+  publicId             String            @unique(map: "ux_samples__public_id") @default(dbgenerated("uuidv7()")) @map("public_id") @db.Uuid
+  entityId             BigInt            @map("entity_id")
+  kind                 SampleKind
+  status               SampleStatus
+  statusChangedAt      DateTime          @default(now()) @map("status_changed_at") @db.Timestamptz(6)
+  customerUserId       BigInt            @map("customer_user_id")
+  productTypeId        BigInt            @map("product_type_id")
+  /// Standalone: the customer's saved quotation or draft the sample is of.
+  sourceQuoteId        BigInt?           @map("source_quote_id")
+  sourceDraftId        BigInt?           @map("source_draft_id")
+  /// The sampled configuration (calculator shape) and its sizes, frozen when the sample is made.
+  configuration        Json
+  dimensions           Json?
+  mockupOption         MockupOption      @map("mockup_option")
+  quantity             Int               @default(1)
+  deliveryPostcode     String?           @map("delivery_postcode") @db.Char(5)
+  customerNote         String?           @map("customer_note")
+  /// Attached: the bulk order. Standalone: the sample order once checked out.
+  orderId              BigInt?           @map("order_id")
+  /// Attached: the order's `mockup` line.
+  orderLineId          BigInt?           @unique(map: "ux_samples__order_line_id") @map("order_line_id")
+  productionJobId      BigInt?           @unique(map: "ux_samples__production_job_id") @map("production_job_id")
+  /// Standalone: the sample quotation (source `sample`).
+  quoteId              BigInt?           @unique(map: "ux_samples__quote_id") @map("quote_id")
+  previousSampleId     BigInt?           @map("previous_sample_id")
+  /// D-254 CS price: sell (incl. and excl. VAT) and the factory's buy amount (staff only, D-141).
+  sellNetAmount        Decimal?          @map("sell_net_amount") @db.Decimal(14, 2)
+  sellGrossAmount      Decimal?          @map("sell_gross_amount") @db.Decimal(14, 2)
+  buyNetAmount         Decimal?          @map("buy_net_amount") @db.Decimal(14, 2)
+  parcelWeightG        Int?              @map("parcel_weight_g")
+  leadTimeDays         Int?              @map("lead_time_days") @db.SmallInt
+  quotedAt             DateTime?         @map("quoted_at") @db.Timestamptz(6)
+  quotedById           BigInt?           @map("quoted_by")
+  validUntil           DateTime?         @map("valid_until") @db.Timestamptz(6)
+  paidAt               DateTime?         @map("paid_at") @db.Timestamptz(6)
+  inProductionAt       DateTime?         @map("in_production_at") @db.Timestamptz(6)
+  shippedAt            DateTime?         @map("shipped_at") @db.Timestamptz(6)
+  deliveredAt          DateTime?         @map("delivered_at") @db.Timestamptz(6)
+  /// D-255 evidence recorded before shipping.
+  measuredLengthMm     Decimal?          @map("measured_length_mm") @db.Decimal(10, 2)
+  measuredWidthMm      Decimal?          @map("measured_width_mm") @db.Decimal(10, 2)
+  measuredDepthMm      Decimal?          @map("measured_depth_mm") @db.Decimal(10, 2)
+  measuredBasis        MeasurementBasis? @map("measured_basis")
+  materialUsed         String?           @map("material_used")
+  evidenceRecordedAt   DateTime?         @map("evidence_recorded_at") @db.Timestamptz(6)
+  evidenceRecordedById BigInt?           @map("evidence_recorded_by")
+  /// D-255 the customer's decision with its evidence; approval locks the spec and the proof.
+  decidedAt            DateTime?         @map("decided_at") @db.Timestamptz(6)
+  decidedByUserId      BigInt?           @map("decided_by")
+  decisionIp           String?           @map("decision_ip") @db.Inet
+  decisionUserAgent    String?           @map("decision_user_agent")
+  decisionNote         String?           @map("decision_note")
+  /// Hex sha256 of every evidence photo when the customer decided.
+  evidencePhotoSha256  String[]          @default([]) @map("evidence_photo_sha256")
+  approvedSpec         Json?             @map("approved_spec")
+  approvedProofId      BigInt?           @map("approved_proof_id")
+  /// D-257 credit: the quotation `orderBulk` saved, the bulk order that used the credit and its amount.
+  bulkQuoteId          BigInt?           @unique(map: "ux_samples__bulk_quote_id") @map("bulk_quote_id")
+  creditOrderId        BigInt?           @map("credit_order_id")
+  creditAmount         Decimal?          @map("credit_amount") @db.Decimal(14, 2)
+  cancelledAt          DateTime?         @map("cancelled_at") @db.Timestamptz(6)
+  cancelReason         String?           @map("cancel_reason")
+  cancelledById        BigInt?           @map("cancelled_by")
+  createdById          BigInt?           @map("created_by")
+  createdAt            DateTime          @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt            DateTime          @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+  rowVersion           Int               @default(1) @map("row_version")
+
+  entity         Entity              @relation("SampleEntity", fields: [entityId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_samples__entity_id")
+  customer       User                @relation("SampleCustomer", fields: [customerUserId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_samples__customer_user_id")
+  productType    ProductType         @relation("SampleProductType", fields: [productTypeId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_samples__product_type_id")
+  sourceQuote    Quote?              @relation("SampleSourceQuote", fields: [sourceQuoteId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_samples__source_quote_id")
+  sourceDraft    ConfigurationDraft? @relation("SampleSourceDraft", fields: [sourceDraftId], references: [id], onDelete: SetNull, onUpdate: Restrict, map: "fk_samples__source_draft_id")
+  order          Order?              @relation("SampleOrder", fields: [orderId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_samples__order_id")
+  orderLine      OrderLine?          @relation("SampleOrderLine", fields: [orderLineId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_samples__order_line_id")
+  productionJob  ProductionJob?      @relation("SampleJob", fields: [productionJobId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_samples__production_job_id")
+  quote          Quote?              @relation("SampleQuote", fields: [quoteId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_samples__quote_id")
+  previousSample Sample?             @relation("SamplePrevious", fields: [previousSampleId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_samples__previous_sample_id")
+  nextSamples    Sample[]            @relation("SamplePrevious")
+  quotedBy       User?               @relation("SampleQuotedBy", fields: [quotedById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_samples__quoted_by")
+  evidenceBy     User?               @relation("SampleEvidenceBy", fields: [evidenceRecordedById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_samples__evidence_recorded_by")
+  decidedBy      User?               @relation("SampleDecidedBy", fields: [decidedByUserId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_samples__decided_by")
+  approvedProof  Proof?              @relation("SampleApprovedProof", fields: [approvedProofId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_samples__approved_proof_id")
+  bulkQuote      Quote?              @relation("SampleBulkQuote", fields: [bulkQuoteId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_samples__bulk_quote_id")
+  creditOrder    Order?              @relation("SampleCreditOrder", fields: [creditOrderId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_samples__credit_order_id")
+  cancelledBy    User?               @relation("SampleCancelledBy", fields: [cancelledById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_samples__cancelled_by")
+  createdBy      User?               @relation("SampleCreatedBy", fields: [createdById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_samples__created_by")
+  claims         Claim[]             @relation("ClaimSample")
+
+  @@unique([orderId], map: "ux_samples__one_live_attached", where: raw("((kind = 'attached'::sample_kind) AND (status = ANY (ARRAY['requested'::sample_status, 'quoted'::sample_status, 'paid'::sample_status, 'in_production'::sample_status, 'shipped'::sample_status, 'delivered'::sample_status])))"))
+  @@index([customerUserId, createdAt(sort: Desc)], map: "ix_samples__customer_user_id__created_at")
+  @@index([status, statusChangedAt], map: "ix_samples__status__status_changed_at")
+  @@index([orderId], map: "ix_samples__order_id")
+  @@index([entityId], map: "ix_samples__entity_id")
+  @@index([productTypeId], map: "ix_samples__product_type_id")
+  @@index([sourceQuoteId], map: "ix_samples__source_quote_id")
+  @@index([sourceDraftId], map: "ix_samples__source_draft_id")
+  @@index([previousSampleId], map: "ix_samples__previous_sample_id")
+  @@index([approvedProofId], map: "ix_samples__approved_proof_id")
+  @@index([creditOrderId], map: "ix_samples__credit_order_id")
+  @@index([quotedById], map: "ix_samples__quoted_by")
+  @@index([evidenceRecordedById], map: "ix_samples__evidence_recorded_by")
+  @@index([decidedByUserId], map: "ix_samples__decided_by")
+  @@index([cancelledById], map: "ix_samples__cancelled_by")
+  @@index([createdById], map: "ix_samples__created_by")
+  @@map("samples")
+}
+
+/// D-253: a standalone sample is its own order of kind `sample`.
+enum OrderKind {
+  standard
+  sample
+
+  @@map("order_kind")
+}
