@@ -8,18 +8,21 @@ export const SURFACES = {
   store: 'store',
   admin: 'admin',
   partner: 'partner',
+  b2b: 'b2b',
   webhooks: 'webhooks',
 } as const;
 export type Surface = keyof typeof SURFACES;
 
 /** Token audiences and their OpenAPI security schemes (ADR-0004). */
-export const AUDIENCES = ['customer', 'staff', 'partner'] as const;
+/** `b2b`: company machine clients (client credentials, D-291) on `/v1/b2b/*`. */
+export const AUDIENCES = ['customer', 'staff', 'partner', 'b2b'] as const;
 export type Audience = (typeof AUDIENCES)[number];
 
 const SURFACE_AUDIENCE: Partial<Record<Surface, Audience>> = {
   store: 'customer',
   admin: 'staff',
   partner: 'partner',
+  b2b: 'b2b',
 };
 
 /**

@@ -35,12 +35,13 @@ const AUDIENCE_DESCRIPTIONS: Record<(typeof AUDIENCES)[number], string> = {
   customer: 'Access token with `aud=customer` — `/v1/store/*`',
   staff: 'Access token with `aud=staff` — `/v1/admin/*`',
   partner: 'Access token with `aud=partner` — `/v1/partner/*` (users and client-credentials)',
+  b2b: 'Access token with `aud=b2b` — `/v1/b2b/*` (company API clients, client-credentials, D-291)',
 };
 
 const INFO_DESCRIPTION = `Packio — Your Packaging Production Partner, operated by Collective Group (Thailand).
 Rules: \`docs/contract/api-conventions.md\` (shared with packio-web).
 
-- **Surfaces:** \`/v1/auth\`, \`/v1/store\` (customer), \`/v1/admin\` (staff), \`/v1/partner\` (factories), \`/webhooks\`. A token is accepted only on its own audience's prefix.
+- **Surfaces:** \`/v1/auth\`, \`/v1/store\` (customer), \`/v1/admin\` (staff), \`/v1/partner\` (factories), \`/v1/b2b\` (company API clients, D-291), \`/webhooks\`. A token is accepted only on its own audience's prefix.
 - **Money:** decimal strings with exactly 2 decimals (\`"1234.50"\`) plus \`currency: "THB"\` on the object; never JSON numbers. Clients never compute prices.
 - **Dates:** ISO 8601 with offset, rendered in \`Asia/Bangkok\` (\`2026-09-22T14:05:00+07:00\`); date-only fields \`YYYY-MM-DD\`.
 - **IDs:** uuid only; business keys (\`orderCode\`) are separate fields.

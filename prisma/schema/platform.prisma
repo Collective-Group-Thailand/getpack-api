@@ -1048,6 +1048,8 @@ model DomainEvent {
   journalEntries JournalEntry[] @relation("JournalEntryDomainEvent")
   // --- end Finance B5.1
 
+  webhookDeliveries WebhookDelivery[] @relation("WebhookDeliveryEvent")
+
   @@index([aggregateType, aggregateId, occurredAt], map: "ix_domain_events__aggregate")
   @@index([type, occurredAt], map: "ix_domain_events__type__occurred_at")
   @@index([correlationId], map: "ix_domain_events__correlation_id")

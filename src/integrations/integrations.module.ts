@@ -47,6 +47,9 @@ import { VIRUS_SCANNER } from './virus-scan/virus-scanner.port';
 import { FakeWebPush } from './web-push/fake-web-push';
 import { VapidWebPush } from './web-push/vapid-web-push';
 import { WEB_PUSH } from './web-push/web-push.port';
+import { FakeWebhookSender } from './webhooks-out/fake-webhook-sender';
+import { HttpWebhookSender } from './webhooks-out/http-webhook-sender';
+import { WEBHOOK_SENDER } from './webhooks-out/webhook-sender.port';
 
 /**
  * Binds each provider port to its real adapter or its fake (`INTEGRATIONS_MODE`).
@@ -175,6 +178,12 @@ import { WEB_PUSH } from './web-push/web-push.port';
             }),
     },
     {
+      provide: WEBHOOK_SENDER,
+      inject: [AppConfig],
+      useFactory: (config: AppConfig) =>
+        config.useFakes ? new FakeWebhookSender() : new HttpWebhookSender(),
+    },
+    {
       provide: TEAMS_WEBHOOK,
       inject: [AppConfig],
       useFactory: (config: AppConfig) =>
@@ -243,6 +252,7 @@ import { WEB_PUSH } from './web-push/web-push.port';
     LINE_MESSAGING,
     WEB_PUSH,
     TEAMS_WEBHOOK,
+    WEBHOOK_SENDER,
     MATERIAL_PRICE_INDEX,
     SECRETS_PROVIDER,
     CARRIER_ADAPTERS,

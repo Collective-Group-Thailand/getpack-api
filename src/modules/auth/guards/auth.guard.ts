@@ -12,8 +12,13 @@ import { PrincipalService } from '../principal.service';
 import { SessionService } from '../sessions/session.service';
 import { type AccessTokenClaims, AccessTokenInvalidError, TokenService } from '../tokens/token.service';
 
-const SURFACE_AUDIENCE: Record<string, Audience> = { store: 'customer', admin: 'staff', partner: 'partner' };
-const SURFACE_OF_PATH = /^\/v\d+\/(store|admin|partner)(?:\/|$)/;
+const SURFACE_AUDIENCE: Record<string, Audience> = {
+  store: 'customer',
+  admin: 'staff',
+  partner: 'partner',
+  b2b: 'b2b',
+};
+const SURFACE_OF_PATH = /^\/v\d+\/(store|admin|partner|b2b)(?:\/|$)/;
 
 /** The audience a path requires (contract §2), or `undefined` for auth, webhooks, health and docs. */
 export function audienceForPath(path: string): Audience | undefined {

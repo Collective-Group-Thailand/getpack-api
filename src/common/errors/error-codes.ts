@@ -362,6 +362,9 @@ export const ERROR_CODES = {
   'call_offs.already_requested': HttpStatus.CONFLICT,
   'call_offs.invalid_status': HttpStatus.CONFLICT,
   'call_offs.release_quantity': HttpStatus.UNPROCESSABLE_ENTITY,
+  'b2b.client_limit': HttpStatus.CONFLICT,
+  'b2b.client_revoked': HttpStatus.CONFLICT,
+  'b2b.owner_cannot_order': HttpStatus.FORBIDDEN,
 } as const satisfies Record<string, HttpStatus>;
 
 export type ErrorCode = keyof typeof ERROR_CODES;

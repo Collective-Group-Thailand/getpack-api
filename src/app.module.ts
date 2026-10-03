@@ -16,6 +16,7 @@ import { AnalyticsModule } from '@modules/analytics/analytics.module';
 import { ArtworkModule } from '@modules/artwork/artwork.module';
 import { AuditSupportModule } from '@modules/audit-support/audit-support.module';
 import { AuthModule } from '@modules/auth/auth.module';
+import { B2bModule } from '@modules/b2b/b2b.module';
 import { BankingModule } from '@modules/banking/banking.module';
 import { CallOffsModule } from '@modules/call-offs/call-offs.module';
 import { CartsModule } from '@modules/carts/carts.module';
@@ -126,6 +127,7 @@ import { LoggerModule } from 'nestjs-pino';
     ToolingModule,
     ReordersModule,
     CallOffsModule,
+    B2bModule,
     PaymentSchedulesModule,
     PromotionsModule,
     LoyaltyModule,

@@ -86,12 +86,13 @@ export class TokensController {
   @ApiConsumes('application/x-www-form-urlencoded', 'application/json')
   @ApiEndpoint({
     id: 'auth.tokens.clientCredentials',
-    summary: 'Get a token for a partner machine client (OAuth2 client credentials)',
+    summary: 'Get a token for a machine client (OAuth2 client credentials)',
     description:
-      'RFC 6749 §4.4 for factory systems. Client id and secret in HTTP Basic auth or in the body. The response ' +
-      'follows RFC 6749 (snake_case fields); errors are problem details like every other endpoint. The ' +
-      "partner-audience token carries the client's factory scope; there is no refresh token.",
-    implements: ['ADR-0004'],
+      'RFC 6749 §4.4 for factory systems and company API clients. Client id and secret in HTTP Basic auth or in ' +
+      'the body. The response follows RFC 6749 (snake_case fields); errors are problem details like every other ' +
+      "endpoint. A factory's client gets a `partner` token with its factory scope (`/v1/partner`), a company's " +
+      'client a `b2b` token with its company scope and `b2b_*` scopes (`/v1/b2b`, D-291); there is no refresh token.',
+    implements: ['ADR-0004', 'D-291'],
   })
   @ApiBody({
     type: ClientCredentialsDto,

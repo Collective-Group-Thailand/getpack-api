@@ -246,6 +246,11 @@ Legend: ● granted · ◆ granted and sensitive (cost/margin data, D-141).
 | `company_orders.approve` — Approve company orders above the company threshold (D-123) |  |  | ● |  |
 | `company_documents.read` — Read company invoices and statements | ● |  |  | ● |
 | `company_assets.manage` — Add and remove the company’s brand assets (every member can use them) (D-227) | ● |  |  |  |
+| `company_api.manage` — Issue and revoke the company’s API clients (secret shown once) (D-291) | ● |  |  |  |
+| `b2b_orders.read` — API client scope `orders:read`: read the company’s orders (D-291) |  |  |  |  |
+| `b2b_orders.write` — API client scope `orders:write`: place orders for the company from saved quotations (D-291) |  |  |  |  |
+| `b2b_documents.read` — API client scope `documents:read`: read and download the company’s documents (D-291) |  |  |  |  |
+| `b2b_webhooks.manage` — API client scope `webhooks:manage`: the company’s webhook subscriptions and deliveries (D-291) |  |  |  |  |
 
 | Role | Name (th) | Name (en) |
 |---|---|---|

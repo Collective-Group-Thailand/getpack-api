@@ -903,6 +903,38 @@ export const PERMISSIONS = [
     description: 'Add and remove the company’s brand assets (every member can use them)',
     decisionRefs: ['D-227'],
   },
+  {
+    key: 'company_api.manage',
+    audience: 'customer',
+    description: 'Issue and revoke the company’s API clients (secret shown once)',
+    decisionRefs: ['D-291'],
+  },
+  // Company API client scopes (D-291 `orders:read`, `orders:write`, `documents:read`, `webhooks:manage`): held by
+  // company machine clients through their configured scopes, never by a role.
+  {
+    key: 'b2b_orders.read',
+    audience: 'customer',
+    description: 'API client scope `orders:read`: read the company’s orders',
+    decisionRefs: ['D-291'],
+  },
+  {
+    key: 'b2b_orders.write',
+    audience: 'customer',
+    description: 'API client scope `orders:write`: place orders for the company from saved quotations',
+    decisionRefs: ['D-291'],
+  },
+  {
+    key: 'b2b_documents.read',
+    audience: 'customer',
+    description: 'API client scope `documents:read`: read and download the company’s documents',
+    decisionRefs: ['D-291'],
+  },
+  {
+    key: 'b2b_webhooks.manage',
+    audience: 'customer',
+    description: 'API client scope `webhooks:manage`: the company’s webhook subscriptions and deliveries',
+    decisionRefs: ['D-291'],
+  },
 
   // --- Finance: ledger (B5.1, accounting-design §1, §8)
   {

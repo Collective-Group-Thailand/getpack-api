@@ -23,7 +23,8 @@ export interface ApiClientActor {
   type: 'api_client';
   apiClientId: bigint;
   publicId: string;
-  audience: 'partner';
+  /** `partner`: a factory's client; `b2b`: a company's client (D-291). */
+  audience: 'partner' | 'b2b';
   scopes: readonly string[];
 }
 

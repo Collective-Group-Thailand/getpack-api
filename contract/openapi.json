@@ -452,6 +452,39 @@
           "type": "https://errors.packio/auth.wrong_audience"
         }
       },
+      "problem.b2b.client_limit": {
+        "summary": "b2b.client_limit",
+        "value": {
+          "code": "b2b.client_limit",
+          "detail": "บริษัทมีคีย์ API ที่ใช้งานอยู่ {max} รายการแล้ว กรุณาเพิกถอนก่อน",
+          "requestId": "6f1c2d8e-2c7b-4d0e-9d1c-3f1a2b3c4d5e",
+          "status": 409,
+          "title": "จำนวนคีย์ API ครบแล้ว",
+          "type": "https://errors.packio/b2b.client_limit"
+        }
+      },
+      "problem.b2b.client_revoked": {
+        "summary": "b2b.client_revoked",
+        "value": {
+          "code": "b2b.client_revoked",
+          "detail": "คีย์ API นี้ถูกเพิกถอนไปแล้ว",
+          "requestId": "6f1c2d8e-2c7b-4d0e-9d1c-3f1a2b3c4d5e",
+          "status": 409,
+          "title": "เพิกถอนคีย์นี้แล้ว",
+          "type": "https://errors.packio/b2b.client_revoked"
+        }
+      },
+      "problem.b2b.owner_cannot_order": {
+        "summary": "b2b.owner_cannot_order",
+        "value": {
+          "code": "b2b.owner_cannot_order",
+          "detail": "ผู้ดูแลที่ออกคีย์ API นี้ไม่มีสิทธิ์สั่งซื้อในนามบริษัทแล้ว",
+          "requestId": "6f1c2d8e-2c7b-4d0e-9d1c-3f1a2b3c4d5e",
+          "status": 403,
+          "title": "ผู้ออกคีย์ไม่มีสิทธิ์สั่งซื้อ",
+          "type": "https://errors.packio/b2b.owner_cannot_order"
+        }
+      },
       "problem.banking.duplicate_import": {
         "summary": "banking.duplicate_import",
         "value": {
@@ -12056,6 +12089,14 @@
         ],
         "type": "object"
       },
+      "ApiClientStatus": {
+        "enum": [
+          "active",
+          "suspended",
+          "revoked"
+        ],
+        "type": "string"
+      },
       "ApplyCodeDto": {
         "properties": {
           "code": {
@@ -13948,6 +13989,84 @@
           "createdAt"
         ],
         "type": "object"
+      },
+      "B2bCompanyDto": {
+        "properties": {
+          "id": {
+            "example": "0192f3a0-7c1e-7d2a-9b1f-0000000e7402",
+            "format": "uuid",
+            "type": "string"
+          },
+          "legalName": {
+            "example": "บริษัท ทดสอบ จำกัด",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "legalName"
+        ],
+        "type": "object"
+      },
+      "B2bDestinationDto": {
+        "properties": {
+          "addressId": {
+            "description": "An address of the client’s owner",
+            "example": "0192f3a0-7c1e-7d2a-9b1f-0000000e7409",
+            "format": "uuid",
+            "type": "string"
+          },
+          "quantity": {
+            "example": 1000,
+            "maximum": 10000000,
+            "minimum": 1,
+            "type": "integer"
+          }
+        },
+        "required": [
+          "addressId",
+          "quantity"
+        ],
+        "type": "object"
+      },
+      "B2bMeDto": {
+        "properties": {
+          "clientId": {
+            "example": "0192f3a0-7c1e-7d2a-9b1f-0000000e7401",
+            "format": "uuid",
+            "type": "string"
+          },
+          "company": {
+            "$ref": "#/components/schemas/B2bCompanyDto"
+          },
+          "name": {
+            "example": "ERP connector",
+            "type": "string"
+          },
+          "scopes": {
+            "items": {
+              "$ref": "#/components/schemas/B2bScope"
+            },
+            "type": "array"
+          }
+        },
+        "required": [
+          "clientId",
+          "name",
+          "scopes",
+          "company"
+        ],
+        "type": "object"
+      },
+      "B2bScope": {
+        "description": "`b2b_orders.read` (orders:read), `b2b_orders.write` (orders:write), `b2b_documents.read` (documents:read), `b2b_webhooks.manage` (webhooks:manage) — D-291",
+        "enum": [
+          "b2b_orders.read",
+          "b2b_orders.write",
+          "b2b_documents.read",
+          "b2b_webhooks.manage"
+        ],
+        "type": "string"
       },
       "BalanceLineDto": {
         "properties": {
@@ -20075,6 +20194,71 @@
           "close"
         ],
         "type": "string"
+      },
+      "CompanyApiClientDto": {
+        "properties": {
+          "clientId": {
+            "description": "The `client_id` of the token request",
+            "example": "pc_5f1c0a9e2b7d4c3a8e6f1d20",
+            "type": "string"
+          },
+          "createdAt": {
+            "example": "2026-10-03T15:00:00+07:00",
+            "format": "date-time",
+            "type": "string"
+          },
+          "id": {
+            "example": "0192f3a0-7c1e-7d2a-9b1f-0000000e7401",
+            "format": "uuid",
+            "type": "string"
+          },
+          "lastUsedAt": {
+            "example": "2026-10-03T16:00:00+07:00",
+            "format": "date-time",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "name": {
+            "example": "ERP connector",
+            "type": "string"
+          },
+          "owner": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/UserRefDto"
+              }
+            ],
+            "description": "The Company Admin who issued it: orders it places are theirs"
+          },
+          "scopes": {
+            "description": "`b2b_orders.read` (orders:read), `b2b_orders.write` (orders:write), `b2b_documents.read` (documents:read), `b2b_webhooks.manage` (webhooks:manage) — D-291",
+            "items": {
+              "$ref": "#/components/schemas/B2bScope"
+            },
+            "type": "array"
+          },
+          "status": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ApiClientStatus"
+              }
+            ],
+            "example": "active"
+          }
+        },
+        "required": [
+          "id",
+          "clientId",
+          "name",
+          "scopes",
+          "status",
+          "owner",
+          "lastUsedAt",
+          "createdAt"
+        ],
+        "type": "object"
       },
       "CompanyApprovalDecision": {
         "enum": [
@@ -27943,6 +28127,29 @@
         ],
         "type": "object"
       },
+      "CreateWebhookSubscriptionDto": {
+        "properties": {
+          "eventTypes": {
+            "items": {
+              "$ref": "#/components/schemas/WebhookEventType"
+            },
+            "minItems": 1,
+            "type": "array"
+          },
+          "url": {
+            "description": "HTTPS only",
+            "example": "https://erp.example.com/packio/webhooks",
+            "maxLength": 2000,
+            "pattern": "^https:\\/\\/[^\\s/$.?#][^\\s]*$",
+            "type": "string"
+          }
+        },
+        "required": [
+          "url",
+          "eventTypes"
+        ],
+        "type": "object"
+      },
       "CreateZoneDto": {
         "properties": {
           "code": {
@@ -28036,6 +28243,52 @@
           "revokedAt",
           "createdAt",
           "token"
+        ],
+        "type": "object"
+      },
+      "CreatedWebhookSubscriptionDto": {
+        "properties": {
+          "createdAt": {
+            "example": "2026-10-03T15:00:00+07:00",
+            "format": "date-time",
+            "type": "string"
+          },
+          "eventTypes": {
+            "items": {
+              "$ref": "#/components/schemas/WebhookEventType"
+            },
+            "type": "array"
+          },
+          "id": {
+            "example": "0192f3a0-7c1e-7d2a-9b1f-0000000e7404",
+            "format": "uuid",
+            "type": "string"
+          },
+          "secret": {
+            "description": "Shown once. Every delivery carries `Packio-Signature: t=<unix seconds>,v1=<hex HMAC-SHA256 of \"<t>.<body>\">`",
+            "example": "whsec_example",
+            "type": "string"
+          },
+          "status": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/WebhookSubscriptionStatus"
+              }
+            ],
+            "example": "active"
+          },
+          "url": {
+            "example": "https://erp.example.com/packio/webhooks",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "url",
+          "eventTypes",
+          "status",
+          "createdAt",
+          "secret"
         ],
         "type": "object"
       },
@@ -39248,6 +39501,27 @@
         ],
         "type": "object"
       },
+      "IssueApiClientDto": {
+        "properties": {
+          "name": {
+            "example": "ERP connector",
+            "type": "string"
+          },
+          "scopes": {
+            "description": "`b2b_orders.read` (orders:read), `b2b_orders.write` (orders:write), `b2b_documents.read` (documents:read), `b2b_webhooks.manage` (webhooks:manage) — D-291",
+            "items": {
+              "$ref": "#/components/schemas/B2bScope"
+            },
+            "minItems": 1,
+            "type": "array"
+          }
+        },
+        "required": [
+          "name",
+          "scopes"
+        ],
+        "type": "object"
+      },
       "IssueDebitNoteDto": {
         "properties": {
           "dueDate": {
@@ -39286,6 +39560,77 @@
           "resolved"
         ],
         "type": "string"
+      },
+      "IssuedCompanyApiClientDto": {
+        "properties": {
+          "clientId": {
+            "description": "The `client_id` of the token request",
+            "example": "pc_5f1c0a9e2b7d4c3a8e6f1d20",
+            "type": "string"
+          },
+          "clientSecret": {
+            "description": "Shown once: only its hash is kept. Exchange it at `POST /v1/auth/oauth/token` (client_credentials).",
+            "example": "example-client-secret",
+            "type": "string"
+          },
+          "createdAt": {
+            "example": "2026-10-03T15:00:00+07:00",
+            "format": "date-time",
+            "type": "string"
+          },
+          "id": {
+            "example": "0192f3a0-7c1e-7d2a-9b1f-0000000e7401",
+            "format": "uuid",
+            "type": "string"
+          },
+          "lastUsedAt": {
+            "example": "2026-10-03T16:00:00+07:00",
+            "format": "date-time",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "name": {
+            "example": "ERP connector",
+            "type": "string"
+          },
+          "owner": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/UserRefDto"
+              }
+            ],
+            "description": "The Company Admin who issued it: orders it places are theirs"
+          },
+          "scopes": {
+            "description": "`b2b_orders.read` (orders:read), `b2b_orders.write` (orders:write), `b2b_documents.read` (documents:read), `b2b_webhooks.manage` (webhooks:manage) — D-291",
+            "items": {
+              "$ref": "#/components/schemas/B2bScope"
+            },
+            "type": "array"
+          },
+          "status": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ApiClientStatus"
+              }
+            ],
+            "example": "active"
+          }
+        },
+        "required": [
+          "id",
+          "clientId",
+          "name",
+          "scopes",
+          "status",
+          "owner",
+          "lastUsedAt",
+          "createdAt",
+          "clientSecret"
+        ],
+        "type": "object"
       },
       "IssuedStatementDto": {
         "properties": {
@@ -47361,6 +47706,51 @@
           "grossMargin",
           "expenses",
           "netProfit"
+        ],
+        "type": "object"
+      },
+      "PlaceB2bOrderDto": {
+        "properties": {
+          "companyBranchId": {
+            "example": "0192f3a0-7c1e-7d2a-9b1f-0000000c1002",
+            "format": "uuid",
+            "type": "string"
+          },
+          "destinations": {
+            "description": "Where the quantity goes; default: the owner’s default address, all of it",
+            "items": {
+              "$ref": "#/components/schemas/B2bDestinationDto"
+            },
+            "maxItems": 20,
+            "type": "array"
+          },
+          "expectedGrossAmount": {
+            "description": "Refused (409) when the order total differs — the client confirms the price it saw",
+            "example": "13508.40",
+            "pattern": "^\\d{1,12}\\.\\d{2}$",
+            "type": "string"
+          },
+          "poNumber": {
+            "description": "The company’s PO number (its PO policy applies)",
+            "example": "PO-2026-0042",
+            "maxLength": 64,
+            "type": "string"
+          },
+          "quoteId": {
+            "description": "A saved quotation of the client’s owner, still valid",
+            "example": "0192f3a0-7c1e-7d2a-9b1f-0000000e7407",
+            "format": "uuid",
+            "type": "string"
+          },
+          "quoteOptionId": {
+            "example": "0192f3a0-7c1e-7d2a-9b1f-0000000e7408",
+            "format": "uuid",
+            "type": "string"
+          }
+        },
+        "required": [
+          "quoteId",
+          "quoteOptionId"
         ],
         "type": "object"
       },
@@ -79799,6 +80189,119 @@
         ],
         "type": "object"
       },
+      "WebhookDeliveryDto": {
+        "properties": {
+          "attempts": {
+            "example": 1,
+            "type": "integer"
+          },
+          "body": {
+            "additionalProperties": true,
+            "description": "The body sent: ids, codes and statuses only",
+            "example": {
+              "data": {
+                "groupCode": "PK-2610-0001",
+                "orderGroupId": "0192f3a0-7c1e-7d2a-9b1f-0000000f1001"
+              },
+              "event": {
+                "id": "0192f3a0-7c1e-7d2a-9b1f-0000000e7406",
+                "occurredAt": "2026-10-03T15:00:00+07:00",
+                "type": "order.placed"
+              }
+            },
+            "type": "object"
+          },
+          "createdAt": {
+            "example": "2026-10-03T15:00:00+07:00",
+            "format": "date-time",
+            "type": "string"
+          },
+          "deliveredAt": {
+            "example": "2026-10-03T15:00:05+07:00",
+            "format": "date-time",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "eventType": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/WebhookEventType"
+              }
+            ],
+            "example": "order.placed"
+          },
+          "id": {
+            "description": "Sent as `Packio-Delivery`",
+            "example": "0192f3a0-7c1e-7d2a-9b1f-0000000e7405",
+            "format": "uuid",
+            "type": "string"
+          },
+          "lastError": {
+            "example": null,
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "lastStatusCode": {
+            "example": 200,
+            "type": [
+              "integer",
+              "null"
+            ]
+          },
+          "nextAttemptAt": {
+            "description": "Back-off after a failure: 1, 5, 30 min, 2 h, 12 h, then `failed`",
+            "example": null,
+            "format": "date-time",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "status": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/WebhookDeliveryStatus"
+              }
+            ],
+            "example": "delivered"
+          }
+        },
+        "required": [
+          "id",
+          "eventType",
+          "status",
+          "attempts",
+          "nextAttemptAt",
+          "lastStatusCode",
+          "lastError",
+          "deliveredAt",
+          "body",
+          "createdAt"
+        ],
+        "type": "object"
+      },
+      "WebhookDeliveryStatus": {
+        "enum": [
+          "pending",
+          "delivered",
+          "failed"
+        ],
+        "type": "string"
+      },
+      "WebhookEventType": {
+        "enum": [
+          "order.placed",
+          "order.updated",
+          "shipment.shipped",
+          "shipment.delivered",
+          "document.issued"
+        ],
+        "type": "string"
+      },
       "WebhookReceivedDto": {
         "properties": {
           "received": {
@@ -79810,6 +80313,53 @@
           "received"
         ],
         "type": "object"
+      },
+      "WebhookSubscriptionDto": {
+        "properties": {
+          "createdAt": {
+            "example": "2026-10-03T15:00:00+07:00",
+            "format": "date-time",
+            "type": "string"
+          },
+          "eventTypes": {
+            "items": {
+              "$ref": "#/components/schemas/WebhookEventType"
+            },
+            "type": "array"
+          },
+          "id": {
+            "example": "0192f3a0-7c1e-7d2a-9b1f-0000000e7404",
+            "format": "uuid",
+            "type": "string"
+          },
+          "status": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/WebhookSubscriptionStatus"
+              }
+            ],
+            "example": "active"
+          },
+          "url": {
+            "example": "https://erp.example.com/packio/webhooks",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "url",
+          "eventTypes",
+          "status",
+          "createdAt"
+        ],
+        "type": "object"
+      },
+      "WebhookSubscriptionStatus": {
+        "enum": [
+          "active",
+          "disabled"
+        ],
+        "type": "string"
       },
       "WhtCategory": {
         "enum": [
@@ -80103,6 +80653,12 @@
       }
     },
     "securitySchemes": {
+      "b2b": {
+        "bearerFormat": "JWT",
+        "description": "Access token with `aud=b2b` — `/v1/b2b/*` (company API clients, client-credentials, D-291)",
+        "scheme": "bearer",
+        "type": "http"
+      },
       "customer": {
         "bearerFormat": "JWT",
         "description": "Access token with `aud=customer` — `/v1/store/*`",
@@ -80125,7 +80681,7 @@
   },
   "info": {
     "contact": {},
-    "description": "Packio — Your Packaging Production Partner, operated by Collective Group (Thailand).\nRules: `docs/contract/api-conventions.md` (shared with packio-web).\n\n- **Surfaces:** `/v1/auth`, `/v1/store` (customer), `/v1/admin` (staff), `/v1/partner` (factories), `/webhooks`. A token is accepted only on its own audience's prefix.\n- **Money:** decimal strings with exactly 2 decimals (`\"1234.50\"`) plus `currency: \"THB\"` on the object; never JSON numbers. Clients never compute prices.\n- **Dates:** ISO 8601 with offset, rendered in `Asia/Bangkok` (`2026-09-22T14:05:00+07:00`); date-only fields `YYYY-MM-DD`.\n- **IDs:** uuid only; business keys (`orderCode`) are separate fields.\n- **Errors:** RFC 9457 `application/problem+json` with a stable `code`; `title`/`detail` localised by `Accept-Language` (`th` default, `en`).\n- **Lists:** `?page&perPage(≤100)&sort&order&q` → `{ data, meta: { page, perPage, total } }`; feeds use `?cursor&limit` → `{ data, meta: { nextCursor } }`.\n- **Idempotency:** irreversible POSTs require `Idempotency-Key` (uuid); replays within 24 h return the original response.\n- **Concurrency:** editable resources return `ETag`; updates send `If-Match` (412 `concurrency.stale`).\n- **Files:** presign → PUT to the returned URL → reference the `fileId`.",
+    "description": "Packio — Your Packaging Production Partner, operated by Collective Group (Thailand).\nRules: `docs/contract/api-conventions.md` (shared with packio-web).\n\n- **Surfaces:** `/v1/auth`, `/v1/store` (customer), `/v1/admin` (staff), `/v1/partner` (factories), `/v1/b2b` (company API clients, D-291), `/webhooks`. A token is accepted only on its own audience's prefix.\n- **Money:** decimal strings with exactly 2 decimals (`\"1234.50\"`) plus `currency: \"THB\"` on the object; never JSON numbers. Clients never compute prices.\n- **Dates:** ISO 8601 with offset, rendered in `Asia/Bangkok` (`2026-09-22T14:05:00+07:00`); date-only fields `YYYY-MM-DD`.\n- **IDs:** uuid only; business keys (`orderCode`) are separate fields.\n- **Errors:** RFC 9457 `application/problem+json` with a stable `code`; `title`/`detail` localised by `Accept-Language` (`th` default, `en`).\n- **Lists:** `?page&perPage(≤100)&sort&order&q` → `{ data, meta: { page, perPage, total } }`; feeds use `?cursor&limit` → `{ data, meta: { nextCursor } }`.\n- **Idempotency:** irreversible POSTs require `Idempotency-Key` (uuid); replays within 24 h return the original response.\n- **Concurrency:** editable resources return `ETag`; updates send `If-Match` (412 `concurrency.stale`).\n- **Files:** presign → PUT to the returned URL → reference the `fileId`.",
     "title": "Packio API",
     "version": "0.29.0"
   },
@@ -292460,7 +293016,7 @@
     },
     "/v1/auth/token": {
       "post": {
-        "description": "RFC 6749 §4.4 for factory systems. Client id and secret in HTTP Basic auth or in the body. The response follows RFC 6749 (snake_case fields); errors are problem details like every other endpoint. The partner-audience token carries the client's factory scope; there is no refresh token.\n\nImplements: ADR-0004.",
+        "description": "RFC 6749 §4.4 for factory systems and company API clients. Client id and secret in HTTP Basic auth or in the body. The response follows RFC 6749 (snake_case fields); errors are problem details like every other endpoint. A factory's client gets a `partner` token with its factory scope (`/v1/partner`), a company's client a `b2b` token with its company scope and `b2b_*` scopes (`/v1/b2b`, D-291); there is no refresh token.\n\nImplements: ADR-0004, D-291.",
         "operationId": "auth.tokens.clientCredentials",
         "parameters": [
           {
@@ -292667,9 +293223,3000 @@
           }
         },
         "security": [],
-        "summary": "Get a token for a partner machine client (OAuth2 client credentials)",
+        "summary": "Get a token for a machine client (OAuth2 client credentials)",
         "tags": [
           "auth.tokens"
+        ]
+      }
+    },
+    "/v1/b2b/documents": {
+      "get": {
+        "description": "Tax invoices, receipts and notes issued to the company (D-010, D-125). Company API clients only (client credentials, `aud=b2b`); everything is the client’s company’s (D-291).\n\nImplements: D-291, D-207, D-010, D-125.",
+        "operationId": "b2b.documents.list",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "page",
+            "required": false,
+            "schema": {
+              "default": 1,
+              "minimum": 1,
+              "type": "integer"
+            }
+          },
+          {
+            "in": "query",
+            "name": "perPage",
+            "required": false,
+            "schema": {
+              "default": 25,
+              "maximum": 100,
+              "minimum": 1,
+              "type": "integer"
+            }
+          },
+          {
+            "description": "Sort field; each endpoint validates it against its own allow-list.",
+            "in": "query",
+            "name": "sort",
+            "required": false,
+            "schema": {
+              "example": "createdAt",
+              "maxLength": 64,
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "order",
+            "required": false,
+            "schema": {
+              "$ref": "#/components/schemas/SortOrder"
+            }
+          },
+          {
+            "description": "Free-text search",
+            "in": "query",
+            "name": "q",
+            "required": false,
+            "schema": {
+              "maxLength": 200,
+              "type": "string"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "data": [
+                    {
+                      "amountDue": "0.00",
+                      "buyer": {
+                        "address": null,
+                        "branchCode": null,
+                        "name": "ลูกค้า ตัวอย่าง (fake)",
+                        "taxId": null
+                      },
+                      "cashAmount": "1070.00",
+                      "cnKind": null,
+                      "currency": "THB",
+                      "deductedPriorAmount": "0.00",
+                      "discountAmount": "0.00",
+                      "docKind": "instalment",
+                      "docNumber": "TR256910-00001",
+                      "docType": "tr",
+                      "documentDate": "2026-10-05",
+                      "dueDate": null,
+                      "grossAmount": "1070.00",
+                      "groupCode": "G2610-00001",
+                      "id": "0192f3a0-7c1e-7d2a-9b1f-000000520001",
+                      "isFullForm": false,
+                      "isTaxInvoice": true,
+                      "issuedAt": "2026-10-05T10:00:00+07:00",
+                      "lines": [
+                        {
+                          "description": "งวดที่ 1 มัดจำ 50% — คำสั่งซื้อ O2610-00001",
+                          "discountAmount": "0.00",
+                          "grossAmount": "1070.00",
+                          "lineNo": 1,
+                          "netAmount": "1000.00",
+                          "quantity": "1.000",
+                          "vatAmount": "70.00",
+                          "whtAmount": "0.00"
+                        }
+                      ],
+                      "netAmount": "1000.00",
+                      "nextActions": [
+                        {
+                          "disabledReason": null,
+                          "irreversible": false,
+                          "key": "customer_document.resend"
+                        }
+                      ],
+                      "orderCode": "O2610-00001",
+                      "orderGroupId": "0192f3a0-7c1e-7d2a-9b1f-0000000d0001",
+                      "orderId": "0192f3a0-7c1e-7d2a-9b1f-0000000c0001",
+                      "originalDocument": null,
+                      "paymentId": "0192f3a0-7c1e-7d2a-9b1f-0000000a0001",
+                      "pdfReady": true,
+                      "reason": null,
+                      "receiptVia": "scb",
+                      "receivable": null,
+                      "seller": {
+                        "address": "99/9 ถนนตัวอย่าง กรุงเทพมหานคร 10000",
+                        "branchCode": "00000",
+                        "name": "บริษัท ตัวอย่าง จำกัด (fake)",
+                        "taxId": "0000000000000"
+                      },
+                      "status": "issued",
+                      "taxNature": "hire_of_work",
+                      "vatAmount": "70.00",
+                      "vatRatePct": "7.0000",
+                      "voidReason": null,
+                      "whtAmount": "0.00"
+                    }
+                  ],
+                  "meta": {
+                    "page": 1,
+                    "perPage": 25,
+                    "total": 1
+                  }
+                },
+                "schema": {
+                  "properties": {
+                    "data": {
+                      "items": {
+                        "$ref": "#/components/schemas/CustomerDocumentDto"
+                      },
+                      "type": "array"
+                    },
+                    "meta": {
+                      "$ref": "#/components/schemas/PageMeta"
+                    }
+                  },
+                  "required": [
+                    "data",
+                    "meta"
+                  ],
+                  "type": "object"
+                }
+              }
+            },
+            "description": "One page of results",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.unauthenticated": {
+                    "$ref": "#/components/examples/problem.auth.unauthenticated"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.unauthenticated`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.forbidden": {
+                    "$ref": "#/components/examples/problem.auth.forbidden"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.forbidden`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "validation.failed": {
+                    "$ref": "#/components/examples/problem.validation.failed"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `validation.failed`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "b2b": []
+          }
+        ],
+        "summary": "List my company’s documents",
+        "tags": [
+          "b2b.documents"
+        ],
+        "x-required-permissions": [
+          "b2b_documents.read"
+        ]
+      }
+    },
+    "/v1/b2b/documents/{documentId}/pdf": {
+      "get": {
+        "description": "A short-lived signed URL of the PDF of one of the company’s documents. Company API clients only (client credentials, `aud=b2b`); everything is the client’s company’s (D-291).\n\nImplements: D-291, D-207, D-010.",
+        "operationId": "b2b.documents.pdf",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "documentId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "expiresAt": "2026-10-05T10:05:00+07:00",
+                  "url": "https://packio-files.s3.example.com/…&X-Amz-Expires=300"
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/DownloadUrlDto"
+                }
+              }
+            },
+            "description": "Signed URL",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.unauthenticated": {
+                    "$ref": "#/components/examples/problem.auth.unauthenticated"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.unauthenticated`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.forbidden": {
+                    "$ref": "#/components/examples/problem.auth.forbidden"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.forbidden`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "404": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.not_found": {
+                    "$ref": "#/components/examples/problem.http.not_found"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.not_found`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "409": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "file.not_ready": {
+                    "$ref": "#/components/examples/problem.file.not_ready"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `file.not_ready`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "validation.failed": {
+                    "$ref": "#/components/examples/problem.validation.failed"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `validation.failed`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "b2b": []
+          }
+        ],
+        "summary": "Download a document",
+        "tags": [
+          "b2b.documents"
+        ],
+        "x-required-permissions": [
+          "b2b_documents.read"
+        ]
+      }
+    },
+    "/v1/b2b/me": {
+      "get": {
+        "description": "The calling client, its scopes and its company. Company API clients only (client credentials, `aud=b2b`); everything is the client’s company’s (D-291).\n\nImplements: D-291, D-207.",
+        "operationId": "b2b.me.get",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "clientId": "0192f3a0-7c1e-7d2a-9b1f-0000000e7401",
+                  "company": {
+                    "id": "0192f3a0-7c1e-7d2a-9b1f-0000000e7402",
+                    "legalName": "บริษัท ทดสอบ จำกัด"
+                  },
+                  "name": "ERP connector",
+                  "scopes": [
+                    "b2b_orders.read",
+                    "b2b_orders.write"
+                  ]
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/B2bMeDto"
+                }
+              }
+            },
+            "description": "Client",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.unauthenticated": {
+                    "$ref": "#/components/examples/problem.auth.unauthenticated"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.unauthenticated`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.forbidden": {
+                    "$ref": "#/components/examples/problem.auth.forbidden"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.forbidden`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "b2b": []
+          }
+        ],
+        "summary": "Who am I",
+        "tags": [
+          "b2b.me"
+        ]
+      }
+    },
+    "/v1/b2b/order-groups": {
+      "get": {
+        "description": "Newest first, with their orders and statuses; no factory data (D-050). Company API clients only (client credentials, `aud=b2b`); everything is the client’s company’s (D-291).\n\nImplements: D-291, D-207, D-050.",
+        "operationId": "b2b.orders.listGroups",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "page",
+            "required": false,
+            "schema": {
+              "default": 1,
+              "minimum": 1,
+              "type": "integer"
+            }
+          },
+          {
+            "in": "query",
+            "name": "perPage",
+            "required": false,
+            "schema": {
+              "default": 25,
+              "maximum": 100,
+              "minimum": 1,
+              "type": "integer"
+            }
+          },
+          {
+            "description": "Sort field; each endpoint validates it against its own allow-list.",
+            "in": "query",
+            "name": "sort",
+            "required": false,
+            "schema": {
+              "example": "createdAt",
+              "maxLength": 64,
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "order",
+            "required": false,
+            "schema": {
+              "$ref": "#/components/schemas/SortOrder"
+            }
+          },
+          {
+            "description": "Free-text search",
+            "in": "query",
+            "name": "q",
+            "required": false,
+            "schema": {
+              "maxLength": 200,
+              "type": "string"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "data": [
+                    {
+                      "cancelledAt": null,
+                      "ccEmails": [],
+                      "channel": "web",
+                      "customerId": "0192f3a0-7c1e-7d2a-9b1f-0000000c0001",
+                      "expiresAt": "2026-10-08T10:00:00+07:00",
+                      "groupCode": "OG-2610-00042",
+                      "id": "0192f3a0-7c1e-7d2a-9b1f-0000000d0001",
+                      "orders": [
+                        {
+                          "artworkStatus": "awaiting_template",
+                          "cancelReasonCode": null,
+                          "cancelReasonNameEn": null,
+                          "cancelReasonNameTh": null,
+                          "cancelledAt": null,
+                          "createdAt": "2026-10-01T09:00:00+07:00",
+                          "designOption": "own_file",
+                          "destinations": [
+                            {
+                              "address": {
+                                "districtNameTh": null,
+                                "line1": "99/9 ถนนตัวอย่าง",
+                                "line2": null,
+                                "phone": "+66810001234",
+                                "postcode": "10110",
+                                "provinceId": "0192f3a0-7c1e-7d2a-9b1f-0000000c0004",
+                                "provinceNameTh": "กรุงเทพมหานคร",
+                                "recipientName": "สมชาย ทดสอบ",
+                                "subdistrictId": null,
+                                "subdistrictNameTh": null
+                              },
+                              "id": "0192f3a0-7c1e-7d2a-9b1f-0000000d0004",
+                              "quantity": 1000,
+                              "shippingNetAmount": "120.00"
+                            }
+                          ],
+                          "estimatedDeliveryDate": "2026-10-14",
+                          "id": "0192f3a0-7c1e-7d2a-9b1f-0000000d0002",
+                          "leadTimeDays": 7,
+                          "lines": [
+                            {
+                              "descriptionEn": "Product",
+                              "descriptionTh": "สินค้า",
+                              "discountAmount": "0.00",
+                              "grossAmount": "13380.00",
+                              "id": "0192f3a0-7c1e-7d2a-9b1f-0000000d0003",
+                              "lineNo": 1,
+                              "lineType": "product",
+                              "netAmount": "12504.21",
+                              "quantity": "1000",
+                              "unitPrice": "12.504206",
+                              "vatAmount": "875.79",
+                              "vatRatePct": "7.0000",
+                              "whtAmount": "0.00",
+                              "whtCategory": "hire_of_work"
+                            }
+                          ],
+                          "mockupOption": "none",
+                          "nextActions": [
+                            {
+                              "disabledReason": null,
+                              "irreversible": false,
+                              "key": "order.upload_artwork"
+                            }
+                          ],
+                          "orderCode": "OR-2610-00042",
+                          "productTypeCode": "folding_carton",
+                          "promisedShipDate": "2026-10-12",
+                          "quantityOrdered": 1000,
+                          "quoteId": "0192f3a0-7c1e-7d2a-9b1f-0000000ca004",
+                          "receipt": {
+                            "autoCompleteAt": null,
+                            "claimWindowEndsAt": null,
+                            "completedAt": null,
+                            "completionMode": null,
+                            "confirmedAt": null,
+                            "deliveredAt": null
+                          },
+                          "status": "waiting_payment",
+                          "statusChangedAt": "2026-10-01T10:00:00+07:00",
+                          "summary": {
+                            "product": {
+                              "imageUrl": "/v1/store/catalog/images/0192f3a0-7c1e-7d2a-9b1f-00000000c009",
+                              "nameEn": "Tuck-end box",
+                              "nameTh": "กล่องฝาเสียบ",
+                              "slug": "tuck-end-box"
+                            },
+                            "productTypeCode": "folding_carton",
+                            "productTypeNameEn": "Folding carton",
+                            "productTypeNameTh": "กล่องกระดาษแข็ง",
+                            "specs": [
+                              {
+                                "key": "style",
+                                "labelEn": "Style",
+                                "labelTh": "แบบกล่อง",
+                                "valueEn": "ฝาเสียบ",
+                                "valueTh": "ฝาเสียบ"
+                              },
+                              {
+                                "key": "size",
+                                "labelEn": "Size",
+                                "labelTh": "ขนาด",
+                                "valueEn": "60 × 60 × 150 mm",
+                                "valueTh": "60 × 60 × 150 มม."
+                              },
+                              {
+                                "key": "material",
+                                "labelEn": "Material",
+                                "labelTh": "วัสดุ",
+                                "valueEn": "Art card 350 gsm",
+                                "valueTh": "อาร์ตการ์ด 350 แกรม"
+                              }
+                            ],
+                            "unit": "piece"
+                          },
+                          "toleranceColourDeltaE": "3.00",
+                          "toleranceDimensionalMm": "1.00",
+                          "toleranceOutcome": null,
+                          "toleranceOveragePct": "5.0000",
+                          "toleranceShortagePct": "5.0000",
+                          "totals": {
+                            "cashAmount": "14182.80",
+                            "currency": "THB",
+                            "discountAmount": "0.00",
+                            "grossAmount": "14182.80",
+                            "netAmount": "13254.95",
+                            "shippingNetAmount": "120.00",
+                            "vatAmount": "927.85",
+                            "whtAmount": "0.00"
+                          }
+                        }
+                      ],
+                      "placedAt": "2026-10-01T10:00:00+07:00",
+                      "poNumber": null,
+                      "status": "waiting_payment",
+                      "totals": {
+                        "cashAmount": "14182.80",
+                        "currency": "THB",
+                        "discountAmount": "0.00",
+                        "grossAmount": "14182.80",
+                        "netAmount": "13254.95",
+                        "shippingNetAmount": "120.00",
+                        "vatAmount": "927.85",
+                        "whtAmount": "0.00"
+                      }
+                    }
+                  ],
+                  "meta": {
+                    "page": 1,
+                    "perPage": 25,
+                    "total": 1
+                  }
+                },
+                "schema": {
+                  "properties": {
+                    "data": {
+                      "items": {
+                        "$ref": "#/components/schemas/OrderGroupDto"
+                      },
+                      "type": "array"
+                    },
+                    "meta": {
+                      "$ref": "#/components/schemas/PageMeta"
+                    }
+                  },
+                  "required": [
+                    "data",
+                    "meta"
+                  ],
+                  "type": "object"
+                }
+              }
+            },
+            "description": "One page of results",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.unauthenticated": {
+                    "$ref": "#/components/examples/problem.auth.unauthenticated"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.unauthenticated`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.forbidden": {
+                    "$ref": "#/components/examples/problem.auth.forbidden"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.forbidden`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "validation.failed": {
+                    "$ref": "#/components/examples/problem.validation.failed"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `validation.failed`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "b2b": []
+          }
+        ],
+        "summary": "List my company’s order groups",
+        "tags": [
+          "b2b.orders"
+        ],
+        "x-required-permissions": [
+          "b2b_orders.read"
+        ]
+      }
+    },
+    "/v1/b2b/orders": {
+      "post": {
+        "description": "From a saved quotation of the client’s owner: the normal checkout for the company (channel `b2b`) — its PO policy, approval threshold and credit apply (D-123); shipping is priced per destination; the order follows the normal payment schedule (D-020). `expectedGrossAmount` guards the price. Company API clients only (client credentials, `aud=b2b`); everything is the client’s company’s (D-291).\n\nImplements: D-291, D-207, D-123, D-020.",
+        "operationId": "b2b.orders.place",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/IdempotencyKey"
+          },
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "examples": {
+                "default": {
+                  "value": {
+                    "destinations": [
+                      {
+                        "addressId": "0192f3a0-7c1e-7d2a-9b1f-0000000e7409",
+                        "quantity": 1000
+                      }
+                    ],
+                    "expectedGrossAmount": "13508.40",
+                    "poNumber": "PO-2026-0042",
+                    "quoteId": "0192f3a0-7c1e-7d2a-9b1f-0000000e7407",
+                    "quoteOptionId": "0192f3a0-7c1e-7d2a-9b1f-0000000e7408"
+                  }
+                }
+              },
+              "schema": {
+                "$ref": "#/components/schemas/PlaceB2bOrderDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "cancelledAt": null,
+                  "ccEmails": [],
+                  "channel": "web",
+                  "customerId": "0192f3a0-7c1e-7d2a-9b1f-0000000c0001",
+                  "expiresAt": "2026-10-08T10:00:00+07:00",
+                  "groupCode": "OG-2610-00042",
+                  "id": "0192f3a0-7c1e-7d2a-9b1f-0000000d0001",
+                  "orders": [
+                    {
+                      "artworkStatus": "awaiting_template",
+                      "cancelReasonCode": null,
+                      "cancelReasonNameEn": null,
+                      "cancelReasonNameTh": null,
+                      "cancelledAt": null,
+                      "createdAt": "2026-10-01T09:00:00+07:00",
+                      "designOption": "own_file",
+                      "destinations": [
+                        {
+                          "address": {
+                            "districtNameTh": null,
+                            "line1": "99/9 ถนนตัวอย่าง",
+                            "line2": null,
+                            "phone": "+66810001234",
+                            "postcode": "10110",
+                            "provinceId": "0192f3a0-7c1e-7d2a-9b1f-0000000c0004",
+                            "provinceNameTh": "กรุงเทพมหานคร",
+                            "recipientName": "สมชาย ทดสอบ",
+                            "subdistrictId": null,
+                            "subdistrictNameTh": null
+                          },
+                          "id": "0192f3a0-7c1e-7d2a-9b1f-0000000d0004",
+                          "quantity": 1000,
+                          "shippingNetAmount": "120.00"
+                        }
+                      ],
+                      "estimatedDeliveryDate": "2026-10-14",
+                      "id": "0192f3a0-7c1e-7d2a-9b1f-0000000d0002",
+                      "leadTimeDays": 7,
+                      "lines": [
+                        {
+                          "descriptionEn": "Product",
+                          "descriptionTh": "สินค้า",
+                          "discountAmount": "0.00",
+                          "grossAmount": "13380.00",
+                          "id": "0192f3a0-7c1e-7d2a-9b1f-0000000d0003",
+                          "lineNo": 1,
+                          "lineType": "product",
+                          "netAmount": "12504.21",
+                          "quantity": "1000",
+                          "unitPrice": "12.504206",
+                          "vatAmount": "875.79",
+                          "vatRatePct": "7.0000",
+                          "whtAmount": "0.00",
+                          "whtCategory": "hire_of_work"
+                        }
+                      ],
+                      "mockupOption": "none",
+                      "nextActions": [
+                        {
+                          "disabledReason": null,
+                          "irreversible": false,
+                          "key": "order.upload_artwork"
+                        }
+                      ],
+                      "orderCode": "OR-2610-00042",
+                      "productTypeCode": "folding_carton",
+                      "promisedShipDate": "2026-10-12",
+                      "quantityOrdered": 1000,
+                      "quoteId": "0192f3a0-7c1e-7d2a-9b1f-0000000ca004",
+                      "receipt": {
+                        "autoCompleteAt": null,
+                        "claimWindowEndsAt": null,
+                        "completedAt": null,
+                        "completionMode": null,
+                        "confirmedAt": null,
+                        "deliveredAt": null
+                      },
+                      "status": "waiting_payment",
+                      "statusChangedAt": "2026-10-01T10:00:00+07:00",
+                      "summary": {
+                        "product": {
+                          "imageUrl": "/v1/store/catalog/images/0192f3a0-7c1e-7d2a-9b1f-00000000c009",
+                          "nameEn": "Tuck-end box",
+                          "nameTh": "กล่องฝาเสียบ",
+                          "slug": "tuck-end-box"
+                        },
+                        "productTypeCode": "folding_carton",
+                        "productTypeNameEn": "Folding carton",
+                        "productTypeNameTh": "กล่องกระดาษแข็ง",
+                        "specs": [
+                          {
+                            "key": "style",
+                            "labelEn": "Style",
+                            "labelTh": "แบบกล่อง",
+                            "valueEn": "ฝาเสียบ",
+                            "valueTh": "ฝาเสียบ"
+                          },
+                          {
+                            "key": "size",
+                            "labelEn": "Size",
+                            "labelTh": "ขนาด",
+                            "valueEn": "60 × 60 × 150 mm",
+                            "valueTh": "60 × 60 × 150 มม."
+                          },
+                          {
+                            "key": "material",
+                            "labelEn": "Material",
+                            "labelTh": "วัสดุ",
+                            "valueEn": "Art card 350 gsm",
+                            "valueTh": "อาร์ตการ์ด 350 แกรม"
+                          }
+                        ],
+                        "unit": "piece"
+                      },
+                      "toleranceColourDeltaE": "3.00",
+                      "toleranceDimensionalMm": "1.00",
+                      "toleranceOutcome": null,
+                      "toleranceOveragePct": "5.0000",
+                      "toleranceShortagePct": "5.0000",
+                      "totals": {
+                        "cashAmount": "14182.80",
+                        "currency": "THB",
+                        "discountAmount": "0.00",
+                        "grossAmount": "14182.80",
+                        "netAmount": "13254.95",
+                        "shippingNetAmount": "120.00",
+                        "vatAmount": "927.85",
+                        "whtAmount": "0.00"
+                      }
+                    }
+                  ],
+                  "placedAt": "2026-10-01T10:00:00+07:00",
+                  "poNumber": null,
+                  "status": "waiting_payment",
+                  "totals": {
+                    "cashAmount": "14182.80",
+                    "currency": "THB",
+                    "discountAmount": "0.00",
+                    "grossAmount": "14182.80",
+                    "netAmount": "13254.95",
+                    "shippingNetAmount": "120.00",
+                    "vatAmount": "927.85",
+                    "whtAmount": "0.00"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/OrderGroupDto"
+                }
+              }
+            },
+            "description": "Placed",
+            "headers": {
+              "Idempotent-Replayed": {
+                "$ref": "#/components/headers/IdempotentReplayed"
+              },
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "400": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.bad_request": {
+                    "$ref": "#/components/examples/problem.http.bad_request"
+                  },
+                  "http.malformed_json": {
+                    "$ref": "#/components/examples/problem.http.malformed_json"
+                  },
+                  "idempotency.key_invalid": {
+                    "$ref": "#/components/examples/problem.idempotency.key_invalid"
+                  },
+                  "idempotency.key_required": {
+                    "$ref": "#/components/examples/problem.idempotency.key_required"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.bad_request`, `http.malformed_json`, `idempotency.key_invalid`, `idempotency.key_required`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.unauthenticated": {
+                    "$ref": "#/components/examples/problem.auth.unauthenticated"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.unauthenticated`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.forbidden": {
+                    "$ref": "#/components/examples/problem.auth.forbidden"
+                  },
+                  "b2b.owner_cannot_order": {
+                    "$ref": "#/components/examples/problem.b2b.owner_cannot_order"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.forbidden`, `b2b.owner_cannot_order`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "404": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.not_found": {
+                    "$ref": "#/components/examples/problem.http.not_found"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.not_found`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "409": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "checkout.price_expired": {
+                    "$ref": "#/components/examples/problem.checkout.price_expired"
+                  },
+                  "checkout.total_changed": {
+                    "$ref": "#/components/examples/problem.checkout.total_changed"
+                  },
+                  "idempotency.in_progress": {
+                    "$ref": "#/components/examples/problem.idempotency.in_progress"
+                  },
+                  "quotes.not_live": {
+                    "$ref": "#/components/examples/problem.quotes.not_live"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `checkout.price_expired`, `checkout.total_changed`, `idempotency.in_progress`, `quotes.not_live`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "checkout.destinations_incomplete": {
+                    "$ref": "#/components/examples/problem.checkout.destinations_incomplete"
+                  },
+                  "checkout.shipping_unavailable": {
+                    "$ref": "#/components/examples/problem.checkout.shipping_unavailable"
+                  },
+                  "idempotency.key_reused": {
+                    "$ref": "#/components/examples/problem.idempotency.key_reused"
+                  },
+                  "validation.failed": {
+                    "$ref": "#/components/examples/problem.validation.failed"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `checkout.destinations_incomplete`, `checkout.shipping_unavailable`, `idempotency.key_reused`, `validation.failed`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "b2b": []
+          }
+        ],
+        "summary": "Place an order for my company",
+        "tags": [
+          "b2b.orders"
+        ],
+        "x-required-permissions": [
+          "b2b_orders.write"
+        ]
+      }
+    },
+    "/v1/b2b/orders/{orderId}": {
+      "get": {
+        "description": "Lines, destinations and status (payment, artwork, production and shipping facts). Company API clients only (client credentials, `aud=b2b`); everything is the client’s company’s (D-291).\n\nImplements: D-291, D-207.",
+        "operationId": "b2b.orders.get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "orderId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "artworkStatus": "awaiting_template",
+                  "cancelReasonCode": null,
+                  "cancelReasonNameEn": null,
+                  "cancelReasonNameTh": null,
+                  "cancelledAt": null,
+                  "createdAt": "2026-10-01T09:00:00+07:00",
+                  "designOption": "own_file",
+                  "destinations": [
+                    {
+                      "address": {
+                        "districtNameTh": null,
+                        "line1": "99/9 ถนนตัวอย่าง",
+                        "line2": null,
+                        "phone": "+66810001234",
+                        "postcode": "10110",
+                        "provinceId": "0192f3a0-7c1e-7d2a-9b1f-0000000c0004",
+                        "provinceNameTh": "กรุงเทพมหานคร",
+                        "recipientName": "สมชาย ทดสอบ",
+                        "subdistrictId": null,
+                        "subdistrictNameTh": null
+                      },
+                      "id": "0192f3a0-7c1e-7d2a-9b1f-0000000d0004",
+                      "quantity": 1000,
+                      "shippingNetAmount": "120.00"
+                    }
+                  ],
+                  "estimatedDeliveryDate": "2026-10-14",
+                  "id": "0192f3a0-7c1e-7d2a-9b1f-0000000d0002",
+                  "leadTimeDays": 7,
+                  "lines": [
+                    {
+                      "descriptionEn": "Product",
+                      "descriptionTh": "สินค้า",
+                      "discountAmount": "0.00",
+                      "grossAmount": "13380.00",
+                      "id": "0192f3a0-7c1e-7d2a-9b1f-0000000d0003",
+                      "lineNo": 1,
+                      "lineType": "product",
+                      "netAmount": "12504.21",
+                      "quantity": "1000",
+                      "unitPrice": "12.504206",
+                      "vatAmount": "875.79",
+                      "vatRatePct": "7.0000",
+                      "whtAmount": "0.00",
+                      "whtCategory": "hire_of_work"
+                    }
+                  ],
+                  "mockupOption": "none",
+                  "nextActions": [
+                    {
+                      "disabledReason": null,
+                      "irreversible": false,
+                      "key": "order.upload_artwork"
+                    }
+                  ],
+                  "orderCode": "OR-2610-00042",
+                  "productTypeCode": "folding_carton",
+                  "promisedShipDate": "2026-10-12",
+                  "quantityOrdered": 1000,
+                  "quoteId": "0192f3a0-7c1e-7d2a-9b1f-0000000ca004",
+                  "receipt": {
+                    "autoCompleteAt": null,
+                    "claimWindowEndsAt": null,
+                    "completedAt": null,
+                    "completionMode": null,
+                    "confirmedAt": null,
+                    "deliveredAt": null
+                  },
+                  "status": "waiting_payment",
+                  "statusChangedAt": "2026-10-01T10:00:00+07:00",
+                  "summary": {
+                    "product": {
+                      "imageUrl": "/v1/store/catalog/images/0192f3a0-7c1e-7d2a-9b1f-00000000c009",
+                      "nameEn": "Tuck-end box",
+                      "nameTh": "กล่องฝาเสียบ",
+                      "slug": "tuck-end-box"
+                    },
+                    "productTypeCode": "folding_carton",
+                    "productTypeNameEn": "Folding carton",
+                    "productTypeNameTh": "กล่องกระดาษแข็ง",
+                    "specs": [
+                      {
+                        "key": "style",
+                        "labelEn": "Style",
+                        "labelTh": "แบบกล่อง",
+                        "valueEn": "ฝาเสียบ",
+                        "valueTh": "ฝาเสียบ"
+                      },
+                      {
+                        "key": "size",
+                        "labelEn": "Size",
+                        "labelTh": "ขนาด",
+                        "valueEn": "60 × 60 × 150 mm",
+                        "valueTh": "60 × 60 × 150 มม."
+                      },
+                      {
+                        "key": "material",
+                        "labelEn": "Material",
+                        "labelTh": "วัสดุ",
+                        "valueEn": "Art card 350 gsm",
+                        "valueTh": "อาร์ตการ์ด 350 แกรม"
+                      }
+                    ],
+                    "unit": "piece"
+                  },
+                  "toleranceColourDeltaE": "3.00",
+                  "toleranceDimensionalMm": "1.00",
+                  "toleranceOutcome": null,
+                  "toleranceOveragePct": "5.0000",
+                  "toleranceShortagePct": "5.0000",
+                  "totals": {
+                    "cashAmount": "14182.80",
+                    "currency": "THB",
+                    "discountAmount": "0.00",
+                    "grossAmount": "14182.80",
+                    "netAmount": "13254.95",
+                    "shippingNetAmount": "120.00",
+                    "vatAmount": "927.85",
+                    "whtAmount": "0.00"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/OrderDto"
+                }
+              }
+            },
+            "description": "Order",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.unauthenticated": {
+                    "$ref": "#/components/examples/problem.auth.unauthenticated"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.unauthenticated`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.forbidden": {
+                    "$ref": "#/components/examples/problem.auth.forbidden"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.forbidden`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "404": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.not_found": {
+                    "$ref": "#/components/examples/problem.http.not_found"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.not_found`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "validation.failed": {
+                    "$ref": "#/components/examples/problem.validation.failed"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `validation.failed`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "b2b": []
+          }
+        ],
+        "summary": "Get one of my company’s orders",
+        "tags": [
+          "b2b.orders"
+        ],
+        "x-required-permissions": [
+          "b2b_orders.read"
+        ]
+      }
+    },
+    "/v1/b2b/quotes": {
+      "get": {
+        "description": "The client owner’s saved quotations still valid, newest first (scope `b2b_orders.write`). Company API clients only (client credentials, `aud=b2b`); everything is the client’s company’s (D-291).\n\nImplements: D-291, D-207.",
+        "operationId": "b2b.orders.listQuotes",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "page",
+            "required": false,
+            "schema": {
+              "default": 1,
+              "minimum": 1,
+              "type": "integer"
+            }
+          },
+          {
+            "in": "query",
+            "name": "perPage",
+            "required": false,
+            "schema": {
+              "default": 25,
+              "maximum": 100,
+              "minimum": 1,
+              "type": "integer"
+            }
+          },
+          {
+            "description": "Sort field; each endpoint validates it against its own allow-list.",
+            "in": "query",
+            "name": "sort",
+            "required": false,
+            "schema": {
+              "example": "createdAt",
+              "maxLength": 64,
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "order",
+            "required": false,
+            "schema": {
+              "$ref": "#/components/schemas/SortOrder"
+            }
+          },
+          {
+            "description": "Free-text search",
+            "in": "query",
+            "name": "q",
+            "required": false,
+            "schema": {
+              "maxLength": 200,
+              "type": "string"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "data": [
+                    {
+                      "advisory": null,
+                      "configuration": {
+                        "d": 120,
+                        "design": {
+                          "graphic": false,
+                          "structure": false
+                        },
+                        "difficultyLevelId": "0192f3a0-7c1e-7d2a-9b1f-00000000a103",
+                        "l": 40,
+                        "materialId": "0192f3a0-7c1e-7d2a-9b1f-00000000a102",
+                        "parts": [
+                          {
+                            "diecutTypeId": "0192f3a0-7c1e-7d2a-9b1f-00000000a106",
+                            "finish1FrontId": "0192f3a0-7c1e-7d2a-9b1f-00000000a105",
+                            "printFront": [
+                              {
+                                "inkColourId": "0192f3a0-7c1e-7d2a-9b1f-00000000a104",
+                                "percent": 100
+                              },
+                              {
+                                "inkColourId": "0192f3a0-7c1e-7d2a-9b1f-00000000a104",
+                                "percent": 100
+                              },
+                              {
+                                "inkColourId": "0192f3a0-7c1e-7d2a-9b1f-00000000a104",
+                                "percent": 100
+                              },
+                              {
+                                "inkColourId": "0192f3a0-7c1e-7d2a-9b1f-00000000a104",
+                                "percent": 100
+                              }
+                            ]
+                          }
+                        ],
+                        "patternId": "0192f3a0-7c1e-7d2a-9b1f-00000000a101",
+                        "quantities": [
+                          1000
+                        ],
+                        "w": 60
+                      },
+                      "createdAt": "2026-10-01T09:00:00+07:00",
+                      "currency": "THB",
+                      "deliveryPostcode": "10110",
+                      "dielineQuantities": null,
+                      "dimensions": null,
+                      "fromLever": null,
+                      "id": "0192f3a0-7c1e-7d2a-9b1f-00000000e601",
+                      "options": [
+                        {
+                          "designFeeAmount": "0.00",
+                          "earliestDeliveryDate": "2026-10-10",
+                          "earliestShipDate": "2026-10-09",
+                          "grossAmount": "13508.40",
+                          "id": "0192f3a0-7c1e-7d2a-9b1f-00000000e602",
+                          "leadTimeDays": 7,
+                          "netAmount": "12624.67",
+                          "productAmount": "13380.00",
+                          "quantity": 1000,
+                          "shippingAmount": "128.40",
+                          "shippingPending": false,
+                          "shippingPendingReason": null,
+                          "structureDesignFeeAmount": "0.00",
+                          "targetGap": {
+                            "gapPct": "16.35",
+                            "gapPerUnit": "1.88",
+                            "meetsTarget": false
+                          },
+                          "toleranceColourDeltaE": "3.00",
+                          "toleranceDimensionalMm": "1.00",
+                          "toleranceOveragePct": "5.0000",
+                          "toleranceShortagePct": "5.0000",
+                          "toolingAmount": "0.00",
+                          "toolingWaiver": null,
+                          "unitPrice": "13.38",
+                          "vatAmount": "883.73"
+                        }
+                      ],
+                      "outcome": null,
+                      "pdfStatus": "none",
+                      "priceLocked": true,
+                      "productTypeCode": "folding_carton",
+                      "quoteCode": null,
+                      "shareExpiresAt": null,
+                      "sharedAt": null,
+                      "source": "instant",
+                      "status": "saved",
+                      "summary": {
+                        "product": {
+                          "imageUrl": "/v1/store/catalog/images/0192f3a0-7c1e-7d2a-9b1f-00000000c009",
+                          "nameEn": "Tuck-end box",
+                          "nameTh": "กล่องฝาเสียบ",
+                          "slug": "tuck-end-box"
+                        },
+                        "productTypeCode": "folding_carton",
+                        "productTypeNameEn": "Folding carton",
+                        "productTypeNameTh": "กล่องกระดาษแข็ง",
+                        "specs": [
+                          {
+                            "key": "style",
+                            "labelEn": "Style",
+                            "labelTh": "แบบกล่อง",
+                            "valueEn": "ฝาเสียบ",
+                            "valueTh": "ฝาเสียบ"
+                          },
+                          {
+                            "key": "size",
+                            "labelEn": "Size",
+                            "labelTh": "ขนาด",
+                            "valueEn": "60 × 60 × 150 mm",
+                            "valueTh": "60 × 60 × 150 มม."
+                          },
+                          {
+                            "key": "material",
+                            "labelEn": "Material",
+                            "labelTh": "วัสดุ",
+                            "valueEn": "Art card 350 gsm",
+                            "valueTh": "อาร์ตการ์ด 350 แกรม"
+                          }
+                        ],
+                        "unit": "piece"
+                      },
+                      "targetPricePerUnit": "11.50",
+                      "validUntil": "2026-10-16T09:00:00+07:00"
+                    }
+                  ],
+                  "meta": {
+                    "page": 1,
+                    "perPage": 25,
+                    "total": 1
+                  }
+                },
+                "schema": {
+                  "properties": {
+                    "data": {
+                      "items": {
+                        "$ref": "#/components/schemas/SavedQuoteDto"
+                      },
+                      "type": "array"
+                    },
+                    "meta": {
+                      "$ref": "#/components/schemas/PageMeta"
+                    }
+                  },
+                  "required": [
+                    "data",
+                    "meta"
+                  ],
+                  "type": "object"
+                }
+              }
+            },
+            "description": "One page of results",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.unauthenticated": {
+                    "$ref": "#/components/examples/problem.auth.unauthenticated"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.unauthenticated`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.forbidden": {
+                    "$ref": "#/components/examples/problem.auth.forbidden"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.forbidden`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "validation.failed": {
+                    "$ref": "#/components/examples/problem.validation.failed"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `validation.failed`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "b2b": []
+          }
+        ],
+        "summary": "List the quotations I may order from",
+        "tags": [
+          "b2b.orders"
+        ],
+        "x-required-permissions": [
+          "b2b_orders.write"
+        ]
+      }
+    },
+    "/v1/b2b/webhook-subscriptions": {
+      "get": {
+        "description": "Never their secrets (D-291). Company API clients only (client credentials, `aud=b2b`); everything is the client’s company’s (D-291).\n\nImplements: D-291, D-207.",
+        "operationId": "b2b.webhooks.list",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "example": [
+                  {
+                    "createdAt": "2026-10-03T15:00:00+07:00",
+                    "eventTypes": [
+                      "order.placed",
+                      "shipment.delivered"
+                    ],
+                    "id": "0192f3a0-7c1e-7d2a-9b1f-0000000e7404",
+                    "status": "active",
+                    "url": "https://erp.example.com/packio/webhooks"
+                  }
+                ],
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/WebhookSubscriptionDto"
+                  },
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Subscriptions",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.unauthenticated": {
+                    "$ref": "#/components/examples/problem.auth.unauthenticated"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.unauthenticated`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.forbidden": {
+                    "$ref": "#/components/examples/problem.auth.forbidden"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.forbidden`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "b2b": []
+          }
+        ],
+        "summary": "List my company’s webhook subscriptions",
+        "tags": [
+          "b2b.webhooks"
+        ],
+        "x-required-permissions": [
+          "b2b_webhooks.manage"
+        ]
+      },
+      "post": {
+        "description": "Order (`order.placed`, `order.updated`), shipment (`shipment.shipped`, `shipment.delivered`) and document (`document.issued`) events of the company are POSTed to the HTTPS `url` with `Packio-Event`, `Packio-Delivery` and `Packio-Signature: t=<unix>,v1=<hex HMAC-SHA256 of \"<t>.<body>\">` (the secret is shown once); a body holds ids, codes and statuses only. Non-2xx answers are retried after 1, 5, 30 min, 2 h and 12 h, then the delivery fails (D-291). Company API clients only (client credentials, `aud=b2b`); everything is the client’s company’s (D-291).\n\nImplements: D-291, D-207.",
+        "operationId": "b2b.webhooks.create",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/IdempotencyKey"
+          },
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "examples": {
+                "default": {
+                  "value": {
+                    "eventTypes": [
+                      "order.placed",
+                      "shipment.delivered"
+                    ],
+                    "url": "https://erp.example.com/packio/webhooks"
+                  }
+                }
+              },
+              "schema": {
+                "$ref": "#/components/schemas/CreateWebhookSubscriptionDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "createdAt": "2026-10-03T15:00:00+07:00",
+                  "eventTypes": [
+                    "order.placed",
+                    "shipment.delivered"
+                  ],
+                  "id": "0192f3a0-7c1e-7d2a-9b1f-0000000e7404",
+                  "secret": "whsec_example",
+                  "status": "active",
+                  "url": "https://erp.example.com/packio/webhooks"
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/CreatedWebhookSubscriptionDto"
+                }
+              }
+            },
+            "description": "Subscribed",
+            "headers": {
+              "Idempotent-Replayed": {
+                "$ref": "#/components/headers/IdempotentReplayed"
+              },
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "400": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.bad_request": {
+                    "$ref": "#/components/examples/problem.http.bad_request"
+                  },
+                  "http.malformed_json": {
+                    "$ref": "#/components/examples/problem.http.malformed_json"
+                  },
+                  "idempotency.key_invalid": {
+                    "$ref": "#/components/examples/problem.idempotency.key_invalid"
+                  },
+                  "idempotency.key_required": {
+                    "$ref": "#/components/examples/problem.idempotency.key_required"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.bad_request`, `http.malformed_json`, `idempotency.key_invalid`, `idempotency.key_required`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.unauthenticated": {
+                    "$ref": "#/components/examples/problem.auth.unauthenticated"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.unauthenticated`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.forbidden": {
+                    "$ref": "#/components/examples/problem.auth.forbidden"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.forbidden`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "409": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "idempotency.in_progress": {
+                    "$ref": "#/components/examples/problem.idempotency.in_progress"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `idempotency.in_progress`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "idempotency.key_reused": {
+                    "$ref": "#/components/examples/problem.idempotency.key_reused"
+                  },
+                  "validation.failed": {
+                    "$ref": "#/components/examples/problem.validation.failed"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `idempotency.key_reused`, `validation.failed`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "b2b": []
+          }
+        ],
+        "summary": "Subscribe to my company’s events",
+        "tags": [
+          "b2b.webhooks"
+        ],
+        "x-required-permissions": [
+          "b2b_webhooks.manage"
+        ]
+      }
+    },
+    "/v1/b2b/webhook-subscriptions/{subscriptionId}/actions/disable": {
+      "post": {
+        "description": "No new deliveries; pending ones are dropped (D-291). Company API clients only (client credentials, `aud=b2b`); everything is the client’s company’s (D-291).\n\nImplements: D-291, D-207.",
+        "operationId": "b2b.webhooks.disable",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "subscriptionId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/IdempotencyKey"
+          },
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "createdAt": "2026-10-03T15:00:00+07:00",
+                  "eventTypes": [
+                    "order.placed",
+                    "shipment.delivered"
+                  ],
+                  "id": "0192f3a0-7c1e-7d2a-9b1f-0000000e7404",
+                  "status": "disabled",
+                  "url": "https://erp.example.com/packio/webhooks"
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/WebhookSubscriptionDto"
+                }
+              }
+            },
+            "description": "Disabled",
+            "headers": {
+              "Idempotent-Replayed": {
+                "$ref": "#/components/headers/IdempotentReplayed"
+              },
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "400": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "idempotency.key_invalid": {
+                    "$ref": "#/components/examples/problem.idempotency.key_invalid"
+                  },
+                  "idempotency.key_required": {
+                    "$ref": "#/components/examples/problem.idempotency.key_required"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `idempotency.key_invalid`, `idempotency.key_required`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.unauthenticated": {
+                    "$ref": "#/components/examples/problem.auth.unauthenticated"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.unauthenticated`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.forbidden": {
+                    "$ref": "#/components/examples/problem.auth.forbidden"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.forbidden`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "404": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.not_found": {
+                    "$ref": "#/components/examples/problem.http.not_found"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.not_found`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "409": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "idempotency.in_progress": {
+                    "$ref": "#/components/examples/problem.idempotency.in_progress"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `idempotency.in_progress`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "idempotency.key_reused": {
+                    "$ref": "#/components/examples/problem.idempotency.key_reused"
+                  },
+                  "validation.failed": {
+                    "$ref": "#/components/examples/problem.validation.failed"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `idempotency.key_reused`, `validation.failed`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "b2b": []
+          }
+        ],
+        "summary": "Disable a webhook subscription",
+        "tags": [
+          "b2b.webhooks"
+        ],
+        "x-required-permissions": [
+          "b2b_webhooks.manage"
+        ]
+      }
+    },
+    "/v1/b2b/webhook-subscriptions/{subscriptionId}/deliveries": {
+      "get": {
+        "description": "Newest first: what was sent, every attempt’s status, the next retry (D-291). Company API clients only (client credentials, `aud=b2b`); everything is the client’s company’s (D-291).\n\nImplements: D-291, D-207.",
+        "operationId": "b2b.webhooks.listDeliveries",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "subscriptionId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "page",
+            "required": false,
+            "schema": {
+              "default": 1,
+              "minimum": 1,
+              "type": "integer"
+            }
+          },
+          {
+            "in": "query",
+            "name": "perPage",
+            "required": false,
+            "schema": {
+              "default": 25,
+              "maximum": 100,
+              "minimum": 1,
+              "type": "integer"
+            }
+          },
+          {
+            "description": "Sort field; each endpoint validates it against its own allow-list.",
+            "in": "query",
+            "name": "sort",
+            "required": false,
+            "schema": {
+              "example": "createdAt",
+              "maxLength": 64,
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "order",
+            "required": false,
+            "schema": {
+              "$ref": "#/components/schemas/SortOrder"
+            }
+          },
+          {
+            "description": "Free-text search",
+            "in": "query",
+            "name": "q",
+            "required": false,
+            "schema": {
+              "maxLength": 200,
+              "type": "string"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "data": [
+                    {
+                      "attempts": 1,
+                      "body": {
+                        "data": {
+                          "groupCode": "PK-2610-0001",
+                          "orderGroupId": "0192f3a0-7c1e-7d2a-9b1f-0000000f1001"
+                        },
+                        "event": {
+                          "id": "0192f3a0-7c1e-7d2a-9b1f-0000000e7406",
+                          "occurredAt": "2026-10-03T15:00:00+07:00",
+                          "type": "order.placed"
+                        }
+                      },
+                      "createdAt": "2026-10-03T15:00:00+07:00",
+                      "deliveredAt": "2026-10-03T15:00:05+07:00",
+                      "eventType": "order.placed",
+                      "id": "0192f3a0-7c1e-7d2a-9b1f-0000000e7405",
+                      "lastError": null,
+                      "lastStatusCode": 200,
+                      "nextAttemptAt": null,
+                      "status": "delivered"
+                    }
+                  ],
+                  "meta": {
+                    "page": 1,
+                    "perPage": 25,
+                    "total": 1
+                  }
+                },
+                "schema": {
+                  "properties": {
+                    "data": {
+                      "items": {
+                        "$ref": "#/components/schemas/WebhookDeliveryDto"
+                      },
+                      "type": "array"
+                    },
+                    "meta": {
+                      "$ref": "#/components/schemas/PageMeta"
+                    }
+                  },
+                  "required": [
+                    "data",
+                    "meta"
+                  ],
+                  "type": "object"
+                }
+              }
+            },
+            "description": "One page of results",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.unauthenticated": {
+                    "$ref": "#/components/examples/problem.auth.unauthenticated"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.unauthenticated`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.forbidden": {
+                    "$ref": "#/components/examples/problem.auth.forbidden"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.forbidden`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "404": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.not_found": {
+                    "$ref": "#/components/examples/problem.http.not_found"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.not_found`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "validation.failed": {
+                    "$ref": "#/components/examples/problem.validation.failed"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `validation.failed`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "b2b": []
+          }
+        ],
+        "summary": "The delivery log of a subscription",
+        "tags": [
+          "b2b.webhooks"
+        ],
+        "x-required-permissions": [
+          "b2b_webhooks.manage"
         ]
       }
     },
@@ -341824,6 +345371,741 @@
         "summary": "Submit the application for review",
         "tags": [
           "store.companies"
+        ]
+      }
+    },
+    "/v1/store/companies/{companyId}/api-clients": {
+      "get": {
+        "description": "Company Admin (`company_api.manage`): every client, newest first, never a secret (D-291).\n\nImplements: D-291, D-207.",
+        "operationId": "store.companyApiClients.list",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "companyId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "example": [
+                  {
+                    "clientId": "pc_5f1c0a9e2b7d4c3a8e6f1d20",
+                    "createdAt": "2026-10-03T15:00:00+07:00",
+                    "id": "0192f3a0-7c1e-7d2a-9b1f-0000000e7401",
+                    "lastUsedAt": null,
+                    "name": "ERP connector",
+                    "owner": {
+                      "displayName": "ผู้ดูแล ทดสอบ",
+                      "id": "0192f3a0-7c1e-7d2a-9b1f-0000000e7403"
+                    },
+                    "scopes": [
+                      "b2b_orders.read",
+                      "b2b_documents.read"
+                    ],
+                    "status": "active"
+                  }
+                ],
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/CompanyApiClientDto"
+                  },
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Clients",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.unauthenticated": {
+                    "$ref": "#/components/examples/problem.auth.unauthenticated"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.unauthenticated`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.forbidden": {
+                    "$ref": "#/components/examples/problem.auth.forbidden"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.forbidden`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "404": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.not_found": {
+                    "$ref": "#/components/examples/problem.http.not_found"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.not_found`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "validation.failed": {
+                    "$ref": "#/components/examples/problem.validation.failed"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `validation.failed`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "customer": []
+          }
+        ],
+        "summary": "List my company’s API clients",
+        "tags": [
+          "store.companyApiClients"
+        ]
+      },
+      "post": {
+        "description": "Company Admin (`company_api.manage`): at most `api.max_keys_per_company` active clients, with scopes; the secret is shown once. Orders the client places are mine, for the company (D-291).\n\nImplements: D-291, D-207.",
+        "operationId": "store.companyApiClients.issue",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "companyId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/IdempotencyKey"
+          },
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "examples": {
+                "default": {
+                  "value": {
+                    "name": "ERP connector",
+                    "scopes": [
+                      "b2b_orders.read",
+                      "b2b_documents.read"
+                    ]
+                  }
+                }
+              },
+              "schema": {
+                "$ref": "#/components/schemas/IssueApiClientDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "clientId": "pc_5f1c0a9e2b7d4c3a8e6f1d20",
+                  "clientSecret": "example-client-secret",
+                  "createdAt": "2026-10-03T15:00:00+07:00",
+                  "id": "0192f3a0-7c1e-7d2a-9b1f-0000000e7401",
+                  "lastUsedAt": null,
+                  "name": "ERP connector",
+                  "owner": {
+                    "displayName": "ผู้ดูแล ทดสอบ",
+                    "id": "0192f3a0-7c1e-7d2a-9b1f-0000000e7403"
+                  },
+                  "scopes": [
+                    "b2b_orders.read",
+                    "b2b_documents.read"
+                  ],
+                  "status": "active"
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/IssuedCompanyApiClientDto"
+                }
+              }
+            },
+            "description": "Issued",
+            "headers": {
+              "Idempotent-Replayed": {
+                "$ref": "#/components/headers/IdempotentReplayed"
+              },
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "400": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.bad_request": {
+                    "$ref": "#/components/examples/problem.http.bad_request"
+                  },
+                  "http.malformed_json": {
+                    "$ref": "#/components/examples/problem.http.malformed_json"
+                  },
+                  "idempotency.key_invalid": {
+                    "$ref": "#/components/examples/problem.idempotency.key_invalid"
+                  },
+                  "idempotency.key_required": {
+                    "$ref": "#/components/examples/problem.idempotency.key_required"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.bad_request`, `http.malformed_json`, `idempotency.key_invalid`, `idempotency.key_required`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.unauthenticated": {
+                    "$ref": "#/components/examples/problem.auth.unauthenticated"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.unauthenticated`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.forbidden": {
+                    "$ref": "#/components/examples/problem.auth.forbidden"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.forbidden`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "404": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.not_found": {
+                    "$ref": "#/components/examples/problem.http.not_found"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.not_found`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "409": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "b2b.client_limit": {
+                    "$ref": "#/components/examples/problem.b2b.client_limit"
+                  },
+                  "companies.invalid_status": {
+                    "$ref": "#/components/examples/problem.companies.invalid_status"
+                  },
+                  "idempotency.in_progress": {
+                    "$ref": "#/components/examples/problem.idempotency.in_progress"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `b2b.client_limit`, `companies.invalid_status`, `idempotency.in_progress`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "idempotency.key_reused": {
+                    "$ref": "#/components/examples/problem.idempotency.key_reused"
+                  },
+                  "validation.failed": {
+                    "$ref": "#/components/examples/problem.validation.failed"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `idempotency.key_reused`, `validation.failed`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "customer": []
+          }
+        ],
+        "summary": "Issue an API client for my company",
+        "tags": [
+          "store.companyApiClients"
+        ]
+      }
+    },
+    "/v1/store/companies/{companyId}/api-clients/{clientId}/actions/revoke": {
+      "post": {
+        "description": "No new token is issued to it; its tokens stop within the principal cache (30 s) (D-291).\n\nImplements: D-291, D-207.",
+        "operationId": "store.companyApiClients.revoke",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "companyId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "clientId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/IdempotencyKey"
+          },
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "clientId": "pc_5f1c0a9e2b7d4c3a8e6f1d20",
+                  "createdAt": "2026-10-03T15:00:00+07:00",
+                  "id": "0192f3a0-7c1e-7d2a-9b1f-0000000e7401",
+                  "lastUsedAt": null,
+                  "name": "ERP connector",
+                  "owner": {
+                    "displayName": "ผู้ดูแล ทดสอบ",
+                    "id": "0192f3a0-7c1e-7d2a-9b1f-0000000e7403"
+                  },
+                  "scopes": [
+                    "b2b_orders.read",
+                    "b2b_documents.read"
+                  ],
+                  "status": "revoked"
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/CompanyApiClientDto"
+                }
+              }
+            },
+            "description": "Revoked",
+            "headers": {
+              "Idempotent-Replayed": {
+                "$ref": "#/components/headers/IdempotentReplayed"
+              },
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "400": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "idempotency.key_invalid": {
+                    "$ref": "#/components/examples/problem.idempotency.key_invalid"
+                  },
+                  "idempotency.key_required": {
+                    "$ref": "#/components/examples/problem.idempotency.key_required"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `idempotency.key_invalid`, `idempotency.key_required`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.unauthenticated": {
+                    "$ref": "#/components/examples/problem.auth.unauthenticated"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.unauthenticated`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.forbidden": {
+                    "$ref": "#/components/examples/problem.auth.forbidden"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.forbidden`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "404": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.not_found": {
+                    "$ref": "#/components/examples/problem.http.not_found"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.not_found`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "409": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "b2b.client_revoked": {
+                    "$ref": "#/components/examples/problem.b2b.client_revoked"
+                  },
+                  "idempotency.in_progress": {
+                    "$ref": "#/components/examples/problem.idempotency.in_progress"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `b2b.client_revoked`, `idempotency.in_progress`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "idempotency.key_reused": {
+                    "$ref": "#/components/examples/problem.idempotency.key_reused"
+                  },
+                  "validation.failed": {
+                    "$ref": "#/components/examples/problem.validation.failed"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `idempotency.key_reused`, `validation.failed`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "customer": []
+          }
+        ],
+        "summary": "Revoke an API client",
+        "tags": [
+          "store.companyApiClients"
         ]
       }
     },
@@ -396958,6 +401240,22 @@
       "name": "auth.tokens"
     },
     {
+      "description": "Tax invoices, receipts and notes of the client’s company (D-291, D-010).",
+      "name": "b2b.documents"
+    },
+    {
+      "description": "The calling company API client, its scopes and company (D-291).",
+      "name": "b2b.me"
+    },
+    {
+      "description": "Orders of the client’s company (D-291): read them, and place new ones from the owner’s saved quotations through the normal checkout.",
+      "name": "b2b.orders"
+    },
+    {
+      "description": "Signed (HMAC-SHA256) webhook deliveries of the company’s order, shipment and document events, logged and retried with back-off (D-291).",
+      "name": "b2b.webhooks"
+    },
+    {
       "description": "Liveness and readiness of the API and its dependencies (database, Redis, object storage).",
       "name": "ops.health"
     },
@@ -397124,6 +401422,10 @@
     {
       "description": "B2B companies: apply, KYC, members and company roles, branches, PO policy and approval threshold (D-120…D-125).",
       "name": "store.companies"
+    },
+    {
+      "description": "The Company Admin issues and revokes the company’s API clients (D-291): scopes, at most `api.max_keys_per_company` active, the secret shown once.",
+      "name": "store.companyApiClients"
     },
     {
       "description": "Company approvers decide orders above the company threshold before placement (D-123).",

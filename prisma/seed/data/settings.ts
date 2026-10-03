@@ -1077,6 +1077,16 @@ export const SETTINGS: readonly SettingSeed[] = [
     ownerRole: 'marketing',
   },
 
+  // --- B2B API (U2.7, D-207 / D-291).
+  {
+    key: 'api.max_keys_per_company',
+    valueType: 'integer',
+    value: 5,
+    valueSchema: { minimum: 1, maximum: 50 },
+    description: 'D-207 / D-291 active API clients a company may hold (issued by its Company Admin)',
+    decisions: ['D-207', 'D-291'],
+    ownerRole: 'superadmin',
+  },
   // --- Call-off agreements (U2.7, D-206 / D-290).
   {
     key: 'calloff.max_months',

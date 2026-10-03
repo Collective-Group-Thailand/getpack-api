@@ -45,16 +45,24 @@ export class ClientCredentialsService {
       });
       throw new DomainException('auth.invalid_client');
     }
-    if (client.factoryId === null) throw new DomainException('auth.scope_unavailable');
-    const factory = (await this.scopes.publicIds('factory', [client.factoryId])).get(client.factoryId);
-    if (!factory) throw new DomainException('auth.scope_unavailable');
+    // A factory's client gets `aud=partner`, a company's `aud=b2b` (D-291); a client with neither has no scope.
+    let scope: string;
+    let aud: 'partner' | 'b2b';
+    if (client.factoryId !== null) {
+      const factory = (await this.scopes.publicIds('factory', [client.factoryId])).get(client.factoryId);
+      if (!factory) throw new DomainException('auth.scope_unavailable');
+      scope = scopeClaim('factory', factory);
+      aud = 'partner';
+    } else if (client.companyId !== null) {
+      const company = await this.prisma.company.findUnique({ where: { id: client.companyId } });
+      if (!company || company.status !== 'active') throw new DomainException('auth.scope_unavailable');
+      scope = scopeClaim('company', company.publicId);
+      aud = 'b2b';
+    } else throw new DomainException('auth.scope_unavailable');
 
-    const scp = [scopeClaim('factory', factory), ...client.scopes].sort();
+    const scp = [scope, ...client.scopes].sort();
     const ttl = await this.settings.value('auth.access_token_ttl_seconds');
-    const { token } = await this.tokens.issue(
-      { sub: client.publicId, aud: 'partner', scp, pty: 'client' },
-      ttl,
-    );
+    const { token } = await this.tokens.issue({ sub: client.publicId, aud, scp, pty: 'client' }, ttl);
     await this.prisma.withTx(async (tx) => {
       await tx.apiClient.update({ where: { id: client.id }, data: { lastUsedAt: new Date() } });
       await this.audit.record(tx, {
@@ -64,7 +72,7 @@ export class ClientCredentialsService {
           type: 'api_client',
           apiClientId: client.id,
           publicId: client.publicId,
-          audience: 'partner',
+          audience: aud,
           scopes: scp,
         },
         resourceType: 'api_client',

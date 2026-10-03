@@ -65,6 +65,14 @@ export const API_TAGS: Record<string, string> = {
     'Company brand kits — logos, palette, font pairs, usage notes — managed by the Company Admin, used by every member (D-282, D-227).',
   'store.dielines':
     'Free dieline downloads of published style variants (D-271, D-203): signed-in customers, within the style’s size range, rate-limited and logged.',
+  'store.companyApiClients':
+    'The Company Admin issues and revokes the company’s API clients (D-291): scopes, at most `api.max_keys_per_company` active, the secret shown once.',
+  'b2b.me': 'The calling company API client, its scopes and company (D-291).',
+  'b2b.orders':
+    'Orders of the client’s company (D-291): read them, and place new ones from the owner’s saved quotations through the normal checkout.',
+  'b2b.documents': 'Tax invoices, receipts and notes of the client’s company (D-291, D-010).',
+  'b2b.webhooks':
+    'Signed (HMAC-SHA256) webhook deliveries of the company’s order, shipment and document events, logged and retried with back-off (D-291).',
   'store.callOffs':
     'Call-off agreements (D-290): a quotation’s unit price locked for its quantity once the factory accepts, released in parts as normal orders; no deposit, no stock.',
   'partner.callOffs':

@@ -23,7 +23,7 @@ export const EXT = {
 const ext = (base: string, source: string, value: unknown) => ApiExtension(`${base}-${source}`, value);
 
 export const OPERATION_ID_PATTERN =
-  /^(auth|store|admin|partner|webhooks|ops)\.[a-z][A-Za-z0-9]*\.[a-z][A-Za-z0-9]*$/;
+  /^(auth|store|admin|partner|b2b|webhooks|ops)\.[a-z][A-Za-z0-9]*\.[a-z][A-Za-z0-9]*$/;
 const REFERENCE_PATTERN = /^(D-\d{3}|ADR-\d{4})$/;
 
 export interface ApiEndpointOptions {

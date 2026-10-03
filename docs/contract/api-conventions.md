@@ -16,6 +16,7 @@
 | `/v1/store/*` | customer zone of `packio-web` (public + signed-in customer; includes BFF-shaped endpoints for pages) | `customer` (or anonymous where marked `@Public()`) |
 | `/v1/admin/*` | admin zone of `packio-web` (Admin, CS, Finance, Prepress, SEO, Logistics…) | `staff` |
 | `/v1/partner/*` | partner-factory zone of `packio-web` **and** machine clients (OAuth2 client-credentials) | `partner` |
+| `/v1/b2b/*` | company machine clients of B2B accounts (OAuth2 client-credentials issued by the Company Admin, scopes `b2b_*`, D-291) | `b2b` |
 | `/webhooks/*` | payment gateways, slip verification, carriers, LINE/Facebook — signature-verified | none |
 | `/health`, `/docs`, `/docs-json` | ops | none (docs disabled in prod unless `DOCS_ENABLED`) |
 

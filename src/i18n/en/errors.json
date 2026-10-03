@@ -1562,5 +1562,19 @@
       "title": "Release quantity not allowed",
       "detail": "A release is at least {min} and at most the {remaining} left."
     }
+  },
+  "b2b": {
+    "client_limit": {
+      "title": "API client limit reached",
+      "detail": "The company already has {max} active API clients; revoke one first."
+    },
+    "client_revoked": {
+      "title": "API client already revoked",
+      "detail": "This API client was already revoked."
+    },
+    "owner_cannot_order": {
+      "title": "Owner may not order",
+      "detail": "The admin who issued this API client may no longer order for the company."
+    }
   }
 }

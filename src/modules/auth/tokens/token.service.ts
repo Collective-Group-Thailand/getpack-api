@@ -71,7 +71,9 @@ export class TokenService {
       const aud = payload.aud;
       if (
         typeof payload.sub !== 'string' ||
-        (aud !== 'customer' && aud !== 'staff' && aud !== 'partner') ||
+        (aud !== 'customer' && aud !== 'staff' && aud !== 'partner' && aud !== 'b2b') ||
+        // `b2b` tokens are only ever issued to company machine clients (D-291).
+        (aud === 'b2b' && payload['pty'] !== 'client') ||
         (payload['pty'] !== 'user' && payload['pty'] !== 'client') ||
         !Array.isArray(payload['scp'])
       ) {

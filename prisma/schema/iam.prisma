@@ -707,6 +707,8 @@ model User {
   callOffResponses  CallOffAgreement[] @relation("CallOffRespondedBy")
   callOffReleases   CallOffRelease[]   @relation("CallOffReleaseCreatedBy")
 
+  apiClientsOwned ApiClient[] @relation("ApiClientOwner")
+
   @@unique([kind, email], map: "ux_users__kind__email", where: raw("((email IS NOT NULL) AND (anonymised_at IS NULL))"))
   @@unique([kind, phone], map: "ux_users__kind__phone", where: raw("((phone IS NOT NULL) AND (anonymised_at IS NULL))"))
   @@index([createdById], map: "ix_users__created_by")
@@ -869,6 +871,9 @@ model ApiClient {
   secretHash      String          @map("secret_hash")
   name            String
   factoryId       BigInt?         @map("factory_id")
+  /// D-291 a company's API client (issued by its Company Admin); orders it places are the owner's, for the company.
+  companyId       BigInt?         @map("company_id")
+  ownerUserId     BigInt?         @map("owner_user_id")
   scopes          String[]        @default([])
   status          ApiClientStatus @default(active)
   secretRotatedAt DateTime?       @map("secret_rotated_at") @db.Timestamptz(6)
@@ -880,18 +885,23 @@ model ApiClient {
   updatedById     BigInt?         @map("updated_by")
   rowVersion      Int             @default(1) @map("row_version")
 
-  factory      Factory?      @relation("ApiClientFactory", fields: [factoryId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_api_clients__factory_id")
-  createdBy    User?         @relation("ApiClientCreatedBy", fields: [createdById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_api_clients__created_by")
-  updatedBy    User?         @relation("ApiClientUpdatedBy", fields: [updatedById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_api_clients__updated_by")
-  auditLogs    AuditLog[]
-  activityLogs ActivityLog[]
-  domainEvents DomainEvent[]
+  factory              Factory?              @relation("ApiClientFactory", fields: [factoryId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_api_clients__factory_id")
+  company              Company?              @relation("ApiClientCompany", fields: [companyId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_api_clients__company_id")
+  owner                User?                 @relation("ApiClientOwner", fields: [ownerUserId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_api_clients__owner_user_id")
+  webhookSubscriptions WebhookSubscription[] @relation("WebhookSubscriptionCreatedBy")
+  createdBy            User?                 @relation("ApiClientCreatedBy", fields: [createdById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_api_clients__created_by")
+  updatedBy            User?                 @relation("ApiClientUpdatedBy", fields: [updatedById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_api_clients__updated_by")
+  auditLogs            AuditLog[]
+  activityLogs         ActivityLog[]
+  domainEvents         DomainEvent[]
 
   // --- Fulfilment B4.2 (generated back-relations)
   milestonesReported JobMilestone[] @relation("JobMilestoneReportedByClient")
   // --- end Fulfilment B4.2
 
   @@index([factoryId], map: "ix_api_clients__factory_id")
+  @@index([companyId], map: "ix_api_clients__company_id")
+  @@index([ownerUserId], map: "ix_api_clients__owner_user_id")
   @@map("api_clients")
 }
 

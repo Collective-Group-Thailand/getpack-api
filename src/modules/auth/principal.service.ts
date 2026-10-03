@@ -45,17 +45,20 @@ export class PrincipalService implements OnModuleInit {
           }
         );
       });
-      if (!client?.active || claims.aud !== 'partner') throw new DomainException('auth.session_revoked');
+      if (!client?.active || (claims.aud !== 'partner' && claims.aud !== 'b2b'))
+        throw new DomainException('auth.session_revoked');
       return {
         type: 'api_client',
         apiClientId: client.id,
         publicId: claims.sub,
-        audience: 'partner',
+        audience: claims.aud,
         scopes: claims.scp,
       };
     }
-    const user = await this.lookup(this.users, `${claims.aud}:${claims.sub}`, async () => {
-      const row = await this.prisma.user.findFirst({ where: { publicId: claims.sub, kind: claims.aud } });
+    const aud = claims.aud;
+    if (aud === 'b2b') throw new DomainException('auth.unauthenticated'); // b2b tokens are clients only
+    const user = await this.lookup(this.users, `${aud}:${claims.sub}`, async () => {
+      const row = await this.prisma.user.findFirst({ where: { publicId: claims.sub, kind: aud } });
       return row && { id: row.id, active: row.status === 'active' && row.anonymisedAt === null };
     });
     if (!user) throw new DomainException('auth.unauthenticated');
@@ -64,7 +67,7 @@ export class PrincipalService implements OnModuleInit {
       type: 'user',
       userId: user.id,
       publicId: claims.sub,
-      audience: claims.aud,
+      audience: aud,
       scopes: claims.scp,
       ...(claims.sid && { sessionId: claims.sid }),
     };

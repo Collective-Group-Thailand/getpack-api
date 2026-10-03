@@ -2010,6 +2010,9 @@ model Company {
 
   reorderSuggestions ReorderSuggestion[] @relation("ReorderSuggestionCompany")
 
+  apiClients           ApiClient[]           @relation("ApiClientCompany")
+  webhookSubscriptions WebhookSubscription[] @relation("WebhookSubscriptionCompany")
+
   @@unique([taxId], map: "ux_companies__tax_id", where: raw("(status <> 'closed'::company_status)"))
   @@index([status], map: "ix_companies__status")
   @@index([entityId], map: "ix_companies__entity_id")
@@ -2342,4 +2345,73 @@ model ReorderSuggestion {
   @@index([contactedById], map: "ix_reorder_suggestions__contacted_by")
   @@index([dismissedById], map: "ix_reorder_suggestions__dismissed_by")
   @@map("reorder_suggestions")
+}
+
+// --- U2.7 B2B webhooks (A-105; D-207, D-291) --------------------------------------------------------------------
+
+enum WebhookSubscriptionStatus {
+  active
+  disabled
+
+  @@map("webhook_subscription_status")
+}
+
+enum WebhookDeliveryStatus {
+  pending
+  delivered
+  /// Every attempt of the back-off failed.
+  failed
+
+  @@map("webhook_delivery_status")
+}
+
+/// D-291 a company's webhook endpoint: the event types it receives, signed with its own secret (HMAC-SHA256).
+model WebhookSubscription {
+  id                BigInt                    @id(map: "pk_webhook_subscriptions") @default(autoincrement())
+  publicId          String                    @unique(map: "ux_webhook_subscriptions__public_id") @default(dbgenerated("uuidv7()")) @map("public_id") @db.Uuid
+  companyId         BigInt                    @map("company_id")
+  url               String
+  eventTypes        String[]                  @map("event_types")
+  /// AES-256-GCM (FieldEncryption): the secret signs every delivery, so it is kept retrievable.
+  secretEnc         Bytes                     @map("secret_enc")
+  status            WebhookSubscriptionStatus @default(active)
+  createdByClientId BigInt                    @map("created_by_client_id")
+  disabledAt        DateTime?                 @map("disabled_at") @db.Timestamptz(6)
+  createdAt         DateTime                  @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt         DateTime                  @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  company         Company           @relation("WebhookSubscriptionCompany", fields: [companyId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_webhook_subscriptions__company_id")
+  createdByClient ApiClient         @relation("WebhookSubscriptionCreatedBy", fields: [createdByClientId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_webhook_subscriptions__created_by_client_id")
+  deliveries      WebhookDelivery[]
+
+  @@index([companyId, status], map: "ix_webhook_subscriptions__company_id__status")
+  @@index([createdByClientId], map: "ix_webhook_subscriptions__created_by_client_id")
+  @@map("webhook_subscriptions")
+}
+
+/// D-291 one event delivered (or being retried) to a subscription: the body sent, every attempt's outcome, the back-off.
+model WebhookDelivery {
+  id             BigInt                @id(map: "pk_webhook_deliveries") @default(autoincrement())
+  publicId       String                @unique(map: "ux_webhook_deliveries__public_id") @default(dbgenerated("uuidv7()")) @map("public_id") @db.Uuid
+  subscriptionId BigInt                @map("subscription_id")
+  domainEventId  String                @map("domain_event_id") @db.Uuid
+  eventType      String                @map("event_type")
+  /// The JSON body sent (ids, codes and statuses only — no personal data).
+  body           Json
+  status         WebhookDeliveryStatus @default(pending)
+  attempts       Int                   @default(0) @db.SmallInt
+  nextAttemptAt  DateTime?             @map("next_attempt_at") @db.Timestamptz(6)
+  lastAttemptAt  DateTime?             @map("last_attempt_at") @db.Timestamptz(6)
+  lastStatusCode Int?                  @map("last_status_code") @db.SmallInt
+  lastError      String?               @map("last_error")
+  deliveredAt    DateTime?             @map("delivered_at") @db.Timestamptz(6)
+  createdAt      DateTime              @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  subscription WebhookSubscription @relation(fields: [subscriptionId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_webhook_deliveries__subscription_id")
+  domainEvent  DomainEvent         @relation("WebhookDeliveryEvent", fields: [domainEventId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_webhook_deliveries__domain_event_id")
+
+  @@unique([subscriptionId, domainEventId, eventType], map: "ux_webhook_deliveries__subscription__event__type")
+  @@index([status, nextAttemptAt], map: "ix_webhook_deliveries__status__next_attempt_at")
+  @@index([domainEventId], map: "ix_webhook_deliveries__domain_event_id")
+  @@map("webhook_deliveries")
 }

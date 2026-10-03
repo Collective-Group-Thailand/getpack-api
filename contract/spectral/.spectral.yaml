@@ -29,7 +29,7 @@ rules:
       field: operationId
       function: pattern
       functionOptions:
-        match: '^(auth|store|admin|partner|webhooks|ops)\.[a-z][A-Za-z0-9]*\.[a-z][A-Za-z0-9]*$'
+        match: '^(auth|store|admin|partner|b2b|webhooks|ops)\.[a-z][A-Za-z0-9]*\.[a-z][A-Za-z0-9]*$'
 
   packio-operation-summary:
     description: Every operation has a one-line summary.
@@ -63,7 +63,7 @@ rules:
           maxItems: 1
           items:
             type: string
-            pattern: '^(auth|store|admin|partner|webhooks|ops)\.[a-z][A-Za-z0-9]*$'
+            pattern: '^(auth|store|admin|partner|b2b|webhooks|ops)\.[a-z][A-Za-z0-9]*$'
 
   packio-operation-security-declared:
     description: Every operation declares `security` (an empty list means public, on purpose).

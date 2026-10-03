@@ -60,7 +60,11 @@ export function evaluateFlag(key: string, enabled: boolean, rules: FeatureFlagRu
   if (!enabled) return false;
   const principal = actor && (actor.type === 'user' || actor.type === 'api_client') ? actor : undefined;
   if (principal && rules.userIds?.includes(principal.publicId)) return true;
-  if (rules.audiences && (!principal || !rules.audiences.includes(principal.audience))) return false;
+  if (
+    rules.audiences &&
+    (!principal || principal.audience === 'b2b' || !rules.audiences.includes(principal.audience))
+  )
+    return false;
   if (rules.percentage !== undefined) {
     if (!principal) return rules.percentage >= 100;
     const bucket = createHash('sha256').update(`${key}:${principal.publicId}`).digest().readUInt32BE(0) % 100;
