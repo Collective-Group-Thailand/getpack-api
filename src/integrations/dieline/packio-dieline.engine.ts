@@ -6,9 +6,9 @@ import { pathToFileURL } from 'node:url';
 import sharp from 'sharp';
 
 import {
+  DielineBuildError,
   type DielineDrawing,
   type DielineEngine,
-  DielineBuildError,
   DielineEngineUnavailableError,
   type DielineFormat,
   type DielineMaterial,
@@ -195,13 +195,8 @@ export class PackioDielineEngine implements DielineEngine {
       })
         .png()
         .toBuffer();
-    let png3d: Buffer | null = null;
-    try {
-      png3d = await png(pkg.render3D(dieline, hinges, request.material, tone, { size }));
-    } catch {
-      // Not every structure folds (labels, sleeves): 2D only.
-      png3d = null;
-    }
+    // Not every structure folds (labels, sleeves): 2D only then.
+    const png3d = await png(pkg.render3D(dieline, hinges, request.material, tone, { size })).catch(() => null);
     return {
       png2d: await png(pkg.render2D(dieline, tone, { size })),
       png3d,
@@ -233,7 +228,7 @@ export class PackioDielineEngine implements DielineEngine {
   private pick(pkg: DielinePackage, request: RecipeBuildRequest): { recipe: EngineRecipe; values: Values } {
     const wanted = Object.entries(request.options).map(([k, v]) => [
       k,
-      Array.isArray(v) ? [...v].sort().join('+') || 'none' : String(v),
+      Array.isArray(v) ? (v as unknown[]).map(String).sort().join('+') || 'none' : String(v),
     ]);
     for (const recipe of this.parse(pkg, request.recipe)) {
       const variant = pkg
