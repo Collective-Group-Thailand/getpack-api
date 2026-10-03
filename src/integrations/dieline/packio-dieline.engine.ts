@@ -196,7 +196,9 @@ export class PackioDielineEngine implements DielineEngine {
         .png()
         .toBuffer();
     // Not every structure folds (labels, sleeves): 2D only then.
-    const png3d = await png(pkg.render3D(dieline, hinges, request.material, tone, { size })).catch(() => null);
+    const png3d = await Promise.resolve()
+      .then(() => png(pkg.render3D(dieline, hinges, request.material, tone, { size })))
+      .catch(() => null);
     return {
       png2d: await png(pkg.render2D(dieline, tone, { size })),
       png3d,
