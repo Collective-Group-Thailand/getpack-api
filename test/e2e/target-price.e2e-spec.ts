@@ -1,5 +1,6 @@
 import { randomUUID } from 'node:crypto';
 
+import { bangkokDate } from '@common/time/bangkok';
 import { PrismaService } from '@database/prisma.service';
 import { type FakeSmsSender } from '@integrations/sms/fake-sms-sender';
 import { SMS_SENDER } from '@integrations/sms/sms-sender.port';
@@ -322,7 +323,8 @@ describe('target price and levers (e2e, U2.3)', () => {
         customerKey: `u-fake-${run}-${i}`,
       })),
     });
-    const today = new Date().toISOString().slice(0, 10);
+    // Unmet demand is bucketed by Bangkok day (the UTC date is yesterday before 07:00 in Bangkok).
+    const today = bangkokDate(new Date());
     const report = await as('marketing')
       .get(`/v1/admin/analytics/unmet-demand?from=${today}&to=${today}`)
       .expect(200);
