@@ -18,6 +18,18 @@ export interface DielineRequest {
   format: DielineFormat;
 }
 
+/**
+ * D-302 the designer PDF: layers and spot swatches `CutContour`, `Crease`, `Perf`, `Glue`, `Bleed`, `Safe` (+ `HalfCut`),
+ * the title and style code in the metadata. Asked for with a `pdf` format; without it the engine's own PDF is drawn.
+ */
+export interface DesignerPdfOptions {
+  title: string;
+  styleCode: string;
+  bleedMm: number;
+  safeMm: number;
+  keywords?: string[];
+}
+
 export interface DielineDrawing {
   body: Buffer;
   mimeType: string;
@@ -117,7 +129,11 @@ export interface DielineEngine {
   available(): Promise<boolean>;
   version(): Promise<string>;
   draw(request: DielineRequest): Promise<DielineDrawing>;
-  build(request: RecipeBuildRequest, formats: DielineFormat[]): Promise<RecipeBuild>;
+  build(
+    request: RecipeBuildRequest,
+    formats: DielineFormat[],
+    designerPdf?: DesignerPdfOptions,
+  ): Promise<RecipeBuild>;
   facts(recipe: StoredRecipe): Promise<RecipeFacts>;
   thumbnails(request: RecipeBuildRequest, size: number): Promise<Thumbnails>;
   /** The engine's own recipes, grouped by the base code they name (for the recipe bundle, ADR-0010). */

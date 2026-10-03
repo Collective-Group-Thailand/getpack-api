@@ -10,7 +10,9 @@ import {
   type MeasurementBasis,
   type Prisma,
 } from '@generated/prisma/client';
+import { DESIGNER_PDF_WRITER } from '@integrations/dieline/designer-pdf';
 import {
+  type DesignerPdfOptions,
   DIELINE_ENGINE,
   DielineBuildError,
   type DielineEngine,
@@ -59,6 +61,7 @@ const VARIANT_INCLUDE = {
   base: {
     select: {
       code: true,
+      nameEn: true,
       status: true,
       hidden: true,
       pattern: { select: { geometryFormula: true, corrugateFormula: true } },
@@ -126,6 +129,7 @@ export class DielineDownloadsService {
       input.materialClass,
       material,
       input.format,
+      now,
     );
     const entered = { lengthMm: input.lengthMm, widthMm: input.widthMm, heightMm: input.heightMm };
     const download = await this.prisma.withTx(async (tx) => {
@@ -186,8 +190,10 @@ export class DielineDownloadsService {
     materialClass: string,
     material: DielineMaterial,
     format: DrawingFormat,
+    now: Date,
   ) {
     const engineVersion = await this.engine.version();
+    const designer = format === 'pdf' ? await this.designerPdf(variant, sizes, now) : undefined;
     const cacheKey = createHash('sha256')
       .update(
         JSON.stringify(
@@ -198,6 +204,12 @@ export class DielineDownloadsService {
             sizes,
             material,
             format,
+            // D-302: the designer PDF's writer and its bleed / safe distances draw a new file when they change.
+            ...(designer && {
+              writer: DESIGNER_PDF_WRITER,
+              bleedMm: designer.bleedMm,
+              safeMm: designer.safeMm,
+            }),
           }),
         ),
       )
@@ -215,6 +227,7 @@ export class DielineDownloadsService {
           material,
         },
         [format],
+        designer,
       );
     } catch (error) {
       if (error instanceof DielineBuildError) throw new DomainException('dielines.not_drawable');
@@ -256,6 +269,26 @@ export class DielineDownloadsService {
   }
 
   // --- helpers -----------------------------------------------------------------------------------------------
+
+  /**
+   * D-302 the designer PDF of a variant: layers named for Illustrator, bleed and safe distances of the preflight rules
+   * (ADR-0009), the style code and inside size in the title and metadata.
+   */
+  private async designerPdf(
+    variant: VariantRow,
+    sizes: { length: number; width: number; height: number },
+    at: Date,
+  ): Promise<DesignerPdfOptions> {
+    const rules = (await this.settings.at('artwork.preflight_rules', { at })).value;
+    const size = `${sizes.length}×${sizes.width}×${sizes.height} mm`;
+    return {
+      title: `${variant.code} ${variant.base.nameEn} ${size} (inside)`,
+      styleCode: variant.code,
+      bleedMm: Number(rules.bleedMm),
+      safeMm: Number(rules.safeZoneMm),
+      keywords: [variant.base.code, `inside ${size}`],
+    };
+  }
 
   /** Inside sizes (D-182): as entered, or converted from the outside / over-crease sizes with the reference caliper. */
   private insideSizes(

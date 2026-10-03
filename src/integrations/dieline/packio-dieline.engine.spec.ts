@@ -4,6 +4,7 @@ import { join } from 'node:path';
 
 import sharp from 'sharp';
 
+import { inspectDesignerPdf } from '../../../test/support/designer-pdf-inspect';
 import { DielineBuildError } from './dieline-engine.port';
 import { PackioDielineEngine } from './packio-dieline.engine';
 
@@ -29,6 +30,31 @@ describe('PackioDielineEngine (vendored bundle, ADR-0010)', () => {
       max: expect.any(Number),
     });
     expect(facts.variants.length).toBeGreaterThan(1);
+  });
+
+  it('draws the designer PDF of a variant with named layers, bleed and safe areas (D-302)', async () => {
+    const recipe = { engine: (await engine.recipesByBase())['PK-TE-01']! };
+    const built = await engine.build(
+      {
+        recipe,
+        options: { tuck_top: 'straight_tuck', tuck_bottom: 'tuck', hang: 'none', window: 'none' },
+        sizes: { length: 60, width: 40, height: 120 },
+        material: BOARD,
+      },
+      ['pdf'],
+      { title: 'PK-TE-01-A test 60×40×120 mm (inside)', styleCode: 'PK-TE-01-A', bleedMm: 3, safeMm: 3 },
+    );
+    const body = built.files.pdf!.body;
+    const pdf = await inspectDesignerPdf(body);
+    expect(pdf.layers).toEqual(
+      expect.arrayContaining(['CutContour', 'Crease', 'Perf', 'Bleed', 'Safe', 'Glue']),
+    );
+    expect(pdf.swatches).toEqual(pdf.layers);
+    expect(pdf).toMatchObject({ styleCode: 'PK-TE-01-A', subject: 'PK-TE-01-A' });
+    // Real geometry on the cut, crease, bleed and safe layers.
+    const raw = body.toString('latin1');
+    for (const layer of ['CutContour', 'Crease', 'Bleed', 'Safe'])
+      expect(raw).toMatch(new RegExp(`/OC /${layer} BDC[^\\n]*\\n[0-9.-]+ [0-9.-]+ m`));
   });
 
   it('builds a variant into drawings and the dieline quantities (D-267)', async () => {

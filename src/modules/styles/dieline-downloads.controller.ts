@@ -17,7 +17,7 @@ import {
 } from './dieline-downloads.dto';
 import { DielineDownloadsService, type DownloadResult } from './dieline-downloads.service';
 
-const DECISIONS = ['D-271', 'D-270', 'D-203', 'D-182'];
+const DECISIONS = ['D-302', 'D-271', 'D-270', 'D-203', 'D-182'];
 const ERRORS = [
   'http.bad_request',
   'http.malformed_json',
@@ -76,7 +76,9 @@ export class StoreDielinesController {
       'plan gating, only within the style’s size range for that class. Signed-in customers only, at most ' +
       '`dielines.downloads_per_minute` (5) a minute and `dielines.downloads_per_day` (20) a Bangkok day; beyond them ' +
       '429 with `Retry-After`. Every download is logged; identical requests reuse the cached drawing (D-271, D-270, ' +
-      'D-203). Answers a short-lived signed URL and the dieline quantities.',
+      'D-203). Answers a short-lived signed URL and the dieline quantities. The PDF is the designer PDF (D-302): ' +
+      'layers and spot swatches `CutContour`, `Crease`, `Perf`, `Glue`, `Bleed`, `Safe` (+ `HalfCut` when the style ' +
+      'has half-cuts), bleed and safe distances of the preflight rules, the style code in the title and metadata.',
     implements: DECISIONS,
   })
   @ApiBody({ type: DownloadDielineDto, examples: { default: { value: DOWNLOAD_BODY_EXAMPLE } } })
@@ -103,7 +105,7 @@ export class AdminDielinesController {
     description:
       'Any style variant with an approved recipe — published or not, to check it before publishing — at any size ' +
       'the engine draws (rules the size breaks are listed in `violations`), on a material class the engine knows. ' +
-      'Not limited; logged like a customer download (D-271, D-270).',
+      'Not limited; logged like a customer download (D-271, D-270). PDF: the designer PDF (D-302).',
     implements: DECISIONS,
   })
   @ApiBody({ type: DownloadDielineDto, examples: { default: { value: DOWNLOAD_BODY_EXAMPLE } } })

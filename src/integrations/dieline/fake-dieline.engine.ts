@@ -1,7 +1,9 @@
 import { PDFDocument } from 'pdf-lib';
 import sharp from 'sharp';
 
+import { writeDesignerPdf } from './designer-pdf';
 import {
+  type DesignerPdfOptions,
   type DielineDrawing,
   type DielineEngine,
   type DielineFormat,
@@ -17,6 +19,34 @@ import {
 } from './dieline-engine.port';
 
 const PT_PER_MM = 72 / 25.4;
+
+/** D-302 the designer PDF of the fake blank: its outline cut, two creases, a glue flap; bleed and safe as rectangles. */
+function fakeDesignerPdf(w: number, h: number, l: number, o: DesignerPdfOptions): Buffer {
+  const rect = (x0: number, y0: number, x1: number, y1: number): [number, number][] => [
+    [x0, y0],
+    [x1, y0],
+    [x1, y1],
+    [x0, y1],
+  ];
+  const outline = rect(0, 0, w, h);
+  return writeDesignerPdf({
+    widthMm: w,
+    heightMm: h,
+    strokes: {
+      cut: [outline.map((p, i) => ({ from: p, to: outline[(i + 1) % 4]! }))],
+      crease: [[{ from: [l, 0], to: [l, h] }], [{ from: [2 * l, 0], to: [2 * l, h] }]],
+      glue_area: [[{ from: [w - 10, 0], to: [w - 10, h] }]],
+    },
+    bleed: [rect(-o.bleedMm, -o.bleedMm, w + o.bleedMm, h + o.bleedMm)],
+    safe: [rect(o.safeMm, o.safeMm, w - o.safeMm, h - o.safeMm)],
+    title: o.title,
+    styleCode: o.styleCode,
+    keywords: o.keywords,
+    producer: 'Packio designer PDF (fake-dieline@0)',
+    bleedMm: o.bleedMm,
+    safeMm: o.safeMm,
+  });
+}
 
 /**
  * Test / `pnpm dev` engine: a PDF (or SVG) whose trim box is a flat blank of (2L + 2W) × (H + W) mm with a
@@ -36,7 +66,11 @@ export class FakeDielineEngine implements DielineEngine {
   }
 
   /** A flat (2L + 2W) × (H + W) blank: obviously fake quantities for the pipeline. */
-  build(request: RecipeBuildRequest, formats: DielineFormat[]): Promise<RecipeBuild> {
+  build(
+    request: RecipeBuildRequest,
+    formats: DielineFormat[],
+    designerPdf?: DesignerPdfOptions,
+  ): Promise<RecipeBuild> {
     this.built.push(request);
     const l = request.sizes['length'] ?? 100;
     const w = request.sizes['width'] ?? 50;
@@ -47,7 +81,10 @@ export class FakeDielineEngine implements DielineEngine {
     const files: RecipeBuild['files'] = {};
     for (const f of formats)
       files[f] = {
-        body: Buffer.from(f === 'svg' ? svg : `fake ${f}`),
+        body:
+          f === 'pdf' && designerPdf
+            ? fakeDesignerPdf(bw, bh, l, designerPdf)
+            : Buffer.from(f === 'svg' ? svg : `fake ${f}`),
         mimeType: f === 'svg' ? 'image/svg+xml' : f === 'pdf' ? 'application/pdf' : 'application/dxf',
       };
     return Promise.resolve({

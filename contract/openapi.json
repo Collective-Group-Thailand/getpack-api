@@ -180918,7 +180918,7 @@
     },
     "/v1/admin/dielines/downloads": {
       "post": {
-        "description": "Any style variant with an approved recipe — published or not, to check it before publishing — at any size the engine draws (rules the size breaks are listed in `violations`), on a material class the engine knows. Not limited; logged like a customer download (D-271, D-270).\n\nImplements: D-271, D-270, D-203, D-182.",
+        "description": "Any style variant with an approved recipe — published or not, to check it before publishing — at any size the engine draws (rules the size breaks are listed in `violations`), on a material class the engine knows. Not limited; logged like a customer download (D-271, D-270). PDF: the designer PDF (D-302).\n\nImplements: D-302, D-271, D-270, D-203, D-182.",
         "operationId": "admin.dielines.download",
         "parameters": [
           {
@@ -370695,7 +370695,7 @@
     },
     "/v1/store/dielines/downloads": {
       "post": {
-        "description": "The dieline of a published style variant at my sizes (inside, or converted from outside / over-crease with the reference caliper, D-182) on a material class the style offers, as PDF, DXF or SVG — watermark-free, no plan gating, only within the style’s size range for that class. Signed-in customers only, at most `dielines.downloads_per_minute` (5) a minute and `dielines.downloads_per_day` (20) a Bangkok day; beyond them 429 with `Retry-After`. Every download is logged; identical requests reuse the cached drawing (D-271, D-270, D-203). Answers a short-lived signed URL and the dieline quantities.\n\nImplements: D-271, D-270, D-203, D-182.",
+        "description": "The dieline of a published style variant at my sizes (inside, or converted from outside / over-crease with the reference caliper, D-182) on a material class the style offers, as PDF, DXF or SVG — watermark-free, no plan gating, only within the style’s size range for that class. Signed-in customers only, at most `dielines.downloads_per_minute` (5) a minute and `dielines.downloads_per_day` (20) a Bangkok day; beyond them 429 with `Retry-After`. Every download is logged; identical requests reuse the cached drawing (D-271, D-270, D-203). Answers a short-lived signed URL and the dieline quantities. The PDF is the designer PDF (D-302): layers and spot swatches `CutContour`, `Crease`, `Perf`, `Glue`, `Bleed`, `Safe` (+ `HalfCut` when the style has half-cuts), bleed and safe distances of the preflight rules, the style code in the title and metadata.\n\nImplements: D-302, D-271, D-270, D-203, D-182.",
         "operationId": "store.dielines.download",
         "parameters": [
           {

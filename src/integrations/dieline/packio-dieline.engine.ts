@@ -5,7 +5,9 @@ import { pathToFileURL } from 'node:url';
 
 import sharp from 'sharp';
 
+import { type Segment, writeDesignerPdf } from './designer-pdf';
 import {
+  type DesignerPdfOptions,
   DielineBuildError,
   type DielineDrawing,
   type DielineEngine,
@@ -70,6 +72,9 @@ interface DielinePackage {
   ): { code: string; severity: string; param?: string | null }[];
   materialClassOf(material: DielineMaterial): string;
   dielineLines(d: Dieline): { role: string; edge: unknown }[];
+  arcAngles(e: unknown): { start: number; sweep: number };
+  bleedOutline(piece: unknown, bleedMm: number): Pt[][];
+  safeZone(face: Face, insetMm: number): Pt[][];
   edgeLength(edge: unknown): number;
   allFaces(d: Dieline): Face[];
   facePolygons(face: Face): Pt[][];
@@ -164,7 +169,11 @@ export class PackioDielineEngine implements DielineEngine {
     };
   }
 
-  async build(request: RecipeBuildRequest, formats: DielineFormat[]): Promise<RecipeBuild> {
+  async build(
+    request: RecipeBuildRequest,
+    formats: DielineFormat[],
+    designerPdf?: DesignerPdfOptions,
+  ): Promise<RecipeBuild> {
     const { pkg, version } = await this.engine();
     const { recipe, values } = this.pick(pkg, request);
     const violations = pkg.explain(recipe, values, request.material).map((v) => ({
@@ -174,7 +183,8 @@ export class PackioDielineEngine implements DielineEngine {
     }));
     const { dieline } = pkg.buildFromRecipe(recipe, values, request.material);
     const files: RecipeBuild['files'] = {};
-    for (const f of formats) files[f] = { body: this.file(pkg, dieline, f), mimeType: MIME[f] };
+    for (const f of formats)
+      files[f] = { body: this.file(pkg, dieline, f, designerPdf, version), mimeType: MIME[f] };
     return { quantities: this.quantities(pkg, dieline), files, violations, engineVersion: version };
   }
 
@@ -311,10 +321,68 @@ export class PackioDielineEngine implements DielineEngine {
     };
   }
 
-  private file(pkg: DielinePackage, d: Dieline, format: DielineFormat): Buffer {
+  private file(
+    pkg: DielinePackage,
+    d: Dieline,
+    format: DielineFormat,
+    designerPdf?: DesignerPdfOptions,
+    version = '',
+  ): Buffer {
     if (format === 'svg') return Buffer.from(pkg.dielineToSvg(d), 'utf8');
     if (format === 'dxf') return Buffer.from(pkg.dielineToDxf(d), 'utf8');
-    return Buffer.from(pkg.dielineToPdf(d));
+    return designerPdf ? this.designerPdf(pkg, d, designerPdf, version) : Buffer.from(pkg.dielineToPdf(d));
+  }
+
+  /** D-302: the engine's die lines, bleed outline and panel safe areas, written as the designer PDF. */
+  private designerPdf(pkg: DielinePackage, d: Dieline, o: DesignerPdfOptions, version: string): Buffer {
+    const strokes: Record<string, Segment[][]> = {};
+    for (const line of pkg.dielineLines(d)) (strokes[line.role] ??= []).push(this.segments(pkg, line.edge));
+    return writeDesignerPdf({
+      widthMm: d.width,
+      heightMm: d.height,
+      strokes,
+      bleed: o.bleedMm > 0 ? d.pieces.flatMap((p) => pkg.bleedOutline(p, o.bleedMm)) : [],
+      safe: o.safeMm > 0 ? pkg.allFaces(d).flatMap((f) => pkg.safeZone(f, o.safeMm)) : [],
+      title: o.title,
+      styleCode: o.styleCode,
+      keywords: o.keywords,
+      producer: `Packio designer PDF (${version})`,
+      bleedMm: o.bleedMm,
+      safeMm: o.safeMm,
+    });
+  }
+
+  /** An engine edge as segments: a line, a cubic, or an arc in quarter-turn cubics (as the engine's own PDF). */
+  private segments(pkg: DielinePackage, edge: unknown): Segment[] {
+    const e = edge as {
+      kind: 'line' | 'arc' | 'bezier';
+      from: Pt;
+      to: Pt;
+      c1?: Pt;
+      c2?: Pt;
+      center?: Pt;
+      radius?: number;
+    };
+    if (e.kind === 'line') return [{ from: e.from, to: e.to }];
+    if (e.kind !== 'arc') return [{ from: e.from, c1: e.c1!, c2: e.c2!, to: e.to }];
+    const { start, sweep } = pkg.arcAngles(e);
+    const parts = Math.max(1, Math.ceil(Math.abs(sweep) / (Math.PI / 2) - 1e-9));
+    const step = sweep / parts;
+    const k = (4 / 3) * Math.tan(step / 4);
+    const r = e.radius!;
+    const [cx, cy] = e.center!;
+    const out: Segment[] = [];
+    for (let i = 0; i < parts; i++) {
+      const a0 = start + step * i;
+      const a1 = a0 + step;
+      out.push({
+        from: i === 0 ? e.from : [cx + r * Math.cos(a0), cy + r * Math.sin(a0)],
+        c1: [cx + r * (Math.cos(a0) - k * Math.sin(a0)), cy + r * (Math.sin(a0) + k * Math.cos(a0))],
+        c2: [cx + r * (Math.cos(a1) + k * Math.sin(a1)), cy + r * (Math.sin(a1) - k * Math.cos(a1))],
+        to: i === parts - 1 ? e.to : [cx + r * Math.cos(a1), cy + r * Math.sin(a1)],
+      });
+    }
+    return out;
   }
 
   private async engine(): Promise<{ pkg: DielinePackage; version: string }> {

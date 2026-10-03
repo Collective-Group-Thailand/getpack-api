@@ -1,6 +1,8 @@
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 
+import { type FakeObjectStorage } from '@integrations/s3/fake-object-storage';
+import { OBJECT_STORAGE } from '@integrations/s3/object-storage.port';
 import request from 'supertest';
 
 import { type UserActor } from '../../src/common/context/actor';
@@ -14,6 +16,7 @@ import {
   setFlag,
   staffToken,
 } from '../support/commerce-e2e';
+import { inspectDesignerPdf } from '../support/designer-pdf-inspect';
 
 const MASTER = readFileSync(
   join(__dirname, '..', '..', 'docs', 'design-tool', 'style-library-master.json'),
@@ -126,6 +129,20 @@ describe('dieline downloads and style assets (e2e, U3.B5)', () => {
     });
     expect(first.body.url).toMatch(/^https?:\/\//);
     expect(first.body.quantities.blankWidthMm).toBe(2 * length + 2 * 50);
+    // D-302 / T12: the PDF opens with the layers and swatches a designer expects, the style code in its metadata.
+    const render = await ctx.prisma.dielineDownload.findUniqueOrThrow({
+      where: { publicId: first.body.id as string },
+      include: { render: { include: { file: true } } },
+    });
+    const stored = ctx.app.get<FakeObjectStorage>(OBJECT_STORAGE).objects.get(render.render.file.storageKey)!;
+    const pdf = await inspectDesignerPdf(stored.body);
+    expect(pdf.layers).toEqual(
+      expect.arrayContaining(['CutContour', 'Crease', 'Perf', 'Bleed', 'Safe', 'Glue']),
+    );
+    expect(pdf.swatches).toEqual(pdf.layers);
+    expect(pdf).toMatchObject({ styleCode: published, subject: published });
+    expect(pdf.title).toContain(published);
+    expect(pdf.xmp).toContain(`<packio:styleCode>${published}</packio:styleCode>`);
     // Same request by someone else: same file, from the cache.
     const again = await as(ctx, other).post('/v1/store/dielines/downloads', body()).expect(201);
     expect(again.body).toMatchObject({
