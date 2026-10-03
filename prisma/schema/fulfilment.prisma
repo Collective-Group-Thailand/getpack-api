@@ -2073,3 +2073,20 @@ model DesignComment {
   @@index([resolvedById], map: "ix_design_comments__resolved_by")
   @@map("design_comments")
 }
+
+/// D-287 a packaging spec sheet generated for an order: one file per language and content (sha256 of its data).
+model OrderSpecSheet {
+  id            BigInt   @id(map: "pk_order_spec_sheets") @default(autoincrement())
+  orderId       BigInt   @map("order_id")
+  lang          String
+  contentSha256 Bytes    @map("content_sha256")
+  fileId        BigInt   @map("file_id")
+  createdAt     DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  order Order      @relation("OrderSpecSheetOrder", fields: [orderId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_order_spec_sheets__order_id")
+  file  FileObject @relation("OrderSpecSheetFile", fields: [fileId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_order_spec_sheets__file_id")
+
+  @@unique([orderId, lang, contentSha256], map: "ux_order_spec_sheets__order__lang__content")
+  @@index([fileId], map: "ix_order_spec_sheets__file_id")
+  @@map("order_spec_sheets")
+}

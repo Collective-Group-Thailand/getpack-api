@@ -1081,6 +1081,10 @@
     "reorder_preview_expired": {
       "title": "Preview expired",
       "detail": "The reorder preview expired or does not match this request; preview it again"
+    },
+    "spec_sheet_unavailable": {
+      "title": "Spec sheet not ready",
+      "detail": "The spec sheet is issued once the artwork (or the sample) is approved."
     }
   },
   "line": {

@@ -688,6 +688,8 @@ model Order {
 
   studioPrintJob StudioPrintJob? @relation("StudioPrintJobOrder")
 
+  specSheets OrderSpecSheet[] @relation("OrderSpecSheetOrder")
+
   @@index([companyId, createdAt(sort: Desc)], map: "ix_orders__company_id__created_at")
   @@index([orderGroupId], map: "ix_orders__order_group_id")
   @@index([status, promisedShipDate], map: "ix_orders__status__promised_ship_date")
