@@ -249,6 +249,7 @@ describe('month simulation: sub-ledgers, tax papers and the trial balance reconc
     await post(cs, `/v1/admin/claims/${claim.id}/actions/review`).expect(200);
     await post(cs, `/v1/admin/claims/${claim.id}/actions/decide`, {
       decision: 'approved',
+      severity: 'major',
       note: 'สีไม่ตรง (fake)',
     }).expect(200);
     await post(lead, `/v1/admin/claims/${claim.id}/actions/resolve`, {

@@ -26,6 +26,8 @@ export const SIGNAL_KEYS = [
   'rfq_first_response_overdue',
   'approvals_overdue',
   'slip_verification_wait_hours',
+  'claim_response_overdue',
+  'claim_decision_overdue',
 ] as const;
 export type SignalKey = (typeof SIGNAL_KEYS)[number];
 
@@ -50,6 +52,8 @@ const DESCRIPTIONS: Record<SignalKey, string> = {
   approvals_overdue: 'Approval steps past their due time',
   slip_verification_wait_hours:
     'Hours the oldest transfer slip has waited for Finance (D-061: 4 business hours)',
+  claim_response_overdue: 'Claims without a first response past the guarantee’s response time (D-263)',
+  claim_decision_overdue: 'Open claims past the guarantee’s decision time from complete evidence (D-263)',
 };
 export const signalDescription = (key: SignalKey) => DESCRIPTIONS[key];
 
@@ -111,6 +115,14 @@ export class OpsSignalsService implements OnModuleInit {
       ),
       slip_verification_wait_hours: await this.count(
         p.$queryRaw`SELECT floor(extract(epoch FROM now() - min(created_at)) / 3600) AS n FROM payments WHERE status = 'awaiting_verification'`,
+      ),
+      claim_response_overdue: await this.count(
+        p.$queryRaw`SELECT count(*) AS n FROM claims WHERE first_responded_at IS NULL AND response_due_at < now()
+                    AND status IN ('submitted', 'under_review', 'need_info', 'factory_review')`,
+      ),
+      claim_decision_overdue: await this.count(
+        p.$queryRaw`SELECT count(*) AS n FROM claims WHERE decided_at IS NULL AND decision_due_at < now()
+                    AND status IN ('submitted', 'under_review', 'factory_review')`,
       ),
     };
   }

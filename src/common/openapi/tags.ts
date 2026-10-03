@@ -74,6 +74,10 @@ export const API_TAGS: Record<string, string> = {
     'Partners’ signed board data sheets (ECT, caliper, grammage) per factory × corrugated board — the only board strength the advisor reads (D-188, D-236).',
   'partner.boardStrengthSheets':
     'The signed board data sheets Packio keeps for the factory’s boards (D-236, D-044).',
+  'store.guarantee':
+    'Packio’s published guarantee (D-198, D-199, D-260): remedies per claim type and severity, response and decision times, the claim window — the version the claim engine applies.',
+  'admin.guaranteePolicies':
+    'Guarantee policy versions (D-260): the CS Lead proposes SLAs and the remedy matrix, C-Level approves (D-200).',
   'store.samples':
     'Physical samples (D-253–D-257): ask for one before ordering, buy its sample quotation, decide on the delivered sample with evidence, order the approved sample in bulk with its credit.',
   'admin.samples':

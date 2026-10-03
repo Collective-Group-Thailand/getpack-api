@@ -19,7 +19,7 @@
 | Webhook failures | Signal `webhook_failures_24h` | ≥ 5 in 24 h | Ticket; page if payments | §4.5 |
 | Payout / bank-file failures | Signal `payout_item_failures_7d`; payout runs `partially_failed` | ≥ 1 | Finance + on-call, same day | §4.6 |
 | Ledger posting failures | Signal `ledger_posting_failures` (dead letters of `ledger.*` consumers) | ≥ 1 | Finance Manager + on-call, same day (the books miss an event) | §4.4 |
-| SLA breaches | Signals `acceptance_overdue` (D-074), `production_at_risk`, `rfq_first_response_overdue`, `approvals_overdue`, `slip_verification_wait_hours` (D-061: 4 business hours; the signal counts wall-clock hours, so it may fire early outside business hours) | ≥ 1 / 5 / 1 / 5 / 4 | Notice to the owning team (Partner, CS, approvers, Finance); on-call only if the signal is `unknown` | §4.7 |
+| SLA breaches | Signals `acceptance_overdue` (D-074), `production_at_risk`, `rfq_first_response_overdue`, `approvals_overdue`, `slip_verification_wait_hours` (D-061: 4 business hours; the signal counts wall-clock hours, so it may fire early outside business hours), `claim_response_overdue` / `claim_decision_overdue` (D-263, U2.5; existing environments add both keys to `ops.alert_thresholds`) | ≥ 1 / 5 / 1 / 5 / 4 / 1 / 1 | Notice to the owning team (Partner, CS, approvers, Finance); on-call only if the signal is `unknown` | §4.7 |
 
 A signal whose source cannot be read (e.g. Redis down for `queue_depth`) is `unknown` and alerts like a breach.
 

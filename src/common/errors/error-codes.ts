@@ -257,6 +257,8 @@ export const ERROR_CODES = {
   'claims.invalid_status': HttpStatus.CONFLICT,
   'claims.liability_undetermined': HttpStatus.CONFLICT,
   'claims.action_not_allowed': HttpStatus.UNPROCESSABLE_ENTITY,
+  'claims.severity_required': HttpStatus.UNPROCESSABLE_ENTITY,
+  'claims.remedy_not_allowed': HttpStatus.UNPROCESSABLE_ENTITY,
   'orders.reorder_unavailable': HttpStatus.CONFLICT,
   'payments.nothing_due': HttpStatus.CONFLICT,
   'payments.reminder_recent': HttpStatus.CONFLICT,
@@ -322,6 +324,8 @@ export const ERROR_CODES = {
   'samples.evidence_recorded': HttpStatus.CONFLICT,
   'samples.evidence_missing': HttpStatus.CONFLICT,
   'samples.freight_unavailable': HttpStatus.CONFLICT,
+  'guarantee.version_pending': HttpStatus.CONFLICT,
+  'guarantee.version_not_proposed': HttpStatus.CONFLICT,
 } as const satisfies Record<string, HttpStatus>;
 
 export type ErrorCode = keyof typeof ERROR_CODES;

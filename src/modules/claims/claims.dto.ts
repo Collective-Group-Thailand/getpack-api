@@ -44,7 +44,10 @@ export const CLAIM_STATUSES = [
   'resolved',
   'closed',
 ] as const;
-export const RESOLUTION_KINDS = ['reprint', 'partial_refund', 'full_refund', 'credit'] as const;
+export const RESOLUTION_KINDS = ['reprint', 'partial_refund', 'full_refund', 'credit', 'goodwill'] as const;
+export const CLAIM_SEVERITIES = ['minor', 'major', 'critical'] as const;
+export const GUARANTEE_REMEDIES = ['reprint', 'refund', 'partial_credit', 'goodwill'] as const;
+export const CLAIM_OWNERS = ['packio', 'customer', 'factory', 'none'] as const;
 export const LIABILITIES = ['factory', 'customer', 'carrier', 'packio', 'undetermined'] as const;
 export const CLAIM_ACTIONS = [
   'reproduction_job',
@@ -260,6 +263,113 @@ export class DecideClaimDto {
   @MinLength(3)
   @MaxLength(2000)
   note!: string;
+
+  @ApiPropertyOptional({
+    enum: CLAIM_SEVERITIES,
+    enumName: 'ClaimSeverity',
+    example: 'major',
+    description: 'Required to approve a claim on Packio’s side (D-261)',
+  })
+  @IsOptional()
+  @IsIn(CLAIM_SEVERITIES)
+  severity?: (typeof CLAIM_SEVERITIES)[number];
+
+  @ApiPropertyOptional({
+    enum: GUARANTEE_REMEDIES,
+    enumName: 'GuaranteeRemedy',
+    example: 'reprint',
+    description:
+      'Default: what the customer asked for; must be allowed by the claim’s guarantee version for its type and ' +
+      'severity (D-261); `goodwill` needs `goodwillMemoId` (D-262)',
+  })
+  @IsOptional()
+  @IsIn(GUARANTEE_REMEDIES)
+  remedy?: (typeof GUARANTEE_REMEDIES)[number];
+
+  @ApiPropertyOptional({
+    format: 'uuid',
+    description: 'An approved discount memo of the customer (goodwill, D-262)',
+  })
+  @IsOptional()
+  @IsUUID()
+  goodwillMemoId?: string;
+}
+
+export class ClaimSlaDto {
+  @ApiProperty({ type: String, format: 'date-time', nullable: true, example: '2026-10-23T09:00:00+07:00' })
+  responseDueAt!: string | null;
+
+  @ApiProperty({ type: String, format: 'date-time', nullable: true, example: '2026-10-22T11:00:00+07:00' })
+  respondedAt!: string | null;
+
+  @ApiProperty({ example: false, description: 'No response yet and past its due time' })
+  responseOverdue!: boolean;
+
+  @ApiProperty({
+    type: String,
+    format: 'date-time',
+    nullable: true,
+    example: '2026-10-27T09:00:00+07:00',
+    description:
+      'Null while Packio waits for the customer’s information (the clock stops, D-263) or once decided',
+  })
+  decisionDueAt!: string | null;
+
+  @ApiProperty({ example: false })
+  decisionOverdue!: boolean;
+
+  @ApiProperty({
+    enum: CLAIM_OWNERS,
+    enumName: 'ClaimOwner',
+    example: 'packio',
+    description:
+      'Who must act now: Packio, the customer (information), the factory (its review), nobody (D-263)',
+  })
+  currentOwner!: (typeof CLAIM_OWNERS)[number];
+
+  @ApiProperty({
+    type: Number,
+    nullable: true,
+    example: 1,
+    description: 'The guarantee version the claim follows (D-260)',
+  })
+  guaranteeVersionNo!: number | null;
+}
+
+export const CLAIM_TIMELINE_EVENTS = [
+  'claim.submitted',
+  'claim.under_review',
+  'claim.info_requested',
+  'claim.info_provided',
+  'claim.approved',
+  'claim.rejected',
+  'claim.resolved',
+  'claim.closed',
+] as const;
+
+export class ClaimTimelineEventDto {
+  @ApiProperty({ enum: CLAIM_TIMELINE_EVENTS, enumName: 'ClaimTimelineEvent', example: 'claim.submitted' })
+  type!: (typeof CLAIM_TIMELINE_EVENTS)[number];
+
+  @ApiProperty({ format: 'date-time', example: '2026-10-22T09:00:00+07:00' })
+  at!: string;
+}
+
+export class ClaimTimelineDto {
+  @ApiProperty({ format: 'uuid', example: '0192f3a0-7c1e-7d2a-9b1f-00000000c101' })
+  claimId!: string;
+
+  @ApiProperty({ example: 'under_review' })
+  status!: string;
+
+  @ApiProperty({ type: ClaimSlaDto })
+  sla!: ClaimSlaDto;
+
+  @ApiProperty({
+    type: [ClaimTimelineEventDto],
+    description: 'Oldest first; Packio’s internal steps are not shown',
+  })
+  events!: ClaimTimelineEventDto[];
 }
 
 export class ResolutionActionDto {
@@ -520,6 +630,30 @@ export class StoreClaimDto {
   @ApiProperty({ type: [ClaimResolutionDto] })
   resolutions!: ClaimResolutionDto[];
 
+  @ApiProperty({ enum: CLAIM_SEVERITIES, enumName: 'ClaimSeverity', nullable: true, example: null })
+  severity!: (typeof CLAIM_SEVERITIES)[number] | null;
+
+  @ApiProperty({
+    enum: GUARANTEE_REMEDIES,
+    enumName: 'GuaranteeRemedy',
+    nullable: true,
+    example: null,
+    description: 'The remedy decided (D-261)',
+  })
+  remedy!: (typeof GUARANTEE_REMEDIES)[number] | null;
+
+  @ApiProperty({ type: ClaimSlaDto, description: 'SLA countdowns and the current owner (D-263)' })
+  sla!: ClaimSlaDto;
+
+  @ApiProperty({
+    type: String,
+    format: 'uuid',
+    nullable: true,
+    example: null,
+    description: 'The sample claimed (D-259)',
+  })
+  sampleId!: string | null;
+
   @ApiProperty({
     type: [NextActionDto],
     description: 'What the signed-in user may do on the claim now, from the actions’ own checks (U-B0.3)',
@@ -688,6 +822,18 @@ const BASE = {
   photos: { product: [CLAIM_IDS.photo], carton: [CLAIM_IDS.carton] },
   tolerance: { shortagePct: '5.0000', overagePct: '5.0000', dimensionalMm: '1.00', colourDeltaE: '3.00' },
   resolutions: [],
+  severity: null,
+  remedy: null,
+  sla: {
+    responseDueAt: '2026-10-23T09:00:00+07:00',
+    respondedAt: '2026-10-22T11:00:00+07:00',
+    responseOverdue: false,
+    decisionDueAt: '2026-10-27T09:00:00+07:00',
+    decisionOverdue: false,
+    currentOwner: 'packio',
+    guaranteeVersionNo: 1,
+  },
+  sampleId: null,
   nextActions: [] as NextActionDto[],
 };
 export const STORE_CLAIM_EXAMPLE = BASE;

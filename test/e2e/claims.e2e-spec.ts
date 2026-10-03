@@ -276,18 +276,44 @@ describe('claims and reorder (e2e, B4.5)', () => {
       liability: 'customer',
       reason: 'ทดสอบสิทธิ์การเปลี่ยนผู้รับผิดชอบ',
     }).expect(403);
+    // D-261: approving needs the severity; the remedy defaults to what the customer asked (reprint).
+    expect(
+      (
+        await post(cs, `/v1/admin/claims/${submitted.id}/actions/decide`, {
+          decision: 'approved',
+          note: 'ยืนยันความเสียหาย',
+        }).expect(422)
+      ).body.code,
+    ).toBe('claims.severity_required');
+    expect(
+      (
+        await post(cs, `/v1/admin/claims/${submitted.id}/actions/decide`, {
+          decision: 'approved',
+          note: 'ยืนยันความเสียหาย',
+          severity: 'minor',
+        }).expect(422)
+      ).body.code,
+    ).toBe('claims.remedy_not_allowed');
     const decided = await post(cs, `/v1/admin/claims/${submitted.id}/actions/decide`, {
       decision: 'approved',
       note: 'ยืนยันความเสียหาย',
+      severity: 'major',
     }).expect(200);
     expect(decided.body.decidedBy).toMatchObject({ id: expect.any(String) });
+    expect(decided.body).toMatchObject({ severity: 'major', remedy: 'reprint' });
     const lead = await staffToken(ctx, 'cs_lead');
-    const resolveBody = {
-      actions: [
-        { action: 'reproduction_job', quantity: 120 },
-        { action: 'credit_note', amount: '500.00', note: 'ส่วนลดชดเชยความล่าช้า' },
-      ],
-    };
+    // A credit note does not fit a reprint (D-261); compensation beyond the matrix is goodwill (D-262).
+    expect(
+      (
+        await post(lead, `/v1/admin/claims/${submitted.id}/actions/resolve`, {
+          actions: [
+            { action: 'reproduction_job', quantity: 120 },
+            { action: 'credit_note', amount: '500.00', note: 'ส่วนลดชดเชยความล่าช้า' },
+          ],
+        }).expect(422)
+      ).body.code,
+    ).toBe('claims.action_not_allowed');
+    const resolveBody = { actions: [{ action: 'reproduction_job', quantity: 120 }] };
     await post(cs, `/v1/admin/claims/${submitted.id}/actions/resolve`, resolveBody).expect(403);
     const resolved = (
       await post(lead, `/v1/admin/claims/${submitted.id}/actions/resolve`, resolveBody).expect(200)
@@ -309,7 +335,7 @@ describe('claims and reorder (e2e, B4.5)', () => {
       await ctx.prisma.domainEvent.count({
         where: { type: 'claim.credit_note_requested', aggregateId: submitted.id },
       }),
-    ).toBe(1);
+    ).toBe(0);
     const mine = (await as(ctx, o.token).get(`/v1/store/claims/${submitted.id}`).expect(200)).body as Claim;
     expect(mine.resolutions.every((r) => r.jobNo === null)).toBe(true);
 
@@ -379,18 +405,30 @@ describe('claims and reorder (e2e, B4.5)', () => {
       liabilityRule: 'staff_decides',
       liabilityOverriddenBy: { id: expect.any(String) },
     });
-    await post(cs, `/v1/admin/claims/${opened.id}/actions/decide`, {
-      decision: 'approved',
-      note: 'ยอมรับ',
-    }).expect(200);
-    // A factory deduction needs the factory to be liable.
+    // D-199: no late-delivery guarantee at launch — no remedy to approve it with (goodwill needs a memo, D-262).
     expect(
       (
-        await post(lead, `/v1/admin/claims/${opened.id}/actions/resolve`, {
-          actions: [{ action: 'factory_deduction', amount: '100.00' }],
+        await post(cs, `/v1/admin/claims/${opened.id}/actions/decide`, {
+          decision: 'approved',
+          note: 'ยอมรับ',
+          severity: 'major',
         }).expect(422)
       ).body.code,
-    ).toBe('claims.action_not_allowed');
+    ).toBe('claims.remedy_not_allowed');
+    expect(
+      (
+        await post(cs, `/v1/admin/claims/${opened.id}/actions/decide`, {
+          decision: 'approved',
+          note: 'ยอมรับ',
+          severity: 'major',
+          remedy: 'goodwill',
+        }).expect(409)
+      ).body.code,
+    ).toBe('discount_memos.not_usable');
+    await post(cs, `/v1/admin/claims/${opened.id}/actions/decide`, {
+      decision: 'rejected',
+      note: 'ไม่มีการรับประกันการส่งล่าช้า (D-199)',
+    }).expect(200);
   });
 
   it('opens a claim by itself when the delivery is outside the tolerance (D-080)', async () => {

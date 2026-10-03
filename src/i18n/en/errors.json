@@ -1031,6 +1031,14 @@
     "action_not_allowed": {
       "title": "Action not allowed",
       "detail": "This resolution is not possible ({reason})"
+    },
+    "severity_required": {
+      "title": "Severity and remedy needed",
+      "detail": "Approving a claim needs its severity and a remedy the guarantee policy allows (D-261)."
+    },
+    "remedy_not_allowed": {
+      "title": "Remedy not allowed",
+      "detail": "The guarantee policy of this claim does not allow this remedy for its type and severity (D-261)."
     }
   },
   "orders": {
@@ -1387,6 +1395,16 @@
     "freight_unavailable": {
       "title": "No freight price",
       "detail": "The customer rate card has no price for this postcode and parcel weight (D-195)."
+    }
+  },
+  "guarantee": {
+    "version_pending": {
+      "title": "A version is in approval",
+      "detail": "Another guarantee policy version waits for C-Level; decide or withdraw it first (D-260)."
+    },
+    "version_not_proposed": {
+      "title": "Not in approval",
+      "detail": "Only a version waiting for approval can be withdrawn (D-260)."
     }
   }
 }

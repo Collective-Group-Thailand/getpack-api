@@ -40,7 +40,35 @@ export function storeClaimDto(c: ClaimRow, photos: Photos = { product: [], carto
     // The customer sees what was done for them, not which job made it (D-050) nor what Packio
     // recovers from the factory or the carrier (D-083, D-044).
     resolutions: c.resolutions.filter((r) => !INTERNAL_ACTIONS.has(r.action)).map(resolutionView),
+    severity: c.severity,
+    remedy: c.remedy,
+    sla: claimSla(c),
+    sampleId: c.sample?.publicId ?? null,
     nextActions: nextActions(c, STORE_CLAIM_ACTIONS, NO_PERMISSIONS),
+  };
+}
+
+const OPEN: ReadonlySet<string> = new Set(['submitted', 'under_review', 'need_info', 'factory_review']);
+
+/** D-263: who must act now on a claim. */
+export function claimOwner(status: string): 'packio' | 'customer' | 'factory' | 'none' {
+  if (status === 'need_info') return 'customer';
+  if (status === 'factory_review') return 'factory';
+  if (['submitted', 'under_review', 'approved'].includes(status)) return 'packio';
+  return 'none';
+}
+
+/** D-263: the SLA countdowns of a claim at `now`. */
+export function claimSla(c: ClaimRow, now = new Date()) {
+  const open = OPEN.has(c.status);
+  return {
+    responseDueAt: iso(c.responseDueAt),
+    respondedAt: iso(c.firstRespondedAt),
+    responseOverdue: !c.firstRespondedAt && c.responseDueAt !== null && c.responseDueAt < now,
+    decisionDueAt: open && !c.decidedAt ? iso(c.decisionDueAt) : null,
+    decisionOverdue: open && !c.decidedAt && c.decisionDueAt !== null && c.decisionDueAt < now,
+    currentOwner: claimOwner(c.status),
+    guaranteeVersionNo: c.guaranteePolicyVersion?.versionNo ?? null,
   };
 }
 

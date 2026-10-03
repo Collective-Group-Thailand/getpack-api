@@ -6,6 +6,7 @@ import { etagOf } from '@common/etag/etag';
 import { Idempotent } from '@common/idempotency/idempotent.decorator';
 import { ApiEndpoint, ApiEtag, ApiStandardErrors, ApiSuccess } from '@common/openapi/decorators';
 import { ApiPaginated } from '@common/pagination/api-paginated.decorator';
+import { toBangkokIso } from '@common/time/bangkok';
 import { PrismaService } from '@database/prisma.service';
 import { type Prisma } from '@generated/prisma/client';
 import { cartDto } from '@modules/carts/cart-views';
@@ -19,7 +20,7 @@ import { Body, Controller, Get, HttpCode, Param, ParseUUIDPipe, Post, Query, Res
 import { ApiBody, ApiParam } from '@nestjs/swagger';
 import { type Response } from 'express';
 
-import { adminClaimDto, partnerClaimDto, storeClaimDto } from './claim-views';
+import { adminClaimDto, claimSla, partnerClaimDto, storeClaimDto } from './claim-views';
 import {
   ADMIN_CLAIM_EXAMPLE,
   AdminClaimDto,
@@ -35,6 +36,7 @@ import {
   ClaimInfoDto,
   ClaimListQuery,
   ClaimNoteDto,
+  ClaimTimelineDto,
   DecideClaimDto,
   FactoryClaimResponseDto,
   OverrideLiabilityDto,
@@ -219,6 +221,48 @@ export class StoreClaimsController extends ClaimViews {
   get(@CurrentActor() actor: Actor, @Param('claimId', ParseUUIDPipe) claimId: string) {
     customer(actor);
     return this.one(actor, claimId, storeClaimDto);
+  }
+
+  @Get('claims/:claimId/timeline')
+  @claimParam
+  @ApiEndpoint({
+    id: 'store.claims.getTimeline',
+    summary: 'The progress of one of my claims',
+    description:
+      'Its visible steps and the SLA countdowns of the guarantee it follows: first response within its business days, ' +
+      'decision within its business days of complete evidence (the clock stops while Packio waits for my answer), and ' +
+      'who must act now (D-263, D-199).',
+    implements: ['D-263', 'D-199', 'D-082'],
+  })
+  @ApiSuccess(200, {
+    description: 'Timeline',
+    type: ClaimTimelineDto,
+    example: {
+      claimId: CLAIM_IDS.claim,
+      status: 'under_review',
+      sla: STORE_CLAIM_EXAMPLE.sla,
+      events: [
+        { type: 'claim.submitted', at: '2026-10-22T09:00:00+07:00' },
+        { type: 'claim.under_review', at: '2026-10-22T11:00:00+07:00' },
+      ],
+    },
+  })
+  @ApiStandardErrors('http.not_found', 'validation.failed')
+  async timeline(
+    @CurrentActor() actor: Actor,
+    @Param('claimId', ParseUUIDPipe) claimId: string,
+  ): Promise<ClaimTimelineDto> {
+    customer(actor);
+    const { claim, events } = await this.claims.timeline(actor, claimId);
+    return {
+      claimId: claim.publicId,
+      status: claim.status,
+      sla: claimSla(claim),
+      events: events.map((e) => ({
+        type: e.type as ClaimTimelineDto['events'][number]['type'],
+        at: toBangkokIso(e.at),
+      })),
+    };
   }
 
   @Post('claims/:claimId/info')

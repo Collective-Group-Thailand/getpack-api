@@ -8,8 +8,10 @@ import {
   type ClaimAction,
   type ClaimLiability,
   type ClaimResolutionKind,
+  type ClaimSeverity,
   type ClaimStatus,
   type ClaimType,
+  type GuaranteeRemedy,
   type Order,
   type Prisma,
 } from '@generated/prisma/client';
@@ -35,6 +37,8 @@ import {
   MAX_CLAIM_PHOTOS,
   RESOLUTION_KINDS,
 } from './claims.dto';
+import { CLAIM_TIMELINE_EVENTS } from './claims.dto';
+import { GuaranteeService } from './guarantee.service';
 import { CLAIM_TRANSITIONS, FINAL_CLAIM_STATUSES, liabilityByRule } from './liability';
 
 const DAY_MS = 86_400_000;
@@ -59,6 +63,24 @@ export interface ResolutionInput {
 }
 
 const USER_REF = { select: { publicId: true, displayName: true } } as const;
+
+/** D-261: the remedy a customer's requested resolution asks for. */
+const REQUESTED_REMEDY: Record<ClaimResolutionKind, GuaranteeRemedy> = {
+  reprint: 'reprint',
+  partial_refund: 'refund',
+  full_refund: 'refund',
+  credit: 'partial_credit',
+  goodwill: 'goodwill',
+};
+/** D-261: what may be done for the customer under each remedy. */
+const REMEDY_ACTIONS: Record<GuaranteeRemedy, ReadonlySet<string>> = {
+  reprint: new Set(['reproduction_job']),
+  refund: new Set(['refund', 'credit_note']),
+  partial_credit: new Set(['credit_note', 'store_credit']),
+  goodwill: new Set<string>(),
+};
+/** Recoveries from the factory or the carrier (D-083) follow any remedy. */
+const RECOVERY_ACTIONS: ReadonlySet<string> = new Set(['factory_deduction', 'carrier_recovery']);
 
 export const CLAIM_INCLUDE = {
   order: {
@@ -91,6 +113,9 @@ export const CLAIM_INCLUDE = {
   liabilityOverriddenBy: USER_REF,
   shipment: { select: { publicId: true, shipmentNo: true } },
   productionJob: { select: { publicId: true, jobNo: true } },
+  sample: { select: { publicId: true } },
+  guaranteePolicyVersion: { select: { publicId: true, versionNo: true } },
+  goodwillMemo: { select: { publicId: true } },
   factory: { select: { publicId: true, code: true } },
   resolutions: {
     orderBy: { id: 'asc' },
@@ -136,6 +161,7 @@ export class ClaimsService implements OnModuleInit {
     private readonly scoping: ScopingService,
     private readonly production: ProductionService,
     private readonly refunds: RefundsService,
+    private readonly guarantee: GuaranteeService,
   ) {}
 
   onModuleInit(): void {
@@ -405,8 +431,19 @@ export class ClaimsService implements OnModuleInit {
     // D-082: the customer claims within the window; automatic and staff claims are not bound by it.
     if (c.origin === 'customer' && at > windowEndsAt)
       throw new DomainException('claims.window_closed', { params: { until: windowEndsAt.toISOString() } });
+    // D-260 / D-263: the guarantee in force at submission, and its SLA clocks.
+    const policy = await this.guarantee.current(at, tx);
+    const sla = policy
+      ? {
+          guaranteePolicyVersionId: policy.id,
+          responseDueAt: await this.guarantee.addBusinessDays(at, policy.responseBusinessDays),
+          evidenceCompleteAt: at,
+          decisionDueAt: await this.guarantee.addBusinessDays(at, policy.decisionBusinessDays),
+        }
+      : {};
     const claim = await tx.claim.create({
       data: {
+        ...sla,
         claimNo: await this.numbering.next(tx, 'claim', at, order.entityId),
         entityId: order.entityId,
         orderId: order.id,
@@ -496,7 +533,8 @@ export class ClaimsService implements OnModuleInit {
       actor,
       publicId,
       'need_info',
-      { infoRequest: note },
+      // D-263: the decision clock stops while Packio waits for the customer.
+      { infoRequest: note, decisionDueAt: null },
       'claim.info_requested',
       ['internal', 'customer'],
       {
@@ -528,7 +566,20 @@ export class ClaimsService implements OnModuleInit {
             customerShareable: true,
           },
         });
-      await this.update(tx, claim, 'under_review', { infoResponse: input.response }, actor);
+      // D-263: the evidence is complete again — the decision clock restarts from now.
+      const at = new Date();
+      const days = await this.decisionDays(tx, claim);
+      await this.update(
+        tx,
+        claim,
+        'under_review',
+        {
+          infoResponse: input.response,
+          evidenceCompleteAt: at,
+          decisionDueAt: days === null ? null : await this.guarantee.addBusinessDays(at, days),
+        },
+        actor,
+      );
       await this.record(tx, claim, 'claim.info_provided', {}, actor, ['internal', 'customer']);
     });
   }
@@ -604,6 +655,7 @@ export class ClaimsService implements OnModuleInit {
           liability: input.liability,
           liabilityOverriddenById: actor.userId,
           overrideReason: input.reason,
+          ...(claim.firstRespondedAt ? {} : { firstRespondedAt: new Date() }),
           rowVersion: { increment: 1 },
         },
       });
@@ -626,7 +678,13 @@ export class ClaimsService implements OnModuleInit {
   async decide(
     actor: UserActor,
     publicId: string,
-    input: { decision: 'approved' | 'rejected'; note: string },
+    input: {
+      decision: 'approved' | 'rejected';
+      note: string;
+      severity?: ClaimSeverity;
+      remedy?: GuaranteeRemedy;
+      goodwillMemoId?: string;
+    },
   ) {
     await this.prisma.withTx(async (tx) => {
       const claim = await this.lock(tx, await this.get(actor, publicId, tx));
@@ -634,11 +692,14 @@ export class ClaimsService implements OnModuleInit {
         throw new DomainException('claims.invalid_status', { params: { status: claim.status } });
       if (input.decision === 'approved' && claim.liability === 'undetermined')
         throw new DomainException('claims.liability_undetermined');
+      const terms = input.decision === 'approved' ? await this.remedyFor(tx, claim, input) : {};
       await this.update(
         tx,
         claim,
         input.decision,
         {
+          ...terms,
+          ...(input.decision === 'rejected' && input.severity ? { severity: input.severity } : {}),
           decisionNote: input.note,
           decidedById: actor.userId,
           decidedAt: new Date(),
@@ -668,6 +729,15 @@ export class ClaimsService implements OnModuleInit {
         if (claim.status !== 'approved')
           throw new DomainException('claims.invalid_status', { params: { status: claim.status } });
         const order = await tx.order.findUniqueOrThrow({ where: { id: claim.orderId } });
+        // D-261 / D-262: what is done for the customer fits the remedy decided; recoveries always may follow.
+        if (claim.remedy) {
+          const fits = REMEDY_ACTIONS[claim.remedy];
+          const wrong = actions.find((a) => !fits.has(a.action) && !RECOVERY_ACTIONS.has(a.action));
+          if (wrong)
+            throw new DomainException('claims.action_not_allowed', {
+              params: { reason: `${wrong.action} does not fit the remedy ${claim.remedy}` },
+            });
+        }
         for (const a of actions) {
           const done = await this.execute(tx, claim, order, a, actor);
           await tx.claimResolution.create({
@@ -788,10 +858,81 @@ export class ClaimsService implements OnModuleInit {
   ) {
     if (!(CLAIM_TRANSITIONS[claim.status] ?? []).includes(to))
       throw new DomainException('claims.invalid_status', { params: { status: claim.status } });
+    // D-263: Packio's first move on the claim is its response.
+    const staff = _actor.type === 'user' && _actor.audience === 'staff';
     await tx.claim.update({
       where: { id: claim.id },
-      data: { ...data, status: to, statusChangedAt: new Date(), rowVersion: { increment: 1 } },
+      data: {
+        ...data,
+        ...(staff && !claim.firstRespondedAt ? { firstRespondedAt: new Date() } : {}),
+        status: to,
+        statusChangedAt: new Date(),
+        rowVersion: { increment: 1 },
+      },
     });
+  }
+
+  /** D-263: the customer's view of the claim's progress — its visible events and the SLA countdowns. */
+  async timeline(
+    actor: Actor,
+    publicId: string,
+  ): Promise<{ claim: ClaimRow; events: { type: string; at: Date }[] }> {
+    const claim = await this.get(actor, publicId);
+    const events = await this.prisma.domainEvent.findMany({
+      where: {
+        aggregateType: 'claim',
+        aggregateId: claim.publicId,
+        type: { in: [...CLAIM_TIMELINE_EVENTS] },
+      },
+      orderBy: [{ occurredAt: 'asc' }, { id: 'asc' }],
+      select: { type: true, occurredAt: true },
+    });
+    return { claim, events: events.map((e) => ({ type: e.type, at: e.occurredAt })) };
+  }
+
+  /** The decision SLA in business days of the claim's guarantee version (or the one in force). */
+  private async decisionDays(tx: Tx, claim: Claim): Promise<number | null> {
+    const version = claim.guaranteePolicyVersionId
+      ? await tx.guaranteePolicyVersion.findUnique({ where: { id: claim.guaranteePolicyVersionId } })
+      : await this.guarantee.current(new Date(), tx);
+    return version?.decisionBusinessDays ?? null;
+  }
+
+  /**
+   * D-261 / D-262: an approval needs the severity and a remedy the claim's guarantee version allows for its type and
+   * severity — the customer's requested resolution when allowed; goodwill only with an approved discount memo of the
+   * same customer. A customer-liable claim (D-083) carries no remedy.
+   */
+  private async remedyFor(
+    tx: Tx,
+    claim: Claim,
+    input: { severity?: ClaimSeverity; remedy?: GuaranteeRemedy; goodwillMemoId?: string },
+  ): Promise<Prisma.ClaimUncheckedUpdateInput> {
+    if (claim.liability === 'customer') return input.severity ? { severity: input.severity } : {};
+    if (!input.severity) throw new DomainException('claims.severity_required');
+    const remedy = input.remedy ?? REQUESTED_REMEDY[claim.requestedResolution];
+    if (remedy === 'goodwill') {
+      const memo = input.goodwillMemoId
+        ? await tx.discountMemo.findUnique({ where: { publicId: input.goodwillMemoId } })
+        : null;
+      if (!memo || memo.status !== 'approved' || memo.customerUserId !== claim.customerUserId)
+        throw new DomainException('discount_memos.not_usable', {
+          params: { status: memo?.status ?? 'unknown' },
+        });
+      return { severity: input.severity, remedy, goodwillMemoId: memo.id };
+    }
+    const version = claim.guaranteePolicyVersionId
+      ? await tx.guaranteePolicyVersion.findUnique({
+          where: { id: claim.guaranteePolicyVersionId },
+          include: { rules: true },
+        })
+      : await this.guarantee.current(new Date(), tx);
+    const allowed = this.guarantee.allowed(version, claim.type, input.severity, claim.liability);
+    if (!allowed.includes(remedy))
+      throw new DomainException('claims.remedy_not_allowed', {
+        params: { remedy, allowed: allowed.join(', ') || 'none' },
+      });
+    return { severity: input.severity, remedy };
   }
 
   private async lock(tx: Tx, claim: { id: bigint }): Promise<Claim> {

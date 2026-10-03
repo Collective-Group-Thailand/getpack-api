@@ -231,6 +231,7 @@ describe('fulfilment from payment to re-production (e2e, B4 quality)', () => {
     await post(cs, `/v1/admin/claims/${claim.id}/actions/review`).expect(200);
     const decided = await post(cs, `/v1/admin/claims/${claim.id}/actions/decide`, {
       decision: 'approved',
+      severity: 'major',
       note: 'สีไม่ตรงพรูฟ',
     }).expect(200);
     expect(decided.body).toMatchObject({ liability: 'factory', liabilityByRule: 'factory' });
