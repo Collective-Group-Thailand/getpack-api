@@ -5,6 +5,7 @@
  * Money and percentages are decimal strings (CLAUDE.md); percentages are in percent (10 = 10 %).
  */
 import { ADVISORY_RULE_SET_SCHEMA } from '../../../src/modules/advisory/rule-set';
+import { STUDIO_PRINT_RULES } from './studio';
 
 export type Confirmation = 'confirmed' | 'proposed' | 'pending_cpa' | 'pending_business';
 
@@ -977,6 +978,81 @@ export const SETTINGS: readonly SettingSeed[] = [
       'D-272 terms a factory accepts when it offers a dieline to the style library (permission to use, adapt and publish the structure); not seeded — factories cannot submit until it is set',
     decisions: ['D-272'],
     ownerRole: 'partner_manager',
+  },
+
+  // --- Studio print checks (U4.B3, D-278 / D-279): owned by Prepress.
+  {
+    key: 'studio.print_rules',
+    valueType: 'json',
+    value: STUDIO_PRINT_RULES,
+    valueSchema: {
+      type: 'object',
+      additionalProperties: false,
+      required: ['rules'],
+      properties: {
+        rules: {
+          type: 'array',
+          maxItems: 100,
+          items: {
+            type: 'object',
+            additionalProperties: false,
+            required: ['id', 'severity', 'evaluatedOn', 'printMethods', 'materialClasses', 'thresholds'],
+            properties: {
+              id: { type: 'string', pattern: '^[a-z][a-z0-9_]{1,63}$' },
+              severity: { enum: ['block', 'warn', 'info'] },
+              evaluatedOn: { type: 'array', items: { enum: ['document', 'web', 'pdf'] }, minItems: 1 },
+              printMethods: {
+                type: ['array', 'null'],
+                items: { enum: ['digital', 'offset', 'flexo', 'none'] },
+              },
+              materialClasses: { type: ['array', 'null'], items: { type: 'string', maxLength: 40 } },
+              thresholds: {
+                type: ['object', 'null'],
+                additionalProperties: { type: ['number', 'string'] },
+              },
+            },
+          },
+        },
+      },
+    },
+    description:
+      'D-278 studio print-check rule catalogue served to the web and evaluated on the document and the print PDF: ' +
+      'rule id, severity, where it runs, print methods / material classes, thresholds (null = off until set); ' +
+      'seeded with the spec 300 / 150 ppi and the ADR-0009 bleed, safe zone and hairline values only',
+    decisions: ['D-278', 'D-070'],
+    confirmation: 'proposed',
+    ownerRole: 'prepress',
+  },
+  {
+    key: 'studio.soft_proof_profiles',
+    valueType: 'json',
+    value: null,
+    unset: true,
+    valueSchema: {
+      type: 'object',
+      additionalProperties: false,
+      required: ['profiles'],
+      properties: {
+        profiles: {
+          type: 'array',
+          maxItems: 50,
+          items: {
+            type: 'object',
+            additionalProperties: false,
+            required: ['materialClass', 'transform'],
+            properties: {
+              materialClass: { type: 'string', maxLength: 40 },
+              label: { type: 'string', maxLength: 200 },
+              transform: { type: 'object', additionalProperties: { type: ['number', 'string'] } },
+            },
+          },
+        },
+      },
+    },
+    description:
+      'D-215 / D-279 simplified soft-proof transforms per material class (preview, never a contract proof); not seeded — no soft proof until Prepress or the factory supplies them',
+    decisions: ['D-215', 'D-279'],
+    ownerRole: 'prepress',
   },
 
   // --- Free dieline download (U3.B5, D-203 / D-271): per signed-in customer; staff are not limited.

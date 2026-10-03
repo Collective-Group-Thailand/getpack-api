@@ -344,6 +344,8 @@ export const ERROR_CODES = {
   'studio.spec_missing': HttpStatus.UNPROCESSABLE_ENTITY,
   'studio.spec_mismatch': HttpStatus.UNPROCESSABLE_ENTITY,
   'studio.rate_limited': HttpStatus.TOO_MANY_REQUESTS,
+  'studio.checks_not_run': HttpStatus.CONFLICT,
+  'studio.block_not_acknowledgeable': HttpStatus.CONFLICT,
 } as const satisfies Record<string, HttpStatus>;
 
 export type ErrorCode = keyof typeof ERROR_CODES;

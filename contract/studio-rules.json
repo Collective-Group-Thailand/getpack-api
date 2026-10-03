@@ -1,0 +1,169 @@
+{
+  "rules": [
+    {
+      "id": "image_resolution",
+      "severity": "warn",
+      "evaluatedOn": [
+        "document",
+        "web",
+        "pdf"
+      ],
+      "printMethods": null,
+      "materialClasses": null,
+      "thresholds": {
+        "warnBelowPpi": 300,
+        "blockBelowPpi": 150
+      }
+    },
+    {
+      "id": "bleed",
+      "severity": "block",
+      "evaluatedOn": [
+        "web",
+        "pdf"
+      ],
+      "printMethods": null,
+      "materialClasses": null,
+      "thresholds": {
+        "bleedMm": "3"
+      }
+    },
+    {
+      "id": "safe_zone",
+      "severity": "warn",
+      "evaluatedOn": [
+        "web",
+        "pdf"
+      ],
+      "printMethods": null,
+      "materialClasses": null,
+      "thresholds": {
+        "safeZoneMm": "3"
+      }
+    },
+    {
+      "id": "min_text_size",
+      "severity": "warn",
+      "evaluatedOn": [
+        "document",
+        "web"
+      ],
+      "printMethods": null,
+      "materialClasses": null,
+      "thresholds": null
+    },
+    {
+      "id": "hairline",
+      "severity": "warn",
+      "evaluatedOn": [
+        "document",
+        "web",
+        "pdf"
+      ],
+      "printMethods": null,
+      "materialClasses": null,
+      "thresholds": {
+        "minStrokePt": "0.25"
+      }
+    },
+    {
+      "id": "rich_black_small_text",
+      "severity": "warn",
+      "evaluatedOn": [
+        "web"
+      ],
+      "printMethods": null,
+      "materialClasses": null,
+      "thresholds": null
+    },
+    {
+      "id": "rgb_out_of_gamut",
+      "severity": "warn",
+      "evaluatedOn": [
+        "web",
+        "pdf"
+      ],
+      "printMethods": [
+        "digital",
+        "offset"
+      ],
+      "materialClasses": null,
+      "thresholds": {}
+    },
+    {
+      "id": "spot_colour_count",
+      "severity": "warn",
+      "evaluatedOn": [
+        "document",
+        "web"
+      ],
+      "printMethods": [
+        "flexo"
+      ],
+      "materialClasses": null,
+      "thresholds": null
+    },
+    {
+      "id": "crosses_crease",
+      "severity": "warn",
+      "evaluatedOn": [
+        "web"
+      ],
+      "printMethods": null,
+      "materialClasses": null,
+      "thresholds": {}
+    },
+    {
+      "id": "crosses_glue",
+      "severity": "warn",
+      "evaluatedOn": [
+        "web"
+      ],
+      "printMethods": null,
+      "materialClasses": null,
+      "thresholds": {}
+    },
+    {
+      "id": "barcode_across_fold",
+      "severity": "block",
+      "evaluatedOn": [
+        "web"
+      ],
+      "printMethods": null,
+      "materialClasses": null,
+      "thresholds": {}
+    },
+    {
+      "id": "barcode_invalid",
+      "severity": "block",
+      "evaluatedOn": [
+        "document",
+        "web",
+        "pdf"
+      ],
+      "printMethods": null,
+      "materialClasses": null,
+      "thresholds": {}
+    },
+    {
+      "id": "white_ink_needed",
+      "severity": "warn",
+      "evaluatedOn": [
+        "web"
+      ],
+      "printMethods": null,
+      "materialClasses": null,
+      "thresholds": null
+    },
+    {
+      "id": "finish_min_feature",
+      "severity": "warn",
+      "evaluatedOn": [
+        "web"
+      ],
+      "printMethods": null,
+      "materialClasses": null,
+      "thresholds": null
+    }
+  ]
+}

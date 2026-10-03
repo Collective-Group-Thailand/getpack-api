@@ -1,0 +1,235 @@
+import { type UserActor } from '@common/context/actor';
+import { DomainException } from '@common/errors/domain.exception';
+import { toBangkokIso } from '@common/time/bangkok';
+import { PrismaService, type Tx } from '@database/prisma.service';
+import { type Prisma } from '@generated/prisma/client';
+import { Injectable } from '@nestjs/common';
+import { DomainEvents } from '@platform/domain-events/domain-events.service';
+import { SettingNotFoundError, SettingsService } from '@platform/settings/settings.service';
+
+import { activeRules, evaluateDocument, type PrintRule } from './print-rules';
+
+/** D-215: what every soft proof says about itself. */
+export const SOFT_PROOF_LABEL = {
+  th: 'ภาพจำลองเพื่อดูตัวอย่าง ไม่ใช่ปรู๊ฟสัญญา',
+  en: 'Preview, not a contract proof',
+};
+
+const RUN_INCLUDE = {
+  findings: { orderBy: { id: 'asc' } },
+  version: { select: { versionNo: true } },
+  rulesVersion: { select: { versionNo: true } },
+} satisfies Prisma.DesignCheckRunInclude;
+type RunRow = Prisma.DesignCheckRunGetPayload<{ include: typeof RUN_INCLUDE }>;
+
+export interface CheckRunView {
+  versionNo: number;
+  rulesVersion: number;
+  source: string;
+  counts: { block: number; warn: number; info: number };
+  findings: {
+    ruleId: string;
+    severity: string;
+    elementId: string | null;
+    details: Record<string, unknown>;
+    acknowledged: boolean;
+  }[];
+  /** No block, and every warning acknowledged: the version may be ordered (D-278). */
+  ready: boolean;
+  evaluatedAt: string;
+}
+
+/**
+ * D-278 studio print checks: the rule catalogue in force is served to the web; the server evaluates a design version
+ * against it (the rules it can see in the document), once per version and catalogue version, and stores the run and
+ * its findings; the customer acknowledges warnings (who, when) — blocks are fixed, never acknowledged.
+ */
+@Injectable()
+export class StudioChecksService {
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly settings: SettingsService,
+    private readonly events: DomainEvents,
+  ) {}
+
+  async rules() {
+    const catalogue = await this.settings.at('studio.print_rules');
+    let profiles: { materialClass: string; label?: string; transform: Record<string, number | string> }[] =
+      [];
+    try {
+      profiles = (await this.settings.at('studio.soft_proof_profiles')).value.profiles;
+    } catch (error) {
+      if (!(error instanceof SettingNotFoundError)) throw error;
+    }
+    return {
+      version: catalogue.versionNo,
+      effectiveFrom: toBangkokIso(catalogue.effectiveFrom),
+      rules: catalogue.value.rules,
+      softProof: { label: SOFT_PROOF_LABEL, profiles },
+    };
+  }
+
+  async run(actor: UserActor, designId: string, versionNo?: number): Promise<CheckRunView> {
+    const { doc, version } = await this.version(actor, designId, versionNo);
+    const catalogue = await this.settings.at('studio.print_rules');
+    const existing = await this.prisma.designCheckRun.findUnique({
+      where: {
+        versionId_rulesVersionId_source: {
+          versionId: version.id,
+          rulesVersionId: catalogue.versionId,
+          source: 'document',
+        },
+      },
+      include: RUN_INCLUDE,
+    });
+    if (existing) return this.view(existing);
+    const rules: PrintRule[] = activeRules(catalogue.value, {
+      printMethod: doc.printMethod,
+      materialClass: doc.styleVariant?.base.materialClass ?? null,
+    });
+    const assets = await this.prisma.designAsset.findMany({
+      where: { documentId: doc.id },
+      select: { publicId: true, fileObject: { select: { widthPx: true, heightPx: true } } },
+    });
+    const findings = evaluateDocument(version.document, rules, {
+      assetPx: new Map(assets.map((a) => [a.publicId, a.fileObject])),
+    });
+    const count = (s: string) => findings.filter((f) => f.severity === s).length;
+    const run = await this.prisma.withTx(async (tx) => {
+      const created = await tx.designCheckRun.create({
+        data: {
+          versionId: version.id,
+          rulesVersionId: catalogue.versionId,
+          source: 'document',
+          blockCount: count('block'),
+          warnCount: count('warn'),
+          infoCount: count('info'),
+          findings: {
+            create: findings.map((f) => ({
+              ruleId: f.ruleId,
+              severity: f.severity,
+              elementId: f.elementId,
+              details: f.details as Prisma.InputJsonValue,
+            })),
+          },
+        },
+        include: RUN_INCLUDE,
+      });
+      await this.record(tx, actor, doc.publicId, 'design.checked', {
+        versionNo: version.versionNo,
+        rulesVersion: catalogue.versionNo,
+        block: created.blockCount,
+        warn: created.warnCount,
+      });
+      return created;
+    });
+    return this.view(run);
+  }
+
+  /** The customer accepts a warning of the version's latest run; a block cannot be acknowledged. */
+  async acknowledge(
+    actor: UserActor,
+    designId: string,
+    input: { versionNo?: number; ruleId: string; elementId?: string },
+  ): Promise<CheckRunView> {
+    const { doc, version } = await this.version(actor, designId, input.versionNo);
+    const run = await this.latest(version.id);
+    if (!run) throw new DomainException('studio.checks_not_run');
+    const elementId = input.elementId ?? '';
+    const finding = run.findings.find((f) => f.ruleId === input.ruleId && f.elementId === elementId);
+    if (!finding)
+      throw new DomainException('validation.failed', {
+        errors: [
+          {
+            path: 'ruleId',
+            code: 'not_found',
+            message: 'no such finding in the latest check of the version',
+          },
+        ],
+      });
+    if (finding.severity === 'block') throw new DomainException('studio.block_not_acknowledgeable');
+    await this.prisma.withTx(async (tx) => {
+      const done = await tx.designCheckAcknowledgement.findUnique({
+        where: { versionId_ruleId_elementId: { versionId: version.id, ruleId: input.ruleId, elementId } },
+      });
+      if (done) return;
+      await tx.designCheckAcknowledgement.create({
+        data: { versionId: version.id, ruleId: input.ruleId, elementId, userId: actor.userId },
+      });
+      await this.record(tx, actor, doc.publicId, 'design.check_acknowledged', {
+        versionNo: version.versionNo,
+        ruleId: input.ruleId,
+        elementId: elementId || null,
+      });
+    });
+    return this.view(run);
+  }
+
+  /** The latest stored run of a version (document source), for the order hand-off (B4). */
+  async latest(versionId: bigint, db: Tx = this.prisma): Promise<RunRow | null> {
+    return db.designCheckRun.findFirst({
+      where: { versionId, source: 'document' },
+      orderBy: { evaluatedAt: 'desc' },
+      include: RUN_INCLUDE,
+    });
+  }
+
+  async view(run: RunRow): Promise<CheckRunView> {
+    const acks = await this.prisma.designCheckAcknowledgement.findMany({
+      where: { versionId: run.versionId },
+      select: { ruleId: true, elementId: true },
+    });
+    const acked = new Set(acks.map((a) => `${a.ruleId}\u0000${a.elementId}`));
+    const findings = run.findings.map((f) => ({
+      ruleId: f.ruleId,
+      severity: f.severity,
+      elementId: f.elementId || null,
+      details: f.details as Record<string, unknown>,
+      acknowledged: acked.has(`${f.ruleId}\u0000${f.elementId}`),
+    }));
+    return {
+      versionNo: run.version.versionNo,
+      rulesVersion: run.rulesVersion.versionNo,
+      source: run.source,
+      counts: { block: run.blockCount, warn: run.warnCount, info: run.infoCount },
+      findings,
+      ready: run.blockCount === 0 && findings.every((f) => f.severity !== 'warn' || f.acknowledged),
+      evaluatedAt: toBangkokIso(run.evaluatedAt),
+    };
+  }
+
+  // --- helpers -----------------------------------------------------------------------------------------------
+
+  private async version(actor: UserActor, designId: string, versionNo?: number) {
+    const doc = await this.prisma.designDocument.findFirst({
+      where: { publicId: designId, ownerUserId: actor.userId, deletedAt: null },
+      include: { styleVariant: { select: { base: { select: { materialClass: true } } } } },
+    });
+    if (!doc) throw new DomainException('http.not_found');
+    const version =
+      versionNo !== undefined
+        ? await this.prisma.designDocumentVersion.findUnique({
+            where: { documentId_versionNo: { documentId: doc.id, versionNo } },
+          })
+        : doc.currentVersionId
+          ? await this.prisma.designDocumentVersion.findUnique({ where: { id: doc.currentVersionId } })
+          : null;
+    if (!version)
+      throw new DomainException(versionNo !== undefined ? 'http.not_found' : 'designs.version_required');
+    return { doc, version };
+  }
+
+  private async record(
+    tx: Tx,
+    actor: UserActor,
+    designId: string,
+    type: string,
+    data: Record<string, unknown>,
+  ) {
+    await this.events.record(
+      tx,
+      { type, aggregateType: 'design_document', aggregateId: designId, payload: { designId, ...data } },
+      actor,
+    );
+  }
+}

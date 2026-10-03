@@ -1,4 +1,4 @@
-import { CurrentActor } from '@common/auth/auth.decorators';
+import { CurrentActor, Public } from '@common/auth/auth.decorators';
 import { type Actor, type UserActor } from '@common/context/actor';
 import { DomainException } from '@common/errors/domain.exception';
 import { Idempotent } from '@common/idempotency/idempotent.decorator';
@@ -10,16 +10,23 @@ import { RFQ_EXAMPLE } from '@modules/rfq/rfqs.controller';
 import { RfqDto } from '@modules/rfq/rfqs.dto';
 import { RfqsService } from '@modules/rfq/rfqs.service';
 import { ApiSurface } from '@modules/surfaces/surfaces';
-import { Body, Controller, HttpCode, Param, ParseUUIDPipe, Post } from '@nestjs/common';
+import { Body, Controller, Get, HttpCode, Param, ParseUUIDPipe, Post } from '@nestjs/common';
 import { ApiBody, ApiParam } from '@nestjs/swagger';
 
 import {
+  AcknowledgeCheckDto,
+  CHECK_RUN_EXAMPLE,
+  CheckRunDto,
+  RULES_EXAMPLE,
+  RunChecksDto,
   SaveStudioQuoteDto,
   STUDIO_QUOTE_EXAMPLE,
   StudioQuoteDto,
   StudioQuoteRequestDto,
   StudioRfqDto,
+  StudioRulesDto,
 } from './studio.dto';
+import { StudioChecksService } from './studio-checks.service';
 import { StudioQuotesService } from './studio-quotes.service';
 
 const DECISIONS = ['D-277', 'D-275', 'D-051'];
@@ -46,8 +53,97 @@ function customer(actor: Actor): UserActor {
 export class StoreStudioController {
   constructor(
     private readonly studio: StudioQuotesService,
+    private readonly checks: StudioChecksService,
     private readonly rfqs: RfqsService,
   ) {}
+
+  @Get('rules')
+  @Public()
+  @ApiEndpoint({
+    id: 'store.studio.getRules',
+    summary: 'Print-check rules',
+    description:
+      'The rule catalogue in force — ids, severities, where each runs, the print methods and material classes it ' +
+      'applies to and its thresholds (null: off until Prepress sets it) — so the web checks with exactly the ' +
+      'server’s thresholds, and the soft-proof profiles per material class, always labelled “preview, not a ' +
+      'contract proof” (D-278, D-279, D-215).',
+    implements: ['D-278', 'D-279', 'D-215'],
+  })
+  @ApiSuccess(200, { description: 'Rules', type: StudioRulesDto, example: RULES_EXAMPLE })
+  @ApiStandardErrors()
+  getRules(): Promise<StudioRulesDto> {
+    return this.checks.rules();
+  }
+
+  @Post(':designId/checks')
+  @HttpCode(200)
+  @designParam
+  @ApiEndpoint({
+    id: 'store.studio.runChecks',
+    summary: 'Check my design version',
+    description:
+      'Evaluates a version (default: the current one) against the catalogue in force — the rules the server can ' +
+      'see in the document: image resolution, text size, hairlines, barcodes, flexo colour count — once per version ' +
+      'and catalogue version; the run is stored. `ready` is true with no block and every warning acknowledged (D-278).',
+    implements: ['D-278', 'D-283'],
+  })
+  @ApiBody({ type: RunChecksDto, examples: { default: { value: {} } } })
+  @ApiSuccess(200, { description: 'Check run', type: CheckRunDto, example: CHECK_RUN_EXAMPLE })
+  @ApiStandardErrors(
+    'http.bad_request',
+    'http.malformed_json',
+    'http.not_found',
+    'validation.failed',
+    'designs.version_required',
+  )
+  runChecks(
+    @CurrentActor() actor: Actor,
+    @Param('designId', ParseUUIDPipe) designId: string,
+    @Body() body: RunChecksDto,
+  ): Promise<CheckRunDto> {
+    return this.checks.run(customer(actor), designId, body.versionNo);
+  }
+
+  @Post(':designId/checks/acknowledgements')
+  @HttpCode(200)
+  @designParam
+  @ApiEndpoint({
+    id: 'store.studio.acknowledgeCheck',
+    summary: 'Accept a print-check warning',
+    description:
+      'Records that I accept a warning of the version’s latest check (who, when); blocks must be fixed and are ' +
+      'refused (D-278).',
+    implements: ['D-278'],
+  })
+  @ApiBody({
+    type: AcknowledgeCheckDto,
+    examples: { default: { value: { ruleId: 'image_resolution', elementId: 'el-7' } } },
+  })
+  @ApiSuccess(200, {
+    description: 'Check run',
+    type: CheckRunDto,
+    example: {
+      ...CHECK_RUN_EXAMPLE,
+      findings: [{ ...CHECK_RUN_EXAMPLE.findings[0]!, acknowledged: true }],
+      ready: true,
+    },
+  })
+  @ApiStandardErrors(
+    'http.bad_request',
+    'http.malformed_json',
+    'http.not_found',
+    'validation.failed',
+    'designs.version_required',
+    'studio.checks_not_run',
+    'studio.block_not_acknowledgeable',
+  )
+  acknowledge(
+    @CurrentActor() actor: Actor,
+    @Param('designId', ParseUUIDPipe) designId: string,
+    @Body() body: AcknowledgeCheckDto,
+  ): Promise<CheckRunDto> {
+    return this.checks.acknowledge(customer(actor), designId, body);
+  }
 
   @Post(':designId/quote')
   @HttpCode(200)

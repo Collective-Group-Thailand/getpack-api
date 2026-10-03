@@ -1483,6 +1483,14 @@
     "rate_limited": {
       "title": "Too many price checks",
       "detail": "Prices are checked too often; wait a moment and try again."
+    },
+    "checks_not_run": {
+      "title": "Check the design first",
+      "detail": "This version has not been checked yet; run the checks, then accept the warnings."
+    },
+    "block_not_acknowledgeable": {
+      "title": "This must be fixed",
+      "detail": "A blocking problem cannot be accepted; fix it in the design."
     }
   }
 }

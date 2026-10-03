@@ -68,6 +68,8 @@ describe('seed data (B1.2 step 3)', () => {
       // B4.1: D-070 fixes four severities only; the rest and every threshold are proposed (ADR-0009).
       'artwork.approval_checklist': 'pending_business',
       'artwork.preflight_rules': 'proposed',
+      // U4.B3: the studio rule catalogue reuses the spec and ADR-0009 values; severities not stated are proposed (D-278).
+      'studio.print_rules': 'proposed',
       'artwork.prepress_sla_business_hours': 'pending_business',
       // B5: accounting-design ⚖ positions and proposed operating values of Finance.
       'tax.rounding_mode': 'pending_cpa',

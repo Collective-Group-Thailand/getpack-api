@@ -1,3 +1,4 @@
+import { type RuleCatalogue } from '@modules/studio/print-rules';
 /**
  * Typed view of the settings the code reads (ADR-0005). Keys absent here can still be read as
  * `unknown`; add a key when a module starts using it. Values are what `setting_versions.value`
@@ -190,6 +191,12 @@ export interface SettingValues {
   'styles.published_wave': number;
   'dielines.downloads_per_day': number;
   'dielines.downloads_per_minute': number;
+  /** D-278 the studio print-check rule catalogue (Prepress). */
+  'studio.print_rules': RuleCatalogue;
+  /** Not seeded (D-279): simplified soft-proof transforms per material class. */
+  'studio.soft_proof_profiles': {
+    profiles: { materialClass: string; label?: string; transform: Record<string, number | string> }[];
+  };
   /** Not seeded (D-272): no partner dieline intake until set. */
   'styles.intake_terms': { textTh: string; textEn: string };
 }

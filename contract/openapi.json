@@ -3345,6 +3345,28 @@
           "type": "https://errors.packio/structural_requests.invalid_transition"
         }
       },
+      "problem.studio.block_not_acknowledgeable": {
+        "summary": "studio.block_not_acknowledgeable",
+        "value": {
+          "code": "studio.block_not_acknowledgeable",
+          "detail": "ปัญหาที่ต้องแก้ไขไม่สามารถกดยอมรับได้ กรุณาแก้ไขในแบบ",
+          "requestId": "6f1c2d8e-2c7b-4d0e-9d1c-3f1a2b3c4d5e",
+          "status": 409,
+          "title": "ต้องแก้ไขก่อน",
+          "type": "https://errors.packio/studio.block_not_acknowledgeable"
+        }
+      },
+      "problem.studio.checks_not_run": {
+        "summary": "studio.checks_not_run",
+        "value": {
+          "code": "studio.checks_not_run",
+          "detail": "เวอร์ชันนี้ยังไม่ได้ตรวจ กรุณาตรวจงานก่อนแล้วจึงยอมรับคำเตือน",
+          "requestId": "6f1c2d8e-2c7b-4d0e-9d1c-3f1a2b3c4d5e",
+          "status": 409,
+          "title": "กรุณาตรวจงานก่อน",
+          "type": "https://errors.packio/studio.checks_not_run"
+        }
+      },
       "problem.studio.rate_limited": {
         "summary": "studio.rate_limited",
         "value": {
@@ -4040,6 +4062,31 @@
           "expense"
         ],
         "type": "string"
+      },
+      "AcknowledgeCheckDto": {
+        "properties": {
+          "elementId": {
+            "description": "The element of the finding; absent for a design-wide one",
+            "example": "el-7",
+            "maxLength": 200,
+            "type": "string"
+          },
+          "ruleId": {
+            "example": "image_resolution",
+            "pattern": "^[a-z][a-z0-9_]{1,63}$",
+            "type": "string"
+          },
+          "versionNo": {
+            "description": "A saved version; absent: the current one",
+            "example": 3,
+            "minimum": 1,
+            "type": "integer"
+          }
+        },
+        "required": [
+          "ruleId"
+        ],
+        "type": "object"
       },
       "ActivationRequestDto": {
         "properties": {
@@ -17337,6 +17384,71 @@
         ],
         "type": "object"
       },
+      "CheckCountsDto": {
+        "properties": {
+          "block": {
+            "example": 0,
+            "type": "integer"
+          },
+          "info": {
+            "example": 0,
+            "type": "integer"
+          },
+          "warn": {
+            "example": 1,
+            "type": "integer"
+          }
+        },
+        "required": [
+          "block",
+          "warn",
+          "info"
+        ],
+        "type": "object"
+      },
+      "CheckFindingDto": {
+        "properties": {
+          "acknowledged": {
+            "example": false,
+            "type": "boolean"
+          },
+          "details": {
+            "additionalProperties": true,
+            "example": {
+              "ppi": 212
+            },
+            "type": "object"
+          },
+          "elementId": {
+            "description": "The document element; null for the design",
+            "example": "el-7",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "ruleId": {
+            "example": "image_resolution",
+            "type": "string"
+          },
+          "severity": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/PreflightSeverity"
+              }
+            ],
+            "example": "warn"
+          }
+        },
+        "required": [
+          "ruleId",
+          "severity",
+          "elementId",
+          "details",
+          "acknowledged"
+        ],
+        "type": "object"
+      },
       "CheckItemDto": {
         "properties": {
           "amount": {
@@ -17418,6 +17530,55 @@
           "summary",
           "figures",
           "items"
+        ],
+        "type": "object"
+      },
+      "CheckRunDto": {
+        "properties": {
+          "counts": {
+            "$ref": "#/components/schemas/CheckCountsDto"
+          },
+          "evaluatedAt": {
+            "example": "2026-10-03T10:00:00+07:00",
+            "format": "date-time",
+            "type": "string"
+          },
+          "findings": {
+            "items": {
+              "$ref": "#/components/schemas/CheckFindingDto"
+            },
+            "type": "array"
+          },
+          "ready": {
+            "description": "No block and every warning acknowledged: the version may be ordered",
+            "example": false,
+            "type": "boolean"
+          },
+          "rulesVersion": {
+            "example": 1,
+            "type": "integer"
+          },
+          "source": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/DesignCheckSource"
+              }
+            ],
+            "example": "document"
+          },
+          "versionNo": {
+            "example": 3,
+            "type": "integer"
+          }
+        },
+        "required": [
+          "versionNo",
+          "rulesVersion",
+          "source",
+          "counts",
+          "findings",
+          "ready",
+          "evaluatedAt"
         ],
         "type": "object"
       },
@@ -29129,6 +29290,13 @@
         ],
         "type": "object"
       },
+      "DesignCheckSource": {
+        "enum": [
+          "document",
+          "pdf"
+        ],
+        "type": "string"
+      },
       "DesignDocumentDto": {
         "properties": {
           "assets": {
@@ -39311,6 +39479,23 @@
         ],
         "type": "string"
       },
+      "LocalisedLabelDto": {
+        "properties": {
+          "en": {
+            "example": "Preview, not a contract proof",
+            "type": "string"
+          },
+          "th": {
+            "example": "ภาพจำลองเพื่อดูตัวอย่าง ไม่ใช่ปรู๊ฟสัญญา",
+            "type": "string"
+          }
+        },
+        "required": [
+          "th",
+          "en"
+        ],
+        "type": "object"
+      },
       "LoyaltySummaryDto": {
         "properties": {
           "availablePoints": {
@@ -48787,6 +48972,94 @@
         ],
         "type": "string"
       },
+      "PrintRuleDto": {
+        "properties": {
+          "evaluatedOn": {
+            "example": [
+              "document",
+              "web",
+              "pdf"
+            ],
+            "items": {
+              "$ref": "#/components/schemas/PrintRuleSurface"
+            },
+            "type": "array"
+          },
+          "id": {
+            "description": "Rule id shared by the web, the server and preflight",
+            "example": "image_resolution",
+            "type": "string"
+          },
+          "materialClasses": {
+            "description": "Material classes; null = all",
+            "example": null,
+            "items": {
+              "type": "string"
+            },
+            "type": [
+              "array",
+              "null"
+            ]
+          },
+          "printMethods": {
+            "description": "Print methods; null = all",
+            "example": null,
+            "items": {
+              "type": "string"
+            },
+            "type": [
+              "array",
+              "null"
+            ]
+          },
+          "severity": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/PreflightSeverity"
+              }
+            ],
+            "example": "warn"
+          },
+          "thresholds": {
+            "additionalProperties": {
+              "oneOf": [
+                {
+                  "type": "number"
+                },
+                {
+                  "type": "string"
+                }
+              ]
+            },
+            "description": "null: the rule is off until Prepress sets it",
+            "example": {
+              "blockBelowPpi": 150,
+              "warnBelowPpi": 300
+            },
+            "type": [
+              "object",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "id",
+          "severity",
+          "evaluatedOn",
+          "printMethods",
+          "materialClasses",
+          "thresholds"
+        ],
+        "type": "object"
+      },
+      "PrintRuleSurface": {
+        "enum": [
+          "document",
+          "web",
+          "pdf"
+        ],
+        "type": "string"
+      },
       "PrintSides": {
         "enum": [
           "outside",
@@ -58020,6 +58293,17 @@
         ],
         "type": "object"
       },
+      "RunChecksDto": {
+        "properties": {
+          "versionNo": {
+            "description": "A saved version; absent: the current one",
+            "example": 3,
+            "minimum": 1,
+            "type": "integer"
+          }
+        },
+        "type": "object"
+      },
       "SalesBreakdownDto": {
         "properties": {
           "gmv": {
@@ -63098,6 +63382,63 @@
           "same_customer"
         ],
         "type": "string"
+      },
+      "SoftProofDto": {
+        "properties": {
+          "label": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/LocalisedLabelDto"
+              }
+            ],
+            "description": "Shown with every soft proof (D-215)"
+          },
+          "profiles": {
+            "description": "Empty until Prepress sets them (D-279)",
+            "items": {
+              "$ref": "#/components/schemas/SoftProofProfileDto"
+            },
+            "type": "array"
+          }
+        },
+        "required": [
+          "label",
+          "profiles"
+        ],
+        "type": "object"
+      },
+      "SoftProofProfileDto": {
+        "properties": {
+          "label": {
+            "example": "กระดาษอาร์ตการ์ด",
+            "type": "string"
+          },
+          "materialClass": {
+            "example": "paperboard",
+            "type": "string"
+          },
+          "transform": {
+            "additionalProperties": {
+              "oneOf": [
+                {
+                  "type": "number"
+                },
+                {
+                  "type": "string"
+                }
+              ]
+            },
+            "example": {
+              "multiply": "#f2efe8"
+            },
+            "type": "object"
+          }
+        },
+        "required": [
+          "materialClass",
+          "transform"
+        ],
+        "type": "object"
       },
       "SortOrder": {
         "enum": [
@@ -68440,6 +68781,36 @@
           "quantities",
           "deliveryPostcode",
           "spec"
+        ],
+        "type": "object"
+      },
+      "StudioRulesDto": {
+        "properties": {
+          "effectiveFrom": {
+            "example": "2026-10-03T00:00:00+07:00",
+            "format": "date-time",
+            "type": "string"
+          },
+          "rules": {
+            "items": {
+              "$ref": "#/components/schemas/PrintRuleDto"
+            },
+            "type": "array"
+          },
+          "softProof": {
+            "$ref": "#/components/schemas/SoftProofDto"
+          },
+          "version": {
+            "description": "The catalogue version (stored with every check run)",
+            "example": 1,
+            "type": "integer"
+          }
+        },
+        "required": [
+          "version",
+          "effectiveFrom",
+          "rules",
+          "softProof"
         ],
         "type": "object"
       },
@@ -372651,6 +373022,671 @@
         "summary": "Cancel a structure request",
         "tags": [
           "store.structuralRequests"
+        ]
+      }
+    },
+    "/v1/store/studio/rules": {
+      "get": {
+        "description": "The rule catalogue in force — ids, severities, where each runs, the print methods and material classes it applies to and its thresholds (null: off until Prepress sets it) — so the web checks with exactly the server’s thresholds, and the soft-proof profiles per material class, always labelled “preview, not a contract proof” (D-278, D-279, D-215).\n\nImplements: D-278, D-279, D-215.",
+        "operationId": "store.studio.getRules",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "effectiveFrom": "2026-10-03T00:00:00+07:00",
+                  "rules": [
+                    {
+                      "evaluatedOn": [
+                        "document",
+                        "web",
+                        "pdf"
+                      ],
+                      "id": "image_resolution",
+                      "materialClasses": null,
+                      "printMethods": null,
+                      "severity": "warn",
+                      "thresholds": {
+                        "blockBelowPpi": 150,
+                        "warnBelowPpi": 300
+                      }
+                    }
+                  ],
+                  "softProof": {
+                    "label": {
+                      "en": "Preview, not a contract proof",
+                      "th": "ภาพจำลองเพื่อดูตัวอย่าง ไม่ใช่ปรู๊ฟสัญญา"
+                    },
+                    "profiles": []
+                  },
+                  "version": 1
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/StudioRulesDto"
+                }
+              }
+            },
+            "description": "Rules",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.unauthenticated": {
+                    "$ref": "#/components/examples/problem.auth.unauthenticated"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.unauthenticated`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.forbidden": {
+                    "$ref": "#/components/examples/problem.auth.forbidden"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.forbidden`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [],
+        "summary": "Print-check rules",
+        "tags": [
+          "store.studio"
+        ]
+      }
+    },
+    "/v1/store/studio/{designId}/checks": {
+      "post": {
+        "description": "Evaluates a version (default: the current one) against the catalogue in force — the rules the server can see in the document: image resolution, text size, hairlines, barcodes, flexo colour count — once per version and catalogue version; the run is stored. `ready` is true with no block and every warning acknowledged (D-278).\n\nImplements: D-278, D-283.",
+        "operationId": "store.studio.runChecks",
+        "parameters": [
+          {
+            "description": "My studio design",
+            "in": "path",
+            "name": "designId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "examples": {
+                "default": {
+                  "value": {}
+                }
+              },
+              "schema": {
+                "$ref": "#/components/schemas/RunChecksDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "counts": {
+                    "block": 0,
+                    "info": 0,
+                    "warn": 1
+                  },
+                  "evaluatedAt": "2026-10-03T10:00:00+07:00",
+                  "findings": [
+                    {
+                      "acknowledged": false,
+                      "details": {
+                        "ppi": 212
+                      },
+                      "elementId": "el-7",
+                      "ruleId": "image_resolution",
+                      "severity": "warn"
+                    }
+                  ],
+                  "ready": false,
+                  "rulesVersion": 1,
+                  "source": "document",
+                  "versionNo": 3
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/CheckRunDto"
+                }
+              }
+            },
+            "description": "Check run",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "400": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.bad_request": {
+                    "$ref": "#/components/examples/problem.http.bad_request"
+                  },
+                  "http.malformed_json": {
+                    "$ref": "#/components/examples/problem.http.malformed_json"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.bad_request`, `http.malformed_json`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.unauthenticated": {
+                    "$ref": "#/components/examples/problem.auth.unauthenticated"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.unauthenticated`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.forbidden": {
+                    "$ref": "#/components/examples/problem.auth.forbidden"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.forbidden`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "404": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.not_found": {
+                    "$ref": "#/components/examples/problem.http.not_found"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.not_found`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "designs.version_required": {
+                    "$ref": "#/components/examples/problem.designs.version_required"
+                  },
+                  "validation.failed": {
+                    "$ref": "#/components/examples/problem.validation.failed"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `designs.version_required`, `validation.failed`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "customer": []
+          }
+        ],
+        "summary": "Check my design version",
+        "tags": [
+          "store.studio"
+        ]
+      }
+    },
+    "/v1/store/studio/{designId}/checks/acknowledgements": {
+      "post": {
+        "description": "Records that I accept a warning of the version’s latest check (who, when); blocks must be fixed and are refused (D-278).\n\nImplements: D-278.",
+        "operationId": "store.studio.acknowledgeCheck",
+        "parameters": [
+          {
+            "description": "My studio design",
+            "in": "path",
+            "name": "designId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "examples": {
+                "default": {
+                  "value": {
+                    "elementId": "el-7",
+                    "ruleId": "image_resolution"
+                  }
+                }
+              },
+              "schema": {
+                "$ref": "#/components/schemas/AcknowledgeCheckDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "counts": {
+                    "block": 0,
+                    "info": 0,
+                    "warn": 1
+                  },
+                  "evaluatedAt": "2026-10-03T10:00:00+07:00",
+                  "findings": [
+                    {
+                      "acknowledged": true,
+                      "details": {
+                        "ppi": 212
+                      },
+                      "elementId": "el-7",
+                      "ruleId": "image_resolution",
+                      "severity": "warn"
+                    }
+                  ],
+                  "ready": true,
+                  "rulesVersion": 1,
+                  "source": "document",
+                  "versionNo": 3
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/CheckRunDto"
+                }
+              }
+            },
+            "description": "Check run",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "400": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.bad_request": {
+                    "$ref": "#/components/examples/problem.http.bad_request"
+                  },
+                  "http.malformed_json": {
+                    "$ref": "#/components/examples/problem.http.malformed_json"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.bad_request`, `http.malformed_json`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.unauthenticated": {
+                    "$ref": "#/components/examples/problem.auth.unauthenticated"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.unauthenticated`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.forbidden": {
+                    "$ref": "#/components/examples/problem.auth.forbidden"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.forbidden`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "404": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.not_found": {
+                    "$ref": "#/components/examples/problem.http.not_found"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.not_found`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "409": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "studio.block_not_acknowledgeable": {
+                    "$ref": "#/components/examples/problem.studio.block_not_acknowledgeable"
+                  },
+                  "studio.checks_not_run": {
+                    "$ref": "#/components/examples/problem.studio.checks_not_run"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `studio.block_not_acknowledgeable`, `studio.checks_not_run`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "designs.version_required": {
+                    "$ref": "#/components/examples/problem.designs.version_required"
+                  },
+                  "validation.failed": {
+                    "$ref": "#/components/examples/problem.validation.failed"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `designs.version_required`, `validation.failed`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "customer": []
+          }
+        ],
+        "summary": "Accept a print-check warning",
+        "tags": [
+          "store.studio"
         ]
       }
     },

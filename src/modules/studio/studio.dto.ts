@@ -213,3 +213,213 @@ export const STUDIO_QUOTE_EXAMPLE: StudioQuoteDto = {
   previousSpecHash: 'a3f1c2d4e5b60718293a4b5c6d7e8f90a1b2c3d4e5f60718293a4b5c6d7e8f90',
   changes: [{ quantity: 1000, previousUnitPrice: '12.96', unitPrice: '13.38' }],
 };
+
+// --- Print checks (U4.B3, D-278) ------------------------------------------------------------------------
+
+export class PrintRuleDto {
+  @ApiProperty({
+    example: 'image_resolution',
+    description: 'Rule id shared by the web, the server and preflight',
+  })
+  id!: string;
+
+  @ApiProperty({ enum: ['block', 'warn', 'info'], enumName: 'PreflightSeverity', example: 'warn' })
+  severity!: string;
+
+  @ApiProperty({
+    enum: ['document', 'web', 'pdf'],
+    enumName: 'PrintRuleSurface',
+    isArray: true,
+    example: ['document', 'web', 'pdf'],
+  })
+  evaluatedOn!: string[];
+
+  @ApiProperty({ type: [String], nullable: true, example: null, description: 'Print methods; null = all' })
+  printMethods!: string[] | null;
+
+  @ApiProperty({ type: [String], nullable: true, example: null, description: 'Material classes; null = all' })
+  materialClasses!: string[] | null;
+
+  @ApiProperty({
+    type: 'object',
+    additionalProperties: { oneOf: [{ type: 'number' }, { type: 'string' }] },
+    nullable: true,
+    example: { warnBelowPpi: 300, blockBelowPpi: 150 },
+    description: 'null: the rule is off until Prepress sets it',
+  })
+  thresholds!: Record<string, number | string> | null;
+}
+
+export class LocalisedLabelDto {
+  @ApiProperty({ example: 'ภาพจำลองเพื่อดูตัวอย่าง ไม่ใช่ปรู๊ฟสัญญา' })
+  th!: string;
+
+  @ApiProperty({ example: 'Preview, not a contract proof' })
+  en!: string;
+}
+
+export class SoftProofProfileDto {
+  @ApiProperty({ example: 'paperboard' })
+  materialClass!: string;
+
+  @ApiPropertyOptional({ example: 'กระดาษอาร์ตการ์ด' })
+  label?: string;
+
+  @ApiProperty({
+    type: 'object',
+    additionalProperties: { oneOf: [{ type: 'number' }, { type: 'string' }] },
+    example: { multiply: '#f2efe8' },
+  })
+  transform!: Record<string, number | string>;
+}
+
+export class SoftProofDto {
+  @ApiProperty({ type: LocalisedLabelDto, description: 'Shown with every soft proof (D-215)' })
+  label!: LocalisedLabelDto;
+
+  @ApiProperty({ type: [SoftProofProfileDto], description: 'Empty until Prepress sets them (D-279)' })
+  profiles!: SoftProofProfileDto[];
+}
+
+export class StudioRulesDto {
+  @ApiProperty({
+    type: 'integer',
+    example: 1,
+    description: 'The catalogue version (stored with every check run)',
+  })
+  version!: number;
+
+  @ApiProperty({ format: 'date-time', example: '2026-10-03T00:00:00+07:00' })
+  effectiveFrom!: string;
+
+  @ApiProperty({ type: [PrintRuleDto] })
+  rules!: PrintRuleDto[];
+
+  @ApiProperty({ type: SoftProofDto })
+  softProof!: SoftProofDto;
+}
+
+export class CheckCountsDto {
+  @ApiProperty({ type: 'integer', example: 0 })
+  block!: number;
+
+  @ApiProperty({ type: 'integer', example: 1 })
+  warn!: number;
+
+  @ApiProperty({ type: 'integer', example: 0 })
+  info!: number;
+}
+
+export class CheckFindingDto {
+  @ApiProperty({ example: 'image_resolution' })
+  ruleId!: string;
+
+  @ApiProperty({ enum: ['block', 'warn', 'info'], enumName: 'PreflightSeverity', example: 'warn' })
+  severity!: string;
+
+  @ApiProperty({
+    type: String,
+    nullable: true,
+    example: 'el-7',
+    description: 'The document element; null for the design',
+  })
+  elementId!: string | null;
+
+  @ApiProperty({ type: 'object', additionalProperties: true, example: { ppi: 212 } })
+  details!: Record<string, unknown>;
+
+  @ApiProperty({ example: false })
+  acknowledged!: boolean;
+}
+
+export class CheckRunDto {
+  @ApiProperty({ type: 'integer', example: 3 })
+  versionNo!: number;
+
+  @ApiProperty({ type: 'integer', example: 1 })
+  rulesVersion!: number;
+
+  @ApiProperty({ enum: ['document', 'pdf'], enumName: 'DesignCheckSource', example: 'document' })
+  source!: string;
+
+  @ApiProperty({ type: CheckCountsDto })
+  counts!: CheckCountsDto;
+
+  @ApiProperty({ type: [CheckFindingDto] })
+  findings!: CheckFindingDto[];
+
+  @ApiProperty({
+    example: false,
+    description: 'No block and every warning acknowledged: the version may be ordered',
+  })
+  ready!: boolean;
+
+  @ApiProperty({ format: 'date-time', example: '2026-10-03T10:00:00+07:00' })
+  evaluatedAt!: string;
+}
+
+export class RunChecksDto {
+  @ApiPropertyOptional({
+    type: 'integer',
+    example: 3,
+    description: 'A saved version; absent: the current one',
+  })
+  @IsOptional()
+  @Type(() => Number)
+  @IsInt()
+  @Min(1)
+  versionNo?: number;
+}
+
+export class AcknowledgeCheckDto extends RunChecksDto {
+  @ApiProperty({ example: 'image_resolution' })
+  @IsString()
+  @Matches(/^[a-z][a-z0-9_]{1,63}$/)
+  ruleId!: string;
+
+  @ApiPropertyOptional({
+    example: 'el-7',
+    description: 'The element of the finding; absent for a design-wide one',
+  })
+  @IsOptional()
+  @IsString()
+  @MaxLength(200)
+  elementId?: string;
+}
+
+export const RULES_EXAMPLE: StudioRulesDto = {
+  version: 1,
+  effectiveFrom: '2026-10-03T00:00:00+07:00',
+  rules: [
+    {
+      id: 'image_resolution',
+      severity: 'warn',
+      evaluatedOn: ['document', 'web', 'pdf'],
+      printMethods: null,
+      materialClasses: null,
+      thresholds: { warnBelowPpi: 300, blockBelowPpi: 150 },
+    },
+  ],
+  softProof: {
+    label: { th: 'ภาพจำลองเพื่อดูตัวอย่าง ไม่ใช่ปรู๊ฟสัญญา', en: 'Preview, not a contract proof' },
+    profiles: [],
+  },
+};
+
+export const CHECK_RUN_EXAMPLE: CheckRunDto = {
+  versionNo: 3,
+  rulesVersion: 1,
+  source: 'document',
+  counts: { block: 0, warn: 1, info: 0 },
+  findings: [
+    {
+      ruleId: 'image_resolution',
+      severity: 'warn',
+      elementId: 'el-7',
+      details: { ppi: 212 },
+      acknowledged: false,
+    },
+  ],
+  ready: false,
+  evaluatedAt: '2026-10-03T10:00:00+07:00',
+};

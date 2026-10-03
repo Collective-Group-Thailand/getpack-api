@@ -555,17 +555,19 @@ model DesignDocumentVersion {
   createdAt       DateTime          @default(now()) @map("created_at") @db.Timestamptz(6)
   createdById     BigInt?           @map("created_by")
 
-  designDocument      DesignDocument       @relation("DesignDocumentVersions", fields: [documentId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_design_document_versions__document_id")
-  thumbnailFile       FileObject?          @relation("DesignDocumentVersionThumbnail", fields: [thumbnailFileId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_design_document_versions__thumbnail_file_id")
-  currentOf           DesignDocument?      @relation("DesignDocumentCurrentVersion")
-  createdBy           User?                @relation("DesignDocumentVersionCreatedBy", fields: [createdById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_design_document_versions__created_by")
-  submissions         ArtworkSubmission[]  @relation("ArtworkSubmissionDesignVersion")
-  semiDesignTemplates SemiDesignTemplate[] @relation("SemiDesignTemplateDesignVersion")
-  lockedOf            DesignDocument[]     @relation("DesignDocumentLockedVersion")
-  cartItems           CartItem[]           @relation("CartItemDesignVersion")
-  orders              Order[]              @relation("OrderDesignVersion")
-  quotes              Quote[]              @relation("QuoteDesignVersion")
-  rfqs                Rfq[]                @relation("RfqDesignVersion")
+  designDocument      DesignDocument               @relation("DesignDocumentVersions", fields: [documentId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_design_document_versions__document_id")
+  thumbnailFile       FileObject?                  @relation("DesignDocumentVersionThumbnail", fields: [thumbnailFileId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_design_document_versions__thumbnail_file_id")
+  currentOf           DesignDocument?              @relation("DesignDocumentCurrentVersion")
+  createdBy           User?                        @relation("DesignDocumentVersionCreatedBy", fields: [createdById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_design_document_versions__created_by")
+  submissions         ArtworkSubmission[]          @relation("ArtworkSubmissionDesignVersion")
+  semiDesignTemplates SemiDesignTemplate[]         @relation("SemiDesignTemplateDesignVersion")
+  lockedOf            DesignDocument[]             @relation("DesignDocumentLockedVersion")
+  cartItems           CartItem[]                   @relation("CartItemDesignVersion")
+  orders              Order[]                      @relation("OrderDesignVersion")
+  quotes              Quote[]                      @relation("QuoteDesignVersion")
+  checkRuns           DesignCheckRun[]             @relation("DesignCheckRunVersion")
+  checkAcks           DesignCheckAcknowledgement[] @relation("DesignCheckAckVersion")
+  rfqs                Rfq[]                        @relation("RfqDesignVersion")
 
   @@unique([documentId, versionNo], map: "ux_design_document_versions__document_id__version_no")
   @@index([createdById], map: "ix_design_document_versions__created_by")
@@ -1839,4 +1841,68 @@ model ConversationMessage {
   @@index([senderUserId], map: "ix_conversation_messages__sender_user_id")
   @@index([fileObjectId], map: "ix_conversation_messages__file_object_id")
   @@map("conversation_messages")
+}
+
+// --- Studio print checks (U4.B3, D-278) -------------------------------------------------------------
+
+/// Where a studio check ran: the server over the document, or the print PDF (ADR-0011).
+enum DesignCheckSource {
+  document
+  pdf
+
+  @@map("design_check_source")
+}
+
+/// D-278 one evaluation of a design version against the rule catalogue in force (`studio.print_rules` version).
+model DesignCheckRun {
+  id             BigInt            @id(map: "pk_design_check_runs") @default(autoincrement())
+  publicId       String            @unique(map: "ux_design_check_runs__public_id") @default(dbgenerated("uuidv7()")) @map("public_id") @db.Uuid
+  versionId      BigInt            @map("version_id")
+  rulesVersionId BigInt            @map("rules_version_id")
+  source         DesignCheckSource
+  blockCount     Int               @map("block_count")
+  warnCount      Int               @map("warn_count")
+  infoCount      Int               @map("info_count")
+  evaluatedAt    DateTime          @default(now()) @map("evaluated_at") @db.Timestamptz(6)
+
+  version      DesignDocumentVersion @relation("DesignCheckRunVersion", fields: [versionId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_design_check_runs__version_id")
+  rulesVersion SettingVersion        @relation("DesignCheckRunRules", fields: [rulesVersionId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_design_check_runs__rules_version_id")
+  findings     DesignCheckFinding[]
+
+  @@unique([versionId, rulesVersionId, source], map: "ux_design_check_runs__version__rules__source")
+  @@index([rulesVersionId], map: "ix_design_check_runs__rules_version_id")
+  @@map("design_check_runs")
+}
+
+/// A rule an element (or the design) breaks in a run; the same rule ids as the web and the PDF preflight.
+model DesignCheckFinding {
+  id        BigInt            @id(map: "pk_design_check_findings") @default(autoincrement())
+  runId     BigInt            @map("run_id")
+  ruleId    String            @map("rule_id")
+  severity  PreflightSeverity
+  /// The document element, empty for the whole design.
+  elementId String            @default("") @map("element_id")
+  details   Json              @default("{}")
+
+  run DesignCheckRun @relation(fields: [runId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_design_check_findings__run_id")
+
+  @@index([runId], map: "ix_design_check_findings__run_id")
+  @@map("design_check_findings")
+}
+
+/// D-278 the customer accepted a warning of a version (who, when); blocks are never acknowledged.
+model DesignCheckAcknowledgement {
+  id             BigInt   @id(map: "pk_design_check_acknowledgements") @default(autoincrement())
+  versionId      BigInt   @map("version_id")
+  ruleId         String   @map("rule_id")
+  elementId      String   @default("") @map("element_id")
+  userId         BigInt   @map("user_id")
+  acknowledgedAt DateTime @default(now()) @map("acknowledged_at") @db.Timestamptz(6)
+
+  version DesignDocumentVersion @relation("DesignCheckAckVersion", fields: [versionId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_design_check_acknowledgements__version_id")
+  user    User                  @relation("DesignCheckAckUser", fields: [userId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_design_check_acknowledgements__user_id")
+
+  @@unique([versionId, ruleId, elementId], map: "ux_design_check_acknowledgements__version__rule__element")
+  @@index([userId], map: "ix_design_check_acknowledgements__user_id")
+  @@map("design_check_acknowledgements")
 }

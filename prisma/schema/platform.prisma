@@ -497,6 +497,8 @@ model SettingVersion {
 
   styleIntakes StyleIntake[] @relation("StyleIntakeTermsVersion")
 
+  designCheckRuns DesignCheckRun[] @relation("DesignCheckRunRules")
+
   @@unique([settingId, versionNo], map: "ux_setting_versions__setting_id__version_no")
   @@index([settingId, effectiveFrom(sort: Desc), versionNo(sort: Desc)], map: "ix_setting_versions__resolution", where: raw("status = 'approved'"))
   @@index([approvalRequestId], map: "ix_setting_versions__approval_request_id")
