@@ -2,6 +2,36 @@
 
 Session 0 of every U-B session (`docs/prompts/U1-update-2026-09-29.md`) and every U2 session (`docs/prompts/U2-benchmark-2026-09-29.md`): one row per requirement → `met | partial | missing`, the evidence, and what the session changes. Requirements already `met` are not touched. Newest session on top.
 
+## U5.B5 — Assistant backend, behind a flag and an evaluation gate (2026-10-04, planning)
+
+Prompt `docs/prompts/U5-ux-excellence.md` §U5.B5. Checked against `v0.36.0`. D-218 stands: **assistant off at launch**, vendor and data terms decided in an ADR before it is enabled anywhere — this session builds the backend against a **fake model** and writes **ADR-0012 as Proposed**; nothing calls a real vendor until the ADR is accepted and the settings below are set. Post-launch (D-219). **D-304–D-306** proposed by this plan (the user approved the plan up front and asked for auto mode, 2026-10-04).
+
+| # | Requirement | Status | Evidence | Resolution |
+|---|---|---|---|---|
+| 1a | Tool: style search | missing (tool) | `StylesStoreService.list` with `q` (trigram + filters, `styles-store.service.ts:103`) | tool `search_styles` over it (published styles only) |
+| 1b | Tool: advisor | missing (tool) | `AdvisoryService.recommend` (`advisory.service.ts:127`, flag `advisory.enabled`) | tool `recommend_structure`, as the signed-in customer |
+| 1c | Tool: quote | missing (tool) | store calculate path: `validateConfiguration` → `assertStoreRules` → `QuoteEngineService.price` → `storeView` (`pricing/quotes/quotes.controller.ts:206`) | tool `get_quote`, same path, no factory data (D-050) |
+| 1d | Tool: order status, own orders only | missing (tool) | store order views (`order-views.ts`) | tool `get_order_status` by order code, scoped to the customer (another's → "not found") |
+| 1e | Tool: glossary | missing | no glossary content anywhere | `glossary_terms` CMS resource (Marketing, `cms.manage`) + tool `lookup_glossary` |
+| 1f | Tool: help search (pgvector over our articles) | missing | articles (`catalog.prisma:1620`, audience D-295), FAQs; empty embedding tables only for products / designs (ADR-0001) | `article_embeddings` (vector(1536), HNSW cosine), indexing job over published `public` articles and FAQs, embedding port (fake until ADR-0012), tool `search_help` |
+| 1g | Tool: CS hand-off | partial | `SupportService.handoff` (D-221) | tool `create_handoff` → a D-221 ticket on the customer's support thread |
+| 2a | Facts only from a tool result of the same turn, enforced by response validation | missing | — | D-304 validator: every price, date, strength value and number in the reply must appear in a tool result (or the customer's own message) of the turn; policy statements need a help / glossary result; otherwise the reply is replaced by a safe answer offering hand-off (logged `blocked_unsupported_fact`) |
+| 2b | Refuse other customers' data | missing | — | tools run as the signed-in customer; order status scoped; refusal recorded |
+| 2c | Rate limits, cost ceiling per session | missing | — | D-305 settings: messages per minute / per day per customer, turns per session, session cost ceiling (unset → assistant not configured) priced from `assistant.model_prices` |
+| 3a | Evaluation harness ≥ 100 Thai cases + red-team set, nightly run, dashboard | missing | — | `eval/cases.ts` (≥ 100 Thai cases, ≥ 20 red-team), fixture tools (the model and guardrails are evaluated, not the shop's data), `assistant_eval_runs`, nightly job, `admin.assistant.*` dashboard |
+| 3b | Logs per PDPA retention with opt-out | missing | — | `assistant_sessions` / `assistant_turns`; opt-out keeps no text (counts and tool names only); purge after `assistant.log_retention_days` |
+| 4 | Model / vendor and data terms in an ADR before enabling anywhere | missing | ADR index ends at 0011 | ADR-0012 **Proposed**; D-306 gate: `assistant.enabled` can be switched on outside local only once `assistant.provider` is set (ADR accepted) and the latest evaluation of that provider meets `assistant.eval_min_pass_rate_pct` with every red-team case passed |
+| DoD | Evaluation pass rate met before the flag can be enabled outside local | missing | flag upsert guard exists for `devOnly` (`feature-flags-admin.service.ts:45`) | same guard point, `409 assistant.not_cleared` |
+
+**Proposed decisions (conservative; reversible by a new decision):**
+- **D-304 Assistant scope and guardrails** — a signed-in customer's helper with seven tools only (search styles, recommend a structure, quote, my order status, glossary, help search, hand-off to CS); it never states a price, date, board strength, quantity or policy that no tool returned in the same turn (the reply is replaced by a safe answer offering CS), never names a factory (D-050), never reads another customer's data, and hands off to CS on request or when it cannot answer.
+- **D-305 Limits and logs** — per customer `assistant.messages_per_minute` (6) and `assistant.messages_per_day` (60), `assistant.turns_per_session` (30), a session cost ceiling `assistant.session_cost_ceiling_usd` (**unset** — the assistant is "not configured" until a cost owner sets it), priced with `assistant.model_prices`; sessions and turns kept `assistant.log_retention_days` (**30**) then purged; a customer may opt out of logging (only counts, tool names and outcomes are kept).
+- **D-306 Enabling gate** — flag `assistant.enabled` (off). Outside local (production, or real integrations) it can be switched on only when `assistant.provider` names the ADR-0012 choice and the latest evaluation run of that provider passed at least `assistant.eval_min_pass_rate_pct` (**unset**) of the cases with **every** red-team case passed; else 409.
+
+**Assumptions:** (1) The fake model is rule-based Thai intent matching; it makes the harness, guardrails and tools testable, it is not a quality claim. (2) Evaluation runs with fixture tools so a pass rate measures the model and the guardrails, never the day's catalogue. (3) Help search covers published `public` articles and FAQs (partner articles are never searched, D-295). (4) Glossary terms are new CMS content (Marketing), empty until written. (5) Prices in `assistant.model_prices` are the vendor's published list prices (USD per million tokens), a configuration of the cost ceiling, not a Packio price.
+
+**Plan:** a schema + glossary CMS · b model port + fake + orchestrator + guardrails + limits + logs · c tools (live) + help indexing · d evaluation harness + nightly + dashboard + gate · e ADR-0012, store / admin endpoints → `v0.37.0`; merge to `main`.
+
 ## U5.B1, U5.B2, U5.B3, U5.B4, U5.B6 — Launchpad & defaults, messaging, RFQ basket, designer PDF, journey analytics (2026-10-04, planning)
 
 Prompt `docs/prompts/U5-ux-excellence.md` (U5.B5, the assistant, is its own session). Checked against `v0.31.0`. All of U5 is **post-launch** (D-219): nothing here blocks `docs/LAUNCH-CHECKLIST.md`. Decisions D-217 / D-218 / D-221 stand; **D-297–D-303** proposed by this plan (the user approved the plan up front and asked for auto mode, 2026-10-04).
