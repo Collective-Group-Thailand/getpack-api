@@ -1,6 +1,8 @@
-import { WorkingDayCalendar } from '@common/time/working-days';
+import { type DayHours, WorkingDayCalendar } from '@common/time/working-days';
 import { PrismaService } from '@database/prisma.service';
 import { Injectable } from '@nestjs/common';
+
+import { WEEKDAYS } from './factory-hours.dto';
 
 /** The national calendar keyed in by admins once a year (D-161). */
 export const NATIONAL_CALENDAR_CODE = 'th_public';
@@ -41,7 +43,26 @@ export class BusinessCalendarService {
         extraWorking.delete(key);
       }
     }
-    const calendar = new WorkingDayCalendar({ weekendDays: own.weekendDays, nonWorking, extraWorking });
+    // D-292: a factory calendar takes the factory's weekly hours (effective-dated) over its weekend.
+    const versions = own.factoryId
+      ? await this.prisma.factoryBusinessHours.findMany({
+          where: { factoryId: own.factoryId },
+          orderBy: { effectiveFrom: 'asc' },
+        })
+      : [];
+    const weekly = versions.map((v) => {
+      const hours = v.hours as Record<string, DayHours | null>;
+      return {
+        from: v.effectiveFrom.toISOString().slice(0, 10),
+        days: WEEKDAYS.map((d) => hours[d] ?? null),
+      };
+    });
+    const calendar = new WorkingDayCalendar({
+      weekendDays: own.weekendDays,
+      nonWorking,
+      extraWorking,
+      ...(weekly.length > 0 && { weekly }),
+    });
     this.cache.set(code, { calendar, loadedAt: Date.now() });
     return calendar;
   }

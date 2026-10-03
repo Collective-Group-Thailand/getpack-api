@@ -7,6 +7,7 @@ import {
 } from './bank-accounts/bank-accounts.controller';
 import { AdminFactoriesController, PartnerFactoriesController } from './factories/factories.controller';
 import { factorySubresourcesController } from './factories/factory-subresources.controller';
+import { PartnerCalendarController } from './factories/partner-calendar.controller';
 import { IndexSeriesController } from './index-series/index-series.controller';
 import {
   AdminFactoryOperationsController,
@@ -63,4 +64,5 @@ export const PARTNERS_PARTNER_CONTROLLERS: Type<unknown>[] = [
   PartnerPriceProposalsController,
   PartnerFactorySelfServiceController,
   PartnerChangeRequestsController,
+  PartnerCalendarController,
 ];

@@ -55,3 +55,33 @@ describe('WorkingDayCalendar (D-161)', () => {
     expect(() => calendar.addWorkingMinutes(new Date(), 1.5)).toThrow(RangeError);
   });
 });
+
+describe('WorkingDayCalendar weekly hours (D-292)', () => {
+  const mon = { from: '08:00', to: '17:00' };
+  const sat = { from: '08:00', to: '12:00' };
+  // From 2026-11-02 the factory works Saturday mornings and not Monday.
+  const calendar = new WorkingDayCalendar({
+    weekendDays: [0, 6],
+    nonWorking: new Set(['2026-11-04']),
+    extraWorking: new Set(),
+    weekly: [{ from: '2026-11-02', days: [null, null, mon, mon, mon, mon, sat] }],
+  });
+
+  it('replaces the weekend from its effective day, holidays and closures still apply', () => {
+    expect(calendar.isWorkingDay('2026-10-26')).toBe(true); // a Monday before the version
+    expect(calendar.isWorkingDay('2026-10-31')).toBe(false); // a Saturday before it
+    expect(calendar.isWorkingDay('2026-11-02')).toBe(false); // Monday: no hours
+    expect(calendar.isWorkingDay('2026-11-07')).toBe(true); // Saturday: hours
+    expect(calendar.isWorkingDay('2026-11-04')).toBe(false); // a closure on a working weekday
+    expect(calendar.hoursOn('2026-11-07')).toEqual(sat);
+    expect(calendar.hoursOn('2026-10-26')).toBeNull();
+  });
+
+  it('counts business time inside each day’s own window', () => {
+    // Friday 2026-11-06 16:00 + 3 h: 1 h Friday, 2 h Saturday from 08:00 → Saturday 10:00 (Bangkok).
+    const start = new Date('2026-11-06T09:00:00Z');
+    expect(calendar.addBusinessMinutes(start, 180, { from: '09:00', to: '18:00' }).toISOString()).toBe(
+      '2026-11-07T03:00:00.000Z',
+    );
+  });
+});

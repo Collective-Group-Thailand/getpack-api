@@ -9,6 +9,23 @@ export interface WorkingDayRules {
   weekendDays: readonly number[];
   nonWorking: ReadonlySet<string>;
   extraWorking: ReadonlySet<string>;
+  /**
+   * D-292 a factory's weekly hours, effective-dated (oldest first): from `from` (a Bangkok day) on, a day of week
+   * (0 = Sunday) with no hours is not worked and a day with hours is — they replace `weekendDays` — and business
+   * time counts inside that day's window instead of `calendar.business_hours`.
+   */
+  weekly?: readonly WeeklyHours[];
+}
+
+export interface DayHours {
+  from: string;
+  to: string;
+}
+
+export interface WeeklyHours {
+  from: string;
+  /** Indexed by day of week, 0 = Sunday. */
+  days: readonly (DayHours | null)[];
 }
 
 /** Safety bound: no SLA or lead time spans more than this many calendar days. */
@@ -21,7 +38,23 @@ export class WorkingDayCalendar {
     if (this.rules.extraWorking.has(day)) return true;
     if (this.rules.nonWorking.has(day)) return false;
     const dow = bangkokDayOfWeek(startOfBangkokDay(day));
+    const weekly = this.weeklyOn(day);
+    if (weekly) return weekly.days[dow] !== null && weekly.days[dow] !== undefined;
     return !this.rules.weekendDays.includes(dow);
+  }
+
+  /** D-292: the factory's hours on `day` when its weekly hours define them, else null. */
+  hoursOn(day: string): DayHours | null {
+    const weekly = this.weeklyOn(day);
+    return weekly ? (weekly.days[bangkokDayOfWeek(startOfBangkokDay(day))] ?? null) : null;
+  }
+
+  private weeklyOn(day: string): WeeklyHours | undefined {
+    const versions = this.rules.weekly;
+    if (!versions?.length) return undefined;
+    let found: WeeklyHours | undefined;
+    for (const v of versions) if (v.from <= day) found = v;
+    return found;
   }
 
   /**
@@ -75,15 +108,18 @@ export class WorkingDayCalendar {
       if (!m) throw new RangeError(`not a time of day: ${hhmm}`);
       return (Number(m[1]) * 60 + Number(m[2])) * 60_000;
     };
-    const open = offset(window.from);
-    const close = offset(window.to);
-    if (close <= open) throw new RangeError('the business-hours window must end after it starts');
+    if (offset(window.to) <= offset(window.from))
+      throw new RangeError('the business-hours window must end after it starts');
     let remaining = minutes * 60_000;
     let cursor = start.getTime();
     for (let scanned = 0; scanned < MAX_SCAN_DAYS; scanned++) {
       const day = bangkokDate(new Date(cursor));
       const dayStart = startOfBangkokDay(day).getTime();
-      if (this.isWorkingDay(day)) {
+      // D-292: a factory's own hours replace the platform window on the days they define.
+      const hours = this.hoursOn(day) ?? window;
+      const open = offset(hours.from);
+      const close = offset(hours.to);
+      if (this.isWorkingDay(day) && close > open) {
         const from = Math.max(cursor, dayStart + open);
         const to = dayStart + close;
         if (from < to) {

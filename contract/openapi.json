@@ -29886,6 +29886,25 @@
         ],
         "type": "object"
       },
+      "DayHoursDto": {
+        "properties": {
+          "from": {
+            "description": "Asia/Bangkok `HH:mm`",
+            "example": "08:00",
+            "type": "string"
+          },
+          "to": {
+            "description": "Asia/Bangkok `HH:mm`, after `from`",
+            "example": "17:00",
+            "type": "string"
+          }
+        },
+        "required": [
+          "from",
+          "to"
+        ],
+        "type": "object"
+      },
       "DecideClaimDto": {
         "properties": {
           "decision": {
@@ -34529,6 +34548,42 @@
           "offboardedAt",
           "onboarding",
           "updatedAt"
+        ],
+        "type": "object"
+      },
+      "FactoryHoursVersionDto": {
+        "properties": {
+          "createdAt": {
+            "example": "2026-10-03T15:00:00+07:00",
+            "format": "date-time",
+            "type": "string"
+          },
+          "effectiveFrom": {
+            "description": "In force from this Bangkok day",
+            "example": "2026-10-05",
+            "format": "date",
+            "type": "string"
+          },
+          "hours": {
+            "$ref": "#/components/schemas/WeeklyHoursDto"
+          },
+          "id": {
+            "example": "0192f3a0-7c1e-7d2a-9b1f-0000000e7501",
+            "format": "uuid",
+            "type": "string"
+          },
+          "inForce": {
+            "description": "The version in force today",
+            "example": true,
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "id",
+          "effectiveFrom",
+          "hours",
+          "inForce",
+          "createdAt"
         ],
         "type": "object"
       },
@@ -62920,6 +62975,24 @@
         ],
         "type": "object"
       },
+      "SetFactoryHoursDto": {
+        "properties": {
+          "effectiveFrom": {
+            "description": "From tomorrow (Asia/Bangkok) on (D-292)",
+            "example": "2026-10-05",
+            "format": "date",
+            "type": "string"
+          },
+          "hours": {
+            "$ref": "#/components/schemas/WeeklyHoursDto"
+          }
+        },
+        "required": [
+          "effectiveFrom",
+          "hours"
+        ],
+        "type": "object"
+      },
       "SetFactoryUserRolesDto": {
         "properties": {
           "roles": {
@@ -80360,6 +80433,122 @@
           "disabled"
         ],
         "type": "string"
+      },
+      "WeeklyHoursDto": {
+        "properties": {
+          "fri": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/DayHoursDto"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Null: closed that day",
+            "example": {
+              "from": "08:00",
+              "to": "17:00"
+            }
+          },
+          "mon": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/DayHoursDto"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Null: closed that day",
+            "example": {
+              "from": "08:00",
+              "to": "17:00"
+            }
+          },
+          "sat": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/DayHoursDto"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Null: closed that day",
+            "example": {
+              "from": "08:00",
+              "to": "12:00"
+            }
+          },
+          "sun": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/DayHoursDto"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Null: closed that day",
+            "example": null
+          },
+          "thu": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/DayHoursDto"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Null: closed that day",
+            "example": {
+              "from": "08:00",
+              "to": "17:00"
+            }
+          },
+          "tue": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/DayHoursDto"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Null: closed that day",
+            "example": {
+              "from": "08:00",
+              "to": "17:00"
+            }
+          },
+          "wed": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/DayHoursDto"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Null: closed that day",
+            "example": {
+              "from": "08:00",
+              "to": "17:00"
+            }
+          }
+        },
+        "required": [
+          "mon",
+          "tue",
+          "wed",
+          "thu",
+          "fri",
+          "sat",
+          "sun"
+        ],
+        "type": "object"
       },
       "WhtCategory": {
         "enum": [
@@ -181329,6 +181518,504 @@
         "summary": "Propose a new payout bank account",
         "tags": [
           "admin.factories"
+        ],
+        "x-required-permissions": [
+          "partners.manage"
+        ]
+      }
+    },
+    "/v1/admin/factories/{factoryId}/business-hours": {
+      "get": {
+        "description": "Its effective-dated versions, newest first, and which is in force; none means the platform weekend and `calendar.business_hours` (D-292).\n\nImplements: D-292, D-209.",
+        "operationId": "admin.calendar.listFactoryHours",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "factoryId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "example": [
+                  {
+                    "createdAt": "2026-10-03T15:00:00+07:00",
+                    "effectiveFrom": "2026-10-05",
+                    "hours": {
+                      "fri": {
+                        "from": "08:00",
+                        "to": "17:00"
+                      },
+                      "mon": {
+                        "from": "08:00",
+                        "to": "17:00"
+                      },
+                      "sat": {
+                        "from": "08:00",
+                        "to": "12:00"
+                      },
+                      "sun": null,
+                      "thu": {
+                        "from": "08:00",
+                        "to": "17:00"
+                      },
+                      "tue": {
+                        "from": "08:00",
+                        "to": "17:00"
+                      },
+                      "wed": {
+                        "from": "08:00",
+                        "to": "17:00"
+                      }
+                    },
+                    "id": "0192f3a0-7c1e-7d2a-9b1f-0000000e7501",
+                    "inForce": true
+                  }
+                ],
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/FactoryHoursVersionDto"
+                  },
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Versions",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.unauthenticated": {
+                    "$ref": "#/components/examples/problem.auth.unauthenticated"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.unauthenticated`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.forbidden": {
+                    "$ref": "#/components/examples/problem.auth.forbidden"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.forbidden`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "404": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.not_found": {
+                    "$ref": "#/components/examples/problem.http.not_found"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.not_found`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "validation.failed": {
+                    "$ref": "#/components/examples/problem.validation.failed"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `validation.failed`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "staff": []
+          }
+        ],
+        "summary": "A factory’s weekly hours",
+        "tags": [
+          "admin.calendar"
+        ],
+        "x-required-permissions": [
+          "partners.read"
+        ]
+      },
+      "put": {
+        "description": "The Partner Manager sets the factory’s hours from a day on (tomorrow at the earliest, Asia/Bangkok): days without hours are not worked, the others count their own window for business time; national holidays and closures still apply. Audited; due dates already computed never move (D-292).\n\nImplements: D-292, D-209.",
+        "operationId": "admin.calendar.setFactoryHours",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "factoryId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "examples": {
+                "default": {
+                  "value": {
+                    "effectiveFrom": "2026-10-05",
+                    "hours": {
+                      "fri": {
+                        "from": "08:00",
+                        "to": "17:00"
+                      },
+                      "mon": {
+                        "from": "08:00",
+                        "to": "17:00"
+                      },
+                      "sat": {
+                        "from": "08:00",
+                        "to": "12:00"
+                      },
+                      "sun": null,
+                      "thu": {
+                        "from": "08:00",
+                        "to": "17:00"
+                      },
+                      "tue": {
+                        "from": "08:00",
+                        "to": "17:00"
+                      },
+                      "wed": {
+                        "from": "08:00",
+                        "to": "17:00"
+                      }
+                    }
+                  }
+                }
+              },
+              "schema": {
+                "$ref": "#/components/schemas/SetFactoryHoursDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "createdAt": "2026-10-03T15:00:00+07:00",
+                  "effectiveFrom": "2026-10-05",
+                  "hours": {
+                    "fri": {
+                      "from": "08:00",
+                      "to": "17:00"
+                    },
+                    "mon": {
+                      "from": "08:00",
+                      "to": "17:00"
+                    },
+                    "sat": {
+                      "from": "08:00",
+                      "to": "12:00"
+                    },
+                    "sun": null,
+                    "thu": {
+                      "from": "08:00",
+                      "to": "17:00"
+                    },
+                    "tue": {
+                      "from": "08:00",
+                      "to": "17:00"
+                    },
+                    "wed": {
+                      "from": "08:00",
+                      "to": "17:00"
+                    }
+                  },
+                  "id": "0192f3a0-7c1e-7d2a-9b1f-0000000e7501",
+                  "inForce": false
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/FactoryHoursVersionDto"
+                }
+              }
+            },
+            "description": "Version",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "400": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.bad_request": {
+                    "$ref": "#/components/examples/problem.http.bad_request"
+                  },
+                  "http.malformed_json": {
+                    "$ref": "#/components/examples/problem.http.malformed_json"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.bad_request`, `http.malformed_json`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.unauthenticated": {
+                    "$ref": "#/components/examples/problem.auth.unauthenticated"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.unauthenticated`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.forbidden": {
+                    "$ref": "#/components/examples/problem.auth.forbidden"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.forbidden`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "404": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.not_found": {
+                    "$ref": "#/components/examples/problem.http.not_found"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.not_found`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "validation.failed": {
+                    "$ref": "#/components/examples/problem.validation.failed"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `validation.failed`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "staff": []
+          }
+        ],
+        "summary": "Set a factory’s weekly hours",
+        "tags": [
+          "admin.calendar"
         ],
         "x-required-permissions": [
           "partners.manage"
@@ -302272,6 +302959,504 @@
         ]
       }
     },
+    "/v1/partner/factories/{factoryId}/business-hours": {
+      "get": {
+        "description": "Effective-dated versions, newest first, and the one in force (D-292).\n\nImplements: D-292, D-209, D-044.",
+        "operationId": "partner.calendar.listHours",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "factoryId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "example": [
+                  {
+                    "createdAt": "2026-10-03T15:00:00+07:00",
+                    "effectiveFrom": "2026-10-05",
+                    "hours": {
+                      "fri": {
+                        "from": "08:00",
+                        "to": "17:00"
+                      },
+                      "mon": {
+                        "from": "08:00",
+                        "to": "17:00"
+                      },
+                      "sat": {
+                        "from": "08:00",
+                        "to": "12:00"
+                      },
+                      "sun": null,
+                      "thu": {
+                        "from": "08:00",
+                        "to": "17:00"
+                      },
+                      "tue": {
+                        "from": "08:00",
+                        "to": "17:00"
+                      },
+                      "wed": {
+                        "from": "08:00",
+                        "to": "17:00"
+                      }
+                    },
+                    "id": "0192f3a0-7c1e-7d2a-9b1f-0000000e7501",
+                    "inForce": true
+                  }
+                ],
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/FactoryHoursVersionDto"
+                  },
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Versions",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.unauthenticated": {
+                    "$ref": "#/components/examples/problem.auth.unauthenticated"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.unauthenticated`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.forbidden": {
+                    "$ref": "#/components/examples/problem.auth.forbidden"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.forbidden`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "404": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.not_found": {
+                    "$ref": "#/components/examples/problem.http.not_found"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.not_found`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "validation.failed": {
+                    "$ref": "#/components/examples/problem.validation.failed"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `validation.failed`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "partner": []
+          }
+        ],
+        "summary": "My factory’s weekly hours",
+        "tags": [
+          "partner.calendar"
+        ],
+        "x-required-permissions": [
+          "factory_capacity.read"
+        ]
+      },
+      "put": {
+        "description": "From tomorrow (Asia/Bangkok) on: days without hours are not worked, the others count their own window; they replace the platform weekend and business hours for my SLAs and promised dates. Audited; due dates already computed — an accepted job’s — never move (D-292).\n\nImplements: D-292, D-209, D-044.",
+        "operationId": "partner.calendar.setHours",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "factoryId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "examples": {
+                "default": {
+                  "value": {
+                    "effectiveFrom": "2026-10-05",
+                    "hours": {
+                      "fri": {
+                        "from": "08:00",
+                        "to": "17:00"
+                      },
+                      "mon": {
+                        "from": "08:00",
+                        "to": "17:00"
+                      },
+                      "sat": {
+                        "from": "08:00",
+                        "to": "12:00"
+                      },
+                      "sun": null,
+                      "thu": {
+                        "from": "08:00",
+                        "to": "17:00"
+                      },
+                      "tue": {
+                        "from": "08:00",
+                        "to": "17:00"
+                      },
+                      "wed": {
+                        "from": "08:00",
+                        "to": "17:00"
+                      }
+                    }
+                  }
+                }
+              },
+              "schema": {
+                "$ref": "#/components/schemas/SetFactoryHoursDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "createdAt": "2026-10-03T15:00:00+07:00",
+                  "effectiveFrom": "2026-10-05",
+                  "hours": {
+                    "fri": {
+                      "from": "08:00",
+                      "to": "17:00"
+                    },
+                    "mon": {
+                      "from": "08:00",
+                      "to": "17:00"
+                    },
+                    "sat": {
+                      "from": "08:00",
+                      "to": "12:00"
+                    },
+                    "sun": null,
+                    "thu": {
+                      "from": "08:00",
+                      "to": "17:00"
+                    },
+                    "tue": {
+                      "from": "08:00",
+                      "to": "17:00"
+                    },
+                    "wed": {
+                      "from": "08:00",
+                      "to": "17:00"
+                    }
+                  },
+                  "id": "0192f3a0-7c1e-7d2a-9b1f-0000000e7501",
+                  "inForce": false
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/FactoryHoursVersionDto"
+                }
+              }
+            },
+            "description": "Version",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "400": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.bad_request": {
+                    "$ref": "#/components/examples/problem.http.bad_request"
+                  },
+                  "http.malformed_json": {
+                    "$ref": "#/components/examples/problem.http.malformed_json"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.bad_request`, `http.malformed_json`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.unauthenticated": {
+                    "$ref": "#/components/examples/problem.auth.unauthenticated"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.unauthenticated`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.forbidden": {
+                    "$ref": "#/components/examples/problem.auth.forbidden"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.forbidden`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "404": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.not_found": {
+                    "$ref": "#/components/examples/problem.http.not_found"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.not_found`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "validation.failed": {
+                    "$ref": "#/components/examples/problem.validation.failed"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `validation.failed`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "partner": []
+          }
+        ],
+        "summary": "Set my factory’s weekly hours",
+        "tags": [
+          "partner.calendar"
+        ],
+        "x-required-permissions": [
+          "factory_capacity.manage"
+        ]
+      }
+    },
     "/v1/partner/factories/{factoryId}/call-off-agreements": {
       "get": {
         "description": "My factory’s call-offs (own factory only, D-044) with my locked buy price per unit. A call-off locks the unit price of a saved quotation option for its quantity for up to `calloff.max_months`, once the quotation’s factory accepts. Each release (≥ the factory’s minimum order, ≤ what is left) is a quotation at the locked unit price — product only, shipping priced at checkout; the first release carries the quotation’s one-off amounts — and a normal order with the normal payment schedule (D-020). No deposit, no stock; what is not released lapses at expiry without charge (D-290).\n\nImplements: D-290, D-206, D-044.",
@@ -303970,6 +305155,632 @@
         ],
         "x-required-permissions": [
           "factory_profile.manage"
+        ]
+      }
+    },
+    "/v1/partner/factories/{factoryId}/closures": {
+      "get": {
+        "description": "Its own closures on top of the national holidays (D-161), from `from` (default today).\n\nImplements: D-292, D-209, D-044, D-161.",
+        "operationId": "partner.calendar.listClosures",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "factoryId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "description": "Closures on or after (default: today)",
+            "in": "query",
+            "name": "from",
+            "required": false,
+            "schema": {
+              "example": "2026-10-01",
+              "format": "date",
+              "type": "string"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "example": [
+                  {
+                    "day": "2027-04-13",
+                    "kind": "closure",
+                    "nameEn": null,
+                    "nameTh": "ปิดซ่อมบำรุงเครื่องจักร",
+                    "observance": "all",
+                    "updatedAt": "2026-12-01T10:00:00+07:00"
+                  }
+                ],
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/CalendarDayDto"
+                  },
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Closures",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.unauthenticated": {
+                    "$ref": "#/components/examples/problem.auth.unauthenticated"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.unauthenticated`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.forbidden": {
+                    "$ref": "#/components/examples/problem.auth.forbidden"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.forbidden`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "404": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.not_found": {
+                    "$ref": "#/components/examples/problem.http.not_found"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.not_found`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "validation.failed": {
+                    "$ref": "#/components/examples/problem.validation.failed"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `validation.failed`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "partner": []
+          }
+        ],
+        "summary": "My factory’s closures",
+        "tags": [
+          "partner.calendar"
+        ],
+        "x-required-permissions": [
+          "factory_capacity.read"
+        ]
+      }
+    },
+    "/v1/partner/factories/{factoryId}/closures/{day}": {
+      "delete": {
+        "description": "From tomorrow on; audited (D-292, D-209).\n\nImplements: D-292, D-209, D-044.",
+        "operationId": "partner.calendar.removeClosure",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "factoryId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "description": "YYYY-MM-DD",
+            "in": "path",
+            "name": "day",
+            "required": true,
+            "schema": {
+              "example": "2026-10-20",
+              "type": "string"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Removed",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.unauthenticated": {
+                    "$ref": "#/components/examples/problem.auth.unauthenticated"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.unauthenticated`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.forbidden": {
+                    "$ref": "#/components/examples/problem.auth.forbidden"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.forbidden`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "404": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.not_found": {
+                    "$ref": "#/components/examples/problem.http.not_found"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.not_found`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "validation.failed": {
+                    "$ref": "#/components/examples/problem.validation.failed"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `validation.failed`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "partner": []
+          }
+        ],
+        "summary": "Reopen my factory on a day",
+        "tags": [
+          "partner.calendar"
+        ],
+        "x-required-permissions": [
+          "factory_capacity.manage"
+        ]
+      },
+      "put": {
+        "description": "From tomorrow (Asia/Bangkok) on, audited; it never moves a due date already computed (accepted jobs keep their SLA) (D-292, D-209).\n\nImplements: D-292, D-209, D-044.",
+        "operationId": "partner.calendar.putClosure",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "factoryId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "description": "YYYY-MM-DD",
+            "in": "path",
+            "name": "day",
+            "required": true,
+            "schema": {
+              "example": "2026-10-20",
+              "type": "string"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "examples": {
+                "default": {
+                  "value": {
+                    "nameTh": "ปิดซ่อมบำรุงเครื่องจักร"
+                  }
+                }
+              },
+              "schema": {
+                "$ref": "#/components/schemas/PutClosureDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "day": "2027-04-13",
+                  "kind": "closure",
+                  "nameEn": null,
+                  "nameTh": "ปิดซ่อมบำรุงเครื่องจักร",
+                  "observance": "all",
+                  "updatedAt": "2026-12-01T10:00:00+07:00"
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/CalendarDayDto"
+                }
+              }
+            },
+            "description": "Day",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "400": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.bad_request": {
+                    "$ref": "#/components/examples/problem.http.bad_request"
+                  },
+                  "http.malformed_json": {
+                    "$ref": "#/components/examples/problem.http.malformed_json"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.bad_request`, `http.malformed_json`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.unauthenticated": {
+                    "$ref": "#/components/examples/problem.auth.unauthenticated"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.unauthenticated`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.forbidden": {
+                    "$ref": "#/components/examples/problem.auth.forbidden"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.forbidden`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "404": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.not_found": {
+                    "$ref": "#/components/examples/problem.http.not_found"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.not_found`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "validation.failed": {
+                    "$ref": "#/components/examples/problem.validation.failed"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `validation.failed`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "partner": []
+          }
+        ],
+        "summary": "Close my factory on a day",
+        "tags": [
+          "partner.calendar"
+        ],
+        "x-required-permissions": [
+          "factory_capacity.manage"
         ]
       }
     },
@@ -401262,6 +403073,10 @@
     {
       "description": "The signed board data sheets Packio keeps for the factory’s boards (D-236, D-044).",
       "name": "partner.boardStrengthSheets"
+    },
+    {
+      "description": "My factory’s weekly hours (effective-dated) and closures — from tomorrow on, audited; they replace the platform weekend and business hours for my SLAs and promised dates (D-292, D-209).",
+      "name": "partner.calendar"
     },
     {
       "description": "Call-off requests for my factory (D-290, D-044): accept to hold my buy price for the committed quantity, or decline with a reason.",

@@ -1451,3 +1451,23 @@ model DocumentSequence {
   @@unique([seriesId, periodKey], map: "ux_document_sequences__series_id__period_key")
   @@map("document_sequences")
 }
+
+/// D-292 a factory's weekly hours from a day on (effective-dated): `hours` per day of week (`mon`…`sun`, `{from, to}`
+/// Bangkok `HH:mm` or null = closed). They replace the weekend and `calendar.business_hours` in the factory's calendar
+/// from `effective_from`; a version already in force is never changed (trigger), a later one replaces it.
+model FactoryBusinessHours {
+  id            BigInt   @id(map: "pk_factory_business_hours") @default(autoincrement())
+  publicId      String   @unique(map: "ux_factory_business_hours__public_id") @default(dbgenerated("uuidv7()")) @map("public_id") @db.Uuid
+  factoryId     BigInt   @map("factory_id")
+  effectiveFrom DateTime @map("effective_from") @db.Date
+  hours         Json
+  createdById   BigInt   @map("created_by")
+  createdAt     DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  factory   Factory @relation("FactoryBusinessHoursFactory", fields: [factoryId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_factory_business_hours__factory_id")
+  createdBy User    @relation("FactoryBusinessHoursCreatedBy", fields: [createdById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_factory_business_hours__created_by")
+
+  @@unique([factoryId, effectiveFrom], map: "ux_factory_business_hours__factory_id__effective_from")
+  @@index([createdById], map: "ix_factory_business_hours__created_by")
+  @@map("factory_business_hours")
+}

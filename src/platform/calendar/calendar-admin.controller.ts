@@ -4,6 +4,7 @@ import { type Actor, type UserActor } from '@common/context/actor';
 import { DomainException } from '@common/errors/domain.exception';
 import { ApiEndpoint, ApiStandardErrors, ApiSuccess } from '@common/openapi/decorators';
 import { toBangkokIso } from '@common/time/bangkok';
+import { PrismaService } from '@database/prisma.service';
 import { type BusinessCalendarDay } from '@generated/prisma/client';
 import { ApiSurface } from '@modules/surfaces/surfaces';
 import { Body, Controller, Delete, Get, HttpCode, Param, ParseUUIDPipe, Put, Query } from '@nestjs/common';
@@ -18,6 +19,13 @@ import {
   PutHolidayDto,
 } from './calendar-admin.dto';
 import { CalendarAdminService } from './calendar-admin.service';
+import {
+  FactoryHoursVersionDto,
+  HOURS_EXAMPLE,
+  SetFactoryHoursDto,
+  WEEKLY_EXAMPLE,
+} from './factory-hours.dto';
+import { FactoryHoursService } from './factory-hours.service';
 
 const WRITE = ['http.bad_request', 'http.malformed_json', 'validation.failed'] as const;
 const dayParam = ApiParam({ name: 'day', example: '2027-04-13', description: 'YYYY-MM-DD' });
@@ -25,7 +33,7 @@ const staff = (actor: Actor): UserActor => {
   if (actor.type !== 'user' || actor.audience !== 'staff') throw new DomainException('auth.forbidden');
   return actor;
 };
-const dayDto = (d: BusinessCalendarDay): CalendarDayDto => ({
+export const dayDto = (d: BusinessCalendarDay): CalendarDayDto => ({
   day: d.day.toISOString().slice(0, 10),
   kind: d.kind,
   observance: d.observance,
@@ -37,7 +45,67 @@ const dayDto = (d: BusinessCalendarDay): CalendarDayDto => ({
 @ApiSurface('admin', 'calendar')
 @Controller()
 export class AdminCalendarController {
-  constructor(private readonly calendars: CalendarAdminService) {}
+  constructor(
+    private readonly calendars: CalendarAdminService,
+    private readonly hours: FactoryHoursService,
+    private readonly prisma: PrismaService,
+  ) {}
+
+  private async factory(publicId: string) {
+    const factory = await this.prisma.factory.findUnique({
+      where: { publicId },
+      select: { id: true, publicId: true },
+    });
+    if (!factory) throw new DomainException('http.not_found');
+    return factory;
+  }
+
+  @Get('factories/:factoryId/business-hours')
+  @Can('partners.read')
+  @ApiParam({ name: 'factoryId', format: 'uuid' })
+  @ApiEndpoint({
+    id: 'admin.calendar.listFactoryHours',
+    summary: 'A factory’s weekly hours',
+    description:
+      'Its effective-dated versions, newest first, and which is in force; none means the platform weekend and ' +
+      '`calendar.business_hours` (D-292).',
+    implements: ['D-292', 'D-209'],
+  })
+  @ApiSuccess(200, { description: 'Versions', type: [FactoryHoursVersionDto], example: [HOURS_EXAMPLE] })
+  @ApiStandardErrors('http.not_found', 'validation.failed')
+  async listHours(@Param('factoryId', ParseUUIDPipe) factoryId: string): Promise<FactoryHoursVersionDto[]> {
+    return this.hours.list((await this.factory(factoryId)).id);
+  }
+
+  @Put('factories/:factoryId/business-hours')
+  @Can('partners.manage')
+  @ApiParam({ name: 'factoryId', format: 'uuid' })
+  @ApiBody({
+    type: SetFactoryHoursDto,
+    examples: { default: { value: { effectiveFrom: '2026-10-05', hours: WEEKLY_EXAMPLE } } },
+  })
+  @ApiEndpoint({
+    id: 'admin.calendar.setFactoryHours',
+    summary: 'Set a factory’s weekly hours',
+    description:
+      'The Partner Manager sets the factory’s hours from a day on (tomorrow at the earliest, Asia/Bangkok): days ' +
+      'without hours are not worked, the others count their own window for business time; national holidays and ' +
+      'closures still apply. Audited; due dates already computed never move (D-292).',
+    implements: ['D-292', 'D-209'],
+  })
+  @ApiSuccess(200, {
+    description: 'Version',
+    type: FactoryHoursVersionDto,
+    example: { ...HOURS_EXAMPLE, inForce: false },
+  })
+  @ApiStandardErrors(...WRITE, 'http.not_found')
+  async setHours(
+    @CurrentActor() actor: Actor,
+    @Param('factoryId', ParseUUIDPipe) factoryId: string,
+    @Body() body: SetFactoryHoursDto,
+  ): Promise<FactoryHoursVersionDto> {
+    return this.hours.set(staff(actor), await this.factory(factoryId), body);
+  }
 
   @Get('business-calendar/holidays')
   @ApiEndpoint({

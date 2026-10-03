@@ -49,8 +49,30 @@ export class CalendarAdminService {
       where: { publicId: factoryPublicId },
       include: { calendar: true },
     });
-    if (!factory?.calendar) throw new DomainException('http.not_found');
-    return factory.calendar;
+    if (!factory) throw new DomainException('http.not_found');
+    if (factory.calendar) return factory.calendar;
+    // D-292: a factory works on the national calendar until its first closure or hours; then it gets its own,
+    // inheriting the national holidays and weekend.
+    return this.prisma.withTx(async (tx) => {
+      const locked = await tx.factory.findUniqueOrThrow({
+        where: { id: factory.id },
+        include: { calendar: true },
+      });
+      if (locked.calendar) return locked.calendar;
+      const national = await this.national(tx);
+      const calendar = await tx.businessCalendar.create({
+        data: {
+          code: `factory-${factory.code.toLowerCase()}`,
+          name: `${factory.tradeName ?? factory.legalName}`,
+          kind: 'factory',
+          factoryId: factory.id,
+          weekendDays: national.weekendDays,
+          baseCalendarId: national.id,
+        },
+      });
+      await tx.factory.update({ where: { id: factory.id }, data: { calendarId: calendar.id } });
+      return calendar;
+    });
   }
 
   async holidays(year: number) {
@@ -62,7 +84,13 @@ export class CalendarAdminService {
   }
 
   async closures(factoryPublicId: string, from?: string) {
-    const calendar = await this.factoryCalendar(factoryPublicId);
+    const factory = await this.prisma.factory.findUnique({
+      where: { publicId: factoryPublicId },
+      include: { calendar: true },
+    });
+    if (!factory) throw new DomainException('http.not_found');
+    const calendar = factory.calendar;
+    if (!calendar) return [];
     return this.prisma.businessCalendarDay.findMany({
       where: { calendarId: calendar.id, day: { gte: asDate(from ?? bangkokDate(new Date())) } },
       orderBy: { day: 'asc' },
