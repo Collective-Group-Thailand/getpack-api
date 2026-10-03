@@ -1,0 +1,9 @@
+{
+  "package": "@packio/dieline",
+  "version": "0.1.0",
+  "packioWebCommit": "e8b8d1684556535e978f6226887cd4891ac32ddd",
+  "uncommittedChanges": 0,
+  "bundleSha256": "f254a19c4170a2d564d1e291ec8642a24044354d929c185eeabd0c7a9f5f08f7",
+  "bundledAt": "2026-10-03T06:45:55Z",
+  "bundler": "esbuild@0.28.2"
+}

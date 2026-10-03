@@ -1,0 +1,16142 @@
+var __defProp = Object.defineProperty;
+var __export = (target, all) => {
+  for (var name in all)
+    __defProp(target, name, { get: all[name], enumerable: true });
+};
+
+// packages/dieline/src/types.ts
+var EDGE_ROLES = ["cut", "crease", "perforation", "half_cut", "glue_area", "bleed"];
+
+// packages/dieline/src/path.ts
+var FLATTEN_TOLERANCE_MM = 0.2;
+var TAU = Math.PI * 2;
+var line = (from, to, role = "cut") => ({ kind: "line", from, to, role });
+var arc = (from, to, center, clockwise, role = "cut") => ({
+  kind: "arc",
+  from,
+  to,
+  center,
+  radius: Math.hypot(from[0] - center[0], from[1] - center[1]),
+  clockwise,
+  role
+});
+var bezier = (from, c1, c2, to, role = "cut") => ({
+  kind: "bezier",
+  from,
+  c1,
+  c2,
+  to,
+  role
+});
+function polygon(points, roles = "cut") {
+  return points.map((p, i) => line(p, points[(i + 1) % points.length], Array.isArray(roles) ? roles[i] : roles));
+}
+function rectangle(x, y, width, height, roles = {}) {
+  return polygon(
+    [
+      [x, y],
+      [x + width, y],
+      [x + width, y + height],
+      [x, y + height]
+    ],
+    [roles.top ?? "cut", roles.right ?? "cut", roles.bottom ?? "cut", roles.left ?? "cut"]
+  );
+}
+var KAPPA = 4 / 3 * Math.tan(Math.PI / 8);
+function roundedRectangle(x, y, width, height, r, role = "cut") {
+  const radius = Math.max(0, Math.min(r, width / 2, height / 2));
+  if (radius < 1e-6) return rectangle(x, y, width, height, { top: role, right: role, bottom: role, left: role });
+  const x1 = x + width;
+  const y1 = y + height;
+  const out = [];
+  const push = (e) => {
+    if (dist(e.from, e.to) > 1e-9) out.push(e);
+  };
+  push(line([x + radius, y], [x1 - radius, y], role));
+  push(arc([x1 - radius, y], [x1, y + radius], [x1 - radius, y + radius], true, role));
+  push(line([x1, y + radius], [x1, y1 - radius], role));
+  push(arc([x1, y1 - radius], [x1 - radius, y1], [x1 - radius, y1 - radius], true, role));
+  push(line([x1 - radius, y1], [x + radius, y1], role));
+  push(arc([x + radius, y1], [x, y1 - radius], [x + radius, y1 - radius], true, role));
+  push(line([x, y1 - radius], [x, y + radius], role));
+  push(arc([x, y + radius], [x + radius, y], [x + radius, y + radius], true, role));
+  return out;
+}
+function ellipse(cx, cy, rx, ry, role = "cut") {
+  const kx = rx * KAPPA;
+  const ky = ry * KAPPA;
+  const e = [cx + rx, cy];
+  const s = [cx, cy + ry];
+  const w = [cx - rx, cy];
+  const n2 = [cx, cy - ry];
+  if (Math.abs(rx - ry) < 1e-9) {
+    return [
+      arc(e, s, [cx, cy], true, role),
+      arc(s, w, [cx, cy], true, role),
+      arc(w, n2, [cx, cy], true, role),
+      arc(n2, e, [cx, cy], true, role)
+    ];
+  }
+  return [
+    bezier(e, [cx + rx, cy + ky], [cx + kx, cy + ry], s, role),
+    bezier(s, [cx - kx, cy + ry], [cx - rx, cy + ky], w, role),
+    bezier(w, [cx - rx, cy - ky], [cx - kx, cy - ry], n2, role),
+    bezier(n2, [cx + kx, cy - ry], [cx + rx, cy - ky], e, role)
+  ];
+}
+var dist = (a, b) => Math.hypot(a[0] - b[0], a[1] - b[1]);
+function arcAngles(e) {
+  const start = Math.atan2(e.from[1] - e.center[1], e.from[0] - e.center[0]);
+  const end = Math.atan2(e.to[1] - e.center[1], e.to[0] - e.center[0]);
+  let sweep = end - start;
+  if (e.clockwise) {
+    while (sweep <= 1e-12) sweep += TAU;
+  } else {
+    while (sweep >= -1e-12) sweep -= TAU;
+  }
+  return { start, end, sweep };
+}
+function bezierPoint(e, t3) {
+  const u = 1 - t3;
+  const a = u * u * u;
+  const b = 3 * u * u * t3;
+  const c = 3 * u * t3 * t3;
+  const d = t3 * t3 * t3;
+  return [
+    a * e.from[0] + b * e.c1[0] + c * e.c2[0] + d * e.to[0],
+    a * e.from[1] + b * e.c1[1] + c * e.c2[1] + d * e.to[1]
+  ];
+}
+function flattenEdge(e, tol = FLATTEN_TOLERANCE_MM) {
+  if (e.kind === "line") return [e.from];
+  if (e.kind === "arc") {
+    const { start, sweep } = arcAngles(e);
+    const r = Math.max(e.radius, 1e-9);
+    const maxStep = tol >= r ? Math.PI / 2 : 2 * Math.acos(1 - tol / r);
+    const n3 = Math.max(2, Math.ceil(Math.abs(sweep) / Math.max(maxStep, 1e-3)));
+    const out2 = [];
+    for (let i = 0; i < n3; i++) {
+      const a = start + sweep * i / n3;
+      out2.push([e.center[0] + r * Math.cos(a), e.center[1] + r * Math.sin(a)]);
+    }
+    out2[0] = e.from;
+    return out2;
+  }
+  const m = Math.max(
+    Math.hypot(e.from[0] - 2 * e.c1[0] + e.c2[0], e.from[1] - 2 * e.c1[1] + e.c2[1]),
+    Math.hypot(e.c1[0] - 2 * e.c2[0] + e.to[0], e.c1[1] - 2 * e.c2[1] + e.to[1])
+  );
+  const n2 = Math.max(2, Math.min(512, Math.ceil(Math.sqrt(0.75 * m / Math.max(tol, 1e-4)))));
+  const out = [];
+  for (let i = 0; i < n2; i++) out.push(bezierPoint(e, i / n2));
+  return out;
+}
+function flattenContour(c, tol = FLATTEN_TOLERANCE_MM) {
+  return c.flatMap((e) => flattenEdge(e, tol));
+}
+function flattenOpen(e, tol = FLATTEN_TOLERANCE_MM) {
+  return [...flattenEdge(e, tol), e.to];
+}
+function edgeLength(e) {
+  if (e.kind === "line") return dist(e.from, e.to);
+  if (e.kind === "arc") return Math.abs(arcAngles(e).sweep) * e.radius;
+  const pts = flattenOpen(e, 0.01);
+  let sum = 0;
+  for (let i = 1; i < pts.length; i++) sum += dist(pts[i - 1], pts[i]);
+  return sum;
+}
+function reverseEdge(e) {
+  if (e.kind === "line") return { ...e, from: e.to, to: e.from };
+  if (e.kind === "arc") return { ...e, from: e.to, to: e.from, clockwise: !e.clockwise };
+  return { ...e, from: e.to, to: e.from, c1: e.c2, c2: e.c1 };
+}
+function reverseContour(c) {
+  return [...c].reverse().map(reverseEdge);
+}
+function signedArea(pts) {
+  let a = 0;
+  for (let i = 0; i < pts.length; i++) {
+    const p = pts[i];
+    const q = pts[(i + 1) % pts.length];
+    a += p[0] * q[1] - q[0] * p[1];
+  }
+  return a / 2;
+}
+function boundsOf(points) {
+  if (points.length === 0) return { x: 0, y: 0, width: 0, height: 0 };
+  let minX = Infinity;
+  let minY = Infinity;
+  let maxX = -Infinity;
+  let maxY = -Infinity;
+  for (const [x, y] of points) {
+    if (x < minX) minX = x;
+    if (y < minY) minY = y;
+    if (x > maxX) maxX = x;
+    if (y > maxY) maxY = y;
+  }
+  return { x: minX, y: minY, width: maxX - minX, height: maxY - minY };
+}
+function edgesBounds(edges) {
+  return boundsOf(edges.flatMap((e) => flattenOpen(e, 0.01)));
+}
+function mapEdge(e, f, flips = false) {
+  if (e.kind === "line") return { ...e, from: f(e.from), to: f(e.to) };
+  if (e.kind === "arc")
+    return { ...e, from: f(e.from), to: f(e.to), center: f(e.center), clockwise: flips ? !e.clockwise : e.clockwise };
+  return { ...e, from: f(e.from), to: f(e.to), c1: f(e.c1), c2: f(e.c2) };
+}
+var translate = (dx, dy) => (p) => [p[0] + dx, p[1] + dy];
+var mirrorX = (axis) => (p) => [2 * axis - p[0], p[1]];
+var round3 = (n2) => {
+  const r = Math.round(n2 * 1e3) / 1e3;
+  return Object.is(r, -0) ? 0 : r;
+};
+function svgPathData(edges, closed = true, fmt3 = (n2) => String(round3(n2))) {
+  if (edges.length === 0) return "";
+  const p = (pt) => `${fmt3(pt[0])} ${fmt3(pt[1])}`;
+  let d = "";
+  let cursor = null;
+  for (const e of edges) {
+    if (!cursor || dist(cursor, e.from) > 1e-6) d += `${d ? " " : ""}M${p(e.from)}`;
+    if (e.kind === "line") d += ` L${p(e.to)}`;
+    else if (e.kind === "bezier") d += ` C${p(e.c1)} ${p(e.c2)} ${p(e.to)}`;
+    else {
+      const { sweep } = arcAngles(e);
+      const large = Math.abs(sweep) > Math.PI ? 1 : 0;
+      d += ` A${fmt3(e.radius)} ${fmt3(e.radius)} 0 ${large} ${e.clockwise ? 1 : 0} ${p(e.to)}`;
+    }
+    cursor = e.to;
+  }
+  return closed ? `${d} Z` : d;
+}
+function arcToBeziers(e) {
+  const { start, sweep } = arcAngles(e);
+  const n2 = Math.max(1, Math.ceil(Math.abs(sweep) / (Math.PI / 2) - 1e-9));
+  const step = sweep / n2;
+  const k2 = 4 / 3 * Math.tan(step / 4);
+  const r = e.radius;
+  const [cx, cy] = e.center;
+  const out = [];
+  for (let i = 0; i < n2; i++) {
+    const a0 = start + step * i;
+    const a1 = a0 + step;
+    const p0 = i === 0 ? e.from : [cx + r * Math.cos(a0), cy + r * Math.sin(a0)];
+    const p3 = i === n2 - 1 ? e.to : [cx + r * Math.cos(a1), cy + r * Math.sin(a1)];
+    const c1 = [cx + r * (Math.cos(a0) - k2 * Math.sin(a0)), cy + r * (Math.sin(a0) + k2 * Math.cos(a0))];
+    const c2 = [cx + r * (Math.cos(a1) + k2 * Math.sin(a1)), cy + r * (Math.sin(a1) - k2 * Math.cos(a1))];
+    out.push(bezier(p0, c1, c2, p3, e.role));
+  }
+  return out;
+}
+function contourGap(c) {
+  let worst = 0;
+  for (let i = 0; i < c.length; i++) worst = Math.max(worst, dist(c[i].to, c[(i + 1) % c.length].from));
+  return worst;
+}
+
+// packages/dieline/src/faces.ts
+var PIECE_GAP_MM = 20;
+function face(id, label, kind, outline, extra = {}) {
+  return { id, label, kind, outline, holes: extra.holes ?? [], marks: extra.marks ?? [] };
+}
+function faceBounds(f) {
+  return edgesBounds(f.outline);
+}
+function mapFace(f, map, flips = false) {
+  return {
+    ...f,
+    outline: f.outline.map((e) => mapEdge(e, map, flips)),
+    holes: f.holes.map((h) => h.map((e) => mapEdge(e, map, flips))),
+    marks: f.marks.map((e) => mapEdge(e, map, flips))
+  };
+}
+function mapAnnotation(a, map) {
+  return { ...a, from: map(a.from), to: map(a.to) };
+}
+function boundsOfFaces(faces) {
+  return edgesBounds(faces.flatMap((f) => f.outline));
+}
+function piece(id, label, faces, annotations = []) {
+  return { id, label, faces, bounds: boundsOfFaces(faces), annotations };
+}
+function mapPiece(p, map, flips = false) {
+  const faces = p.faces.map((f) => mapFace(f, map, flips));
+  return { ...p, faces, bounds: boundsOfFaces(faces), annotations: p.annotations.map((a) => mapAnnotation(a, map)) };
+}
+function assemble(styleId, pieces, gap = PIECE_GAP_MM) {
+  let x = 0;
+  let height = 0;
+  const placed = pieces.map((p) => {
+    const moved = mapPiece(p, translate(x - p.bounds.x, -p.bounds.y));
+    x += moved.bounds.width + gap;
+    height = Math.max(height, moved.bounds.height);
+    return moved;
+  });
+  const width = placed.length ? x - gap : 0;
+  return { styleId, pieces: placed, width, height };
+}
+var allFaces = (d) => d.pieces.flatMap((p) => p.faces);
+function findFace(d, id) {
+  return allFaces(d).find((f) => f.id === id);
+}
+function prefixFaces(faces, prefix) {
+  return faces.map((f) => ({ ...f, id: `${prefix}${f.id}` }));
+}
+
+// packages/dieline/src/lines.ts
+var k = (p) => `${round3(p[0])},${round3(p[1])}`;
+function edgeKey(e) {
+  const a = k(e.from);
+  const b = k(e.to);
+  const forward = a <= b;
+  const ends = forward ? `${a}|${b}` : `${b}|${a}`;
+  if (e.kind === "line") return `L${ends}`;
+  if (e.kind === "arc") return `A${ends}|${k(e.center)}|${round3(e.radius)}|${forward === e.clockwise ? 1 : 0}`;
+  return `B${ends}|${forward ? `${k(e.c1)}|${k(e.c2)}` : `${k(e.c2)}|${k(e.c1)}`}`;
+}
+var STRENGTH = {
+  crease: 5,
+  perforation: 4,
+  half_cut: 3,
+  cut: 2,
+  glue_area: 1,
+  bleed: 0
+};
+function dielineLines(d) {
+  const out = [];
+  for (const piece2 of d.pieces) {
+    const index = /* @__PURE__ */ new Map();
+    for (const f of piece2.faces) {
+      for (const e of f.outline) {
+        const key = edgeKey(e);
+        const seen = index.get(key);
+        if (seen) {
+          if (!seen.faces.includes(f.id)) seen.faces.push(f.id);
+          if (STRENGTH[e.role] > STRENGTH[seen.role]) seen.role = e.role;
+          continue;
+        }
+        const line2 = { edge: e, role: e.role, pieceId: piece2.id, faces: [f.id], source: "outline" };
+        index.set(key, line2);
+        out.push(line2);
+      }
+      for (const hole of f.holes) {
+        for (const e of hole) out.push({ edge: e, role: e.role, pieceId: piece2.id, faces: [f.id], source: "hole" });
+      }
+      for (const e of f.marks) out.push({ edge: e, role: e.role, pieceId: piece2.id, faces: [f.id], source: "mark" });
+    }
+  }
+  return out;
+}
+function sharedEdgeRoles(d) {
+  const out = [];
+  for (const piece2 of d.pieces) {
+    const index = /* @__PURE__ */ new Map();
+    for (const f of piece2.faces) {
+      for (const e of f.outline) {
+        const key = edgeKey(e);
+        const entry = index.get(key) ?? { key, roles: [], faces: [] };
+        entry.roles.push(e.role);
+        entry.faces.push(f.id);
+        if (!index.has(key)) {
+          index.set(key, entry);
+          out.push(entry);
+        }
+      }
+    }
+  }
+  return out;
+}
+
+// packages/dieline/src/geom.ts
+function pointInPolygon(p, poly) {
+  let hit = false;
+  for (let i = 0, j = poly.length - 1; i < poly.length; j = i++) {
+    const [xi, yi] = poly[i];
+    const [xj, yj] = poly[j];
+    if (yi > p[1] !== yj > p[1] && p[0] < (xj - xi) * (p[1] - yi) / (yj - yi) + xi) hit = !hit;
+  }
+  return hit;
+}
+function pointSegmentDistance(p, a, b) {
+  const dx = b[0] - a[0];
+  const dy = b[1] - a[1];
+  const len2 = dx * dx + dy * dy;
+  const t3 = len2 === 0 ? 0 : Math.max(0, Math.min(1, ((p[0] - a[0]) * dx + (p[1] - a[1]) * dy) / len2));
+  return Math.hypot(p[0] - (a[0] + t3 * dx), p[1] - (a[1] + t3 * dy));
+}
+function segmentsCross(a, b, c, d) {
+  const o = (p, q, r) => Math.sign((q[0] - p[0]) * (r[1] - p[1]) - (q[1] - p[1]) * (r[0] - p[0]));
+  return o(a, b, c) !== o(a, b, d) && o(c, d, a) !== o(c, d, b);
+}
+function polygonInsideWithMargin(outer, inner, margin) {
+  for (const p of inner) if (!pointInPolygon(p, outer)) return false;
+  for (let i = 0; i < outer.length; i++) {
+    const a = outer[i];
+    const b = outer[(i + 1) % outer.length];
+    for (let j = 0; j < inner.length; j++) {
+      const c = inner[j];
+      const d = inner[(j + 1) % inner.length];
+      if (segmentsCross(a, b, c, d)) return false;
+      if (pointSegmentDistance(c, a, b) < margin - 1e-9) return false;
+      if (pointSegmentDistance(a, c, d) < margin - 1e-9) return false;
+    }
+  }
+  return true;
+}
+
+// node_modules/.pnpm/clipper2-ts@2.0.1/node_modules/clipper2-ts/dist/Core.js
+var ClipType;
+(function(ClipType2) {
+  ClipType2[ClipType2["NoClip"] = 0] = "NoClip";
+  ClipType2[ClipType2["Intersection"] = 1] = "Intersection";
+  ClipType2[ClipType2["Union"] = 2] = "Union";
+  ClipType2[ClipType2["Difference"] = 3] = "Difference";
+  ClipType2[ClipType2["Xor"] = 4] = "Xor";
+})(ClipType || (ClipType = {}));
+var PathType;
+(function(PathType2) {
+  PathType2[PathType2["Subject"] = 0] = "Subject";
+  PathType2[PathType2["Clip"] = 1] = "Clip";
+})(PathType || (PathType = {}));
+var FillRule;
+(function(FillRule2) {
+  FillRule2[FillRule2["EvenOdd"] = 0] = "EvenOdd";
+  FillRule2[FillRule2["NonZero"] = 1] = "NonZero";
+  FillRule2[FillRule2["Positive"] = 2] = "Positive";
+  FillRule2[FillRule2["Negative"] = 3] = "Negative";
+})(FillRule || (FillRule = {}));
+var PointInPolygonResult;
+(function(PointInPolygonResult2) {
+  PointInPolygonResult2[PointInPolygonResult2["IsOn"] = 0] = "IsOn";
+  PointInPolygonResult2[PointInPolygonResult2["IsInside"] = 1] = "IsInside";
+  PointInPolygonResult2[PointInPolygonResult2["IsOutside"] = 2] = "IsOutside";
+})(PointInPolygonResult || (PointInPolygonResult = {}));
+var InternalClipper;
+(function(InternalClipper2) {
+  InternalClipper2.MaxInt64 = 9223372036854775807n;
+  InternalClipper2.MaxCoord = Number(InternalClipper2.MaxInt64 / 4n);
+  InternalClipper2.max_coord = InternalClipper2.MaxCoord;
+  InternalClipper2.min_coord = -InternalClipper2.MaxCoord;
+  InternalClipper2.Invalid64 = Number(InternalClipper2.MaxInt64);
+  InternalClipper2.floatingPointTolerance = 1e-12;
+  InternalClipper2.defaultMinimumEdgeLength = 0.1;
+  function crossProduct(pt1, pt2, pt3) {
+    return (pt2.x - pt1.x) * (pt3.y - pt2.y) - (pt2.y - pt1.y) * (pt3.x - pt2.x);
+  }
+  InternalClipper2.crossProduct = crossProduct;
+  function crossProductSign(pt1, pt2, pt3) {
+    const a = pt2.x - pt1.x;
+    const b = pt3.y - pt2.y;
+    const c = pt2.y - pt1.y;
+    const d = pt3.x - pt2.x;
+    if (Math.abs(a) < 9e7 && Math.abs(b) < 9e7 && Math.abs(c) < 9e7 && Math.abs(d) < 9e7) {
+      const prod12 = a * b;
+      const prod22 = c * d;
+      return prod12 > prod22 ? 1 : prod12 < prod22 ? -1 : 0;
+    }
+    const signA = a < 0 ? -1 : a > 0 ? 1 : 0;
+    const signB = b < 0 ? -1 : b > 0 ? 1 : 0;
+    const signC = c < 0 ? -1 : c > 0 ? 1 : 0;
+    const signD = d < 0 ? -1 : d > 0 ? 1 : 0;
+    const signAB = signA * signB;
+    const signCD = signC * signD;
+    if (signAB !== signCD) {
+      return signAB > signCD ? 1 : -1;
+    }
+    if (signAB === 0)
+      return 0;
+    const bigA = BigInt(a);
+    const bigB = BigInt(b);
+    const bigC = BigInt(c);
+    const bigD = BigInt(d);
+    const prod1 = bigA * bigB;
+    const prod2 = bigC * bigD;
+    if (prod1 === prod2)
+      return 0;
+    return prod1 > prod2 ? 1 : -1;
+  }
+  InternalClipper2.crossProductSign = crossProductSign;
+  function checkPrecision(precision) {
+    if (precision < -8 || precision > 8) {
+      throw new Error("Error: Precision is out of range.");
+    }
+  }
+  InternalClipper2.checkPrecision = checkPrecision;
+  function isAlmostZero(value) {
+    return Math.abs(value) <= InternalClipper2.floatingPointTolerance;
+  }
+  InternalClipper2.isAlmostZero = isAlmostZero;
+  function triSign(x) {
+    return x < 0 ? -1 : x > 0 ? 1 : 0;
+  }
+  InternalClipper2.triSign = triSign;
+  function multiplyUInt64(a, b) {
+    const aBig = BigInt(a);
+    const bBig = BigInt(b);
+    const res = aBig * bBig;
+    return {
+      lo64: Number(res & 0xffffffffffffffffn),
+      hi64: Number(res >> 64n)
+    };
+  }
+  InternalClipper2.multiplyUInt64 = multiplyUInt64;
+  function productsAreEqual(a, b, c, d) {
+    const absA = Math.abs(a);
+    const absB = Math.abs(b);
+    const absC = Math.abs(c);
+    const absD = Math.abs(d);
+    if (absA < 46341 && absB < 46341 && absC < 46341 && absD < 46341) {
+      return a * b === c * d;
+    }
+    if (absA < 9e7 && absB < 9e7 && absC < 9e7 && absD < 9e7) {
+      return a * b === c * d;
+    }
+    const signAb = (a < 0 ? -1 : a > 0 ? 1 : 0) * (b < 0 ? -1 : b > 0 ? 1 : 0);
+    const signCd = (c < 0 ? -1 : c > 0 ? 1 : 0) * (d < 0 ? -1 : d > 0 ? 1 : 0);
+    if (signAb !== signCd)
+      return false;
+    if (signAb === 0)
+      return true;
+    const bigA = BigInt(absA);
+    const bigB = BigInt(absB);
+    const bigC = BigInt(absC);
+    const bigD = BigInt(absD);
+    return bigA * bigB === bigC * bigD;
+  }
+  InternalClipper2.productsAreEqual = productsAreEqual;
+  function isCollinear(pt1, sharedPt, pt2) {
+    const a = sharedPt.x - pt1.x;
+    const b = pt2.y - sharedPt.y;
+    const c = sharedPt.y - pt1.y;
+    const d = pt2.x - sharedPt.x;
+    return productsAreEqual(a, b, c, d);
+  }
+  InternalClipper2.isCollinear = isCollinear;
+  function dotProduct(pt1, pt2, pt3) {
+    return (pt2.x - pt1.x) * (pt3.x - pt2.x) + (pt2.y - pt1.y) * (pt3.y - pt2.y);
+  }
+  InternalClipper2.dotProduct = dotProduct;
+  function crossProductD(vec1, vec2) {
+    return vec1.y * vec2.x - vec2.y * vec1.x;
+  }
+  InternalClipper2.crossProductD = crossProductD;
+  function dotProductD(vec1, vec2) {
+    return vec1.x * vec2.x + vec1.y * vec2.y;
+  }
+  InternalClipper2.dotProductD = dotProductD;
+  function roundToEven(value) {
+    const floor = Math.floor(value);
+    const diff = value - floor;
+    if (Math.abs(diff - 0.5) < 1e-10) {
+      return floor % 2 === 0 ? floor : floor + 1;
+    }
+    return Math.round(value);
+  }
+  InternalClipper2.roundToEven = roundToEven;
+  function checkCastInt64(val) {
+    if (val >= InternalClipper2.max_coord || val <= InternalClipper2.min_coord)
+      return InternalClipper2.Invalid64;
+    return Math.round(val);
+  }
+  InternalClipper2.checkCastInt64 = checkCastInt64;
+  function getLineIntersectPt(ln1a, ln1b, ln2a, ln2b) {
+    const dy1 = ln1b.y - ln1a.y;
+    const dx1 = ln1b.x - ln1a.x;
+    const dy2 = ln2b.y - ln2a.y;
+    const dx2 = ln2b.x - ln2a.x;
+    const det = dy1 * dx2 - dy2 * dx1;
+    if (det === 0) {
+      return { intersects: false, point: { x: 0, y: 0, z: 0 } };
+    }
+    const t3 = ((ln1a.x - ln2a.x) * dy2 - (ln1a.y - ln2a.y) * dx2) / det;
+    let ip;
+    if (t3 <= 0) {
+      ip = { x: ln1a.x, y: ln1a.y, z: 0 };
+    } else if (t3 >= 1) {
+      ip = { x: ln1b.x, y: ln1b.y, z: 0 };
+    } else {
+      const rawX = ln1a.x + t3 * dx1;
+      const rawY = ln1a.y + t3 * dy1;
+      ip = {
+        x: Math.trunc(rawX),
+        y: Math.trunc(rawY),
+        z: 0
+      };
+    }
+    return { intersects: true, point: ip };
+  }
+  InternalClipper2.getLineIntersectPt = getLineIntersectPt;
+  function getLineIntersectPtD(ln1a, ln1b, ln2a, ln2b) {
+    const dy1 = ln1b.y - ln1a.y;
+    const dx1 = ln1b.x - ln1a.x;
+    const dy2 = ln2b.y - ln2a.y;
+    const dx2 = ln2b.x - ln2a.x;
+    const det = dy1 * dx2 - dy2 * dx1;
+    if (det === 0) {
+      return { success: false, ip: { x: 0, y: 0, z: 0 } };
+    }
+    const t3 = ((ln1a.x - ln2a.x) * dy2 - (ln1a.y - ln2a.y) * dx2) / det;
+    let ip;
+    if (t3 <= 0) {
+      ip = { ...ln1a, z: 0 };
+    } else if (t3 >= 1) {
+      ip = { ...ln1b, z: 0 };
+    } else {
+      ip = {
+        x: ln1a.x + t3 * dx1,
+        y: ln1a.y + t3 * dy1,
+        z: 0
+      };
+    }
+    return { success: true, ip };
+  }
+  InternalClipper2.getLineIntersectPtD = getLineIntersectPtD;
+  function segsIntersect(seg1a, seg1b, seg2a, seg2b, inclusive = false) {
+    if (!inclusive) {
+      return crossProduct(seg1a, seg2a, seg2b) * crossProduct(seg1b, seg2a, seg2b) < 0 && crossProduct(seg2a, seg1a, seg1b) * crossProduct(seg2b, seg1a, seg1b) < 0;
+    }
+    const res1 = crossProduct(seg1a, seg2a, seg2b);
+    const res2 = crossProduct(seg1b, seg2a, seg2b);
+    if (res1 * res2 > 0)
+      return false;
+    const res3 = crossProduct(seg2a, seg1a, seg1b);
+    const res4 = crossProduct(seg2b, seg1a, seg1b);
+    if (res3 * res4 > 0)
+      return false;
+    return res1 !== 0 || res2 !== 0 || res3 !== 0 || res4 !== 0;
+  }
+  InternalClipper2.segsIntersect = segsIntersect;
+  function getBounds2(path) {
+    if (path.length === 0)
+      return { left: 0, top: 0, right: 0, bottom: 0 };
+    const result = {
+      left: Number.MAX_SAFE_INTEGER,
+      top: Number.MAX_SAFE_INTEGER,
+      right: Number.MIN_SAFE_INTEGER,
+      bottom: Number.MIN_SAFE_INTEGER
+    };
+    for (const pt of path) {
+      if (pt.x < result.left)
+        result.left = pt.x;
+      if (pt.x > result.right)
+        result.right = pt.x;
+      if (pt.y < result.top)
+        result.top = pt.y;
+      if (pt.y > result.bottom)
+        result.bottom = pt.y;
+    }
+    return result.left === Number.MAX_SAFE_INTEGER ? { left: 0, top: 0, right: 0, bottom: 0 } : result;
+  }
+  InternalClipper2.getBounds = getBounds2;
+  function getClosestPtOnSegment(offPt, seg1, seg2) {
+    if (seg1.x === seg2.x && seg1.y === seg2.y)
+      return { x: seg1.x, y: seg1.y, z: 0 };
+    const dx = seg2.x - seg1.x;
+    const dy = seg2.y - seg1.y;
+    const q = ((offPt.x - seg1.x) * dx + (offPt.y - seg1.y) * dy) / (dx * dx + dy * dy);
+    const qClamped = q < 0 ? 0 : q > 1 ? 1 : q;
+    return {
+      // use Math.round to match the C# MidpointRounding.ToEven behavior
+      x: Math.round(seg1.x + qClamped * dx),
+      y: Math.round(seg1.y + qClamped * dy),
+      z: 0
+    };
+  }
+  InternalClipper2.getClosestPtOnSegment = getClosestPtOnSegment;
+  function pointInPolygon3(pt, polygon2) {
+    const len2 = polygon2.length;
+    let start = 0;
+    if (len2 < 3)
+      return PointInPolygonResult.IsOutside;
+    while (start < len2 && polygon2[start].y === pt.y)
+      start++;
+    if (start === len2)
+      return PointInPolygonResult.IsOutside;
+    let isAbove = polygon2[start].y < pt.y;
+    const startingAbove = isAbove;
+    let val = 0;
+    let i = start + 1;
+    let end = len2;
+    while (true) {
+      if (i === end) {
+        if (end === 0 || start === 0)
+          break;
+        end = start;
+        i = 0;
+      }
+      if (isAbove) {
+        while (i < end && polygon2[i].y < pt.y)
+          i++;
+      } else {
+        while (i < end && polygon2[i].y > pt.y)
+          i++;
+      }
+      if (i === end)
+        continue;
+      const curr = polygon2[i];
+      const prev = i > 0 ? polygon2[i - 1] : polygon2[len2 - 1];
+      if (curr.y === pt.y) {
+        if (curr.x === pt.x || curr.y === prev.y && pt.x < prev.x !== pt.x < curr.x) {
+          return PointInPolygonResult.IsOn;
+        }
+        i++;
+        if (i === start)
+          break;
+        continue;
+      }
+      if (pt.x < curr.x && pt.x < prev.x) {
+      } else if (pt.x > prev.x && pt.x > curr.x) {
+        val = 1 - val;
+      } else {
+        const cps2 = crossProductSign(prev, curr, pt);
+        if (cps2 === 0)
+          return PointInPolygonResult.IsOn;
+        if (cps2 < 0 === isAbove)
+          val = 1 - val;
+      }
+      isAbove = !isAbove;
+      i++;
+    }
+    if (isAbove === startingAbove) {
+      return val === 0 ? PointInPolygonResult.IsOutside : PointInPolygonResult.IsInside;
+    }
+    if (i === len2)
+      i = 0;
+    const cps = i === 0 ? crossProductSign(polygon2[len2 - 1], polygon2[0], pt) : crossProductSign(polygon2[i - 1], polygon2[i], pt);
+    if (cps === 0)
+      return PointInPolygonResult.IsOn;
+    if (cps < 0 === isAbove)
+      val = 1 - val;
+    return val === 0 ? PointInPolygonResult.IsOutside : PointInPolygonResult.IsInside;
+  }
+  InternalClipper2.pointInPolygon = pointInPolygon3;
+  function path2ContainsPath1(path1, path2) {
+    let pip = PointInPolygonResult.IsOn;
+    for (const pt of path1) {
+      switch (pointInPolygon3(pt, path2)) {
+        case PointInPolygonResult.IsOutside:
+          if (pip === PointInPolygonResult.IsOutside)
+            return false;
+          pip = PointInPolygonResult.IsOutside;
+          break;
+        case PointInPolygonResult.IsInside:
+          if (pip === PointInPolygonResult.IsInside)
+            return true;
+          pip = PointInPolygonResult.IsInside;
+          break;
+        default:
+          break;
+      }
+    }
+    const mp = getBounds2(path1);
+    const midPt = {
+      x: Math.round((mp.left + mp.right) / 2),
+      y: Math.round((mp.top + mp.bottom) / 2)
+    };
+    return pointInPolygon3(midPt, path2) !== PointInPolygonResult.IsOutside;
+  }
+  InternalClipper2.path2ContainsPath1 = path2ContainsPath1;
+})(InternalClipper || (InternalClipper = {}));
+var Point64Utils;
+(function(Point64Utils2) {
+  function create(x = 0, y = 0, z = 0) {
+    return { x: Math.round(x), y: Math.round(y), z };
+  }
+  Point64Utils2.create = create;
+  function fromPointD(pt) {
+    return { x: Math.round(pt.x), y: Math.round(pt.y), z: pt.z || 0 };
+  }
+  Point64Utils2.fromPointD = fromPointD;
+  function scale(pt, scale2) {
+    return {
+      x: Math.round(pt.x * scale2),
+      y: Math.round(pt.y * scale2),
+      z: pt.z || 0
+    };
+  }
+  Point64Utils2.scale = scale;
+  function equals(a, b) {
+    return a.x === b.x && a.y === b.y;
+  }
+  Point64Utils2.equals = equals;
+  function add(a, b) {
+    return { x: a.x + b.x, y: a.y + b.y, z: 0 };
+  }
+  Point64Utils2.add = add;
+  function subtract(a, b) {
+    return { x: a.x - b.x, y: a.y - b.y, z: 0 };
+  }
+  Point64Utils2.subtract = subtract;
+  function toString(pt) {
+    if (pt.z !== void 0 && pt.z !== 0) {
+      return `${pt.x},${pt.y},${pt.z} `;
+    }
+    return `${pt.x},${pt.y} `;
+  }
+  Point64Utils2.toString = toString;
+})(Point64Utils || (Point64Utils = {}));
+var PointDUtils;
+(function(PointDUtils2) {
+  function create(x = 0, y = 0, z = 0) {
+    return { x, y, z };
+  }
+  PointDUtils2.create = create;
+  function fromPoint64(pt) {
+    return { x: pt.x, y: pt.y, z: pt.z || 0 };
+  }
+  PointDUtils2.fromPoint64 = fromPoint64;
+  function scale(pt, scale2) {
+    return { x: pt.x * scale2, y: pt.y * scale2, z: pt.z || 0 };
+  }
+  PointDUtils2.scale = scale;
+  function equals(a, b) {
+    return InternalClipper.isAlmostZero(a.x - b.x) && InternalClipper.isAlmostZero(a.y - b.y);
+  }
+  PointDUtils2.equals = equals;
+  function negate(pt) {
+    pt.x = -pt.x;
+    pt.y = -pt.y;
+  }
+  PointDUtils2.negate = negate;
+  function toString(pt, precision = 2) {
+    if (pt.z !== void 0 && pt.z !== 0) {
+      return `${pt.x.toFixed(precision)},${pt.y.toFixed(precision)},${pt.z}`;
+    }
+    return `${pt.x.toFixed(precision)},${pt.y.toFixed(precision)}`;
+  }
+  PointDUtils2.toString = toString;
+})(PointDUtils || (PointDUtils = {}));
+var Rect64Utils;
+(function(Rect64Utils2) {
+  function create(l = 0, t3 = 0, r = 0, b = 0) {
+    return { left: l, top: t3, right: r, bottom: b };
+  }
+  Rect64Utils2.create = create;
+  function createInvalid() {
+    return {
+      left: Number.MAX_SAFE_INTEGER,
+      top: Number.MAX_SAFE_INTEGER,
+      right: Number.MIN_SAFE_INTEGER,
+      bottom: Number.MIN_SAFE_INTEGER
+    };
+  }
+  Rect64Utils2.createInvalid = createInvalid;
+  function width(rect2) {
+    return rect2.right - rect2.left;
+  }
+  Rect64Utils2.width = width;
+  function height(rect2) {
+    return rect2.bottom - rect2.top;
+  }
+  Rect64Utils2.height = height;
+  function isEmpty(rect2) {
+    return rect2.bottom <= rect2.top || rect2.right <= rect2.left;
+  }
+  Rect64Utils2.isEmpty = isEmpty;
+  function isValid(rect2) {
+    return rect2.left < Number.MAX_SAFE_INTEGER;
+  }
+  Rect64Utils2.isValid = isValid;
+  function midPoint(rect2) {
+    return {
+      x: Math.round((rect2.left + rect2.right) / 2),
+      y: Math.round((rect2.top + rect2.bottom) / 2)
+    };
+  }
+  Rect64Utils2.midPoint = midPoint;
+  function contains(rect2, pt) {
+    return pt.x > rect2.left && pt.x < rect2.right && pt.y > rect2.top && pt.y < rect2.bottom;
+  }
+  Rect64Utils2.contains = contains;
+  function containsRect(rect2, rec) {
+    return rec.left >= rect2.left && rec.right <= rect2.right && rec.top >= rect2.top && rec.bottom <= rect2.bottom;
+  }
+  Rect64Utils2.containsRect = containsRect;
+  function intersects(rect2, rec) {
+    return Math.max(rect2.left, rec.left) <= Math.min(rect2.right, rec.right) && Math.max(rect2.top, rec.top) <= Math.min(rect2.bottom, rec.bottom);
+  }
+  Rect64Utils2.intersects = intersects;
+  function asPath(rect2) {
+    return [
+      { x: rect2.left, y: rect2.top, z: 0 },
+      { x: rect2.right, y: rect2.top, z: 0 },
+      { x: rect2.right, y: rect2.bottom, z: 0 },
+      { x: rect2.left, y: rect2.bottom, z: 0 }
+    ];
+  }
+  Rect64Utils2.asPath = asPath;
+})(Rect64Utils || (Rect64Utils = {}));
+var RectDUtils;
+(function(RectDUtils2) {
+  function create(l = 0, t3 = 0, r = 0, b = 0) {
+    return { left: l, top: t3, right: r, bottom: b };
+  }
+  RectDUtils2.create = create;
+  function createInvalid() {
+    return {
+      left: Number.MAX_VALUE,
+      top: Number.MAX_VALUE,
+      right: -Number.MAX_VALUE,
+      bottom: -Number.MAX_VALUE
+    };
+  }
+  RectDUtils2.createInvalid = createInvalid;
+  function width(rect2) {
+    return rect2.right - rect2.left;
+  }
+  RectDUtils2.width = width;
+  function height(rect2) {
+    return rect2.bottom - rect2.top;
+  }
+  RectDUtils2.height = height;
+  function isEmpty(rect2) {
+    return rect2.bottom <= rect2.top || rect2.right <= rect2.left;
+  }
+  RectDUtils2.isEmpty = isEmpty;
+  function midPoint(rect2) {
+    return {
+      x: (rect2.left + rect2.right) / 2,
+      y: (rect2.top + rect2.bottom) / 2
+    };
+  }
+  RectDUtils2.midPoint = midPoint;
+  function contains(rect2, pt) {
+    return pt.x > rect2.left && pt.x < rect2.right && pt.y > rect2.top && pt.y < rect2.bottom;
+  }
+  RectDUtils2.contains = contains;
+  function containsRect(rect2, rec) {
+    return rec.left >= rect2.left && rec.right <= rect2.right && rec.top >= rect2.top && rec.bottom <= rect2.bottom;
+  }
+  RectDUtils2.containsRect = containsRect;
+  function intersects(rect2, rec) {
+    return Math.max(rect2.left, rec.left) < Math.min(rect2.right, rec.right) && Math.max(rect2.top, rec.top) < Math.min(rect2.bottom, rec.bottom);
+  }
+  RectDUtils2.intersects = intersects;
+  function asPath(rect2) {
+    return [
+      { x: rect2.left, y: rect2.top, z: 0 },
+      { x: rect2.right, y: rect2.top, z: 0 },
+      { x: rect2.right, y: rect2.bottom, z: 0 },
+      { x: rect2.left, y: rect2.bottom, z: 0 }
+    ];
+  }
+  RectDUtils2.asPath = asPath;
+})(RectDUtils || (RectDUtils = {}));
+var PathUtils;
+(function(PathUtils2) {
+  function toString64(path) {
+    let result = "";
+    for (const pt of path) {
+      result += Point64Utils.toString(pt);
+    }
+    return result + "\n";
+  }
+  PathUtils2.toString64 = toString64;
+  function toStringD(path, precision = 2) {
+    let result = "";
+    for (const pt of path) {
+      result += PointDUtils.toString(pt, precision) + ", ";
+    }
+    if (result !== "")
+      result = result.slice(0, -2);
+    return result;
+  }
+  PathUtils2.toStringD = toStringD;
+  function reverse64(path) {
+    return [...path].reverse();
+  }
+  PathUtils2.reverse64 = reverse64;
+  function reverseD(path) {
+    return [...path].reverse();
+  }
+  PathUtils2.reverseD = reverseD;
+})(PathUtils || (PathUtils = {}));
+var PathsUtils;
+(function(PathsUtils2) {
+  function toString64(paths) {
+    let result = "";
+    for (const path of paths) {
+      result += PathUtils.toString64(path);
+    }
+    return result;
+  }
+  PathsUtils2.toString64 = toString64;
+  function toStringD(paths, precision = 2) {
+    let result = "";
+    for (const path of paths) {
+      result += PathUtils.toStringD(path, precision) + "\n";
+    }
+    return result;
+  }
+  PathsUtils2.toStringD = toStringD;
+  function reverse64(paths) {
+    return paths.map((path) => PathUtils.reverse64(path));
+  }
+  PathsUtils2.reverse64 = reverse64;
+  function reverseD(paths) {
+    return paths.map((path) => PathUtils.reverseD(path));
+  }
+  PathsUtils2.reverseD = reverseD;
+})(PathsUtils || (PathsUtils = {}));
+var InvalidRect64 = Rect64Utils.createInvalid();
+var InvalidRectD = RectDUtils.createInvalid();
+
+// node_modules/.pnpm/clipper2-ts@2.0.1/node_modules/clipper2-ts/dist/Engine.js
+var VertexFlags;
+(function(VertexFlags2) {
+  VertexFlags2[VertexFlags2["None"] = 0] = "None";
+  VertexFlags2[VertexFlags2["OpenStart"] = 1] = "OpenStart";
+  VertexFlags2[VertexFlags2["OpenEnd"] = 2] = "OpenEnd";
+  VertexFlags2[VertexFlags2["LocalMax"] = 4] = "LocalMax";
+  VertexFlags2[VertexFlags2["LocalMin"] = 8] = "LocalMin";
+})(VertexFlags || (VertexFlags = {}));
+var ScanlineHeap = class {
+  data = [];
+  push(value) {
+    this.data.push(value);
+    this.siftUp(this.data.length - 1);
+  }
+  pop() {
+    if (this.data.length === 0)
+      return null;
+    const max = this.data[0];
+    const last = this.data.pop();
+    if (this.data.length > 0) {
+      this.data[0] = last;
+      this.siftDown(0);
+    }
+    return max;
+  }
+  clear() {
+    this.data.length = 0;
+  }
+  siftUp(index) {
+    while (index > 0) {
+      const parent = index - 1 >> 1;
+      if (this.data[parent] >= this.data[index])
+        break;
+      [this.data[parent], this.data[index]] = [this.data[index], this.data[parent]];
+      index = parent;
+    }
+  }
+  siftDown(index) {
+    const length = this.data.length;
+    while (true) {
+      let largest = index;
+      const left = (index << 1) + 1;
+      const right = left + 1;
+      if (left < length && this.data[left] > this.data[largest])
+        largest = left;
+      if (right < length && this.data[right] > this.data[largest])
+        largest = right;
+      if (largest === index)
+        break;
+      [this.data[index], this.data[largest]] = [this.data[largest], this.data[index]];
+      index = largest;
+    }
+  }
+};
+var Vertex = class {
+  pt;
+  next = null;
+  prev = null;
+  flags;
+  constructor(pt, flags, prev) {
+    this.pt = pt;
+    this.flags = flags;
+    this.prev = prev;
+  }
+};
+var LocalMinima = class {
+  vertex;
+  polytype;
+  isOpen;
+  constructor(vertex, polytype, isOpen = false) {
+    this.vertex = vertex;
+    this.polytype = polytype;
+    this.isOpen = isOpen;
+  }
+  equals(other) {
+    return other !== null && this.vertex === other.vertex;
+  }
+};
+function createIntersectNode(pt, edge1, edge2) {
+  return { pt: { x: pt.x, y: pt.y, z: pt.z || 0 }, edge1, edge2 };
+}
+var OutPt = class _OutPt {
+  static _nextId = 1;
+  _debugId;
+  pt;
+  next;
+  prev;
+  outrec;
+  horz;
+  constructor(pt, outrec) {
+    this._debugId = _OutPt._nextId++;
+    this.pt = pt;
+    this.outrec = outrec;
+    this.next = this;
+    this.prev = this;
+    this.horz = null;
+  }
+};
+var JoinWith;
+(function(JoinWith2) {
+  JoinWith2[JoinWith2["None"] = 0] = "None";
+  JoinWith2[JoinWith2["Left"] = 1] = "Left";
+  JoinWith2[JoinWith2["Right"] = 2] = "Right";
+})(JoinWith || (JoinWith = {}));
+var HorzPosition;
+(function(HorzPosition2) {
+  HorzPosition2[HorzPosition2["Bottom"] = 0] = "Bottom";
+  HorzPosition2[HorzPosition2["Middle"] = 1] = "Middle";
+  HorzPosition2[HorzPosition2["Top"] = 2] = "Top";
+})(HorzPosition || (HorzPosition = {}));
+var OutRec = class _OutRec {
+  static _nextId = 1;
+  _debugId;
+  idx = 0;
+  owner = null;
+  frontEdge = null;
+  backEdge = null;
+  pts = null;
+  polypath = null;
+  bounds = { left: 0, top: 0, right: 0, bottom: 0 };
+  path = [];
+  isOpen = false;
+  splits = null;
+  recursiveSplit = null;
+  constructor() {
+    this._debugId = _OutRec._nextId++;
+  }
+};
+var HorzSegment = class {
+  leftOp;
+  rightOp;
+  leftToRight;
+  constructor(op) {
+    this.leftOp = op;
+    this.rightOp = null;
+    this.leftToRight = true;
+  }
+};
+var HorzJoin = class {
+  op1;
+  op2;
+  constructor(ltor, rtol) {
+    this.op1 = ltor;
+    this.op2 = rtol;
+  }
+};
+var Active = class {
+  bot = { x: 0, y: 0, z: 0 };
+  top = { x: 0, y: 0, z: 0 };
+  curX = 0;
+  // current (updated at every new scanline) - keep as number but ensure integer precision
+  dx = 0;
+  windDx = 0;
+  // 1 or -1 depending on winding direction
+  windCount = 0;
+  windCount2 = 0;
+  // winding count of the opposite polytype
+  outrec = null;
+  // AEL: 'active edge list' (Vatti's AET - active edge table)
+  //     a linked list of all edges (from left to right) that are present
+  //     (or 'active') within the current scanbeam (a horizontal 'beam' that
+  //     sweeps from bottom to top over the paths in the clipping operation).
+  prevInAEL = null;
+  nextInAEL = null;
+  // SEL: 'sorted edge list' (Vatti's ST - sorted table)
+  //     linked list used when sorting edges into their new positions at the
+  //     top of scanbeams, but also (re)used to process horizontals.
+  prevInSEL = null;
+  nextInSEL = null;
+  jump = null;
+  vertexTop = null;
+  localMin = null;
+  // the bottom of an edge 'bound' (also Vatti)
+  isLeftBound = false;
+  joinWith = JoinWith.None;
+};
+var ClipperEngine;
+(function(ClipperEngine2) {
+  function addLocMin(vert, polytype, isOpen, minimaList) {
+    if ((vert.flags & VertexFlags.LocalMin) !== VertexFlags.None)
+      return;
+    vert.flags |= VertexFlags.LocalMin;
+    const lm = new LocalMinima(vert, polytype, isOpen);
+    minimaList.push(lm);
+  }
+  ClipperEngine2.addLocMin = addLocMin;
+  function addPathsToVertexList(paths, polytype, isOpen, minimaList, vertexList) {
+    for (let i = 0, len2 = paths.length; i < len2; i++) {
+      const path = paths[i];
+      let v0 = null;
+      let prevV = null;
+      for (let j = 0, len22 = path.length; j < len22; j++) {
+        const pt = path[j];
+        if (v0 === null) {
+          v0 = new Vertex(pt, VertexFlags.None, null);
+          vertexList.push(v0);
+          prevV = v0;
+        } else if (!(prevV.pt.x === pt.x && prevV.pt.y === pt.y)) {
+          const currV2 = new Vertex(pt, VertexFlags.None, prevV);
+          vertexList.push(currV2);
+          prevV.next = currV2;
+          prevV = currV2;
+        }
+      }
+      if (prevV?.prev === null)
+        continue;
+      if (!isOpen && prevV.pt.x === v0.pt.x && prevV.pt.y === v0.pt.y)
+        prevV = prevV.prev;
+      prevV.next = v0;
+      v0.prev = prevV;
+      if (!isOpen && prevV.next === prevV)
+        continue;
+      let goingUp;
+      if (isOpen) {
+        let currV2 = v0.next;
+        while (currV2 !== v0 && currV2.pt.y === v0.pt.y)
+          currV2 = currV2.next;
+        goingUp = currV2.pt.y <= v0.pt.y;
+        if (goingUp) {
+          v0.flags = VertexFlags.OpenStart;
+          addLocMin(v0, polytype, true, minimaList);
+        } else {
+          v0.flags = VertexFlags.OpenStart | VertexFlags.LocalMax;
+        }
+      } else {
+        prevV = v0.prev;
+        while (prevV !== v0 && prevV.pt.y === v0.pt.y)
+          prevV = prevV.prev;
+        if (prevV === v0)
+          continue;
+        goingUp = prevV.pt.y > v0.pt.y;
+      }
+      const goingUp0 = goingUp;
+      prevV = v0;
+      let currV = v0.next;
+      while (currV !== v0) {
+        if (currV.pt.y > prevV.pt.y && goingUp) {
+          prevV.flags |= VertexFlags.LocalMax;
+          goingUp = false;
+        } else if (currV.pt.y < prevV.pt.y && !goingUp) {
+          goingUp = true;
+          addLocMin(prevV, polytype, isOpen, minimaList);
+        }
+        prevV = currV;
+        currV = currV.next;
+      }
+      if (isOpen) {
+        prevV.flags |= VertexFlags.OpenEnd;
+        if (goingUp)
+          prevV.flags |= VertexFlags.LocalMax;
+        else
+          addLocMin(prevV, polytype, isOpen, minimaList);
+      } else if (goingUp !== goingUp0) {
+        if (goingUp0)
+          addLocMin(prevV, polytype, false, minimaList);
+        else
+          prevV.flags |= VertexFlags.LocalMax;
+      }
+    }
+  }
+  ClipperEngine2.addPathsToVertexList = addPathsToVertexList;
+})(ClipperEngine || (ClipperEngine = {}));
+var ClipperBase = class _ClipperBase {
+  cliptype = ClipType.NoClip;
+  fillrule = FillRule.EvenOdd;
+  actives = null;
+  sel = null;
+  minimaList = [];
+  intersectList = [];
+  vertexList = [];
+  outrecList = [];
+  scanlineHeap = new ScanlineHeap();
+  scanlineSet = /* @__PURE__ */ new Set();
+  // For very small inputs, a heap + set can cost more than it saves.
+  // Use an array-based scanline mode initially, and upgrade to heap+set
+  // automatically if the scanline list grows beyond a threshold.
+  scanlineArr = [];
+  useScanlineArray = false;
+  horzSegList = [];
+  horzJoinList = [];
+  currentLocMin = 0;
+  currentBotY = 0;
+  isSortedMinimaList = false;
+  hasOpenPaths = false;
+  usingPolytree = false;
+  succeeded = false;
+  preserveCollinear = true;
+  reverseSolution = false;
+  constructor() {
+  }
+  // Z-coordinate callback support
+  // Override in subclasses (Clipper64/ClipperD) to provide callback
+  getZCallback() {
+    return void 0;
+  }
+  xyEqual(pt1, pt2) {
+    return pt1.x === pt2.x && pt1.y === pt2.y;
+  }
+  setZ(ae1, ae2, intersectPt) {
+    const zCallback = this.getZCallback();
+    if (!zCallback)
+      return;
+    if (_ClipperBase.getPolyType(ae1) === PathType.Subject) {
+      if (this.xyEqual(intersectPt, ae1.bot)) {
+        intersectPt.z = ae1.bot.z;
+      } else if (this.xyEqual(intersectPt, ae1.top)) {
+        intersectPt.z = ae1.top.z;
+      } else if (this.xyEqual(intersectPt, ae2.bot)) {
+        intersectPt.z = ae2.bot.z;
+      } else if (this.xyEqual(intersectPt, ae2.top)) {
+        intersectPt.z = ae2.top.z;
+      } else {
+        intersectPt.z = 0;
+      }
+      zCallback(ae1.bot, ae1.top, ae2.bot, ae2.top, intersectPt);
+    } else {
+      if (this.xyEqual(intersectPt, ae2.bot)) {
+        intersectPt.z = ae2.bot.z;
+      } else if (this.xyEqual(intersectPt, ae2.top)) {
+        intersectPt.z = ae2.top.z;
+      } else if (this.xyEqual(intersectPt, ae1.bot)) {
+        intersectPt.z = ae1.bot.z;
+      } else if (this.xyEqual(intersectPt, ae1.top)) {
+        intersectPt.z = ae1.top.z;
+      } else {
+        intersectPt.z = 0;
+      }
+      zCallback(ae2.bot, ae2.top, ae1.bot, ae1.top, intersectPt);
+    }
+  }
+  // Helper functions
+  static isOdd(val) {
+    return (val & 1) !== 0;
+  }
+  static isHotEdge(ae) {
+    return ae.outrec != null;
+  }
+  static isOpen(ae) {
+    return ae.localMin.isOpen;
+  }
+  static isOpenEnd(ae) {
+    return ae.localMin.isOpen && _ClipperBase.isOpenEndVertex(ae.vertexTop);
+  }
+  static isOpenEndVertex(v) {
+    return (v.flags & (VertexFlags.OpenStart | VertexFlags.OpenEnd)) !== VertexFlags.None;
+  }
+  static getPrevHotEdge(ae) {
+    let prev = ae.prevInAEL;
+    while (prev !== null && (_ClipperBase.isOpen(prev) || !_ClipperBase.isHotEdge(prev))) {
+      prev = prev.prevInAEL;
+    }
+    return prev;
+  }
+  static isFront(ae) {
+    return ae === ae.outrec.frontEdge;
+  }
+  /*******************************************************************************
+  *  Dx:                             0(90deg)                                    *
+  *                                  |                                           *
+  *               +inf (180deg) <--- o ---> -inf (0deg)                          *
+  *******************************************************************************/
+  static getDx(pt1, pt2) {
+    const dy = pt2.y - pt1.y;
+    if (dy !== 0) {
+      return (pt2.x - pt1.x) / dy;
+    }
+    return pt2.x > pt1.x ? Number.NEGATIVE_INFINITY : Number.POSITIVE_INFINITY;
+  }
+  static topX(ae, currentY) {
+    if (currentY === ae.top.y || ae.top.x === ae.bot.x)
+      return ae.top.x;
+    if (currentY === ae.bot.y)
+      return ae.bot.x;
+    return InternalClipper.roundToEven(ae.bot.x + ae.dx * (currentY - ae.bot.y));
+  }
+  static isHorizontal(ae) {
+    return ae.top.y === ae.bot.y;
+  }
+  static isHeadingRightHorz(ae) {
+    return ae.dx === Number.NEGATIVE_INFINITY;
+  }
+  static isHeadingLeftHorz(ae) {
+    return ae.dx === Number.POSITIVE_INFINITY;
+  }
+  static swapActives(ae1, ae2) {
+    return [ae2, ae1];
+  }
+  static getPolyType(ae) {
+    return ae.localMin.polytype;
+  }
+  static isSamePolyType(ae1, ae2) {
+    return ae1.localMin.polytype === ae2.localMin.polytype;
+  }
+  static setDx(ae) {
+    ae.dx = _ClipperBase.getDx(ae.bot, ae.top);
+  }
+  static nextVertex(ae) {
+    return ae.windDx > 0 ? ae.vertexTop.next : ae.vertexTop.prev;
+  }
+  static prevPrevVertex(ae) {
+    return ae.windDx > 0 ? ae.vertexTop.prev.prev : ae.vertexTop.next.next;
+  }
+  static isMaxima(vertexOrAe) {
+    if ("flags" in vertexOrAe) {
+      return (vertexOrAe.flags & VertexFlags.LocalMax) !== VertexFlags.None;
+    } else {
+      return _ClipperBase.isMaxima(vertexOrAe.vertexTop);
+    }
+  }
+  static getMaximaPair(ae) {
+    let ae2 = ae.nextInAEL;
+    while (ae2 !== null) {
+      if (ae2.vertexTop === ae.vertexTop)
+        return ae2;
+      ae2 = ae2.nextInAEL;
+    }
+    return null;
+  }
+  // optimization (not in C# reference): fast bounding box overlap check for segment intersection
+  boundingBoxesOverlap(p1, p2, p3, p4) {
+    const min1x = Math.min(p1.x, p2.x);
+    const max1x = Math.max(p1.x, p2.x);
+    const min1y = Math.min(p1.y, p2.y);
+    const max1y = Math.max(p1.y, p2.y);
+    const min2x = Math.min(p3.x, p4.x);
+    const max2x = Math.max(p3.x, p4.x);
+    const min2y = Math.min(p3.y, p4.y);
+    const max2y = Math.max(p3.y, p4.y);
+    return !(max1x < min2x || max2x < min1x || max1y < min2y || max2y < min1y);
+  }
+  clearSolutionOnly() {
+    while (this.actives !== null)
+      this.deleteFromAEL(this.actives);
+    this.scanlineHeap.clear();
+    this.scanlineSet.clear();
+    this.scanlineArr.length = 0;
+    this.disposeIntersectNodes();
+    this.outrecList.length = 0;
+    this.horzSegList.length = 0;
+    this.horzJoinList.length = 0;
+  }
+  clear() {
+    this.clearSolutionOnly();
+    this.minimaList.length = 0;
+    this.vertexList.length = 0;
+    this.currentLocMin = 0;
+    this.isSortedMinimaList = false;
+    this.hasOpenPaths = false;
+  }
+  reset() {
+    if (!this.isSortedMinimaList) {
+      this.minimaList.sort((a, b) => b.vertex.pt.y - a.vertex.pt.y);
+      this.isSortedMinimaList = true;
+    }
+    this.scanlineHeap.clear();
+    this.scanlineSet.clear();
+    this.scanlineArr.length = 0;
+    this.useScanlineArray = this.minimaList.length <= 16;
+    for (let i = this.minimaList.length - 1; i >= 0; i--) {
+      this.insertScanline(this.minimaList[i].vertex.pt.y);
+    }
+    this.currentBotY = 0;
+    this.currentLocMin = 0;
+    this.actives = null;
+    this.sel = null;
+    this.succeeded = true;
+  }
+  upgradeScanlineStructureFromArray() {
+    const arr = this.scanlineArr;
+    for (let i = 0, len2 = arr.length; i < len2; i++) {
+      const y = arr[i];
+      this.scanlineSet.add(y);
+      this.scanlineHeap.push(y);
+    }
+    arr.length = 0;
+    this.useScanlineArray = false;
+  }
+  insertScanline(y) {
+    if (this.useScanlineArray) {
+      const arr = this.scanlineArr;
+      for (let i = 0, len2 = arr.length; i < len2; i++) {
+        if (arr[i] === y)
+          return;
+      }
+      arr.push(y);
+      if (arr.length > 64)
+        this.upgradeScanlineStructureFromArray();
+      return;
+    }
+    if (this.scanlineSet.has(y))
+      return;
+    this.scanlineSet.add(y);
+    this.scanlineHeap.push(y);
+  }
+  popScanline() {
+    if (this.useScanlineArray) {
+      const arr = this.scanlineArr;
+      const len2 = arr.length;
+      if (len2 === 0)
+        return { success: false, y: 0 };
+      let bestIdx = 0;
+      let bestY = arr[0];
+      for (let i = 1; i < len2; i++) {
+        const v = arr[i];
+        if (v > bestY) {
+          bestY = v;
+          bestIdx = i;
+        }
+      }
+      arr[bestIdx] = arr[len2 - 1];
+      arr.pop();
+      return { success: true, y: bestY };
+    }
+    const y = this.scanlineHeap.pop();
+    if (y === null)
+      return { success: false, y: 0 };
+    this.scanlineSet.delete(y);
+    return { success: true, y };
+  }
+  hasLocMinAtY(y) {
+    return this.currentLocMin < this.minimaList.length && this.minimaList[this.currentLocMin].vertex.pt.y === y;
+  }
+  popLocalMinima() {
+    return this.minimaList[this.currentLocMin++];
+  }
+  addPath(path, polytype, isOpen = false) {
+    const tmp = [path];
+    this.addPaths(tmp, polytype, isOpen);
+  }
+  addPaths(paths, polytype, isOpen = false) {
+    if (isOpen)
+      this.hasOpenPaths = true;
+    this.isSortedMinimaList = false;
+    ClipperEngine.addPathsToVertexList(paths, polytype, isOpen, this.minimaList, this.vertexList);
+  }
+  addReuseableData(reuseableData) {
+    if (reuseableData["minimaList"].length === 0)
+      return;
+    this.isSortedMinimaList = false;
+    for (const lm of reuseableData["minimaList"]) {
+      this.minimaList.push(new LocalMinima(lm.vertex, lm.polytype, lm.isOpen));
+      if (lm.isOpen)
+        this.hasOpenPaths = true;
+    }
+  }
+  deleteFromAEL(ae) {
+    const prev = ae.prevInAEL;
+    const next = ae.nextInAEL;
+    if (prev === null && next === null && ae !== this.actives)
+      return;
+    if (prev !== null) {
+      prev.nextInAEL = next;
+    } else {
+      this.actives = next;
+    }
+    if (next !== null)
+      next.prevInAEL = prev;
+  }
+  getBounds() {
+    const bounds = {
+      left: Number.MAX_SAFE_INTEGER,
+      top: Number.MAX_SAFE_INTEGER,
+      right: Number.MIN_SAFE_INTEGER,
+      bottom: Number.MIN_SAFE_INTEGER
+    };
+    for (const t3 of this.vertexList) {
+      let v = t3;
+      do {
+        if (v.pt.x < bounds.left)
+          bounds.left = v.pt.x;
+        if (v.pt.x > bounds.right)
+          bounds.right = v.pt.x;
+        if (v.pt.y < bounds.top)
+          bounds.top = v.pt.y;
+        if (v.pt.y > bounds.bottom)
+          bounds.bottom = v.pt.y;
+        v = v.next;
+      } while (v !== t3);
+    }
+    return Rect64Utils.isEmpty(bounds) ? { left: 0, top: 0, right: 0, bottom: 0 } : bounds;
+  }
+  executeInternal(ct, fillRule) {
+    if (ct === ClipType.NoClip)
+      return;
+    this.fillrule = fillRule;
+    this.cliptype = ct;
+    this.reset();
+    const scanResult = this.popScanline();
+    if (!scanResult.success)
+      return;
+    let y = scanResult.y;
+    while (this.succeeded) {
+      this.insertLocalMinimaIntoAEL(y);
+      let ae;
+      while ((ae = this.popHorz()) !== null)
+        this.doHorizontal(ae);
+      if (this.horzSegList.length > 0) {
+        this.convertHorzSegsToJoins();
+        this.horzSegList.length = 0;
+      }
+      this.currentBotY = y;
+      const nextScanResult = this.popScanline();
+      if (!nextScanResult.success)
+        break;
+      y = nextScanResult.y;
+      this.doIntersections(y);
+      this.doTopOfScanbeam(y);
+      while ((ae = this.popHorz()) !== null)
+        this.doHorizontal(ae);
+    }
+    if (this.succeeded)
+      this.processHorzJoins();
+  }
+  insertLocalMinimaIntoAEL(botY) {
+    while (this.hasLocMinAtY(botY)) {
+      const localMinima = this.popLocalMinima();
+      let leftBound;
+      if ((localMinima.vertex.flags & VertexFlags.OpenStart) !== VertexFlags.None) {
+        leftBound = null;
+      } else {
+        leftBound = new Active();
+        leftBound.bot = { x: localMinima.vertex.pt.x, y: localMinima.vertex.pt.y, z: localMinima.vertex.pt.z || 0 };
+        leftBound.curX = localMinima.vertex.pt.x;
+        leftBound.windDx = -1;
+        leftBound.vertexTop = localMinima.vertex.prev;
+        leftBound.top = { x: localMinima.vertex.prev.pt.x, y: localMinima.vertex.prev.pt.y, z: localMinima.vertex.prev.pt.z || 0 };
+        leftBound.outrec = null;
+        leftBound.localMin = localMinima;
+        _ClipperBase.setDx(leftBound);
+      }
+      let rightBound;
+      if ((localMinima.vertex.flags & VertexFlags.OpenEnd) !== VertexFlags.None) {
+        rightBound = null;
+      } else {
+        rightBound = new Active();
+        rightBound.bot = { x: localMinima.vertex.pt.x, y: localMinima.vertex.pt.y, z: localMinima.vertex.pt.z || 0 };
+        rightBound.curX = localMinima.vertex.pt.x;
+        rightBound.windDx = 1;
+        rightBound.vertexTop = localMinima.vertex.next;
+        rightBound.top = { x: localMinima.vertex.next.pt.x, y: localMinima.vertex.next.pt.y, z: localMinima.vertex.next.pt.z || 0 };
+        rightBound.outrec = null;
+        rightBound.localMin = localMinima;
+        _ClipperBase.setDx(rightBound);
+      }
+      if (leftBound !== null && rightBound !== null) {
+        if (_ClipperBase.isHorizontal(leftBound)) {
+          if (_ClipperBase.isHeadingRightHorz(leftBound))
+            [leftBound, rightBound] = _ClipperBase.swapActives(leftBound, rightBound);
+        } else if (_ClipperBase.isHorizontal(rightBound)) {
+          if (_ClipperBase.isHeadingLeftHorz(rightBound))
+            [leftBound, rightBound] = _ClipperBase.swapActives(leftBound, rightBound);
+        } else if (leftBound.dx < rightBound.dx) {
+          [leftBound, rightBound] = _ClipperBase.swapActives(leftBound, rightBound);
+        }
+      } else if (leftBound === null) {
+        leftBound = rightBound;
+        rightBound = null;
+      }
+      let contributing;
+      leftBound.isLeftBound = true;
+      this.insertLeftEdge(leftBound);
+      if (_ClipperBase.isOpen(leftBound)) {
+        this.setWindCountForOpenPathEdge(leftBound);
+        contributing = this.isContributingOpen(leftBound);
+      } else {
+        this.setWindCountForClosedPathEdge(leftBound);
+        contributing = this.isContributingClosed(leftBound);
+      }
+      if (rightBound !== null) {
+        rightBound.windCount = leftBound.windCount;
+        rightBound.windCount2 = leftBound.windCount2;
+        this.insertRightEdge(leftBound, rightBound);
+        if (contributing) {
+          this.addLocalMinPoly(leftBound, rightBound, leftBound.bot, true);
+          if (!_ClipperBase.isHorizontal(leftBound)) {
+            this.checkJoinLeft(leftBound, leftBound.bot);
+          }
+        }
+        while (rightBound.nextInAEL !== null && this.isValidAelOrder(rightBound.nextInAEL, rightBound)) {
+          this.intersectEdges(rightBound, rightBound.nextInAEL, rightBound.bot);
+          this.swapPositionsInAEL(rightBound, rightBound.nextInAEL);
+        }
+        if (_ClipperBase.isHorizontal(rightBound)) {
+          this.pushHorz(rightBound);
+        } else {
+          this.checkJoinRight(rightBound, rightBound.bot);
+          this.insertScanline(rightBound.top.y);
+        }
+      } else if (contributing) {
+        this.startOpenPath(leftBound, leftBound.bot);
+      }
+      if (_ClipperBase.isHorizontal(leftBound)) {
+        this.pushHorz(leftBound);
+      } else {
+        this.insertScanline(leftBound.top.y);
+      }
+    }
+  }
+  pushHorz(ae) {
+    ae.nextInSEL = this.sel;
+    this.sel = ae;
+  }
+  popHorz() {
+    const ae = this.sel;
+    if (ae === null)
+      return null;
+    this.sel = this.sel.nextInSEL;
+    return ae;
+  }
+  doHorizontal(horz) {
+    const horzIsOpen = _ClipperBase.isOpen(horz);
+    const y = horz.bot.y;
+    const vertexMax = horzIsOpen ? this.getCurrYMaximaVertexOpen(horz) : this.getCurrYMaximaVertex(horz);
+    const { isLeftToRight, leftX, rightX } = this.resetHorzDirection(horz, vertexMax);
+    let leftX2 = leftX;
+    let rightX2 = rightX;
+    if (_ClipperBase.isHotEdge(horz)) {
+      const op = this.addOutPt(horz, { x: horz.curX, y });
+      this.addToHorzSegList(op);
+    }
+    while (true) {
+      let ae = isLeftToRight ? horz.nextInAEL : horz.prevInAEL;
+      while (ae !== null) {
+        if (ae.vertexTop === vertexMax) {
+          if (_ClipperBase.isHotEdge(horz) && this.isJoined(ae))
+            this.split(ae, ae.top);
+          if (_ClipperBase.isHotEdge(horz)) {
+            while (horz.vertexTop !== vertexMax) {
+              this.addOutPt(horz, horz.top);
+              this.updateEdgeIntoAEL(horz);
+            }
+            if (isLeftToRight) {
+              this.addLocalMaxPoly(horz, ae, horz.top);
+            } else {
+              this.addLocalMaxPoly(ae, horz, horz.top);
+            }
+          }
+          this.deleteFromAEL(ae);
+          this.deleteFromAEL(horz);
+          return;
+        }
+        if (vertexMax !== horz.vertexTop || _ClipperBase.isOpenEnd(horz)) {
+          if (isLeftToRight && ae.curX > rightX2 || !isLeftToRight && ae.curX < leftX2)
+            break;
+          if (ae.curX === horz.top.x && !_ClipperBase.isHorizontal(ae)) {
+            const pt2 = _ClipperBase.nextVertex(horz).pt;
+            if (_ClipperBase.isOpen(ae) && !_ClipperBase.isSamePolyType(ae, horz) && !_ClipperBase.isHotEdge(ae)) {
+              if (isLeftToRight && _ClipperBase.topX(ae, pt2.y) > pt2.x || !isLeftToRight && _ClipperBase.topX(ae, pt2.y) < pt2.x)
+                break;
+            } else if (isLeftToRight && _ClipperBase.topX(ae, pt2.y) >= pt2.x || !isLeftToRight && _ClipperBase.topX(ae, pt2.y) <= pt2.x)
+              break;
+          }
+        }
+        const pt = { x: ae.curX, y };
+        if (isLeftToRight) {
+          this.intersectEdges(horz, ae, pt);
+          this.swapPositionsInAEL(horz, ae);
+          this.checkJoinLeft(ae, pt);
+          horz.curX = ae.curX;
+          ae = horz.nextInAEL;
+        } else {
+          this.intersectEdges(ae, horz, pt);
+          this.swapPositionsInAEL(ae, horz);
+          this.checkJoinRight(ae, pt);
+          horz.curX = ae.curX;
+          ae = horz.prevInAEL;
+        }
+        if (_ClipperBase.isHotEdge(horz)) {
+          this.addToHorzSegList(this.getLastOp(horz));
+        }
+      }
+      if (horzIsOpen && _ClipperBase.isOpenEnd(horz)) {
+        if (_ClipperBase.isHotEdge(horz)) {
+          this.addOutPt(horz, horz.top);
+          if (_ClipperBase.isFront(horz)) {
+            horz.outrec.frontEdge = null;
+          } else {
+            horz.outrec.backEdge = null;
+          }
+          horz.outrec = null;
+        }
+        this.deleteFromAEL(horz);
+        return;
+      }
+      if (_ClipperBase.nextVertex(horz).pt.y !== horz.top.y) {
+        break;
+      }
+      if (_ClipperBase.isHotEdge(horz)) {
+        this.addOutPt(horz, horz.top);
+      }
+      this.updateEdgeIntoAEL(horz);
+      const resetResult = this.resetHorzDirection(horz, vertexMax);
+      leftX2 = resetResult.leftX;
+      rightX2 = resetResult.rightX;
+    }
+    if (_ClipperBase.isHotEdge(horz)) {
+      const op = this.addOutPt(horz, horz.top);
+      this.addToHorzSegList(op);
+    }
+    this.updateEdgeIntoAEL(horz);
+  }
+  convertHorzSegsToJoins() {
+    let k2 = 0;
+    for (const hs of this.horzSegList) {
+      if (this.updateHorzSegment(hs))
+        k2++;
+    }
+    if (k2 < 2)
+      return;
+    this.horzSegList.sort((a, b) => this.horzSegSort(a, b));
+    for (let i = 0; i < k2 - 1; i++) {
+      const hs1 = this.horzSegList[i];
+      for (let j = i + 1; j < k2; j++) {
+        const hs2 = this.horzSegList[j];
+        if (hs2.leftOp.pt.x >= hs1.rightOp.pt.x || hs2.leftToRight === hs1.leftToRight || hs2.rightOp.pt.x <= hs1.leftOp.pt.x)
+          continue;
+        const currY = hs1.leftOp.pt.y;
+        if (hs1.leftToRight) {
+          while (hs1.leftOp.next.pt.y === currY && hs1.leftOp.next.pt.x <= hs2.leftOp.pt.x)
+            hs1.leftOp = hs1.leftOp.next;
+          while (hs2.leftOp.prev.pt.y === currY && hs2.leftOp.prev.pt.x <= hs1.leftOp.pt.x)
+            hs2.leftOp = hs2.leftOp.prev;
+          const join = new HorzJoin(this.duplicateOp(hs1.leftOp, true), this.duplicateOp(hs2.leftOp, false));
+          this.horzJoinList.push(join);
+        } else {
+          while (hs1.leftOp.prev.pt.y === currY && hs1.leftOp.prev.pt.x <= hs2.leftOp.pt.x)
+            hs1.leftOp = hs1.leftOp.prev;
+          while (hs2.leftOp.next.pt.y === currY && hs2.leftOp.next.pt.x <= hs1.leftOp.pt.x)
+            hs2.leftOp = hs2.leftOp.next;
+          const join = new HorzJoin(this.duplicateOp(hs2.leftOp, true), this.duplicateOp(hs1.leftOp, false));
+          this.horzJoinList.push(join);
+        }
+      }
+    }
+  }
+  updateHorzSegment(hs) {
+    const op = hs.leftOp;
+    const outrec = this.getRealOutRec(op.outrec);
+    const outrecHasEdges = outrec.frontEdge !== null;
+    const currY = op.pt.y;
+    let opP = op;
+    let opN = op;
+    if (outrecHasEdges) {
+      const opA = outrec.pts;
+      const opZ = opA.next;
+      while (opP !== opZ && opP.prev.pt.y === currY)
+        opP = opP.prev;
+      while (opN !== opA && opN.next.pt.y === currY)
+        opN = opN.next;
+    } else {
+      while (opP.prev !== opN && opP.prev.pt.y === currY)
+        opP = opP.prev;
+      while (opN.next !== opP && opN.next.pt.y === currY)
+        opN = opN.next;
+    }
+    const result = this.setHorzSegHeadingForward(hs, opP, opN) && hs.leftOp.horz === null;
+    if (result) {
+      hs.leftOp.horz = hs;
+    } else {
+      hs.rightOp = null;
+    }
+    return result;
+  }
+  setHorzSegHeadingForward(hs, opP, opN) {
+    if (opP.pt.x === opN.pt.x)
+      return false;
+    if (opP.pt.x < opN.pt.x) {
+      hs.leftOp = opP;
+      hs.rightOp = opN;
+      hs.leftToRight = true;
+    } else {
+      hs.leftOp = opN;
+      hs.rightOp = opP;
+      hs.leftToRight = false;
+    }
+    return true;
+  }
+  horzSegSort(hs1, hs2) {
+    if (hs1.rightOp === null) {
+      return hs2.rightOp === null ? 0 : 1;
+    }
+    if (hs2.rightOp === null)
+      return -1;
+    return hs1.leftOp.pt.x - hs2.leftOp.pt.x;
+  }
+  duplicateOp(op, insertAfter) {
+    const result = new OutPt(op.pt, op.outrec);
+    if (insertAfter) {
+      result.next = op.next;
+      result.next.prev = result;
+      result.prev = op;
+      op.next = result;
+    } else {
+      result.prev = op.prev;
+      result.prev.next = result;
+      result.next = op;
+      op.prev = result;
+    }
+    return result;
+  }
+  getRealOutRec(outRec) {
+    while (outRec !== null && outRec.pts === null) {
+      outRec = outRec.owner;
+    }
+    return outRec;
+  }
+  doIntersections(y) {
+    if (this.buildIntersectList(y)) {
+      this.processIntersectList();
+      this.disposeIntersectNodes();
+    }
+  }
+  doTopOfScanbeam(y) {
+    this.sel = null;
+    let ae = this.actives;
+    while (ae !== null) {
+      if (ae.top.y === y) {
+        ae.curX = ae.top.x;
+        if (_ClipperBase.isMaxima(ae)) {
+          ae = this.doMaxima(ae);
+          continue;
+        } else {
+          if (_ClipperBase.isHotEdge(ae))
+            this.addOutPt(ae, ae.top);
+          this.updateEdgeIntoAEL(ae);
+          if (_ClipperBase.isHorizontal(ae)) {
+            this.pushHorz(ae);
+          }
+        }
+      } else {
+        ae.curX = _ClipperBase.topX(ae, y);
+      }
+      ae = ae.nextInAEL;
+    }
+  }
+  processHorzJoins() {
+    for (const j of this.horzJoinList) {
+      const or1 = this.getRealOutRec(j.op1.outrec);
+      const or2 = this.getRealOutRec(j.op2.outrec);
+      const op1b = j.op1.next;
+      const op2b = j.op2.prev;
+      j.op1.next = j.op2;
+      j.op2.prev = j.op1;
+      op1b.prev = op2b;
+      op2b.next = op1b;
+      if (or1 === or2) {
+        const or2New = this.newOutRec();
+        or2New.pts = op1b;
+        this.fixOutRecPts(or2New);
+        if (or1.pts.outrec === or2New) {
+          or1.pts = j.op1;
+          or1.pts.outrec = or1;
+        }
+        if (this.usingPolytree) {
+          if (this.path1InsidePath2(or1.pts, or2New.pts)) {
+            [or2New.pts, or1.pts] = [or1.pts, or2New.pts];
+            this.fixOutRecPts(or1);
+            this.fixOutRecPts(or2New);
+            or2New.owner = or1;
+          } else if (this.path1InsidePath2(or2New.pts, or1.pts)) {
+            or2New.owner = or1;
+          } else {
+            or2New.owner = or1.owner;
+          }
+          if (or1.splits === null)
+            or1.splits = [];
+          or1.splits.push(or2New.idx);
+        } else {
+          or2New.owner = or1;
+        }
+      } else {
+        or2.pts = null;
+        if (this.usingPolytree) {
+          this.setOwner(or2, or1);
+          this.moveSplits(or2, or1);
+        } else {
+          or2.owner = or1;
+        }
+      }
+    }
+  }
+  fixOutRecPts(outrec) {
+    let op = outrec.pts;
+    do {
+      op.outrec = outrec;
+      op = op.next;
+    } while (op !== outrec.pts);
+  }
+  path1InsidePath2(op1, op2) {
+    let pip = PointInPolygonResult.IsOn;
+    let op = op1;
+    do {
+      switch (this.pointInOpPolygon(op.pt, op2)) {
+        case PointInPolygonResult.IsOutside:
+          if (pip === PointInPolygonResult.IsOutside)
+            return false;
+          pip = PointInPolygonResult.IsOutside;
+          break;
+        case PointInPolygonResult.IsInside:
+          if (pip === PointInPolygonResult.IsInside)
+            return true;
+          pip = PointInPolygonResult.IsInside;
+          break;
+        default:
+          break;
+      }
+      op = op.next;
+    } while (op !== op1);
+    return InternalClipper.path2ContainsPath1(this.getCleanPath(op1), this.getCleanPath(op2));
+  }
+  pointInOpPolygon(pt, op) {
+    if (op === op.next || op.prev === op.next) {
+      return PointInPolygonResult.IsOutside;
+    }
+    let op2 = op;
+    do {
+      if (op.pt.y !== pt.y)
+        break;
+      op = op.next;
+    } while (op !== op2);
+    if (op.pt.y === pt.y)
+      return PointInPolygonResult.IsOutside;
+    let isAbove = op.pt.y < pt.y;
+    const startingAbove = isAbove;
+    let val = 0;
+    op2 = op.next;
+    while (op2 !== op) {
+      if (isAbove) {
+        while (op2 !== op && op2.pt.y < pt.y)
+          op2 = op2.next;
+      } else {
+        while (op2 !== op && op2.pt.y > pt.y)
+          op2 = op2.next;
+      }
+      if (op2 === op)
+        break;
+      if (op2.pt.y === pt.y) {
+        if (op2.pt.x === pt.x || op2.pt.y === op2.prev.pt.y && pt.x < op2.prev.pt.x !== pt.x < op2.pt.x)
+          return PointInPolygonResult.IsOn;
+        op2 = op2.next;
+        if (op2 === op)
+          break;
+        continue;
+      }
+      if (op2.pt.x <= pt.x || op2.prev.pt.x <= pt.x) {
+        if (op2.prev.pt.x < pt.x && op2.pt.x < pt.x) {
+          val = 1 - val;
+        } else {
+          const d = InternalClipper.crossProduct(op2.prev.pt, op2.pt, pt);
+          if (d === 0)
+            return PointInPolygonResult.IsOn;
+          if (d < 0 === isAbove)
+            val = 1 - val;
+        }
+      }
+      isAbove = !isAbove;
+      op2 = op2.next;
+    }
+    if (isAbove === startingAbove)
+      return val === 0 ? PointInPolygonResult.IsOutside : PointInPolygonResult.IsInside;
+    {
+      const d = InternalClipper.crossProduct(op2.prev.pt, op2.pt, pt);
+      if (d === 0)
+        return PointInPolygonResult.IsOn;
+      if (d < 0 === isAbove)
+        val = 1 - val;
+    }
+    return val === 0 ? PointInPolygonResult.IsOutside : PointInPolygonResult.IsInside;
+  }
+  getCleanPath(op) {
+    const result = [];
+    let op2 = op;
+    while (op2.next !== op && (op2.pt.x === op2.next.pt.x && op2.pt.x === op2.prev.pt.x || op2.pt.y === op2.next.pt.y && op2.pt.y === op2.prev.pt.y))
+      op2 = op2.next;
+    result.push(op2.pt);
+    let prevOp = op2;
+    op2 = op2.next;
+    while (op2 !== op) {
+      if ((op2.pt.x !== op2.next.pt.x || op2.pt.x !== prevOp.pt.x) && (op2.pt.y !== op2.next.pt.y || op2.pt.y !== prevOp.pt.y)) {
+        result.push(op2.pt);
+        prevOp = op2;
+      }
+      op2 = op2.next;
+    }
+    return result;
+  }
+  moveSplits(fromOr, toOr) {
+    if (fromOr.splits === null)
+      return;
+    if (toOr.splits === null)
+      toOr.splits = [];
+    for (const i of fromOr.splits) {
+      if (i !== toOr.idx) {
+        toOr.splits.push(i);
+      }
+    }
+    fromOr.splits = null;
+  }
+  buildIntersectList(topY) {
+    if (this.actives?.nextInAEL === null)
+      return false;
+    this.adjustCurrXAndCopyToSEL(topY);
+    let left = this.sel;
+    while (left !== null && left.jump !== null) {
+      let prevBase = null;
+      while (left !== null && left.jump !== null) {
+        let currBase = left;
+        let right = left.jump;
+        let lEnd = right;
+        const rEnd = right?.jump || null;
+        left.jump = rEnd;
+        while (left !== lEnd && right !== rEnd) {
+          if (right.curX < left.curX) {
+            let tmp = right.prevInSEL;
+            while (true) {
+              this.addNewIntersectNode(tmp, right, topY);
+              if (tmp === left)
+                break;
+              tmp = tmp.prevInSEL;
+            }
+            tmp = right;
+            right = this.extractFromSEL(tmp);
+            lEnd = right;
+            if (left !== null)
+              this.insert1Before2InSEL(tmp, left);
+            if (left !== currBase)
+              continue;
+            currBase = tmp;
+            currBase.jump = rEnd;
+            if (prevBase === null) {
+              this.sel = currBase;
+            } else {
+              prevBase.jump = currBase;
+            }
+          } else {
+            left = left.nextInSEL;
+          }
+        }
+        prevBase = currBase;
+        left = rEnd;
+      }
+      left = this.sel;
+    }
+    return this.intersectList.length > 0;
+  }
+  processIntersectList() {
+    this.intersectList.sort((a, b) => {
+      if (a.pt.y !== b.pt.y)
+        return a.pt.y > b.pt.y ? -1 : 1;
+      if (a.pt.x !== b.pt.x)
+        return a.pt.x < b.pt.x ? -1 : 1;
+      if (a.edge1.curX !== b.edge1.curX)
+        return a.edge1.curX < b.edge1.curX ? -1 : 1;
+      return a.edge2.curX < b.edge2.curX ? -1 : a.edge2.curX > b.edge2.curX ? 1 : 0;
+    });
+    for (let i = 0; i < this.intersectList.length; ++i) {
+      if (!this.edgesAdjacentInAEL(this.intersectList[i])) {
+        let j = i + 1;
+        while (!this.edgesAdjacentInAEL(this.intersectList[j]))
+          j++;
+        [this.intersectList[j], this.intersectList[i]] = [this.intersectList[i], this.intersectList[j]];
+      }
+      const node = this.intersectList[i];
+      this.intersectEdges(node.edge1, node.edge2, node.pt);
+      this.swapPositionsInAEL(node.edge1, node.edge2);
+      node.edge1.curX = node.pt.x;
+      node.edge2.curX = node.pt.x;
+      this.checkJoinLeft(node.edge2, node.pt, true);
+      this.checkJoinRight(node.edge1, node.pt, true);
+    }
+  }
+  edgesAdjacentInAEL(inode) {
+    return inode.edge1.nextInAEL === inode.edge2 || inode.edge1.prevInAEL === inode.edge2;
+  }
+  adjustCurrXAndCopyToSEL(topY) {
+    let ae = this.actives;
+    this.sel = ae;
+    while (ae !== null) {
+      ae.prevInSEL = ae.prevInAEL;
+      ae.nextInSEL = ae.nextInAEL;
+      ae.jump = ae.nextInSEL;
+      ae.curX = _ClipperBase.topX(ae, topY);
+      ae = ae.nextInAEL;
+    }
+  }
+  doMaxima(ae) {
+    const prevE = ae.prevInAEL;
+    let nextE = ae.nextInAEL;
+    if (_ClipperBase.isOpenEnd(ae)) {
+      if (_ClipperBase.isHotEdge(ae))
+        this.addOutPt(ae, ae.top);
+      if (_ClipperBase.isHorizontal(ae))
+        return nextE;
+      if (_ClipperBase.isHotEdge(ae)) {
+        if (_ClipperBase.isFront(ae)) {
+          ae.outrec.frontEdge = null;
+        } else {
+          ae.outrec.backEdge = null;
+        }
+        ae.outrec = null;
+      }
+      this.deleteFromAEL(ae);
+      return nextE;
+    }
+    const maxPair = _ClipperBase.getMaximaPair(ae);
+    if (maxPair === null)
+      return nextE;
+    if (this.isJoined(ae))
+      this.split(ae, ae.top);
+    if (this.isJoined(maxPair))
+      this.split(maxPair, maxPair.top);
+    while (nextE !== maxPair) {
+      this.intersectEdges(ae, nextE, ae.top);
+      this.swapPositionsInAEL(ae, nextE);
+      nextE = ae.nextInAEL;
+    }
+    if (_ClipperBase.isOpen(ae)) {
+      if (_ClipperBase.isHotEdge(ae)) {
+        this.addLocalMaxPoly(ae, maxPair, ae.top);
+      }
+      this.deleteFromAEL(maxPair);
+      this.deleteFromAEL(ae);
+      return prevE !== null ? prevE.nextInAEL : this.actives;
+    }
+    if (_ClipperBase.isHotEdge(ae)) {
+      this.addLocalMaxPoly(ae, maxPair, ae.top);
+    }
+    this.deleteFromAEL(ae);
+    this.deleteFromAEL(maxPair);
+    return prevE !== null ? prevE.nextInAEL : this.actives;
+  }
+  updateEdgeIntoAEL(ae) {
+    ae.bot = { x: ae.top.x, y: ae.top.y, z: ae.top.z || 0 };
+    ae.vertexTop = _ClipperBase.nextVertex(ae);
+    ae.top = { x: ae.vertexTop.pt.x, y: ae.vertexTop.pt.y, z: ae.vertexTop.pt.z || 0 };
+    ae.curX = ae.bot.x;
+    _ClipperBase.setDx(ae);
+    if (this.isJoined(ae))
+      this.split(ae, ae.bot);
+    if (_ClipperBase.isHorizontal(ae)) {
+      if (!_ClipperBase.isOpen(ae))
+        this.trimHorz(ae, this.preserveCollinear);
+      return;
+    }
+    this.insertScanline(ae.top.y);
+    this.checkJoinLeft(ae, ae.bot);
+    this.checkJoinRight(ae, ae.bot, true);
+  }
+  trimHorz(horzEdge, preserveCollinear) {
+    let wasTrimmed = false;
+    let pt = _ClipperBase.nextVertex(horzEdge).pt;
+    while (pt.y === horzEdge.top.y) {
+      if (preserveCollinear && pt.x < horzEdge.top.x !== horzEdge.bot.x < horzEdge.top.x) {
+        break;
+      }
+      horzEdge.vertexTop = _ClipperBase.nextVertex(horzEdge);
+      horzEdge.top = pt;
+      wasTrimmed = true;
+      if (_ClipperBase.isMaxima(horzEdge))
+        break;
+      pt = _ClipperBase.nextVertex(horzEdge).pt;
+    }
+    if (wasTrimmed)
+      _ClipperBase.setDx(horzEdge);
+  }
+  addToHorzSegList(op) {
+    if (op.outrec.isOpen)
+      return;
+    this.horzSegList.push(new HorzSegment(op));
+  }
+  addNewIntersectNode(ae1, ae2, topY) {
+    const intersectResult = InternalClipper.getLineIntersectPt(ae1.bot, ae1.top, ae2.bot, ae2.top);
+    let ip;
+    if (!intersectResult.intersects) {
+      ip = { x: ae1.curX, y: topY, z: 0 };
+    } else {
+      ip = intersectResult.point;
+    }
+    if (ip.y > this.currentBotY || ip.y < topY) {
+      const absDx1 = Math.abs(ae1.dx);
+      const absDx2 = Math.abs(ae2.dx);
+      if (absDx1 > 100 && absDx2 > 100) {
+        if (absDx1 > absDx2) {
+          ip = InternalClipper.getClosestPtOnSegment(ip, ae1.bot, ae1.top);
+        } else {
+          ip = InternalClipper.getClosestPtOnSegment(ip, ae2.bot, ae2.top);
+        }
+      } else if (absDx1 > 100) {
+        ip = InternalClipper.getClosestPtOnSegment(ip, ae1.bot, ae1.top);
+      } else if (absDx2 > 100) {
+        ip = InternalClipper.getClosestPtOnSegment(ip, ae2.bot, ae2.top);
+      } else {
+        if (ip.y < topY)
+          ip.y = topY;
+        else
+          ip.y = this.currentBotY;
+        if (absDx1 < absDx2)
+          ip.x = _ClipperBase.topX(ae1, ip.y);
+        else
+          ip.x = _ClipperBase.topX(ae2, ip.y);
+      }
+    }
+    const node = createIntersectNode(ip, ae1, ae2);
+    this.intersectList.push(node);
+  }
+  extractFromSEL(ae) {
+    const res = ae.nextInSEL;
+    if (res !== null) {
+      res.prevInSEL = ae.prevInSEL;
+    }
+    ae.prevInSEL.nextInSEL = res;
+    return res;
+  }
+  insert1Before2InSEL(ae1, ae2) {
+    ae1.prevInSEL = ae2.prevInSEL;
+    if (ae1.prevInSEL !== null) {
+      ae1.prevInSEL.nextInSEL = ae1;
+    }
+    ae1.nextInSEL = ae2;
+    ae2.prevInSEL = ae1;
+  }
+  getCurrYMaximaVertexOpen(ae) {
+    let result = ae.vertexTop;
+    if (ae.windDx > 0) {
+      while (result.next.pt.y === result.pt.y && (result.flags & (VertexFlags.OpenEnd | VertexFlags.LocalMax)) === VertexFlags.None)
+        result = result.next;
+    } else {
+      while (result.prev.pt.y === result.pt.y && (result.flags & (VertexFlags.OpenEnd | VertexFlags.LocalMax)) === VertexFlags.None)
+        result = result.prev;
+    }
+    if (!_ClipperBase.isMaxima(result))
+      result = null;
+    return result;
+  }
+  getCurrYMaximaVertex(ae) {
+    let result = ae.vertexTop;
+    if (ae.windDx > 0) {
+      while (result.next.pt.y === result.pt.y)
+        result = result.next;
+    } else {
+      while (result.prev.pt.y === result.pt.y)
+        result = result.prev;
+    }
+    if (!_ClipperBase.isMaxima(result))
+      result = null;
+    return result;
+  }
+  resetHorzDirection(horz, vertexMax) {
+    if (horz.bot.x === horz.top.x) {
+      const leftX = horz.curX;
+      const rightX = horz.curX;
+      let ae = horz.nextInAEL;
+      while (ae !== null && ae.vertexTop !== vertexMax)
+        ae = ae.nextInAEL;
+      return { isLeftToRight: ae !== null, leftX, rightX };
+    }
+    if (horz.curX < horz.top.x) {
+      return { isLeftToRight: true, leftX: horz.curX, rightX: horz.top.x };
+    } else {
+      return { isLeftToRight: false, leftX: horz.top.x, rightX: horz.curX };
+    }
+  }
+  getLastOp(hotEdge) {
+    const outrec = hotEdge.outrec;
+    return hotEdge === outrec.frontEdge ? outrec.pts : outrec.pts.next;
+  }
+  insertLeftEdge(ae) {
+    if (this.actives === null) {
+      ae.prevInAEL = null;
+      ae.nextInAEL = null;
+      this.actives = ae;
+    } else if (!this.isValidAelOrder(this.actives, ae)) {
+      ae.prevInAEL = null;
+      ae.nextInAEL = this.actives;
+      this.actives.prevInAEL = ae;
+      this.actives = ae;
+    } else {
+      let ae2 = this.actives;
+      while (ae2.nextInAEL !== null && this.isValidAelOrder(ae2.nextInAEL, ae)) {
+        ae2 = ae2.nextInAEL;
+      }
+      if (ae2.joinWith === JoinWith.Right)
+        ae2 = ae2.nextInAEL;
+      ae.nextInAEL = ae2.nextInAEL;
+      if (ae2.nextInAEL !== null)
+        ae2.nextInAEL.prevInAEL = ae;
+      ae.prevInAEL = ae2;
+      ae2.nextInAEL = ae;
+    }
+  }
+  insertRightEdge(ae1, ae2) {
+    ae2.nextInAEL = ae1.nextInAEL;
+    if (ae1.nextInAEL !== null)
+      ae1.nextInAEL.prevInAEL = ae2;
+    ae2.prevInAEL = ae1;
+    ae1.nextInAEL = ae2;
+  }
+  setWindCountForOpenPathEdge(ae) {
+    let ae2 = this.actives;
+    if (this.fillrule === FillRule.EvenOdd) {
+      let cnt1 = 0, cnt2 = 0;
+      while (ae2 !== ae) {
+        if (_ClipperBase.getPolyType(ae2) === PathType.Clip) {
+          cnt2++;
+        } else if (!_ClipperBase.isOpen(ae2)) {
+          cnt1++;
+        }
+        ae2 = ae2.nextInAEL;
+      }
+      ae.windCount = _ClipperBase.isOdd(cnt1) ? 1 : 0;
+      ae.windCount2 = _ClipperBase.isOdd(cnt2) ? 1 : 0;
+    } else {
+      while (ae2 !== ae) {
+        if (_ClipperBase.getPolyType(ae2) === PathType.Clip) {
+          ae.windCount2 += ae2.windDx;
+        } else if (!_ClipperBase.isOpen(ae2)) {
+          ae.windCount += ae2.windDx;
+        }
+        ae2 = ae2.nextInAEL;
+      }
+    }
+  }
+  setWindCountForClosedPathEdge(ae) {
+    let ae2 = ae.prevInAEL;
+    const pt = _ClipperBase.getPolyType(ae);
+    while (ae2 !== null && (_ClipperBase.getPolyType(ae2) !== pt || _ClipperBase.isOpen(ae2)))
+      ae2 = ae2.prevInAEL;
+    if (ae2 === null) {
+      ae.windCount = ae.windDx;
+      ae2 = this.actives;
+    } else if (this.fillrule === FillRule.EvenOdd) {
+      ae.windCount = ae.windDx;
+      ae.windCount2 = ae2.windCount2;
+      ae2 = ae2.nextInAEL;
+    } else {
+      if (ae2.windCount * ae2.windDx < 0) {
+        if (Math.abs(ae2.windCount) > 1) {
+          if (ae2.windDx * ae.windDx < 0) {
+            ae.windCount = ae2.windCount;
+          } else {
+            ae.windCount = ae2.windCount + ae.windDx;
+          }
+        } else {
+          ae.windCount = _ClipperBase.isOpen(ae) ? 1 : ae.windDx;
+        }
+      } else {
+        if (ae2.windDx * ae.windDx < 0) {
+          ae.windCount = ae2.windCount;
+        } else {
+          ae.windCount = ae2.windCount + ae.windDx;
+        }
+      }
+      ae.windCount2 = ae2.windCount2;
+      ae2 = ae2.nextInAEL;
+    }
+    if (this.fillrule === FillRule.EvenOdd) {
+      while (ae2 !== ae) {
+        if (_ClipperBase.getPolyType(ae2) !== pt && !_ClipperBase.isOpen(ae2)) {
+          ae.windCount2 = ae.windCount2 === 0 ? 1 : 0;
+        }
+        ae2 = ae2.nextInAEL;
+      }
+    } else {
+      while (ae2 !== ae) {
+        if (_ClipperBase.getPolyType(ae2) !== pt && !_ClipperBase.isOpen(ae2)) {
+          ae.windCount2 += ae2.windDx;
+        }
+        ae2 = ae2.nextInAEL;
+      }
+    }
+  }
+  isContributingOpen(ae) {
+    let isInClip, isInSubj;
+    switch (this.fillrule) {
+      case FillRule.Positive:
+        isInSubj = ae.windCount > 0;
+        isInClip = ae.windCount2 > 0;
+        break;
+      case FillRule.Negative:
+        isInSubj = ae.windCount < 0;
+        isInClip = ae.windCount2 < 0;
+        break;
+      default:
+        isInSubj = ae.windCount !== 0;
+        isInClip = ae.windCount2 !== 0;
+        break;
+    }
+    switch (this.cliptype) {
+      case ClipType.Intersection:
+        return isInClip;
+      case ClipType.Union:
+        return !isInSubj && !isInClip;
+      default:
+        return !isInClip;
+    }
+  }
+  isContributingClosed(ae) {
+    switch (this.fillrule) {
+      case FillRule.Positive:
+        if (ae.windCount !== 1)
+          return false;
+        break;
+      case FillRule.Negative:
+        if (ae.windCount !== -1)
+          return false;
+        break;
+      case FillRule.NonZero:
+        if (Math.abs(ae.windCount) !== 1)
+          return false;
+        break;
+    }
+    switch (this.cliptype) {
+      case ClipType.Intersection:
+        return this.fillrule === FillRule.Positive ? ae.windCount2 > 0 : this.fillrule === FillRule.Negative ? ae.windCount2 < 0 : ae.windCount2 !== 0;
+      case ClipType.Union:
+        return this.fillrule === FillRule.Positive ? ae.windCount2 <= 0 : this.fillrule === FillRule.Negative ? ae.windCount2 >= 0 : ae.windCount2 === 0;
+      case ClipType.Difference:
+        const result = this.fillrule === FillRule.Positive ? ae.windCount2 <= 0 : this.fillrule === FillRule.Negative ? ae.windCount2 >= 0 : ae.windCount2 === 0;
+        return _ClipperBase.getPolyType(ae) === PathType.Subject ? result : !result;
+      case ClipType.Xor:
+        return true;
+      // XOr is always contributing unless open
+      default:
+        return false;
+    }
+  }
+  addLocalMinPoly(ae1, ae2, pt, isNew = false) {
+    const outrec = this.newOutRec();
+    ae1.outrec = outrec;
+    ae2.outrec = outrec;
+    if (_ClipperBase.isOpen(ae1)) {
+      outrec.owner = null;
+      outrec.isOpen = true;
+      if (ae1.windDx > 0) {
+        this.setSides(outrec, ae1, ae2);
+      } else {
+        this.setSides(outrec, ae2, ae1);
+      }
+    } else {
+      outrec.isOpen = false;
+      const prevHotEdge = _ClipperBase.getPrevHotEdge(ae1);
+      if (prevHotEdge !== null) {
+        if (this.usingPolytree) {
+          this.setOwner(outrec, prevHotEdge.outrec);
+        }
+        outrec.owner = prevHotEdge.outrec;
+        if (this.outrecIsAscending(prevHotEdge) === isNew) {
+          this.setSides(outrec, ae2, ae1);
+        } else {
+          this.setSides(outrec, ae1, ae2);
+        }
+      } else {
+        outrec.owner = null;
+        if (isNew) {
+          this.setSides(outrec, ae1, ae2);
+        } else {
+          this.setSides(outrec, ae2, ae1);
+        }
+      }
+    }
+    const op = new OutPt(pt, outrec);
+    outrec.pts = op;
+    return op;
+  }
+  outrecIsAscending(hotEdge) {
+    return hotEdge === hotEdge.outrec.frontEdge;
+  }
+  newOutRec() {
+    const result = new OutRec();
+    result.idx = this.outrecList.length;
+    this.outrecList.push(result);
+    return result;
+  }
+  startOpenPath(ae, pt) {
+    const outrec = this.newOutRec();
+    outrec.isOpen = true;
+    if (ae.windDx > 0) {
+      outrec.frontEdge = ae;
+      outrec.backEdge = null;
+    } else {
+      outrec.frontEdge = null;
+      outrec.backEdge = ae;
+    }
+    ae.outrec = outrec;
+    const op = new OutPt(pt, outrec);
+    outrec.pts = op;
+    return op;
+  }
+  checkJoinLeft(ae, pt, checkCurrX = false) {
+    const prev = ae.prevInAEL;
+    if (prev === null || !_ClipperBase.isHotEdge(ae) || !_ClipperBase.isHotEdge(prev) || _ClipperBase.isHorizontal(ae) || _ClipperBase.isHorizontal(prev) || _ClipperBase.isOpen(ae) || _ClipperBase.isOpen(prev))
+      return;
+    if ((pt.y < ae.top.y + 2 || pt.y < prev.top.y + 2) && // avoid trivial joins
+    (ae.bot.y > pt.y || prev.bot.y > pt.y))
+      return;
+    if (checkCurrX) {
+      if (this.perpendicDistFromLineSqrd(pt, prev.bot, prev.top) > 0.25)
+        return;
+    } else if (ae.curX !== prev.curX)
+      return;
+    if (!InternalClipper.isCollinear(ae.top, pt, prev.top))
+      return;
+    if (ae.outrec.idx === prev.outrec.idx) {
+      this.addLocalMaxPoly(prev, ae, pt);
+    } else if (ae.outrec.idx < prev.outrec.idx) {
+      this.joinOutrecPaths(ae, prev);
+    } else {
+      this.joinOutrecPaths(prev, ae);
+    }
+    prev.joinWith = JoinWith.Right;
+    ae.joinWith = JoinWith.Left;
+  }
+  checkJoinRight(ae, pt, checkCurrX = false) {
+    const next = ae.nextInAEL;
+    if (next === null || !_ClipperBase.isHotEdge(ae) || !_ClipperBase.isHotEdge(next) || _ClipperBase.isHorizontal(ae) || _ClipperBase.isHorizontal(next) || _ClipperBase.isOpen(ae) || _ClipperBase.isOpen(next))
+      return;
+    if ((pt.y < ae.top.y + 2 || pt.y < next.top.y + 2) && // avoid trivial joins
+    (ae.bot.y > pt.y || next.bot.y > pt.y))
+      return;
+    if (checkCurrX) {
+      if (this.perpendicDistFromLineSqrd(pt, next.bot, next.top) > 0.25)
+        return;
+    } else if (ae.curX !== next.curX)
+      return;
+    if (!InternalClipper.isCollinear(ae.top, pt, next.top))
+      return;
+    if (ae.outrec.idx === next.outrec.idx) {
+      this.addLocalMaxPoly(ae, next, pt);
+    } else if (ae.outrec.idx < next.outrec.idx) {
+      this.joinOutrecPaths(ae, next);
+    } else {
+      this.joinOutrecPaths(next, ae);
+    }
+    ae.joinWith = JoinWith.Right;
+    next.joinWith = JoinWith.Left;
+  }
+  perpendicDistFromLineSqrd(pt, line1, line2) {
+    const a = pt.x - line1.x;
+    const b = pt.y - line1.y;
+    const c = line2.x - line1.x;
+    const d = line2.y - line1.y;
+    if (c === 0 && d === 0)
+      return 0;
+    return (a * d - c * b) * (a * d - c * b) / (c * c + d * d);
+  }
+  intersectEdges(ae1, ae2, pt) {
+    let resultOp = null;
+    if (this.hasOpenPaths && (_ClipperBase.isOpen(ae1) || _ClipperBase.isOpen(ae2))) {
+      if (_ClipperBase.isOpen(ae1) && _ClipperBase.isOpen(ae2))
+        return;
+      if (_ClipperBase.isOpen(ae2))
+        [ae1, ae2] = _ClipperBase.swapActives(ae1, ae2);
+      if (this.isJoined(ae2))
+        this.split(ae2, pt);
+      if (this.cliptype === ClipType.Union) {
+        if (!_ClipperBase.isHotEdge(ae2))
+          return;
+      } else if (ae2.localMin.polytype === PathType.Subject)
+        return;
+      switch (this.fillrule) {
+        case FillRule.Positive:
+          if (ae2.windCount !== 1)
+            return;
+          break;
+        case FillRule.Negative:
+          if (ae2.windCount !== -1)
+            return;
+          break;
+        default:
+          if (Math.abs(ae2.windCount) !== 1)
+            return;
+          break;
+      }
+      if (_ClipperBase.isHotEdge(ae1)) {
+        resultOp = this.addOutPt(ae1, pt);
+        this.setZ(ae1, ae2, resultOp.pt);
+        if (_ClipperBase.isFront(ae1)) {
+          ae1.outrec.frontEdge = null;
+        } else {
+          ae1.outrec.backEdge = null;
+        }
+        ae1.outrec = null;
+      } else if (pt.x === ae1.localMin.vertex.pt.x && pt.y === ae1.localMin.vertex.pt.y && !_ClipperBase.isOpenEndVertex(ae1.localMin.vertex)) {
+        const ae3 = this.findEdgeWithMatchingLocMin(ae1);
+        if (ae3 !== null && _ClipperBase.isHotEdge(ae3)) {
+          ae1.outrec = ae3.outrec;
+          if (ae1.windDx > 0) {
+            this.setSides(ae3.outrec, ae1, ae3);
+          } else {
+            this.setSides(ae3.outrec, ae3, ae1);
+          }
+          return;
+        }
+        resultOp = this.startOpenPath(ae1, pt);
+      } else {
+        resultOp = this.startOpenPath(ae1, pt);
+      }
+      this.setZ(ae1, ae2, resultOp.pt);
+      return;
+    }
+    if (this.isJoined(ae1))
+      this.split(ae1, pt);
+    if (this.isJoined(ae2))
+      this.split(ae2, pt);
+    let oldE1WindCount, oldE2WindCount;
+    if (ae1.localMin.polytype === ae2.localMin.polytype) {
+      if (this.fillrule === FillRule.EvenOdd) {
+        oldE1WindCount = ae1.windCount;
+        ae1.windCount = ae2.windCount;
+        ae2.windCount = oldE1WindCount;
+      } else {
+        if (ae1.windCount + ae2.windDx === 0) {
+          ae1.windCount = -ae1.windCount;
+        } else {
+          ae1.windCount += ae2.windDx;
+        }
+        if (ae2.windCount - ae1.windDx === 0) {
+          ae2.windCount = -ae2.windCount;
+        } else {
+          ae2.windCount -= ae1.windDx;
+        }
+      }
+    } else {
+      if (this.fillrule !== FillRule.EvenOdd) {
+        ae1.windCount2 += ae2.windDx;
+      } else {
+        ae1.windCount2 = ae1.windCount2 === 0 ? 1 : 0;
+      }
+      if (this.fillrule !== FillRule.EvenOdd) {
+        ae2.windCount2 -= ae1.windDx;
+      } else {
+        ae2.windCount2 = ae2.windCount2 === 0 ? 1 : 0;
+      }
+    }
+    switch (this.fillrule) {
+      case FillRule.Positive:
+        oldE1WindCount = ae1.windCount;
+        oldE2WindCount = ae2.windCount;
+        break;
+      case FillRule.Negative:
+        oldE1WindCount = -ae1.windCount;
+        oldE2WindCount = -ae2.windCount;
+        break;
+      default:
+        oldE1WindCount = Math.abs(ae1.windCount);
+        oldE2WindCount = Math.abs(ae2.windCount);
+        break;
+    }
+    const e1WindCountIs0or1 = oldE1WindCount === 0 || oldE1WindCount === 1;
+    const e2WindCountIs0or1 = oldE2WindCount === 0 || oldE2WindCount === 1;
+    if (!_ClipperBase.isHotEdge(ae1) && !e1WindCountIs0or1 || !_ClipperBase.isHotEdge(ae2) && !e2WindCountIs0or1)
+      return;
+    if (_ClipperBase.isHotEdge(ae1) && _ClipperBase.isHotEdge(ae2)) {
+      if (oldE1WindCount !== 0 && oldE1WindCount !== 1 || oldE2WindCount !== 0 && oldE2WindCount !== 1 || ae1.localMin.polytype !== ae2.localMin.polytype && this.cliptype !== ClipType.Xor) {
+        resultOp = this.addLocalMaxPoly(ae1, ae2, pt);
+        if (resultOp)
+          this.setZ(ae1, ae2, resultOp.pt);
+      } else if (_ClipperBase.isFront(ae1) || ae1.outrec === ae2.outrec) {
+        resultOp = this.addLocalMaxPoly(ae1, ae2, pt);
+        if (resultOp)
+          this.setZ(ae1, ae2, resultOp.pt);
+        const op2 = this.addLocalMinPoly(ae1, ae2, pt);
+        this.setZ(ae1, ae2, op2.pt);
+      } else {
+        resultOp = this.addOutPt(ae1, pt);
+        this.setZ(ae1, ae2, resultOp.pt);
+        const op2 = this.addOutPt(ae2, pt);
+        this.setZ(ae1, ae2, op2.pt);
+        this.swapOutrecs(ae1, ae2);
+      }
+    } else if (_ClipperBase.isHotEdge(ae1)) {
+      resultOp = this.addOutPt(ae1, pt);
+      this.setZ(ae1, ae2, resultOp.pt);
+      this.swapOutrecs(ae1, ae2);
+    } else if (_ClipperBase.isHotEdge(ae2)) {
+      resultOp = this.addOutPt(ae2, pt);
+      this.setZ(ae1, ae2, resultOp.pt);
+      this.swapOutrecs(ae1, ae2);
+    } else {
+      let e1Wc2, e2Wc2;
+      switch (this.fillrule) {
+        case FillRule.Positive:
+          e1Wc2 = ae1.windCount2;
+          e2Wc2 = ae2.windCount2;
+          break;
+        case FillRule.Negative:
+          e1Wc2 = -ae1.windCount2;
+          e2Wc2 = -ae2.windCount2;
+          break;
+        default:
+          e1Wc2 = Math.abs(ae1.windCount2);
+          e2Wc2 = Math.abs(ae2.windCount2);
+          break;
+      }
+      if (!_ClipperBase.isSamePolyType(ae1, ae2)) {
+        resultOp = this.addLocalMinPoly(ae1, ae2, pt);
+        this.setZ(ae1, ae2, resultOp.pt);
+      } else if (oldE1WindCount === 1 && oldE2WindCount === 1) {
+        resultOp = null;
+        switch (this.cliptype) {
+          case ClipType.Union:
+            if (e1Wc2 > 0 && e2Wc2 > 0)
+              return;
+            resultOp = this.addLocalMinPoly(ae1, ae2, pt);
+            break;
+          case ClipType.Difference:
+            if (_ClipperBase.getPolyType(ae1) === PathType.Clip && e1Wc2 > 0 && e2Wc2 > 0 || _ClipperBase.getPolyType(ae1) === PathType.Subject && e1Wc2 <= 0 && e2Wc2 <= 0) {
+              resultOp = this.addLocalMinPoly(ae1, ae2, pt);
+            }
+            break;
+          case ClipType.Xor:
+            resultOp = this.addLocalMinPoly(ae1, ae2, pt);
+            break;
+          default:
+            if (e1Wc2 <= 0 || e2Wc2 <= 0)
+              return;
+            resultOp = this.addLocalMinPoly(ae1, ae2, pt);
+            break;
+        }
+        if (resultOp)
+          this.setZ(ae1, ae2, resultOp.pt);
+      }
+    }
+  }
+  swapPositionsInAEL(ae1, ae2) {
+    const next = ae2.nextInAEL;
+    if (next !== null)
+      next.prevInAEL = ae1;
+    const prev = ae1.prevInAEL;
+    if (prev !== null)
+      prev.nextInAEL = ae2;
+    ae2.prevInAEL = prev;
+    ae2.nextInAEL = ae1;
+    ae1.prevInAEL = ae2;
+    ae1.nextInAEL = next;
+    if (ae2.prevInAEL === null)
+      this.actives = ae2;
+  }
+  isValidAelOrder(resident, newcomer) {
+    if (newcomer.curX !== resident.curX) {
+      return newcomer.curX > resident.curX;
+    }
+    const d = InternalClipper.crossProduct(resident.top, newcomer.bot, newcomer.top);
+    if (d !== 0)
+      return d < 0;
+    if (!_ClipperBase.isMaxima(resident) && resident.top.y > newcomer.top.y) {
+      return InternalClipper.crossProduct(newcomer.bot, resident.top, _ClipperBase.nextVertex(resident).pt) <= 0;
+    }
+    if (!_ClipperBase.isMaxima(newcomer) && newcomer.top.y > resident.top.y) {
+      return InternalClipper.crossProduct(newcomer.bot, newcomer.top, _ClipperBase.nextVertex(newcomer).pt) >= 0;
+    }
+    const y = newcomer.bot.y;
+    const newcomerIsLeft = newcomer.isLeftBound;
+    if (resident.bot.y !== y || resident.localMin.vertex.pt.y !== y) {
+      return newcomer.isLeftBound;
+    }
+    if (resident.isLeftBound !== newcomerIsLeft) {
+      return newcomerIsLeft;
+    }
+    if (InternalClipper.isCollinear(_ClipperBase.prevPrevVertex(resident).pt, resident.bot, resident.top))
+      return true;
+    return InternalClipper.crossProduct(_ClipperBase.prevPrevVertex(resident).pt, newcomer.bot, _ClipperBase.prevPrevVertex(newcomer).pt) > 0 === newcomerIsLeft;
+  }
+  isJoined(e) {
+    return e.joinWith !== JoinWith.None;
+  }
+  split(e, currPt) {
+    if (e.joinWith === JoinWith.Right) {
+      e.joinWith = JoinWith.None;
+      e.nextInAEL.joinWith = JoinWith.None;
+      this.addLocalMinPoly(e, e.nextInAEL, currPt, true);
+    } else {
+      e.joinWith = JoinWith.None;
+      e.prevInAEL.joinWith = JoinWith.None;
+      this.addLocalMinPoly(e.prevInAEL, e, currPt, true);
+    }
+  }
+  setSides(outrec, startEdge, endEdge) {
+    outrec.frontEdge = startEdge;
+    outrec.backEdge = endEdge;
+  }
+  findEdgeWithMatchingLocMin(e) {
+    let result = e.nextInAEL;
+    while (result !== null) {
+      if (result.localMin?.equals(e.localMin))
+        return result;
+      if (!_ClipperBase.isHorizontal(result) && !(e.bot.x === result.bot.x && e.bot.y === result.bot.y))
+        result = null;
+      else
+        result = result.nextInAEL;
+    }
+    result = e.prevInAEL;
+    while (result !== null) {
+      if (result.localMin?.equals(e.localMin))
+        return result;
+      if (!_ClipperBase.isHorizontal(result) && !(e.bot.x === result.bot.x && e.bot.y === result.bot.y))
+        return null;
+      result = result.prevInAEL;
+    }
+    return result;
+  }
+  addOutPt(ae, pt) {
+    const outrec = ae.outrec;
+    const toFront = _ClipperBase.isFront(ae);
+    const opFront = outrec.pts;
+    const opBack = opFront.next;
+    if (toFront && pt.x === opFront.pt.x && pt.y === opFront.pt.y) {
+      return opFront;
+    } else if (!toFront && pt.x === opBack.pt.x && pt.y === opBack.pt.y) {
+      return opBack;
+    }
+    const newOp = new OutPt(pt, outrec);
+    opBack.prev = newOp;
+    newOp.prev = opFront;
+    newOp.next = opBack;
+    opFront.next = newOp;
+    if (toFront)
+      outrec.pts = newOp;
+    return newOp;
+  }
+  addLocalMaxPoly(ae1, ae2, pt) {
+    if (this.isJoined(ae1))
+      this.split(ae1, pt);
+    if (this.isJoined(ae2))
+      this.split(ae2, pt);
+    if (_ClipperBase.isFront(ae1) === _ClipperBase.isFront(ae2)) {
+      if (_ClipperBase.isOpenEnd(ae1)) {
+        this.swapFrontBackSides(ae1.outrec);
+      } else if (_ClipperBase.isOpenEnd(ae2)) {
+        this.swapFrontBackSides(ae2.outrec);
+      } else {
+        this.succeeded = false;
+        return null;
+      }
+    }
+    const result = this.addOutPt(ae1, pt);
+    if (ae1.outrec === ae2.outrec) {
+      const outrec = ae1.outrec;
+      outrec.pts = result;
+      if (this.usingPolytree) {
+        const e = _ClipperBase.getPrevHotEdge(ae1);
+        if (e === null) {
+          outrec.owner = null;
+        } else {
+          this.setOwner(outrec, e.outrec);
+        }
+      }
+      this.uncoupleOutRec(ae1);
+    } else if (_ClipperBase.isOpen(ae1)) {
+      if (ae1.windDx < 0) {
+        this.joinOutrecPaths(ae1, ae2);
+      } else {
+        this.joinOutrecPaths(ae2, ae1);
+      }
+    } else if (ae1.outrec.idx < ae2.outrec.idx) {
+      this.joinOutrecPaths(ae1, ae2);
+    } else {
+      this.joinOutrecPaths(ae2, ae1);
+    }
+    return result;
+  }
+  swapFrontBackSides(outrec) {
+    const ae2 = outrec.frontEdge;
+    outrec.frontEdge = outrec.backEdge;
+    outrec.backEdge = ae2;
+    outrec.pts = outrec.pts.next;
+  }
+  setOwner(outrec, newOwner) {
+    while (newOwner.owner !== null && newOwner.owner.pts === null) {
+      newOwner.owner = newOwner.owner.owner;
+    }
+    let tmp = newOwner;
+    while (tmp !== null && tmp !== outrec) {
+      tmp = tmp.owner;
+    }
+    if (tmp !== null) {
+      newOwner.owner = outrec.owner;
+    }
+    outrec.owner = newOwner;
+  }
+  uncoupleOutRec(ae) {
+    const outrec = ae.outrec;
+    if (outrec === null)
+      return;
+    outrec.frontEdge.outrec = null;
+    outrec.backEdge.outrec = null;
+    outrec.frontEdge = null;
+    outrec.backEdge = null;
+  }
+  joinOutrecPaths(ae1, ae2) {
+    const p1Start = ae1.outrec.pts;
+    const p2Start = ae2.outrec.pts;
+    const p1End = p1Start.next;
+    const p2End = p2Start.next;
+    if (_ClipperBase.isFront(ae1)) {
+      p2End.prev = p1Start;
+      p1Start.next = p2End;
+      p2Start.next = p1End;
+      p1End.prev = p2Start;
+      ae1.outrec.pts = p2Start;
+      ae1.outrec.frontEdge = ae2.outrec.frontEdge;
+      if (ae1.outrec.frontEdge !== null) {
+        ae1.outrec.frontEdge.outrec = ae1.outrec;
+      }
+    } else {
+      p1End.prev = p2Start;
+      p2Start.next = p1End;
+      p1Start.next = p2End;
+      p2End.prev = p1Start;
+      ae1.outrec.backEdge = ae2.outrec.backEdge;
+      if (ae1.outrec.backEdge !== null) {
+        ae1.outrec.backEdge.outrec = ae1.outrec;
+      }
+    }
+    ae2.outrec.frontEdge = null;
+    ae2.outrec.backEdge = null;
+    ae2.outrec.pts = null;
+    this.setOwner(ae2.outrec, ae1.outrec);
+    if (_ClipperBase.isOpenEnd(ae1)) {
+      ae2.outrec.pts = ae1.outrec.pts;
+      ae1.outrec.pts = null;
+    }
+    ae1.outrec = null;
+    ae2.outrec = null;
+  }
+  swapOutrecs(ae1, ae2) {
+    const or1 = ae1.outrec;
+    const or2 = ae2.outrec;
+    if (or1 === or2) {
+      const ae = or1.frontEdge;
+      or1.frontEdge = or1.backEdge;
+      or1.backEdge = ae;
+      return;
+    }
+    if (or1 !== null) {
+      if (ae1 === or1.frontEdge) {
+        or1.frontEdge = ae2;
+      } else {
+        or1.backEdge = ae2;
+      }
+    }
+    if (or2 !== null) {
+      if (ae2 === or2.frontEdge) {
+        or2.frontEdge = ae1;
+      } else {
+        or2.backEdge = ae1;
+      }
+    }
+    ae1.outrec = or2;
+    ae2.outrec = or1;
+  }
+  disposeIntersectNodes() {
+    this.intersectList.length = 0;
+  }
+  static ptsReallyClose(pt1, pt2) {
+    return Math.abs(pt1.x - pt2.x) < 2 && Math.abs(pt1.y - pt2.y) < 2;
+  }
+  static isVerySmallTriangle(op) {
+    return op.next.next === op.prev && (_ClipperBase.ptsReallyClose(op.prev.pt, op.next.pt) || _ClipperBase.ptsReallyClose(op.pt, op.next.pt) || _ClipperBase.ptsReallyClose(op.pt, op.prev.pt));
+  }
+  static buildPath(op, reverse2, isOpen, path) {
+    if (op === null || op.next === op || !isOpen && op.next === op.prev)
+      return false;
+    path.length = 0;
+    let lastPt;
+    let op2;
+    if (reverse2) {
+      lastPt = op.pt;
+      op2 = op.prev;
+    } else {
+      op = op.next;
+      lastPt = op.pt;
+      op2 = op.next;
+    }
+    path.push(lastPt);
+    while (op2 !== op) {
+      if (!(op2.pt.x === lastPt.x && op2.pt.y === lastPt.y)) {
+        lastPt = op2.pt;
+        path.push(lastPt);
+      }
+      if (reverse2) {
+        op2 = op2.prev;
+      } else {
+        op2 = op2.next;
+      }
+    }
+    return path.length !== 3 || isOpen || !_ClipperBase.isVerySmallTriangle(op2);
+  }
+  buildPaths(solutionClosed, solutionOpen) {
+    solutionClosed.length = 0;
+    solutionOpen.length = 0;
+    let i = 0;
+    while (i < this.outrecList.length) {
+      const outrec = this.outrecList[i++];
+      if (outrec.pts === null)
+        continue;
+      const path = [];
+      if (outrec.isOpen) {
+        if (_ClipperBase.buildPath(outrec.pts, this.reverseSolution, true, path)) {
+          solutionOpen.push(path);
+        }
+      } else {
+        this.cleanCollinear(outrec);
+        if (_ClipperBase.buildPath(outrec.pts, this.reverseSolution, false, path)) {
+          solutionClosed.push(path);
+        }
+      }
+    }
+    return true;
+  }
+  buildTree(polytree, solutionOpen) {
+    polytree.clear();
+    solutionOpen.length = 0;
+    let i = 0;
+    while (i < this.outrecList.length) {
+      const outrec = this.outrecList[i++];
+      if (outrec.pts === null)
+        continue;
+      if (outrec.isOpen) {
+        const openPath = [];
+        if (_ClipperBase.buildPath(outrec.pts, this.reverseSolution, true, openPath)) {
+          solutionOpen.push(openPath);
+        }
+        continue;
+      }
+      if (this.checkBounds(outrec)) {
+        this.recursiveCheckOwners(outrec, polytree);
+      }
+    }
+  }
+  checkBounds(outrec) {
+    if (outrec.pts === null)
+      return false;
+    if (!Rect64Utils.isEmpty(outrec.bounds))
+      return true;
+    this.cleanCollinear(outrec);
+    if (outrec.pts === null || !_ClipperBase.buildPath(outrec.pts, this.reverseSolution, false, outrec.path)) {
+      return false;
+    }
+    outrec.bounds = InternalClipper.getBounds(outrec.path);
+    return true;
+  }
+  recursiveCheckOwners(outrec, polypath) {
+    if (outrec.polypath !== null || Rect64Utils.isEmpty(outrec.bounds))
+      return;
+    while (outrec.owner !== null) {
+      if (outrec.owner.splits !== null && this.checkSplitOwner(outrec, outrec.owner.splits))
+        break;
+      if (outrec.owner.pts !== null && this.checkBounds(outrec.owner) && // Fast reject: a container must contain the child's bounds.
+      this.containsRect(outrec.owner.bounds, outrec.bounds) && this.path1InsidePath2(outrec.pts, outrec.owner.pts))
+        break;
+      outrec.owner = outrec.owner.owner;
+    }
+    if (outrec.owner !== null) {
+      if (outrec.owner.polypath === null) {
+        this.recursiveCheckOwners(outrec.owner, polypath);
+      }
+      outrec.polypath = outrec.owner.polypath.addChild(outrec.path);
+    } else {
+      outrec.polypath = polypath.addChild(outrec.path);
+    }
+  }
+  cleanCollinear(outrec) {
+    outrec = this.getRealOutRec(outrec);
+    if (outrec === null || outrec.isOpen)
+      return;
+    if (!this.isValidClosedPath(outrec.pts)) {
+      outrec.pts = null;
+      return;
+    }
+    let startOp = outrec.pts;
+    let op2 = startOp;
+    while (true) {
+      if (op2 !== null && InternalClipper.isCollinear(op2.prev.pt, op2.pt, op2.next.pt) && (op2.pt.x === op2.prev.pt.x && op2.pt.y === op2.prev.pt.y || op2.pt.x === op2.next.pt.x && op2.pt.y === op2.next.pt.y || !this.preserveCollinear || InternalClipper.dotProduct(op2.prev.pt, op2.pt, op2.next.pt) < 0)) {
+        if (op2 === outrec.pts) {
+          outrec.pts = op2.prev;
+        }
+        op2 = this.disposeOutPt(op2);
+        if (!this.isValidClosedPath(op2)) {
+          outrec.pts = null;
+          return;
+        }
+        startOp = op2;
+        continue;
+      }
+      if (op2 === null)
+        break;
+      op2 = op2.next;
+      if (op2 === startOp)
+        break;
+    }
+    this.fixSelfIntersects(outrec);
+  }
+  isValidClosedPath(op) {
+    return op !== null && op.next !== op && (op.next !== op.prev || !_ClipperBase.isVerySmallTriangle(op));
+  }
+  disposeOutPt(op) {
+    const result = op.next === op ? null : op.next;
+    op.prev.next = op.next;
+    op.next.prev = op.prev;
+    return result;
+  }
+  fixSelfIntersects(outrec) {
+    let op2 = outrec.pts;
+    if (op2.prev === op2.next.next) {
+      return;
+    }
+    while (true) {
+      if (op2.next && op2.next.next && // optimization (not in C# reference): bbox check before segsIntersect  
+      this.boundingBoxesOverlap(op2.prev.pt, op2.pt, op2.next.pt, op2.next.next.pt) && // TEST: Bbox only
+      InternalClipper.segsIntersect(op2.prev.pt, op2.pt, op2.next.pt, op2.next.next.pt)) {
+        if (op2.next.next.next && // optimization (not in C# reference): bbox check before segsIntersect
+        this.boundingBoxesOverlap(op2.prev.pt, op2.pt, op2.next.next.pt, op2.next.next.next.pt) && // TEST: Bbox only
+        InternalClipper.segsIntersect(op2.prev.pt, op2.pt, op2.next.next.pt, op2.next.next.next.pt)) {
+          op2 = this.duplicateOp(op2, false);
+          op2.pt = op2.next.next.next.pt;
+          op2 = op2.next;
+        } else {
+          if (op2 === outrec.pts || op2.next === outrec.pts) {
+            outrec.pts = outrec.pts.prev;
+          }
+          this.doSplitOp(outrec, op2);
+          if (outrec.pts === null)
+            return;
+          op2 = outrec.pts;
+          if (op2.prev === op2.next.next)
+            break;
+          continue;
+        }
+      }
+      op2 = op2.next;
+      if (op2 === outrec.pts)
+        break;
+    }
+  }
+  doSplitOp(outrec, splitOp) {
+    const prevOp = splitOp.prev;
+    const nextNextOp = splitOp.next.next;
+    outrec.pts = prevOp;
+    const intersectResult = InternalClipper.getLineIntersectPt(prevOp.pt, splitOp.pt, splitOp.next.pt, nextNextOp.pt);
+    const ip = intersectResult.point;
+    const area1 = _ClipperBase.areaOutPt(prevOp);
+    const absArea1 = Math.abs(area1);
+    if (absArea1 < 2) {
+      outrec.pts = null;
+      return;
+    }
+    const area2 = this.areaTriangle(ip, splitOp.pt, splitOp.next.pt);
+    const absArea2 = Math.abs(area2);
+    if (ip.x === prevOp.pt.x && ip.y === prevOp.pt.y || ip.x === nextNextOp.pt.x && ip.y === nextNextOp.pt.y) {
+      nextNextOp.prev = prevOp;
+      prevOp.next = nextNextOp;
+    } else {
+      const newOp2 = new OutPt(ip, outrec);
+      newOp2.prev = prevOp;
+      newOp2.next = nextNextOp;
+      nextNextOp.prev = newOp2;
+      prevOp.next = newOp2;
+    }
+    if (!(absArea2 > 1) || !(absArea2 > absArea1) && area2 > 0 !== area1 > 0)
+      return;
+    const newOutRec = this.newOutRec();
+    newOutRec.owner = outrec.owner;
+    splitOp.outrec = newOutRec;
+    splitOp.next.outrec = newOutRec;
+    const newOp = new OutPt(ip, newOutRec);
+    newOp.prev = splitOp.next;
+    newOp.next = splitOp;
+    newOutRec.pts = newOp;
+    splitOp.prev = newOp;
+    splitOp.next.next = newOp;
+    if (!this.usingPolytree)
+      return;
+    if (this.path1InsidePath2(prevOp, newOp)) {
+      if (newOutRec.splits === null)
+        newOutRec.splits = [];
+      newOutRec.splits.push(outrec.idx);
+    } else {
+      if (outrec.splits === null)
+        outrec.splits = [];
+      outrec.splits.push(newOutRec.idx);
+    }
+  }
+  static areaOutPt(op) {
+    let area2 = 0;
+    let op2 = op;
+    do {
+      area2 += (op2.prev.pt.y + op2.pt.y) * (op2.prev.pt.x - op2.pt.x);
+      op2 = op2.next;
+    } while (op2 !== op);
+    return area2 * 0.5;
+  }
+  areaTriangle(pt1, pt2, pt3) {
+    return (pt3.y + pt1.y) * (pt3.x - pt1.x) + (pt1.y + pt2.y) * (pt1.x - pt2.x) + (pt2.y + pt3.y) * (pt2.x - pt3.x);
+  }
+  isValidOwner(outRec, testOwner) {
+    while (testOwner !== null && testOwner !== outRec) {
+      testOwner = testOwner.owner;
+    }
+    return testOwner === null;
+  }
+  containsRect(rect2, rec) {
+    return rec.left >= rect2.left && rec.right <= rect2.right && rec.top >= rect2.top && rec.bottom <= rect2.bottom;
+  }
+  checkSplitOwner(outrec, splits) {
+    for (let i = 0; i < splits.length; i++) {
+      let split = this.outrecList[splits[i]];
+      if (split.pts === null && split.splits !== null && this.checkSplitOwner(outrec, split.splits))
+        return true;
+      split = this.getRealOutRec(split);
+      if (split === null || split === outrec || split.recursiveSplit === outrec)
+        continue;
+      split.recursiveSplit = outrec;
+      if (split.splits !== null && this.checkSplitOwner(outrec, split.splits))
+        return true;
+      if (!this.checkBounds(split) || !this.containsRect(split.bounds, outrec.bounds) || !this.path1InsidePath2(outrec.pts, split.pts))
+        continue;
+      if (!this.isValidOwner(outrec, split)) {
+        split.owner = outrec.owner;
+      }
+      outrec.owner = split;
+      return true;
+    }
+    return false;
+  }
+};
+var Clipper64 = class extends ClipperBase {
+  zCallback;
+  getZCallback() {
+    return this.zCallback;
+  }
+  addPath(path, polytype, isOpen = false) {
+    super.addPath(path, polytype, isOpen);
+  }
+  addReuseableData(reuseableData) {
+    super.addReuseableData(reuseableData);
+  }
+  addPaths(paths, polytype, isOpen = false) {
+    super.addPaths(paths, polytype, isOpen);
+  }
+  addSubject(paths) {
+    this.addPaths(paths, PathType.Subject);
+  }
+  addOpenSubject(paths) {
+    this.addPaths(paths, PathType.Subject, true);
+  }
+  addClip(paths) {
+    this.addPaths(paths, PathType.Clip);
+  }
+  execute(clipType, fillRule, solutionOrTree, openPathsOrSolutionOpen) {
+    if (Array.isArray(solutionOrTree)) {
+      const solutionClosed = solutionOrTree;
+      const solutionOpen = openPathsOrSolutionOpen;
+      solutionClosed.length = 0;
+      if (solutionOpen)
+        solutionOpen.length = 0;
+      try {
+        this.executeInternal(clipType, fillRule);
+        this.buildPaths(solutionClosed, solutionOpen || []);
+      } catch {
+        this.succeeded = false;
+      }
+      this.clearSolutionOnly();
+      return this.succeeded;
+    } else {
+      const polytree = solutionOrTree;
+      const openPaths = openPathsOrSolutionOpen;
+      polytree.clear();
+      if (openPaths)
+        openPaths.length = 0;
+      this.usingPolytree = true;
+      try {
+        this.executeInternal(clipType, fillRule);
+        this.buildTree(polytree, openPaths || []);
+      } catch {
+        this.succeeded = false;
+      }
+      this.clearSolutionOnly();
+      return this.succeeded;
+    }
+  }
+};
+var ClipperD = class extends ClipperBase {
+  zCallback;
+  scale;
+  invScale;
+  constructor(roundingDecimalPrecision = 2) {
+    super();
+    InternalClipper.checkPrecision(roundingDecimalPrecision);
+    this.scale = Math.pow(10, roundingDecimalPrecision);
+    this.invScale = 1 / this.scale;
+  }
+  getZCallback() {
+    return this.zCallback;
+  }
+  scalePathDFromInt(path, scale) {
+    const result = [];
+    for (const pt of path) {
+      result.push({
+        x: pt.x * scale,
+        y: pt.y * scale,
+        z: pt.z || 0
+      });
+    }
+    return result;
+  }
+  buildPathsD(solutionClosed, solutionOpen) {
+    solutionClosed.length = 0;
+    solutionOpen.length = 0;
+    let i = 0;
+    while (i < this.outrecList.length) {
+      const outrec = this.outrecList[i++];
+      if (outrec.pts === null)
+        continue;
+      const path = [];
+      if (outrec.isOpen) {
+        if (ClipperBase.buildPath(outrec.pts, this.reverseSolution, true, path)) {
+          solutionOpen.push(this.scalePathDFromInt(path, this.invScale));
+        }
+      } else {
+        this.cleanCollinear(outrec);
+        if (ClipperBase.buildPath(outrec.pts, this.reverseSolution, false, path)) {
+          solutionClosed.push(this.scalePathDFromInt(path, this.invScale));
+        }
+      }
+    }
+    return true;
+  }
+  buildTreeD(polytree, solutionOpen) {
+    polytree.clear();
+    solutionOpen.length = 0;
+    let i = 0;
+    while (i < this.outrecList.length) {
+      const outrec = this.outrecList[i++];
+      if (outrec.pts === null)
+        continue;
+      if (outrec.isOpen) {
+        const openPath = [];
+        if (ClipperBase.buildPath(outrec.pts, this.reverseSolution, true, openPath)) {
+          solutionOpen.push(this.scalePathDFromInt(openPath, this.invScale));
+        }
+        continue;
+      }
+      if (this.checkBounds(outrec)) {
+        this.recursiveCheckOwners(outrec, polytree);
+      }
+    }
+  }
+  addPath(path, polytype, isOpen = false) {
+    super.addPath(Clipper.scalePath64(path, this.scale), polytype, isOpen);
+  }
+  addPaths(paths, polytype, isOpen = false) {
+    super.addPaths(Clipper.scalePaths64(paths, this.scale), polytype, isOpen);
+  }
+  addSubject(path) {
+    this.addPath(path, PathType.Subject);
+  }
+  addOpenSubject(path) {
+    this.addPath(path, PathType.Subject, true);
+  }
+  addClip(path) {
+    this.addPath(path, PathType.Clip);
+  }
+  addSubjectPaths(paths) {
+    this.addPaths(paths, PathType.Subject);
+  }
+  addOpenSubjectPaths(paths) {
+    this.addPaths(paths, PathType.Subject, true);
+  }
+  addClipPaths(paths) {
+    this.addPaths(paths, PathType.Clip);
+  }
+  execute(clipType, fillRule, solutionOrTree, openPathsOrSolutionOpen) {
+    if (Array.isArray(solutionOrTree)) {
+      const solutionClosed = solutionOrTree;
+      const solutionOpen = openPathsOrSolutionOpen;
+      const solClosed64 = [];
+      const solOpen64 = [];
+      solutionClosed.length = 0;
+      if (solutionOpen)
+        solutionOpen.length = 0;
+      let success = true;
+      try {
+        this.executeInternal(clipType, fillRule);
+        this.buildPaths(solClosed64, solOpen64);
+      } catch {
+        success = false;
+      }
+      this.clearSolutionOnly();
+      if (!success)
+        return false;
+      for (const path of solClosed64) {
+        solutionClosed.push(this.scalePathDFromInt(path, this.invScale));
+      }
+      if (solutionOpen) {
+        for (const path of solOpen64) {
+          solutionOpen.push(this.scalePathDFromInt(path, this.invScale));
+        }
+      }
+      return true;
+    } else {
+      const polytree = solutionOrTree;
+      const openPaths = openPathsOrSolutionOpen;
+      polytree.clear();
+      if (openPaths)
+        openPaths.length = 0;
+      this.usingPolytree = true;
+      polytree.scale = this.scale;
+      let success = true;
+      try {
+        this.executeInternal(clipType, fillRule);
+        this.buildTreeD(polytree, openPaths || []);
+      } catch {
+        success = false;
+      }
+      this.clearSolutionOnly();
+      return success;
+    }
+  }
+};
+var Clipper;
+(function(Clipper3) {
+  function area2(path) {
+    let a = 0;
+    const cnt = path.length;
+    if (cnt < 3)
+      return 0;
+    let prevPt = path[cnt - 1];
+    for (const pt of path) {
+      a += (prevPt.y + pt.y) * (prevPt.x - pt.x);
+      prevPt = pt;
+    }
+    return a * 0.5;
+  }
+  Clipper3.area = area2;
+  function areaD2(path) {
+    let a = 0;
+    const cnt = path.length;
+    if (cnt < 3)
+      return 0;
+    let prevPt = path[cnt - 1];
+    for (const pt of path) {
+      a += (prevPt.y + pt.y) * (prevPt.x - pt.x);
+      prevPt = pt;
+    }
+    return a * 0.5;
+  }
+  Clipper3.areaD = areaD2;
+  function scalePath642(path, scale) {
+    const result = [];
+    for (const pt of path) {
+      result.push({
+        x: Math.round(pt.x * scale),
+        y: Math.round(pt.y * scale)
+      });
+    }
+    return result;
+  }
+  Clipper3.scalePath64 = scalePath642;
+  function scalePaths642(paths, scale) {
+    const result = [];
+    for (const path of paths) {
+      result.push(scalePath642(path, scale));
+    }
+    return result;
+  }
+  Clipper3.scalePaths64 = scalePaths642;
+  function scalePathD2(path, scale) {
+    const result = [];
+    for (const pt of path) {
+      result.push({
+        x: pt.x * scale,
+        y: pt.y * scale
+      });
+    }
+    return result;
+  }
+  Clipper3.scalePathD = scalePathD2;
+  function scalePathsD2(paths, scale) {
+    const result = [];
+    for (const path of paths) {
+      result.push(scalePathD2(path, scale));
+    }
+    return result;
+  }
+  Clipper3.scalePathsD = scalePathsD2;
+})(Clipper || (Clipper = {}));
+
+// node_modules/.pnpm/clipper2-ts@2.0.1/node_modules/clipper2-ts/dist/Offset.js
+var JoinType;
+(function(JoinType2) {
+  JoinType2[JoinType2["Miter"] = 0] = "Miter";
+  JoinType2[JoinType2["Square"] = 1] = "Square";
+  JoinType2[JoinType2["Bevel"] = 2] = "Bevel";
+  JoinType2[JoinType2["Round"] = 3] = "Round";
+})(JoinType || (JoinType = {}));
+var EndType;
+(function(EndType2) {
+  EndType2[EndType2["Polygon"] = 0] = "Polygon";
+  EndType2[EndType2["Joined"] = 1] = "Joined";
+  EndType2[EndType2["Butt"] = 2] = "Butt";
+  EndType2[EndType2["Square"] = 3] = "Square";
+  EndType2[EndType2["Round"] = 4] = "Round";
+})(EndType || (EndType = {}));
+var Group = class {
+  inPaths;
+  joinType;
+  endType;
+  pathsReversed;
+  lowestPathIdx;
+  constructor(paths, joinType, endType = EndType.Polygon) {
+    this.joinType = joinType;
+    this.endType = endType;
+    const isJoined = endType === EndType.Polygon || endType === EndType.Joined;
+    this.inPaths = [];
+    for (const path of paths) {
+      this.inPaths.push(ClipperOffset.stripDuplicates(path, isJoined));
+    }
+    if (endType === EndType.Polygon) {
+      const lowestInfo = ClipperOffset.getLowestPathInfo(this.inPaths);
+      this.lowestPathIdx = lowestInfo.idx;
+      this.pathsReversed = this.lowestPathIdx >= 0 && lowestInfo.isNegArea;
+    } else {
+      this.lowestPathIdx = -1;
+      this.pathsReversed = false;
+    }
+  }
+};
+var ClipperOffset = class _ClipperOffset {
+  static Tolerance = 1e-12;
+  // Clipper2 approximates arcs by using series of relatively short straight
+  //line segments. And logically, shorter line segments will produce better arc
+  // approximations. But very short segments can degrade performance, usually
+  // with little or no discernable improvement in curve quality. Very short
+  // segments can even detract from curve quality, due to the effects of integer
+  // rounding. Since there isn't an optimal number of line segments for any given
+  // arc radius (that perfectly balances curve approximation with performance),
+  // arc tolerance is user defined. Nevertheless, when the user doesn't define
+  // an arc tolerance (ie leaves alone the 0 default value), the calculated
+  // default arc tolerance (offset_radius / 500) generally produces good (smooth)
+  // arc approximations without producing excessively small segment lengths.
+  // See also: https://www.angusj.com/clipper2/Docs/Trigonometry.htm
+  static arc_const = 2e-3;
+  // <-- 1/500
+  groupList = [];
+  pathOut = [];
+  normals = [];
+  solution = [];
+  solutionTree = null;
+  groupDelta = 0;
+  //*0.5 for open paths; *-1.0 for negative areas
+  delta = 0;
+  mitLimSqr = 0;
+  stepsPerRad = 0;
+  stepSin = 0;
+  stepCos = 0;
+  joinType = JoinType.Bevel;
+  endType = EndType.Polygon;
+  arcTolerance = 0;
+  mergeGroups = true;
+  miterLimit = 2;
+  preserveCollinear = false;
+  reverseSolution = false;
+  zCallback;
+  deltaCallback = null;
+  constructor(miterLimit = 2, arcTolerance = 0, preserveCollinear = false, reverseSolution = false) {
+    this.miterLimit = miterLimit;
+    this.arcTolerance = arcTolerance;
+    this.mergeGroups = true;
+    this.preserveCollinear = preserveCollinear;
+    this.reverseSolution = reverseSolution;
+  }
+  clear() {
+    this.groupList.length = 0;
+  }
+  // Internal Z callback that implements default Z handling before calling user callback
+  ZCB = (bot1, top1, bot2, top2, intersectPt) => {
+    if ((bot1.z || 0) !== 0 && (bot1.z === bot2.z || bot1.z === top2.z)) {
+      intersectPt.z = bot1.z;
+    } else if ((bot2.z || 0) !== 0 && bot2.z === top1.z) {
+      intersectPt.z = bot2.z;
+    } else if ((top1.z || 0) !== 0 && top1.z === top2.z) {
+      intersectPt.z = top1.z;
+    } else if (this.zCallback) {
+      this.zCallback(bot1, top1, bot2, top2, intersectPt);
+    }
+  };
+  addPath(path, joinType, endType) {
+    if (path.length === 0)
+      return;
+    const pp = [path];
+    this.addPaths(pp, joinType, endType);
+  }
+  addPaths(paths, joinType, endType) {
+    if (paths.length === 0)
+      return;
+    this.groupList.push(new Group(paths, joinType, endType));
+  }
+  calcSolutionCapacity() {
+    let result = 0;
+    for (const g of this.groupList) {
+      result += g.endType === EndType.Joined ? g.inPaths.length * 2 : g.inPaths.length;
+    }
+    return result;
+  }
+  checkPathsReversed() {
+    let result = false;
+    for (const g of this.groupList) {
+      if (g.endType === EndType.Polygon) {
+        result = g.pathsReversed;
+        break;
+      }
+    }
+    return result;
+  }
+  executeInternal(delta) {
+    if (this.groupList.length === 0)
+      return;
+    if (Math.abs(delta) < 0.5) {
+      for (const group of this.groupList) {
+        for (const path of group.inPaths) {
+          this.solution.push(path);
+        }
+      }
+      return;
+    }
+    this.delta = delta;
+    this.mitLimSqr = this.miterLimit <= 1 ? 2 : 2 / _ClipperOffset.sqr(this.miterLimit);
+    for (const group of this.groupList) {
+      this.doGroupOffset(group);
+    }
+    if (this.groupList.length === 0)
+      return;
+    const pathsReversed = this.checkPathsReversed();
+    const fillRule = pathsReversed ? FillRule.Negative : FillRule.Positive;
+    const c = new Clipper64();
+    c.preserveCollinear = this.preserveCollinear;
+    c.reverseSolution = this.reverseSolution !== pathsReversed;
+    c.zCallback = this.ZCB;
+    c.addSubject(this.solution);
+    if (this.solutionTree !== null) {
+      c.execute(ClipType.Union, fillRule, this.solutionTree);
+    } else {
+      c.execute(ClipType.Union, fillRule, this.solution);
+    }
+  }
+  execute(delta, solutionOrTree) {
+    if (Array.isArray(solutionOrTree)) {
+      const solution = solutionOrTree;
+      solution.length = 0;
+      this.solution = solution;
+      this.executeInternal(delta);
+    } else {
+      const solutionTree = solutionOrTree;
+      solutionTree.clear();
+      this.solutionTree = solutionTree;
+      this.solution = [];
+      this.executeInternal(delta);
+    }
+  }
+  executeWithCallback(deltaCallback, solution) {
+    this.deltaCallback = deltaCallback;
+    this.execute(1, solution);
+  }
+  static getUnitNormal(pt1, pt2) {
+    const dx = pt2.x - pt1.x;
+    const dy = pt2.y - pt1.y;
+    if (dx === 0 && dy === 0)
+      return { x: 0, y: 0 };
+    const f = 1 / Math.sqrt(dx * dx + dy * dy);
+    return {
+      x: dy * f,
+      y: -dx * f
+    };
+  }
+  static getLowestPathInfo(paths) {
+    let idx = -1;
+    let isNegArea = false;
+    let botPt = { x: Number.MAX_SAFE_INTEGER, y: Number.MIN_SAFE_INTEGER };
+    for (let i = 0; i < paths.length; ++i) {
+      let a = Number.MAX_VALUE;
+      for (const pt of paths[i]) {
+        if (pt.y < botPt.y || pt.y === botPt.y && pt.x >= botPt.x)
+          continue;
+        if (a === Number.MAX_VALUE) {
+          a = _ClipperOffset.area(paths[i]);
+          if (a === 0)
+            break;
+          isNegArea = a < 0;
+        }
+        idx = i;
+        botPt.x = pt.x;
+        botPt.y = pt.y;
+      }
+    }
+    return { idx, isNegArea };
+  }
+  static translatePoint(pt, dx, dy) {
+    return { x: pt.x + dx, y: pt.y + dy };
+  }
+  static reflectPoint(pt, pivot) {
+    return { x: pivot.x + (pivot.x - pt.x), y: pivot.y + (pivot.y - pt.y) };
+  }
+  static almostZero(value, epsilon = 1e-3) {
+    return Math.abs(value) < epsilon;
+  }
+  static hypotenuse(x, y) {
+    return Math.sqrt(Math.pow(x, 2) + Math.pow(y, 2));
+  }
+  static normalizeVector(vec) {
+    const h = _ClipperOffset.hypotenuse(vec.x, vec.y);
+    if (_ClipperOffset.almostZero(h))
+      return { x: 0, y: 0 };
+    const inverseHypot = 1 / h;
+    return { x: vec.x * inverseHypot, y: vec.y * inverseHypot };
+  }
+  static getAvgUnitVector(vec1, vec2) {
+    return _ClipperOffset.normalizeVector({ x: vec1.x + vec2.x, y: vec1.y + vec2.y });
+  }
+  static intersectPoint(pt1a, pt1b, pt2a, pt2b) {
+    if (InternalClipper.isAlmostZero(pt1a.x - pt1b.x)) {
+      if (InternalClipper.isAlmostZero(pt2a.x - pt2b.x))
+        return { x: 0, y: 0 };
+      const m2 = (pt2b.y - pt2a.y) / (pt2b.x - pt2a.x);
+      const b2 = pt2a.y - m2 * pt2a.x;
+      return { x: pt1a.x, y: m2 * pt1a.x + b2 };
+    }
+    if (InternalClipper.isAlmostZero(pt2a.x - pt2b.x)) {
+      const m1 = (pt1b.y - pt1a.y) / (pt1b.x - pt1a.x);
+      const b1 = pt1a.y - m1 * pt1a.x;
+      return { x: pt2a.x, y: m1 * pt2a.x + b1 };
+    } else {
+      const m1 = (pt1b.y - pt1a.y) / (pt1b.x - pt1a.x);
+      const b1 = pt1a.y - m1 * pt1a.x;
+      const m2 = (pt2b.y - pt2a.y) / (pt2b.x - pt2a.x);
+      const b2 = pt2a.y - m2 * pt2a.x;
+      if (InternalClipper.isAlmostZero(m1 - m2))
+        return { x: 0, y: 0 };
+      const x = (b2 - b1) / (m1 - m2);
+      return { x, y: m1 * x + b1 };
+    }
+  }
+  getPerpendic(pt, norm2) {
+    return {
+      x: Math.round(pt.x + norm2.x * this.groupDelta),
+      y: Math.round(pt.y + norm2.y * this.groupDelta)
+    };
+  }
+  getPerpendicD(pt, norm2) {
+    return {
+      x: pt.x + norm2.x * this.groupDelta,
+      y: pt.y + norm2.y * this.groupDelta
+    };
+  }
+  doBevel(path, j, k2) {
+    let pt1, pt2;
+    if (j === k2) {
+      const absDelta = Math.abs(this.groupDelta);
+      pt1 = {
+        x: Math.round(path[j].x - absDelta * this.normals[j].x),
+        y: Math.round(path[j].y - absDelta * this.normals[j].y)
+      };
+      pt2 = {
+        x: Math.round(path[j].x + absDelta * this.normals[j].x),
+        y: Math.round(path[j].y + absDelta * this.normals[j].y)
+      };
+    } else {
+      pt1 = {
+        x: Math.round(path[j].x + this.groupDelta * this.normals[k2].x),
+        y: Math.round(path[j].y + this.groupDelta * this.normals[k2].y)
+      };
+      pt2 = {
+        x: Math.round(path[j].x + this.groupDelta * this.normals[j].x),
+        y: Math.round(path[j].y + this.groupDelta * this.normals[j].y)
+      };
+    }
+    this.pathOut.push(pt1);
+    this.pathOut.push(pt2);
+  }
+  doSquare(path, j, k2) {
+    let vec;
+    if (j === k2) {
+      vec = { x: this.normals[j].y, y: -this.normals[j].x };
+    } else {
+      vec = _ClipperOffset.getAvgUnitVector({ x: -this.normals[k2].y, y: this.normals[k2].x }, { x: this.normals[j].y, y: -this.normals[j].x });
+    }
+    const absDelta = Math.abs(this.groupDelta);
+    let ptQ = { x: path[j].x, y: path[j].y };
+    ptQ = _ClipperOffset.translatePoint(ptQ, absDelta * vec.x, absDelta * vec.y);
+    const pt1 = _ClipperOffset.translatePoint(ptQ, this.groupDelta * vec.y, this.groupDelta * -vec.x);
+    const pt2 = _ClipperOffset.translatePoint(ptQ, this.groupDelta * -vec.y, this.groupDelta * vec.x);
+    const pt3 = this.getPerpendicD(path[k2], this.normals[k2]);
+    if (j === k2) {
+      const pt4 = {
+        x: pt3.x + vec.x * this.groupDelta,
+        y: pt3.y + vec.y * this.groupDelta
+      };
+      const pt = _ClipperOffset.intersectPoint(pt1, pt2, pt3, pt4);
+      this.pathOut.push(Point64Utils.fromPointD(_ClipperOffset.reflectPoint(pt, ptQ)));
+      this.pathOut.push(Point64Utils.fromPointD(pt));
+    } else {
+      const pt4 = this.getPerpendicD(path[j], this.normals[k2]);
+      const pt = _ClipperOffset.intersectPoint(pt1, pt2, pt3, pt4);
+      this.pathOut.push(Point64Utils.fromPointD(pt));
+      this.pathOut.push(Point64Utils.fromPointD(_ClipperOffset.reflectPoint(pt, ptQ)));
+    }
+  }
+  doMiter(path, j, k2, cosA) {
+    const q = this.groupDelta / (cosA + 1);
+    this.pathOut.push({
+      x: Math.round(path[j].x + (this.normals[k2].x + this.normals[j].x) * q),
+      y: Math.round(path[j].y + (this.normals[k2].y + this.normals[j].y) * q)
+    });
+  }
+  doRound(path, j, k2, angle) {
+    if (this.deltaCallback !== null) {
+      const absDelta = Math.abs(this.groupDelta);
+      const arcTol = this.arcTolerance > 0.01 ? this.arcTolerance : absDelta * _ClipperOffset.arc_const;
+      const stepsPer360 = Math.PI / Math.acos(1 - arcTol / absDelta);
+      this.stepSin = Math.sin(2 * Math.PI / stepsPer360);
+      this.stepCos = Math.cos(2 * Math.PI / stepsPer360);
+      if (this.groupDelta < 0)
+        this.stepSin = -this.stepSin;
+      this.stepsPerRad = stepsPer360 / (2 * Math.PI);
+    }
+    const pt = path[j];
+    let offsetVec = { x: this.normals[k2].x * this.groupDelta, y: this.normals[k2].y * this.groupDelta };
+    if (j === k2)
+      PointDUtils.negate(offsetVec);
+    this.pathOut.push({
+      x: Math.round(pt.x + offsetVec.x),
+      y: Math.round(pt.y + offsetVec.y)
+    });
+    const steps = Math.ceil(this.stepsPerRad * Math.abs(angle));
+    for (let i = 1; i < steps; i++) {
+      offsetVec = {
+        x: offsetVec.x * this.stepCos - this.stepSin * offsetVec.y,
+        y: offsetVec.x * this.stepSin + offsetVec.y * this.stepCos
+      };
+      this.pathOut.push({
+        x: Math.round(pt.x + offsetVec.x),
+        y: Math.round(pt.y + offsetVec.y)
+      });
+    }
+    this.pathOut.push(this.getPerpendic(path[j], this.normals[j]));
+  }
+  buildNormals(path) {
+    const cnt = path.length;
+    this.normals.length = 0;
+    if (cnt === 0)
+      return;
+    for (let i = 0; i < cnt - 1; i++) {
+      this.normals.push(_ClipperOffset.getUnitNormal(path[i], path[i + 1]));
+    }
+    this.normals.push(_ClipperOffset.getUnitNormal(path[cnt - 1], path[0]));
+  }
+  offsetPoint(group, path, j, k2) {
+    if (Point64Utils.equals(path[j], path[k2]))
+      return;
+    let sinA = InternalClipper.crossProductD(this.normals[j], this.normals[k2]);
+    const cosA = InternalClipper.dotProductD(this.normals[j], this.normals[k2]);
+    if (sinA > 1)
+      sinA = 1;
+    else if (sinA < -1)
+      sinA = -1;
+    if (this.deltaCallback !== null) {
+      this.groupDelta = this.deltaCallback(path, this.normals, j, k2);
+      if (group.pathsReversed)
+        this.groupDelta = -this.groupDelta;
+    }
+    if (Math.abs(this.groupDelta) < _ClipperOffset.Tolerance) {
+      this.pathOut.push(path[j]);
+      return;
+    }
+    if (cosA > -0.999 && sinA * this.groupDelta < 0) {
+      this.pathOut.push(this.getPerpendic(path[j], this.normals[k2]));
+      this.pathOut.push(path[j]);
+      this.pathOut.push(this.getPerpendic(path[j], this.normals[j]));
+    } else if (cosA > 0.999 && this.joinType !== JoinType.Round) {
+      this.doMiter(path, j, k2, cosA);
+    } else {
+      switch (this.joinType) {
+        // miter unless the angle is sufficiently acute to exceed ML
+        case JoinType.Miter:
+          if (cosA > this.mitLimSqr - 1) {
+            this.doMiter(path, j, k2, cosA);
+          } else {
+            this.doSquare(path, j, k2);
+          }
+          break;
+        case JoinType.Round:
+          this.doRound(path, j, k2, Math.atan2(sinA, cosA));
+          break;
+        case JoinType.Bevel:
+          this.doBevel(path, j, k2);
+          break;
+        default:
+          this.doSquare(path, j, k2);
+          break;
+      }
+    }
+  }
+  offsetPolygon(group, path) {
+    this.pathOut = [];
+    const cnt = path.length;
+    let prev = cnt - 1;
+    for (let i = 0; i < cnt; i++) {
+      this.offsetPoint(group, path, i, prev);
+      prev = i;
+    }
+    this.solution.push([...this.pathOut]);
+  }
+  offsetOpenJoined(group, path) {
+    this.offsetPolygon(group, path);
+    const reversePath2 = [...path].reverse();
+    this.buildNormals(reversePath2);
+    this.offsetPolygon(group, reversePath2);
+  }
+  offsetOpenPath(group, path) {
+    this.pathOut = [];
+    const highI = path.length - 1;
+    if (this.deltaCallback !== null) {
+      this.groupDelta = this.deltaCallback(path, this.normals, 0, 0);
+    }
+    if (Math.abs(this.groupDelta) < _ClipperOffset.Tolerance) {
+      this.pathOut.push(path[0]);
+    } else {
+      switch (this.endType) {
+        case EndType.Butt:
+          this.doBevel(path, 0, 0);
+          break;
+        case EndType.Round:
+          this.doRound(path, 0, 0, Math.PI);
+          break;
+        default:
+          this.doSquare(path, 0, 0);
+          break;
+      }
+    }
+    for (let i = 1, k2 = 0; i < highI; i++) {
+      this.offsetPoint(group, path, i, k2);
+      k2 = i;
+    }
+    for (let i = highI; i > 0; i--) {
+      this.normals[i] = { x: -this.normals[i - 1].x, y: -this.normals[i - 1].y };
+    }
+    this.normals[0] = this.normals[highI];
+    if (this.deltaCallback !== null) {
+      this.groupDelta = this.deltaCallback(path, this.normals, highI, highI);
+    }
+    if (Math.abs(this.groupDelta) < _ClipperOffset.Tolerance) {
+      this.pathOut.push(path[highI]);
+    } else {
+      switch (this.endType) {
+        case EndType.Butt:
+          this.doBevel(path, highI, highI);
+          break;
+        case EndType.Round:
+          this.doRound(path, highI, highI, Math.PI);
+          break;
+        default:
+          this.doSquare(path, highI, highI);
+          break;
+      }
+    }
+    for (let i = highI - 1, k2 = highI; i > 0; i--) {
+      this.offsetPoint(group, path, i, k2);
+      k2 = i;
+    }
+    this.solution.push([...this.pathOut]);
+  }
+  doGroupOffset(group) {
+    if (group.endType === EndType.Polygon) {
+      if (group.lowestPathIdx < 0)
+        this.delta = Math.abs(this.delta);
+      this.groupDelta = group.pathsReversed ? -this.delta : this.delta;
+    } else {
+      this.groupDelta = Math.abs(this.delta);
+    }
+    const absDelta = Math.abs(this.groupDelta);
+    this.joinType = group.joinType;
+    this.endType = group.endType;
+    if (group.joinType === JoinType.Round || group.endType === EndType.Round) {
+      const arcTol = this.arcTolerance > 0.01 ? this.arcTolerance : absDelta * _ClipperOffset.arc_const;
+      const stepsPer360 = Math.PI / Math.acos(1 - arcTol / absDelta);
+      this.stepSin = Math.sin(2 * Math.PI / stepsPer360);
+      this.stepCos = Math.cos(2 * Math.PI / stepsPer360);
+      if (this.groupDelta < 0)
+        this.stepSin = -this.stepSin;
+      this.stepsPerRad = stepsPer360 / (2 * Math.PI);
+    }
+    for (const pathIn of group.inPaths) {
+      this.pathOut = [];
+      const cnt = pathIn.length;
+      if (cnt === 1) {
+        const pt = pathIn[0];
+        if (this.deltaCallback !== null) {
+          this.groupDelta = this.deltaCallback(pathIn, this.normals, 0, 0);
+          if (group.pathsReversed)
+            this.groupDelta = -this.groupDelta;
+        }
+        if (group.endType === EndType.Round) {
+          const steps = Math.ceil(this.stepsPerRad * 2 * Math.PI);
+          this.pathOut = _ClipperOffset.ellipse(pt, Math.abs(this.groupDelta), Math.abs(this.groupDelta), steps);
+        } else {
+          const d = Math.ceil(Math.abs(this.groupDelta));
+          const r = { left: pt.x - d, top: pt.y - d, right: pt.x + d, bottom: pt.y + d };
+          this.pathOut = [
+            { x: r.left, y: r.top },
+            { x: r.right, y: r.top },
+            { x: r.right, y: r.bottom },
+            { x: r.left, y: r.bottom }
+          ];
+        }
+        this.solution.push([...this.pathOut]);
+        continue;
+      }
+      if (cnt === 2 && group.endType === EndType.Joined) {
+        this.endType = group.joinType === JoinType.Round ? EndType.Round : EndType.Square;
+      }
+      this.buildNormals(pathIn);
+      switch (this.endType) {
+        case EndType.Polygon:
+          this.offsetPolygon(group, pathIn);
+          break;
+        case EndType.Joined:
+          this.offsetOpenJoined(group, pathIn);
+          break;
+        default:
+          this.offsetOpenPath(group, pathIn);
+          break;
+      }
+    }
+  }
+  static stripDuplicates(path, isClosedPath) {
+    const cnt = path.length;
+    const result = [];
+    if (cnt === 0)
+      return result;
+    let lastPt = path[0];
+    result.push(lastPt);
+    for (let i = 1; i < cnt; i++) {
+      if (!Point64Utils.equals(lastPt, path[i])) {
+        lastPt = path[i];
+        result.push(lastPt);
+      }
+    }
+    if (isClosedPath && Point64Utils.equals(lastPt, result[0])) {
+      result.pop();
+    }
+    return result;
+  }
+  static area(path) {
+    let a = 0;
+    const cnt = path.length;
+    if (cnt < 3)
+      return 0;
+    let prevPt = path[cnt - 1];
+    for (const pt of path) {
+      a += (prevPt.y + pt.y) * (prevPt.x - pt.x);
+      prevPt = pt;
+    }
+    return a * 0.5;
+  }
+  static sqr(val) {
+    return val * val;
+  }
+  static ellipse(center, radiusX, radiusY = 0, steps = 0) {
+    if (radiusX <= 0)
+      return [];
+    if (radiusY <= 0)
+      radiusY = radiusX;
+    if (steps <= 2) {
+      steps = Math.ceil(Math.PI * Math.sqrt((radiusX + radiusY) / 2));
+    }
+    const si = Math.sin(2 * Math.PI / steps);
+    const co = Math.cos(2 * Math.PI / steps);
+    let dx = co;
+    let dy = si;
+    const result = [{ x: Math.round(center.x + radiusX), y: center.y }];
+    for (let i = 1; i < steps; ++i) {
+      result.push({
+        x: Math.round(center.x + radiusX * dx),
+        y: Math.round(center.y + radiusY * dy)
+      });
+      const x = dx * co - dy * si;
+      dy = dy * co + dx * si;
+      dx = x;
+    }
+    return result;
+  }
+};
+
+// node_modules/.pnpm/clipper2-ts@2.0.1/node_modules/clipper2-ts/dist/RectClip.js
+var OutPt2 = class {
+  next = null;
+  prev = null;
+  pt;
+  ownerIdx = 0;
+  edge = null;
+  constructor(pt) {
+    this.pt = pt;
+  }
+};
+var Location;
+(function(Location2) {
+  Location2[Location2["left"] = 0] = "left";
+  Location2[Location2["top"] = 1] = "top";
+  Location2[Location2["right"] = 2] = "right";
+  Location2[Location2["bottom"] = 3] = "bottom";
+  Location2[Location2["inside"] = 4] = "inside";
+})(Location || (Location = {}));
+var RectClip64 = class _RectClip64 {
+  rect;
+  mp;
+  rectPath;
+  pathBounds = { left: 0, top: 0, right: 0, bottom: 0 };
+  results = [];
+  edges = [];
+  currIdx = -1;
+  constructor(rect2) {
+    this.currIdx = -1;
+    this.rect = rect2;
+    this.mp = Rect64Utils.midPoint(rect2);
+    this.rectPath = Rect64Utils.asPath(this.rect);
+    this.results = [];
+    this.edges = [];
+    for (let i = 0; i < 8; i++) {
+      this.edges[i] = [];
+    }
+  }
+  add(pt, startingNewPath = false) {
+    let currIdx = this.results.length;
+    let result;
+    if (currIdx === 0 || startingNewPath) {
+      result = new OutPt2(pt);
+      this.results.push(result);
+      result.ownerIdx = currIdx;
+      result.prev = result;
+      result.next = result;
+    } else {
+      currIdx--;
+      const prevOp = this.results[currIdx];
+      if (prevOp && Point64Utils.equals(prevOp.pt, pt))
+        return prevOp;
+      result = new OutPt2(pt);
+      result.ownerIdx = currIdx;
+      result.next = prevOp.next;
+      prevOp.next.prev = result;
+      prevOp.next = result;
+      result.prev = prevOp;
+      this.results[currIdx] = result;
+    }
+    return result;
+  }
+  static path1ContainsPath2(path1, path2) {
+    let ioCount = 0;
+    for (const pt of path2) {
+      const pip = InternalClipper.pointInPolygon(pt, path1);
+      switch (pip) {
+        case PointInPolygonResult.IsInside:
+          ioCount--;
+          break;
+        case PointInPolygonResult.IsOutside:
+          ioCount++;
+          break;
+      }
+      if (Math.abs(ioCount) > 1)
+        break;
+    }
+    return ioCount <= 0;
+  }
+  static isClockwise(prev, curr, prevPt, currPt, rectMidPoint) {
+    if (_RectClip64.areOpposites(prev, curr)) {
+      return InternalClipper.crossProduct(prevPt, rectMidPoint, currPt) < 0;
+    }
+    return _RectClip64.headingClockwise(prev, curr);
+  }
+  static areOpposites(prev, curr) {
+    return Math.abs(prev - curr) === 2;
+  }
+  static headingClockwise(prev, curr) {
+    return (prev + 1) % 4 === curr;
+  }
+  static getAdjacentLocation(loc, isClockwise) {
+    const delta = isClockwise ? 1 : 3;
+    return (loc + delta) % 4;
+  }
+  static unlinkOp(op) {
+    if (op.next === op)
+      return null;
+    op.prev.next = op.next;
+    op.next.prev = op.prev;
+    return op.next;
+  }
+  static unlinkOpBack(op) {
+    if (op.next === op)
+      return null;
+    op.prev.next = op.next;
+    op.next.prev = op.prev;
+    return op.prev;
+  }
+  static getEdgesForPt(pt, rec) {
+    let result = 0;
+    if (pt.x === rec.left)
+      result = 1;
+    else if (pt.x === rec.right)
+      result = 4;
+    if (pt.y === rec.top)
+      result += 2;
+    else if (pt.y === rec.bottom)
+      result += 8;
+    return result;
+  }
+  static isHeadingClockwise(pt1, pt2, edgeIdx) {
+    switch (edgeIdx) {
+      case 0:
+        return pt2.y < pt1.y;
+      case 1:
+        return pt2.x > pt1.x;
+      case 2:
+        return pt2.y > pt1.y;
+      default:
+        return pt2.x < pt1.x;
+    }
+  }
+  static hasHorzOverlap(left1, right1, left2, right2) {
+    return left1.x < right2.x && right1.x > left2.x;
+  }
+  static hasVertOverlap(top1, bottom1, top2, bottom2) {
+    return top1.y < bottom2.y && bottom1.y > top2.y;
+  }
+  static addToEdge(edge, op) {
+    if (op.edge !== null)
+      return;
+    op.edge = edge;
+    edge.push(op);
+  }
+  static uncoupleEdge(op) {
+    if (op.edge === null)
+      return;
+    for (let i = 0; i < op.edge.length; i++) {
+      const op2 = op.edge[i];
+      if (op2 === op) {
+        op.edge[i] = null;
+        break;
+      }
+    }
+    op.edge = null;
+  }
+  static setNewOwner(op, newIdx) {
+    op.ownerIdx = newIdx;
+    let op2 = op.next;
+    while (op2 !== op) {
+      op2.ownerIdx = newIdx;
+      op2 = op2.next;
+    }
+  }
+  addCorner(prev, curr) {
+    this.add(_RectClip64.headingClockwise(prev, curr) ? this.rectPath[prev] : this.rectPath[curr]);
+  }
+  addCornerWithDirection(loc, isClockwise) {
+    if (isClockwise) {
+      this.add(this.rectPath[loc]);
+      return _RectClip64.getAdjacentLocation(loc, true);
+    } else {
+      const newLoc = _RectClip64.getAdjacentLocation(loc, false);
+      this.add(this.rectPath[newLoc]);
+      return newLoc;
+    }
+  }
+  static getLocation(rec, pt) {
+    if (pt.x === rec.left && pt.y >= rec.top && pt.y <= rec.bottom) {
+      return { location: Location.left, isOnRect: true };
+    }
+    if (pt.x === rec.right && pt.y >= rec.top && pt.y <= rec.bottom) {
+      return { location: Location.right, isOnRect: true };
+    }
+    if (pt.y === rec.top && pt.x >= rec.left && pt.x <= rec.right) {
+      return { location: Location.top, isOnRect: true };
+    }
+    if (pt.y === rec.bottom && pt.x >= rec.left && pt.x <= rec.right) {
+      return { location: Location.bottom, isOnRect: true };
+    }
+    let location;
+    if (pt.x < rec.left)
+      location = Location.left;
+    else if (pt.x > rec.right)
+      location = Location.right;
+    else if (pt.y < rec.top)
+      location = Location.top;
+    else if (pt.y > rec.bottom)
+      location = Location.bottom;
+    else
+      location = Location.inside;
+    return { location, isOnRect: false };
+  }
+  static isHorizontal(pt1, pt2) {
+    return pt1.y === pt2.y;
+  }
+  static getSegmentIntersection(p1, p2, p3, p4) {
+    const res1 = InternalClipper.crossProduct(p1, p3, p4);
+    const res2 = InternalClipper.crossProduct(p2, p3, p4);
+    if (res1 === 0) {
+      const ip = p1;
+      if (res2 === 0)
+        return { intersects: false, point: ip };
+      if (Point64Utils.equals(p1, p3) || Point64Utils.equals(p1, p4))
+        return { intersects: true, point: ip };
+      if (_RectClip64.isHorizontal(p3, p4)) {
+        return { intersects: p1.x > p3.x === p1.x < p4.x, point: ip };
+      }
+      return { intersects: p1.y > p3.y === p1.y < p4.y, point: ip };
+    }
+    if (res2 === 0) {
+      const ip = p2;
+      if (Point64Utils.equals(p2, p3) || Point64Utils.equals(p2, p4))
+        return { intersects: true, point: ip };
+      if (_RectClip64.isHorizontal(p3, p4)) {
+        return { intersects: p2.x > p3.x === p2.x < p4.x, point: ip };
+      }
+      return { intersects: p2.y > p3.y === p2.y < p4.y, point: ip };
+    }
+    if (res1 > 0 === res2 > 0) {
+      return { intersects: false, point: { x: 0, y: 0 } };
+    }
+    const res3 = InternalClipper.crossProduct(p3, p1, p2);
+    const res4 = InternalClipper.crossProduct(p4, p1, p2);
+    if (res3 === 0) {
+      const ip = p3;
+      if (Point64Utils.equals(p3, p1) || Point64Utils.equals(p3, p2))
+        return { intersects: true, point: ip };
+      if (_RectClip64.isHorizontal(p1, p2)) {
+        return { intersects: p3.x > p1.x === p3.x < p2.x, point: ip };
+      }
+      return { intersects: p3.y > p1.y === p3.y < p2.y, point: ip };
+    }
+    if (res4 === 0) {
+      const ip = p4;
+      if (Point64Utils.equals(p4, p1) || Point64Utils.equals(p4, p2))
+        return { intersects: true, point: ip };
+      if (_RectClip64.isHorizontal(p1, p2)) {
+        return { intersects: p4.x > p1.x === p4.x < p2.x, point: ip };
+      }
+      return { intersects: p4.y > p1.y === p4.y < p2.y, point: ip };
+    }
+    if (res3 > 0 === res4 > 0) {
+      return { intersects: false, point: { x: 0, y: 0 } };
+    }
+    return InternalClipper.getLineIntersectPt(p1, p2, p3, p4);
+  }
+  static getIntersection(rectPath, p, p2, loc) {
+    let ip = { x: 0, y: 0 };
+    let newLocation = loc;
+    switch (loc) {
+      case Location.left: {
+        const result1 = _RectClip64.getSegmentIntersection(p, p2, rectPath[0], rectPath[3]);
+        if (result1.intersects) {
+          ip = result1.point;
+          return { intersects: true, point: ip, newLocation };
+        }
+        if (p.y < rectPath[0].y) {
+          const result2 = _RectClip64.getSegmentIntersection(p, p2, rectPath[0], rectPath[1]);
+          if (result2.intersects) {
+            newLocation = Location.top;
+            return { intersects: true, point: result2.point, newLocation };
+          }
+        }
+        const result3 = _RectClip64.getSegmentIntersection(p, p2, rectPath[2], rectPath[3]);
+        if (result3.intersects) {
+          newLocation = Location.bottom;
+          return { intersects: true, point: result3.point, newLocation };
+        }
+        return { intersects: false, point: ip, newLocation };
+      }
+      case Location.right: {
+        const result1 = _RectClip64.getSegmentIntersection(p, p2, rectPath[1], rectPath[2]);
+        if (result1.intersects) {
+          return { intersects: true, point: result1.point, newLocation };
+        }
+        if (p.y < rectPath[0].y) {
+          const result2 = _RectClip64.getSegmentIntersection(p, p2, rectPath[0], rectPath[1]);
+          if (result2.intersects) {
+            newLocation = Location.top;
+            return { intersects: true, point: result2.point, newLocation };
+          }
+        }
+        const result3 = _RectClip64.getSegmentIntersection(p, p2, rectPath[2], rectPath[3]);
+        if (result3.intersects) {
+          newLocation = Location.bottom;
+          return { intersects: true, point: result3.point, newLocation };
+        }
+        return { intersects: false, point: ip, newLocation };
+      }
+      case Location.top: {
+        const result1 = _RectClip64.getSegmentIntersection(p, p2, rectPath[0], rectPath[1]);
+        if (result1.intersects) {
+          return { intersects: true, point: result1.point, newLocation };
+        }
+        if (p.x < rectPath[0].x) {
+          const result2 = _RectClip64.getSegmentIntersection(p, p2, rectPath[0], rectPath[3]);
+          if (result2.intersects) {
+            newLocation = Location.left;
+            return { intersects: true, point: result2.point, newLocation };
+          }
+        }
+        if (p.x <= rectPath[1].x) {
+          return { intersects: false, point: ip, newLocation };
+        }
+        const result3 = _RectClip64.getSegmentIntersection(p, p2, rectPath[1], rectPath[2]);
+        if (result3.intersects) {
+          newLocation = Location.right;
+          return { intersects: true, point: result3.point, newLocation };
+        }
+        return { intersects: false, point: ip, newLocation };
+      }
+      case Location.bottom: {
+        const result1 = _RectClip64.getSegmentIntersection(p, p2, rectPath[2], rectPath[3]);
+        if (result1.intersects) {
+          return { intersects: true, point: result1.point, newLocation };
+        }
+        if (p.x < rectPath[3].x) {
+          const result2 = _RectClip64.getSegmentIntersection(p, p2, rectPath[0], rectPath[3]);
+          if (result2.intersects) {
+            newLocation = Location.left;
+            return { intersects: true, point: result2.point, newLocation };
+          }
+        }
+        if (p.x <= rectPath[2].x) {
+          return { intersects: false, point: ip, newLocation };
+        }
+        const result3 = _RectClip64.getSegmentIntersection(p, p2, rectPath[1], rectPath[2]);
+        if (result3.intersects) {
+          newLocation = Location.right;
+          return { intersects: true, point: result3.point, newLocation };
+        }
+        return { intersects: false, point: ip, newLocation };
+      }
+      default: {
+        const result1 = _RectClip64.getSegmentIntersection(p, p2, rectPath[0], rectPath[3]);
+        if (result1.intersects) {
+          newLocation = Location.left;
+          return { intersects: true, point: result1.point, newLocation };
+        }
+        const result2 = _RectClip64.getSegmentIntersection(p, p2, rectPath[0], rectPath[1]);
+        if (result2.intersects) {
+          newLocation = Location.top;
+          return { intersects: true, point: result2.point, newLocation };
+        }
+        const result3 = _RectClip64.getSegmentIntersection(p, p2, rectPath[1], rectPath[2]);
+        if (result3.intersects) {
+          newLocation = Location.right;
+          return { intersects: true, point: result3.point, newLocation };
+        }
+        const result4 = _RectClip64.getSegmentIntersection(p, p2, rectPath[2], rectPath[3]);
+        if (result4.intersects) {
+          newLocation = Location.bottom;
+          return { intersects: true, point: result4.point, newLocation };
+        }
+        return { intersects: false, point: ip, newLocation };
+      }
+    }
+  }
+  getNextLocation(path, loc, i, highI) {
+    let newI = i;
+    let newLoc = loc;
+    switch (loc) {
+      case Location.left:
+        while (newI <= highI && path[newI].x <= this.rect.left)
+          newI++;
+        if (newI > highI)
+          break;
+        if (path[newI].x >= this.rect.right)
+          newLoc = Location.right;
+        else if (path[newI].y <= this.rect.top)
+          newLoc = Location.top;
+        else if (path[newI].y >= this.rect.bottom)
+          newLoc = Location.bottom;
+        else
+          newLoc = Location.inside;
+        break;
+      case Location.top:
+        while (newI <= highI && path[newI].y <= this.rect.top)
+          newI++;
+        if (newI > highI)
+          break;
+        if (path[newI].y >= this.rect.bottom)
+          newLoc = Location.bottom;
+        else if (path[newI].x <= this.rect.left)
+          newLoc = Location.left;
+        else if (path[newI].x >= this.rect.right)
+          newLoc = Location.right;
+        else
+          newLoc = Location.inside;
+        break;
+      case Location.right:
+        while (newI <= highI && path[newI].x >= this.rect.right)
+          newI++;
+        if (newI > highI)
+          break;
+        if (path[newI].x <= this.rect.left)
+          newLoc = Location.left;
+        else if (path[newI].y <= this.rect.top)
+          newLoc = Location.top;
+        else if (path[newI].y >= this.rect.bottom)
+          newLoc = Location.bottom;
+        else
+          newLoc = Location.inside;
+        break;
+      case Location.bottom:
+        while (newI <= highI && path[newI].y >= this.rect.bottom)
+          newI++;
+        if (newI > highI)
+          break;
+        if (path[newI].y <= this.rect.top)
+          newLoc = Location.top;
+        else if (path[newI].x <= this.rect.left)
+          newLoc = Location.left;
+        else if (path[newI].x >= this.rect.right)
+          newLoc = Location.right;
+        else
+          newLoc = Location.inside;
+        break;
+      case Location.inside:
+        while (newI <= highI) {
+          if (path[newI].x < this.rect.left)
+            newLoc = Location.left;
+          else if (path[newI].x > this.rect.right)
+            newLoc = Location.right;
+          else if (path[newI].y > this.rect.bottom)
+            newLoc = Location.bottom;
+          else if (path[newI].y < this.rect.top)
+            newLoc = Location.top;
+          else {
+            this.add(path[newI]);
+            newI++;
+            continue;
+          }
+          break;
+        }
+        break;
+    }
+    return { location: newLoc, index: newI };
+  }
+  static startLocsAreClockwise(startLocs) {
+    let result = 0;
+    for (let i = 1; i < startLocs.length; i++) {
+      const d = startLocs[i] - startLocs[i - 1];
+      switch (d) {
+        case -1:
+          result -= 1;
+          break;
+        case 1:
+          result += 1;
+          break;
+        case -3:
+          result += 1;
+          break;
+        case 3:
+          result -= 1;
+          break;
+      }
+    }
+    return result > 0;
+  }
+  executeInternal(path) {
+    if (path.length < 3 || Rect64Utils.isEmpty(this.rect))
+      return;
+    const startLocs = [];
+    let firstCross = Location.inside;
+    let crossingLoc = firstCross;
+    let prev = firstCross;
+    const highI = path.length - 1;
+    const lastLocResult = _RectClip64.getLocation(this.rect, path[highI]);
+    let loc = lastLocResult.location;
+    if (lastLocResult.isOnRect) {
+      let i2 = highI - 1;
+      while (i2 >= 0) {
+        const prevLocResult = _RectClip64.getLocation(this.rect, path[i2]);
+        if (!prevLocResult.isOnRect) {
+          prev = prevLocResult.location;
+          break;
+        }
+        i2--;
+      }
+      if (i2 < 0) {
+        for (const pt of path) {
+          this.add(pt);
+        }
+        return;
+      }
+      if (prev === Location.inside)
+        loc = Location.inside;
+    }
+    const startingLoc = loc;
+    let i = 0;
+    while (i <= highI) {
+      prev = loc;
+      const prevCrossLoc = crossingLoc;
+      const nextLocResult = this.getNextLocation(path, loc, i, highI);
+      loc = nextLocResult.location;
+      i = nextLocResult.index;
+      if (i > highI)
+        break;
+      const prevPt = i === 0 ? path[highI] : path[i - 1];
+      crossingLoc = loc;
+      const intersectionResult = _RectClip64.getIntersection(this.rectPath, path[i], prevPt, crossingLoc);
+      if (!intersectionResult.intersects) {
+        if (prevCrossLoc === Location.inside) {
+          const isClockw = _RectClip64.isClockwise(prev, loc, prevPt, path[i], this.mp);
+          do {
+            startLocs.push(prev);
+            prev = _RectClip64.getAdjacentLocation(prev, isClockw);
+          } while (prev !== loc);
+          crossingLoc = prevCrossLoc;
+        } else if (prev !== Location.inside && prev !== loc) {
+          const isClockw = _RectClip64.isClockwise(prev, loc, prevPt, path[i], this.mp);
+          do {
+            prev = this.addCornerWithDirection(prev, isClockw);
+          } while (prev !== loc);
+        }
+        ++i;
+        continue;
+      }
+      const ip = intersectionResult.point;
+      crossingLoc = intersectionResult.newLocation;
+      if (loc === Location.inside) {
+        if (firstCross === Location.inside) {
+          firstCross = crossingLoc;
+          startLocs.push(prev);
+        } else if (prev !== crossingLoc) {
+          const isClockw = _RectClip64.isClockwise(prev, crossingLoc, prevPt, path[i], this.mp);
+          do {
+            prev = this.addCornerWithDirection(prev, isClockw);
+          } while (prev !== crossingLoc);
+        }
+      } else if (prev !== Location.inside) {
+        loc = prev;
+        const intersection2Result = _RectClip64.getIntersection(this.rectPath, prevPt, path[i], loc);
+        const ip2 = intersection2Result.point;
+        if (prevCrossLoc !== Location.inside && prevCrossLoc !== loc) {
+          this.addCorner(prevCrossLoc, loc);
+        }
+        if (firstCross === Location.inside) {
+          firstCross = loc;
+          startLocs.push(prev);
+        }
+        loc = crossingLoc;
+        this.add(ip2);
+        if (Point64Utils.equals(ip, ip2)) {
+          const pathLocResult = _RectClip64.getLocation(this.rect, path[i]);
+          loc = pathLocResult.location;
+          this.addCorner(crossingLoc, loc);
+          crossingLoc = loc;
+          continue;
+        }
+      } else {
+        loc = crossingLoc;
+        if (firstCross === Location.inside) {
+          firstCross = crossingLoc;
+        }
+      }
+      this.add(ip);
+    }
+    if (firstCross === Location.inside) {
+      if (startingLoc === Location.inside)
+        return;
+      if (!Rect64Utils.containsRect(this.pathBounds, this.rect) || !_RectClip64.path1ContainsPath2(path, this.rectPath))
+        return;
+      const startLocsClockwise = _RectClip64.startLocsAreClockwise(startLocs);
+      for (let j = 0; j < 4; j++) {
+        const k2 = startLocsClockwise ? j : 3 - j;
+        this.add(this.rectPath[k2]);
+        _RectClip64.addToEdge(this.edges[k2 * 2], this.results[0]);
+      }
+    } else if (loc !== Location.inside && (loc !== firstCross || startLocs.length > 2)) {
+      if (startLocs.length > 0) {
+        prev = loc;
+        for (const loc2 of startLocs) {
+          if (prev === loc2)
+            continue;
+          prev = this.addCornerWithDirection(prev, _RectClip64.headingClockwise(prev, loc2));
+          prev = loc2;
+        }
+        loc = prev;
+      }
+      if (loc !== firstCross) {
+        this.addCornerWithDirection(loc, _RectClip64.headingClockwise(loc, firstCross));
+      }
+    }
+  }
+  execute(paths) {
+    const result = [];
+    if (Rect64Utils.isEmpty(this.rect))
+      return result;
+    for (const path of paths) {
+      if (path.length < 3)
+        continue;
+      this.pathBounds = InternalClipper.getBounds(path);
+      if (!Rect64Utils.intersects(this.rect, this.pathBounds)) {
+        continue;
+      }
+      if (Rect64Utils.containsRect(this.rect, this.pathBounds)) {
+        result.push(path);
+        continue;
+      }
+      this.executeInternal(path);
+      this.checkEdges();
+      for (let i = 0; i < 4; ++i) {
+        this.tidyEdgePair(i, this.edges[i * 2], this.edges[i * 2 + 1]);
+      }
+      for (const op of this.results) {
+        const tmp = this.getPath(op);
+        if (tmp.length > 0)
+          result.push(tmp);
+      }
+      this.results.length = 0;
+      for (let i = 0; i < 8; i++) {
+        this.edges[i].length = 0;
+      }
+    }
+    return result;
+  }
+  checkEdges() {
+    for (let i = 0; i < this.results.length; i++) {
+      let op = this.results[i];
+      let op2 = op;
+      if (op === null)
+        continue;
+      do {
+        if (InternalClipper.isCollinear(op2.prev.pt, op2.pt, op2.next.pt)) {
+          if (op2 === op) {
+            op2 = _RectClip64.unlinkOpBack(op2);
+            if (op2 === null)
+              break;
+            op = op2.prev;
+          } else {
+            op2 = _RectClip64.unlinkOpBack(op2);
+            if (op2 === null)
+              break;
+          }
+        } else {
+          op2 = op2.next;
+        }
+      } while (op2 !== op);
+      if (op2 === null) {
+        this.results[i] = null;
+        continue;
+      }
+      this.results[i] = op2;
+      let edgeSet1 = _RectClip64.getEdgesForPt(op.prev.pt, this.rect);
+      op2 = op;
+      do {
+        const edgeSet2 = _RectClip64.getEdgesForPt(op2.pt, this.rect);
+        if (edgeSet2 !== 0 && op2.edge === null) {
+          const combinedSet = edgeSet1 & edgeSet2;
+          for (let j = 0; j < 4; ++j) {
+            if ((combinedSet & 1 << j) === 0)
+              continue;
+            if (_RectClip64.isHeadingClockwise(op2.prev.pt, op2.pt, j)) {
+              _RectClip64.addToEdge(this.edges[j * 2], op2);
+            } else {
+              _RectClip64.addToEdge(this.edges[j * 2 + 1], op2);
+            }
+          }
+        }
+        edgeSet1 = edgeSet2;
+        op2 = op2.next;
+      } while (op2 !== op);
+    }
+  }
+  tidyEdgePair(idx, cw, ccw) {
+    if (ccw.length === 0)
+      return;
+    const isHorz = idx === 1 || idx === 3;
+    const cwIsTowardLarger = idx === 1 || idx === 2;
+    let i = 0, j = 0;
+    while (i < cw.length) {
+      let p1 = cw[i];
+      if (p1 === null || p1.next === p1.prev) {
+        cw[i++] = null;
+        j = 0;
+        continue;
+      }
+      const jLim = ccw.length;
+      while (j < jLim && (ccw[j] === null || ccw[j].next === ccw[j].prev))
+        ++j;
+      if (j === jLim) {
+        ++i;
+        j = 0;
+        continue;
+      }
+      let p2;
+      let p1a;
+      let p2a;
+      if (cwIsTowardLarger) {
+        p1 = cw[i].prev;
+        p1a = cw[i];
+        p2 = ccw[j];
+        p2a = ccw[j].prev;
+      } else {
+        p1 = cw[i];
+        p1a = cw[i].prev;
+        p2 = ccw[j].prev;
+        p2a = ccw[j];
+      }
+      if (isHorz && !_RectClip64.hasHorzOverlap(p1.pt, p1a.pt, p2.pt, p2a.pt) || !isHorz && !_RectClip64.hasVertOverlap(p1.pt, p1a.pt, p2.pt, p2a.pt)) {
+        ++j;
+        continue;
+      }
+      const isRejoining = cw[i].ownerIdx !== ccw[j].ownerIdx;
+      if (isRejoining) {
+        this.results[p2.ownerIdx] = null;
+        _RectClip64.setNewOwner(p2, p1.ownerIdx);
+      }
+      if (cwIsTowardLarger) {
+        p1.next = p2;
+        p2.prev = p1;
+        p1a.prev = p2a;
+        p2a.next = p1a;
+      } else {
+        p1.prev = p2;
+        p2.next = p1;
+        p1a.next = p2a;
+        p2a.prev = p1a;
+      }
+      if (!isRejoining) {
+        const newIdx = this.results.length;
+        this.results.push(p1a);
+        _RectClip64.setNewOwner(p1a, newIdx);
+      }
+      let op;
+      let op2;
+      if (cwIsTowardLarger) {
+        op = p2;
+        op2 = p1a;
+      } else {
+        op = p1;
+        op2 = p2a;
+      }
+      this.results[op.ownerIdx] = op;
+      this.results[op2.ownerIdx] = op2;
+      let opIsLarger, op2IsLarger;
+      if (isHorz) {
+        opIsLarger = op.pt.x > op.prev.pt.x;
+        op2IsLarger = op2.pt.x > op2.prev.pt.x;
+      } else {
+        opIsLarger = op.pt.y > op.prev.pt.y;
+        op2IsLarger = op2.pt.y > op2.prev.pt.y;
+      }
+      if (op.next === op.prev || Point64Utils.equals(op.pt, op.prev.pt)) {
+        if (op2IsLarger === cwIsTowardLarger) {
+          cw[i] = op2;
+          ccw[j++] = null;
+        } else {
+          ccw[j] = op2;
+          cw[i++] = null;
+        }
+      } else if (op2.next === op2.prev || Point64Utils.equals(op2.pt, op2.prev.pt)) {
+        if (opIsLarger === cwIsTowardLarger) {
+          cw[i] = op;
+          ccw[j++] = null;
+        } else {
+          ccw[j] = op;
+          cw[i++] = null;
+        }
+      } else if (opIsLarger === op2IsLarger) {
+        if (opIsLarger === cwIsTowardLarger) {
+          cw[i] = op;
+          _RectClip64.uncoupleEdge(op2);
+          _RectClip64.addToEdge(cw, op2);
+          ccw[j++] = null;
+        } else {
+          cw[i++] = null;
+          ccw[j] = op2;
+          _RectClip64.uncoupleEdge(op);
+          _RectClip64.addToEdge(ccw, op);
+          j = 0;
+        }
+      } else {
+        if (opIsLarger === cwIsTowardLarger) {
+          cw[i] = op;
+        } else {
+          ccw[j] = op;
+        }
+        if (op2IsLarger === cwIsTowardLarger) {
+          cw[i] = op2;
+        } else {
+          ccw[j] = op2;
+        }
+      }
+    }
+  }
+  getPath(op) {
+    const result = [];
+    if (op === null || op.prev === op.next)
+      return result;
+    let op2 = op.next;
+    while (op2 !== null && op2 !== op) {
+      if (InternalClipper.isCollinear(op2.prev.pt, op2.pt, op2.next.pt)) {
+        op = op2.prev;
+        op2 = _RectClip64.unlinkOp(op2);
+      } else {
+        op2 = op2.next;
+      }
+    }
+    if (op2 === null)
+      return [];
+    result.push(op.pt);
+    op2 = op.next;
+    while (op2 !== op) {
+      result.push(op2.pt);
+      op2 = op2.next;
+    }
+    return result;
+  }
+};
+var RectClipLines64 = class extends RectClip64 {
+  constructor(rect2) {
+    super(rect2);
+  }
+  execute(paths) {
+    const result = [];
+    if (Rect64Utils.isEmpty(this.rect))
+      return result;
+    for (const path of paths) {
+      if (path.length < 2)
+        continue;
+      this.pathBounds = InternalClipper.getBounds(path);
+      if (!Rect64Utils.intersects(this.rect, this.pathBounds)) {
+        continue;
+      }
+      this.executeInternalLines(path);
+      for (const op of this.results) {
+        const tmp = this.getPathLines(op);
+        if (tmp.length > 0)
+          result.push(tmp);
+      }
+      this.results.length = 0;
+      for (let i = 0; i < 8; i++) {
+        this.edges[i].length = 0;
+      }
+    }
+    return result;
+  }
+  getPathLines(op) {
+    const result = [];
+    if (op === null || op === op.next)
+      return result;
+    op = op.next;
+    result.push(op.pt);
+    let op2 = op.next;
+    while (op2 !== op) {
+      result.push(op2.pt);
+      op2 = op2.next;
+    }
+    return result;
+  }
+  executeInternalLines(path) {
+    this.results.length = 0;
+    if (path.length < 2 || Rect64Utils.isEmpty(this.rect))
+      return;
+    let prev = Location.inside;
+    let i = 1;
+    const highI = path.length - 1;
+    const firstLocResult = RectClip64.getLocation(this.rect, path[0]);
+    let loc = firstLocResult.location;
+    if (firstLocResult.isOnRect) {
+      while (i <= highI) {
+        const prevLocResult = RectClip64.getLocation(this.rect, path[i]);
+        if (!prevLocResult.isOnRect) {
+          prev = prevLocResult.location;
+          break;
+        }
+        i++;
+      }
+      if (i > highI) {
+        for (const pt of path) {
+          this.add(pt);
+        }
+        return;
+      }
+      if (prev === Location.inside)
+        loc = Location.inside;
+      i = 1;
+    }
+    if (loc === Location.inside)
+      this.add(path[0]);
+    while (i <= highI) {
+      prev = loc;
+      const nextLocResult = this.getNextLocation(path, loc, i, highI);
+      loc = nextLocResult.location;
+      i = nextLocResult.index;
+      if (i > highI)
+        break;
+      const prevPt = path[i - 1];
+      let crossingLoc = loc;
+      const intersectionResult = RectClip64.getIntersection(this.rectPath, path[i], prevPt, crossingLoc);
+      if (!intersectionResult.intersects) {
+        ++i;
+        continue;
+      }
+      const ip = intersectionResult.point;
+      crossingLoc = intersectionResult.newLocation;
+      if (loc === Location.inside) {
+        this.add(ip, true);
+      } else if (prev !== Location.inside) {
+        crossingLoc = prev;
+        const intersection2Result = RectClip64.getIntersection(this.rectPath, prevPt, path[i], crossingLoc);
+        const ip2 = intersection2Result.point;
+        this.add(ip2, true);
+        this.add(ip);
+      } else {
+        this.add(ip);
+      }
+    }
+  }
+};
+
+// node_modules/.pnpm/clipper2-ts@2.0.1/node_modules/clipper2-ts/dist/Minkowski.js
+var Minkowski;
+(function(Minkowski2) {
+  function minkowskiInternal(pattern, path, isSum, isClosed) {
+    const delta = isClosed ? 0 : 1;
+    const patLen = pattern.length;
+    const pathLen = path.length;
+    const tmp = [];
+    for (const pathPt of path) {
+      const path2 = [];
+      if (isSum) {
+        for (const basePt of pattern) {
+          path2.push(Point64Utils.add(pathPt, basePt));
+        }
+      } else {
+        for (const basePt of pattern) {
+          path2.push(Point64Utils.subtract(pathPt, basePt));
+        }
+      }
+      tmp.push(path2);
+    }
+    const result = [];
+    let g = isClosed ? pathLen - 1 : 0;
+    let h = patLen - 1;
+    for (let i = delta; i < pathLen; i++) {
+      for (let j = 0; j < patLen; j++) {
+        const quad = [
+          tmp[g][h],
+          tmp[i][h],
+          tmp[i][j],
+          tmp[g][j]
+        ];
+        if (!isPositive2(quad)) {
+          result.push(reversePath2(quad));
+        } else {
+          result.push(quad);
+        }
+        h = j;
+      }
+      g = i;
+    }
+    return result;
+  }
+  function sum(pattern, path, isClosed) {
+    return union3(minkowskiInternal(pattern, path, true, isClosed), FillRule.NonZero);
+  }
+  Minkowski2.sum = sum;
+  function sumD(pattern, path, isClosed, decimalPlaces = 2) {
+    const scale = Math.pow(10, decimalPlaces);
+    const tmp = union3(minkowskiInternal(scalePath642(pattern, scale), scalePath642(path, scale), true, isClosed), FillRule.NonZero);
+    return scalePathsD2(tmp, 1 / scale);
+  }
+  Minkowski2.sumD = sumD;
+  function diff(pattern, path, isClosed) {
+    return union3(minkowskiInternal(pattern, path, false, isClosed), FillRule.NonZero);
+  }
+  Minkowski2.diff = diff;
+  function diffD(pattern, path, isClosed, decimalPlaces = 2) {
+    const scale = Math.pow(10, decimalPlaces);
+    const tmp = union3(minkowskiInternal(scalePath642(pattern, scale), scalePath642(path, scale), false, isClosed), FillRule.NonZero);
+    return scalePathsD2(tmp, 1 / scale);
+  }
+  Minkowski2.diffD = diffD;
+  function isPositive2(path) {
+    return area2(path) >= 0;
+  }
+  function area2(path) {
+    let a = 0;
+    const cnt = path.length;
+    if (cnt < 3)
+      return 0;
+    let prevPt = path[cnt - 1];
+    for (const pt of path) {
+      a += (prevPt.y + pt.y) * (prevPt.x - pt.x);
+      prevPt = pt;
+    }
+    return a * 0.5;
+  }
+  function reversePath2(path) {
+    return [...path].reverse();
+  }
+  function scalePath642(path, scale) {
+    const result = [];
+    for (const pt of path) {
+      result.push({
+        x: InternalClipper.roundToEven(pt.x * scale),
+        y: InternalClipper.roundToEven(pt.y * scale)
+      });
+    }
+    return result;
+  }
+  function scalePathsD2(paths, scale) {
+    const result = [];
+    for (const path of paths) {
+      const pathD = [];
+      for (const pt of path) {
+        pathD.push({
+          x: pt.x * scale,
+          y: pt.y * scale
+        });
+      }
+      result.push(pathD);
+    }
+    return result;
+  }
+  function union3(paths, fillRule) {
+    const solution = [];
+    const c = new Clipper64();
+    c.addPaths(paths, PathType.Subject);
+    c.execute(ClipType.Union, fillRule, solution);
+    return solution;
+  }
+})(Minkowski || (Minkowski = {}));
+
+// node_modules/.pnpm/clipper2-ts@2.0.1/node_modules/clipper2-ts/dist/Triangulation.js
+var TriangulateResult;
+(function(TriangulateResult2) {
+  TriangulateResult2[TriangulateResult2["success"] = 0] = "success";
+  TriangulateResult2[TriangulateResult2["fail"] = 1] = "fail";
+  TriangulateResult2[TriangulateResult2["noPolygons"] = 2] = "noPolygons";
+  TriangulateResult2[TriangulateResult2["pathsIntersect"] = 3] = "pathsIntersect";
+})(TriangulateResult || (TriangulateResult = {}));
+var EdgeKind;
+(function(EdgeKind2) {
+  EdgeKind2[EdgeKind2["loose"] = 0] = "loose";
+  EdgeKind2[EdgeKind2["ascend"] = 1] = "ascend";
+  EdgeKind2[EdgeKind2["descend"] = 2] = "descend";
+})(EdgeKind || (EdgeKind = {}));
+var IntersectKind;
+(function(IntersectKind2) {
+  IntersectKind2[IntersectKind2["none"] = 0] = "none";
+  IntersectKind2[IntersectKind2["collinear"] = 1] = "collinear";
+  IntersectKind2[IntersectKind2["intersect"] = 2] = "intersect";
+})(IntersectKind || (IntersectKind = {}));
+var EdgeContainsResult;
+(function(EdgeContainsResult2) {
+  EdgeContainsResult2[EdgeContainsResult2["neither"] = 0] = "neither";
+  EdgeContainsResult2[EdgeContainsResult2["left"] = 1] = "left";
+  EdgeContainsResult2[EdgeContainsResult2["right"] = 2] = "right";
+})(EdgeContainsResult || (EdgeContainsResult = {}));
+var Vertex2 = class {
+  pt;
+  edges = [];
+  innerLM = false;
+  constructor(p64) {
+    this.pt = p64;
+  }
+};
+var Edge = class {
+  vL = null;
+  vR = null;
+  vB = null;
+  vT = null;
+  kind = EdgeKind.loose;
+  triA = null;
+  triB = null;
+  isActive = false;
+  nextE = null;
+  prevE = null;
+};
+var Triangle = class {
+  edges = new Array(3);
+  constructor(e1, e2, e3) {
+    this.edges[0] = e1;
+    this.edges[1] = e2;
+    this.edges[2] = e3;
+  }
+};
+var Delaunay = class _Delaunay {
+  allVertices = [];
+  allEdges = [];
+  allTriangles = [];
+  pendingDelaunayStack = [];
+  horzEdgeStack = [];
+  locMinStack = [];
+  useDelaunay;
+  firstActive = null;
+  lowermostVertex = null;
+  constructor(delaunay = true) {
+    this.useDelaunay = delaunay;
+  }
+  addPath(path) {
+    const len2 = path.length;
+    if (len2 === 0)
+      return;
+    let i0 = 0;
+    let iPrev;
+    let iNext;
+    const foundIdx = _Delaunay.findLocMinIdx(path, len2, i0);
+    if (!foundIdx.found)
+      return;
+    i0 = foundIdx.idx;
+    iPrev = _Delaunay.prev(i0, len2);
+    while (path[iPrev].x === path[i0].x && path[iPrev].y === path[i0].y)
+      iPrev = _Delaunay.prev(iPrev, len2);
+    iNext = _Delaunay.next(i0, len2);
+    let i = i0;
+    while (InternalClipper.crossProductSign(path[iPrev], path[i], path[iNext]) === 0) {
+      const result = _Delaunay.findLocMinIdx(path, len2, i);
+      if (!result.found)
+        return;
+      i = result.idx;
+      iPrev = _Delaunay.prev(i, len2);
+      while (path[iPrev].x === path[i].x && path[iPrev].y === path[i].y)
+        iPrev = _Delaunay.prev(iPrev, len2);
+      iNext = _Delaunay.next(i, len2);
+    }
+    const vert_cnt = this.allVertices.length;
+    const v0 = new Vertex2(path[i]);
+    this.allVertices.push(v0);
+    if (_Delaunay.leftTurning(path[iPrev], path[i], path[iNext]))
+      v0.innerLM = true;
+    let vPrev = v0;
+    i = iNext;
+    for (; ; ) {
+      this.locMinStack.push(vPrev);
+      if (this.lowermostVertex === null || vPrev.pt.y > this.lowermostVertex.pt.y || vPrev.pt.y === this.lowermostVertex.pt.y && vPrev.pt.x < this.lowermostVertex.pt.x)
+        this.lowermostVertex = vPrev;
+      iNext = _Delaunay.next(i, len2);
+      if (InternalClipper.crossProductSign(vPrev.pt, path[i], path[iNext]) === 0) {
+        i = iNext;
+        continue;
+      }
+      while (path[i].y <= vPrev.pt.y) {
+        const v = new Vertex2(path[i]);
+        this.allVertices.push(v);
+        this.createEdge(vPrev, v, EdgeKind.ascend);
+        vPrev = v;
+        i = iNext;
+        iNext = _Delaunay.next(i, len2);
+        while (InternalClipper.crossProductSign(vPrev.pt, path[i], path[iNext]) === 0) {
+          i = iNext;
+          iNext = _Delaunay.next(i, len2);
+        }
+      }
+      const vPrevPrev = vPrev;
+      while (i !== i0 && path[i].y >= vPrev.pt.y) {
+        const v = new Vertex2(path[i]);
+        this.allVertices.push(v);
+        this.createEdge(v, vPrev, EdgeKind.descend);
+        vPrev = v;
+        i = iNext;
+        iNext = _Delaunay.next(i, len2);
+        while (InternalClipper.crossProductSign(vPrev.pt, path[i], path[iNext]) === 0) {
+          i = iNext;
+          iNext = _Delaunay.next(i, len2);
+        }
+      }
+      if (i === i0)
+        break;
+      if (_Delaunay.leftTurning(vPrevPrev.pt, vPrev.pt, path[i]))
+        vPrev.innerLM = true;
+    }
+    this.createEdge(v0, vPrev, EdgeKind.descend);
+    const pathLen = this.allVertices.length - vert_cnt;
+    const idx = vert_cnt;
+    if (pathLen < 3 || pathLen === 3 && (_Delaunay.distSqr(this.allVertices[idx].pt, this.allVertices[idx + 1].pt) <= 1 || _Delaunay.distSqr(this.allVertices[idx + 1].pt, this.allVertices[idx + 2].pt) <= 1 || _Delaunay.distSqr(this.allVertices[idx + 2].pt, this.allVertices[idx].pt) <= 1)) {
+      for (let j = vert_cnt; j < this.allVertices.length; ++j)
+        this.allVertices[j].edges = [];
+    }
+  }
+  addPaths(paths) {
+    let totalVertexCount = 0;
+    for (const path of paths)
+      totalVertexCount += path.length;
+    if (totalVertexCount === 0)
+      return false;
+    for (const path of paths)
+      this.addPath(path);
+    return this.allVertices.length > 2;
+  }
+  cleanUp() {
+    this.allVertices.length = 0;
+    this.allEdges.length = 0;
+    this.allTriangles.length = 0;
+    this.pendingDelaunayStack.length = 0;
+    this.horzEdgeStack.length = 0;
+    this.locMinStack.length = 0;
+    this.firstActive = null;
+    this.lowermostVertex = null;
+  }
+  fixupEdgeIntersects() {
+    for (let i1 = 0; i1 < this.allEdges.length; ++i1) {
+      const e1 = this.allEdges[i1];
+      for (let i2 = i1 + 1; i2 < this.allEdges.length; ++i2) {
+        const e2 = this.allEdges[i2];
+        if (e2.vL.pt.x >= e1.vR.pt.x)
+          break;
+        if (e2.vT.pt.y < e1.vB.pt.y && e2.vB.pt.y > e1.vT.pt.y && _Delaunay.segsIntersect(e2.vL.pt, e2.vR.pt, e1.vL.pt, e1.vR.pt) === IntersectKind.intersect) {
+          if (!this.removeIntersection(e2, e1))
+            return false;
+        }
+      }
+    }
+    return true;
+  }
+  mergeDupOrCollinearVertices() {
+    if (this.allVertices.length < 2)
+      return;
+    let v1Index = 0;
+    for (let v2Index = 1; v2Index < this.allVertices.length; ++v2Index) {
+      const v1 = this.allVertices[v1Index];
+      const v2 = this.allVertices[v2Index];
+      if (!(v1.pt.x === v2.pt.x && v1.pt.y === v2.pt.y)) {
+        v1Index = v2Index;
+        continue;
+      }
+      if (!v1.innerLM || !v2.innerLM)
+        v1.innerLM = false;
+      for (const e of v2.edges) {
+        if (e.vB === v2)
+          e.vB = v1;
+        else
+          e.vT = v1;
+        if (e.vL === v2)
+          e.vL = v1;
+        else
+          e.vR = v1;
+      }
+      v1.edges.push(...v2.edges);
+      v2.edges = [];
+      for (let iE = 0; iE < v1.edges.length; ++iE) {
+        const e1 = v1.edges[iE];
+        if (_Delaunay.isHorizontal(e1) || e1.vB !== v1)
+          continue;
+        for (let iE2 = iE + 1; iE2 < v1.edges.length; ++iE2) {
+          const e2 = v1.edges[iE2];
+          if (e2.vB !== v1 || e1.vT.pt.y === e2.vT.pt.y || InternalClipper.crossProductSign(e1.vT.pt, v1.pt, e2.vT.pt) !== 0)
+            continue;
+          if (e1.vT.pt.y < e2.vT.pt.y)
+            this.splitEdge(e1, e2);
+          else
+            this.splitEdge(e2, e1);
+          break;
+        }
+      }
+    }
+  }
+  splitEdge(longE, shortE) {
+    const oldT = longE.vT;
+    const newT = shortE.vT;
+    _Delaunay.removeEdgeFromVertex(oldT, longE);
+    longE.vT = newT;
+    if (longE.vL === oldT)
+      longE.vL = newT;
+    else
+      longE.vR = newT;
+    newT.edges.push(longE);
+    this.createEdge(newT, oldT, longE.kind);
+  }
+  removeIntersection(e1, e2) {
+    let v = e1.vL;
+    let tmpE = e2;
+    let d = _Delaunay.shortestDistFromSegment(e1.vL.pt, e2.vL.pt, e2.vR.pt);
+    let d2 = _Delaunay.shortestDistFromSegment(e1.vR.pt, e2.vL.pt, e2.vR.pt);
+    if (d2 < d) {
+      d = d2;
+      v = e1.vR;
+    }
+    d2 = _Delaunay.shortestDistFromSegment(e2.vL.pt, e1.vL.pt, e1.vR.pt);
+    if (d2 < d) {
+      d = d2;
+      tmpE = e1;
+      v = e2.vL;
+    }
+    d2 = _Delaunay.shortestDistFromSegment(e2.vR.pt, e1.vL.pt, e1.vR.pt);
+    if (d2 < d) {
+      d = d2;
+      tmpE = e1;
+      v = e2.vR;
+    }
+    if (d > 1)
+      return false;
+    const v2 = tmpE.vT;
+    _Delaunay.removeEdgeFromVertex(v2, tmpE);
+    if (tmpE.vL === v2)
+      tmpE.vL = v;
+    else
+      tmpE.vR = v;
+    tmpE.vT = v;
+    v.edges.push(tmpE);
+    v.innerLM = false;
+    if (tmpE.vB.innerLM && _Delaunay.getLocMinAngle(tmpE.vB) <= 0)
+      tmpE.vB.innerLM = false;
+    this.createEdge(v, v2, tmpE.kind);
+    return true;
+  }
+  createEdge(v1, v2, k2) {
+    const res = new Edge();
+    this.allEdges.push(res);
+    if (v1.pt.y === v2.pt.y) {
+      res.vB = v1;
+      res.vT = v2;
+    } else if (v1.pt.y < v2.pt.y) {
+      res.vB = v2;
+      res.vT = v1;
+    } else {
+      res.vB = v1;
+      res.vT = v2;
+    }
+    if (v1.pt.x <= v2.pt.x) {
+      res.vL = v1;
+      res.vR = v2;
+    } else {
+      res.vL = v2;
+      res.vR = v1;
+    }
+    res.kind = k2;
+    v1.edges.push(res);
+    v2.edges.push(res);
+    if (k2 === EdgeKind.loose) {
+      this.pendingDelaunayStack.push(res);
+      this.addEdgeToActives(res);
+    }
+    return res;
+  }
+  createTriangle(e1, e2, e3) {
+    const tri = new Triangle(e1, e2, e3);
+    this.allTriangles.push(tri);
+    for (let i = 0; i < 3; ++i) {
+      const e = tri.edges[i];
+      if (e.triA !== null) {
+        e.triB = tri;
+        this.removeEdgeFromActives(e);
+      } else {
+        e.triA = tri;
+        if (!_Delaunay.isLooseEdge(e))
+          this.removeEdgeFromActives(e);
+      }
+    }
+    return tri;
+  }
+  forceLegal(edge) {
+    if (edge.triA === null || edge.triB === null)
+      return;
+    let vertA = null;
+    let vertB = null;
+    const edgesA = [null, null, null];
+    const edgesB = [null, null, null];
+    for (let i = 0; i < 3; ++i) {
+      if (edge.triA.edges[i] === edge)
+        continue;
+      const e = edge.triA.edges[i];
+      const containsResult = _Delaunay.edgeContains(e, edge.vL);
+      if (containsResult === EdgeContainsResult.left) {
+        edgesA[1] = e;
+        vertA = e.vR;
+      } else if (containsResult === EdgeContainsResult.right) {
+        edgesA[1] = e;
+        vertA = e.vL;
+      } else {
+        edgesB[1] = e;
+      }
+    }
+    for (let i = 0; i < 3; ++i) {
+      if (edge.triB.edges[i] === edge)
+        continue;
+      const e = edge.triB.edges[i];
+      const containsResult = _Delaunay.edgeContains(e, edge.vL);
+      if (containsResult === EdgeContainsResult.left) {
+        edgesA[2] = e;
+        vertB = e.vR;
+      } else if (containsResult === EdgeContainsResult.right) {
+        edgesA[2] = e;
+        vertB = e.vL;
+      } else {
+        edgesB[2] = e;
+      }
+    }
+    if (vertA === null || vertB === null)
+      return;
+    if (InternalClipper.crossProductSign(vertA.pt, edge.vL.pt, edge.vR.pt) === 0)
+      return;
+    const ictResult = _Delaunay.inCircleTest(vertA.pt, edge.vL.pt, edge.vR.pt, vertB.pt);
+    if (ictResult === 0 || _Delaunay.rightTurning(vertA.pt, edge.vL.pt, edge.vR.pt) === ictResult < 0)
+      return;
+    edge.vL = vertA;
+    edge.vR = vertB;
+    edge.triA.edges[0] = edge;
+    for (let i = 1; i < 3; ++i) {
+      const eAi = edgesA[i];
+      edge.triA.edges[i] = eAi;
+      if (_Delaunay.isLooseEdge(eAi))
+        this.pendingDelaunayStack.push(eAi);
+      if (eAi.triA === edge.triA || eAi.triB === edge.triA)
+        continue;
+      if (eAi.triA === edge.triB)
+        eAi.triA = edge.triA;
+      else if (eAi.triB === edge.triB)
+        eAi.triB = edge.triA;
+      else
+        throw new Error("Triangulation internal error");
+    }
+    edge.triB.edges[0] = edge;
+    for (let i = 1; i < 3; ++i) {
+      const eBi = edgesB[i];
+      edge.triB.edges[i] = eBi;
+      if (_Delaunay.isLooseEdge(eBi))
+        this.pendingDelaunayStack.push(eBi);
+      if (eBi.triA === edge.triB || eBi.triB === edge.triB)
+        continue;
+      if (eBi.triA === edge.triA)
+        eBi.triA = edge.triB;
+      else if (eBi.triB === edge.triA)
+        eBi.triB = edge.triB;
+      else
+        throw new Error("Triangulation internal error");
+    }
+  }
+  createInnerLocMinLooseEdge(vAbove) {
+    if (this.firstActive === null)
+      return null;
+    const xAbove = vAbove.pt.x;
+    const yAbove = vAbove.pt.y;
+    let e = this.firstActive;
+    let eBelow = null;
+    let bestD = -1;
+    while (e !== null) {
+      if (e.vL.pt.x <= xAbove && e.vR.pt.x >= xAbove && e.vB.pt.y >= yAbove && e.vB !== vAbove && e.vT !== vAbove && !_Delaunay.leftTurning(e.vL.pt, vAbove.pt, e.vR.pt)) {
+        const d = _Delaunay.shortestDistFromSegment(vAbove.pt, e.vL.pt, e.vR.pt);
+        if (eBelow === null || d < bestD) {
+          eBelow = e;
+          bestD = d;
+        }
+      }
+      e = e.nextE;
+    }
+    if (eBelow === null)
+      return null;
+    let vBest = eBelow.vT.pt.y <= yAbove ? eBelow.vB : eBelow.vT;
+    let xBest = vBest.pt.x;
+    let yBest = vBest.pt.y;
+    e = this.firstActive;
+    if (xBest < xAbove) {
+      while (e !== null) {
+        if (e.vR.pt.x > xBest && e.vL.pt.x < xAbove && e.vB.pt.y > yAbove && e.vT.pt.y < yBest && _Delaunay.segsIntersect(e.vB.pt, e.vT.pt, vBest.pt, vAbove.pt) === IntersectKind.intersect) {
+          vBest = e.vT.pt.y > yAbove ? e.vT : e.vB;
+          xBest = vBest.pt.x;
+          yBest = vBest.pt.y;
+        }
+        e = e.nextE;
+      }
+    } else {
+      while (e !== null) {
+        if (e.vR.pt.x < xBest && e.vL.pt.x > xAbove && e.vB.pt.y > yAbove && e.vT.pt.y < yBest && _Delaunay.segsIntersect(e.vB.pt, e.vT.pt, vBest.pt, vAbove.pt) === IntersectKind.intersect) {
+          vBest = e.vT.pt.y > yAbove ? e.vT : e.vB;
+          xBest = vBest.pt.x;
+          yBest = vBest.pt.y;
+        }
+        e = e.nextE;
+      }
+    }
+    return this.createEdge(vBest, vAbove, EdgeKind.loose);
+  }
+  horizontalBetween(v1, v2) {
+    const y = v1.pt.y;
+    let l;
+    let r;
+    if (v1.pt.x > v2.pt.x) {
+      l = v2.pt.x;
+      r = v1.pt.x;
+    } else {
+      l = v1.pt.x;
+      r = v2.pt.x;
+    }
+    let res = this.firstActive;
+    while (res !== null) {
+      if (res.vL.pt.y === y && res.vR.pt.y === y && res.vL.pt.x >= l && res.vR.pt.x <= r && (res.vL.pt.x !== l || res.vL.pt.x !== r))
+        break;
+      res = res.nextE;
+    }
+    return res;
+  }
+  doTriangulateLeft(edge, pivot, minY) {
+    let vAlt = null;
+    let eAlt = null;
+    const v = edge.vB === pivot ? edge.vT : edge.vB;
+    for (const e of pivot.edges) {
+      if (e === edge || !e.isActive)
+        continue;
+      const vX = e.vT === pivot ? e.vB : e.vT;
+      if (vX === v)
+        continue;
+      const cps = InternalClipper.crossProductSign(v.pt, pivot.pt, vX.pt);
+      if (cps === 0) {
+        if (v.pt.x > pivot.pt.x === pivot.pt.x > vX.pt.x)
+          continue;
+      } else if (cps > 0 || vAlt !== null && !_Delaunay.leftTurning(vX.pt, pivot.pt, vAlt.pt))
+        continue;
+      vAlt = vX;
+      eAlt = e;
+    }
+    if (vAlt === null || vAlt.pt.y < minY || eAlt === null)
+      return;
+    if (vAlt.pt.y < pivot.pt.y) {
+      if (_Delaunay.isLeftEdge(eAlt))
+        return;
+    } else if (vAlt.pt.y > pivot.pt.y) {
+      if (_Delaunay.isRightEdge(eAlt))
+        return;
+    }
+    let eX = _Delaunay.findLinkingEdge(vAlt, v, vAlt.pt.y < v.pt.y);
+    if (eX === null) {
+      if (vAlt.pt.y === v.pt.y && v.pt.y === minY && this.horizontalBetween(vAlt, v) !== null)
+        return;
+      eX = this.createEdge(vAlt, v, EdgeKind.loose);
+    }
+    this.createTriangle(edge, eAlt, eX);
+    if (!_Delaunay.edgeCompleted(eX))
+      this.doTriangulateLeft(eX, vAlt, minY);
+  }
+  doTriangulateRight(edge, pivot, minY) {
+    let vAlt = null;
+    let eAlt = null;
+    const v = edge.vB === pivot ? edge.vT : edge.vB;
+    for (const e of pivot.edges) {
+      if (e === edge || !e.isActive)
+        continue;
+      const vX = e.vT === pivot ? e.vB : e.vT;
+      if (vX === v)
+        continue;
+      const cps = InternalClipper.crossProductSign(v.pt, pivot.pt, vX.pt);
+      if (cps === 0) {
+        if (v.pt.x > pivot.pt.x === pivot.pt.x > vX.pt.x)
+          continue;
+      } else if (cps < 0 || vAlt !== null && !_Delaunay.rightTurning(vX.pt, pivot.pt, vAlt.pt))
+        continue;
+      vAlt = vX;
+      eAlt = e;
+    }
+    if (vAlt === null || vAlt.pt.y < minY || eAlt === null)
+      return;
+    if (vAlt.pt.y < pivot.pt.y) {
+      if (_Delaunay.isRightEdge(eAlt))
+        return;
+    } else if (vAlt.pt.y > pivot.pt.y) {
+      if (_Delaunay.isLeftEdge(eAlt))
+        return;
+    }
+    let eX = _Delaunay.findLinkingEdge(vAlt, v, vAlt.pt.y > v.pt.y);
+    if (eX === null) {
+      if (vAlt.pt.y === v.pt.y && v.pt.y === minY && this.horizontalBetween(vAlt, v) !== null)
+        return;
+      eX = this.createEdge(vAlt, v, EdgeKind.loose);
+    }
+    this.createTriangle(edge, eX, eAlt);
+    if (!_Delaunay.edgeCompleted(eX))
+      this.doTriangulateRight(eX, vAlt, minY);
+  }
+  addEdgeToActives(edge) {
+    if (edge.isActive)
+      return;
+    edge.prevE = null;
+    edge.nextE = this.firstActive;
+    edge.isActive = true;
+    if (this.firstActive !== null)
+      this.firstActive.prevE = edge;
+    this.firstActive = edge;
+  }
+  removeEdgeFromActives(edge) {
+    _Delaunay.removeEdgeFromVertex(edge.vB, edge);
+    _Delaunay.removeEdgeFromVertex(edge.vT, edge);
+    const prev = edge.prevE;
+    const next = edge.nextE;
+    if (next !== null)
+      next.prevE = prev;
+    if (prev !== null)
+      prev.nextE = next;
+    edge.isActive = false;
+    if (this.firstActive === edge)
+      this.firstActive = next;
+  }
+  execute(paths) {
+    const sol = [];
+    if (!this.addPaths(paths)) {
+      return { result: TriangulateResult.noPolygons, solution: sol };
+    }
+    if (this.lowermostVertex.innerLM) {
+      while (this.locMinStack.length > 0) {
+        const lm = this.locMinStack.pop();
+        lm.innerLM = !lm.innerLM;
+      }
+      for (const e of this.allEdges) {
+        if (e.kind === EdgeKind.ascend)
+          e.kind = EdgeKind.descend;
+        else if (e.kind === EdgeKind.descend)
+          e.kind = EdgeKind.ascend;
+      }
+    } else {
+      this.locMinStack.length = 0;
+    }
+    this.allEdges.sort((a, b) => {
+      if (a.vL.pt.x < b.vL.pt.x)
+        return -1;
+      if (a.vL.pt.x > b.vL.pt.x)
+        return 1;
+      return 0;
+    });
+    if (!this.fixupEdgeIntersects()) {
+      this.cleanUp();
+      return { result: TriangulateResult.pathsIntersect, solution: sol };
+    }
+    this.allVertices.sort((a, b) => {
+      if (a.pt.y === b.pt.y) {
+        if (a.pt.x < b.pt.x)
+          return -1;
+        if (a.pt.x > b.pt.x)
+          return 1;
+        return 0;
+      }
+      if (b.pt.y < a.pt.y)
+        return -1;
+      return 1;
+    });
+    this.mergeDupOrCollinearVertices();
+    let currY = this.allVertices[0].pt.y;
+    for (const v of this.allVertices) {
+      if (v.edges.length === 0)
+        continue;
+      if (v.pt.y !== currY) {
+        while (this.locMinStack.length > 0) {
+          const lm = this.locMinStack.pop();
+          const e = this.createInnerLocMinLooseEdge(lm);
+          if (e === null) {
+            this.cleanUp();
+            return { result: TriangulateResult.fail, solution: sol };
+          }
+          if (_Delaunay.isHorizontal(e)) {
+            if (e.vL === e.vB)
+              this.doTriangulateLeft(e, e.vB, currY);
+            else
+              this.doTriangulateRight(e, e.vB, currY);
+          } else {
+            this.doTriangulateLeft(e, e.vB, currY);
+            if (!_Delaunay.edgeCompleted(e))
+              this.doTriangulateRight(e, e.vB, currY);
+          }
+          this.addEdgeToActives(lm.edges[0]);
+          this.addEdgeToActives(lm.edges[1]);
+        }
+        while (this.horzEdgeStack.length > 0) {
+          const e = this.horzEdgeStack.pop();
+          if (_Delaunay.edgeCompleted(e))
+            continue;
+          if (e.vB === e.vL) {
+            if (_Delaunay.isLeftEdge(e))
+              this.doTriangulateLeft(e, e.vB, currY);
+          } else {
+            if (_Delaunay.isRightEdge(e))
+              this.doTriangulateRight(e, e.vB, currY);
+          }
+        }
+        currY = v.pt.y;
+      }
+      for (let i = v.edges.length - 1; i >= 0; --i) {
+        if (i >= v.edges.length)
+          continue;
+        const e = v.edges[i];
+        if (_Delaunay.edgeCompleted(e) || _Delaunay.isLooseEdge(e))
+          continue;
+        if (v === e.vB) {
+          if (_Delaunay.isHorizontal(e))
+            this.horzEdgeStack.push(e);
+          if (!v.innerLM)
+            this.addEdgeToActives(e);
+        } else {
+          if (_Delaunay.isHorizontal(e))
+            this.horzEdgeStack.push(e);
+          else if (_Delaunay.isLeftEdge(e))
+            this.doTriangulateLeft(e, e.vB, v.pt.y);
+          else
+            this.doTriangulateRight(e, e.vB, v.pt.y);
+        }
+      }
+      if (v.innerLM)
+        this.locMinStack.push(v);
+    }
+    while (this.horzEdgeStack.length > 0) {
+      const e = this.horzEdgeStack.pop();
+      if (!_Delaunay.edgeCompleted(e) && e.vB === e.vL)
+        this.doTriangulateLeft(e, e.vB, currY);
+    }
+    if (this.useDelaunay) {
+      while (this.pendingDelaunayStack.length > 0) {
+        const e = this.pendingDelaunayStack.pop();
+        this.forceLegal(e);
+      }
+    }
+    for (const tri of this.allTriangles) {
+      const p = _Delaunay.pathFromTriangle(tri);
+      const cps = InternalClipper.crossProductSign(p[0], p[1], p[2]);
+      if (cps === 0)
+        continue;
+      if (cps < 0)
+        p.reverse();
+      sol.push(p);
+    }
+    this.cleanUp();
+    return { result: TriangulateResult.success, solution: sol };
+  }
+  // ---------------------------------------------------------------------
+  // Static / helper functions
+  // ---------------------------------------------------------------------
+  static isLooseEdge(e) {
+    return e.kind === EdgeKind.loose;
+  }
+  static isLeftEdge(e) {
+    return e.kind === EdgeKind.ascend;
+  }
+  static isRightEdge(e) {
+    return e.kind === EdgeKind.descend;
+  }
+  static isHorizontal(e) {
+    return e.vB.pt.y === e.vT.pt.y;
+  }
+  static leftTurning(p1, p2, p3) {
+    return InternalClipper.crossProductSign(p1, p2, p3) < 0;
+  }
+  static rightTurning(p1, p2, p3) {
+    return InternalClipper.crossProductSign(p1, p2, p3) > 0;
+  }
+  static edgeCompleted(edge) {
+    if (edge.triA === null)
+      return false;
+    if (edge.triB !== null)
+      return true;
+    return edge.kind !== EdgeKind.loose;
+  }
+  static edgeContains(edge, v) {
+    if (edge.vL === v)
+      return EdgeContainsResult.left;
+    if (edge.vR === v)
+      return EdgeContainsResult.right;
+    return EdgeContainsResult.neither;
+  }
+  static getAngle(a, b, c) {
+    const abx = Number(b.x - a.x);
+    const aby = Number(b.y - a.y);
+    const bcx = Number(b.x - c.x);
+    const bcy = Number(b.y - c.y);
+    const dp = abx * bcx + aby * bcy;
+    const cp = abx * bcy - aby * bcx;
+    return Math.atan2(cp, dp);
+  }
+  static getLocMinAngle(v) {
+    let asc;
+    let des;
+    if (v.edges[0].kind === EdgeKind.ascend) {
+      asc = 0;
+      des = 1;
+    } else {
+      des = 0;
+      asc = 1;
+    }
+    return _Delaunay.getAngle(v.edges[des].vT.pt, v.pt, v.edges[asc].vT.pt);
+  }
+  static removeEdgeFromVertex(vert, edge) {
+    const idx = vert.edges.indexOf(edge);
+    if (idx < 0)
+      throw new Error("Edge not found in vertex");
+    vert.edges.splice(idx, 1);
+  }
+  static findLocMinIdx(path, len2, idx) {
+    if (len2 < 3)
+      return { found: false, idx };
+    const i0 = idx;
+    let n2 = (idx + 1) % len2;
+    while (path[n2].y <= path[idx].y) {
+      idx = n2;
+      n2 = (n2 + 1) % len2;
+      if (idx === i0)
+        return { found: false, idx };
+    }
+    while (path[n2].y >= path[idx].y) {
+      idx = n2;
+      n2 = (n2 + 1) % len2;
+    }
+    return { found: true, idx };
+  }
+  static prev(idx, len2) {
+    if (idx === 0)
+      return len2 - 1;
+    return idx - 1;
+  }
+  static next(idx, len2) {
+    return (idx + 1) % len2;
+  }
+  static findLinkingEdge(vert1, vert2, preferAscending) {
+    let res = null;
+    for (const e of vert1.edges) {
+      if (e.vL === vert2 || e.vR === vert2) {
+        if (e.kind === EdgeKind.loose || e.kind === EdgeKind.ascend === preferAscending)
+          return e;
+        res = e;
+      }
+    }
+    return res;
+  }
+  static pathFromTriangle(tri) {
+    const res = [
+      tri.edges[0].vL.pt,
+      tri.edges[0].vR.pt
+    ];
+    const e = tri.edges[1];
+    if (e.vL.pt.x === res[0].x && e.vL.pt.y === res[0].y || e.vL.pt.x === res[1].x && e.vL.pt.y === res[1].y)
+      res.push(e.vR.pt);
+    else
+      res.push(e.vL.pt);
+    return res;
+  }
+  static inCircleTest(ptA, ptB, ptC, ptD) {
+    const m00 = Number(ptA.x - ptD.x);
+    const m01 = Number(ptA.y - ptD.y);
+    const m02 = m00 * m00 + m01 * m01;
+    const m10 = Number(ptB.x - ptD.x);
+    const m11 = Number(ptB.y - ptD.y);
+    const m12 = m10 * m10 + m11 * m11;
+    const m20 = Number(ptC.x - ptD.x);
+    const m21 = Number(ptC.y - ptD.y);
+    const m22 = m20 * m20 + m21 * m21;
+    return m00 * (m11 * m22 - m21 * m12) - m10 * (m01 * m22 - m21 * m02) + m20 * (m01 * m12 - m11 * m02);
+  }
+  static shortestDistFromSegment(pt, segPt1, segPt2) {
+    const dx = Number(segPt2.x - segPt1.x);
+    const dy = Number(segPt2.y - segPt1.y);
+    const ax = Number(pt.x - segPt1.x);
+    const ay = Number(pt.y - segPt1.y);
+    const qNum = ax * dx + ay * dy;
+    const denom = dx * dx + dy * dy;
+    if (qNum < 0)
+      return _Delaunay.distanceSqr(pt, segPt1);
+    if (qNum > denom)
+      return _Delaunay.distanceSqr(pt, segPt2);
+    return (ax * dy - dx * ay) * (ax * dy - dx * ay) / denom;
+  }
+  static segsIntersect(s1a, s1b, s2a, s2b) {
+    const dy1 = Number(s1b.y - s1a.y);
+    const dx1 = Number(s1b.x - s1a.x);
+    const dy2 = Number(s2b.y - s2a.y);
+    const dx2 = Number(s2b.x - s2a.x);
+    const cp = dy1 * dx2 - dy2 * dx1;
+    if (cp === 0)
+      return IntersectKind.collinear;
+    let t3 = Number(s1a.x - s2a.x) * dy2 - Number(s1a.y - s2a.y) * dx2;
+    if (t3 === 0)
+      return IntersectKind.none;
+    if (t3 > 0) {
+      if (cp < 0 || t3 >= cp)
+        return IntersectKind.none;
+    } else {
+      if (cp > 0 || t3 <= cp)
+        return IntersectKind.none;
+    }
+    t3 = Number(s1a.x - s2a.x) * dy1 - Number(s1a.y - s2a.y) * dx1;
+    if (t3 === 0)
+      return IntersectKind.none;
+    if (t3 > 0) {
+      if (cp > 0 && t3 < cp)
+        return IntersectKind.intersect;
+    } else {
+      if (cp < 0 && t3 > cp)
+        return IntersectKind.intersect;
+    }
+    return IntersectKind.none;
+  }
+  static distSqr(pt1, pt2) {
+    const dx = Number(pt1.x - pt2.x);
+    const dy = Number(pt1.y - pt2.y);
+    return dx * dx + dy * dy;
+  }
+  static distanceSqr(a, b) {
+    const dx = Number(a.x - b.x);
+    const dy = Number(a.y - b.y);
+    return dx * dx + dy * dy;
+  }
+};
+
+// node_modules/.pnpm/clipper2-ts@2.0.1/node_modules/clipper2-ts/dist/Clipper.js
+var Clipper2;
+(function(Clipper3) {
+  Clipper3.invalidRect64 = InvalidRect64;
+  Clipper3.invalidRectD = InvalidRectD;
+  function intersect2(subject, clip, fillRule) {
+    return booleanOp2(ClipType.Intersection, subject, clip, fillRule);
+  }
+  Clipper3.intersect = intersect2;
+  function intersectD2(subject, clip, fillRule, precision = 2) {
+    return booleanOpD2(ClipType.Intersection, subject, clip, fillRule, precision);
+  }
+  Clipper3.intersectD = intersectD2;
+  function union3(subject, clipOrFillRule, fillRule) {
+    if (typeof clipOrFillRule === "number") {
+      return booleanOp2(ClipType.Union, subject, null, clipOrFillRule);
+    } else {
+      return booleanOp2(ClipType.Union, subject, clipOrFillRule, fillRule);
+    }
+  }
+  Clipper3.union = union3;
+  function unionD2(subject, clipOrFillRule, fillRuleOrPrecision, precision) {
+    if (typeof clipOrFillRule === "number") {
+      return booleanOpD2(ClipType.Union, subject, null, clipOrFillRule);
+    } else {
+      return booleanOpD2(ClipType.Union, subject, clipOrFillRule, fillRuleOrPrecision, precision || 2);
+    }
+  }
+  Clipper3.unionD = unionD2;
+  function difference2(subject, clip, fillRule) {
+    return booleanOp2(ClipType.Difference, subject, clip, fillRule);
+  }
+  Clipper3.difference = difference2;
+  function differenceD2(subject, clip, fillRule, precision = 2) {
+    return booleanOpD2(ClipType.Difference, subject, clip, fillRule, precision);
+  }
+  Clipper3.differenceD = differenceD2;
+  function xor2(subject, clip, fillRule) {
+    return booleanOp2(ClipType.Xor, subject, clip, fillRule);
+  }
+  Clipper3.xor = xor2;
+  function xorD2(subject, clip, fillRule, precision = 2) {
+    return booleanOpD2(ClipType.Xor, subject, clip, fillRule, precision);
+  }
+  Clipper3.xorD = xorD2;
+  function booleanOp2(clipType, subject, clip, fillRule) {
+    const solution = [];
+    if (subject === null)
+      return solution;
+    const c = new Clipper64();
+    c.addPaths(subject, PathType.Subject);
+    if (clip !== null) {
+      c.addPaths(clip, PathType.Clip);
+    }
+    c.execute(clipType, fillRule, solution);
+    return solution;
+  }
+  Clipper3.booleanOp = booleanOp2;
+  function booleanOpWithPolyTree2(clipType, subject, clip, polytree, fillRule) {
+    if (subject === null)
+      return;
+    const c = new Clipper64();
+    c.addPaths(subject, PathType.Subject);
+    if (clip !== null) {
+      c.addPaths(clip, PathType.Clip);
+    }
+    c.execute(clipType, fillRule, polytree);
+  }
+  Clipper3.booleanOpWithPolyTree = booleanOpWithPolyTree2;
+  function booleanOpD2(clipType, subject, clip, fillRule, precision = 2) {
+    const solution = [];
+    const c = new ClipperD(precision);
+    c.addSubjectPaths(subject);
+    if (clip !== null) {
+      c.addClipPaths(clip);
+    }
+    c.execute(clipType, fillRule, solution);
+    return solution;
+  }
+  Clipper3.booleanOpD = booleanOpD2;
+  function booleanOpDWithPolyTree2(clipType, subject, clip, polytree, fillRule, precision = 2) {
+    if (subject === null)
+      return;
+    const c = new ClipperD(precision);
+    c.addSubjectPaths(subject);
+    if (clip !== null) {
+      c.addClipPaths(clip);
+    }
+    c.execute(clipType, fillRule, polytree);
+  }
+  Clipper3.booleanOpDWithPolyTree = booleanOpDWithPolyTree2;
+  function inflatePaths2(paths, delta, joinType, endType, miterLimit = 2, arcTolerance = 0) {
+    const co = new ClipperOffset(miterLimit, arcTolerance);
+    co.addPaths(paths, joinType, endType);
+    const solution = [];
+    co.execute(delta, solution);
+    return solution;
+  }
+  Clipper3.inflatePaths = inflatePaths2;
+  function inflatePathsD2(paths, delta, joinType, endType, miterLimit = 2, precision = 2, arcTolerance = 0) {
+    InternalClipper.checkPrecision(precision);
+    const scale = Math.pow(10, precision);
+    const tmp = scalePaths642(paths, scale);
+    const co = new ClipperOffset(miterLimit, scale * arcTolerance);
+    co.addPaths(tmp, joinType, endType);
+    const solution = [];
+    co.execute(delta * scale, solution);
+    return scalePathsD2(solution, 1 / scale);
+  }
+  Clipper3.inflatePathsD = inflatePathsD2;
+  function rectClip2(rect2, pathsOrPath, precision) {
+    if ("left" in rect2 && typeof rect2.left === "number" && Number.isInteger(rect2.left)) {
+      const rect64 = rect2;
+      if (Rect64Utils.isEmpty(rect64))
+        return [];
+      if (Array.isArray(pathsOrPath[0])) {
+        const paths = pathsOrPath;
+        if (paths.length === 0)
+          return [];
+        const rc = new RectClip64(rect64);
+        return rc.execute(paths);
+      } else {
+        const path = pathsOrPath;
+        if (path.length === 0)
+          return [];
+        const tmp = [path];
+        return rectClip2(rect64, tmp);
+      }
+    } else {
+      const rectD = rect2;
+      const prec = precision || 2;
+      InternalClipper.checkPrecision(prec);
+      if (RectDUtils.isEmpty(rectD))
+        return [];
+      const scale = Math.pow(10, prec);
+      const r = scaleRect(rectD, scale);
+      if (Array.isArray(pathsOrPath[0])) {
+        const paths = pathsOrPath;
+        if (paths.length === 0)
+          return [];
+        const tmpPath = scalePaths642(paths, scale);
+        const rc = new RectClip64(r);
+        const result = rc.execute(tmpPath);
+        return scalePathsD2(result, 1 / scale);
+      } else {
+        const path = pathsOrPath;
+        if (path.length === 0)
+          return [];
+        const tmp = [path];
+        return rectClip2(rectD, tmp, prec);
+      }
+    }
+  }
+  Clipper3.rectClip = rectClip2;
+  function rectClipLines2(rect2, pathsOrPath, precision) {
+    if ("left" in rect2 && typeof rect2.left === "number" && Number.isInteger(rect2.left)) {
+      const rect64 = rect2;
+      if (Rect64Utils.isEmpty(rect64))
+        return [];
+      if (Array.isArray(pathsOrPath[0])) {
+        const paths = pathsOrPath;
+        if (paths.length === 0)
+          return [];
+        const rc = new RectClipLines64(rect64);
+        return rc.execute(paths);
+      } else {
+        const path = pathsOrPath;
+        if (path.length === 0)
+          return [];
+        const tmp = [path];
+        return rectClipLines2(rect64, tmp);
+      }
+    } else {
+      const rectD = rect2;
+      const prec = precision || 2;
+      InternalClipper.checkPrecision(prec);
+      if (RectDUtils.isEmpty(rectD))
+        return [];
+      const scale = Math.pow(10, prec);
+      const r = scaleRect(rectD, scale);
+      if (Array.isArray(pathsOrPath[0])) {
+        const paths = pathsOrPath;
+        if (paths.length === 0)
+          return [];
+        const tmpPath = scalePaths642(paths, scale);
+        const rc = new RectClipLines64(r);
+        const result = rc.execute(tmpPath);
+        return scalePathsD2(result, 1 / scale);
+      } else {
+        const path = pathsOrPath;
+        if (path.length === 0)
+          return [];
+        const tmp = [path];
+        return rectClipLines2(rectD, tmp, prec);
+      }
+    }
+  }
+  Clipper3.rectClipLines = rectClipLines2;
+  function minkowskiSum2(pattern, path, isClosed) {
+    return Minkowski.sum(pattern, path, isClosed);
+  }
+  Clipper3.minkowskiSum = minkowskiSum2;
+  function minkowskiSumD2(pattern, path, isClosed) {
+    return Minkowski.sumD(pattern, path, isClosed);
+  }
+  Clipper3.minkowskiSumD = minkowskiSumD2;
+  function minkowskiDiff2(pattern, path, isClosed) {
+    return Minkowski.diff(pattern, path, isClosed);
+  }
+  Clipper3.minkowskiDiff = minkowskiDiff2;
+  function minkowskiDiffD2(pattern, path, isClosed) {
+    return Minkowski.diffD(pattern, path, isClosed);
+  }
+  Clipper3.minkowskiDiffD = minkowskiDiffD2;
+  function area2(path) {
+    let a = 0;
+    const cnt = path.length;
+    if (cnt < 3)
+      return 0;
+    let prevPt = path[cnt - 1];
+    for (const pt of path) {
+      a += (prevPt.y + pt.y) * (prevPt.x - pt.x);
+      prevPt = pt;
+    }
+    return a * 0.5;
+  }
+  Clipper3.area = area2;
+  function areaPaths2(paths) {
+    let a = 0;
+    for (const path of paths) {
+      a += area2(path);
+    }
+    return a;
+  }
+  Clipper3.areaPaths = areaPaths2;
+  function areaD2(path) {
+    let a = 0;
+    const cnt = path.length;
+    if (cnt < 3)
+      return 0;
+    let prevPt = path[cnt - 1];
+    for (const pt of path) {
+      a += (prevPt.y + pt.y) * (prevPt.x - pt.x);
+      prevPt = pt;
+    }
+    return a * 0.5;
+  }
+  Clipper3.areaD = areaD2;
+  function areaPathsD2(paths) {
+    let a = 0;
+    for (const path of paths) {
+      a += areaD2(path);
+    }
+    return a;
+  }
+  Clipper3.areaPathsD = areaPathsD2;
+  function isPositive2(poly) {
+    return area2(poly) >= 0;
+  }
+  Clipper3.isPositive = isPositive2;
+  function isPositiveD2(poly) {
+    return areaD2(poly) >= 0;
+  }
+  Clipper3.isPositiveD = isPositiveD2;
+  function path64ToString(path) {
+    let result = "";
+    for (const pt of path) {
+      result += Point64Utils.toString(pt);
+    }
+    return result + "\n";
+  }
+  Clipper3.path64ToString = path64ToString;
+  function paths64ToString(paths) {
+    let result = "";
+    for (const path of paths) {
+      result += path64ToString(path);
+    }
+    return result;
+  }
+  Clipper3.paths64ToString = paths64ToString;
+  function pathDToString(path, precision = 2) {
+    let result = "";
+    for (const pt of path) {
+      result += PointDUtils.toString(pt, precision);
+    }
+    return result + "\n";
+  }
+  Clipper3.pathDToString = pathDToString;
+  function pathsDToString(paths, precision = 2) {
+    let result = "";
+    for (const path of paths) {
+      result += pathDToString(path, precision);
+    }
+    return result;
+  }
+  Clipper3.pathsDToString = pathsDToString;
+  function offsetPath(path, dx, dy) {
+    const result = [];
+    for (const pt of path) {
+      result.push({ x: pt.x + dx, y: pt.y + dy });
+    }
+    return result;
+  }
+  Clipper3.offsetPath = offsetPath;
+  function scalePoint64(pt, scale) {
+    return {
+      x: Math.round(pt.x * scale),
+      y: Math.round(pt.y * scale)
+    };
+  }
+  Clipper3.scalePoint64 = scalePoint64;
+  function scalePointD(pt, scale) {
+    return {
+      x: pt.x * scale,
+      y: pt.y * scale
+    };
+  }
+  Clipper3.scalePointD = scalePointD;
+  function scaleRect(rec, scale) {
+    return {
+      left: Math.round(rec.left * scale),
+      top: Math.round(rec.top * scale),
+      right: Math.round(rec.right * scale),
+      bottom: Math.round(rec.bottom * scale)
+    };
+  }
+  Clipper3.scaleRect = scaleRect;
+  function scalePath(path, scale) {
+    if (InternalClipper.isAlmostZero(scale - 1))
+      return path;
+    const result = [];
+    for (const pt of path) {
+      result.push({
+        x: Math.round(pt.x * scale),
+        y: Math.round(pt.y * scale)
+      });
+    }
+    return result;
+  }
+  Clipper3.scalePath = scalePath;
+  function scalePaths(paths, scale) {
+    if (InternalClipper.isAlmostZero(scale - 1))
+      return paths;
+    const result = [];
+    for (const path of paths) {
+      result.push(scalePath(path, scale));
+    }
+    return result;
+  }
+  Clipper3.scalePaths = scalePaths;
+  function scalePathD2(path, scale) {
+    if (InternalClipper.isAlmostZero(scale - 1))
+      return path;
+    const result = [];
+    for (const pt of path) {
+      result.push(PointDUtils.scale(pt, scale));
+    }
+    return result;
+  }
+  Clipper3.scalePathD = scalePathD2;
+  function scalePathsD2(paths, scale) {
+    if (InternalClipper.isAlmostZero(scale - 1))
+      return paths;
+    const result = [];
+    for (const path of paths) {
+      result.push(scalePathD2(path, scale));
+    }
+    return result;
+  }
+  Clipper3.scalePathsD = scalePathsD2;
+  function scalePath642(path, scale) {
+    const result = [];
+    for (const pt of path) {
+      result.push({
+        x: Math.round(pt.x * scale),
+        y: Math.round(pt.y * scale)
+      });
+    }
+    return result;
+  }
+  Clipper3.scalePath64 = scalePath642;
+  function scalePaths642(paths, scale) {
+    const result = [];
+    for (const path of paths) {
+      result.push(scalePath642(path, scale));
+    }
+    return result;
+  }
+  Clipper3.scalePaths64 = scalePaths642;
+  function scalePathDFromInt(path, scale) {
+    const result = [];
+    for (const pt of path) {
+      result.push({
+        x: pt.x * scale,
+        y: pt.y * scale
+      });
+    }
+    return result;
+  }
+  Clipper3.scalePathDFromInt = scalePathDFromInt;
+  function scalePathsDFromInt(paths, scale) {
+    const result = [];
+    for (const path of paths) {
+      result.push(scalePathDFromInt(path, scale));
+    }
+    return result;
+  }
+  Clipper3.scalePathsDFromInt = scalePathsDFromInt;
+  function path64FromD(path) {
+    const result = [];
+    for (const pt of path) {
+      result.push(Point64Utils.fromPointD(pt));
+    }
+    return result;
+  }
+  Clipper3.path64FromD = path64FromD;
+  function paths64FromD(paths) {
+    const result = [];
+    for (const path of paths) {
+      result.push(path64FromD(path));
+    }
+    return result;
+  }
+  Clipper3.paths64FromD = paths64FromD;
+  function pathsD(paths) {
+    const result = [];
+    for (const path of paths) {
+      result.push(pathD(path));
+    }
+    return result;
+  }
+  Clipper3.pathsD = pathsD;
+  function pathD(path) {
+    const result = [];
+    for (const pt of path) {
+      result.push(PointDUtils.fromPoint64(pt));
+    }
+    return result;
+  }
+  Clipper3.pathD = pathD;
+  function translatePath2(path, dx, dy) {
+    const result = [];
+    for (const pt of path) {
+      result.push({ x: pt.x + dx, y: pt.y + dy });
+    }
+    return result;
+  }
+  Clipper3.translatePath = translatePath2;
+  function translatePaths2(paths, dx, dy) {
+    const result = [];
+    for (const path of paths) {
+      result.push(offsetPath(path, dx, dy));
+    }
+    return result;
+  }
+  Clipper3.translatePaths = translatePaths2;
+  function translatePathD2(path, dx, dy) {
+    const result = [];
+    for (const pt of path) {
+      result.push({ x: pt.x + dx, y: pt.y + dy });
+    }
+    return result;
+  }
+  Clipper3.translatePathD = translatePathD2;
+  function translatePathsD2(paths, dx, dy) {
+    const result = [];
+    for (const path of paths) {
+      result.push(translatePathD2(path, dx, dy));
+    }
+    return result;
+  }
+  Clipper3.translatePathsD = translatePathsD2;
+  function reversePath2(path) {
+    return [...path].reverse();
+  }
+  Clipper3.reversePath = reversePath2;
+  function reversePathD2(path) {
+    return [...path].reverse();
+  }
+  Clipper3.reversePathD = reversePathD2;
+  function reversePaths2(paths) {
+    const result = [];
+    for (const path of paths) {
+      result.push(reversePath2(path));
+    }
+    return result;
+  }
+  Clipper3.reversePaths = reversePaths2;
+  function reversePathsD2(paths) {
+    const result = [];
+    for (const path of paths) {
+      result.push(reversePathD2(path));
+    }
+    return result;
+  }
+  Clipper3.reversePathsD = reversePathsD2;
+  function getBounds2(path) {
+    return InternalClipper.getBounds(path);
+  }
+  Clipper3.getBounds = getBounds2;
+  function getBoundsPaths2(paths) {
+    const result = Rect64Utils.createInvalid();
+    for (const path of paths) {
+      for (const pt of path) {
+        if (pt.x < result.left)
+          result.left = pt.x;
+        if (pt.x > result.right)
+          result.right = pt.x;
+        if (pt.y < result.top)
+          result.top = pt.y;
+        if (pt.y > result.bottom)
+          result.bottom = pt.y;
+      }
+    }
+    return result.left === Number.MAX_SAFE_INTEGER ? { left: 0, top: 0, right: 0, bottom: 0 } : result;
+  }
+  Clipper3.getBoundsPaths = getBoundsPaths2;
+  function getBoundsD2(path) {
+    const result = RectDUtils.createInvalid();
+    for (const pt of path) {
+      if (pt.x < result.left)
+        result.left = pt.x;
+      if (pt.x > result.right)
+        result.right = pt.x;
+      if (pt.y < result.top)
+        result.top = pt.y;
+      if (pt.y > result.bottom)
+        result.bottom = pt.y;
+    }
+    return Math.abs(result.left - Number.MAX_VALUE) < InternalClipper.floatingPointTolerance ? { left: 0, top: 0, right: 0, bottom: 0 } : result;
+  }
+  Clipper3.getBoundsD = getBoundsD2;
+  function getBoundsPathsD2(paths) {
+    const result = RectDUtils.createInvalid();
+    for (const path of paths) {
+      for (const pt of path) {
+        if (pt.x < result.left)
+          result.left = pt.x;
+        if (pt.x > result.right)
+          result.right = pt.x;
+        if (pt.y < result.top)
+          result.top = pt.y;
+        if (pt.y > result.bottom)
+          result.bottom = pt.y;
+      }
+    }
+    return Math.abs(result.left - Number.MAX_VALUE) < InternalClipper.floatingPointTolerance ? { left: 0, top: 0, right: 0, bottom: 0 } : result;
+  }
+  Clipper3.getBoundsPathsD = getBoundsPathsD2;
+  function makePath2(arr) {
+    const len2 = Math.floor(arr.length / 2);
+    const p = [];
+    for (let i = 0; i < len2; i++) {
+      p.push({ x: arr[i * 2], y: arr[i * 2 + 1], z: 0 });
+    }
+    return p;
+  }
+  Clipper3.makePath = makePath2;
+  function makePathD2(arr) {
+    const len2 = Math.floor(arr.length / 2);
+    const p = [];
+    for (let i = 0; i < len2; i++) {
+      p.push({ x: arr[i * 2], y: arr[i * 2 + 1], z: 0 });
+    }
+    return p;
+  }
+  Clipper3.makePathD = makePathD2;
+  function sqr(val) {
+    return val * val;
+  }
+  Clipper3.sqr = sqr;
+  function distanceSqr(pt1, pt2) {
+    return sqr(pt1.x - pt2.x) + sqr(pt1.y - pt2.y);
+  }
+  Clipper3.distanceSqr = distanceSqr;
+  function midPoint(pt1, pt2) {
+    return { x: Math.round((pt1.x + pt2.x) / 2), y: Math.round((pt1.y + pt2.y) / 2) };
+  }
+  Clipper3.midPoint = midPoint;
+  function midPointD(pt1, pt2) {
+    return { x: (pt1.x + pt2.x) / 2, y: (pt1.y + pt2.y) / 2 };
+  }
+  Clipper3.midPointD = midPointD;
+  function inflateRect(rec, dx, dy) {
+    rec.left -= dx;
+    rec.right += dx;
+    rec.top -= dy;
+    rec.bottom += dy;
+  }
+  Clipper3.inflateRect = inflateRect;
+  function inflateRectD(rec, dx, dy) {
+    rec.left -= dx;
+    rec.right += dx;
+    rec.top -= dy;
+    rec.bottom += dy;
+  }
+  Clipper3.inflateRectD = inflateRectD;
+  function pointsNearEqual(pt1, pt2, distanceSqrd) {
+    return sqr(pt1.x - pt2.x) + sqr(pt1.y - pt2.y) < distanceSqrd;
+  }
+  Clipper3.pointsNearEqual = pointsNearEqual;
+  function stripNearDuplicates(path, minEdgeLenSqrd, isClosedPath) {
+    const cnt = path.length;
+    const result = [];
+    if (cnt === 0)
+      return result;
+    let lastPt = path[0];
+    result.push(lastPt);
+    for (let i = 1; i < cnt; i++) {
+      if (!pointsNearEqual(lastPt, path[i], minEdgeLenSqrd)) {
+        lastPt = path[i];
+        result.push(lastPt);
+      }
+    }
+    if (isClosedPath && pointsNearEqual(lastPt, result[0], minEdgeLenSqrd)) {
+      result.pop();
+    }
+    return result;
+  }
+  Clipper3.stripNearDuplicates = stripNearDuplicates;
+  function stripDuplicates2(path, isClosedPath) {
+    const cnt = path.length;
+    const result = [];
+    if (cnt === 0)
+      return result;
+    let lastPt = path[0];
+    result.push(lastPt);
+    for (let i = 1; i < cnt; i++) {
+      if (!Point64Utils.equals(lastPt, path[i])) {
+        lastPt = path[i];
+        result.push(lastPt);
+      }
+    }
+    if (isClosedPath && Point64Utils.equals(lastPt, result[0])) {
+      result.pop();
+    }
+    return result;
+  }
+  Clipper3.stripDuplicates = stripDuplicates2;
+  function addPolyNodeToPaths(polyPath, paths) {
+    if (polyPath.poly && polyPath.poly.length > 0) {
+      paths.push(polyPath.poly);
+    }
+    for (let i = 0; i < polyPath.count; i++) {
+      addPolyNodeToPaths(polyPath.child(i), paths);
+    }
+  }
+  function polyTreeToPaths64(polyTree) {
+    const result = [];
+    for (let i = 0; i < polyTree.count; i++) {
+      addPolyNodeToPaths(polyTree.child(i), result);
+    }
+    return result;
+  }
+  Clipper3.polyTreeToPaths64 = polyTreeToPaths64;
+  function addPolyNodeToPathsD(polyPath, paths) {
+    if (polyPath.poly && polyPath.poly.length > 0) {
+      paths.push(polyPath.poly);
+    }
+    for (let i = 0; i < polyPath.count; i++) {
+      addPolyNodeToPathsD(polyPath.child(i), paths);
+    }
+  }
+  Clipper3.addPolyNodeToPathsD = addPolyNodeToPathsD;
+  function polyTreeToPathsD(polyTree) {
+    const result = [];
+    for (let i = 0; i < polyTree.count; i++) {
+      addPolyNodeToPathsD(polyTree.child(i), result);
+    }
+    return result;
+  }
+  Clipper3.polyTreeToPathsD = polyTreeToPathsD;
+  function perpendicDistFromLineSqrd(pt, line1, line2) {
+    const a = pt.x - line1.x;
+    const b = pt.y - line1.y;
+    const c = line2.x - line1.x;
+    const d = line2.y - line1.y;
+    if (c === 0 && d === 0)
+      return 0;
+    return sqr(a * d - c * b) / (c * c + d * d);
+  }
+  Clipper3.perpendicDistFromLineSqrd = perpendicDistFromLineSqrd;
+  function perpendicDistFromLineSqrd64(pt, line1, line2) {
+    const a = pt.x - line1.x;
+    const b = pt.y - line1.y;
+    const c = line2.x - line1.x;
+    const d = line2.y - line1.y;
+    if (c === 0 && d === 0)
+      return 0;
+    return sqr(a * d - c * b) / (c * c + d * d);
+  }
+  Clipper3.perpendicDistFromLineSqrd64 = perpendicDistFromLineSqrd64;
+  function rdp(path, begin, end, epsSqrd, flags) {
+    while (true) {
+      let idx = 0;
+      let maxD = 0;
+      while (end > begin && Point64Utils.equals(path[begin], path[end]))
+        flags[end--] = false;
+      for (let i = begin + 1; i < end; ++i) {
+        const d = perpendicDistFromLineSqrd64(path[i], path[begin], path[end]);
+        if (d <= maxD)
+          continue;
+        maxD = d;
+        idx = i;
+      }
+      if (maxD <= epsSqrd)
+        return;
+      flags[idx] = true;
+      if (idx > begin + 1)
+        rdp(path, begin, idx, epsSqrd, flags);
+      if (idx < end - 1) {
+        begin = idx;
+        continue;
+      }
+      break;
+    }
+  }
+  function ramerDouglasPeucker2(path, epsilon) {
+    const len2 = path.length;
+    if (len2 < 5)
+      return path;
+    const flags = new Array(len2).fill(false);
+    flags[0] = true;
+    flags[len2 - 1] = true;
+    rdp(path, 0, len2 - 1, sqr(epsilon), flags);
+    const result = [];
+    for (let i = 0; i < len2; ++i) {
+      if (flags[i])
+        result.push(path[i]);
+    }
+    return result;
+  }
+  Clipper3.ramerDouglasPeucker = ramerDouglasPeucker2;
+  function ramerDouglasPeuckerPaths2(paths, epsilon) {
+    const result = [];
+    for (const path of paths) {
+      result.push(ramerDouglasPeucker2(path, epsilon));
+    }
+    return result;
+  }
+  Clipper3.ramerDouglasPeuckerPaths = ramerDouglasPeuckerPaths2;
+  function rdpD(path, begin, end, epsSqrd, flags) {
+    while (true) {
+      let idx = 0;
+      let maxD = 0;
+      while (end > begin && PointDUtils.equals(path[begin], path[end]))
+        flags[end--] = false;
+      for (let i = begin + 1; i < end; ++i) {
+        const d = perpendicDistFromLineSqrd(path[i], path[begin], path[end]);
+        if (d <= maxD)
+          continue;
+        maxD = d;
+        idx = i;
+      }
+      if (maxD <= epsSqrd)
+        return;
+      flags[idx] = true;
+      if (idx > begin + 1)
+        rdpD(path, begin, idx, epsSqrd, flags);
+      if (idx < end - 1) {
+        begin = idx;
+        continue;
+      }
+      break;
+    }
+  }
+  function ramerDouglasPeuckerD2(path, epsilon) {
+    const len2 = path.length;
+    if (len2 < 5)
+      return path;
+    const flags = new Array(len2).fill(false);
+    flags[0] = true;
+    flags[len2 - 1] = true;
+    rdpD(path, 0, len2 - 1, sqr(epsilon), flags);
+    const result = [];
+    for (let i = 0; i < len2; ++i) {
+      if (flags[i])
+        result.push(path[i]);
+    }
+    return result;
+  }
+  Clipper3.ramerDouglasPeuckerD = ramerDouglasPeuckerD2;
+  function ramerDouglasPeuckerPathsD2(paths, epsilon) {
+    const result = [];
+    for (const path of paths) {
+      result.push(ramerDouglasPeuckerD2(path, epsilon));
+    }
+    return result;
+  }
+  Clipper3.ramerDouglasPeuckerPathsD = ramerDouglasPeuckerPathsD2;
+  function getNext(current, high, flags) {
+    ++current;
+    while (current <= high && flags[current])
+      ++current;
+    if (current <= high)
+      return current;
+    current = 0;
+    while (flags[current])
+      ++current;
+    return current;
+  }
+  function getPrior(current, high, flags) {
+    if (current === 0)
+      current = high;
+    else
+      --current;
+    while (current > 0 && flags[current])
+      --current;
+    if (!flags[current])
+      return current;
+    current = high;
+    while (flags[current])
+      --current;
+    return current;
+  }
+  function simplifyPath2(path, epsilon, isClosedPath = true) {
+    const len2 = path.length;
+    const high = len2 - 1;
+    const epsSqr = sqr(epsilon);
+    if (len2 < 4)
+      return path;
+    const flags = new Array(len2).fill(false);
+    const dsq = new Array(len2).fill(0);
+    let curr = 0;
+    if (isClosedPath) {
+      dsq[0] = perpendicDistFromLineSqrd64(path[0], path[high], path[1]);
+      dsq[high] = perpendicDistFromLineSqrd64(path[high], path[0], path[high - 1]);
+    } else {
+      dsq[0] = Number.MAX_VALUE;
+      dsq[high] = Number.MAX_VALUE;
+    }
+    for (let i = 1; i < high; ++i) {
+      dsq[i] = perpendicDistFromLineSqrd64(path[i], path[i - 1], path[i + 1]);
+    }
+    while (true) {
+      if (dsq[curr] > epsSqr) {
+        const start = curr;
+        do {
+          curr = getNext(curr, high, flags);
+        } while (curr !== start && dsq[curr] > epsSqr);
+        if (curr === start)
+          break;
+      }
+      const prev = getPrior(curr, high, flags);
+      const next = getNext(curr, high, flags);
+      if (next === prev)
+        break;
+      let prior2;
+      if (dsq[next] < dsq[curr]) {
+        prior2 = prev;
+        const newPrev = curr;
+        curr = next;
+        const newNext = getNext(next, high, flags);
+        flags[curr] = true;
+        curr = newNext;
+        const nextNext = getNext(newNext, high, flags);
+        if (isClosedPath || curr !== high && curr !== 0) {
+          dsq[curr] = perpendicDistFromLineSqrd64(path[curr], path[newPrev], path[nextNext]);
+        }
+        if (isClosedPath || newPrev !== 0 && newPrev !== high) {
+          dsq[newPrev] = perpendicDistFromLineSqrd64(path[newPrev], path[prior2], path[curr]);
+        }
+      } else {
+        prior2 = getPrior(prev, high, flags);
+        flags[curr] = true;
+        curr = next;
+        const nextNext = getNext(next, high, flags);
+        if (isClosedPath || curr !== high && curr !== 0) {
+          dsq[curr] = perpendicDistFromLineSqrd64(path[curr], path[prev], path[nextNext]);
+        }
+        if (isClosedPath || prev !== 0 && prev !== high) {
+          dsq[prev] = perpendicDistFromLineSqrd64(path[prev], path[prior2], path[curr]);
+        }
+      }
+    }
+    const result = [];
+    for (let i = 0; i < len2; i++) {
+      if (!flags[i])
+        result.push(path[i]);
+    }
+    return result;
+  }
+  Clipper3.simplifyPath = simplifyPath2;
+  function simplifyPaths2(paths, epsilon, isClosedPaths = true) {
+    const result = [];
+    for (const path of paths) {
+      result.push(simplifyPath2(path, epsilon, isClosedPaths));
+    }
+    return result;
+  }
+  Clipper3.simplifyPaths = simplifyPaths2;
+  function simplifyPathD2(path, epsilon, isClosedPath = true) {
+    const len2 = path.length;
+    const high = len2 - 1;
+    const epsSqr = sqr(epsilon);
+    if (len2 < 4)
+      return path;
+    const flags = new Array(len2).fill(false);
+    const dsq = new Array(len2).fill(0);
+    let curr = 0;
+    if (isClosedPath) {
+      dsq[0] = perpendicDistFromLineSqrd(path[0], path[high], path[1]);
+      dsq[high] = perpendicDistFromLineSqrd(path[high], path[0], path[high - 1]);
+    } else {
+      dsq[0] = Number.MAX_VALUE;
+      dsq[high] = Number.MAX_VALUE;
+    }
+    for (let i = 1; i < high; ++i) {
+      dsq[i] = perpendicDistFromLineSqrd(path[i], path[i - 1], path[i + 1]);
+    }
+    while (true) {
+      if (dsq[curr] > epsSqr) {
+        const start = curr;
+        do {
+          curr = getNext(curr, high, flags);
+        } while (curr !== start && dsq[curr] > epsSqr);
+        if (curr === start)
+          break;
+      }
+      const prev = getPrior(curr, high, flags);
+      const next = getNext(curr, high, flags);
+      if (next === prev)
+        break;
+      let prior2;
+      if (dsq[next] < dsq[curr]) {
+        prior2 = prev;
+        const newPrev = curr;
+        curr = next;
+        const newNext = getNext(next, high, flags);
+        flags[curr] = true;
+        curr = newNext;
+        const nextNext = getNext(newNext, high, flags);
+        if (isClosedPath || curr !== high && curr !== 0) {
+          dsq[curr] = perpendicDistFromLineSqrd(path[curr], path[newPrev], path[nextNext]);
+        }
+        if (isClosedPath || newPrev !== 0 && newPrev !== high) {
+          dsq[newPrev] = perpendicDistFromLineSqrd(path[newPrev], path[prior2], path[curr]);
+        }
+      } else {
+        prior2 = getPrior(prev, high, flags);
+        flags[curr] = true;
+        curr = next;
+        const nextNext = getNext(next, high, flags);
+        if (isClosedPath || curr !== high && curr !== 0) {
+          dsq[curr] = perpendicDistFromLineSqrd(path[curr], path[prev], path[nextNext]);
+        }
+        if (isClosedPath || prev !== 0 && prev !== high) {
+          dsq[prev] = perpendicDistFromLineSqrd(path[prev], path[prior2], path[curr]);
+        }
+      }
+    }
+    const result = [];
+    for (let i = 0; i < len2; i++) {
+      if (!flags[i])
+        result.push(path[i]);
+    }
+    return result;
+  }
+  Clipper3.simplifyPathD = simplifyPathD2;
+  function simplifyPathsD2(paths, epsilon, isClosedPath = true) {
+    const result = [];
+    for (const path of paths) {
+      result.push(simplifyPathD2(path, epsilon, isClosedPath));
+    }
+    return result;
+  }
+  Clipper3.simplifyPathsD = simplifyPathsD2;
+  function trimCollinear2(path, isOpen = false) {
+    let len2 = path.length;
+    let i = 0;
+    if (!isOpen) {
+      while (i < len2 - 1 && InternalClipper.isCollinear(path[len2 - 1], path[i], path[i + 1]))
+        i++;
+      while (i < len2 - 1 && InternalClipper.isCollinear(path[len2 - 2], path[len2 - 1], path[i]))
+        len2--;
+    }
+    if (len2 - i < 3) {
+      if (!isOpen || len2 < 2 || Point64Utils.equals(path[0], path[1])) {
+        return [];
+      }
+      return path;
+    }
+    const result = [];
+    let last = path[i];
+    result.push(last);
+    for (i++; i < len2 - 1; i++) {
+      if (InternalClipper.isCollinear(last, path[i], path[i + 1]))
+        continue;
+      last = path[i];
+      result.push(last);
+    }
+    if (isOpen) {
+      result.push(path[len2 - 1]);
+    } else if (!InternalClipper.isCollinear(last, path[len2 - 1], result[0])) {
+      result.push(path[len2 - 1]);
+    } else {
+      while (result.length > 2 && InternalClipper.isCollinear(result[result.length - 1], result[result.length - 2], result[0])) {
+        result.pop();
+      }
+      if (result.length < 3) {
+        result.length = 0;
+      }
+    }
+    return result;
+  }
+  Clipper3.trimCollinear = trimCollinear2;
+  function trimCollinearD2(path, precision, isOpen = false) {
+    InternalClipper.checkPrecision(precision);
+    const scale = Math.pow(10, precision);
+    let p = scalePath642(path, scale);
+    p = trimCollinear2(p, isOpen);
+    return scalePathDFromInt(p, 1 / scale);
+  }
+  Clipper3.trimCollinearD = trimCollinearD2;
+  function pointInPolygon3(pt, polygon2) {
+    return InternalClipper.pointInPolygon(pt, polygon2);
+  }
+  Clipper3.pointInPolygon = pointInPolygon3;
+  function pointInPolygonD2(pt, polygon2, precision = 2) {
+    InternalClipper.checkPrecision(precision);
+    const scale = Math.pow(10, precision);
+    const p = Point64Utils.fromPointD(PointDUtils.scale(pt, scale));
+    const pathScaled = scalePath642(polygon2, scale);
+    return InternalClipper.pointInPolygon(p, pathScaled);
+  }
+  Clipper3.pointInPolygonD = pointInPolygonD2;
+  function ellipse3(center, radiusX, radiusY = 0, steps = 0) {
+    if (radiusX <= 0)
+      return [];
+    if (radiusY <= 0)
+      radiusY = radiusX;
+    if (steps <= 2) {
+      steps = Math.ceil(Math.PI * Math.sqrt((radiusX + radiusY) / 2));
+    }
+    const si = Math.sin(2 * Math.PI / steps);
+    const co = Math.cos(2 * Math.PI / steps);
+    let dx = co;
+    let dy = si;
+    const result = [{ x: Math.round(center.x + radiusX), y: center.y }];
+    for (let i = 1; i < steps; ++i) {
+      result.push({
+        x: Math.round(center.x + radiusX * dx),
+        y: Math.round(center.y + radiusY * dy)
+      });
+      const x = dx * co - dy * si;
+      dy = dy * co + dx * si;
+      dx = x;
+    }
+    return result;
+  }
+  Clipper3.ellipse = ellipse3;
+  function ellipseD2(center, radiusX, radiusY = 0, steps = 0) {
+    if (radiusX <= 0)
+      return [];
+    if (radiusY <= 0)
+      radiusY = radiusX;
+    if (steps <= 2) {
+      steps = Math.ceil(Math.PI * Math.sqrt((radiusX + radiusY) / 2));
+    }
+    const si = Math.sin(2 * Math.PI / steps);
+    const co = Math.cos(2 * Math.PI / steps);
+    let dx = co;
+    let dy = si;
+    const result = [{ x: center.x + radiusX, y: center.y }];
+    for (let i = 1; i < steps; ++i) {
+      result.push({
+        x: center.x + radiusX * dx,
+        y: center.y + radiusY * dy
+      });
+      const x = dx * co - dy * si;
+      dy = dy * co + dx * si;
+      dx = x;
+    }
+    return result;
+  }
+  Clipper3.ellipseD = ellipseD2;
+  function triangulate3(pp, useDelaunay = true) {
+    const d = new Delaunay(useDelaunay);
+    return d.execute(pp);
+  }
+  Clipper3.triangulate = triangulate3;
+  function triangulateD2(pp, decPlaces, useDelaunay = true) {
+    let scale;
+    if (decPlaces <= 0)
+      scale = 1;
+    else if (decPlaces > 8)
+      scale = Math.pow(10, 8);
+    else
+      scale = Math.pow(10, decPlaces);
+    const pp64 = scalePaths642(pp, scale);
+    const d = new Delaunay(useDelaunay);
+    const { result, solution: sol64 } = d.execute(pp64);
+    let solution;
+    if (result === TriangulateResult.success) {
+      solution = scalePathsD2(sol64, 1 / scale);
+    } else {
+      solution = [];
+    }
+    return { result, solution };
+  }
+  Clipper3.triangulateD = triangulateD2;
+})(Clipper2 || (Clipper2 = {}));
+
+// node_modules/.pnpm/clipper2-ts@2.0.1/node_modules/clipper2-ts/dist/index.js
+var { intersect, intersectD, union, unionD, difference, differenceD, xor, xorD, booleanOp, booleanOpWithPolyTree, booleanOpD, booleanOpDWithPolyTree, inflatePaths, inflatePathsD, rectClip, rectClipLines, minkowskiSum, minkowskiSumD, minkowskiDiff, minkowskiDiffD, area, areaPaths, areaD, areaPathsD, isPositive, isPositiveD, getBounds, getBoundsPaths, getBoundsD, getBoundsPathsD, makePath, makePathD, scalePath64, scalePaths64, scalePathD, scalePathsD, translatePath, translatePaths, translatePathD, translatePathsD, reversePath, reversePathD, reversePaths, reversePathsD, stripDuplicates, trimCollinear, trimCollinearD, pointInPolygon: pointInPolygon2, pointInPolygonD, ellipse: ellipse2, ellipseD, simplifyPath, simplifyPaths, simplifyPathD, simplifyPathsD, ramerDouglasPeucker, ramerDouglasPeuckerPaths, ramerDouglasPeuckerD, ramerDouglasPeuckerPathsD, triangulate, triangulateD } = Clipper2;
+
+// packages/dieline/src/offset.ts
+var PRECISION = 3;
+var toPath = (pts) => pts.map(([x, y]) => ({ x, y }));
+var union2 = (paths) => Clipper2.booleanOpD(ClipType.Union, paths, null, FillRule.NonZero, PRECISION);
+var fromPath = (p) => p.map((q) => [q.x, q.y]);
+function facePaths(f, tol) {
+  const outer = union2([toPath(flattenContour(f.outline, tol))]);
+  if (f.holes.length === 0) return outer;
+  const holes = f.holes.map((h) => toPath(flattenContour(h, tol)));
+  return Clipper2.differenceD(outer, holes, FillRule.NonZero, PRECISION);
+}
+function offsetFace(f, deltaMm, tol = FLATTEN_TOLERANCE_MM) {
+  const paths = facePaths(f, tol);
+  if (deltaMm === 0) return paths.map(fromPath);
+  const out = Clipper2.inflatePathsD(paths, deltaMm, JoinType.Miter, EndType.Polygon, 4, PRECISION);
+  return out.map(fromPath);
+}
+function safeZone(f, insetMm, tol = FLATTEN_TOLERANCE_MM) {
+  return offsetFace(f, -Math.abs(insetMm), tol);
+}
+function facePolygons(f, tol = FLATTEN_TOLERANCE_MM) {
+  return facePaths(f, tol).map(fromPath);
+}
+function pieceOutline(p, tol = FLATTEN_TOLERANCE_MM) {
+  const all = p.faces.flatMap((f) => facePaths(f, tol));
+  return union2(all).map(fromPath);
+}
+function bleedOutline(p, bleedMm, tol = FLATTEN_TOLERANCE_MM) {
+  const all = p.faces.flatMap((f) => facePaths(f, tol));
+  const merged = union2(all);
+  return Clipper2.inflatePathsD(merged, Math.abs(bleedMm), JoinType.Miter, EndType.Polygon, 4, PRECISION).map(fromPath);
+}
+function polygonsArea(polys) {
+  return Math.abs(Clipper2.areaPathsD(polys.map(toPath)));
+}
+function overlapArea(a, b, tol = FLATTEN_TOLERANCE_MM) {
+  const shared = Clipper2.intersectD(facePaths(a, tol), facePaths(b, tol), FillRule.NonZero, PRECISION);
+  return Math.abs(Clipper2.areaPathsD(shared));
+}
+function triangulate2(polys) {
+  if (polys.length === 0) return [];
+  const { solution } = Clipper2.triangulateD(polys.map(toPath), PRECISION);
+  return solution.map(fromPath);
+}
+
+// packages/dieline/src/checks.ts
+var CLOSURE_TOLERANCE_MM = 0.01;
+var OVERLAP_TOLERANCE_MM2 = 0.05;
+var FOLD_ROLES = /* @__PURE__ */ new Set(["crease", "perforation", "half_cut"]);
+function checkDieline(d) {
+  const problems = [];
+  const ids = /* @__PURE__ */ new Set();
+  for (const piece2 of d.pieces) {
+    for (const f of piece2.faces) {
+      if (ids.has(f.id)) problems.push({ code: "face.duplicate_id", detail: f.id });
+      ids.add(f.id);
+      const gap = contourGap(f.outline);
+      if (gap > CLOSURE_TOLERANCE_MM)
+        problems.push({ code: "contour.open", detail: `${f.id} gap ${gap.toFixed(4)} mm` });
+      f.holes.forEach((h, i) => {
+        const hg = contourGap(h);
+        if (hg > CLOSURE_TOLERANCE_MM)
+          problems.push({ code: "hole.open", detail: `${f.id} hole ${i} gap ${hg.toFixed(4)} mm` });
+      });
+    }
+  }
+  for (const shared of sharedEdgeRoles(d)) {
+    if (shared.faces.length === 1) {
+      if (shared.roles[0] !== "cut")
+        problems.push({ code: "boundary.not_cut", detail: `${shared.faces[0]} ${shared.key} is ${shared.roles[0]}` });
+      continue;
+    }
+    if (shared.faces.length > 2)
+      problems.push({ code: "edge.role_conflict", detail: `${shared.faces.join(",")} share ${shared.key}` });
+    if (new Set(shared.roles).size > 1) {
+      problems.push({ code: "edge.role_conflict", detail: `${shared.faces.join(",")}: ${shared.roles.join("/")}` });
+    }
+  }
+  const lines = dielineLines(d);
+  for (const l of lines) {
+    if (l.source === "outline" && FOLD_ROLES.has(l.role) && l.faces.length < 2) {
+      problems.push({ code: "crease.not_shared", detail: `${l.faces[0]} ${edgeKey(l.edge)}` });
+    }
+  }
+  for (const piece2 of d.pieces) {
+    const pieceLines = lines.filter((l) => l.pieceId === piece2.id && l.role !== "bleed" && l.role !== "glue_area");
+    const ends = pieceLines.flatMap((l) => [l.edge.from, l.edge.to]);
+    for (const l of pieceLines) {
+      if (l.role !== "cut" || l.source === "mark") continue;
+      for (const end of [l.edge.from, l.edge.to]) {
+        let meets = 0;
+        for (const other of ends) if (dist(end, other) <= CLOSURE_TOLERANCE_MM) meets++;
+        if (meets < 2)
+          problems.push({
+            code: "cut.dangling",
+            detail: `${l.faces.join(",")} at ${end[0].toFixed(3)},${end[1].toFixed(3)}`
+          });
+      }
+    }
+  }
+  for (const piece2 of d.pieces) {
+    const faces = piece2.faces;
+    for (let i = 0; i < faces.length; i++) {
+      const bi = edgesBounds(faces[i].outline);
+      for (let j = i + 1; j < faces.length; j++) {
+        const bj = edgesBounds(faces[j].outline);
+        if (bi.x >= bj.x + bj.width || bj.x >= bi.x + bi.width || bi.y >= bj.y + bj.height || bj.y >= bi.y + bi.height)
+          continue;
+        const area2 = overlapArea(faces[i], faces[j]);
+        if (area2 > OVERLAP_TOLERANCE_MM2) {
+          problems.push({ code: "faces.overlap", detail: `${faces[i].id} \xD7 ${faces[j].id} ${area2.toFixed(3)} mm\xB2` });
+        }
+      }
+    }
+    const byKey = /* @__PURE__ */ new Map();
+    for (const f of faces) for (const e of f.outline) byKey.set(edgeKey(e), [...byKey.get(edgeKey(e)) ?? [], f.id]);
+    const adjacent = new Map(faces.map((f) => [f.id, /* @__PURE__ */ new Set()]));
+    for (const owners of byKey.values()) {
+      for (const a of owners) for (const b of owners) if (a !== b) adjacent.get(a)?.add(b);
+    }
+    if (faces.length > 0) {
+      const seen = /* @__PURE__ */ new Set([faces[0].id]);
+      const queue = [faces[0].id];
+      while (queue.length) {
+        for (const next of adjacent.get(queue.shift()) ?? []) {
+          if (seen.has(next)) continue;
+          seen.add(next);
+          queue.push(next);
+        }
+      }
+      if (seen.size !== faces.length) {
+        const lost = faces.filter((f) => !seen.has(f.id)).map((f) => f.id);
+        problems.push({ code: "piece.disconnected", detail: `${piece2.id}: ${lost.join(",")}` });
+      }
+    }
+  }
+  return problems;
+}
+
+// packages/dieline/src/fold.ts
+var STAGE = {
+  panel: 0,
+  wall: 0,
+  base: 0,
+  glue_flap: 0,
+  hanger: 0,
+  flat: 0,
+  dust_flap: 1,
+  flap: 1,
+  lock: 1,
+  tab: 1,
+  lid: 2,
+  handle: 2,
+  tuck: 3
+};
+var FOLD_ROLES2 = /* @__PURE__ */ new Set(["crease", "half_cut", "perforation"]);
+var identity = () => [1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1];
+function multiply(a, b) {
+  const out = new Array(16).fill(0);
+  for (let c = 0; c < 4; c++) {
+    for (let r = 0; r < 4; r++) {
+      let s = 0;
+      for (let k2 = 0; k2 < 4; k2++) s += a[k2 * 4 + r] * b[c * 4 + k2];
+      out[c * 4 + r] = s;
+    }
+  }
+  return out;
+}
+var translation = (x, y, z) => [1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, x, y, z, 1];
+function rotation(u, angle) {
+  const [x, y, z] = u;
+  const c = Math.cos(angle);
+  const s = Math.sin(angle);
+  const t3 = 1 - c;
+  return [
+    t3 * x * x + c,
+    t3 * x * y + s * z,
+    t3 * x * z - s * y,
+    0,
+    t3 * x * y - s * z,
+    t3 * y * y + c,
+    t3 * y * z + s * x,
+    0,
+    t3 * x * z + s * y,
+    t3 * y * z - s * x,
+    t3 * z * z + c,
+    0,
+    0,
+    0,
+    0,
+    1
+  ];
+}
+function applyMat4(m, p) {
+  return [
+    m[0] * p[0] + m[4] * p[1] + m[8] * p[2] + m[12],
+    m[1] * p[0] + m[5] * p[1] + m[9] * p[2] + m[13],
+    m[2] * p[0] + m[6] * p[1] + m[10] * p[2] + m[14]
+  ];
+}
+var lift = (p) => [p[0], -p[1], 0];
+function centroid(f) {
+  const pts = flattenContour(f.outline, 0.5);
+  let x = 0;
+  let y = 0;
+  for (const p of pts) {
+    x += p[0];
+    y += p[1];
+  }
+  return [x / pts.length, y / pts.length];
+}
+function hingesOf(piece2, map) {
+  const root = map.roots[piece2.id] ?? piece2.faces[0]?.id;
+  const byKey = /* @__PURE__ */ new Map();
+  for (const f of piece2.faces) {
+    for (const e of f.outline) {
+      if (!FOLD_ROLES2.has(e.role) || e.kind === "bezier") continue;
+      const key = edgeKey(e);
+      byKey.set(key, [...byKey.get(key) ?? [], { face: f, from: e.from, to: e.to }]);
+    }
+  }
+  const neighbours = /* @__PURE__ */ new Map();
+  for (const owners of byKey.values()) {
+    if (owners.length !== 2) continue;
+    const [a, b] = owners;
+    neighbours.set(a.face.id, [...neighbours.get(a.face.id) ?? [], { face: b.face, from: a.from, to: a.to }]);
+    neighbours.set(b.face.id, [...neighbours.get(b.face.id) ?? [], { face: a.face, from: b.from, to: b.to }]);
+  }
+  const hinges2 = [];
+  const seen = /* @__PURE__ */ new Set([root]);
+  const queue = [root];
+  while (queue.length) {
+    const parent = queue.shift();
+    for (const n2 of neighbours.get(parent) ?? []) {
+      if (seen.has(n2.face.id)) continue;
+      seen.add(n2.face.id);
+      queue.push(n2.face.id);
+      hinges2.push({
+        parent,
+        child: n2.face.id,
+        from: n2.from,
+        to: n2.to,
+        angle: map.angles?.[n2.face.id] ?? 90,
+        stage: map.stages?.[n2.face.id] ?? STAGE[n2.face.kind]
+      });
+    }
+  }
+  return { root, hinges: hinges2 };
+}
+function foldPiece(piece2, map, progress) {
+  const { root, hinges: hinges2 } = hingesOf(piece2, map);
+  const faces = new Map(piece2.faces.map((f) => [f.id, f]));
+  const stages = Math.max(1, ...hinges2.map((h) => h.stage + 1));
+  const out = /* @__PURE__ */ new Map([[root, identity()]]);
+  for (const h of hinges2) {
+    const parentM = out.get(h.parent) ?? identity();
+    const local = Math.min(1, Math.max(0, progress * stages - h.stage));
+    const angle = h.angle * Math.PI * local / 180;
+    const a = lift(h.from);
+    const b = lift(h.to);
+    const len2 = Math.hypot(b[0] - a[0], b[1] - a[1]) || 1;
+    let u = [(b[0] - a[0]) / len2, (b[1] - a[1]) / len2, 0];
+    const c = lift(centroid(faces.get(h.child)));
+    const probe = applyMat4(
+      multiply(translation(a[0], a[1], 0), multiply(rotation(u, 0.1), translation(-a[0], -a[1], 0))),
+      c
+    );
+    if (probe[2] > 0) u = [-u[0], -u[1], 0];
+    const hinge = multiply(translation(a[0], a[1], 0), multiply(rotation(u, angle), translation(-a[0], -a[1], 0)));
+    out.set(h.child, multiply(parentM, hinge));
+  }
+  for (const f of piece2.faces) if (!out.has(f.id)) out.set(f.id, identity());
+  return out;
+}
+function boundsOfTransformed(faces, transforms) {
+  const min = [Infinity, Infinity, Infinity];
+  const max = [-Infinity, -Infinity, -Infinity];
+  for (const f of faces) {
+    const m = transforms.get(f.id) ?? identity();
+    for (const p of flattenContour(f.outline, 0.5)) {
+      const q = applyMat4(m, lift(p));
+      for (let i = 0; i < 3; i++) {
+        if (q[i] < min[i]) min[i] = q[i];
+        if (q[i] > max[i]) max[i] = q[i];
+      }
+    }
+  }
+  return { min, max };
+}
+function foldDieline(d, map, progress = 1) {
+  const out = /* @__PURE__ */ new Map();
+  const folded = /* @__PURE__ */ new Map();
+  for (const p of d.pieces) folded.set(p.id, foldPiece(p, map, progress));
+  const upright = map.upright === "base" ? rotation([1, 0, 0], Math.PI / 2) : identity();
+  const placedBounds = /* @__PURE__ */ new Map();
+  for (const p of d.pieces) {
+    let transforms = folded.get(p.id);
+    transforms = new Map([...transforms].map(([id, m]) => [id, multiply(upright, m)]));
+    const rule = map.placement?.[p.id];
+    if (rule) {
+      if (rule.rotate) {
+        const b = boundsOfTransformed(p.faces, transforms);
+        const c = [(b.min[0] + b.max[0]) / 2, (b.min[1] + b.max[1]) / 2, (b.min[2] + b.max[2]) / 2];
+        const [rx, ry, rz] = rule.rotate.map((deg2) => deg2 * Math.PI / 180);
+        const r = multiply(rotation([0, 0, 1], rz), multiply(rotation([0, 1, 0], ry), rotation([1, 0, 0], rx)));
+        const turn = multiply(translation(c[0], c[1], c[2]), multiply(r, translation(-c[0], -c[1], -c[2])));
+        transforms = new Map([...transforms].map(([id, m]) => [id, multiply(turn, m)]));
+      }
+      if (rule.flip) {
+        const b = boundsOfTransformed(p.faces, transforms);
+        const cy = (b.min[1] + b.max[1]) / 2;
+        const cz = (b.min[2] + b.max[2]) / 2;
+        const flip = multiply(translation(0, cy, cz), multiply(rotation([1, 0, 0], Math.PI), translation(0, -cy, -cz)));
+        transforms = new Map([...transforms].map(([id, m]) => [id, multiply(flip, m)]));
+      }
+      const target = rule.over ?? rule.inside;
+      const ref = target ? placedBounds.get(target) : void 0;
+      if (ref) {
+        const b = boundsOfTransformed(p.faces, transforms);
+        const dx = (ref.min[0] + ref.max[0]) / 2 - (b.min[0] + b.max[0]) / 2;
+        const dz = (ref.min[2] + ref.max[2]) / 2 - (b.min[2] + b.max[2]) / 2;
+        const dy = rule.over ? ref.max[1] - b.min[1] - (rule.sink ?? 0) + (rule.lift ?? 0) * (1 - progress) : (ref.min[1] + ref.max[1]) / 2 - (b.min[1] + b.max[1]) / 2;
+        const slide = rule.inside ? (rule.slide ?? 0) * (1 - progress) : 0;
+        const move = translation(dx + slide, dy, dz);
+        transforms = new Map([...transforms].map(([id, m]) => [id, multiply(move, m)]));
+      }
+    }
+    placedBounds.set(p.id, boundsOfTransformed(p.faces, transforms));
+    for (const [id, m] of transforms) out.set(id, m);
+  }
+  return out;
+}
+function foldedBounds(d, map, progress = 1, ignore = ["hanger", "handle"]) {
+  const transforms = foldDieline(d, map, progress);
+  const faces = d.pieces.flatMap((p) => p.faces).filter((f) => !ignore.includes(f.kind));
+  return boundsOfTransformed(faces, transforms);
+}
+
+// packages/dieline/src/labels.ts
+var FACE_LABELS = {
+  front: { th: "\u0E14\u0E49\u0E32\u0E19\u0E2B\u0E19\u0E49\u0E32", en: "Front" },
+  back: { th: "\u0E14\u0E49\u0E32\u0E19\u0E2B\u0E25\u0E31\u0E07", en: "Back" },
+  side: { th: "\u0E14\u0E49\u0E32\u0E19\u0E02\u0E49\u0E32\u0E07", en: "Side" },
+  left: { th: "\u0E14\u0E49\u0E32\u0E19\u0E0B\u0E49\u0E32\u0E22", en: "Left side" },
+  right: { th: "\u0E14\u0E49\u0E32\u0E19\u0E02\u0E27\u0E32", en: "Right side" },
+  top: { th: "\u0E14\u0E49\u0E32\u0E19\u0E1A\u0E19", en: "Top" },
+  bottom: { th: "\u0E14\u0E49\u0E32\u0E19\u0E25\u0E48\u0E32\u0E07", en: "Bottom" },
+  glue_flap: { th: "\u0E1B\u0E35\u0E01\u0E01\u0E32\u0E27", en: "Glue flap" },
+  top_flap: { th: "\u0E1D\u0E32\u0E1A\u0E19", en: "Top flap" },
+  bottom_flap: { th: "\u0E1D\u0E32\u0E25\u0E48\u0E32\u0E07", en: "Bottom flap" },
+  outer_flap: { th: "\u0E1D\u0E32\u0E1B\u0E34\u0E14\u0E19\u0E2D\u0E01", en: "Outer flap" },
+  inner_flap: { th: "\u0E1D\u0E32\u0E1B\u0E34\u0E14\u0E43\u0E19", en: "Inner flap" },
+  dust_flap: { th: "\u0E1B\u0E35\u0E01\u0E01\u0E31\u0E19\u0E1D\u0E38\u0E48\u0E19", en: "Dust flap" },
+  lid: { th: "\u0E1D\u0E32", en: "Lid" },
+  tuck: { th: "\u0E25\u0E34\u0E49\u0E19\u0E40\u0E2A\u0E35\u0E22\u0E1A", en: "Tuck flap" },
+  lock_flap: { th: "\u0E1B\u0E35\u0E01\u0E25\u0E47\u0E2D\u0E01\u0E01\u0E49\u0E19", en: "Lock flap" },
+  crash_flap: { th: "\u0E1B\u0E35\u0E01\u0E01\u0E49\u0E19\u0E25\u0E47\u0E2D\u0E01\u0E2D\u0E31\u0E15\u0E42\u0E19\u0E21\u0E31\u0E15\u0E34", en: "Crash-lock flap" },
+  base: { th: "\u0E10\u0E32\u0E19", en: "Base" },
+  wall: { th: "\u0E1C\u0E19\u0E31\u0E07", en: "Wall" },
+  wall_front: { th: "\u0E1C\u0E19\u0E31\u0E07\u0E2B\u0E19\u0E49\u0E32", en: "Front wall" },
+  wall_back: { th: "\u0E1C\u0E19\u0E31\u0E07\u0E2B\u0E25\u0E31\u0E07", en: "Back wall" },
+  wall_left: { th: "\u0E1C\u0E19\u0E31\u0E07\u0E0B\u0E49\u0E32\u0E22", en: "Left wall" },
+  wall_right: { th: "\u0E1C\u0E19\u0E31\u0E07\u0E02\u0E27\u0E32", en: "Right wall" },
+  inner_wall: { th: "\u0E1C\u0E19\u0E31\u0E07\u0E0A\u0E31\u0E49\u0E19\u0E43\u0E19", en: "Inner wall" },
+  corner_flap: { th: "\u0E1B\u0E35\u0E01\u0E21\u0E38\u0E21", en: "Corner flap" },
+  lock_tab: { th: "\u0E25\u0E34\u0E49\u0E19\u0E25\u0E47\u0E2D\u0E01", en: "Locking tab" },
+  hanger: { th: "\u0E2B\u0E39\u0E41\u0E02\u0E27\u0E19", en: "Hang tab" },
+  handle: { th: "\u0E2B\u0E39\u0E2B\u0E34\u0E49\u0E27", en: "Handle" },
+  roof: { th: "\u0E2B\u0E25\u0E31\u0E07\u0E04\u0E32", en: "Roof panel" },
+  end_flap: { th: "\u0E1B\u0E35\u0E01\u0E1B\u0E25\u0E32\u0E22\u0E42\u0E04\u0E49\u0E07", en: "Curved end flap" },
+  label: { th: "\u0E1E\u0E37\u0E49\u0E19\u0E17\u0E35\u0E48\u0E09\u0E25\u0E32\u0E01", en: "Label" },
+  tag: { th: "\u0E1B\u0E49\u0E32\u0E22", en: "Tag" },
+  band: { th: "\u0E2A\u0E32\u0E22\u0E04\u0E32\u0E14", en: "Band" },
+  panel: { th: "\u0E41\u0E1C\u0E07", en: "Panel" }
+};
+var PIECE_LABELS = {
+  blank: { th: "\u0E41\u0E1C\u0E48\u0E19\u0E04\u0E25\u0E35\u0E48", en: "Blank" },
+  lid: { th: "\u0E1D\u0E32", en: "Lid" },
+  base: { th: "\u0E15\u0E31\u0E27\u0E01\u0E25\u0E48\u0E2D\u0E07", en: "Base" },
+  sleeve: { th: "\u0E1B\u0E25\u0E2D\u0E01", en: "Sleeve" },
+  drawer: { th: "\u0E25\u0E34\u0E49\u0E19\u0E0A\u0E31\u0E01", en: "Drawer" }
+};
+function faceLabel(key) {
+  return FACE_LABELS[key] ?? { th: key, en: key };
+}
+function pieceLabel(key) {
+  return PIECE_LABELS[key] ?? { th: key, en: key };
+}
+
+// packages/dieline/src/params.ts
+function num(v, key, fallback) {
+  const raw = v[key];
+  const value = typeof raw === "number" ? raw : typeof raw === "string" && raw.trim() !== "" ? Number(raw) : NaN;
+  return Number.isFinite(value) ? value : fallback;
+}
+function str(v, key, fallback) {
+  const raw = v[key];
+  return typeof raw === "string" && raw !== "" ? raw : fallback;
+}
+function bool(v, key, fallback) {
+  const raw = v[key];
+  if (typeof raw === "boolean") return raw;
+  if (raw === "true") return true;
+  if (raw === "false") return false;
+  return fallback;
+}
+function isActive(p, v) {
+  if (!p.when) return true;
+  return p.when.in.includes(v[p.when.key]);
+}
+var fmt = (n2) => String(Math.round(n2 * 10) / 10);
+var issue = (code, message, param, severity = "error") => ({
+  code,
+  severity,
+  param,
+  message
+});
+function schemaIssues(params, v) {
+  const out = [];
+  for (const p of params) {
+    if (!isActive(p, v)) continue;
+    const raw = v[p.key];
+    if (p.kind === "enum") {
+      if (raw === void 0) continue;
+      if (!p.options?.some((o) => o.value === raw)) {
+        out.push(
+          issue(
+            "param.invalid_option",
+            {
+              th: `\u0E04\u0E48\u0E32 "${String(raw)}" \u0E43\u0E0A\u0E49\u0E01\u0E31\u0E1A${p.label.th}\u0E44\u0E21\u0E48\u0E44\u0E14\u0E49`,
+              en: `"${String(raw)}" is not a valid ${p.label.en.toLowerCase()}`
+            },
+            p.key
+          )
+        );
+      }
+      continue;
+    }
+    if (p.kind === "boolean" || p.kind === "text") continue;
+    if (raw === void 0) continue;
+    const value = typeof raw === "number" ? raw : Number(raw);
+    if (!Number.isFinite(value)) {
+      out.push(
+        issue("param.not_a_number", { th: `${p.label.th}\u0E15\u0E49\u0E2D\u0E07\u0E40\u0E1B\u0E47\u0E19\u0E15\u0E31\u0E27\u0E40\u0E25\u0E02`, en: `${p.label.en} must be a number` }, p.key)
+      );
+      continue;
+    }
+    const unit = p.kind === "angle" ? { th: "\xB0", en: "\xB0" } : p.kind === "length" ? { th: " \u0E21\u0E21.", en: " mm" } : { th: "", en: "" };
+    if (p.min !== void 0 && value < p.min) {
+      out.push(
+        issue(
+          "size.out_of_range",
+          {
+            th: `${p.label.th}\u0E15\u0E49\u0E2D\u0E07\u0E44\u0E21\u0E48\u0E19\u0E49\u0E2D\u0E22\u0E01\u0E27\u0E48\u0E32 ${fmt(p.min)}${unit.th}`,
+            en: `${p.label.en} must be at least ${fmt(p.min)}${unit.en}`
+          },
+          p.key
+        )
+      );
+    }
+    if (p.max !== void 0 && value > p.max) {
+      out.push(
+        issue(
+          "size.out_of_range",
+          {
+            th: `${p.label.th}\u0E15\u0E49\u0E2D\u0E07\u0E44\u0E21\u0E48\u0E40\u0E01\u0E34\u0E19 ${fmt(p.max)}${unit.th}`,
+            en: `${p.label.en} must be at most ${fmt(p.max)}${unit.en}`
+          },
+          p.key
+        )
+      );
+    }
+  }
+  return out;
+}
+function withDefaults(defaults, v) {
+  const out = { ...defaults };
+  for (const [k2, value] of Object.entries(v)) if (value !== void 0 && value !== null && value !== "") out[k2] = value;
+  return out;
+}
+
+// packages/dieline/src/constants.ts
+var constants_exports = {};
+__export(constants_exports, {
+  CORRUGATED_GLUE_FLAP_MM: () => CORRUGATED_GLUE_FLAP_MM,
+  DEFAULT_BLEED_MM: () => DEFAULT_BLEED_MM,
+  DEFAULT_SAFE_MM: () => DEFAULT_SAFE_MM,
+  DEPTH_CALIPER_FACTOR: () => DEPTH_CALIPER_FACTOR,
+  DRAWER_CLEARANCE_MM: () => DRAWER_CLEARANCE_MM,
+  DUST_FLAP_CLEARANCE_MM: () => DUST_FLAP_CLEARANCE_MM,
+  DUST_FLAP_LENGTH_SHARE: () => DUST_FLAP_LENGTH_SHARE,
+  DUST_FLAP_WIDTH_SHARE: () => DUST_FLAP_WIDTH_SHARE,
+  EURO_SLOT_HEIGHT_MM: () => EURO_SLOT_HEIGHT_MM,
+  EURO_SLOT_WIDTH_MM: () => EURO_SLOT_WIDTH_MM,
+  FLAP_CALIPER_FACTOR: () => FLAP_CALIPER_FACTOR,
+  GLUE_AREA_INSET_MM: () => GLUE_AREA_INSET_MM,
+  GLUE_FLAP_TAPER_DEG: () => GLUE_FLAP_TAPER_DEG,
+  GLUE_PANEL_REDUCTION_FACTOR: () => GLUE_PANEL_REDUCTION_FACTOR,
+  HANG_HOLE_DIAMETER_MM: () => HANG_HOLE_DIAMETER_MM,
+  LID_CLEARANCE_MM: () => LID_CLEARANCE_MM,
+  MIN_SLOT_MM: () => MIN_SLOT_MM,
+  PANEL_CALIPER_FACTOR: () => PANEL_CALIPER_FACTOR,
+  SLOT_CALIPER_FACTOR: () => SLOT_CALIPER_FACTOR,
+  THUMB_NOTCH_RADIUS_MM: () => THUMB_NOTCH_RADIUS_MM,
+  TRAY_CORNER_FLAP_MAX_MM: () => TRAY_CORNER_FLAP_MAX_MM,
+  TRAY_CORNER_FLAP_SHARE: () => TRAY_CORNER_FLAP_SHARE,
+  TRAY_DEPTH_CALIPER_FACTOR: () => TRAY_DEPTH_CALIPER_FACTOR,
+  TUCK_CORNER_RADIUS_MM: () => TUCK_CORNER_RADIUS_MM,
+  TUCK_SHOULDER_MM: () => TUCK_SHOULDER_MM,
+  WINDOW_MIN_MARGIN_MM: () => WINDOW_MIN_MARGIN_MM,
+  allowancesOf: () => allowancesOf,
+  glueWidthFor: () => glueWidthFor,
+  snapLockTongueFor: () => snapLockTongueFor,
+  tuckDepthFor: () => tuckDepthFor
+});
+var PANEL_CALIPER_FACTOR = 1;
+var DEPTH_CALIPER_FACTOR = 2;
+var TRAY_DEPTH_CALIPER_FACTOR = 1;
+var FLAP_CALIPER_FACTOR = 0.5;
+var GLUE_PANEL_REDUCTION_FACTOR = 1;
+function allowancesOf(m) {
+  const t3 = Math.max(0, m.caliperMm);
+  return {
+    panel: m.allowances?.panel ?? PANEL_CALIPER_FACTOR * t3,
+    depth: m.allowances?.depth ?? DEPTH_CALIPER_FACTOR * t3,
+    trayDepth: TRAY_DEPTH_CALIPER_FACTOR * t3,
+    flap: m.allowances?.flap ?? FLAP_CALIPER_FACTOR * t3,
+    gluePanel: GLUE_PANEL_REDUCTION_FACTOR * t3
+  };
+}
+function tuckDepthFor(lengthMm) {
+  if (lengthMm <= 150) return 15;
+  if (lengthMm <= 300) return 20;
+  return 25;
+}
+function glueWidthFor(widthMm, m) {
+  if (m.kind === "corrugated") return CORRUGATED_GLUE_FLAP_MM;
+  return widthMm <= 150 ? 15 : 25;
+}
+var GLUE_FLAP_TAPER_DEG = 15;
+var GLUE_AREA_INSET_MM = 2;
+var DUST_FLAP_LENGTH_SHARE = 0.45;
+var DUST_FLAP_WIDTH_SHARE = 0.9;
+var DUST_FLAP_CLEARANCE_MM = 1;
+var TUCK_CORNER_RADIUS_MM = 6;
+var TUCK_SHOULDER_MM = 1.5;
+var THUMB_NOTCH_RADIUS_MM = 10;
+function snapLockTongueFor(widthMm) {
+  if (widthMm <= 30) return 3;
+  if (widthMm <= 80) return 5;
+  return 10;
+}
+var WINDOW_MIN_MARGIN_MM = 6;
+var EURO_SLOT_WIDTH_MM = 32;
+var EURO_SLOT_HEIGHT_MM = 10;
+var HANG_HOLE_DIAMETER_MM = 6;
+var CORRUGATED_GLUE_FLAP_MM = 35;
+var SLOT_CALIPER_FACTOR = 2;
+var MIN_SLOT_MM = 3;
+var TRAY_CORNER_FLAP_SHARE = 0.85;
+var TRAY_CORNER_FLAP_MAX_MM = 25;
+var LID_CLEARANCE_MM = 1;
+var DRAWER_CLEARANCE_MM = 1;
+var DEFAULT_BLEED_MM = 3;
+var DEFAULT_SAFE_MM = 3;
+
+// packages/dieline/src/export/layers.ts
+var LAYER_OF = {
+  cut: "CUT",
+  crease: "CREASE",
+  perforation: "PERF",
+  half_cut: "HALFCUT",
+  glue_area: "GLUE",
+  bleed: "BLEED"
+};
+var LAYER_ORDER = ["CUT", "CREASE", "PERF", "HALFCUT", "GLUE", "BLEED"];
+var LAYER_STYLE = {
+  CUT: { hex: "#ff0000", dxfColor: 1, spot: "CutContour", cmyk: [0, 1, 0, 0] },
+  CREASE: { hex: "#0066ff", dash: "3 2", dxfColor: 5, spot: "Crease", cmyk: [1, 0.5, 0, 0] },
+  PERF: { hex: "#00a651", dash: "1 1", dxfColor: 3, spot: "Perforation", cmyk: [0.8, 0, 1, 0] },
+  HALFCUT: { hex: "#ff00ff", dash: "4 1 1 1", dxfColor: 6, spot: "HalfCut", cmyk: [0, 1, 0, 0] },
+  GLUE: { hex: "#ffb000", dash: "2 1", dxfColor: 2, spot: "Glue", cmyk: [0, 0.3, 1, 0] },
+  BLEED: { hex: "#00b7eb", dash: "1 2", dxfColor: 4, spot: "Bleed", cmyk: [0.7, 0, 0, 0] }
+};
+
+// packages/dieline/src/export/svg.ts
+var fmt2 = (n2) => String(round3(n2));
+function dielineToSvg(d, opts = {}) {
+  const margin = opts.margin ?? 5;
+  const stroke = opts.strokeMm ?? 0.25;
+  const shift = (p) => [p[0] + margin, p[1] + margin];
+  const paths = { CUT: [], CREASE: [], PERF: [], HALFCUT: [], GLUE: [], BLEED: [] };
+  for (const l of dielineLines(d)) {
+    const e = l.edge;
+    const moved = e.kind === "line" ? { ...e, from: shift(e.from), to: shift(e.to) } : e.kind === "arc" ? { ...e, from: shift(e.from), to: shift(e.to), center: shift(e.center) } : { ...e, from: shift(e.from), to: shift(e.to), c1: shift(e.c1), c2: shift(e.c2) };
+    paths[LAYER_OF[l.role]].push(`<path d="${svgPathData([moved], false, fmt2)}"/>`);
+  }
+  if (opts.bleedMm) {
+    for (const p of d.pieces) {
+      for (const poly of bleedOutline(p, opts.bleedMm)) {
+        paths.BLEED.push(`<path d="M${poly.map((q) => `${fmt2(q[0] + margin)} ${fmt2(q[1] + margin)}`).join(" L")} Z"/>`);
+      }
+    }
+  }
+  const w = fmt2(d.width + margin * 2);
+  const h = fmt2(d.height + margin * 2);
+  const layers2 = LAYER_ORDER.filter((name) => name !== "BLEED" || opts.bleedMm).map((name) => {
+    const s = LAYER_STYLE[name];
+    const dash = s.dash ? ` stroke-dasharray="${s.dash}"` : "";
+    return `  <g id="${name}" stroke="${s.hex}" stroke-width="${fmt2(stroke)}"${dash} fill="none">${paths[name].join("")}</g>`;
+  });
+  if (opts.annotations) {
+    const notes = d.pieces.flatMap(
+      (p) => p.annotations.map((a) => {
+        const [x1, y1] = shift(a.from);
+        const [x2, y2] = shift(a.to);
+        const ang = Math.atan2(y2 - y1, x2 - x1);
+        const head = (da) => `${fmt2(x2 - 4 * Math.cos(ang + da))} ${fmt2(y2 - 4 * Math.sin(ang + da))}`;
+        return `<path d="M${fmt2(x1)} ${fmt2(y1)} L${fmt2(x2)} ${fmt2(y2)} M${head(0.4)} L${fmt2(x2)} ${fmt2(y2)} L${head(-0.4)}"/>`;
+      })
+    );
+    layers2.push(`  <g id="NOTES" stroke="#808080" stroke-width="${fmt2(stroke)}" fill="none">${notes.join("")}</g>`);
+  }
+  return `<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="${w}mm" height="${h}mm" viewBox="0 0 ${w} ${h}" data-style="${d.styleId}">
+${layers2.join("\n")}
+</svg>`;
+}
+
+// packages/dieline/src/export/dxf.ts
+var deg = (rad) => round3((rad * 180 / Math.PI % 360 + 360) % 360);
+function dielineToDxf(d) {
+  const out = [];
+  const pair = (code, value) => out.push(String(code), String(value));
+  const flip = (p) => [round3(p[0]), round3(d.height - p[1])];
+  pair(0, "SECTION");
+  pair(2, "HEADER");
+  pair(9, "$ACADVER");
+  pair(1, "AC1009");
+  pair(9, "$INSUNITS");
+  pair(70, 4);
+  pair(9, "$MEASUREMENT");
+  pair(70, 1);
+  pair(9, "$EXTMIN");
+  pair(10, 0);
+  pair(20, 0);
+  pair(9, "$EXTMAX");
+  pair(10, round3(d.width));
+  pair(20, round3(d.height));
+  pair(0, "ENDSEC");
+  pair(0, "SECTION");
+  pair(2, "TABLES");
+  pair(0, "TABLE");
+  pair(2, "LTYPE");
+  pair(70, 1);
+  pair(0, "LTYPE");
+  pair(2, "CONTINUOUS");
+  pair(70, 0);
+  pair(3, "Solid line");
+  pair(72, 65);
+  pair(73, 0);
+  pair(40, 0);
+  pair(0, "ENDTAB");
+  pair(0, "TABLE");
+  pair(2, "LAYER");
+  pair(70, LAYER_ORDER.length);
+  for (const name of LAYER_ORDER) {
+    pair(0, "LAYER");
+    pair(2, name);
+    pair(70, 0);
+    pair(62, LAYER_STYLE[name].dxfColor);
+    pair(6, "CONTINUOUS");
+  }
+  pair(0, "ENDTAB");
+  pair(0, "ENDSEC");
+  pair(0, "SECTION");
+  pair(2, "ENTITIES");
+  for (const l of dielineLines(d)) {
+    const layer = LAYER_OF[l.role];
+    const e = l.edge;
+    if (e.kind === "line") {
+      const [x1, y1] = flip(e.from);
+      const [x2, y2] = flip(e.to);
+      pair(0, "LINE");
+      pair(8, layer);
+      pair(10, x1);
+      pair(20, y1);
+      pair(11, x2);
+      pair(21, y2);
+    } else if (e.kind === "arc") {
+      const { start, end } = arcAngles(e);
+      const [cx, cy] = flip(e.center);
+      pair(0, "ARC");
+      pair(8, layer);
+      pair(10, cx);
+      pair(20, cy);
+      pair(40, round3(e.radius));
+      pair(50, e.clockwise ? deg(-end) : deg(-start));
+      pair(51, e.clockwise ? deg(-start) : deg(-end));
+    } else {
+      pair(0, "POLYLINE");
+      pair(8, layer);
+      pair(66, 1);
+      pair(10, 0);
+      pair(20, 0);
+      pair(70, 0);
+      for (const p of flattenOpen(e, 0.05)) {
+        const [x, y] = flip(p);
+        pair(0, "VERTEX");
+        pair(8, layer);
+        pair(10, x);
+        pair(20, y);
+      }
+      pair(0, "SEQEND");
+      pair(8, layer);
+    }
+  }
+  pair(0, "ENDSEC");
+  pair(0, "EOF");
+  return out.join("\n") + "\n";
+}
+
+// packages/dieline/src/export/pdf.ts
+var PT_PER_MM = 72 / 25.4;
+var n = (v) => String(round3(v));
+function pdfText(s) {
+  let hex = "FEFF";
+  for (const ch of s) {
+    const code = ch.codePointAt(0);
+    if (code > 65535) {
+      const v = code - 65536;
+      hex += (55296 + (v >> 10)).toString(16).padStart(4, "0") + (56320 + (v & 1023)).toString(16).padStart(4, "0");
+    } else hex += code.toString(16).padStart(4, "0");
+  }
+  return `<${hex.toUpperCase()}>`;
+}
+function pathOps(e) {
+  const start = `${n(e.from[0])} ${n(e.from[1])} m`;
+  if (e.kind === "line") return `${start} ${n(e.to[0])} ${n(e.to[1])} l S`;
+  const curves = e.kind === "arc" ? arcToBeziers(e) : [e];
+  return `${start} ${curves.map((c) => `${n(c.c1[0])} ${n(c.c1[1])} ${n(c.c2[0])} ${n(c.c2[1])} ${n(c.to[0])} ${n(c.to[1])} c`).join(" ")} S`;
+}
+function dielineToPdf(d, opts = {}) {
+  const margin = opts.margin ?? 10;
+  const bleed = opts.bleedMm ?? 0;
+  const stroke = opts.strokeMm ?? 0.25;
+  const roles = new Set(opts.roles ?? ["cut", "crease", "perforation", "half_cut", "glue_area"]);
+  const pageW = (d.width + margin * 2) * PT_PER_MM;
+  const pageH = (d.height + margin * 2) * PT_PER_MM;
+  const byLayer = /* @__PURE__ */ new Map();
+  for (const l of dielineLines(d)) {
+    if (!roles.has(l.role)) continue;
+    const layer = LAYER_OF[l.role];
+    byLayer.set(layer, [...byLayer.get(layer) ?? [], pathOps(l.edge)]);
+  }
+  if (bleed > 0) {
+    const ops2 = d.pieces.flatMap(
+      (p) => bleedOutline(p, bleed).map(
+        (poly) => `${poly.map((q, i) => `${n(q[0])} ${n(q[1])} ${i ? "l" : "m"}`).join(" ")} h S`
+      )
+    );
+    byLayer.set("BLEED", ops2);
+  }
+  const layers2 = LAYER_ORDER.filter((name) => byLayer.has(name));
+  const objects = [];
+  const add = (body) => {
+    objects.push(body);
+    return objects.length;
+  };
+  const catalog = add("");
+  const pages = add("");
+  const page = add("");
+  const content = add("");
+  const gs = add("<< /Type /ExtGState /OP true /op true /OPM 1 >>");
+  const tint = (c) => `<< /FunctionType 2 /Domain [0 1] /C0 [0 0 0 0] /C1 [${c.map(n).join(" ")}] /N 1 >>`;
+  const separations = /* @__PURE__ */ new Map();
+  const ocgs = /* @__PURE__ */ new Map();
+  for (const name of layers2) {
+    const s = LAYER_STYLE[name];
+    separations.set(name, add(`[/Separation /${s.spot} /DeviceCMYK ${tint(s.cmyk)}]`));
+  }
+  const images = opts.images ?? [];
+  if (images.length) ocgs.set("Artwork", add(`<< /Type /OCG /Name ${pdfText("Artwork")} >>`));
+  for (const name of layers2) ocgs.set(name, add(`<< /Type /OCG /Name ${pdfText(name)} >>`));
+  const imageObjs = images.map(
+    (img) => add([
+      new TextEncoder().encode(
+        `<< /Type /XObject /Subtype /Image /Width ${img.widthPx} /Height ${img.heightPx} /ColorSpace /DeviceRGB /BitsPerComponent 8 /Filter /DCTDecode /Length ${img.jpeg.length} >>
+stream
+`
+      ),
+      img.jpeg,
+      new TextEncoder().encode("\nendstream")
+    ])
+  );
+  const info = add(`<< /Producer (Packio @packio/dieline) /Title ${pdfText(opts.title ?? `Dieline ${d.styleId}`)} >>`);
+  const k2 = PT_PER_MM;
+  const ops = [`${n(k2)} 0 0 ${n(-k2)} ${n(margin * k2)} ${n(pageH - margin * k2)} cm`];
+  if (images.length) {
+    ops.push("/OC /Artwork BDC");
+    images.forEach(
+      (img, i) => ops.push(`q ${n(img.width)} 0 0 ${n(-img.height)} ${n(img.x)} ${n(img.y + img.height)} cm /Im${i} Do Q`)
+    );
+    ops.push("EMC");
+  }
+  for (const name of layers2) {
+    const s = LAYER_STYLE[name];
+    const dash = s.dash ? `[${s.dash}] 0 d` : "[] 0 d";
+    ops.push(`/OC /${name} BDC q /GS0 gs /CS_${name} CS 1 SCN ${n(stroke)} w ${dash} 1 J 1 j`);
+    ops.push(...byLayer.get(name));
+    ops.push("Q EMC");
+  }
+  const stream = ops.join("\n");
+  const colorSpaces = layers2.map((name) => `/CS_${name} ${separations.get(name)} 0 R`).join(" ");
+  const properties = [...ocgs].map(([name, id]) => `/${name} ${id} 0 R`).join(" ");
+  const xobjects = imageObjs.map((id, i) => `/Im${i} ${id} 0 R`).join(" ");
+  const trim = [margin * k2, margin * k2, pageW - margin * k2, pageH - margin * k2];
+  const bleedBox = [
+    (margin - bleed) * k2,
+    (margin - bleed) * k2,
+    pageW - (margin - bleed) * k2,
+    pageH - (margin - bleed) * k2
+  ];
+  objects[catalog - 1] = `<< /Type /Catalog /Pages ${pages} 0 R /OCProperties << /OCGs [${[...ocgs.values()].map((id) => `${id} 0 R`).join(" ")}] /D << /Order [${[...ocgs.values()].map((id) => `${id} 0 R`).join(" ")}] /ON [${[...ocgs.values()].map((id) => `${id} 0 R`).join(" ")}] >> >> >>`;
+  objects[pages - 1] = `<< /Type /Pages /Kids [${page} 0 R] /Count 1 >>`;
+  objects[page - 1] = `<< /Type /Page /Parent ${pages} 0 R /MediaBox [0 0 ${n(pageW)} ${n(pageH)}] /TrimBox [${trim.map(n).join(" ")}] /BleedBox [${bleedBox.map(n).join(" ")}] /Resources << /ExtGState << /GS0 ${gs} 0 R >> /ColorSpace << ${colorSpaces} >> /Properties << ${properties} >>${xobjects ? ` /XObject << ${xobjects} >>` : ""} >> /Contents ${content} 0 R >>`;
+  objects[content - 1] = `<< /Length ${new TextEncoder().encode(stream).length} >>
+stream
+${stream}
+endstream`;
+  const enc = new TextEncoder();
+  const chunks = [];
+  let offset = 0;
+  const push = (c) => {
+    chunks.push(c);
+    offset += c.length;
+  };
+  push(enc.encode("%PDF-1.6\n%\xE2\xE3\xCF\xD3\n"));
+  const offsets = [];
+  objects.forEach((body, i) => {
+    offsets.push(offset);
+    push(enc.encode(`${i + 1} 0 obj
+`));
+    if (typeof body === "string") push(enc.encode(body));
+    else body.forEach(push);
+    push(enc.encode("\nendobj\n"));
+  });
+  const xref = offset;
+  push(
+    enc.encode(
+      `xref
+0 ${objects.length + 1}
+0000000000 65535 f 
+${offsets.map((o) => `${String(o).padStart(10, "0")} 00000 n 
+`).join("")}trailer
+<< /Size ${objects.length + 1} /Root ${catalog} 0 R /Info ${info} 0 R >>
+startxref
+${xref}
+%%EOF
+`
+    )
+  );
+  const out = new Uint8Array(offset);
+  let at = 0;
+  for (const c of chunks) {
+    out.set(c, at);
+    at += c.length;
+  }
+  return out;
+}
+
+// packages/dieline/src/materials.ts
+var REFERENCE_MATERIALS = {
+  "board-350": { caliperMm: 0.45, kind: "paperboard" },
+  "board-450": { caliperMm: 0.6, kind: "paperboard" },
+  "flute-e": { caliperMm: 1.6, kind: "corrugated", flute: "E" },
+  "flute-b": { caliperMm: 3, kind: "corrugated", flute: "B" },
+  "flute-bc": { caliperMm: 6.5, kind: "corrugated", flute: "BC" },
+  "rigid-2": { caliperMm: 2, kind: "rigid" },
+  "label-film": { caliperMm: 0.1, kind: "label" }
+};
+var REFERENCE_BY_CATEGORY = {
+  folding_carton: ["board-350", "board-450", "flute-e"],
+  corrugated: ["flute-e", "flute-b", "flute-bc"],
+  tray_lid: ["board-350", "flute-e", "flute-b"],
+  specialty: ["board-350", "board-450"],
+  flat: ["label-film", "board-350"]
+};
+
+// packages/dieline/src/recipes/data/tuck-end.json
+var tuck_end_default = {
+  schemaVersion: 1,
+  id: "tuck-end",
+  base: "PK-TE-01",
+  variant: {
+    tuck_top: "straight_tuck",
+    tuck_bottom: "tuck",
+    hang: "none"
+  },
+  variants: {
+    window: {
+      none: {
+        window: "none"
+      },
+      front_window: {
+        window: "rect",
+        windowPanel: "front"
+      }
+    }
+  },
+  category: "folding_carton",
+  name: {
+    th: "\u0E01\u0E25\u0E48\u0E2D\u0E07\u0E1D\u0E32\u0E40\u0E2A\u0E35\u0E22\u0E1A (\u0E1A\u0E19-\u0E25\u0E48\u0E32\u0E07\u0E17\u0E32\u0E07\u0E40\u0E14\u0E35\u0E22\u0E27\u0E01\u0E31\u0E19)",
+    en: "Straight tuck end"
+  },
+  description: {
+    th: "\u0E01\u0E25\u0E48\u0E2D\u0E07\u0E01\u0E23\u0E30\u0E14\u0E32\u0E29\u0E41\u0E02\u0E47\u0E07\u0E2A\u0E33\u0E2B\u0E23\u0E31\u0E1A\u0E2A\u0E34\u0E19\u0E04\u0E49\u0E32\u0E02\u0E32\u0E22\u0E1B\u0E25\u0E35\u0E01 \u0E25\u0E34\u0E49\u0E19\u0E40\u0E2A\u0E35\u0E22\u0E1A\u0E1A\u0E19\u0E41\u0E25\u0E30\u0E25\u0E48\u0E32\u0E07\u0E1E\u0E31\u0E1A\u0E08\u0E32\u0E01\u0E14\u0E49\u0E32\u0E19\u0E2B\u0E25\u0E31\u0E07\u0E40\u0E2B\u0E21\u0E37\u0E2D\u0E19\u0E01\u0E31\u0E19",
+    en: "Retail carton whose top and bottom tucks both hinge from the back panel"
+  },
+  materials: ["paperboard", "corrugated"],
+  params: [
+    {
+      ref: "length",
+      min: 20,
+      max: 400
+    },
+    {
+      ref: "width",
+      min: 15,
+      max: 300
+    },
+    {
+      ref: "height",
+      min: 20,
+      max: 450
+    },
+    "tuckDepth",
+    "tuckCorners",
+    "dustFlapDepth",
+    "thumbNotch",
+    "glueWidth",
+    "glueSide",
+    "grain",
+    "window",
+    "windowPanel",
+    "windowWidth",
+    "windowHeight",
+    "windowOffsetX",
+    "windowOffsetY",
+    "windowRadius"
+  ],
+  defaults: {
+    "@extends": "carton"
+  },
+  presets: "carton",
+  body: {
+    module: "tube",
+    preset: "carton"
+  },
+  closures: {
+    top: {
+      module: "tuck",
+      with: {
+        lid: "back"
+      }
+    },
+    bottom: {
+      module: "tuck",
+      with: {
+        lid: "back"
+      }
+    }
+  },
+  features: [
+    {
+      module: "thumbNotch",
+      with: {
+        end: "top"
+      }
+    },
+    {
+      module: "window"
+    }
+  ],
+  legacy: {
+    patternKeys: [
+      "pid:1",
+      "mapping:1",
+      "folding-truck-end-box",
+      "pid:26",
+      "mapping:50",
+      "corrugate-truck-end-box",
+      "ste"
+    ]
+  }
+};
+
+// packages/dieline/src/recipes/data/reverse-tuck-end.json
+var reverse_tuck_end_default = {
+  schemaVersion: 1,
+  id: "reverse-tuck-end",
+  base: "PK-TE-01",
+  variant: {
+    tuck_top: "reverse_tuck",
+    tuck_bottom: "tuck",
+    hang: "none"
+  },
+  variants: {
+    window: {
+      none: {
+        window: "none"
+      },
+      front_window: {
+        window: "rect",
+        windowPanel: "front"
+      }
+    }
+  },
+  category: "folding_carton",
+  name: {
+    th: "\u0E01\u0E25\u0E48\u0E2D\u0E07\u0E1D\u0E32\u0E40\u0E2A\u0E35\u0E22\u0E1A\u0E2A\u0E25\u0E31\u0E1A (\u0E1A\u0E19-\u0E25\u0E48\u0E32\u0E07\u0E2A\u0E25\u0E31\u0E1A\u0E14\u0E49\u0E32\u0E19)",
+    en: "Reverse tuck end"
+  },
+  description: {
+    th: "\u0E25\u0E34\u0E49\u0E19\u0E40\u0E2A\u0E35\u0E22\u0E1A\u0E1A\u0E19\u0E1E\u0E31\u0E1A\u0E08\u0E32\u0E01\u0E14\u0E49\u0E32\u0E19\u0E2B\u0E25\u0E31\u0E07 \u0E25\u0E34\u0E49\u0E19\u0E40\u0E2A\u0E35\u0E22\u0E1A\u0E25\u0E48\u0E32\u0E07\u0E1E\u0E31\u0E1A\u0E08\u0E32\u0E01\u0E14\u0E49\u0E32\u0E19\u0E2B\u0E19\u0E49\u0E32 \u0E43\u0E0A\u0E49\u0E01\u0E23\u0E30\u0E14\u0E32\u0E29\u0E04\u0E38\u0E49\u0E21\u0E01\u0E27\u0E48\u0E32\u0E43\u0E19\u0E07\u0E32\u0E19\u0E1E\u0E34\u0E21\u0E1E\u0E4C\u0E08\u0E33\u0E19\u0E27\u0E19\u0E21\u0E32\u0E01",
+    en: "Top tuck hinges from the back, bottom tuck from the front \u2014 nests tighter on the press sheet"
+  },
+  materials: ["paperboard", "corrugated"],
+  params: [
+    {
+      ref: "length",
+      min: 20,
+      max: 400
+    },
+    {
+      ref: "width",
+      min: 15,
+      max: 300
+    },
+    {
+      ref: "height",
+      min: 20,
+      max: 450
+    },
+    "tuckDepth",
+    "tuckCorners",
+    "dustFlapDepth",
+    "thumbNotch",
+    "glueWidth",
+    "glueSide",
+    "grain",
+    "window",
+    "windowPanel",
+    "windowWidth",
+    "windowHeight",
+    "windowOffsetX",
+    "windowOffsetY",
+    "windowRadius"
+  ],
+  defaults: {
+    "@extends": "carton"
+  },
+  presets: "carton",
+  body: {
+    module: "tube",
+    preset: "carton"
+  },
+  closures: {
+    top: {
+      module: "tuck",
+      with: {
+        lid: "back"
+      }
+    },
+    bottom: {
+      module: "tuck",
+      with: {
+        lid: "front"
+      }
+    }
+  },
+  features: [
+    {
+      module: "thumbNotch",
+      with: {
+        end: "top"
+      }
+    },
+    {
+      module: "window"
+    }
+  ],
+  legacy: {
+    patternKeys: ["rte"]
+  }
+};
+
+// packages/dieline/src/recipes/data/snap-lock-bottom.json
+var snap_lock_bottom_default = {
+  schemaVersion: 1,
+  id: "snap-lock-bottom",
+  base: "PK-TE-01",
+  variant: {
+    tuck_top: "straight_tuck",
+    tuck_bottom: "snap_lock_123",
+    hang: "none"
+  },
+  variants: {
+    window: {
+      none: {
+        window: "none"
+      },
+      front_window: {
+        window: "rect",
+        windowPanel: "front"
+      }
+    }
+  },
+  category: "folding_carton",
+  name: {
+    th: "\u0E01\u0E25\u0E48\u0E2D\u0E07\u0E1D\u0E32\u0E40\u0E2A\u0E35\u0E22\u0E1A\u0E1A\u0E19 \u0E01\u0E49\u0E19\u0E25\u0E47\u0E2D\u0E01 (1-2-3)",
+    en: "Tuck top, snap-lock (1-2-3) bottom"
+  },
+  description: {
+    th: "\u0E1D\u0E32\u0E1A\u0E19\u0E40\u0E1B\u0E47\u0E19\u0E25\u0E34\u0E49\u0E19\u0E40\u0E2A\u0E35\u0E22\u0E1A \u0E01\u0E49\u0E19\u0E1E\u0E31\u0E1A\u0E25\u0E47\u0E2D\u0E01\u0E01\u0E31\u0E19\u0E40\u0E2D\u0E07\u0E42\u0E14\u0E22\u0E44\u0E21\u0E48\u0E15\u0E49\u0E2D\u0E07\u0E43\u0E0A\u0E49\u0E01\u0E32\u0E27 \u0E23\u0E31\u0E1A\u0E19\u0E49\u0E33\u0E2B\u0E19\u0E31\u0E01\u0E44\u0E14\u0E49\u0E14\u0E35\u0E01\u0E27\u0E48\u0E32\u0E1D\u0E32\u0E40\u0E2A\u0E35\u0E22\u0E1A\u0E18\u0E23\u0E23\u0E21\u0E14\u0E32",
+    en: "Tuck top; the bottom flaps interlock without glue and carry more weight than a tuck"
+  },
+  materials: ["paperboard", "corrugated"],
+  params: [
+    {
+      ref: "length",
+      min: 20,
+      max: 400
+    },
+    {
+      ref: "width",
+      min: 15,
+      max: 300
+    },
+    {
+      ref: "height",
+      min: 20,
+      max: 450
+    },
+    "tuckDepth",
+    "tuckCorners",
+    "dustFlapDepth",
+    "thumbNotch",
+    "lockTongue",
+    "glueWidth",
+    "glueSide",
+    "grain",
+    "window",
+    "windowPanel",
+    "windowWidth",
+    "windowHeight",
+    "windowOffsetX",
+    "windowOffsetY",
+    "windowRadius"
+  ],
+  defaults: {
+    "@extends": "carton"
+  },
+  presets: "carton",
+  body: {
+    module: "tube",
+    preset: "carton"
+  },
+  closures: {
+    top: {
+      module: "tuck",
+      with: {
+        lid: "back"
+      }
+    },
+    bottom: {
+      module: "snapLock123",
+      preset: "default"
+    }
+  },
+  features: [
+    {
+      module: "thumbNotch",
+      with: {
+        end: "top"
+      }
+    },
+    {
+      module: "window"
+    }
+  ],
+  legacy: {
+    patternKeys: ["pid:16", "pid:17", "mapping:94", "folding-truck-end-snap-lock-bottom"]
+  }
+};
+
+// packages/dieline/src/recipes/data/crash-lock-bottom.json
+var crash_lock_bottom_default = {
+  schemaVersion: 1,
+  id: "crash-lock-bottom",
+  base: "PK-TE-01",
+  variant: {
+    tuck_top: "straight_tuck",
+    tuck_bottom: "crash_lock",
+    hang: "none"
+  },
+  variants: {
+    window: {
+      none: {
+        window: "none"
+      },
+      front_window: {
+        window: "rect",
+        windowPanel: "front"
+      }
+    }
+  },
+  category: "folding_carton",
+  name: {
+    th: "\u0E01\u0E25\u0E48\u0E2D\u0E07\u0E1D\u0E32\u0E40\u0E2A\u0E35\u0E22\u0E1A\u0E1A\u0E19 \u0E01\u0E49\u0E19\u0E25\u0E47\u0E2D\u0E01\u0E2D\u0E31\u0E15\u0E42\u0E19\u0E21\u0E31\u0E15\u0E34 (\u0E1B\u0E4A\u0E2D\u0E1B\u0E2D\u0E31\u0E1E)",
+    en: "Tuck top, crash-lock (auto) bottom"
+  },
+  description: {
+    th: "\u0E01\u0E49\u0E19\u0E17\u0E32\u0E01\u0E32\u0E27\u0E21\u0E32\u0E08\u0E32\u0E01\u0E42\u0E23\u0E07\u0E07\u0E32\u0E19 \u0E01\u0E32\u0E07\u0E01\u0E25\u0E48\u0E2D\u0E07\u0E41\u0E25\u0E49\u0E27\u0E01\u0E49\u0E19\u0E25\u0E47\u0E2D\u0E01\u0E40\u0E1B\u0E47\u0E19\u0E23\u0E39\u0E1B\u0E17\u0E31\u0E19\u0E17\u0E35 \u0E40\u0E23\u0E47\u0E27\u0E17\u0E35\u0E48\u0E2A\u0E38\u0E14\u0E43\u0E19\u0E44\u0E25\u0E19\u0E4C\u0E1A\u0E23\u0E23\u0E08\u0E38",
+    en: "The bottom is pre-glued at the factory and snaps square as the carton is opened \u2014 fastest to pack"
+  },
+  materials: ["paperboard", "corrugated"],
+  params: [
+    {
+      ref: "length",
+      min: 20,
+      max: 400
+    },
+    {
+      ref: "width",
+      min: 15,
+      max: 300
+    },
+    {
+      ref: "height",
+      min: 20,
+      max: 450
+    },
+    "tuckDepth",
+    "tuckCorners",
+    "dustFlapDepth",
+    "thumbNotch",
+    "glueWidth",
+    "glueSide",
+    "grain",
+    "window",
+    "windowPanel",
+    "windowWidth",
+    "windowHeight",
+    "windowOffsetX",
+    "windowOffsetY",
+    "windowRadius"
+  ],
+  defaults: {
+    "@extends": "carton"
+  },
+  presets: "carton",
+  body: {
+    module: "tube",
+    preset: "carton"
+  },
+  closures: {
+    top: {
+      module: "tuck",
+      with: {
+        lid: "back"
+      }
+    },
+    bottom: {
+      module: "crashLock"
+    }
+  },
+  features: [
+    {
+      module: "thumbNotch",
+      with: {
+        end: "top"
+      }
+    },
+    {
+      module: "window"
+    }
+  ],
+  legacy: {
+    patternKeys: ["pid:7"]
+  }
+};
+
+// packages/dieline/src/recipes/data/seal-end.json
+var seal_end_default = {
+  schemaVersion: 1,
+  id: "seal-end",
+  base: "PK-TE-01",
+  variant: {
+    tuck_top: "seal",
+    tuck_bottom: "seal",
+    hang: "none"
+  },
+  variants: {
+    window: {
+      none: {
+        window: "none"
+      },
+      front_window: {
+        window: "rect",
+        windowPanel: "front"
+      }
+    }
+  },
+  category: "folding_carton",
+  name: {
+    th: "\u0E01\u0E25\u0E48\u0E2D\u0E07\u0E1B\u0E34\u0E14\u0E17\u0E32\u0E01\u0E32\u0E27\u0E2B\u0E31\u0E27\u0E17\u0E49\u0E32\u0E22 (Seal end)",
+    en: "Seal end"
+  },
+  description: {
+    th: "\u0E1B\u0E34\u0E14\u0E17\u0E31\u0E49\u0E07\u0E2A\u0E2D\u0E07\u0E14\u0E49\u0E32\u0E19\u0E14\u0E49\u0E27\u0E22\u0E01\u0E32\u0E27 \u0E41\u0E19\u0E48\u0E19\u0E2B\u0E19\u0E32 \u0E40\u0E2B\u0E21\u0E32\u0E30\u0E01\u0E31\u0E1A\u0E2A\u0E34\u0E19\u0E04\u0E49\u0E32\u0E40\u0E17\u0E43\u0E2A\u0E48\u0E2D\u0E31\u0E15\u0E42\u0E19\u0E21\u0E31\u0E15\u0E34 \u0E40\u0E0A\u0E48\u0E19 \u0E0B\u0E35\u0E40\u0E23\u0E35\u0E22\u0E25 \u0E1C\u0E07\u0E0B\u0E31\u0E01\u0E1F\u0E2D\u0E01",
+    en: "Both ends closed with glue \u2014 tamper-evident, for auto-filled goods like cereal or detergent"
+  },
+  materials: ["paperboard", "corrugated"],
+  params: [
+    {
+      ref: "length",
+      min: 20,
+      max: 400
+    },
+    {
+      ref: "width",
+      min: 15,
+      max: 300
+    },
+    {
+      ref: "height",
+      min: 20,
+      max: 450
+    },
+    "glueWidth",
+    "glueSide",
+    "grain",
+    "window",
+    "windowPanel",
+    "windowWidth",
+    "windowHeight",
+    "windowOffsetX",
+    "windowOffsetY",
+    "windowRadius"
+  ],
+  defaults: {
+    "@extends": "carton",
+    length: 190,
+    width: 60,
+    height: 280
+  },
+  presets: [
+    {
+      id: "cereal",
+      label: {
+        th: "\u0E0B\u0E35\u0E40\u0E23\u0E35\u0E22\u0E25 190 \xD7 60 \xD7 280",
+        en: "Cereal 190 \xD7 60 \xD7 280"
+      },
+      values: {
+        length: 190,
+        width: 60,
+        height: 280
+      }
+    },
+    {
+      id: "tea",
+      label: {
+        th: "\u0E0A\u0E32 110 \xD7 60 \xD7 70",
+        en: "Tea 110 \xD7 60 \xD7 70"
+      },
+      values: {
+        length: 110,
+        width: 60,
+        height: 70
+      }
+    },
+    {
+      id: "powder",
+      label: {
+        th: "\u0E1C\u0E07 150 \xD7 50 \xD7 200",
+        en: "Powder 150 \xD7 50 \xD7 200"
+      },
+      values: {
+        length: 150,
+        width: 50,
+        height: 200
+      }
+    }
+  ],
+  body: {
+    module: "tube",
+    preset: "carton"
+  },
+  closures: {
+    top: {
+      module: "seal"
+    },
+    bottom: {
+      module: "seal"
+    }
+  },
+  features: [
+    {
+      module: "window"
+    }
+  ],
+  legacy: {
+    patternKeys: []
+  }
+};
+
+// packages/dieline/src/recipes/data/hang-tab-tuck.json
+var hang_tab_tuck_default = {
+  schemaVersion: 1,
+  id: "hang-tab-tuck",
+  base: "PK-TE-01",
+  variant: {
+    tuck_top: "reverse_tuck",
+    tuck_bottom: "tuck"
+  },
+  variants: {
+    hang: {
+      euro_slot: {
+        hangHole: "euro"
+      },
+      round_hole: {
+        hangHole: "round"
+      }
+    },
+    window: {
+      none: {
+        window: "none"
+      },
+      front_window: {
+        window: "rect",
+        windowPanel: "front"
+      }
+    }
+  },
+  category: "folding_carton",
+  name: {
+    th: "\u0E01\u0E25\u0E48\u0E2D\u0E07\u0E1D\u0E32\u0E40\u0E2A\u0E35\u0E22\u0E1A\u0E21\u0E35\u0E2B\u0E39\u0E41\u0E02\u0E27\u0E19",
+    en: "Tuck end with hang tab"
+  },
+  description: {
+    th: "\u0E2B\u0E39\u0E41\u0E02\u0E27\u0E19\u0E22\u0E37\u0E48\u0E19\u0E08\u0E32\u0E01\u0E14\u0E49\u0E32\u0E19\u0E2B\u0E25\u0E31\u0E07 \u0E40\u0E08\u0E32\u0E30\u0E23\u0E39\u0E41\u0E1A\u0E1A\u0E22\u0E39\u0E42\u0E23\u0E2B\u0E23\u0E37\u0E2D\u0E23\u0E39\u0E01\u0E25\u0E21 \u0E2A\u0E33\u0E2B\u0E23\u0E31\u0E1A\u0E41\u0E02\u0E27\u0E19\u0E1A\u0E19\u0E23\u0E32\u0E27\u0E43\u0E19\u0E23\u0E49\u0E32\u0E19 \u0E1D\u0E32\u0E1A\u0E19\u0E1E\u0E31\u0E1A\u0E08\u0E32\u0E01\u0E14\u0E49\u0E32\u0E19\u0E2B\u0E19\u0E49\u0E32",
+    en: "A hang tab rises from the back with a euro slot or round hole for peg display; the top lid hinges from the front"
+  },
+  materials: ["paperboard", "corrugated"],
+  params: [
+    {
+      ref: "length",
+      min: 20,
+      max: 400
+    },
+    {
+      ref: "width",
+      min: 15,
+      max: 300
+    },
+    {
+      ref: "height",
+      min: 20,
+      max: 450
+    },
+    "tuckDepth",
+    "tuckCorners",
+    "dustFlapDepth",
+    "thumbNotch",
+    "hangerHeight",
+    "hangHole",
+    "glueWidth",
+    "glueSide",
+    "grain",
+    "window",
+    "windowPanel",
+    "windowWidth",
+    "windowHeight",
+    "windowOffsetX",
+    "windowOffsetY",
+    "windowRadius"
+  ],
+  defaults: {
+    "@extends": "carton",
+    hangHole: "euro"
+  },
+  presets: "carton",
+  body: {
+    module: "tube",
+    preset: "carton"
+  },
+  closures: {
+    top: {
+      module: "tuck",
+      with: {
+        lid: "front"
+      }
+    },
+    bottom: {
+      module: "tuck",
+      with: {
+        lid: "back"
+      }
+    }
+  },
+  features: [
+    {
+      module: "hangTab",
+      with: {
+        end: "top"
+      }
+    },
+    {
+      module: "window"
+    }
+  ],
+  legacy: {
+    patternKeys: ["pid:6", "pid:8"]
+  }
+};
+
+// packages/dieline/src/recipes/data/sleeve.json
+var sleeve_default = {
+  schemaVersion: 1,
+  id: "sleeve",
+  base: "PK-SL-01",
+  variants: {
+    window: {
+      none: {
+        window: "none"
+      },
+      front_window: {
+        window: "rect",
+        windowPanel: "front"
+      }
+    }
+  },
+  category: "folding_carton",
+  name: {
+    th: "\u0E1B\u0E25\u0E2D\u0E01\u0E2A\u0E27\u0E21",
+    en: "Sleeve"
+  },
+  description: {
+    th: "\u0E1B\u0E25\u0E2D\u0E01\u0E40\u0E1B\u0E34\u0E14\u0E2B\u0E31\u0E27\u0E17\u0E49\u0E32\u0E22\u0E2A\u0E27\u0E21\u0E17\u0E31\u0E1A\u0E16\u0E32\u0E14\u0E2B\u0E23\u0E37\u0E2D\u0E2A\u0E34\u0E19\u0E04\u0E49\u0E32 \u0E04\u0E27\u0E32\u0E21\u0E2A\u0E39\u0E07\u0E04\u0E37\u0E2D\u0E04\u0E27\u0E32\u0E21\u0E01\u0E27\u0E49\u0E32\u0E07\u0E02\u0E2D\u0E07\u0E1B\u0E25\u0E2D\u0E01",
+    en: "An open-ended band over a tray or product; the height is the band's width"
+  },
+  materials: ["paperboard", "corrugated"],
+  params: [
+    {
+      ref: "length",
+      min: 20,
+      max: 500
+    },
+    {
+      ref: "width",
+      min: 10,
+      max: 400
+    },
+    {
+      ref: "height",
+      min: 15,
+      max: 400
+    },
+    "glueWidth",
+    "glueSide",
+    "grain",
+    "window",
+    "windowPanel",
+    "windowWidth",
+    "windowHeight",
+    "windowOffsetX",
+    "windowOffsetY",
+    "windowRadius"
+  ],
+  defaults: {
+    length: 120,
+    width: 80,
+    height: 60,
+    glueSide: "left",
+    grain: "across",
+    windowPanel: "front",
+    window: "none",
+    windowWidth: 40,
+    windowHeight: 30,
+    windowOffsetX: 0,
+    windowOffsetY: 0,
+    windowRadius: 6
+  },
+  presets: [
+    {
+      id: "soap",
+      label: {
+        th: "\u0E2A\u0E1A\u0E39\u0E48 90 \xD7 60 \xD7 40",
+        en: "Soap bar 90 \xD7 60 \xD7 40"
+      },
+      values: {
+        length: 90,
+        width: 60,
+        height: 40
+      }
+    },
+    {
+      id: "gift",
+      label: {
+        th: "\u0E02\u0E2D\u0E07\u0E02\u0E27\u0E31\u0E0D 200 \xD7 150 \xD7 80",
+        en: "Gift 200 \xD7 150 \xD7 80"
+      },
+      values: {
+        length: 200,
+        width: 150,
+        height: 80
+      }
+    }
+  ],
+  body: {
+    module: "tube",
+    preset: "carton",
+    with: {
+      dims: {
+        front: "length + a.panel",
+        side: "width + a.panel",
+        closingSide: "side - a.gluePanel",
+        glue: "glueWidth ?? glueWidthFor(width)"
+      },
+      depth: "height",
+      piece: {
+        id: "blank",
+        label: "sleeve"
+      }
+    }
+  },
+  features: [
+    {
+      module: "window"
+    }
+  ],
+  outerSize: {
+    height: "height"
+  },
+  legacy: {
+    patternKeys: ["pid:3"]
+  }
+};
+
+// packages/dieline/src/recipes/data/sleeve-drawer.json
+var sleeve_drawer_default = {
+  schemaVersion: 1,
+  id: "sleeve-drawer",
+  base: "PK-SL-02",
+  variants: {
+    thumb: {
+      thumb_notch: {
+        fingerHole: true
+      },
+      none: {
+        fingerHole: false
+      }
+    }
+  },
+  category: "folding_carton",
+  name: {
+    th: "\u0E01\u0E25\u0E48\u0E2D\u0E07\u0E25\u0E34\u0E49\u0E19\u0E0A\u0E31\u0E01 (\u0E1B\u0E25\u0E2D\u0E01 + \u0E16\u0E32\u0E14)",
+    en: "Sleeve and drawer (two pieces)"
+  },
+  description: {
+    th: "\u0E16\u0E32\u0E14\u0E25\u0E34\u0E49\u0E19\u0E0A\u0E31\u0E01\u0E40\u0E25\u0E37\u0E48\u0E2D\u0E19\u0E40\u0E02\u0E49\u0E32\u0E2D\u0E2D\u0E01\u0E43\u0E19\u0E1B\u0E25\u0E2D\u0E01 \u0E43\u0E2B\u0E49\u0E04\u0E27\u0E32\u0E21\u0E23\u0E39\u0E49\u0E2A\u0E36\u0E01\u0E1E\u0E23\u0E35\u0E40\u0E21\u0E35\u0E22\u0E21 \u0E40\u0E2B\u0E21\u0E32\u0E30\u0E01\u0E31\u0E1A\u0E40\u0E04\u0E23\u0E37\u0E48\u0E2D\u0E07\u0E1B\u0E23\u0E30\u0E14\u0E31\u0E1A \u0E02\u0E2D\u0E07\u0E02\u0E27\u0E31\u0E0D",
+    en: "A drawer sliding in a sleeve \u2014 a premium reveal for jewellery and gifts"
+  },
+  materials: ["paperboard", "corrugated"],
+  params: [
+    {
+      ref: "length",
+      min: 40,
+      max: 500
+    },
+    {
+      ref: "width",
+      min: 30,
+      max: 400
+    },
+    {
+      ref: "height",
+      min: 10,
+      max: 200
+    },
+    "fingerHole",
+    "glueWidth",
+    "grain"
+  ],
+  defaults: {
+    length: 150,
+    width: 100,
+    height: 40,
+    fingerHole: true,
+    grain: "across"
+  },
+  presets: [
+    {
+      id: "jewellery",
+      label: {
+        th: "\u0E40\u0E04\u0E23\u0E37\u0E48\u0E2D\u0E07\u0E1B\u0E23\u0E30\u0E14\u0E31\u0E1A 100 \xD7 80 \xD7 30",
+        en: "Jewellery 100 \xD7 80 \xD7 30"
+      },
+      values: {
+        length: 100,
+        width: 80,
+        height: 30
+      }
+    },
+    {
+      id: "gift",
+      label: {
+        th: "\u0E02\u0E2D\u0E07\u0E02\u0E27\u0E31\u0E0D 200 \xD7 150 \xD7 60",
+        en: "Gift 200 \xD7 150 \xD7 60"
+      },
+      values: {
+        length: 200,
+        width: 150,
+        height: 60
+      }
+    }
+  ],
+  pieceSet: {
+    module: "sleeveAndDrawer"
+  },
+  closedSize: {
+    length: "length + 2 * t",
+    width: "width + 2 * t + 2 * C.DRAWER_CLEARANCE_MM",
+    height: "height + t + 2 * C.DRAWER_CLEARANCE_MM"
+  },
+  outerSize: {
+    length: "length + 3 * t",
+    width: "width + 4 * t + 2 * C.DRAWER_CLEARANCE_MM",
+    height: "height + 3 * t + 2 * C.DRAWER_CLEARANCE_MM"
+  },
+  legacy: {
+    patternKeys: ["pid:31", "mapping:10", "folding-slide-box", "pid:30", "mapping:56", "corrugate-slide"]
+  }
+};
+
+// packages/dieline/src/recipes/data/gable.json
+var gable_default = {
+  schemaVersion: 1,
+  id: "gable",
+  base: "PK-SP-02",
+  variant: {
+    tuck_bottom: "snap_lock_123"
+  },
+  variants: {
+    window: {
+      none: {
+        window: "none"
+      },
+      front_window: {
+        window: "rect",
+        windowPanel: "front"
+      }
+    }
+  },
+  category: "folding_carton",
+  name: {
+    th: "\u0E01\u0E25\u0E48\u0E2D\u0E07\u0E17\u0E23\u0E07\u0E1A\u0E49\u0E32\u0E19 \u0E21\u0E35\u0E2B\u0E39\u0E2B\u0E34\u0E49\u0E27",
+    en: "Gable box with handle"
+  },
+  description: {
+    th: "\u0E2B\u0E25\u0E31\u0E07\u0E04\u0E32\u0E17\u0E23\u0E07\u0E08\u0E31\u0E48\u0E27\u0E15\u0E48\u0E2D\u0E40\u0E1B\u0E47\u0E19\u0E2B\u0E39\u0E2B\u0E34\u0E49\u0E27\u0E21\u0E35\u0E0A\u0E48\u0E2D\u0E07\u0E21\u0E37\u0E2D\u0E08\u0E31\u0E1A \u0E01\u0E49\u0E19\u0E25\u0E47\u0E2D\u0E01 1-2-3 \u0E40\u0E2B\u0E21\u0E32\u0E30\u0E01\u0E31\u0E1A\u0E02\u0E19\u0E21 \u0E40\u0E1A\u0E40\u0E01\u0E2D\u0E23\u0E35\u0E48 \u0E02\u0E2D\u0E07\u0E1D\u0E32\u0E01",
+    en: "A gable roof rising into a carry handle with a hand hole, snap-lock bottom \u2014 bakery and gifts"
+  },
+  materials: ["paperboard", "corrugated"],
+  params: [
+    {
+      ref: "length",
+      min: 20,
+      max: 400
+    },
+    {
+      ref: "width",
+      min: 15,
+      max: 300
+    },
+    {
+      ref: "height",
+      min: 20,
+      max: 450
+    },
+    "handleHeight",
+    "glueWidth",
+    "glueSide",
+    "grain",
+    "window",
+    "windowPanel",
+    "windowWidth",
+    "windowHeight",
+    "windowOffsetX",
+    "windowOffsetY",
+    "windowRadius"
+  ],
+  defaults: {
+    "@extends": "carton",
+    length: 150,
+    width: 80,
+    height: 100,
+    handleHeight: 40
+  },
+  presets: [
+    {
+      id: "cake",
+      label: {
+        th: "\u0E02\u0E19\u0E21 150 \xD7 80 \xD7 100",
+        en: "Cakes 150 \xD7 80 \xD7 100"
+      },
+      values: {
+        length: 150,
+        width: 80,
+        height: 100
+      }
+    },
+    {
+      id: "gift",
+      label: {
+        th: "\u0E02\u0E2D\u0E07\u0E1D\u0E32\u0E01 200 \xD7 100 \xD7 120",
+        en: "Gifts 200 \xD7 100 \xD7 120"
+      },
+      values: {
+        length: 200,
+        width: 100,
+        height: 120
+      }
+    }
+  ],
+  body: {
+    module: "tube",
+    preset: "carton"
+  },
+  closures: {
+    top: {
+      module: "gableHandle"
+    },
+    bottom: {
+      module: "snapLock123",
+      preset: "default",
+      with: {
+        tongue: "snapLockTongueFor(width)"
+      }
+    }
+  },
+  features: [
+    {
+      module: "window"
+    }
+  ],
+  closedSize: {
+    length: "length",
+    width: "width",
+    height: "height + side / 2"
+  },
+  legacy: {
+    patternKeys: [
+      "pid:9",
+      "pid:27",
+      "pid:28",
+      "mapping:51",
+      "mapping:52",
+      "corrugate-handle-box-no-rim",
+      "corrugate-handle-box-with-rim"
+    ]
+  }
+};
+
+// packages/dieline/src/recipes/data/hexagonal.json
+var hexagonal_default = {
+  schemaVersion: 1,
+  id: "hexagonal",
+  base: "PK-SP-03",
+  category: "folding_carton",
+  name: {
+    th: "\u0E01\u0E25\u0E48\u0E2D\u0E07\u0E2B\u0E01\u0E40\u0E2B\u0E25\u0E35\u0E48\u0E22\u0E21 \u0E1D\u0E32\u0E40\u0E2A\u0E35\u0E22\u0E1A",
+    en: "Hexagonal tuck box"
+  },
+  description: {
+    th: "\u0E15\u0E31\u0E27\u0E01\u0E25\u0E48\u0E2D\u0E07\u0E2B\u0E01\u0E40\u0E2B\u0E25\u0E35\u0E48\u0E22\u0E21 \u0E1D\u0E32\u0E41\u0E25\u0E30\u0E01\u0E49\u0E19\u0E40\u0E1B\u0E47\u0E19\u0E2B\u0E01\u0E40\u0E2B\u0E25\u0E35\u0E48\u0E22\u0E21\u0E1E\u0E23\u0E49\u0E2D\u0E21\u0E25\u0E34\u0E49\u0E19\u0E40\u0E2A\u0E35\u0E22\u0E1A \u0E40\u0E2B\u0E21\u0E32\u0E30\u0E01\u0E31\u0E1A\u0E02\u0E2D\u0E07\u0E02\u0E27\u0E31\u0E0D \u0E0A\u0E32 \u0E02\u0E19\u0E21",
+    en: "A hexagonal prism with hexagonal tuck lids \u2014 gifts, tea, sweets"
+  },
+  materials: ["paperboard"],
+  params: [
+    "side",
+    {
+      ref: "height",
+      min: 30,
+      max: 400
+    },
+    {
+      ref: "tuckDepth",
+      omit: ["help"]
+    },
+    "tuckCorners",
+    "glueWidth",
+    "glueSide",
+    "grain"
+  ],
+  defaults: {
+    side: 50,
+    height: 120,
+    tuckCorners: "rounded",
+    glueSide: "left",
+    grain: "across"
+  },
+  presets: [
+    {
+      id: "tea",
+      label: {
+        th: "\u0E0A\u0E32 \u0E14\u0E49\u0E32\u0E19 40 \u0E2A\u0E39\u0E07 100",
+        en: "Tea, side 40 \xD7 100"
+      },
+      values: {
+        side: 40,
+        height: 100
+      }
+    },
+    {
+      id: "gift",
+      label: {
+        th: "\u0E02\u0E2D\u0E07\u0E02\u0E27\u0E31\u0E0D \u0E14\u0E49\u0E32\u0E19 60 \u0E2A\u0E39\u0E07 150",
+        en: "Gift, side 60 \xD7 150"
+      },
+      values: {
+        side: 60,
+        height: 150
+      }
+    }
+  ],
+  body: {
+    module: "tube",
+    with: {
+      dims: {
+        panel: "side + t * tan(pi / 6)",
+        depth: "height + 2 * t",
+        glue: "glueWidth ?? glueWidthFor(panel)"
+      },
+      panels: [
+        {
+          id: "side-1",
+          label: "front",
+          width: "panel"
+        },
+        {
+          id: "side-2",
+          label: "side",
+          width: "panel"
+        },
+        {
+          id: "side-3",
+          label: "side",
+          width: "panel"
+        },
+        {
+          id: "side-4",
+          label: "side",
+          width: "panel"
+        },
+        {
+          id: "side-5",
+          label: "side",
+          width: "panel"
+        },
+        {
+          id: "side-6",
+          label: "side",
+          width: "panel"
+        }
+      ],
+      depth: "depth",
+      glue: "glue",
+      glueRight: "glueSide == 'right'",
+      grain: "side-1",
+      root: "side-1",
+      turn: 60
+    }
+  },
+  closures: {
+    top: {
+      module: "polygonTuckLid"
+    },
+    bottom: {
+      module: "polygonTuckLid"
+    }
+  },
+  constraints: [
+    {
+      id: "hexagonal.tuck_depth",
+      code: "tuck.too_deep",
+      severity: "error",
+      param: "tuckDepth",
+      require: "(tuckDepth ?? tuckDepthFor(2 * side)) < height - 5",
+      message: {
+        th: "\u0E25\u0E34\u0E49\u0E19\u0E40\u0E2A\u0E35\u0E22\u0E1A\u0E25\u0E36\u0E01\u0E40\u0E01\u0E34\u0E19\u0E04\u0E27\u0E32\u0E21\u0E2A\u0E39\u0E07\u0E01\u0E25\u0E48\u0E2D\u0E07",
+        en: "The tuck is deeper than the box is tall"
+      }
+    }
+  ],
+  closedSize: {
+    length: "2 * side",
+    width: "sqrt(3) * side",
+    height: "height"
+  },
+  legacy: {
+    patternKeys: []
+  }
+};
+
+// packages/dieline/src/recipes/data/rsc.json
+var rsc_default = {
+  schemaVersion: 1,
+  id: "rsc",
+  base: "PK-CS-01",
+  variant: {
+    joint: "glue_flap"
+  },
+  variants: {
+    hand_holes: {
+      none: {
+        handles: "none"
+      },
+      end_panels: {
+        handles: "side"
+      }
+    }
+  },
+  category: "corrugated",
+  name: {
+    th: "\u0E01\u0E25\u0E48\u0E2D\u0E07\u0E25\u0E39\u0E01\u0E1F\u0E39\u0E01\u0E1D\u0E32\u0E0A\u0E19 (RSC)",
+    en: "Regular slotted container (RSC)"
+  },
+  description: {
+    th: "\u0E01\u0E25\u0E48\u0E2D\u0E07\u0E02\u0E19\u0E2A\u0E48\u0E07\u0E21\u0E32\u0E15\u0E23\u0E10\u0E32\u0E19 \u0E1D\u0E32\u0E1A\u0E19-\u0E25\u0E48\u0E32\u0E07\u0E22\u0E32\u0E27\u0E04\u0E23\u0E36\u0E48\u0E07\u0E2B\u0E19\u0E36\u0E48\u0E07\u0E02\u0E2D\u0E07\u0E04\u0E27\u0E32\u0E21\u0E01\u0E27\u0E49\u0E32\u0E07 \u0E1E\u0E31\u0E1A\u0E21\u0E32\u0E0A\u0E19\u0E01\u0E31\u0E19\u0E01\u0E25\u0E32\u0E07\u0E01\u0E25\u0E48\u0E2D\u0E07",
+    en: "The standard shipping box: all flaps half the width, outer flaps meeting in the middle"
+  },
+  codes: {
+    fefco: "0201"
+  },
+  materials: ["corrugated"],
+  params: [
+    {
+      ref: "length",
+      min: 80,
+      max: 1200
+    },
+    {
+      ref: "width",
+      min: 60,
+      max: 800
+    },
+    {
+      ref: "height",
+      min: 40,
+      max: 1e3
+    },
+    "glueWidth",
+    "glueSide",
+    "handles",
+    "grain"
+  ],
+  defaults: {
+    "@extends": "slotted"
+  },
+  presets: "slotted",
+  body: {
+    module: "tube",
+    preset: "carton"
+  },
+  closures: {
+    top: {
+      module: "rsc"
+    },
+    bottom: {
+      module: "rsc"
+    }
+  },
+  features: [
+    {
+      module: "handHoles"
+    }
+  ],
+  legacy: {
+    patternKeys: ["pid:19", "mapping:30", "corrugate-rsc", "rsc-3d", "rsc"]
+  }
+};
+
+// packages/dieline/src/recipes/data/hsc.json
+var hsc_default = {
+  schemaVersion: 1,
+  id: "hsc",
+  base: "PK-CS-02",
+  variant: {
+    joint: "glue_flap"
+  },
+  variants: {
+    hand_holes: {
+      none: {
+        handles: "none"
+      },
+      end_panels: {
+        handles: "side"
+      }
+    }
+  },
+  category: "corrugated",
+  name: {
+    th: "\u0E01\u0E25\u0E48\u0E2D\u0E07\u0E25\u0E39\u0E01\u0E1F\u0E39\u0E01\u0E1D\u0E32\u0E40\u0E14\u0E35\u0E22\u0E27 (HSC)",
+    en: "Half slotted container (HSC)"
+  },
+  description: {
+    th: "\u0E40\u0E2B\u0E21\u0E37\u0E2D\u0E19\u0E01\u0E25\u0E48\u0E2D\u0E07\u0E1D\u0E32\u0E0A\u0E19\u0E41\u0E15\u0E48\u0E44\u0E21\u0E48\u0E21\u0E35\u0E1D\u0E32\u0E1A\u0E19 \u0E43\u0E0A\u0E49\u0E04\u0E39\u0E48\u0E01\u0E31\u0E1A\u0E1D\u0E32\u0E04\u0E23\u0E2D\u0E1A\u0E2B\u0E23\u0E37\u0E2D\u0E40\u0E1B\u0E47\u0E19\u0E16\u0E32\u0E14\u0E25\u0E36\u0E01",
+    en: "An RSC without top flaps \u2014 used with a separate lid or as a deep tray"
+  },
+  codes: {
+    fefco: "0200"
+  },
+  materials: ["corrugated"],
+  params: [
+    {
+      ref: "length",
+      min: 80,
+      max: 1200
+    },
+    {
+      ref: "width",
+      min: 60,
+      max: 800
+    },
+    {
+      ref: "height",
+      min: 40,
+      max: 1e3
+    },
+    "glueWidth",
+    "glueSide",
+    "handles",
+    "grain"
+  ],
+  defaults: {
+    "@extends": "slotted"
+  },
+  presets: "slotted",
+  body: {
+    module: "tube",
+    preset: "carton",
+    with: {
+      dims: {
+        front: "length + a.panel",
+        side: "width + a.panel",
+        closingSide: "side - a.gluePanel",
+        depth: "height + a.trayDepth",
+        glue: "glueWidth ?? glueWidthFor(width)"
+      }
+    }
+  },
+  closures: {
+    bottom: {
+      module: "rsc"
+    }
+  },
+  features: [
+    {
+      module: "handHoles"
+    }
+  ],
+  outerSize: {
+    height: "height + t"
+  },
+  legacy: {
+    patternKeys: []
+  }
+};
+
+// packages/dieline/src/recipes/data/fol.json
+var fol_default = {
+  schemaVersion: 1,
+  id: "fol",
+  base: "PK-CS-03",
+  variant: {
+    joint: "glue_flap"
+  },
+  variants: {
+    hand_holes: {
+      none: {
+        handles: "none"
+      },
+      end_panels: {
+        handles: "side"
+      }
+    }
+  },
+  category: "corrugated",
+  name: {
+    th: "\u0E01\u0E25\u0E48\u0E2D\u0E07\u0E25\u0E39\u0E01\u0E1F\u0E39\u0E01\u0E1D\u0E32\u0E0B\u0E49\u0E2D\u0E19\u0E40\u0E15\u0E47\u0E21 (FOL)",
+    en: "Full overlap slotted container (FOL)"
+  },
+  description: {
+    th: "\u0E1D\u0E32\u0E19\u0E2D\u0E01\u0E22\u0E32\u0E27\u0E40\u0E17\u0E48\u0E32\u0E04\u0E27\u0E32\u0E21\u0E01\u0E27\u0E49\u0E32\u0E07 \u0E0B\u0E49\u0E2D\u0E19\u0E01\u0E31\u0E19\u0E40\u0E15\u0E47\u0E21\u0E41\u0E1C\u0E48\u0E19 \u0E41\u0E02\u0E47\u0E07\u0E41\u0E23\u0E07\u0E40\u0E21\u0E37\u0E48\u0E2D\u0E27\u0E32\u0E07\u0E0B\u0E49\u0E2D\u0E19\u0E41\u0E25\u0E30\u0E01\u0E31\u0E19\u0E01\u0E23\u0E30\u0E41\u0E17\u0E01\u0E14\u0E49\u0E32\u0E19\u0E1A\u0E19",
+    en: "Outer flaps as deep as the width, overlapping fully \u2014 stronger stacking and top protection"
+  },
+  codes: {
+    fefco: "0203"
+  },
+  materials: ["corrugated"],
+  params: [
+    {
+      ref: "length",
+      min: 80,
+      max: 1200
+    },
+    {
+      ref: "width",
+      min: 60,
+      max: 800
+    },
+    {
+      ref: "height",
+      min: 40,
+      max: 1e3
+    },
+    "glueWidth",
+    "glueSide",
+    "handles",
+    "grain"
+  ],
+  defaults: {
+    "@extends": "slotted"
+  },
+  presets: "slotted",
+  body: {
+    module: "tube",
+    preset: "carton"
+  },
+  closures: {
+    top: {
+      module: "fol"
+    },
+    bottom: {
+      module: "fol"
+    }
+  },
+  features: [
+    {
+      module: "handHoles"
+    }
+  ],
+  legacy: {
+    patternKeys: ["pid:39", "mapping:73", "mapping:70", "corrugate-rsc-full-overlap"]
+  }
+};
+
+// packages/dieline/src/recipes/data/cssc.json
+var cssc_default = {
+  schemaVersion: 1,
+  id: "cssc",
+  base: "PK-CS-04",
+  variant: {
+    joint: "glue_flap"
+  },
+  category: "corrugated",
+  name: {
+    th: "\u0E01\u0E25\u0E48\u0E2D\u0E07\u0E25\u0E39\u0E01\u0E1F\u0E39\u0E01\u0E1D\u0E32\u0E0A\u0E19\u0E01\u0E25\u0E32\u0E07\u0E17\u0E38\u0E01\u0E14\u0E49\u0E32\u0E19 (CSSC)",
+    en: "Centre special slotted container (CSSC)"
+  },
+  description: {
+    th: "\u0E1D\u0E32\u0E43\u0E19\u0E41\u0E25\u0E30\u0E1D\u0E32\u0E19\u0E2D\u0E01\u0E22\u0E32\u0E27\u0E21\u0E32\u0E0A\u0E19\u0E01\u0E31\u0E19\u0E01\u0E25\u0E32\u0E07\u0E01\u0E25\u0E48\u0E2D\u0E07\u0E17\u0E31\u0E49\u0E07\u0E2A\u0E2D\u0E07\u0E41\u0E19\u0E27 \u0E1B\u0E34\u0E14\u0E14\u0E49\u0E32\u0E19\u0E1A\u0E19\u0E40\u0E15\u0E47\u0E21\u0E2A\u0E2D\u0E07\u0E0A\u0E31\u0E49\u0E19",
+    en: "Inner and outer flaps all meet at the centre \u2014 a full double layer top and bottom"
+  },
+  codes: {
+    fefco: "0204"
+  },
+  materials: ["corrugated"],
+  params: [
+    {
+      ref: "length",
+      min: 80,
+      max: 1200
+    },
+    {
+      ref: "width",
+      min: 60,
+      max: 800
+    },
+    {
+      ref: "height",
+      min: 40,
+      max: 1e3
+    },
+    "glueWidth",
+    "glueSide",
+    "handles",
+    "grain"
+  ],
+  defaults: {
+    "@extends": "slotted"
+  },
+  presets: "slotted",
+  body: {
+    module: "tube",
+    preset: "carton"
+  },
+  closures: {
+    top: {
+      module: "cssc"
+    },
+    bottom: {
+      module: "cssc"
+    }
+  },
+  features: [
+    {
+      module: "handHoles"
+    }
+  ],
+  legacy: {
+    patternKeys: []
+  }
+};
+
+// packages/dieline/src/recipes/data/mailer.json
+var mailer_default = {
+  schemaVersion: 1,
+  id: "mailer",
+  base: "PK-CF-01",
+  variant: {
+    mailer_front: "tuck"
+  },
+  category: "corrugated",
+  name: {
+    th: "\u0E01\u0E25\u0E48\u0E2D\u0E07\u0E44\u0E1B\u0E23\u0E29\u0E13\u0E35\u0E22\u0E4C\u0E1D\u0E32\u0E40\u0E2A\u0E35\u0E22\u0E1A\u0E2B\u0E19\u0E49\u0E32 (Mailer)",
+    en: "Roll-end tuck-front mailer"
+  },
+  description: {
+    th: "\u0E1C\u0E19\u0E31\u0E07\u0E1E\u0E31\u0E1A\u0E21\u0E49\u0E27\u0E19\u0E2A\u0E2D\u0E07\u0E0A\u0E31\u0E49\u0E19 \u0E1D\u0E32\u0E40\u0E2A\u0E35\u0E22\u0E1A\u0E14\u0E49\u0E32\u0E19\u0E2B\u0E19\u0E49\u0E32\u0E1E\u0E23\u0E49\u0E2D\u0E21\u0E1B\u0E35\u0E01\u0E02\u0E49\u0E32\u0E07 \u0E44\u0E21\u0E48\u0E15\u0E49\u0E2D\u0E07\u0E43\u0E0A\u0E49\u0E40\u0E17\u0E1B\u0E2B\u0E23\u0E37\u0E2D\u0E01\u0E32\u0E27 \u0E40\u0E2B\u0E21\u0E32\u0E30\u0E01\u0E31\u0E1A\u0E2D\u0E35\u0E04\u0E2D\u0E21\u0E40\u0E21\u0E34\u0E23\u0E4C\u0E0B\u0E41\u0E25\u0E30 subscription box",
+    en: "Rolled double walls, a tuck-front lid with side ears, no tape or glue \u2014 e-commerce and subscription boxes"
+  },
+  codes: {
+    fefco: "0427"
+  },
+  materials: ["corrugated", "paperboard"],
+  params: [
+    {
+      ref: "length",
+      min: 80,
+      max: 600
+    },
+    {
+      ref: "width",
+      min: 60,
+      max: 450
+    },
+    {
+      ref: "height",
+      min: 20,
+      max: 250
+    },
+    {
+      ref: "tuckDepth",
+      omit: ["help"]
+    },
+    "grain"
+  ],
+  defaults: {
+    length: 250,
+    width: 180,
+    height: 80,
+    grain: "across"
+  },
+  presets: [
+    {
+      id: "small",
+      label: {
+        th: "\u0E40\u0E25\u0E47\u0E01 200 \xD7 150 \xD7 50",
+        en: "Small 200 \xD7 150 \xD7 50"
+      },
+      values: {
+        length: 200,
+        width: 150,
+        height: 50
+      }
+    },
+    {
+      id: "medium",
+      label: {
+        th: "\u0E01\u0E25\u0E32\u0E07 250 \xD7 180 \xD7 80",
+        en: "Medium 250 \xD7 180 \xD7 80"
+      },
+      values: {
+        length: 250,
+        width: 180,
+        height: 80
+      }
+    },
+    {
+      id: "large",
+      label: {
+        th: "\u0E43\u0E2B\u0E0D\u0E48 350 \xD7 250 \xD7 100",
+        en: "Large 350 \xD7 250 \xD7 100"
+      },
+      values: {
+        length: 350,
+        width: 250,
+        height: 100
+      }
+    }
+  ],
+  body: {
+    module: "tray",
+    preset: "glued"
+  },
+  closures: {
+    top: {
+      module: "hingedLid",
+      with: {
+        front: "tuck"
+      }
+    }
+  },
+  features: [
+    {
+      module: "rollOverWalls",
+      with: {
+        walls: ["front", "left", "right"]
+      }
+    }
+  ],
+  outerSize: {
+    width: "width + 3 * t",
+    height: "height + t"
+  },
+  legacy: {
+    patternKeys: [
+      "pid:20",
+      "pid:21",
+      "pid:22",
+      "pid:23",
+      "pid:25",
+      "mapping:31",
+      "mapping:32",
+      "mapping:48",
+      "mapping:49",
+      "pid:10"
+    ]
+  }
+};
+
+// packages/dieline/src/recipes/data/wrap-around.json
+var wrap_around_default = {
+  schemaVersion: 1,
+  id: "wrap-around",
+  base: "PK-CF-03",
+  variant: {
+    joint: "glue_flap"
+  },
+  category: "corrugated",
+  name: {
+    th: "\u0E41\u0E1C\u0E48\u0E19\u0E2B\u0E48\u0E2D\u0E23\u0E2D\u0E1A\u0E2A\u0E34\u0E19\u0E04\u0E49\u0E32 (Wrap-around)",
+    en: "Wrap-around blank"
+  },
+  description: {
+    th: "\u0E2B\u0E48\u0E2D\u0E23\u0E2D\u0E1A\u0E2A\u0E34\u0E19\u0E04\u0E49\u0E32\u0E15\u0E32\u0E21\u0E41\u0E19\u0E27\u0E22\u0E32\u0E27\u0E41\u0E25\u0E49\u0E27\u0E15\u0E34\u0E14\u0E01\u0E32\u0E27 \u0E1B\u0E34\u0E14\u0E2B\u0E31\u0E27\u0E17\u0E49\u0E32\u0E22\u0E14\u0E49\u0E27\u0E22\u0E1B\u0E35\u0E01 \u0E41\u0E19\u0E48\u0E19\u0E1E\u0E2D\u0E14\u0E35\u0E2A\u0E34\u0E19\u0E04\u0E49\u0E32 \u0E19\u0E34\u0E22\u0E21\u0E01\u0E31\u0E1A\u0E40\u0E04\u0E23\u0E37\u0E48\u0E2D\u0E07\u0E1A\u0E23\u0E23\u0E08\u0E38\u0E2D\u0E31\u0E15\u0E42\u0E19\u0E21\u0E31\u0E15\u0E34",
+    en: "Wrapped round the product along its length and glued, ends closed by flaps \u2014 a tight fit, common on automatic packers"
+  },
+  materials: ["corrugated"],
+  params: [
+    {
+      ref: "length",
+      min: 100,
+      max: 1200
+    },
+    {
+      ref: "width",
+      min: 60,
+      max: 800
+    },
+    {
+      ref: "height",
+      min: 30,
+      max: 600
+    },
+    "glueWidth",
+    "glueSide",
+    "grain"
+  ],
+  defaults: {
+    length: 300,
+    width: 200,
+    height: 100,
+    glueSide: "left",
+    grain: "across"
+  },
+  presets: [
+    {
+      id: "drinks",
+      label: {
+        th: "\u0E40\u0E04\u0E23\u0E37\u0E48\u0E2D\u0E07\u0E14\u0E37\u0E48\u0E21 6 \u0E02\u0E27\u0E14 260 \xD7 180 \xD7 230",
+        en: "Six bottles 260 \xD7 180 \xD7 230"
+      },
+      values: {
+        length: 260,
+        width: 180,
+        height: 230
+      }
+    },
+    {
+      id: "flat",
+      label: {
+        th: "\u0E2A\u0E34\u0E19\u0E04\u0E49\u0E32\u0E41\u0E1A\u0E19 400 \xD7 300 \xD7 60",
+        en: "Flat goods 400 \xD7 300 \xD7 60"
+      },
+      values: {
+        length: 400,
+        width: 300,
+        height: 60
+      }
+    }
+  ],
+  body: {
+    module: "tube",
+    with: {
+      dims: {
+        wall: "height + a.panel",
+        top: "width + a.panel",
+        depth: "length + a.depth",
+        glue: "glueWidth ?? glueWidthFor(width)"
+      },
+      panels: [
+        {
+          id: "wall-front",
+          label: "wall_front",
+          width: "wall"
+        },
+        {
+          id: "top",
+          label: "top",
+          width: "top"
+        },
+        {
+          id: "wall-back",
+          label: "wall_back",
+          width: "wall"
+        },
+        {
+          id: "bottom",
+          label: "bottom",
+          width: "top - a.gluePanel"
+        }
+      ],
+      depth: "depth",
+      glue: "glue",
+      glueRight: "glueSide == 'right'",
+      grain: "top",
+      root: "wall-front"
+    }
+  },
+  closures: {
+    top: {
+      module: "endFlaps"
+    },
+    bottom: {
+      module: "endFlaps"
+    }
+  },
+  legacy: {
+    patternKeys: []
+  }
+};
+
+// packages/dieline/src/recipes/data/tray.json
+var tray_default = {
+  schemaVersion: 1,
+  id: "tray",
+  base: "PK-TR-01",
+  variant: {
+    corner: "glued"
+  },
+  category: "tray_lid",
+  name: {
+    th: "\u0E16\u0E32\u0E14\u0E17\u0E32\u0E01\u0E32\u0E27 4 \u0E21\u0E38\u0E21",
+    en: "Four-corner glued tray"
+  },
+  description: {
+    th: "\u0E16\u0E32\u0E14 4 \u0E1C\u0E19\u0E31\u0E07 \u0E21\u0E35\u0E1B\u0E35\u0E01\u0E01\u0E32\u0E27\u0E17\u0E35\u0E48\u0E21\u0E38\u0E21 \u0E40\u0E2B\u0E21\u0E32\u0E30\u0E01\u0E31\u0E1A\u0E40\u0E1A\u0E40\u0E01\u0E2D\u0E23\u0E35\u0E48 \u0E02\u0E2D\u0E07\u0E02\u0E27\u0E31\u0E0D \u0E41\u0E25\u0E30\u0E40\u0E1B\u0E47\u0E19\u0E15\u0E31\u0E27\u0E10\u0E32\u0E19\u0E02\u0E2D\u0E07\u0E01\u0E25\u0E48\u0E2D\u0E07\u0E2A\u0E2D\u0E07\u0E0A\u0E34\u0E49\u0E19",
+    en: "Four walls with glued corner flaps \u2014 bakery, gifts, and the base of two-piece boxes"
+  },
+  materials: ["paperboard", "corrugated"],
+  params: [
+    {
+      ref: "length",
+      min: 30,
+      max: 600
+    },
+    {
+      ref: "width",
+      min: 30,
+      max: 400
+    },
+    {
+      ref: "height",
+      min: 10,
+      max: 200
+    },
+    "cornerFlap",
+    "grain"
+  ],
+  defaults: {
+    length: 200,
+    width: 150,
+    height: 60,
+    grain: "across"
+  },
+  presets: [
+    {
+      id: "small",
+      label: {
+        th: "\u0E16\u0E32\u0E14\u0E40\u0E25\u0E47\u0E01 120 \xD7 120 \xD7 50",
+        en: "Small 120 \xD7 120 \xD7 50"
+      },
+      values: {
+        length: 120,
+        width: 120,
+        height: 50
+      }
+    },
+    {
+      id: "medium",
+      label: {
+        th: "\u0E16\u0E32\u0E14\u0E01\u0E25\u0E32\u0E07 200 \xD7 150 \xD7 60",
+        en: "Medium 200 \xD7 150 \xD7 60"
+      },
+      values: {
+        length: 200,
+        width: 150,
+        height: 60
+      }
+    },
+    {
+      id: "large",
+      label: {
+        th: "\u0E16\u0E32\u0E14\u0E43\u0E2B\u0E0D\u0E48 300 \xD7 220 \xD7 80",
+        en: "Large 300 \xD7 220 \xD7 80"
+      },
+      values: {
+        length: 300,
+        width: 220,
+        height: 80
+      }
+    }
+  ],
+  body: {
+    module: "tray",
+    preset: "glued"
+  },
+  outerSize: {
+    height: "height + t"
+  },
+  legacy: {
+    patternKeys: ["pid:2", "pid:38", "tray"]
+  }
+};
+
+// packages/dieline/src/recipes/data/tray-6-corner.json
+var tray_6_corner_default = {
+  schemaVersion: 1,
+  id: "tray-6-corner",
+  base: "PK-TR-02",
+  category: "tray_lid",
+  name: {
+    th: "\u0E01\u0E25\u0E48\u0E2D\u0E07\u0E16\u0E32\u0E14\u0E1D\u0E32\u0E1E\u0E31\u0E1A 6 \u0E21\u0E38\u0E21",
+    en: "Six-corner box (tray with hinged lid)"
+  },
+  description: {
+    th: "\u0E16\u0E32\u0E14\u0E17\u0E32\u0E01\u0E32\u0E27 4 \u0E21\u0E38\u0E21 \u0E21\u0E35\u0E1D\u0E32\u0E1E\u0E31\u0E1A\u0E15\u0E34\u0E14\u0E1C\u0E19\u0E31\u0E07\u0E2B\u0E25\u0E31\u0E07\u0E41\u0E25\u0E30\u0E02\u0E2D\u0E1A\u0E1D\u0E32\u0E17\u0E32\u0E01\u0E32\u0E27\u0E2D\u0E35\u0E01 2 \u0E21\u0E38\u0E21 \u0E2A\u0E48\u0E07\u0E41\u0E1A\u0E1A\u0E41\u0E1A\u0E19\u0E41\u0E25\u0E49\u0E27\u0E01\u0E32\u0E07\u0E43\u0E0A\u0E49\u0E44\u0E14\u0E49\u0E17\u0E31\u0E19\u0E17\u0E35",
+    en: "A glued tray with a lid hinged on the back and its lips glued at two more corners \u2014 ships flat, pops up ready"
+  },
+  materials: ["paperboard", "corrugated"],
+  params: [
+    {
+      ref: "length",
+      min: 40,
+      max: 500
+    },
+    {
+      ref: "width",
+      min: 30,
+      max: 400
+    },
+    {
+      ref: "height",
+      min: 15,
+      max: 150
+    },
+    "grain"
+  ],
+  defaults: {
+    length: 200,
+    width: 150,
+    height: 60,
+    grain: "across"
+  },
+  presets: [
+    {
+      id: "cake",
+      label: {
+        th: "\u0E40\u0E04\u0E49\u0E01 200 \xD7 200 \xD7 80",
+        en: "Cake 200 \xD7 200 \xD7 80"
+      },
+      values: {
+        length: 200,
+        width: 200,
+        height: 80
+      }
+    },
+    {
+      id: "dessert",
+      label: {
+        th: "\u0E02\u0E19\u0E21 200 \xD7 150 \xD7 60",
+        en: "Desserts 200 \xD7 150 \xD7 60"
+      },
+      values: {
+        length: 200,
+        width: 150,
+        height: 60
+      }
+    }
+  ],
+  body: {
+    module: "tray",
+    preset: "glued"
+  },
+  closures: {
+    top: {
+      module: "hingedLid",
+      with: {
+        front: "glued_lips"
+      }
+    }
+  },
+  outerSize: {
+    height: "height + t"
+  },
+  legacy: {
+    patternKeys: ["pid:10", "pid:11"]
+  }
+};
+
+// packages/dieline/src/recipes/data/double-wall-tray.json
+var double_wall_tray_default = {
+  schemaVersion: 1,
+  id: "double-wall-tray",
+  base: "PK-TR-03",
+  category: "tray_lid",
+  name: {
+    th: "\u0E16\u0E32\u0E14\u0E1C\u0E19\u0E31\u0E07\u0E2A\u0E2D\u0E07\u0E0A\u0E31\u0E49\u0E19",
+    en: "Double-wall tray"
+  },
+  description: {
+    th: "\u0E1C\u0E19\u0E31\u0E07\u0E2B\u0E19\u0E49\u0E32-\u0E2B\u0E25\u0E31\u0E07\u0E1E\u0E31\u0E1A\u0E0B\u0E49\u0E2D\u0E19\u0E2A\u0E2D\u0E07\u0E0A\u0E31\u0E49\u0E19\u0E2B\u0E19\u0E35\u0E1A\u0E1B\u0E35\u0E01\u0E21\u0E38\u0E21\u0E44\u0E27\u0E49 \u0E02\u0E2D\u0E1A\u0E41\u0E02\u0E47\u0E07\u0E41\u0E23\u0E07 \u0E44\u0E21\u0E48\u0E15\u0E49\u0E2D\u0E07\u0E17\u0E32\u0E01\u0E32\u0E27 \u0E40\u0E2B\u0E21\u0E32\u0E30\u0E01\u0E31\u0E1A\u0E1C\u0E31\u0E01\u0E1C\u0E25\u0E44\u0E21\u0E49 \u0E16\u0E32\u0E14\u0E42\u0E0A\u0E27\u0E4C\u0E2A\u0E34\u0E19\u0E04\u0E49\u0E32",
+    en: "Front and back walls fold over into a second layer that traps the corner flaps \u2014 stiff rims, no glue; produce and display trays"
+  },
+  materials: ["paperboard", "corrugated"],
+  params: [
+    {
+      ref: "length",
+      min: 60,
+      max: 800
+    },
+    {
+      ref: "width",
+      min: 40,
+      max: 600
+    },
+    {
+      ref: "height",
+      min: 20,
+      max: 250
+    },
+    "grain"
+  ],
+  defaults: {
+    length: 250,
+    width: 180,
+    height: 60,
+    grain: "across"
+  },
+  presets: [
+    {
+      id: "produce",
+      label: {
+        th: "\u0E1C\u0E31\u0E01\u0E1C\u0E25\u0E44\u0E21\u0E49 400 \xD7 300 \xD7 100",
+        en: "Produce 400 \xD7 300 \xD7 100"
+      },
+      values: {
+        length: 400,
+        width: 300,
+        height: 100
+      }
+    },
+    {
+      id: "display",
+      label: {
+        th: "\u0E16\u0E32\u0E14\u0E42\u0E0A\u0E27\u0E4C 250 \xD7 180 \xD7 60",
+        en: "Display 250 \xD7 180 \xD7 60"
+      },
+      values: {
+        length: 250,
+        width: 180,
+        height: 60
+      }
+    }
+  ],
+  body: {
+    module: "tray",
+    preset: "glued"
+  },
+  features: [
+    {
+      module: "rollOverWalls",
+      with: {
+        walls: ["back", "front"]
+      }
+    }
+  ],
+  outerSize: {
+    height: "height + t"
+  },
+  legacy: {
+    patternKeys: []
+  }
+};
+
+// packages/dieline/src/recipes/data/telescope.json
+var telescope_default = {
+  schemaVersion: 1,
+  id: "telescope",
+  base: "PK-LB-01",
+  variants: {
+    lid_depth: {
+      partial: {
+        lid: "partial"
+      },
+      full: {
+        lid: "full"
+      }
+    }
+  },
+  category: "tray_lid",
+  name: {
+    th: "\u0E01\u0E25\u0E48\u0E2D\u0E07\u0E1D\u0E32\u0E04\u0E23\u0E2D\u0E1A\u0E2A\u0E2D\u0E07\u0E0A\u0E34\u0E49\u0E19 (\u0E1D\u0E32-\u0E15\u0E31\u0E27)",
+    en: "Two-piece telescope box"
+  },
+  description: {
+    th: "\u0E15\u0E31\u0E27\u0E01\u0E25\u0E48\u0E2D\u0E07\u0E41\u0E25\u0E30\u0E1D\u0E32\u0E04\u0E23\u0E2D\u0E1A\u0E41\u0E22\u0E01\u0E0A\u0E34\u0E49\u0E19 \u0E1D\u0E32\u0E04\u0E23\u0E2D\u0E1A\u0E25\u0E36\u0E01\u0E40\u0E15\u0E47\u0E21\u0E2B\u0E23\u0E37\u0E2D\u0E04\u0E23\u0E36\u0E48\u0E07 \u0E40\u0E1B\u0E34\u0E14\u0E41\u0E25\u0E49\u0E27\u0E14\u0E39\u0E1E\u0E23\u0E35\u0E40\u0E21\u0E35\u0E22\u0E21 \u0E40\u0E2B\u0E21\u0E32\u0E30\u0E01\u0E31\u0E1A\u0E02\u0E2D\u0E07\u0E02\u0E27\u0E31\u0E0D \u0E40\u0E2A\u0E37\u0E49\u0E2D\u0E1C\u0E49\u0E32",
+    en: "A base and a separate lid, full or partial depth \u2014 a premium opening for gifts and apparel"
+  },
+  materials: ["paperboard", "corrugated", "rigid"],
+  params: [
+    {
+      ref: "length",
+      min: 40,
+      max: 600
+    },
+    {
+      ref: "width",
+      min: 30,
+      max: 450
+    },
+    {
+      ref: "height",
+      min: 15,
+      max: 300
+    },
+    "lid",
+    "lidDepth",
+    "grain"
+  ],
+  defaults: {
+    length: 200,
+    width: 150,
+    height: 60,
+    lid: "partial",
+    grain: "across"
+  },
+  presets: [
+    {
+      id: "gift",
+      label: {
+        th: "\u0E02\u0E2D\u0E07\u0E02\u0E27\u0E31\u0E0D 200 \xD7 150 \xD7 60",
+        en: "Gift 200 \xD7 150 \xD7 60"
+      },
+      values: {
+        length: 200,
+        width: 150,
+        height: 60
+      }
+    },
+    {
+      id: "apparel",
+      label: {
+        th: "\u0E40\u0E2A\u0E37\u0E49\u0E2D\u0E1C\u0E49\u0E32 300 \xD7 250 \xD7 80",
+        en: "Apparel 300 \xD7 250 \xD7 80"
+      },
+      values: {
+        length: 300,
+        width: 250,
+        height: 80,
+        lid: "full"
+      }
+    }
+  ],
+  pieceSet: {
+    module: "lidAndBase"
+  },
+  closedSize: {
+    length: "length + 2 * t + 2 * C.LID_CLEARANCE_MM",
+    width: "width + 2 * t + 2 * C.LID_CLEARANCE_MM",
+    height: "height"
+  },
+  legacy: {
+    patternKeys: ["pid:4", "pid:32", "mapping:11", "folding-cover-box", "pid:29"]
+  }
+};
+
+// packages/dieline/src/recipes/data/pillow.json
+var pillow_default = {
+  schemaVersion: 1,
+  id: "pillow",
+  base: "PK-SP-01",
+  category: "specialty",
+  name: {
+    th: "\u0E01\u0E25\u0E48\u0E2D\u0E07\u0E2B\u0E21\u0E2D\u0E19",
+    en: "Pillow box"
+  },
+  description: {
+    th: "\u0E1B\u0E25\u0E32\u0E22\u0E42\u0E04\u0E49\u0E07\u0E1E\u0E31\u0E1A\u0E40\u0E02\u0E49\u0E32\u0E2B\u0E32\u0E01\u0E31\u0E19 \u0E15\u0E31\u0E27\u0E01\u0E25\u0E48\u0E2D\u0E07\u0E42\u0E1B\u0E48\u0E07\u0E40\u0E2B\u0E21\u0E37\u0E2D\u0E19\u0E2B\u0E21\u0E2D\u0E19 \u0E2A\u0E27\u0E22\u0E2A\u0E33\u0E2B\u0E23\u0E31\u0E1A\u0E02\u0E2D\u0E07\u0E0A\u0E33\u0E23\u0E48\u0E27\u0E22 \u0E40\u0E04\u0E23\u0E37\u0E48\u0E2D\u0E07\u0E1B\u0E23\u0E30\u0E14\u0E31\u0E1A",
+    en: "Curved ends fold in and bow the box into a pillow \u2014 favours, jewellery, small gifts"
+  },
+  materials: ["paperboard"],
+  params: [
+    {
+      ref: "length",
+      label: {
+        th: "\u0E04\u0E27\u0E32\u0E21\u0E22\u0E32\u0E27\u0E23\u0E27\u0E21 (\u0E01\u0E36\u0E48\u0E07\u0E01\u0E25\u0E32\u0E07)",
+        en: "Overall length (at the middle)"
+      },
+      min: 60,
+      max: 400
+    },
+    {
+      ref: "width",
+      label: {
+        th: "\u0E04\u0E27\u0E32\u0E21\u0E01\u0E27\u0E49\u0E32\u0E07",
+        en: "Width"
+      },
+      min: 40,
+      max: 300
+    },
+    "thickness",
+    "glueWidth",
+    "grain"
+  ],
+  defaults: {
+    length: 150,
+    width: 100,
+    thickness: 30,
+    grain: "across"
+  },
+  presets: [
+    {
+      id: "small",
+      label: {
+        th: "\u0E40\u0E25\u0E47\u0E01 120 \xD7 80 \xD7 25",
+        en: "Small 120 \xD7 80 \xD7 25"
+      },
+      values: {
+        length: 120,
+        width: 80,
+        thickness: 25
+      }
+    },
+    {
+      id: "medium",
+      label: {
+        th: "\u0E01\u0E25\u0E32\u0E07 180 \xD7 110 \xD7 35",
+        en: "Medium 180 \xD7 110 \xD7 35"
+      },
+      values: {
+        length: 180,
+        width: 110,
+        thickness: 35
+      }
+    }
+  ],
+  body: {
+    module: "pillowTube"
+  },
+  constraints: [
+    {
+      id: "pillow.thickness",
+      code: "pillow.too_thick",
+      severity: "error",
+      param: "thickness",
+      require: "thickness <= width / 2",
+      message: {
+        th: "\u0E04\u0E27\u0E32\u0E21\u0E2B\u0E19\u0E32\u0E15\u0E49\u0E2D\u0E07\u0E44\u0E21\u0E48\u0E40\u0E01\u0E34\u0E19\u0E04\u0E23\u0E36\u0E48\u0E07\u0E2B\u0E19\u0E36\u0E48\u0E07\u0E02\u0E2D\u0E07\u0E04\u0E27\u0E32\u0E21\u0E01\u0E27\u0E49\u0E32\u0E07",
+        en: "Thickness must be at most half the width"
+      }
+    }
+  ],
+  closedSize: {
+    length: "length",
+    width: "width",
+    height: "thickness"
+  },
+  outerSize: {
+    length: "length",
+    width: "width + t",
+    height: "thickness"
+  },
+  legacy: {
+    patternKeys: []
+  }
+};
+
+// packages/dieline/src/recipes/data/flat-rect.json
+var flat_rect_default = {
+  schemaVersion: 1,
+  id: "flat-rect",
+  base: "PK-LA-02",
+  variant: {
+    shape_flat: "rectangle"
+  },
+  category: "flat",
+  name: {
+    th: "\u0E41\u0E1C\u0E48\u0E19\u0E2A\u0E35\u0E48\u0E40\u0E2B\u0E25\u0E35\u0E48\u0E22\u0E21 (\u0E09\u0E25\u0E32\u0E01/\u0E2A\u0E15\u0E34\u0E01\u0E40\u0E01\u0E2D\u0E23\u0E4C/\u0E41\u0E1C\u0E48\u0E19\u0E1E\u0E34\u0E21\u0E1E\u0E4C)",
+    en: "Rectangle (label, sticker, flat print)"
+  },
+  description: {
+    th: "\u0E0A\u0E34\u0E49\u0E19\u0E07\u0E32\u0E19\u0E41\u0E1A\u0E19\u0E2A\u0E35\u0E48\u0E40\u0E2B\u0E25\u0E35\u0E48\u0E22\u0E21 \u0E15\u0E31\u0E14\u0E15\u0E23\u0E07\u0E17\u0E38\u0E01\u0E14\u0E49\u0E32\u0E19",
+    en: "A flat rectangle, straight cuts all round"
+  },
+  materials: ["label", "paperboard", "flexible"],
+  params: [
+    {
+      ref: "length",
+      min: 5,
+      max: 1e3
+    },
+    {
+      ref: "width",
+      min: 5,
+      max: 1e3
+    }
+  ],
+  defaults: {
+    length: 100,
+    width: 60
+  },
+  presets: "label",
+  body: {
+    module: "flatShape",
+    with: {
+      shape: "rectangle"
+    }
+  },
+  legacy: {
+    patternKeys: ["pid:14", "pid:15", "pid:18", "pid:24", "pid:35", "mapping:25", "mapping:59", "square"]
+  }
+};
+
+// packages/dieline/src/recipes/data/flat-rounded-rect.json
+var flat_rounded_rect_default = {
+  schemaVersion: 1,
+  id: "flat-rounded-rect",
+  base: "PK-LA-02",
+  variant: {
+    shape_flat: "rounded_rectangle"
+  },
+  category: "flat",
+  name: {
+    th: "\u0E41\u0E1C\u0E48\u0E19\u0E2A\u0E35\u0E48\u0E40\u0E2B\u0E25\u0E35\u0E48\u0E22\u0E21\u0E21\u0E38\u0E21\u0E21\u0E19",
+    en: "Rounded rectangle"
+  },
+  description: {
+    th: "\u0E0A\u0E34\u0E49\u0E19\u0E07\u0E32\u0E19\u0E41\u0E1A\u0E19\u0E2A\u0E35\u0E48\u0E40\u0E2B\u0E25\u0E35\u0E48\u0E22\u0E21\u0E21\u0E38\u0E21\u0E21\u0E19 \u0E23\u0E31\u0E28\u0E21\u0E35\u0E21\u0E38\u0E21\u0E01\u0E33\u0E2B\u0E19\u0E14\u0E44\u0E14\u0E49",
+    en: "A flat rectangle with rounded corners"
+  },
+  materials: ["label", "paperboard", "flexible"],
+  params: [
+    {
+      ref: "length",
+      min: 5,
+      max: 1e3
+    },
+    {
+      ref: "width",
+      min: 5,
+      max: 1e3
+    },
+    "cornerRadius"
+  ],
+  defaults: {
+    length: 100,
+    width: 60,
+    cornerRadius: 6
+  },
+  presets: "label",
+  body: {
+    module: "flatShape",
+    with: {
+      shape: "rounded_rectangle"
+    }
+  },
+  legacy: {
+    patternKeys: []
+  }
+};
+
+// packages/dieline/src/recipes/data/flat-circle.json
+var flat_circle_default = {
+  schemaVersion: 1,
+  id: "flat-circle",
+  base: "PK-LA-02",
+  variant: {
+    shape_flat: "circle"
+  },
+  category: "flat",
+  name: {
+    th: "\u0E41\u0E1C\u0E48\u0E19\u0E27\u0E07\u0E01\u0E25\u0E21",
+    en: "Circle"
+  },
+  description: {
+    th: "\u0E09\u0E25\u0E32\u0E01\u0E2B\u0E23\u0E37\u0E2D\u0E2A\u0E15\u0E34\u0E01\u0E40\u0E01\u0E2D\u0E23\u0E4C\u0E27\u0E07\u0E01\u0E25\u0E21",
+    en: "A round label or sticker"
+  },
+  materials: ["label", "paperboard", "flexible"],
+  params: ["diameter"],
+  defaults: {
+    diameter: 50
+  },
+  presets: [
+    {
+      id: "d30",
+      label: {
+        th: "\u2300 30",
+        en: "\u2300 30"
+      },
+      values: {
+        diameter: 30
+      }
+    },
+    {
+      id: "d50",
+      label: {
+        th: "\u2300 50",
+        en: "\u2300 50"
+      },
+      values: {
+        diameter: 50
+      }
+    },
+    {
+      id: "d80",
+      label: {
+        th: "\u2300 80",
+        en: "\u2300 80"
+      },
+      values: {
+        diameter: 80
+      }
+    }
+  ],
+  body: {
+    module: "flatShape",
+    with: {
+      shape: "circle"
+    }
+  },
+  legacy: {
+    patternKeys: ["mapping:24", "circle"]
+  }
+};
+
+// packages/dieline/src/recipes/data/flat-oval.json
+var flat_oval_default = {
+  schemaVersion: 1,
+  id: "flat-oval",
+  base: "PK-LA-02",
+  variant: {
+    shape_flat: "oval"
+  },
+  category: "flat",
+  name: {
+    th: "\u0E41\u0E1C\u0E48\u0E19\u0E27\u0E07\u0E23\u0E35",
+    en: "Oval"
+  },
+  description: {
+    th: "\u0E09\u0E25\u0E32\u0E01\u0E2B\u0E23\u0E37\u0E2D\u0E2A\u0E15\u0E34\u0E01\u0E40\u0E01\u0E2D\u0E23\u0E4C\u0E27\u0E07\u0E23\u0E35",
+    en: "An oval label or sticker"
+  },
+  materials: ["label", "paperboard", "flexible"],
+  params: [
+    {
+      ref: "length",
+      min: 5,
+      max: 1e3
+    },
+    {
+      ref: "width",
+      min: 5,
+      max: 1e3
+    }
+  ],
+  defaults: {
+    length: 80,
+    width: 50
+  },
+  presets: [
+    {
+      id: "a",
+      label: {
+        th: "60 \xD7 40",
+        en: "60 \xD7 40"
+      },
+      values: {
+        length: 60,
+        width: 40
+      }
+    },
+    {
+      id: "b",
+      label: {
+        th: "100 \xD7 60",
+        en: "100 \xD7 60"
+      },
+      values: {
+        length: 100,
+        width: 60
+      }
+    }
+  ],
+  body: {
+    module: "flatShape",
+    with: {
+      shape: "oval"
+    }
+  },
+  legacy: {
+    patternKeys: []
+  }
+};
+
+// packages/dieline/src/recipes/data/flat-custom.json
+var flat_custom_default = {
+  schemaVersion: 1,
+  id: "flat-custom",
+  base: "PK-LA-02",
+  variant: {
+    shape_flat: "custom_path"
+  },
+  category: "flat",
+  name: {
+    th: "\u0E23\u0E39\u0E1B\u0E17\u0E23\u0E07\u0E2D\u0E34\u0E2A\u0E23\u0E30\u0E08\u0E32\u0E01\u0E44\u0E1F\u0E25\u0E4C SVG",
+    en: "Custom shape from an SVG path"
+  },
+  description: {
+    th: "\u0E2D\u0E31\u0E1B\u0E42\u0E2B\u0E25\u0E14\u0E40\u0E2A\u0E49\u0E19\u0E23\u0E2D\u0E1A\u0E23\u0E39\u0E1B\u0E40\u0E1B\u0E47\u0E19 SVG path \u0E23\u0E30\u0E1A\u0E1A\u0E22\u0E48\u0E2D-\u0E02\u0E22\u0E32\u0E22\u0E43\u0E2B\u0E49\u0E14\u0E49\u0E32\u0E19\u0E17\u0E35\u0E48\u0E22\u0E32\u0E27\u0E17\u0E35\u0E48\u0E2A\u0E38\u0E14\u0E40\u0E17\u0E48\u0E32\u0E01\u0E31\u0E1A\u0E02\u0E19\u0E32\u0E14\u0E17\u0E35\u0E48\u0E01\u0E33\u0E2B\u0E19\u0E14",
+    en: "Upload the outline as an SVG path; it is scaled so its longest side is the size you set"
+  },
+  materials: ["label", "paperboard", "flexible"],
+  params: ["size", "path"],
+  defaults: {
+    size: 60,
+    path: "M20 0 L25 14 L40 15 L28 24 L32 40 L20 31 L8 40 L12 24 L0 15 L15 14 Z"
+  },
+  presets: [
+    {
+      id: "star",
+      label: {
+        th: "\u0E14\u0E32\u0E27 60 \u0E21\u0E21.",
+        en: "Star, 60 mm"
+      },
+      values: {
+        size: 60,
+        path: "M20 0 L25 14 L40 15 L28 24 L32 40 L20 31 L8 40 L12 24 L0 15 L15 14 Z"
+      }
+    }
+  ],
+  body: {
+    module: "flatShape",
+    with: {
+      shape: "custom_path"
+    }
+  },
+  legacy: {
+    patternKeys: []
+  }
+};
+
+// packages/dieline/src/recipes/data/hang-tag.json
+var hang_tag_default = {
+  schemaVersion: 1,
+  id: "hang-tag",
+  base: "PK-TG-01",
+  variants: {
+    hang: {
+      round_hole: {
+        hole: "6"
+      },
+      none: {
+        hole: "0"
+      }
+    }
+  },
+  category: "flat",
+  name: {
+    th: "\u0E1B\u0E49\u0E32\u0E22\u0E41\u0E17\u0E47\u0E01 (\u0E15\u0E31\u0E14\u0E21\u0E38\u0E21 / \u0E21\u0E38\u0E21\u0E21\u0E19)",
+    en: "Hang tag (cut or rounded corners)"
+  },
+  description: {
+    th: "\u0E1B\u0E49\u0E32\u0E22\u0E2B\u0E49\u0E2D\u0E22\u0E2A\u0E34\u0E19\u0E04\u0E49\u0E32 \u0E40\u0E08\u0E32\u0E30\u0E23\u0E39\u0E23\u0E49\u0E2D\u0E22\u0E40\u0E0A\u0E37\u0E2D\u0E01 \u0E21\u0E38\u0E21\u0E15\u0E31\u0E14\u0E2B\u0E23\u0E37\u0E2D\u0E21\u0E38\u0E21\u0E21\u0E19",
+    en: "A swing tag with a string hole, corners cut or rounded"
+  },
+  materials: ["paperboard"],
+  params: [
+    {
+      ref: "width",
+      label: {
+        th: "\u0E04\u0E27\u0E32\u0E21\u0E01\u0E27\u0E49\u0E32\u0E07",
+        en: "Width"
+      },
+      min: 20,
+      max: 200
+    },
+    {
+      ref: "length",
+      label: {
+        th: "\u0E04\u0E27\u0E32\u0E21\u0E2A\u0E39\u0E07",
+        en: "Height"
+      },
+      min: 30,
+      max: 300
+    },
+    "corners",
+    "cornerSize",
+    "hole",
+    "holeOffset"
+  ],
+  defaults: {
+    width: 40,
+    length: 60,
+    corners: "chamfer",
+    cornerSize: 5,
+    hole: "6"
+  },
+  presets: [
+    {
+      id: "s",
+      label: {
+        th: "S 40 \xD7 60",
+        en: "S 40 \xD7 60"
+      },
+      values: {
+        width: 40,
+        length: 60
+      }
+    },
+    {
+      id: "m",
+      label: {
+        th: "M 40 \xD7 80",
+        en: "M 40 \xD7 80"
+      },
+      values: {
+        width: 40,
+        length: 80
+      }
+    },
+    {
+      id: "l",
+      label: {
+        th: "L 50 \xD7 100",
+        en: "L 50 \xD7 100"
+      },
+      values: {
+        width: 50,
+        length: 100
+      }
+    },
+    {
+      id: "xl",
+      label: {
+        th: "XL 60 \xD7 120",
+        en: "XL 60 \xD7 120"
+      },
+      values: {
+        width: 60,
+        length: 120
+      }
+    }
+  ],
+  body: {
+    module: "flatShape",
+    with: {
+      shape: "tag"
+    }
+  },
+  features: [
+    {
+      module: "hangHole"
+    }
+  ],
+  legacy: {
+    patternKeys: ["pid:33", "pid:34", "mapping:57", "mapping:58", "tag-cut", "tag-curve"]
+  }
+};
+
+// packages/dieline/src/recipes/data/cup-sleeve.json
+var cup_sleeve_default = {
+  schemaVersion: 1,
+  id: "cup-sleeve",
+  base: "PK-TG-02",
+  category: "flat",
+  name: {
+    th: "\u0E1B\u0E25\u0E2D\u0E01\u0E41\u0E01\u0E49\u0E27",
+    en: "Cup sleeve"
+  },
+  description: {
+    th: "\u0E1B\u0E25\u0E2D\u0E01\u0E01\u0E23\u0E30\u0E14\u0E32\u0E29\u0E2A\u0E27\u0E21\u0E41\u0E01\u0E49\u0E27\u0E17\u0E23\u0E07\u0E01\u0E23\u0E27\u0E22 \u0E04\u0E33\u0E19\u0E27\u0E13\u0E2A\u0E48\u0E27\u0E19\u0E42\u0E04\u0E49\u0E07\u0E08\u0E32\u0E01\u0E40\u0E2A\u0E49\u0E19\u0E1C\u0E48\u0E32\u0E19\u0E28\u0E39\u0E19\u0E22\u0E4C\u0E01\u0E25\u0E32\u0E07\u0E1B\u0E32\u0E01\u0E41\u0E25\u0E30\u0E01\u0E49\u0E19\u0E41\u0E01\u0E49\u0E27",
+    en: "A band round a tapered cup, its curve worked out from the rim and base diameters"
+  },
+  materials: ["paperboard"],
+  params: [
+    "topDiameter",
+    "bottomDiameter",
+    {
+      ref: "height",
+      label: {
+        th: "\u0E04\u0E27\u0E32\u0E21\u0E2A\u0E39\u0E07\u0E1B\u0E25\u0E2D\u0E01",
+        en: "Sleeve height"
+      },
+      min: 20,
+      max: 200,
+      omit: ["legacyKey"]
+    },
+    "overlap"
+  ],
+  defaults: {
+    topDiameter: 90,
+    bottomDiameter: 60,
+    height: 70,
+    overlap: 10
+  },
+  presets: [
+    {
+      id: "cup-12oz",
+      label: {
+        th: "\u0E41\u0E01\u0E49\u0E27 12 \u0E2D\u0E2D\u0E19\u0E0B\u0E4C (\u230090 \u2192 \u230060, \u0E2A\u0E39\u0E07 70)",
+        en: "12 oz cup (\u230090 \u2192 \u230060, 70 high)"
+      },
+      values: {
+        topDiameter: 90,
+        bottomDiameter: 60,
+        height: 70
+      }
+    },
+    {
+      id: "cup-16oz",
+      label: {
+        th: "\u0E41\u0E01\u0E49\u0E27 16 \u0E2D\u0E2D\u0E19\u0E0B\u0E4C (\u230090 \u2192 \u230060, \u0E2A\u0E39\u0E07 85)",
+        en: "16 oz cup (\u230090 \u2192 \u230060, 85 high)"
+      },
+      values: {
+        topDiameter: 90,
+        bottomDiameter: 60,
+        height: 85
+      }
+    },
+    {
+      id: "straight",
+      label: {
+        th: "\u0E41\u0E01\u0E49\u0E27\u0E17\u0E23\u0E07\u0E15\u0E23\u0E07 \u230075 \u0E2A\u0E39\u0E07 75",
+        en: "Straight cup \u230075, 75 high"
+      },
+      values: {
+        topDiameter: 75,
+        bottomDiameter: 75,
+        height: 75
+      }
+    }
+  ],
+  body: {
+    module: "cone"
+  },
+  legacy: {
+    patternKeys: ["pid:36", "mapping:60"]
+  }
+};
+
+// packages/dieline/src/recipes/data/band.json
+var band_default = {
+  schemaVersion: 1,
+  id: "band",
+  base: "PK-SL-03",
+  category: "flat",
+  name: {
+    th: "\u0E2A\u0E32\u0E22\u0E04\u0E32\u0E14",
+    en: "Band (strap)"
+  },
+  description: {
+    th: "\u0E41\u0E16\u0E1A\u0E01\u0E23\u0E30\u0E14\u0E32\u0E29\u0E04\u0E32\u0E14\u0E23\u0E2D\u0E1A\u0E2A\u0E34\u0E19\u0E04\u0E49\u0E32 \u0E17\u0E31\u0E1A\u0E01\u0E32\u0E27\u0E17\u0E35\u0E48\u0E1B\u0E25\u0E32\u0E22 \u0E04\u0E27\u0E32\u0E21\u0E22\u0E32\u0E27\u0E04\u0E37\u0E2D\u0E23\u0E2D\u0E1A\u0E27\u0E07\u0E23\u0E27\u0E21\u0E23\u0E30\u0E22\u0E30\u0E17\u0E31\u0E1A",
+    en: "A paper strip round a product, glued where it overlaps; the length includes the overlap"
+  },
+  materials: ["paperboard", "label"],
+  params: [
+    {
+      ref: "length",
+      label: {
+        th: "\u0E04\u0E27\u0E32\u0E21\u0E22\u0E32\u0E27\u0E23\u0E27\u0E21",
+        en: "Total length"
+      },
+      min: 50,
+      max: 1200
+    },
+    {
+      ref: "width",
+      label: {
+        th: "\u0E04\u0E27\u0E32\u0E21\u0E01\u0E27\u0E49\u0E32\u0E07\u0E41\u0E16\u0E1A",
+        en: "Band width"
+      },
+      min: 10,
+      max: 300
+    },
+    {
+      ref: "overlap",
+      max: 50
+    }
+  ],
+  defaults: {
+    length: 400,
+    width: 50,
+    overlap: 15
+  },
+  presets: [
+    {
+      id: "box",
+      label: {
+        th: "\u0E04\u0E32\u0E14\u0E01\u0E25\u0E48\u0E2D\u0E07 400 \xD7 50",
+        en: "Box band 400 \xD7 50"
+      },
+      values: {
+        length: 400,
+        width: 50
+      }
+    },
+    {
+      id: "jar",
+      label: {
+        th: "\u0E04\u0E32\u0E14\u0E02\u0E27\u0E14\u0E42\u0E2B\u0E25 280 \xD7 40",
+        en: "Jar band 280 \xD7 40"
+      },
+      values: {
+        length: 280,
+        width: 40
+      }
+    }
+  ],
+  body: {
+    module: "band"
+  },
+  legacy: {
+    patternKeys: ["mapping:66", "strap"]
+  }
+};
+
+// packages/dieline/src/recipes/data/pouch.json
+var pouch_default = {
+  schemaVersion: 1,
+  id: "pouch",
+  category: "flat",
+  name: {
+    th: "\u0E0B\u0E2D\u0E07\u0E1A\u0E23\u0E23\u0E08\u0E38\u0E20\u0E31\u0E13\u0E11\u0E4C (\u0E41\u0E1A\u0E1A\u0E1E\u0E34\u0E21\u0E1E\u0E4C)",
+    en: "Pouch print template"
+  },
+  description: {
+    th: "\u0E41\u0E1A\u0E1A\u0E04\u0E25\u0E35\u0E48\u0E2A\u0E33\u0E2B\u0E23\u0E31\u0E1A\u0E1E\u0E34\u0E21\u0E1E\u0E4C\u0E0B\u0E2D\u0E07: \u0E0B\u0E35\u0E25 3 \u0E14\u0E49\u0E32\u0E19, \u0E0B\u0E35\u0E25 4 \u0E14\u0E49\u0E32\u0E19, \u0E0B\u0E35\u0E25\u0E01\u0E25\u0E32\u0E07, \u0E0B\u0E35\u0E25\u0E01\u0E25\u0E32\u0E07\u0E21\u0E35\u0E02\u0E49\u0E32\u0E07 \u0E41\u0E25\u0E30\u0E0B\u0E2D\u0E07\u0E15\u0E31\u0E49\u0E07\u0E44\u0E14\u0E49",
+    en: "Flat print layouts for 3-side seal, 4-side seal, centre seal, centre seal with gussets and stand-up pouches"
+  },
+  materials: ["flexible"],
+  params: [
+    "pouchType",
+    {
+      ref: "width",
+      label: {
+        th: "\u0E04\u0E27\u0E32\u0E21\u0E01\u0E27\u0E49\u0E32\u0E07\u0E23\u0E27\u0E21\u0E23\u0E2D\u0E22\u0E0B\u0E35\u0E25",
+        en: "Width incl. seals"
+      },
+      min: 30,
+      max: 600
+    },
+    {
+      ref: "length",
+      label: {
+        th: "\u0E04\u0E27\u0E32\u0E21\u0E2A\u0E39\u0E07\u0E23\u0E27\u0E21\u0E23\u0E2D\u0E22\u0E0B\u0E35\u0E25",
+        en: "Height incl. seals"
+      },
+      min: 30,
+      max: 800
+    },
+    "gusset",
+    "bottom",
+    "centerSeal",
+    "sealWidth"
+  ],
+  defaults: {
+    pouchType: "three_side",
+    width: 120,
+    length: 180,
+    gusset: 40,
+    bottom: 40,
+    centerSeal: 10,
+    sealWidth: 8
+  },
+  presets: [
+    {
+      id: "three-side",
+      label: {
+        th: "\u0E0B\u0E35\u0E25 3 \u0E14\u0E49\u0E32\u0E19 120 \xD7 180",
+        en: "3-side seal 120 \xD7 180"
+      },
+      values: {
+        pouchType: "three_side",
+        width: 120,
+        length: 180
+      }
+    },
+    {
+      id: "standing",
+      label: {
+        th: "\u0E0B\u0E2D\u0E07\u0E15\u0E31\u0E49\u0E07 140 \xD7 200 \u0E01\u0E49\u0E19 40",
+        en: "Stand-up 140 \xD7 200, 40 base"
+      },
+      values: {
+        pouchType: "standing",
+        width: 140,
+        length: 200,
+        bottom: 40
+      }
+    },
+    {
+      id: "pillow",
+      label: {
+        th: "\u0E0B\u0E35\u0E25\u0E01\u0E25\u0E32\u0E07 100 \xD7 160",
+        en: "Centre seal 100 \xD7 160"
+      },
+      values: {
+        pouchType: "center_seal",
+        width: 100,
+        length: 160
+      }
+    },
+    {
+      id: "gusset",
+      label: {
+        th: "\u0E0B\u0E35\u0E25\u0E01\u0E25\u0E32\u0E07\u0E21\u0E35\u0E02\u0E49\u0E32\u0E07 100 \xD7 200 \u0E02\u0E49\u0E32\u0E07 40",
+        en: "Centre seal gusset 100 \xD7 200, 40 side"
+      },
+      values: {
+        pouchType: "center_seal_gusset",
+        width: 100,
+        length: 200,
+        gusset: 40
+      }
+    },
+    {
+      id: "four-side",
+      label: {
+        th: "\u0E0B\u0E35\u0E25 4 \u0E14\u0E49\u0E32\u0E19 100 \xD7 180 \u0E02\u0E49\u0E32\u0E07 40",
+        en: "4-side seal 100 \xD7 180, 40 side"
+      },
+      values: {
+        pouchType: "four_side",
+        width: 100,
+        length: 180,
+        gusset: 40
+      }
+    }
+  ],
+  body: {
+    module: "pouchWeb"
+  },
+  legacy: {
+    patternKeys: [
+      "pid:40",
+      "pid:41",
+      "pid:42",
+      "pid:43",
+      "pid:44",
+      "mapping:76",
+      "mapping:77",
+      "mapping:78",
+      "mapping:79",
+      "mapping:80",
+      "pouch-3-seal",
+      "pouch-center-seal",
+      "pouch-center-seal-gusset",
+      "pouch-4-seal",
+      "pouch-standing"
+    ]
+  }
+};
+
+// packages/dieline/src/expr.ts
+var ExprError = class extends Error {
+  constructor(message, source) {
+    super(`${message} in "${source}"`);
+    this.source = source;
+    this.name = "ExprError";
+  }
+  source;
+};
+var OPS = ["<=", ">=", "==", "!=", "&&", "||", "??", "<", ">", "+", "-", "*", "/", "(", ")", ",", "?", ":", "!"];
+function tokenize(src) {
+  const out = [];
+  let i = 0;
+  while (i < src.length) {
+    const c = src[i];
+    if (c === " " || c === "	" || c === "\n") {
+      i++;
+      continue;
+    }
+    if (c >= "0" && c <= "9" || c === "." && src[i + 1] >= "0" && src[i + 1] <= "9") {
+      const m = /^(\d+\.?\d*|\.\d+)(e[+-]?\d+)?/i.exec(src.slice(i));
+      out.push({ k: "num", v: Number(m[0]) });
+      i += m[0].length;
+      continue;
+    }
+    if (c === "'") {
+      const end = src.indexOf("'", i + 1);
+      if (end < 0) throw new ExprError("unterminated string", src);
+      out.push({ k: "str", v: src.slice(i + 1, end) });
+      i = end + 1;
+      continue;
+    }
+    if (/[A-Za-z_]/.test(c)) {
+      const m = /^[A-Za-z_][A-Za-z0-9_.]*/.exec(src.slice(i));
+      out.push({ k: "name", v: m[0] });
+      i += m[0].length;
+      continue;
+    }
+    const op = OPS.find((o) => src.startsWith(o, i));
+    if (!op) throw new ExprError(`unexpected "${c}"`, src);
+    out.push({ k: "op", v: op });
+    i += op.length;
+  }
+  return out;
+}
+function parse(src) {
+  const tokens = tokenize(src);
+  let at = 0;
+  const peek = () => tokens[at];
+  const isOp = (v) => peek()?.k === "op" && peek().v === v;
+  const isWord = (v) => peek()?.k === "name" && peek().v === v;
+  const expect = (v) => {
+    if (!isOp(v)) throw new ExprError(`expected "${v}"`, src);
+    at++;
+  };
+  const expr2 = () => cond();
+  const cond = () => {
+    const c = nullish();
+    if (!isOp("?")) return c;
+    at++;
+    const a = expr2();
+    expect(":");
+    return { t: "cond", c, a, b: expr2() };
+  };
+  const nullish = () => {
+    let a = or();
+    while (isOp("??")) {
+      at++;
+      a = { t: "bin", op: "??", a, b: or() };
+    }
+    return a;
+  };
+  const or = () => {
+    let a = and();
+    while (isOp("||") || isWord("or")) {
+      at++;
+      a = { t: "bin", op: "or", a, b: and() };
+    }
+    return a;
+  };
+  const and = () => {
+    let a = not();
+    while (isOp("&&") || isWord("and")) {
+      at++;
+      a = { t: "bin", op: "and", a, b: not() };
+    }
+    return a;
+  };
+  const not = () => {
+    if (isOp("!") || isWord("not")) {
+      at++;
+      return { t: "not", a: not() };
+    }
+    return compare();
+  };
+  const compare = () => {
+    const a = sum();
+    const tok = peek();
+    if (tok?.k === "op" && ["<", "<=", ">", ">=", "==", "!="].includes(tok.v)) {
+      at++;
+      return { t: "bin", op: tok.v, a, b: sum() };
+    }
+    return a;
+  };
+  const sum = () => {
+    let a = product();
+    while (isOp("+") || isOp("-")) {
+      const op = tokens[at++].v;
+      a = { t: "bin", op, a, b: product() };
+    }
+    return a;
+  };
+  const product = () => {
+    let a = unary();
+    while (isOp("*") || isOp("/")) {
+      const op = tokens[at++].v;
+      a = { t: "bin", op, a, b: unary() };
+    }
+    return a;
+  };
+  const unary = () => {
+    if (isOp("-")) {
+      at++;
+      return { t: "neg", a: unary() };
+    }
+    return primary();
+  };
+  const primary = () => {
+    const tok = peek();
+    if (!tok) throw new ExprError("unexpected end", src);
+    at++;
+    if (tok.k === "num") return { t: "num", v: tok.v };
+    if (tok.k === "str") return { t: "str", v: tok.v };
+    if (tok.k === "name") {
+      if (tok.v === "true" || tok.v === "false") return { t: "name", v: tok.v };
+      if (tok.v === "not" || tok.v === "and" || tok.v === "or") throw new ExprError(`unexpected "${tok.v}"`, src);
+      if (isOp("(")) {
+        at++;
+        const args = [];
+        if (!isOp(")")) {
+          args.push(expr2());
+          while (isOp(",")) {
+            at++;
+            args.push(expr2());
+          }
+        }
+        expect(")");
+        return { t: "call", f: tok.v, args };
+      }
+      return { t: "name", v: tok.v };
+    }
+    if (tok.v === "(") {
+      const inner = expr2();
+      expect(")");
+      return inner;
+    }
+    throw new ExprError(`unexpected "${tok.v}"`, src);
+  };
+  const node = expr2();
+  if (at !== tokens.length) throw new ExprError(`unexpected "${String(tokens[at].v)}"`, src);
+  return node;
+}
+var cache = /* @__PURE__ */ new Map();
+function compile(src) {
+  let node = cache.get(src);
+  if (!node) {
+    node = parse(src);
+    cache.set(src, node);
+  }
+  return node;
+}
+function walk(n2, visit) {
+  visit(n2);
+  if (n2.t === "call") n2.args.forEach((a) => walk(a, visit));
+  else if (n2.t === "neg" || n2.t === "not") walk(n2.a, visit);
+  else if (n2.t === "bin") [n2.a, n2.b].forEach((x) => walk(x, visit));
+  else if (n2.t === "cond") [n2.c, n2.a, n2.b].forEach((x) => walk(x, visit));
+}
+function namesOf(src) {
+  const out = /* @__PURE__ */ new Set();
+  walk(compile(src), (n2) => {
+    if (n2.t === "name" && n2.v !== "true" && n2.v !== "false") out.add(n2.v);
+  });
+  return [...out];
+}
+function callsOf(src) {
+  const out = /* @__PURE__ */ new Set();
+  walk(compile(src), (n2) => {
+    if (n2.t === "call") out.add(n2.f);
+  });
+  return [...out];
+}
+var finite = (x) => typeof x === "number" && Number.isFinite(x);
+var missing = (x) => x === void 0 || x === null || typeof x === "number" && !Number.isFinite(x);
+var arith = (x, y, f) => typeof x === "number" && typeof y === "number" ? f(x, y) : void 0;
+function evaluate(node, scope) {
+  switch (node.t) {
+    case "num":
+    case "str":
+      return node.v;
+    case "name":
+      return node.v === "true" ? true : node.v === "false" ? false : scope.get(node.v);
+    case "neg": {
+      const a = evaluate(node.a, scope);
+      return typeof a === "number" ? -a : void 0;
+    }
+    case "not": {
+      const a = evaluate(node.a, scope);
+      return a === null || a === void 0 ? null : !a;
+    }
+    case "cond": {
+      const c = evaluate(node.c, scope);
+      if (c === null || c === void 0) return void 0;
+      return c ? evaluate(node.a, scope) : evaluate(node.b, scope);
+    }
+    case "call": {
+      const f = scope.fn?.[node.f];
+      if (!f) throw new ExprError(`unknown function "${node.f}"`, node.f);
+      return f(...node.args.map((a) => evaluate(a, scope)));
+    }
+    case "bin": {
+      const { op } = node;
+      if (op === "??") {
+        const a2 = evaluate(node.a, scope);
+        return missing(a2) ? evaluate(node.b, scope) : a2;
+      }
+      if (op === "and" || op === "or") {
+        const a2 = evaluate(node.a, scope);
+        const known = (x) => x === null || x === void 0 ? null : Boolean(x);
+        const p = known(a2);
+        if (op === "and" && p === false) return false;
+        if (op === "or" && p === true) return true;
+        const q = known(evaluate(node.b, scope));
+        if (op === "and") return q === false ? false : p === null || q === null ? null : true;
+        return q === true ? true : p === null || q === null ? null : false;
+      }
+      const a = evaluate(node.a, scope);
+      const b = evaluate(node.b, scope);
+      switch (op) {
+        case "+":
+          return arith(a, b, (x, y) => x + y);
+        case "-":
+          return arith(a, b, (x, y) => x - y);
+        case "*":
+          return arith(a, b, (x, y) => x * y);
+        case "/":
+          return arith(a, b, (x, y) => x / y);
+        case "==":
+        case "!=": {
+          if (a === void 0 || a === null || b === void 0 || b === null) return null;
+          if (typeof a === "number" && !Number.isFinite(a)) return null;
+          if (typeof b === "number" && !Number.isFinite(b)) return null;
+          return op === "==" ? a === b : a !== b;
+        }
+        default: {
+          if (!finite(a) || !finite(b)) return null;
+          if (op === "<") return a < b;
+          if (op === "<=") return a <= b;
+          if (op === ">") return a > b;
+          return a >= b;
+        }
+      }
+    }
+  }
+}
+
+// packages/dieline/src/styles/_flat.ts
+function flatDieline(styleId, outline, label = "label", extra = {}) {
+  return assemble(styleId, [piece("blank", "blank", [face("label", label, "flat", outline, extra)])]);
+}
+
+// packages/dieline/src/styles/_shared.ts
+var t = (th, en) => ({ th, en });
+function grainArrow(v, x0, x1, y0, y1) {
+  const cx = (x0 + x1) / 2;
+  const cy = (y0 + y1) / 2;
+  const len2 = Math.min(x1 - x0, y1 - y0) * 0.4;
+  return str(v, "grain", "across") === "along" ? [{ kind: "grain", from: [cx, cy + len2 / 2], to: [cx, cy - len2 / 2] }] : [{ kind: "grain", from: [cx - len2 / 2, cy], to: [cx + len2 / 2, cy] }];
+}
+function grainOn(v, faces, faceId) {
+  const f = faces.find((x) => x.id === faceId) ?? faces[0];
+  if (!f) return [];
+  const b = faceBounds(f);
+  return grainArrow(v, b.x, b.x + b.width, b.y, b.y + b.height);
+}
+function windowHole(v, panelId, x0, x1, y0, y1) {
+  const kind = str(v, "window", "none");
+  if (kind === "none" || str(v, "windowPanel", "front") !== panelId) return [];
+  const w = num(v, "windowWidth", 40);
+  const h = num(v, "windowHeight", 30);
+  const cx = (x0 + x1) / 2 + num(v, "windowOffsetX", 0);
+  const cy = (y0 + y1) / 2 + num(v, "windowOffsetY", 0);
+  if (kind === "ellipse") return [ellipse(cx, cy, w / 2, h / 2)];
+  if (kind === "rounded") return [roundedRectangle(cx - w / 2, cy - h / 2, w, h, num(v, "windowRadius", 6))];
+  return [rectangle(cx - w / 2, cy - h / 2, w, h)];
+}
+function windowIssues(v, d) {
+  const kind = str(v, "window", "none");
+  if (kind === "none") return [];
+  const panelId = str(v, "windowPanel", "front");
+  const panel = findFace(d, panelId);
+  const hole = panel?.holes[0];
+  if (!panel || !hole)
+    return [
+      issue("window.no_panel", t("\u0E40\u0E25\u0E37\u0E2D\u0E01\u0E14\u0E49\u0E32\u0E19\u0E17\u0E35\u0E48\u0E08\u0E30\u0E40\u0E08\u0E32\u0E30\u0E2B\u0E19\u0E49\u0E32\u0E15\u0E48\u0E32\u0E07", "Choose the panel for the window"), "windowPanel")
+    ];
+  if (!polygonInsideWithMargin(flattenContour(panel.outline), flattenContour(hole), WINDOW_MIN_MARGIN_MM)) {
+    return [
+      issue(
+        "window.outside_panel",
+        t(
+          `\u0E2B\u0E19\u0E49\u0E32\u0E15\u0E48\u0E32\u0E07\u0E15\u0E49\u0E2D\u0E07\u0E2D\u0E22\u0E39\u0E48\u0E43\u0E19\u0E14\u0E49\u0E32\u0E19\u0E17\u0E35\u0E48\u0E40\u0E25\u0E37\u0E2D\u0E01 \u0E2B\u0E48\u0E32\u0E07\u0E02\u0E2D\u0E1A\u0E41\u0E25\u0E30\u0E23\u0E2D\u0E22\u0E1E\u0E31\u0E1A\u0E2D\u0E22\u0E48\u0E32\u0E07\u0E19\u0E49\u0E2D\u0E22 ${WINDOW_MIN_MARGIN_MM} \u0E21\u0E21.`,
+          `The window must sit inside its panel, at least ${WINDOW_MIN_MARGIN_MM} mm from every edge and crease`
+        ),
+        "windowWidth"
+      )
+    ];
+  }
+  return [];
+}
+function materialIssues(style, m, v) {
+  const out = [];
+  if (!style.materials.includes(m.kind)) {
+    out.push(
+      issue(
+        "material.unsupported",
+        t("\u0E27\u0E31\u0E2A\u0E14\u0E38\u0E19\u0E35\u0E49\u0E44\u0E21\u0E48\u0E40\u0E2B\u0E21\u0E32\u0E30\u0E01\u0E31\u0E1A\u0E23\u0E39\u0E1B\u0E41\u0E1A\u0E1A\u0E01\u0E25\u0E48\u0E2D\u0E07\u0E19\u0E35\u0E49", "This material is not made into this box style"),
+        void 0,
+        "warning"
+      )
+    );
+  }
+  const smallest = Math.min(...["length", "width", "height"].map((k2) => num(v, k2, Infinity)));
+  if (Number.isFinite(smallest) && m.caliperMm * 4 > smallest) {
+    out.push(
+      issue(
+        "material.too_thick",
+        t("\u0E27\u0E31\u0E2A\u0E14\u0E38\u0E2B\u0E19\u0E32\u0E40\u0E01\u0E34\u0E19\u0E44\u0E1B\u0E2A\u0E33\u0E2B\u0E23\u0E31\u0E1A\u0E02\u0E19\u0E32\u0E14\u0E19\u0E35\u0E49", "The board is too thick for a box this small"),
+        void 0,
+        "error"
+      )
+    );
+  }
+  return out;
+}
+function defineStyle(input) {
+  const { check: check2, make, ...def } = input;
+  return {
+    ...def,
+    build: (v, m) => make(withDefaults(def.defaults, v), m),
+    validate: (v, m) => {
+      const values = withDefaults(def.defaults, v);
+      const schema = schemaIssues(def.params, values);
+      if (schema.some((i) => i.severity === "error")) return schema;
+      const own = [...materialIssues(def, m, values), ...schema];
+      if (own.some((i) => i.severity === "error")) return own;
+      return [...own, ...check2 ? check2(values, m, make(values, m)) : []];
+    }
+  };
+}
+
+// packages/dieline/src/svgpath.ts
+function parseSvgPath(d, role = "cut") {
+  const tokens = d.match(/[a-zA-Z]|[-+]?(?:\d*\.\d+|\d+\.?)(?:[eE][-+]?\d+)?/g) ?? [];
+  const out = [];
+  let current = [];
+  let pos = [0, 0];
+  let start = [0, 0];
+  let lastControl = null;
+  let lastQuad = null;
+  let cmd = "";
+  let i = 0;
+  const num2 = () => {
+    const v = Number(tokens[i++]);
+    if (!Number.isFinite(v)) throw new Error("Malformed path data");
+    return v;
+  };
+  const close = () => {
+    if (current.length === 0) return;
+    if (dist(pos, start) > 1e-6) current.push(line(pos, start, role));
+    out.push(current);
+    current = [];
+    pos = start;
+  };
+  const push = (e) => {
+    if (dist(e.from, e.to) > 1e-9) current.push(e);
+    pos = e.to;
+  };
+  while (i < tokens.length) {
+    if (/^[a-zA-Z]$/.test(tokens[i])) cmd = tokens[i++];
+    else if (!cmd) throw new Error("Path data must start with a command");
+    const rel = cmd === cmd.toLowerCase();
+    const abs = (x, y) => rel ? [pos[0] + x, pos[1] + y] : [x, y];
+    switch (cmd.toUpperCase()) {
+      case "M": {
+        close();
+        pos = abs(num2(), num2());
+        start = pos;
+        cmd = rel ? "l" : "L";
+        lastControl = lastQuad = null;
+        continue;
+      }
+      case "L":
+        push(line(pos, abs(num2(), num2()), role));
+        lastControl = lastQuad = null;
+        break;
+      case "H": {
+        const x = num2();
+        push(line(pos, [rel ? pos[0] + x : x, pos[1]], role));
+        lastControl = lastQuad = null;
+        break;
+      }
+      case "V": {
+        const y = num2();
+        push(line(pos, [pos[0], rel ? pos[1] + y : y], role));
+        lastControl = lastQuad = null;
+        break;
+      }
+      case "C": {
+        const c1 = abs(num2(), num2());
+        const c2 = abs(num2(), num2());
+        const to = abs(num2(), num2());
+        push(bezier(pos, c1, c2, to, role));
+        lastControl = c2;
+        lastQuad = null;
+        break;
+      }
+      case "S": {
+        const c1 = lastControl ? [2 * pos[0] - lastControl[0], 2 * pos[1] - lastControl[1]] : pos;
+        const c2 = abs(num2(), num2());
+        const to = abs(num2(), num2());
+        push(bezier(pos, c1, c2, to, role));
+        lastControl = c2;
+        lastQuad = null;
+        break;
+      }
+      case "Q":
+      case "T": {
+        const q = cmd.toUpperCase() === "Q" ? abs(num2(), num2()) : lastQuad ? [2 * pos[0] - lastQuad[0], 2 * pos[1] - lastQuad[1]] : pos;
+        const to = abs(num2(), num2());
+        const from = pos;
+        push(
+          bezier(
+            from,
+            [from[0] + 2 / 3 * (q[0] - from[0]), from[1] + 2 / 3 * (q[1] - from[1])],
+            [to[0] + 2 / 3 * (q[0] - to[0]), to[1] + 2 / 3 * (q[1] - to[1])],
+            to,
+            role
+          )
+        );
+        lastQuad = q;
+        lastControl = null;
+        break;
+      }
+      case "A": {
+        const rx = Math.abs(num2());
+        const ry = Math.abs(num2());
+        const rot = num2();
+        const large = num2() !== 0;
+        const sweep = num2() !== 0;
+        const to = abs(num2(), num2());
+        for (const e of svgArc(pos, to, rx, ry, rot, large, sweep, role)) push(e);
+        lastControl = lastQuad = null;
+        break;
+      }
+      case "Z":
+        close();
+        lastControl = lastQuad = null;
+        cmd = "";
+        continue;
+      default:
+        throw new Error(`Unsupported path command ${cmd}`);
+    }
+  }
+  close();
+  return out;
+}
+function svgArc(p0, p1, rxIn, ryIn, rotDeg, large, sweep, role) {
+  if (dist(p0, p1) < 1e-9) return [];
+  if (rxIn === 0 || ryIn === 0) return [line(p0, p1, role)];
+  const phi = rotDeg * Math.PI / 180;
+  const cos = Math.cos(phi);
+  const sin = Math.sin(phi);
+  const dx = (p0[0] - p1[0]) / 2;
+  const dy = (p0[1] - p1[1]) / 2;
+  const x1 = cos * dx + sin * dy;
+  const y1 = -sin * dx + cos * dy;
+  let rx = rxIn;
+  let ry = ryIn;
+  const lambda = x1 * x1 / (rx * rx) + y1 * y1 / (ry * ry);
+  if (lambda > 1) {
+    rx *= Math.sqrt(lambda);
+    ry *= Math.sqrt(lambda);
+  }
+  const num2 = rx * rx * ry * ry - rx * rx * y1 * y1 - ry * ry * x1 * x1;
+  const den = rx * rx * y1 * y1 + ry * ry * x1 * x1;
+  const coef = (large === sweep ? -1 : 1) * Math.sqrt(Math.max(0, num2 / den));
+  const cx1 = coef * rx * y1 / ry;
+  const cy1 = -coef * ry * x1 / rx;
+  const cx = cos * cx1 - sin * cy1 + (p0[0] + p1[0]) / 2;
+  const cy = sin * cx1 + cos * cy1 + (p0[1] + p1[1]) / 2;
+  if (Math.abs(rx - ry) < 1e-9) {
+    return [arc(p0, p1, [cx, cy], sweep, role)];
+  }
+  const angle = (ux, uy, vx, vy) => {
+    const a = Math.atan2(ux * vy - uy * vx, ux * vx + uy * vy);
+    return a;
+  };
+  const t1 = angle(1, 0, (x1 - cx1) / rx, (y1 - cy1) / ry);
+  let dt = angle((x1 - cx1) / rx, (y1 - cy1) / ry, (-x1 - cx1) / rx, (-y1 - cy1) / ry);
+  if (!sweep && dt > 0) dt -= 2 * Math.PI;
+  if (sweep && dt < 0) dt += 2 * Math.PI;
+  const n2 = Math.max(1, Math.ceil(Math.abs(dt) / (Math.PI / 2)));
+  const step = dt / n2;
+  const k2 = 4 / 3 * Math.tan(step / 4);
+  const pt = (a) => [
+    cx + rx * Math.cos(a) * cos - ry * Math.sin(a) * sin,
+    cy + rx * Math.cos(a) * sin + ry * Math.sin(a) * cos
+  ];
+  const deriv = (a) => [
+    -rx * Math.sin(a) * cos - ry * Math.cos(a) * sin,
+    -rx * Math.sin(a) * sin + ry * Math.cos(a) * cos
+  ];
+  const out = [];
+  for (let j = 0; j < n2; j++) {
+    const a0 = t1 + step * j;
+    const a1 = a0 + step;
+    const s = j === 0 ? p0 : pt(a0);
+    const e = j === n2 - 1 ? p1 : pt(a1);
+    const d0 = deriv(a0);
+    const d1 = deriv(a1);
+    out.push(bezier(s, [s[0] + k2 * d0[0], s[1] + k2 * d0[1]], [e[0] - k2 * d1[0], e[1] - k2 * d1[1]], e, role));
+  }
+  return out;
+}
+
+// packages/dieline/src/modules/body/flat.ts
+var SAMPLE_PATH = "M20 0 L25 14 L40 15 L28 24 L32 40 L20 31 L8 40 L12 24 L0 15 L15 14 Z";
+function customOutline(path, size) {
+  let contours;
+  try {
+    contours = parseSvgPath(path);
+  } catch {
+    return null;
+  }
+  if (contours.length === 0) return null;
+  const measured = contours.map((c2) => ({ c: c2, b: boundsOf(flattenContour(c2, 0.5)) }));
+  measured.sort((p, q) => q.b.width * q.b.height - p.b.width * p.b.height);
+  const { c, b } = measured[0];
+  const longest = Math.max(b.width, b.height);
+  if (!(longest > 0)) return null;
+  const k2 = size / longest;
+  return c.map((e) => mapEdge(e, (p) => [(p[0] - b.x) * k2, (p[1] - b.y) * k2]));
+}
+function tagOutline(v) {
+  const w = num(v, "width", 40);
+  const h = num(v, "length", 60);
+  const r = Math.min(num(v, "cornerSize", 5), w / 3, h / 3);
+  const corners = str(v, "corners", "chamfer");
+  if (corners === "rounded") return roundedRectangle(0, 0, w, h, r);
+  if (corners === "square" || r <= 0)
+    return polygon([
+      [0, 0],
+      [w, 0],
+      [w, h],
+      [0, h]
+    ]);
+  return [
+    line([r, 0], [w - r, 0]),
+    line([w - r, 0], [w, r]),
+    line([w, r], [w, h]),
+    line([w, h], [0, h]),
+    line([0, h], [0, r]),
+    line([0, r], [r, 0])
+  ];
+}
+function outlineOf(shape, v) {
+  switch (shape) {
+    case "rectangle":
+      return rectangle(0, 0, num(v, "length", 100), num(v, "width", 60));
+    case "rounded_rectangle":
+      return roundedRectangle(0, 0, num(v, "length", 100), num(v, "width", 60), num(v, "cornerRadius", 6));
+    case "circle": {
+      const r = num(v, "diameter", 50) / 2;
+      return ellipse(r, r, r, r);
+    }
+    case "oval": {
+      const rx = num(v, "length", 80) / 2;
+      const ry = num(v, "width", 50) / 2;
+      return ellipse(rx, ry, rx, ry);
+    }
+    case "custom_path":
+      return customOutline(str(v, "path", SAMPLE_PATH), num(v, "size", 60)) ?? rectangle(0, 0, num(v, "size", 60), num(v, "size", 60));
+    case "tag":
+      return tagOutline(v);
+  }
+}
+var holesOf = (ctx, parts) => parts.features.flatMap((f) => f.def.slot === "feature" ? f.def.flatHoles?.(ctx, f.cfg) ?? [] : []);
+var flatShape = {
+  id: "flatShape",
+  slot: "body",
+  kind: "flat",
+  status: "implemented",
+  folds: false,
+  label: t(
+    "\u0E0A\u0E34\u0E49\u0E19\u0E07\u0E32\u0E19\u0E41\u0E1A\u0E19 (\u0E2A\u0E35\u0E48\u0E40\u0E2B\u0E25\u0E35\u0E48\u0E22\u0E21 \u0E21\u0E38\u0E21\u0E21\u0E19 \u0E27\u0E07\u0E01\u0E25\u0E21 \u0E27\u0E07\u0E23\u0E35 \u0E23\u0E39\u0E1B\u0E2D\u0E34\u0E2A\u0E23\u0E30 \u0E1B\u0E49\u0E32\u0E22)",
+    "Flat shape (rectangle, rounded, circle, oval, custom, tag)"
+  ),
+  params: ["length", "width", "cornerRadius", "diameter", "size", "path", "corners", "cornerSize"],
+  processes: ["die_cut"],
+  contributes: { kinds: ["flat"], roles: ["cut"] },
+  constraints: (cfg) => cfg.shape === "rounded_rectangle" ? [
+    {
+      id: "flatShape.corner_radius",
+      code: "corner.too_large",
+      severity: "warning",
+      param: "cornerRadius",
+      require: "cornerRadius <= min(length, width) / 2",
+      message: t(
+        "\u0E23\u0E31\u0E28\u0E21\u0E35\u0E21\u0E38\u0E21\u0E40\u0E01\u0E34\u0E19\u0E04\u0E23\u0E36\u0E48\u0E07\u0E2B\u0E19\u0E36\u0E48\u0E07\u0E02\u0E2D\u0E07\u0E14\u0E49\u0E32\u0E19\u0E17\u0E35\u0E48\u0E2A\u0E31\u0E49\u0E19\u0E01\u0E27\u0E48\u0E32",
+        "The corner radius is more than half the shorter side"
+      )
+    }
+  ] : [],
+  check: (ctx, cfg) => cfg.shape === "custom_path" && !customOutline(str(ctx.v, "path", SAMPLE_PATH), num(ctx.v, "size", 60)) ? [issue("path.invalid", t("\u0E2D\u0E48\u0E32\u0E19\u0E40\u0E2A\u0E49\u0E19\u0E23\u0E2D\u0E1A\u0E23\u0E39\u0E1B\u0E08\u0E32\u0E01 SVG \u0E44\u0E21\u0E48\u0E44\u0E14\u0E49", "The SVG outline could not be read"), "path")] : [],
+  build(ctx, cfg, parts) {
+    const shape = cfg.shape;
+    const holes = holesOf(ctx, parts);
+    return flatDieline(
+      ctx.styleId,
+      outlineOf(shape, ctx.v),
+      shape === "tag" ? "tag" : "label",
+      holes.length ? { holes } : {}
+    );
+  }
+};
+var band = {
+  id: "band",
+  slot: "body",
+  kind: "flat",
+  status: "implemented",
+  folds: false,
+  label: t("\u0E2A\u0E32\u0E22\u0E04\u0E32\u0E14 (\u0E41\u0E16\u0E1A\u0E17\u0E31\u0E1A\u0E01\u0E32\u0E27\u0E17\u0E35\u0E48\u0E1B\u0E25\u0E32\u0E22)", "Band glued on its overlap"),
+  params: ["length", "width", "overlap"],
+  processes: ["die_cut"],
+  contributes: { kinds: ["flat"], roles: ["cut", "glue_area"] },
+  build(ctx) {
+    const { v } = ctx;
+    const l = num(v, "length", 400);
+    const w = num(v, "width", 50);
+    const o = num(v, "overlap", 15);
+    const i = Math.min(GLUE_AREA_INSET_MM, o / 4, w / 4);
+    return flatDieline(ctx.styleId, rectangle(0, 0, l, w), "band", {
+      marks: polygon(
+        [
+          [l - o + i, i],
+          [l - i, i],
+          [l - i, w - i],
+          [l - o + i, w - i]
+        ],
+        "glue_area"
+      )
+    });
+  }
+};
+var cone = {
+  id: "cone",
+  slot: "body",
+  kind: "flat",
+  status: "implemented",
+  folds: false,
+  label: t("\u0E1B\u0E25\u0E2D\u0E01\u0E17\u0E23\u0E07\u0E01\u0E23\u0E27\u0E22 (\u0E04\u0E25\u0E35\u0E48\u0E40\u0E1B\u0E47\u0E19\u0E2A\u0E48\u0E27\u0E19\u0E42\u0E04\u0E49\u0E07)", "Cone frustum band (unrolled sector)"),
+  params: ["topDiameter", "bottomDiameter", "height", "overlap"],
+  processes: ["die_cut"],
+  contributes: { kinds: ["flat"], roles: ["cut", "glue_area"] },
+  constraints: [
+    {
+      id: "cone.inverted",
+      code: "sleeve.inverted",
+      severity: "error",
+      param: "bottomDiameter",
+      require: "bottomDiameter <= topDiameter",
+      message: t("\u0E01\u0E49\u0E19\u0E41\u0E01\u0E49\u0E27\u0E43\u0E2B\u0E0D\u0E48\u0E01\u0E27\u0E48\u0E32\u0E1B\u0E32\u0E01\u0E41\u0E01\u0E49\u0E27 \u0E2A\u0E25\u0E31\u0E1A\u0E04\u0E48\u0E32\u0E01\u0E31\u0E19", "The base is wider than the rim \u2014 swap them")
+    }
+  ],
+  build(ctx) {
+    const { v } = ctx;
+    const D = num(v, "topDiameter", 90);
+    const d = num(v, "bottomDiameter", 60);
+    const h = num(v, "height", 70);
+    const overlap = num(v, "overlap", 10);
+    if (D - d < 0.5) {
+      const w = Math.PI * D + overlap;
+      const inset = Math.min(GLUE_AREA_INSET_MM, overlap / 4);
+      return flatDieline(ctx.styleId, rectangle(0, 0, w, h), "band", {
+        marks: polygon(
+          [
+            [w - overlap + inset, inset],
+            [w - inset, inset],
+            [w - inset, h - inset],
+            [w - overlap + inset, h - inset]
+          ],
+          "glue_area"
+        )
+      });
+    }
+    const s = Math.sqrt(h * h + ((D - d) / 2) ** 2);
+    const inner = s * d / (D - d);
+    const outer = inner + s;
+    const sweep = (Math.PI * D + overlap) / outer;
+    const a0 = -Math.PI / 2 - sweep / 2;
+    const a1 = -Math.PI / 2 + sweep / 2;
+    const at = (r, a) => [r * Math.cos(a), r * Math.sin(a)];
+    const outline = [
+      arc(at(outer, a0), at(outer, a1), [0, 0], true),
+      line(at(outer, a1), at(inner, a1)),
+      arc(at(inner, a1), at(inner, a0), [0, 0], false),
+      line(at(inner, a0), at(outer, a0))
+    ];
+    const g = overlap / outer;
+    const gi = GLUE_AREA_INSET_MM;
+    const marks = polygon(
+      [
+        at(outer - gi, a1 - g),
+        at(outer - gi, a1 - gi / outer),
+        at(inner + gi, a1 - gi / inner),
+        at(inner + gi, a1 - g)
+      ],
+      "glue_area"
+    );
+    return flatDieline(ctx.styleId, outline, "band", { marks });
+  }
+};
+
+// packages/dieline/src/construct/tube.ts
+function edgeRun(x0, x1, y, spans, notches, notchInto, profile) {
+  if (profile && profile.length) {
+    const pts = [[x0, y], ...profile, [x1, y]];
+    return pts.slice(1).map((p, i) => line(pts[i], p, "cut"));
+  }
+  const out = [];
+  let cursor = x0;
+  const sorted = [...spans].sort((a, b) => a.span[0] - b.span[0]);
+  const freeRun = (a, b) => {
+    if (b - a < 1e-9) return;
+    const inside = notches.filter((n2) => n2.center - n2.radius > a + 1e-9 && n2.center + n2.radius < b - 1e-9).sort((p, q) => p.center - q.center);
+    let at = a;
+    for (const n2 of inside) {
+      out.push(line([at, y], [n2.center - n2.radius, y], "cut"));
+      out.push(arc([n2.center - n2.radius, y], [n2.center + n2.radius, y], [n2.center, y], notchInto === -1, "cut"));
+      at = n2.center + n2.radius;
+    }
+    out.push(line([at, y], [b, y], "cut"));
+  };
+  for (const s of sorted) {
+    freeRun(cursor, s.span[0]);
+    out.push(line([s.span[0], y], [s.span[1], y], s.role));
+    cursor = s.span[1];
+  }
+  freeRun(cursor, x1);
+  return out;
+}
+var reversed = (edges) => [...edges].reverse().map(
+  (e) => e.kind === "arc" ? { ...e, from: e.to, to: e.from, clockwise: !e.clockwise } : e.kind === "line" ? { ...e, from: e.to, to: e.from } : { ...e, from: e.to, to: e.from, c1: e.c2, c2: e.c1 }
+);
+function glueFlap(id, x, width, depth, side) {
+  const taper = Math.min(width * Math.tan(GLUE_FLAP_TAPER_DEG * Math.PI / 180), depth / 4);
+  const outer = side === "left" ? x - width : x + width;
+  const pts = side === "left" ? [
+    [x, 0],
+    [outer, taper],
+    [outer, depth - taper],
+    [x, depth]
+  ] : [
+    [x, depth],
+    [outer, depth - taper],
+    [outer, taper],
+    [x, 0]
+  ];
+  const inset = Math.min(GLUE_AREA_INSET_MM, width / 4);
+  const gx0 = Math.min(x, outer) + inset;
+  const gx1 = Math.max(x, outer) - inset;
+  const marks = gx1 - gx0 > 1 && depth - 2 * (taper + inset) > 1 ? polygon(
+    [
+      [gx0, taper + inset],
+      [gx1, taper + inset],
+      [gx1, depth - taper - inset],
+      [gx0, depth - taper - inset]
+    ],
+    "glue_area"
+  ) : [];
+  return face(id, "glue_flap", "glue_flap", polygon(pts, ["cut", "cut", "cut", "crease"]), { marks });
+}
+function buildTube(spec) {
+  const glue = spec.glue ?? 0;
+  const spans = [];
+  let x = glue;
+  spec.panels.forEach((p, index) => {
+    spans.push({ id: p.id, label: p.label, index, x0: x, x1: x + p.width });
+    x += p.width;
+  });
+  const depth = spec.depth;
+  const faces = [];
+  const top = spec.top?.({ panels: spans, end: "top" }) ?? { attachments: [] };
+  const bottomLocal = spec.bottom?.({ panels: spans, end: "bottom" }) ?? { attachments: [] };
+  const flipDown = (p) => [p[0], depth - p[1]];
+  const down = (f) => ({
+    ...f,
+    outline: f.outline.map((e) => mapEdge(e, flipDown, true)),
+    holes: f.holes.map((h) => h.map((e) => mapEdge(e, flipDown, true))),
+    marks: f.marks.map((e) => mapEdge(e, flipDown, true))
+  });
+  const bottom = {
+    attachments: bottomLocal.attachments.map((a) => ({ ...a, face: down(a.face) })),
+    faces: (bottomLocal.faces ?? []).map(down),
+    notches: bottomLocal.notches ?? [],
+    profiles: Object.fromEntries(
+      Object.entries(bottomLocal.profiles ?? {}).map(([k2, pts]) => [k2, pts.map(flipDown)])
+    )
+  };
+  if (glue > 0) faces.push(glueFlap(spec.glueId ?? "glue", glue, glue, depth, "left"));
+  for (const s of spans) {
+    const within = (a) => a.span[0] >= s.x0 - 1e-9 && a.span[1] <= s.x1 + 1e-9;
+    const topSpans = top.attachments.filter(within).map((a) => ({ span: a.span, role: a.role ?? "crease" }));
+    const bottomSpans = bottom.attachments.filter(within).map((a) => ({ span: a.span, role: a.role ?? "crease" }));
+    const hasLeft = s.index > 0 || glue > 0;
+    const hasRight = s.index < spans.length - 1;
+    const outline = [
+      ...edgeRun(
+        s.x0,
+        s.x1,
+        0,
+        topSpans,
+        (top.notches ?? []).filter((n2) => n2.panel === s.index),
+        1,
+        top.profiles?.[s.index]
+      ),
+      line([s.x1, 0], [s.x1, depth], hasRight ? "crease" : "cut"),
+      ...reversed(
+        edgeRun(
+          s.x0,
+          s.x1,
+          depth,
+          bottomSpans,
+          bottom.notches.filter((n2) => n2.panel === s.index),
+          -1,
+          bottom.profiles[s.index]
+        )
+      ),
+      line([s.x0, depth], [s.x0, 0], hasLeft ? "crease" : "cut")
+    ];
+    const holes = spec.holes?.({ ...s, y0: 0, y1: depth }) ?? [];
+    faces.push(face(s.id, s.label, "panel", outline, { holes }));
+  }
+  faces.push(...top.attachments.map((a) => a.face), ...top.faces ?? []);
+  faces.push(...bottom.attachments.map((a) => a.face), ...bottom.faces);
+  if (!spec.glueRight) return faces;
+  const width = x;
+  const mirror = mirrorX(width / 2);
+  return faces.map((f) => ({
+    ...f,
+    outline: f.outline.map((e) => mapEdge(e, mirror, true)),
+    holes: f.holes.map((h) => h.map((e) => mapEdge(e, mirror, true))),
+    marks: f.marks.map((e) => mapEdge(e, mirror, true))
+  }));
+}
+
+// packages/dieline/src/modules/body/pillow.ts
+function bulge(a, b, sagitta, up, role) {
+  const c = b[0] - a[0];
+  const r = c * c / (8 * sagitta) + sagitta / 2;
+  const xm = (a[0] + b[0]) / 2;
+  const center = up ? [xm, a[1] - sagitta + r] : [xm, a[1] + sagitta - r];
+  return arc(a, b, center, up, role);
+}
+var reverse = (e) => ({ ...e, from: e.to, to: e.from, clockwise: !e.clockwise });
+var pillowTube = {
+  id: "pillowTube",
+  slot: "body",
+  kind: "special",
+  status: "implemented",
+  folds: true,
+  label: t("\u0E15\u0E31\u0E27\u0E01\u0E25\u0E48\u0E2D\u0E07\u0E2B\u0E21\u0E2D\u0E19 (\u0E1B\u0E25\u0E32\u0E22\u0E42\u0E04\u0E49\u0E07\u0E1E\u0E31\u0E1A)", "Pillow tube with curved ends"),
+  params: ["length", "width", "thickness", "glueWidth", "grain"],
+  processes: ["die_cut", "folder_gluer_straight"],
+  contributes: { kinds: ["panel", "flap", "glue_flap"], roles: ["cut", "crease", "glue_area"] },
+  build(ctx) {
+    const { v, m } = ctx;
+    const T = num(v, "thickness", 30);
+    const sc = T / 3;
+    const L = num(v, "length", 150) - 2 * sc;
+    const W = num(v, "width", 100) + m.caliperMm;
+    const g = num(v, "glueWidth", glueWidthFor(W, m));
+    const x = [g, g + W, g + 2 * W];
+    const faces = [glueFlap("glue", g, g, L, "left")];
+    ["front", "back"].forEach((id, i) => {
+      const x0 = x[i];
+      const x1 = x[i + 1];
+      const topCrease = bulge([x0, 0], [x1, 0], sc, true, "crease");
+      const bottomCrease = bulge([x0, L], [x1, L], sc, false, "crease");
+      faces.push(
+        face(id, id === "front" ? "front" : "back", "panel", [
+          topCrease,
+          line([x1, 0], [x1, L], i === 0 ? "crease" : "cut"),
+          reverse(bottomCrease),
+          line([x0, L], [x0, 0], "crease")
+        ]),
+        face(`end-${id}-top`, "end_flap", "flap", [bulge([x0, 0], [x1, 0], T, true, "cut"), reverse(topCrease)]),
+        face(`end-${id}-bottom`, "end_flap", "flap", [reverse(bulge([x0, L], [x1, L], T, false, "cut")), bottomCrease])
+      );
+    });
+    return assemble(ctx.styleId, [piece("blank", "blank", faces, grainOn(v, faces, "front"))]);
+  },
+  hinges: () => ({
+    roots: { blank: "front" },
+    angles: { back: 180, glue: 180, "end-back-top": -90, "end-back-bottom": -90 }
+  })
+};
+
+// packages/dieline/src/modules/body/pouch.ts
+function panelsOf(type, v) {
+  const w = num(v, "width", 120);
+  const l = num(v, "length", 180);
+  const s = num(v, "gusset", 40);
+  const b = num(v, "bottom", 40);
+  const cs = num(v, "centerSeal", 10);
+  switch (type) {
+    case "three_side":
+      return [
+        { id: "front", label: "front", size: l },
+        { id: "back", label: "back", size: l }
+      ];
+    case "standing":
+      return [
+        { id: "front", label: "front", size: l },
+        { id: "bottom-a", label: "bottom", size: b / 2 },
+        { id: "bottom-b", label: "bottom", size: b / 2 },
+        { id: "back", label: "back", size: l }
+      ];
+    case "four_side":
+      return [
+        { id: "front", label: "front", size: w },
+        { id: "gusset-right", label: "side", size: s },
+        { id: "back", label: "back", size: w },
+        { id: "gusset-left", label: "side", size: s }
+      ];
+    case "center_seal":
+      return [
+        { id: "fin-left", label: "glue_flap", size: cs },
+        { id: "back-left", label: "back", size: w / 2 },
+        { id: "front", label: "front", size: w },
+        { id: "back-right", label: "back", size: w / 2 },
+        { id: "fin-right", label: "glue_flap", size: cs }
+      ];
+    case "center_seal_gusset":
+      return [
+        { id: "fin-left", label: "glue_flap", size: cs },
+        { id: "back-left", label: "back", size: w / 2 },
+        { id: "gusset-left", label: "side", size: s },
+        { id: "front", label: "front", size: w },
+        { id: "gusset-right", label: "side", size: s },
+        { id: "back-right", label: "back", size: w / 2 },
+        { id: "fin-right", label: "glue_flap", size: cs }
+      ];
+  }
+}
+function build(styleId, v) {
+  const type = str(v, "pouchType", "three_side");
+  const panels = panelsOf(type, v);
+  const seal2 = num(v, "sealWidth", 8);
+  const vertical = type === "three_side" || type === "standing";
+  const across = vertical ? num(v, "width", 120) : num(v, "length", 180);
+  const faces = [];
+  let at = 0;
+  panels.forEach((p, i) => {
+    const first = i === 0;
+    const last = i === panels.length - 1;
+    const outline = vertical ? rectangle(0, at, across, p.size, { top: first ? "cut" : "crease", bottom: last ? "cut" : "crease" }) : rectangle(at, 0, p.size, across, { left: first ? "cut" : "crease", right: last ? "cut" : "crease" });
+    const marks = [];
+    const band2 = (x, y, w, h) => {
+      if (w > 1 && h > 1)
+        marks.push(
+          ...polygon(
+            [
+              [x, y],
+              [x + w, y],
+              [x + w, y + h],
+              [x, y + h]
+            ],
+            "glue_area"
+          )
+        );
+    };
+    if (p.id.startsWith("fin")) band2(at + 0.5, 0.5, p.size - 1, across - 1);
+    else if (vertical) {
+      band2(0.5, at + 0.5, seal2, p.size - 1);
+      band2(across - seal2 - 0.5, at + 0.5, seal2, p.size - 1);
+      if (first) band2(seal2 + 0.5, at + 0.5, across - 2 * seal2 - 1, seal2);
+      if (last) band2(seal2 + 0.5, at + p.size - seal2 - 0.5, across - 2 * seal2 - 1, seal2);
+    } else {
+      band2(at + 0.5, 0.5, p.size - 1, seal2);
+      band2(at + 0.5, across - seal2 - 0.5, p.size - 1, seal2);
+    }
+    faces.push(face(p.id, p.label, "flat", outline, { marks }));
+    at += p.size;
+  });
+  return assemble(styleId, [piece("blank", "blank", faces)]);
+}
+var pouchWeb = {
+  id: "pouchWeb",
+  slot: "body",
+  kind: "flat",
+  status: "implemented",
+  folds: false,
+  label: t("\u0E41\u0E1C\u0E48\u0E19\u0E1F\u0E34\u0E25\u0E4C\u0E21\u0E0B\u0E2D\u0E07 (\u0E41\u0E1C\u0E07 \u0E02\u0E49\u0E32\u0E07\u0E0B\u0E2D\u0E07 \u0E0B\u0E35\u0E25)", "Pouch web (panels, gussets, seals)"),
+  params: ["pouchType", "width", "length", "gusset", "bottom", "centerSeal", "sealWidth"],
+  processes: ["pouch_making"],
+  contributes: { kinds: ["flat"], roles: ["cut", "crease", "glue_area"] },
+  constraints: [
+    {
+      id: "pouchWeb.seal_width",
+      code: "seal.too_wide",
+      severity: "error",
+      param: "sealWidth",
+      require: "sealWidth * 2 < min(width, length)",
+      message: t("\u0E23\u0E2D\u0E22\u0E0B\u0E35\u0E25\u0E01\u0E27\u0E49\u0E32\u0E07\u0E40\u0E01\u0E34\u0E19\u0E02\u0E19\u0E32\u0E14\u0E0B\u0E2D\u0E07", "The seals are wider than the pouch")
+    },
+    {
+      id: "pouchWeb.seal_range",
+      code: "mfg.seal_width",
+      severity: "error",
+      param: "sealWidth",
+      require: "rule.seal.max == 0 or (sealWidth >= rule.seal.min and sealWidth <= rule.seal.max)",
+      message: t("\u0E04\u0E27\u0E32\u0E21\u0E01\u0E27\u0E49\u0E32\u0E07\u0E23\u0E2D\u0E22\u0E0B\u0E35\u0E25\u0E2D\u0E22\u0E39\u0E48\u0E19\u0E2D\u0E01\u0E0A\u0E48\u0E27\u0E07\u0E17\u0E35\u0E48\u0E40\u0E04\u0E23\u0E37\u0E48\u0E2D\u0E07\u0E17\u0E33\u0E44\u0E14\u0E49", "The seal width is outside what a pouch line makes"),
+      stage: "manufacturing"
+    }
+  ],
+  build: (ctx) => build(ctx.styleId, ctx.v)
+};
+
+// packages/dieline/src/construct/tray.ts
+function buildTray(spec) {
+  const { length: L, width: W, height: H } = spec;
+  const x0 = H;
+  const x1 = H + L;
+  const y0 = H;
+  const y1 = H + W;
+  const cf = Math.max(0, Math.min(spec.cornerFlap, H - 0.5, (L - 1) / 2, (W - 1) / 2));
+  const holes = (id) => spec.holes?.[id] ?? [];
+  const extraBack = spec.wallExtras?.["wall-back"]?.([
+    [x1, 0],
+    [x0, 0]
+  ]) ?? [];
+  const extraFront = spec.wallExtras?.["wall-front"]?.([
+    [x0, y1 + H],
+    [x1, y1 + H]
+  ]) ?? [];
+  const extraLeft = spec.wallExtras?.["wall-left"]?.([
+    [0, y0],
+    [0, y1]
+  ]) ?? [];
+  const extraRight = spec.wallExtras?.["wall-right"]?.([
+    [x1 + H, y1],
+    [x1 + H, y0]
+  ]) ?? [];
+  const faces = [
+    face(
+      "base",
+      spec.labels?.base ?? "base",
+      "base",
+      rectangle(x0, y0, L, W, { top: "crease", right: "crease", bottom: "crease", left: "crease" }),
+      { holes: holes("base") }
+    ),
+    face(
+      "wall-back",
+      "wall_back",
+      "wall",
+      rectangle(x0, 0, L, H, { top: extraBack.length ? "crease" : "cut", bottom: "crease" }),
+      { holes: holes("wall-back") }
+    ),
+    face(
+      "wall-front",
+      "wall_front",
+      "wall",
+      rectangle(x0, y1, L, H, { top: "crease", bottom: extraFront.length ? "crease" : "cut" }),
+      { holes: holes("wall-front") }
+    ),
+    face(
+      "wall-left",
+      "wall_left",
+      "wall",
+      rectangle(0, y0, H, W, {
+        top: cf > 0 ? "crease" : "cut",
+        right: "crease",
+        bottom: cf > 0 ? "crease" : "cut",
+        left: extraLeft.length ? "crease" : "cut"
+      }),
+      { holes: holes("wall-left") }
+    ),
+    face(
+      "wall-right",
+      "wall_right",
+      "wall",
+      rectangle(x1, y0, H, W, {
+        top: cf > 0 ? "crease" : "cut",
+        right: extraRight.length ? "crease" : "cut",
+        bottom: cf > 0 ? "crease" : "cut",
+        left: "crease"
+      }),
+      { holes: holes("wall-right") }
+    )
+  ];
+  if (cf > 0) {
+    const flap = (id, hinge, dir, wallSide) => {
+      const [a, b] = hinge;
+      const y = a[1];
+      const tip = y - dir * cf;
+      const nearWall = wallSide === "left" ? b[0] : a[0];
+      const farEnd = wallSide === "left" ? a[0] : b[0];
+      const inset = Math.min(cf, Math.abs(b[0] - a[0]) - 0.5);
+      const pts = wallSide === "left" ? [
+        [farEnd, y],
+        [farEnd, tip],
+        [nearWall - inset, tip],
+        [nearWall, y]
+      ] : [
+        [nearWall, y],
+        [nearWall + inset, tip],
+        [farEnd, tip],
+        [farEnd, y]
+      ];
+      const edges = polygon(pts, ["cut", "cut", "cut", "crease"]);
+      return face(id, "corner_flap", "flap", edges);
+    };
+    faces.push(
+      flap(
+        "corner-left-top",
+        [
+          [0, y0],
+          [H, y0]
+        ],
+        1,
+        "left"
+      ),
+      flap(
+        "corner-left-bottom",
+        [
+          [0, y1],
+          [H, y1]
+        ],
+        -1,
+        "left"
+      ),
+      flap(
+        "corner-right-top",
+        [
+          [x1, y0],
+          [x1 + H, y0]
+        ],
+        1,
+        "right"
+      ),
+      flap(
+        "corner-right-bottom",
+        [
+          [x1, y1],
+          [x1 + H, y1]
+        ],
+        -1,
+        "right"
+      )
+    );
+  }
+  faces.push(...extraBack, ...extraFront, ...extraLeft, ...extraRight);
+  return faces;
+}
+
+// packages/dieline/src/modules/body/tray.ts
+var WALLS = ["wall-back", "wall-front", "wall-left", "wall-right"];
+var tray = {
+  id: "tray",
+  slot: "body",
+  kind: "tray",
+  status: "implemented",
+  folds: true,
+  label: t("\u0E16\u0E32\u0E14 (\u0E10\u0E32\u0E19 + \u0E1C\u0E19\u0E31\u0E07 4 \u0E14\u0E49\u0E32\u0E19, \u0E1B\u0E35\u0E01\u0E01\u0E32\u0E27\u0E21\u0E38\u0E21)", "Tray (base, four walls, glued corners)"),
+  params: ["grain"],
+  processes: ["die_cut", "folder_gluer_corner"],
+  contributes: { kinds: ["base", "wall", "flap"], roles: ["cut", "crease"] },
+  presets: {
+    /** Inside L × W × H: base + t each way, walls + t (one closure layer, the base). */
+    glued: {
+      dims: {
+        trayLength: "length + a.panel",
+        trayWidth: "width + a.panel",
+        trayHeight: "height + a.trayDepth",
+        cornerFlap: "cornerFlap ?? min(trayHeight * C.TRAY_CORNER_FLAP_SHARE, C.TRAY_CORNER_FLAP_MAX_MM)"
+      },
+      length: "trayLength",
+      width: "trayWidth",
+      height: "trayHeight",
+      cornerFlap: "cornerFlap",
+      grain: "base"
+    }
+  },
+  build(ctx, cfg, parts) {
+    const frame = {
+      length: ctx.num(cfg.length),
+      width: ctx.num(cfg.width),
+      height: ctx.num(cfg.height)
+    };
+    const extras = [];
+    if (parts.top?.def.slot === "closure" && parts.top.def.tray)
+      extras.push(parts.top.def.tray(ctx, parts.top.cfg, frame));
+    for (const f of parts.features)
+      if (f.def.slot === "feature" && f.def.tray) extras.push(f.def.tray(ctx, f.cfg, frame));
+    const wallExtras = {};
+    for (const w of WALLS) {
+      const faces2 = extras.flatMap((e) => e[w] ?? []);
+      if (faces2.length) wallExtras[w] = () => faces2;
+    }
+    const faces = buildTray({ ...frame, cornerFlap: ctx.num(cfg.cornerFlap), wallExtras });
+    const p = cfg.piece ?? { id: "blank", label: "blank" };
+    return assemble(ctx.styleId, [piece(p.id, p.label, faces, grainOn(ctx.v, faces, cfg.grain))]);
+  },
+  hinges: () => ({ roots: { blank: "base" }, upright: "base" })
+};
+
+// packages/dieline/src/modules/body/tube.ts
+var closureFor = (ctx, parts, end) => {
+  const use = parts[end];
+  let closure = use?.def.slot === "closure" ? use.def.tube?.(ctx, use.cfg, end, parts) : void 0;
+  for (const f of parts.features) {
+    if (f.def.slot === "feature" && f.def.wrapClosure && f.cfg.end === end && closure) {
+      closure = f.def.wrapClosure(ctx, f.cfg, end, closure);
+    }
+  }
+  return closure;
+};
+var pieceOf = (cfg) => cfg.piece ?? { id: "blank", label: "blank" };
+var tube = {
+  id: "tube",
+  slot: "body",
+  kind: "tube",
+  status: "implemented",
+  folds: true,
+  label: t("\u0E15\u0E31\u0E27\u0E01\u0E25\u0E48\u0E2D\u0E07\u0E17\u0E23\u0E07\u0E17\u0E48\u0E2D (\u0E41\u0E1C\u0E07\u0E15\u0E48\u0E2D\u0E01\u0E31\u0E19 + \u0E1B\u0E35\u0E01\u0E01\u0E32\u0E27)", "Tube of panels with a glue flap"),
+  params: ["glueWidth", "glueSide", "grain"],
+  processes: ["die_cut", "folder_gluer_straight"],
+  contributes: { kinds: ["panel", "glue_flap"], roles: ["cut", "crease", "glue_area"] },
+  presets: {
+    /** Four panels closed at both ends (ADR-0008 compensation: panel + t, depth + 2t, glue side − t). */
+    carton: {
+      dims: {
+        front: "length + a.panel",
+        side: "width + a.panel",
+        closingSide: "side - a.gluePanel",
+        depth: "height + a.depth",
+        glue: "glueWidth ?? glueWidthFor(width)"
+      },
+      panels: [
+        { id: "front", label: "front", width: "front" },
+        { id: "right", label: "right", width: "side" },
+        { id: "back", label: "back", width: "front" },
+        { id: "left", label: "left", width: "closingSide" }
+      ],
+      depth: "depth",
+      glue: "glue",
+      glueRight: "glueSide == 'right'",
+      grain: "front",
+      root: "front"
+    }
+  },
+  build(ctx, cfg, parts) {
+    const panels = cfg.panels.map((p2) => ({
+      id: p2.id,
+      label: p2.label,
+      width: ctx.num(p2.width)
+    }));
+    const features = parts.features.filter((f) => f.def.slot === "feature" && f.def.tubeHoles);
+    const faces = buildTube({
+      panels,
+      depth: ctx.num(cfg.depth),
+      glue: ctx.num(cfg.glue ?? 0),
+      glueId: cfg.glueId,
+      glueRight: cfg.glueRight === void 0 ? void 0 : ctx.test(cfg.glueRight),
+      top: closureFor(ctx, parts, "top"),
+      bottom: closureFor(ctx, parts, "bottom"),
+      ...features.length ? {
+        holes: (p2) => features.flatMap((f) => f.def.slot === "feature" ? f.def.tubeHoles?.(ctx, f.cfg, p2) ?? [] : [])
+      } : {}
+    });
+    const p = pieceOf(cfg);
+    return assemble(ctx.styleId, [piece(p.id, p.label, faces, grainOn(ctx.v, faces, cfg.grain))]);
+  },
+  hinges(_ctx, cfg) {
+    const p = pieceOf(cfg);
+    const turn = cfg.turn;
+    const ids = cfg.panels.slice(1).map((x) => x.id);
+    return {
+      roots: { [p.id]: cfg.root },
+      ...turn ? { angles: Object.fromEntries([...ids, cfg.glueId ?? "glue"].map((id) => [id, turn])) } : {}
+    };
+  }
+};
+
+// packages/dieline/src/construct/closures.ts
+var idOf = (end, name) => `${name}-${end}`;
+function tuckOutline(x0, x1, yBase, depth, radius) {
+  const sh = Math.min(TUCK_SHOULDER_MM, (x1 - x0) / 8, depth / 4);
+  const yTop = yBase - depth;
+  const left = x0 + sh;
+  const right = x1 - sh;
+  const r = Math.max(0, Math.min(radius, (right - left) / 2 - 0.01, depth - sh - 0.01));
+  const out = [line([x1, yBase], [right, yBase - sh], "cut")];
+  if (r > 0.01) {
+    out.push(line([right, yBase - sh], [right, yTop + r], "cut"));
+    out.push(arc([right, yTop + r], [right - r, yTop], [right - r, yTop + r], false, "cut"));
+    out.push(line([right - r, yTop], [left + r, yTop], "cut"));
+    out.push(arc([left + r, yTop], [left, yTop + r], [left + r, yTop + r], false, "cut"));
+    out.push(line([left, yTop + r], [left, yBase - sh], "cut"));
+  } else {
+    out.push(line([right, yBase - sh], [right, yTop], "cut"));
+    out.push(line([right, yTop], [left, yTop], "cut"));
+    out.push(line([left, yTop], [left, yBase - sh], "cut"));
+  }
+  out.push(line([left, yBase - sh], [x0, yBase], "cut"));
+  out.push(line([x0, yBase], [x1, yBase], "crease"));
+  return out;
+}
+function dustFlap(end, s, reach, lidSide, caliper) {
+  const w = s.x1 - s.x0;
+  const lidInset = Math.min(w / 3, DUST_FLAP_CLEARANCE_MM + caliper + reach * 0.15);
+  const otherInset = Math.min(w / 4, reach * 0.1);
+  const insetL = lidSide === "left" ? lidInset : otherInset;
+  const insetR = lidSide === "right" ? lidInset : otherInset;
+  const pts = [
+    [s.x0, 0],
+    [s.x0 + insetL, -reach],
+    [s.x1 - insetR, -reach],
+    [s.x1, 0]
+  ];
+  return {
+    face: face(idOf(end, `dust-${s.id}`), "dust_flap", "dust_flap", polygon(pts, ["cut", "cut", "cut", "crease"])),
+    span: [s.x0, s.x1]
+  };
+}
+function tuckClosure(spec) {
+  return ({ panels, end }) => {
+    const lid = panels[spec.lidPanel];
+    const y = -spec.lidDepth;
+    const lidFace = face(idOf(end, "lid"), "lid", "lid", [
+      line([lid.x0, 0], [lid.x0, y], "cut"),
+      line([lid.x0, y], [lid.x1, y], "crease"),
+      line([lid.x1, y], [lid.x1, 0], "cut"),
+      line([lid.x1, 0], [lid.x0, 0], "crease")
+    ]);
+    const tuck2 = face(
+      idOf(end, "tuck"),
+      "tuck",
+      "tuck",
+      tuckOutline(lid.x0, lid.x1, y, spec.tuckDepth, spec.tuckRadius)
+    );
+    const attachments = [{ face: lidFace, span: [lid.x0, lid.x1] }];
+    for (const i of spec.dustPanels) {
+      const s = panels[i];
+      const lidSide = (i + 1) % panels.length === spec.lidPanel ? "right" : "left";
+      attachments.push(dustFlap(end, s, spec.dustReach, lidSide, spec.caliper));
+    }
+    const notches = [];
+    if (spec.thumbNotch && spec.thumbNotch > 0) {
+      const opposite = (spec.lidPanel + 2) % panels.length;
+      const s = panels[opposite];
+      const r = Math.min(spec.thumbNotch, (s.x1 - s.x0) / 4);
+      notches.push({ panel: opposite, center: (s.x0 + s.x1) / 2, radius: r });
+    }
+    return { attachments, faces: [tuck2], notches };
+  };
+}
+function slottedFlaps(spec) {
+  return ({ panels, end }) => {
+    const half = spec.slot / 2;
+    const last = panels.length - 1;
+    const attachments = panels.map((s, i) => {
+      const a = i === 0 ? s.x0 : s.x0 + half;
+      const b = i === last ? s.x1 : s.x1 - half;
+      const d = spec.depths[i];
+      const left = spec.slot === 0 && i > 0 ? spec.depths[i - 1] : Infinity;
+      const right = spec.slot === 0 && i < last ? spec.depths[i + 1] : Infinity;
+      const pts = [[a, 0]];
+      if (left < d - 1e-9) pts.push([a, -left]);
+      pts.push([a, -d], [b, -d]);
+      if (right < d - 1e-9) pts.push([b, -right]);
+      pts.push([b, 0]);
+      const roles = pts.map((_, k2) => k2 === pts.length - 1 ? "crease" : "cut");
+      const label = Array.isArray(spec.labels) ? spec.labels[i] : spec.labels ?? (end === "top" ? "top_flap" : "bottom_flap");
+      const inset = Math.min(GLUE_AREA_INSET_MM, (b - a) / 4, d / 4);
+      const marks = spec.glue?.includes(i) ? polygon(
+        [
+          [a + inset, -inset],
+          [b - inset, -inset],
+          [b - inset, -d + inset],
+          [a + inset, -d + inset]
+        ],
+        "glue_area"
+      ) : [];
+      return {
+        face: face(idOf(end, `flap-${s.id}`), label, spec.kinds?.[i] ?? "flap", polygon(pts, roles), { marks }),
+        span: [a, b]
+      };
+    });
+    return { attachments };
+  };
+}
+function trapezoid(id, label, kind, s, depth, insetL, insetR) {
+  return face(
+    id,
+    label,
+    kind,
+    polygon(
+      [
+        [s.x0, 0],
+        [s.x0 + insetL, -depth],
+        [s.x1 - insetR, -depth],
+        [s.x1, 0]
+      ],
+      ["cut", "cut", "cut", "crease"]
+    )
+  );
+}
+function snapLockClosure(spec) {
+  return ({ panels, end }) => {
+    const [front, right, back, left] = panels;
+    const side = right.x1 - right.x0;
+    const h = side / 2;
+    const lock = (s, kind) => {
+      const len2 = s.x1 - s.x0;
+      const ch = Math.min(h * 0.5, len2 * 0.15);
+      const tw = len2 * 0.4;
+      const xm = (s.x0 + s.x1) / 2;
+      const b = Math.min(spec.tongue, h * 0.6);
+      const half = tw / 2 + (kind === "notch" ? spec.clearance : 0);
+      const tip = kind === "tongue" ? -h - b : -h + b;
+      const pts = [
+        [s.x0, 0],
+        [s.x0 + ch, -h],
+        [xm - half, -h],
+        [xm - half, tip],
+        [xm + half, tip],
+        [xm + half, -h],
+        [s.x1 - ch, -h],
+        [s.x1, 0]
+      ];
+      return {
+        face: face(
+          idOf(end, `lock-${s.id}`),
+          "lock_flap",
+          "lock",
+          polygon(pts, [...pts.slice(1).map(() => "cut"), "crease"])
+        ),
+        span: [s.x0, s.x1]
+      };
+    };
+    const sideFlap = (s) => {
+      const depth = Math.min((front.x1 - front.x0) * 0.45, (s.x1 - s.x0) * 0.9);
+      const e = Math.min(depth, (s.x1 - s.x0) / 3) * 0.5;
+      return {
+        face: trapezoid(idOf(end, `lock-${s.id}`), "lock_flap", "dust_flap", s, depth, e, e),
+        span: [s.x0, s.x1]
+      };
+    };
+    return { attachments: [lock(front, "tongue"), sideFlap(right), lock(back, "notch"), sideFlap(left)] };
+  };
+}
+function crashLockClosure() {
+  return ({ panels, end }) => {
+    const side = panels[1].x1 - panels[1].x0;
+    const attachments = panels.map((s, i) => {
+      const w = s.x1 - s.x0;
+      if (i % 2 === 0) {
+        const h2 = side / 2 + Math.min(side * 0.25, 15);
+        const lead = Math.min(h2 * 0.4, w * 0.3);
+        const pts2 = [
+          [s.x0, 0],
+          [s.x0, -h2 + lead],
+          [s.x0 + lead, -h2],
+          [s.x1 - Math.min(2, w / 10), -h2],
+          [s.x1, 0]
+        ];
+        return {
+          face: face(
+            idOf(end, `crash-${s.id}`),
+            "crash_flap",
+            "lock",
+            polygon(pts2, ["cut", "cut", "cut", "cut", "crease"])
+          ),
+          span: [s.x0, s.x1]
+        };
+      }
+      const h = Math.min(side / 2, w);
+      const e = Math.min(2, w / 10);
+      const pts = [
+        [s.x0, 0],
+        [s.x0, -h],
+        [s.x1 - e, -h],
+        [s.x1, 0]
+      ];
+      const diagonal = Math.min(h, w - e);
+      const marks = [line([s.x0, 0], [s.x0 + diagonal, -diagonal], "crease")];
+      if (diagonal > 12) {
+        marks.push(
+          ...polygon(
+            [
+              [s.x0 + 2, -5],
+              [s.x0 + 2, -h + 2],
+              [s.x0 + Math.min(diagonal, h) - 5, -h + 2]
+            ],
+            "glue_area"
+          )
+        );
+      }
+      return {
+        face: face(idOf(end, `crash-${s.id}`), "crash_flap", "flap", polygon(pts, ["cut", "cut", "cut", "crease"]), {
+          marks
+        }),
+        span: [s.x0, s.x1]
+      };
+    });
+    return { attachments };
+  };
+}
+function gableClosure(spec) {
+  return ({ panels, end }) => {
+    const attachments = [];
+    const faces = [];
+    const profiles = {};
+    panels.forEach((s, i) => {
+      if (i % 2 === 1) {
+        profiles[i] = [[(s.x0 + s.x1) / 2, -spec.apex]];
+        return;
+      }
+      const roof = face(idOf(end, `roof-${s.id}`), "roof", "lid", [
+        line([s.x0, 0], [s.x0, -spec.roof], "cut"),
+        line([s.x0, -spec.roof], [s.x1, -spec.roof], "crease"),
+        line([s.x1, -spec.roof], [s.x1, 0], "cut"),
+        line([s.x1, 0], [s.x0, 0], "crease")
+      ]);
+      attachments.push({ face: roof, span: [s.x0, s.x1] });
+      const y0 = -spec.roof;
+      const y1 = y0 - spec.handle;
+      const hw = Math.min(spec.hole.width, (s.x1 - s.x0) * 0.6);
+      const hh = Math.min(spec.hole.height, spec.handle * 0.5);
+      const cx = (s.x0 + s.x1) / 2;
+      const cy = y0 - spec.handle * 0.55;
+      faces.push(
+        face(
+          idOf(end, `handle-${s.id}`),
+          "handle",
+          "handle",
+          [
+            line([s.x0, y0], [s.x0, y1], "cut"),
+            line([s.x0, y1], [s.x1, y1], "cut"),
+            line([s.x1, y1], [s.x1, y0], "cut"),
+            line([s.x1, y0], [s.x0, y0], "crease")
+          ],
+          { holes: [roundedRectangle(cx - hw / 2, cy - hh / 2, hw, hh, hh / 2)] }
+        )
+      );
+    });
+    return { attachments, faces, profiles };
+  };
+}
+function polygonLid(spec) {
+  return ({ panels, end }) => {
+    const s = panels[spec.panel];
+    const rest = spec.points(s);
+    const pts = [[s.x1, 0], ...rest, [s.x0, 0]];
+    const roles = pts.map(
+      (_, k2) => k2 === pts.length - 1 ? "crease" : k2 === spec.tuckEdge + 1 ? "crease" : "cut"
+    );
+    const lid = face(idOf(end, "lid"), "lid", "lid", polygon(pts, roles));
+    const a = pts[spec.tuckEdge + 1];
+    const b = pts[spec.tuckEdge + 2];
+    const tuck2 = tuckOnEdge(idOf(end, "tuck"), b, a, spec.tuckDepth, spec.tuckRadius);
+    return { attachments: [{ face: lid, span: [s.x0, s.x1] }], faces: [tuck2] };
+  };
+}
+function tuckOnEdge(id, a, b, depth, radius) {
+  const len2 = Math.hypot(b[0] - a[0], b[1] - a[1]);
+  const ux = (b[0] - a[0]) / len2;
+  const uy = (b[1] - a[1]) / len2;
+  const nx = uy;
+  const ny = -ux;
+  const local = tuckOutline(0, len2, 0, depth, radius);
+  const map = (p) => [a[0] + p[0] * ux - p[1] * nx, a[1] + p[0] * uy - p[1] * ny];
+  return face(
+    id,
+    "tuck",
+    "tuck",
+    local.map((e) => mapEdge(e, map))
+  );
+}
+
+// packages/dieline/src/modules/closure/tray-closures.ts
+function gluedLipsLid(f) {
+  const { length: L, width: W, height: H } = f;
+  const x0 = H;
+  const x1 = H + L;
+  const lip = Math.min(H * 0.5, 30);
+  const cf = Math.min(lip * TRAY_CORNER_FLAP_SHARE, TRAY_CORNER_FLAP_MAX_MM, lip - 0.5);
+  const y = -W;
+  const corner = (id, xa, xb, nearFront) => {
+    const pts = nearFront === "right" ? [
+      [xa, y],
+      [xa, y - cf],
+      [xb - cf, y - cf],
+      [xb, y]
+    ] : [
+      [xa, y],
+      [xa + cf, y - cf],
+      [xb, y - cf],
+      [xb, y]
+    ];
+    return face(id, "corner_flap", "flap", polygon(pts, ["cut", "cut", "cut", "crease"]));
+  };
+  return [
+    face("lid", "lid", "lid", [
+      line([x0, 0], [x0, y], "crease"),
+      line([x0, y], [x1, y], "crease"),
+      line([x1, y], [x1, 0], "crease"),
+      line([x1, 0], [x0, 0], "crease")
+    ]),
+    face("lip-front", "outer_flap", "flap", rectangle(x0, y - lip, L, lip, { bottom: "crease" })),
+    face("lip-left", "outer_flap", "flap", rectangle(x0 - lip, y, lip, W, { top: "crease", right: "crease" })),
+    face("lip-right", "outer_flap", "flap", rectangle(x1, y, lip, W, { top: "crease", left: "crease" })),
+    corner("lid-corner-left", x0 - lip, x0, "right"),
+    corner("lid-corner-right", x1, x1 + lip, "left")
+  ];
+}
+function tuckFrontLid(ctx, f) {
+  const { length: L, width: W, height: H } = f;
+  const t0 = ctx.m.caliperMm;
+  const tuckDepth = num(ctx.v, "tuckDepth", tuckDepthFor(L));
+  const x0 = H;
+  const x1 = H + L;
+  const lidW = W + t0;
+  const ear = Math.min(H * 0.9, lidW / 2 - 1);
+  const earInset = Math.min(ear * 0.35, lidW / 4);
+  const yLid = -lidW;
+  const yFront = yLid - H;
+  const earFace = (id, side) => {
+    const x = side === "left" ? x0 : x1;
+    const out = side === "left" ? x0 - ear : x1 + ear;
+    const pts = side === "left" ? [
+      [x, 0],
+      [out, -earInset],
+      [out, yLid + earInset],
+      [x, yLid]
+    ] : [
+      [x, yLid],
+      [out, yLid + earInset],
+      [out, -earInset],
+      [x, 0]
+    ];
+    return face(id, "dust_flap", "dust_flap", polygon(pts, ["cut", "cut", "cut", "crease"]));
+  };
+  return [
+    face("lid", "lid", "lid", [
+      line([x0, 0], [x0, yLid], "crease"),
+      line([x0, yLid], [x1, yLid], "crease"),
+      line([x1, yLid], [x1, 0], "crease"),
+      line([x1, 0], [x0, 0], "crease")
+    ]),
+    earFace("ear-left", "left"),
+    earFace("ear-right", "right"),
+    face("lid-front", "front", "flap", rectangle(x0, yFront, L, H, { top: "crease", bottom: "crease" })),
+    // Walked left to right, so the tuck lies on its upper side, away from the front flap.
+    tuckOnEdge("tuck", [x0, yFront], [x1, yFront], tuckDepth, Math.min(TUCK_CORNER_RADIUS_MM, tuckDepth / 2))
+  ];
+}
+var hingedLid = {
+  id: "hingedLid",
+  slot: "closure",
+  status: "implemented",
+  fits: ["tray"],
+  label: t("\u0E1D\u0E32\u0E1E\u0E31\u0E1A\u0E15\u0E34\u0E14\u0E1C\u0E19\u0E31\u0E07\u0E2B\u0E25\u0E31\u0E07", "Lid hinged on the back wall"),
+  params: ["tuckDepth"],
+  processes: ["die_cut", "folder_gluer_corner"],
+  contributes: { kinds: ["lid", "flap", "dust_flap", "tuck"], roles: ["cut", "crease"] },
+  constraints: (cfg) => cfg.front === "tuck" ? [
+    {
+      id: "hingedLid.tuck_depth",
+      code: "tuck.too_deep",
+      severity: "error",
+      param: "tuckDepth",
+      require: "(tuckDepth ?? tuckDepthFor(length)) < height + t",
+      message: t("\u0E25\u0E34\u0E49\u0E19\u0E40\u0E2A\u0E35\u0E22\u0E1A\u0E25\u0E36\u0E01\u0E40\u0E01\u0E34\u0E19\u0E04\u0E27\u0E32\u0E21\u0E2A\u0E39\u0E07\u0E01\u0E25\u0E48\u0E2D\u0E07", "The tuck is deeper than the box is tall")
+    },
+    {
+      id: "hingedLid.tuck_min_depth",
+      code: "mfg.tuck_too_shallow",
+      severity: "error",
+      param: "tuckDepth",
+      require: "(tuckDepth ?? tuckDepthFor(length + a.panel)) >= rule.minTuck",
+      message: t("\u0E25\u0E34\u0E49\u0E19\u0E40\u0E2A\u0E35\u0E22\u0E1A\u0E15\u0E37\u0E49\u0E19\u0E40\u0E01\u0E34\u0E19\u0E44\u0E1B\u0E2A\u0E33\u0E2B\u0E23\u0E31\u0E1A\u0E27\u0E31\u0E2A\u0E14\u0E38\u0E19\u0E35\u0E49", "The tuck is too shallow to hold in this material"),
+      stage: "manufacturing"
+    }
+  ] : [],
+  tray: (ctx, cfg, frame) => ({
+    "wall-back": cfg.front === "tuck" ? tuckFrontLid(ctx, frame) : gluedLipsLid(frame)
+  })
+};
+
+// packages/dieline/src/modules/closure/tube-closures.ts
+var PANEL_INDEX = { front: 0, right: 1, back: 2, left: 3 };
+var TUCK_CONSTRAINTS = [
+  {
+    id: "tuck.min_depth",
+    code: "mfg.tuck_too_shallow",
+    severity: "error",
+    param: "tuckDepth",
+    require: "(tuckDepth ?? tuckDepthFor(length)) >= rule.minTuck",
+    message: t("\u0E25\u0E34\u0E49\u0E19\u0E40\u0E2A\u0E35\u0E22\u0E1A\u0E15\u0E37\u0E49\u0E19\u0E40\u0E01\u0E34\u0E19\u0E44\u0E1B\u0E2A\u0E33\u0E2B\u0E23\u0E31\u0E1A\u0E27\u0E31\u0E2A\u0E14\u0E38\u0E19\u0E35\u0E49", "The tuck is too shallow to hold in this material"),
+    stage: "manufacturing"
+  },
+  {
+    id: "tuck.depth_vs_height",
+    code: "tuck.too_deep",
+    severity: "error",
+    param: "tuckDepth",
+    require: "(tuckDepth ?? tuckDepthFor(length)) < depth - 5",
+    message: t("\u0E25\u0E34\u0E49\u0E19\u0E40\u0E2A\u0E35\u0E22\u0E1A\u0E25\u0E36\u0E01\u0E40\u0E01\u0E34\u0E19\u0E04\u0E27\u0E32\u0E21\u0E2A\u0E39\u0E07\u0E01\u0E25\u0E48\u0E2D\u0E07", "The tuck is deeper than the box is tall")
+  },
+  {
+    id: "tuck.depth_vs_lid",
+    code: "tuck.deeper_than_lid",
+    severity: "warning",
+    param: "tuckDepth",
+    require: "(tuckDepth ?? tuckDepthFor(length)) <= side * 1.5",
+    message: t("\u0E25\u0E34\u0E49\u0E19\u0E40\u0E2A\u0E35\u0E22\u0E1A\u0E25\u0E36\u0E01\u0E01\u0E27\u0E48\u0E32\u0E1D\u0E32\u0E21\u0E32\u0E01 \u0E2D\u0E32\u0E08\u0E1B\u0E34\u0E14\u0E44\u0E21\u0E48\u0E2A\u0E19\u0E34\u0E17", "The tuck is much deeper than the lid; it may not close flat")
+  }
+];
+var tuck = {
+  id: "tuck",
+  slot: "closure",
+  status: "implemented",
+  fits: ["tube"],
+  label: t("\u0E1D\u0E32\u0E40\u0E2A\u0E35\u0E22\u0E1A (\u0E25\u0E34\u0E49\u0E19\u0E40\u0E2A\u0E35\u0E22\u0E1A + \u0E1B\u0E35\u0E01\u0E01\u0E31\u0E19\u0E1D\u0E38\u0E48\u0E19)", "Tuck end (lid, tuck flap, dust flaps)"),
+  params: ["tuckDepth", "tuckCorners", "dustFlapDepth"],
+  constraints: TUCK_CONSTRAINTS,
+  processes: ["die_cut", "folder_gluer_straight"],
+  contributes: { kinds: ["lid", "tuck", "dust_flap"], roles: ["cut", "crease"] },
+  tube(ctx, cfg, end, parts) {
+    const { v, m } = ctx;
+    const L = num(v, "length", 70);
+    const W = num(v, "width", 40);
+    const tuckDepth = num(v, "tuckDepth", tuckDepthFor(L));
+    const notch = parts.features.some((f) => f.def.id === "thumbNotch" && f.cfg.end === end);
+    return tuckClosure({
+      lidPanel: PANEL_INDEX[cfg.lid ?? "back"],
+      lidDepth: ctx.dims.side,
+      tuckDepth,
+      tuckRadius: str(v, "tuckCorners", "rounded") === "rounded" ? Math.min(TUCK_CORNER_RADIUS_MM, tuckDepth / 2) : 0,
+      dustPanels: [1, 3],
+      dustReach: num(v, "dustFlapDepth", Math.min(L * DUST_FLAP_LENGTH_SHARE, W * DUST_FLAP_WIDTH_SHARE)),
+      caliper: m.caliperMm,
+      thumbNotch: notch && bool(v, "thumbNotch", false) ? THUMB_NOTCH_RADIUS_MM : 0
+    });
+  }
+};
+var FLAP_DEFAULTS = {};
+function flapSet(id, label, defaults, processes, constraints = []) {
+  FLAP_DEFAULTS[id] = defaults;
+  return {
+    id,
+    slot: "closure",
+    status: "implemented",
+    fits: ["tube"],
+    label,
+    params: [],
+    constraints,
+    processes,
+    contributes: { kinds: ["flap", "dust_flap", "lid"], roles: ["cut", "crease", "glue_area"] },
+    tube(ctx, raw) {
+      const cfg = { ...defaults, ...raw };
+      return slottedFlaps({
+        depths: cfg.depths.map((e) => ctx.num(e)),
+        slot: ctx.num(cfg.slot),
+        ...cfg.labels ? { labels: cfg.labels } : {},
+        ...cfg.kinds ? { kinds: cfg.kinds } : {},
+        ...cfg.glue ? { glue: cfg.glue } : {}
+      });
+    },
+    hinges(_ctx, raw, end) {
+      const stages = { ...defaults, ...raw }.stages ?? null;
+      return stages ? { stages: Object.fromEntries(Object.entries(stages).map(([p, s]) => [`flap-${p}-${end}`, s])) } : {};
+    }
+  };
+}
+var MEET = "side / 2 + a.flap";
+var SLOTTED = [
+  {
+    id: "slotted.width_vs_length",
+    code: "size.width_exceeds_length",
+    severity: "warning",
+    param: "width",
+    require: "width <= length",
+    message: t("\u0E04\u0E27\u0E32\u0E21\u0E01\u0E27\u0E49\u0E32\u0E07\u0E21\u0E32\u0E01\u0E01\u0E27\u0E48\u0E32\u0E04\u0E27\u0E32\u0E21\u0E22\u0E32\u0E27 \u0E25\u0E2D\u0E07\u0E2A\u0E25\u0E31\u0E1A\u0E04\u0E48\u0E32\u0E01\u0E31\u0E19", "Width is greater than length \u2014 try swapping them")
+  }
+];
+var rsc = flapSet(
+  "rsc",
+  t("\u0E1D\u0E32\u0E0A\u0E19 (RSC)", "Regular slotted flaps (RSC)"),
+  { depths: [MEET, MEET, MEET, MEET], slot: "slotWidth()" },
+  ["slotter", "folder_gluer_straight"],
+  SLOTTED
+);
+var fol = flapSet(
+  "fol",
+  t("\u0E1D\u0E32\u0E0B\u0E49\u0E2D\u0E19\u0E40\u0E15\u0E47\u0E21 (FOL)", "Full overlap flaps (FOL)"),
+  { depths: ["side", "side", "side", "side"], slot: "slotWidth()" },
+  ["slotter", "folder_gluer_straight"],
+  SLOTTED
+);
+var cssc = flapSet(
+  "cssc",
+  t("\u0E1D\u0E32\u0E0A\u0E19\u0E01\u0E25\u0E32\u0E07\u0E17\u0E38\u0E01\u0E14\u0E49\u0E32\u0E19 (CSSC)", "Centre special flaps (CSSC)"),
+  { depths: [MEET, "front / 2 + a.flap", MEET, "front / 2 + a.flap"], slot: "slotWidth()" },
+  ["slotter", "folder_gluer_straight"],
+  SLOTTED
+);
+var endFlaps = flapSet(
+  "endFlaps",
+  t("\u0E1B\u0E35\u0E01\u0E1B\u0E34\u0E14\u0E2B\u0E31\u0E27\u0E17\u0E49\u0E32\u0E22 (\u0E41\u0E1C\u0E48\u0E19\u0E2B\u0E48\u0E2D)", "End flaps (wrap-around)"),
+  {
+    depths: ["top / 2 + a.flap", "wall / 2 + a.flap", "top / 2 + a.flap", "wall / 2 + a.flap"],
+    slot: "slotWidth()",
+    labels: ["end_flap", "end_flap", "end_flap", "end_flap"]
+  },
+  ["slotter", "folder_gluer_straight"]
+);
+var DUST = "min(length * C.DUST_FLAP_LENGTH_SHARE, width * C.DUST_FLAP_WIDTH_SHARE)";
+var seal = flapSet(
+  "seal",
+  t("\u0E1B\u0E34\u0E14\u0E17\u0E32\u0E01\u0E32\u0E27 (Seal end)", "Seal end (glued flaps)"),
+  {
+    depths: ["side * 0.6", DUST, "side", DUST],
+    slot: "0",
+    labels: ["inner_flap", "dust_flap", "outer_flap", "dust_flap"],
+    kinds: ["flap", "dust_flap", "lid", "dust_flap"],
+    glue: [2],
+    stages: { front: 2, back: 3 }
+  },
+  ["die_cut", "folder_gluer_straight"]
+);
+var snapLock123 = {
+  id: "snapLock123",
+  slot: "closure",
+  status: "implemented",
+  fits: ["tube"],
+  label: t("\u0E01\u0E49\u0E19\u0E25\u0E47\u0E2D\u0E01 1-2-3", "Snap-lock (1-2-3) bottom"),
+  params: ["lockTongue"],
+  processes: ["die_cut", "folder_gluer_straight"],
+  contributes: { kinds: ["lock", "dust_flap"], roles: ["cut", "crease"] },
+  presets: { default: { tongue: "lockTongue ?? snapLockTongueFor(width)", clearance: "max(0.5, t)" } },
+  tube: (ctx, cfg) => snapLockClosure({ tongue: ctx.num(cfg.tongue), clearance: ctx.num(cfg.clearance) })
+};
+var crashLock = {
+  id: "crashLock",
+  slot: "closure",
+  status: "implemented",
+  fits: ["tube"],
+  label: t("\u0E01\u0E49\u0E19\u0E25\u0E47\u0E2D\u0E01\u0E2D\u0E31\u0E15\u0E42\u0E19\u0E21\u0E31\u0E15\u0E34 (crash-lock)", "Crash-lock (auto) bottom"),
+  params: [],
+  processes: ["die_cut", "folder_gluer_crash_lock"],
+  constraints: [
+    {
+      id: "crashLock.depth",
+      code: "mfg.crash_lock_too_shallow",
+      severity: "error",
+      param: "width",
+      require: "side / 2 >= rule.crashLockMinDepth",
+      message: t("\u0E01\u0E25\u0E48\u0E2D\u0E07\u0E41\u0E04\u0E1A\u0E40\u0E01\u0E34\u0E19\u0E01\u0E27\u0E48\u0E32\u0E08\u0E30\u0E17\u0E33\u0E01\u0E49\u0E19\u0E25\u0E47\u0E2D\u0E01\u0E2D\u0E31\u0E15\u0E42\u0E19\u0E21\u0E31\u0E15\u0E34", "Too narrow for a crash-lock bottom in this material"),
+      stage: "manufacturing"
+    }
+  ],
+  contributes: { kinds: ["lock", "flap"], roles: ["cut", "crease", "glue_area"] },
+  tube: () => crashLockClosure()
+};
+var gableHandle = {
+  id: "gableHandle",
+  slot: "closure",
+  status: "implemented",
+  fits: ["tube"],
+  label: t("\u0E2B\u0E25\u0E31\u0E07\u0E04\u0E32\u0E08\u0E31\u0E48\u0E27\u0E1E\u0E23\u0E49\u0E2D\u0E21\u0E2B\u0E39\u0E2B\u0E34\u0E49\u0E27", "Gable top with carry handle"),
+  params: ["handleHeight"],
+  processes: ["die_cut", "folder_gluer_straight"],
+  contributes: { kinds: ["lid", "handle"], roles: ["cut", "crease"] },
+  constraints: [
+    {
+      id: "gableHandle.width",
+      code: "handle.too_narrow",
+      severity: "error",
+      param: "length",
+      require: "front >= 60",
+      message: t(
+        "\u0E01\u0E25\u0E48\u0E2D\u0E07\u0E41\u0E04\u0E1A\u0E40\u0E01\u0E34\u0E19\u0E01\u0E27\u0E48\u0E32\u0E08\u0E30\u0E17\u0E33\u0E2B\u0E39\u0E2B\u0E34\u0E49\u0E27 (\u0E15\u0E49\u0E2D\u0E07\u0E22\u0E32\u0E27\u0E2D\u0E22\u0E48\u0E32\u0E07\u0E19\u0E49\u0E2D\u0E22 60 \u0E21\u0E21.)",
+        "Too narrow for a handle (at least 60 mm long)"
+      )
+    }
+  ],
+  tube(ctx) {
+    const side = ctx.dims.side;
+    return gableClosure({
+      apex: side / 2,
+      roof: side / 2 * Math.SQRT2,
+      handle: num(ctx.v, "handleHeight", 40),
+      hole: { width: 90, height: 24 }
+    });
+  },
+  hinges: (_ctx, _cfg, end) => ({
+    angles: {
+      [`roof-front-${end}`]: 45,
+      [`roof-back-${end}`]: 45,
+      [`handle-front-${end}`]: -45,
+      [`handle-back-${end}`]: -45
+    }
+  })
+};
+var polygonTuckLid = {
+  id: "polygonTuckLid",
+  slot: "closure",
+  status: "implemented",
+  fits: ["tube"],
+  label: t("\u0E1D\u0E32\u0E40\u0E2B\u0E25\u0E35\u0E48\u0E22\u0E21\u0E1E\u0E23\u0E49\u0E2D\u0E21\u0E25\u0E34\u0E49\u0E19\u0E40\u0E2A\u0E35\u0E22\u0E1A", "Polygon lid with tuck"),
+  params: ["tuckDepth", "tuckCorners"],
+  processes: ["die_cut", "folder_gluer_straight"],
+  contributes: { kinds: ["lid", "tuck"], roles: ["cut", "crease"] },
+  constraints: [
+    {
+      id: "polygonTuckLid.min_depth",
+      code: "mfg.tuck_too_shallow",
+      severity: "error",
+      param: "tuckDepth",
+      require: "(tuckDepth ?? tuckDepthFor(2 * panel)) >= rule.minTuck",
+      message: t("\u0E25\u0E34\u0E49\u0E19\u0E40\u0E2A\u0E35\u0E22\u0E1A\u0E15\u0E37\u0E49\u0E19\u0E40\u0E01\u0E34\u0E19\u0E44\u0E1B\u0E2A\u0E33\u0E2B\u0E23\u0E31\u0E1A\u0E27\u0E31\u0E2A\u0E14\u0E38\u0E19\u0E35\u0E49", "The tuck is too shallow to hold in this material"),
+      stage: "manufacturing"
+    }
+  ],
+  tube(ctx) {
+    const a = ctx.dims.panel;
+    const h = a * Math.sqrt(3) / 2;
+    const tuckDepth = num(ctx.v, "tuckDepth", tuckDepthFor(2 * a));
+    const radius = str(ctx.v, "tuckCorners", "rounded") === "rounded" ? Math.min(TUCK_CORNER_RADIUS_MM, tuckDepth / 2) : 0;
+    return polygonLid({
+      panel: 0,
+      points: (s) => {
+        const pts = [
+          [s.x1 + a / 2, -h],
+          [s.x1, -2 * h],
+          [s.x0, -2 * h],
+          [s.x0 - a / 2, -h]
+        ];
+        return pts;
+      },
+      tuckEdge: 1,
+      tuckDepth,
+      tuckRadius: radius
+    });
+  }
+};
+
+// packages/dieline/src/modules/feature/features.ts
+var windowFeature = {
+  id: "window",
+  slot: "feature",
+  status: "implemented",
+  fits: ["tube"],
+  label: t("\u0E2B\u0E19\u0E49\u0E32\u0E15\u0E48\u0E32\u0E07", "Window"),
+  params: ["window", "windowPanel", "windowWidth", "windowHeight", "windowOffsetX", "windowOffsetY", "windowRadius"],
+  processes: ["window_patching"],
+  contributes: { kinds: [], roles: ["cut"] },
+  tubeHoles: (ctx, _cfg, p) => windowHole(ctx.v, p.id, p.x0, p.x1, p.y0, p.y1),
+  check: (ctx, _cfg, built) => windowIssues(ctx.v, built)
+};
+var thumbNotch = {
+  id: "thumbNotch",
+  slot: "feature",
+  status: "implemented",
+  fits: ["tube"],
+  label: t("\u0E23\u0E2D\u0E22\u0E40\u0E27\u0E49\u0E32\u0E19\u0E34\u0E49\u0E27\u0E42\u0E1B\u0E49\u0E07", "Thumb notch"),
+  params: ["thumbNotch"],
+  processes: ["die_cut"],
+  contributes: { kinds: [], roles: ["cut"] }
+};
+function roundedTop(x0, x1, y, r) {
+  const rr = roundedRectangle(x0, y, x1 - x0, 2 * r + 1, r);
+  const [topLine, topRight, , , , , , topLeft] = rr;
+  return r > 0.01 ? [topLeft, topLine, topRight] : [line([x0, y], [x1, y], "cut")];
+}
+var hangTab = {
+  id: "hangTab",
+  slot: "feature",
+  status: "implemented",
+  fits: ["tube"],
+  label: t("\u0E2B\u0E39\u0E41\u0E02\u0E27\u0E19", "Hang tab"),
+  params: ["hangerHeight", "hangHole"],
+  processes: ["die_cut"],
+  contributes: { kinds: ["hanger"], roles: ["cut", "crease"] },
+  constraints: [
+    {
+      id: "hangTab.euro_width",
+      code: "hanger.too_narrow",
+      severity: "error",
+      param: "hangHole",
+      require: "not (hangHole == 'euro' and front < C.EURO_SLOT_WIDTH_MM + 12)",
+      message: t(
+        "\u0E01\u0E25\u0E48\u0E2D\u0E07\u0E41\u0E04\u0E1A\u0E40\u0E01\u0E34\u0E19\u0E01\u0E27\u0E48\u0E32\u0E08\u0E30\u0E40\u0E08\u0E32\u0E30\u0E23\u0E39\u0E22\u0E39\u0E42\u0E23 \u0E40\u0E25\u0E37\u0E2D\u0E01\u0E23\u0E39\u0E01\u0E25\u0E21\u0E41\u0E17\u0E19",
+        "The box is too narrow for a euro slot \u2014 choose a round hole"
+      )
+    }
+  ],
+  wrapClosure: (ctx, _cfg, _end, inner) => (c) => {
+    const base = inner(c);
+    const back = c.panels[2];
+    const h = num(ctx.v, "hangerHeight", Math.max(25, Math.min(45, ctx.dims.side)));
+    const cx = (back.x0 + back.x1) / 2;
+    const cy = -h * 0.55;
+    const kind = str(ctx.v, "hangHole", "euro");
+    const holes = kind === "euro" ? [
+      roundedRectangle(
+        cx - EURO_SLOT_WIDTH_MM / 2,
+        cy - EURO_SLOT_HEIGHT_MM / 2,
+        EURO_SLOT_WIDTH_MM,
+        EURO_SLOT_HEIGHT_MM,
+        EURO_SLOT_HEIGHT_MM / 2
+      )
+    ] : kind === "round" ? [ellipse(cx, cy, HANG_HOLE_DIAMETER_MM / 2, HANG_HOLE_DIAMETER_MM / 2)] : [];
+    const r = Math.min(6, h / 3, (back.x1 - back.x0) / 4);
+    const hanger = face(
+      `hanger-${c.end}`,
+      "hanger",
+      "hanger",
+      [
+        line([back.x0, 0], [back.x0, -h + r], "cut"),
+        ...roundedTop(back.x0, back.x1, -h, r),
+        line([back.x1, -h + r], [back.x1, 0], "cut"),
+        line([back.x1, 0], [back.x0, 0], "crease")
+      ],
+      { holes }
+    );
+    return { ...base, attachments: [...base.attachments, { face: hanger, span: [back.x0, back.x1] }] };
+  },
+  hinges: (_ctx, cfg) => ({ angles: { [`hanger-${cfg.end}`]: 0 } })
+};
+var HAND_HOLE = { width: 90, height: 30, fromTop: 30, margin: 20 };
+var handHoles = {
+  id: "handHoles",
+  slot: "feature",
+  status: "implemented",
+  fits: ["tube"],
+  label: t("\u0E0A\u0E48\u0E2D\u0E07\u0E21\u0E37\u0E2D\u0E08\u0E31\u0E1A", "Hand holes"),
+  params: ["handles"],
+  processes: ["die_cut"],
+  contributes: { kinds: [], roles: ["cut"] },
+  constraints: [
+    {
+      id: "handHoles.size",
+      code: "handle.too_small",
+      severity: "error",
+      param: "handles",
+      require: "not (handles == 'side' and (width < 60 + 2 * 20 or height < 80))",
+      message: t("\u0E01\u0E25\u0E48\u0E2D\u0E07\u0E40\u0E25\u0E47\u0E01\u0E40\u0E01\u0E34\u0E19\u0E01\u0E27\u0E48\u0E32\u0E08\u0E30\u0E40\u0E08\u0E32\u0E30\u0E0A\u0E48\u0E2D\u0E07\u0E21\u0E37\u0E2D\u0E08\u0E31\u0E1A", "The box is too small for hand holes")
+    }
+  ],
+  tubeHoles(ctx, _cfg, panel) {
+    if (str(ctx.v, "handles", "none") !== "side" || panel.id !== "right" && panel.id !== "left") return [];
+    const w = Math.min(HAND_HOLE.width, panel.x1 - panel.x0 - 2 * HAND_HOLE.margin);
+    const cx = (panel.x0 + panel.x1) / 2;
+    const y = panel.y0 + HAND_HOLE.fromTop;
+    return [roundedRectangle(cx - w / 2, y, w, HAND_HOLE.height, HAND_HOLE.height / 2)];
+  }
+};
+var rollOverWalls = {
+  id: "rollOverWalls",
+  slot: "feature",
+  status: "implemented",
+  fits: ["tray"],
+  label: t("\u0E1C\u0E19\u0E31\u0E07\u0E1E\u0E31\u0E1A\u0E2A\u0E2D\u0E07\u0E0A\u0E31\u0E49\u0E19", "Rolled-over double walls"),
+  params: [],
+  processes: ["die_cut"],
+  contributes: { kinds: ["flap"], roles: ["cut", "crease"] },
+  tray(ctx, cfg, f) {
+    const { length: L, width: W, height: H } = f;
+    const inner = H - ctx.m.caliperMm;
+    const x0 = H;
+    const x1 = H + L;
+    const y1 = H + W;
+    const make = {
+      back: () => face("inner-back", "inner_wall", "flap", rectangle(x0, -inner, L, inner, { bottom: "crease" })),
+      front: () => face("inner-front", "inner_wall", "flap", rectangle(x0, y1 + H, L, inner, { top: "crease" })),
+      left: () => face("inner-left", "inner_wall", "flap", rectangle(-inner, H, inner, W, { right: "crease" })),
+      right: () => face("inner-right", "inner_wall", "flap", rectangle(x1 + H, H, inner, W, { left: "crease" }))
+    };
+    const out = {};
+    for (const w of cfg.walls) out[`wall-${w}`] = [make[w]()];
+    return out;
+  },
+  hinges: (_ctx, cfg) => ({ angles: Object.fromEntries(cfg.walls.map((w) => [`inner-${w}`, 180])) })
+};
+var hangHole = {
+  id: "hangHole",
+  slot: "feature",
+  status: "implemented",
+  fits: ["flat"],
+  label: t("\u0E23\u0E39\u0E23\u0E49\u0E2D\u0E22\u0E40\u0E0A\u0E37\u0E2D\u0E01", "String hole"),
+  params: ["hole", "holeOffset"],
+  processes: ["die_cut"],
+  contributes: { kinds: [], roles: ["cut"] },
+  constraints: [
+    {
+      id: "hangHole.edge",
+      code: "hole.too_close",
+      severity: "error",
+      param: "holeOffset",
+      require: "not (number(hole) > 0 and (holeOffset ?? max(8, number(hole) * 1.5)) - number(hole) / 2 < 3)",
+      message: t("\u0E23\u0E39\u0E43\u0E01\u0E25\u0E49\u0E02\u0E2D\u0E1A\u0E40\u0E01\u0E34\u0E19\u0E44\u0E1B (\u0E15\u0E49\u0E2D\u0E07\u0E2B\u0E48\u0E32\u0E07\u0E2D\u0E22\u0E48\u0E32\u0E07\u0E19\u0E49\u0E2D\u0E22 3 \u0E21\u0E21.)", "The hole is too close to the edge (at least 3 mm)")
+    }
+  ],
+  flatHoles(ctx) {
+    const d = Number(str(ctx.v, "hole", "6"));
+    if (!(d > 0)) return [];
+    const w = num(ctx.v, "width", 40);
+    const cy = num(ctx.v, "holeOffset", Math.max(8, d * 1.5));
+    return [ellipse(w / 2, cy, d / 2, d / 2)];
+  }
+};
+
+// packages/dieline/src/modules/pieceSet/piece-sets.ts
+function lidDepthOf(v) {
+  const H = num(v, "height", 60);
+  return str(v, "lid", "partial") === "full" ? H : num(v, "lidDepth", Math.max(15, Math.round(H / 3)));
+}
+var lidAndBase = {
+  id: "lidAndBase",
+  slot: "pieceSet",
+  status: "implemented",
+  label: t("\u0E1D\u0E32\u0E04\u0E23\u0E2D\u0E1A + \u0E15\u0E31\u0E27\u0E01\u0E25\u0E48\u0E2D\u0E07 (\u0E2A\u0E2D\u0E07\u0E0A\u0E34\u0E49\u0E19)", "Lid and base (two pieces)"),
+  params: ["lid", "lidDepth", "grain"],
+  processes: ["die_cut", "folder_gluer_corner"],
+  contributes: { kinds: ["base", "wall", "flap"], roles: ["cut", "crease"] },
+  constraints: [
+    {
+      id: "lidAndBase.lid_depth",
+      code: "lid.too_deep",
+      severity: "error",
+      param: "lidDepth",
+      require: "(lid == 'full' ? height : (lidDepth ?? max(15, round(height / 3)))) <= height",
+      message: t("\u0E1D\u0E32\u0E04\u0E23\u0E2D\u0E1A\u0E25\u0E36\u0E01\u0E01\u0E27\u0E48\u0E32\u0E15\u0E31\u0E27\u0E01\u0E25\u0E48\u0E2D\u0E07", "The lid is deeper than the base")
+    }
+  ],
+  build(ctx) {
+    const { v, m } = ctx;
+    const a = allowancesOf(m);
+    const t0 = m.caliperMm;
+    const L = num(v, "length", 200);
+    const W = num(v, "width", 150);
+    const H = num(v, "height", 60);
+    const c = LID_CLEARANCE_MM;
+    const tray3 = (l, w, h) => buildTray({
+      length: l + a.panel,
+      width: w + a.panel,
+      height: h + a.trayDepth,
+      cornerFlap: Math.min((h + a.trayDepth) * TRAY_CORNER_FLAP_SHARE, TRAY_CORNER_FLAP_MAX_MM)
+    });
+    const base = tray3(L, W, H);
+    const lid = prefixFaces(tray3(L + 2 * t0 + 2 * c, W + 2 * t0 + 2 * c, lidDepthOf(v)), "lid-");
+    return assemble(ctx.styleId, [
+      piece("base", "base", base, grainOn(v, base, "base")),
+      piece("lid", "lid", lid, grainOn(v, lid, "lid-base"))
+    ]);
+  },
+  hinges: (ctx) => ({
+    roots: { base: "base", lid: "lid-base" },
+    upright: "base",
+    placement: { lid: { over: "base", flip: true, sink: lidDepthOf(ctx.v), lift: 40 } }
+  })
+};
+var sleeveAndDrawer = {
+  id: "sleeveAndDrawer",
+  slot: "pieceSet",
+  status: "implemented",
+  label: t("\u0E1B\u0E25\u0E2D\u0E01 + \u0E25\u0E34\u0E49\u0E19\u0E0A\u0E31\u0E01 (\u0E2A\u0E2D\u0E07\u0E0A\u0E34\u0E49\u0E19)", "Sleeve and drawer (two pieces)"),
+  params: ["fingerHole", "glueWidth", "grain"],
+  processes: ["die_cut", "folder_gluer_straight", "folder_gluer_corner"],
+  constraints: [
+    {
+      id: "sleeveAndDrawer.glue_width",
+      code: "mfg.glue_flap_too_wide",
+      severity: "error",
+      param: "glueWidth",
+      require: "(glueWidth ?? glueWidthFor(width)) <= height + t + 2 * C.DRAWER_CLEARANCE_MM + a.panel - a.gluePanel",
+      message: t("\u0E1B\u0E35\u0E01\u0E01\u0E32\u0E27\u0E01\u0E27\u0E49\u0E32\u0E07\u0E01\u0E27\u0E48\u0E32\u0E41\u0E1C\u0E07\u0E02\u0E49\u0E32\u0E07\u0E02\u0E2D\u0E07\u0E1B\u0E25\u0E2D\u0E01", "The glue flap is wider than the sleeve's side panel it is glued to"),
+      stage: "manufacturing"
+    }
+  ],
+  contributes: { kinds: ["panel", "glue_flap", "base", "wall", "flap"], roles: ["cut", "crease", "glue_area"] },
+  build(ctx) {
+    const { v, m } = ctx;
+    const a = allowancesOf(m);
+    const t0 = m.caliperMm;
+    const L = num(v, "length", 150);
+    const W = num(v, "width", 100);
+    const H = num(v, "height", 40);
+    const c = DRAWER_CLEARANCE_MM;
+    const drawerH = H + a.trayDepth;
+    const drawerL = L + a.panel;
+    const holes = bool(v, "fingerHole", true) ? {
+      "wall-front": [
+        ellipse(
+          drawerH + drawerL / 2,
+          drawerH + W + a.panel + drawerH / 2,
+          Math.min(10, drawerH / 3),
+          Math.min(10, drawerH / 3)
+        )
+      ]
+    } : {};
+    const drawer = buildTray({
+      length: drawerL,
+      width: W + a.panel,
+      height: drawerH,
+      cornerFlap: Math.min(drawerH * TRAY_CORNER_FLAP_SHARE, TRAY_CORNER_FLAP_MAX_MM),
+      holes
+    });
+    const sw = W + 2 * t0 + 2 * c + a.panel;
+    const sh = H + t0 + 2 * c + a.panel;
+    const sleeve = buildTube({
+      panels: [
+        { id: "sleeve-bottom", label: "bottom", width: sw },
+        { id: "sleeve-right", label: "right", width: sh },
+        { id: "sleeve-top", label: "top", width: sw },
+        { id: "sleeve-left", label: "left", width: sh - a.gluePanel }
+      ],
+      depth: drawerL + 2 * t0,
+      glue: num(v, "glueWidth", glueWidthFor(W, m)),
+      glueId: "sleeve-glue"
+    });
+    return assemble(ctx.styleId, [
+      piece("sleeve", "sleeve", sleeve, grainOn(v, sleeve, "sleeve-top")),
+      piece("drawer", "drawer", drawer, grainOn(v, drawer, "base"))
+    ]);
+  },
+  hinges: (ctx) => ({
+    roots: { sleeve: "sleeve-bottom", drawer: "base" },
+    upright: "base",
+    placement: {
+      sleeve: { rotate: [0, 90, 0] },
+      drawer: { inside: "sleeve", slide: num(ctx.v, "length", 150) * 0.6 }
+    }
+  })
+};
+
+// packages/dieline/src/modules/planned.ts
+function planned(id, slot, label, processes, fits2 = ["tube"]) {
+  const base = { id, status: "planned", label, params: [], processes, contributes: { kinds: [], roles: [] } };
+  const fail = () => {
+    throw new Error(`module.not_implemented: ${id}`);
+  };
+  switch (slot) {
+    case "body":
+      return { ...base, slot, kind: "special", folds: true, build: fail };
+    case "pieceSet":
+      return { ...base, slot, build: fail };
+    case "closure":
+      return { ...base, slot, fits: fits2, tube: fail, tray: fail };
+    case "feature":
+      return { ...base, slot, fits: fits2, tubeHoles: fail };
+  }
+}
+var PLANNED_MODULES = [
+  planned("ngonTube", "body", t("\u0E15\u0E31\u0E27\u0E01\u0E25\u0E48\u0E2D\u0E07\u0E2B\u0E25\u0E32\u0E22\u0E40\u0E2B\u0E25\u0E35\u0E48\u0E22\u0E21 (3, 8 \u0E14\u0E49\u0E32\u0E19)", "n-sided tube (3, 8 sides)"), [
+    "die_cut",
+    "folder_gluer_straight"
+  ]),
+  planned("taperedPail", "body", t("\u0E16\u0E31\u0E07\u0E17\u0E23\u0E07\u0E2A\u0E2D\u0E1A", "Tapered pail"), ["die_cut", "folder_gluer_straight"]),
+  planned("airplaneTuck", "closure", t("\u0E1D\u0E32\u0E40\u0E2A\u0E35\u0E22\u0E1A\u0E41\u0E1A\u0E1A\u0E40\u0E04\u0E23\u0E37\u0E48\u0E2D\u0E07\u0E1A\u0E34\u0E19", "Airplane tuck"), ["die_cut", "folder_gluer_straight"]),
+  planned("fourFlapLock", "closure", t("\u0E01\u0E49\u0E19\u0E25\u0E47\u0E2D\u0E01 4 \u0E1B\u0E35\u0E01", "Four-flap lock bottom"), ["die_cut", "hand_assembly"]),
+  planned("petal", "closure", t("\u0E1D\u0E32\u0E01\u0E25\u0E35\u0E1A\u0E14\u0E2D\u0E01", "Petal closure"), ["die_cut", "hand_assembly"]),
+  planned("lockCorners", "feature", t("\u0E21\u0E38\u0E21\u0E25\u0E47\u0E2D\u0E01 (\u0E44\u0E21\u0E48\u0E43\u0E0A\u0E49\u0E01\u0E32\u0E27)", "Lock corners (no glue)"), ["die_cut"], ["tray"]),
+  planned("sombreroHeader", "feature", t("\u0E2B\u0E39\u0E41\u0E02\u0E27\u0E19\u0E17\u0E23\u0E07\u0E2B\u0E21\u0E27\u0E01", "Sombrero hang header"), ["die_cut"]),
+  planned("tearStrip", "feature", t("\u0E41\u0E16\u0E1A\u0E14\u0E36\u0E07\u0E09\u0E35\u0E01", "Tear strip"), ["die_cut", "tear_strip_applicator"], ["tube", "tray"]),
+  planned(
+    "adhesiveStrip",
+    "feature",
+    t("\u0E41\u0E16\u0E1A\u0E01\u0E32\u0E27\u0E1B\u0E34\u0E14\u0E1C\u0E19\u0E36\u0E01", "Adhesive strip (single / dual return)"),
+    ["adhesive_strip_applicator"],
+    ["tube", "tray"]
+  ),
+  planned("vents", "feature", t("\u0E23\u0E39\u0E23\u0E30\u0E1A\u0E32\u0E22\u0E2D\u0E32\u0E01\u0E32\u0E28", "Vent holes"), ["die_cut"], ["tube", "tray"]),
+  planned("dispenser", "feature", t("\u0E0A\u0E48\u0E2D\u0E07\u0E14\u0E36\u0E07\u0E2A\u0E34\u0E19\u0E04\u0E49\u0E32", "Dispenser opening"), ["die_cut"]),
+  planned("neckLock", "feature", t("\u0E25\u0E47\u0E2D\u0E01\u0E04\u0E2D\u0E02\u0E27\u0E14", "Neck lock"), ["die_cut"]),
+  planned("dustFlapLock", "feature", t("\u0E25\u0E47\u0E2D\u0E01\u0E1B\u0E35\u0E01\u0E01\u0E31\u0E19\u0E1D\u0E38\u0E48\u0E19", "Dust-flap lock"), ["die_cut"]),
+  planned("slitLock", "feature", t("\u0E25\u0E47\u0E2D\u0E01\u0E23\u0E48\u0E2D\u0E07", "Slit lock"), ["die_cut"]),
+  planned("bodyAndInsert", "pieceSet", t("\u0E15\u0E31\u0E27\u0E01\u0E25\u0E48\u0E2D\u0E07 + \u0E15\u0E31\u0E27\u0E23\u0E2D\u0E07", "Body and insert"), ["die_cut", "hand_assembly"]),
+  planned("partitionGrid", "pieceSet", t("\u0E0A\u0E48\u0E2D\u0E07\u0E01\u0E31\u0E49\u0E19\u0E15\u0E32\u0E23\u0E32\u0E07", "Partition grid (rows \xD7 columns)"), [
+    "die_cut",
+    "slotter",
+    "hand_assembly"
+  ])
+];
+
+// packages/dieline/src/modules/types.ts
+var PROCESSES = [
+  "die_cut",
+  "slotter",
+  "folder_gluer_straight",
+  "folder_gluer_crash_lock",
+  "folder_gluer_corner",
+  "window_patching",
+  "hand_assembly",
+  "rigid_box_line",
+  "pouch_making",
+  "label_press",
+  "shrink_sleeve",
+  "tear_strip_applicator",
+  "adhesive_strip_applicator"
+];
+
+// packages/dieline/src/modules/index.ts
+var MODULES = [
+  tube,
+  tray,
+  pillowTube,
+  flatShape,
+  band,
+  cone,
+  pouchWeb,
+  tuck,
+  rsc,
+  fol,
+  cssc,
+  endFlaps,
+  seal,
+  snapLock123,
+  crashLock,
+  gableHandle,
+  polygonTuckLid,
+  hingedLid,
+  windowFeature,
+  thumbNotch,
+  hangTab,
+  handHoles,
+  rollOverWalls,
+  hangHole,
+  lidAndBase,
+  sleeveAndDrawer,
+  ...PLANNED_MODULES
+];
+var BY_ID = new Map(MODULES.map((m) => [m.id, m]));
+function getModule(id) {
+  return BY_ID.get(id);
+}
+
+// packages/dieline/src/recipes/context.ts
+var numeric = (xs) => xs.every((x) => typeof x === "number");
+var math = (f) => (...xs) => numeric(xs) ? f(...xs) : void 0;
+function slotWidth(m) {
+  return m.kind === "corrugated" ? Math.max(MIN_SLOT_MM, SLOT_CALIPER_FACTOR * m.caliperMm) : 0;
+}
+function functionsFor(m) {
+  return {
+    min: math(Math.min),
+    max: math(Math.max),
+    abs: math(Math.abs),
+    floor: math(Math.floor),
+    ceil: math(Math.ceil),
+    round: math(Math.round),
+    sqrt: math(Math.sqrt),
+    sin: math(Math.sin),
+    cos: math(Math.cos),
+    tan: math(Math.tan),
+    number: (x) => typeof x === "number" ? x : typeof x === "string" ? Number(x) : void 0,
+    tuckDepthFor: math(tuckDepthFor),
+    glueWidthFor: math((w) => glueWidthFor(w, m)),
+    snapLockTongueFor: math(snapLockTongueFor),
+    slotWidth: () => slotWidth(m)
+  };
+}
+var EXPRESSION_FUNCTIONS = Object.keys(functionsFor({ caliperMm: 0, kind: "paperboard" }));
+function readParam(raw) {
+  if (raw === void 0) return void 0;
+  if (typeof raw === "number" || typeof raw === "boolean") return raw;
+  if (raw.trim() === "") return void 0;
+  const n2 = Number(raw);
+  return Number.isFinite(n2) ? n2 : raw;
+}
+var CONSTANTS = constants_exports;
+function scopeFor(v, m, dims, rules) {
+  const a = allowancesOf(m);
+  return {
+    fn: functionsFor(m),
+    get(name) {
+      if (name in dims) return dims[name];
+      if (name === "t") return Math.max(0, m.caliperMm);
+      if (name === "pi") return Math.PI;
+      if (name === "material.kind") return m.kind;
+      if (name === "material.flute") return m.flute ?? void 0;
+      if (name.startsWith("a.")) return a[name.slice(2)];
+      if (name.startsWith("rule.")) {
+        const [key, part] = name.slice(5).split(".");
+        const r = rules?.[key];
+        if (Array.isArray(r)) return part === "min" ? r[0] : part === "max" ? r[1] : void 0;
+        return typeof r === "number" && part === void 0 ? r : void 0;
+      }
+      if (name.startsWith("C.")) {
+        const c = CONSTANTS[name.slice(2)];
+        return typeof c === "number" ? c : void 0;
+      }
+      return readParam(v[name]);
+    }
+  };
+}
+function contextFor(styleId, v, m, dimsExpr = {}, rules) {
+  const dims = {};
+  const scope = scopeFor(v, m, dims, rules);
+  const value = (e) => typeof e === "string" ? evaluate(compile(e), scope) : e;
+  for (const [name, e] of Object.entries(dimsExpr)) {
+    const x = value(e);
+    dims[name] = typeof x === "number" ? x : NaN;
+  }
+  return {
+    styleId,
+    v,
+    m,
+    dims,
+    scope,
+    rules,
+    num: (e) => {
+      const x = value(e);
+      return typeof x === "number" ? x : NaN;
+    },
+    test: (e) => value(e) === true
+  };
+}
+
+// packages/dieline/src/recipes/params.json
+var params_default = {
+  bottom: {
+    key: "bottom",
+    kind: "length",
+    group: "size",
+    label: {
+      th: "\u0E02\u0E19\u0E32\u0E14\u0E01\u0E49\u0E19\u0E0B\u0E2D\u0E07\u0E23\u0E27\u0E21\u0E23\u0E2D\u0E22\u0E0B\u0E35\u0E25",
+      en: "Bottom gusset incl. seals"
+    },
+    min: 10,
+    max: 200,
+    step: 0.5,
+    legacyKey: "b",
+    when: {
+      key: "pouchType",
+      in: ["standing"]
+    }
+  },
+  bottomDiameter: {
+    key: "bottomDiameter",
+    kind: "length",
+    group: "size",
+    label: {
+      th: "\u0E40\u0E2A\u0E49\u0E19\u0E1C\u0E48\u0E32\u0E19\u0E28\u0E39\u0E19\u0E22\u0E4C\u0E01\u0E25\u0E32\u0E07\u0E14\u0E49\u0E32\u0E19\u0E25\u0E48\u0E32\u0E07",
+      en: "Bottom diameter"
+    },
+    min: 20,
+    max: 200,
+    step: 0.5
+  },
+  centerSeal: {
+    key: "centerSeal",
+    kind: "length",
+    group: "construction",
+    label: {
+      th: "\u0E02\u0E19\u0E32\u0E14\u0E0B\u0E35\u0E25\u0E01\u0E25\u0E32\u0E07",
+      en: "Centre seal"
+    },
+    min: 5,
+    max: 30,
+    step: 0.5,
+    legacyKey: "cs",
+    when: {
+      key: "pouchType",
+      in: ["center_seal", "center_seal_gusset"]
+    }
+  },
+  cornerFlap: {
+    key: "cornerFlap",
+    kind: "length",
+    group: "construction",
+    label: {
+      th: "\u0E04\u0E27\u0E32\u0E21\u0E22\u0E32\u0E27\u0E1B\u0E35\u0E01\u0E01\u0E32\u0E27\u0E21\u0E38\u0E21",
+      en: "Corner flap reach"
+    },
+    help: {
+      th: "\u0E40\u0E27\u0E49\u0E19\u0E27\u0E48\u0E32\u0E07\u0E40\u0E1E\u0E37\u0E48\u0E2D\u0E43\u0E0A\u0E49\u0E04\u0E48\u0E32\u0E41\u0E19\u0E30\u0E19\u0E33 (85% \u0E02\u0E2D\u0E07\u0E04\u0E27\u0E32\u0E21\u0E2A\u0E39\u0E07 \u0E44\u0E21\u0E48\u0E40\u0E01\u0E34\u0E19 25 \u0E21\u0E21.)",
+      en: "Leave empty for the recommended reach (85 % of the height, at most 25 mm)"
+    },
+    min: 5,
+    max: 60,
+    step: 0.5
+  },
+  cornerRadius: {
+    key: "cornerRadius",
+    kind: "length",
+    group: "size",
+    label: {
+      th: "\u0E23\u0E31\u0E28\u0E21\u0E35\u0E21\u0E38\u0E21",
+      en: "Corner radius"
+    },
+    min: 1,
+    max: 200,
+    step: 0.5,
+    legacyKey: "r"
+  },
+  cornerSize: {
+    key: "cornerSize",
+    kind: "length",
+    group: "options",
+    label: {
+      th: "\u0E02\u0E19\u0E32\u0E14\u0E21\u0E38\u0E21",
+      en: "Corner size"
+    },
+    min: 1,
+    max: 30,
+    step: 0.5,
+    legacyKey: "r"
+  },
+  corners: {
+    key: "corners",
+    kind: "enum",
+    group: "options",
+    label: {
+      th: "\u0E21\u0E38\u0E21",
+      en: "Corners"
+    },
+    options: [
+      {
+        value: "chamfer",
+        label: {
+          th: "\u0E15\u0E31\u0E14\u0E21\u0E38\u0E21",
+          en: "Cut corners"
+        }
+      },
+      {
+        value: "rounded",
+        label: {
+          th: "\u0E21\u0E38\u0E21\u0E21\u0E19",
+          en: "Rounded"
+        }
+      },
+      {
+        value: "square",
+        label: {
+          th: "\u0E21\u0E38\u0E21\u0E09\u0E32\u0E01",
+          en: "Square"
+        }
+      }
+    ]
+  },
+  diameter: {
+    key: "diameter",
+    kind: "length",
+    group: "size",
+    label: {
+      th: "\u0E40\u0E2A\u0E49\u0E19\u0E1C\u0E48\u0E32\u0E19\u0E28\u0E39\u0E19\u0E22\u0E4C\u0E01\u0E25\u0E32\u0E07",
+      en: "Diameter"
+    },
+    min: 5,
+    max: 600,
+    step: 0.5,
+    legacyKey: "w"
+  },
+  dustFlapDepth: {
+    key: "dustFlapDepth",
+    kind: "length",
+    group: "closure",
+    label: {
+      th: "\u0E04\u0E27\u0E32\u0E21\u0E25\u0E36\u0E01\u0E1B\u0E35\u0E01\u0E01\u0E31\u0E19\u0E1D\u0E38\u0E48\u0E19",
+      en: "Dust flap depth"
+    },
+    help: {
+      th: "\u0E40\u0E27\u0E49\u0E19\u0E27\u0E48\u0E32\u0E07\u0E40\u0E1E\u0E37\u0E48\u0E2D\u0E43\u0E0A\u0E49\u0E04\u0E48\u0E32\u0E41\u0E19\u0E30\u0E19\u0E33",
+      en: "Leave empty for the recommended depth"
+    },
+    min: 5,
+    max: 300,
+    step: 0.5
+  },
+  fingerHole: {
+    key: "fingerHole",
+    kind: "boolean",
+    group: "options",
+    label: {
+      th: "\u0E23\u0E39\u0E14\u0E36\u0E07\u0E25\u0E34\u0E49\u0E19\u0E0A\u0E31\u0E01",
+      en: "Finger hole in the drawer"
+    }
+  },
+  glueSide: {
+    key: "glueSide",
+    kind: "enum",
+    group: "construction",
+    label: {
+      th: "\u0E14\u0E49\u0E32\u0E19\u0E1B\u0E35\u0E01\u0E01\u0E32\u0E27",
+      en: "Glue flap side"
+    },
+    options: [
+      {
+        value: "left",
+        label: {
+          th: "\u0E0B\u0E49\u0E32\u0E22",
+          en: "Left"
+        }
+      },
+      {
+        value: "right",
+        label: {
+          th: "\u0E02\u0E27\u0E32",
+          en: "Right"
+        }
+      }
+    ]
+  },
+  glueWidth: {
+    key: "glueWidth",
+    kind: "length",
+    group: "construction",
+    label: {
+      th: "\u0E04\u0E27\u0E32\u0E21\u0E01\u0E27\u0E49\u0E32\u0E07\u0E1B\u0E35\u0E01\u0E01\u0E32\u0E27",
+      en: "Glue flap width"
+    },
+    help: {
+      th: "\u0E40\u0E27\u0E49\u0E19\u0E27\u0E48\u0E32\u0E07\u0E40\u0E1E\u0E37\u0E48\u0E2D\u0E43\u0E0A\u0E49\u0E04\u0E48\u0E32\u0E41\u0E19\u0E30\u0E19\u0E33\u0E15\u0E32\u0E21\u0E02\u0E19\u0E32\u0E14\u0E01\u0E25\u0E48\u0E2D\u0E07",
+      en: "Leave empty for the recommended width for this size"
+    },
+    min: 8,
+    max: 60,
+    step: 0.5,
+    legacyKey: "g"
+  },
+  grain: {
+    key: "grain",
+    kind: "enum",
+    group: "options",
+    label: {
+      th: "\u0E41\u0E19\u0E27\u0E40\u0E2A\u0E35\u0E49\u0E22\u0E19\u0E01\u0E23\u0E30\u0E14\u0E32\u0E29",
+      en: "Grain direction"
+    },
+    help: {
+      th: "\u0E25\u0E39\u0E01\u0E28\u0E23\u0E1A\u0E2D\u0E01\u0E41\u0E19\u0E27\u0E40\u0E2A\u0E35\u0E49\u0E22\u0E19\u0E1A\u0E19\u0E41\u0E1A\u0E1A\u0E04\u0E25\u0E35\u0E48 \u0E2A\u0E33\u0E2B\u0E23\u0E31\u0E1A\u0E42\u0E23\u0E07\u0E07\u0E32\u0E19",
+      en: "An arrow on the drawing telling the factory which way the grain runs"
+    },
+    options: [
+      {
+        value: "across",
+        label: {
+          th: "\u0E02\u0E27\u0E32\u0E07\u0E23\u0E2D\u0E22\u0E1E\u0E31\u0E1A\u0E2B\u0E25\u0E31\u0E01",
+          en: "Across the main creases"
+        }
+      },
+      {
+        value: "along",
+        label: {
+          th: "\u0E15\u0E32\u0E21\u0E23\u0E2D\u0E22\u0E1E\u0E31\u0E1A\u0E2B\u0E25\u0E31\u0E01",
+          en: "Along the main creases"
+        }
+      }
+    ]
+  },
+  gusset: {
+    key: "gusset",
+    kind: "length",
+    group: "size",
+    label: {
+      th: "\u0E02\u0E19\u0E32\u0E14\u0E02\u0E49\u0E32\u0E07\u0E0B\u0E2D\u0E07\u0E23\u0E27\u0E21\u0E23\u0E2D\u0E22\u0E0B\u0E35\u0E25",
+      en: "Side gusset incl. seals"
+    },
+    min: 10,
+    max: 200,
+    step: 0.5,
+    legacyKey: "s",
+    when: {
+      key: "pouchType",
+      in: ["four_side", "center_seal_gusset"]
+    }
+  },
+  handleHeight: {
+    key: "handleHeight",
+    kind: "length",
+    group: "options",
+    label: {
+      th: "\u0E04\u0E27\u0E32\u0E21\u0E2A\u0E39\u0E07\u0E2B\u0E39\u0E2B\u0E34\u0E49\u0E27",
+      en: "Handle height"
+    },
+    min: 25,
+    max: 120,
+    step: 0.5
+  },
+  handles: {
+    key: "handles",
+    kind: "enum",
+    group: "options",
+    label: {
+      th: "\u0E0A\u0E48\u0E2D\u0E07\u0E21\u0E37\u0E2D\u0E08\u0E31\u0E1A",
+      en: "Hand holes"
+    },
+    options: [
+      {
+        value: "none",
+        label: {
+          th: "\u0E44\u0E21\u0E48\u0E21\u0E35",
+          en: "None"
+        }
+      },
+      {
+        value: "side",
+        label: {
+          th: "\u0E17\u0E35\u0E48\u0E14\u0E49\u0E32\u0E19\u0E02\u0E49\u0E32\u0E07\u0E17\u0E31\u0E49\u0E07\u0E2A\u0E2D\u0E07",
+          en: "In both end panels"
+        }
+      }
+    ]
+  },
+  hangHole: {
+    key: "hangHole",
+    kind: "enum",
+    group: "options",
+    label: {
+      th: "\u0E23\u0E39\u0E41\u0E02\u0E27\u0E19",
+      en: "Hang hole"
+    },
+    options: [
+      {
+        value: "euro",
+        label: {
+          th: "\u0E23\u0E39\u0E22\u0E39\u0E42\u0E23",
+          en: "Euro slot"
+        }
+      },
+      {
+        value: "round",
+        label: {
+          th: "\u0E23\u0E39\u0E01\u0E25\u0E21",
+          en: "Round hole"
+        }
+      },
+      {
+        value: "none",
+        label: {
+          th: "\u0E44\u0E21\u0E48\u0E40\u0E08\u0E32\u0E30",
+          en: "None"
+        }
+      }
+    ]
+  },
+  hangerHeight: {
+    key: "hangerHeight",
+    kind: "length",
+    group: "options",
+    label: {
+      th: "\u0E04\u0E27\u0E32\u0E21\u0E2A\u0E39\u0E07\u0E2B\u0E39\u0E41\u0E02\u0E27\u0E19",
+      en: "Hang tab height"
+    },
+    help: {
+      th: "\u0E40\u0E27\u0E49\u0E19\u0E27\u0E48\u0E32\u0E07\u0E40\u0E1E\u0E37\u0E48\u0E2D\u0E43\u0E0A\u0E49\u0E04\u0E48\u0E32\u0E41\u0E19\u0E30\u0E19\u0E33",
+      en: "Leave empty for the recommended height"
+    },
+    min: 15,
+    max: 120,
+    step: 0.5
+  },
+  height: {
+    key: "height",
+    kind: "length",
+    group: "size",
+    label: {
+      th: "\u0E04\u0E27\u0E32\u0E21\u0E2A\u0E39\u0E07 (\u0E14\u0E49\u0E32\u0E19\u0E43\u0E19)",
+      en: "Inside height"
+    },
+    step: 0.5,
+    legacyKey: "h"
+  },
+  hole: {
+    key: "hole",
+    kind: "enum",
+    group: "options",
+    label: {
+      th: "\u0E23\u0E39\u0E23\u0E49\u0E2D\u0E22\u0E40\u0E0A\u0E37\u0E2D\u0E01",
+      en: "String hole"
+    },
+    options: [
+      {
+        value: "6",
+        label: {
+          th: "6 \u0E21\u0E21.",
+          en: "6 mm"
+        }
+      },
+      {
+        value: "3",
+        label: {
+          th: "3 \u0E21\u0E21.",
+          en: "3 mm"
+        }
+      },
+      {
+        value: "0",
+        label: {
+          th: "\u0E44\u0E21\u0E48\u0E40\u0E08\u0E32\u0E30",
+          en: "None"
+        }
+      }
+    ],
+    legacyKey: "dim"
+  },
+  holeOffset: {
+    key: "holeOffset",
+    kind: "length",
+    group: "options",
+    label: {
+      th: "\u0E23\u0E30\u0E22\u0E30\u0E23\u0E39\u0E08\u0E32\u0E01\u0E02\u0E2D\u0E1A\u0E1A\u0E19",
+      en: "Hole from top edge"
+    },
+    min: 4,
+    max: 60,
+    step: 0.5
+  },
+  length: {
+    key: "length",
+    kind: "length",
+    group: "size",
+    label: {
+      th: "\u0E04\u0E27\u0E32\u0E21\u0E22\u0E32\u0E27 (\u0E14\u0E49\u0E32\u0E19\u0E43\u0E19)",
+      en: "Inside length"
+    },
+    step: 0.5,
+    legacyKey: "l"
+  },
+  lid: {
+    key: "lid",
+    kind: "enum",
+    group: "closure",
+    label: {
+      th: "\u0E04\u0E27\u0E32\u0E21\u0E25\u0E36\u0E01\u0E1D\u0E32",
+      en: "Lid depth"
+    },
+    options: [
+      {
+        value: "partial",
+        label: {
+          th: "\u0E04\u0E23\u0E2D\u0E1A\u0E1A\u0E32\u0E07\u0E2A\u0E48\u0E27\u0E19",
+          en: "Partial"
+        }
+      },
+      {
+        value: "full",
+        label: {
+          th: "\u0E04\u0E23\u0E2D\u0E1A\u0E40\u0E15\u0E47\u0E21",
+          en: "Full"
+        }
+      }
+    ]
+  },
+  lidDepth: {
+    key: "lidDepth",
+    kind: "length",
+    group: "closure",
+    label: {
+      th: "\u0E04\u0E27\u0E32\u0E21\u0E25\u0E36\u0E01\u0E1D\u0E32\u0E04\u0E23\u0E2D\u0E1A",
+      en: "Lid depth (partial)"
+    },
+    min: 10,
+    max: 300,
+    step: 0.5,
+    when: {
+      key: "lid",
+      in: ["partial"]
+    }
+  },
+  lockTongue: {
+    key: "lockTongue",
+    kind: "length",
+    group: "closure",
+    label: {
+      th: "\u0E25\u0E34\u0E49\u0E19\u0E25\u0E47\u0E2D\u0E01\u0E01\u0E49\u0E19",
+      en: "Bottom lock tongue"
+    },
+    help: {
+      th: "\u0E40\u0E27\u0E49\u0E19\u0E27\u0E48\u0E32\u0E07\u0E40\u0E1E\u0E37\u0E48\u0E2D\u0E43\u0E0A\u0E49\u0E04\u0E48\u0E32\u0E41\u0E19\u0E30\u0E19\u0E33\u0E15\u0E32\u0E21\u0E04\u0E27\u0E32\u0E21\u0E01\u0E27\u0E49\u0E32\u0E07 (3 / 5 / 10 \u0E21\u0E21.)",
+      en: "Leave empty for the recommended tongue by width (3 / 5 / 10 mm)"
+    },
+    min: 2,
+    max: 30,
+    step: 0.5,
+    legacyKey: "b"
+  },
+  overlap: {
+    key: "overlap",
+    kind: "length",
+    group: "construction",
+    label: {
+      th: "\u0E23\u0E30\u0E22\u0E30\u0E17\u0E31\u0E1A\u0E01\u0E32\u0E27",
+      en: "Glue overlap"
+    },
+    min: 5,
+    max: 30,
+    step: 0.5
+  },
+  path: {
+    key: "path",
+    kind: "text",
+    group: "size",
+    label: {
+      th: "\u0E40\u0E2A\u0E49\u0E19\u0E23\u0E2D\u0E1A\u0E23\u0E39\u0E1B (SVG path)",
+      en: "Outline (SVG path data)"
+    }
+  },
+  pouchType: {
+    key: "pouchType",
+    kind: "enum",
+    group: "construction",
+    label: {
+      th: "\u0E0A\u0E19\u0E34\u0E14\u0E0B\u0E2D\u0E07",
+      en: "Pouch type"
+    },
+    options: [
+      {
+        value: "three_side",
+        label: {
+          th: "\u0E0B\u0E35\u0E25 3 \u0E14\u0E49\u0E32\u0E19",
+          en: "3-side seal"
+        }
+      },
+      {
+        value: "four_side",
+        label: {
+          th: "\u0E0B\u0E35\u0E25 4 \u0E14\u0E49\u0E32\u0E19",
+          en: "4-side seal"
+        }
+      },
+      {
+        value: "center_seal",
+        label: {
+          th: "\u0E0B\u0E35\u0E25\u0E01\u0E25\u0E32\u0E07 (\u0E2B\u0E21\u0E2D\u0E19)",
+          en: "Centre seal (pillow)"
+        }
+      },
+      {
+        value: "center_seal_gusset",
+        label: {
+          th: "\u0E0B\u0E35\u0E25\u0E01\u0E25\u0E32\u0E07\u0E21\u0E35\u0E02\u0E49\u0E32\u0E07",
+          en: "Centre seal with gussets"
+        }
+      },
+      {
+        value: "standing",
+        label: {
+          th: "\u0E0B\u0E2D\u0E07\u0E15\u0E31\u0E49\u0E07\u0E44\u0E14\u0E49",
+          en: "Stand-up pouch"
+        }
+      }
+    ]
+  },
+  sealWidth: {
+    key: "sealWidth",
+    kind: "length",
+    group: "construction",
+    label: {
+      th: "\u0E04\u0E27\u0E32\u0E21\u0E01\u0E27\u0E49\u0E32\u0E07\u0E23\u0E2D\u0E22\u0E0B\u0E35\u0E25",
+      en: "Seal width"
+    },
+    min: 3,
+    max: 25,
+    step: 0.5
+  },
+  side: {
+    key: "side",
+    kind: "length",
+    group: "size",
+    label: {
+      th: "\u0E04\u0E27\u0E32\u0E21\u0E22\u0E32\u0E27\u0E14\u0E49\u0E32\u0E19",
+      en: "Side length"
+    },
+    min: 20,
+    max: 200,
+    step: 0.5
+  },
+  size: {
+    key: "size",
+    kind: "length",
+    group: "size",
+    label: {
+      th: "\u0E02\u0E19\u0E32\u0E14\u0E14\u0E49\u0E32\u0E19\u0E17\u0E35\u0E48\u0E22\u0E32\u0E27\u0E17\u0E35\u0E48\u0E2A\u0E38\u0E14",
+      en: "Longest side"
+    },
+    min: 10,
+    max: 1e3,
+    step: 0.5
+  },
+  thickness: {
+    key: "thickness",
+    kind: "length",
+    group: "size",
+    label: {
+      th: "\u0E04\u0E27\u0E32\u0E21\u0E2B\u0E19\u0E32\u0E15\u0E23\u0E07\u0E01\u0E25\u0E32\u0E07",
+      en: "Thickness at the middle"
+    },
+    min: 10,
+    max: 120,
+    step: 0.5
+  },
+  thumbNotch: {
+    key: "thumbNotch",
+    kind: "boolean",
+    group: "options",
+    label: {
+      th: "\u0E23\u0E2D\u0E22\u0E40\u0E27\u0E49\u0E32\u0E19\u0E34\u0E49\u0E27\u0E42\u0E1B\u0E49\u0E07",
+      en: "Thumb notch"
+    }
+  },
+  topDiameter: {
+    key: "topDiameter",
+    kind: "length",
+    group: "size",
+    label: {
+      th: "\u0E40\u0E2A\u0E49\u0E19\u0E1C\u0E48\u0E32\u0E19\u0E28\u0E39\u0E19\u0E22\u0E4C\u0E01\u0E25\u0E32\u0E07\u0E14\u0E49\u0E32\u0E19\u0E1A\u0E19",
+      en: "Top diameter"
+    },
+    min: 30,
+    max: 200,
+    step: 0.5
+  },
+  tuckCorners: {
+    key: "tuckCorners",
+    kind: "enum",
+    group: "closure",
+    label: {
+      th: "\u0E21\u0E38\u0E21\u0E25\u0E34\u0E49\u0E19\u0E40\u0E2A\u0E35\u0E22\u0E1A",
+      en: "Tuck corners"
+    },
+    options: [
+      {
+        value: "rounded",
+        label: {
+          th: "\u0E21\u0E38\u0E21\u0E21\u0E19",
+          en: "Rounded"
+        }
+      },
+      {
+        value: "square",
+        label: {
+          th: "\u0E21\u0E38\u0E21\u0E40\u0E2B\u0E25\u0E35\u0E48\u0E22\u0E21",
+          en: "Square"
+        }
+      }
+    ]
+  },
+  tuckDepth: {
+    key: "tuckDepth",
+    kind: "length",
+    group: "closure",
+    label: {
+      th: "\u0E04\u0E27\u0E32\u0E21\u0E25\u0E36\u0E01\u0E25\u0E34\u0E49\u0E19\u0E40\u0E2A\u0E35\u0E22\u0E1A",
+      en: "Tuck depth"
+    },
+    help: {
+      th: "\u0E40\u0E27\u0E49\u0E19\u0E27\u0E48\u0E32\u0E07\u0E40\u0E1E\u0E37\u0E48\u0E2D\u0E43\u0E0A\u0E49\u0E04\u0E48\u0E32\u0E41\u0E19\u0E30\u0E19\u0E33\u0E15\u0E32\u0E21\u0E04\u0E27\u0E32\u0E21\u0E22\u0E32\u0E27\u0E01\u0E25\u0E48\u0E2D\u0E07 (15 / 20 / 25 \u0E21\u0E21.)",
+      en: "Leave empty for the recommended depth by box length (15 / 20 / 25 mm)"
+    },
+    min: 8,
+    max: 60,
+    step: 0.5,
+    legacyKey: "f"
+  },
+  width: {
+    key: "width",
+    kind: "length",
+    group: "size",
+    label: {
+      th: "\u0E04\u0E27\u0E32\u0E21\u0E01\u0E27\u0E49\u0E32\u0E07 (\u0E14\u0E49\u0E32\u0E19\u0E43\u0E19)",
+      en: "Inside width"
+    },
+    step: 0.5,
+    legacyKey: "w"
+  },
+  window: {
+    key: "window",
+    kind: "enum",
+    group: "window",
+    label: {
+      th: "\u0E2B\u0E19\u0E49\u0E32\u0E15\u0E48\u0E32\u0E07",
+      en: "Window"
+    },
+    options: [
+      {
+        value: "none",
+        label: {
+          th: "\u0E44\u0E21\u0E48\u0E21\u0E35",
+          en: "None"
+        }
+      },
+      {
+        value: "rect",
+        label: {
+          th: "\u0E2A\u0E35\u0E48\u0E40\u0E2B\u0E25\u0E35\u0E48\u0E22\u0E21",
+          en: "Rectangle"
+        }
+      },
+      {
+        value: "rounded",
+        label: {
+          th: "\u0E2A\u0E35\u0E48\u0E40\u0E2B\u0E25\u0E35\u0E48\u0E22\u0E21\u0E21\u0E38\u0E21\u0E21\u0E19",
+          en: "Rounded rectangle"
+        }
+      },
+      {
+        value: "ellipse",
+        label: {
+          th: "\u0E27\u0E07\u0E23\u0E35",
+          en: "Ellipse"
+        }
+      }
+    ]
+  },
+  windowHeight: {
+    key: "windowHeight",
+    kind: "length",
+    group: "window",
+    label: {
+      th: "\u0E04\u0E27\u0E32\u0E21\u0E2A\u0E39\u0E07\u0E2B\u0E19\u0E49\u0E32\u0E15\u0E48\u0E32\u0E07",
+      en: "Window height"
+    },
+    min: 10,
+    max: 600,
+    step: 0.5,
+    when: {
+      key: "window",
+      in: ["rect", "rounded", "ellipse"]
+    }
+  },
+  windowOffsetX: {
+    key: "windowOffsetX",
+    kind: "length",
+    group: "window",
+    label: {
+      th: "\u0E40\u0E25\u0E37\u0E48\u0E2D\u0E19\u0E2B\u0E19\u0E49\u0E32\u0E15\u0E48\u0E32\u0E07\u0E41\u0E19\u0E27\u0E19\u0E2D\u0E19",
+      en: "Window offset, horizontal"
+    },
+    min: -300,
+    max: 300,
+    step: 0.5,
+    when: {
+      key: "window",
+      in: ["rect", "rounded", "ellipse"]
+    }
+  },
+  windowOffsetY: {
+    key: "windowOffsetY",
+    kind: "length",
+    group: "window",
+    label: {
+      th: "\u0E40\u0E25\u0E37\u0E48\u0E2D\u0E19\u0E2B\u0E19\u0E49\u0E32\u0E15\u0E48\u0E32\u0E07\u0E41\u0E19\u0E27\u0E15\u0E31\u0E49\u0E07",
+      en: "Window offset, vertical"
+    },
+    min: -300,
+    max: 300,
+    step: 0.5,
+    when: {
+      key: "window",
+      in: ["rect", "rounded", "ellipse"]
+    }
+  },
+  windowPanel: {
+    key: "windowPanel",
+    kind: "enum",
+    group: "window",
+    label: {
+      th: "\u0E2B\u0E19\u0E49\u0E32\u0E15\u0E48\u0E32\u0E07\u0E2D\u0E22\u0E39\u0E48\u0E17\u0E35\u0E48\u0E14\u0E49\u0E32\u0E19",
+      en: "Window on"
+    },
+    options: [
+      {
+        value: "front",
+        label: {
+          th: "\u0E14\u0E49\u0E32\u0E19\u0E2B\u0E19\u0E49\u0E32",
+          en: "Front"
+        }
+      },
+      {
+        value: "back",
+        label: {
+          th: "\u0E14\u0E49\u0E32\u0E19\u0E2B\u0E25\u0E31\u0E07",
+          en: "Back"
+        }
+      },
+      {
+        value: "right",
+        label: {
+          th: "\u0E14\u0E49\u0E32\u0E19\u0E02\u0E49\u0E32\u0E07\u0E02\u0E27\u0E32",
+          en: "Right side"
+        }
+      },
+      {
+        value: "left",
+        label: {
+          th: "\u0E14\u0E49\u0E32\u0E19\u0E02\u0E49\u0E32\u0E07\u0E0B\u0E49\u0E32\u0E22",
+          en: "Left side"
+        }
+      }
+    ],
+    when: {
+      key: "window",
+      in: ["rect", "rounded", "ellipse"]
+    }
+  },
+  windowRadius: {
+    key: "windowRadius",
+    kind: "length",
+    group: "window",
+    label: {
+      th: "\u0E23\u0E31\u0E28\u0E21\u0E35\u0E21\u0E38\u0E21\u0E2B\u0E19\u0E49\u0E32\u0E15\u0E48\u0E32\u0E07",
+      en: "Window corner radius"
+    },
+    min: 0,
+    max: 100,
+    step: 0.5,
+    when: {
+      key: "window",
+      in: ["rounded"]
+    }
+  },
+  windowWidth: {
+    key: "windowWidth",
+    kind: "length",
+    group: "window",
+    label: {
+      th: "\u0E04\u0E27\u0E32\u0E21\u0E01\u0E27\u0E49\u0E32\u0E07\u0E2B\u0E19\u0E49\u0E32\u0E15\u0E48\u0E32\u0E07",
+      en: "Window width"
+    },
+    min: 10,
+    max: 600,
+    step: 0.5,
+    when: {
+      key: "window",
+      in: ["rect", "rounded", "ellipse"]
+    }
+  }
+};
+
+// packages/dieline/src/recipes/sets.json
+var sets_default = {
+  presets: {
+    carton: [
+      {
+        id: "cosmetic",
+        label: {
+          th: "\u0E04\u0E23\u0E35\u0E21/\u0E40\u0E04\u0E23\u0E37\u0E48\u0E2D\u0E07\u0E2A\u0E33\u0E2D\u0E32\u0E07 50 \xD7 50 \xD7 120",
+          en: "Cosmetics 50 \xD7 50 \xD7 120"
+        },
+        values: {
+          length: 50,
+          width: 50,
+          height: 120
+        }
+      },
+      {
+        id: "supplement",
+        label: {
+          th: "\u0E2D\u0E32\u0E2B\u0E32\u0E23\u0E40\u0E2A\u0E23\u0E34\u0E21 70 \xD7 40 \xD7 150",
+          en: "Supplements 70 \xD7 40 \xD7 150"
+        },
+        values: {
+          length: 70,
+          width: 40,
+          height: 150
+        }
+      },
+      {
+        id: "snack",
+        label: {
+          th: "\u0E02\u0E19\u0E21 120 \xD7 60 \xD7 180",
+          en: "Snacks 120 \xD7 60 \xD7 180"
+        },
+        values: {
+          length: 120,
+          width: 60,
+          height: 180
+        }
+      }
+    ],
+    slotted: [
+      {
+        id: "s",
+        label: {
+          th: "S 150 \xD7 100 \xD7 80",
+          en: "S 150 \xD7 100 \xD7 80"
+        },
+        values: {
+          length: 150,
+          width: 100,
+          height: 80
+        }
+      },
+      {
+        id: "m",
+        label: {
+          th: "M 250 \xD7 180 \xD7 120",
+          en: "M 250 \xD7 180 \xD7 120"
+        },
+        values: {
+          length: 250,
+          width: 180,
+          height: 120
+        }
+      },
+      {
+        id: "l",
+        label: {
+          th: "L 350 \xD7 250 \xD7 200",
+          en: "L 350 \xD7 250 \xD7 200"
+        },
+        values: {
+          length: 350,
+          width: 250,
+          height: 200
+        }
+      },
+      {
+        id: "xl",
+        label: {
+          th: "XL 450 \xD7 350 \xD7 300",
+          en: "XL 450 \xD7 350 \xD7 300"
+        },
+        values: {
+          length: 450,
+          width: 350,
+          height: 300
+        }
+      }
+    ],
+    label: [
+      {
+        id: "a",
+        label: {
+          th: "50 \xD7 50",
+          en: "50 \xD7 50"
+        },
+        values: {
+          length: 50,
+          width: 50
+        }
+      },
+      {
+        id: "b",
+        label: {
+          th: "100 \xD7 60",
+          en: "100 \xD7 60"
+        },
+        values: {
+          length: 100,
+          width: 60
+        }
+      },
+      {
+        id: "c",
+        label: {
+          th: "150 \xD7 100",
+          en: "150 \xD7 100"
+        },
+        values: {
+          length: 150,
+          width: 100
+        }
+      }
+    ]
+  },
+  defaults: {
+    carton: {
+      length: 70,
+      width: 40,
+      height: 150,
+      tuckCorners: "rounded",
+      glueSide: "left",
+      thumbNotch: false,
+      grain: "across",
+      windowPanel: "front",
+      window: "none",
+      windowWidth: 40,
+      windowHeight: 30,
+      windowOffsetX: 0,
+      windowOffsetY: 0,
+      windowRadius: 6
+    },
+    slotted: {
+      length: 250,
+      width: 180,
+      height: 120,
+      glueSide: "left",
+      handles: "none",
+      grain: "across"
+    }
+  }
+};
+
+// packages/dieline/src/recipes/params.ts
+var PARAM_LIBRARY = params_default;
+var RecipeError = class extends Error {
+  constructor(code, path, detail) {
+    super(`${code} at ${path}: ${detail}`);
+    this.code = code;
+    this.path = path;
+    this.name = "RecipeError";
+  }
+  code;
+  path;
+};
+function resolveParam(p, path = "params") {
+  if (typeof p === "string") {
+    const def = PARAM_LIBRARY[p];
+    if (!def) throw new RecipeError("recipe.unknown_param", path, `"${p}" is not in params.json`);
+    return { ...def, key: p };
+  }
+  if ("ref" in p) {
+    const { ref, omit, ...over } = p;
+    const def = PARAM_LIBRARY[ref];
+    if (!def) throw new RecipeError("recipe.unknown_param", path, `"${ref}" is not in params.json`);
+    const out = { ...def, ...over, key: ref };
+    for (const k2 of omit ?? []) delete out[k2];
+    return out;
+  }
+  return p;
+}
+var RECIPE_SETS = sets_default;
+function presetsOf(r) {
+  if (typeof r.presets !== "string") return r.presets;
+  const set = RECIPE_SETS.presets[r.presets];
+  if (!set) throw new RecipeError("recipe.unknown_set", `${r.id}.presets`, `"${r.presets}" is not in sets.json`);
+  return set;
+}
+function defaultsOf(r) {
+  const { "@extends": base, ...own } = r.defaults;
+  if (base === void 0) return own;
+  const set = RECIPE_SETS.defaults[base];
+  if (!set) throw new RecipeError("recipe.unknown_set", `${r.id}.defaults`, `"${base}" is not in sets.json`);
+  return { ...set, ...own };
+}
+
+// packages/dieline/src/recipes/build.ts
+function moduleUse(rm, end) {
+  if (!rm) return void 0;
+  const def = getModule(rm.module);
+  if (!def) throw new Error(`recipe.unknown_module: ${rm.module}`);
+  const cfg = { ...rm.preset ? def.presets?.[rm.preset] : {}, ...rm.with };
+  return { def, cfg, end };
+}
+function resolveUses(recipe) {
+  const main = moduleUse(recipe.body ?? recipe.pieceSet);
+  const parts = {
+    top: moduleUse(recipe.closures?.top, "top"),
+    bottom: moduleUse(recipe.closures?.bottom, "bottom"),
+    features: (recipe.features ?? []).map((f) => moduleUse(f))
+  };
+  const all = [main, parts.top, parts.bottom, ...parts.features].filter((u) => !!u);
+  return { main, parts, all };
+}
+var usesCache = /* @__PURE__ */ new WeakMap();
+var recipeUses = (r) => uses(r);
+var uses = (r) => {
+  let u = usesCache.get(r);
+  if (!u) usesCache.set(r, u = resolveUses(r));
+  return u;
+};
+function recipeContext(recipe, v, m, rules) {
+  return contextFor(recipe.id, v, m, uses(recipe).main.cfg.dims ?? {}, rules);
+}
+function drawRecipe(recipe, ctx) {
+  const { main, parts } = uses(recipe);
+  if (main.def.slot === "pieceSet") return main.def.build(ctx, main.cfg);
+  if (main.def.slot !== "body") throw new Error(`recipe.no_body: ${recipe.id}`);
+  return main.def.build(ctx, main.cfg, parts);
+}
+var foldable = (recipe) => {
+  const { main } = uses(recipe);
+  return main.def.slot !== "body" || main.def.folds;
+};
+function hinges(recipe, ctx) {
+  const out = { roots: {} };
+  for (const u of uses(recipe).all) {
+    const part = u.def.hinges?.(ctx, u.cfg, u.end);
+    if (!part) continue;
+    if (part.roots) Object.assign(out.roots, part.roots);
+    if (part.angles) out.angles = { ...out.angles, ...part.angles };
+    if (part.stages) out.stages = { ...out.stages, ...part.stages };
+    if (part.upright) out.upright = part.upright;
+    if (part.placement) out.placement = { ...out.placement, ...part.placement };
+  }
+  return out;
+}
+var constraintsOf = (def, cfg) => typeof def.constraints === "function" ? def.constraints(cfg) : def.constraints ?? [];
+function interpolate(text, ctx) {
+  return text.replace(/\{\{([^}]+)\}\}/g, (_m, e) => {
+    const x = evaluate(compile(e.trim()), ctx.scope);
+    return typeof x === "number" ? String(Math.round(x * 10) / 10) : String(x ?? "");
+  });
+}
+function broken(c, ctx) {
+  return evaluate(compile(c.require), ctx.scope) === false;
+}
+var toIssue = (c, ctx) => issue(c.code, { th: interpolate(c.message.th, ctx), en: interpolate(c.message.en, ctx) }, c.param, c.severity);
+function recipeConstraints(recipe) {
+  const seen = /* @__PURE__ */ new Set();
+  const out = [];
+  const add = (c, use) => {
+    if (seen.has(c.id)) return;
+    seen.add(c.id);
+    out.push({ constraint: c, use });
+  };
+  for (const c of recipe.constraints ?? []) add(c);
+  for (const u of uses(recipe).all) for (const c of constraintsOf(u.def, u.cfg)) add(c, u);
+  return out;
+}
+function check(recipe, v, m, built) {
+  const ctx = recipeContext(recipe, v, m);
+  const out = [];
+  const seen = /* @__PURE__ */ new Set();
+  const rule = (c) => {
+    if (c.stage === "manufacturing" || seen.has(c.id)) return;
+    seen.add(c.id);
+    if (broken(c, ctx)) out.push(toIssue(c, ctx));
+  };
+  (recipe.constraints ?? []).forEach(rule);
+  for (const u of uses(recipe).all) {
+    constraintsOf(u.def, u.cfg).forEach(rule);
+    if (u.def.check) out.push(...u.def.check(ctx, u.cfg, built));
+  }
+  return out;
+}
+function buildFromRecipe(recipe, values, material) {
+  const v = withDefaults(defaultsOf(recipe), values);
+  const ctx = recipeContext(recipe, v, material);
+  const limits = {};
+  for (const p of recipe.params.map((x) => resolveParam(x)))
+    if (p.min !== void 0 || p.max !== void 0) limits[p.key] = { min: p.min, max: p.max };
+  return { dieline: drawRecipe(recipe, ctx), hinges: foldable(recipe) ? hinges(recipe, ctx) : null, limits };
+}
+function styleFromRecipe(recipe) {
+  const { closedSize } = recipe;
+  return defineStyle({
+    id: recipe.id,
+    category: recipe.category,
+    name: recipe.name,
+    description: recipe.description,
+    ...recipe.codes ? { codes: recipe.codes } : {},
+    materials: recipe.materials,
+    params: recipe.params.map((p) => resolveParam(p)),
+    defaults: defaultsOf(recipe),
+    presets: presetsOf(recipe),
+    ...foldable(recipe) ? { faces3d: (v, m) => hinges(recipe, recipeContext(recipe, v, m)) } : {},
+    ...closedSize ? {
+      closedSize: (v, m) => {
+        const ctx = recipeContext(recipe, v, m);
+        return {
+          length: ctx.num(closedSize.length),
+          width: ctx.num(closedSize.width),
+          height: ctx.num(closedSize.height)
+        };
+      }
+    } : {},
+    make: (v, m) => drawRecipe(recipe, recipeContext(recipe, v, m)),
+    check: (v, m, built) => check(recipe, v, m, built),
+    ...recipe.legacy ? { legacy: recipe.legacy } : {}
+  });
+}
+function outerSizeOf(recipe, values, m) {
+  const v = withDefaults(defaultsOf(recipe), values);
+  const ctx = recipeContext(recipe, v, m);
+  const nominal = recipe.closedSize ?? { length: "length", width: "width", height: "height" };
+  const axis = (k2) => {
+    const own = recipe.outerSize?.[k2];
+    return own ? ctx.num(own) : ctx.num(nominal[k2]) + 2 * Math.max(0, m.caliperMm);
+  };
+  return { length: axis("length"), width: axis("width"), height: axis("height") };
+}
+
+// packages/dieline/src/recipes/parse.ts
+var CATEGORIES = ["folding_carton", "corrugated", "tray_lid", "specialty", "flat"];
+var KINDS = ["paperboard", "corrugated", "rigid", "label", "flexible"];
+var expr = (src, path) => {
+  if (typeof src === "number" || typeof src === "boolean") return;
+  if (typeof src !== "string") throw new RecipeError("recipe.bad_expression", path, "expected an expression");
+  try {
+    compile(src);
+  } catch (e) {
+    throw new RecipeError("recipe.bad_expression", path, e.message);
+  }
+};
+function checkConstraints(list, path) {
+  list.forEach((c, i) => {
+    const at = `${path}[${i}]`;
+    if (!c.id || !c.code || !c.message?.th || !c.message?.en)
+      throw new RecipeError("recipe.bad_constraint", at, "id, code and a Thai and English message are required");
+    if (c.severity !== "error" && c.severity !== "warning")
+      throw new RecipeError("recipe.bad_constraint", at, `severity "${String(c.severity)}"`);
+    expr(c.require, `${at}.require`);
+  });
+}
+function moduleOf(use, slot, path) {
+  if (!use) return void 0;
+  const def = getModule(use.module);
+  if (!def) throw new RecipeError("recipe.unknown_module", path, `"${use.module}"`);
+  if (def.slot !== slot)
+    throw new RecipeError("recipe.wrong_slot", path, `"${use.module}" is a ${def.slot}, not a ${slot}`);
+  if (use.preset && !def.presets?.[use.preset])
+    throw new RecipeError("recipe.unknown_preset", path, `"${use.module}" has no preset "${use.preset}"`);
+  const cfg = { ...use.preset ? def.presets[use.preset] : {}, ...use.with };
+  const dims = cfg.dims;
+  if (dims && typeof dims === "object" && !Array.isArray(dims))
+    for (const [k2, e] of Object.entries(dims)) expr(e, `${path}.dims.${k2}`);
+  if (Array.isArray(cfg.panels))
+    cfg.panels.forEach((p, i) => {
+      const panel = p;
+      if (!(String(panel.label) in FACE_LABELS))
+        throw new RecipeError("recipe.unknown_label", `${path}.panels[${i}]`, `face label "${String(panel.label)}"`);
+      expr(panel.width, `${path}.panels[${i}].width`);
+    });
+  for (const k2 of [
+    "depth",
+    "glue",
+    "glueRight",
+    "length",
+    "width",
+    "height",
+    "cornerFlap",
+    "slot",
+    "tongue",
+    "clearance"
+  ])
+    if (k2 in cfg) expr(cfg[k2], `${path}.${k2}`);
+  if (Array.isArray(cfg.depths)) cfg.depths.forEach((e, i) => expr(e, `${path}.depths[${i}]`));
+  const piece2 = cfg.piece;
+  if (piece2 && !(String(piece2.label) in PIECE_LABELS))
+    throw new RecipeError("recipe.unknown_label", `${path}.piece`, `piece label "${String(piece2.label)}"`);
+  const constraints = typeof def.constraints === "function" ? def.constraints(cfg) : def.constraints ?? [];
+  checkConstraints(constraints, `${path}(${def.id}).constraints`);
+  return def;
+}
+var fits = (def, kind, path) => {
+  if (def && (def.slot === "closure" || def.slot === "feature") && !def.fits.includes(kind))
+    throw new RecipeError("recipe.does_not_fit", path, `"${def.id}" does not attach to a ${kind} body`);
+};
+function parseRecipe(raw) {
+  if (!raw || typeof raw !== "object") throw new RecipeError("recipe.not_an_object", "$", typeof raw);
+  const r = raw;
+  const id = typeof r.id === "string" ? r.id : "?";
+  const at = (p) => `${id}.${p}`;
+  if (r.schemaVersion !== 1)
+    throw new RecipeError("recipe.schema_version", at("schemaVersion"), String(r.schemaVersion));
+  if (!/^[a-z0-9-]+$/.test(id)) throw new RecipeError("recipe.bad_id", at("id"), id);
+  if (!CATEGORIES.includes(r.category))
+    throw new RecipeError("recipe.bad_category", at("category"), String(r.category));
+  for (const k2 of ["name", "description"])
+    if (!r[k2]?.th || !r[k2]?.en) throw new RecipeError("recipe.missing_words", at(k2), "Thai and English are required");
+  if (!Array.isArray(r.materials) || !r.materials.length || r.materials.some((m) => !KINDS.includes(m)))
+    throw new RecipeError("recipe.bad_materials", at("materials"), JSON.stringify(r.materials));
+  if (!Array.isArray(r.params)) throw new RecipeError("recipe.bad_params", at("params"), "expected a list");
+  const keys = r.params.map((p, i) => resolveParam(p, at(`params[${i}]`)).key);
+  if (new Set(keys).size !== keys.length) throw new RecipeError("recipe.duplicate_param", at("params"), keys.join(","));
+  if (!presetsOf(r).length) throw new RecipeError("recipe.no_presets", at("presets"), "");
+  defaultsOf(r);
+  if (!r.body === !r.pieceSet)
+    throw new RecipeError("recipe.body_or_piece_set", at("body"), "exactly one of body / pieceSet");
+  const body = moduleOf(r.body, "body", at("body"));
+  moduleOf(r.pieceSet, "pieceSet", at("pieceSet"));
+  const kind = body?.slot === "body" ? body.kind : "special";
+  const top = moduleOf(r.closures?.top, "closure", at("closures.top"));
+  const bottom = moduleOf(r.closures?.bottom, "closure", at("closures.bottom"));
+  fits(top, kind, at("closures.top"));
+  fits(bottom, kind, at("closures.bottom"));
+  const features = (r.features ?? []).map((f, i) => {
+    const def = moduleOf(f, "feature", at(`features[${i}]`));
+    fits(def, kind, at(`features[${i}]`));
+    return def;
+  });
+  checkConstraints(r.constraints ?? [], at("constraints"));
+  for (const [axis, options] of Object.entries(r.variants ?? {}))
+    for (const [value, set] of Object.entries(options))
+      for (const k2 of Object.keys(set))
+        if (!keys.includes(k2))
+          throw new RecipeError(
+            "recipe.unknown_param",
+            at(`variants.${axis}.${value}`),
+            `"${k2}" is not a parameter of this recipe`
+          );
+  if (r.closedSize)
+    for (const k2 of ["length", "width", "height"]) expr(r.closedSize[k2], at(`closedSize.${k2}`));
+  for (const [k2, e] of Object.entries(r.outerSize ?? {})) {
+    if (!["length", "width", "height"].includes(k2))
+      throw new RecipeError("recipe.bad_outer_size", at(`outerSize.${k2}`), k2);
+    expr(e, at(`outerSize.${k2}`));
+  }
+  const used = new Set([body, top, bottom, ...features].filter(Boolean).map((d) => d.id));
+  for (const rule of r.incompatible ?? [])
+    if (rule.modules.every((m) => used.has(m)))
+      throw new RecipeError(rule.code || "recipe.incompatible", at("incompatible"), rule.modules.join(" + "));
+  for (const src of collectExpressions(r))
+    for (const call of callsOf(src))
+      if (!EXPRESSION_FUNCTIONS.includes(call))
+        throw new RecipeError("recipe.unknown_function", at("$"), `${call}() in "${src}"`);
+  return r;
+}
+function collectExpressions(r) {
+  const out = [];
+  const cfgExprs = (use) => {
+    if (!use) return;
+    const def = getModule(use.module);
+    const cfg = { ...use.preset ? def?.presets?.[use.preset] : {}, ...use.with };
+    const dims = cfg.dims;
+    for (const e of Object.values(dims ?? {})) if (typeof e === "string") out.push(e);
+    for (const k2 of [
+      "depth",
+      "glue",
+      "glueRight",
+      "length",
+      "width",
+      "height",
+      "cornerFlap",
+      "slot",
+      "tongue",
+      "clearance"
+    ])
+      if (typeof cfg[k2] === "string") out.push(cfg[k2]);
+    for (const e of cfg.depths ?? []) if (typeof e === "string") out.push(e);
+    for (const p of cfg.panels ?? []) if (typeof p.width === "string") out.push(p.width);
+    const cs = def ? typeof def.constraints === "function" ? def.constraints(cfg) : def.constraints ?? [] : [];
+    for (const c of cs) out.push(c.require);
+  };
+  [r.body, r.pieceSet, r.closures?.top, r.closures?.bottom, ...r.features ?? []].forEach(cfgExprs);
+  for (const c of r.constraints ?? []) out.push(c.require);
+  if (r.closedSize) out.push(r.closedSize.length, r.closedSize.width, r.closedSize.height);
+  out.push(...Object.values(r.outerSize ?? {}).filter((e) => typeof e === "string"));
+  return out;
+}
+
+// packages/dieline/src/recipes/names.reviewed.json
+var names_reviewed_default = {};
+
+// packages/dieline/src/recipes/variants.ts
+var variantKey = (axes) => Object.keys(axes).sort().map((k2) => `${k2}=${axes[k2]}`).join(";");
+function variantsOf(recipe) {
+  let combos = [{ axes: { ...recipe.variant }, values: {} }];
+  for (const [axis, options] of Object.entries(recipe.variants ?? {}))
+    combos = combos.flatMap(
+      (c) => Object.entries(options).map(([value, set]) => ({
+        axes: { ...c.axes, [axis]: value },
+        values: { ...c.values, ...set }
+      }))
+    );
+  return combos.map((c) => ({ key: variantKey(c.axes), ...c }));
+}
+var AXIS_PHRASES = {
+  window: {
+    none: null,
+    front_window: { th: "\u0E21\u0E35\u0E2B\u0E19\u0E49\u0E32\u0E15\u0E48\u0E32\u0E07\u0E14\u0E49\u0E32\u0E19\u0E2B\u0E19\u0E49\u0E32", en: "front window" },
+    top_window: { th: "\u0E21\u0E35\u0E2B\u0E19\u0E49\u0E32\u0E15\u0E48\u0E32\u0E07\u0E14\u0E49\u0E32\u0E19\u0E1A\u0E19", en: "top window" }
+  },
+  hang: {
+    none: null,
+    euro_slot: { th: "\u0E23\u0E39\u0E41\u0E02\u0E27\u0E19\u0E41\u0E1A\u0E1A\u0E22\u0E39\u0E42\u0E23", en: "euro slot hang hole" },
+    round_hole: { th: "\u0E23\u0E39\u0E41\u0E02\u0E27\u0E19\u0E01\u0E25\u0E21", en: "round hang hole" },
+    sombrero_header: { th: "\u0E2B\u0E31\u0E27\u0E41\u0E02\u0E27\u0E19\u0E17\u0E23\u0E07\u0E2B\u0E21\u0E27\u0E01", en: "sombrero hang header" }
+  },
+  thumb: { none: null, thumb_notch: { th: "\u0E21\u0E35\u0E23\u0E39\u0E14\u0E36\u0E07", en: "finger pull" } },
+  hand_holes: {
+    none: null,
+    end_panels: { th: "\u0E0A\u0E48\u0E2D\u0E07\u0E21\u0E37\u0E2D\u0E08\u0E31\u0E1A\u0E14\u0E49\u0E32\u0E19\u0E02\u0E49\u0E32\u0E07", en: "hand holes in the end panels" },
+    side_panels: { th: "\u0E0A\u0E48\u0E2D\u0E07\u0E21\u0E37\u0E2D\u0E08\u0E31\u0E1A\u0E14\u0E49\u0E32\u0E19\u0E22\u0E32\u0E27", en: "hand holes in the side panels" }
+  },
+  lid_depth: {
+    full: { th: "\u0E1D\u0E32\u0E04\u0E23\u0E2D\u0E1A\u0E40\u0E15\u0E47\u0E21", en: "full-depth lid" },
+    partial: { th: "\u0E1D\u0E32\u0E04\u0E23\u0E2D\u0E1A\u0E1A\u0E32\u0E07\u0E2A\u0E48\u0E27\u0E19", en: "partial-depth lid" }
+  }
+};
+var reviewed = names_reviewed_default;
+function describeVariant(recipe, variant) {
+  const approved = reviewed[`${recipe.id}|${variant.key}`];
+  if (approved) return { ...approved, reviewStatus: "approved" };
+  const chosen = Object.keys(recipe.variants ?? {}).map((axis) => AXIS_PHRASES[axis]?.[variant.axes[axis]]).filter((p) => !!p);
+  const name = {
+    th: [recipe.name.th, ...chosen.map((p) => p.th)].join(" \xB7 "),
+    en: [recipe.name.en, ...chosen.map((p) => p.en)].join(" \xB7 ")
+  };
+  const uses2 = [
+    recipe.body ?? recipe.pieceSet,
+    recipe.closures?.top,
+    recipe.closures?.bottom,
+    ...recipe.features ?? []
+  ];
+  const labels = [...new Set(uses2.filter(Boolean).map((u) => getModule(u.module).label))];
+  const description = {
+    th: `\u0E42\u0E04\u0E23\u0E07\u0E2A\u0E23\u0E49\u0E32\u0E07: ${labels.map((l) => l.th).join(" \xB7 ")}`,
+    en: `Construction: ${labels.map((l) => l.en).join(" \xB7 ")}`
+  };
+  return { name, description, reviewStatus: "pending" };
+}
+
+// packages/dieline/src/recipes/index.ts
+var RECIPES = [
+  tuck_end_default,
+  reverse_tuck_end_default,
+  snap_lock_bottom_default,
+  crash_lock_bottom_default,
+  seal_end_default,
+  hang_tab_tuck_default,
+  sleeve_default,
+  sleeve_drawer_default,
+  gable_default,
+  hexagonal_default,
+  rsc_default,
+  hsc_default,
+  fol_default,
+  cssc_default,
+  mailer_default,
+  wrap_around_default,
+  tray_default,
+  tray_6_corner_default,
+  double_wall_tray_default,
+  telescope_default,
+  pillow_default,
+  flat_rect_default,
+  flat_rounded_rect_default,
+  flat_circle_default,
+  flat_oval_default,
+  flat_custom_default,
+  hang_tag_default,
+  cup_sleeve_default,
+  band_default,
+  pouch_default
+];
+
+// packages/dieline/src/styles/index.ts
+var STYLES = RECIPES.map(styleFromRecipe);
+var BY_ID2 = new Map(STYLES.map((s) => [s.id, s]));
+var STYLE_ALIASES = {
+  ste: "tuck-end",
+  "straight-tuck-end": "tuck-end",
+  rte: "reverse-tuck-end",
+  slb: "snap-lock-bottom",
+  "lock-bottom": "snap-lock-bottom",
+  clb: "crash-lock-bottom",
+  "auto-bottom": "crash-lock-bottom",
+  "tuck-top-lock-bottom": "snap-lock-bottom",
+  tele: "telescope",
+  // Legacy Locopack drawing-service names (DownloadDrawingController::$patternName).
+  "folding-truck-end-box": "tuck-end",
+  "folding-truck-end-snap-lock-bottom": "snap-lock-bottom",
+  "folding-slide-box": "sleeve-drawer",
+  "folding-cover-box": "telescope",
+  "corrugate-rsc": "rsc",
+  "corrugate-rsc-3d": "rsc",
+  "corrugate-rsc-full-overlap": "fol",
+  "corrugate-truck-end-box": "tuck-end",
+  "corrugate-slide": "sleeve-drawer",
+  "corrugate-handle-box-no-rim": "gable",
+  "corrugate-handle-box-with-rim": "gable",
+  "tag-cut": "hang-tag",
+  "tag-curve": "hang-tag",
+  circle: "flat-circle",
+  square: "flat-rect",
+  strap: "band",
+  "pouch-3-seal": "pouch",
+  "pouch-center-seal": "pouch",
+  "pouch-center-seal-gusset": "pouch",
+  "pouch-4-seal": "pouch",
+  "pouch-standing": "pouch"
+};
+function resolveStyleId(key) {
+  if (!key) return null;
+  const k2 = key.trim().toLowerCase();
+  if (BY_ID2.has(k2)) return k2;
+  const alias = STYLE_ALIASES[k2];
+  return alias && BY_ID2.has(alias) ? alias : null;
+}
+var isStyleId = (key) => resolveStyleId(key) !== null;
+function getStyle(key) {
+  const id = resolveStyleId(key);
+  const style = id ? BY_ID2.get(id) : void 0;
+  if (!style) throw new Error(`Unknown box style "${key}"`);
+  return style;
+}
+function resolveValues(style, v) {
+  return withDefaults(style.defaults, v);
+}
+function buildStyle(key, v, material) {
+  return getStyle(key).build(v, material);
+}
+function validateStyle(key, v, material) {
+  return getStyle(key).validate(v, material);
+}
+function hingeMapOf(style, v, material) {
+  const f = style.faces3d;
+  if (!f) return null;
+  return typeof f === "function" ? f(resolveValues(style, v), material) : f;
+}
+function stylesByCategory() {
+  const order = ["folding_carton", "corrugated", "tray_lid", "specialty", "flat"];
+  return order.map((category) => ({ category, styles: STYLES.filter((s) => s.category === category) })).filter((g) => g.styles.length);
+}
+
+// packages/dieline/src/rules/materials.ts
+var MATERIAL_CLASSES = [
+  "paperboard",
+  "food_board",
+  "corrugated",
+  "rigid",
+  "flexible",
+  "paper",
+  "label_stock",
+  "shrink_film"
+];
+var t2 = (m) => Math.max(0, m.caliperMm);
+var RULES = {
+  paperboard: (m) => ({
+    caliper: [0.2, 1.2],
+    minPanel: 8,
+    cutToCrease: Math.max(1, 2 * t2(m)),
+    minGlueFlap: 8,
+    minSlot: 0,
+    windowMargin: WINDOW_MIN_MARGIN_MM,
+    minTuck: 8,
+    crashLockMinDepth: 12,
+    seal: [0, 0]
+  }),
+  food_board: (m) => ({ ...RULES.paperboard(m), caliper: [0.25, 1] }),
+  corrugated: (m) => ({
+    caliper: [0.8, 8],
+    minPanel: Math.max(10, 5 * t2(m)),
+    cutToCrease: Math.max(2, 1.5 * t2(m)),
+    minGlueFlap: 20,
+    minSlot: Math.max(MIN_SLOT_MM, SLOT_CALIPER_FACTOR * t2(m)),
+    windowMargin: WINDOW_MIN_MARGIN_MM,
+    minTuck: 10,
+    crashLockMinDepth: 20,
+    seal: [0, 0]
+  }),
+  rigid: (m) => ({
+    caliper: [1, 4],
+    minPanel: Math.max(10, 5 * t2(m)),
+    cutToCrease: Math.max(2, t2(m)),
+    minGlueFlap: 10,
+    minSlot: 0,
+    windowMargin: Math.max(WINDOW_MIN_MARGIN_MM, 4 * t2(m)),
+    minTuck: 10,
+    crashLockMinDepth: 20,
+    seal: [0, 0]
+  }),
+  flexible: () => ({
+    caliper: [0.02, 0.4],
+    minPanel: 5,
+    cutToCrease: 0,
+    minGlueFlap: 0,
+    minSlot: 0,
+    windowMargin: WINDOW_MIN_MARGIN_MM,
+    minTuck: 0,
+    crashLockMinDepth: 0,
+    seal: [3, 25]
+  }),
+  paper: (m) => ({ ...RULES.paperboard(m), caliper: [0.05, 0.3], minPanel: 15, minGlueFlap: 12 }),
+  label_stock: () => ({
+    caliper: [0.04, 0.4],
+    minPanel: 3,
+    cutToCrease: 0,
+    minGlueFlap: GLUE_AREA_INSET_MM,
+    minSlot: 0,
+    windowMargin: 0,
+    minTuck: 0,
+    crashLockMinDepth: 0,
+    seal: [0, 0]
+  }),
+  shrink_film: () => ({ ...RULES.label_stock({ caliperMm: 0, kind: "label" }), caliper: [0.02, 0.1] })
+};
+var BY_KIND = {
+  paperboard: "paperboard",
+  corrugated: "corrugated",
+  rigid: "rigid",
+  label: "label_stock",
+  flexible: "flexible"
+};
+function materialClassOf(m) {
+  return m.class ?? BY_KIND[m.kind];
+}
+function materialRules(m) {
+  return RULES[materialClassOf(m)](m);
+}
+
+// packages/dieline/src/rules/manufacturing.ts
+var sub = (a, b) => [a[0] - b[0], a[1] - b[1]];
+var len = (p) => Math.hypot(p[0], p[1]);
+var near = (a, b) => len(sub(a, b)) < 0.01;
+function besideDistance(cut, crease) {
+  if (cut.kind !== "line" || crease.kind !== "line") return null;
+  if ([cut.from, cut.to].some((p) => near(p, crease.from) || near(p, crease.to))) return null;
+  const d = sub(crease.to, crease.from);
+  const L = len(d);
+  if (L < 1e-9) return null;
+  const u = [d[0] / L, d[1] / L];
+  const c = sub(cut.to, cut.from);
+  const cl = len(c);
+  if (cl < 1e-9 || Math.abs(u[0] * c[1] - u[1] * c[0]) / cl > Math.sin(10 * Math.PI / 180)) return null;
+  const along = (p) => (p[0] - crease.from[0]) * u[0] + (p[1] - crease.from[1]) * u[1];
+  const across = (p) => Math.abs((p[0] - crease.from[0]) * u[1] - (p[1] - crease.from[1]) * u[0]);
+  const [a0, a1] = [along(cut.from), along(cut.to)].sort((p, q) => p - q);
+  const overlap = Math.min(a1, L) - Math.max(a0, 0);
+  if (overlap <= 1) return null;
+  return Math.min(across(cut.from), across(cut.to));
+}
+function dielineManufacturing(d, m) {
+  const r = materialRules(m);
+  const out = [];
+  if (m.caliperMm < r.caliper[0] || m.caliperMm > r.caliper[1]) {
+    out.push(
+      issue(
+        "mfg.caliper_out_of_range",
+        t(
+          `\u0E04\u0E27\u0E32\u0E21\u0E2B\u0E19\u0E32 ${m.caliperMm} \u0E21\u0E21. \u0E44\u0E21\u0E48\u0E2D\u0E22\u0E39\u0E48\u0E43\u0E19\u0E0A\u0E48\u0E27\u0E07\u0E02\u0E2D\u0E07\u0E27\u0E31\u0E2A\u0E14\u0E38\u0E01\u0E25\u0E38\u0E48\u0E21 ${materialClassOf(m)}`,
+          `A ${m.caliperMm} mm caliper is outside the ${materialClassOf(m)} range`
+        )
+      )
+    );
+  }
+  if (r.cutToCrease <= 0) return out;
+  for (const f of allFaces(d)) {
+    const edges = [...f.outline, ...f.marks];
+    const creases = edges.filter((e) => e.role === "crease");
+    const cuts = [...f.outline.filter((e) => e.role === "cut"), ...f.holes.flat()];
+    const tooClose = cuts.some(
+      (c) => creases.some((k2) => {
+        const dist2 = besideDistance(c, k2);
+        return dist2 !== null && dist2 < r.cutToCrease;
+      })
+    );
+    if (tooClose) {
+      out.push(
+        issue(
+          "mfg.cut_near_crease",
+          t(
+            `\u0E23\u0E2D\u0E22\u0E15\u0E31\u0E14\u0E43\u0E01\u0E25\u0E49\u0E23\u0E2D\u0E22\u0E1E\u0E31\u0E1A\u0E40\u0E01\u0E34\u0E19 ${r.cutToCrease} \u0E21\u0E21. \u0E1A\u0E19\u0E14\u0E49\u0E32\u0E19 ${f.id}`,
+            `A cut runs within ${r.cutToCrease} mm of a crease on ${f.id}`
+          )
+        )
+      );
+    }
+  }
+  return out;
+}
+
+// packages/dieline/src/rules/module-rules.ts
+function paramOf(src, ctx, dims) {
+  if (typeof src !== "string") return void 0;
+  for (const n2 of namesOf(src)) {
+    if (n2 in dims) {
+      const p = paramOf(dims[n2], ctx, dims);
+      if (p) return p;
+    } else if (n2 in ctx.v) return n2;
+  }
+  return void 0;
+}
+var tube2 = (ctx, cfg) => {
+  const r = ctx.rules;
+  const dims = cfg.dims ?? {};
+  const out = [];
+  for (const p of cfg.panels) {
+    if (ctx.num(p.width) < r.minPanel)
+      out.push(
+        issue(
+          "mfg.panel_too_narrow",
+          t(
+            `\u0E41\u0E1C\u0E07 ${p.id} \u0E41\u0E04\u0E1A\u0E01\u0E27\u0E48\u0E32 ${r.minPanel} \u0E21\u0E21. \u0E17\u0E35\u0E48\u0E40\u0E04\u0E23\u0E37\u0E48\u0E2D\u0E07\u0E1E\u0E31\u0E1A\u0E44\u0E14\u0E49`,
+            `Panel ${p.id} is narrower than the ${r.minPanel} mm a machine folds`
+          ),
+          paramOf(p.width, ctx, dims)
+        )
+      );
+  }
+  if (ctx.num(cfg.depth) < r.minPanel)
+    out.push(
+      issue(
+        "mfg.panel_too_narrow",
+        t(`\u0E04\u0E27\u0E32\u0E21\u0E2A\u0E39\u0E07\u0E41\u0E1C\u0E07\u0E19\u0E49\u0E2D\u0E22\u0E01\u0E27\u0E48\u0E32 ${r.minPanel} \u0E21\u0E21.`, `Panels are shorter than ${r.minPanel} mm`),
+        paramOf(cfg.depth, ctx, dims)
+      )
+    );
+  const glue = ctx.num(cfg.glue ?? 0);
+  const panels = cfg.panels;
+  const closing = ctx.num(panels[panels.length - 1].width);
+  if (glue > closing)
+    out.push(
+      issue(
+        "mfg.glue_flap_too_wide",
+        t(
+          `\u0E1B\u0E35\u0E01\u0E01\u0E32\u0E27\u0E01\u0E27\u0E49\u0E32\u0E07\u0E01\u0E27\u0E48\u0E32\u0E41\u0E1C\u0E07\u0E17\u0E35\u0E48\u0E15\u0E34\u0E14\u0E01\u0E32\u0E27 (${Math.round(closing * 10) / 10} \u0E21\u0E21.)`,
+          `The glue flap is wider than the panel it is glued to (${Math.round(closing * 10) / 10} mm)`
+        ),
+        "glueWidth"
+      )
+    );
+  if (glue > 0 && glue < r.minGlueFlap)
+    out.push(
+      issue(
+        "mfg.glue_flap_too_narrow",
+        t(`\u0E1B\u0E35\u0E01\u0E01\u0E32\u0E27\u0E41\u0E04\u0E1A\u0E01\u0E27\u0E48\u0E32 ${r.minGlueFlap} \u0E21\u0E21.`, `The glue flap is narrower than ${r.minGlueFlap} mm`),
+        "glueWidth"
+      )
+    );
+  return out;
+};
+var tray2 = (ctx, cfg) => ["length", "width", "height"].filter((k2) => ctx.num(cfg[k2]) < ctx.rules.minPanel).map(
+  (k2) => issue(
+    "mfg.panel_too_narrow",
+    t(`\u0E16\u0E32\u0E14\u0E14\u0E49\u0E32\u0E19 ${k2} \u0E19\u0E49\u0E2D\u0E22\u0E01\u0E27\u0E48\u0E32 ${ctx.rules.minPanel} \u0E21\u0E21.`, `The tray's ${k2} is under ${ctx.rules.minPanel} mm`),
+    k2
+  )
+);
+var slots = (id) => (ctx, raw) => {
+  const slot = ctx.num({ ...FLAP_DEFAULTS[id], ...raw }.slot ?? 0);
+  const min = ctx.rules.minSlot;
+  return slot > 0 && slot < min ? [issue("mfg.slot_too_narrow", t(`\u0E23\u0E48\u0E2D\u0E07\u0E23\u0E30\u0E2B\u0E27\u0E48\u0E32\u0E07\u0E1B\u0E35\u0E01\u0E41\u0E04\u0E1A\u0E01\u0E27\u0E48\u0E32 ${min} \u0E21\u0E21.`, `Slots are narrower than ${min} mm`))] : [];
+};
+var windowMargin = (ctx, _cfg, built) => {
+  const margin = ctx.rules.windowMargin;
+  if (margin <= WINDOW_MIN_MARGIN_MM || str(ctx.v, "window", "none") === "none") return [];
+  const panel = findFace(built, str(ctx.v, "windowPanel", "front"));
+  const hole = panel?.holes[0];
+  return panel && hole && !polygonInsideWithMargin(flattenContour(panel.outline), flattenContour(hole), margin) ? [
+    issue(
+      "mfg.window_margin",
+      t(
+        `\u0E2B\u0E19\u0E49\u0E32\u0E15\u0E48\u0E32\u0E07\u0E15\u0E49\u0E2D\u0E07\u0E2B\u0E48\u0E32\u0E07\u0E02\u0E2D\u0E1A ${margin} \u0E21\u0E21. \u0E2A\u0E33\u0E2B\u0E23\u0E31\u0E1A\u0E27\u0E31\u0E2A\u0E14\u0E38\u0E19\u0E35\u0E49`,
+        `The window needs ${margin} mm of board round it in this material`
+      ),
+      "windowWidth"
+    )
+  ] : [];
+};
+var MODULE_MANUFACTURING = {
+  tube: tube2,
+  tray: tray2,
+  window: windowMargin,
+  ...Object.fromEntries(Object.keys(FLAP_DEFAULTS).map((id) => [id, slots(id)]))
+};
+
+// packages/dieline/src/solver.ts
+var paramsCache = /* @__PURE__ */ new WeakMap();
+function paramsOf(recipe) {
+  let p = paramsCache.get(recipe);
+  if (!p) paramsCache.set(recipe, p = recipe.params.map((x) => resolveParam(x)));
+  return p;
+}
+var dimsOf = (recipe) => recipeUses(recipe).main.cfg.dims ?? {};
+function paramsRead(src, keys, dims, seen = /* @__PURE__ */ new Set()) {
+  return namesOf(src).flatMap((n2) => {
+    if (n2 in dims && !seen.has(n2)) {
+      seen.add(n2);
+      return paramsRead(dims[n2], keys, dims, seen).concat(keys.has(n2) ? [n2] : []);
+    }
+    return keys.has(n2) ? [n2] : [];
+  });
+}
+var fromIssue = (i, rule) => ({
+  code: i.code,
+  severity: i.severity,
+  rule,
+  param: i.param,
+  params: i.param ? [i.param] : [],
+  message: i.message
+});
+function explain(recipe, values, material) {
+  const params = paramsOf(recipe);
+  const keys = new Set(params.map((p) => p.key));
+  const v = withDefaults(defaultsOf(recipe), values);
+  const out = [];
+  const schema = schemaIssues(params, v);
+  for (const i of schema) {
+    const p = params.find((q) => q.key === i.param);
+    const raw = i.param ? Number(v[i.param]) : NaN;
+    out.push({
+      ...fromIssue(i, "schema"),
+      ...i.code === "size.out_of_range" && p ? { expected: { min: p.min, max: p.max }, actual: raw } : {}
+    });
+  }
+  if (schema.some((i) => i.severity === "error")) return out;
+  out.push(...materialIssues(recipe, material, v).map((i) => fromIssue(i, "material")));
+  if (out.some((x) => x.severity === "error")) return out;
+  const ctx = recipeContext(recipe, v, material, materialRules(material));
+  let built;
+  try {
+    built = drawRecipe(recipe, ctx);
+  } catch (e) {
+    return [
+      ...out,
+      {
+        code: "geometry.build_failed",
+        severity: "error",
+        rule: "geometry",
+        params: [],
+        message: { th: e.message, en: e.message }
+      }
+    ];
+  }
+  for (const { constraint: c } of recipeConstraints(recipe)) {
+    const node = compile(c.require);
+    if (evaluate(node, ctx.scope) !== false) continue;
+    const violation = {
+      code: c.code,
+      severity: c.severity,
+      rule: c.stage === "manufacturing" ? "manufacturing" : "constraint",
+      constraintId: c.id,
+      param: c.param,
+      params: [.../* @__PURE__ */ new Set([...c.param ? [c.param] : [], ...paramsRead(c.require, keys, dimsOf(recipe))])],
+      message: c.message
+    };
+    if (node.t === "bin" && ["<", "<=", ">", ">="].includes(node.op)) {
+      const actual = evaluate(node.a, ctx.scope);
+      const bound = evaluate(node.b, ctx.scope);
+      if (typeof actual === "number" && typeof bound === "number") {
+        violation.actual = actual;
+        violation.expected = node.op.startsWith("<") ? { max: bound } : { min: bound };
+      }
+    }
+    out.push(violation);
+  }
+  for (const u of recipeUses(recipe).all) {
+    if (u.def.check) out.push(...u.def.check(ctx, u.cfg, built).map((i) => fromIssue(i, "geometry")));
+    const rule = MODULE_MANUFACTURING[u.def.id];
+    if (rule) out.push(...rule(ctx, u.cfg, built).map((i) => fromIssue(i, "manufacturing")));
+  }
+  out.push(...dielineManufacturing(built, material).map((i) => fromIssue(i, "manufacturing")));
+  return out;
+}
+var isBuildable = (recipe, values, material) => !explain(recipe, values, material).some((x) => x.severity === "error");
+var SAMPLES = 32;
+var RESOLUTION_MM = 0.01;
+function solvable(recipe, v) {
+  return paramsOf(recipe).filter(
+    (p) => (p.kind === "length" || p.kind === "number" || p.kind === "angle") && p.min !== void 0 && p.max !== void 0 && isActive(p, v) && typeof v[p.key] === "number"
+  );
+}
+function validRanges(recipe, material, at) {
+  const v = withDefaults(defaultsOf(recipe), at ?? presetsOf(recipe)[0].values);
+  return solvable(recipe, v).map((p) => {
+    const lo = p.min;
+    const hi = p.max;
+    const ok = (x) => isBuildable(recipe, { ...v, [p.key]: x }, material);
+    const bisect = (bad, good) => {
+      while (Math.abs(good - bad) > RESOLUTION_MM / 2) {
+        const mid = (bad + good) / 2;
+        if (ok(mid)) good = mid;
+        else bad = mid;
+      }
+      return good;
+    };
+    const xs = Array.from({ length: SAMPLES + 1 }, (_, i) => lo + (hi - lo) * i / SAMPLES);
+    const pass = xs.map(ok);
+    const intervals = [];
+    for (let i = 0; i < xs.length; i++) {
+      if (!pass[i] || i > 0 && pass[i - 1]) continue;
+      let j = i;
+      while (j + 1 < xs.length && pass[j + 1]) j++;
+      const start = i === 0 ? xs[0] : bisect(xs[i - 1], xs[i]);
+      const end = j === xs.length - 1 ? xs[j] : bisect(xs[j + 1], xs[j]);
+      intervals.push([start, end]);
+    }
+    return { param: p.key, domain: [lo, hi], at: v[p.key], intervals };
+  });
+}
+function sizeRanges(recipe, material) {
+  const out = {};
+  for (const preset of presetsOf(recipe)) {
+    for (const r of validRanges(recipe, material, preset.values)) {
+      for (const [a, b] of r.intervals) {
+        const cur = out[r.param];
+        out[r.param] = cur ? { min: Math.min(cur.min, a), max: Math.max(cur.max, b) } : { min: a, max: b };
+      }
+    }
+  }
+  return out;
+}
+
+// packages/dieline/src/rules/envelope.ts
+function recipeProcesses(recipe) {
+  return [...new Set(recipeUses(recipe).all.flatMap((u) => u.def.processes))];
+}
+function fitsEnvelope(d, material, envelopes, processes = []) {
+  return envelopes.map((e) => {
+    const reasons = /* @__PURE__ */ new Set();
+    let rotated = false;
+    for (const p of d.pieces) {
+      const { width: w, height: h } = p.bounds;
+      const within = (a, b) => a <= e.maxSheet.width + 1e-9 && b <= e.maxSheet.height + 1e-9;
+      if (within(w, h)) continue;
+      if (within(h, w)) rotated = true;
+      else reasons.add("sheet.too_large");
+    }
+    if (e.minSheet) {
+      const longest = Math.max(...d.pieces.map((p) => Math.max(p.bounds.width, p.bounds.height)));
+      const shortest = Math.max(...d.pieces.map((p) => Math.min(p.bounds.width, p.bounds.height)));
+      const minLong = Math.max(e.minSheet.width, e.minSheet.height);
+      const minShort = Math.min(e.minSheet.width, e.minSheet.height);
+      if (longest < minLong || shortest < minShort) reasons.add("sheet.too_small");
+    }
+    if (e.maxCaliperMm !== void 0 && material.caliperMm > e.maxCaliperMm) reasons.add("caliper.too_thick");
+    const missing2 = e.processes ? processes.filter((p) => !e.processes.includes(p)) : [];
+    if (missing2.length) reasons.add("process.missing");
+    return { ref: e.ref, fits: reasons.size === 0, reasons: [...reasons], missing: missing2, rotated };
+  });
+}
+
+// packages/dieline/src/model/thickness.ts
+var WRAP_MM = 0.15;
+var CENTRED = ["panel", "wall", "hanger", "handle", "flat"];
+var dot = (a, b) => a[0] * b[0] + a[1] * b[1] + a[2] * b[2];
+var normalOf = (m) => {
+  const n2 = [m[8], m[9], m[10]];
+  const l = Math.hypot(...n2) || 1;
+  return [n2[0] / l, n2[1] / l, n2[2] / l];
+};
+function stagesOf(d, hinges2) {
+  const out = /* @__PURE__ */ new Map();
+  for (const p of d.pieces) {
+    const { root, hinges: list } = hingesOf(p, hinges2);
+    out.set(root, 0);
+    for (const h of list) out.set(h.child, h.stage);
+  }
+  return out;
+}
+function layers(placed, t3) {
+  const out = /* @__PURE__ */ new Map();
+  const groups = [];
+  for (const p of placed) {
+    const g = groups.find((q) => {
+      const c = dot(q[0].normal, p.normal);
+      return Math.abs(c) > 0.999 && Math.abs(q[0].offset - Math.sign(c) * p.offset) < 0.25;
+    });
+    if (g) g.push(p);
+    else groups.push([p]);
+  }
+  const overlaps = (a, b) => {
+    const w = Math.min(a.box[1], b.box[1]) - Math.max(a.box[0], b.box[0]);
+    const h = Math.min(a.box[3], b.box[3]) - Math.max(a.box[2], b.box[2]);
+    return w > 0.5 && h > 0.5;
+  };
+  const walls = groups.filter((g) => g.some((p) => CENTRED.includes(p.face.kind)));
+  const wraps = (g) => !g.some((p) => CENTRED.includes(p.face.kind)) && walls.some((w) => {
+    const c = dot(w[0].normal, g[0].normal);
+    const wall = w.find((p) => CENTRED.includes(p.face.kind));
+    const gap = Math.sign(c) * g[0].offset - w[0].offset;
+    const outward = dot(wall.normal, w[0].normal) > 0 ? gap : -gap;
+    return Math.abs(c) > 0.999 && outward > 0.75 * t3 && outward < 1.25 * t3 && g.some((p) => overlaps(wall, p));
+  });
+  for (const g of groups) {
+    const order = [...g].sort(
+      (a, b) => Number(!CENTRED.includes(a.face.kind)) - Number(!CENTRED.includes(b.face.kind)) || b.stage - a.stage || (a.face.id < b.face.id ? -1 : 1)
+    );
+    const wrapping = wraps(g);
+    const ref = order[0].normal;
+    const here = [];
+    for (const p of order) {
+      const flip = dot(p.normal, ref) < 0;
+      if (CENTRED.includes(p.face.kind)) {
+        const backToBack = g.some(
+          (q) => q !== p && CENTRED.includes(q.face.kind) && dot(q.normal, p.normal) < 0 && overlaps(q, p)
+        );
+        out.set(p.face.id, { layer: backToBack ? -2 : -1, flip });
+        here.push({ p, layer: -1 });
+        continue;
+      }
+      const taken = here.filter((q) => overlaps(q.p, p)).map((q) => q.layer);
+      let layer = 0;
+      while (taken.includes(layer)) layer++;
+      const under = wrapping || here.some((q) => q.layer === -1 && overlaps(q.p, p)) ? 0.5 : 0;
+      out.set(p.face.id, { layer: wrapping ? layer - 0.5 : layer + under, flip });
+      here.push({ p, layer });
+    }
+  }
+  return out;
+}
+function basis(n2) {
+  const a = Math.abs(n2[0]) < 0.9 ? [1, 0, 0] : [0, 1, 0];
+  const u = [n2[1] * a[2] - n2[2] * a[1], n2[2] * a[0] - n2[0] * a[2], n2[0] * a[1] - n2[1] * a[0]];
+  const ul = Math.hypot(...u);
+  const uu = [u[0] / ul, u[1] / ul, u[2] / ul];
+  const v = [n2[1] * uu[2] - n2[2] * uu[1], n2[2] * uu[0] - n2[0] * uu[2], n2[0] * uu[1] - n2[1] * uu[0]];
+  return [uu, v];
+}
+function foldModel(d, hinges2, material, progress = 1) {
+  const t3 = Math.max(0, material.caliperMm);
+  const stages = stagesOf(d, hinges2);
+  const closed = foldDieline(d, hinges2, 1);
+  const now = progress === 1 ? closed : foldDieline(d, hinges2, progress);
+  const placed = allFaces(d).map((face2) => {
+    const matrix = closed.get(face2.id);
+    const normal = normalOf(matrix);
+    const pts = flattenContour(face2.outline, 0.5).map((p) => applyMat4(matrix, lift(p)));
+    const k2 = Math.abs(normal[0]) > 1e-6 ? normal[0] : Math.abs(normal[1]) > 1e-6 ? normal[1] : normal[2];
+    const [u, v] = basis(k2 < 0 ? [-normal[0], -normal[1], -normal[2]] : normal);
+    const us = pts.map((p) => dot(p, u));
+    const vs = pts.map((p) => dot(p, v));
+    return {
+      face: face2,
+      matrix,
+      normal,
+      offset: dot(pts[0], normal),
+      box: [Math.min(...us), Math.max(...us), Math.min(...vs), Math.max(...vs)],
+      stage: stages.get(face2.id) ?? 0
+    };
+  });
+  const layer = layers(placed, t3);
+  const wrap = material.kind === "rigid" ? WRAP_MM : 0;
+  return {
+    caliperMm: t3,
+    faces: placed.map(({ face: face2, stage }) => {
+      const { layer: l, flip } = layer.get(face2.id);
+      const [lc, hc] = l === -1 ? [-t3 / 2, t3 / 2] : l === -2 ? [0, t3] : flip ? [l * t3, (l + 1) * t3] : [-(l + 1) * t3, -l * t3];
+      const lerp = (flat, shut) => flat + (shut - flat) * progress;
+      return {
+        id: face2.id,
+        kind: face2.kind,
+        stage,
+        matrix: now.get(face2.id),
+        lo: lerp(-t3 / 2, lc),
+        hi: lerp(t3 / 2, hc) + wrap
+      };
+    })
+  };
+}
+function slabPoint(f, p, z) {
+  const q = applyMat4(f.matrix, lift(p));
+  const n2 = normalOf(f.matrix);
+  return [q[0] + n2[0] * z, q[1] + n2[1] * z, q[2] + n2[2] * z];
+}
+function modelBounds(d, model, ignore = ["hanger", "handle"]) {
+  const min = [Infinity, Infinity, Infinity];
+  const max = [-Infinity, -Infinity, -Infinity];
+  const byId = new Map(allFaces(d).map((f) => [f.id, f]));
+  for (const f of model.faces) {
+    if (ignore.includes(f.kind)) continue;
+    for (const p of flattenContour(byId.get(f.id).outline, 0.5)) {
+      for (const z of [f.lo, f.hi]) {
+        const q = slabPoint(f, p, z);
+        for (let i = 0; i < 3; i++) {
+          if (q[i] < min[i]) min[i] = q[i];
+          if (q[i] > max[i]) max[i] = q[i];
+        }
+      }
+    }
+  }
+  return { min, max };
+}
+
+// packages/dieline/src/model/collide.ts
+var CONTACT_MM = 0.3;
+var sub2 = (a, b) => [a[0] - b[0], a[1] - b[1], a[2] - b[2]];
+var cross = (a, b) => [
+  a[1] * b[2] - a[2] * b[1],
+  a[2] * b[0] - a[0] * b[2],
+  a[0] * b[1] - a[1] * b[0]
+];
+var dot2 = (a, b) => a[0] * b[0] + a[1] * b[1] + a[2] * b[2];
+function segmentHits(p, q, [a, b, c]) {
+  const d = sub2(q, p);
+  const e1 = sub2(b, a);
+  const e2 = sub2(c, a);
+  const h = cross(d, e2);
+  const det = dot2(e1, h);
+  if (Math.abs(det) < 1e-9) return false;
+  const f = 1 / det;
+  const s = sub2(p, a);
+  const u = f * dot2(s, h);
+  if (u <= 1e-6 || u >= 1 - 1e-6) return false;
+  const qv = cross(s, e1);
+  const v = f * dot2(d, qv);
+  if (v <= 1e-6 || u + v >= 1 - 1e-6) return false;
+  const t3 = f * dot2(e2, qv);
+  return t3 > 1e-6 && t3 < 1 - 1e-6;
+}
+function trianglesCross(x, y) {
+  for (const [p, q] of [
+    [x[0], x[1]],
+    [x[1], x[2]],
+    [x[2], x[0]]
+  ])
+    if (segmentHits(p, q, y)) return true;
+  for (const [p, q] of [
+    [y[0], y[1]],
+    [y[1], y[2]],
+    [y[2], y[0]]
+  ])
+    if (segmentHits(p, q, x)) return true;
+  return false;
+}
+function solidOf(id, polys, m) {
+  const tris = triangulate2(polys).filter((t3) => t3.length === 3).map((t3) => t3.map((p) => applyMat4(m, lift(p))));
+  if (!tris.length) return null;
+  const n2 = [m[8], m[9], m[10]];
+  const min = [Infinity, Infinity, Infinity];
+  const max = [-Infinity, -Infinity, -Infinity];
+  for (const t3 of tris)
+    for (const p of t3)
+      for (let i = 0; i < 3; i++) {
+        min[i] = Math.min(min[i], p[i]);
+        max[i] = Math.max(max[i], p[i]);
+      }
+  return { id, tris, normal: n2, offset: dot2(n2, tris[0][0]), min, max };
+}
+function collisions(d, hinges2) {
+  const transforms = foldDieline(d, hinges2, 1);
+  const faces = allFaces(d);
+  const neighbours = /* @__PURE__ */ new Map();
+  const owners = /* @__PURE__ */ new Map();
+  for (const f of faces)
+    for (const e of f.outline) if (e.role !== "cut") owners.set(edgeKey(e), [...owners.get(edgeKey(e)) ?? [], f.id]);
+  for (const ids of owners.values())
+    for (const a of ids)
+      for (const b of ids) if (a !== b) neighbours.set(a, /* @__PURE__ */ new Set([...neighbours.get(a) ?? [], b]));
+  const solids = faces.map((f) => solidOf(f.id, offsetFace(f, -CONTACT_MM), transforms.get(f.id))).filter((s) => s !== null);
+  const out = [];
+  for (let i = 0; i < solids.length; i++) {
+    for (let j = i + 1; j < solids.length; j++) {
+      const a = solids[i];
+      const b = solids[j];
+      if (neighbours.get(a.id)?.has(b.id)) continue;
+      if ([0, 1, 2].some((k2) => a.max[k2] < b.min[k2] || b.max[k2] < a.min[k2])) continue;
+      const c = dot2(a.normal, b.normal);
+      if (Math.abs(c) > 0.999 && Math.abs(a.offset - Math.sign(c) * b.offset) < 0.3) continue;
+      if (a.tris.some((x) => b.tris.some((y) => trianglesCross(x, y)))) out.push([a.id, b.id]);
+    }
+  }
+  return out;
+}
+
+// packages/dieline/src/model/pouch.ts
+function pouchBulge(v) {
+  const w = num(v, "width", 120);
+  const l = num(v, "length", 180);
+  const type = str(v, "pouchType", "three_side");
+  const gusset = type === "standing" ? num(v, "bottom", 40) : type.includes("gusset") || type === "four_side" ? num(v, "gusset", 40) : 0;
+  return Math.min(w, l) / 8 + gusset / 2;
+}
+function inflatedPouch(v, n2 = 16) {
+  const w = num(v, "width", 120);
+  const l = num(v, "length", 180);
+  const seal2 = Math.min(num(v, "sealWidth", 8), w / 4, l / 4);
+  const h = pouchBulge(v);
+  const positions = [];
+  const triangles = [];
+  const lift2 = (x, y) => {
+    const u = Math.max(0, Math.min(1, (x - seal2) / (w - 2 * seal2)));
+    const s = Math.max(0, Math.min(1, (y - seal2) / (l - 2 * seal2)));
+    return h * Math.sin(Math.PI * u) * Math.sin(Math.PI * s);
+  };
+  for (const side of [1, -1]) {
+    const start = positions.length;
+    for (let j = 0; j <= n2; j++)
+      for (let i = 0; i <= n2; i++) {
+        const x = w * i / n2;
+        const y = l * j / n2;
+        positions.push([x - w / 2, y - l / 2, side * lift2(x, y)]);
+      }
+    for (let j = 0; j < n2; j++)
+      for (let i = 0; i < n2; i++) {
+        const a = start + j * (n2 + 1) + i;
+        const b = a + 1;
+        const c = a + n2 + 1;
+        const d = c + 1;
+        if (side > 0) triangles.push([a, b, d], [a, d, c]);
+        else triangles.push([a, d, b], [a, c, d]);
+      }
+  }
+  return { positions, triangles };
+}
+
+// packages/dieline/src/render/raster.ts
+var Raster = class {
+  constructor(width, height, background) {
+    this.width = width;
+    this.height = height;
+    this.data = new Uint8ClampedArray(width * height * 4);
+    this.depth = new Float32Array(width * height).fill(Infinity);
+    for (let i = 0; i < width * height; i++) this.data.set([...background, 255], i * 4);
+  }
+  width;
+  height;
+  data;
+  depth;
+  put(x, y, c) {
+    const i = (y * this.width + x) * 4;
+    this.data[i] = c[0];
+    this.data[i + 1] = c[1];
+    this.data[i + 2] = c[2];
+  }
+  /** A filled triangle in pixel space; `z` is depth (smaller is nearer), tested per pixel centre. */
+  triangle(a, b, c, colour) {
+    const minX = Math.max(0, Math.floor(Math.min(a[0], b[0], c[0])));
+    const maxX = Math.min(this.width - 1, Math.ceil(Math.max(a[0], b[0], c[0])));
+    const minY = Math.max(0, Math.floor(Math.min(a[1], b[1], c[1])));
+    const maxY = Math.min(this.height - 1, Math.ceil(Math.max(a[1], b[1], c[1])));
+    const area2 = (b[0] - a[0]) * (c[1] - a[1]) - (b[1] - a[1]) * (c[0] - a[0]);
+    if (Math.abs(area2) < 1e-12) return;
+    for (let y = minY; y <= maxY; y++) {
+      for (let x = minX; x <= maxX; x++) {
+        const px = x + 0.5;
+        const py = y + 0.5;
+        const w0 = ((b[0] - px) * (c[1] - py) - (b[1] - py) * (c[0] - px)) / area2;
+        const w1 = ((c[0] - px) * (a[1] - py) - (c[1] - py) * (a[0] - px)) / area2;
+        const w2 = 1 - w0 - w1;
+        if (w0 < 0 || w1 < 0 || w2 < 0) continue;
+        const z = w0 * a[2] + w1 * b[2] + w2 * c[2];
+        const i = y * this.width + x;
+        if (z >= this.depth[i]) continue;
+        this.depth[i] = z;
+        this.put(x, y, colour);
+      }
+    }
+  }
+  /** A line `width` pixels wide, drawn over everything (no depth); `dash` as [on, off] pixels. */
+  line(x0, y0, x1, y1, width, colour, dash) {
+    const len2 = Math.hypot(x1 - x0, y1 - y0);
+    if (len2 < 1e-9) return;
+    const r = width / 2;
+    const minX = Math.max(0, Math.floor(Math.min(x0, x1) - r));
+    const maxX = Math.min(this.width - 1, Math.ceil(Math.max(x0, x1) + r));
+    const minY = Math.max(0, Math.floor(Math.min(y0, y1) - r));
+    const maxY = Math.min(this.height - 1, Math.ceil(Math.max(y0, y1) + r));
+    const ux = (x1 - x0) / len2;
+    const uy = (y1 - y0) / len2;
+    for (let y = minY; y <= maxY; y++) {
+      for (let x = minX; x <= maxX; x++) {
+        const px = x + 0.5 - x0;
+        const py = y + 0.5 - y0;
+        const along = px * ux + py * uy;
+        if (along < -r || along > len2 + r) continue;
+        if (Math.abs(px * uy - py * ux) > r) continue;
+        if (dash && Math.max(0, along) % (dash[0] + dash[1]) > dash[0]) continue;
+        this.put(x, y, colour);
+      }
+    }
+  }
+  /** Box-filters the raster down by `factor` (supersampling's anti-aliasing). */
+  downsample(factor) {
+    const w = Math.floor(this.width / factor);
+    const h = Math.floor(this.height / factor);
+    const out = new Uint8ClampedArray(w * h * 4);
+    const n2 = factor * factor;
+    for (let y = 0; y < h; y++)
+      for (let x = 0; x < w; x++)
+        for (let ch = 0; ch < 4; ch++) {
+          let s = 0;
+          for (let dy = 0; dy < factor; dy++)
+            for (let dx = 0; dx < factor; dx++)
+              s += this.data[((y * factor + dy) * this.width + x * factor + dx) * 4 + ch];
+          out[(y * w + x) * 4 + ch] = Math.round(s / n2);
+        }
+    return { width: w, height: h, data: out };
+  }
+};
+
+// packages/dieline/src/render/thumbnails.ts
+var TONES = { kraft: [186, 146, 99], white: [242, 239, 232] };
+var BACKGROUND = [250, 247, 242];
+var INK = [42, 38, 34];
+var CREASE = [140, 131, 120];
+var GLUE = [214, 160, 64];
+var STUDIO_LIGHTS = [
+  { dir: [-0.45, 0.65, 0.6], strength: 0.55 },
+  { dir: [0.7, 0.1, 0.5], strength: 0.2 },
+  { dir: [0.2, 0.4, -0.9], strength: 0.12 }
+];
+var AMBIENT = 0.38;
+var VIEW = { tilt: 0.35, turn: -0.6 };
+var norm = (v) => {
+  const l = Math.hypot(...v) || 1;
+  return [v[0] / l, v[1] / l, v[2] / l];
+};
+var LIGHTS = STUDIO_LIGHTS.map((l) => ({ dir: norm(l.dir), strength: l.strength }));
+function view(p) {
+  const cy = Math.cos(VIEW.turn);
+  const sy = Math.sin(VIEW.turn);
+  const x1 = p[0] * cy + p[2] * sy;
+  const z1 = -p[0] * sy + p[2] * cy;
+  const cx = Math.cos(VIEW.tilt);
+  const sx = Math.sin(VIEW.tilt);
+  return [x1, p[1] * cx - z1 * sx, p[1] * sx + z1 * cx];
+}
+var shade = (base, n2, factor = 1) => {
+  const f = n2[2] < 0 ? [-n2[0], -n2[1], -n2[2]] : n2;
+  let s = AMBIENT;
+  for (const l of LIGHTS) s += l.strength * Math.max(0, f[0] * l.dir[0] + f[1] * l.dir[1] + f[2] * l.dir[2]);
+  return base.map((c) => Math.max(0, Math.min(255, Math.round(c * s * factor))));
+};
+function draw(tris, opts) {
+  const size = opts.size ?? 320;
+  const k2 = opts.supersample ?? 2;
+  const px = size * k2;
+  const viewed = tris.map((t3) => ({ ...t3, v: t3.p.map(view) }));
+  const xs = viewed.flatMap((t3) => t3.v.map((p) => p[0]));
+  const ys = viewed.flatMap((t3) => t3.v.map((p) => p[1]));
+  const [x0, x1, y0, y1] = [Math.min(...xs), Math.max(...xs), Math.min(...ys), Math.max(...ys)];
+  const scale = px * 0.84 / Math.max(x1 - x0, y1 - y0, 1e-9);
+  const ox = px / 2 - (x0 + x1) / 2 * scale;
+  const oy = px / 2 + (y0 + y1) / 2 * scale;
+  const raster = new Raster(px, px, BACKGROUND);
+  for (const t3 of viewed) {
+    const [a, b, c] = t3.v;
+    const n2 = norm([
+      (b[1] - a[1]) * (c[2] - a[2]) - (b[2] - a[2]) * (c[1] - a[1]),
+      (b[2] - a[2]) * (c[0] - a[0]) - (b[0] - a[0]) * (c[2] - a[2]),
+      (b[0] - a[0]) * (c[1] - a[1]) - (b[1] - a[1]) * (c[0] - a[0])
+    ]);
+    const s = (p) => [ox + p[0] * scale, oy - p[1] * scale, -p[2]];
+    raster.triangle(s(a), s(b), s(c), shade(t3.colour, n2, t3.inner ? 0.86 : 1));
+  }
+  return raster.downsample(k2);
+}
+function render3D(d, hinges2, material, tone, opts = {}) {
+  const model = foldModel(d, hinges2, material);
+  const byId = new Map(model.faces.map((f) => [f.id, f]));
+  const base = TONES[tone];
+  const tris = [];
+  for (const face2 of allFaces(d)) {
+    const m = byId.get(face2.id);
+    for (const tri of triangulate2(facePolygons(face2))) {
+      if (tri.length !== 3) continue;
+      const [a, b, c] = tri;
+      tris.push({ p: [slabPoint(m, a, m.hi), slabPoint(m, b, m.hi), slabPoint(m, c, m.hi)], colour: base });
+      tris.push({
+        p: [slabPoint(m, a, m.lo), slabPoint(m, c, m.lo), slabPoint(m, b, m.lo)],
+        colour: base,
+        inner: true
+      });
+    }
+    for (const loop of [face2.outline, ...face2.holes].map((c) => flattenContour(c, 0.5)))
+      loop.forEach((a, i) => {
+        const b = loop[(i + 1) % loop.length];
+        const q = [slabPoint(m, a, m.lo), slabPoint(m, b, m.lo), slabPoint(m, b, m.hi), slabPoint(m, a, m.hi)];
+        tris.push(
+          { p: [q[0], q[1], q[2]], colour: base, inner: true },
+          { p: [q[0], q[2], q[3]], colour: base, inner: true }
+        );
+      });
+  }
+  return draw(tris, opts);
+}
+function renderSurface(mesh, tone, opts = {}) {
+  const tris = mesh.triangles.map(([a, b, c]) => ({
+    p: [mesh.positions[a], mesh.positions[b], mesh.positions[c]],
+    colour: TONES[tone]
+  }));
+  return draw(tris, opts);
+}
+var LINE = {
+  cut: { colour: INK, width: 1.6 },
+  crease: { colour: CREASE, width: 1.2, dash: [6, 4] },
+  perforation: { colour: INK, width: 1.2, dash: [2, 3] },
+  half_cut: { colour: CREASE, width: 1.2, dash: [8, 3] },
+  glue_area: { colour: GLUE, width: 1 }
+};
+function render2D(d, tone, opts = {}) {
+  const size = opts.size ?? 320;
+  const k2 = opts.supersample ?? 2;
+  const px = size * k2;
+  const scale = px * 0.9 / Math.max(d.width, d.height, 1e-9);
+  const ox = (px - d.width * scale) / 2;
+  const oy = (px - d.height * scale) / 2;
+  const at = (p) => [ox + p[0] * scale, oy + p[1] * scale, 0];
+  const raster = new Raster(px, px, BACKGROUND);
+  for (const face2 of allFaces(d))
+    for (const tri of triangulate2(facePolygons(face2)))
+      if (tri.length === 3) raster.triangle(at(tri[0]), at(tri[1]), at(tri[2]), TONES[tone]);
+  const lines = dielineLines(d);
+  for (const role of ["glue_area", "crease", "half_cut", "perforation", "cut"]) {
+    const style = LINE[role];
+    if (!style) continue;
+    for (const l of lines.filter((x) => x.role === role)) {
+      const pts = [...flattenEdge(l.edge, 0.3), l.edge.to];
+      for (let i = 1; i < pts.length; i++) {
+        const [a, b] = [at(pts[i - 1]), at(pts[i])];
+        raster.line(
+          a[0],
+          a[1],
+          b[0],
+          b[1],
+          style.width * k2,
+          style.colour,
+          style.dash?.map((x) => x * k2)
+        );
+      }
+    }
+  }
+  return raster.downsample(k2);
+}
+
+// packages/dieline/src/fixtures.ts
+var fixtureFileKey = (patternKey) => patternKey.replace(/[^A-Za-z0-9_-]+/g, "-");
+function patternFixtures() {
+  const seen = /* @__PURE__ */ new Set();
+  const out = [];
+  for (const style of STYLES) {
+    const preset = style.presets[0];
+    const materialId = REFERENCE_BY_CATEGORY[style.category][0];
+    if (!preset || !materialId) continue;
+    const material = REFERENCE_MATERIALS[materialId];
+    const values = resolveValues(style, preset.values);
+    const d = style.build(values, material);
+    const svg = dielineToSvg(d);
+    const dxf = dielineToDxf(d);
+    for (const patternKey of style.legacy?.patternKeys ?? []) {
+      if (seen.has(patternKey)) continue;
+      seen.add(patternKey);
+      out.push({
+        patternKey,
+        fileKey: fixtureFileKey(patternKey),
+        styleId: style.id,
+        presetId: preset.id,
+        materialId,
+        material,
+        values,
+        svg,
+        dxf
+      });
+    }
+  }
+  return out;
+}
+
+// packages/dieline/src/compat/v1.ts
+var rect = (x1, y1, x2, y2) => [
+  [x1, y1],
+  [x2, y1],
+  [x2, y2],
+  [x1, y2]
+];
+var clamp = (v, min, max) => Math.max(min, Math.min(max, v));
+var PANEL_NAMES = ["\u0E2B\u0E19\u0E49\u0E32", "\u0E02\u0E49\u0E32\u0E07", "\u0E2B\u0E25\u0E31\u0E07", "\u0E02\u0E49\u0E32\u0E07"];
+function rscV1({ length: L, width: W, height: H }) {
+  const g = clamp(Math.min(H, L) * 0.25, 25, 40);
+  const f = W / 2;
+  const xs = [0, g, g + L, g + L + W, g + 2 * L + W, g + 2 * L + 2 * W];
+  const y1 = f;
+  const y2 = f + H;
+  const y3 = 2 * f + H;
+  const taper = Math.min(8, H / 6);
+  const faces = [
+    {
+      id: "glue",
+      name: "\u0E1B\u0E35\u0E01\u0E01\u0E32\u0E27",
+      points: [
+        [xs[1], y1],
+        [0, y1 + taper],
+        [0, y2 - taper],
+        [xs[1], y2]
+      ],
+      folds: [3]
+    }
+  ];
+  for (let i = 1; i <= 4; i++) {
+    const a = xs[i];
+    const b = xs[i + 1];
+    faces.push({
+      id: `panel-${i}`,
+      name: PANEL_NAMES[i - 1],
+      points: rect(a, y1, b, y2),
+      folds: i < 4 ? [0, 1, 2, 3] : [0, 2, 3]
+    });
+    faces.push({ id: `top-${i}`, name: "\u0E1D\u0E32\u0E1A\u0E19", points: rect(a, 0, b, y1), folds: [2] });
+    faces.push({ id: `bottom-${i}`, name: "\u0E1D\u0E32\u0E25\u0E48\u0E32\u0E07", points: rect(a, y2, b, y3), folds: [0] });
+  }
+  return { faces, width: xs[5], height: y3 };
+}
+function tuckEndV1({ length: L, width: W, height: H }) {
+  const g = clamp(Math.min(H, L) * 0.2, 10, 18);
+  const t3 = clamp(W * 0.35, 8, 18);
+  const d = Math.min(L * 0.45, W * 0.9);
+  const xs = [0, g, g + L, g + L + W, g + 2 * L + W, g + 2 * L + 2 * W];
+  const yTop = W + t3;
+  const yBot = yTop + H;
+  const total = yBot + W + t3;
+  const taper = Math.min(4, H / 10);
+  const inset = Math.min(3, W / 8);
+  const faces = [
+    {
+      id: "glue",
+      name: "\u0E1B\u0E35\u0E01\u0E01\u0E32\u0E27",
+      points: [
+        [xs[1], yTop],
+        [0, yTop + taper],
+        [0, yBot - taper],
+        [xs[1], yBot]
+      ],
+      folds: [3]
+    }
+  ];
+  for (let i = 1; i <= 4; i++) {
+    const a = xs[i];
+    const b = xs[i + 1];
+    const folds = [3];
+    if (i < 4) folds.push(1);
+    if (i !== 1) folds.push(0, 2);
+    faces.push({ id: `panel-${i}`, name: PANEL_NAMES[i - 1], points: rect(a, yTop, b, yBot), folds });
+    if (i === 3) {
+      faces.push({ id: "lid-top", name: "\u0E1D\u0E32\u0E1A\u0E19", points: rect(a, t3, b, yTop), folds: [0, 2] });
+      faces.push({
+        id: "tuck-top",
+        name: "\u0E25\u0E34\u0E49\u0E19\u0E40\u0E2A\u0E35\u0E22\u0E1A",
+        points: [
+          [a + inset, 0],
+          [b - inset, 0],
+          [b, t3],
+          [a, t3]
+        ],
+        folds: [2]
+      });
+      faces.push({ id: "lid-bottom", name: "\u0E1D\u0E32\u0E25\u0E48\u0E32\u0E07", points: rect(a, yBot, b, yBot + W), folds: [0, 2] });
+      faces.push({
+        id: "tuck-bottom",
+        name: "\u0E25\u0E34\u0E49\u0E19\u0E40\u0E2A\u0E35\u0E22\u0E1A",
+        points: [
+          [a, yBot + W],
+          [b, yBot + W],
+          [b - inset, total],
+          [a + inset, total]
+        ],
+        folds: [0]
+      });
+    }
+    if (i === 2 || i === 4) {
+      const di = Math.min(inset, (b - a) / 6);
+      faces.push({
+        id: `dust-top-${i}`,
+        name: "\u0E1B\u0E35\u0E01\u0E01\u0E31\u0E19\u0E1D\u0E38\u0E48\u0E19",
+        points: [
+          [a + di, yTop - d],
+          [b - di, yTop - d],
+          [b, yTop],
+          [a, yTop]
+        ],
+        folds: [2]
+      });
+      faces.push({
+        id: `dust-bottom-${i}`,
+        name: "\u0E1B\u0E35\u0E01\u0E01\u0E31\u0E19\u0E1D\u0E38\u0E48\u0E19",
+        points: [
+          [a, yBot],
+          [b, yBot],
+          [b - di, yBot + d],
+          [a + di, yBot + d]
+        ],
+        folds: [0]
+      });
+    }
+  }
+  return { faces, width: xs[5], height: total };
+}
+function trayV1({ length: L, width: W, height: H }) {
+  const td = Math.min(H * 0.85, 20);
+  const inset = Math.min(3, H / 6);
+  const faces = [
+    { id: "base", name: "\u0E10\u0E32\u0E19", points: rect(H, H, H + L, H + W), folds: [0, 1, 2, 3] },
+    { id: "wall-back", name: "\u0E1C\u0E19\u0E31\u0E07\u0E2B\u0E25\u0E31\u0E07", points: rect(H, 0, H + L, H), folds: [2] },
+    { id: "wall-front", name: "\u0E1C\u0E19\u0E31\u0E07\u0E2B\u0E19\u0E49\u0E32", points: rect(H, H + W, H + L, 2 * H + W), folds: [0] },
+    { id: "wall-left", name: "\u0E1C\u0E19\u0E31\u0E07\u0E0B\u0E49\u0E32\u0E22", points: rect(0, H, H, H + W), folds: [0, 1, 2] },
+    { id: "wall-right", name: "\u0E1C\u0E19\u0E31\u0E07\u0E02\u0E27\u0E32", points: rect(H + L, H, 2 * H + L, H + W), folds: [0, 2, 3] }
+  ];
+  for (const [side, a, b] of [
+    ["l", 0, H],
+    ["r", H + L, 2 * H + L]
+  ]) {
+    faces.push({
+      id: `tab-${side}-top`,
+      name: "\u0E1B\u0E35\u0E01\u0E01\u0E32\u0E27",
+      points: [
+        [a + inset, H - td],
+        [b - inset, H - td],
+        [b, H],
+        [a, H]
+      ],
+      folds: [2]
+    });
+    faces.push({
+      id: `tab-${side}-bottom`,
+      name: "\u0E1B\u0E35\u0E01\u0E01\u0E32\u0E27",
+      points: [
+        [a, H + W],
+        [b, H + W],
+        [b - inset, H + W + td],
+        [a + inset, H + W + td]
+      ],
+      folds: [0]
+    });
+  }
+  return { faces, width: 2 * H + L, height: 2 * H + W };
+}
+function buildDielineV1(style, dims) {
+  switch (style) {
+    case "rsc":
+      return rscV1(dims);
+    case "tuck-end":
+      return tuckEndV1(dims);
+    case "tray":
+      return trayV1(dims);
+  }
+}
+
+// packages/dieline/src/migrate.ts
+var SPEC_VERSION = 2;
+var LEGACY_BOARDS = {
+  "ivory-350": { caliperMm: 0.45, kind: "paperboard" },
+  "kraft-350": { caliperMm: 0.5, kind: "paperboard" },
+  "e-white": { caliperMm: 1.6, kind: "corrugated", flute: "E" },
+  "e-kraft": { caliperMm: 1.6, kind: "corrugated", flute: "E" },
+  "b-kraft": { caliperMm: 3, kind: "corrugated", flute: "B" },
+  "bc-kraft": { caliperMm: 6.5, kind: "corrugated", flute: "BC" }
+};
+var V1_STYLES = /* @__PURE__ */ new Set(["rsc", "tuck-end", "tray"]);
+var positive = (n2) => typeof n2 === "number" && Number.isFinite(n2) && n2 > 0;
+function isV1Spec(x) {
+  if (!x || typeof x !== "object") return false;
+  const s = x;
+  const dims = s.dims;
+  return !("specVersion" in s) && typeof s.style === "string" && V1_STYLES.has(s.style) && !!dims && positive(dims.length) && positive(dims.width) && positive(dims.height) && typeof s.paperId === "string";
+}
+function isDielineSpec(x) {
+  if (!x || typeof x !== "object") return false;
+  const s = x;
+  const m = s.material;
+  return s.specVersion === SPEC_VERSION && typeof s.styleId === "string" && !!s.values && typeof s.values === "object" && !!m && typeof m.caliperMm === "number" && typeof m.kind === "string";
+}
+function migrateSpec(input) {
+  if (isDielineSpec(input)) return input;
+  if (!isV1Spec(input)) return null;
+  return {
+    specVersion: SPEC_VERSION,
+    styleId: input.style,
+    values: { length: input.dims.length, width: input.dims.width, height: input.dims.height },
+    material: LEGACY_BOARDS[input.paperId] ?? { caliperMm: 0.45, kind: "paperboard" },
+    materialId: input.paperId
+  };
+}
+var PANEL_V1 = { "1": "front", "2": "right", "3": "back", "4": "left" };
+function v1FaceId(style, id) {
+  const panel = /^panel-(\d)$/.exec(id);
+  if (panel) return PANEL_V1[panel[1]];
+  if (style === "rsc") {
+    const flap = /^(top|bottom)-(\d)$/.exec(id);
+    if (flap) return `flap-${PANEL_V1[flap[2]]}-${flap[1]}`;
+  }
+  if (style === "tuck-end") {
+    const dust = /^dust-(top|bottom)-(\d)$/.exec(id);
+    if (dust) return `dust-${PANEL_V1[dust[2]]}-${dust[1]}`;
+  }
+  if (style === "tray") {
+    const tab = /^tab-(l|r)-(top|bottom)$/.exec(id);
+    if (tab) return `corner-${tab[1] === "l" ? "left" : "right"}-${tab[2]}`;
+  }
+  return id;
+}
+function remapV1Point(spec, next, p) {
+  const old = buildDielineV1(spec.style, spec.dims);
+  let best = old.faces.find((f) => pointInPolygon(p, f.points));
+  if (!best) {
+    let bestDist = Infinity;
+    for (const f of old.faces) {
+      const b = boundsOf(f.points);
+      const dx = Math.max(b.x - p[0], 0, p[0] - (b.x + b.width));
+      const dy = Math.max(b.y - p[1], 0, p[1] - (b.y + b.height));
+      const dist2 = Math.hypot(dx, dy);
+      if (dist2 < bestDist) {
+        bestDist = dist2;
+        best = f;
+      }
+    }
+  }
+  if (!best) return p;
+  const target = findFace(next, v1FaceId(spec.style, best.id));
+  if (!target) return p;
+  const from = boundsOf(best.points);
+  const to = faceBounds(target);
+  const sx = from.width > 0 ? to.width / from.width : 1;
+  const sy = from.height > 0 ? to.height / from.height : 1;
+  return [to.x + (p[0] - from.x) * sx, to.y + (p[1] - from.y) * sy];
+}
+
+// packages/dieline/src/index.ts
+var PX_PER_MM = 96 / 25.4;
+export {
+  AMBIENT,
+  AXIS_PHRASES,
+  CLOSURE_TOLERANCE_MM,
+  CONTACT_MM,
+  DEFAULT_BLEED_MM,
+  DEFAULT_SAFE_MM,
+  EDGE_ROLES,
+  ExprError,
+  FACE_LABELS,
+  FLATTEN_TOLERANCE_MM,
+  LAYER_OF,
+  LAYER_ORDER,
+  LAYER_STYLE,
+  LEGACY_BOARDS,
+  MATERIAL_CLASSES,
+  MODULES,
+  PARAM_LIBRARY,
+  PIECE_GAP_MM,
+  PIECE_LABELS,
+  PROCESSES,
+  PX_PER_MM,
+  RECIPES,
+  REFERENCE_BY_CATEGORY,
+  REFERENCE_MATERIALS,
+  RESOLUTION_MM,
+  Raster,
+  RecipeError,
+  SPEC_VERSION,
+  STUDIO_LIGHTS,
+  STYLES,
+  STYLE_ALIASES,
+  TONES,
+  VIEW,
+  WRAP_MM,
+  allFaces,
+  applyMat4,
+  arc,
+  arcAngles,
+  assemble,
+  bezier,
+  bleedOutline,
+  boundsOf,
+  buildFromRecipe,
+  buildStyle,
+  callsOf,
+  checkDieline,
+  collectExpressions,
+  collisions,
+  compile as compileExpression,
+  constants_exports as constants,
+  defaultsOf,
+  describeVariant,
+  dielineLines,
+  dielineManufacturing,
+  dielineToDxf,
+  dielineToPdf,
+  dielineToSvg,
+  edgeKey,
+  edgeLength,
+  edgesBounds,
+  ellipse,
+  explain,
+  face,
+  faceBounds,
+  faceLabel,
+  facePolygons,
+  findFace,
+  fitsEnvelope,
+  fixtureFileKey,
+  flattenContour,
+  flattenEdge,
+  flattenOpen,
+  foldDieline,
+  foldModel,
+  foldPiece,
+  foldedBounds,
+  getModule,
+  getStyle,
+  hingeMapOf,
+  hingesOf,
+  inflatedPouch,
+  isActive,
+  isBuildable,
+  isDielineSpec,
+  isStyleId,
+  isV1Spec,
+  lift,
+  line,
+  materialClassOf,
+  materialRules,
+  migrateSpec,
+  modelBounds,
+  namesOf,
+  offsetFace,
+  outerSizeOf,
+  overlapArea,
+  parseRecipe,
+  parseSvgPath,
+  patternFixtures,
+  piece,
+  pieceLabel,
+  pieceOutline,
+  pointInPolygon,
+  polygon,
+  polygonInsideWithMargin,
+  polygonsArea,
+  pouchBulge,
+  presetsOf,
+  recipeConstraints,
+  recipeProcesses,
+  rectangle,
+  remapV1Point,
+  render2D,
+  render3D,
+  renderSurface,
+  resolveParam,
+  resolveStyleId,
+  resolveValues,
+  reverseContour,
+  roundedRectangle,
+  safeZone,
+  schemaIssues,
+  signedArea,
+  sizeRanges,
+  slabPoint,
+  styleFromRecipe,
+  stylesByCategory,
+  svgPathData,
+  triangulate2 as triangulate,
+  v1FaceId,
+  validRanges,
+  validateStyle,
+  variantKey,
+  variantsOf,
+  withDefaults
+};

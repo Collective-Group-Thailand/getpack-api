@@ -8,3 +8,4 @@ contract/openapi.json
 *.md
 docs
 legacy
+vendor

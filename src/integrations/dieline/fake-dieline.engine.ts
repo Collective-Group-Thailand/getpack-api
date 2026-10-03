@@ -1,6 +1,17 @@
 import { PDFDocument } from 'pdf-lib';
+import sharp from 'sharp';
 
-import { type DielineDrawing, type DielineEngine, type DielineRequest } from './dieline-engine.port';
+import {
+  type DielineDrawing,
+  type DielineEngine,
+  type DielineFormat,
+  type DielineRequest,
+  type RecipeBuild,
+  type RecipeBuildRequest,
+  type RecipeFacts,
+  type StoredRecipe,
+  type Thumbnails,
+} from './dieline-engine.port';
 
 const PT_PER_MM = 72 / 25.4;
 
@@ -11,8 +22,80 @@ const PT_PER_MM = 72 / 25.4;
 export class FakeDielineEngine implements DielineEngine {
   readonly drawn: DielineRequest[] = [];
 
+  readonly built: RecipeBuildRequest[] = [];
+
   available(): Promise<boolean> {
     return Promise.resolve(true);
+  }
+
+  version(): Promise<string> {
+    return Promise.resolve('fake-dieline@0');
+  }
+
+  /** A flat (2L + 2W) × (H + W) blank: obviously fake quantities for the pipeline. */
+  build(request: RecipeBuildRequest, formats: DielineFormat[]): Promise<RecipeBuild> {
+    this.built.push(request);
+    const l = request.sizes['length'] ?? 100;
+    const w = request.sizes['width'] ?? 50;
+    const h = request.sizes['height'] ?? 100;
+    const bw = 2 * l + 2 * w;
+    const bh = h + w;
+    const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="${bw}mm" height="${bh}mm"><rect width="${bw}" height="${bh}"/></svg>`;
+    const files: RecipeBuild['files'] = {};
+    for (const f of formats)
+      files[f] = {
+        body: Buffer.from(f === 'svg' ? svg : `fake ${f}`),
+        mimeType: f === 'svg' ? 'image/svg+xml' : f === 'pdf' ? 'application/pdf' : 'application/dxf',
+      };
+    return Promise.resolve({
+      quantities: {
+        blankWidthMm: bw,
+        blankHeightMm: bh,
+        blankAreaMm2: bw * bh,
+        cutMm: 2 * (bw + bh),
+        creaseMm: 3 * bh,
+        perforationMm: 0,
+        halfCutMm: 0,
+        glueOutlineMm: 2 * bh,
+        cutoutAreaMm2: 0,
+        pieces: 1,
+      },
+      files,
+      violations: [],
+      engineVersion: 'fake-dieline@0',
+    });
+  }
+
+  facts(recipe: StoredRecipe): Promise<RecipeFacts> {
+    const first = (recipe.engine[0] ?? {}) as { base?: string; processes?: string[] };
+    return Promise.resolve({
+      baseCode: first.base ?? null,
+      processes: first.processes ?? ['die_cut'],
+      sizeRanges: {
+        paperboard: {
+          length: { min: 20, max: 400 },
+          width: { min: 15, max: 300 },
+          height: { min: 20, max: 450 },
+        },
+      },
+      variants: recipe.engine.map((r) => (r as { variant?: Record<string, string> }).variant ?? {}),
+    });
+  }
+
+  async thumbnails(_request: RecipeBuildRequest, size: number): Promise<Thumbnails> {
+    const png = await sharp({ create: { width: size, height: size, channels: 4, background: '#f2efe8' } })
+      .png()
+      .toBuffer();
+    return {
+      png2d: png,
+      png3d: null,
+      svg: '<svg xmlns="http://www.w3.org/2000/svg"/>',
+      engineVersion: 'fake-dieline@0',
+    };
+  }
+
+  recipesByBase(): Promise<Record<string, unknown[]>> {
+    return Promise.resolve({});
   }
 
   async draw(request: DielineRequest): Promise<DielineDrawing> {
