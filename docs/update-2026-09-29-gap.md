@@ -2,6 +2,30 @@
 
 Session 0 of every U-B session (`docs/prompts/U1-update-2026-09-29.md`) and every U2 session (`docs/prompts/U2-benchmark-2026-09-29.md`): one row per requirement → `met | partial | missing`, the evidence, and what the session changes. Requirements already `met` are not touched. Newest session on top.
 
+## U2.6, U2.7, U2.9 — Spec sheet, repeat business, partner parity (2026-10-03, planning)
+
+Prompt `docs/prompts/U2-benchmark-2026-09-29.md` (U2.6 item 3 only — items 1–2 were superseded and built by U3.B1–B2 and U3.B5; U2.8 out of scope, D-208). Checked against `v0.28.0`. Decisions D-202–D-210 stand; **D-287–D-296** proposed by this plan. Pre-launch per D-219: the F1 tooling waiver (U2.7 item 2) and the release hygiene (U2.9 item 6); the rest post-launch.
+
+| # | Requirement | Status | Evidence | Resolution |
+|---|---|---|---|---|
+| 6.3 | Packaging spec sheet PDF (th / en) for approved orders / samples, QR to tracking | missing | PDF port + Handlebars pattern (`quotes/quote-document.ts`, `quote-pdf.service.ts:109`); QR on labels (`logistics/shipment-documents.ts:92`); tracking `${STOREFRONT_BASE_URL}/track/<token>` per shipment (`shipments.service.ts:965`); data: `quote.input.dimensions`, `Pattern.styleCode / internationalName` (`catalog.prisma:553-556`), `Material.caliperMm`, `Quote.specSummary`, order tolerances, `Proof.approvedFileId`; `ProductionJob.specSnapshot` (`production.service.ts:369`) | D-287 `store|admin|partner…getSpecSheet` |
+| 7.1 | Consumption history per SKU, suggested date / quantity, storefront + CS queue, respects preferences | missing | reorder prices today (`claims/reorder.service.ts:129,309`), no history or suggestion | D-288 `reorder_suggestions` + nightly job + store / admin endpoints + marketing reminder route |
+| 7.2 | Tooling waived on unchanged reorder, register | missing — **F1** | corrugate charges `tooling = Σ(platesSale + dieBlockSale)` (`corrugate-calculator.ts:375`), re-charged on reorder; `OrderLine.isReusableTooling / waivedReason` unused (`commerce.prisma:737-738`) | D-289 `tooling_register` + waiver in the reorder path (engine context) |
+| 7.3 | Call-off orders | missing | nothing (grep 0); quote lock 15 days only | D-290 `call_off_agreements` + releases |
+| 7.4 | B2B API keys, order create / track, documents, signed webhooks + delivery log | missing | `ApiClient` factory-only (`iam.prisma:854`, `client-credentials.service.ts`); inbound webhooks only | D-291 company clients, `b2b.*`, `webhook_subscriptions` / `webhook_deliveries` |
+| 9.1 | Factory hours + closures edited by admin and partner | partial | admin closures (`calendar-admin.controller.ts`), global `calendar.business_hours` (`setting-keys.ts:125`), partner calendar read-only (`self-service.controller.ts:88`) | D-292 `factory_business_hours` + partner closures |
+| 9.2 | Payout calendar | partial | `partner.payables.payoutStatement|getPayout|payoutSchedule` (`payouts.controller.ts:387-531`); runs `pay_on`; no expected date before a run | D-293 expected pay-on + runs view |
+| 9.3 | Finance views reconciling to the ledger | partial | POs, GRs, statements, SOA (`payables.controller.ts:477-626`); no totals earned / paid / retained / deducted | D-293 totals + reconciliation test |
+| 9.4 | Partner counters incl. samples and claims | partial | `partner.production.today` counts jobs only (`jobs-query.service.ts:162`) | D-294 `partner.me.getCounters` |
+| 9.5 | Partner knowledge base | missing | articles have no audience (`catalog.prisma:1608`) | D-295 `articles.audience` + `partner.knowledgeBase.*` |
+| 9.6 | Release hygiene CI | missing | no marker check in `.github/workflows/ci.yml`; `FeatureFlag` has no dev-only field (`platform.prisma:509`) | D-296 script + `feature_flags.dev_only` + boot guard |
+
+**Findings:** **R1** checkout folds the tooling into the product line (no `plate` / `die_block` lines, `order-pricing.ts`); the waiver therefore happens in pricing (the reorder quotation), not as an order line. **R2** a tracking token exists only per shipment — the spec sheet points to the order before shipping. **R3** proofs have no thumbnail and approved files are usually PDFs — no rasteriser (ADR-0009 note), so the sheet names the file and its hash. **R4** API clients are factory-only; the client-credentials grant refuses others (`auth.scope_unavailable`).
+
+**Assumptions:** (1) D-288 "SMA of intervals + lead time + 7 days" is read as the reminder date *before* the next need (need − lead time − safety); the wording would otherwise remind after the need. (2) The SKU's artwork is the approved proof's sha256; a reorder that reuses the approved proof keeps the SKU. (3) The call-off release amounts are the locked unit price × quantity with the original option's VAT ratio (no new formula). (4) The expected pay-on date is the first payout run weekday on or after eligibility per the policy's payment terms. (5) Webhook retries back off 1, 5, 30 min, 2 h, 12 h then give up (technical).
+
+**Plan (merge to `main` at the end):** **U2.6** spec sheet → `v0.29.0`. **U2.7** a tooling register + F1 waiver · b reorder suggestions · c call-off agreements · d B2B clients + webhooks → `v0.30.0`. **U2.9** a factory hours + partner closures · b payout calendar + finance totals · c partner counters · d knowledge base · e release hygiene → `v0.31.0`.
+
 ## U4 — Studio backend, B1 → B6 (2026-10-03, planning)
 
 Prompt `docs/prompts/U4-3d-studio.md` with `docs/design-tool/studio-spec.md`. Checked against `v0.22.0`. All of U4 is post-launch (D-219). Decisions D-213–D-216, D-226, D-227 stand; **D-275–D-286** and **ADR-0011** proposed by this plan under the user's standing instruction (2026-10-03).
