@@ -693,6 +693,8 @@ model Order {
   toolingSourced  ToolingItem[] @relation("ToolingSourceOrder")
   toolingLastUsed ToolingItem[] @relation("ToolingLastOrder")
 
+  reorderSuggestions ReorderSuggestion[] @relation("ReorderSuggestionLastOrder")
+
   @@index([companyId, createdAt(sort: Desc)], map: "ix_orders__company_id__created_at")
   @@index([orderGroupId], map: "ix_orders__order_group_id")
   @@index([status, promisedShipDate], map: "ix_orders__status__promised_ship_date")
@@ -2004,6 +2006,8 @@ model Company {
   brandKits     BrandKit[]                @relation("BrandKitCompany")
   elementRights ElementRightDeclaration[] @relation("ElementRightCompany")
 
+  reorderSuggestions ReorderSuggestion[] @relation("ReorderSuggestionCompany")
+
   @@unique([taxId], map: "ux_companies__tax_id", where: raw("(status <> 'closed'::company_status)"))
   @@index([status], map: "ix_companies__status")
   @@index([entityId], map: "ix_companies__entity_id")
@@ -2274,4 +2278,66 @@ model DiscountMemo {
   @@index([approvalRequestId], map: "ix_discount_memos__approval_request_id")
   @@index([appliedOrderGroupId], map: "ix_discount_memos__applied_order_group_id")
   @@map("discount_memos")
+}
+
+// --- U2.7 reorder suggestions (A-103; D-204, D-288) ------------------------------------------------------------
+
+enum ReorderSuggestionStatus {
+  open
+  /// CS reached the customer about it.
+  contacted
+  /// The customer (or CS) set it aside until the SKU is ordered again.
+  dismissed
+
+  @@map("reorder_suggestion_status")
+}
+
+/// D-288 a reorder suggestion per SKU — the customer (or company) × the specification × the approved artwork — with at
+/// least `reorder.min_orders` earlier orders, recomputed nightly; a new order of the SKU starts a new cycle (open).
+model ReorderSuggestion {
+  id                  BigInt                  @id(map: "pk_reorder_suggestions") @default(autoincrement())
+  publicId            String                  @unique(map: "ux_reorder_suggestions__public_id") @default(dbgenerated("uuidv7()")) @map("public_id") @db.Uuid
+  /// sha256 of owner + specification + artwork.
+  skuSha256           Bytes                   @map("sku_sha256")
+  /// The owner: a customer's own orders, or a company's.
+  customerUserId      BigInt?                 @map("customer_user_id")
+  companyId           BigInt?                 @map("company_id")
+  productTypeId       BigInt                  @map("product_type_id")
+  lastOrderId         BigInt                  @map("last_order_id")
+  orderCount          Int                     @map("order_count")
+  averageIntervalDays Decimal                 @map("average_interval_days") @db.Decimal(8, 2)
+  lastLeadTimeDays    Int                     @map("last_lead_time_days")
+  nextNeedOn          DateTime                @map("next_need_on") @db.Date
+  suggestedOn         DateTime                @map("suggested_on") @db.Date
+  suggestedQuantity   Int                     @map("suggested_quantity")
+  status              ReorderSuggestionStatus @default(open)
+  /// The `reorder.*` setting versions the computation used.
+  settingVersionIds   Json                    @map("setting_version_ids")
+  computedAt          DateTime                @map("computed_at") @db.Timestamptz(6)
+  contactedAt         DateTime?               @map("contacted_at") @db.Timestamptz(6)
+  contactedById       BigInt?                 @map("contacted_by")
+  contactNote         String?                 @map("contact_note")
+  dismissedAt         DateTime?               @map("dismissed_at") @db.Timestamptz(6)
+  dismissedById       BigInt?                 @map("dismissed_by")
+  /// The marketing reminder of this cycle was handed to the notification router (D-144 applies there).
+  remindedAt          DateTime?               @map("reminded_at") @db.Timestamptz(6)
+  createdAt           DateTime                @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt           DateTime                @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  customer    User?       @relation("ReorderSuggestionCustomer", fields: [customerUserId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_reorder_suggestions__customer_user_id")
+  company     Company?    @relation("ReorderSuggestionCompany", fields: [companyId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_reorder_suggestions__company_id")
+  productType ProductType @relation("ReorderSuggestionProductType", fields: [productTypeId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_reorder_suggestions__product_type_id")
+  lastOrder   Order       @relation("ReorderSuggestionLastOrder", fields: [lastOrderId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_reorder_suggestions__last_order_id")
+  contactedBy User?       @relation("ReorderSuggestionContactedBy", fields: [contactedById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_reorder_suggestions__contacted_by")
+  dismissedBy User?       @relation("ReorderSuggestionDismissedBy", fields: [dismissedById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_reorder_suggestions__dismissed_by")
+
+  @@unique([skuSha256], map: "ux_reorder_suggestions__sku_sha256")
+  @@index([customerUserId], map: "ix_reorder_suggestions__customer_user_id")
+  @@index([companyId], map: "ix_reorder_suggestions__company_id")
+  @@index([productTypeId], map: "ix_reorder_suggestions__product_type_id")
+  @@index([lastOrderId], map: "ix_reorder_suggestions__last_order_id")
+  @@index([status, suggestedOn], map: "ix_reorder_suggestions__status__suggested_on")
+  @@index([contactedById], map: "ix_reorder_suggestions__contacted_by")
+  @@index([dismissedById], map: "ix_reorder_suggestions__dismissed_by")
+  @@map("reorder_suggestions")
 }

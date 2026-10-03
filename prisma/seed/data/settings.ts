@@ -1077,6 +1077,37 @@ export const SETTINGS: readonly SettingSeed[] = [
     ownerRole: 'marketing',
   },
 
+  // --- Reorder suggestions (U2.7, D-204 / D-288): per SKU, recomputed nightly.
+  {
+    key: 'reorder.min_orders',
+    valueType: 'integer',
+    value: 3,
+    valueSchema: { minimum: 2, maximum: 50 },
+    description:
+      'D-204 / D-288 earlier orders of a SKU (specification × approved artwork) needed before it is suggested',
+    decisions: ['D-204', 'D-288'],
+    ownerRole: 'superadmin',
+  },
+  {
+    key: 'reorder.average_orders',
+    valueType: 'integer',
+    value: 3,
+    valueSchema: { minimum: 1, maximum: 50 },
+    description:
+      'D-288 order intervals (the most recent) whose simple moving average gives the next need; their orders’ quantities give the suggested quantity',
+    decisions: ['D-288'],
+    ownerRole: 'superadmin',
+  },
+  {
+    key: 'reorder.safety_stock_days',
+    valueType: 'integer',
+    value: 7,
+    valueSchema: { minimum: 0, maximum: 365 },
+    description:
+      'D-204 / D-288 days of safety stock: the suggestion comes this many days before need − lead time',
+    decisions: ['D-204', 'D-288'],
+    ownerRole: 'superadmin',
+  },
   // --- Tooling register (U2.7, D-205 / D-289): plates and die blocks kept at the factory that made them.
   {
     key: 'tooling.reuse_months',

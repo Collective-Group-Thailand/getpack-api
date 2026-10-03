@@ -357,6 +357,7 @@ export const ERROR_CODES = {
   'studio.maker_checker': HttpStatus.FORBIDDEN,
   'studio.right_not_required': HttpStatus.CONFLICT,
   'tooling.already_reported': HttpStatus.CONFLICT,
+  'reorders.suggestion_decided': HttpStatus.CONFLICT,
 } as const satisfies Record<string, HttpStatus>;
 
 export type ErrorCode = keyof typeof ERROR_CODES;

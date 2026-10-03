@@ -5,7 +5,6 @@ import { formatMoney, MoneyDecimal } from '@common/money/money';
 import { toBangkokIso } from '@common/time/bangkok';
 import { PrismaService, type Tx } from '@database/prisma.service';
 import { Prisma, type ToolingKind, type ToolingStatus } from '@generated/prisma/client';
-import { canonical } from '@modules/catalog/imports/import-engine';
 import { FactoryAccess } from '@modules/partners/factories/factory-access';
 import {
   type QuoteStepView,
@@ -13,6 +12,7 @@ import {
   type ToolingCredit,
 } from '@modules/pricing/quotes/quote-engine.service';
 import { ProductionService } from '@modules/production/production.service';
+import { specificationHash } from '@modules/quotes/specification-hash';
 import { Injectable } from '@nestjs/common';
 import { ActivityLogService } from '@platform/activity/activity-log.service';
 import { type DomainEventEnvelope } from '@platform/domain-events/domain-event';
@@ -34,13 +34,6 @@ const INCLUDE = {
 type ToolingRow = Prisma.ToolingItemGetPayload<{ include: typeof INCLUDE }>;
 
 type Internal = { tooling?: { charged: ToolingAmountsView; waived: ToolingAmountsView } | null };
-
-/** D-289: the specification a tool is bound to — product type + configuration without quantities or delivery. */
-export function toolingSpecHash(productTypeCode: string, configuration: Record<string, unknown>): Uint8Array {
-  const { quantities: _q, ...rest } = configuration;
-  void _q;
-  return sha256(JSON.stringify(canonical({ productTypeCode, configuration: rest })));
-}
 
 /** `instant` + `months` calendar months on the Bangkok clock. */
 export function addBangkokMonths(instant: Date, months: number): Date {
@@ -80,7 +73,7 @@ export class ToolingService {
     const since = addBangkokMonths(at, -(await this.reuseMonths(at)));
     const rows = await this.prisma.toolingItem.findMany({
       where: {
-        specSha256: Uint8Array.from(toolingSpecHash(spec.productTypeCode, spec.configuration)),
+        specSha256: Uint8Array.from(specificationHash(spec.productTypeCode, spec.configuration)),
         status: 'active',
         lastUsedAt: { gte: since },
       },
@@ -128,7 +121,7 @@ export class ToolingService {
     const kinds: ToolingKind[] = [];
     if (used(c.platesSale, c.platesBuy, w.platesSale, w.platesBuy)) kinds.push('plates');
     if (used(c.dieBlockSale, c.dieBlockBuy, w.dieBlockSale, w.dieBlockBuy)) kinds.push('die_block');
-    const specSha256 = toolingSpecHash(input.productTypeCode, input.configuration);
+    const specSha256 = specificationHash(input.productTypeCode, input.configuration);
     const artwork = order.proofs[0]?.approvedFileSha256 ?? null;
     for (const kind of kinds) {
       // Plates print one artwork: without an approved file hash they cannot be matched again.

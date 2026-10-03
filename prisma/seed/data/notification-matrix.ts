@@ -23,6 +23,8 @@ interface Row {
   subject: Text;
   body: Text;
   description: string;
+  /** Marketing rows get the D-144 consent and quiet hours in the router; everything else is transactional. */
+  category?: 'marketing';
 }
 
 const email = (greeting: string, body: string, footer: string) =>
@@ -73,6 +75,22 @@ const F = (event: string, channels: Channel[], subject: Text, body: Text, descri
 
 const ROWS: Row[] = [
   // --- customers -------------------------------------------------------------------------------------------
+  {
+    ...C(
+      'reorder.suggestion_due',
+      ['email', 'line'],
+      {
+        th: 'ถึงเวลาสั่ง{{payload.productTypeNameTh}}อีกครั้ง',
+        en: 'Time to reorder your {{payload.productTypeNameEn}}',
+      },
+      {
+        th: 'จากประวัติการสั่งซื้อ Packio แนะนำให้สั่งซ้ำจำนวน {{payload.suggestedQuantity}} (คำสั่งซื้อล่าสุด {{payload.orderCode}}) สั่งซ้ำได้ในไม่กี่คลิกที่ Packio',
+        en: 'From your order history Packio suggests reordering a quantity of {{payload.suggestedQuantity}} (last order {{payload.orderCode}}); reorder in a few clicks on Packio',
+      },
+      'Customer: reorder suggestion due — marketing, consent and quiet hours apply (D-288, D-144)',
+    ),
+    category: 'marketing',
+  },
   C(
     'order_group.placed',
     ['email', 'line', 'in_app'],
@@ -838,7 +856,7 @@ export const MATRIX_TEMPLATES: NotificationTemplateSeed[] = ROWS.flatMap((r) =>
   r.channels.map((channel) => ({
     key: keyOf(r),
     channel,
-    category: 'transactional' as const,
+    category: r.category ?? ('transactional' as const),
     description: r.description,
     versions: {
       th: {

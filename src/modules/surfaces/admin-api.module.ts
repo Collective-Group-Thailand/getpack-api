@@ -38,6 +38,7 @@ import { PRODUCTION_ADMIN_CONTROLLERS } from '@modules/production/production.reg
 import { PROMOTIONS_ADMIN_CONTROLLERS } from '@modules/promotions/promotions.registry';
 import { QUOTES_ADMIN_CONTROLLERS } from '@modules/quotes/quotes.registry';
 import { RECEIVABLES_ADMIN_CONTROLLERS } from '@modules/receivables/receivables.registry';
+import { REORDERS_ADMIN_CONTROLLERS } from '@modules/reorders/reorders.registry';
 import { REPORTS_ADMIN_CONTROLLERS } from '@modules/reports/reports.registry';
 import { SAMPLES_ADMIN_CONTROLLERS } from '@modules/samples/samples.registry';
 import { SHIPPING_ADMIN_CONTROLLERS } from '@modules/shipping/shipping.registry';
@@ -113,6 +114,7 @@ import { SettingsAdminModule } from '@platform/settings/settings-admin.module';
     ...CARTS_ADMIN_CONTROLLERS,
     ...CHECKOUT_ADMIN_CONTROLLERS,
     ...ORDERS_ADMIN_CONTROLLERS,
+    ...REORDERS_ADMIN_CONTROLLERS,
     ...TOOLING_ADMIN_CONTROLLERS,
     ...PAYMENT_SCHEDULES_ADMIN_CONTROLLERS,
     ...PROMOTIONS_ADMIN_CONTROLLERS,

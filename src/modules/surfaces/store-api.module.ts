@@ -26,6 +26,7 @@ import { StoreQuotePathController } from '@modules/pricing/quotes/store-quote-pa
 import { PROMOTIONS_STORE_CONTROLLERS } from '@modules/promotions/promotions.registry';
 import { QUOTES_STORE_CONTROLLERS } from '@modules/quotes/quotes.registry';
 import { RECEIVABLES_STORE_CONTROLLERS } from '@modules/receivables/receivables.registry';
+import { REORDERS_STORE_CONTROLLERS } from '@modules/reorders/reorders.registry';
 import { SAMPLES_STORE_CONTROLLERS } from '@modules/samples/samples.registry';
 import { STUDIO_STORE_CONTROLLERS } from '@modules/studio/studio.registry';
 import { STYLES_STORE_CONTROLLERS } from '@modules/styles/styles.registry';
@@ -66,6 +67,7 @@ import { RealtimeModule } from '@platform/realtime/realtime.module';
     ...CARTS_STORE_CONTROLLERS,
     ...CHECKOUT_STORE_CONTROLLERS,
     ...ORDERS_STORE_CONTROLLERS,
+    ...REORDERS_STORE_CONTROLLERS,
     ...LOGISTICS_STORE_CONTROLLERS,
     ...CLAIMS_STORE_CONTROLLERS,
     ...CONVERSATIONS_STORE_CONTROLLERS,

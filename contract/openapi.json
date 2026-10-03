@@ -2916,6 +2916,17 @@
           "type": "https://errors.packio/refunds.not_refundable"
         }
       },
+      "problem.reorders.suggestion_decided": {
+        "summary": "reorders.suggestion_decided",
+        "value": {
+          "code": "reorders.suggestion_decided",
+          "detail": "คำแนะนำการสั่งซ้ำนี้ถูกบันทึกเป็น {status} แล้ว",
+          "requestId": "6f1c2d8e-2c7b-4d0e-9d1c-3f1a2b3c4d5e",
+          "status": 409,
+          "title": "ดำเนินการกับคำแนะนำนี้แล้ว",
+          "type": "https://errors.packio/reorders.suggestion_decided"
+        }
+      },
       "problem.reports.recipient_not_allowed": {
         "summary": "reports.recipient_not_allowed",
         "value": {
@@ -8477,6 +8488,148 @@
           "rewardPoints",
           "approvalId",
           "decidedAt"
+        ],
+        "type": "object"
+      },
+      "AdminReorderSuggestionDto": {
+        "properties": {
+          "averageIntervalDays": {
+            "description": "Simple moving average of the recent order intervals, days",
+            "example": "30.00",
+            "type": "string"
+          },
+          "company": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/PersonRefDto"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Null for my own orders"
+          },
+          "computedAt": {
+            "example": "2026-10-03T02:30:00+07:00",
+            "format": "date-time",
+            "type": "string"
+          },
+          "contactNote": {
+            "example": null,
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "contactedAt": {
+            "example": null,
+            "format": "date-time",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "contactedBy": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/UserRefDto"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "example": null
+          },
+          "customer": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/UserRefDto"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "The customer (own orders); null for a company"
+          },
+          "id": {
+            "example": "0192f3a0-7c1e-7d2a-9b1f-0000000e7201",
+            "format": "uuid",
+            "type": "string"
+          },
+          "lastLeadTimeDays": {
+            "description": "Placement → delivery of the last delivered order",
+            "example": 10,
+            "type": "integer"
+          },
+          "lastOrder": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/SuggestionLastOrderDto"
+              }
+            ],
+            "description": "The SKU’s last order — reorder it with `store.claims.reorder` (D-153)"
+          },
+          "nextNeedOn": {
+            "description": "When the next order is likely needed",
+            "example": "2026-11-01",
+            "format": "date",
+            "type": "string"
+          },
+          "orderCount": {
+            "description": "Orders of the SKU so far",
+            "example": 3,
+            "type": "integer"
+          },
+          "productType": {
+            "$ref": "#/components/schemas/CodeNameRefDto"
+          },
+          "remindedAt": {
+            "description": "The marketing reminder of this cycle was sent to the router (consent and quiet hours, D-144)",
+            "example": null,
+            "format": "date-time",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "status": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ReorderSuggestionStatus"
+              }
+            ],
+            "example": "open"
+          },
+          "suggestedOn": {
+            "description": "Next need − last lead time − `reorder.safety_stock_days` (D-288)",
+            "example": "2026-10-15",
+            "format": "date",
+            "type": "string"
+          },
+          "suggestedQuantity": {
+            "description": "Mean quantity of the orders the intervals span",
+            "example": 1500,
+            "type": "integer"
+          }
+        },
+        "required": [
+          "id",
+          "status",
+          "productType",
+          "company",
+          "lastOrder",
+          "orderCount",
+          "averageIntervalDays",
+          "lastLeadTimeDays",
+          "nextNeedOn",
+          "suggestedOn",
+          "suggestedQuantity",
+          "computedAt",
+          "customer",
+          "contactedAt",
+          "contactedBy",
+          "contactNote",
+          "remindedAt"
         ],
         "type": "object"
       },
@@ -56084,6 +56237,105 @@
         ],
         "type": "object"
       },
+      "ReorderSuggestionDto": {
+        "properties": {
+          "averageIntervalDays": {
+            "description": "Simple moving average of the recent order intervals, days",
+            "example": "30.00",
+            "type": "string"
+          },
+          "company": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/PersonRefDto"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Null for my own orders"
+          },
+          "computedAt": {
+            "example": "2026-10-03T02:30:00+07:00",
+            "format": "date-time",
+            "type": "string"
+          },
+          "id": {
+            "example": "0192f3a0-7c1e-7d2a-9b1f-0000000e7201",
+            "format": "uuid",
+            "type": "string"
+          },
+          "lastLeadTimeDays": {
+            "description": "Placement → delivery of the last delivered order",
+            "example": 10,
+            "type": "integer"
+          },
+          "lastOrder": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/SuggestionLastOrderDto"
+              }
+            ],
+            "description": "The SKU’s last order — reorder it with `store.claims.reorder` (D-153)"
+          },
+          "nextNeedOn": {
+            "description": "When the next order is likely needed",
+            "example": "2026-11-01",
+            "format": "date",
+            "type": "string"
+          },
+          "orderCount": {
+            "description": "Orders of the SKU so far",
+            "example": 3,
+            "type": "integer"
+          },
+          "productType": {
+            "$ref": "#/components/schemas/CodeNameRefDto"
+          },
+          "status": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ReorderSuggestionStatus"
+              }
+            ],
+            "example": "open"
+          },
+          "suggestedOn": {
+            "description": "Next need − last lead time − `reorder.safety_stock_days` (D-288)",
+            "example": "2026-10-15",
+            "format": "date",
+            "type": "string"
+          },
+          "suggestedQuantity": {
+            "description": "Mean quantity of the orders the intervals span",
+            "example": 1500,
+            "type": "integer"
+          }
+        },
+        "required": [
+          "id",
+          "status",
+          "productType",
+          "company",
+          "lastOrder",
+          "orderCount",
+          "averageIntervalDays",
+          "lastLeadTimeDays",
+          "nextNeedOn",
+          "suggestedOn",
+          "suggestedQuantity",
+          "computedAt"
+        ],
+        "type": "object"
+      },
+      "ReorderSuggestionStatus": {
+        "enum": [
+          "open",
+          "contacted",
+          "dismissed"
+        ],
+        "type": "string"
+      },
       "ReplaceArticleCategoriesDto": {
         "properties": {
           "categoryIds": {
@@ -72619,6 +72871,34 @@
         "required": [
           "endpoint",
           "keys"
+        ],
+        "type": "object"
+      },
+      "SuggestionLastOrderDto": {
+        "properties": {
+          "orderCode": {
+            "example": "PK-2610-0001-01",
+            "type": "string"
+          },
+          "orderId": {
+            "example": "0192f3a0-7c1e-7d2a-9b1f-0000000f1002",
+            "format": "uuid",
+            "type": "string"
+          },
+          "quantity": {
+            "example": 1000,
+            "type": "integer"
+          },
+          "unit": {
+            "example": "piece",
+            "type": "string"
+          }
+        },
+        "required": [
+          "orderId",
+          "orderCode",
+          "quantity",
+          "unit"
         ],
         "type": "object"
       },
@@ -246739,6 +247019,846 @@
         ]
       }
     },
+    "/v1/admin/reorder-suggestions": {
+      "get": {
+        "description": "CS queue: open suggestions by default, soonest suggested date first; filter by status and due date. A SKU is the specification (product type + configuration, without quantities or delivery) × the approved artwork, of a customer or of a company; with ≥ `reorder.min_orders` orders: next need = last order + the simple moving average of the last `reorder.average_orders` intervals, suggested date = next need − the last lead time − `reorder.safety_stock_days`, quantity = the mean of the same orders’ quantities. Recomputed nightly; a new order of the SKU opens a new cycle (D-288).\n\nImplements: D-288, D-204.",
+        "operationId": "admin.reorderSuggestions.list",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "page",
+            "required": false,
+            "schema": {
+              "default": 1,
+              "minimum": 1,
+              "type": "integer"
+            }
+          },
+          {
+            "in": "query",
+            "name": "perPage",
+            "required": false,
+            "schema": {
+              "default": 25,
+              "maximum": 100,
+              "minimum": 1,
+              "type": "integer"
+            }
+          },
+          {
+            "description": "Sort field; each endpoint validates it against its own allow-list.",
+            "in": "query",
+            "name": "sort",
+            "required": false,
+            "schema": {
+              "example": "createdAt",
+              "maxLength": 64,
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "order",
+            "required": false,
+            "schema": {
+              "$ref": "#/components/schemas/SortOrder"
+            }
+          },
+          {
+            "description": "Free-text search",
+            "in": "query",
+            "name": "q",
+            "required": false,
+            "schema": {
+              "maxLength": 200,
+              "type": "string"
+            }
+          },
+          {
+            "description": "Default `open`",
+            "in": "query",
+            "name": "status",
+            "required": false,
+            "schema": {
+              "$ref": "#/components/schemas/ReorderSuggestionStatus"
+            }
+          },
+          {
+            "description": "Suggested on or before this date",
+            "in": "query",
+            "name": "dueBy",
+            "required": false,
+            "schema": {
+              "example": "2026-10-15",
+              "format": "date",
+              "type": "string"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "data": [
+                    {
+                      "averageIntervalDays": "30.00",
+                      "company": null,
+                      "computedAt": "2026-10-03T02:30:00+07:00",
+                      "contactNote": null,
+                      "contactedAt": null,
+                      "contactedBy": null,
+                      "customer": {
+                        "displayName": "ลูกค้า ทดสอบ",
+                        "id": "0192f3a0-7c1e-7d2a-9b1f-0000000e7203"
+                      },
+                      "id": "0192f3a0-7c1e-7d2a-9b1f-0000000e7201",
+                      "lastLeadTimeDays": 10,
+                      "lastOrder": {
+                        "orderCode": "PK-2610-0001-01",
+                        "orderId": "0192f3a0-7c1e-7d2a-9b1f-0000000f1002",
+                        "quantity": 1000,
+                        "unit": "piece"
+                      },
+                      "nextNeedOn": "2026-11-01",
+                      "orderCount": 3,
+                      "productType": {
+                        "code": "folding_carton",
+                        "id": "0192f3a0-7c1e-7d2a-9b1f-0000000e7205",
+                        "nameEn": "Folding carton",
+                        "nameTh": "กล่องกระดาษพับ"
+                      },
+                      "remindedAt": null,
+                      "status": "open",
+                      "suggestedOn": "2026-10-15",
+                      "suggestedQuantity": 1500
+                    }
+                  ],
+                  "meta": {
+                    "page": 1,
+                    "perPage": 25,
+                    "total": 1
+                  }
+                },
+                "schema": {
+                  "properties": {
+                    "data": {
+                      "items": {
+                        "$ref": "#/components/schemas/AdminReorderSuggestionDto"
+                      },
+                      "type": "array"
+                    },
+                    "meta": {
+                      "$ref": "#/components/schemas/PageMeta"
+                    }
+                  },
+                  "required": [
+                    "data",
+                    "meta"
+                  ],
+                  "type": "object"
+                }
+              }
+            },
+            "description": "One page of results",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.unauthenticated": {
+                    "$ref": "#/components/examples/problem.auth.unauthenticated"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.unauthenticated`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.forbidden": {
+                    "$ref": "#/components/examples/problem.auth.forbidden"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.forbidden`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "validation.failed": {
+                    "$ref": "#/components/examples/problem.validation.failed"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `validation.failed`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "staff": []
+          }
+        ],
+        "summary": "Work the reorder suggestion queue",
+        "tags": [
+          "admin.reorderSuggestions"
+        ],
+        "x-required-permissions": [
+          "orders.read"
+        ]
+      }
+    },
+    "/v1/admin/reorder-suggestions/{suggestionId}/actions/dismiss": {
+      "post": {
+        "description": "Set aside until the SKU is ordered again (D-288).\n\nImplements: D-288, D-204.",
+        "operationId": "admin.reorderSuggestions.dismiss",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "suggestionId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/IdempotencyKey"
+          },
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "averageIntervalDays": "30.00",
+                  "company": null,
+                  "computedAt": "2026-10-03T02:30:00+07:00",
+                  "contactNote": null,
+                  "contactedAt": null,
+                  "contactedBy": null,
+                  "customer": {
+                    "displayName": "ลูกค้า ทดสอบ",
+                    "id": "0192f3a0-7c1e-7d2a-9b1f-0000000e7203"
+                  },
+                  "id": "0192f3a0-7c1e-7d2a-9b1f-0000000e7201",
+                  "lastLeadTimeDays": 10,
+                  "lastOrder": {
+                    "orderCode": "PK-2610-0001-01",
+                    "orderId": "0192f3a0-7c1e-7d2a-9b1f-0000000f1002",
+                    "quantity": 1000,
+                    "unit": "piece"
+                  },
+                  "nextNeedOn": "2026-11-01",
+                  "orderCount": 3,
+                  "productType": {
+                    "code": "folding_carton",
+                    "id": "0192f3a0-7c1e-7d2a-9b1f-0000000e7205",
+                    "nameEn": "Folding carton",
+                    "nameTh": "กล่องกระดาษพับ"
+                  },
+                  "remindedAt": null,
+                  "status": "dismissed",
+                  "suggestedOn": "2026-10-15",
+                  "suggestedQuantity": 1500
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/AdminReorderSuggestionDto"
+                }
+              }
+            },
+            "description": "Dismissed",
+            "headers": {
+              "Idempotent-Replayed": {
+                "$ref": "#/components/headers/IdempotentReplayed"
+              },
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "400": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "idempotency.key_invalid": {
+                    "$ref": "#/components/examples/problem.idempotency.key_invalid"
+                  },
+                  "idempotency.key_required": {
+                    "$ref": "#/components/examples/problem.idempotency.key_required"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `idempotency.key_invalid`, `idempotency.key_required`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.unauthenticated": {
+                    "$ref": "#/components/examples/problem.auth.unauthenticated"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.unauthenticated`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.forbidden": {
+                    "$ref": "#/components/examples/problem.auth.forbidden"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.forbidden`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "404": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.not_found": {
+                    "$ref": "#/components/examples/problem.http.not_found"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.not_found`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "409": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "idempotency.in_progress": {
+                    "$ref": "#/components/examples/problem.idempotency.in_progress"
+                  },
+                  "reorders.suggestion_decided": {
+                    "$ref": "#/components/examples/problem.reorders.suggestion_decided"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `idempotency.in_progress`, `reorders.suggestion_decided`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "idempotency.key_reused": {
+                    "$ref": "#/components/examples/problem.idempotency.key_reused"
+                  },
+                  "validation.failed": {
+                    "$ref": "#/components/examples/problem.validation.failed"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `idempotency.key_reused`, `validation.failed`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "staff": []
+          }
+        ],
+        "summary": "Dismiss a reorder suggestion",
+        "tags": [
+          "admin.reorderSuggestions"
+        ],
+        "x-required-permissions": [
+          "customers.manage"
+        ]
+      }
+    },
+    "/v1/admin/reorder-suggestions/{suggestionId}/actions/mark-contacted": {
+      "post": {
+        "description": "CS reached the customer about it, with what was agreed (D-288).\n\nImplements: D-288, D-204.",
+        "operationId": "admin.reorderSuggestions.markContacted",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "suggestionId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/IdempotencyKey"
+          },
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "examples": {
+                "default": {
+                  "value": {
+                    "note": "Called; the customer will reorder next week"
+                  }
+                }
+              },
+              "schema": {
+                "$ref": "#/components/schemas/DecisionNoteDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "averageIntervalDays": "30.00",
+                  "company": null,
+                  "computedAt": "2026-10-03T02:30:00+07:00",
+                  "contactNote": "Called; the customer will reorder next week",
+                  "contactedAt": "2026-10-15T10:00:00+07:00",
+                  "contactedBy": {
+                    "displayName": "Dev CS",
+                    "id": "0192f3a0-7c1e-7d2a-9b1f-0000000e7204"
+                  },
+                  "customer": {
+                    "displayName": "ลูกค้า ทดสอบ",
+                    "id": "0192f3a0-7c1e-7d2a-9b1f-0000000e7203"
+                  },
+                  "id": "0192f3a0-7c1e-7d2a-9b1f-0000000e7201",
+                  "lastLeadTimeDays": 10,
+                  "lastOrder": {
+                    "orderCode": "PK-2610-0001-01",
+                    "orderId": "0192f3a0-7c1e-7d2a-9b1f-0000000f1002",
+                    "quantity": 1000,
+                    "unit": "piece"
+                  },
+                  "nextNeedOn": "2026-11-01",
+                  "orderCount": 3,
+                  "productType": {
+                    "code": "folding_carton",
+                    "id": "0192f3a0-7c1e-7d2a-9b1f-0000000e7205",
+                    "nameEn": "Folding carton",
+                    "nameTh": "กล่องกระดาษพับ"
+                  },
+                  "remindedAt": null,
+                  "status": "contacted",
+                  "suggestedOn": "2026-10-15",
+                  "suggestedQuantity": 1500
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/AdminReorderSuggestionDto"
+                }
+              }
+            },
+            "description": "Contacted",
+            "headers": {
+              "Idempotent-Replayed": {
+                "$ref": "#/components/headers/IdempotentReplayed"
+              },
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "400": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.bad_request": {
+                    "$ref": "#/components/examples/problem.http.bad_request"
+                  },
+                  "http.malformed_json": {
+                    "$ref": "#/components/examples/problem.http.malformed_json"
+                  },
+                  "idempotency.key_invalid": {
+                    "$ref": "#/components/examples/problem.idempotency.key_invalid"
+                  },
+                  "idempotency.key_required": {
+                    "$ref": "#/components/examples/problem.idempotency.key_required"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.bad_request`, `http.malformed_json`, `idempotency.key_invalid`, `idempotency.key_required`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.unauthenticated": {
+                    "$ref": "#/components/examples/problem.auth.unauthenticated"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.unauthenticated`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.forbidden": {
+                    "$ref": "#/components/examples/problem.auth.forbidden"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.forbidden`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "404": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.not_found": {
+                    "$ref": "#/components/examples/problem.http.not_found"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.not_found`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "409": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "idempotency.in_progress": {
+                    "$ref": "#/components/examples/problem.idempotency.in_progress"
+                  },
+                  "reorders.suggestion_decided": {
+                    "$ref": "#/components/examples/problem.reorders.suggestion_decided"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `idempotency.in_progress`, `reorders.suggestion_decided`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "idempotency.key_reused": {
+                    "$ref": "#/components/examples/problem.idempotency.key_reused"
+                  },
+                  "validation.failed": {
+                    "$ref": "#/components/examples/problem.validation.failed"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `idempotency.key_reused`, `validation.failed`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "staff": []
+          }
+        ],
+        "summary": "Mark a reorder suggestion contacted",
+        "tags": [
+          "admin.reorderSuggestions"
+        ],
+        "x-required-permissions": [
+          "customers.manage"
+        ]
+      }
+    },
     "/v1/admin/report-runs": {
       "get": {
         "description": "Newest first (100): the runs of reports the caller may read that they requested or were sent (all of them with `reports.schedule`).\n\nImplements: D-111, D-033.",
@@ -374744,6 +375864,421 @@
         ]
       }
     },
+    "/v1/store/reorder-suggestions": {
+      "get": {
+        "description": "My SKUs and those of companies where I may place orders, soonest first; dismissed ones left out. A SKU is the specification (product type + configuration, without quantities or delivery) × the approved artwork, of a customer or of a company; with ≥ `reorder.min_orders` orders: next need = last order + the simple moving average of the last `reorder.average_orders` intervals, suggested date = next need − the last lead time − `reorder.safety_stock_days`, quantity = the mean of the same orders’ quantities. Recomputed nightly; a new order of the SKU opens a new cycle (D-288).\n\nImplements: D-288, D-204.",
+        "operationId": "store.reorderSuggestions.list",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "example": [
+                  {
+                    "averageIntervalDays": "30.00",
+                    "company": null,
+                    "computedAt": "2026-10-03T02:30:00+07:00",
+                    "id": "0192f3a0-7c1e-7d2a-9b1f-0000000e7201",
+                    "lastLeadTimeDays": 10,
+                    "lastOrder": {
+                      "orderCode": "PK-2610-0001-01",
+                      "orderId": "0192f3a0-7c1e-7d2a-9b1f-0000000f1002",
+                      "quantity": 1000,
+                      "unit": "piece"
+                    },
+                    "nextNeedOn": "2026-11-01",
+                    "orderCount": 3,
+                    "productType": {
+                      "code": "folding_carton",
+                      "id": "0192f3a0-7c1e-7d2a-9b1f-0000000e7205",
+                      "nameEn": "Folding carton",
+                      "nameTh": "กล่องกระดาษพับ"
+                    },
+                    "status": "open",
+                    "suggestedOn": "2026-10-15",
+                    "suggestedQuantity": 1500
+                  }
+                ],
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/ReorderSuggestionDto"
+                  },
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Suggestions",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.unauthenticated": {
+                    "$ref": "#/components/examples/problem.auth.unauthenticated"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.unauthenticated`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.forbidden": {
+                    "$ref": "#/components/examples/problem.auth.forbidden"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.forbidden`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "customer": []
+          }
+        ],
+        "summary": "List my reorder suggestions",
+        "tags": [
+          "store.reorderSuggestions"
+        ]
+      }
+    },
+    "/v1/store/reorder-suggestions/{suggestionId}/actions/dismiss": {
+      "post": {
+        "description": "Not now: the suggestion and its reminder are set aside until the SKU is ordered again (D-288).\n\nImplements: D-288, D-204.",
+        "operationId": "store.reorderSuggestions.dismiss",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "suggestionId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/IdempotencyKey"
+          },
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "averageIntervalDays": "30.00",
+                  "company": null,
+                  "computedAt": "2026-10-03T02:30:00+07:00",
+                  "id": "0192f3a0-7c1e-7d2a-9b1f-0000000e7201",
+                  "lastLeadTimeDays": 10,
+                  "lastOrder": {
+                    "orderCode": "PK-2610-0001-01",
+                    "orderId": "0192f3a0-7c1e-7d2a-9b1f-0000000f1002",
+                    "quantity": 1000,
+                    "unit": "piece"
+                  },
+                  "nextNeedOn": "2026-11-01",
+                  "orderCount": 3,
+                  "productType": {
+                    "code": "folding_carton",
+                    "id": "0192f3a0-7c1e-7d2a-9b1f-0000000e7205",
+                    "nameEn": "Folding carton",
+                    "nameTh": "กล่องกระดาษพับ"
+                  },
+                  "status": "dismissed",
+                  "suggestedOn": "2026-10-15",
+                  "suggestedQuantity": 1500
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ReorderSuggestionDto"
+                }
+              }
+            },
+            "description": "Dismissed",
+            "headers": {
+              "Idempotent-Replayed": {
+                "$ref": "#/components/headers/IdempotentReplayed"
+              },
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "400": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "idempotency.key_invalid": {
+                    "$ref": "#/components/examples/problem.idempotency.key_invalid"
+                  },
+                  "idempotency.key_required": {
+                    "$ref": "#/components/examples/problem.idempotency.key_required"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `idempotency.key_invalid`, `idempotency.key_required`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.unauthenticated": {
+                    "$ref": "#/components/examples/problem.auth.unauthenticated"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.unauthenticated`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.forbidden": {
+                    "$ref": "#/components/examples/problem.auth.forbidden"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.forbidden`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "404": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.not_found": {
+                    "$ref": "#/components/examples/problem.http.not_found"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.not_found`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "409": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "idempotency.in_progress": {
+                    "$ref": "#/components/examples/problem.idempotency.in_progress"
+                  },
+                  "reorders.suggestion_decided": {
+                    "$ref": "#/components/examples/problem.reorders.suggestion_decided"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `idempotency.in_progress`, `reorders.suggestion_decided`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "idempotency.key_reused": {
+                    "$ref": "#/components/examples/problem.idempotency.key_reused"
+                  },
+                  "validation.failed": {
+                    "$ref": "#/components/examples/problem.validation.failed"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `idempotency.key_reused`, `validation.failed`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "customer": []
+          }
+        ],
+        "summary": "Dismiss a reorder suggestion",
+        "tags": [
+          "store.reorderSuggestions"
+        ]
+      }
+    },
     "/v1/store/reviews": {
       "get": {
         "description": "Published reviews of delivered orders, newest first, with the product type, Packio’s reply and an abbreviated name — never fabricated, never an order or a contact (D-202, D-265, D-181).\n\nImplements: D-202, D-265, D-181.",
@@ -392563,6 +394098,10 @@
       "name": "admin.refunds"
     },
     {
+      "description": "The reorder suggestion queue for CS (D-288): due suggestions per customer or company, marked contacted or dismissed.",
+      "name": "admin.reorderSuggestions"
+    },
+    {
       "description": "Operational reports (B6.2): catalogue by permission, previews, XLSX / CSV files generated by the worker and downloaded through signed URLs (audited), and schedules that notify their recipients; calculate / search / drawing / event-log reports are R2 (D-111).",
       "name": "admin.reports"
     },
@@ -392941,6 +394480,10 @@
     {
       "description": "My referral code and link; use a friend’s code before the first order (D-136).",
       "name": "store.referral"
+    },
+    {
+      "description": "When to reorder what (D-288): per SKU (specification × approved artwork), from my order history — the date and quantity Packio suggests, reordered from the last order.",
+      "name": "store.reorderSuggestions"
     },
     {
       "description": "Review a delivered order and earn the review reward (D-135).",

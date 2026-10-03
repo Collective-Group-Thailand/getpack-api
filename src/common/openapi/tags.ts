@@ -65,6 +65,10 @@ export const API_TAGS: Record<string, string> = {
     'Company brand kits — logos, palette, font pairs, usage notes — managed by the Company Admin, used by every member (D-282, D-227).',
   'store.dielines':
     'Free dieline downloads of published style variants (D-271, D-203): signed-in customers, within the style’s size range, rate-limited and logged.',
+  'store.reorderSuggestions':
+    'When to reorder what (D-288): per SKU (specification × approved artwork), from my order history — the date and quantity Packio suggests, reordered from the last order.',
+  'admin.reorderSuggestions':
+    'The reorder suggestion queue for CS (D-288): due suggestions per customer or company, marked contacted or dismissed.',
   'admin.tooling':
     'The tooling register (D-205, D-289): plates and die blocks kept at the factory that made them, their last use, reuse window and the remakes Packio absorbed.',
   'partner.tooling':

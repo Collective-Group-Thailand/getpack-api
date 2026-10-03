@@ -283,6 +283,8 @@ model ProductType {
 
   studioQuoteSnapshots StudioQuoteSnapshot[] @relation("StudioQuoteSnapshotProductType")
 
+  reorderSuggestions ReorderSuggestion[] @relation("ReorderSuggestionProductType")
+
   @@index([categoryId], map: "ix_product_types__category_id")
   @@map("product_types")
 }

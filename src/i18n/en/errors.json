@@ -1538,5 +1538,11 @@
       "title": "Tool already reported",
       "detail": "This tool was already reported unusable for this job."
     }
+  },
+  "reorders": {
+    "suggestion_decided": {
+      "title": "Suggestion already decided",
+      "detail": "This reorder suggestion was already marked {status}."
+    }
   }
 }

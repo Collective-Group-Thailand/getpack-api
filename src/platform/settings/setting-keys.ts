@@ -189,6 +189,10 @@ export interface SettingValues {
   'advisory.rule_set': AdvisoryRuleSet;
   /** D-212 / D-243 highest style-library wave that may be published. */
   'styles.published_wave': number;
+  /** D-288 reorder suggestions: orders needed, intervals averaged, safety-stock days. */
+  'reorder.min_orders': number;
+  'reorder.average_orders': number;
+  'reorder.safety_stock_days': number;
   /** D-289 months a registered tool stays reusable after its last use. */
   'tooling.reuse_months': number;
   'dielines.downloads_per_day': number;
