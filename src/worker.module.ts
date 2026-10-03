@@ -7,7 +7,7 @@ import { IntegrationsModule } from '@integrations/integrations.module';
 import { AnalyticsModule } from '@modules/analytics/analytics.module';
 import { ArtworkModule } from '@modules/artwork/artwork.module';
 import { AuditSupportModule } from '@modules/audit-support/audit-support.module';
-import { B2bModule } from '@modules/b2b/b2b.module';
+import { B2bWorkerModule } from '@modules/b2b/b2b.module';
 import { BankingModule } from '@modules/banking/banking.module';
 import { CallOffsModule } from '@modules/call-offs/call-offs.module';
 import { CartsModule } from '@modules/carts/carts.module';
@@ -105,7 +105,7 @@ import { WorkerLifecycle } from './worker.lifecycle';
     ToolingModule,
     ReordersModule,
     CallOffsModule,
-    B2bModule,
+    B2bWorkerModule,
     PaymentSchedulesModule,
     PromotionsModule,
     LoyaltyModule,
