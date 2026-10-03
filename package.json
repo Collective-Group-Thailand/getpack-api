@@ -34,7 +34,8 @@
     "rbac:build": "nest build && node dist/scripts/rbac-build.js",
     "launch:settings": "nest build && node dist/scripts/launch-settings-build.js",
     "styles:import": "nest build && node dist/scripts/styles-import.js",
-    "dieline:vendor": "bash scripts/dieline-vendor.sh"
+    "dieline:vendor": "bash scripts/dieline-vendor.sh",
+    "styles:recipes-from-engine": "nest build && node dist/scripts/styles-recipes-from-engine.js"
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.1138.0",
