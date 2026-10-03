@@ -483,8 +483,26 @@ export const PERMISSIONS = [
   {
     key: 'reviews.moderate',
     audience: 'staff',
-    description: 'Hide or re-publish order reviews',
-    decisionRefs: ['D-135'],
+    description: 'Hide or re-publish order reviews (Marketing, D-202)',
+    decisionRefs: ['D-135', 'D-202', 'D-265'],
+  },
+  {
+    key: 'reviews.reply',
+    audience: 'staff',
+    description: 'Write or edit the one reply to a review (CS, D-202)',
+    decisionRefs: ['D-202', 'D-265'],
+  },
+  {
+    key: 'guarantee_policies.read',
+    audience: 'staff',
+    description: 'See guarantee policy versions and their remedy matrix',
+    decisionRefs: ['D-260'],
+  },
+  {
+    key: 'guarantee_policies.manage',
+    audience: 'staff',
+    description: 'Draft a new guarantee policy version for C-Level approval (CS Lead, D-200)',
+    decisionRefs: ['D-200', 'D-260'],
   },
 
   {

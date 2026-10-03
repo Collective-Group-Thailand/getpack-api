@@ -20,6 +20,7 @@ import { NOTIFICATION_ROUTES, NOTIFICATION_TEMPLATES } from './data/notification
 import { AGREEMENT_TEMPLATES } from './data/partners';
 import { CUSTOMER_POSTING_RULES } from './data/posting-rules-customer';
 import { VENDOR_POSTING_RULES } from './data/posting-rules-vendor';
+import { GUARANTEE_POLICY_V1 } from './data/guarantee';
 import { PRICING_FEATURE_FLAGS, QUOTE_LOSS_REASONS, UNMET_DEMAND_REASONS } from './data/quotes';
 import { CREDIT_NOTE_REASONS, FINANCE_FEATURE_FLAGS } from './data/receivables';
 import { CONSENT_PURPOSES, NATIONAL_CALENDAR, SOD_RULES, TAX_RATES, TEAMS } from './data/reference';
@@ -80,6 +81,7 @@ export async function seedReference(prisma: PrismaClient, entity: EntitySeedInpu
       await ensureTaxRates(tx, count);
       await ensureShipping(tx, count);
       await ensureUnmetDemandReasons(tx, count);
+      await ensureGuaranteePolicy(tx, count);
       await ensureStyleProcesses(tx, count);
       await ensureOrderCancelReasons(tx, count);
       await ensurePaymentScheduleTemplates(tx, count);
@@ -485,6 +487,22 @@ async function ensureUnmetDemandReasons(tx: Tx, count: (what: string) => void): 
     await tx.quoteLossReason.create({ data: { ...reason, sort: (index + 1) * 10 } });
     count('quote_loss_reasons');
   }
+}
+
+/** D-260 guarantee policy version 1 (D-198 / D-199), approved by decision, in force from the seed date. */
+async function ensureGuaranteePolicy(tx: Tx, count: (what: string) => void): Promise<void> {
+  if (await tx.guaranteePolicyVersion.findFirst({ select: { id: true } })) return;
+  const { rules, ...version } = GUARANTEE_POLICY_V1;
+  await tx.guaranteePolicyVersion.create({
+    data: {
+      ...version,
+      status: 'approved',
+      effectiveFrom: SEED_EFFECTIVE_FROM,
+      decidedAt: SEED_EFFECTIVE_FROM,
+      rules: { create: rules.map((r) => ({ ...r, remedies: [...r.remedies] })) },
+    },
+  });
+  count('guarantee_policy_versions');
 }
 
 /** Order cancel reasons (B3.1). */

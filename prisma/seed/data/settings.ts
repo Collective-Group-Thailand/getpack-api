@@ -713,6 +713,9 @@ export const SETTINGS: readonly SettingSeed[] = [
       rfq_first_response_overdue: 1,
       approvals_overdue: 5,
       slip_verification_wait_hours: 4,
+      // D-263: one overdue claim is worth an alert.
+      claim_response_overdue: 1,
+      claim_decision_overdue: 1,
     },
     valueSchema: { type: 'object', additionalProperties: { type: 'integer', minimum: 1 } },
     description:
@@ -753,6 +756,59 @@ export const SETTINGS: readonly SettingSeed[] = [
     decisions: ['D-252'],
     confirmation: 'proposed',
     ownerRole: 'superadmin',
+  },
+  // --- Trust data (U2.5, D-201 / D-264): public network statistics.
+  {
+    key: 'trust.network_min_factories',
+    valueType: 'integer',
+    value: 3,
+    valueSchema: { minimum: 1, maximum: 100 },
+    description:
+      'D-201 / D-264 active factories needed before partner counts and rates are published (also the style library partners count)',
+    decisions: ['D-201', 'D-264', 'D-044'],
+    ownerRole: 'superadmin',
+  },
+  {
+    key: 'trust.network_min_jobs',
+    valueType: 'integer',
+    value: 30,
+    valueSchema: { minimum: 1, maximum: 100_000 },
+    description: 'D-201 / D-264 production jobs completed in the window needed before rates are published',
+    decisions: ['D-201', 'D-264'],
+    ownerRole: 'superadmin',
+  },
+  {
+    key: 'trust.network_window_days',
+    valueType: 'integer',
+    value: 90,
+    valueSchema: { minimum: 7, maximum: 730 },
+    description: 'D-201 / D-264 rolling window (days) of the published on-time and first-pass rates',
+    decisions: ['D-201', 'D-264'],
+    ownerRole: 'superadmin',
+  },
+  {
+    key: 'trust.audit_criteria',
+    valueType: 'json',
+    value: null,
+    unset: true,
+    valueSchema: {
+      type: 'array',
+      maxItems: 30,
+      items: {
+        type: 'object',
+        required: ['key', 'labelTh', 'labelEn'],
+        properties: {
+          key: { type: 'string', pattern: '^[a-z][a-z0-9_]{0,39}$' },
+          labelTh: { type: 'string', minLength: 1, maxLength: 300 },
+          labelEn: { type: 'string', minLength: 1, maxLength: 300 },
+        },
+      },
+    },
+    description:
+      'D-201 / D-264 the factory audit criteria published on the network page (th / en); not seeded — written by the Partner Manager',
+    decisions: ['D-201', 'D-264', 'D-041'],
+    confirmation: 'pending_business',
+    ownerRole: 'partner_manager',
   },
   {
     key: 'samples.credit_pct',

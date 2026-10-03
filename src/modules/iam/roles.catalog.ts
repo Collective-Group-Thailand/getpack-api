@@ -44,6 +44,7 @@ export const ROLES: readonly RoleDefinition[] = [
     nameTh: 'ผู้บริหารระดับสูง',
     nameEn: 'C-Level',
     permissions: [
+      'guarantee_policies.read',
       'reports.export',
       'reports.schedule',
       'analytics.read',
@@ -132,6 +133,7 @@ export const ROLES: readonly RoleDefinition[] = [
     nameTh: 'ผู้ดูแลระบบ',
     nameEn: 'Admin',
     permissions: [
+      'guarantee_policies.read',
       'ops.read',
       'reports.export',
       'reports.schedule',
@@ -252,6 +254,8 @@ export const ROLES: readonly RoleDefinition[] = [
       'samples.read',
       'claims.read',
       'claims.manage',
+      'reviews.reply',
+      'guarantee_policies.read',
       'shipments.read',
       'production.start_manual',
     ],
@@ -294,7 +298,9 @@ export const ROLES: readonly RoleDefinition[] = [
       'promotions.read',
       'loyalty.read',
       'loyalty.adjust',
-      'reviews.moderate',
+      'reviews.reply',
+      'guarantee_policies.read',
+      'guarantee_policies.manage',
       'companies.read',
       'companies.manage',
       'companies.kyc_review',
@@ -503,6 +509,7 @@ export const ROLES: readonly RoleDefinition[] = [
     nameEn: 'Marketing',
     // CMS and SEO go to Marketing (no SEO role in D-140, schema-design §7 C-6).
     permissions: [
+      'guarantee_policies.read',
       'reports.export',
       'reports.schedule',
       'analytics.read',

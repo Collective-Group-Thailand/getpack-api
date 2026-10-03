@@ -79,6 +79,14 @@ export interface SettingValues {
   'analytics.target_price_min_group_size': number;
   /** D-252 ascending upper bounds (%) of the price-gap bands. */
   'analytics.price_gap_bands_pct': number[];
+  /** D-201 / D-264 minimum active factories for published network figures. */
+  'trust.network_min_factories': number;
+  /** D-201 / D-264 minimum completed jobs in the window for published rates. */
+  'trust.network_min_jobs': number;
+  /** D-201 / D-264 rolling window (days) of the published rates. */
+  'trust.network_window_days': number;
+  /** D-201 / D-264 published factory audit criteria; not seeded. */
+  'trust.audit_criteria': { key: string; labelTh: string; labelEn: string }[];
   /** D-197 / D-257 % of an approved standalone sample's product price credited on its bulk order. */
   'samples.credit_pct': string;
   /** D-197 / D-257 days after approval within which the credit applies. */

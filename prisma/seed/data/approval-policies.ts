@@ -146,6 +146,15 @@ export const APPROVAL_POLICIES: readonly PolicySeed[] = [
     steps: [{ name: 'Superadmin approval', role: 'superadmin' }],
   },
   {
+    key: 'guarantee_policy_change',
+    subjectType: 'guarantee_policy_version',
+    description:
+      'New guarantee policy versions (D-200, D-260): the remedy matrix and claim SLAs the public page and the claim engine read; CS Lead requests, C-Level approves',
+    decisions: ['D-200', 'D-260', 'D-063'],
+    reason: 'D-200 (accepted 2026-09-30): requested by the CS Lead, approved by C-Level',
+    steps: [{ name: 'C-Level approval', role: 'c_level' }],
+  },
+  {
     key: 'customer_shipping_rate_change',
     subjectType: 'customer_shipping_rate_card_version',
     description:

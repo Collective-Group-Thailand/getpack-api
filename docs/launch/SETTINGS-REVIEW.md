@@ -5,7 +5,7 @@
 > (a new effective-dated version, audited — D-063) and signs item 5 of `docs/LAUNCH-CHECKLIST.md`. A *proposed* or
 > *pending* value is not a decision: it goes live only once its owner confirms it.
 
-**81 settings** — 46 confirmed · 18 proposed · 4 pending the CPA (⚖) · 1 pending the business · 12 defined without a value (not set until their owner sets them).
+**85 settings** — 49 confirmed · 18 proposed · 4 pending the CPA (⚖) · 1 pending the business · 13 defined without a value (not set until their owner sets them).
 
 ## Settings
 
@@ -52,7 +52,7 @@
 | `loyalty.redemption_limits` | `{"minimumBaht":"10.00","maxPctOfOrder":"20"}` | confirmed | superadmin | D-133 | D-133 minimum redemption (THB equivalent) and maximum share of the order value |
 | `loyalty.tiers` | `[{"tier":"member","minSpend12m":"0.00","multiplier":"1"},{"tier":"silver","minSpend12m":"50000.00","multiplier":"1.25"},{"tier":"gold","minSpend12m":"200000.00","multiplier":"1.5"}]` | confirmed | superadmin | D-134 | D-134 tiers by 12-month spend with earn multipliers |
 | `notifications.marketing_window` | `{"from":"09:00","to":"20:00","timezone":"Asia/Bangkok"}` | confirmed | superadmin | D-144 | D-144 marketing messages are sent only inside this window (transactional anytime) |
-| `ops.alert_thresholds` | `{"outbox_dead_letters":1,"outbox_backlog_minutes":15,"queue_depth":1000,"webhook_failures_24h":5,"payout_item_failures_7d":1,"ledger_posting_failures":1,"acceptance_overdue":1,"production_at_risk":5,"rfq_first_response_overdue":1,"approvals_overdue":5,"slip_verification_wait_hours":4}` | proposed | superadmin | D-113, D-061, D-074 | D-113 launch monitoring: value at which each operational signal raises an alert to superadmins and admins (slip wait mirrors the D-061 4-hour SLA in wall-clock hours; the rest proposed) |
+| `ops.alert_thresholds` | `{"outbox_dead_letters":1,"outbox_backlog_minutes":15,"queue_depth":1000,"webhook_failures_24h":5,"payout_item_failures_7d":1,"ledger_posting_failures":1,"acceptance_overdue":1,"production_at_risk":5,"rfq_first_response_overdue":1,"approvals_overdue":5,"slip_verification_wait_hours":4,"claim_response_overdue":1,"claim_decision_overdue":1}` | proposed | superadmin | D-113, D-061, D-074 | D-113 launch monitoring: value at which each operational signal raises an alert to superadmins and admins (slip wait mirrors the D-061 4-hour SLA in wall-clock hours; the rest proposed) |
 | `orders.auto_complete_days` | `7` | confirmed | superadmin | D-081 | D-081 days after delivery until an order completes automatically |
 | `orders.unpaid_expiry_days` | `7` | proposed | superadmin | D-060 | D-060 calendar days after placement until an unpaid order group is cancelled; legacy reads the value from a secret not in the repository, so its 7-day fallback is seeded (B3.1, 2026-09-27) |
 | `partners.auto_selection_min_factories` | `2` | confirmed | superadmin | D-101, D-012 | D-101 active factories per product type before auto-selection and auto-reassignment switch on |
@@ -92,6 +92,10 @@
 | `tax.gl_accounts` | `{"output_vat":["2210"],"input_vat":["1241"],"wht_pnd3":["2232"],"wht_pnd53":["2231"],"wht_receivable":["1230"]}` | proposed | finance_manager | D-033 | D-033 / accounting-design §7 step 7: GL control accounts each tax report and working paper reconciles to (difference must be 0); follows the chart of accounts (proposed) |
 | `tax.nature_by_product_type` | `{"default":"hire_of_work","overrides":{"standard_product":"sale_of_goods"}}` | pending_cpa | finance_manager | D-033 | D-033 / accounting-design §2 nature of the sale per product type code (⚖): hire of work for made-to-order packaging, sale of goods for standard products; snapshotted on every order |
 | `tax.rounding_mode` | `line` | pending_cpa | finance_manager | D-033 | D-033 / accounting-design §1.5 VAT and WHT rounding per line or per document (⚖); a document-level difference is an explicit rounding amount |
+| `trust.audit_criteria` | `— (not set)` | not set | partner_manager | D-201, D-264, D-041 | D-201 / D-264 the factory audit criteria published on the network page (th / en); not seeded — written by the Partner Manager |
+| `trust.network_min_factories` | `3` | confirmed | superadmin | D-201, D-264, D-044 | D-201 / D-264 active factories needed before partner counts and rates are published (also the style library partners count) |
+| `trust.network_min_jobs` | `30` | confirmed | superadmin | D-201, D-264 | D-201 / D-264 production jobs completed in the window needed before rates are published |
+| `trust.network_window_days` | `90` | confirmed | superadmin | D-201, D-264 | D-201 / D-264 rolling window (days) of the published on-time and first-pass rates |
 
 ## Legal entity data (D-092)
 
@@ -119,6 +123,7 @@ Seeded per entity from the `SEED_ENTITY_*` environment variables — never from 
 | `approval_policy_change` | approval_policy_version | Superadmin approval: **superadmin** | D-063 | Seed from D-063 — Superadmin approves (B6.3 launch gap) |
 | `factory_tolerance_change` | factory_tolerance_policy_version | Superadmin approval: **superadmin** | D-173, D-021, D-063 | Seed from D-173 — Superadmin approves (proposed default) |
 | `factory_payout_policy_change` | factory_payout_policy_version | Superadmin approval: **superadmin** | D-173, D-022, D-063 | Seed from D-173 — Superadmin approves (proposed default) |
+| `guarantee_policy_change` | guarantee_policy_version | C-Level approval: **c_level** | D-200, D-260, D-063 | D-200 (accepted 2026-09-30): requested by the CS Lead, approved by C-Level |
 | `customer_shipping_rate_change` | customer_shipping_rate_card_version | C-Level approval: **c_level** | D-013, D-063 | Chosen at B2.4 planning (2026-09-26) — no decision names the approver; C-Level (proposed default) |
 | `vendor_bank_account_change` | vendor_bank_account | Finance verification: **finance**<br>Finance Manager approval: **finance_manager** | D-033, D-169 | Seed from D-169 — Finance Manager approves; dual approval by two different people |
 | `company_bank_account_change` | company_bank_account | Finance verification: **finance**<br>Finance Manager approval: **finance_manager** | D-093, D-033, D-169 | Seed from D-169 — Finance Manager approves; dual approval by two different people |

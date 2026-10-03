@@ -1432,6 +1432,8 @@ enum ClaimResolutionKind {
   partial_refund
   full_refund
   credit
+  /// D-262: outside the guarantee matrix, through an approved discount memo.
+  goodwill
 
   @@map("claim_resolution_kind")
 }
@@ -1468,48 +1470,59 @@ enum ClaimAction {
 /// (D-080) or one staff open. Evidence photos are attachments (`claim.product_photo`, `claim.carton_photo`).
 /// Liability follows the rules (D-083) unless overridden with a reason by permission.
 model Claim {
-  id                      BigInt                @id(map: "pk_claims") @default(autoincrement())
-  publicId                String                @unique(map: "ux_claims__public_id") @default(dbgenerated("uuidv7()")) @map("public_id") @db.Uuid
-  claimNo                 String                @unique(map: "ux_claims__claim_no") @map("claim_no")
-  entityId                BigInt                @map("entity_id")
-  orderId                 BigInt                @map("order_id")
-  shipmentId              BigInt?               @map("shipment_id")
+  id                       BigInt                @id(map: "pk_claims") @default(autoincrement())
+  publicId                 String                @unique(map: "ux_claims__public_id") @default(dbgenerated("uuidv7()")) @map("public_id") @db.Uuid
+  claimNo                  String                @unique(map: "ux_claims__claim_no") @map("claim_no")
+  entityId                 BigInt                @map("entity_id")
+  orderId                  BigInt                @map("order_id")
+  shipmentId               BigInt?               @map("shipment_id")
   /// The job whose goods are claimed (liable factory's job).
+  /// D-260 the guarantee version in force at submission; D-261 severity and remedy set on the decision.
+  guaranteePolicyVersionId BigInt?               @map("guarantee_policy_version_id")
+  severity                 ClaimSeverity?
+  remedy                   GuaranteeRemedy?
+  /// D-262 the approved discount memo of a goodwill remedy.
+  goodwillMemoId           BigInt?               @map("goodwill_memo_id")
+  /// D-263 SLA clocks (business days, D-161 / D-175).
+  responseDueAt            DateTime?             @map("response_due_at") @db.Timestamptz(6)
+  firstRespondedAt         DateTime?             @map("first_responded_at") @db.Timestamptz(6)
+  evidenceCompleteAt       DateTime?             @map("evidence_complete_at") @db.Timestamptz(6)
+  decisionDueAt            DateTime?             @map("decision_due_at") @db.Timestamptz(6)
   /// D-259: the sample the claim is about (its job is `production_job_id`).
-  sampleId                BigInt?               @map("sample_id")
-  productionJobId         BigInt?               @map("production_job_id")
-  customerUserId          BigInt                @map("customer_user_id")
-  type                    ClaimType
-  origin                  ClaimOrigin
-  status                  ClaimStatus           @default(submitted)
-  statusChangedAt         DateTime              @default(now()) @map("status_changed_at") @db.Timestamptz(6)
-  description             String
-  receivedAt              DateTime              @map("received_at") @db.Timestamptz(6)
-  windowEndsAt            DateTime              @map("window_ends_at") @db.Timestamptz(6)
-  submittedAt             DateTime              @default(now()) @map("submitted_at") @db.Timestamptz(6)
-  requestedResolution     ClaimResolutionKind   @map("requested_resolution")
-  claimedQuantity         Int?                  @map("claimed_quantity")
-  claimedAmount           Decimal?              @map("claimed_amount") @db.Decimal(14, 2)
-  liability               ClaimLiability        @default(undetermined)
-  liabilityByRule         ClaimLiability        @map("liability_by_rule")
-  liabilityOverriddenById BigInt?               @map("liability_overridden_by")
-  overrideReason          String?               @map("override_reason")
-  factoryId               BigInt?               @map("factory_id")
-  factoryResponse         FactoryClaimResponse? @map("factory_response")
-  factoryResponseNote     String?               @map("factory_response_note")
-  factoryRespondedAt      DateTime?             @map("factory_responded_at") @db.Timestamptz(6)
-  factoryRespondedById    BigInt?               @map("factory_responded_by")
-  infoRequest             String?               @map("info_request")
-  infoResponse            String?               @map("info_response")
-  decisionNote            String?               @map("decision_note")
-  decidedById             BigInt?               @map("decided_by")
-  decidedAt               DateTime?             @map("decided_at") @db.Timestamptz(6)
-  resolvedAt              DateTime?             @map("resolved_at") @db.Timestamptz(6)
-  closedAt                DateTime?             @map("closed_at") @db.Timestamptz(6)
-  createdById             BigInt?               @map("created_by")
-  createdAt               DateTime              @default(now()) @map("created_at") @db.Timestamptz(6)
-  updatedAt               DateTime              @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
-  rowVersion              Int                   @default(1) @map("row_version")
+  sampleId                 BigInt?               @map("sample_id")
+  productionJobId          BigInt?               @map("production_job_id")
+  customerUserId           BigInt                @map("customer_user_id")
+  type                     ClaimType
+  origin                   ClaimOrigin
+  status                   ClaimStatus           @default(submitted)
+  statusChangedAt          DateTime              @default(now()) @map("status_changed_at") @db.Timestamptz(6)
+  description              String
+  receivedAt               DateTime              @map("received_at") @db.Timestamptz(6)
+  windowEndsAt             DateTime              @map("window_ends_at") @db.Timestamptz(6)
+  submittedAt              DateTime              @default(now()) @map("submitted_at") @db.Timestamptz(6)
+  requestedResolution      ClaimResolutionKind   @map("requested_resolution")
+  claimedQuantity          Int?                  @map("claimed_quantity")
+  claimedAmount            Decimal?              @map("claimed_amount") @db.Decimal(14, 2)
+  liability                ClaimLiability        @default(undetermined)
+  liabilityByRule          ClaimLiability        @map("liability_by_rule")
+  liabilityOverriddenById  BigInt?               @map("liability_overridden_by")
+  overrideReason           String?               @map("override_reason")
+  factoryId                BigInt?               @map("factory_id")
+  factoryResponse          FactoryClaimResponse? @map("factory_response")
+  factoryResponseNote      String?               @map("factory_response_note")
+  factoryRespondedAt       DateTime?             @map("factory_responded_at") @db.Timestamptz(6)
+  factoryRespondedById     BigInt?               @map("factory_responded_by")
+  infoRequest              String?               @map("info_request")
+  infoResponse             String?               @map("info_response")
+  decisionNote             String?               @map("decision_note")
+  decidedById              BigInt?               @map("decided_by")
+  decidedAt                DateTime?             @map("decided_at") @db.Timestamptz(6)
+  resolvedAt               DateTime?             @map("resolved_at") @db.Timestamptz(6)
+  closedAt                 DateTime?             @map("closed_at") @db.Timestamptz(6)
+  createdById              BigInt?               @map("created_by")
+  createdAt                DateTime              @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt                DateTime              @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+  rowVersion               Int                   @default(1) @map("row_version")
 
   entity                Entity                   @relation("ClaimEntity", fields: [entityId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_claims__entity_id")
   order                 Order                    @relation("ClaimOrder", fields: [orderId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_claims__order_id")
@@ -1535,6 +1548,9 @@ model Claim {
 
   sample Sample? @relation("ClaimSample", fields: [sampleId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_claims__sample_id")
 
+  guaranteePolicyVersion GuaranteePolicyVersion? @relation("ClaimGuaranteePolicy", fields: [guaranteePolicyVersionId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_claims__guarantee_policy_version_id")
+  goodwillMemo           DiscountMemo?           @relation("ClaimGoodwillMemo", fields: [goodwillMemoId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_claims__goodwill_memo_id")
+
   @@index([orderId], map: "ix_claims__order_id")
   @@index([status, statusChangedAt], map: "ix_claims__status__status_changed_at")
   @@index([factoryId, status], map: "ix_claims__factory_id__status")
@@ -1549,6 +1565,10 @@ model Claim {
   @@index([submittedAt], map: "ix_claims__submitted_at")
   @@index([claimNo(ops: raw("gin_trgm_ops"))], type: Gin, map: "ix_claims__claim_no_trgm")
   @@index([sampleId], map: "ix_claims__sample_id")
+  @@index([guaranteePolicyVersionId], map: "ix_claims__guarantee_policy_version_id")
+  @@index([goodwillMemoId], map: "ix_claims__goodwill_memo_id")
+  @@index([responseDueAt], map: "ix_claims__response_due_at", where: raw("(first_responded_at IS NULL)"))
+  @@index([decisionDueAt], map: "ix_claims__decision_due_at", where: raw("(decided_at IS NULL)"))
   @@map("claims")
 }
 

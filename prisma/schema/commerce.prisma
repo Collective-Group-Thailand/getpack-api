@@ -745,6 +745,8 @@ model OrderLine {
 
   sample Sample? @relation("SampleOrderLine")
 
+  review OrderReview? @relation("OrderReviewOrderLine")
+
   @@unique([orderId, lineNo], map: "ux_order_lines__order_id__line_no")
   @@map("order_lines")
 }
@@ -1836,12 +1838,18 @@ model OrderReview {
   id            BigInt       @id(map: "pk_order_reviews") @default(autoincrement())
   publicId      String       @unique(map: "ux_order_reviews__public_id") @default(dbgenerated("uuidv7()")) @map("public_id") @db.Uuid
   orderId       BigInt       @unique(map: "ux_order_reviews__order_id") @map("order_id")
+  /// D-265: the product line reviewed (one per line; an order has one product line).
+  orderLineId   BigInt?      @unique(map: "ux_order_reviews__order_line_id") @map("order_line_id")
   userId        BigInt       @map("user_id")
   rating        Int          @db.SmallInt
   comment       String?
   status        ReviewStatus @default(published)
   moderatedById BigInt?      @map("moderated_by")
   moderatedAt   DateTime?    @map("moderated_at") @db.Timestamptz(6)
+  /// D-265: one reply by CS, editable with audit.
+  replyBody     String?      @map("reply_body")
+  repliedAt     DateTime?    @map("replied_at") @db.Timestamptz(6)
+  repliedById   BigInt?      @map("replied_by")
   createdAt     DateTime     @default(now()) @map("created_at") @db.Timestamptz(6)
   updatedAt     DateTime     @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
   rowVersion    Int          @default(1) @map("row_version")
@@ -1849,10 +1857,14 @@ model OrderReview {
   order         Order         @relation("OrderReviewOrder", fields: [orderId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_order_reviews__order_id")
   user          User          @relation("OrderReviewUser", fields: [userId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_order_reviews__user_id")
   moderatedBy   User?         @relation("OrderReviewModeratedBy", fields: [moderatedById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_order_reviews__moderated_by")
+  orderLine     OrderLine?    @relation("OrderReviewOrderLine", fields: [orderLineId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_order_reviews__order_line_id")
+  repliedBy     User?         @relation("OrderReviewRepliedBy", fields: [repliedById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_order_reviews__replied_by")
   pointsEntries PointsEntry[]
 
   @@index([userId], map: "ix_order_reviews__user_id")
   @@index([moderatedById], map: "ix_order_reviews__moderated_by")
+  @@index([repliedById], map: "ix_order_reviews__replied_by")
+  @@index([status, createdAt], map: "ix_order_reviews__status__created_at")
   @@map("order_reviews")
 }
 
@@ -2226,6 +2238,8 @@ model DiscountMemo {
   companyDiscounts  CompanyDiscountVersion[] @relation("CompanyDiscountVersionMemo")
   orderDiscounts    OrderDiscount[]          @relation("OrderDiscountMemo")
   orderGroups       OrderGroup[]             @relation("OrderGroupDiscountMemo")
+
+  goodwillClaims Claim[] @relation("ClaimGoodwillMemo")
 
   @@index([status, validUntil], map: "ix_discount_memos__status__valid_until")
   @@index([entityId], map: "ix_discount_memos__entity_id")

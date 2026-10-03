@@ -687,6 +687,8 @@ model ApprovalRequest {
 
   styleImportRuns StyleImportRun[] @relation("StyleImportRunApproval")
 
+  guaranteePolicyVersion GuaranteePolicyVersion? @relation("GuaranteePolicyVersionApproval")
+
   @@unique([policyId, subjectType, subjectId], map: "ux_approval_requests__one_pending_per_subject", where: raw("status = 'pending'"))
   @@index([subjectType, subjectId], map: "ix_approval_requests__subject")
   @@index([status, expiresAt], map: "ix_approval_requests__status__expires_at")

@@ -97,7 +97,10 @@ Legend: ● granted · ◆ granted and sensitive (cost/margin data, D-141).
 | `campaigns.manage` — Create campaigns, set their THB budget, activate, pause and end them (D-154) | ● |  |  |  | ● |  |  |  |  |  |  | ● |  |  |  |
 | `loyalty.read` — Read customers’ points, tiers and points history (D-130, D-134) | ● | ● |  |  | ● | ● | ● |  | ● | ● |  | ● |  | ● |  |
 | `loyalty.adjust` — Add or remove a customer’s points with a reason (audited) (D-131, D-132) | ● |  |  |  | ● |  | ● |  |  |  |  | ● |  |  |  |
-| `reviews.moderate` — Hide or re-publish order reviews (D-135) | ● |  |  |  | ● |  | ● |  |  |  |  | ● |  |  |  |
+| `reviews.moderate` — Hide or re-publish order reviews (Marketing, D-202) (D-135, D-202, D-265) | ● |  |  |  | ● |  |  |  |  |  |  | ● |  |  |  |
+| `reviews.reply` — Write or edit the one reply to a review (CS, D-202) (D-202, D-265) | ● |  |  |  |  | ● | ● |  |  |  |  |  |  |  |  |
+| `guarantee_policies.read` — See guarantee policy versions and their remedy matrix (D-260) | ● | ● |  |  | ● | ● | ● |  |  |  |  | ● |  |  |  |
+| `guarantee_policies.manage` — Draft a new guarantee policy version for C-Level approval (CS Lead, D-200) (D-200, D-260) | ● |  |  |  |  |  | ● |  |  |  |  |  |  |  |  |
 | `companies.read` — Read B2B companies, their members, branches and KYC documents (D-120, D-125) | ● | ● |  |  | ● | ● | ● |  | ● | ● |  |  |  | ● |  |
 | `companies.manage` — Suspend, reactivate or close B2B companies (D-120) | ● |  |  |  | ● |  | ● |  |  |  |  |  |  |  |  |
 | `companies.kyc_review` — Verify company KYC documents and approve or reject applications (D-120) | ● |  |  |  | ● |  | ● |  |  | ● |  |  |  |  |  |

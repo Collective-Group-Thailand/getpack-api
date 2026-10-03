@@ -1,0 +1,61 @@
+// --- Guarantee policy (U2.5, D-198–D-200, D-260–D-263, schema-design A-91) ---------------------------
+
+/// D-261: how serious a claimed defect is, set by staff when they decide.
+enum ClaimSeverity {
+  minor
+  major
+  critical
+
+  @@map("claim_severity")
+}
+
+/// D-260 / D-262: what the customer gets; `goodwill` is outside the matrix (discount memo, D-052).
+enum GuaranteeRemedy {
+  reprint
+  refund
+  partial_credit
+  goodwill
+
+  @@map("guarantee_remedy")
+}
+
+/// D-260 (A-91): one version of the published guarantee — SLA days and the remedy matrix; effective-dated, never
+/// edited (a new version supersedes), approved through `guarantee_policy_change` (CS Lead → C-Level, D-200).
+model GuaranteePolicyVersion {
+  id                   BigInt              @id(map: "pk_guarantee_policy_versions") @default(autoincrement())
+  publicId             String              @unique(map: "ux_guarantee_policy_versions__public_id") @default(dbgenerated("uuidv7()")) @map("public_id") @db.Uuid
+  versionNo            Int                 @unique(map: "ux_guarantee_policy_versions__version_no") @map("version_no")
+  effectiveFrom        DateTime            @map("effective_from") @db.Timestamptz(6)
+  status               ConfigVersionStatus
+  /// D-199 / D-263 business days to the first response and to the decision (from complete evidence).
+  responseBusinessDays Int                 @map("response_business_days") @db.SmallInt
+  decisionBusinessDays Int                 @map("decision_business_days") @db.SmallInt
+  reason               String
+  approvalRequestId    BigInt?             @unique(map: "ux_guarantee_policy_versions__approval_request_id") @map("approval_request_id")
+  createdById          BigInt?             @map("created_by")
+  decidedAt            DateTime?           @map("decided_at") @db.Timestamptz(6)
+  createdAt            DateTime            @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  approvalRequest ApprovalRequest?      @relation("GuaranteePolicyVersionApproval", fields: [approvalRequestId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_guarantee_policy_versions__approval_request_id")
+  createdBy       User?                 @relation("GuaranteePolicyVersionCreatedBy", fields: [createdById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_guarantee_policy_versions__created_by")
+  rules           GuaranteePolicyRule[]
+  claims          Claim[]               @relation("ClaimGuaranteePolicy")
+
+  @@index([status, effectiveFrom], map: "ix_guarantee_policy_versions__status__effective_from")
+  @@index([createdById], map: "ix_guarantee_policy_versions__created_by")
+  @@map("guarantee_policy_versions")
+}
+
+/// D-260: claim type × severity → the remedies allowed (empty = no remedy; goodwill only through a memo).
+model GuaranteePolicyRule {
+  id        BigInt            @id(map: "pk_guarantee_policy_rules") @default(autoincrement())
+  versionId BigInt            @map("version_id")
+  claimType ClaimType         @map("claim_type")
+  severity  ClaimSeverity
+  remedies  GuaranteeRemedy[]
+
+  version GuaranteePolicyVersion @relation(fields: [versionId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_guarantee_policy_rules__version_id")
+
+  @@unique([versionId, claimType, severity], map: "ux_guarantee_policy_rules__version__type__severity")
+  @@map("guarantee_policy_rules")
+}
