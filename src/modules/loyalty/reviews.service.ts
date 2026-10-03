@@ -1,16 +1,23 @@
 import { type Actor, type UserActor } from '@common/context/actor';
 import { DomainException } from '@common/errors/domain.exception';
 import { PrismaService, type Tx } from '@database/prisma.service';
-import { type OrderReview, type Prisma } from '@generated/prisma/client';
+import { type OrderReview, Prisma } from '@generated/prisma/client';
 import { Injectable } from '@nestjs/common';
 import { ActivityLogService } from '@platform/activity/activity-log.service';
+import { AuditService } from '@platform/audit/audit.service';
 import { DomainEvents } from '@platform/domain-events/domain-events.service';
 import { SettingsService } from '@platform/settings/settings.service';
 
 import { LoyaltyService } from './loyalty.service';
 
 export const REVIEW_INCLUDE = {
-  order: { select: { publicId: true, orderCode: true } },
+  order: {
+    select: {
+      publicId: true,
+      orderCode: true,
+      productType: { select: { code: true, nameTh: true, nameEn: true } },
+    },
+  },
   user: { select: { publicId: true, displayName: true } },
   pointsEntries: { select: { points: true } },
 } as const satisfies Prisma.OrderReviewInclude;
@@ -28,6 +35,7 @@ export class ReviewsService {
     private readonly settings: SettingsService,
     private readonly events: DomainEvents,
     private readonly activity: ActivityLogService,
+    private readonly audit: AuditService,
   ) {}
 
   async submit(
@@ -41,9 +49,16 @@ export class ReviewsService {
       if (!order.deliveredAt) throw new DomainException('reviews.not_delivered');
       if (await tx.orderReview.findUnique({ where: { orderId: order.id } }))
         throw new DomainException('reviews.exists');
+      // D-265: the review is of the order's product line (an order has one).
+      const line = await tx.orderLine.findFirst({
+        where: { orderId: order.id, lineType: 'product' },
+        orderBy: { lineNo: 'asc' },
+        select: { id: true },
+      });
       const review = await tx.orderReview.create({
         data: {
           orderId: order.id,
+          orderLineId: line?.id ?? null,
           userId: actor.userId,
           rating: input.rating,
           comment: input.comment?.trim() || null,
@@ -110,6 +125,79 @@ export class ReviewsService {
       }
       return this.get(publicId, tx);
     });
+  }
+
+  /** D-265: CS writes the one reply to a review, or edits it (an edit is audited). */
+  async reply(actor: UserActor, publicId: string, body: string): Promise<ReviewRow> {
+    return this.prisma.withTx(async (tx) => {
+      const review = await tx.orderReview.findUnique({ where: { publicId }, include: { order: true } });
+      if (!review) throw new DomainException('http.not_found');
+      const row = await tx.orderReview.update({
+        where: { id: review.id },
+        data: {
+          replyBody: body.trim(),
+          repliedAt: new Date(),
+          repliedById: actor.userId,
+          rowVersion: { increment: 1 },
+        },
+      });
+      if (review.replyBody !== null)
+        await this.audit.record(tx, {
+          category: 'data_access',
+          action: 'review.reply_edited',
+          actor,
+          resourceType: 'order_review',
+          resourcePublicId: review.publicId,
+          data: { previous: review.replyBody, next: body.trim() },
+        });
+      await this.record(
+        tx,
+        row,
+        review.order.publicId,
+        'review.replied',
+        { edited: review.replyBody !== null },
+        actor,
+      );
+      return this.get(publicId, tx);
+    });
+  }
+
+  /** D-265: published reviews for the public, newest first, optionally of one product type. */
+  listPublic(productTypeCode: string | undefined, page: number, perPage: number) {
+    return this.list(
+      {
+        status: 'published',
+        ...(productTypeCode ? { order: { productType: { code: productTypeCode } } } : {}),
+      },
+      page,
+      perPage,
+    );
+  }
+
+  /** D-265: count, average and distribution of published reviews, overall and per product type. */
+  async summary(productTypeCode?: string) {
+    const rows = await this.prisma.$queryRaw<{ code: string; rating: number; n: bigint }[]>`
+      SELECT pt.code, r.rating, count(*) AS n FROM order_reviews r
+        JOIN orders o ON o.id = r.order_id JOIN product_types pt ON pt.id = o.product_type_id
+       WHERE r.status = 'published' ${productTypeCode ? Prisma.sql`AND pt.code = ${productTypeCode}` : Prisma.empty}
+       GROUP BY pt.code, r.rating`;
+    const stats = (list: typeof rows) => {
+      const count = list.reduce((a, r) => a + Number(r.n), 0);
+      const sum = list.reduce((a, r) => a + r.rating * Number(r.n), 0);
+      return { count, averageRating: count ? (sum / count).toFixed(2) : null };
+    };
+    const codes = [...new Set(rows.map((r) => r.code))].sort();
+    return {
+      ...stats(rows),
+      distribution: [1, 2, 3, 4, 5].map((rating) => ({
+        rating,
+        count: rows.filter((r) => r.rating === rating).reduce((a, r) => a + Number(r.n), 0),
+      })),
+      byProductType: codes.map((code) => ({
+        productTypeCode: code,
+        ...stats(rows.filter((r) => r.code === code)),
+      })),
+    };
   }
 
   private async record(

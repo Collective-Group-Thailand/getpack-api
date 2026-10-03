@@ -1,4 +1,4 @@
-import { CurrentActor } from '@common/auth/auth.decorators';
+import { CurrentActor, Public } from '@common/auth/auth.decorators';
 import { Can } from '@common/auth/can.decorator';
 import { type Actor, type UserActor } from '@common/context/actor';
 import { DomainException } from '@common/errors/domain.exception';
@@ -8,7 +8,18 @@ import { ApiPaginated } from '@common/pagination/api-paginated.decorator';
 import { PageQuery } from '@common/pagination/pagination.dto';
 import { CustomersService } from '@modules/customers/customers.service';
 import { ApiSurface } from '@modules/surfaces/surfaces';
-import { Body, Controller, Get, HttpCode, Param, ParseUUIDPipe, Post, Query } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Get,
+  Header,
+  HttpCode,
+  Param,
+  ParseUUIDPipe,
+  Post,
+  Put,
+  Query,
+} from '@nestjs/common';
 import { ApiBody, ApiParam } from '@nestjs/swagger';
 
 import {
@@ -19,14 +30,20 @@ import {
   LedgerQuery,
   LoyaltySummaryDto,
   PointsEntryDto,
+  PUBLIC_REVIEW_EXAMPLE,
+  PublicReviewDto,
+  PublicReviewQuery,
+  ReplyReviewDto,
   REVIEW_EXAMPLE,
+  REVIEW_SUMMARY_EXAMPLE,
   ReviewDto,
   ReviewListQuery,
+  ReviewSummaryDto,
   SubmitReviewDto,
   SUMMARY_EXAMPLE,
 } from './loyalty.dto';
 import { LoyaltyService } from './loyalty.service';
-import { adminReviewDto, entryDto, reviewDto, summaryDto } from './loyalty-views';
+import { adminReviewDto, entryDto, publicReviewDto, reviewDto, summaryDto } from './loyalty-views';
 import { ReviewsService } from './reviews.service';
 
 const DECISIONS = ['D-130', 'D-131', 'D-132', 'D-133', 'D-134'];
@@ -260,8 +277,8 @@ export class AdminReviewsController {
   @ApiEndpoint({
     id: 'admin.reviews.moderate',
     summary: 'Hide or re-publish a review',
-    description: 'CS moderation; the customer keeps the review reward (D-135).',
-    implements: ['D-135'],
+    description: 'Marketing moderation (D-202, D-265); the customer keeps the review reward (D-135).',
+    implements: ['D-135', 'D-202', 'D-265'],
   })
   @ApiSuccess(200, { description: 'Review', type: AdminReviewDto, example: ADMIN_REVIEW_EXAMPLE })
   @ApiStandardErrors('http.not_found', 'validation.failed')
@@ -272,5 +289,73 @@ export class AdminReviewsController {
   ): Promise<AdminReviewDto> {
     if (action !== 'hide' && action !== 'publish') throw new DomainException('http.not_found');
     return adminReviewDto(await this.reviews.moderate(staff(actor), reviewId, action));
+  }
+
+  @Put(':reviewId/reply')
+  @Can('reviews.reply')
+  @ApiParam({ name: 'reviewId', format: 'uuid' })
+  @ApiEndpoint({
+    id: 'admin.reviews.reply',
+    summary: 'Reply to a review',
+    description:
+      'CS writes the one reply shown under the review, or edits it (an edit is audited) (D-202, D-265).',
+    implements: ['D-202', 'D-265'],
+  })
+  @ApiBody({
+    type: ReplyReviewDto,
+    examples: { default: { value: { body: 'ขอบคุณที่ไว้วางใจ Packio ครับ' } } },
+  })
+  @ApiSuccess(200, {
+    description: 'Review',
+    type: AdminReviewDto,
+    example: { ...ADMIN_REVIEW_EXAMPLE, reply: PUBLIC_REVIEW_EXAMPLE.reply },
+  })
+  @ApiStandardErrors('http.bad_request', 'http.malformed_json', 'http.not_found', 'validation.failed')
+  async reply(
+    @CurrentActor() actor: Actor,
+    @Param('reviewId', ParseUUIDPipe) reviewId: string,
+    @Body() body: ReplyReviewDto,
+  ): Promise<AdminReviewDto> {
+    return adminReviewDto(await this.reviews.reply(staff(actor), reviewId, body.body));
+  }
+}
+
+@ApiSurface('store', 'publicReviews')
+@Controller('reviews')
+export class StorePublicReviewsController {
+  constructor(private readonly reviews: ReviewsService) {}
+
+  @Get()
+  @Public()
+  @Header('Cache-Control', 'public, max-age=300')
+  @ApiEndpoint({
+    id: 'store.reviews.listPublic',
+    summary: 'Customer reviews',
+    description:
+      'Published reviews of delivered orders, newest first, with the product type, Packio’s reply and an abbreviated ' +
+      'name — never fabricated, never an order or a contact (D-202, D-265, D-181).',
+    implements: ['D-202', 'D-265', 'D-181'],
+  })
+  @ApiPaginated(PublicReviewDto, { example: PUBLIC_REVIEW_EXAMPLE })
+  @ApiStandardErrors('validation.failed')
+  async list(@Query() q: PublicReviewQuery) {
+    const [rows, total] = await this.reviews.listPublic(q.productTypeCode, q.page, q.perPage);
+    return { data: rows.map(publicReviewDto), meta: { page: q.page, perPage: q.perPage, total } };
+  }
+
+  @Get('summary')
+  @Public()
+  @Header('Cache-Control', 'public, max-age=300')
+  @ApiEndpoint({
+    id: 'store.reviews.getSummary',
+    summary: 'Review ratings at a glance',
+    description:
+      'Count, average and distribution of published reviews, overall and per product type (D-202, D-265).',
+    implements: ['D-202', 'D-265'],
+  })
+  @ApiSuccess(200, { description: 'Summary', type: ReviewSummaryDto, example: REVIEW_SUMMARY_EXAMPLE })
+  @ApiStandardErrors('validation.failed')
+  summary(@Query() q: PublicReviewQuery): Promise<ReviewSummaryDto> {
+    return this.reviews.summary(q.productTypeCode);
   }
 }

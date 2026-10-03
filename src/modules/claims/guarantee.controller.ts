@@ -13,7 +13,7 @@ import { Type } from 'class-transformer';
 import { ArrayMaxSize, ArrayMinSize, IsArray, IsDateString, IsIn, ValidateNested } from 'class-validator';
 
 import { CLAIM_SEVERITIES, CLAIM_TYPES } from './claims.dto';
-import { GuaranteeService,type GuaranteeVersionRow } from './guarantee.service';
+import { GuaranteeService, type GuaranteeVersionRow } from './guarantee.service';
 
 const MATRIX_REMEDIES = ['reprint', 'refund', 'partial_credit'] as const;
 const VERSION_STATUSES = [
@@ -83,10 +83,9 @@ export class ProposeGuaranteeDto {
   rules!: GuaranteeRuleDto[];
 }
 
-export class WithdrawGuaranteeDto {
-  @TextField({ example: 'ทบทวนใหม่ (fake)', max: 800 })
-  reason!: string;
-}
+/** Withdrawing takes a reason — the shared `ReasonBodyDto`. */
+export { ReasonBodyDto as WithdrawGuaranteeDto } from '@modules/partners/factories/factories.dto';
+import { ReasonBodyDto as WithdrawGuaranteeDto } from '@modules/partners/factories/factories.dto';
 
 export class PublicGuaranteeDto {
   @ApiProperty({ example: 1 })

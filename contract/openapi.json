@@ -1365,6 +1365,28 @@
           "type": "https://errors.packio/fixed_assets.run_exists"
         }
       },
+      "problem.guarantee.version_not_proposed": {
+        "summary": "guarantee.version_not_proposed",
+        "value": {
+          "code": "guarantee.version_not_proposed",
+          "detail": "ถอนได้เฉพาะฉบับที่รอการอนุมัติ",
+          "requestId": "6f1c2d8e-2c7b-4d0e-9d1c-3f1a2b3c4d5e",
+          "status": 409,
+          "title": "ไม่ได้อยู่ระหว่างอนุมัติ",
+          "type": "https://errors.packio/guarantee.version_not_proposed"
+        }
+      },
+      "problem.guarantee.version_pending": {
+        "summary": "guarantee.version_pending",
+        "value": {
+          "code": "guarantee.version_pending",
+          "detail": "มีนโยบายการรับประกันฉบับอื่นรอการอนุมัติอยู่ กรุณาพิจารณาหรือถอนฉบับนั้นก่อน",
+          "requestId": "6f1c2d8e-2c7b-4d0e-9d1c-3f1a2b3c4d5e",
+          "status": 409,
+          "title": "มีฉบับที่รออนุมัติอยู่",
+          "type": "https://errors.packio/guarantee.version_pending"
+        }
+      },
       "problem.http.bad_request": {
         "summary": "http.bad_request",
         "value": {
@@ -5058,6 +5080,18 @@
             "format": "date-time",
             "type": "string"
           },
+          "remedy": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/GuaranteeRemedy"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "The remedy decided (D-261)",
+            "example": null
+          },
           "requestedResolution": {
             "allOf": [
               {
@@ -5071,6 +5105,26 @@
               "$ref": "#/components/schemas/ClaimResolutionDto"
             },
             "type": "array"
+          },
+          "sampleId": {
+            "description": "The sample claimed (D-259)",
+            "example": null,
+            "format": "uuid",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "severity": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ClaimSeverity"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "example": null
           },
           "shipmentId": {
             "example": "0192f3a0-7c1e-7d2a-9b1f-0000000f2001",
@@ -5086,6 +5140,14 @@
               "string",
               "null"
             ]
+          },
+          "sla": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ClaimSlaDto"
+              }
+            ],
+            "description": "SLA countdowns and the current owner (D-263)"
           },
           "status": {
             "allOf": [
@@ -5142,6 +5204,10 @@
           "photos",
           "tolerance",
           "resolutions",
+          "severity",
+          "remedy",
+          "sla",
+          "sampleId",
           "nextActions",
           "jobId",
           "jobNo",
@@ -7886,9 +7952,25 @@
             "format": "uuid",
             "type": "string"
           },
+          "productTypeCode": {
+            "description": "The product type reviewed (D-202)",
+            "example": "folding_carton",
+            "type": "string"
+          },
           "rating": {
             "example": 5,
             "type": "integer"
+          },
+          "reply": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ReviewReplyDto"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Packio’s reply (D-265)"
           },
           "rewardPoints": {
             "description": "Points the review earned (D-135)",
@@ -7912,6 +7994,8 @@
           "comment",
           "status",
           "rewardPoints",
+          "productTypeCode",
+          "reply",
           "createdAt",
           "customer"
         ],
@@ -17231,7 +17315,8 @@
               "reprint",
               "partial_refund",
               "full_refund",
-              "credit"
+              "credit",
+              "goodwill"
             ],
             "items": {
               "$ref": "#/components/schemas/ClaimResolutionKind"
@@ -17403,6 +17488,16 @@
         ],
         "type": "string"
       },
+      "ClaimOwner": {
+        "description": "Who must act now: Packio, the customer (information), the factory (its review), nobody (D-263)",
+        "enum": [
+          "packio",
+          "customer",
+          "factory",
+          "none"
+        ],
+        "type": "string"
+      },
       "ClaimPhotosDto": {
         "properties": {
           "carton": {
@@ -17507,9 +17602,83 @@
           "reprint",
           "partial_refund",
           "full_refund",
-          "credit"
+          "credit",
+          "goodwill"
         ],
         "type": "string"
+      },
+      "ClaimSeverity": {
+        "enum": [
+          "minor",
+          "major",
+          "critical"
+        ],
+        "type": "string"
+      },
+      "ClaimSlaDto": {
+        "properties": {
+          "currentOwner": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ClaimOwner"
+              }
+            ],
+            "description": "Who must act now: Packio, the customer (information), the factory (its review), nobody (D-263)",
+            "example": "packio"
+          },
+          "decisionDueAt": {
+            "description": "Null while Packio waits for the customer’s information (the clock stops, D-263) or once decided",
+            "example": "2026-10-27T09:00:00+07:00",
+            "format": "date-time",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "decisionOverdue": {
+            "example": false,
+            "type": "boolean"
+          },
+          "guaranteeVersionNo": {
+            "description": "The guarantee version the claim follows (D-260)",
+            "example": 1,
+            "type": [
+              "number",
+              "null"
+            ]
+          },
+          "respondedAt": {
+            "example": "2026-10-22T11:00:00+07:00",
+            "format": "date-time",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "responseDueAt": {
+            "example": "2026-10-23T09:00:00+07:00",
+            "format": "date-time",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "responseOverdue": {
+            "description": "No response yet and past its due time",
+            "example": false,
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "responseDueAt",
+          "respondedAt",
+          "responseOverdue",
+          "decisionDueAt",
+          "decisionOverdue",
+          "currentOwner",
+          "guaranteeVersionNo"
+        ],
+        "type": "object"
       },
       "ClaimStatus": {
         "enum": [
@@ -17523,6 +17692,71 @@
           "closed"
         ],
         "type": "string"
+      },
+      "ClaimTimelineDto": {
+        "properties": {
+          "claimId": {
+            "example": "0192f3a0-7c1e-7d2a-9b1f-00000000c101",
+            "format": "uuid",
+            "type": "string"
+          },
+          "events": {
+            "description": "Oldest first; Packio’s internal steps are not shown",
+            "items": {
+              "$ref": "#/components/schemas/ClaimTimelineEventDto"
+            },
+            "type": "array"
+          },
+          "sla": {
+            "$ref": "#/components/schemas/ClaimSlaDto"
+          },
+          "status": {
+            "example": "under_review",
+            "type": "string"
+          }
+        },
+        "required": [
+          "claimId",
+          "status",
+          "sla",
+          "events"
+        ],
+        "type": "object"
+      },
+      "ClaimTimelineEvent": {
+        "enum": [
+          "claim.submitted",
+          "claim.under_review",
+          "claim.info_requested",
+          "claim.info_provided",
+          "claim.approved",
+          "claim.rejected",
+          "claim.resolved",
+          "claim.closed"
+        ],
+        "type": "string"
+      },
+      "ClaimTimelineEventDto": {
+        "properties": {
+          "at": {
+            "example": "2026-10-22T09:00:00+07:00",
+            "format": "date-time",
+            "type": "string"
+          },
+          "type": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ClaimTimelineEvent"
+              }
+            ],
+            "example": "claim.submitted"
+          }
+        },
+        "required": [
+          "type",
+          "at"
+        ],
+        "type": "object"
       },
       "ClaimToleranceDto": {
         "properties": {
@@ -21194,6 +21428,34 @@
           "disabled"
         ],
         "type": "string"
+      },
+      "CoverageDto": {
+        "properties": {
+          "available": {
+            "description": "At least one active partner can make it",
+            "example": true,
+            "type": "boolean"
+          },
+          "nameEn": {
+            "example": "Folding carton",
+            "type": "string"
+          },
+          "nameTh": {
+            "example": "กล่องกระดาษพับ",
+            "type": "string"
+          },
+          "productTypeCode": {
+            "example": "folding_carton",
+            "type": "string"
+          }
+        },
+        "required": [
+          "productTypeCode",
+          "nameTh",
+          "nameEn",
+          "available"
+        ],
+        "type": "object"
       },
       "CoverageFactoryDto": {
         "properties": {
@@ -27350,11 +27612,34 @@
             ],
             "example": "approved"
           },
+          "goodwillMemoId": {
+            "description": "An approved discount memo of the customer (goodwill, D-262)",
+            "format": "uuid",
+            "type": "string"
+          },
           "note": {
             "example": "รูปยืนยันความเสียหายจากการขนส่ง",
             "maxLength": 2000,
             "minLength": 3,
             "type": "string"
+          },
+          "remedy": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/GuaranteeRemedy"
+              }
+            ],
+            "description": "Default: what the customer asked for; must be allowed by the claim’s guarantee version for its type and severity (D-261); `goodwill` needs `goodwillMemoId` (D-262)",
+            "example": "reprint"
+          },
+          "severity": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ClaimSeverity"
+              }
+            ],
+            "description": "Required to approve a claim on Packio’s side (D-261)",
+            "example": "major"
           }
         },
         "required": [
@@ -34406,6 +34691,150 @@
         ],
         "type": "object"
       },
+      "GuaranteeMatrixRemedy": {
+        "description": "Empty = no remedy (goodwill only through a discount memo, D-262)",
+        "enum": [
+          "reprint",
+          "refund",
+          "partial_credit"
+        ],
+        "type": "string"
+      },
+      "GuaranteeRemedy": {
+        "description": "The remedy decided (D-261)",
+        "enum": [
+          "reprint",
+          "refund",
+          "partial_credit",
+          "goodwill"
+        ],
+        "type": "string"
+      },
+      "GuaranteeRuleDto": {
+        "properties": {
+          "claimType": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ClaimType"
+              }
+            ],
+            "example": "damaged"
+          },
+          "remedies": {
+            "description": "Empty = no remedy (goodwill only through a discount memo, D-262)",
+            "example": [
+              "reprint",
+              "refund"
+            ],
+            "items": {
+              "$ref": "#/components/schemas/GuaranteeMatrixRemedy"
+            },
+            "type": "array"
+          },
+          "severity": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ClaimSeverity"
+              }
+            ],
+            "example": "major"
+          }
+        },
+        "required": [
+          "claimType",
+          "severity",
+          "remedies"
+        ],
+        "type": "object"
+      },
+      "GuaranteeVersionDto": {
+        "properties": {
+          "approvalRequestId": {
+            "example": null,
+            "format": "uuid",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "claimWindowDays": {
+            "description": "Days after receipt to make a claim (`claims.window_days`, D-082)",
+            "example": 7,
+            "type": "number"
+          },
+          "createdAt": {
+            "example": "2026-10-03T10:00:00+07:00",
+            "format": "date-time",
+            "type": "string"
+          },
+          "decidedAt": {
+            "example": "2026-01-01T00:00:00+07:00",
+            "format": "date-time",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "decisionBusinessDays": {
+            "description": "Business days to the decision from complete evidence (D-199)",
+            "example": 3,
+            "type": "number"
+          },
+          "effectiveFrom": {
+            "example": "2026-01-01T00:00:00+07:00",
+            "format": "date-time",
+            "type": "string"
+          },
+          "id": {
+            "example": "0192f3a0-7c1e-7d2a-9b1f-00000000d101",
+            "format": "uuid",
+            "type": "string"
+          },
+          "reason": {
+            "example": "D-198 / D-199 (accepted 2026-09-30): remedies and claim SLAs at launch",
+            "type": "string"
+          },
+          "responseBusinessDays": {
+            "description": "Business days to the first response (D-199)",
+            "example": 1,
+            "type": "number"
+          },
+          "rules": {
+            "description": "Remedies for a claim on Packio’s side (D-083)",
+            "items": {
+              "$ref": "#/components/schemas/GuaranteeRuleDto"
+            },
+            "type": "array"
+          },
+          "status": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ConfigVersionStatus"
+              }
+            ],
+            "example": "approved"
+          },
+          "versionNo": {
+            "example": 1,
+            "type": "number"
+          }
+        },
+        "required": [
+          "versionNo",
+          "effectiveFrom",
+          "responseBusinessDays",
+          "decisionBusinessDays",
+          "claimWindowDays",
+          "rules",
+          "id",
+          "status",
+          "reason",
+          "approvalRequestId",
+          "decidedAt",
+          "createdAt"
+        ],
+        "type": "object"
+      },
       "HealthIndicatorState": {
         "properties": {
           "status": {
@@ -38704,6 +39133,95 @@
         ],
         "type": "string"
       },
+      "NetworkFiguresDto": {
+        "properties": {
+          "firstPassPct": {
+            "description": "Jobs whose first QC check passed, whole %",
+            "example": null,
+            "type": [
+              "number",
+              "null"
+            ]
+          },
+          "minFactories": {
+            "example": 3,
+            "type": "number"
+          },
+          "minJobs": {
+            "example": 30,
+            "type": "number"
+          },
+          "onTimePct": {
+            "description": "Jobs picked up by their promised ship date, whole %",
+            "example": null,
+            "type": [
+              "number",
+              "null"
+            ]
+          },
+          "partnerCount": {
+            "description": "Active partner factories",
+            "example": null,
+            "type": [
+              "number",
+              "null"
+            ]
+          },
+          "published": {
+            "description": "Figures are published only with ≥ `trust.network_min_factories` active factories and ≥ `trust.network_min_jobs` completed jobs in the window (D-201, D-264); otherwise every figure is null",
+            "example": false,
+            "type": "boolean"
+          },
+          "windowDays": {
+            "description": "Rolling window (days)",
+            "example": 90,
+            "type": "number"
+          }
+        },
+        "required": [
+          "published",
+          "minFactories",
+          "minJobs",
+          "windowDays",
+          "partnerCount",
+          "onTimePct",
+          "firstPassPct"
+        ],
+        "type": "object"
+      },
+      "NetworkStatsDto": {
+        "properties": {
+          "auditCriteria": {
+            "description": "How partners are audited (`trust.audit_criteria`)",
+            "items": {
+              "$ref": "#/components/schemas/ArtworkChecklistItemDto"
+            },
+            "type": "array"
+          },
+          "coverage": {
+            "description": "Capability coverage by product type (yes / no)",
+            "items": {
+              "$ref": "#/components/schemas/CoverageDto"
+            },
+            "type": "array"
+          },
+          "generatedAt": {
+            "example": "2026-10-03T10:00:00+07:00",
+            "format": "date-time",
+            "type": "string"
+          },
+          "network": {
+            "$ref": "#/components/schemas/NetworkFiguresDto"
+          }
+        },
+        "required": [
+          "auditCriteria",
+          "coverage",
+          "network",
+          "generatedAt"
+        ],
+        "type": "object"
+      },
       "NextActionDto": {
         "properties": {
           "disabledReason": {
@@ -39295,7 +39813,9 @@
           "production_at_risk",
           "rfq_first_response_overdue",
           "approvals_overdue",
-          "slip_verification_wait_hours"
+          "slip_verification_wait_hours",
+          "claim_response_overdue",
+          "claim_decision_overdue"
         ],
         "type": "string"
       },
@@ -40836,6 +41356,18 @@
             "format": "date-time",
             "type": "string"
           },
+          "remedy": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/GuaranteeRemedy"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "The remedy decided (D-261)",
+            "example": null
+          },
           "requestedResolution": {
             "allOf": [
               {
@@ -40850,12 +41382,40 @@
             },
             "type": "array"
           },
+          "sampleId": {
+            "description": "The sample claimed (D-259)",
+            "example": null,
+            "format": "uuid",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "severity": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ClaimSeverity"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "example": null
+          },
           "shipmentNo": {
             "example": "SH-2610-0001",
             "type": [
               "string",
               "null"
             ]
+          },
+          "sla": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ClaimSlaDto"
+              }
+            ],
+            "description": "SLA countdowns and the current owner (D-263)"
           },
           "status": {
             "allOf": [
@@ -40912,6 +41472,10 @@
           "photos",
           "tolerance",
           "resolutions",
+          "severity",
+          "remedy",
+          "sla",
+          "sampleId",
           "nextActions",
           "jobId",
           "jobNo",
@@ -48723,6 +49287,49 @@
         ],
         "type": "object"
       },
+      "ProposeGuaranteeDto": {
+        "properties": {
+          "decisionBusinessDays": {
+            "description": "Business days to the decision from complete evidence",
+            "example": 3,
+            "maximum": 60,
+            "minimum": 0,
+            "type": "integer"
+          },
+          "effectiveFrom": {
+            "description": "Never in the past",
+            "example": "2026-11-01T00:00:00+07:00",
+            "format": "date-time",
+            "type": "string"
+          },
+          "reason": {
+            "example": "ขยายการรับประกันงานพิมพ์ (fake)",
+            "type": "string"
+          },
+          "responseBusinessDays": {
+            "description": "Business days to the first response (D-199)",
+            "example": 1,
+            "maximum": 30,
+            "minimum": 0,
+            "type": "integer"
+          },
+          "rules": {
+            "description": "Claim type × severity; one rule each, missing = no remedy",
+            "items": {
+              "$ref": "#/components/schemas/GuaranteeRuleDto"
+            },
+            "type": "array"
+          }
+        },
+        "required": [
+          "effectiveFrom",
+          "responseBusinessDays",
+          "decisionBusinessDays",
+          "reason",
+          "rules"
+        ],
+        "type": "object"
+      },
       "ProposePolicyVersionDto": {
         "properties": {
           "effectiveFrom": {
@@ -49049,6 +49656,114 @@
           "method",
           "targetAmount",
           "amount"
+        ],
+        "type": "object"
+      },
+      "PublicGuaranteeDto": {
+        "properties": {
+          "claimWindowDays": {
+            "description": "Days after receipt to make a claim (`claims.window_days`, D-082)",
+            "example": 7,
+            "type": "number"
+          },
+          "decisionBusinessDays": {
+            "description": "Business days to the decision from complete evidence (D-199)",
+            "example": 3,
+            "type": "number"
+          },
+          "effectiveFrom": {
+            "example": "2026-01-01T00:00:00+07:00",
+            "format": "date-time",
+            "type": "string"
+          },
+          "responseBusinessDays": {
+            "description": "Business days to the first response (D-199)",
+            "example": 1,
+            "type": "number"
+          },
+          "rules": {
+            "description": "Remedies for a claim on Packio’s side (D-083)",
+            "items": {
+              "$ref": "#/components/schemas/GuaranteeRuleDto"
+            },
+            "type": "array"
+          },
+          "versionNo": {
+            "example": 1,
+            "type": "number"
+          }
+        },
+        "required": [
+          "versionNo",
+          "effectiveFrom",
+          "responseBusinessDays",
+          "decisionBusinessDays",
+          "claimWindowDays",
+          "rules"
+        ],
+        "type": "object"
+      },
+      "PublicReviewDto": {
+        "properties": {
+          "comment": {
+            "example": "กล่องสวย ส่งตรงเวลา",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "createdAt": {
+            "example": "2026-10-25T10:00:00+07:00",
+            "format": "date-time",
+            "type": "string"
+          },
+          "id": {
+            "example": "0192f3a0-7c1e-7d2a-9b1f-0000000b0010",
+            "format": "uuid",
+            "type": "string"
+          },
+          "productTypeCode": {
+            "example": "folding_carton",
+            "type": "string"
+          },
+          "productTypeNameEn": {
+            "example": "Folding carton",
+            "type": "string"
+          },
+          "productTypeNameTh": {
+            "example": "กล่องกระดาษพับ",
+            "type": "string"
+          },
+          "rating": {
+            "example": 5,
+            "type": "integer"
+          },
+          "reply": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ReviewReplyDto"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "reviewerName": {
+            "description": "First name and the initial of the last name",
+            "example": "สมหญิง ท.",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "rating",
+          "comment",
+          "reviewerName",
+          "productTypeCode",
+          "productTypeNameTh",
+          "productTypeNameEn",
+          "reply",
+          "createdAt"
         ],
         "type": "object"
       },
@@ -52785,6 +53500,20 @@
         ],
         "type": "object"
       },
+      "ReplyReviewDto": {
+        "properties": {
+          "body": {
+            "example": "ขอบคุณที่ไว้วางใจ Packio ครับ",
+            "maxLength": 2000,
+            "minLength": 2,
+            "type": "string"
+          }
+        },
+        "required": [
+          "body"
+        ],
+        "type": "object"
+      },
       "ReportColumnDto": {
         "properties": {
           "key": {
@@ -53947,9 +54676,25 @@
             "format": "uuid",
             "type": "string"
           },
+          "productTypeCode": {
+            "description": "The product type reviewed (D-202)",
+            "example": "folding_carton",
+            "type": "string"
+          },
           "rating": {
             "example": 5,
             "type": "integer"
+          },
+          "reply": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ReviewReplyDto"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Packio’s reply (D-265)"
           },
           "rewardPoints": {
             "description": "Points the review earned (D-135)",
@@ -53973,6 +54718,8 @@
           "comment",
           "status",
           "rewardPoints",
+          "productTypeCode",
+          "reply",
           "createdAt"
         ],
         "type": "object"
@@ -54036,6 +54783,41 @@
         },
         "type": "object"
       },
+      "ReviewRatingCountDto": {
+        "properties": {
+          "count": {
+            "example": 12,
+            "type": "integer"
+          },
+          "rating": {
+            "example": 5,
+            "type": "integer"
+          }
+        },
+        "required": [
+          "rating",
+          "count"
+        ],
+        "type": "object"
+      },
+      "ReviewReplyDto": {
+        "properties": {
+          "body": {
+            "example": "ขอบคุณที่ไว้วางใจ Packio ครับ",
+            "type": "string"
+          },
+          "repliedAt": {
+            "example": "2026-10-26T10:00:00+07:00",
+            "format": "date-time",
+            "type": "string"
+          }
+        },
+        "required": [
+          "body",
+          "repliedAt"
+        ],
+        "type": "object"
+      },
       "ReviewStatus": {
         "enum": [
           "pending",
@@ -54043,6 +54825,66 @@
           "hidden"
         ],
         "type": "string"
+      },
+      "ReviewSummaryDto": {
+        "properties": {
+          "averageRating": {
+            "description": "Null without reviews",
+            "example": "4.60",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "byProductType": {
+            "items": {
+              "$ref": "#/components/schemas/ReviewTypeSummaryDto"
+            },
+            "type": "array"
+          },
+          "count": {
+            "example": 15,
+            "type": "integer"
+          },
+          "distribution": {
+            "items": {
+              "$ref": "#/components/schemas/ReviewRatingCountDto"
+            },
+            "type": "array"
+          }
+        },
+        "required": [
+          "count",
+          "averageRating",
+          "distribution",
+          "byProductType"
+        ],
+        "type": "object"
+      },
+      "ReviewTypeSummaryDto": {
+        "properties": {
+          "averageRating": {
+            "example": "4.75",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "count": {
+            "example": 12,
+            "type": "integer"
+          },
+          "productTypeCode": {
+            "example": "folding_carton",
+            "type": "string"
+          }
+        },
+        "required": [
+          "productTypeCode",
+          "count",
+          "averageRating"
+        ],
+        "type": "object"
       },
       "RfqAcceptanceChannel": {
         "description": "How the customer accepted",
@@ -62965,6 +63807,18 @@
             "format": "date-time",
             "type": "string"
           },
+          "remedy": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/GuaranteeRemedy"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "The remedy decided (D-261)",
+            "example": null
+          },
           "requestedResolution": {
             "allOf": [
               {
@@ -62978,6 +63832,34 @@
               "$ref": "#/components/schemas/ClaimResolutionDto"
             },
             "type": "array"
+          },
+          "sampleId": {
+            "description": "The sample claimed (D-259)",
+            "example": null,
+            "format": "uuid",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "severity": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ClaimSeverity"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "example": null
+          },
+          "sla": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ClaimSlaDto"
+              }
+            ],
+            "description": "SLA countdowns and the current owner (D-263)"
           },
           "status": {
             "allOf": [
@@ -63034,6 +63916,10 @@
           "photos",
           "tolerance",
           "resolutions",
+          "severity",
+          "remedy",
+          "sla",
+          "sampleId",
           "nextActions"
         ],
         "type": "object"
@@ -128003,10 +128889,22 @@
                         ]
                       },
                       "receivedAt": "2026-10-21T14:05:00+07:00",
+                      "remedy": null,
                       "requestedResolution": "reprint",
                       "resolutions": [],
+                      "sampleId": null,
+                      "severity": null,
                       "shipmentId": "0192f3a0-7c1e-7d2a-9b1f-0000000f2001",
                       "shipmentNo": "SH-2610-0001",
+                      "sla": {
+                        "currentOwner": "packio",
+                        "decisionDueAt": "2026-10-27T09:00:00+07:00",
+                        "decisionOverdue": false,
+                        "guaranteeVersionNo": 1,
+                        "respondedAt": "2026-10-22T11:00:00+07:00",
+                        "responseDueAt": "2026-10-23T09:00:00+07:00",
+                        "responseOverdue": false
+                      },
                       "status": "under_review",
                       "submittedAt": "2026-10-22T09:00:00+07:00",
                       "tolerance": {
@@ -128253,10 +129151,22 @@
                     ]
                   },
                   "receivedAt": "2026-10-21T14:05:00+07:00",
+                  "remedy": null,
                   "requestedResolution": "reprint",
                   "resolutions": [],
+                  "sampleId": null,
+                  "severity": null,
                   "shipmentId": "0192f3a0-7c1e-7d2a-9b1f-0000000f2001",
                   "shipmentNo": "SH-2610-0001",
+                  "sla": {
+                    "currentOwner": "packio",
+                    "decisionDueAt": "2026-10-27T09:00:00+07:00",
+                    "decisionOverdue": false,
+                    "guaranteeVersionNo": 1,
+                    "respondedAt": "2026-10-22T11:00:00+07:00",
+                    "responseDueAt": "2026-10-23T09:00:00+07:00",
+                    "responseOverdue": false
+                  },
                   "status": "under_review",
                   "submittedAt": "2026-10-22T09:00:00+07:00",
                   "tolerance": {
@@ -128507,6 +129417,7 @@
                     ]
                   },
                   "receivedAt": "2026-10-21T14:05:00+07:00",
+                  "remedy": null,
                   "requestedResolution": "reprint",
                   "resolutions": [
                     {
@@ -128518,8 +129429,19 @@
                       "refundId": null
                     }
                   ],
+                  "sampleId": null,
+                  "severity": null,
                   "shipmentId": "0192f3a0-7c1e-7d2a-9b1f-0000000f2001",
                   "shipmentNo": "SH-2610-0001",
+                  "sla": {
+                    "currentOwner": "packio",
+                    "decisionDueAt": "2026-10-27T09:00:00+07:00",
+                    "decisionOverdue": false,
+                    "guaranteeVersionNo": 1,
+                    "respondedAt": "2026-10-22T11:00:00+07:00",
+                    "responseDueAt": "2026-10-23T09:00:00+07:00",
+                    "responseOverdue": false
+                  },
                   "status": "closed",
                   "submittedAt": "2026-10-22T09:00:00+07:00",
                   "tolerance": {
@@ -128837,10 +129759,22 @@
                     ]
                   },
                   "receivedAt": "2026-10-21T14:05:00+07:00",
+                  "remedy": null,
                   "requestedResolution": "reprint",
                   "resolutions": [],
+                  "sampleId": null,
+                  "severity": null,
                   "shipmentId": "0192f3a0-7c1e-7d2a-9b1f-0000000f2001",
                   "shipmentNo": "SH-2610-0001",
+                  "sla": {
+                    "currentOwner": "packio",
+                    "decisionDueAt": "2026-10-27T09:00:00+07:00",
+                    "decisionOverdue": false,
+                    "guaranteeVersionNo": 1,
+                    "respondedAt": "2026-10-22T11:00:00+07:00",
+                    "responseDueAt": "2026-10-23T09:00:00+07:00",
+                    "responseOverdue": false
+                  },
                   "status": "approved",
                   "submittedAt": "2026-10-22T09:00:00+07:00",
                   "tolerance": {
@@ -129167,10 +130101,22 @@
                     ]
                   },
                   "receivedAt": "2026-10-21T14:05:00+07:00",
+                  "remedy": null,
                   "requestedResolution": "reprint",
                   "resolutions": [],
+                  "sampleId": null,
+                  "severity": null,
                   "shipmentId": "0192f3a0-7c1e-7d2a-9b1f-0000000f2001",
                   "shipmentNo": "SH-2610-0001",
+                  "sla": {
+                    "currentOwner": "packio",
+                    "decisionDueAt": "2026-10-27T09:00:00+07:00",
+                    "decisionOverdue": false,
+                    "guaranteeVersionNo": 1,
+                    "respondedAt": "2026-10-22T11:00:00+07:00",
+                    "responseDueAt": "2026-10-23T09:00:00+07:00",
+                    "responseOverdue": false
+                  },
                   "status": "under_review",
                   "submittedAt": "2026-10-22T09:00:00+07:00",
                   "tolerance": {
@@ -129496,10 +130442,22 @@
                     ]
                   },
                   "receivedAt": "2026-10-21T14:05:00+07:00",
+                  "remedy": null,
                   "requestedResolution": "reprint",
                   "resolutions": [],
+                  "sampleId": null,
+                  "severity": null,
                   "shipmentId": "0192f3a0-7c1e-7d2a-9b1f-0000000f2001",
                   "shipmentNo": "SH-2610-0001",
+                  "sla": {
+                    "currentOwner": "packio",
+                    "decisionDueAt": "2026-10-27T09:00:00+07:00",
+                    "decisionOverdue": false,
+                    "guaranteeVersionNo": 1,
+                    "respondedAt": "2026-10-22T11:00:00+07:00",
+                    "responseDueAt": "2026-10-23T09:00:00+07:00",
+                    "responseOverdue": false
+                  },
                   "status": "need_info",
                   "submittedAt": "2026-10-22T09:00:00+07:00",
                   "tolerance": {
@@ -129827,6 +130785,7 @@
                     ]
                   },
                   "receivedAt": "2026-10-21T14:05:00+07:00",
+                  "remedy": null,
                   "requestedResolution": "reprint",
                   "resolutions": [
                     {
@@ -129838,8 +130797,19 @@
                       "refundId": null
                     }
                   ],
+                  "sampleId": null,
+                  "severity": null,
                   "shipmentId": "0192f3a0-7c1e-7d2a-9b1f-0000000f2001",
                   "shipmentNo": "SH-2610-0001",
+                  "sla": {
+                    "currentOwner": "packio",
+                    "decisionDueAt": "2026-10-27T09:00:00+07:00",
+                    "decisionOverdue": false,
+                    "guaranteeVersionNo": 1,
+                    "respondedAt": "2026-10-22T11:00:00+07:00",
+                    "responseDueAt": "2026-10-23T09:00:00+07:00",
+                    "responseOverdue": false
+                  },
                   "status": "resolved",
                   "submittedAt": "2026-10-22T09:00:00+07:00",
                   "tolerance": {
@@ -130157,10 +131127,22 @@
                     ]
                   },
                   "receivedAt": "2026-10-21T14:05:00+07:00",
+                  "remedy": null,
                   "requestedResolution": "reprint",
                   "resolutions": [],
+                  "sampleId": null,
+                  "severity": null,
                   "shipmentId": "0192f3a0-7c1e-7d2a-9b1f-0000000f2001",
                   "shipmentNo": "SH-2610-0001",
+                  "sla": {
+                    "currentOwner": "packio",
+                    "decisionDueAt": "2026-10-27T09:00:00+07:00",
+                    "decisionOverdue": false,
+                    "guaranteeVersionNo": 1,
+                    "respondedAt": "2026-10-22T11:00:00+07:00",
+                    "responseDueAt": "2026-10-23T09:00:00+07:00",
+                    "responseOverdue": false
+                  },
                   "status": "under_review",
                   "submittedAt": "2026-10-22T09:00:00+07:00",
                   "tolerance": {
@@ -130460,10 +131442,22 @@
                     ]
                   },
                   "receivedAt": "2026-10-21T14:05:00+07:00",
+                  "remedy": null,
                   "requestedResolution": "reprint",
                   "resolutions": [],
+                  "sampleId": null,
+                  "severity": null,
                   "shipmentId": "0192f3a0-7c1e-7d2a-9b1f-0000000f2001",
                   "shipmentNo": "SH-2610-0001",
+                  "sla": {
+                    "currentOwner": "packio",
+                    "decisionDueAt": "2026-10-27T09:00:00+07:00",
+                    "decisionOverdue": false,
+                    "guaranteeVersionNo": 1,
+                    "respondedAt": "2026-10-22T11:00:00+07:00",
+                    "responseDueAt": "2026-10-23T09:00:00+07:00",
+                    "responseOverdue": false
+                  },
                   "status": "factory_review",
                   "submittedAt": "2026-10-22T09:00:00+07:00",
                   "tolerance": {
@@ -193499,6 +194493,963 @@
         ]
       }
     },
+    "/v1/admin/guarantee-policies": {
+      "get": {
+        "description": "Every version, newest first, with its status and matrix (D-260).\n\nImplements: D-198, D-199, D-260.",
+        "operationId": "admin.guaranteePolicies.list",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "example": [
+                  {
+                    "approvalRequestId": null,
+                    "claimWindowDays": 7,
+                    "createdAt": "2026-10-03T10:00:00+07:00",
+                    "decidedAt": "2026-01-01T00:00:00+07:00",
+                    "decisionBusinessDays": 3,
+                    "effectiveFrom": "2026-01-01T00:00:00+07:00",
+                    "id": "0192f3a0-7c1e-7d2a-9b1f-00000000d101",
+                    "reason": "D-198 / D-199 (accepted 2026-09-30): remedies and claim SLAs at launch",
+                    "responseBusinessDays": 1,
+                    "rules": [
+                      {
+                        "claimType": "damaged",
+                        "remedies": [
+                          "reprint",
+                          "refund"
+                        ],
+                        "severity": "major"
+                      },
+                      {
+                        "claimType": "damaged",
+                        "remedies": [
+                          "partial_credit"
+                        ],
+                        "severity": "minor"
+                      },
+                      {
+                        "claimType": "late",
+                        "remedies": [],
+                        "severity": "major"
+                      }
+                    ],
+                    "status": "approved",
+                    "versionNo": 1
+                  }
+                ],
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/GuaranteeVersionDto"
+                  },
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Versions",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.unauthenticated": {
+                    "$ref": "#/components/examples/problem.auth.unauthenticated"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.unauthenticated`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.forbidden": {
+                    "$ref": "#/components/examples/problem.auth.forbidden"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.forbidden`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "validation.failed": {
+                    "$ref": "#/components/examples/problem.validation.failed"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `validation.failed`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "staff": []
+          }
+        ],
+        "summary": "List guarantee policy versions",
+        "tags": [
+          "admin.guaranteePolicies"
+        ],
+        "x-required-permissions": [
+          "guarantee_policies.read"
+        ]
+      },
+      "post": {
+        "description": "The CS Lead drafts SLAs and the remedy matrix; the version goes to C-Level at once (approval `guarantee_policy_change`) and applies from its effective date once approved — never backwards; an effective date that passed while in approval becomes the approval time. One version in approval at a time (D-200, D-260).\n\nImplements: D-198, D-199, D-260, D-200, D-063.",
+        "operationId": "admin.guaranteePolicies.create",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "examples": {
+                "default": {
+                  "value": {
+                    "decisionBusinessDays": 3,
+                    "effectiveFrom": "2026-11-01T00:00:00+07:00",
+                    "reason": "ขยายการรับประกันงานพิมพ์ (fake)",
+                    "responseBusinessDays": 1,
+                    "rules": [
+                      {
+                        "claimType": "damaged",
+                        "remedies": [
+                          "reprint",
+                          "refund"
+                        ],
+                        "severity": "major"
+                      },
+                      {
+                        "claimType": "damaged",
+                        "remedies": [
+                          "partial_credit"
+                        ],
+                        "severity": "minor"
+                      },
+                      {
+                        "claimType": "late",
+                        "remedies": [],
+                        "severity": "major"
+                      }
+                    ]
+                  }
+                }
+              },
+              "schema": {
+                "$ref": "#/components/schemas/ProposeGuaranteeDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "approvalRequestId": null,
+                  "claimWindowDays": 7,
+                  "createdAt": "2026-10-03T10:00:00+07:00",
+                  "decidedAt": null,
+                  "decisionBusinessDays": 3,
+                  "effectiveFrom": "2026-01-01T00:00:00+07:00",
+                  "id": "0192f3a0-7c1e-7d2a-9b1f-00000000d101",
+                  "reason": "D-198 / D-199 (accepted 2026-09-30): remedies and claim SLAs at launch",
+                  "responseBusinessDays": 1,
+                  "rules": [
+                    {
+                      "claimType": "damaged",
+                      "remedies": [
+                        "reprint",
+                        "refund"
+                      ],
+                      "severity": "major"
+                    },
+                    {
+                      "claimType": "damaged",
+                      "remedies": [
+                        "partial_credit"
+                      ],
+                      "severity": "minor"
+                    },
+                    {
+                      "claimType": "late",
+                      "remedies": [],
+                      "severity": "major"
+                    }
+                  ],
+                  "status": "proposed",
+                  "versionNo": 2
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/GuaranteeVersionDto"
+                }
+              }
+            },
+            "description": "Proposed",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "400": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.bad_request": {
+                    "$ref": "#/components/examples/problem.http.bad_request"
+                  },
+                  "http.malformed_json": {
+                    "$ref": "#/components/examples/problem.http.malformed_json"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.bad_request`, `http.malformed_json`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.unauthenticated": {
+                    "$ref": "#/components/examples/problem.auth.unauthenticated"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.unauthenticated`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.forbidden": {
+                    "$ref": "#/components/examples/problem.auth.forbidden"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.forbidden`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "409": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "guarantee.version_pending": {
+                    "$ref": "#/components/examples/problem.guarantee.version_pending"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `guarantee.version_pending`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "approval.no_matching_step": {
+                    "$ref": "#/components/examples/problem.approval.no_matching_step"
+                  },
+                  "validation.failed": {
+                    "$ref": "#/components/examples/problem.validation.failed"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `approval.no_matching_step`, `validation.failed`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "staff": []
+          }
+        ],
+        "summary": "Propose a new guarantee policy version",
+        "tags": [
+          "admin.guaranteePolicies"
+        ],
+        "x-required-permissions": [
+          "guarantee_policies.manage"
+        ]
+      }
+    },
+    "/v1/admin/guarantee-policies/{versionId}": {
+      "get": {
+        "description": "Its SLAs, remedy matrix, status and approval request (D-260).\n\nImplements: D-198, D-199, D-260.",
+        "operationId": "admin.guaranteePolicies.get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "versionId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "approvalRequestId": null,
+                  "claimWindowDays": 7,
+                  "createdAt": "2026-10-03T10:00:00+07:00",
+                  "decidedAt": "2026-01-01T00:00:00+07:00",
+                  "decisionBusinessDays": 3,
+                  "effectiveFrom": "2026-01-01T00:00:00+07:00",
+                  "id": "0192f3a0-7c1e-7d2a-9b1f-00000000d101",
+                  "reason": "D-198 / D-199 (accepted 2026-09-30): remedies and claim SLAs at launch",
+                  "responseBusinessDays": 1,
+                  "rules": [
+                    {
+                      "claimType": "damaged",
+                      "remedies": [
+                        "reprint",
+                        "refund"
+                      ],
+                      "severity": "major"
+                    },
+                    {
+                      "claimType": "damaged",
+                      "remedies": [
+                        "partial_credit"
+                      ],
+                      "severity": "minor"
+                    },
+                    {
+                      "claimType": "late",
+                      "remedies": [],
+                      "severity": "major"
+                    }
+                  ],
+                  "status": "approved",
+                  "versionNo": 1
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/GuaranteeVersionDto"
+                }
+              }
+            },
+            "description": "Version",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.unauthenticated": {
+                    "$ref": "#/components/examples/problem.auth.unauthenticated"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.unauthenticated`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.forbidden": {
+                    "$ref": "#/components/examples/problem.auth.forbidden"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.forbidden`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "404": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.not_found": {
+                    "$ref": "#/components/examples/problem.http.not_found"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.not_found`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "validation.failed": {
+                    "$ref": "#/components/examples/problem.validation.failed"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `validation.failed`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "staff": []
+          }
+        ],
+        "summary": "Get a guarantee policy version",
+        "tags": [
+          "admin.guaranteePolicies"
+        ],
+        "x-required-permissions": [
+          "guarantee_policies.read"
+        ]
+      }
+    },
+    "/v1/admin/guarantee-policies/{versionId}/actions/withdraw": {
+      "post": {
+        "description": "Its approval request is withdrawn with it (D-260).\n\nImplements: D-198, D-199, D-260.",
+        "operationId": "admin.guaranteePolicies.withdraw",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "versionId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "examples": {
+                "default": {
+                  "value": {
+                    "reason": "ทบทวนใหม่ (fake)"
+                  }
+                }
+              },
+              "schema": {
+                "$ref": "#/components/schemas/ReasonBodyDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "approvalRequestId": null,
+                  "claimWindowDays": 7,
+                  "createdAt": "2026-10-03T10:00:00+07:00",
+                  "decidedAt": "2026-01-01T00:00:00+07:00",
+                  "decisionBusinessDays": 3,
+                  "effectiveFrom": "2026-01-01T00:00:00+07:00",
+                  "id": "0192f3a0-7c1e-7d2a-9b1f-00000000d101",
+                  "reason": "D-198 / D-199 (accepted 2026-09-30): remedies and claim SLAs at launch",
+                  "responseBusinessDays": 1,
+                  "rules": [
+                    {
+                      "claimType": "damaged",
+                      "remedies": [
+                        "reprint",
+                        "refund"
+                      ],
+                      "severity": "major"
+                    },
+                    {
+                      "claimType": "damaged",
+                      "remedies": [
+                        "partial_credit"
+                      ],
+                      "severity": "minor"
+                    },
+                    {
+                      "claimType": "late",
+                      "remedies": [],
+                      "severity": "major"
+                    }
+                  ],
+                  "status": "withdrawn",
+                  "versionNo": 2
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/GuaranteeVersionDto"
+                }
+              }
+            },
+            "description": "Withdrawn",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "400": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.bad_request": {
+                    "$ref": "#/components/examples/problem.http.bad_request"
+                  },
+                  "http.malformed_json": {
+                    "$ref": "#/components/examples/problem.http.malformed_json"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.bad_request`, `http.malformed_json`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.unauthenticated": {
+                    "$ref": "#/components/examples/problem.auth.unauthenticated"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.unauthenticated`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.forbidden": {
+                    "$ref": "#/components/examples/problem.auth.forbidden"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.forbidden`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "404": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.not_found": {
+                    "$ref": "#/components/examples/problem.http.not_found"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.not_found`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "409": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "guarantee.version_not_proposed": {
+                    "$ref": "#/components/examples/problem.guarantee.version_not_proposed"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `guarantee.version_not_proposed`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "validation.failed": {
+                    "$ref": "#/components/examples/problem.validation.failed"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `validation.failed`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "staff": []
+          }
+        ],
+        "summary": "Withdraw a proposed guarantee version",
+        "tags": [
+          "admin.guaranteePolicies"
+        ],
+        "x-required-permissions": [
+          "guarantee_policies.manage"
+        ]
+      }
+    },
     "/v1/admin/index-series": {
       "get": {
         "description": "Material price indices per material family (D-040 group 1) and cost-driver series (group 2) with their latest value. `q` searches code and names.\n\nImplements: D-040.",
@@ -211516,10 +213467,22 @@
                     ]
                   },
                   "receivedAt": "2026-10-21T14:05:00+07:00",
+                  "remedy": null,
                   "requestedResolution": "reprint",
                   "resolutions": [],
+                  "sampleId": null,
+                  "severity": null,
                   "shipmentId": "0192f3a0-7c1e-7d2a-9b1f-0000000f2001",
                   "shipmentNo": "SH-2610-0001",
+                  "sla": {
+                    "currentOwner": "packio",
+                    "decisionDueAt": "2026-10-27T09:00:00+07:00",
+                    "decisionOverdue": false,
+                    "guaranteeVersionNo": 1,
+                    "respondedAt": "2026-10-22T11:00:00+07:00",
+                    "responseDueAt": "2026-10-23T09:00:00+07:00",
+                    "responseOverdue": false
+                  },
                   "status": "submitted",
                   "submittedAt": "2026-10-22T09:00:00+07:00",
                   "tolerance": {
@@ -240887,7 +242850,9 @@
                       "id": "0192f3a0-7c1e-7d2a-9b1f-0000000b0010",
                       "orderCode": "OR-2610-0001",
                       "orderId": "0192f3a0-7c1e-7d2a-9b1f-0000000b0011",
+                      "productTypeCode": "folding_carton",
                       "rating": 5,
+                      "reply": null,
                       "rewardPoints": 4,
                       "status": "published"
                     }
@@ -241054,7 +243019,7 @@
     },
     "/v1/admin/reviews/{reviewId}/actions/{action}": {
       "post": {
-        "description": "CS moderation; the customer keeps the review reward (D-135).\n\nImplements: D-135.",
+        "description": "Marketing moderation (D-202, D-265); the customer keeps the review reward (D-135).\n\nImplements: D-135, D-202, D-265.",
         "operationId": "admin.reviews.moderate",
         "parameters": [
           {
@@ -241092,7 +243057,9 @@
                   "id": "0192f3a0-7c1e-7d2a-9b1f-0000000b0010",
                   "orderCode": "OR-2610-0001",
                   "orderId": "0192f3a0-7c1e-7d2a-9b1f-0000000b0011",
+                  "productTypeCode": "folding_carton",
                   "rating": 5,
+                  "reply": null,
                   "rewardPoints": 4,
                   "status": "published"
                 },
@@ -241252,6 +243219,246 @@
         ],
         "x-required-permissions": [
           "reviews.moderate"
+        ]
+      }
+    },
+    "/v1/admin/reviews/{reviewId}/reply": {
+      "put": {
+        "description": "CS writes the one reply shown under the review, or edits it (an edit is audited) (D-202, D-265).\n\nImplements: D-202, D-265.",
+        "operationId": "admin.reviews.reply",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "reviewId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "examples": {
+                "default": {
+                  "value": {
+                    "body": "ขอบคุณที่ไว้วางใจ Packio ครับ"
+                  }
+                }
+              },
+              "schema": {
+                "$ref": "#/components/schemas/ReplyReviewDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "comment": "กล่องสวย ส่งตรงเวลา",
+                  "createdAt": "2026-10-25T10:00:00+07:00",
+                  "customer": {
+                    "displayName": "สมหญิง ทดสอบ",
+                    "id": "0192f3a0-7c1e-7d2a-9b1f-0000000e0009"
+                  },
+                  "id": "0192f3a0-7c1e-7d2a-9b1f-0000000b0010",
+                  "orderCode": "OR-2610-0001",
+                  "orderId": "0192f3a0-7c1e-7d2a-9b1f-0000000b0011",
+                  "productTypeCode": "folding_carton",
+                  "rating": 5,
+                  "reply": {
+                    "body": "ขอบคุณที่ไว้วางใจ Packio ครับ",
+                    "repliedAt": "2026-10-26T10:00:00+07:00"
+                  },
+                  "rewardPoints": 4,
+                  "status": "published"
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/AdminReviewDto"
+                }
+              }
+            },
+            "description": "Review",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "400": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.bad_request": {
+                    "$ref": "#/components/examples/problem.http.bad_request"
+                  },
+                  "http.malformed_json": {
+                    "$ref": "#/components/examples/problem.http.malformed_json"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.bad_request`, `http.malformed_json`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.unauthenticated": {
+                    "$ref": "#/components/examples/problem.auth.unauthenticated"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.unauthenticated`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.forbidden": {
+                    "$ref": "#/components/examples/problem.auth.forbidden"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.forbidden`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "404": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.not_found": {
+                    "$ref": "#/components/examples/problem.http.not_found"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.not_found`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "validation.failed": {
+                    "$ref": "#/components/examples/problem.validation.failed"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `validation.failed`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "staff": []
+          }
+        ],
+        "summary": "Reply to a review",
+        "tags": [
+          "admin.reviews"
+        ],
+        "x-required-permissions": [
+          "reviews.reply"
         ]
       }
     },
@@ -277273,9 +279480,21 @@
                         ]
                       },
                       "receivedAt": "2026-10-21T14:05:00+07:00",
+                      "remedy": null,
                       "requestedResolution": "reprint",
                       "resolutions": [],
+                      "sampleId": null,
+                      "severity": null,
                       "shipmentNo": "SH-2610-0001",
+                      "sla": {
+                        "currentOwner": "packio",
+                        "decisionDueAt": "2026-10-27T09:00:00+07:00",
+                        "decisionOverdue": false,
+                        "guaranteeVersionNo": 1,
+                        "respondedAt": "2026-10-22T11:00:00+07:00",
+                        "responseDueAt": "2026-10-23T09:00:00+07:00",
+                        "responseOverdue": false
+                      },
                       "status": "factory_review",
                       "submittedAt": "2026-10-22T09:00:00+07:00",
                       "tolerance": {
@@ -277500,9 +279719,21 @@
                     ]
                   },
                   "receivedAt": "2026-10-21T14:05:00+07:00",
+                  "remedy": null,
                   "requestedResolution": "reprint",
                   "resolutions": [],
+                  "sampleId": null,
+                  "severity": null,
                   "shipmentNo": "SH-2610-0001",
+                  "sla": {
+                    "currentOwner": "packio",
+                    "decisionDueAt": "2026-10-27T09:00:00+07:00",
+                    "decisionOverdue": false,
+                    "guaranteeVersionNo": 1,
+                    "respondedAt": "2026-10-22T11:00:00+07:00",
+                    "responseDueAt": "2026-10-23T09:00:00+07:00",
+                    "responseOverdue": false
+                  },
                   "status": "factory_review",
                   "submittedAt": "2026-10-22T09:00:00+07:00",
                   "tolerance": {
@@ -277746,9 +279977,21 @@
                     ]
                   },
                   "receivedAt": "2026-10-21T14:05:00+07:00",
+                  "remedy": null,
                   "requestedResolution": "reprint",
                   "resolutions": [],
+                  "sampleId": null,
+                  "severity": null,
                   "shipmentNo": "SH-2610-0001",
+                  "sla": {
+                    "currentOwner": "packio",
+                    "decisionDueAt": "2026-10-27T09:00:00+07:00",
+                    "decisionOverdue": false,
+                    "guaranteeVersionNo": 1,
+                    "respondedAt": "2026-10-22T11:00:00+07:00",
+                    "responseDueAt": "2026-10-23T09:00:00+07:00",
+                    "responseOverdue": false
+                  },
                   "status": "under_review",
                   "submittedAt": "2026-10-22T09:00:00+07:00",
                   "tolerance": {
@@ -318108,8 +320351,20 @@
                         ]
                       },
                       "receivedAt": "2026-10-21T14:05:00+07:00",
+                      "remedy": null,
                       "requestedResolution": "reprint",
                       "resolutions": [],
+                      "sampleId": null,
+                      "severity": null,
+                      "sla": {
+                        "currentOwner": "packio",
+                        "decisionDueAt": "2026-10-27T09:00:00+07:00",
+                        "decisionOverdue": false,
+                        "guaranteeVersionNo": 1,
+                        "respondedAt": "2026-10-22T11:00:00+07:00",
+                        "responseDueAt": "2026-10-23T09:00:00+07:00",
+                        "responseOverdue": false
+                      },
                       "status": "under_review",
                       "submittedAt": "2026-10-22T09:00:00+07:00",
                       "tolerance": {
@@ -318322,8 +320577,20 @@
                     ]
                   },
                   "receivedAt": "2026-10-21T14:05:00+07:00",
+                  "remedy": null,
                   "requestedResolution": "reprint",
                   "resolutions": [],
+                  "sampleId": null,
+                  "severity": null,
+                  "sla": {
+                    "currentOwner": "packio",
+                    "decisionDueAt": "2026-10-27T09:00:00+07:00",
+                    "decisionOverdue": false,
+                    "guaranteeVersionNo": 1,
+                    "respondedAt": "2026-10-22T11:00:00+07:00",
+                    "responseDueAt": "2026-10-23T09:00:00+07:00",
+                    "responseOverdue": false
+                  },
                   "status": "under_review",
                   "submittedAt": "2026-10-22T09:00:00+07:00",
                   "tolerance": {
@@ -318557,8 +320824,20 @@
                     ]
                   },
                   "receivedAt": "2026-10-21T14:05:00+07:00",
+                  "remedy": null,
                   "requestedResolution": "reprint",
                   "resolutions": [],
+                  "sampleId": null,
+                  "severity": null,
+                  "sla": {
+                    "currentOwner": "packio",
+                    "decisionDueAt": "2026-10-27T09:00:00+07:00",
+                    "decisionOverdue": false,
+                    "guaranteeVersionNo": 1,
+                    "respondedAt": "2026-10-22T11:00:00+07:00",
+                    "responseDueAt": "2026-10-23T09:00:00+07:00",
+                    "responseOverdue": false
+                  },
                   "status": "under_review",
                   "submittedAt": "2026-10-22T09:00:00+07:00",
                   "tolerance": {
@@ -318782,6 +321061,207 @@
           }
         ],
         "summary": "Answer Packio’s question about my claim",
+        "tags": [
+          "store.claims"
+        ]
+      }
+    },
+    "/v1/store/claims/{claimId}/timeline": {
+      "get": {
+        "description": "Its visible steps and the SLA countdowns of the guarantee it follows: first response within its business days, decision within its business days of complete evidence (the clock stops while Packio waits for my answer), and who must act now (D-263, D-199).\n\nImplements: D-263, D-199, D-082.",
+        "operationId": "store.claims.getTimeline",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "claimId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "claimId": "0192f3a0-7c1e-7d2a-9b1f-0000000f3001",
+                  "events": [
+                    {
+                      "at": "2026-10-22T09:00:00+07:00",
+                      "type": "claim.submitted"
+                    },
+                    {
+                      "at": "2026-10-22T11:00:00+07:00",
+                      "type": "claim.under_review"
+                    }
+                  ],
+                  "sla": {
+                    "currentOwner": "packio",
+                    "decisionDueAt": "2026-10-27T09:00:00+07:00",
+                    "decisionOverdue": false,
+                    "guaranteeVersionNo": 1,
+                    "respondedAt": "2026-10-22T11:00:00+07:00",
+                    "responseDueAt": "2026-10-23T09:00:00+07:00",
+                    "responseOverdue": false
+                  },
+                  "status": "under_review"
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ClaimTimelineDto"
+                }
+              }
+            },
+            "description": "Timeline",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.unauthenticated": {
+                    "$ref": "#/components/examples/problem.auth.unauthenticated"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.unauthenticated`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.forbidden": {
+                    "$ref": "#/components/examples/problem.auth.forbidden"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.forbidden`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "404": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.not_found": {
+                    "$ref": "#/components/examples/problem.http.not_found"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.not_found`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "validation.failed": {
+                    "$ref": "#/components/examples/problem.validation.failed"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `validation.failed`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "customer": []
+          }
+        ],
+        "summary": "The progress of one of my claims",
         "tags": [
           "store.claims"
         ]
@@ -335764,6 +338244,180 @@
         ]
       }
     },
+    "/v1/store/guarantee": {
+      "get": {
+        "description": "The guarantee in force — the same version the claim engine applies: what a claim on Packio’s side gets per claim type and severity (reprint, refund, partial credit), the response and decision times in business days and the claim window. A claim whose cause is the customer’s (e.g. artwork the customer approved) gets no remedy; there is no late-delivery guarantee at launch (D-198, D-199, D-260, D-083).\n\nImplements: D-198, D-199, D-260, D-083, D-082.",
+        "operationId": "store.guarantee.get",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "claimWindowDays": 7,
+                  "decisionBusinessDays": 3,
+                  "effectiveFrom": "2026-01-01T00:00:00+07:00",
+                  "responseBusinessDays": 1,
+                  "rules": [
+                    {
+                      "claimType": "damaged",
+                      "remedies": [
+                        "reprint",
+                        "refund"
+                      ],
+                      "severity": "major"
+                    },
+                    {
+                      "claimType": "damaged",
+                      "remedies": [
+                        "partial_credit"
+                      ],
+                      "severity": "minor"
+                    },
+                    {
+                      "claimType": "late",
+                      "remedies": [],
+                      "severity": "major"
+                    }
+                  ],
+                  "versionNo": 1
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/PublicGuaranteeDto"
+                }
+              }
+            },
+            "description": "Guarantee",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.unauthenticated": {
+                    "$ref": "#/components/examples/problem.auth.unauthenticated"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.unauthenticated`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.forbidden": {
+                    "$ref": "#/components/examples/problem.auth.forbidden"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.forbidden`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "404": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.not_found": {
+                    "$ref": "#/components/examples/problem.http.not_found"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.not_found`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [],
+        "summary": "Packio’s guarantee",
+        "tags": [
+          "store.guarantee"
+        ]
+      }
+    },
     "/v1/store/instalments": {
       "get": {
         "description": "Newest group first; cancelled instalments are left out unless asked for with `status`. Each says which orders it pays for, whether it can be paid now and the payment already started on it (D-020, D-061).\n\nImplements: D-020, D-061.",
@@ -338177,6 +340831,178 @@
         "summary": "Ask for an export or the deletion of my data",
         "tags": [
           "store.me"
+        ]
+      }
+    },
+    "/v1/store/network/stats": {
+      "get": {
+        "description": "How partners are audited, which product types the network can make, and — only with at least `trust.network_min_factories` (3) active factories and `trust.network_min_jobs` (30) jobs completed in the last `trust.network_window_days` (90) days — the partner count and the on-time and first-pass rates rounded to whole %. Aggregates only: never a partner or the factory of an order (D-201, D-264, D-044).\n\nImplements: D-201, D-264, D-044.",
+        "operationId": "store.network.getStats",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "auditCriteria": [
+                    {
+                      "key": "site_visit",
+                      "labelEn": "Passed a site visit by the Partner team",
+                      "labelTh": "ผ่านการตรวจเยี่ยมโรงงานโดยทีมพาร์ทเนอร์"
+                    }
+                  ],
+                  "coverage": [
+                    {
+                      "available": true,
+                      "nameEn": "Folding carton",
+                      "nameTh": "กล่องกระดาษพับ",
+                      "productTypeCode": "folding_carton"
+                    }
+                  ],
+                  "generatedAt": "2026-10-03T10:00:00+07:00",
+                  "network": {
+                    "firstPassPct": null,
+                    "minFactories": 3,
+                    "minJobs": 30,
+                    "onTimePct": null,
+                    "partnerCount": null,
+                    "published": false,
+                    "windowDays": 90
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/NetworkStatsDto"
+                }
+              }
+            },
+            "description": "Statistics",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.unauthenticated": {
+                    "$ref": "#/components/examples/problem.auth.unauthenticated"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.unauthenticated`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.forbidden": {
+                    "$ref": "#/components/examples/problem.auth.forbidden"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.forbidden`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "404": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.not_found": {
+                    "$ref": "#/components/examples/problem.http.not_found"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.not_found`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [],
+        "summary": "Packio’s partner network in numbers",
+        "tags": [
+          "store.network"
         ]
       }
     },
@@ -343186,7 +346012,8 @@
                     "reprint",
                     "partial_refund",
                     "full_refund",
-                    "credit"
+                    "credit",
+                    "goodwill"
                   ],
                   "shipments": [
                     {
@@ -343438,8 +346265,20 @@
                     ]
                   },
                   "receivedAt": "2026-10-21T14:05:00+07:00",
+                  "remedy": null,
                   "requestedResolution": "reprint",
                   "resolutions": [],
+                  "sampleId": null,
+                  "severity": null,
+                  "sla": {
+                    "currentOwner": "packio",
+                    "decisionDueAt": "2026-10-27T09:00:00+07:00",
+                    "decisionOverdue": false,
+                    "guaranteeVersionNo": 1,
+                    "respondedAt": "2026-10-22T11:00:00+07:00",
+                    "responseDueAt": "2026-10-23T09:00:00+07:00",
+                    "responseOverdue": false
+                  },
                   "status": "submitted",
                   "submittedAt": "2026-10-22T09:00:00+07:00",
                   "tolerance": {
@@ -345195,7 +348034,9 @@
                   "id": "0192f3a0-7c1e-7d2a-9b1f-0000000b0010",
                   "orderCode": "OR-2610-0001",
                   "orderId": "0192f3a0-7c1e-7d2a-9b1f-0000000b0011",
+                  "productTypeCode": "folding_carton",
                   "rating": 5,
+                  "reply": null,
                   "rewardPoints": 4,
                   "status": "published"
                 },
@@ -345399,7 +348240,9 @@
                   "id": "0192f3a0-7c1e-7d2a-9b1f-0000000b0010",
                   "orderCode": "OR-2610-0001",
                   "orderId": "0192f3a0-7c1e-7d2a-9b1f-0000000b0011",
+                  "productTypeCode": "folding_carton",
                   "rating": 5,
+                  "reply": null,
                   "rewardPoints": 4,
                   "status": "published"
                 },
@@ -354176,6 +357019,487 @@
         "summary": "Use a friend’s referral code",
         "tags": [
           "store.referral"
+        ]
+      }
+    },
+    "/v1/store/reviews": {
+      "get": {
+        "description": "Published reviews of delivered orders, newest first, with the product type, Packio’s reply and an abbreviated name — never fabricated, never an order or a contact (D-202, D-265, D-181).\n\nImplements: D-202, D-265, D-181.",
+        "operationId": "store.reviews.listPublic",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "page",
+            "required": false,
+            "schema": {
+              "default": 1,
+              "minimum": 1,
+              "type": "integer"
+            }
+          },
+          {
+            "in": "query",
+            "name": "perPage",
+            "required": false,
+            "schema": {
+              "default": 25,
+              "maximum": 100,
+              "minimum": 1,
+              "type": "integer"
+            }
+          },
+          {
+            "description": "Sort field; each endpoint validates it against its own allow-list.",
+            "in": "query",
+            "name": "sort",
+            "required": false,
+            "schema": {
+              "example": "createdAt",
+              "maxLength": 64,
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "order",
+            "required": false,
+            "schema": {
+              "$ref": "#/components/schemas/SortOrder"
+            }
+          },
+          {
+            "description": "Free-text search",
+            "in": "query",
+            "name": "q",
+            "required": false,
+            "schema": {
+              "maxLength": 200,
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "productTypeCode",
+            "required": false,
+            "schema": {
+              "example": "folding_carton",
+              "pattern": "^[a-z][a-z0-9_]*$",
+              "type": "string"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "data": [
+                    {
+                      "comment": "กล่องสวย ส่งตรงเวลา",
+                      "createdAt": "2026-10-25T10:00:00+07:00",
+                      "id": "0192f3a0-7c1e-7d2a-9b1f-0000000b0010",
+                      "productTypeCode": "folding_carton",
+                      "productTypeNameEn": "Folding carton",
+                      "productTypeNameTh": "กล่องกระดาษพับ",
+                      "rating": 5,
+                      "reply": {
+                        "body": "ขอบคุณที่ไว้วางใจ Packio ครับ",
+                        "repliedAt": "2026-10-26T10:00:00+07:00"
+                      },
+                      "reviewerName": "สมหญิง ท."
+                    }
+                  ],
+                  "meta": {
+                    "page": 1,
+                    "perPage": 25,
+                    "total": 1
+                  }
+                },
+                "schema": {
+                  "properties": {
+                    "data": {
+                      "items": {
+                        "$ref": "#/components/schemas/PublicReviewDto"
+                      },
+                      "type": "array"
+                    },
+                    "meta": {
+                      "$ref": "#/components/schemas/PageMeta"
+                    }
+                  },
+                  "required": [
+                    "data",
+                    "meta"
+                  ],
+                  "type": "object"
+                }
+              }
+            },
+            "description": "One page of results",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.unauthenticated": {
+                    "$ref": "#/components/examples/problem.auth.unauthenticated"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.unauthenticated`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.forbidden": {
+                    "$ref": "#/components/examples/problem.auth.forbidden"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.forbidden`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "validation.failed": {
+                    "$ref": "#/components/examples/problem.validation.failed"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `validation.failed`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [],
+        "summary": "Customer reviews",
+        "tags": [
+          "store.publicReviews"
+        ]
+      }
+    },
+    "/v1/store/reviews/summary": {
+      "get": {
+        "description": "Count, average and distribution of published reviews, overall and per product type (D-202, D-265).\n\nImplements: D-202, D-265.",
+        "operationId": "store.reviews.getSummary",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "page",
+            "required": false,
+            "schema": {
+              "default": 1,
+              "minimum": 1,
+              "type": "integer"
+            }
+          },
+          {
+            "in": "query",
+            "name": "perPage",
+            "required": false,
+            "schema": {
+              "default": 25,
+              "maximum": 100,
+              "minimum": 1,
+              "type": "integer"
+            }
+          },
+          {
+            "description": "Sort field; each endpoint validates it against its own allow-list.",
+            "in": "query",
+            "name": "sort",
+            "required": false,
+            "schema": {
+              "example": "createdAt",
+              "maxLength": 64,
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "order",
+            "required": false,
+            "schema": {
+              "$ref": "#/components/schemas/SortOrder"
+            }
+          },
+          {
+            "description": "Free-text search",
+            "in": "query",
+            "name": "q",
+            "required": false,
+            "schema": {
+              "maxLength": 200,
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "productTypeCode",
+            "required": false,
+            "schema": {
+              "example": "folding_carton",
+              "pattern": "^[a-z][a-z0-9_]*$",
+              "type": "string"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "averageRating": "4.60",
+                  "byProductType": [
+                    {
+                      "averageRating": "4.60",
+                      "count": 15,
+                      "productTypeCode": "folding_carton"
+                    }
+                  ],
+                  "count": 15,
+                  "distribution": [
+                    {
+                      "count": 0,
+                      "rating": 1
+                    },
+                    {
+                      "count": 0,
+                      "rating": 2
+                    },
+                    {
+                      "count": 1,
+                      "rating": 3
+                    },
+                    {
+                      "count": 4,
+                      "rating": 4
+                    },
+                    {
+                      "count": 10,
+                      "rating": 5
+                    }
+                  ]
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ReviewSummaryDto"
+                }
+              }
+            },
+            "description": "Summary",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.unauthenticated": {
+                    "$ref": "#/components/examples/problem.auth.unauthenticated"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.unauthenticated`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.forbidden": {
+                    "$ref": "#/components/examples/problem.auth.forbidden"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.forbidden`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "validation.failed": {
+                    "$ref": "#/components/examples/problem.validation.failed"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `validation.failed`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [],
+        "summary": "Review ratings at a glance",
+        "tags": [
+          "store.publicReviews"
         ]
       }
     },
@@ -364417,6 +367741,10 @@
       "name": "admin.geographySubdistricts"
     },
     {
+      "description": "Guarantee policy versions (D-260): the CS Lead proposes SLAs and the remedy matrix, C-Level approves (D-200).",
+      "name": "admin.guaranteePolicies"
+    },
+    {
       "description": "Material price indices and cost-driver series behind the price suggestions (D-040).",
       "name": "admin.indexSeries"
     },
@@ -364845,6 +368173,10 @@
       "name": "store.files"
     },
     {
+      "description": "Packio’s published guarantee (D-198, D-199, D-260): remedies per claim type and severity, response and decision times, the claim window — the version the claim engine applies.",
+      "name": "store.guarantee"
+    },
+    {
       "description": "The shipments of my orders and confirming receipt (D-050, D-081).",
       "name": "store.logistics"
     },
@@ -364855,6 +368187,10 @@
     {
       "description": "The signed-in customer.",
       "name": "store.me"
+    },
+    {
+      "description": "Packio’s partner network in numbers (D-201, D-264): audit criteria, coverage by product type, and the partner count and rates above the published minimums — aggregates only.",
+      "name": "store.network"
     },
     {
       "description": "The signed-in customer's in-app notifications.",
@@ -364875,6 +368211,10 @@
     {
       "description": "Check a promotion code before the cart, and the codes I hold (D-053).",
       "name": "store.promotions"
+    },
+    {
+      "description": "Verified customer reviews (D-202, D-265): published reviews with the product type and Packio’s reply, and the rating summary — never fabricated.",
+      "name": "store.publicReviews"
     },
     {
       "description": "Instant price calculation per quantity (D-043, D-100); save it as a quotation with `store.savedQuotes` (D-051).",

@@ -1,7 +1,9 @@
 import { randomUUID } from 'node:crypto';
 
 import { DeliveryService } from '@modules/logistics/delivery.service';
+import { OpsSignalsService } from '@modules/ops/ops-signals.service';
 import { ProductionOversightService } from '@modules/production/production-oversight.service';
+import request from 'supertest';
 
 import { type DevFolding } from '../../prisma/seed/dev-folding';
 import {
@@ -496,5 +498,131 @@ describe('claims and reorder (e2e, B4.5)', () => {
     });
     // Paid and approved → production starts without a new proof.
     expect(reordered.productionJobs).toHaveLength(1);
+  });
+
+  it('follows the published guarantee: SLA clocks, owner, timeline, overdue signals and approved versions (D-260–D-263)', async () => {
+    // The public page and the engine read the same version (D-260).
+    const guarantee = (await request(ctx.server).get('/v1/store/guarantee').expect(200)).body as {
+      versionNo: number;
+      responseBusinessDays: number;
+      decisionBusinessDays: number;
+      rules: { claimType: string; severity: string; remedies: string[] }[];
+    };
+    expect(guarantee).toMatchObject({ versionNo: 1, responseBusinessDays: 1, decisionBusinessDays: 3 });
+    expect(guarantee.rules).toEqual(
+      expect.arrayContaining([
+        { claimType: 'damaged', severity: 'major', remedies: ['reprint', 'refund'] },
+        { claimType: 'damaged', severity: 'minor', remedies: ['partial_credit'] },
+        { claimType: 'late', severity: 'critical', remedies: [] },
+      ]),
+    );
+
+    const o = await deliveredOrder(7);
+    const submitted = (
+      await post(o.token, `/v1/store/orders/${o.orderId}/claims`, {
+        type: 'print_defect',
+        description: 'สีเพี้ยน (fake)',
+        requestedResolution: 'reprint',
+        shipmentId: o.shipmentId,
+        productPhotoFileIds: [await photo(o.token)],
+        cartonPhotoFileIds: [await photo(o.token)],
+      }).expect(201)
+    ).body as { id: string; sla: Record<string, unknown> };
+    expect(submitted.sla).toMatchObject({
+      respondedAt: null,
+      responseOverdue: false,
+      currentOwner: 'packio',
+      guaranteeVersionNo: 1,
+    });
+    expect(submitted.sla['responseDueAt']).toEqual(expect.any(String));
+    expect(submitted.sla['decisionDueAt']).toEqual(expect.any(String));
+
+    const cs = await staffToken(ctx, 'cs');
+    await post(cs, `/v1/admin/claims/${submitted.id}/actions/review`).expect(200);
+    await post(cs, `/v1/admin/claims/${submitted.id}/actions/request-info`, {
+      note: 'ขอรูปเพิ่ม (fake)',
+    }).expect(200);
+    let mine = (await as(ctx, o.token).get(`/v1/store/claims/${submitted.id}`).expect(200)).body as {
+      sla: Record<string, unknown>;
+    };
+    // Responded; the decision clock stops while Packio waits for the customer (D-263).
+    expect(mine.sla).toMatchObject({ currentOwner: 'customer', decisionDueAt: null });
+    expect(mine.sla['respondedAt']).toEqual(expect.any(String));
+    await post(o.token, `/v1/store/claims/${submitted.id}/info`, { response: 'แนบแล้ว (fake)' }).expect(200);
+    mine = (await as(ctx, o.token).get(`/v1/store/claims/${submitted.id}`).expect(200)).body;
+    expect(mine.sla).toMatchObject({ currentOwner: 'packio' });
+    expect(mine.sla['decisionDueAt']).toEqual(expect.any(String));
+    const timeline = (await as(ctx, o.token).get(`/v1/store/claims/${submitted.id}/timeline`).expect(200))
+      .body as {
+      events: { type: string }[];
+    };
+    expect(timeline.events.map((e) => e.type)).toEqual([
+      'claim.submitted',
+      'claim.under_review',
+      'claim.info_requested',
+      'claim.info_provided',
+    ]);
+
+    // Overdue claims raise the ops signals (D-263).
+    await ctx.prisma
+      .$executeRaw`UPDATE claims SET decision_due_at = now() - interval '1 hour' WHERE public_id = ${submitted.id}::uuid`;
+    const signals = await ctx.app.get(OpsSignalsService).values();
+    expect(signals.claim_decision_overdue).toBeGreaterThanOrEqual(1);
+    mine = (await as(ctx, o.token).get(`/v1/store/claims/${submitted.id}`).expect(200)).body;
+    expect(mine.sla).toMatchObject({ decisionOverdue: true });
+
+    // A new version: the CS Lead proposes, C-Level approves, it never applies backwards (D-200, D-260).
+    const lead = await staffToken(ctx, 'cs_lead');
+    const body = {
+      effectiveFrom: new Date(Date.now() + 30 * DAY).toISOString(),
+      responseBusinessDays: 1,
+      decisionBusinessDays: 2,
+      reason: 'ตัดสินเร็วขึ้น (fake)',
+      rules: [{ claimType: 'late', severity: 'major', remedies: ['partial_credit'] }],
+    };
+    await post(cs, '/v1/admin/guarantee-policies', body).expect(403);
+    const proposed = (await post(lead, '/v1/admin/guarantee-policies', body).expect(201)).body as {
+      id: string;
+      versionNo: number;
+      status: string;
+      approvalRequestId: string;
+    };
+    expect(proposed).toMatchObject({ versionNo: 2, status: 'proposed' });
+    expect((await post(lead, '/v1/admin/guarantee-policies', body).expect(409)).body.code).toBe(
+      'guarantee.version_pending',
+    );
+    await post(lead, `/v1/admin/approvals/${proposed.approvalRequestId}/actions/approve`, {}).expect(403);
+    await post(
+      await staffToken(ctx, 'c_level'),
+      `/v1/admin/approvals/${proposed.approvalRequestId}/actions/approve`,
+      {},
+    ).expect(200);
+    await ctx.pump();
+    const approved = (await as(ctx, lead).get(`/v1/admin/guarantee-policies/${proposed.id}`).expect(200))
+      .body;
+    expect(approved.status).toBe('approved');
+    // Effective in 30 days: today's page still shows version 1.
+    expect((await request(ctx.server).get('/v1/store/guarantee').expect(200)).body.versionNo).toBe(1);
+
+    // Network statistics (D-201, D-264): below the minimums every figure is null — never a factory.
+    const stats = (await request(ctx.server).get('/v1/store/network/stats').expect(200)).body as {
+      coverage: { productTypeCode: string; available: boolean }[];
+      network: Record<string, unknown>;
+      auditCriteria: unknown[];
+    };
+    expect(stats.network).toMatchObject({
+      published: false,
+      minFactories: 3,
+      minJobs: 30,
+      windowDays: 90,
+      partnerCount: null,
+      onTimePct: null,
+      firstPassPct: null,
+    });
+    expect(stats.coverage.find((c) => c.productTypeCode === 'folding_carton')).toMatchObject({
+      available: true,
+    });
+    expect(stats.auditCriteria).toEqual([]);
+    expect(JSON.stringify(stats)).not.toContain(fixture.factoryPublicId);
   });
 });

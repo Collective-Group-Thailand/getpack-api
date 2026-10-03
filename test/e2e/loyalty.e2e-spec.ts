@@ -6,6 +6,7 @@ import { LoyaltyService } from '@modules/loyalty/loyalty.service';
 import { OrdersService } from '@modules/orders/orders.service';
 import { PaymentSchedulesService } from '@modules/payment-schedules/payment-schedules.service';
 import { type DomainEventEnvelope, envelopeFromRow } from '@platform/domain-events/domain-event';
+import request from 'supertest';
 
 import { type DevFolding } from '../../prisma/seed/dev-folding';
 import {
@@ -289,12 +290,16 @@ describe('loyalty points (e2e, B3.4)', () => {
     ).toBe(1);
   });
 
-  it('rewards one review of a delivered order (D-135) and lets CS hide it', async () => {
+  it('rewards one review of a delivered order (D-135); Marketing moderates, CS replies, the public sees it (D-265)', async () => {
     const { token, orderId } = completed;
     const review = await as(ctx, token)
       .post(`/v1/store/orders/${orderId}/review`, { rating: 5, comment: 'ดีมาก' })
       .expect(201);
-    expect(review.body).toMatchObject({ rating: 5, status: 'published', rewardPoints: 4 });
+    expect(review.body).toMatchObject({ rating: 5, status: 'published', rewardPoints: 4, reply: null });
+    const row = await ctx.prisma.orderReview.findFirstOrThrow({
+      where: { publicId: review.body.id as string },
+    });
+    expect(row.orderLineId).not.toBeNull();
     await as(ctx, token)
       .post(`/v1/store/orders/${orderId}/review`, { rating: 4 })
       .expect(409)
@@ -315,12 +320,41 @@ describe('loyalty points (e2e, B3.4)', () => {
       .post(`/v1/store/orders/${other.body.orders[0].id as string}/review`, { rating: 5 })
       .expect(409);
 
-    const csLead = await staffToken(ctx, 'cs-lead');
-    const hidden = await as(ctx, csLead)
+    // D-265: CS replies (an edit is audited); the public list shows it with an abbreviated name.
+    const cs = await staffToken(ctx, 'cs');
+    await as(ctx, cs)
+      .put(`/v1/admin/reviews/${review.body.id as string}/reply`, { body: 'ขอบคุณครับ (fake)' })
+      .expect(200);
+    const replied = await as(ctx, cs)
+      .put(`/v1/admin/reviews/${review.body.id as string}/reply`, { body: 'ขอบคุณที่ไว้วางใจครับ (fake)' })
+      .expect(200);
+    expect(replied.body.reply).toMatchObject({ body: 'ขอบคุณที่ไว้วางใจครับ (fake)' });
+    expect(
+      await ctx.prisma.auditLog.count({
+        where: { action: 'review.reply_edited', resourcePublicId: review.body.id },
+      }),
+    ).toBe(1);
+    const listed = await request(ctx.server).get('/v1/store/reviews?perPage=100').expect(200);
+    const mine = (listed.body.data as { id: string; reviewerName: string; productTypeCode: string }[]).find(
+      (r) => r.id === review.body.id,
+    )!;
+    expect(mine.productTypeCode).toEqual(expect.any(String));
+    expect(JSON.stringify(listed.body)).not.toContain(orderId);
+    const summary = await request(ctx.server).get('/v1/store/reviews/summary').expect(200);
+    expect(summary.body.count).toBeGreaterThanOrEqual(1);
+
+    // D-265: moderation is Marketing's only.
+    await as(ctx, await staffToken(ctx, 'cs-lead'))
+      .post(`/v1/admin/reviews/${review.body.id as string}/actions/hide`)
+      .expect(403);
+    const marketing = await staffToken(ctx, 'marketing');
+    const hidden = await as(ctx, marketing)
       .post(`/v1/admin/reviews/${review.body.id as string}/actions/hide`)
       .expect(200);
     expect(hidden.body).toMatchObject({ status: 'hidden', rewardPoints: 4 });
-    await as(ctx, await staffToken(ctx, 'cs'))
+    const afterHide = await request(ctx.server).get('/v1/store/reviews?perPage=100').expect(200);
+    expect((afterHide.body.data as { id: string }[]).map((r) => r.id)).not.toContain(review.body.id);
+    await as(ctx, cs)
       .post(`/v1/admin/reviews/${review.body.id as string}/actions/publish`)
       .expect(403);
   });

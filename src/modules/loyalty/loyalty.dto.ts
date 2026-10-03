@@ -7,6 +7,7 @@ import {
   IsInt,
   IsOptional,
   IsString,
+  Matches,
   Max,
   MaxLength,
   Min,
@@ -215,8 +216,101 @@ export class ReviewDto {
   @ApiProperty({ type: 'integer', example: 4, description: 'Points the review earned (D-135)' })
   rewardPoints!: number;
 
+  @ApiProperty({ example: 'folding_carton', description: 'The product type reviewed (D-202)' })
+  productTypeCode!: string;
+
+  @ApiProperty({ type: () => ReviewReplyDto, nullable: true, description: 'Packio’s reply (D-265)' })
+  reply!: ReviewReplyDto | null;
+
   @ApiProperty({ format: 'date-time', example: '2026-10-25T10:00:00+07:00' })
   createdAt!: string;
+}
+
+export class ReviewReplyDto {
+  @ApiProperty({ example: 'ขอบคุณที่ไว้วางใจ Packio ครับ' })
+  body!: string;
+
+  @ApiProperty({ format: 'date-time', example: '2026-10-26T10:00:00+07:00' })
+  repliedAt!: string;
+}
+
+export class ReplyReviewDto {
+  @ApiProperty({ example: 'ขอบคุณที่ไว้วางใจ Packio ครับ', minLength: 2, maxLength: 2000 })
+  @IsString()
+  @MinLength(2)
+  @MaxLength(2000)
+  body!: string;
+}
+
+/** What the public sees (D-202, D-265): no order, no customer beyond an abbreviated name. */
+export class PublicReviewDto {
+  @ApiProperty({ format: 'uuid', example: '0192f3a0-7c1e-7d2a-9b1f-0000000b0010' })
+  id!: string;
+
+  @ApiProperty({ type: 'integer', example: 5 })
+  rating!: number;
+
+  @ApiProperty({ type: String, nullable: true, example: 'กล่องสวย ส่งตรงเวลา' })
+  comment!: string | null;
+
+  @ApiProperty({ example: 'สมหญิง ท.', description: 'First name and the initial of the last name' })
+  reviewerName!: string;
+
+  @ApiProperty({ example: 'folding_carton' })
+  productTypeCode!: string;
+
+  @ApiProperty({ example: 'กล่องกระดาษพับ' })
+  productTypeNameTh!: string;
+
+  @ApiProperty({ example: 'Folding carton' })
+  productTypeNameEn!: string;
+
+  @ApiProperty({ type: ReviewReplyDto, nullable: true })
+  reply!: ReviewReplyDto | null;
+
+  @ApiProperty({ format: 'date-time', example: '2026-10-25T10:00:00+07:00' })
+  createdAt!: string;
+}
+
+export class ReviewRatingCountDto {
+  @ApiProperty({ type: 'integer', example: 5 })
+  rating!: number;
+
+  @ApiProperty({ type: 'integer', example: 12 })
+  count!: number;
+}
+
+export class ReviewTypeSummaryDto {
+  @ApiProperty({ example: 'folding_carton' })
+  productTypeCode!: string;
+
+  @ApiProperty({ type: 'integer', example: 12 })
+  count!: number;
+
+  @ApiProperty({ type: String, nullable: true, example: '4.75' })
+  averageRating!: string | null;
+}
+
+export class ReviewSummaryDto {
+  @ApiProperty({ type: 'integer', example: 15 })
+  count!: number;
+
+  @ApiProperty({ type: String, nullable: true, example: '4.60', description: 'Null without reviews' })
+  averageRating!: string | null;
+
+  @ApiProperty({ type: [ReviewRatingCountDto] })
+  distribution!: ReviewRatingCountDto[];
+
+  @ApiProperty({ type: [ReviewTypeSummaryDto] })
+  byProductType!: ReviewTypeSummaryDto[];
+}
+
+export class PublicReviewQuery extends PageQuery {
+  @ApiPropertyOptional({ example: 'folding_carton', pattern: '^[a-z][a-z0-9_]*$' })
+  @IsOptional()
+  @IsString()
+  @Matches(/^[a-z][a-z0-9_]*$/)
+  productTypeCode?: string;
 }
 
 export class AdminReviewDto extends ReviewDto {
@@ -232,7 +326,34 @@ export const REVIEW_EXAMPLE: ReviewDto = {
   comment: 'กล่องสวย ส่งตรงเวลา',
   status: 'published',
   rewardPoints: 4,
+  productTypeCode: 'folding_carton',
+  reply: null,
   createdAt: '2026-10-25T10:00:00+07:00',
+};
+
+export const PUBLIC_REVIEW_EXAMPLE: PublicReviewDto = {
+  id: '0192f3a0-7c1e-7d2a-9b1f-0000000b0010',
+  rating: 5,
+  comment: 'กล่องสวย ส่งตรงเวลา',
+  reviewerName: 'สมหญิง ท.',
+  productTypeCode: 'folding_carton',
+  productTypeNameTh: 'กล่องกระดาษพับ',
+  productTypeNameEn: 'Folding carton',
+  reply: { body: 'ขอบคุณที่ไว้วางใจ Packio ครับ', repliedAt: '2026-10-26T10:00:00+07:00' },
+  createdAt: '2026-10-25T10:00:00+07:00',
+};
+
+export const REVIEW_SUMMARY_EXAMPLE: ReviewSummaryDto = {
+  count: 15,
+  averageRating: '4.60',
+  distribution: [
+    { rating: 1, count: 0 },
+    { rating: 2, count: 0 },
+    { rating: 3, count: 1 },
+    { rating: 4, count: 4 },
+    { rating: 5, count: 10 },
+  ],
+  byProductType: [{ productTypeCode: 'folding_carton', count: 15, averageRating: '4.60' }],
 };
 
 export const ADMIN_REVIEW_EXAMPLE: AdminReviewDto = {

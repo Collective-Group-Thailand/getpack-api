@@ -5,6 +5,7 @@ import { PrismaService } from '@database/prisma.service';
 import { type Prisma } from '@generated/prisma/client';
 import { sizeRulesOf } from '@modules/catalog/store/size-rules';
 import { Injectable } from '@nestjs/common';
+import { SettingsService } from '@platform/settings/settings.service';
 
 import { StyleMakeabilityService } from './style-makeability.service';
 import { MULTI_SELECT_AXES } from './style-master';
@@ -27,8 +28,6 @@ const CLOSURE_AXES: ReadonlySet<string> = new Set([
   'mailer_front',
   'lid_depth',
 ]);
-/** D-201: a partners count is shown only with this many active factories. */
-const MIN_PUBLIC_FACTORIES = 3;
 const POPULAR_WINDOW_DAYS = 90;
 
 const LIBRARY_INCLUDE = {
@@ -85,6 +84,7 @@ export class StylesStoreService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly makeability: StyleMakeabilityService,
+    private readonly settings: SettingsService,
   ) {}
 
   async list(query: StyleListQuery, userId: bigint | null): Promise<StyleListDto> {
@@ -227,7 +227,11 @@ export class StylesStoreService {
       variants: row.variants.map((v) => ({ code: v.code, options: v.options as Record<string, unknown> })),
       sizeRanges: sizeRanges(row),
       leadTime,
-      partnersCount: factories.length >= MIN_PUBLIC_FACTORIES ? factories.length : null,
+      // D-201 / D-264: shown only with the published network minimum of active factories.
+      partnersCount:
+        factories.length >= (await this.settings.at('trust.network_min_factories')).value
+          ? factories.length
+          : null,
       useCases: row.useCases.map((u) => u.code),
       assets: row.assets.map((a) => ({
         kind: a.kind,

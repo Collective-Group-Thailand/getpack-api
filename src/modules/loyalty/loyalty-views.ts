@@ -4,6 +4,7 @@ import {
   type AdminReviewDto,
   type LoyaltySummaryDto,
   type PointsEntryDto,
+  type PublicReviewDto,
   type ReviewDto,
 } from './loyalty.dto';
 import { type LedgerRow, type LoyaltyService } from './loyalty.service';
@@ -43,6 +44,34 @@ export function reviewDto(r: ReviewRow): ReviewDto {
     comment: r.comment,
     status: r.status,
     rewardPoints: r.pointsEntries.reduce((a, e) => a + e.points, 0),
+    productTypeCode: r.order.productType.code,
+    reply: replyOf(r),
+    createdAt: toBangkokIso(r.createdAt),
+  };
+}
+
+function replyOf(r: ReviewRow) {
+  return r.replyBody && r.repliedAt ? { body: r.replyBody, repliedAt: toBangkokIso(r.repliedAt) } : null;
+}
+
+/** D-265: first name and the initial of the last name ("สมหญิง ท."); one word stays as it is. */
+export function abbreviatedName(displayName: string): string {
+  const words = displayName.trim().split(/\s+/).filter(Boolean);
+  if (words.length === 0) return '—';
+  if (words.length === 1) return words[0]!;
+  return `${words[0]} ${[...words.at(-1)!][0]}.`;
+}
+
+export function publicReviewDto(r: ReviewRow): PublicReviewDto {
+  return {
+    id: r.publicId,
+    rating: r.rating,
+    comment: r.comment,
+    reviewerName: abbreviatedName(r.user.displayName),
+    productTypeCode: r.order.productType.code,
+    productTypeNameTh: r.order.productType.nameTh,
+    productTypeNameEn: r.order.productType.nameEn,
+    reply: replyOf(r),
     createdAt: toBangkokIso(r.createdAt),
   };
 }
