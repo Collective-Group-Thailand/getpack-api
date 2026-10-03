@@ -1,5 +1,6 @@
 import { randomUUID } from 'node:crypto';
 
+import { addCalendarDays, bangkokDate } from '@common/time/bangkok';
 import request from 'supertest';
 
 import { type DevFolding } from '../../prisma/seed/dev-folding';
@@ -195,8 +196,9 @@ describe('studio collaboration (e2e, U4.B6)', () => {
     const ingested = await request(ctx.server).post('/v1/store/analytics/events').send({ events });
     expect(ingested.status).toBeLessThan(300);
     const admin = await staffToken(ctx, 'admin');
-    const day = new Date().toISOString().slice(0, 10);
-    const yesterday = new Date(Date.now() - 86_400_000).toISOString().slice(0, 10);
+    // Bangkok days: the UTC date is yesterday before 07:00 in Bangkok.
+    const day = bangkokDate(new Date());
+    const yesterday = addCalendarDays(day, -1);
     const report = await as(ctx, admin)
       .get(`/v1/admin/analytics/studio-funnel?from=${yesterday}&to=${day}`)
       .expect(200);
