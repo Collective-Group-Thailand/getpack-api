@@ -12,6 +12,16 @@ export const UNMET_DEMAND_REASONS = [
   { code: 'expired', nameTh: 'หมดอายุ', nameEn: 'Expired' },
 ] as const;
 
+/** D-250 why a customer declined a quotation (optional for the customer, U2.3). */
+export const QUOTE_LOSS_REASONS = [
+  { code: 'price', nameTh: 'ราคาสูงกว่างบประมาณ', nameEn: 'Price above budget' },
+  { code: 'lead_time', nameTh: 'ระยะเวลาผลิตนานเกินไป', nameEn: 'Lead time too long' },
+  { code: 'specification', nameTh: 'สเปกไม่ตรงความต้องการ', nameEn: 'Specification does not fit' },
+  { code: 'bought_elsewhere', nameTh: 'สั่งซื้อจากที่อื่นแล้ว', nameEn: 'Bought elsewhere' },
+  { code: 'no_longer_needed', nameTh: 'ไม่ต้องการแล้ว', nameEn: 'No longer needed' },
+  { code: 'other', nameTh: 'อื่น ๆ', nameEn: 'Other' },
+] as const;
+
 /**
  * Pricing feature flags (U-B6 tail, U2.2): a ported engine or the Structure Advisor stays off until its validation
  * document is signed (A-16, D-100, D-189).

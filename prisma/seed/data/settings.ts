@@ -728,6 +728,48 @@ export const SETTINGS: readonly SettingSeed[] = [
     description: 'D-160 minimum factories per breakdown in anonymised exports and the partner prospectus',
     decisions: ['D-160', 'D-044'],
   },
+  {
+    key: 'analytics.target_price_min_group_size',
+    valueType: 'integer',
+    value: 5,
+    valueSchema: { minimum: 1, maximum: 100 },
+    description:
+      'D-190 / D-252 minimum distinct customers per cell for any figure built from customers’ target prices (prospectus and staff views)',
+    decisions: ['D-190', 'D-252'],
+    ownerRole: 'superadmin',
+  },
+  {
+    key: 'analytics.price_gap_bands_pct',
+    valueType: 'json',
+    value: [10, 25, 50],
+    valueSchema: {
+      type: 'array',
+      minItems: 1,
+      maxItems: 10,
+      items: { type: 'number', exclusiveMinimum: 0, maximum: 1000 },
+    },
+    description:
+      'D-252 upper bounds (% of the target) of the price-gap bands of unmet demand, ascending: [10, 25, 50] → 0-10, 10-25, 25-50, 50+',
+    decisions: ['D-252'],
+    confirmation: 'proposed',
+    ownerRole: 'superadmin',
+  },
+  {
+    key: 'quotes.lever_quantity_multipliers',
+    valueType: 'json',
+    value: [2, 5],
+    valueSchema: {
+      type: 'array',
+      minItems: 1,
+      maxItems: 5,
+      items: { type: 'number', exclusiveMinimum: 1, maximum: 100 },
+    },
+    description:
+      'D-248 quantity levers when the catalogue product has no preset quantity above the quoted: the largest quoted quantity × each multiplier',
+    decisions: ['D-248'],
+    confirmation: 'proposed',
+    ownerRole: 'superadmin',
+  },
 
   // --- Artwork (U-B0.1): the proof approval checklist. No decision gives the items: definition only.
   {

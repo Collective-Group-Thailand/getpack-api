@@ -510,6 +510,10 @@ enum QuoteStatus {
   converted
   expired
   superseded
+  /// D-250: the customer declined the quotation (outcome `lost`).
+  declined
+  /// D-251: the customer sent the quotation to CS as a pre-filled RFQ (outcome `converted_to_rfq`).
+  routed_to_rfq
 
   @@map("quote_status")
 }
@@ -561,6 +565,12 @@ model Quote {
   /// D-240: the Structure Advisor recommendation and choice the customer saved this quotation from; set once.
   advisoryRecommendationId BigInt?      @map("advisory_recommendation_id")
   advisoryChoiceId         BigInt?      @map("advisory_choice_id")
+  /// D-247: the customer's target per unit (THB incl. VAT, excl. shipping); set once at save, never shown to a partner.
+  targetPricePerUnit       Decimal?     @map("target_price_per_unit") @db.Decimal(14, 2)
+  /// D-249: the lever of an earlier quotation this one was saved from; set once.
+  fromLeverId              BigInt?      @unique(map: "ux_quotes__from_lever_id") @map("from_lever_id")
+  /// D-248: when the levers were computed (once; none found is still computed).
+  leversComputedAt         DateTime?    @map("levers_computed_at") @db.Timestamptz(6)
 
   entity         Entity          @relation("QuoteEntity", fields: [entityId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_quotes__entity_id")
   rfqQuote       RfqQuote?       @relation("QuoteRfqQuote", fields: [rfqQuoteId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_quotes__rfq_quote_id")
@@ -586,6 +596,12 @@ model Quote {
   discountMemos          DiscountMemo[]          @relation("DiscountMemoQuote")
 
   configurationDrafts ConfigurationDraft[] @relation("ConfigurationDraftQuote")
+
+  fromLever   QuoteLever?         @relation("QuoteFromLever", fields: [fromLeverId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_quotes__from_lever_id")
+  levers      QuoteLever[]        @relation("QuoteLevers")
+  outcome     QuoteOutcome?       @relation("QuoteOutcomeQuote")
+  routedRfq   Rfq?                @relation("RfqRoutedFromQuote")
+  unmetDemand UnmetDemandRecord[] @relation("UnmetDemandQuote")
 
   @@index([advisoryRecommendationId], map: "ix_quotes__advisory_recommendation_id")
   @@index([advisoryChoiceId], map: "ix_quotes__advisory_choice_id")
@@ -697,6 +713,8 @@ enum UnmetDemandSource {
   no_price_path
   capability_missing
   capacity_limited
+  /// D-252: a quotation with a target ended lost / expired / sent to CS above its target.
+  price_above_target
 
   @@map("unmet_demand_source")
 }
@@ -731,6 +749,10 @@ model Rfq {
   slaDueAt                 DateTime?        @map("sla_due_at") @db.Timestamptz(6)
   firstResponseAt          DateTime?        @map("first_response_at") @db.Timestamptz(6)
   routedFromCalculateLogId BigInt?          @map("routed_from_calculate_log_id")
+  /// D-251: the saved quotation the customer sent to CS (store.quotes.sendToCs).
+  routedFromQuoteId        BigInt?          @unique(map: "ux_rfqs__routed_from_quote_id") @map("routed_from_quote_id")
+  /// D-247: the customer's target per unit (THB incl. VAT, excl. shipping); staff only, never shown to a partner (D-190).
+  targetPricePerUnit       Decimal?         @map("target_price_per_unit") @db.Decimal(14, 2)
   acceptedQuoteId          BigInt?          @unique(map: "ux_rfqs__accepted_quote_id") @map("accepted_quote_id")
   submittedAt              DateTime         @default(now()) @map("submitted_at") @db.Timestamptz(6)
   closedAt                 DateTime?        @map("closed_at") @db.Timestamptz(6)
@@ -738,21 +760,23 @@ model Rfq {
   updatedAt                DateTime         @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
   rowVersion               Int              @default(1) @map("row_version")
 
-  entity        Entity                   @relation("RfqEntity", fields: [entityId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_rfqs__entity_id")
-  customer      User                     @relation("RfqCustomer", fields: [customerUserId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_rfqs__customer_user_id")
-  createdBy     User?                    @relation("RfqCreatedBy", fields: [createdById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_rfqs__created_by")
-  assignedTo    User?                    @relation("RfqAssignedTo", fields: [assignedToUserId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_rfqs__assigned_to_user_id")
-  productType   ProductType              @relation("RfqProductType", fields: [productTypeId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_rfqs__product_type_id")
-  province      GeoProvince?             @relation("RfqProvince", fields: [provinceId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_rfqs__province_id")
-  declineReason UnmetDemandReason?       @relation(fields: [declineReasonId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_rfqs__decline_reason_id")
-  acceptedQuote Quote?                   @relation("RfqAcceptedQuote", fields: [acceptedQuoteId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_rfqs__accepted_quote_id")
-  tiers         RfqQuantityTier[]
-  messages      RfqMessage[]
-  consultations RfqFactoryConsultation[]
-  quotes        RfqQuote[]
-  unmetDemand   UnmetDemandRecord[]
+  entity          Entity                   @relation("RfqEntity", fields: [entityId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_rfqs__entity_id")
+  customer        User                     @relation("RfqCustomer", fields: [customerUserId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_rfqs__customer_user_id")
+  createdBy       User?                    @relation("RfqCreatedBy", fields: [createdById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_rfqs__created_by")
+  assignedTo      User?                    @relation("RfqAssignedTo", fields: [assignedToUserId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_rfqs__assigned_to_user_id")
+  productType     ProductType              @relation("RfqProductType", fields: [productTypeId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_rfqs__product_type_id")
+  province        GeoProvince?             @relation("RfqProvince", fields: [provinceId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_rfqs__province_id")
+  declineReason   UnmetDemandReason?       @relation(fields: [declineReasonId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_rfqs__decline_reason_id")
+  acceptedQuote   Quote?                   @relation("RfqAcceptedQuote", fields: [acceptedQuoteId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_rfqs__accepted_quote_id")
+  routedFromQuote Quote?                   @relation("RfqRoutedFromQuote", fields: [routedFromQuoteId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_rfqs__routed_from_quote_id")
+  tiers           RfqQuantityTier[]
+  messages        RfqMessage[]
+  consultations   RfqFactoryConsultation[]
+  quotes          RfqQuote[]
+  unmetDemand     UnmetDemandRecord[]
 
   configurationDrafts ConfigurationDraft[] @relation("ConfigurationDraftRfq")
+  quoteOutcomes       QuoteOutcome[]       @relation("QuoteOutcomeRfq")
 
   @@index([customerUserId, submittedAt(sort: Desc)], map: "ix_rfqs__customer_user_id__submitted_at")
   @@index([status, slaDueAt], map: "ix_rfqs__status__sla_due_at")
@@ -917,16 +941,24 @@ model UnmetDemandRecord {
   rfqId          BigInt?           @map("rfq_id")
   calculateLogId BigInt?           @map("calculate_log_id")
   domainEventId  String?           @unique(map: "ux_unmet_demand_records__domain_event_id") @map("domain_event_id") @db.Uuid
+  /// D-252: the quotation that ended above its target (source price_above_target).
+  quoteId        BigInt?           @map("quote_id")
+  /// D-252: gap band in % of the target (`0-10`, `10-25`, `25-50`, `50+` from analytics.price_gap_bands_pct).
+  priceGapBand   String?           @map("price_gap_band")
+  /// Distinct-customer key for k-anonymity (`c:<company>`, `u:<user>`, `a:<anonymous id>`); never exported.
+  customerKey    String?           @map("customer_key")
 
   reason      UnmetDemandReason? @relation(fields: [reasonId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_unmet_demand_records__reason_id")
   productType ProductType        @relation("UnmetDemandProductType", fields: [productTypeId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_unmet_demand_records__product_type_id")
   province    GeoProvince?       @relation("UnmetDemandProvince", fields: [provinceId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_unmet_demand_records__province_id")
   rfq         Rfq?               @relation(fields: [rfqId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_unmet_demand_records__rfq_id")
+  quote       Quote?             @relation("UnmetDemandQuote", fields: [quoteId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_unmet_demand_records__quote_id")
 
   @@index([productTypeId, occurredAt], map: "ix_unmet_demand_records__product_type_id__occurred_at")
   @@index([reasonId], map: "ix_unmet_demand_records__reason_id")
   @@index([provinceId], map: "ix_unmet_demand_records__province_id")
   @@index([rfqId], map: "ix_unmet_demand_records__rfq_id")
+  @@index([quoteId], map: "ix_unmet_demand_records__quote_id")
   @@index([occurredAt], map: "ix_unmet_demand_records__occurred_at")
   @@map("unmet_demand_records")
 }
@@ -942,27 +974,29 @@ enum ConfigurationDraftStatus {
 /// D-185 (U2.1, A-83): an incomplete configuration a signed-in customer keeps, resumes, shares and converts to a quote
 /// or an RFQ; deleted `configurations.draft_retention_days` after its last change.
 model ConfigurationDraft {
-  id               BigInt                   @id(map: "pk_configuration_drafts") @default(autoincrement())
-  publicId         String                   @unique(map: "ux_configuration_drafts__public_id") @default(dbgenerated("uuidv7()")) @map("public_id") @db.Uuid
-  ownerUserId      BigInt                   @map("owner_user_id")
-  productTypeId    BigInt                   @map("product_type_id")
-  catalogProductId BigInt?                  @map("catalog_product_id")
-  title            String?
-  configuration    Json                     @default("{}")
+  id                 BigInt                   @id(map: "pk_configuration_drafts") @default(autoincrement())
+  publicId           String                   @unique(map: "ux_configuration_drafts__public_id") @default(dbgenerated("uuidv7()")) @map("public_id") @db.Uuid
+  ownerUserId        BigInt                   @map("owner_user_id")
+  productTypeId      BigInt                   @map("product_type_id")
+  catalogProductId   BigInt?                  @map("catalog_product_id")
+  title              String?
+  configuration      Json                     @default("{}")
   /// 0–100: the share of the calculator's required fields given (D-185).
-  completenessPct  Decimal                  @default(0) @map("completeness_pct") @db.Decimal(5, 2)
-  missingFields    String[]                 @default([]) @map("missing_fields")
-  status           ConfigurationDraftStatus @default(open)
-  convertedQuoteId BigInt?                  @map("converted_quote_id")
-  convertedRfqId   BigInt?                  @map("converted_rfq_id")
-  shareTokenHash   Bytes?                   @unique(map: "ux_configuration_drafts__share_token_hash") @map("share_token_hash")
-  sharedAt         DateTime?                @map("shared_at") @db.Timestamptz(6)
-  shareExpiresAt   DateTime?                @map("share_expires_at") @db.Timestamptz(6)
-  lastChangedAt    DateTime                 @default(now()) @map("last_changed_at") @db.Timestamptz(6)
-  expiresAt        DateTime                 @map("expires_at") @db.Timestamptz(6)
-  createdAt        DateTime                 @default(now()) @map("created_at") @db.Timestamptz(6)
-  updatedAt        DateTime                 @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
-  rowVersion       Int                      @default(1) @map("row_version")
+  completenessPct    Decimal                  @default(0) @map("completeness_pct") @db.Decimal(5, 2)
+  missingFields      String[]                 @default([]) @map("missing_fields")
+  /// D-247: the customer's target per unit (THB incl. VAT, excl. shipping), carried to the quote or RFQ.
+  targetPricePerUnit Decimal?                 @map("target_price_per_unit") @db.Decimal(14, 2)
+  status             ConfigurationDraftStatus @default(open)
+  convertedQuoteId   BigInt?                  @map("converted_quote_id")
+  convertedRfqId     BigInt?                  @map("converted_rfq_id")
+  shareTokenHash     Bytes?                   @unique(map: "ux_configuration_drafts__share_token_hash") @map("share_token_hash")
+  sharedAt           DateTime?                @map("shared_at") @db.Timestamptz(6)
+  shareExpiresAt     DateTime?                @map("share_expires_at") @db.Timestamptz(6)
+  lastChangedAt      DateTime                 @default(now()) @map("last_changed_at") @db.Timestamptz(6)
+  expiresAt          DateTime                 @map("expires_at") @db.Timestamptz(6)
+  createdAt          DateTime                 @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt          DateTime                 @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+  rowVersion         Int                      @default(1) @map("row_version")
 
   owner          User            @relation("ConfigurationDraftOwner", fields: [ownerUserId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_configuration_drafts__owner_user_id")
   productType    ProductType     @relation("ConfigurationDraftProductType", fields: [productTypeId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_configuration_drafts__product_type_id")
@@ -977,4 +1011,105 @@ model ConfigurationDraft {
   @@index([convertedQuoteId], map: "ix_configuration_drafts__converted_quote_id")
   @@index([convertedRfqId], map: "ix_configuration_drafts__converted_rfq_id")
   @@map("configuration_drafts")
+}
+
+// --- Target price, levers, outcomes (U2.3, D-247–D-252, schema-design A-89) ---------------------------
+
+/// D-248: what a lever changes.
+enum QuoteLeverKind {
+  quantity
+  material
+  back_print
+  special_finish
+  coating
+  assembly
+
+  @@map("quote_lever_kind")
+}
+
+/// D-248 (A-89): one alternative to a saved quotation above its target, re-priced by the real engine; write-once,
+/// computed on the first request and valid until the quotation's `valid_until`.
+model QuoteLever {
+  id            BigInt         @id(map: "pk_quote_levers") @default(autoincrement())
+  publicId      String         @unique(map: "ux_quote_levers__public_id") @default(dbgenerated("uuidv7()")) @map("public_id") @db.Uuid
+  quoteId       BigInt         @map("quote_id")
+  rank          Int            @db.SmallInt
+  kind          QuoteLeverKind
+  /// The fields changed against the quotation's configuration (path → { from, to }).
+  changes       Json
+  /// The full configuration the lever was priced with (saved as a new quotation when taken, D-249).
+  configuration Json
+  /// Re-priced instant steps: quantity, unitPrice, grossAmount, leadTimeDays, gap, gapPct, meetsTarget.
+  steps         Json
+  reasonCodes   String[]       @map("reason_codes")
+  /// Largest unit-price saving against the quotation at a quoted quantity, % (quantity levers: against the largest).
+  bestSavingPct Decimal        @map("best_saving_pct") @db.Decimal(9, 4)
+  validUntil    DateTime       @map("valid_until") @db.Timestamptz(6)
+  createdAt     DateTime       @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  quote    Quote          @relation("QuoteLevers", fields: [quoteId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_quote_levers__quote_id")
+  takenBy  Quote?         @relation("QuoteFromLever")
+  outcomes QuoteOutcome[] @relation("QuoteOutcomeLever")
+
+  @@unique([quoteId, rank], map: "ux_quote_levers__quote_id__rank")
+  @@map("quote_levers")
+}
+
+/// D-250: how a saved quotation ended.
+enum QuoteOutcomeKind {
+  won
+  lost
+  expired
+  converted_to_rfq
+  revised
+
+  @@map("quote_outcome_kind")
+}
+
+/// D-250: why a customer declined a quotation (optional for the customer).
+model QuoteLossReason {
+  id        BigInt   @id(map: "pk_quote_loss_reasons") @default(autoincrement())
+  code      String   @unique(map: "ux_quote_loss_reasons__code")
+  nameTh    String   @map("name_th")
+  nameEn    String   @map("name_en")
+  active    Boolean  @default(true)
+  sort      Int      @default(0)
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  outcomes QuoteOutcome[]
+
+  @@map("quote_loss_reasons")
+}
+
+/// D-250 (A-89): one write-once outcome per saved quotation, with the target, the gap and the levers.
+model QuoteOutcome {
+  id                 BigInt           @id(map: "pk_quote_outcomes") @default(autoincrement())
+  quoteId            BigInt           @unique(map: "ux_quote_outcomes__quote_id") @map("quote_id")
+  outcome            QuoteOutcomeKind
+  occurredAt         DateTime         @default(now()) @map("occurred_at") @db.Timestamptz(6)
+  targetPricePerUnit Decimal?         @map("target_price_per_unit") @db.Decimal(14, 2)
+  /// The quantity the gap is measured at: the ordered one when won, else the one with the smallest gap.
+  quantity           Int?
+  unitPrice          Decimal?         @map("unit_price") @db.Decimal(18, 6)
+  gapPerUnit         Decimal?         @map("gap_per_unit") @db.Decimal(18, 6)
+  gapPct             Decimal?         @map("gap_pct") @db.Decimal(9, 4)
+  leversShown        Int              @default(0) @map("levers_shown") @db.SmallInt
+  leverTakenId       BigInt?          @map("lever_taken_id")
+  lossReasonId       BigInt?          @map("loss_reason_id")
+  lossNote           String?          @map("loss_note")
+  orderId            BigInt?          @map("order_id")
+  rfqId              BigInt?          @map("rfq_id")
+
+  quote      Quote            @relation("QuoteOutcomeQuote", fields: [quoteId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_quote_outcomes__quote_id")
+  leverTaken QuoteLever?      @relation("QuoteOutcomeLever", fields: [leverTakenId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_quote_outcomes__lever_taken_id")
+  lossReason QuoteLossReason? @relation(fields: [lossReasonId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_quote_outcomes__loss_reason_id")
+  order      Order?           @relation("QuoteOutcomeOrder", fields: [orderId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_quote_outcomes__order_id")
+  rfq        Rfq?             @relation("QuoteOutcomeRfq", fields: [rfqId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_quote_outcomes__rfq_id")
+
+  @@index([outcome, occurredAt], map: "ix_quote_outcomes__outcome__occurred_at")
+  @@index([leverTakenId], map: "ix_quote_outcomes__lever_taken_id")
+  @@index([lossReasonId], map: "ix_quote_outcomes__loss_reason_id")
+  @@index([orderId], map: "ix_quote_outcomes__order_id")
+  @@index([rfqId], map: "ix_quote_outcomes__rfq_id")
+  @@map("quote_outcomes")
 }

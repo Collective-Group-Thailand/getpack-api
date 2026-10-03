@@ -605,6 +605,7 @@ model Order {
   quoteOption           QuoteOption            @relation("OrderQuoteOption", fields: [quoteOptionId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_orders__quote_option_id")
   reorderOfOrder        Order?                 @relation("OrderReorderOf", fields: [reorderOfOrderId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_orders__reorder_of_order_id")
   reorders              Order[]                @relation("OrderReorderOf")
+  quoteOutcomes         QuoteOutcome[]         @relation("QuoteOutcomeOrder")
   cancelReason          OrderCancelReason?     @relation("OrderCancelReason", fields: [cancelReasonId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_orders__cancel_reason_id")
   selectedFactory       Factory?               @relation("OrderSelectedFactory", fields: [selectedFactoryId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_orders__selected_factory_id")
   updatedBy             User?                  @relation("OrderUpdatedBy", fields: [updatedById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_orders__updated_by")

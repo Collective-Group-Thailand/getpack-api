@@ -20,7 +20,7 @@ import { NOTIFICATION_ROUTES, NOTIFICATION_TEMPLATES } from './data/notification
 import { AGREEMENT_TEMPLATES } from './data/partners';
 import { CUSTOMER_POSTING_RULES } from './data/posting-rules-customer';
 import { VENDOR_POSTING_RULES } from './data/posting-rules-vendor';
-import { PRICING_FEATURE_FLAGS, UNMET_DEMAND_REASONS } from './data/quotes';
+import { PRICING_FEATURE_FLAGS, QUOTE_LOSS_REASONS, UNMET_DEMAND_REASONS } from './data/quotes';
 import { CREDIT_NOTE_REASONS, FINANCE_FEATURE_FLAGS } from './data/receivables';
 import { CONSENT_PURPOSES, NATIONAL_CALENDAR, SOD_RULES, TAX_RATES, TEAMS } from './data/reference';
 import { ENTITY_SETTING_KEYS, SETTINGS, type SettingSeed } from './data/settings';
@@ -478,6 +478,12 @@ async function ensureUnmetDemandReasons(tx: Tx, count: (what: string) => void): 
     if (await tx.unmetDemandReason.findUnique({ where: { code: reason.code } })) continue;
     await tx.unmetDemandReason.create({ data: { ...reason } });
     count('unmet_demand_reasons');
+  }
+  // D-250 quotation loss reasons (U2.3).
+  for (const [index, reason] of QUOTE_LOSS_REASONS.entries()) {
+    if (await tx.quoteLossReason.findUnique({ where: { code: reason.code } })) continue;
+    await tx.quoteLossReason.create({ data: { ...reason, sort: (index + 1) * 10 } });
+    count('quote_loss_reasons');
   }
 }
 

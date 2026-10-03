@@ -75,6 +75,12 @@ export interface SettingValues {
   'ops.alert_thresholds': Partial<Record<string, number>>;
   /** D-160 minimum contributors per prospectus figure. */
   'analytics.prospectus_min_group_size': number;
+  /** D-190 / D-252 minimum distinct customers per cell built from target prices. */
+  'analytics.target_price_min_group_size': number;
+  /** D-252 ascending upper bounds (%) of the price-gap bands. */
+  'analytics.price_gap_bands_pct': number[];
+  /** D-248 quantity-lever multipliers of the largest quoted quantity (no catalogue preset above it). */
+  'quotes.lever_quantity_multipliers': number[];
   'claims.window_days': number;
   'discounts.cs_limit_pct': string;
   'payments.schedule_split_threshold': string;
