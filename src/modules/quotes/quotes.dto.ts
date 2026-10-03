@@ -15,6 +15,7 @@ import { ApiProperty, ApiPropertyOptional, getSchemaPath } from '@nestjs/swagger
 import { UserRefDto } from '@platform/approvals/approvals.dto';
 import { IsIn, IsOptional, IsString, IsUUID, MaxLength } from 'class-validator';
 
+import { QuoteOutcomeDto } from './levers/levers.dto';
 import { LINE_SUMMARY_EXAMPLE, LineSummaryDto } from './line-summary.dto';
 
 /** Saved quotations (D-051, schema-design §3.5). */
@@ -235,6 +236,18 @@ export class QuoteAdvisoryDto {
   choiceId!: string;
 }
 
+export class QuoteFromLeverDto {
+  @ApiProperty({ format: 'uuid', example: '0192f3a0-7c1e-7d2a-9b1f-00000000e701' })
+  leverId!: string;
+
+  @ApiProperty({
+    format: 'uuid',
+    example: '0192f3a0-7c1e-7d2a-9b1f-00000000e600',
+    description: 'The quotation it revised',
+  })
+  quoteId!: string;
+}
+
 export class SavedQuoteDto {
   @ApiProperty({ format: 'uuid', example: IDS.quote })
   id!: string;
@@ -347,6 +360,22 @@ export class SavedQuoteDto {
   })
   targetPricePerUnit!: string | null;
 
+  @ApiProperty({
+    type: QuoteOutcomeDto,
+    nullable: true,
+    example: null,
+    description: 'How the quotation ended (D-250); null while it is open',
+  })
+  outcome!: QuoteOutcomeDto | null;
+
+  @ApiProperty({
+    type: QuoteFromLeverDto,
+    nullable: true,
+    example: null,
+    description: 'The lever of an earlier quotation this one was saved from (D-249)',
+  })
+  fromLever!: QuoteFromLeverDto | null;
+
   @ApiProperty({ format: 'date-time', example: '2026-10-01T09:00:00+07:00' })
   createdAt!: string;
 }
@@ -446,6 +475,8 @@ export const QUOTE_EXAMPLE: SavedQuoteDto = {
   sharedAt: null,
   advisory: null,
   targetPricePerUnit: '11.50',
+  outcome: null,
+  fromLever: null,
   createdAt: '2026-10-01T09:00:00+07:00',
 };
 

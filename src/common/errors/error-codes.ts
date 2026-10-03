@@ -136,6 +136,7 @@ export const ERROR_CODES = {
   'quotes.not_live': HttpStatus.CONFLICT,
   'quotes.still_valid': HttpStatus.CONFLICT,
   'quotes.not_repriceable': HttpStatus.CONFLICT,
+  'quotes.no_target': HttpStatus.UNPROCESSABLE_ENTITY,
   'rfq.closed': HttpStatus.CONFLICT,
   'rfq.invalid_transition': HttpStatus.CONFLICT,
   'rfq.quote_not_open': HttpStatus.CONFLICT,

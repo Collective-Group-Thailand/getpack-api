@@ -61,7 +61,7 @@ export function renderProspectusHtml(c: ProspectusContent): string {
 <h1>${esc(c.titleTh)}</h1>
 <div class="meta">${esc(c.titleEn)}${c.issuer ? ` · ${esc(c.issuer)}` : ''}<br>ช่วงข้อมูล / Period: ${esc(c.from)} – ${esc(c.to)}</div>
 <div class="note">ข้อมูลรวมและไม่ระบุตัวตน ไม่มีข้อมูลลูกค้ารายบุคคล ราคาของลูกค้ารายใด หรือชื่อโรงงาน ตัวเลขที่มีผู้เกี่ยวข้องน้อยกว่า ${c.k} ราย แสดงเป็น "${hidden}"<br>
-Aggregated and anonymised: no customer identity, individual price or factory name. Figures backed by fewer than ${c.k} contributors show as "${hidden}" (${c.suppressed} cells).</div>
+Aggregated and anonymised: no customer identity, individual price or factory name. Figures backed by fewer than ${c.k} contributors show as "${hidden}" (${c.suppressed} cells); the target-price table needs ${c.kTarget} customers per figure.</div>
 ${tables}
 </body></html>`;
 }

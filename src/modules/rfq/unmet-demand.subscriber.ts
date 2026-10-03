@@ -3,8 +3,9 @@ import { type Prisma, type UnmetDemandSource } from '@generated/prisma/client';
 import { Injectable } from '@nestjs/common';
 import { type DomainEventEnvelope } from '@platform/domain-events/domain-event';
 import { OnDomainEvent } from '@platform/domain-events/on-domain-event.decorator';
+import { SettingsService } from '@platform/settings/settings.service';
 
-import { dimensionBand, quantityBand } from './rfq-spec';
+import { dimensionBand, priceGapBand, quantityBand } from './rfq-spec';
 
 /** Why a calculation had no instant price → the unmet-demand source (D-102). */
 const CALCULATION_SOURCES: Record<string, UnmetDemandSource> = {
@@ -23,6 +24,63 @@ const CALCULATION_SOURCES: Record<string, UnmetDemandSource> = {
  */
 @Injectable()
 export class UnmetDemandSubscriber {
+  constructor(private readonly settings: SettingsService) {}
+
+  /**
+   * D-252: a quotation with a target that ended lost, expired or sent to CS above its target is demand at a price
+   * Packio could not meet — banded by gap, with a distinct-customer key so target-price figures can be suppressed
+   * below `analytics.target_price_min_group_size` (D-190). Never the target or the price itself.
+   */
+  @OnDomainEvent('quote.outcome_recorded', { consumer: 'rfq.unmet-demand-price-gap' })
+  async onQuoteOutcome(event: DomainEventEnvelope, tx: Tx): Promise<void> {
+    if (event.payload['aboveTarget'] !== true) return;
+    if (!['lost', 'expired', 'converted_to_rfq'].includes(String(event.payload['outcome']))) return;
+    const quote = await tx.quote.findUnique({
+      where: { publicId: String(event.payload['quoteId']) },
+      include: { outcome: true },
+    });
+    const outcome = quote?.outcome;
+    if (!quote || !outcome?.gapPct || outcome.quantity === null) return;
+    const bounds = (await this.settings.at('analytics.price_gap_bands_pct', { at: outcome.occurredAt, tx }))
+      .value;
+    const band = priceGapBand(outcome.gapPct.toNumber(), bounds);
+    if (!band) return;
+    const input = quote.input as { dimensions?: { entered?: { l?: number; w?: number; d?: number } } };
+    const config = (quote.input as { configuration?: Record<string, unknown> }).configuration ?? {};
+    const dim = (k: 'l' | 'w' | 'd') => {
+      const v = input.dimensions?.entered?.[k] ?? config[k];
+      return typeof v === 'number' ? v : null;
+    };
+    const province = quote.deliveryPostcode
+      ? await tx.geoSubdistrict.findFirst({
+          where: { postcode: quote.deliveryPostcode },
+          select: { district: { select: { provinceId: true } } },
+        })
+      : null;
+    // The prospectus's contributor key (a company once, else the customer, else the anonymous session).
+    const customerKey = quote.companyId
+      ? `c${quote.companyId}`
+      : quote.customerUserId
+        ? `u${quote.customerUserId}`
+        : `a${quote.anonymousId ?? quote.publicId}`;
+    await this.write(tx, event, {
+      occurredAt: outcome.occurredAt,
+      source: 'price_above_target',
+      reasonId: null,
+      productTypeId: quote.productTypeId,
+      specBand: {
+        widthMm: dimensionBand(dim('w')),
+        lengthMm: dimensionBand(dim('l')),
+        heightMm: dimensionBand(dim('d')),
+      },
+      quantityBand: quantityBand(outcome.quantity),
+      provinceId: province?.district.provinceId ?? null,
+      quoteId: quote.id,
+      priceGapBand: band,
+      customerKey,
+    });
+  }
+
   @OnDomainEvent(['rfq.declined', 'rfq.expired'], { consumer: 'rfq.unmet-demand' })
   async onRfqClosed(event: DomainEventEnvelope, tx: Tx): Promise<void> {
     const rfq = await tx.rfq.findUnique({

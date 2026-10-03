@@ -5,6 +5,7 @@ import { PrismaService } from '@database/prisma.service';
 import { Prisma } from '@generated/prisma/client';
 import { CapacityService } from '@modules/partners/capacity/capacity.service';
 import { Injectable } from '@nestjs/common';
+import { SettingsService } from '@platform/settings/settings.service';
 
 import {
   type AnalyticsRefDto,
@@ -73,6 +74,7 @@ export class AnalyticsDashboardsService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly capacity: CapacityService,
+    private readonly settings: SettingsService,
   ) {}
 
   range(from: string, to: string): { from: string; to: string } {
@@ -367,7 +369,8 @@ export class AnalyticsDashboardsService {
       { key: string; records: Num }[]
     >`
       SELECT ${Prisma.raw(column)} AS key, sum(records) AS records FROM analytics.fact_unmet_demand
-      WHERE date_key BETWEEN ${from}::date AND ${to}::date GROUP BY 1 ORDER BY 2 DESC, 1`;
+      WHERE date_key BETWEEN ${from}::date AND ${to}::date AND source <> 'price_above_target'
+      GROUP BY 1 ORDER BY 2 DESC, 1`;
     const rows = await this.prisma.$queryRaw<(RefRow & Record<string, string | Num | null>)[]>`
       SELECT f.source, f.reason_code, f.spec_band, f.quantity_band, sum(f.records) AS records,
              pt.public_id::text AS pt_public_id, pt.code AS pt_code, pt.name_th AS pt_name_th, pt.name_en AS pt_name_en,
@@ -375,7 +378,7 @@ export class AnalyticsDashboardsService {
       FROM analytics.fact_unmet_demand f
       JOIN product_types pt ON pt.id = f.product_type_id
       LEFT JOIN geo_provinces pv ON pv.id = f.province_id
-      WHERE f.date_key BETWEEN ${from}::date AND ${to}::date
+      WHERE f.date_key BETWEEN ${from}::date AND ${to}::date AND f.source <> 'price_above_target'
       GROUP BY f.source, f.reason_code, f.spec_band, f.quantity_band, pt.id, pv.id
       ORDER BY 5 DESC, pt.code LIMIT 200`;
     return {
@@ -391,6 +394,37 @@ export class AnalyticsDashboardsService {
         records: int(r['records'] as Num),
       })),
       capacityLimitedWeeks: await this.capacityLimitedWeeks(from, to),
+      priceGap: await this.priceGap(from, to),
+    };
+  }
+
+  /**
+   * D-252: quotations above the customer's target, by product type × quantity band × gap band, read from the records
+   * (distinct customers per cell); a cell below `analytics.target_price_min_group_size` is withheld (D-190) — in the
+   * staff view as in the prospectus.
+   */
+  private async priceGap(from: string, to: string) {
+    const k = (await this.settings.at('analytics.target_price_min_group_size')).value;
+    const rows = await this.prisma.$queryRaw<(RefRow & Record<string, string | Num | null>)[]>`
+      SELECT u.quantity_band, u.price_gap_band, count(*) AS records, count(DISTINCT u.customer_key) AS customers,
+             pt.public_id::text AS pt_public_id, pt.code AS pt_code, pt.name_th AS pt_name_th, pt.name_en AS pt_name_en
+      FROM unmet_demand_records u JOIN product_types pt ON pt.id = u.product_type_id
+      WHERE u.source = 'price_above_target'
+        AND u.occurred_at >= ${from}::date::timestamp AT TIME ZONE 'Asia/Bangkok'
+        AND u.occurred_at < (${to}::date + 1)::timestamp AT TIME ZONE 'Asia/Bangkok'
+      GROUP BY pt.id, u.quantity_band, u.price_gap_band
+      ORDER BY pt.code, u.quantity_band, u.price_gap_band`;
+    const kept = rows.filter((r) => int(r['customers'] as Num) >= k);
+    return {
+      minGroupSize: k,
+      rows: kept.map((r) => ({
+        productType: productTypeRef(r),
+        quantityBand: r['quantity_band'] as string,
+        priceGapBand: r['price_gap_band'] as string,
+        records: int(r['records'] as Num),
+        customers: int(r['customers'] as Num),
+      })),
+      suppressedRows: rows.length - kept.length,
     };
   }
 

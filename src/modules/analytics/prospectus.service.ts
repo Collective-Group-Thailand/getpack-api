@@ -47,6 +47,8 @@ export interface ProspectusContent {
   from: string;
   to: string;
   k: number;
+  /** D-190 / D-252 minimum distinct customers of the target-price table. */
+  kTarget: number;
   generatedAt: Date;
   tables: PublishedTable[];
   suppressed: number;
@@ -54,6 +56,8 @@ export interface ProspectusContent {
 
 type Raw = Record<string, unknown>;
 const n = (v: unknown) => Number(v ?? 0);
+/** D-252 the prospectus table built from customers' target prices (suppressed at the target-price k). */
+export const PRICE_GAP_TABLE = 'price_gap';
 const money = (v: unknown) =>
   new Prisma.Decimal((v as { toString(): string } | null | undefined)?.toString() ?? '0').toFixed(2);
 const cell = (value: number | string, contributors: unknown): Cell => ({
@@ -241,13 +245,16 @@ export class ProspectusService {
       await this.demandByBand(start, end, types),
       await this.demandByRegion(start, end, types),
       await this.unmetDemand(start, end, types),
+      await this.priceGap(start, end, types),
       await this.monthlyTrend(start, end, types),
       await this.factorySupply(types),
       ...(await this.styleCoverageTables()),
     ];
+    // D-190 / D-252: figures built from target prices need the stricter of the two minimum group sizes.
+    const kTarget = Math.max(k, (await this.settings.at('analytics.target_price_min_group_size')).value);
     let suppressed = 0;
     const published = tables.map((t) => {
-      const result = suppress(t, k);
+      const result = suppress(t, t.key === PRICE_GAP_TABLE ? kTarget : k);
       suppressed += result.suppressed;
       return result.table;
     });
@@ -258,6 +265,7 @@ export class ProspectusService {
       from,
       to,
       k,
+      kTarget,
       generatedAt: new Date(),
       tables: published,
       suppressed,
@@ -450,6 +458,8 @@ export class ProspectusService {
         LEFT JOIN calculate_logs cl ON cl.id = u.calculate_log_id AND u.rfq_id IS NULL
         LEFT JOIN users us ON us.id = cl.actor_user_id
         WHERE u.occurred_at >= ${start} AND u.occurred_at < ${end} ${typeFilter}
+          -- D-252: demand built from target prices has its own table at the stricter k (D-190).
+          AND u.source <> 'price_above_target'
       )`;
     const rows = await this.prisma.$queryRaw<Raw[]>`
       ${base}
@@ -470,6 +480,52 @@ export class ProspectusService {
       metrics: [COUNT('records', 'จำนวนครั้ง', 'Occurrences')],
       rows: rows.map((r) => ({
         labels: [String(r['label']), String(r['source'])],
+        cells: [cell(n(r['records']), r['who'])],
+      })),
+      totals: [cell(n(t?.['records']), t?.['who'])],
+    };
+  }
+
+  /**
+   * D-252: quotations that ended above the customer's target, by product type, quantity band, delivery region and gap
+   * band — published only where a cell has ≥ `analytics.target_price_min_group_size` distinct customers (D-190).
+   */
+  private async priceGap(start: Date, end: Date, types: bigint[] | null): Promise<ProspectusTable> {
+    const typeFilter = types ? Prisma.sql`AND u.product_type_id = ANY(${types}::bigint[])` : Prisma.empty;
+    const base = Prisma.sql`
+      WITH u AS (
+        SELECT u.product_type_id, u.quantity_band, u.price_gap_band, u.customer_key AS who,
+               coalesce(p.region, 'ไม่ระบุ / Unknown') AS region
+        FROM unmet_demand_records u LEFT JOIN geo_provinces p ON p.id = u.province_id
+        WHERE u.source = 'price_above_target' AND u.occurred_at >= ${start} AND u.occurred_at < ${end} ${typeFilter}
+      )`;
+    const rows = await this.prisma.$queryRaw<Raw[]>`
+      ${base}
+      SELECT (SELECT pt.name_th || ' / ' || pt.name_en FROM product_types pt WHERE pt.id = u.product_type_id) AS label,
+             u.quantity_band, u.region, u.price_gap_band, count(*) AS records, count(DISTINCT who) AS who
+      FROM u GROUP BY u.product_type_id, u.quantity_band, u.region, u.price_gap_band
+      ORDER BY label, u.quantity_band, u.region, u.price_gap_band`;
+    const [t] = await this.prisma.$queryRaw<
+      Raw[]
+    >`${base} SELECT count(*) AS records, count(DISTINCT who) AS who FROM u`;
+    return {
+      key: PRICE_GAP_TABLE,
+      titleTh: 'ราคาที่สูงกว่าราคาเป้าหมายของลูกค้า',
+      titleEn: 'Quotations above the customer’s target price',
+      labels: [
+        { th: 'ประเภทสินค้า', en: 'Product type' },
+        { th: 'ช่วงจำนวน', en: 'Quantity band' },
+        { th: 'ภูมิภาค', en: 'Region' },
+        { th: 'ส่วนต่างจากราคาเป้าหมาย (%)', en: 'Gap to target (%)' },
+      ],
+      metrics: [COUNT('records', 'จำนวนใบเสนอราคา', 'Quotations')],
+      rows: rows.map((r) => ({
+        labels: [
+          String(r['label']),
+          String(r['quantity_band']),
+          String(r['region']),
+          String(r['price_gap_band']),
+        ],
         cells: [cell(n(r['records']), r['who'])],
       })),
       totals: [cell(n(t?.['records']), t?.['who'])],
@@ -618,6 +674,7 @@ export class ProspectusService {
       { item: 'Issuer', value: content.issuer ?? 'Packio' },
       { item: 'Period', value: `${content.from} – ${content.to} (Asia/Bangkok)` },
       { item: 'Minimum group size (k)', value: content.k },
+      { item: 'Minimum customers, target-price table', value: content.kTarget },
       { item: 'Suppressed cells', value: content.suppressed },
       {
         item: 'Method',

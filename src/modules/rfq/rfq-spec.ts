@@ -51,3 +51,18 @@ export function quantityBand(quantity: number): string {
 export function dimensionBand(mm: number | null | undefined): number | null {
   return mm === null || mm === undefined ? null : Math.floor(mm / 50) * 50;
 }
+
+/**
+ * D-252 price-gap band of a gap in % of the target from ascending upper bounds (`analytics.price_gap_bands_pct`):
+ * [10, 25, 50] → `0-10`, `10-25`, `25-50`, `50+`. A gap at or below 0 is not a band (null).
+ */
+export function priceGapBand(gapPct: number, bounds: readonly number[]): string | null {
+  if (!(gapPct > 0)) return null;
+  const sorted = [...new Set(bounds)].filter((b) => b > 0).sort((a, b) => a - b);
+  let lower = 0;
+  for (const upper of sorted) {
+    if (gapPct < upper) return `${lower}-${upper}`;
+    lower = upper;
+  }
+  return `${lower}+`;
+}

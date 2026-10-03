@@ -15,8 +15,18 @@ import { ApiBody, ApiParam, ApiPropertyOptional, ApiQuery } from '@nestjs/swagge
 import { Throttle } from '@nestjs/throttler';
 import { IsIn, IsOptional, IsUUID } from 'class-validator';
 
+import {
+  DeclineQuoteDto,
+  LEVERS_EXAMPLE,
+  QuoteLeversDto,
+  SEND_TO_CS_EXAMPLE,
+  SendQuoteToCsDto,
+  SendQuoteToCsResultDto,
+} from './levers/levers.dto';
+import { QuoteClosingService } from './levers/quote-closing.service';
+import { QuoteLeversService } from './levers/quote-levers.service';
 import { QuotePdfService } from './quote-pdf.service';
-import { adminQuoteDto, quoteDto } from './quote-views';
+import { adminQuoteDto, leverSetDto, quoteDto } from './quote-views';
 import {
   ADMIN_QUOTE_EXAMPLE,
   AdminSavedQuoteDto,
@@ -67,6 +77,8 @@ export class StoreSavedQuotesController {
   constructor(
     private readonly quotes: SavedQuotesService,
     private readonly pdf: QuotePdfService,
+    private readonly levers: QuoteLeversService,
+    private readonly closing: QuoteClosingService,
   ) {}
 
   @Post()
@@ -285,6 +297,143 @@ export class StoreSavedQuotesController {
     return quoteDto(await this.quotes.reprice(ownerOf(actor, anonymousId), quoteId));
   }
 
+  @Get(':quoteId/levers')
+  @Public()
+  @quoteParam
+  @anonymousQuery
+  @ApiEndpoint({
+    id: 'store.quotes.getLevers',
+    summary: 'Ways to reach my target price',
+    description:
+      'For a quotation saved with a target above it: alternatives re-priced by the real engine — the next quantity ' +
+      'breaks, another material the product offers, no back print, no special finish, no coating, no assembly — ' +
+      'each kept only when it lowers the unit price, at most 5, largest saving first; reason codes only, valid ' +
+      'until the quotation’s validity (D-248, D-191). Computed on the first request (live quotations only) and ' +
+      'kept; no factory data (D-050).',
+    implements: [...DECISIONS, 'D-248', 'D-191'],
+  })
+  @ApiSuccess(200, { description: 'Levers', type: QuoteLeversDto, example: LEVERS_EXAMPLE })
+  @ApiStandardErrors('http.not_found', 'validation.failed', 'quotes.no_target', 'quotes.not_live')
+  async getLevers(
+    @OptionalActor() actor: Actor | undefined,
+    @Param('quoteId', ParseUUIDPipe) quoteId: string,
+    @Query('anonymousId') anonymousId?: string,
+  ): Promise<QuoteLeversDto> {
+    return leverSetDto(await this.levers.levers(ownerOf(actor, anonymousId), quoteId));
+  }
+
+  @Post(':quoteId/levers/:leverId/actions/apply')
+  @Public()
+  @quoteParam
+  @ApiParam({ name: 'leverId', format: 'uuid' })
+  @anonymousQuery
+  @ApiEndpoint({
+    id: 'store.quotes.applyLever',
+    summary: 'Take a lever',
+    description:
+      'Saves a new quotation from the lever’s configuration at today’s prices, with the same target; the original ' +
+      'becomes `superseded` and its outcome `revised` (D-249). The quotation and the lever must still be valid; a ' +
+      'lever is taken once.',
+    implements: [...DECISIONS, 'D-249', 'D-250'],
+  })
+  @ApiSuccess(201, { description: 'New quotation', type: SavedQuoteDto, example: QUOTE_EXAMPLE })
+  @ApiStandardErrors(
+    'http.not_found',
+    'validation.failed',
+    'quotes.not_live',
+    'quotes.nothing_to_save',
+    'pricing.not_instant',
+  )
+  async applyLever(
+    @OptionalActor() actor: Actor | undefined,
+    @Param('quoteId', ParseUUIDPipe) quoteId: string,
+    @Param('leverId', ParseUUIDPipe) leverId: string,
+    @Query('anonymousId') anonymousId?: string,
+  ): Promise<SavedQuoteDto> {
+    return quoteDto(await this.levers.apply(ownerOf(actor, anonymousId), quoteId, leverId));
+  }
+
+  @Post(':quoteId/actions/decline')
+  @HttpCode(200)
+  @Public()
+  @quoteParam
+  @anonymousQuery
+  @ApiEndpoint({
+    id: 'store.quotes.decline',
+    summary: 'Decline a quotation',
+    description:
+      'The customer will not order this quotation: status `declined`, outcome `lost` with an optional reason ' +
+      '(D-250). Live quotations only; a shared link stops resolving.',
+    implements: [...DECISIONS, 'D-250'],
+  })
+  @ApiBody({
+    type: DeclineQuoteDto,
+    examples: { default: { value: { reasonCode: 'price', note: 'งบประมาณไม่พอ' } } },
+  })
+  @ApiSuccess(200, {
+    description: 'Declined',
+    type: SavedQuoteDto,
+    example: {
+      ...QUOTE_EXAMPLE,
+      status: 'declined',
+      priceLocked: false,
+      outcome: {
+        outcome: 'lost',
+        occurredAt: '2026-10-03T10:00:00+07:00',
+        lossReasonCode: 'price',
+        leverTakenId: null,
+      },
+    },
+  })
+  @ApiStandardErrors(
+    'http.bad_request',
+    'http.malformed_json',
+    'http.not_found',
+    'validation.failed',
+    'quotes.not_live',
+  )
+  async decline(
+    @OptionalActor() actor: Actor | undefined,
+    @Param('quoteId', ParseUUIDPipe) quoteId: string,
+    @Body() body: DeclineQuoteDto,
+    @Query('anonymousId') anonymousId?: string,
+  ): Promise<SavedQuoteDto> {
+    return quoteDto(await this.closing.decline(ownerOf(actor, anonymousId), quoteId, body));
+  }
+
+  @Post(':quoteId/actions/send-to-cs')
+  @quoteParam
+  @ApiEndpoint({
+    id: 'store.quotes.sendToCs',
+    summary: 'Send a quotation to CS',
+    description:
+      'Signed-in owners: the quotation becomes a request for quote pre-filled with its product type, size and basis, ' +
+      'quantities, delivery postcode and target, linked to it; status `routed_to_rfq`, outcome `converted_to_rfq` ' +
+      '(D-251, D-191). Live quotations only.',
+    implements: [...DECISIONS, 'D-251', 'D-100'],
+  })
+  @ApiBody({
+    type: SendQuoteToCsDto,
+    examples: { default: { value: { notes: 'ขอราคาที่ 11.50 บาทต่อชิ้น' } } },
+  })
+  @ApiSuccess(201, { description: 'RFQ created', type: SendQuoteToCsResultDto, example: SEND_TO_CS_EXAMPLE })
+  @ApiStandardErrors(
+    'http.bad_request',
+    'http.malformed_json',
+    'http.not_found',
+    'validation.failed',
+    'quotes.not_live',
+    'numbering.series_missing',
+    'specs.unit_not_accepted',
+  )
+  async sendToCs(
+    @CurrentActor() actor: Actor,
+    @Param('quoteId', ParseUUIDPipe) quoteId: string,
+    @Body() body: SendQuoteToCsDto,
+  ): Promise<SendQuoteToCsResultDto> {
+    return this.closing.sendToCs(ownerOf(actor), quoteId, body);
+  }
+
   @Post(':quoteId/actions/request-pdf')
   @HttpCode(202)
   @quoteParam
@@ -346,6 +495,7 @@ export class AdminQuotesController {
     private readonly quotes: SavedQuotesService,
     private readonly pdf: QuotePdfService,
     private readonly permissions: PermissionResolver,
+    private readonly levers: QuoteLeversService,
   ) {}
 
   @Get()
@@ -391,6 +541,28 @@ export class AdminQuotesController {
     const quote = await this.quotes.get({ kind: 'staff', actor: actor as UserActor }, quoteId);
     await this.quotes.auditStaffRead(quote.publicId);
     return adminQuoteDto(quote, await this.grants(actor));
+  }
+
+  @Get(':quoteId/levers')
+  @Can('quotes.read')
+  @quoteParam
+  @ApiEndpoint({
+    id: 'admin.quotes.getLevers',
+    summary: 'The levers shown on a quotation',
+    description:
+      'What the customer was shown against their target (D-248); empty with `computedAt` null until the customer asked ' +
+      'for them — staff reading never computes them (levers shown, D-250).',
+    implements: [...DECISIONS, 'D-248', 'D-250'],
+  })
+  @ApiSuccess(200, { description: 'Levers', type: QuoteLeversDto, example: LEVERS_EXAMPLE })
+  @ApiStandardErrors('http.not_found', 'validation.failed', 'quotes.no_target')
+  async getLevers(
+    @CurrentActor() actor: Actor,
+    @Param('quoteId', ParseUUIDPipe) quoteId: string,
+  ): Promise<QuoteLeversDto> {
+    return leverSetDto(
+      await this.levers.levers({ kind: 'staff', actor: actor as UserActor }, quoteId, new Date(), false),
+    );
   }
 
   @Post()

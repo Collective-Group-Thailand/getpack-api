@@ -501,6 +501,10 @@
     "not_repriceable": {
       "title": "Cannot re-price",
       "detail": "Only an instant quotation that was saved, shared or expired can be re-priced."
+    },
+    "no_target": {
+      "title": "No target price",
+      "detail": "Levers need the quotation's target price per unit; save the quotation with one (D-248)."
     }
   },
   "rfq": {

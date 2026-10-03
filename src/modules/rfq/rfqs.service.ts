@@ -162,6 +162,11 @@ export class RfqsService implements OnModuleInit {
     channel: SalesChannel,
     input: SubmitRfqInput,
     createdBy?: UserActor,
+    /** D-251: a quotation sent to CS — linked, and closed in the same transaction. */
+    hooks: {
+      routedFromQuoteId?: bigint;
+      inTx?: (tx: Tx, rfq: { id: bigint; publicId: string }) => Promise<void>;
+    } = {},
   ): Promise<RfqRow> {
     // D-183: sizes are millimetres; a spec naming a unit is refused, never read in it.
     refuseUnits(input.spec, 'spec');
@@ -212,6 +217,7 @@ export class RfqsService implements OnModuleInit {
           spec: input.spec as Prisma.InputJsonValue,
           specSchemaVersion: type.rfqSpecSchemaVersion,
           routedFromCalculateLogId: routedFrom,
+          routedFromQuoteId: hooks.routedFromQuoteId ?? null,
           targetPricePerUnit: input.targetPricePerUnit ?? null,
           lengthMm: input.lengthMm ?? null,
           widthMm: input.widthMm ?? null,
@@ -244,6 +250,7 @@ export class RfqsService implements OnModuleInit {
         quantities: input.quantities.length,
         slaDueAt: slaDueAt?.toISOString() ?? null,
       });
+      if (hooks.inTx) await hooks.inTx(tx, rfq);
       return this.load(tx, rfq.id);
     });
   }

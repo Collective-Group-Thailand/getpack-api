@@ -26,6 +26,7 @@ import { DocumentNumberingService } from '@platform/numbering/document-numbering
 import { SettingsService } from '@platform/settings/settings.service';
 
 import { resolveAdvisoryLink } from './advisory-link';
+import { QuoteOutcomesService } from './levers/quote-outcomes.service';
 import {
   type BoxConfiguration,
   boxSpecLines,
@@ -56,6 +57,10 @@ export const QUOTE_INCLUDE = {
   rfqQuote: { select: { rfq: { select: { publicId: true, rfqCode: true } } } },
   advisoryRecommendation: { select: { publicId: true } },
   advisoryChoice: { select: { publicId: true } },
+  outcome: {
+    include: { lossReason: { select: { code: true } }, leverTaken: { select: { publicId: true } } },
+  },
+  fromLever: { select: { publicId: true, quote: { select: { publicId: true } } } },
 } satisfies Prisma.QuoteInclude;
 export type QuoteRow = Prisma.QuoteGetPayload<{ include: typeof QUOTE_INCLUDE }>;
 
@@ -99,6 +104,7 @@ export class SavedQuotesService {
     private readonly audit: AuditService,
     private readonly events: DomainEvents,
     private readonly activity: ActivityLogService,
+    private readonly outcomes: QuoteOutcomesService,
   ) {}
 
   async save(
@@ -200,10 +206,17 @@ export class SavedQuotesService {
         },
       });
       if (extra.supersedes) {
-        await tx.quote.update({
+        const old = await tx.quote.update({
           where: { id: extra.supersedes },
           data: { status: 'superseded', supersededById: quote.id },
         });
+        // D-250: a lever taken revises the quotation (D-249); a re-price follows an expiry the job may not have seen.
+        await this.outcomes.record(
+          tx,
+          extra.supersedes,
+          extra.fromLeverId ? 'revised' : 'expired',
+          extra.fromLeverId ? { leverTakenId: extra.fromLeverId } : { at: old.validUntil },
+        );
       }
       if (view.calculateLog) {
         await tx.calculateLog.update({

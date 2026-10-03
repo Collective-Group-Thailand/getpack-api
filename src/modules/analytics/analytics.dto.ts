@@ -553,6 +553,42 @@ export class CapacityLimitedWeekDto {
   factoriesFull!: number;
 }
 
+export class PriceGapRowDto {
+  @ApiProperty({ type: AnalyticsRefDto })
+  productType!: AnalyticsRefDto;
+
+  @ApiProperty({ example: '1000-4999' })
+  quantityBand!: string;
+
+  @ApiProperty({
+    example: '10-25',
+    description: 'Gap to the target, % (`analytics.price_gap_bands_pct`, D-252)',
+  })
+  priceGapBand!: string;
+
+  @ApiProperty({ type: 'integer', example: 7, description: 'Quotations' })
+  records!: number;
+
+  @ApiProperty({ type: 'integer', example: 6, description: 'Distinct customers (≥ the minimum group size)' })
+  customers!: number;
+}
+
+export class PriceGapReportDto {
+  @ApiProperty({
+    type: 'integer',
+    example: 5,
+    description:
+      '`analytics.target_price_min_group_size` applied: a cell with fewer distinct customers is withheld (D-190)',
+  })
+  minGroupSize!: number;
+
+  @ApiProperty({ type: [PriceGapRowDto] })
+  rows!: PriceGapRowDto[];
+
+  @ApiProperty({ type: 'integer', example: 3, description: 'Cells withheld below the minimum group size' })
+  suppressedRows!: number;
+}
+
 export class UnmetDemandReportDto {
   @ApiProperty({ type: [UnmetCountDto] })
   bySource!: UnmetCountDto[];
@@ -568,6 +604,14 @@ export class UnmetDemandReportDto {
     description: 'Weeks in the range in which a factory was fully booked',
   })
   capacityLimitedWeeks!: CapacityLimitedWeekDto[];
+
+  @ApiProperty({
+    type: PriceGapReportDto,
+    description:
+      'Quotations that ended above the customer’s target (D-252), by product type, quantity band and gap band; ' +
+      'only cells with enough distinct customers (D-190). They are not in `bySource` / `rows`.',
+  })
+  priceGap!: PriceGapReportDto;
 }
 
 export class FactoryPerformanceDto {

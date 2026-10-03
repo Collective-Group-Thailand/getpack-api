@@ -5,14 +5,16 @@
 > (a new effective-dated version, audited — D-063) and signs item 5 of `docs/LAUNCH-CHECKLIST.md`. A *proposed* or
 > *pending* value is not a decision: it goes live only once its owner confirms it.
 
-**76 settings** — 43 confirmed · 16 proposed · 4 pending the CPA (⚖) · 1 pending the business · 12 defined without a value (not set until their owner sets them).
+**79 settings** — 44 confirmed · 18 proposed · 4 pending the CPA (⚖) · 1 pending the business · 12 defined without a value (not set until their owner sets them).
 
 ## Settings
 
 | Key | Seeded value | Status | Owner | Decisions | What it controls |
 |---|---|---|---|---|---|
 | `advisory.rule_set` | `— (not set)` | not set | superadmin | D-188, D-237, D-239 | D-237 Structure Advisor rule set: McKee constant, ± uncertainty band %, eligible corrugate formulas, thin-margin threshold % and one factor (0 < f ≤ 1) per band of humidity, storage time, pallet pattern, pallet overhang, transport mode and fragility; not seeded — no advice until a Superadmin sets it after the D-189 sign-off |
+| `analytics.price_gap_bands_pct` | `[10,25,50]` | proposed | superadmin | D-252 | D-252 upper bounds (% of the target) of the price-gap bands of unmet demand, ascending: [10, 25, 50] → 0-10, 10-25, 25-50, 50+ |
 | `analytics.prospectus_min_group_size` | `3` | confirmed | superadmin | D-160, D-044 | D-160 minimum factories per breakdown in anonymised exports and the partner prospectus |
+| `analytics.target_price_min_group_size` | `5` | confirmed | superadmin | D-190, D-252 | D-190 / D-252 minimum distinct customers per cell for any figure built from customers’ target prices (prospectus and staff views) |
 | `artwork.approval_checklist` | `— (not set)` | not set | superadmin | D-073 | D-073 items the customer confirms when approving a proof (spelling, colours, size…), kept as approval evidence; not seeded — no checklist until set |
 | `artwork.preflight_rules` | `{"severities":{"size_mismatch":"block","missing_bleed":"block","low_resolution":"warn","rgb_colour":"warn","fonts_not_embedded":"info","safe_zone":"info","thin_lines":"info","overprint":"info","ink_coverage":"info"},"bleedMm":"3","sizeToleranceMm":"1","minEffectivePpi":300,"safeZoneMm":"3","minLineWidthPt":"0.25","maxInkCoveragePct":300}` | proposed | superadmin | D-070 | D-070 preflight: block on size mismatch or missing bleed, warn on low resolution or RGB; other checks report only; technical thresholds proposed (ADR-0009) |
 | `artwork.prepress_sla_business_hours` | `— (not set)` | not set | superadmin | D-070 | D-070 prepress queue: business hours to answer a submission; no decision gives it, no due time until set |
@@ -72,6 +74,7 @@
 | `production.factory_acceptance_sla_business_days` | `1` | confirmed | superadmin | D-074 | D-074 time a factory has to accept a released job (business days) |
 | `promotions.code_attempt_limits` | `{"perCustomerPerHour":10,"perIpPerHour":30,"perDevicePerHour":10}` | proposed | superadmin | D-053 | D-053 abuse control: coupon code attempts allowed per customer, IP and device each hour |
 | `qc.inspection_sampling` | `{"fullInspectionFromValue":"300000.00","sampledBandFromValue":"100000.00","sampledBandRatePct":"20","trialFactoryJobs":3,"trialFactoryRatePct":"100","highDefectRateThresholdPct":"3","highDefectWindowDays":90,"highDefectRatePct":"50","specialFinishOrFoodUpliftPp":"20","isoInspectionLevel":"II","aql":{"critical":"0","major":"2.5","minor":"4.0"}}` | confirmed | superadmin | D-076 | D-076 Packio risk-based inspection sampling (ISO 2859-1) |
+| `quotes.lever_quantity_multipliers` | `[2,5]` | proposed | superadmin | D-248 | D-248 quantity levers when the catalogue product has no preset quantity above the quoted: the largest quoted quantity × each multiplier |
 | `quotes.validity_days` | `15` | confirmed | superadmin | D-051 | D-051 quotation validity with price lock (days) |
 | `receivables.allowance_rates` | `— (not set)` | not set | finance_manager | D-033 | D-033 / accounting-design §10 allowance method (⚖): % of open receivables per days-overdue band for P30; not seeded — until set, Finance enters the allowance amount |
 | `receivables.forfeited_deposit_policy` | `{"forfeitPct":"0"}` | pending_business | finance_manager | D-033, D-020 | D-033 / accounting-design §10 forfeited deposit policy (⚖): % of the paid deposit kept when an order is cancelled before production; 0 until the business decides (P23) |

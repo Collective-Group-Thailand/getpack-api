@@ -334,8 +334,8 @@ export class AdminAnalyticsController {
     id: 'admin.analytics.unmetDemand',
     summary: 'Unmet demand',
     description:
-      'Declined / expired RFQs with their reason, calculations without an instant price (capability, capacity) by product type, spec band, quantity band and province, and the weeks a factory was fully booked (D-101).',
-    implements: [...DOCS, 'D-101'],
+      'Declined / expired RFQs with their reason, calculations without an instant price (capability, capacity) by product type, spec band, quantity band and province, and the weeks a factory was fully booked (D-101). `priceGap`: quotations that ended above the customer’s target, only in cells with ≥ `analytics.target_price_min_group_size` distinct customers (D-252, D-190).',
+    implements: [...DOCS, 'D-101', 'D-252', 'D-190'],
   })
   @ApiSuccess(200, {
     description: 'Unmet demand',
@@ -357,6 +357,19 @@ export class AdminAnalyticsController {
       capacityLimitedWeeks: [
         { productType: EXAMPLES.productType, weekStart: '2026-10-05', factories: 1, factoriesFull: 1 },
       ],
+      priceGap: {
+        minGroupSize: 5,
+        rows: [
+          {
+            productType: EXAMPLES.productType,
+            quantityBand: '1000-4999',
+            priceGapBand: '10-25',
+            records: 7,
+            customers: 6,
+          },
+        ],
+        suppressedRows: 3,
+      },
     },
   })
   @ApiStandardErrors(...RANGE_ERRORS)

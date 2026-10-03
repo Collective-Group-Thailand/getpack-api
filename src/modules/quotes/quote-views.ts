@@ -2,6 +2,8 @@ import { toBangkokIso } from '@common/time/bangkok';
 import { type QuoteStepView } from '@modules/pricing/quotes/quote-engine.service';
 import { targetGap, targetString } from '@modules/pricing/quotes/target-price';
 
+import { type QuoteLeverDto, type QuoteLeversDto } from './levers/levers.dto';
+import { type LeverSet } from './levers/quote-levers.service';
 import { lineSummary } from './line-summary';
 import { type AdminSavedQuoteDto, type SavedQuoteDto, type SavedQuoteOptionDto } from './quotes.dto';
 import { type QuoteRow } from './saved-quotes.service';
@@ -69,6 +71,15 @@ export function quoteDto(q: QuoteRow, now = new Date()): SavedQuoteDto {
         ? { recommendationId: q.advisoryRecommendation.publicId, choiceId: q.advisoryChoice.publicId }
         : null,
     targetPricePerUnit: targetString(q.targetPricePerUnit),
+    outcome: q.outcome
+      ? {
+          outcome: q.outcome.outcome,
+          occurredAt: toBangkokIso(q.outcome.occurredAt),
+          lossReasonCode: q.outcome.lossReason?.code ?? null,
+          leverTakenId: q.outcome.leverTaken?.publicId ?? null,
+        }
+      : null,
+    fromLever: q.fromLever ? { leverId: q.fromLever.publicId, quoteId: q.fromLever.quote.publicId } : null,
     createdAt: toBangkokIso(q.createdAt),
   };
 }
@@ -101,5 +112,27 @@ export function adminQuoteDto(q: QuoteRow, grants: { cost: boolean; margin: bool
         },
       };
     }),
+  };
+}
+
+/** D-248 levers of a quotation (the customer's own configuration; never a factory). */
+export function leverSetDto(set: LeverSet): QuoteLeversDto {
+  return {
+    quoteId: set.quote.publicId,
+    targetPricePerUnit: targetString(set.quote.targetPricePerUnit)!,
+    status: set.status,
+    computedAt: set.quote.leversComputedAt ? toBangkokIso(set.quote.leversComputedAt) : null,
+    levers: set.levers.map((l) => ({
+      id: l.publicId,
+      rank: l.rank,
+      kind: l.kind,
+      reasonCodes: l.reasonCodes as QuoteLeverDto['reasonCodes'],
+      changes: l.changes as Record<string, unknown>,
+      configuration: l.configuration as Record<string, unknown>,
+      steps: l.steps as unknown as QuoteLeverDto['steps'],
+      bestSavingPct: l.bestSavingPct.toFixed(4),
+      validUntil: toBangkokIso(l.validUntil),
+      takenQuoteId: l.takenBy?.publicId ?? null,
+    })),
   };
 }

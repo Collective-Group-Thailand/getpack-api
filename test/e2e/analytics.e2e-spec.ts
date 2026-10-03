@@ -390,6 +390,7 @@ describe('analytics (e2e, B6.1)', () => {
       'demand_by_quantity_band',
       'demand_by_region',
       'unmet_demand',
+      'price_gap',
       'monthly_trend',
       'factory_supply',
     ]);

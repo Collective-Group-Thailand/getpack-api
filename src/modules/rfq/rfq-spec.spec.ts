@@ -1,7 +1,7 @@
 import { type Tx } from '@database/prisma.service';
 import { type DomainEventEnvelope } from '@platform/domain-events/domain-event';
 
-import { dimensionBand, quantityBand, specErrors } from './rfq-spec';
+import { dimensionBand, priceGapBand, quantityBand, specErrors } from './rfq-spec';
 import { UnmetDemandSubscriber } from './unmet-demand.subscriber';
 
 describe('RFQ spec and bands (D-100, D-102)', () => {
@@ -61,7 +61,7 @@ describe('unmet demand from calculations (D-102)', () => {
     }) as unknown as DomainEventEnvelope;
 
   it('records calculations without an instant price once, banded', async () => {
-    const subscriber = new UnmetDemandSubscriber();
+    const subscriber = new UnmetDemandSubscriber({} as never);
     await subscriber.onCalculated(event({ instant: true, reasons: [] }), tx);
     expect(created).toHaveLength(0);
     const payload = {
@@ -87,5 +87,20 @@ describe('unmet demand from calculations (D-102)', () => {
         domainEventId: 'e1',
       }),
     ]);
+  });
+});
+
+describe('priceGapBand (D-252)', () => {
+  const bounds = [10, 25, 50];
+  it('bands a positive gap by ascending upper bounds', () => {
+    expect(priceGapBand(0.01, bounds)).toBe('0-10');
+    expect(priceGapBand(10, bounds)).toBe('10-25');
+    expect(priceGapBand(24.99, bounds)).toBe('10-25');
+    expect(priceGapBand(50, bounds)).toBe('50+');
+    expect(priceGapBand(300, [50, 10, 25])).toBe('50+');
+  });
+  it('has no band at or below the target', () => {
+    expect(priceGapBand(0, bounds)).toBeNull();
+    expect(priceGapBand(-5, bounds)).toBeNull();
   });
 });

@@ -945,7 +945,7 @@ model UnmetDemandRecord {
   quoteId        BigInt?           @map("quote_id")
   /// D-252: gap band in % of the target (`0-10`, `10-25`, `25-50`, `50+` from analytics.price_gap_bands_pct).
   priceGapBand   String?           @map("price_gap_band")
-  /// Distinct-customer key for k-anonymity (`c:<company>`, `u:<user>`, `a:<anonymous id>`); never exported.
+  /// Distinct-customer key for k-anonymity (`c<company>`, `u<user>`, `a<anonymous id>`, as the prospectus); never exported.
   customerKey    String?           @map("customer_key")
 
   reason      UnmetDemandReason? @relation(fields: [reasonId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_unmet_demand_records__reason_id")
