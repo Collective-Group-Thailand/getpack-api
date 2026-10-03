@@ -13,7 +13,7 @@ import { Type } from 'class-transformer';
 import { ArrayMaxSize, ArrayMinSize, IsArray, IsDateString, IsIn, ValidateNested } from 'class-validator';
 
 import { CLAIM_SEVERITIES, CLAIM_TYPES } from './claims.dto';
-import { type GuaranteeVersionRow, GuaranteeService } from './guarantee.service';
+import { GuaranteeService,type GuaranteeVersionRow } from './guarantee.service';
 
 const MATRIX_REMEDIES = ['reprint', 'refund', 'partial_credit'] as const;
 const VERSION_STATUSES = [
