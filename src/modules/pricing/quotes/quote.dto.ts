@@ -306,10 +306,12 @@ export class QuoteStepDto {
       'envelope_not_covered',
       'capacity_unavailable',
       'delivery_unavailable',
+      'style_variant_not_publishable',
+      'rfq_required',
     ],
     enumName: 'QuoteNoPriceReason',
     description:
-      'Why there is no instant price; `envelope_not_covered`: only tier-B paths priced it, outside their envelopes (D-234)',
+      'Why there is no instant price; `envelope_not_covered`: only tier-B paths priced it, outside their envelopes (D-234); `style_variant_not_publishable`: the named style variant is not published (D-243); `rfq_required`: the variant is published but priced through RFQ — calculator not signed or an option not priced (D-266)',
   })
   reason!: string | null;
 

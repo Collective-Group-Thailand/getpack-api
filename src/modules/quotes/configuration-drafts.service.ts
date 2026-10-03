@@ -290,6 +290,7 @@ export class ConfigurationDraftsService {
       deliveryPostcode: input.deliveryPostcode,
       notes: input.notes,
       targetPricePerUnit: targetString(draft.targetPricePerUnit), // D-247
+      styleVariantCode: typeof cfg['styleVariantCode'] === 'string' ? cfg['styleVariantCode'] : null, // D-269
     });
     const row = await this.converted(
       draft,

@@ -1373,6 +1373,14 @@
     "capability_decided": {
       "title": "Capability already decided",
       "detail": "This process capability is verified, rejected, withdrawn or replaced already (D-244)."
+    },
+    "price_rule_exists": {
+      "title": "Rule already active",
+      "detail": "An active price rule exists for this calculator and option value; retire it first (D-268)."
+    },
+    "price_rule_retired": {
+      "title": "Rule already retired",
+      "detail": "This price rule is no longer active (D-268)."
     }
   },
   "samples": {

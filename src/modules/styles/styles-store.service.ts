@@ -7,6 +7,7 @@ import { sizeRulesOf } from '@modules/catalog/store/size-rules';
 import { Injectable } from '@nestjs/common';
 import { SettingsService } from '@platform/settings/settings.service';
 
+import { optionValues as priceOptions, PRICE_REASONS } from './publishability';
 import { StyleMakeabilityService } from './style-makeability.service';
 import { MULTI_SELECT_AXES } from './style-master';
 import {
@@ -34,7 +35,7 @@ const LIBRARY_INCLUDE = {
   productType: { select: { calculatorKey: true, quoteMode: true, status: true } },
   variants: {
     where: { publishable: true, status: 'active' },
-    select: { code: true, options: true },
+    select: { code: true, options: true, pricePath: true, priceReasons: true },
     orderBy: { code: 'asc' },
   },
   useCases: { select: { code: true }, orderBy: { code: 'asc' } },
@@ -204,6 +205,30 @@ export class StylesStoreService {
     await this.prisma.styleFavourite.deleteMany({ where: { userId, base: { code } } });
   }
 
+  /** D-266 / D-268: each publishable variant with its price path and the configuration patches of its options. */
+  private async variantViews(row: LibraryRow) {
+    const key = row.productType?.calculatorKey ?? null;
+    const rules = key
+      ? await this.prisma.styleOptionPriceRule.findMany({
+          where: { calculatorKey: key, status: 'active', effect: 'configuration' },
+          select: { axis: true, value: true, patch: true },
+        })
+      : [];
+    const patches = new Map(rules.map((r) => [`${r.axis}:${r.value}`, r.patch as Record<string, unknown>]));
+    return row.variants.map((v) => {
+      const options = v.options as Record<string, unknown>;
+      return {
+        code: v.code,
+        options,
+        pricePath: v.pricePath,
+        priceReasons: v.priceReasons as (typeof PRICE_REASONS)[number][],
+        configurationPatches: priceOptions(options).flatMap((option) =>
+          patches.has(option) ? [{ option, patch: patches.get(option)! }] : [],
+        ),
+      };
+    });
+  }
+
   private async detail(row: LibraryRow, favourites: Set<bigint>): Promise<StyleDetailDto> {
     const factories = await this.makeability.factoriesFor(this.prisma, row.id);
     const hints = productHints(row);
@@ -224,7 +249,7 @@ export class StylesStoreService {
       descriptionTh: row.descriptionTh,
       descriptionEn: row.descriptionEn,
       axes: axesOf(row),
-      variants: row.variants.map((v) => ({ code: v.code, options: v.options as Record<string, unknown> })),
+      variants: await this.variantViews(row),
       sizeRanges: sizeRanges(row),
       leadTime,
       // D-201 / D-264: shown only with the published network minimum of active factories.

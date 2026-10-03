@@ -17,6 +17,7 @@ import {
   type QuoteStepView,
   type QuoteView,
 } from '@modules/pricing/quotes/quote-engine.service';
+import { StyleDielinesService } from '@modules/styles/style-dielines.service';
 import { Injectable } from '@nestjs/common';
 import { ActivityLogService } from '@platform/activity/activity-log.service';
 import { AuditService } from '@platform/audit/audit.service';
@@ -105,6 +106,7 @@ export class SavedQuotesService {
     private readonly events: DomainEvents,
     private readonly activity: ActivityLogService,
     private readonly outcomes: QuoteOutcomesService,
+    private readonly dielines: StyleDielinesService,
   ) {}
 
   async save(
@@ -176,6 +178,12 @@ export class SavedQuotesService {
     const advisory = input.advisoryRecommendationId
       ? await resolveAdvisoryLink(this.prisma, owner, input.advisoryRecommendationId, configuration)
       : null;
+    // D-267: a style variant's dieline quantities at the size priced, frozen (no price effect yet).
+    const dielines = await this.dielines.quantitiesFor(
+      this.prisma,
+      configuration,
+      view.dimensions?.priced ?? null,
+    );
     return this.prisma.withTx(async (tx) => {
       const quote = await tx.quote.create({
         data: {
@@ -203,6 +211,7 @@ export class SavedQuotesService {
           advisoryChoiceId: advisory?.choiceId ?? null,
           targetPricePerUnit: input.targetPricePerUnit ?? null,
           fromLeverId: extra.fromLeverId ?? null,
+          ...(dielines ? { dielineQuantities: dielines as unknown as Prisma.InputJsonValue } : {}),
         },
       });
       if (extra.supersedes) {

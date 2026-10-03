@@ -2,14 +2,18 @@ import { Global, Module } from '@nestjs/common';
 
 import { ProcessCapabilitiesService } from './process-capabilities.service';
 import { StyleCoverageService } from './style-coverage.service';
+import { StyleDielinesService } from './style-dielines.service';
 import { StyleImportService } from './style-import.service';
 import { StyleMakeabilityService } from './style-makeability.service';
+import { StylePriceRulesService } from './style-price-rules';
 import { StylePublishingService } from './style-publishing.service';
 import { StylesJobs } from './styles.jobs';
 import { StylesAdminService } from './styles-admin.service';
 import { StylesStoreService } from './styles-store.service';
 
 const SERVICES = [
+  StyleDielinesService,
+  StylePriceRulesService,
   StyleMakeabilityService,
   StylePublishingService,
   StyleImportService,

@@ -12,6 +12,8 @@ import {
   MaxLength,
 } from 'class-validator';
 
+import { PRICE_REASONS } from './publishability';
+
 /** Store style library DTOs (U3.B2, D-245, D-246): published styles only, never a factory identity (D-050). */
 
 export const PRICE_PATHS = ['instant', 'rfq'] as const;
@@ -217,6 +219,19 @@ export class StyleAxisDto {
   multiSelect!: boolean;
 }
 
+export class StyleOptionPatchDto {
+  @ApiProperty({ example: 'window:front_window', description: '`axis:value`' })
+  option!: string;
+
+  @ApiProperty({
+    type: 'object',
+    additionalProperties: true,
+    example: { part: { assemblies: [{ assemblyId: '0192f3a0-7c1e-7d2a-9b1f-00000000a301' }] } },
+    description: '`{ config?, part? }` merged into the configuration / each part',
+  })
+  patch!: Record<string, unknown>;
+}
+
 export class StyleVariantRefDto {
   @ApiProperty({ example: 'PK-TE-01-K7QD' })
   code!: string;
@@ -227,6 +242,28 @@ export class StyleVariantRefDto {
     example: { tuck_top: 'reverse_tuck', tuck_bottom: 'crash_lock', hang: 'none', window: 'none' },
   })
   options!: Record<string, unknown>;
+
+  @ApiProperty({
+    enum: ['instant', 'rfq'],
+    enumName: 'QuoteMode',
+    example: 'rfq',
+    description: 'Instant only with a signed calculator and every option priced; otherwise RFQ (D-266)',
+  })
+  pricePath!: 'instant' | 'rfq';
+
+  @ApiProperty({
+    enum: PRICE_REASONS,
+    enumName: 'StylePriceReason',
+    isArray: true,
+    example: ['option_not_priced'],
+  })
+  priceReasons!: (typeof PRICE_REASONS)[number][];
+
+  @ApiProperty({
+    type: [StyleOptionPatchDto],
+    description: 'What the configurator applies for the variant’s priced options (D-268)',
+  })
+  configurationPatches!: StyleOptionPatchDto[];
 }
 
 export class StyleSizeRangeDto {
@@ -377,6 +414,9 @@ export const DETAIL_EXAMPLE: StyleDetailDto = {
     {
       code: 'PK-TE-01-K7QD',
       options: { tuck_top: 'reverse_tuck', tuck_bottom: 'crash_lock', hang: 'none', window: 'none' },
+      pricePath: 'rfq',
+      priceReasons: ['option_not_priced'],
+      configurationPatches: [],
     },
   ],
   sizeRanges: [

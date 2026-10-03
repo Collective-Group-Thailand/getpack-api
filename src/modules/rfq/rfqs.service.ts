@@ -31,6 +31,9 @@ export const rfqEtag = (r: { publicId: string; rowVersion: number }) => etagOf(r
 
 export const RFQ_INCLUDE = {
   productType: { select: { code: true, nameTh: true, nameEn: true } },
+  styleVariant: {
+    select: { code: true, options: true, base: { select: { code: true, nameTh: true, nameEn: true } } },
+  },
   province: { select: { nameTh: true, nameEn: true } },
   customer: {
     select: {
@@ -92,6 +95,8 @@ export interface SubmitRfqInput {
   routedFrom?: { calculationId: string };
   /** D-247: the customer's target per unit (THB incl. VAT, excl. shipping); staff only, never to a partner (D-190). */
   targetPricePerUnit?: string | null;
+  /** D-269: a published style variant of the product type. */
+  styleVariantCode?: string | null;
 }
 
 export interface RfqQuoteLineInput {
@@ -197,6 +202,29 @@ export class RfqsService implements OnModuleInit {
       });
     }
     const routedFrom = await this.routedFrom(customerUserId, type.id, input.routedFrom?.calculationId);
+    // D-269: the style travels with the request — a published variant of this product type only.
+    const styleVariant = input.styleVariantCode
+      ? await this.prisma.styleVariant.findUnique({
+          where: { code: input.styleVariantCode },
+          select: { id: true, publishable: true, status: true, base: { select: { productTypeId: true } } },
+        })
+      : null;
+    if (
+      input.styleVariantCode &&
+      (!styleVariant ||
+        !styleVariant.publishable ||
+        styleVariant.status !== 'active' ||
+        styleVariant.base.productTypeId !== type.id)
+    )
+      throw new DomainException('validation.failed', {
+        errors: [
+          {
+            path: 'styleVariantCode',
+            code: 'exists',
+            message: 'not a published style variant of this product type',
+          },
+        ],
+      });
     const files = await this.ownFiles(customerUserId, createdBy, input.fileIds ?? []);
     const province = await this.prisma.geoSubdistrict.findFirst({
       where: { postcode: input.deliveryPostcode },
@@ -218,6 +246,7 @@ export class RfqsService implements OnModuleInit {
           specSchemaVersion: type.rfqSpecSchemaVersion,
           routedFromCalculateLogId: routedFrom,
           routedFromQuoteId: hooks.routedFromQuoteId ?? null,
+          styleVariantId: styleVariant?.id ?? null,
           targetPricePerUnit: input.targetPricePerUnit ?? null,
           lengthMm: input.lengthMm ?? null,
           widthMm: input.widthMm ?? null,
@@ -954,6 +983,13 @@ export class RfqsService implements OnModuleInit {
             productType: { select: { code: true, nameTh: true, nameEn: true } },
             province: { select: { nameTh: true, nameEn: true } },
             tiers: { orderBy: { quantity: 'asc' } },
+            styleVariant: {
+              select: {
+                code: true,
+                options: true,
+                base: { select: { code: true, nameTh: true, nameEn: true } },
+              },
+            },
           },
         },
       },

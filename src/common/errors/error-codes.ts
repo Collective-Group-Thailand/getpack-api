@@ -119,6 +119,8 @@ export const ERROR_CODES = {
   'styles.variant_not_found': HttpStatus.NOT_FOUND,
   'styles.site_visit_not_passed': HttpStatus.CONFLICT,
   'styles.capability_decided': HttpStatus.CONFLICT,
+  'styles.price_rule_exists': HttpStatus.CONFLICT,
+  'styles.price_rule_retired': HttpStatus.CONFLICT,
   'specs.unit_not_accepted': HttpStatus.UNPROCESSABLE_ENTITY,
   'specs.basis_not_accepted': HttpStatus.UNPROCESSABLE_ENTITY,
   'specs.caliper_missing': HttpStatus.UNPROCESSABLE_ENTITY,

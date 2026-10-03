@@ -621,6 +621,7 @@ export class QuoteEngineService {
       select: {
         publishable: true,
         status: true,
+        pricePath: true,
         base: { select: { pattern: { select: { publicId: true } } } },
       },
     });
@@ -629,7 +630,9 @@ export class QuoteEngineService {
       variant.publishable &&
       variant.status === 'active' &&
       variant.base.pattern?.publicId === cfg['patternId'];
-    return ok ? null : 'style_variant_not_publishable';
+    if (!ok) return 'style_variant_not_publishable';
+    // D-266: a published variant without an instant price path (calculator not signed, option not priced) is RFQ.
+    return variant.pricePath === 'instant' ? null : 'rfq_required';
   }
 
   async destinationShipping(

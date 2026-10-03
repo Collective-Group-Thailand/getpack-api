@@ -147,6 +147,8 @@ export class StylesAdminService {
         options: v.options as Record<string, unknown>,
         publishable: v.publishable,
         reasons: v.reasons as AdminStyleVariantDto['reasons'],
+        pricePath: v.pricePath,
+        priceReasons: v.priceReasons as AdminStyleVariantDto['priceReasons'],
         status: v.status,
         publishedAt: iso(v.publishedAt),
       })),

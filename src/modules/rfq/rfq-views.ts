@@ -64,6 +64,7 @@ export function rfqDto(r: RfqRow, files: RfqFiles = NO_FILES): RfqDto {
     quantities: r.tiers.map((t) => t.quantity),
     targetDate: date(r.targetDate),
     targetPricePerUnit: targetString(r.targetPricePerUnit),
+    style: styleOf(r.styleVariant),
     deliveryPostcode: r.deliveryPostcode,
     notes: r.notes,
     slaDueAt: iso(r.slaDueAt),
@@ -185,8 +186,24 @@ export function factoryConsultationDto(c: ConsultationRow): FactoryConsultationD
     measurementBasis: c.rfq.measurementBasis,
     quantities: c.rfq.tiers.map((t) => t.quantity),
     targetDate: date(c.rfq.targetDate),
+    style: styleOf(c.rfq.styleVariant),
     deliveryProvince: c.rfq.province?.nameTh ?? null,
     lines: response?.lines ?? null,
     respondedAt: iso(c.respondedAt),
   };
+}
+
+/** D-269: the style variant an RFQ asks for. */
+function styleOf(
+  v: { code: string; options: unknown; base: { code: string; nameTh: string; nameEn: string } } | null,
+) {
+  return v
+    ? {
+        variantCode: v.code,
+        baseCode: v.base.code,
+        nameTh: v.base.nameTh,
+        nameEn: v.base.nameEn,
+        options: v.options as Record<string, unknown>,
+      }
+    : null;
 }

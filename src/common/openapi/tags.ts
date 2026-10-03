@@ -76,6 +76,8 @@ export const API_TAGS: Record<string, string> = {
     'The signed board data sheets Packio keeps for the factory’s boards (D-236, D-044).',
   'store.publicReviews':
     'Verified customer reviews (D-202, D-265): published reviews with the product type and Packio’s reply, and the rating summary — never fabricated.',
+  'admin.stylePriceRules':
+    'Option price rules of styles (D-266, D-268): which option values a calculator prices and how; a variant prices instantly only when all its options are covered.',
   'store.network':
     'Packio’s partner network in numbers (D-201, D-264): audit criteria, coverage by product type, and the partner count and rates above the published minimums — aggregates only.',
   'store.guarantee':

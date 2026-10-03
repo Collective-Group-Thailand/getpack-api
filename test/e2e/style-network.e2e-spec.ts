@@ -1,3 +1,4 @@
+import { randomUUID } from 'node:crypto';
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 
@@ -287,7 +288,7 @@ describe('style library network and store (e2e, U3.B2–B3)', () => {
     expect(codes(back.body)).toContain('PK-CS-02');
   });
 
-  it('prices a publishable variant of the configuration’s style instantly (D-243)', async () => {
+  it('prices a publishable variant instantly only with every option priced; RFQ otherwise (D-243, D-266, D-268, D-269)', async () => {
     await ctx.prisma.productType.update({ where: { code: 'corrugated' }, data: { quoteMode: 'instant' } });
     const pattern = await ctx.prisma.pattern.findUniqueOrThrow({
       where: { publicId: corrugate.rscPatternPublicId },
@@ -308,11 +309,103 @@ describe('style library network and store (e2e, U3.B2–B3)', () => {
       parts: [{ printFront: [{ inkColourId: corrugate.inkColourPublicId, area: 'top' }] }],
       styleVariantCode: variant.code,
     };
+    // D-266: no price rule covers its options yet → RFQ (after the recompute that sees the instant type).
+    await ctx.app.get(StylesJobs).nightly();
+    const rfq = await request(ctx.server)
+      .post('/v1/store/quotes/actions/calculate')
+      .send({ productTypeCode: 'corrugated', configuration })
+      .expect(200);
+    expect(rfq.body.steps[0]).toMatchObject({ instant: false, reason: 'rfq_required' });
+    let row = await ctx.prisma.styleVariant.findUniqueOrThrow({ where: { id: variant.id } });
+    expect(row).toMatchObject({ pricePath: 'rfq', priceReasons: ['option_not_priced'] });
+
+    // D-268: Prepress prices each option value of the variant (neutral here); the price path follows at once.
+    const values = Object.entries(variant.options as Record<string, unknown>).flatMap(([axis, v]) =>
+      (Array.isArray(v) ? v.map(String) : [String(v)])
+        .filter((x) => x !== 'none')
+        .map((value) => ({ axis, value })),
+    );
+    await as(ctx, t['cs']!)
+      .post('/v1/admin/style-price-rules', {
+        calculatorKey: 'corrugate',
+        axis: 'x',
+        value: 'y',
+        effect: 'neutral',
+        note: 'fake',
+      })
+      .expect(403);
+    const created: string[] = [];
+    for (const v of values) {
+      const res = await as(ctx, t['prepress']!)
+        .post('/v1/admin/style-price-rules', {
+          calculatorKey: 'corrugate',
+          ...v,
+          effect: 'neutral',
+          note: 'ไม่กระทบราคา (fake)',
+        })
+        .expect(201);
+      created.push(res.body.id as string);
+    }
+    if (values.length > 0) {
+      const dup = await as(ctx, t['prepress']!)
+        .post('/v1/admin/style-price-rules', {
+          calculatorKey: 'corrugate',
+          ...values[0]!,
+          effect: 'neutral',
+          note: 'fake',
+        })
+        .expect(409);
+      expect(dup.body.code).toBe('styles.price_rule_exists');
+    }
+    row = await ctx.prisma.styleVariant.findUniqueOrThrow({ where: { id: variant.id } });
+    expect(row).toMatchObject({ pricePath: 'instant', priceReasons: [] });
     const ok = await request(ctx.server)
       .post('/v1/store/quotes/actions/calculate')
       .send({ productTypeCode: 'corrugated', configuration })
       .expect(200);
     expect(ok.body.steps[0].instant).toBe(true);
+    const detail = await request(ctx.server).get('/v1/store/styles/PK-CS-01').expect(200);
+    expect(
+      (detail.body.variants as { code: string; pricePath: string }[]).find((v) => v.code === variant.code),
+    ).toMatchObject({
+      pricePath: 'instant',
+    });
+
+    // D-269: an RFQ names the published variant; staff and the request carry the style.
+    const submitted = await as(ctx, t['customer']!)
+      .post('/v1/store/rfqs', {
+        productTypeCode: 'corrugated',
+        spec: {},
+        quantities: [500],
+        deliveryPostcode: '10110',
+        styleVariantCode: variant.code,
+      })
+      .set('Idempotency-Key', randomUUID())
+      .expect(201);
+    expect(submitted.body.style).toMatchObject({ variantCode: variant.code, baseCode: 'PK-CS-01' });
+    await as(ctx, t['customer']!)
+      .post('/v1/store/rfqs', {
+        productTypeCode: 'folding_carton',
+        spec: {},
+        quantities: [500],
+        deliveryPostcode: '10110',
+        styleVariantCode: variant.code,
+      })
+      .set('Idempotency-Key', randomUUID())
+      .expect(422);
+
+    // Retiring a rule sends the variant back to RFQ.
+    if (created.length > 0) {
+      await as(ctx, t['prepress']!)
+        .post(`/v1/admin/style-price-rules/${created[0]}/actions/retire`, { reason: 'ทดสอบ (fake)' })
+        .expect(200);
+      row = await ctx.prisma.styleVariant.findUniqueOrThrow({ where: { id: variant.id } });
+      expect(row.pricePath).toBe('rfq');
+      for (const id of created.slice(1))
+        await as(ctx, t['prepress']!)
+          .post(`/v1/admin/style-price-rules/${id}/actions/retire`, { reason: 'cleanup (fake)' })
+          .expect(200);
+    }
     const other = await ctx.prisma.styleVariant.findFirstOrThrow({
       where: { base: { code: 'PK-CS-02' }, publishable: true },
     });

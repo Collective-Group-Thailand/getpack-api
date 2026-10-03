@@ -80,6 +80,7 @@ export function quoteDto(q: QuoteRow, now = new Date()): SavedQuoteDto {
         }
       : null,
     fromLever: q.fromLever ? { leverId: q.fromLever.publicId, quoteId: q.fromLever.quote.publicId } : null,
+    dielineQuantities: (q.dielineQuantities as Record<string, unknown> | null) ?? null,
     createdAt: toBangkokIso(q.createdAt),
   };
 }

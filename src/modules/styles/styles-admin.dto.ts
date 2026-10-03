@@ -17,7 +17,7 @@ import {
   ValidateNested,
 } from 'class-validator';
 
-import { PUBLISH_REASONS } from './publishability';
+import { PRICE_REASONS, PUBLISH_REASONS } from './publishability';
 
 /** Style library staff DTOs (U3.B1, D-241–D-243). */
 
@@ -247,6 +247,17 @@ export class AdminStyleVariantDto {
   })
   reasons!: (typeof PUBLISH_REASONS)[number][];
 
+  @ApiProperty({ enum: ['instant', 'rfq'], enumName: 'QuoteMode', example: 'rfq', description: 'D-266' })
+  pricePath!: 'instant' | 'rfq';
+
+  @ApiProperty({
+    enum: PRICE_REASONS,
+    enumName: 'StylePriceReason',
+    isArray: true,
+    example: ['calculator_not_signed'],
+  })
+  priceReasons!: (typeof PRICE_REASONS)[number][];
+
   @ApiProperty({ enum: STYLE_STATUSES, enumName: 'StyleStatus', example: 'active' })
   status!: (typeof STYLE_STATUSES)[number];
 
@@ -390,6 +401,8 @@ export const ADMIN_VARIANT_EXAMPLE: AdminStyleVariantDto = {
   options: { tuck_top: 'reverse_tuck', tuck_bottom: 'crash_lock', hang: 'none', window: 'none' },
   publishable: false,
   reasons: ['no_recipe', 'names_not_approved', 'not_makeable'],
+  pricePath: 'rfq',
+  priceReasons: ['calculator_not_signed', 'option_not_priced'],
   status: 'active',
   publishedAt: null,
 };

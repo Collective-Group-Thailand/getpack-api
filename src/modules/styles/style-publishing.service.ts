@@ -3,7 +3,7 @@ import { Injectable } from '@nestjs/common';
 import { DomainEvents } from '@platform/domain-events/domain-events.service';
 import { SettingsService } from '@platform/settings/settings.service';
 
-import { publishReasons } from './publishability';
+import { pricePath, publishReasons } from './publishability';
 import { searchDocument } from './search-document';
 import { StyleMakeabilityService } from './style-makeability.service';
 
@@ -30,7 +30,7 @@ export class StylePublishingService {
     const bases = await tx.styleBase.findMany({
       where: baseIds ? { id: { in: baseIds } } : {},
       include: {
-        productType: { select: { status: true } },
+        productType: { select: { status: true, calculatorKey: true, quoteMode: true } },
         recipes: {
           select: { approvedAt: true, processes: true, version: true },
           orderBy: { version: 'desc' },
@@ -43,12 +43,25 @@ export class StylePublishingService {
             publishable: true,
             reasons: true,
             publishedAt: true,
+            pricePath: true,
+            priceReasons: true,
           },
         },
         synonyms: { select: { term: true } },
         useCases: { select: { code: true } },
       },
     });
+    // D-268: the active option price rules per calculator.
+    const ruleRows = await tx.styleOptionPriceRule.findMany({
+      where: { status: 'active' },
+      select: { calculatorKey: true, axis: true, value: true },
+    });
+    const rules = new Map<string, Set<string>>();
+    for (const r of ruleRows) {
+      const set = rules.get(r.calculatorKey) ?? new Set<string>();
+      set.add(`${r.axis}:${r.value}`);
+      rules.set(r.calculatorKey, set);
+    }
     const now = new Date();
     let variants = 0;
     let publishable = 0;
@@ -88,9 +101,19 @@ export class StylePublishingService {
         });
         const ok = reasons.length === 0;
         if (ok) after++;
+        // D-266: instant only with a signed calculator and every option priced.
+        const calculatorKey = base.productType?.calculatorKey ?? null;
+        const price = pricePath({
+          calculatorKey,
+          instantType: base.productType?.quoteMode === 'instant',
+          options: v.options as Record<string, unknown>,
+          rules: rules.get(calculatorKey ?? '') ?? new Set<string>(),
+        });
         if (
           ok !== v.publishable ||
           JSON.stringify(reasons) !== JSON.stringify(v.reasons) ||
+          price.path !== v.pricePath ||
+          JSON.stringify(price.reasons) !== JSON.stringify(v.priceReasons) ||
           (ok && !v.publishedAt)
         ) {
           await tx.styleVariant.update({
@@ -98,6 +121,8 @@ export class StylePublishingService {
             data: {
               publishable: ok,
               reasons,
+              pricePath: price.path,
+              priceReasons: price.reasons,
               evaluatedAt: now,
               ...(ok && !v.publishedAt && { publishedAt: now }),
             },

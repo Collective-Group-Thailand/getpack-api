@@ -40,3 +40,39 @@ export function publishReasons(g: GateInput): PublishReason[] {
   if (!g.makeable) reasons.push('not_makeable');
   return reasons;
 }
+
+export const PRICE_REASONS = ['no_calculator', 'calculator_not_signed', 'option_not_priced'] as const;
+export type PriceReason = (typeof PRICE_REASONS)[number];
+
+export interface PriceInput {
+  /** The Packio product type's calculator (null: an RFQ-only type, D-100). */
+  calculatorKey: string | null;
+  /** The type is switched to instant — the Pricing owner's sign-off switch (A-16). */
+  instantType: boolean;
+  /** The variant's options (`axis → value`; a multi-select is an array). */
+  options: Record<string, unknown>;
+  /** Active option price rules of the calculator, as `axis:value`. */
+  rules: ReadonlySet<string>;
+}
+
+/** The option values of a variant as `axis:value`; `none` (no feature) never needs a rule (assumption U3 (7)). */
+export function optionValues(options: Record<string, unknown>): string[] {
+  return Object.entries(options).flatMap(([axis, v]) =>
+    (Array.isArray(v) ? (v as unknown[]).map(String) : [String(v)])
+      .filter((value) => value !== '' && value !== 'none')
+      .map((value) => `${axis}:${value}`),
+  );
+}
+
+/**
+ * D-266 the price path of a variant: instant only with a calculator, its type switched to instant and every option
+ * value covered by a price rule (D-268); otherwise RFQ with the reasons.
+ */
+export function pricePath(p: PriceInput): { path: 'instant' | 'rfq'; reasons: PriceReason[] } {
+  const reasons: PriceReason[] = [];
+  if (!p.calculatorKey) reasons.push('no_calculator');
+  else if (!p.instantType) reasons.push('calculator_not_signed');
+  if (p.calculatorKey && optionValues(p.options).some((v) => !p.rules.has(v)))
+    reasons.push('option_not_priced');
+  return { path: reasons.length === 0 ? 'instant' : 'rfq', reasons };
+}

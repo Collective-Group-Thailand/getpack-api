@@ -3257,6 +3257,28 @@
           "type": "https://errors.packio/styles.maker_checker"
         }
       },
+      "problem.styles.price_rule_exists": {
+        "summary": "styles.price_rule_exists",
+        "value": {
+          "code": "styles.price_rule_exists",
+          "detail": "มีกฎราคาที่ใช้งานอยู่สำหรับตัวเลือกนี้แล้ว กรุณายกเลิกกฎเดิมก่อน",
+          "requestId": "6f1c2d8e-2c7b-4d0e-9d1c-3f1a2b3c4d5e",
+          "status": 409,
+          "title": "มีกฎราคาอยู่แล้ว",
+          "type": "https://errors.packio/styles.price_rule_exists"
+        }
+      },
+      "problem.styles.price_rule_retired": {
+        "summary": "styles.price_rule_retired",
+        "value": {
+          "code": "styles.price_rule_retired",
+          "detail": "กฎราคานี้ถูกยกเลิกไปแล้ว",
+          "requestId": "6f1c2d8e-2c7b-4d0e-9d1c-3f1a2b3c4d5e",
+          "status": 409,
+          "title": "กฎถูกยกเลิกแล้ว",
+          "type": "https://errors.packio/styles.price_rule_retired"
+        }
+      },
       "problem.styles.recipe_approved": {
         "summary": "styles.recipe_approved",
         "value": {
@@ -7656,7 +7678,7 @@
                 "type": "null"
               }
             ],
-            "description": "Why there is no instant price; `envelope_not_covered`: only tier-B paths priced it, outside their envelopes (D-234)",
+            "description": "Why there is no instant price; `envelope_not_covered`: only tier-B paths priced it, outside their envelopes (D-234); `style_variant_not_publishable`: the named style variant is not published (D-243); `rfq_required`: the variant is published but priced through RFQ — calculator not signed or an option not priced (D-266)",
             "example": null
           },
           "shippingAmount": {
@@ -8388,6 +8410,15 @@
               "null"
             ]
           },
+          "dielineQuantities": {
+            "additionalProperties": true,
+            "description": "The style variant’s dieline quantities at the size priced — blank, cut / crease / perforation / glue lengths, cut-out area, pieces — frozen with the engine version; no price effect until signed (D-267)",
+            "example": null,
+            "type": [
+              "object",
+              "null"
+            ]
+          },
           "dimensions": {
             "anyOf": [
               {
@@ -8558,6 +8589,7 @@
           "targetPricePerUnit",
           "outcome",
           "fromLever",
+          "dielineQuantities",
           "createdAt",
           "channel",
           "customer",
@@ -9442,6 +9474,24 @@
             },
             "type": "object"
           },
+          "pricePath": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/QuoteMode"
+              }
+            ],
+            "description": "D-266",
+            "example": "rfq"
+          },
+          "priceReasons": {
+            "example": [
+              "calculator_not_signed"
+            ],
+            "items": {
+              "$ref": "#/components/schemas/StylePriceReason"
+            },
+            "type": "array"
+          },
           "publishable": {
             "example": false,
             "type": "boolean"
@@ -9479,6 +9529,8 @@
           "options",
           "publishable",
           "reasons",
+          "pricePath",
+          "priceReasons",
           "status",
           "publishedAt"
         ],
@@ -25575,6 +25627,63 @@
         ],
         "type": "object"
       },
+      "CreateStylePriceRuleDto": {
+        "properties": {
+          "axis": {
+            "example": "window",
+            "pattern": "^[a-z][a-z0-9_]{0,63}$",
+            "type": "string"
+          },
+          "calculatorKey": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/CalculatorKey"
+              }
+            ],
+            "example": "folding"
+          },
+          "effect": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/StyleOptionPriceEffect"
+              }
+            ],
+            "description": "`neutral`: the option does not change the price; `configuration`: priced through `patch`",
+            "example": "configuration"
+          },
+          "note": {
+            "example": "หน้าต่าง = ติดฟิล์มหน้าต่าง (fake)",
+            "type": "string"
+          },
+          "patch": {
+            "additionalProperties": true,
+            "description": "`{ config?, part? }` merged into the configuration / each part; required for `configuration`",
+            "example": {
+              "part": {
+                "assemblies": [
+                  {
+                    "assemblyId": "0192f3a0-7c1e-7d2a-9b1f-00000000a301"
+                  }
+                ]
+              }
+            },
+            "type": "object"
+          },
+          "value": {
+            "example": "front_window",
+            "pattern": "^[a-z0-9][a-z0-9_+]{0,63}$",
+            "type": "string"
+          }
+        },
+        "required": [
+          "calculatorKey",
+          "axis",
+          "value",
+          "effect",
+          "note"
+        ],
+        "type": "object"
+      },
       "CreateStyleProcessRuleDto": {
         "properties": {
           "processCode": {
@@ -31459,6 +31568,17 @@
             ],
             "example": "requested"
           },
+          "style": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/RfqStyleDto"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "The style variant asked for (D-269)"
+          },
           "targetDate": {
             "example": "2026-11-15",
             "format": "date",
@@ -31490,6 +31610,7 @@
           "measurementBasis",
           "quantities",
           "targetDate",
+          "style",
           "deliveryProvince",
           "lines",
           "respondedAt"
@@ -50794,13 +50915,15 @@
         "type": "string"
       },
       "QuoteNoPriceReason": {
-        "description": "Why there is no instant price; `envelope_not_covered`: only tier-B paths priced it, outside their envelopes (D-234)",
+        "description": "Why there is no instant price; `envelope_not_covered`: only tier-B paths priced it, outside their envelopes (D-234); `style_variant_not_publishable`: the named style variant is not published (D-243); `rfq_required`: the variant is published but priced through RFQ — calculator not signed or an option not priced (D-266)",
         "enum": [
           "no_price_path",
           "not_priceable",
           "envelope_not_covered",
           "capacity_unavailable",
-          "delivery_unavailable"
+          "delivery_unavailable",
+          "style_variant_not_publishable",
+          "rfq_required"
         ],
         "type": "string"
       },
@@ -51270,7 +51393,7 @@
                 "type": "null"
               }
             ],
-            "description": "Why there is no instant price; `envelope_not_covered`: only tier-B paths priced it, outside their envelopes (D-234)",
+            "description": "Why there is no instant price; `envelope_not_covered`: only tier-B paths priced it, outside their envelopes (D-234); `style_variant_not_publishable`: the named style variant is not published (D-243); `rfq_required`: the variant is published but priced through RFQ — calculator not signed or an option not priced (D-266)",
             "example": null
           },
           "shippingAmount": {
@@ -55138,6 +55261,17 @@
             ],
             "example": "quoted"
           },
+          "style": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/RfqStyleDto"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "The style variant asked for (D-269)"
+          },
           "submittedAt": {
             "example": "2026-10-01T09:00:00+07:00",
             "format": "date-time",
@@ -55181,6 +55315,7 @@
           "quantities",
           "targetDate",
           "targetPricePerUnit",
+          "style",
           "deliveryPostcode",
           "notes",
           "slaDueAt",
@@ -55653,6 +55788,44 @@
           "expired"
         ],
         "type": "string"
+      },
+      "RfqStyleDto": {
+        "properties": {
+          "baseCode": {
+            "example": "PK-TE-01",
+            "type": "string"
+          },
+          "nameEn": {
+            "example": "Tuck end box",
+            "type": "string"
+          },
+          "nameTh": {
+            "example": "กล่องฝาเสียบ",
+            "type": "string"
+          },
+          "options": {
+            "additionalProperties": true,
+            "example": {
+              "hang": "none",
+              "tuck_bottom": "crash_lock",
+              "tuck_top": "reverse_tuck",
+              "window": "none"
+            },
+            "type": "object"
+          },
+          "variantCode": {
+            "example": "PK-TE-01-K7QD",
+            "type": "string"
+          }
+        },
+        "required": [
+          "variantCode",
+          "baseCode",
+          "nameTh",
+          "nameEn",
+          "options"
+        ],
+        "type": "object"
       },
       "RichMenuAudience": {
         "enum": [
@@ -57308,6 +57481,15 @@
               "null"
             ]
           },
+          "dielineQuantities": {
+            "additionalProperties": true,
+            "description": "The style variant’s dieline quantities at the size priced — blank, cut / crease / perforation / glue lengths, cut-out area, pieces — frozen with the engine version; no price effect until signed (D-267)",
+            "example": null,
+            "type": [
+              "object",
+              "null"
+            ]
+          },
           "dimensions": {
             "anyOf": [
               {
@@ -57458,6 +57640,7 @@
           "targetPricePerUnit",
           "outcome",
           "fromLever",
+          "dielineQuantities",
           "createdAt"
         ],
         "type": "object"
@@ -62113,6 +62296,17 @@
             ],
             "example": "quoted"
           },
+          "style": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/RfqStyleDto"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "The style variant asked for (D-269)"
+          },
           "submittedAt": {
             "example": "2026-10-01T09:00:00+07:00",
             "format": "date-time",
@@ -62156,6 +62350,7 @@
           "quantities",
           "targetDate",
           "targetPricePerUnit",
+          "style",
           "deliveryPostcode",
           "notes",
           "slaDueAt",
@@ -62573,6 +62768,12 @@
             "maximum": 32767,
             "minimum": 1,
             "type": "integer"
+          },
+          "styleVariantCode": {
+            "description": "The style-library variant this configuration builds (D-241). It must be publishable and belong to the configuration’s pattern; otherwise no quantity is priced instantly (reason `style_variant_not_publishable`, D-243), so the configuration cannot be saved, carted or ordered",
+            "example": "PK-TE-01-K7QD",
+            "pattern": "^PK-[A-Z0-9]{2,8}-[0-9]{2,3}-[A-Z2-7]{4,8}$",
+            "type": "string"
           },
           "targetDate": {
             "example": "2026-11-15",
@@ -66845,6 +67046,41 @@
         ],
         "type": "object"
       },
+      "StyleOptionPatchDto": {
+        "properties": {
+          "option": {
+            "description": "`axis:value`",
+            "example": "window:front_window",
+            "type": "string"
+          },
+          "patch": {
+            "additionalProperties": true,
+            "description": "`{ config?, part? }` merged into the configuration / each part",
+            "example": {
+              "part": {
+                "assemblies": [
+                  {
+                    "assemblyId": "0192f3a0-7c1e-7d2a-9b1f-00000000a301"
+                  }
+                ]
+              }
+            },
+            "type": "object"
+          }
+        },
+        "required": [
+          "option",
+          "patch"
+        ],
+        "type": "object"
+      },
+      "StyleOptionPriceEffect": {
+        "enum": [
+          "neutral",
+          "configuration"
+        ],
+        "type": "string"
+      },
       "StylePriceDto": {
         "properties": {
           "catalogProductSlug": {
@@ -66883,6 +67119,101 @@
           "quantity",
           "catalogProductSlug",
           "computedAt"
+        ],
+        "type": "object"
+      },
+      "StylePriceReason": {
+        "enum": [
+          "no_calculator",
+          "calculator_not_signed",
+          "option_not_priced"
+        ],
+        "type": "string"
+      },
+      "StylePriceRuleDto": {
+        "properties": {
+          "axis": {
+            "example": "window",
+            "type": "string"
+          },
+          "calculatorKey": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/CalculatorKey"
+              }
+            ],
+            "example": "folding"
+          },
+          "createdAt": {
+            "example": "2026-10-03T10:00:00+07:00",
+            "format": "date-time",
+            "type": "string"
+          },
+          "effect": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/StyleOptionPriceEffect"
+              }
+            ],
+            "example": "configuration"
+          },
+          "id": {
+            "example": "0192f3a0-7c1e-7d2a-9b1f-00000000a401",
+            "format": "uuid",
+            "type": "string"
+          },
+          "note": {
+            "example": "หน้าต่าง = ติดฟิล์มหน้าต่าง (fake)",
+            "type": "string"
+          },
+          "patch": {
+            "additionalProperties": true,
+            "example": {
+              "part": {
+                "assemblies": [
+                  {
+                    "assemblyId": "0192f3a0-7c1e-7d2a-9b1f-00000000a301"
+                  }
+                ]
+              }
+            },
+            "type": [
+              "object",
+              "null"
+            ]
+          },
+          "retiredAt": {
+            "example": null,
+            "format": "date-time",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "status": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/StyleStatus"
+              }
+            ],
+            "example": "active"
+          },
+          "value": {
+            "example": "front_window",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "calculatorKey",
+          "axis",
+          "value",
+          "effect",
+          "patch",
+          "note",
+          "status",
+          "createdAt",
+          "retiredAt"
         ],
         "type": "object"
       },
@@ -67198,6 +67529,13 @@
             "example": "PK-TE-01-K7QD",
             "type": "string"
           },
+          "configurationPatches": {
+            "description": "What the configurator applies for the variant’s priced options (D-268)",
+            "items": {
+              "$ref": "#/components/schemas/StyleOptionPatchDto"
+            },
+            "type": "array"
+          },
           "options": {
             "additionalProperties": true,
             "example": {
@@ -67207,11 +67545,32 @@
               "window": "none"
             },
             "type": "object"
+          },
+          "pricePath": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/QuoteMode"
+              }
+            ],
+            "description": "Instant only with a signed calculator and every option priced; otherwise RFQ (D-266)",
+            "example": "rfq"
+          },
+          "priceReasons": {
+            "example": [
+              "option_not_priced"
+            ],
+            "items": {
+              "$ref": "#/components/schemas/StylePriceReason"
+            },
+            "type": "array"
           }
         },
         "required": [
           "code",
-          "options"
+          "options",
+          "pricePath",
+          "priceReasons",
+          "configurationPatches"
         ],
         "type": "object"
       },
@@ -67644,6 +68003,12 @@
             "maximum": 32767,
             "minimum": 1,
             "type": "integer"
+          },
+          "styleVariantCode": {
+            "description": "The style-library variant this configuration builds (D-241). It must be publishable and belong to the configuration’s pattern; otherwise no quantity is priced instantly (reason `style_variant_not_publishable`, D-243), so the configuration cannot be saved, carted or ordered",
+            "example": "PK-TE-01-K7QD",
+            "pattern": "^PK-[A-Z0-9]{2,8}-[0-9]{2,3}-[A-Z2-7]{4,8}$",
+            "type": "string"
           },
           "targetDate": {
             "example": "2026-11-15",
@@ -234918,6 +235283,7 @@
                       },
                       "customerCode": "CU-000042",
                       "deliveryPostcode": "10110",
+                      "dielineQuantities": null,
                       "dimensions": null,
                       "fromLever": null,
                       "id": "0192f3a0-7c1e-7d2a-9b1f-00000000e601",
@@ -235312,6 +235678,7 @@
                   },
                   "customerCode": "CU-000042",
                   "deliveryPostcode": "10110",
+                  "dielineQuantities": null,
                   "dimensions": null,
                   "fromLever": null,
                   "id": "0192f3a0-7c1e-7d2a-9b1f-00000000e601",
@@ -235687,6 +236054,7 @@
                   },
                   "customerCode": "CU-000042",
                   "deliveryPostcode": "10110",
+                  "dielineQuantities": null,
                   "dimensions": null,
                   "fromLever": null,
                   "id": "0192f3a0-7c1e-7d2a-9b1f-00000000e601",
@@ -236033,6 +236401,7 @@
                   },
                   "customerCode": "CU-000042",
                   "deliveryPostcode": "10110",
+                  "dielineQuantities": null,
                   "dimensions": null,
                   "fromLever": null,
                   "id": "0192f3a0-7c1e-7d2a-9b1f-00000000e601",
@@ -236408,6 +236777,7 @@
                   },
                   "customerCode": "CU-000042",
                   "deliveryPostcode": "10110",
+                  "dielineQuantities": null,
                   "dimensions": null,
                   "fromLever": null,
                   "id": "0192f3a0-7c1e-7d2a-9b1f-00000000e601",
@@ -236766,6 +237136,7 @@
                     "createdAt": "2026-10-01T09:00:00+07:00",
                     "currency": "THB",
                     "deliveryPostcode": "10110",
+                    "dielineQuantities": null,
                     "dimensions": null,
                     "fromLever": null,
                     "id": "0192f3a0-7c1e-7d2a-9b1f-00000000e601",
@@ -237513,6 +237884,7 @@
                   "createdAt": "2026-10-01T09:00:00+07:00",
                   "currency": "THB",
                   "deliveryPostcode": "10110",
+                  "dielineQuantities": null,
                   "dimensions": null,
                   "fromLever": null,
                   "id": "0192f3a0-7c1e-7d2a-9b1f-00000000e601",
@@ -243871,6 +244243,7 @@
                     }
                   ],
                   "status": "quoted",
+                  "style": null,
                   "submittedAt": "2026-09-30T15:00:00+07:00",
                   "targetDate": "2026-11-15",
                   "targetPricePerUnit": null,
@@ -244298,6 +244671,7 @@
                     }
                   ],
                   "status": "quoted",
+                  "style": null,
                   "submittedAt": "2026-09-30T15:00:00+07:00",
                   "targetDate": "2026-11-15",
                   "targetPricePerUnit": null,
@@ -244659,6 +245033,7 @@
                     }
                   ],
                   "status": "accepted",
+                  "style": null,
                   "submittedAt": "2026-09-30T15:00:00+07:00",
                   "targetDate": "2026-11-15",
                   "targetPricePerUnit": null,
@@ -245038,6 +245413,7 @@
                     }
                   ],
                   "status": "quoted",
+                  "style": null,
                   "submittedAt": "2026-09-30T15:00:00+07:00",
                   "targetDate": "2026-11-15",
                   "targetPricePerUnit": null,
@@ -245532,6 +245908,7 @@
                         }
                       ],
                       "status": "quoted",
+                      "style": null,
                       "submittedAt": "2026-09-30T15:00:00+07:00",
                       "targetDate": "2026-11-15",
                       "targetPricePerUnit": null,
@@ -245879,6 +246256,7 @@
                     }
                   ],
                   "status": "submitted",
+                  "style": null,
                   "submittedAt": "2026-09-30T15:00:00+07:00",
                   "targetDate": "2026-11-15",
                   "targetPricePerUnit": null,
@@ -246255,6 +246633,7 @@
                     }
                   ],
                   "status": "quoted",
+                  "style": null,
                   "submittedAt": "2026-09-30T15:00:00+07:00",
                   "targetDate": "2026-11-15",
                   "targetPricePerUnit": null,
@@ -246593,6 +246972,7 @@
                     }
                   ],
                   "status": "quoted",
+                  "style": null,
                   "submittedAt": "2026-09-30T15:00:00+07:00",
                   "targetDate": "2026-11-15",
                   "targetPricePerUnit": null,
@@ -246978,6 +247358,7 @@
                     }
                   ],
                   "status": "declined",
+                  "style": null,
                   "submittedAt": "2026-09-30T15:00:00+07:00",
                   "targetDate": "2026-11-15",
                   "targetPricePerUnit": null,
@@ -247368,6 +247749,7 @@
                     }
                   ],
                   "status": "need_info",
+                  "style": null,
                   "submittedAt": "2026-09-30T15:00:00+07:00",
                   "targetDate": "2026-11-15",
                   "targetPricePerUnit": null,
@@ -247732,6 +248114,7 @@
                     }
                   ],
                   "status": "quoted",
+                  "style": null,
                   "submittedAt": "2026-09-30T15:00:00+07:00",
                   "targetDate": "2026-11-15",
                   "targetPricePerUnit": null,
@@ -248292,6 +248675,7 @@
                     }
                   ],
                   "status": "quoted",
+                  "style": null,
                   "submittedAt": "2026-09-30T15:00:00+07:00",
                   "targetDate": "2026-11-15",
                   "targetPricePerUnit": null,
@@ -248686,6 +249070,7 @@
                     }
                   ],
                   "status": "quoted",
+                  "style": null,
                   "submittedAt": "2026-09-30T15:00:00+07:00",
                   "targetDate": "2026-11-15",
                   "targetPricePerUnit": null,
@@ -249076,6 +249461,7 @@
                     }
                   ],
                   "status": "quoted",
+                  "style": null,
                   "submittedAt": "2026-09-30T15:00:00+07:00",
                   "targetDate": "2026-11-15",
                   "targetPricePerUnit": null,
@@ -265328,6 +265714,703 @@
         ]
       }
     },
+    "/v1/admin/style-price-rules": {
+      "get": {
+        "description": "Which option values a calculator prices and how (D-268); filter by calculator or status.\n\nImplements: D-268, D-266.",
+        "operationId": "admin.stylePriceRules.list",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "calculatorKey",
+            "required": false,
+            "schema": {
+              "$ref": "#/components/schemas/CalculatorKey"
+            }
+          },
+          {
+            "in": "query",
+            "name": "status",
+            "required": false,
+            "schema": {
+              "$ref": "#/components/schemas/StyleStatus"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "example": [
+                  {
+                    "axis": "window",
+                    "calculatorKey": "folding",
+                    "createdAt": "2026-10-03T10:00:00+07:00",
+                    "effect": "configuration",
+                    "id": "0192f3a0-7c1e-7d2a-9b1f-00000000a401",
+                    "note": "หน้าต่าง = ติดฟิล์มหน้าต่าง (fake)",
+                    "patch": {
+                      "part": {
+                        "assemblies": [
+                          {
+                            "assemblyId": "0192f3a0-7c1e-7d2a-9b1f-00000000a301"
+                          }
+                        ]
+                      }
+                    },
+                    "retiredAt": null,
+                    "status": "active",
+                    "value": "front_window"
+                  }
+                ],
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/StylePriceRuleDto"
+                  },
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Rules",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.unauthenticated": {
+                    "$ref": "#/components/examples/problem.auth.unauthenticated"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.unauthenticated`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.forbidden": {
+                    "$ref": "#/components/examples/problem.auth.forbidden"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.forbidden`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "validation.failed": {
+                    "$ref": "#/components/examples/problem.validation.failed"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `validation.failed`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "staff": []
+          }
+        ],
+        "summary": "List option price rules",
+        "tags": [
+          "admin.stylePriceRules"
+        ],
+        "x-required-permissions": [
+          "styles.read"
+        ]
+      },
+      "post": {
+        "description": "Prepress, with the Pricing owner, maps an option value of a calculator to its price — neutral, or a configuration patch the configurator applies; audited. One active rule per calculator × option value; the price path of the affected variants is recomputed at once (D-268, D-266).\n\nImplements: D-268, D-266.",
+        "operationId": "admin.stylePriceRules.create",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "examples": {
+                "default": {
+                  "value": {
+                    "axis": "window",
+                    "calculatorKey": "folding",
+                    "effect": "configuration",
+                    "note": "หน้าต่าง = ติดฟิล์มหน้าต่าง (fake)",
+                    "patch": {
+                      "part": {
+                        "assemblies": [
+                          {
+                            "assemblyId": "0192f3a0-7c1e-7d2a-9b1f-00000000a301"
+                          }
+                        ]
+                      }
+                    },
+                    "value": "front_window"
+                  }
+                }
+              },
+              "schema": {
+                "$ref": "#/components/schemas/CreateStylePriceRuleDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "axis": "window",
+                  "calculatorKey": "folding",
+                  "createdAt": "2026-10-03T10:00:00+07:00",
+                  "effect": "configuration",
+                  "id": "0192f3a0-7c1e-7d2a-9b1f-00000000a401",
+                  "note": "หน้าต่าง = ติดฟิล์มหน้าต่าง (fake)",
+                  "patch": {
+                    "part": {
+                      "assemblies": [
+                        {
+                          "assemblyId": "0192f3a0-7c1e-7d2a-9b1f-00000000a301"
+                        }
+                      ]
+                    }
+                  },
+                  "retiredAt": null,
+                  "status": "active",
+                  "value": "front_window"
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/StylePriceRuleDto"
+                }
+              }
+            },
+            "description": "Rule",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "400": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.bad_request": {
+                    "$ref": "#/components/examples/problem.http.bad_request"
+                  },
+                  "http.malformed_json": {
+                    "$ref": "#/components/examples/problem.http.malformed_json"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.bad_request`, `http.malformed_json`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.unauthenticated": {
+                    "$ref": "#/components/examples/problem.auth.unauthenticated"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.unauthenticated`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.forbidden": {
+                    "$ref": "#/components/examples/problem.auth.forbidden"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.forbidden`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "409": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "styles.price_rule_exists": {
+                    "$ref": "#/components/examples/problem.styles.price_rule_exists"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `styles.price_rule_exists`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "validation.failed": {
+                    "$ref": "#/components/examples/problem.validation.failed"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `validation.failed`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "staff": []
+          }
+        ],
+        "summary": "Add an option price rule",
+        "tags": [
+          "admin.stylePriceRules"
+        ],
+        "x-required-permissions": [
+          "styles.price_rules"
+        ]
+      }
+    },
+    "/v1/admin/style-price-rules/{ruleId}/actions/retire": {
+      "post": {
+        "description": "With a reason (audited); the option goes back to RFQ until a new rule (D-268, D-266).\n\nImplements: D-268, D-266.",
+        "operationId": "admin.stylePriceRules.retire",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "ruleId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "examples": {
+                "default": {
+                  "value": {
+                    "reason": "ราคาเปลี่ยน (fake)"
+                  }
+                }
+              },
+              "schema": {
+                "$ref": "#/components/schemas/ReasonBodyDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "axis": "window",
+                  "calculatorKey": "folding",
+                  "createdAt": "2026-10-03T10:00:00+07:00",
+                  "effect": "configuration",
+                  "id": "0192f3a0-7c1e-7d2a-9b1f-00000000a401",
+                  "note": "หน้าต่าง = ติดฟิล์มหน้าต่าง (fake)",
+                  "patch": {
+                    "part": {
+                      "assemblies": [
+                        {
+                          "assemblyId": "0192f3a0-7c1e-7d2a-9b1f-00000000a301"
+                        }
+                      ]
+                    }
+                  },
+                  "retiredAt": "2026-10-04T10:00:00+07:00",
+                  "status": "retired",
+                  "value": "front_window"
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/StylePriceRuleDto"
+                }
+              }
+            },
+            "description": "Retired",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "400": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.bad_request": {
+                    "$ref": "#/components/examples/problem.http.bad_request"
+                  },
+                  "http.malformed_json": {
+                    "$ref": "#/components/examples/problem.http.malformed_json"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.bad_request`, `http.malformed_json`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.unauthenticated": {
+                    "$ref": "#/components/examples/problem.auth.unauthenticated"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.unauthenticated`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.forbidden": {
+                    "$ref": "#/components/examples/problem.auth.forbidden"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.forbidden`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "404": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.not_found": {
+                    "$ref": "#/components/examples/problem.http.not_found"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.not_found`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "409": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "styles.price_rule_retired": {
+                    "$ref": "#/components/examples/problem.styles.price_rule_retired"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `styles.price_rule_retired`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "validation.failed": {
+                    "$ref": "#/components/examples/problem.validation.failed"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `validation.failed`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "staff": []
+          }
+        ],
+        "summary": "Retire an option price rule",
+        "tags": [
+          "admin.stylePriceRules"
+        ],
+        "x-required-permissions": [
+          "styles.price_rules"
+        ]
+      }
+    },
     "/v1/admin/style-process-rules": {
       "get": {
         "description": "Which processes a style needs when its recipe declares none — by master product type, category, family or option value (D-244); seeded as a proposal Prepress confirms.\n\nImplements: D-244.",
@@ -267703,6 +268786,11 @@
                         "tuck_top": "reverse_tuck",
                         "window": "none"
                       },
+                      "pricePath": "rfq",
+                      "priceReasons": [
+                        "calculator_not_signed",
+                        "option_not_priced"
+                      ],
                       "publishable": false,
                       "publishedAt": null,
                       "reasons": [
@@ -293859,6 +294947,7 @@
                       "print": "1 colour one side"
                     },
                     "status": "requested",
+                    "style": null,
                     "targetDate": "2026-11-15",
                     "widthMm": 120
                   }
@@ -294097,6 +295186,7 @@
                     "print": "1 colour one side"
                   },
                   "status": "declined",
+                  "style": null,
                   "targetDate": "2026-11-15",
                   "widthMm": 120
                 },
@@ -294384,6 +295474,7 @@
                     "print": "1 colour one side"
                   },
                   "status": "responded",
+                  "style": null,
                   "targetDate": "2026-11-15",
                   "widthMm": 120
                 },
@@ -329685,6 +330776,7 @@
                     "createdAt": "2026-10-01T09:00:00+07:00",
                     "currency": "THB",
                     "deliveryPostcode": "10110",
+                    "dielineQuantities": null,
                     "dimensions": null,
                     "fromLever": null,
                     "id": "0192f3a0-7c1e-7d2a-9b1f-00000000e601",
@@ -351689,6 +352781,7 @@
                       "createdAt": "2026-10-01T09:00:00+07:00",
                       "currency": "THB",
                       "deliveryPostcode": "10110",
+                      "dielineQuantities": null,
                       "dimensions": null,
                       "fromLever": null,
                       "id": "0192f3a0-7c1e-7d2a-9b1f-00000000e601",
@@ -352038,6 +353131,7 @@
                   "createdAt": "2026-10-01T09:00:00+07:00",
                   "currency": "THB",
                   "deliveryPostcode": "10110",
+                  "dielineQuantities": null,
                   "dimensions": null,
                   "fromLever": null,
                   "id": "0192f3a0-7c1e-7d2a-9b1f-00000000e601",
@@ -352758,6 +353852,7 @@
                   "createdAt": "2026-10-01T09:00:00+07:00",
                   "currency": "THB",
                   "deliveryPostcode": "10110",
+                  "dielineQuantities": null,
                   "dimensions": null,
                   "fromLever": null,
                   "id": "0192f3a0-7c1e-7d2a-9b1f-00000000e601",
@@ -353045,6 +354140,7 @@
                   "createdAt": "2026-10-01T09:00:00+07:00",
                   "currency": "THB",
                   "deliveryPostcode": "10110",
+                  "dielineQuantities": null,
                   "dimensions": null,
                   "fromLever": null,
                   "id": "0192f3a0-7c1e-7d2a-9b1f-00000000e601",
@@ -353359,6 +354455,7 @@
                   "createdAt": "2026-10-01T09:00:00+07:00",
                   "currency": "THB",
                   "deliveryPostcode": "10110",
+                  "dielineQuantities": null,
                   "dimensions": null,
                   "fromLever": null,
                   "id": "0192f3a0-7c1e-7d2a-9b1f-00000000e601",
@@ -353711,6 +354808,7 @@
                   "createdAt": "2026-10-01T09:00:00+07:00",
                   "currency": "THB",
                   "deliveryPostcode": "10110",
+                  "dielineQuantities": null,
                   "dimensions": null,
                   "fromLever": null,
                   "id": "0192f3a0-7c1e-7d2a-9b1f-00000000e601",
@@ -354066,6 +355164,7 @@
                   "createdAt": "2026-10-01T09:00:00+07:00",
                   "currency": "THB",
                   "deliveryPostcode": "10110",
+                  "dielineQuantities": null,
                   "dimensions": null,
                   "fromLever": null,
                   "id": "0192f3a0-7c1e-7d2a-9b1f-00000000e601",
@@ -354392,6 +355491,7 @@
                   "createdAt": "2026-10-01T09:00:00+07:00",
                   "currency": "THB",
                   "deliveryPostcode": "10110",
+                  "dielineQuantities": null,
                   "dimensions": null,
                   "fromLever": null,
                   "id": "0192f3a0-7c1e-7d2a-9b1f-00000000e601",
@@ -354974,6 +356074,7 @@
                     "createdAt": "2026-10-01T09:00:00+07:00",
                     "currency": "THB",
                     "deliveryPostcode": "10110",
+                    "dielineQuantities": null,
                     "dimensions": null,
                     "fromLever": null,
                     "id": "0192f3a0-7c1e-7d2a-9b1f-00000000e601",
@@ -355570,6 +356671,7 @@
                   "createdAt": "2026-10-01T09:00:00+07:00",
                   "currency": "THB",
                   "deliveryPostcode": "10110",
+                  "dielineQuantities": null,
                   "dimensions": null,
                   "fromLever": null,
                   "id": "0192f3a0-7c1e-7d2a-9b1f-00000000e601",
@@ -356086,6 +357188,7 @@
                   "createdAt": "2026-10-01T09:00:00+07:00",
                   "currency": "THB",
                   "deliveryPostcode": "10110",
+                  "dielineQuantities": null,
                   "dimensions": null,
                   "fromLever": null,
                   "id": "0192f3a0-7c1e-7d2a-9b1f-00000000e601",
@@ -357826,6 +358929,7 @@
                         "print": "1 colour one side"
                       },
                       "status": "quoted",
+                      "style": null,
                       "submittedAt": "2026-09-30T15:00:00+07:00",
                       "targetDate": "2026-11-15",
                       "targetPricePerUnit": null,
@@ -358079,6 +359183,7 @@
                     "print": "1 colour one side"
                   },
                   "status": "submitted",
+                  "style": null,
                   "submittedAt": "2026-09-30T15:00:00+07:00",
                   "targetDate": "2026-11-15",
                   "targetPricePerUnit": null,
@@ -358393,6 +359498,7 @@
                     "print": "1 colour one side"
                   },
                   "status": "quoted",
+                  "style": null,
                   "submittedAt": "2026-09-30T15:00:00+07:00",
                   "targetDate": "2026-11-15",
                   "targetPricePerUnit": null,
@@ -358669,6 +359775,7 @@
                     "print": "1 colour one side"
                   },
                   "status": "accepted",
+                  "style": null,
                   "submittedAt": "2026-09-30T15:00:00+07:00",
                   "targetDate": "2026-11-15",
                   "targetPricePerUnit": null,
@@ -359017,6 +360124,7 @@
                     "print": "1 colour one side"
                   },
                   "status": "declined",
+                  "style": null,
                   "submittedAt": "2026-09-30T15:00:00+07:00",
                   "targetDate": "2026-11-15",
                   "targetPricePerUnit": null,
@@ -359330,6 +360438,7 @@
                     "print": "1 colour one side"
                   },
                   "status": "quoted",
+                  "style": null,
                   "submittedAt": "2026-09-30T15:00:00+07:00",
                   "targetDate": "2026-11-15",
                   "targetPricePerUnit": null,
@@ -363349,12 +364458,17 @@
                     "variants": [
                       {
                         "code": "PK-TE-01-K7QD",
+                        "configurationPatches": [],
                         "options": {
                           "hang": "none",
                           "tuck_bottom": "crash_lock",
                           "tuck_top": "reverse_tuck",
                           "window": "none"
-                        }
+                        },
+                        "pricePath": "rfq",
+                        "priceReasons": [
+                          "option_not_priced"
+                        ]
                       }
                     ]
                   }
@@ -363588,12 +364702,17 @@
                   "variants": [
                     {
                       "code": "PK-TE-01-K7QD",
+                      "configurationPatches": [],
                       "options": {
                         "hang": "none",
                         "tuck_bottom": "crash_lock",
                         "tuck_top": "reverse_tuck",
                         "window": "none"
-                      }
+                      },
+                      "pricePath": "rfq",
+                      "priceReasons": [
+                        "option_not_priced"
+                      ]
                     }
                   ]
                 },
@@ -367935,6 +369054,10 @@
     {
       "description": "Style-library imports (D-242): master files and recipe bundles, their diffs and approvals.",
       "name": "admin.styleImports"
+    },
+    {
+      "description": "Option price rules of styles (D-266, D-268): which option values a calculator prices and how; a variant prices instantly only when all its options are covered.",
+      "name": "admin.stylePriceRules"
     },
     {
       "description": "Which processes a style needs when its recipe declares none (D-244, Prepress).",

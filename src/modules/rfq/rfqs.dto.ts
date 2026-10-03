@@ -6,6 +6,7 @@ import { TargetPriceField } from '@modules/pricing/quotes/target-price';
 import { SpecLineDto } from '@modules/quotes/line-summary.dto';
 import { MONEY, POSTCODE, RATE } from '@modules/shipping/rates/customer-rates.dto';
 import { MEASUREMENT_BASES } from '@modules/specs/dimension-conversion';
+import { StyleVariantField } from '@modules/styles/style-variant-field';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { UserRefDto } from '@platform/approvals/approvals.dto';
 import { AttachedFileDto } from '@platform/files/files.dto';
@@ -177,6 +178,30 @@ export class SubmitRfqDto {
 
   @TargetPriceField('Staff see it; a factory never does (D-190)')
   targetPricePerUnit?: string;
+
+  @StyleVariantField()
+  styleVariantCode?: string;
+}
+
+export class RfqStyleDto {
+  @ApiProperty({ example: 'PK-TE-01-K7QD' })
+  variantCode!: string;
+
+  @ApiProperty({ example: 'PK-TE-01' })
+  baseCode!: string;
+
+  @ApiProperty({ example: 'กล่องฝาเสียบ' })
+  nameTh!: string;
+
+  @ApiProperty({ example: 'Tuck end box' })
+  nameEn!: string;
+
+  @ApiProperty({
+    type: 'object',
+    additionalProperties: true,
+    example: { tuck_top: 'reverse_tuck', tuck_bottom: 'crash_lock', hang: 'none', window: 'none' },
+  })
+  options!: Record<string, unknown>;
 }
 
 export class StaffSubmitRfqDto extends SubmitRfqDto {
@@ -659,6 +684,13 @@ export class RfqDto {
   })
   targetPricePerUnit!: string | null;
 
+  @ApiProperty({
+    type: () => RfqStyleDto,
+    nullable: true,
+    description: 'The style variant asked for (D-269)',
+  })
+  style!: RfqStyleDto | null;
+
   @ApiProperty({ example: '10110' })
   deliveryPostcode!: string;
 
@@ -805,6 +837,13 @@ export class FactoryConsultationDto {
 
   @ApiProperty({ type: String, format: 'date', nullable: true, example: '2026-11-15' })
   targetDate!: string | null;
+
+  @ApiProperty({
+    type: () => RfqStyleDto,
+    nullable: true,
+    description: 'The style variant asked for (D-269)',
+  })
+  style!: RfqStyleDto | null;
 
   @ApiProperty({
     type: String,

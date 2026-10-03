@@ -87,6 +87,8 @@ export class QuoteClosingService {
         deliveryPostcode,
         notes: input.notes,
         targetPricePerUnit: quote.targetPricePerUnit?.toFixed(2) ?? null,
+        // D-269: the style travels to CS with the request.
+        styleVariantCode: typeof cfg['styleVariantCode'] === 'string' ? cfg['styleVariantCode'] : null,
       },
       undefined,
       {

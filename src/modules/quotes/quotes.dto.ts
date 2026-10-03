@@ -376,6 +376,17 @@ export class SavedQuoteDto {
   })
   fromLever!: QuoteFromLeverDto | null;
 
+  @ApiProperty({
+    type: 'object',
+    additionalProperties: true,
+    nullable: true,
+    example: null,
+    description:
+      'The style variant’s dieline quantities at the size priced — blank, cut / crease / perforation / glue lengths, ' +
+      'cut-out area, pieces — frozen with the engine version; no price effect until signed (D-267)',
+  })
+  dielineQuantities!: Record<string, unknown> | null;
+
   @ApiProperty({ format: 'date-time', example: '2026-10-01T09:00:00+07:00' })
   createdAt!: string;
 }
@@ -477,6 +488,7 @@ export const QUOTE_EXAMPLE: SavedQuoteDto = {
   targetPricePerUnit: '11.50',
   outcome: null,
   fromLever: null,
+  dielineQuantities: null,
   createdAt: '2026-10-01T09:00:00+07:00',
 };
 
