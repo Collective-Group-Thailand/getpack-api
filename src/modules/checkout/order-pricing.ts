@@ -11,14 +11,23 @@ import { formatMoney, MoneyDecimal, type MoneyValue } from '@common/money/money'
  * line). Customer withholding (P03) applies per line category when the tax profile withholds (D-174).
  */
 
+export type QuoteSourceKind = 'instant' | 'rfq' | 'sample' | 'call_off';
+
+/** Instant quotations and call-off releases carry VAT-inclusive amounts and get shipping per destination. */
+export const shippedPerDestination = (source: QuoteSourceKind): boolean =>
+  source === 'instant' || source === 'call_off';
+
 export type LineType = 'product' | 'design_fee' | 'structure_design_fee' | 'shipping';
 export type WhtCategory = 'hire_of_work' | 'transport' | 'service' | 'none';
 export type TaxNature = 'sale_of_goods' | 'hire_of_work';
 export type RevenueCategory = 'made_to_order' | 'standard_product' | 'design_service' | 'shipping' | 'mockup';
 
 export interface QuoteOptionInput {
-  /** `sample`: a standalone sample quotation (D-254) — priced like an RFQ quotation, from its option. */
-  source: 'instant' | 'rfq' | 'sample';
+  /**
+   * `sample`: a standalone sample quotation (D-254) — priced like an RFQ quotation, from its option. `call_off`: a
+   * call-off release (D-290) — VAT-inclusive like an instant quotation, shipping priced per destination.
+   */
+  source: QuoteSourceKind;
   quantity: number;
   netAmount: string;
   vatAmount: string;
@@ -109,7 +118,7 @@ export function priceOrderLines(
       ? D(option.result.shippingVatAmount)
       : quoteShipGross.sub(quoteShipNet);
 
-  if (option.source === 'instant') {
+  if (shippedPerDestination(option.source)) {
     const productSideGross = D(option.grossAmount).sub(quoteShipGross);
     const productSideVat = D(option.vatAmount).sub(quoteShipVat);
     const candidates: { type: LineType; gross: MoneyValue }[] = [
@@ -140,8 +149,9 @@ export function priceOrderLines(
     drafts.push({ type: 'product', quantity: option.quantity, net, vat });
   }
 
-  const shipNet = option.source === 'instant' ? (shippingNet ?? D(0)) : quoteShipNet;
-  const shipVat = option.source === 'instant' ? vatOf(shipNet, ctx.vatPct) : quoteShipVat;
+  const perDestination = shippedPerDestination(option.source);
+  const shipNet = perDestination ? (shippingNet ?? D(0)) : quoteShipNet;
+  const shipVat = perDestination ? vatOf(shipNet, ctx.vatPct) : quoteShipVat;
   if (shipNet.gt(0)) drafts.push({ type: 'shipping', quantity: 1, net: shipNet, vat: shipVat });
 
   return drafts.map((d) => {

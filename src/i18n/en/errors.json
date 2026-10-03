@@ -1544,5 +1544,23 @@
       "title": "Suggestion already decided",
       "detail": "This reorder suggestion was already marked {status}."
     }
+  },
+  "call_offs": {
+    "quote_not_eligible": {
+      "title": "Quotation not eligible",
+      "detail": "A call-off needs a saved instant quotation of yours, still valid, whose option has a factory."
+    },
+    "already_requested": {
+      "title": "Call-off already requested",
+      "detail": "This quotation option already has a call-off request or agreement."
+    },
+    "invalid_status": {
+      "title": "Not possible now",
+      "detail": "The call-off agreement is {status}."
+    },
+    "release_quantity": {
+      "title": "Release quantity not allowed",
+      "detail": "A release is at least {min} and at most the {remaining} left."
+    }
   }
 }

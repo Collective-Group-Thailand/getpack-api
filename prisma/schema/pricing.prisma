@@ -510,6 +510,8 @@ enum QuoteSource {
   rfq
   /// D-254: a standalone sample quotation priced by CS (one option).
   sample
+  /// D-290: a release of a call-off agreement, at its locked unit price (product only; shipping at checkout).
+  call_off
 
   @@map("quote_source")
 }
@@ -627,6 +629,9 @@ model Quote {
 
   studioPrintJobs StudioPrintJob[] @relation("StudioPrintJobQuote")
 
+  callOffAgreements CallOffAgreement[] @relation("CallOffQuote")
+  callOffRelease    CallOffRelease?    @relation("CallOffReleaseQuote")
+
   @@index([designDocumentVersionId], map: "ix_quotes__design_document_version_id")
   @@index([specHash], map: "ix_quotes__spec_hash")
   @@index([advisoryRecommendationId], map: "ix_quotes__advisory_recommendation_id")
@@ -686,6 +691,8 @@ model QuoteOption {
   cartItems        CartItem[] @relation("CartItemQuoteOption")
   cartItemsPending CartItem[] @relation("CartItemPendingQuoteOption")
   orders           Order[]    @relation("OrderQuoteOption")
+
+  callOffAgreements CallOffAgreement[] @relation("CallOffQuoteOption")
 
   @@unique([quoteId, quantity], map: "ux_quote_options__quote_id__quantity")
   @@index([selectedFactoryId], map: "ix_quote_options__selected_factory_id")
@@ -1174,4 +1181,103 @@ model StudioQuoteSnapshot {
   @@index([productTypeId], map: "ix_studio_quote_snapshots__product_type_id")
   @@index([createdAt], map: "ix_studio_quote_snapshots__created_at")
   @@map("studio_quote_snapshots")
+}
+
+// --- U2.7 call-off agreements (A-104; D-206, D-290) ------------------------------------------------------------
+
+enum CallOffStatus {
+  /// Asked by the customer; the quotation's factory has not answered.
+  pending_factory
+  active
+  declined
+  /// Withdrawn by the customer before the factory answered.
+  cancelled
+  /// Past its end (or its quotation's validity while pending): what was not released lapses, no charge.
+  expired
+
+  @@map("call_off_status")
+}
+
+enum CallOffReleaseStatus {
+  /// Its quotation is in the cart, not ordered yet.
+  quoted
+  ordered
+  /// Its quotation expired unordered: the quantity is free again.
+  lapsed
+
+  @@map("call_off_release_status")
+}
+
+/// D-290 a call-off agreement: the unit price of a saved quotation option locked for its quantity for `months` (≤
+/// `calloff.max_months`) once the option's factory accepts; released in parts, each a quotation at the locked price
+/// and a normal order. No deposit, no stock.
+model CallOffAgreement {
+  id                 BigInt        @id(map: "pk_call_off_agreements") @default(autoincrement())
+  publicId           String        @unique(map: "ux_call_off_agreements__public_id") @default(dbgenerated("uuidv7()")) @map("public_id") @db.Uuid
+  customerUserId     BigInt        @map("customer_user_id")
+  quoteId            BigInt        @map("quote_id")
+  quoteOptionId      BigInt        @map("quote_option_id")
+  factoryId          BigInt        @map("factory_id")
+  productTypeId      BigInt        @map("product_type_id")
+  /// The quotation option's quantity: the committed quantity at its unit price.
+  committedQuantity  Int           @map("committed_quantity")
+  /// The factory's minimum order for the product type when asked (each release is at least this).
+  minReleaseQuantity Int           @map("min_release_quantity")
+  months             Int           @db.SmallInt
+  status             CallOffStatus @default(pending_factory)
+  respondedAt        DateTime?     @map("responded_at") @db.Timestamptz(6)
+  respondedById      BigInt?       @map("responded_by")
+  declineReason      String?       @map("decline_reason")
+  startsAt           DateTime?     @map("starts_at") @db.Timestamptz(6)
+  expiresAt          DateTime?     @map("expires_at") @db.Timestamptz(6)
+  endedAt            DateTime?     @map("ended_at") @db.Timestamptz(6)
+  /// At expiry: the committed quantity not released (no charge, D-290).
+  lapsedQuantity     Int?          @map("lapsed_quantity")
+  createdAt          DateTime      @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt          DateTime      @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+  rowVersion         Int           @default(1) @map("row_version")
+
+  customer    User             @relation("CallOffCustomer", fields: [customerUserId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_call_off_agreements__customer_user_id")
+  quote       Quote            @relation("CallOffQuote", fields: [quoteId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_call_off_agreements__quote_id")
+  quoteOption QuoteOption      @relation("CallOffQuoteOption", fields: [quoteOptionId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_call_off_agreements__quote_option_id")
+  factory     Factory          @relation("CallOffFactory", fields: [factoryId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_call_off_agreements__factory_id")
+  productType ProductType      @relation("CallOffProductType", fields: [productTypeId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_call_off_agreements__product_type_id")
+  respondedBy User?            @relation("CallOffRespondedBy", fields: [respondedById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_call_off_agreements__responded_by")
+  releases    CallOffRelease[]
+
+  @@index([customerUserId], map: "ix_call_off_agreements__customer_user_id")
+  @@index([quoteId], map: "ix_call_off_agreements__quote_id")
+  @@index([quoteOptionId], map: "ix_call_off_agreements__quote_option_id")
+  @@index([factoryId, status], map: "ix_call_off_agreements__factory_id__status")
+  @@index([productTypeId], map: "ix_call_off_agreements__product_type_id")
+  @@index([respondedById], map: "ix_call_off_agreements__responded_by")
+  @@index([status, expiresAt], map: "ix_call_off_agreements__status__expires_at")
+  @@map("call_off_agreements")
+}
+
+/// D-290 one release of a call-off agreement: a quotation at the locked unit price, then the order placed from it.
+model CallOffRelease {
+  id              BigInt               @id(map: "pk_call_off_releases") @default(autoincrement())
+  publicId        String               @unique(map: "ux_call_off_releases__public_id") @default(dbgenerated("uuidv7()")) @map("public_id") @db.Uuid
+  agreementId     BigInt               @map("agreement_id")
+  seq             Int                  @db.SmallInt
+  quantity        Int
+  status          CallOffReleaseStatus @default(quoted)
+  quoteId         BigInt               @unique(map: "ux_call_off_releases__quote_id") @map("quote_id")
+  orderId         BigInt?              @unique(map: "ux_call_off_releases__order_id") @map("order_id")
+  /// The first release carries the quotation's one-off amounts (design fees, plates and die blocks).
+  includesOneOffs Boolean              @map("includes_one_offs")
+  createdById     BigInt               @map("created_by")
+  createdAt       DateTime             @default(now()) @map("created_at") @db.Timestamptz(6)
+  orderedAt       DateTime?            @map("ordered_at") @db.Timestamptz(6)
+  lapsedAt        DateTime?            @map("lapsed_at") @db.Timestamptz(6)
+
+  agreement CallOffAgreement @relation(fields: [agreementId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_call_off_releases__agreement_id")
+  quote     Quote            @relation("CallOffReleaseQuote", fields: [quoteId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_call_off_releases__quote_id")
+  order     Order?           @relation("CallOffReleaseOrder", fields: [orderId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_call_off_releases__order_id")
+  createdBy User             @relation("CallOffReleaseCreatedBy", fields: [createdById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_call_off_releases__created_by")
+
+  @@unique([agreementId, seq], map: "ux_call_off_releases__agreement_id__seq")
+  @@index([createdById], map: "ix_call_off_releases__created_by")
+  @@map("call_off_releases")
 }

@@ -2,6 +2,7 @@ import { ADVISORY_STORE_CONTROLLERS } from '@modules/advisory/advisory.registry'
 import { ANALYTICS_STORE_CONTROLLERS } from '@modules/analytics/analytics.registry';
 import { ARTWORK_STORE_CONTROLLERS } from '@modules/artwork/artwork.registry';
 import { StoreMeController } from '@modules/auth/controllers/me.controllers';
+import { CALL_OFFS_STORE_CONTROLLERS } from '@modules/call-offs/call-offs.registry';
 import { CARTS_STORE_CONTROLLERS } from '@modules/carts/carts.registry';
 import { StoreCatalogController } from '@modules/catalog/store/store-catalog.controller';
 import {
@@ -67,6 +68,7 @@ import { RealtimeModule } from '@platform/realtime/realtime.module';
     ...CARTS_STORE_CONTROLLERS,
     ...CHECKOUT_STORE_CONTROLLERS,
     ...ORDERS_STORE_CONTROLLERS,
+    ...CALL_OFFS_STORE_CONTROLLERS,
     ...REORDERS_STORE_CONTROLLERS,
     ...LOGISTICS_STORE_CONTROLLERS,
     ...CLAIMS_STORE_CONTROLLERS,

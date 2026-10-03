@@ -507,6 +507,50 @@
           "type": "https://errors.packio/banking.statement_invalid"
         }
       },
+      "problem.call_offs.already_requested": {
+        "summary": "call_offs.already_requested",
+        "value": {
+          "code": "call_offs.already_requested",
+          "detail": "ตัวเลือกนี้มีคำขอหรือสัญญาสั่งผลิตแบบทยอยอยู่แล้ว",
+          "requestId": "6f1c2d8e-2c7b-4d0e-9d1c-3f1a2b3c4d5e",
+          "status": 409,
+          "title": "ขอทำสัญญาไปแล้ว",
+          "type": "https://errors.packio/call_offs.already_requested"
+        }
+      },
+      "problem.call_offs.invalid_status": {
+        "summary": "call_offs.invalid_status",
+        "value": {
+          "code": "call_offs.invalid_status",
+          "detail": "สัญญาอยู่ในสถานะ {status}",
+          "requestId": "6f1c2d8e-2c7b-4d0e-9d1c-3f1a2b3c4d5e",
+          "status": 409,
+          "title": "ทำรายการนี้ไม่ได้ในขณะนี้",
+          "type": "https://errors.packio/call_offs.invalid_status"
+        }
+      },
+      "problem.call_offs.quote_not_eligible": {
+        "summary": "call_offs.quote_not_eligible",
+        "value": {
+          "code": "call_offs.quote_not_eligible",
+          "detail": "สัญญาสั่งผลิตแบบทยอยต้องใช้ใบเสนอราคาแบบทันทีที่บันทึกไว้และยังไม่หมดอายุ",
+          "requestId": "6f1c2d8e-2c7b-4d0e-9d1c-3f1a2b3c4d5e",
+          "status": 422,
+          "title": "ใบเสนอราคานี้ใช้ทำสัญญาไม่ได้",
+          "type": "https://errors.packio/call_offs.quote_not_eligible"
+        }
+      },
+      "problem.call_offs.release_quantity": {
+        "summary": "call_offs.release_quantity",
+        "value": {
+          "code": "call_offs.release_quantity",
+          "detail": "จำนวนที่เรียกต้องไม่น้อยกว่า {min} และไม่เกินที่เหลือ {remaining}",
+          "requestId": "6f1c2d8e-2c7b-4d0e-9d1c-3f1a2b3c4d5e",
+          "status": 422,
+          "title": "จำนวนที่เรียกไม่ถูกต้อง",
+          "type": "https://errors.packio/call_offs.release_quantity"
+        }
+      },
       "problem.cart.design_option_unavailable": {
         "summary": "cart.design_option_unavailable",
         "value": {
@@ -9221,10 +9265,10 @@
           "source": {
             "allOf": [
               {
-                "$ref": "#/components/schemas/QuoteMode"
+                "$ref": "#/components/schemas/QuoteSource"
               }
             ],
-            "description": "`instant` (calculator) or `rfq` (manual quotation of a request for quote)",
+            "description": "`instant` (calculator), `rfq` (manual quotation of a request for quote), `sample` (a standalone sample, D-254) or `call_off` (a call-off release at its locked unit price, D-290)",
             "example": "instant"
           },
           "status": {
@@ -15807,6 +15851,246 @@
         ],
         "type": "string"
       },
+      "CallOffAgreementDto": {
+        "properties": {
+          "buyUnitPrice": {
+            "description": "The factory’s locked buy price per unit, net — the factory and staff only (D-044, D-141)",
+            "example": null,
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "committedQuantity": {
+            "description": "The quotation option’s quantity",
+            "example": 10000,
+            "type": "integer"
+          },
+          "createdAt": {
+            "example": "2026-10-03T15:00:00+07:00",
+            "format": "date-time",
+            "type": "string"
+          },
+          "declineReason": {
+            "example": null,
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "expiresAt": {
+            "example": "2027-04-04T09:00:00+07:00",
+            "format": "date-time",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "factory": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/CodedRefDto"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "The quotation’s factory, which accepts the lock — staff and the factory only (D-050)"
+          },
+          "id": {
+            "example": "0192f3a0-7c1e-7d2a-9b1f-0000000e7301",
+            "format": "uuid",
+            "type": "string"
+          },
+          "lapsedQuantity": {
+            "description": "At expiry: the quantity not released, without charge",
+            "example": null,
+            "type": [
+              "integer",
+              "null"
+            ]
+          },
+          "minReleaseQuantity": {
+            "description": "The factory’s minimum order when asked",
+            "example": 1000,
+            "type": "integer"
+          },
+          "months": {
+            "example": 6,
+            "type": "integer"
+          },
+          "productType": {
+            "$ref": "#/components/schemas/CodeNameRefDto"
+          },
+          "quoteCode": {
+            "example": "QT-2610-00012",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "quoteId": {
+            "example": "0192f3a0-7c1e-7d2a-9b1f-0000000e7303",
+            "format": "uuid",
+            "type": "string"
+          },
+          "quoteOptionId": {
+            "example": "0192f3a0-7c1e-7d2a-9b1f-0000000e7304",
+            "format": "uuid",
+            "type": "string"
+          },
+          "releasedQuantity": {
+            "description": "Quoted or ordered releases",
+            "example": 2000,
+            "type": "integer"
+          },
+          "releases": {
+            "items": {
+              "$ref": "#/components/schemas/CallOffReleaseDto"
+            },
+            "type": "array"
+          },
+          "remainingQuantity": {
+            "description": "0 unless active",
+            "example": 8000,
+            "type": "integer"
+          },
+          "startsAt": {
+            "example": "2026-10-04T09:00:00+07:00",
+            "format": "date-time",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "status": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/CallOffStatus"
+              }
+            ],
+            "example": "active"
+          },
+          "unit": {
+            "example": "piece",
+            "type": "string"
+          },
+          "unitPrice": {
+            "description": "The locked unit price, VAT included (product only); null for the factory (D-044)",
+            "example": "13.38",
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "id",
+          "status",
+          "quoteId",
+          "quoteOptionId",
+          "quoteCode",
+          "productType",
+          "factory",
+          "unit",
+          "unitPrice",
+          "buyUnitPrice",
+          "committedQuantity",
+          "releasedQuantity",
+          "remainingQuantity",
+          "minReleaseQuantity",
+          "months",
+          "startsAt",
+          "expiresAt",
+          "declineReason",
+          "lapsedQuantity",
+          "releases",
+          "createdAt"
+        ],
+        "type": "object"
+      },
+      "CallOffReleaseDto": {
+        "properties": {
+          "createdAt": {
+            "example": "2026-10-05T10:00:00+07:00",
+            "format": "date-time",
+            "type": "string"
+          },
+          "id": {
+            "example": "0192f3a0-7c1e-7d2a-9b1f-0000000e7302",
+            "format": "uuid",
+            "type": "string"
+          },
+          "includesOneOffs": {
+            "description": "The first release carries the quotation’s design fees, plates and die blocks once",
+            "example": true,
+            "type": "boolean"
+          },
+          "order": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/OrderRefDto"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "quantity": {
+            "example": 2000,
+            "type": "integer"
+          },
+          "quoteId": {
+            "description": "The release’s quotation",
+            "example": "0192f3a0-7c1e-7d2a-9b1f-0000000e7305",
+            "format": "uuid",
+            "type": "string"
+          },
+          "seq": {
+            "example": 1,
+            "type": "integer"
+          },
+          "status": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/CallOffReleaseStatus"
+              }
+            ],
+            "description": "`quoted`: its quotation is in the cart; `lapsed`: it expired unordered and its quantity is free",
+            "example": "ordered"
+          }
+        },
+        "required": [
+          "id",
+          "seq",
+          "quantity",
+          "status",
+          "quoteId",
+          "order",
+          "includesOneOffs",
+          "createdAt"
+        ],
+        "type": "object"
+      },
+      "CallOffReleaseStatus": {
+        "description": "`quoted`: its quotation is in the cart; `lapsed`: it expired unordered and its quantity is free",
+        "enum": [
+          "quoted",
+          "ordered",
+          "lapsed"
+        ],
+        "type": "string"
+      },
+      "CallOffStatus": {
+        "enum": [
+          "pending_factory",
+          "active",
+          "declined",
+          "cancelled",
+          "expired"
+        ],
+        "type": "string"
+      },
       "CampaignDto": {
         "properties": {
           "alertThresholdPct": {
@@ -17202,7 +17486,7 @@
           "source": {
             "allOf": [
               {
-                "$ref": "#/components/schemas/QuoteMode"
+                "$ref": "#/components/schemas/QuoteSource"
               }
             ],
             "example": "instant"
@@ -54172,6 +54456,16 @@
         ],
         "type": "object"
       },
+      "QuoteSource": {
+        "description": "`instant` (calculator), `rfq` (manual quotation of a request for quote), `sample` (a standalone sample, D-254) or `call_off` (a call-off release at its locked unit price, D-290)",
+        "enum": [
+          "instant",
+          "rfq",
+          "sample",
+          "call_off"
+        ],
+        "type": "string"
+      },
       "QuoteStatus": {
         "enum": [
           "calculated",
@@ -55983,6 +56277,21 @@
         ],
         "type": "string"
       },
+      "ReleaseCallOffDto": {
+        "properties": {
+          "quantity": {
+            "description": "At least the factory’s minimum order, at most what is left",
+            "example": 2000,
+            "maximum": 10000000,
+            "minimum": 1,
+            "type": "integer"
+          }
+        },
+        "required": [
+          "quantity"
+        ],
+        "type": "object"
+      },
       "ReminderSkipDto": {
         "properties": {
           "orderId": {
@@ -57267,6 +57576,35 @@
           "quoteId",
           "quoteOptionId",
           "reason"
+        ],
+        "type": "object"
+      },
+      "RequestCallOffDto": {
+        "properties": {
+          "months": {
+            "description": "At most `calloff.max_months` (D-290)",
+            "example": 6,
+            "maximum": 60,
+            "minimum": 1,
+            "type": "integer"
+          },
+          "quoteId": {
+            "description": "A saved instant quotation of mine, still valid",
+            "example": "0192f3a0-7c1e-7d2a-9b1f-0000000e7303",
+            "format": "uuid",
+            "type": "string"
+          },
+          "quoteOptionId": {
+            "description": "Its option whose unit price and quantity are locked",
+            "example": "0192f3a0-7c1e-7d2a-9b1f-0000000e7304",
+            "format": "uuid",
+            "type": "string"
+          }
+        },
+        "required": [
+          "quoteId",
+          "quoteOptionId",
+          "months"
         ],
         "type": "object"
       },
@@ -60817,10 +61155,10 @@
           "source": {
             "allOf": [
               {
-                "$ref": "#/components/schemas/QuoteMode"
+                "$ref": "#/components/schemas/QuoteSource"
               }
             ],
-            "description": "`instant` (calculator) or `rfq` (manual quotation of a request for quote)",
+            "description": "`instant` (calculator), `rfq` (manual quotation of a request for quote), `sample` (a standalone sample, D-254) or `call_off` (a call-off release at its locked unit price, D-290)",
             "example": "instant"
           },
           "status": {
@@ -95415,6 +95753,286 @@
         ],
         "x-required-permissions": [
           "business_calendar.manage"
+        ]
+      }
+    },
+    "/v1/admin/call-off-agreements": {
+      "get": {
+        "description": "Every call-off, newest first; filter by status. Buy prices need `factory_cost.read` (D-141). A call-off locks the unit price of a saved quotation option for its quantity for up to `calloff.max_months`, once the quotation’s factory accepts. Each release (≥ the factory’s minimum order, ≤ what is left) is a quotation at the locked unit price — product only, shipping priced at checkout; the first release carries the quotation’s one-off amounts — and a normal order with the normal payment schedule (D-020). No deposit, no stock; what is not released lapses at expiry without charge (D-290).\n\nImplements: D-290, D-206, D-141.",
+        "operationId": "admin.callOffs.list",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "page",
+            "required": false,
+            "schema": {
+              "default": 1,
+              "minimum": 1,
+              "type": "integer"
+            }
+          },
+          {
+            "in": "query",
+            "name": "perPage",
+            "required": false,
+            "schema": {
+              "default": 25,
+              "maximum": 100,
+              "minimum": 1,
+              "type": "integer"
+            }
+          },
+          {
+            "description": "Sort field; each endpoint validates it against its own allow-list.",
+            "in": "query",
+            "name": "sort",
+            "required": false,
+            "schema": {
+              "example": "createdAt",
+              "maxLength": 64,
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "order",
+            "required": false,
+            "schema": {
+              "$ref": "#/components/schemas/SortOrder"
+            }
+          },
+          {
+            "description": "Free-text search",
+            "in": "query",
+            "name": "q",
+            "required": false,
+            "schema": {
+              "maxLength": 200,
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "status",
+            "required": false,
+            "schema": {
+              "$ref": "#/components/schemas/CallOffStatus"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "data": [
+                    {
+                      "buyUnitPrice": "10.123450",
+                      "committedQuantity": 10000,
+                      "createdAt": "2026-10-03T15:00:00+07:00",
+                      "declineReason": null,
+                      "expiresAt": "2027-04-04T09:00:00+07:00",
+                      "factory": {
+                        "code": "F0001",
+                        "id": "0192f3a0-7c1e-7d2a-9b1f-0000000d1003",
+                        "name": "โรงพิมพ์ ทดสอบ"
+                      },
+                      "id": "0192f3a0-7c1e-7d2a-9b1f-0000000e7301",
+                      "lapsedQuantity": null,
+                      "minReleaseQuantity": 1000,
+                      "months": 6,
+                      "productType": {
+                        "code": "folding_carton",
+                        "id": "0192f3a0-7c1e-7d2a-9b1f-0000000e7306",
+                        "nameEn": "Folding carton",
+                        "nameTh": "กล่องกระดาษพับ"
+                      },
+                      "quoteCode": "QT-2610-00012",
+                      "quoteId": "0192f3a0-7c1e-7d2a-9b1f-0000000e7303",
+                      "quoteOptionId": "0192f3a0-7c1e-7d2a-9b1f-0000000e7304",
+                      "releasedQuantity": 2000,
+                      "releases": [
+                        {
+                          "createdAt": "2026-10-05T10:00:00+07:00",
+                          "id": "0192f3a0-7c1e-7d2a-9b1f-0000000e7302",
+                          "includesOneOffs": true,
+                          "order": {
+                            "orderCode": "PK-2610-0001-01",
+                            "orderId": "0192f3a0-7c1e-7d2a-9b1f-0000000f1002"
+                          },
+                          "quantity": 2000,
+                          "quoteId": "0192f3a0-7c1e-7d2a-9b1f-0000000e7305",
+                          "seq": 1,
+                          "status": "ordered"
+                        }
+                      ],
+                      "remainingQuantity": 8000,
+                      "startsAt": "2026-10-04T09:00:00+07:00",
+                      "status": "active",
+                      "unit": "piece",
+                      "unitPrice": "13.38"
+                    }
+                  ],
+                  "meta": {
+                    "page": 1,
+                    "perPage": 25,
+                    "total": 1
+                  }
+                },
+                "schema": {
+                  "properties": {
+                    "data": {
+                      "items": {
+                        "$ref": "#/components/schemas/CallOffAgreementDto"
+                      },
+                      "type": "array"
+                    },
+                    "meta": {
+                      "$ref": "#/components/schemas/PageMeta"
+                    }
+                  },
+                  "required": [
+                    "data",
+                    "meta"
+                  ],
+                  "type": "object"
+                }
+              }
+            },
+            "description": "One page of results",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.unauthenticated": {
+                    "$ref": "#/components/examples/problem.auth.unauthenticated"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.unauthenticated`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.forbidden": {
+                    "$ref": "#/components/examples/problem.auth.forbidden"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.forbidden`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "validation.failed": {
+                    "$ref": "#/components/examples/problem.validation.failed"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `validation.failed`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "staff": []
+          }
+        ],
+        "summary": "List call-off agreements",
+        "tags": [
+          "admin.callOffs"
+        ],
+        "x-required-permissions": [
+          "orders.read"
         ]
       }
     },
@@ -293991,6 +294609,593 @@
         ]
       }
     },
+    "/v1/partner/call-off-agreements/{agreementId}/actions/accept": {
+      "post": {
+        "description": "The factory holds its buy price for the committed quantity for the agreed months; the lock starts now (D-290). No deposit and no stock are involved.\n\nImplements: D-290, D-206.",
+        "operationId": "partner.callOffs.accept",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "agreementId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/IdempotencyKey"
+          },
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "buyUnitPrice": "10.123450",
+                  "committedQuantity": 10000,
+                  "createdAt": "2026-10-03T15:00:00+07:00",
+                  "declineReason": null,
+                  "expiresAt": "2027-04-04T09:00:00+07:00",
+                  "factory": {
+                    "code": "F0001",
+                    "id": "0192f3a0-7c1e-7d2a-9b1f-0000000d1003",
+                    "name": "โรงพิมพ์ ทดสอบ"
+                  },
+                  "id": "0192f3a0-7c1e-7d2a-9b1f-0000000e7301",
+                  "lapsedQuantity": null,
+                  "minReleaseQuantity": 1000,
+                  "months": 6,
+                  "productType": {
+                    "code": "folding_carton",
+                    "id": "0192f3a0-7c1e-7d2a-9b1f-0000000e7306",
+                    "nameEn": "Folding carton",
+                    "nameTh": "กล่องกระดาษพับ"
+                  },
+                  "quoteCode": "QT-2610-00012",
+                  "quoteId": "0192f3a0-7c1e-7d2a-9b1f-0000000e7303",
+                  "quoteOptionId": "0192f3a0-7c1e-7d2a-9b1f-0000000e7304",
+                  "releasedQuantity": 2000,
+                  "releases": [
+                    {
+                      "createdAt": "2026-10-05T10:00:00+07:00",
+                      "id": "0192f3a0-7c1e-7d2a-9b1f-0000000e7302",
+                      "includesOneOffs": true,
+                      "order": {
+                        "orderCode": "PK-2610-0001-01",
+                        "orderId": "0192f3a0-7c1e-7d2a-9b1f-0000000f1002"
+                      },
+                      "quantity": 2000,
+                      "quoteId": "0192f3a0-7c1e-7d2a-9b1f-0000000e7305",
+                      "seq": 1,
+                      "status": "ordered"
+                    }
+                  ],
+                  "remainingQuantity": 8000,
+                  "startsAt": "2026-10-04T09:00:00+07:00",
+                  "status": "active",
+                  "unit": "piece",
+                  "unitPrice": null
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/CallOffAgreementDto"
+                }
+              }
+            },
+            "description": "Active",
+            "headers": {
+              "Idempotent-Replayed": {
+                "$ref": "#/components/headers/IdempotentReplayed"
+              },
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "400": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "idempotency.key_invalid": {
+                    "$ref": "#/components/examples/problem.idempotency.key_invalid"
+                  },
+                  "idempotency.key_required": {
+                    "$ref": "#/components/examples/problem.idempotency.key_required"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `idempotency.key_invalid`, `idempotency.key_required`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.unauthenticated": {
+                    "$ref": "#/components/examples/problem.auth.unauthenticated"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.unauthenticated`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.forbidden": {
+                    "$ref": "#/components/examples/problem.auth.forbidden"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.forbidden`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "404": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.not_found": {
+                    "$ref": "#/components/examples/problem.http.not_found"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.not_found`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "409": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "call_offs.invalid_status": {
+                    "$ref": "#/components/examples/problem.call_offs.invalid_status"
+                  },
+                  "idempotency.in_progress": {
+                    "$ref": "#/components/examples/problem.idempotency.in_progress"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `call_offs.invalid_status`, `idempotency.in_progress`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "idempotency.key_reused": {
+                    "$ref": "#/components/examples/problem.idempotency.key_reused"
+                  },
+                  "validation.failed": {
+                    "$ref": "#/components/examples/problem.validation.failed"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `idempotency.key_reused`, `validation.failed`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "partner": []
+          }
+        ],
+        "summary": "Accept a call-off agreement",
+        "tags": [
+          "partner.callOffs"
+        ],
+        "x-required-permissions": [
+          "factory_jobs.respond"
+        ]
+      }
+    },
+    "/v1/partner/call-off-agreements/{agreementId}/actions/decline": {
+      "post": {
+        "description": "With a reason the customer sees (D-290).\n\nImplements: D-290, D-206.",
+        "operationId": "partner.callOffs.decline",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "agreementId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/IdempotencyKey"
+          },
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "examples": {
+                "default": {
+                  "value": {
+                    "reason": "Board price is moving; cannot hold it six months"
+                  }
+                }
+              },
+              "schema": {
+                "$ref": "#/components/schemas/ReasonBodyDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "buyUnitPrice": "10.123450",
+                  "committedQuantity": 10000,
+                  "createdAt": "2026-10-03T15:00:00+07:00",
+                  "declineReason": "Board price is moving; cannot hold it six months",
+                  "expiresAt": "2027-04-04T09:00:00+07:00",
+                  "factory": {
+                    "code": "F0001",
+                    "id": "0192f3a0-7c1e-7d2a-9b1f-0000000d1003",
+                    "name": "โรงพิมพ์ ทดสอบ"
+                  },
+                  "id": "0192f3a0-7c1e-7d2a-9b1f-0000000e7301",
+                  "lapsedQuantity": null,
+                  "minReleaseQuantity": 1000,
+                  "months": 6,
+                  "productType": {
+                    "code": "folding_carton",
+                    "id": "0192f3a0-7c1e-7d2a-9b1f-0000000e7306",
+                    "nameEn": "Folding carton",
+                    "nameTh": "กล่องกระดาษพับ"
+                  },
+                  "quoteCode": "QT-2610-00012",
+                  "quoteId": "0192f3a0-7c1e-7d2a-9b1f-0000000e7303",
+                  "quoteOptionId": "0192f3a0-7c1e-7d2a-9b1f-0000000e7304",
+                  "releasedQuantity": 2000,
+                  "releases": [
+                    {
+                      "createdAt": "2026-10-05T10:00:00+07:00",
+                      "id": "0192f3a0-7c1e-7d2a-9b1f-0000000e7302",
+                      "includesOneOffs": true,
+                      "order": {
+                        "orderCode": "PK-2610-0001-01",
+                        "orderId": "0192f3a0-7c1e-7d2a-9b1f-0000000f1002"
+                      },
+                      "quantity": 2000,
+                      "quoteId": "0192f3a0-7c1e-7d2a-9b1f-0000000e7305",
+                      "seq": 1,
+                      "status": "ordered"
+                    }
+                  ],
+                  "remainingQuantity": 8000,
+                  "startsAt": "2026-10-04T09:00:00+07:00",
+                  "status": "declined",
+                  "unit": "piece",
+                  "unitPrice": null
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/CallOffAgreementDto"
+                }
+              }
+            },
+            "description": "Declined",
+            "headers": {
+              "Idempotent-Replayed": {
+                "$ref": "#/components/headers/IdempotentReplayed"
+              },
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "400": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.bad_request": {
+                    "$ref": "#/components/examples/problem.http.bad_request"
+                  },
+                  "http.malformed_json": {
+                    "$ref": "#/components/examples/problem.http.malformed_json"
+                  },
+                  "idempotency.key_invalid": {
+                    "$ref": "#/components/examples/problem.idempotency.key_invalid"
+                  },
+                  "idempotency.key_required": {
+                    "$ref": "#/components/examples/problem.idempotency.key_required"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.bad_request`, `http.malformed_json`, `idempotency.key_invalid`, `idempotency.key_required`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.unauthenticated": {
+                    "$ref": "#/components/examples/problem.auth.unauthenticated"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.unauthenticated`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.forbidden": {
+                    "$ref": "#/components/examples/problem.auth.forbidden"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.forbidden`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "404": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.not_found": {
+                    "$ref": "#/components/examples/problem.http.not_found"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.not_found`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "409": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "call_offs.invalid_status": {
+                    "$ref": "#/components/examples/problem.call_offs.invalid_status"
+                  },
+                  "idempotency.in_progress": {
+                    "$ref": "#/components/examples/problem.idempotency.in_progress"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `call_offs.invalid_status`, `idempotency.in_progress`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "idempotency.key_reused": {
+                    "$ref": "#/components/examples/problem.idempotency.key_reused"
+                  },
+                  "validation.failed": {
+                    "$ref": "#/components/examples/problem.validation.failed"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `idempotency.key_reused`, `validation.failed`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "partner": []
+          }
+        ],
+        "summary": "Decline a call-off agreement",
+        "tags": [
+          "partner.callOffs"
+        ],
+        "x-required-permissions": [
+          "factory_jobs.respond"
+        ]
+      }
+    },
     "/v1/partner/claims": {
       "get": {
         "description": "Those Packio sent for review or decided against the factory (D-083).\n\nImplements: D-083.",
@@ -297517,6 +298722,238 @@
         ],
         "x-required-permissions": [
           "factory_bank_account.propose"
+        ]
+      }
+    },
+    "/v1/partner/factories/{factoryId}/call-off-agreements": {
+      "get": {
+        "description": "My factory’s call-offs (own factory only, D-044) with my locked buy price per unit. A call-off locks the unit price of a saved quotation option for its quantity for up to `calloff.max_months`, once the quotation’s factory accepts. Each release (≥ the factory’s minimum order, ≤ what is left) is a quotation at the locked unit price — product only, shipping priced at checkout; the first release carries the quotation’s one-off amounts — and a normal order with the normal payment schedule (D-020). No deposit, no stock; what is not released lapses at expiry without charge (D-290).\n\nImplements: D-290, D-206, D-044.",
+        "operationId": "partner.callOffs.list",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "factoryId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "example": [
+                  {
+                    "buyUnitPrice": "10.123450",
+                    "committedQuantity": 10000,
+                    "createdAt": "2026-10-03T15:00:00+07:00",
+                    "declineReason": null,
+                    "expiresAt": "2027-04-04T09:00:00+07:00",
+                    "factory": {
+                      "code": "F0001",
+                      "id": "0192f3a0-7c1e-7d2a-9b1f-0000000d1003",
+                      "name": "โรงพิมพ์ ทดสอบ"
+                    },
+                    "id": "0192f3a0-7c1e-7d2a-9b1f-0000000e7301",
+                    "lapsedQuantity": null,
+                    "minReleaseQuantity": 1000,
+                    "months": 6,
+                    "productType": {
+                      "code": "folding_carton",
+                      "id": "0192f3a0-7c1e-7d2a-9b1f-0000000e7306",
+                      "nameEn": "Folding carton",
+                      "nameTh": "กล่องกระดาษพับ"
+                    },
+                    "quoteCode": "QT-2610-00012",
+                    "quoteId": "0192f3a0-7c1e-7d2a-9b1f-0000000e7303",
+                    "quoteOptionId": "0192f3a0-7c1e-7d2a-9b1f-0000000e7304",
+                    "releasedQuantity": 2000,
+                    "releases": [
+                      {
+                        "createdAt": "2026-10-05T10:00:00+07:00",
+                        "id": "0192f3a0-7c1e-7d2a-9b1f-0000000e7302",
+                        "includesOneOffs": true,
+                        "order": {
+                          "orderCode": "PK-2610-0001-01",
+                          "orderId": "0192f3a0-7c1e-7d2a-9b1f-0000000f1002"
+                        },
+                        "quantity": 2000,
+                        "quoteId": "0192f3a0-7c1e-7d2a-9b1f-0000000e7305",
+                        "seq": 1,
+                        "status": "ordered"
+                      }
+                    ],
+                    "remainingQuantity": 8000,
+                    "startsAt": "2026-10-04T09:00:00+07:00",
+                    "status": "active",
+                    "unit": "piece",
+                    "unitPrice": null
+                  }
+                ],
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/CallOffAgreementDto"
+                  },
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Agreements",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.unauthenticated": {
+                    "$ref": "#/components/examples/problem.auth.unauthenticated"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.unauthenticated`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.forbidden": {
+                    "$ref": "#/components/examples/problem.auth.forbidden"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.forbidden`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "404": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.not_found": {
+                    "$ref": "#/components/examples/problem.http.not_found"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.not_found`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "validation.failed": {
+                    "$ref": "#/components/examples/problem.validation.failed"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `validation.failed`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "partner": []
+          }
+        ],
+        "summary": "List call-off requests and agreements",
+        "tags": [
+          "partner.callOffs"
+        ],
+        "x-required-permissions": [
+          "factory_jobs.read"
         ]
       }
     },
@@ -328309,6 +329746,1301 @@
         "summary": "Post analytics events",
         "tags": [
           "store.analytics"
+        ]
+      }
+    },
+    "/v1/store/call-off-agreements": {
+      "get": {
+        "description": "Newest first, with their releases. A call-off locks the unit price of a saved quotation option for its quantity for up to `calloff.max_months`, once the quotation’s factory accepts. Each release (≥ the factory’s minimum order, ≤ what is left) is a quotation at the locked unit price — product only, shipping priced at checkout; the first release carries the quotation’s one-off amounts — and a normal order with the normal payment schedule (D-020). No deposit, no stock; what is not released lapses at expiry without charge (D-290).\n\nImplements: D-290, D-206.",
+        "operationId": "store.callOffs.list",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "example": [
+                  {
+                    "buyUnitPrice": null,
+                    "committedQuantity": 10000,
+                    "createdAt": "2026-10-03T15:00:00+07:00",
+                    "declineReason": null,
+                    "expiresAt": "2027-04-04T09:00:00+07:00",
+                    "factory": null,
+                    "id": "0192f3a0-7c1e-7d2a-9b1f-0000000e7301",
+                    "lapsedQuantity": null,
+                    "minReleaseQuantity": 1000,
+                    "months": 6,
+                    "productType": {
+                      "code": "folding_carton",
+                      "id": "0192f3a0-7c1e-7d2a-9b1f-0000000e7306",
+                      "nameEn": "Folding carton",
+                      "nameTh": "กล่องกระดาษพับ"
+                    },
+                    "quoteCode": "QT-2610-00012",
+                    "quoteId": "0192f3a0-7c1e-7d2a-9b1f-0000000e7303",
+                    "quoteOptionId": "0192f3a0-7c1e-7d2a-9b1f-0000000e7304",
+                    "releasedQuantity": 2000,
+                    "releases": [
+                      {
+                        "createdAt": "2026-10-05T10:00:00+07:00",
+                        "id": "0192f3a0-7c1e-7d2a-9b1f-0000000e7302",
+                        "includesOneOffs": true,
+                        "order": {
+                          "orderCode": "PK-2610-0001-01",
+                          "orderId": "0192f3a0-7c1e-7d2a-9b1f-0000000f1002"
+                        },
+                        "quantity": 2000,
+                        "quoteId": "0192f3a0-7c1e-7d2a-9b1f-0000000e7305",
+                        "seq": 1,
+                        "status": "ordered"
+                      }
+                    ],
+                    "remainingQuantity": 8000,
+                    "startsAt": "2026-10-04T09:00:00+07:00",
+                    "status": "active",
+                    "unit": "piece",
+                    "unitPrice": "13.38"
+                  }
+                ],
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/CallOffAgreementDto"
+                  },
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Agreements",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.unauthenticated": {
+                    "$ref": "#/components/examples/problem.auth.unauthenticated"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.unauthenticated`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.forbidden": {
+                    "$ref": "#/components/examples/problem.auth.forbidden"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.forbidden`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "customer": []
+          }
+        ],
+        "summary": "List my call-off agreements",
+        "tags": [
+          "store.callOffs"
+        ]
+      },
+      "post": {
+        "description": "Ask the factory of my saved quotation to lock its option’s unit price. A call-off locks the unit price of a saved quotation option for its quantity for up to `calloff.max_months`, once the quotation’s factory accepts. Each release (≥ the factory’s minimum order, ≤ what is left) is a quotation at the locked unit price — product only, shipping priced at checkout; the first release carries the quotation’s one-off amounts — and a normal order with the normal payment schedule (D-020). No deposit, no stock; what is not released lapses at expiry without charge (D-290).\n\nImplements: D-290, D-206.",
+        "operationId": "store.callOffs.request",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/IdempotencyKey"
+          },
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "examples": {
+                "default": {
+                  "value": {
+                    "months": 6,
+                    "quoteId": "0192f3a0-7c1e-7d2a-9b1f-0000000e7303",
+                    "quoteOptionId": "0192f3a0-7c1e-7d2a-9b1f-0000000e7304"
+                  }
+                }
+              },
+              "schema": {
+                "$ref": "#/components/schemas/RequestCallOffDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "buyUnitPrice": null,
+                  "committedQuantity": 10000,
+                  "createdAt": "2026-10-03T15:00:00+07:00",
+                  "declineReason": null,
+                  "expiresAt": null,
+                  "factory": null,
+                  "id": "0192f3a0-7c1e-7d2a-9b1f-0000000e7301",
+                  "lapsedQuantity": null,
+                  "minReleaseQuantity": 1000,
+                  "months": 6,
+                  "productType": {
+                    "code": "folding_carton",
+                    "id": "0192f3a0-7c1e-7d2a-9b1f-0000000e7306",
+                    "nameEn": "Folding carton",
+                    "nameTh": "กล่องกระดาษพับ"
+                  },
+                  "quoteCode": "QT-2610-00012",
+                  "quoteId": "0192f3a0-7c1e-7d2a-9b1f-0000000e7303",
+                  "quoteOptionId": "0192f3a0-7c1e-7d2a-9b1f-0000000e7304",
+                  "releasedQuantity": 0,
+                  "releases": [],
+                  "remainingQuantity": 0,
+                  "startsAt": null,
+                  "status": "pending_factory",
+                  "unit": "piece",
+                  "unitPrice": "13.38"
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/CallOffAgreementDto"
+                }
+              }
+            },
+            "description": "Requested",
+            "headers": {
+              "Idempotent-Replayed": {
+                "$ref": "#/components/headers/IdempotentReplayed"
+              },
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "400": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.bad_request": {
+                    "$ref": "#/components/examples/problem.http.bad_request"
+                  },
+                  "http.malformed_json": {
+                    "$ref": "#/components/examples/problem.http.malformed_json"
+                  },
+                  "idempotency.key_invalid": {
+                    "$ref": "#/components/examples/problem.idempotency.key_invalid"
+                  },
+                  "idempotency.key_required": {
+                    "$ref": "#/components/examples/problem.idempotency.key_required"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.bad_request`, `http.malformed_json`, `idempotency.key_invalid`, `idempotency.key_required`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.unauthenticated": {
+                    "$ref": "#/components/examples/problem.auth.unauthenticated"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.unauthenticated`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.forbidden": {
+                    "$ref": "#/components/examples/problem.auth.forbidden"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.forbidden`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "404": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.not_found": {
+                    "$ref": "#/components/examples/problem.http.not_found"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.not_found`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "409": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "call_offs.already_requested": {
+                    "$ref": "#/components/examples/problem.call_offs.already_requested"
+                  },
+                  "idempotency.in_progress": {
+                    "$ref": "#/components/examples/problem.idempotency.in_progress"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `call_offs.already_requested`, `idempotency.in_progress`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "call_offs.quote_not_eligible": {
+                    "$ref": "#/components/examples/problem.call_offs.quote_not_eligible"
+                  },
+                  "idempotency.key_reused": {
+                    "$ref": "#/components/examples/problem.idempotency.key_reused"
+                  },
+                  "validation.failed": {
+                    "$ref": "#/components/examples/problem.validation.failed"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `call_offs.quote_not_eligible`, `idempotency.key_reused`, `validation.failed`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "customer": []
+          }
+        ],
+        "summary": "Ask for a call-off agreement",
+        "tags": [
+          "store.callOffs"
+        ]
+      }
+    },
+    "/v1/store/call-off-agreements/{agreementId}": {
+      "get": {
+        "description": "The agreement, what is left and its releases (D-290).\n\nImplements: D-290, D-206.",
+        "operationId": "store.callOffs.get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "agreementId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "buyUnitPrice": null,
+                  "committedQuantity": 10000,
+                  "createdAt": "2026-10-03T15:00:00+07:00",
+                  "declineReason": null,
+                  "expiresAt": "2027-04-04T09:00:00+07:00",
+                  "factory": null,
+                  "id": "0192f3a0-7c1e-7d2a-9b1f-0000000e7301",
+                  "lapsedQuantity": null,
+                  "minReleaseQuantity": 1000,
+                  "months": 6,
+                  "productType": {
+                    "code": "folding_carton",
+                    "id": "0192f3a0-7c1e-7d2a-9b1f-0000000e7306",
+                    "nameEn": "Folding carton",
+                    "nameTh": "กล่องกระดาษพับ"
+                  },
+                  "quoteCode": "QT-2610-00012",
+                  "quoteId": "0192f3a0-7c1e-7d2a-9b1f-0000000e7303",
+                  "quoteOptionId": "0192f3a0-7c1e-7d2a-9b1f-0000000e7304",
+                  "releasedQuantity": 2000,
+                  "releases": [
+                    {
+                      "createdAt": "2026-10-05T10:00:00+07:00",
+                      "id": "0192f3a0-7c1e-7d2a-9b1f-0000000e7302",
+                      "includesOneOffs": true,
+                      "order": {
+                        "orderCode": "PK-2610-0001-01",
+                        "orderId": "0192f3a0-7c1e-7d2a-9b1f-0000000f1002"
+                      },
+                      "quantity": 2000,
+                      "quoteId": "0192f3a0-7c1e-7d2a-9b1f-0000000e7305",
+                      "seq": 1,
+                      "status": "ordered"
+                    }
+                  ],
+                  "remainingQuantity": 8000,
+                  "startsAt": "2026-10-04T09:00:00+07:00",
+                  "status": "active",
+                  "unit": "piece",
+                  "unitPrice": "13.38"
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/CallOffAgreementDto"
+                }
+              }
+            },
+            "description": "Agreement",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.unauthenticated": {
+                    "$ref": "#/components/examples/problem.auth.unauthenticated"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.unauthenticated`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.forbidden": {
+                    "$ref": "#/components/examples/problem.auth.forbidden"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.forbidden`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "404": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.not_found": {
+                    "$ref": "#/components/examples/problem.http.not_found"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.not_found`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "validation.failed": {
+                    "$ref": "#/components/examples/problem.validation.failed"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `validation.failed`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "customer": []
+          }
+        ],
+        "summary": "Get my call-off agreement",
+        "tags": [
+          "store.callOffs"
+        ]
+      }
+    },
+    "/v1/store/call-off-agreements/{agreementId}/actions/cancel": {
+      "post": {
+        "description": "Only while the factory has not answered (D-290).\n\nImplements: D-290, D-206.",
+        "operationId": "store.callOffs.cancel",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "agreementId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/IdempotencyKey"
+          },
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "buyUnitPrice": null,
+                  "committedQuantity": 10000,
+                  "createdAt": "2026-10-03T15:00:00+07:00",
+                  "declineReason": null,
+                  "expiresAt": null,
+                  "factory": null,
+                  "id": "0192f3a0-7c1e-7d2a-9b1f-0000000e7301",
+                  "lapsedQuantity": null,
+                  "minReleaseQuantity": 1000,
+                  "months": 6,
+                  "productType": {
+                    "code": "folding_carton",
+                    "id": "0192f3a0-7c1e-7d2a-9b1f-0000000e7306",
+                    "nameEn": "Folding carton",
+                    "nameTh": "กล่องกระดาษพับ"
+                  },
+                  "quoteCode": "QT-2610-00012",
+                  "quoteId": "0192f3a0-7c1e-7d2a-9b1f-0000000e7303",
+                  "quoteOptionId": "0192f3a0-7c1e-7d2a-9b1f-0000000e7304",
+                  "releasedQuantity": 0,
+                  "releases": [],
+                  "remainingQuantity": 0,
+                  "startsAt": null,
+                  "status": "cancelled",
+                  "unit": "piece",
+                  "unitPrice": "13.38"
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/CallOffAgreementDto"
+                }
+              }
+            },
+            "description": "Withdrawn",
+            "headers": {
+              "Idempotent-Replayed": {
+                "$ref": "#/components/headers/IdempotentReplayed"
+              },
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "400": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "idempotency.key_invalid": {
+                    "$ref": "#/components/examples/problem.idempotency.key_invalid"
+                  },
+                  "idempotency.key_required": {
+                    "$ref": "#/components/examples/problem.idempotency.key_required"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `idempotency.key_invalid`, `idempotency.key_required`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.unauthenticated": {
+                    "$ref": "#/components/examples/problem.auth.unauthenticated"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.unauthenticated`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.forbidden": {
+                    "$ref": "#/components/examples/problem.auth.forbidden"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.forbidden`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "404": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.not_found": {
+                    "$ref": "#/components/examples/problem.http.not_found"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.not_found`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "409": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "call_offs.invalid_status": {
+                    "$ref": "#/components/examples/problem.call_offs.invalid_status"
+                  },
+                  "idempotency.in_progress": {
+                    "$ref": "#/components/examples/problem.idempotency.in_progress"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `call_offs.invalid_status`, `idempotency.in_progress`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "idempotency.key_reused": {
+                    "$ref": "#/components/examples/problem.idempotency.key_reused"
+                  },
+                  "validation.failed": {
+                    "$ref": "#/components/examples/problem.validation.failed"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `idempotency.key_reused`, `validation.failed`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "customer": []
+          }
+        ],
+        "summary": "Withdraw a call-off request",
+        "tags": [
+          "store.callOffs"
+        ]
+      }
+    },
+    "/v1/store/call-off-agreements/{agreementId}/releases": {
+      "post": {
+        "description": "A quotation at the locked unit price for `quantity` is added to my cart; checkout prices the shipping per destination and places a normal order (D-290, D-020). A release not ordered before its quotation expires lapses and its quantity is free again.\n\nImplements: D-290, D-206, D-020.",
+        "operationId": "store.callOffs.release",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "agreementId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/IdempotencyKey"
+          },
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "examples": {
+                "default": {
+                  "value": {
+                    "quantity": 2000
+                  }
+                }
+              },
+              "schema": {
+                "$ref": "#/components/schemas/ReleaseCallOffDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "channel": "web",
+                  "codes": [
+                    {
+                      "code": "WELCOME10",
+                      "rejectReason": null,
+                      "status": "validated"
+                    }
+                  ],
+                  "currency": "THB",
+                  "customerId": "0192f3a0-7c1e-7d2a-9b1f-0000000c0001",
+                  "id": "0192f3a0-7c1e-7d2a-9b1f-0000000ca001",
+                  "items": [
+                    {
+                      "designDocumentId": null,
+                      "designFeeAmount": "0.00",
+                      "designNote": null,
+                      "designOption": "own_file",
+                      "designVersionNo": null,
+                      "destinations": [
+                        {
+                          "address": {
+                            "districtNameTh": null,
+                            "line1": "99/9 ถนนตัวอย่าง",
+                            "line2": null,
+                            "phone": "+66810001234",
+                            "postcode": "10110",
+                            "provinceId": "0192f3a0-7c1e-7d2a-9b1f-0000000c0004",
+                            "provinceNameTh": "กรุงเทพมหานคร",
+                            "recipientName": "สมชาย ทดสอบ",
+                            "subdistrictId": null,
+                            "subdistrictNameTh": null
+                          },
+                          "addressId": "0192f3a0-7c1e-7d2a-9b1f-0000000c0002",
+                          "id": "0192f3a0-7c1e-7d2a-9b1f-0000000ca003",
+                          "quantity": 1000
+                        }
+                      ],
+                      "destinationsComplete": true,
+                      "id": "0192f3a0-7c1e-7d2a-9b1f-0000000ca002",
+                      "mockupOption": "none",
+                      "pendingReprice": null,
+                      "priceLocked": true,
+                      "priceLockedUntil": "2026-10-16T10:00:00+07:00",
+                      "productGrossAmount": "13380.00",
+                      "productTypeCode": "folding_carton",
+                      "quantity": 1000,
+                      "quoteCode": null,
+                      "quoteId": "0192f3a0-7c1e-7d2a-9b1f-0000000ca004",
+                      "quoteOptionId": "0192f3a0-7c1e-7d2a-9b1f-0000000ca005",
+                      "quoteShippingAmount": "128.40",
+                      "reorderOf": null,
+                      "reusesApprovedArtwork": false,
+                      "source": "instant",
+                      "summary": {
+                        "product": {
+                          "imageUrl": "/v1/store/catalog/images/0192f3a0-7c1e-7d2a-9b1f-00000000c009",
+                          "nameEn": "Tuck-end box",
+                          "nameTh": "กล่องฝาเสียบ",
+                          "slug": "tuck-end-box"
+                        },
+                        "productTypeCode": "folding_carton",
+                        "productTypeNameEn": "Folding carton",
+                        "productTypeNameTh": "กล่องกระดาษแข็ง",
+                        "specs": [
+                          {
+                            "key": "style",
+                            "labelEn": "Style",
+                            "labelTh": "แบบกล่อง",
+                            "valueEn": "ฝาเสียบ",
+                            "valueTh": "ฝาเสียบ"
+                          },
+                          {
+                            "key": "size",
+                            "labelEn": "Size",
+                            "labelTh": "ขนาด",
+                            "valueEn": "60 × 60 × 150 mm",
+                            "valueTh": "60 × 60 × 150 มม."
+                          },
+                          {
+                            "key": "material",
+                            "labelEn": "Material",
+                            "labelTh": "วัสดุ",
+                            "valueEn": "Art card 350 gsm",
+                            "valueTh": "อาร์ตการ์ด 350 แกรม"
+                          }
+                        ],
+                        "unit": "piece"
+                      },
+                      "unitPrice": "13.38"
+                    }
+                  ],
+                  "productGrossAmount": "13380.00",
+                  "updatedAt": "2026-10-01T10:00:00+07:00"
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/CartDto"
+                }
+              }
+            },
+            "description": "Cart with the release",
+            "headers": {
+              "ETag": {
+                "$ref": "#/components/headers/ETag"
+              },
+              "Idempotent-Replayed": {
+                "$ref": "#/components/headers/IdempotentReplayed"
+              },
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "400": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.bad_request": {
+                    "$ref": "#/components/examples/problem.http.bad_request"
+                  },
+                  "http.malformed_json": {
+                    "$ref": "#/components/examples/problem.http.malformed_json"
+                  },
+                  "idempotency.key_invalid": {
+                    "$ref": "#/components/examples/problem.idempotency.key_invalid"
+                  },
+                  "idempotency.key_required": {
+                    "$ref": "#/components/examples/problem.idempotency.key_required"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.bad_request`, `http.malformed_json`, `idempotency.key_invalid`, `idempotency.key_required`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.unauthenticated": {
+                    "$ref": "#/components/examples/problem.auth.unauthenticated"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.unauthenticated`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.forbidden": {
+                    "$ref": "#/components/examples/problem.auth.forbidden"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.forbidden`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "404": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.not_found": {
+                    "$ref": "#/components/examples/problem.http.not_found"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.not_found`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "409": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "call_offs.invalid_status": {
+                    "$ref": "#/components/examples/problem.call_offs.invalid_status"
+                  },
+                  "cart.item_exists": {
+                    "$ref": "#/components/examples/problem.cart.item_exists"
+                  },
+                  "idempotency.in_progress": {
+                    "$ref": "#/components/examples/problem.idempotency.in_progress"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `call_offs.invalid_status`, `cart.item_exists`, `idempotency.in_progress`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "call_offs.release_quantity": {
+                    "$ref": "#/components/examples/problem.call_offs.release_quantity"
+                  },
+                  "idempotency.key_reused": {
+                    "$ref": "#/components/examples/problem.idempotency.key_reused"
+                  },
+                  "validation.failed": {
+                    "$ref": "#/components/examples/problem.validation.failed"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `call_offs.release_quantity`, `idempotency.key_reused`, `validation.failed`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "customer": []
+          }
+        ],
+        "summary": "Release part of a call-off agreement",
+        "tags": [
+          "store.callOffs"
         ]
       }
     },
@@ -393646,6 +396378,10 @@
       "name": "admin.calendar"
     },
     {
+      "description": "Call-off agreements of every customer (D-290): status, releases, what lapsed.",
+      "name": "admin.callOffs"
+    },
+    {
       "description": "Marketing campaigns with a THB budget: 80 % alert and auto-stop when spent (D-154).",
       "name": "admin.campaigns"
     },
@@ -394230,6 +396966,10 @@
       "name": "partner.boardStrengthSheets"
     },
     {
+      "description": "Call-off requests for my factory (D-290, D-044): accept to hold my buy price for the committed quantity, or decline with a reason.",
+      "name": "partner.callOffs"
+    },
+    {
       "description": "Requests to the Partner team for changes only staff make, or a site visit; with the team’s answer (U-B0.3).",
       "name": "partner.changeRequests"
     },
@@ -394360,6 +397100,10 @@
     {
       "description": "Company brand kits — logos, palette, font pairs, usage notes — managed by the Company Admin, used by every member (D-282, D-227).",
       "name": "store.brandKits"
+    },
+    {
+      "description": "Call-off agreements (D-290): a quotation’s unit price locked for its quantity once the factory accepts, released in parts as normal orders; no deposit, no stock.",
+      "name": "store.callOffs"
     },
     {
       "description": "The signed-in customer’s cart: price-locked quotation options split over addresses (D-051, D-142).",

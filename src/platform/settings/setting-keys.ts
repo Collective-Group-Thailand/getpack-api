@@ -189,6 +189,8 @@ export interface SettingValues {
   'advisory.rule_set': AdvisoryRuleSet;
   /** D-212 / D-243 highest style-library wave that may be published. */
   'styles.published_wave': number;
+  /** D-290 longest a call-off agreement holds a unit price (months). */
+  'calloff.max_months': number;
   /** D-288 reorder suggestions: orders needed, intervals averaged, safety-stock days. */
   'reorder.min_orders': number;
   'reorder.average_orders': number;

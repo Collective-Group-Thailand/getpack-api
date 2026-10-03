@@ -285,6 +285,8 @@ model ProductType {
 
   reorderSuggestions ReorderSuggestion[] @relation("ReorderSuggestionProductType")
 
+  callOffAgreements CallOffAgreement[] @relation("CallOffProductType")
+
   @@index([categoryId], map: "ix_product_types__category_id")
   @@map("product_types")
 }

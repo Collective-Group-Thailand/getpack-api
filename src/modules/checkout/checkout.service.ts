@@ -28,7 +28,14 @@ import {
   type PlacedGroup,
   type ShippingLeg,
 } from './checkout.extensions';
-import { addTotals, type LineType, priceOrderLines, type QuoteOptionInput, totalsOf } from './order-pricing';
+import {
+  addTotals,
+  type LineType,
+  priceOrderLines,
+  type QuoteOptionInput,
+  shippedPerDestination,
+  totalsOf,
+} from './order-pricing';
 
 const D = (v: string | number | MoneyValue | Prisma.Decimal | null | undefined) =>
   new MoneyDecimal(v?.toString() ?? '0');
@@ -370,7 +377,9 @@ export class CheckoutService {
       shippingAmount: option.shippingAmount?.toFixed(2) ?? null,
       result: (option.result ?? {}) as QuoteOptionInput['result'],
     };
-    const shippingNet = item.quote.source === 'instant' ? legs.reduce((a, l) => a.add(l.net), D(0)) : null;
+    const shippingNet = shippedPerDestination(item.quote.source)
+      ? legs.reduce((a, l) => a.add(l.net), D(0))
+      : null;
     const lines = priceOrderLines(optionInput, shippingNet, {
       vatPct,
       nature: natureOf,
@@ -389,7 +398,7 @@ export class CheckoutService {
     const quoteShipCost = D(internal?.shipping?.costAmount ?? '0');
     const legCost = legs.reduce((a, l) => a.add(l.cost ?? 0), D(0));
     const buyCostNet = option.buyCostNet
-      ? item.quote.source === 'instant'
+      ? shippedPerDestination(item.quote.source)
         ? D(option.buyCostNet).sub(quoteShipCost).add(legCost)
         : D(option.buyCostNet)
       : null;

@@ -31,7 +31,7 @@ export const QUOTE_STATUSES = [
   'declined',
   'routed_to_rfq',
 ] as const;
-export const QUOTE_SOURCES = ['instant', 'rfq'] as const;
+export const QUOTE_SOURCES = ['instant', 'rfq', 'sample', 'call_off'] as const;
 export const PDF_STATUSES = ['none', 'pending', 'ready'] as const;
 
 const IDS = {
@@ -274,9 +274,11 @@ export class SavedQuoteDto {
 
   @ApiProperty({
     enum: QUOTE_SOURCES,
-    enumName: 'QuoteMode',
+    enumName: 'QuoteSource',
     example: 'instant',
-    description: '`instant` (calculator) or `rfq` (manual quotation of a request for quote)',
+    description:
+      '`instant` (calculator), `rfq` (manual quotation of a request for quote), `sample` (a standalone sample, ' +
+      'D-254) or `call_off` (a call-off release at its locked unit price, D-290)',
   })
   source!: string;
 

@@ -25,7 +25,7 @@ import {
 export const DESIGN_OPTIONS = ['own_file', 'online_designer', 'hired_design', 'free_design'] as const;
 export const MOCKUP_OPTIONS = ['none', 'with_print', 'without_print'] as const;
 export const CART_STATUSES = ['active', 'checked_out', 'abandoned'] as const;
-export const QUOTE_SOURCES = ['instant', 'rfq'] as const;
+export const QUOTE_SOURCES = ['instant', 'rfq', 'sample', 'call_off'] as const;
 
 export const CART_IDS = {
   cart: '0192f3a0-7c1e-7d2a-9b1f-0000000ca001',
@@ -247,7 +247,7 @@ export class CartItemDto {
   @ApiProperty({ type: String, nullable: true, example: 'QT-2026-000042' })
   quoteCode!: string | null;
 
-  @ApiProperty({ enum: QUOTE_SOURCES, enumName: 'QuoteMode', example: 'instant' })
+  @ApiProperty({ enum: QUOTE_SOURCES, enumName: 'QuoteSource', example: 'instant' })
   source!: string;
 
   @ApiProperty({ example: 'folding_carton' })

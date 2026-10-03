@@ -5,7 +5,7 @@ import { type DiscountSource, type SalesChannel } from '@generated/prisma/client
 import { type TaxProfileSnapshot } from '@modules/customers/customers.service';
 import { Injectable } from '@nestjs/common';
 
-import { type LineDraft, type Totals } from './order-pricing';
+import { type LineDraft, type QuoteSourceKind, type Totals } from './order-pricing';
 
 /**
  * Extension points of checkout (B3.1). Later deliverables plug in without touching checkout itself:
@@ -54,7 +54,7 @@ export interface DraftOrder {
   quoteId: bigint;
   quotePublicId: string;
   quoteCode: string | null;
-  quoteSource: 'instant' | 'rfq' | 'sample';
+  quoteSource: QuoteSourceKind;
   quoteOptionId: bigint;
   productTypeId: bigint;
   productTypeCode: string;

@@ -5,7 +5,7 @@
 > (a new effective-dated version, audited — D-063) and signs item 5 of `docs/LAUNCH-CHECKLIST.md`. A *proposed* or
 > *pending* value is not a decision: it goes live only once its owner confirms it.
 
-**95 settings** — 56 confirmed · 19 proposed · 4 pending the CPA (⚖) · 1 pending the business · 15 defined without a value (not set until their owner sets them).
+**96 settings** — 57 confirmed · 19 proposed · 4 pending the CPA (⚖) · 1 pending the business · 15 defined without a value (not set until their owner sets them).
 
 ## Settings
 
@@ -30,6 +30,7 @@
 | `b2b.overdue_rules` | `{"reminderDaysBeforeDue":7,"blockCreditOrdersAfterDaysOverdue":7}` | confirmed | superadmin | D-122 | D-122 overdue reminders and credit-order blocking |
 | `banking.auto_match` | `{"dateWindowDays":3,"amountTolerance":"0.00"}` | proposed | finance_manager | D-093, D-061 | D-093 / accounting-design §6 bank auto-matching: exact amount (± tolerance) + reference + date window (proposed) |
 | `calendar.business_hours` | `{"from":"09:00","to":"18:00","timezone":"Asia/Bangkok"}` | proposed | superadmin | D-175, D-061 | D-175 business hours of working days (national calendar) for business-hour SLAs such as the D-061 slip review |
+| `calloff.max_months` | `6` | confirmed | superadmin | D-206, D-290 | D-206 / D-290 longest a call-off agreement may hold a quotation’s unit price (months, from the factory’s acceptance) |
 | `campaigns.budget_alert_pct` | `80` | confirmed | superadmin | D-154 | D-154 Marketing is alerted when a campaign has used this share of its budget |
 | `claims.window_days` | `7` | confirmed | superadmin | D-082 | D-082 claim window after receipt (days) |
 | `close.unmatched_items_threshold` | `0` | proposed | finance_manager | D-033 | D-033 / accounting-design §7 step 1: unmatched bank / gateway items allowed at close before each must be explained (proposed: none) |

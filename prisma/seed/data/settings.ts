@@ -1077,6 +1077,17 @@ export const SETTINGS: readonly SettingSeed[] = [
     ownerRole: 'marketing',
   },
 
+  // --- Call-off agreements (U2.7, D-206 / D-290).
+  {
+    key: 'calloff.max_months',
+    valueType: 'integer',
+    value: 6,
+    valueSchema: { minimum: 1, maximum: 60 },
+    description:
+      'D-206 / D-290 longest a call-off agreement may hold a quotation’s unit price (months, from the factory’s acceptance)',
+    decisions: ['D-206', 'D-290'],
+    ownerRole: 'superadmin',
+  },
   // --- Reorder suggestions (U2.7, D-204 / D-288): per SKU, recomputed nightly.
   {
     key: 'reorder.min_orders',

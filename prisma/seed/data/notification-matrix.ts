@@ -92,6 +92,36 @@ const ROWS: Row[] = [
     category: 'marketing',
   },
   C(
+    'call_off.accepted',
+    ['email', 'line', 'in_app'],
+    { th: 'สัญญาสั่งผลิตแบบทยอยเริ่มแล้ว', en: 'Your call-off agreement is active' },
+    {
+      th: 'ราคาถูกล็อกไว้จนถึง {{payload.expiresAt}} เรียกสินค้าเป็นงวดได้ที่ Packio',
+      en: 'Your price is locked until {{payload.expiresAt}}; release quantities on Packio',
+    },
+    'Customer: call-off agreement accepted by the factory (D-290)',
+  ),
+  C(
+    'call_off.declined',
+    ['email', 'in_app'],
+    { th: 'สัญญาสั่งผลิตแบบทยอยไม่ได้รับการตอบรับ', en: 'Your call-off request was declined' },
+    {
+      th: 'เหตุผล: {{payload.reason}} ใบเสนอราคาเดิมยังสั่งซื้อได้ตามปกติจนหมดอายุ',
+      en: 'Reason: {{payload.reason}}. Your quotation can still be ordered as usual until it expires',
+    },
+    'Customer: call-off agreement declined (D-290)',
+  ),
+  C(
+    'call_off.expired',
+    ['email', 'in_app'],
+    { th: 'สัญญาสั่งผลิตแบบทยอยสิ้นสุดแล้ว', en: 'Your call-off agreement has ended' },
+    {
+      th: 'จำนวนที่ยังไม่ได้เรียกจะไม่ถูกเรียกเก็บเงิน',
+      en: 'The quantity not released is not charged',
+    },
+    'Customer: call-off agreement expired; what was not released lapses without charge (D-290)',
+  ),
+  C(
     'order_group.placed',
     ['email', 'line', 'in_app'],
     { th: 'ได้รับคำสั่งซื้อ {{payload.groupCode}} แล้ว', en: 'Order {{payload.groupCode}} received' },
@@ -841,6 +871,16 @@ const ROWS: Row[] = [
       en: 'Awaiting acceptance {{payload.awaitingAcceptance}} · due today {{payload.dueToday}} · overdue steps {{payload.overdueSteps}} · at risk {{payload.atRisk}}',
     },
     'Factory: daily digest (D-075)',
+  ),
+  F(
+    'call_off.requested',
+    ['in_app', 'email', 'line'],
+    { th: 'คำขอสัญญาสั่งผลิตแบบทยอยใหม่', en: 'New call-off request' },
+    {
+      th: 'ลูกค้าขอให้คงราคาสำหรับ {{payload.committedQuantity}} หน่วย {{payload.months}} เดือน กรุณาตอบรับหรือปฏิเสธที่ Packio',
+      en: 'A customer asks you to hold the price for {{payload.committedQuantity}} units for {{payload.months}} months; accept or decline on Packio',
+    },
+    'Factory: call-off agreement requested (D-290)',
   ),
 ];
 

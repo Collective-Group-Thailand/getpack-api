@@ -4,6 +4,7 @@ import { ARTWORK_ADMIN_CONTROLLERS } from '@modules/artwork/artwork.registry';
 import { AUDIT_SUPPORT_ADMIN_CONTROLLERS } from '@modules/audit-support/audit-support.registry';
 import { AdminMeController } from '@modules/auth/controllers/me.controllers';
 import { BANKING_ADMIN_CONTROLLERS } from '@modules/banking/banking.registry';
+import { CALL_OFFS_ADMIN_CONTROLLERS } from '@modules/call-offs/call-offs.registry';
 import { CARTS_ADMIN_CONTROLLERS } from '@modules/carts/carts.registry';
 import { CATALOG_ADMIN_CONTROLLERS } from '@modules/catalog/catalog.registry';
 import { CHECKOUT_ADMIN_CONTROLLERS } from '@modules/checkout/checkout.registry';
@@ -114,6 +115,7 @@ import { SettingsAdminModule } from '@platform/settings/settings-admin.module';
     ...CARTS_ADMIN_CONTROLLERS,
     ...CHECKOUT_ADMIN_CONTROLLERS,
     ...ORDERS_ADMIN_CONTROLLERS,
+    ...CALL_OFFS_ADMIN_CONTROLLERS,
     ...REORDERS_ADMIN_CONTROLLERS,
     ...TOOLING_ADMIN_CONTROLLERS,
     ...PAYMENT_SCHEDULES_ADMIN_CONTROLLERS,

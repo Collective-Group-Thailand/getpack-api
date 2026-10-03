@@ -65,6 +65,11 @@ export const API_TAGS: Record<string, string> = {
     'Company brand kits — logos, palette, font pairs, usage notes — managed by the Company Admin, used by every member (D-282, D-227).',
   'store.dielines':
     'Free dieline downloads of published style variants (D-271, D-203): signed-in customers, within the style’s size range, rate-limited and logged.',
+  'store.callOffs':
+    'Call-off agreements (D-290): a quotation’s unit price locked for its quantity once the factory accepts, released in parts as normal orders; no deposit, no stock.',
+  'partner.callOffs':
+    'Call-off requests for my factory (D-290, D-044): accept to hold my buy price for the committed quantity, or decline with a reason.',
+  'admin.callOffs': 'Call-off agreements of every customer (D-290): status, releases, what lapsed.',
   'store.reorderSuggestions':
     'When to reorder what (D-288): per SKU (specification × approved artwork), from my order history — the date and quantity Packio suggests, reordered from the last order.',
   'admin.reorderSuggestions':
