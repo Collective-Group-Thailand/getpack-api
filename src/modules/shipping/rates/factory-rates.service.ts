@@ -1,3 +1,4 @@
+import { acceptanceEvidence } from '@common/context/acceptance-evidence';
 import { type UserActor } from '@common/context/actor';
 import { DomainException } from '@common/errors/domain.exception';
 import { MoneyDecimal, type MoneyValue } from '@common/money/money';
@@ -66,7 +67,7 @@ type Side = { side: 'admin' } | { side: 'partner' };
  * Packio drafts a complete version (Partner Manager, `factory_shipping_rates.manage`), sends it, and
  * the factory accepts the whole card or answers per line (accept / counter); Packio accepts a counter or
  * keeps its value, and the version applies once every line is accepted (D-042 rate-card flow, chosen
- * at B2.4 planning). Buy prices: staff reads need `factory_cost.read` and are audited (D-141, D-044);
+ * at B2.4 planning). Buy prices: staff reads need `factory_buy_prices.read` and are audited (D-141, D-044);
  * a factory sees only its own card and never Packio's drafts.
  */
 @Injectable()
@@ -395,7 +396,11 @@ export class FactoryRatesService {
       }
       await tx.factoryShippingRateCardVersion.update({
         where: { id: version.id },
-        data: { factoryAcceptedById: actor.userId },
+        data: {
+          factoryAcceptedById: actor.userId,
+          factoryAcceptedIp: acceptanceEvidence().ip,
+          factoryAcceptedUa: acceptanceEvidence().userAgent,
+        },
       });
       await this.record(tx, factory, version.publicId, 'factory_shipping_rate_card.factory_responded', {
         versionNo: version.versionNo,
@@ -714,7 +719,7 @@ export class FactoryRatesService {
       action,
       resourceType,
       resourcePublicId,
-      data: { factory: factory.code },
+      data: { factory: factory.code, purpose: 'shipping_rate_review' },
     });
   }
 

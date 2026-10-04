@@ -325,6 +325,12 @@ describe('price governance (e2e, B2.2)', () => {
       .get(`/v1/admin/price-list-versions/${firstVersionId}/lines?component=material_prices`)
       .expect(200);
     expect(await readAudits()).toBe(before + 1);
+    // D-044: the read is logged with its purpose (U-B3).
+    const latest = await prisma.auditLog.findFirstOrThrow({
+      where: { action: 'price.read_other_factory' },
+      orderBy: { id: 'desc' },
+    });
+    expect(latest.data).toMatchObject({ purpose: 'price_list_review' });
   });
 
   it('sends a Packio rate card the factory negotiates per line; counters are decided by a checker (D-042 a)', async () => {
@@ -361,6 +367,7 @@ describe('price governance (e2e, B2.2)', () => {
           },
         ],
       })
+      .set('User-Agent', 'packio-e2e/1.0')
       .expect(200);
     expect(answered.body.status).toBe('countered');
 
@@ -381,6 +388,13 @@ describe('price governance (e2e, B2.2)', () => {
     const lists = await owner.get(`${partner(own.b)}/price-lists`).expect(200);
     expect(lists.body[0].current).toMatchObject({ origin: 'platform_rate_card', lineCount: 2 });
     expect(lists.body[0].current.factoryAcceptedAt).not.toBeNull();
+    // Acceptance evidence: who, when, from where (A-114).
+    const accepted = await prisma.priceListVersion.findFirstOrThrow({
+      where: { publicId: lists.body[0].current.id as string },
+    });
+    expect(accepted.factoryAcceptedById).not.toBeNull();
+    expect(accepted.factoryAcceptedIp).toMatch(/127\.0\.0\.1|::1/);
+    expect(accepted.factoryAcceptedUa).toBe('packio-e2e/1.0');
     const rows = await owner
       .get(
         `${partner(own.b)}/price-list-versions/${lists.body[0].current.id}/lines?component=material_prices`,
@@ -429,7 +443,13 @@ describe('price governance (e2e, B2.2)', () => {
 
     const signed = await as(own.a.token)
       .post(`${partner(own.a)}/price-list-versions/${pending.resultingVersion!.id}/actions/sign-off`)
+      .set('User-Agent', 'packio-e2e/1.0')
       .expect(200);
+    const signedRow = await prisma.priceListVersion.findFirstOrThrow({
+      where: { publicId: pending.resultingVersion!.id },
+    });
+    expect(signedRow.factorySignedOffIp).toMatch(/127\.0\.0\.1|::1/);
+    expect(signedRow.factorySignedOffUa).toBe('packio-e2e/1.0');
     expect(signed.body).toMatchObject({ status: 'approved', origin: 'assisted_entry', lineCount: 2 });
     await as(own.a.token)
       .post(`${partner(own.a)}/price-list-versions/${pending.resultingVersion!.id}/actions/sign-off`)
@@ -462,6 +482,20 @@ describe('price governance (e2e, B2.2)', () => {
       expect.objectContaining({ factoryId: own.a.id, tier: 'A', priceListVersionNo: 3 }),
       expect.objectContaining({ factoryId: own.b.id, tier: 'A', priceListVersionNo: 1 }),
     ]);
+    // The last 90 days of demand (U-B3 item 7): consistent counts, coverage % only with calculations.
+    const demand = coverage.body[0].last90Days as {
+      calculations: number;
+      instantCalculations: number;
+      instantCoveragePct: string | null;
+      rfqs: number;
+    };
+    expect(demand.instantCalculations).toBeLessThanOrEqual(demand.calculations);
+    expect(demand.rfqs).toBeGreaterThanOrEqual(0);
+    expect(demand.instantCoveragePct).toBe(
+      demand.calculations === 0
+        ? null
+        : ((demand.instantCalculations * 100) / demand.calculations).toFixed(1),
+    );
     await as(own.a.token).get('/v1/admin/partners/coverage').expect(403);
   });
 

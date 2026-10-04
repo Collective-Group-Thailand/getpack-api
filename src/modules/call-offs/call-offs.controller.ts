@@ -261,7 +261,7 @@ export class AdminCallOffsController {
   @ApiEndpoint({
     id: 'admin.callOffs.list',
     summary: 'List call-off agreements',
-    description: `Every call-off, newest first; filter by status. Buy prices need \`factory_cost.read\` (D-141). ${HOW}`,
+    description: `Every call-off, newest first; filter by status. Buy prices need \`factory_buy_prices.read\` (D-141). ${HOW}`,
     implements: [...DECISIONS, 'D-141'],
   })
   @ApiPaginated(CallOffAgreementDto, {
@@ -272,7 +272,7 @@ export class AdminCallOffsController {
     const { rows, total } = await this.callOffs.list(query);
     const cost =
       actor.type === 'user' &&
-      (await this.permissions.forUser(actor.userId)).permissions.has('factory_cost.read');
+      (await this.permissions.forUser(actor.userId)).permissions.has('factory_buy_prices.read');
     return {
       data: cost ? rows : rows.map((r) => ({ ...r, buyUnitPrice: null })),
       meta: { page: query.page, perPage: query.perPage, total },

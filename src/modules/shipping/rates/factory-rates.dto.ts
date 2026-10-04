@@ -20,7 +20,7 @@ import { MAX_RATES, MONEY, POSTCODE, RATE, SHIPPING_IDS, VERSION_STATUSES } from
 /**
  * Factory shipping payout cards (D-013): what Packio pays a factory for delivering with its own
  * fleet. Packio drafts, the factory accepts or counters per line (D-042 rate-card flow, chosen at
- * B2.4 planning). Buy prices: staff need `factory_cost.read` (D-141); a factory sees only its own.
+ * B2.4 planning). Buy prices: staff need `factory_buy_prices.read` (D-141); a factory sees only its own.
  */
 
 export const RATE_LINE_ACCEPTANCES = ['pending', 'accepted', 'countered'] as const;

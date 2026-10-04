@@ -6973,7 +6973,16 @@
             "type": "boolean"
           },
           "buyCostNet": {
-            "description": "D-141: only with `factory_cost.read`",
+            "deprecated": true,
+            "description": "Deprecated: the same value as `buyPriceNet` (D-042 terminology)",
+            "example": null,
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "buyPriceNet": {
+            "description": "The factory’s net buy price of the job. D-141: only with `factory_buy_prices.read`",
             "example": null,
             "type": [
               "string",
@@ -7290,6 +7299,7 @@
           "escalatedAt",
           "predictedFinishOn",
           "inspectionReasons",
+          "buyPriceNet",
           "buyCostNet",
           "assignments"
         ],
@@ -7865,7 +7875,16 @@
             "type": "boolean"
           },
           "buyCostNet": {
-            "description": "Masked without `factory_cost.read` (D-141)",
+            "deprecated": true,
+            "description": "Deprecated: the same value as `buyPriceNet` (D-042 terminology)",
+            "example": "10150.00",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "buyPriceNet": {
+            "description": "The factory’s net buy price. Masked without `factory_buy_prices.read` (D-141)",
             "example": "10150.00",
             "type": [
               "string",
@@ -7898,6 +7917,7 @@
         },
         "required": [
           "selectedFactoryId",
+          "buyPriceNet",
           "buyCostNet",
           "marginAmount",
           "marginPct",
@@ -9051,7 +9071,7 @@
             ]
           },
           "buyNetAmount": {
-            "description": "Factory buy amount (D-141 `factory_cost.read`)",
+            "description": "Factory buy amount (D-141 `factory_buy_prices.read`)",
             "example": "600.00",
             "type": [
               "string",
@@ -9850,7 +9870,7 @@
             ]
           },
           "carrierCostAmount": {
-            "description": "Fallback carrier cost (P25); only with `factory_cost.read`",
+            "description": "Fallback carrier cost (P25); only with `factory_buy_prices.read`",
             "example": null,
             "type": [
               "string",
@@ -9959,7 +9979,7 @@
             ]
           },
           "payoutAmount": {
-            "description": "Factory shipping payout (P15); only with `factory_cost.read` (D-141)",
+            "description": "Factory shipping payout (P15); only with `factory_buy_prices.read` (D-141)",
             "example": "120.00",
             "type": [
               "string",
@@ -24596,6 +24616,40 @@
         ],
         "type": "string"
       },
+      "CoverageDemandDto": {
+        "properties": {
+          "calculations": {
+            "description": "Calculations of the type (store and CS) in the window",
+            "example": 120,
+            "type": "integer"
+          },
+          "instantCalculations": {
+            "description": "Of which an instant path priced the configuration",
+            "example": 96,
+            "type": "integer"
+          },
+          "instantCoveragePct": {
+            "description": "instantCalculations ÷ calculations, in %, one decimal; null without calculations",
+            "example": "80.0",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "rfqs": {
+            "description": "RFQs created for the type in the window",
+            "example": 14,
+            "type": "integer"
+          }
+        },
+        "required": [
+          "calculations",
+          "instantCalculations",
+          "instantCoveragePct",
+          "rfqs"
+        ],
+        "type": "object"
+      },
       "CoverageDto": {
         "properties": {
           "available": {
@@ -36493,8 +36547,13 @@
       "FactoryQuotePartDto": {
         "properties": {
           "buyPrice": {
-            "description": "Buy price of the part (cost ÷ (1 − factory margin))",
+            "description": "Buy price of the part (components subtotal ÷ (1 − factory margin))",
             "example": "10123.45",
+            "type": "string"
+          },
+          "componentsSubtotal": {
+            "description": "The sum of the factory’s price-list components for the part, before its margin",
+            "example": "9111.11",
             "type": "string"
           },
           "layoutAmount": {
@@ -36514,13 +36573,15 @@
             "type": "number"
           },
           "totalCost": {
-            "description": "Cost before the factory margin",
+            "deprecated": true,
+            "description": "Deprecated: the same value as `componentsSubtotal` (D-042 terminology)",
             "example": "9111.11",
             "type": "string"
           }
         },
         "required": [
           "partKey",
+          "componentsSubtotal",
           "totalCost",
           "buyPrice",
           "layoutAmount",
@@ -54393,6 +54454,14 @@
             "description": "Instant path for a configuration inside every envelope (tier A), else why not",
             "example": "type_rfq_only"
           },
+          "last90Days": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/CoverageDemandDto"
+              }
+            ],
+            "description": "The last 90 days: instant coverage and RFQ volume"
+          },
           "productTypeCode": {
             "example": "folding_carton",
             "type": "string"
@@ -54417,7 +54486,8 @@
           "quoteMode",
           "instantPath",
           "availability",
-          "factories"
+          "factories",
+          "last90Days"
         ],
         "type": "object"
       },
@@ -57084,7 +57154,7 @@
             "type": "boolean"
           },
           "buyPrice": {
-            "description": "Needs `factory_cost.read` (D-141)",
+            "description": "Needs `factory_buy_prices.read` (D-141)",
             "example": "10123.45",
             "type": [
               "string",
@@ -57483,7 +57553,7 @@
       "QuotePartInternalDto": {
         "properties": {
           "buyPrice": {
-            "description": "Needs `factory_cost.read` (D-141)",
+            "description": "Needs `factory_buy_prices.read` (D-141)",
             "example": "10123.45",
             "type": [
               "string",
@@ -57723,7 +57793,7 @@
             ]
           },
           "costAmount": {
-            "description": "Packio’s delivery cost (fleet payout or carrier); needs `factory_cost.read` (D-141)",
+            "description": "Packio’s delivery cost (fleet payout or carrier); needs `factory_buy_prices.read` (D-141)",
             "example": "95.00",
             "type": [
               "string",
@@ -62193,7 +62263,7 @@
             "type": "string"
           },
           "lines": {
-            "description": "The factory’s buy prices; needs `factory_cost.read` (D-141)",
+            "description": "The factory’s buy prices; needs `factory_buy_prices.read` (D-141)",
             "items": {
               "$ref": "#/components/schemas/ConsultationLineDto"
             },
@@ -63112,7 +63182,7 @@
           "permissions": {
             "example": [
               "approvals.act",
-              "factory_cost.read"
+              "factory_buy_prices.read"
             ],
             "items": {
               "type": "string"
@@ -67746,7 +67816,7 @@
       "ShipmentCarrierQuoteDto": {
         "properties": {
           "amount": {
-            "description": "Packio’s cost (P25), THB; only with `factory_cost.read` (D-141)",
+            "description": "Packio’s cost (P25), THB; only with `factory_buy_prices.read` (D-141)",
             "example": "85.00",
             "type": [
               "string",
@@ -70203,7 +70273,7 @@
             "type": "boolean"
           },
           "buyUnitPrice": {
-            "description": "Needs `factory_cost.read` (D-141)",
+            "description": "Needs `factory_buy_prices.read` (D-141)",
             "example": "9.800000",
             "type": [
               "string",
@@ -79284,7 +79354,7 @@
       "ToolingAmountsDto": {
         "properties": {
           "dieBlockBuy": {
-            "description": "Needs `factory_cost.read` (D-141)",
+            "description": "Needs `factory_buy_prices.read` (D-141)",
             "example": "2500.00",
             "type": [
               "string",
@@ -79297,7 +79367,7 @@
             "type": "string"
           },
           "platesBuy": {
-            "description": "Needs `factory_cost.read` (D-141)",
+            "description": "Needs `factory_buy_prices.read` (D-141)",
             "example": "0.00",
             "type": [
               "string",
@@ -101907,7 +101977,7 @@
     },
     "/v1/admin/call-off-agreements": {
       "get": {
-        "description": "Every call-off, newest first; filter by status. Buy prices need `factory_cost.read` (D-141). A call-off locks the unit price of a saved quotation option for its quantity for up to `calloff.max_months`, once the quotation’s factory accepts. Each release (≥ the factory’s minimum order, ≤ what is left) is a quotation at the locked unit price — product only, shipping priced at checkout; the first release carries the quotation’s one-off amounts — and a normal order with the normal payment schedule (D-020). No deposit, no stock; what is not released lapses at expiry without charge (D-290).\n\nImplements: D-290, D-206, D-141.",
+        "description": "Every call-off, newest first; filter by status. Buy prices need `factory_buy_prices.read` (D-141). A call-off locks the unit price of a saved quotation option for its quantity for up to `calloff.max_months`, once the quotation’s factory accepts. Each release (≥ the factory’s minimum order, ≤ what is left) is a quotation at the locked unit price — product only, shipping priced at checkout; the first release carries the quotation’s one-off amounts — and a normal order with the normal payment schedule (D-020). No deposit, no stock; what is not released lapses at expiry without charge (D-290).\n\nImplements: D-290, D-206, D-141.",
         "operationId": "admin.callOffs.list",
         "parameters": [
           {
@@ -168192,7 +168262,7 @@
     },
     "/v1/admin/cs/corrugate/calculate": {
       "post": {
-        "description": "The store calculation plus the staff view (selected factory and print type, price-list version, margin-floor flag, each option’s reason when it has no price). Plates and die blocks are their own tooling line. Buy prices need `factory_cost.read`, the margin `margin.read` (D-141). CS may price digital print on its coverage. Works before the type is switched to instant, for checks.\n\nImplements: D-100, D-043, D-050, D-051, D-101, D-012, D-141.",
+        "description": "The store calculation plus the staff view (selected factory and print type, price-list version, margin-floor flag, each option’s reason when it has no price). Plates and die blocks are their own tooling line. Buy prices need `factory_buy_prices.read`, the margin `margin.read` (D-141). CS may price digital print on its coverage. Works before the type is switched to instant, for checks.\n\nImplements: D-100, D-043, D-050, D-051, D-101, D-012, D-141.",
         "operationId": "admin.csCorrugate.calculate",
         "parameters": [
           {
@@ -168801,7 +168871,7 @@
     },
     "/v1/admin/cs/folding/calculate": {
       "post": {
-        "description": "The store calculation plus the staff view: selected factory and print type, price-list version, production run, margin-floor flag (D-012) and each option’s reason when it has no price. Buy prices need `factory_cost.read`, the margin `margin.read` (D-141); they are null otherwise. Works before the type is switched to instant, for checks.\n\nImplements: D-100, D-043, D-050, D-051, D-101, D-012, D-141.",
+        "description": "The store calculation plus the staff view: selected factory and print type, price-list version, production run, margin-floor flag (D-012) and each option’s reason when it has no price. Buy prices need `factory_buy_prices.read`, the margin `margin.read` (D-141); they are null otherwise. Works before the type is switched to instant, for checks.\n\nImplements: D-100, D-043, D-050, D-051, D-101, D-012, D-141.",
         "operationId": "admin.csFolding.calculate",
         "parameters": [
           {
@@ -169416,7 +169486,7 @@
     },
     "/v1/admin/cs/label/calculate": {
       "post": {
-        "description": "The store calculation plus the staff view (selected factory and print type, price-list version, margin-floor flag, each option’s reason when it has no price). Labels are priced on their W × L bounding box on the factory’s sheets and rolls; offset label printing is not priced (U-B6 label, quirk L2). Buy prices need `factory_cost.read`, the margin `margin.read` (D-141). Works before the type is switched to instant, for checks.\n\nImplements: D-100, D-043, D-050, D-051, D-101, D-012, D-141.",
+        "description": "The store calculation plus the staff view (selected factory and print type, price-list version, margin-floor flag, each option’s reason when it has no price). Labels are priced on their W × L bounding box on the factory’s sheets and rolls; offset label printing is not priced (U-B6 label, quirk L2). Buy prices need `factory_buy_prices.read`, the margin `margin.read` (D-141). Works before the type is switched to instant, for checks.\n\nImplements: D-100, D-043, D-050, D-051, D-101, D-012, D-141.",
         "operationId": "admin.csLabel.calculate",
         "parameters": [
           {
@@ -169942,7 +170012,7 @@
     },
     "/v1/admin/cs/pouch/calculate": {
       "post": {
-        "description": "The store calculation plus the staff view (selected factory and print type, price-list version, margin-floor flag, each option’s reason when it has no price). A pouch is priced on the film it takes on the factory’s web, its print, lamination, making and options (legacy `PouchCalculator`); a quantity below the factory’s minimum is refused, never raised (U-B6 pouch). Buy prices need `factory_cost.read`, the margin `margin.read` (D-141). Works before the type is switched to instant, for checks.\n\nImplements: D-100, D-043, D-050, D-051, D-101, D-012, D-141.",
+        "description": "The store calculation plus the staff view (selected factory and print type, price-list version, margin-floor flag, each option’s reason when it has no price). A pouch is priced on the film it takes on the factory’s web, its print, lamination, making and options (legacy `PouchCalculator`); a quantity below the factory’s minimum is refused, never raised (U-B6 pouch). Buy prices need `factory_buy_prices.read`, the margin `margin.read` (D-141). Works before the type is switched to instant, for checks.\n\nImplements: D-100, D-043, D-050, D-051, D-101, D-012, D-141.",
         "operationId": "admin.csPouch.calculate",
         "parameters": [
           {
@@ -170498,7 +170568,7 @@
     },
     "/v1/admin/cs/service/actions/price": {
       "post": {
-        "description": "Legacy `cs/service` maths, computed on the server (D-194: the price is entered by CS, no new formula): from a net buy price, Packio’s `service` margin and the dated VAT give the net and gross sell price; from a VAT-inclusive sell price (design), the net and the buy price — each rounded as legacy’s page did — and, for a hired freelancer, the payable (legacy `design_cost`). Nothing is saved. A buy price CS did not enter needs `factory_cost.read`, the margin `margin.read` (D-141). The amount is `unitAmount` (money string); the numeric `amount` and the basis `buy_cost_net` are deprecated spellings, still accepted (D-042).\n\nImplements: D-194, D-100, D-063, D-141.",
+        "description": "Legacy `cs/service` maths, computed on the server (D-194: the price is entered by CS, no new formula): from a net buy price, Packio’s `service` margin and the dated VAT give the net and gross sell price; from a VAT-inclusive sell price (design), the net and the buy price — each rounded as legacy’s page did — and, for a hired freelancer, the payable (legacy `design_cost`). Nothing is saved. A buy price CS did not enter needs `factory_buy_prices.read`, the margin `margin.read` (D-141). The amount is `unitAmount` (money string); the numeric `amount` and the basis `buy_cost_net` are deprecated spellings, still accepted (D-042).\n\nImplements: D-194, D-100, D-063, D-141.",
         "operationId": "admin.csService.price",
         "parameters": [
           {
@@ -170739,7 +170809,7 @@
     },
     "/v1/admin/cs/service/calculate": {
       "post": {
-        "description": "The store calculation plus the staff view, from the factories’ `service` price lines (net cost per unit, Packio’s margin, VAT). A service ships nothing, so there is no shipping line. Without a line the item has no instant price: CS prices it from an amount (`admin.csService.price`). Buy prices need `factory_cost.read`, the margin `margin.read` (D-141).\n\nImplements: D-100, D-043, D-050, D-051, D-101, D-012, D-141.",
+        "description": "The store calculation plus the staff view, from the factories’ `service` price lines (net cost per unit, Packio’s margin, VAT). A service ships nothing, so there is no shipping line. Without a line the item has no instant price: CS prices it from an amount (`admin.csService.price`). Buy prices need `factory_buy_prices.read`, the margin `margin.read` (D-141).\n\nImplements: D-100, D-043, D-050, D-051, D-101, D-012, D-141.",
         "operationId": "admin.csService.calculate",
         "parameters": [
           {
@@ -171213,7 +171283,7 @@
     },
     "/v1/admin/cs/standard-product/calculate": {
       "post": {
-        "description": "The store calculation plus the staff view (selected factory and print type, price-list version, margin-floor flag, each option’s reason when it has no price). A standard product is priced from the factory’s buy-price tiers with Packio’s margin and VAT (legacy `CalculatePrice`); delivery is its own line (D-013). Buy prices need `factory_cost.read`, the margin `margin.read` (D-141). Works before the type is switched to instant, for checks.\n\nImplements: D-100, D-043, D-050, D-051, D-101, D-012, D-141.",
+        "description": "The store calculation plus the staff view (selected factory and print type, price-list version, margin-floor flag, each option’s reason when it has no price). A standard product is priced from the factory’s buy-price tiers with Packio’s margin and VAT (legacy `CalculatePrice`); delivery is its own line (D-013). Buy prices need `factory_buy_prices.read`, the margin `margin.read` (D-141). Works before the type is switched to instant, for checks.\n\nImplements: D-100, D-043, D-050, D-051, D-101, D-012, D-141.",
         "operationId": "admin.csStandardProduct.calculate",
         "parameters": [
           {
@@ -171706,7 +171776,7 @@
     },
     "/v1/admin/cs/tag-sleeve/calculate": {
       "post": {
-        "description": "The store calculation plus the staff view (selected factory and print type, price-list version, production run, margin-floor flag, each option’s reason when it has no price). A tag or sleeve is a flat blank priced on the folding engine with the factory’s tag & sleeve price list; finish 2 is offset only (U-B6 tag & sleeve, quirk T9). Buy prices need `factory_cost.read`, the margin `margin.read` (D-141). Works before the type is switched to instant, for checks.\n\nImplements: D-100, D-043, D-050, D-051, D-101, D-012, D-141.",
+        "description": "The store calculation plus the staff view (selected factory and print type, price-list version, production run, margin-floor flag, each option’s reason when it has no price). A tag or sleeve is a flat blank priced on the folding engine with the factory’s tag & sleeve price list; finish 2 is offset only (U-B6 tag & sleeve, quirk T9). Buy prices need `factory_buy_prices.read`, the margin `margin.read` (D-141). Works before the type is switched to instant, for checks.\n\nImplements: D-100, D-043, D-050, D-051, D-101, D-012, D-141.",
         "operationId": "admin.csTagSleeve.calculate",
         "parameters": [
           {
@@ -179467,6 +179537,7 @@
                       "internal": {
                         "belowMarginFloor": false,
                         "buyCostNet": "10150.00",
+                        "buyPriceNet": "10150.00",
                         "marginAmount": "3104.95",
                         "marginPct": "23.4254",
                         "selectedFactoryId": "0192f3a0-7c1e-7d2a-9b1f-0000000f0001"
@@ -198411,7 +198482,7 @@
     },
     "/v1/admin/factories/{factoryId}/price-lists": {
       "get": {
-        "description": "One list per product type with the version in force, scheduled versions and versions awaiting the factory (rate cards, assisted entry). Version metadata only — the lines need `factory_cost.read` (D-044).\n\nImplements: D-040, D-042, D-043, D-044.",
+        "description": "One list per product type with the version in force, scheduled versions and versions awaiting the factory (rate cards, assisted entry). Version metadata only — the lines need `factory_buy_prices.read` (D-044).\n\nImplements: D-040, D-042, D-043, D-044.",
         "operationId": "admin.priceLists.list",
         "parameters": [
           {
@@ -201148,7 +201219,7 @@
         ],
         "x-required-permissions": [
           "partners.read",
-          "factory_cost.read"
+          "factory_buy_prices.read"
         ]
       }
     },
@@ -201350,7 +201421,7 @@
         ],
         "x-required-permissions": [
           "partners.read",
-          "factory_cost.read"
+          "factory_buy_prices.read"
         ]
       },
       "post": {
@@ -201639,7 +201710,7 @@
         ],
         "x-required-permissions": [
           "partners.read",
-          "factory_cost.read",
+          "factory_buy_prices.read",
           "factory_shipping_rates.manage"
         ]
       }
@@ -201847,7 +201918,7 @@
         ],
         "x-required-permissions": [
           "partners.read",
-          "factory_cost.read",
+          "factory_buy_prices.read",
           "factory_shipping_rates.manage"
         ]
       },
@@ -202070,7 +202141,7 @@
         ],
         "x-required-permissions": [
           "partners.read",
-          "factory_cost.read"
+          "factory_buy_prices.read"
         ]
       }
     },
@@ -202359,7 +202430,7 @@
         ],
         "x-required-permissions": [
           "partners.read",
-          "factory_cost.read",
+          "factory_buy_prices.read",
           "factory_shipping_rates.manage"
         ]
       }
@@ -202607,7 +202678,7 @@
         ],
         "x-required-permissions": [
           "partners.read",
-          "factory_cost.read",
+          "factory_buy_prices.read",
           "factory_shipping_rates.manage"
         ]
       }
@@ -202892,7 +202963,7 @@
         ],
         "x-required-permissions": [
           "partners.read",
-          "factory_cost.read",
+          "factory_buy_prices.read",
           "factory_shipping_rates.manage"
         ]
       }
@@ -203188,7 +203259,7 @@
         ],
         "x-required-permissions": [
           "partners.read",
-          "factory_cost.read",
+          "factory_buy_prices.read",
           "factory_shipping_rates.manage"
         ]
       }
@@ -203398,7 +203469,7 @@
         ],
         "x-required-permissions": [
           "partners.read",
-          "factory_cost.read",
+          "factory_buy_prices.read",
           "price_suggestions.read"
         ]
       }
@@ -225971,6 +226042,7 @@
                           "internal": {
                             "belowMarginFloor": false,
                             "buyCostNet": "10150.00",
+                            "buyPriceNet": "10150.00",
                             "marginAmount": "3104.95",
                             "marginPct": "23.4254",
                             "selectedFactoryId": "0192f3a0-7c1e-7d2a-9b1f-0000000f0001"
@@ -226256,7 +226328,7 @@
     },
     "/v1/admin/order-groups/{groupId}": {
       "get": {
-        "description": "Staff view with CS remarks; factory cost and margin need `factory_cost.read` / `margin.read` (D-141).\n\nImplements: D-060, D-073, D-142, D-050, D-141.",
+        "description": "Staff view with CS remarks; factory cost and margin need `factory_buy_prices.read` / `margin.read` (D-141).\n\nImplements: D-060, D-073, D-142, D-050, D-141.",
         "operationId": "admin.orders.getGroup",
         "parameters": [
           {
@@ -226325,6 +226397,7 @@
                       "internal": {
                         "belowMarginFloor": false,
                         "buyCostNet": "10150.00",
+                        "buyPriceNet": "10150.00",
                         "marginAmount": "3104.95",
                         "marginPct": "23.4254",
                         "selectedFactoryId": "0192f3a0-7c1e-7d2a-9b1f-0000000f0001"
@@ -226698,6 +226771,7 @@
                       "internal": {
                         "belowMarginFloor": false,
                         "buyCostNet": "10150.00",
+                        "buyPriceNet": "10150.00",
                         "marginAmount": "3104.95",
                         "marginPct": "23.4254",
                         "selectedFactoryId": "0192f3a0-7c1e-7d2a-9b1f-0000000f0001"
@@ -227139,6 +227213,7 @@
                       "internal": {
                         "belowMarginFloor": false,
                         "buyCostNet": "10150.00",
+                        "buyPriceNet": "10150.00",
                         "marginAmount": "3104.95",
                         "marginPct": "23.4254",
                         "selectedFactoryId": "0192f3a0-7c1e-7d2a-9b1f-0000000f0001"
@@ -227609,6 +227684,7 @@
                       "internal": {
                         "belowMarginFloor": false,
                         "buyCostNet": "10150.00",
+                        "buyPriceNet": "10150.00",
                         "marginAmount": "3104.95",
                         "marginPct": "23.4254",
                         "selectedFactoryId": "0192f3a0-7c1e-7d2a-9b1f-0000000f0001"
@@ -229797,6 +229873,7 @@
                   "internal": {
                     "belowMarginFloor": false,
                     "buyCostNet": "10150.00",
+                    "buyPriceNet": "10150.00",
                     "marginAmount": "3104.95",
                     "marginPct": "23.4254",
                     "selectedFactoryId": "0192f3a0-7c1e-7d2a-9b1f-0000000f0001"
@@ -230350,6 +230427,7 @@
                   "internal": {
                     "belowMarginFloor": false,
                     "buyCostNet": "10150.00",
+                    "buyPriceNet": "10150.00",
                     "marginAmount": "3104.95",
                     "marginPct": "23.4254",
                     "selectedFactoryId": "0192f3a0-7c1e-7d2a-9b1f-0000000f0001"
@@ -230740,6 +230818,7 @@
                   "internal": {
                     "belowMarginFloor": false,
                     "buyCostNet": "10150.00",
+                    "buyPriceNet": "10150.00",
                     "marginAmount": "3104.95",
                     "marginPct": "23.4254",
                     "selectedFactoryId": "0192f3a0-7c1e-7d2a-9b1f-0000000f0001"
@@ -231399,6 +231478,7 @@
                   ],
                   "atRisk": false,
                   "buyCostNet": null,
+                  "buyPriceNet": null,
                   "currentMilestoneKey": "printing",
                   "destinations": [
                     {
@@ -237124,7 +237204,7 @@
     },
     "/v1/admin/partners/coverage": {
       "get": {
-        "description": "Per active type: quote mode, whether an instant path exists, availability (instant / partial / rfq) and every factory with a capability for it — status, tier, tier-B envelope, price-list version and weekly capacity in force (D-043, D-234, D-100, D-101).\n\nImplements: D-043, D-234, D-100, D-101.",
+        "description": "Per active type: quote mode, whether an instant path exists, availability (instant / partial / rfq) and every factory with a capability for it — status, tier, tier-B envelope, price-list version and weekly capacity in force (D-043, D-234, D-100, D-101) — and the last 90 days of demand: calculations, how many an instant path priced (coverage %) and RFQs created (D-102).\n\nImplements: D-043, D-234, D-100, D-101, D-102.",
         "operationId": "admin.partnerCoverage.get",
         "parameters": [
           {
@@ -237163,6 +237243,12 @@
                       }
                     ],
                     "instantPath": "type_rfq_only",
+                    "last90Days": {
+                      "calculations": 120,
+                      "instantCalculations": 96,
+                      "instantCoveragePct": "80.0",
+                      "rfqs": 14
+                    },
                     "productTypeCode": "folding_carton",
                     "productTypeId": "0192f3a0-7c1e-7d2a-9b1f-00000000c002",
                     "quoteMode": "rfq"
@@ -242968,7 +243054,7 @@
         ],
         "x-required-permissions": [
           "partners.read",
-          "factory_cost.read"
+          "factory_buy_prices.read"
         ]
       }
     },
@@ -243482,7 +243568,7 @@
         ],
         "x-required-permissions": [
           "price_proposals.review",
-          "factory_cost.read"
+          "factory_buy_prices.read"
         ]
       }
     },
@@ -246919,7 +247005,7 @@
     },
     "/v1/admin/production-jobs": {
       "get": {
-        "description": "Newest first; queues: `awaiting_acceptance` (released, not yet accepted), `escalated` (rejected or overdue with no factory to move to, D-074 / D-012), `at_risk` (predicted to miss the promised date). Buy prices only with `factory_cost.read` (D-141).\n\nImplements: D-073, D-074, D-141.",
+        "description": "Newest first; queues: `awaiting_acceptance` (released, not yet accepted), `escalated` (rejected or overdue with no factory to move to, D-074 / D-012), `at_risk` (predicted to miss the promised date). Buy prices only with `factory_buy_prices.read` (D-141).\n\nImplements: D-073, D-074, D-141.",
         "operationId": "admin.production.list",
         "parameters": [
           {
@@ -247060,6 +247146,7 @@
                       ],
                       "atRisk": false,
                       "buyCostNet": null,
+                      "buyPriceNet": null,
                       "currentMilestoneKey": "printing",
                       "destinations": [
                         {
@@ -247355,6 +247442,7 @@
                   ],
                   "atRisk": false,
                   "buyCostNet": null,
+                  "buyPriceNet": null,
                   "currentMilestoneKey": "printing",
                   "destinations": [
                     {
@@ -247665,6 +247753,7 @@
                   ],
                   "atRisk": false,
                   "buyCostNet": null,
+                  "buyPriceNet": null,
                   "currentMilestoneKey": "printing",
                   "destinations": [
                     {
@@ -248019,6 +248108,7 @@
                   ],
                   "atRisk": false,
                   "buyCostNet": null,
+                  "buyPriceNet": null,
                   "currentMilestoneKey": "printing",
                   "destinations": [
                     {
@@ -248364,6 +248454,7 @@
                   ],
                   "atRisk": false,
                   "buyCostNet": null,
+                  "buyPriceNet": null,
                   "currentMilestoneKey": "printing",
                   "destinations": [
                     {
@@ -269725,7 +269816,7 @@
                     "nameTh": "การเงิน",
                     "permissions": [
                       "approvals.act",
-                      "factory_cost.read"
+                      "factory_buy_prices.read"
                     ],
                     "scopeType": "platform"
                   }
@@ -270375,7 +270466,7 @@
     },
     "/v1/admin/samples/{sampleId}": {
       "get": {
-        "description": "With the factory buy amount for `factory_cost.read` (D-141) and the decision evidence (D-255).\n\nImplements: D-253, D-192, D-072, D-141, D-255.",
+        "description": "With the factory buy amount for `factory_buy_prices.read` (D-141) and the decision evidence (D-255).\n\nImplements: D-253, D-192, D-072, D-141, D-255.",
         "operationId": "admin.samples.get",
         "parameters": [
           {
@@ -274375,7 +274466,7 @@
     },
     "/v1/admin/shipments": {
       "get": {
-        "description": "Newest first; payout and carrier cost only with `factory_cost.read` (D-141). `queue` picks a work queue (awaiting pickup, in transit, delivery exceptions D-230, POD reviews D-229); `carrier` and `factoryId` narrow it.\n\nImplements: D-013, D-141, D-229, D-230.",
+        "description": "Newest first; payout and carrier cost only with `factory_buy_prices.read` (D-141). `queue` picks a work queue (awaiting pickup, in transit, delivery exceptions D-230, POD reviews D-229); `carrier` and `factoryId` narrow it.\n\nImplements: D-013, D-141, D-229, D-230.",
         "operationId": "admin.shipments.list",
         "parameters": [
           {
@@ -276558,7 +276649,7 @@
     },
     "/v1/admin/shipments/{shipmentId}/carrier-quotes": {
       "post": {
-        "description": "Every fallback carrier’s quote for this trip — pickup at the factory, the destination, one parcel per carton (D-114) — before booking; a carrier that is not enabled, has no account or cannot quote comes back unavailable with the reason. Amounts are Packio’s cost, shown only with `factory_cost.read` (D-141). Nothing is booked or stored.\n\nImplements: D-013, D-114, D-141.",
+        "description": "Every fallback carrier’s quote for this trip — pickup at the factory, the destination, one parcel per carton (D-114) — before booking; a carrier that is not enabled, has no account or cannot quote comes back unavailable with the reason. Amounts are Packio’s cost, shown only with `factory_buy_prices.read` (D-141). Nothing is booked or stored.\n\nImplements: D-013, D-114, D-141.",
         "operationId": "admin.shipments.carrierQuotes",
         "parameters": [
           {
@@ -324833,6 +324924,7 @@
                           "parts": [
                             {
                               "buyPrice": "10123.45",
+                              "componentsSubtotal": "9111.11",
                               "layoutAmount": 10,
                               "layoutStandard": false,
                               "partKey": "main",
@@ -325121,6 +325213,7 @@
                           "parts": [
                             {
                               "buyPrice": "10123.45",
+                              "componentsSubtotal": "9111.11",
                               "layoutAmount": 10,
                               "layoutStandard": false,
                               "partKey": "main",
@@ -325390,6 +325483,7 @@
                           "parts": [
                             {
                               "buyPrice": "10123.45",
+                              "componentsSubtotal": "9111.11",
                               "layoutAmount": 10,
                               "layoutStandard": false,
                               "partKey": "main",
@@ -325659,6 +325753,7 @@
                           "parts": [
                             {
                               "buyPrice": "10123.45",
+                              "componentsSubtotal": "9111.11",
                               "layoutAmount": 10,
                               "layoutStandard": false,
                               "partKey": "main",
@@ -325914,6 +326009,7 @@
                           "parts": [
                             {
                               "buyPrice": "10123.45",
+                              "componentsSubtotal": "9111.11",
                               "layoutAmount": 10,
                               "layoutStandard": false,
                               "partKey": "main",
@@ -326174,6 +326270,7 @@
                           "parts": [
                             {
                               "buyPrice": "10123.45",
+                              "componentsSubtotal": "9111.11",
                               "layoutAmount": 10,
                               "layoutStandard": false,
                               "partKey": "main",
@@ -326466,6 +326563,7 @@
                           "parts": [
                             {
                               "buyPrice": "10123.45",
+                              "componentsSubtotal": "9111.11",
                               "layoutAmount": 10,
                               "layoutStandard": false,
                               "partKey": "main",

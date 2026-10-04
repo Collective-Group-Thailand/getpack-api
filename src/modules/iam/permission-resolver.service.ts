@@ -2,6 +2,8 @@ import { InvalidationBus } from '@common/cache/invalidation-bus';
 import { PrismaService } from '@database/prisma.service';
 import { Injectable, type OnModuleInit } from '@nestjs/common';
 
+import { PERMISSION_ALIASES } from './permissions.catalog';
+
 export interface HeldRole {
   key: string;
   scopeType: 'platform' | 'factory' | 'company';
@@ -57,7 +59,7 @@ export class PermissionResolver implements OnModuleInit {
         scopeId: g.scopeId,
         validTo: g.validTo,
       })),
-      permissions: new Set(grants.flatMap((g) => g.role.permissions.map((rp) => rp.permission.key))),
+      permissions: withAliases(grants.flatMap((g) => g.role.permissions.map((rp) => rp.permission.key))),
     };
     this.cache.set(key, { access, loadedAt: Date.now() });
     return access;
@@ -71,4 +73,16 @@ export class PermissionResolver implements OnModuleInit {
 
 function expiredSince(access: EffectiveAccess, at: Date): boolean {
   return access.roles.some((r) => r.validTo !== null && r.validTo.getTime() <= at.getTime());
+}
+
+/** A deprecated key and its replacement grant each other (`PERMISSION_ALIASES`, U-B3). */
+export function withAliases(keys: string[]): Set<string> {
+  const set = new Set(keys);
+  for (const [old, current] of Object.entries(PERMISSION_ALIASES)) {
+    if (set.has(old) || set.has(current)) {
+      set.add(old);
+      set.add(current);
+    }
+  }
+  return set;
 }

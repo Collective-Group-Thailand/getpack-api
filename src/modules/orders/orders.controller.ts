@@ -187,7 +187,11 @@ export class AdminOrdersController {
   private async grants(actor: Actor): Promise<CostGrants> {
     const granted =
       actor.type === 'user' ? (await this.permissions.forUser(actor.userId)).permissions : new Set<string>();
-    return { cost: granted.has('factory_cost.read'), margin: granted.has('margin.read'), perms: granted };
+    return {
+      cost: granted.has('factory_buy_prices.read'),
+      margin: granted.has('margin.read'),
+      perms: granted,
+    };
   }
 
   @Get('order-groups')
@@ -226,7 +230,7 @@ export class AdminOrdersController {
     id: 'admin.orders.getGroup',
     summary: 'Get an order group',
     description:
-      'Staff view with CS remarks; factory cost and margin need `factory_cost.read` / `margin.read` (D-141).',
+      'Staff view with CS remarks; factory cost and margin need `factory_buy_prices.read` / `margin.read` (D-141).',
     implements: [...DECISIONS, 'D-141'],
   })
   @ApiEtag()

@@ -553,7 +553,7 @@ export class StaffRfqQuoteLineDto extends RfqQuoteLineDto {
     type: String,
     nullable: true,
     example: '9.800000',
-    description: 'Needs `factory_cost.read` (D-141)',
+    description: 'Needs `factory_buy_prices.read` (D-141)',
   })
   buyUnitPrice!: string | null;
 
@@ -619,7 +619,7 @@ export class RfqConsultationDto {
   @ApiProperty({
     type: [ConsultationLineDto],
     nullable: true,
-    description: 'The factory’s buy prices; needs `factory_cost.read` (D-141)',
+    description: 'The factory’s buy prices; needs `factory_buy_prices.read` (D-141)',
   })
   lines!: ConsultationLineDto[] | null;
 

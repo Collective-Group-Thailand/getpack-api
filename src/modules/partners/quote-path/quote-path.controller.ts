@@ -19,8 +19,9 @@ export class AdminCoverageController {
     description:
       'Per active type: quote mode, whether an instant path exists, availability (instant / partial / rfq) and every ' +
       'factory with a capability for it — status, tier, tier-B envelope, price-list version and weekly capacity in ' +
-      'force (D-043, D-234, D-100, D-101).',
-    implements: ['D-043', 'D-234', 'D-100', 'D-101'],
+      'force (D-043, D-234, D-100, D-101) — and the last 90 days of demand: calculations, how many an instant path ' +
+      'priced (coverage %) and RFQs created (D-102).',
+    implements: ['D-043', 'D-234', 'D-100', 'D-101', 'D-102'],
   })
   @ApiSuccess(200, { description: 'Coverage', type: [ProductTypeCoverageDto], example: [COVERAGE_EXAMPLE] })
   @ApiStandardErrors('http.not_found', 'validation.failed')

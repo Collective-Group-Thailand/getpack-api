@@ -209,6 +209,7 @@ export function adminOrderDto(row: OrderRow, grants: CostGrants): AdminOrderDto 
     ...orderDto(row),
     internal: {
       selectedFactoryId: row.selectedFactory?.publicId ?? null,
+      buyPriceNet: grants.cost ? (row.buyCostNet?.toFixed(2) ?? null) : null,
       buyCostNet: grants.cost ? (row.buyCostNet?.toFixed(2) ?? null) : null,
       marginAmount: grants.margin ? (row.marginAmount?.toFixed(2) ?? null) : null,
       marginPct: grants.margin ? (row.marginPct?.toFixed(4) ?? null) : null,

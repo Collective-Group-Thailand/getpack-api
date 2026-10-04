@@ -11,7 +11,7 @@ describe('docs/rbac.md', () => {
 
   it('shows D-141 cost visibility only for the roles the decision names', () => {
     const staffTable = renderRbacDoc().split('## Partner factory')[0]!;
-    const costRow = staffTable.split('\n').find((l) => l.startsWith('| `factory_cost.read`'))!;
+    const costRow = staffTable.split('\n').find((l) => l.startsWith('| `factory_buy_prices.read`'))!;
     const header = staffTable.split('\n').find((l) => l.startsWith('| Permission |'))!;
     const roles = header
       .split('|')

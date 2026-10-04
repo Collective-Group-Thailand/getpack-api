@@ -125,6 +125,34 @@ export class CoverageFactoryDto {
   capacityUnit!: string | null;
 }
 
+/** The last 90 days of demand for a product type (U1 §U-B3 item 7, D-043, D-102). */
+export class CoverageDemandDto {
+  @ApiProperty({
+    type: 'integer',
+    example: 120,
+    description: 'Calculations of the type (store and CS) in the window',
+  })
+  calculations!: number;
+
+  @ApiProperty({
+    type: 'integer',
+    example: 96,
+    description: 'Of which an instant path priced the configuration',
+  })
+  instantCalculations!: number;
+
+  @ApiProperty({
+    type: String,
+    nullable: true,
+    example: '80.0',
+    description: 'instantCalculations ÷ calculations, in %, one decimal; null without calculations',
+  })
+  instantCoveragePct!: string | null;
+
+  @ApiProperty({ type: 'integer', example: 14, description: 'RFQs created for the type in the window' })
+  rfqs!: number;
+}
+
 export class ProductTypeCoverageDto {
   @ApiProperty({ format: 'uuid', example: IDS.productType })
   productTypeId!: string;
@@ -153,6 +181,9 @@ export class ProductTypeCoverageDto {
 
   @ApiProperty({ type: [CoverageFactoryDto], description: 'Factories with a capability for the type' })
   factories!: CoverageFactoryDto[];
+
+  @ApiProperty({ type: CoverageDemandDto, description: 'The last 90 days: instant coverage and RFQ volume' })
+  last90Days!: CoverageDemandDto;
 }
 
 export class CoverageQuery {
@@ -180,4 +211,5 @@ export const COVERAGE_EXAMPLE: ProductTypeCoverageDto = {
       capacityUnit: 'sheets',
     },
   ],
+  last90Days: { calculations: 120, instantCalculations: 96, instantCoveragePct: '80.0', rfqs: 14 },
 };

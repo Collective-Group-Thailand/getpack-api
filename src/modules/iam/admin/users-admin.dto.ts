@@ -208,6 +208,6 @@ export class RoleDto {
   @ApiProperty({ example: 'Finance' })
   nameEn!: string;
 
-  @ApiProperty({ type: [String], example: ['approvals.act', 'factory_cost.read'] })
+  @ApiProperty({ type: [String], example: ['approvals.act', 'factory_buy_prices.read'] })
   permissions!: string[];
 }

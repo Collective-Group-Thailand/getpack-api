@@ -285,11 +285,18 @@ export const PERMISSIONS = [
 
   // --- Cost & margin visibility (D-141)
   {
+    key: 'factory_buy_prices.read',
+    audience: 'staff',
+    description: 'See full factory buy prices',
+    sensitive: true,
+    decisionRefs: ['D-141', 'D-044', 'D-042'],
+  },
+  {
     key: 'factory_cost.read',
     audience: 'staff',
-    description: 'See full factory buy prices and costs',
+    description: 'Deprecated alias of factory_buy_prices.read (D-042 terminology); removed in U-B5',
     sensitive: true,
-    decisionRefs: ['D-141', 'D-044'],
+    decisionRefs: ['D-141', 'D-044', 'D-042'],
   },
   {
     key: 'margin.read',
@@ -1209,3 +1216,11 @@ export const PERMISSIONS = [
 ] as const satisfies readonly PermissionDefinition[];
 
 export type PermissionKey = (typeof PERMISSIONS)[number]['key'];
+
+/**
+ * Deprecated permission keys and their replacements (D-042 "buy price", U-B3): holding either key grants
+ * both, so roles seeded before the rename keep working and `/me` lists both until U-B5 removes the alias.
+ */
+export const PERMISSION_ALIASES: Readonly<Partial<Record<PermissionKey, PermissionKey>>> = {
+  'factory_cost.read': 'factory_buy_prices.read',
+};

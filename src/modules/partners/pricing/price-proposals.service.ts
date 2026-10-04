@@ -1,3 +1,4 @@
+import { acceptanceEvidence } from '@common/context/acceptance-evidence';
 import { type Actor, type UserActor } from '@common/context/actor';
 import { DomainException } from '@common/errors/domain.exception';
 import { toSkipTake } from '@common/pagination/pagination';
@@ -489,7 +490,7 @@ export class PriceProposalsService {
       // Who answered for the factory; the acceptance time is set when the card applies.
       await tx.priceListVersion.update({
         where: { id: proposal.resultingVersion.id },
-        data: { factoryAcceptedById: actor.userId },
+        data: { factoryAcceptedById: actor.userId, ...acceptedEvidence() },
       });
       const after = await this.load(tx, actor, proposalPublicId, side, true);
       await this.record(tx, proposal, 'price_proposal.rate_card_answered', {
@@ -864,7 +865,12 @@ export class PriceProposalsService {
       action: 'price.read_other_factory',
       resourceType: 'price_proposal',
       resourcePublicId: proposal.publicId,
-      data: { factory: proposal.priceList.factory.code, lines: proposal.lines.length },
+      data: {
+        factory: proposal.priceList.factory.code,
+        // D-044: why another factory's prices were read — reviewing its proposal or Packio's rate card for it.
+        purpose: proposal.direction === 'packio_to_factory' ? 'rate_card_review' : 'proposal_review',
+        lines: proposal.lines.length,
+      },
     });
   }
 
@@ -929,4 +935,10 @@ export class PriceProposalsService {
       })),
     };
   }
+}
+
+/** Who answered for the factory is kept with where from (A-114). */
+function acceptedEvidence() {
+  const { ip, userAgent } = acceptanceEvidence();
+  return { factoryAcceptedIp: ip, factoryAcceptedUa: userAgent };
 }

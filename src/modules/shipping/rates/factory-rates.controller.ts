@@ -61,7 +61,7 @@ export class AdminFactoryShippingRatesController {
   constructor(private readonly service: FactoryRatesService) {}
 
   @Get()
-  @Can('partners.read', 'factory_cost.read')
+  @Can('partners.read', 'factory_buy_prices.read')
   @factoryParam
   @ApiEndpoint({
     id: 'admin.factoryShippingRates.get',
@@ -81,7 +81,7 @@ export class AdminFactoryShippingRatesController {
   }
 
   @Get('versions')
-  @Can('partners.read', 'factory_cost.read')
+  @Can('partners.read', 'factory_buy_prices.read')
   @factoryParam
   @ApiEndpoint({
     id: 'admin.factoryShippingRates.listVersions',
@@ -100,7 +100,7 @@ export class AdminFactoryShippingRatesController {
   }
 
   @Get('versions/:versionId')
-  @Can('partners.read', 'factory_cost.read')
+  @Can('partners.read', 'factory_buy_prices.read')
   @params
   @ApiEndpoint({
     id: 'admin.factoryShippingRates.getVersion',
@@ -119,7 +119,7 @@ export class AdminFactoryShippingRatesController {
   }
 
   @Post('versions')
-  @Can('partners.read', 'factory_cost.read', 'factory_shipping_rates.manage')
+  @Can('partners.read', 'factory_buy_prices.read', 'factory_shipping_rates.manage')
   @factoryParam
   @ApiEndpoint({
     id: 'admin.factoryShippingRates.createVersion',
@@ -159,7 +159,7 @@ export class AdminFactoryShippingRatesController {
   }
 
   @Put('versions/:versionId/rates')
-  @Can('partners.read', 'factory_cost.read', 'factory_shipping_rates.manage')
+  @Can('partners.read', 'factory_buy_prices.read', 'factory_shipping_rates.manage')
   @params
   @ApiEndpoint({
     id: 'admin.factoryShippingRates.replaceRates',
@@ -190,7 +190,7 @@ export class AdminFactoryShippingRatesController {
 
   @Delete('versions/:versionId')
   @HttpCode(204)
-  @Can('partners.read', 'factory_cost.read', 'factory_shipping_rates.manage')
+  @Can('partners.read', 'factory_buy_prices.read', 'factory_shipping_rates.manage')
   @params
   @ApiEndpoint({
     id: 'admin.factoryShippingRates.deleteDraft',
@@ -210,7 +210,7 @@ export class AdminFactoryShippingRatesController {
 
   @Post('versions/:versionId/actions/send')
   @HttpCode(200)
-  @Can('partners.read', 'factory_cost.read', 'factory_shipping_rates.manage')
+  @Can('partners.read', 'factory_buy_prices.read', 'factory_shipping_rates.manage')
   @params
   @ApiEndpoint({
     id: 'admin.factoryShippingRates.sendVersion',
@@ -242,7 +242,7 @@ export class AdminFactoryShippingRatesController {
 
   @Post('versions/:versionId/actions/answer-counters')
   @HttpCode(200)
-  @Can('partners.read', 'factory_cost.read', 'factory_shipping_rates.manage')
+  @Can('partners.read', 'factory_buy_prices.read', 'factory_shipping_rates.manage')
   @params
   @ApiEndpoint({
     id: 'admin.factoryShippingRates.answerCounters',
@@ -279,7 +279,7 @@ export class AdminFactoryShippingRatesController {
 
   @Post('versions/:versionId/actions/withdraw')
   @HttpCode(200)
-  @Can('partners.read', 'factory_cost.read', 'factory_shipping_rates.manage')
+  @Can('partners.read', 'factory_buy_prices.read', 'factory_shipping_rates.manage')
   @params
   @ApiEndpoint({
     id: 'admin.factoryShippingRates.withdrawVersion',
@@ -310,7 +310,7 @@ export class AdminFactoryShippingRatesController {
   }
 
   @Get('versions/:versionId/suggestions')
-  @Can('partners.read', 'factory_cost.read', 'price_suggestions.read')
+  @Can('partners.read', 'factory_buy_prices.read', 'price_suggestions.read')
   @params
   @ApiEndpoint({
     id: 'admin.factoryShippingRates.suggestions',

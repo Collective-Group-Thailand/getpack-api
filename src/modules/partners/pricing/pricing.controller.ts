@@ -127,7 +127,7 @@ export class AdminPriceListsController {
     summary: 'List the price lists of a factory',
     description:
       'One list per product type with the version in force, scheduled versions and versions awaiting the factory ' +
-      '(rate cards, assisted entry). Version metadata only — the lines need `factory_cost.read` (D-044).',
+      '(rate cards, assisted entry). Version metadata only — the lines need `factory_buy_prices.read` (D-044).',
     implements: GOVERNANCE,
   })
   @ApiSuccess(200, { description: 'Price lists', type: [PriceListDto], example: [PRICE_LIST_EXAMPLE] })
@@ -137,7 +137,7 @@ export class AdminPriceListsController {
   }
 
   @Get('price-list-versions/:versionId/lines')
-  @Can('partners.read', 'factory_cost.read')
+  @Can('partners.read', 'factory_buy_prices.read')
   @versionParam
   @ApiEndpoint({
     id: 'admin.priceLists.listLines',
@@ -188,7 +188,7 @@ export class AdminPriceProposalsController {
   }
 
   @Get('price-proposals/:proposalId')
-  @Can('price_proposals.review', 'factory_cost.read')
+  @Can('price_proposals.review', 'factory_buy_prices.read')
   @proposalParam
   @ApiEndpoint({
     id: 'admin.priceProposals.get',

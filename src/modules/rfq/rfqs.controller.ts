@@ -918,7 +918,11 @@ export class AdminRfqsController {
   private async grants(actor: Actor) {
     const granted =
       actor.type === 'user' ? (await this.permissions.forUser(actor.userId)).permissions : new Set<string>();
-    return { cost: granted.has('factory_cost.read'), margin: granted.has('margin.read'), perms: granted };
+    return {
+      cost: granted.has('factory_buy_prices.read'),
+      margin: granted.has('margin.read'),
+      perms: granted,
+    };
   }
 }
 

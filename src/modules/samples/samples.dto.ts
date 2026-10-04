@@ -418,7 +418,7 @@ export class AdminSampleDto extends SampleDto {
     type: String,
     nullable: true,
     example: '600.00',
-    description: 'Factory buy amount (D-141 `factory_cost.read`)',
+    description: 'Factory buy amount (D-141 `factory_buy_prices.read`)',
   })
   buyNetAmount!: string | null;
 

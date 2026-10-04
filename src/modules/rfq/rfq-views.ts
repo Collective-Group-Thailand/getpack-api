@@ -97,7 +97,7 @@ export function rfqDto(r: RfqRow, files: RfqFiles = NO_FILES): RfqDto {
   };
 }
 
-/** The staff view; buy prices need `factory_cost.read`, margins `margin.read` (D-141). */
+/** The staff view; buy prices need `factory_buy_prices.read`, margins `margin.read` (D-141). */
 export function staffRfqDto(
   r: RfqRow,
   grants: { cost: boolean; margin: boolean; perms?: ReadonlySet<string> },

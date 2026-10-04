@@ -260,7 +260,7 @@ function checkoutController(surface: 'store' | 'admin'): Type<unknown> {
       if (!admin) return orderGroupDto(group);
       const granted = (await this.permissions.forUser((actor as { userId: bigint }).userId)).permissions;
       return adminOrderGroupDto(group, {
-        cost: granted.has('factory_cost.read'),
+        cost: granted.has('factory_buy_prices.read'),
         margin: granted.has('margin.read'),
         perms: granted,
       });

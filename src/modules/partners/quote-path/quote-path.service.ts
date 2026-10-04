@@ -10,10 +10,14 @@ import {
   type TierBEnvelope,
 } from '../configuration/tier-b-envelope';
 import {
+  type CoverageDemandDto,
   type ProductTypeAvailabilityDto,
   type ProductTypeCoverageDto,
   type QuotePathReason,
 } from './quote-path.dto';
+
+/** The coverage map's demand window (U1 §U-B3 item 7: "the last 90 days"). */
+const COVERAGE_WINDOW_DAYS = 90;
 
 interface Candidate {
   factoryId: bigint;
@@ -132,6 +136,10 @@ export class QuotePathService {
       orderBy: { code: 'asc' },
     });
     if (productTypePublicId && types.length === 0) throw new DomainException('http.not_found');
+    const demand = await this.demand(
+      types.map((t) => t.id),
+      at,
+    );
     const result: ProductTypeCoverageDto[] = [];
     for (const type of types) {
       const candidates = await this.candidates(this.prisma, type.id, at);
@@ -153,9 +161,48 @@ export class QuotePathService {
           weeklyCapacity: c.capacity?.weeklyCapacity ?? null,
           capacityUnit: c.capacity?.capacityUnit ?? null,
         })),
+        last90Days: demand(type.id),
       });
     }
     return result;
+  }
+
+  /**
+   * Demand of the last 90 days per type (U1 §U-B3 item 7): calculations from the calculate log (store and CS) and
+   * how many found an instant path, RFQs created. The window is the one the prompt names, not a business setting.
+   */
+  private async demand(typeIds: bigint[], at: Date): Promise<(typeId: bigint) => CoverageDemandDto> {
+    const since = new Date(at.getTime() - COVERAGE_WINDOW_DAYS * 86_400_000);
+    const window = { gte: since, lte: at };
+    const [calculations, instant, rfqs] = await Promise.all([
+      this.prisma.calculateLog.groupBy({
+        by: ['productTypeId'],
+        where: { productTypeId: { in: typeIds }, occurredAt: window },
+        _count: { _all: true },
+      }),
+      this.prisma.calculateLog.groupBy({
+        by: ['productTypeId'],
+        where: { productTypeId: { in: typeIds }, occurredAt: window, instantPath: true },
+        _count: { _all: true },
+      }),
+      this.prisma.rfq.groupBy({
+        by: ['productTypeId'],
+        where: { productTypeId: { in: typeIds }, createdAt: window },
+        _count: { _all: true },
+      }),
+    ]);
+    const count = (rows: { productTypeId: bigint; _count: { _all: number } }[], id: bigint) =>
+      rows.find((r) => r.productTypeId === id)?._count._all ?? 0;
+    return (id) => {
+      const total = count(calculations, id);
+      const covered = count(instant, id);
+      return {
+        calculations: total,
+        instantCalculations: covered,
+        instantCoveragePct: total === 0 ? null : ((covered * 100) / total).toFixed(1),
+        rfqs: count(rfqs, id),
+      };
+    };
   }
 
   /**

@@ -254,7 +254,7 @@ export class AdminSamplesController {
       actor.type === 'user' ? (await this.permissions.forUser(actor.userId)).permissions : new Set<string>();
     const photos = (await this.samples.photos([row.id])).get(row.id) ?? [];
     return adminSampleDto(row, photos, await creditWindow(this.settings), {
-      cost: granted.has('factory_cost.read'),
+      cost: granted.has('factory_buy_prices.read'),
     });
   }
 
@@ -283,7 +283,7 @@ export class AdminSamplesController {
     id: 'admin.samples.get',
     summary: 'Get a sample',
     description:
-      'With the factory buy amount for `factory_cost.read` (D-141) and the decision evidence (D-255).',
+      'With the factory buy amount for `factory_buy_prices.read` (D-141) and the decision evidence (D-255).',
     implements: [...DECISIONS, 'D-141', 'D-255'],
   })
   @ApiSuccess(200, { description: 'Sample', type: AdminSampleDto, example: ADMIN_SAMPLE_EXAMPLE })

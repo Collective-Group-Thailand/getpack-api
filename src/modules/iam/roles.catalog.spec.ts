@@ -55,7 +55,7 @@ describe('IAM catalogues (D-140, D-141)', () => {
   });
 
   it('shows full factory cost only to the roles D-141 names', () => {
-    const withCost = ROLES.filter((r) => r.permissions.includes('factory_cost.read')).map((r) => r.key);
+    const withCost = ROLES.filter((r) => r.permissions.includes('factory_buy_prices.read')).map((r) => r.key);
     expect(withCost.sort()).toEqual([
       'c_level',
       'finance',
@@ -74,7 +74,9 @@ describe('IAM catalogues (D-140, D-141)', () => {
     for (const key of ['prepress', 'logistics']) {
       const sensitive = byKey
         .get(key)!
-        .permissions.filter((p) => permission.get(p)?.key.startsWith('margin') || p === 'factory_cost.read');
+        .permissions.filter(
+          (p) => permission.get(p)?.key.startsWith('margin') || p === 'factory_buy_prices.read',
+        );
       expect(sensitive).toEqual([]);
     }
   });

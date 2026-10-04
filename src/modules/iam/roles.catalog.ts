@@ -25,7 +25,7 @@ const EVERY_STAFF_MEMBER: PermissionKey[] = [
 ];
 const APPROVER: PermissionKey[] = [...EVERY_STAFF_MEMBER, 'approvals.act', 'settings.read'];
 /** Full factory cost — Superadmin, C-Level, VP, Finance (+Manager), Partner Manager (D-141). */
-const COST_AND_MARGIN: PermissionKey[] = ['factory_cost.read', 'margin.read'];
+const COST_AND_MARGIN: PermissionKey[] = ['factory_buy_prices.read', 'margin.read'];
 
 export const ROLES: readonly RoleDefinition[] = [
   // --- Packio staff (platform scope)

@@ -66,7 +66,8 @@ Legend: ● granted · ◆ granted and sensitive (cost/margin data, D-141).
 | `agreements.manage` — Publish partner agreement texts (D-011) | ● |  |  |  |  |  |  |  |  |  |  |  | ● |  |  |
 | `zones.manage` — Maintain zone schemes, zones and postcodes (D-013) | ● |  |  |  |  |  |  |  |  |  |  |  | ● |  |  |
 | `vendor_bank_accounts.verify` — Record the verification call of a vendor bank-account change (D-033) | ● |  |  |  |  |  |  |  | ● |  |  |  |  |  |  |
-| `factory_cost.read` — See full factory buy prices and costs (D-141, D-044) | ◆ | ◆ | ◆ |  |  |  |  |  | ◆ | ◆ |  |  | ◆ |  |  |
+| `factory_buy_prices.read` — See full factory buy prices (D-141, D-044, D-042) | ◆ | ◆ | ◆ |  |  |  |  |  | ◆ | ◆ |  |  | ◆ |  |  |
+| `factory_cost.read` — Deprecated alias of factory_buy_prices.read (D-042 terminology); removed in U-B5 (D-141, D-044, D-042) | ◆ |  |  |  |  |  |  |  |  |  |  |  |  |  |  |
 | `margin.read` — See margins in amounts and percent (D-141) | ◆ | ◆ | ◆ |  |  |  |  |  | ◆ | ◆ |  |  | ◆ |  |  |
 | `margin.read_pct_when_discounting` — See the resulting margin % while applying a discount (D-141, D-052) | ◆ |  |  |  |  | ◆ | ◆ |  |  |  |  |  |  |  |  |
 | `quotes.calculate` — Price a configuration for a customer in the admin zone (CS calculator) (D-100, D-043) | ● | ● |  |  | ● | ● | ● |  |  |  |  |  | ● |  |  |

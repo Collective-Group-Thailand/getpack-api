@@ -71,7 +71,11 @@ export class AdminOrderOperationsController {
   private async grants(actor: Actor): Promise<CostGrants> {
     const granted =
       actor.type === 'user' ? (await this.permissions.forUser(actor.userId)).permissions : new Set<string>();
-    return { cost: granted.has('factory_cost.read'), margin: granted.has('margin.read'), perms: granted };
+    return {
+      cost: granted.has('factory_buy_prices.read'),
+      margin: granted.has('margin.read'),
+      perms: granted,
+    };
   }
 
   @Post('orders/:orderId/actions/reprice')

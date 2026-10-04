@@ -538,7 +538,7 @@ export class QuotePartInternalDto {
     type: String,
     nullable: true,
     example: '10123.45',
-    description: 'Needs `factory_cost.read` (D-141)',
+    description: 'Needs `factory_buy_prices.read` (D-141)',
   })
   buyPrice!: string | null;
 
@@ -564,7 +564,7 @@ export class QuoteShippingInternalDto {
     type: String,
     nullable: true,
     example: '95.00',
-    description: 'Packio’s delivery cost (fleet payout or carrier); needs `factory_cost.read` (D-141)',
+    description: 'Packio’s delivery cost (fleet payout or carrier); needs `factory_buy_prices.read` (D-141)',
   })
   costAmount!: string | null;
 
@@ -614,7 +614,7 @@ export class ToolingAmountsDto {
     type: String,
     nullable: true,
     example: '0.00',
-    description: 'Needs `factory_cost.read` (D-141)',
+    description: 'Needs `factory_buy_prices.read` (D-141)',
   })
   platesBuy!: string | null;
 
@@ -622,7 +622,7 @@ export class ToolingAmountsDto {
     type: String,
     nullable: true,
     example: '2500.00',
-    description: 'Needs `factory_cost.read` (D-141)',
+    description: 'Needs `factory_buy_prices.read` (D-141)',
   })
   dieBlockBuy!: string | null;
 }
@@ -653,7 +653,7 @@ export class QuoteInternalDto {
     type: String,
     nullable: true,
     example: '10123.45',
-    description: 'Needs `factory_cost.read` (D-141)',
+    description: 'Needs `factory_buy_prices.read` (D-141)',
   })
   buyPrice!: string | null;
 

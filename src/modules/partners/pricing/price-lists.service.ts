@@ -1,3 +1,4 @@
+import { acceptanceEvidence } from '@common/context/acceptance-evidence';
 import { type Actor, type UserActor } from '@common/context/actor';
 import { DomainException } from '@common/errors/domain.exception';
 import { toBangkokIso } from '@common/time/bangkok';
@@ -142,7 +143,13 @@ export class PriceListsService {
         action: 'price.read_other_factory',
         resourceType: 'price_list_version',
         resourcePublicId: version.publicId,
-        data: { factory: factory.code, component, page: query.page, rows: rows.length },
+        data: {
+          factory: factory.code,
+          purpose: 'price_list_review',
+          component,
+          page: query.page,
+          rows: rows.length,
+        },
       });
     }
     return { rows: rows.map((r) => ({ component, lineKey: r.lineKey, values: r.values })), total };
@@ -164,12 +171,15 @@ export class PriceListsService {
         throw new DomainException('partners.version_not_awaiting');
       }
       const now = new Date();
+      const evidence = acceptanceEvidence();
       const updated = await tx.priceListVersion.update({
         where: { id: version.id },
         data: {
           status: 'approved',
           factorySignedOffById: actor.userId,
           factorySignedOffAt: now,
+          factorySignedOffIp: evidence.ip,
+          factorySignedOffUa: evidence.userAgent,
           // Never back-dated: it applies from the later of the planned date and now (ADR-0005).
           effectiveFrom: version.effectiveFrom > now ? version.effectiveFrom : now,
           decidedAt: now,

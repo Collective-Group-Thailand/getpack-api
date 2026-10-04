@@ -195,6 +195,8 @@ describe('IAM, permissions and SoD (e2e, D-140 / D-168)', () => {
       .auth(token('admin'), { type: 'bearer' })
       .expect(200);
     const finance = (res.body as { key: string; permissions: string[] }[]).find((r) => r.key === 'finance');
+    expect(finance?.permissions).toContain('factory_buy_prices.read');
+    // The deprecated key stays listed beside its replacement until U-B5 (D-042, U-B3).
     expect(finance?.permissions).toContain('factory_cost.read');
   });
 

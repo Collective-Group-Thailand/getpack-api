@@ -87,7 +87,7 @@ export function quoteDto(q: QuoteRow, now = new Date()): SavedQuoteDto {
   };
 }
 
-/** The staff view; buy prices need `factory_cost.read`, margins `margin.read` (D-141). */
+/** The staff view; buy prices need `factory_buy_prices.read`, margins `margin.read` (D-141). */
 export function adminQuoteDto(q: QuoteRow, grants: { cost: boolean; margin: boolean }): AdminSavedQuoteDto {
   const base = quoteDto(q);
   return {

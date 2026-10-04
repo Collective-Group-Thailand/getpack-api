@@ -64,7 +64,7 @@ export class AdminProductionController {
       adminJobDto(
         r,
         photos,
-        { cost: granted.has('factory_cost.read'), margin: granted.has('margin.read') },
+        { cost: granted.has('factory_buy_prices.read'), margin: granted.has('margin.read') },
         extras,
         granted,
       ),
@@ -113,7 +113,7 @@ export class AdminProductionController {
     description:
       'Newest first; queues: `awaiting_acceptance` (released, not yet accepted), `escalated` (rejected or overdue ' +
       'with no factory to move to, D-074 / D-012), `at_risk` (predicted to miss the promised date). Buy prices ' +
-      'only with `factory_cost.read` (D-141).',
+      'only with `factory_buy_prices.read` (D-141).',
     implements: ['D-073', 'D-074', 'D-141'],
   })
   @ApiPaginated(AdminJobDto, { example: ADMIN_JOB_EXAMPLE })

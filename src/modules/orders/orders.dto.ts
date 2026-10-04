@@ -419,7 +419,16 @@ export class AdminOrderInternalDto {
     type: String,
     nullable: true,
     example: '10150.00',
-    description: 'Masked without `factory_cost.read` (D-141)',
+    description: 'The factory’s net buy price. Masked without `factory_buy_prices.read` (D-141)',
+  })
+  buyPriceNet!: string | null;
+
+  @ApiProperty({
+    type: String,
+    nullable: true,
+    example: '10150.00',
+    deprecated: true,
+    description: 'Deprecated: the same value as `buyPriceNet` (D-042 terminology)',
   })
   buyCostNet!: string | null;
 
@@ -613,6 +622,7 @@ export const ADMIN_ORDER_GROUP_EXAMPLE: AdminOrderGroupDto = {
       ...ORDER_EXAMPLE,
       internal: {
         selectedFactoryId: '0192f3a0-7c1e-7d2a-9b1f-0000000f0001',
+        buyPriceNet: '10150.00',
         buyCostNet: '10150.00',
         marginAmount: '3104.95',
         marginPct: '23.4254',

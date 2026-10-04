@@ -75,7 +75,7 @@ export function sampleDto(s: SampleRow, photos: SamplePhoto[], creditWindowDays:
   };
 }
 
-/** The staff view; the buy amount needs `factory_cost.read` (D-141). */
+/** The staff view; the buy amount needs `factory_buy_prices.read` (D-141). */
 export function adminSampleDto(
   s: SampleRow,
   photos: SamplePhoto[],

@@ -112,7 +112,7 @@ export const storeView = (view: QuoteView, target?: string): QuoteCalculationDto
     : null,
 });
 
-/** The staff view with buy prices only for `factory_cost.read` and margins only for `margin.read` (D-141). */
+/** The staff view with buy prices only for `factory_buy_prices.read` and margins only for `margin.read` (D-141). */
 async function adminView(
   view: QuoteView,
   actor: Actor,
@@ -120,7 +120,7 @@ async function adminView(
 ): Promise<AdminQuoteCalculationDto> {
   const granted =
     actor.type === 'user' ? (await permissions.forUser(actor.userId)).permissions : new Set<string>();
-  const cost = granted.has('factory_cost.read');
+  const cost = granted.has('factory_buy_prices.read');
   const margin = granted.has('margin.read');
   return {
     calculatorVersion: view.calculatorVersion,
@@ -263,7 +263,7 @@ export class AdminCsFoldingController {
     summary: 'Price a folding configuration for a customer (CS)',
     description:
       'The store calculation plus the staff view: selected factory and print type, price-list version, production run, ' +
-      'margin-floor flag (D-012) and each option’s reason when it has no price. Buy prices need `factory_cost.read`, the ' +
+      'margin-floor flag (D-012) and each option’s reason when it has no price. Buy prices need `factory_buy_prices.read`, the ' +
       'margin `margin.read` (D-141); they are null otherwise. Works before the type is switched to instant, for checks.',
     implements: [...CALCULATION, 'D-012', 'D-141'],
   })
@@ -381,7 +381,7 @@ export class AdminCsCorrugateController {
     description:
       'The store calculation plus the staff view (selected factory and print type, price-list version, margin-floor ' +
       'flag, each option’s reason when it has no price). Plates and die blocks are their own tooling line. Buy prices ' +
-      'need `factory_cost.read`, the margin `margin.read` (D-141). CS may price digital print on its coverage. Works ' +
+      'need `factory_buy_prices.read`, the margin `margin.read` (D-141). CS may price digital print on its coverage. Works ' +
       'before the type is switched to instant, for checks.',
     implements: [...CALCULATION, 'D-012', 'D-141'],
   })
@@ -500,7 +500,7 @@ export class AdminCsLabelController {
       'The store calculation plus the staff view (selected factory and print type, price-list version, margin-floor ' +
       'flag, each option’s reason when it has no price). Labels are priced on their W × L bounding box on the ' +
       'factory’s sheets and rolls; offset label printing is not priced (U-B6 label, quirk L2). Buy prices need ' +
-      '`factory_cost.read`, the margin `margin.read` (D-141). Works before the type is switched to instant, for checks.',
+      '`factory_buy_prices.read`, the margin `margin.read` (D-141). Works before the type is switched to instant, for checks.',
     implements: [...CALCULATION, 'D-012', 'D-141'],
   })
   @ApiBody({ type: LabelConfigurationDto, examples: { default: { value: LABEL_CONFIGURATION_EXAMPLE } } })
@@ -615,7 +615,7 @@ export class AdminCsTagSleeveController {
       'The store calculation plus the staff view (selected factory and print type, price-list version, production ' +
       'run, margin-floor flag, each option’s reason when it has no price). A tag or sleeve is a flat blank priced on ' +
       'the folding engine with the factory’s tag & sleeve price list; finish 2 is offset only (U-B6 tag & sleeve, ' +
-      'quirk T9). Buy prices need `factory_cost.read`, the margin `margin.read` (D-141). Works before the type is ' +
+      'quirk T9). Buy prices need `factory_buy_prices.read`, the margin `margin.read` (D-141). Works before the type is ' +
       'switched to instant, for checks.',
     implements: [...CALCULATION, 'D-012', 'D-141'],
   })
@@ -733,7 +733,7 @@ export class AdminCsPouchController {
       'The store calculation plus the staff view (selected factory and print type, price-list version, margin-floor ' +
       'flag, each option’s reason when it has no price). A pouch is priced on the film it takes on the factory’s web, ' +
       'its print, lamination, making and options (legacy `PouchCalculator`); a quantity below the factory’s minimum is ' +
-      'refused, never raised (U-B6 pouch). Buy prices need `factory_cost.read`, the margin `margin.read` (D-141). Works ' +
+      'refused, never raised (U-B6 pouch). Buy prices need `factory_buy_prices.read`, the margin `margin.read` (D-141). Works ' +
       'before the type is switched to instant, for checks.',
     implements: [...CALCULATION, 'D-012', 'D-141'],
   })
@@ -848,7 +848,7 @@ export class AdminCsStandardProductController {
       'The store calculation plus the staff view (selected factory and print type, price-list version, margin-floor ' +
       'flag, each option’s reason when it has no price). A standard product is priced from the factory’s buy-price ' +
       'tiers with Packio’s margin and VAT (legacy `CalculatePrice`); delivery is its own line (D-013). Buy prices need ' +
-      '`factory_cost.read`, the margin `margin.read` (D-141). Works before the type is switched to instant, for checks.',
+      '`factory_buy_prices.read`, the margin `margin.read` (D-141). Works before the type is switched to instant, for checks.',
     implements: [...CALCULATION, 'D-012', 'D-141'],
   })
   @ApiBody({
@@ -966,7 +966,7 @@ export class AdminCsServiceController {
     description:
       'The store calculation plus the staff view, from the factories’ `service` price lines (net cost per unit, ' +
       'Packio’s margin, VAT). A service ships nothing, so there is no shipping line. Without a line the item has no ' +
-      'instant price: CS prices it from an amount (`admin.csService.price`). Buy prices need `factory_cost.read`, the ' +
+      'instant price: CS prices it from an amount (`admin.csService.price`). Buy prices need `factory_buy_prices.read`, the ' +
       'margin `margin.read` (D-141).',
     implements: [...CALCULATION, 'D-012', 'D-141'],
   })
@@ -1005,7 +1005,7 @@ export class AdminCsServiceController {
       'net buy price, Packio’s `service` margin and the dated VAT give the net and gross sell price; from a ' +
       'VAT-inclusive sell price (design), the net and the buy price — each rounded as legacy’s page did — and, for a ' +
       'hired freelancer, the payable (legacy `design_cost`). Nothing is saved. A buy price CS did not enter needs ' +
-      '`factory_cost.read`, the margin `margin.read` (D-141). The amount is `unitAmount` (money string); the numeric ' +
+      '`factory_buy_prices.read`, the margin `margin.read` (D-141). The amount is `unitAmount` (money string); the numeric ' +
       '`amount` and the basis `buy_cost_net` are deprecated spellings, still accepted (D-042).',
     implements: ['D-194', 'D-100', 'D-063', 'D-141'],
   })
@@ -1031,7 +1031,7 @@ export class AdminCsServiceController {
     return this.pricing.price(
       { ...body, basis, amount, basisAsSent: body.basis },
       {
-        cost: granted.has('factory_cost.read'),
+        cost: granted.has('factory_buy_prices.read'),
         margin: granted.has('margin.read'),
       },
     );

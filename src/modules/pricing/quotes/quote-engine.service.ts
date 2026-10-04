@@ -172,6 +172,7 @@ export interface FactoryQuoteView {
       leadTimeDays: number | null;
       parts: {
         partKey: string;
+        componentsSubtotal: string;
         totalCost: string;
         buyPrice: string;
         layoutAmount: number;
@@ -549,6 +550,7 @@ export class QuoteEngineService {
                 leadTimeDays: s.leadTimeDays,
                 parts: s.parts.map((p) => ({
                   partKey: p.partKey,
+                  componentsSubtotal: formatMoney(p.totalCost),
                   totalCost: formatMoney(p.totalCost),
                   buyPrice: formatMoney(p.buyPrice),
                   layoutAmount: p.layoutAmount,

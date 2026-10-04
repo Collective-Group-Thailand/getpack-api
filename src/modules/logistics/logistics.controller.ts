@@ -489,7 +489,7 @@ export class AdminShipmentsController {
   private async canSeeCost(actor: Actor): Promise<boolean> {
     return (
       actor.type === 'user' &&
-      (await this.permissions.forUser(actor.userId)).permissions.has('factory_cost.read')
+      (await this.permissions.forUser(actor.userId)).permissions.has('factory_buy_prices.read')
     );
   }
 
@@ -499,7 +499,7 @@ export class AdminShipmentsController {
       this.query.podPhotos(rows),
       this.shipments.blockedByPayment(rows),
     ]);
-    const cost = perms.has('factory_cost.read');
+    const cost = perms.has('factory_buy_prices.read');
     return rows.map((r) => adminShipmentDto(r, { cost }, photos.get(r.id), blocked.has(r.id), perms));
   }
 
@@ -515,7 +515,7 @@ export class AdminShipmentsController {
     id: 'admin.shipments.list',
     summary: 'List shipments',
     description:
-      'Newest first; payout and carrier cost only with `factory_cost.read` (D-141). `queue` picks a work queue ' +
+      'Newest first; payout and carrier cost only with `factory_buy_prices.read` (D-141). `queue` picks a work queue ' +
       '(awaiting pickup, in transit, delivery exceptions D-230, POD reviews D-229); `carrier` and `factoryId` ' +
       'narrow it.',
     implements: ['D-013', 'D-141', 'D-229', 'D-230'],
@@ -615,7 +615,7 @@ export class AdminShipmentsController {
     description:
       'Every fallback carrier’s quote for this trip — pickup at the factory, the destination, one parcel per ' +
       'carton (D-114) — before booking; a carrier that is not enabled, has no account or cannot quote comes back ' +
-      'unavailable with the reason. Amounts are Packio’s cost, shown only with `factory_cost.read` (D-141). ' +
+      'unavailable with the reason. Amounts are Packio’s cost, shown only with `factory_buy_prices.read` (D-141). ' +
       'Nothing is booked or stored.',
     implements: ['D-013', 'D-114', 'D-141'],
   })

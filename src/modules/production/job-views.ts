@@ -187,6 +187,7 @@ export function adminJobDto(
     escalatedAt: iso(row.escalatedAt),
     predictedFinishOn: day(row.predictedFinishOn),
     inspectionReasons: row.inspectionReasons,
+    buyPriceNet: grants.cost ? (buy.buyCostNet ?? null) : null,
     buyCostNet: grants.cost ? (buy.buyCostNet ?? null) : null,
     assignments: row.assignments.map((a) => ({
       fromFactoryId: a.fromFactory?.publicId ?? null,

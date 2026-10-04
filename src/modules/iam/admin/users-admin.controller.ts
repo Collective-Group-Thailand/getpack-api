@@ -11,6 +11,7 @@ import { ApiSurface } from '@modules/surfaces/surfaces';
 import { Body, Controller, Get, HttpCode, Param, ParseUUIDPipe, Post, Query } from '@nestjs/common';
 import { ApiBody } from '@nestjs/swagger';
 
+import { withAliases } from '../permission-resolver.service';
 import { ScopeDirectory } from '../scope-directory';
 import {
   CreateUserDto,
@@ -304,7 +305,7 @@ export class RolesAdminController {
         scopeType: 'platform',
         nameTh: 'การเงิน',
         nameEn: 'Finance',
-        permissions: ['approvals.act', 'factory_cost.read'],
+        permissions: ['approvals.act', 'factory_buy_prices.read'],
       },
     ],
   })
@@ -316,7 +317,8 @@ export class RolesAdminController {
       scopeType: role.scopeType,
       nameTh: role.nameTh,
       nameEn: role.nameEn,
-      permissions: role.permissions.map((rp) => rp.permission.key).sort(),
+      // Deprecated keys are listed beside their replacement until U-B5 (PERMISSION_ALIASES).
+      permissions: [...withAliases(role.permissions.map((rp) => rp.permission.key))].sort(),
     }));
   }
 }

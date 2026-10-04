@@ -393,6 +393,8 @@ model FactoryShippingRateCardVersion {
   sentAt              DateTime?           @map("sent_at") @db.Timestamptz(6)
   sentById            BigInt?             @map("sent_by")
   factoryAcceptedAt   DateTime?           @map("factory_accepted_at") @db.Timestamptz(6)
+  factoryAcceptedIp   String?             @map("factory_accepted_ip") @db.Inet
+  factoryAcceptedUa   String?             @map("factory_accepted_user_agent")
   factoryAcceptedById BigInt?             @map("factory_accepted_by")
   createdAt           DateTime            @default(now()) @map("created_at") @db.Timestamptz(6)
   createdById         BigInt?             @map("created_by")

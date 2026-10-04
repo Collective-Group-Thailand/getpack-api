@@ -1102,8 +1102,12 @@ model PriceListVersion {
   approvalRequestId    BigInt?             @map("approval_request_id")
   factoryAcceptedById  BigInt?             @map("factory_accepted_by")
   factoryAcceptedAt    DateTime?           @map("factory_accepted_at") @db.Timestamptz(6)
+  factoryAcceptedIp    String?             @map("factory_accepted_ip") @db.Inet
+  factoryAcceptedUa    String?             @map("factory_accepted_user_agent")
   factorySignedOffById BigInt?             @map("factory_signed_off_by")
   factorySignedOffAt   DateTime?           @map("factory_signed_off_at") @db.Timestamptz(6)
+  factorySignedOffIp   String?             @map("factory_signed_off_ip") @db.Inet
+  factorySignedOffUa   String?             @map("factory_signed_off_user_agent")
   lineCount            Int                 @default(0) @map("line_count")
   contentSha256        Bytes?              @map("content_sha256")
   reason               String

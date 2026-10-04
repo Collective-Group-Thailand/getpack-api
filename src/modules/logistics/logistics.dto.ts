@@ -669,14 +669,14 @@ export class AdminShipmentDto extends PartnerShipmentDto {
   @ApiProperty({
     nullable: true,
     example: '120.00',
-    description: 'Factory shipping payout (P15); only with `factory_cost.read` (D-141)',
+    description: 'Factory shipping payout (P15); only with `factory_buy_prices.read` (D-141)',
   })
   payoutAmount!: string | null;
 
   @ApiProperty({
     nullable: true,
     example: null,
-    description: 'Fallback carrier cost (P25); only with `factory_cost.read`',
+    description: 'Fallback carrier cost (P25); only with `factory_buy_prices.read`',
   })
   carrierCostAmount!: string | null;
 
@@ -719,7 +719,7 @@ export class ShipmentCarrierQuoteDto {
     type: String,
     nullable: true,
     example: '85.00',
-    description: 'Packio’s cost (P25), THB; only with `factory_cost.read` (D-141)',
+    description: 'Packio’s cost (P25), THB; only with `factory_buy_prices.read` (D-141)',
   })
   amount!: string | null;
 

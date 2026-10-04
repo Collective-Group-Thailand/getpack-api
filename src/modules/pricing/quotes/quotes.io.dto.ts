@@ -462,10 +462,23 @@ class FactoryQuotePartDto {
   @ApiProperty({ example: 'main' })
   partKey!: string;
 
-  @ApiProperty({ example: '9111.11', description: 'Cost before the factory margin' })
+  @ApiProperty({
+    example: '9111.11',
+    description: 'The sum of the factory’s price-list components for the part, before its margin',
+  })
+  componentsSubtotal!: string;
+
+  @ApiProperty({
+    example: '9111.11',
+    deprecated: true,
+    description: 'Deprecated: the same value as `componentsSubtotal` (D-042 terminology)',
+  })
   totalCost!: string;
 
-  @ApiProperty({ example: '10123.45', description: 'Buy price of the part (cost ÷ (1 − factory margin))' })
+  @ApiProperty({
+    example: '10123.45',
+    description: 'Buy price of the part (components subtotal ÷ (1 − factory margin))',
+  })
   buyPrice!: string;
 
   @ApiProperty({ example: 10 })
@@ -654,6 +667,7 @@ export const FACTORY_QUOTE_EXAMPLE: FactoryQuoteDto = {
           parts: [
             {
               partKey: 'main',
+              componentsSubtotal: '9111.11',
               totalCost: '9111.11',
               buyPrice: '10123.45',
               layoutAmount: 10,

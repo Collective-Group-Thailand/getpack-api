@@ -546,7 +546,16 @@ export class AdminJobDto extends PartnerJobDto {
     type: String,
     nullable: true,
     example: null,
-    description: 'D-141: only with `factory_cost.read`',
+    description: 'The factory’s net buy price of the job. D-141: only with `factory_buy_prices.read`',
+  })
+  buyPriceNet!: string | null;
+
+  @ApiProperty({
+    type: String,
+    nullable: true,
+    example: null,
+    deprecated: true,
+    description: 'Deprecated: the same value as `buyPriceNet` (D-042 terminology)',
   })
   buyCostNet!: string | null;
 
@@ -640,6 +649,7 @@ export const ADMIN_JOB_EXAMPLE: AdminJobDto = {
   escalatedAt: null,
   predictedFinishOn: null,
   inspectionReasons: [],
+  buyPriceNet: null,
   buyCostNet: null,
   assignments: [
     {
