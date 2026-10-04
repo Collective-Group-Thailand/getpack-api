@@ -124,7 +124,8 @@ export class CreateDesignDto {
     format: 'uuid',
     example: null,
     nullable: true,
-    description: 'D-285: a design of my company — its members comment, edit through edit links and are mentioned',
+    description:
+      'D-285: a design of my company — its members comment, edit through edit links and are mentioned',
   })
   @IsOptional()
   @IsUUID()

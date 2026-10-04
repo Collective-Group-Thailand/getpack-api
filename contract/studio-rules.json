@@ -3,11 +3,7 @@
     {
       "id": "image_resolution",
       "severity": "warn",
-      "evaluatedOn": [
-        "document",
-        "web",
-        "pdf"
-      ],
+      "evaluatedOn": ["document", "web", "pdf"],
       "printMethods": null,
       "materialClasses": null,
       "thresholds": {
@@ -18,10 +14,7 @@
     {
       "id": "bleed",
       "severity": "block",
-      "evaluatedOn": [
-        "web",
-        "pdf"
-      ],
+      "evaluatedOn": ["web", "pdf"],
       "printMethods": null,
       "materialClasses": null,
       "thresholds": {
@@ -31,10 +24,7 @@
     {
       "id": "safe_zone",
       "severity": "warn",
-      "evaluatedOn": [
-        "web",
-        "pdf"
-      ],
+      "evaluatedOn": ["web", "pdf"],
       "printMethods": null,
       "materialClasses": null,
       "thresholds": {
@@ -44,10 +34,7 @@
     {
       "id": "min_text_size",
       "severity": "warn",
-      "evaluatedOn": [
-        "document",
-        "web"
-      ],
+      "evaluatedOn": ["document", "web"],
       "printMethods": null,
       "materialClasses": null,
       "thresholds": null
@@ -55,11 +42,7 @@
     {
       "id": "hairline",
       "severity": "warn",
-      "evaluatedOn": [
-        "document",
-        "web",
-        "pdf"
-      ],
+      "evaluatedOn": ["document", "web", "pdf"],
       "printMethods": null,
       "materialClasses": null,
       "thresholds": {
@@ -69,9 +52,7 @@
     {
       "id": "rich_black_small_text",
       "severity": "warn",
-      "evaluatedOn": [
-        "web"
-      ],
+      "evaluatedOn": ["web"],
       "printMethods": null,
       "materialClasses": null,
       "thresholds": null
@@ -79,36 +60,23 @@
     {
       "id": "rgb_out_of_gamut",
       "severity": "warn",
-      "evaluatedOn": [
-        "web",
-        "pdf"
-      ],
-      "printMethods": [
-        "digital",
-        "offset"
-      ],
+      "evaluatedOn": ["web", "pdf"],
+      "printMethods": ["digital", "offset"],
       "materialClasses": null,
       "thresholds": {}
     },
     {
       "id": "spot_colour_count",
       "severity": "warn",
-      "evaluatedOn": [
-        "document",
-        "web"
-      ],
-      "printMethods": [
-        "flexo"
-      ],
+      "evaluatedOn": ["document", "web"],
+      "printMethods": ["flexo"],
       "materialClasses": null,
       "thresholds": null
     },
     {
       "id": "crosses_crease",
       "severity": "warn",
-      "evaluatedOn": [
-        "web"
-      ],
+      "evaluatedOn": ["web"],
       "printMethods": null,
       "materialClasses": null,
       "thresholds": {}
@@ -116,9 +84,7 @@
     {
       "id": "crosses_glue",
       "severity": "warn",
-      "evaluatedOn": [
-        "web"
-      ],
+      "evaluatedOn": ["web"],
       "printMethods": null,
       "materialClasses": null,
       "thresholds": {}
@@ -126,9 +92,7 @@
     {
       "id": "barcode_across_fold",
       "severity": "block",
-      "evaluatedOn": [
-        "web"
-      ],
+      "evaluatedOn": ["web"],
       "printMethods": null,
       "materialClasses": null,
       "thresholds": {}
@@ -136,11 +100,7 @@
     {
       "id": "barcode_invalid",
       "severity": "block",
-      "evaluatedOn": [
-        "document",
-        "web",
-        "pdf"
-      ],
+      "evaluatedOn": ["document", "web", "pdf"],
       "printMethods": null,
       "materialClasses": null,
       "thresholds": {}
@@ -148,9 +108,7 @@
     {
       "id": "white_ink_needed",
       "severity": "warn",
-      "evaluatedOn": [
-        "web"
-      ],
+      "evaluatedOn": ["web"],
       "printMethods": null,
       "materialClasses": null,
       "thresholds": null
@@ -158,9 +116,7 @@
     {
       "id": "finish_min_feature",
       "severity": "warn",
-      "evaluatedOn": [
-        "web"
-      ],
+      "evaluatedOn": ["web"],
       "printMethods": null,
       "materialClasses": null,
       "thresholds": null
@@ -168,10 +124,7 @@
     {
       "id": "element_right_missing",
       "severity": "block",
-      "evaluatedOn": [
-        "document",
-        "web"
-      ],
+      "evaluatedOn": ["document", "web"],
       "printMethods": null,
       "materialClasses": null,
       "thresholds": {}

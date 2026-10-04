@@ -16,7 +16,8 @@ COPY prisma ./prisma
 COPY prisma.config.ts ./
 RUN --mount=type=cache,id=pnpm,target=/pnpm/store pnpm install --frozen-lockfile
 COPY . .
-RUN pnpm build
+# tsc outgrew Node's default heap (U-B1, 2026-10-04).
+RUN NODE_OPTIONS=--max-old-space-size=6144 pnpm build
 
 # --- prod-deps: runtime dependencies only (no scripts: the Prisma client is already compiled) ----
 FROM base AS prod-deps
