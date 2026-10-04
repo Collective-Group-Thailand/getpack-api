@@ -144,6 +144,7 @@ export const ROLES: readonly RoleDefinition[] = [
       'conversations.read',
       'conversations.reply',
       'conversations.manage_canned',
+      'assistant.manage',
       'line.manage',
       'settings.read',
       'feature_flags.read',

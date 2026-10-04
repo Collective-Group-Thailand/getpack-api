@@ -5,7 +5,7 @@
 > (a new effective-dated version, audited — D-063) and signs item 5 of `docs/LAUNCH-CHECKLIST.md`. A *proposed* or
 > *pending* value is not a decision: it goes live only once its owner confirms it.
 
-**102 settings** — 61 confirmed · 19 proposed · 4 pending the CPA (⚖) · 1 pending the business · 17 defined without a value (not set until their owner sets them).
+**111 settings** — 65 confirmed · 20 proposed · 4 pending the CPA (⚖) · 1 pending the business · 21 defined without a value (not set until their owner sets them).
 
 ## Settings
 
@@ -21,6 +21,15 @@
 | `artwork.approval_checklist` | `— (not set)` | not set | superadmin | D-073 | D-073 items the customer confirms when approving a proof (spelling, colours, size…), kept as approval evidence; not seeded — no checklist until set |
 | `artwork.preflight_rules` | `{"severities":{"size_mismatch":"block","missing_bleed":"block","low_resolution":"warn","rgb_colour":"warn","fonts_not_embedded":"info","safe_zone":"info","thin_lines":"info","overprint":"info","ink_coverage":"info"},"bleedMm":"3","sizeToleranceMm":"1","minEffectivePpi":300,"safeZoneMm":"3","minLineWidthPt":"0.25","maxInkCoveragePct":300}` | proposed | superadmin | D-070 | D-070 preflight: block on size mismatch or missing bleed, warn on low resolution or RGB; other checks report only; technical thresholds proposed (ADR-0009) |
 | `artwork.prepress_sla_business_hours` | `— (not set)` | not set | superadmin | D-070 | D-070 prepress queue: business hours to answer a submission; no decision gives it, no due time until set |
+| `assistant.eval_min_pass_rate_pct` | `— (not set)` | not set | superadmin | D-306, D-218 | D-306 share of the evaluation cases (%) the latest run of the provider must pass (with every red-team case) before the assistant flag can be switched on outside local — no decision yet: unset, never cleared |
+| `assistant.log_retention_days` | `30` | confirmed | superadmin | D-305, D-222 | D-305 days assistant sessions and turns are kept after their last turn, then purged (PDPA) |
+| `assistant.messages_per_day` | `60` | confirmed | superadmin | D-305 | D-305 assistant messages one customer may send per Bangkok day (429 beyond) |
+| `assistant.messages_per_minute` | `6` | confirmed | superadmin | D-305 | D-305 assistant messages one customer may send per minute (429 beyond) |
+| `assistant.model` | `— (not set)` | not set | superadmin | D-306, D-218 | D-306 / ADR-0012 the model id of the assistant provider — unset until ADR-0012 is accepted |
+| `assistant.model_prices` | `{"fake-rules-1":{"inputPerMTokUsd":"0","outputPerMTokUsd":"0"},"claude-opus-5":{"inputPerMTokUsd":"5","outputPerMTokUsd":"25"},"claude-sonnet-5":{"inputPerMTokUsd":"2","outputPerMTokUsd":"10"},"claude-haiku-4-5":{"inputPerMTokUsd":"1","outputPerMTokUsd":"5"}}` | proposed | superadmin | D-305, D-218 | D-305 vendor list prices (USD per million input / output tokens) by model id, used to count an assistant session against its cost ceiling — published list prices of the ADR-0012 options |
+| `assistant.provider` | `— (not set)` | not set | superadmin | D-306, D-218 | D-306 / ADR-0012 the assistant model provider — unset until ADR-0012 is accepted; the assistant is off outside local until then |
+| `assistant.session_cost_ceiling_usd` | `— (not set)` | not set | superadmin | D-305 | D-305 most one assistant session may cost in model usage (USD, vendor list prices of assistant.model_prices) — no decision yet: unset, the assistant answers not configured until it is set |
+| `assistant.turns_per_session` | `30` | confirmed | superadmin | D-305 | D-305 turns one assistant session may hold; then it ends and a new one starts |
 | `audit.business_hours` | `{"start":"08:00","end":"18:00","weekdays":[1,2,3,4,5]}` | proposed | finance_manager | D-033 | D-033 / accounting-design §8 exception report: manual journals posted outside these hours (Asia/Bangkok, ISO weekdays) are listed for the auditor (proposed) |
 | `auth.access_token_ttl_seconds` | `600` | proposed | superadmin | D-063 | D-063 / ADR-0004 access-token lifetime in seconds (contract §4: 10–15 minutes) |
 | `auth.device_pin_policy` | `{"length":6,"maxAttempts":5,"lockMinutes":15}` | proposed | superadmin | D-063 | D-063 / ADR-0004 optional partner device PIN: length and attempt limit |
@@ -169,6 +178,7 @@ Every integration flag is seeded **off** and switched on by a superadmin once it
 | `payments.twoc2p_ipp` | 2C2P card instalments (IPP) — R2 (D-111), adapter stubbed |
 | `payments.scb_direct_debit` | SCB direct debit — R2 (D-111), adapter stubbed |
 | `drawing.engine` | Dieline drawing engine @packio/dieline (B4.1) — off until the package is published; drawings answer 501 |
+| `assistant.enabled` | Customer assistant (U5.B5, D-218 / D-306) — off at launch; outside local it switches on only after ADR-0012 and a passing evaluation |
 | `e_tax.sending` | Send e-Tax invoices / e-Receipts to the Revenue Department (D-091): XML and PDF are generated in R1; sending is enabled in R2 after registration |
 | `pricing.folding_engine_b` | Folding engine B (type-B factories, D-233) in customer and CS quotes — off until docs/pricing-validation-folding-b.md is signed; factory breakdowns price B meanwhile |
 | `advisory.structure_advisor` | Structure Advisor for customers (store.advisory.recommend / choose, D-237) — off until the golden cases of docs/advisory-validation.md are signed by the Partner Manager and Prepress (D-189); staff evaluate meanwhile |

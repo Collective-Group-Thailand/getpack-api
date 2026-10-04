@@ -1,7 +1,7 @@
-import { AdminDeepLinksController } from '@platform/notifications/deep-links.controller';
 import { ADVISORY_ADMIN_CONTROLLERS } from '@modules/advisory/advisory.registry';
 import { ANALYTICS_ADMIN_CONTROLLERS } from '@modules/analytics/analytics.registry';
 import { ARTWORK_ADMIN_CONTROLLERS } from '@modules/artwork/artwork.registry';
+import { AdminAssistantController } from '@modules/assistant/assistant.controller';
 import { AUDIT_SUPPORT_ADMIN_CONTROLLERS } from '@modules/audit-support/audit-support.registry';
 import { AdminMeController } from '@modules/auth/controllers/me.controllers';
 import { BANKING_ADMIN_CONTROLLERS } from '@modules/banking/banking.registry';
@@ -58,6 +58,7 @@ import { AdminCalendarController } from '@platform/calendar/calendar-admin.contr
 import { OutboxAdminController } from '@platform/domain-events/outbox-admin.controller';
 import { FeatureFlagsController } from '@platform/feature-flags/feature-flags.controller';
 import { AdminFilesController } from '@platform/files/files.controllers';
+import { AdminDeepLinksController } from '@platform/notifications/deep-links.controller';
 import { AdminInboxController } from '@platform/notifications/my-notifications.controller';
 import {
   AdminCustomerConsentsController,
@@ -100,6 +101,7 @@ import { SettingsAdminModule } from '@platform/settings/settings-admin.module';
     ConsentPurposesController,
     AdminCustomerConsentsController,
     AdminInboxController,
+    AdminAssistantController,
     AdminDeepLinksController,
     AuditLogsController,
     DocumentSeriesController,

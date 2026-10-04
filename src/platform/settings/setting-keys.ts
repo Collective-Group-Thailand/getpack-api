@@ -171,6 +171,24 @@ export interface SettingValues {
   };
   /** D-221 first-response target of a contact-form / hand-off conversation, in business days. */
   'support.first_response_business_days': number;
+  /** D-306 the assistant provider chosen by ADR-0012; unset until accepted. */
+  'assistant.provider': string;
+  /** D-306 the provider model id the assistant uses; unset until ADR-0012. */
+  'assistant.model': string;
+  /** D-305 assistant messages a customer may send per minute. */
+  'assistant.messages_per_minute': number;
+  /** D-305 assistant messages a customer may send per Bangkok day. */
+  'assistant.messages_per_day': number;
+  /** D-305 turns in one assistant session. */
+  'assistant.turns_per_session': number;
+  /** D-305 model cost ceiling of one assistant session (USD decimal string); unset = not configured. */
+  'assistant.session_cost_ceiling_usd': string;
+  /** D-305 vendor list prices per million tokens by model id (USD), for the cost ceiling. */
+  'assistant.model_prices': Record<string, { inputPerMTokUsd: string; outputPerMTokUsd: string }>;
+  /** D-305 days assistant sessions and turns are kept after their last turn. */
+  'assistant.log_retention_days': number;
+  /** D-306 evaluation pass rate (%) that clears the assistant outside local; unset = never cleared. */
+  'assistant.eval_min_pass_rate_pct': number;
   /** D-303 relative week-over-week fall of a journey's conversion that alerts ops, %. */
   'analytics.journey_drop_alert_pct': number;
   /** D-303 sessions a journey needs in both weeks before its drop alerts. */

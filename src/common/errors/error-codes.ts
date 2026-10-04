@@ -369,6 +369,11 @@ export const ERROR_CODES = {
   'deep_links.expired': HttpStatus.GONE,
   'rfq_baskets.changed': HttpStatus.CONFLICT,
   'rfq_baskets.not_submitted': HttpStatus.CONFLICT,
+  'assistant.disabled': HttpStatus.NOT_FOUND,
+  'assistant.not_configured': HttpStatus.CONFLICT,
+  'assistant.rate_limited': HttpStatus.TOO_MANY_REQUESTS,
+  'assistant.session_ended': HttpStatus.CONFLICT,
+  'assistant.not_cleared': HttpStatus.CONFLICT,
 } as const satisfies Record<string, HttpStatus>;
 
 export type ErrorCode = keyof typeof ERROR_CODES;

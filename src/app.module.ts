@@ -14,6 +14,7 @@ import { IntegrationsModule } from '@integrations/integrations.module';
 import { AdvisoryModule } from '@modules/advisory/advisory.module';
 import { AnalyticsModule } from '@modules/analytics/analytics.module';
 import { ArtworkModule } from '@modules/artwork/artwork.module';
+import { AssistantApiModule, AssistantModule } from '@modules/assistant/assistant.module';
 import { AuditSupportModule } from '@modules/audit-support/audit-support.module';
 import { AuthModule } from '@modules/auth/auth.module';
 import { B2bModule } from '@modules/b2b/b2b.module';
@@ -33,6 +34,7 @@ import { DiscountMemosModule } from '@modules/discount-memos/discount-memos.modu
 import { FinancialReportsModule } from '@modules/financial-reports/financial-reports.module';
 import { FixedAssetsModule } from '@modules/fixed-assets/fixed-assets.module';
 import { IamModule } from '@modules/iam/iam.module';
+import { LaunchpadModule } from '@modules/launchpad/launchpad.module';
 import { LedgerModule } from '@modules/ledger/ledger.module';
 import { LogisticsModule } from '@modules/logistics/logistics.module';
 import { LoyaltyModule } from '@modules/loyalty/loyalty.module';
@@ -49,7 +51,6 @@ import { PromotionsModule } from '@modules/promotions/promotions.module';
 import { QuotesModule } from '@modules/quotes/quotes.module';
 import { ReceivablesModule } from '@modules/receivables/receivables.module';
 import { ReordersModule } from '@modules/reorders/reorders.module';
-import { LaunchpadModule } from '@modules/launchpad/launchpad.module';
 import { ReportsModule } from '@modules/reports/reports.module';
 import { RfqModule } from '@modules/rfq/rfq.module';
 import { RfqBasketsModule } from '@modules/rfq/rfq-baskets.module';
@@ -130,6 +131,8 @@ import { LoggerModule } from 'nestjs-pino';
     ToolingModule,
     ReordersModule,
     LaunchpadModule,
+    AssistantModule,
+    AssistantApiModule,
     CallOffsModule,
     B2bModule,
     PaymentSchedulesModule,

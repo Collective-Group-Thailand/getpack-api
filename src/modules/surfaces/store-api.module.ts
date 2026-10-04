@@ -1,7 +1,7 @@
-import { StoreDeepLinksController } from '@platform/notifications/deep-links.controller';
 import { ADVISORY_STORE_CONTROLLERS } from '@modules/advisory/advisory.registry';
 import { ANALYTICS_STORE_CONTROLLERS } from '@modules/analytics/analytics.registry';
 import { ARTWORK_STORE_CONTROLLERS } from '@modules/artwork/artwork.registry';
+import { StoreAssistantController } from '@modules/assistant/assistant.controller';
 import { StoreMeController } from '@modules/auth/controllers/me.controllers';
 import { B2B_STORE_CONTROLLERS } from '@modules/b2b/b2b.registry';
 import { CALL_OFFS_STORE_CONTROLLERS } from '@modules/call-offs/call-offs.registry';
@@ -37,6 +37,7 @@ import { STYLES_STORE_CONTROLLERS } from '@modules/styles/styles.registry';
 import { TIMELINE_STORE_CONTROLLERS } from '@modules/timeline/timeline.registry';
 import { Module } from '@nestjs/common';
 import { StoreFilesController } from '@platform/files/files.controllers';
+import { StoreDeepLinksController } from '@platform/notifications/deep-links.controller';
 import {
   StoreInboxController,
   StoreMyNotificationSettingsController,
@@ -76,6 +77,7 @@ import { RealtimeModule } from '@platform/realtime/realtime.module';
     ...B2B_STORE_CONTROLLERS,
     ...REORDERS_STORE_CONTROLLERS,
     ...LAUNCHPAD_STORE_CONTROLLERS,
+    StoreAssistantController,
     ...LOGISTICS_STORE_CONTROLLERS,
     ...CLAIMS_STORE_CONTROLLERS,
     ...CONVERSATIONS_STORE_CONTROLLERS,

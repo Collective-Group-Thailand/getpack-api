@@ -171,6 +171,11 @@ export const API_TAGS: Record<string, string> = {
   'auth.tokens':
     'Refresh-token rotation, logout, OAuth2 client credentials for factory systems, JWKS. ADR-0004.',
   'store.me': 'The signed-in customer.',
+  'admin.cmsGlossaryTerms': 'Glossary terms the assistant explains (D-304); Marketing, soft-deleted.',
+  'store.assistant':
+    'The customer assistant (D-304–D-306): off at launch (D-218); answers only from its seven tools, never a fact no tool returned, limits and a cost ceiling per session, logs kept 30 days with an opt-out.',
+  'admin.assistant':
+    'Assistant evaluation (≥ 100 Thai cases + red team, nightly), the D-306 clearance and usage by outcome (D-218, ADR-0012).',
   'admin.me': 'The signed-in staff member, permissions and menu entitlements.',
   // --- B4.1 artwork, proofs, design services, designs & drawings
   'store.artwork':

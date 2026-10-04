@@ -129,6 +129,7 @@ Legend: ● granted · ◆ granted and sensitive (cost/margin data, D-141).
 | `shipments.read` — Read shipments, carrier events, proofs of delivery and delivery reconciliations (D-013, D-080) | ● | ● | ● | ● | ● | ● | ● |  | ● | ● | ● |  | ● | ● |  |
 | `conversations.read` — Read the CS inbox: LINE and web conversations (D-151) | ● |  |  |  | ● | ● | ● |  |  |  |  |  |  |  |  |
 | `conversations.reply` — Reply to customers, assign and close conversations (D-151) | ● |  |  |  | ● | ● | ● |  |  |  |  |  |  |  |  |
+| `assistant.manage` — Run and read the assistant evaluation and its usage dashboard (D-306) | ● |  |  |  | ● |  |  |  |  |  |  |  |  |  |  |
 | `conversations.manage_canned` — Maintain the canned responses CS reuses in conversations (D-300) | ● |  |  |  | ● |  | ● |  |  |  |  |  |  |  |  |
 | `line.manage` — Register the LINE official account rich menus (D-151) | ● |  |  |  | ● |  |  |  |  |  |  | ● |  |  |  |
 | `claims.read` — Read claims, their evidence and resolutions (D-082) | ● | ● | ● | ● | ● | ● | ● |  | ● | ● | ● |  | ● | ● |  |

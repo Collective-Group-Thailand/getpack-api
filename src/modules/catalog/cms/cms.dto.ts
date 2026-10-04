@@ -1,7 +1,16 @@
 import { PageQuery } from '@common/pagination/pagination.dto';
 import { ApiProperty, ApiPropertyOptional, OmitType, PartialType } from '@nestjs/swagger';
 import { Type } from 'class-transformer';
-import { ArrayMaxSize, IsArray, IsDate, IsObject, IsOptional, IsUUID } from 'class-validator';
+import {
+  ArrayMaxSize,
+  IsArray,
+  IsDate,
+  IsObject,
+  IsOptional,
+  IsString,
+  IsUUID,
+  MaxLength,
+} from 'class-validator';
 
 import {
   BoolField,
@@ -698,3 +707,72 @@ export class VideoListQuery extends PageQuery {
   @RefField({ example: CMS_IDS.catalogProduct, optional: true })
   subjectId?: string;
 }
+
+// --- glossary (U5.B5, D-304) -----------------------------------------------------------------------------
+
+const GLOSSARY_ID = '0192f3a0-7c1e-7d2a-9b1f-00000000a1f1';
+
+export class GlossaryTermDto {
+  @IdField(GLOSSARY_ID)
+  id!: string;
+
+  @ApiProperty({ example: 'ลอนอี' })
+  termTh!: string;
+
+  @ApiProperty({ type: String, nullable: true, example: 'E-flute' })
+  termEn!: string | null;
+
+  @ApiProperty({ type: [String], example: ['ลอน E', 'e flute'], description: 'Other spellings people type' })
+  aliases!: string[];
+
+  @ApiProperty({ example: 'ลอนกระดาษลูกฟูกแบบบาง เหมาะกับกล่องขนาดเล็กที่ต้องการพิมพ์สวย' })
+  definitionTh!: string;
+
+  @ApiProperty({
+    type: String,
+    nullable: true,
+    example: 'A thin corrugated flute for small, well-printed boxes.',
+  })
+  definitionEn!: string | null;
+
+  @ApiProperty({ type: 'integer', example: 10 })
+  sort!: number;
+
+  @ApiProperty({ enum: CONTENT_STATUSES, enumName: 'ContentStatus', example: 'published' })
+  status!: Content;
+
+  @TimestampField(TS)
+  updatedAt!: string;
+}
+
+export class CreateGlossaryTermDto {
+  @TextField({ example: 'ลอนอี', max: 120 })
+  termTh!: string;
+
+  @TextField({ example: 'E-flute', nullable: true, max: 120 })
+  termEn?: string | null;
+
+  @ApiPropertyOptional({ type: [String], example: ['ลอน E'] })
+  @IsOptional()
+  @IsArray()
+  @ArrayMaxSize(20)
+  @IsString({ each: true })
+  @MaxLength(80, { each: true })
+  aliases?: string[];
+
+  @TextField({ example: 'ลอนกระดาษลูกฟูกแบบบาง เหมาะกับกล่องขนาดเล็กที่ต้องการพิมพ์สวย', max: 2000 })
+  definitionTh!: string;
+
+  @TextField({ example: 'A thin corrugated flute for small, well-printed boxes.', nullable: true, max: 2000 })
+  definitionEn?: string | null;
+
+  @SortField()
+  sort?: number;
+
+  @ContentStatusField()
+  status?: Content;
+}
+
+export class UpdateGlossaryTermDto extends PartialType(CreateGlossaryTermDto) {}
+
+export class GlossaryTermListQuery extends ContentStatusQuery {}

@@ -232,6 +232,50 @@
           "type": "https://errors.packio/artwork.preflight_pending"
         }
       },
+      "problem.assistant.disabled": {
+        "summary": "assistant.disabled",
+        "value": {
+          "code": "assistant.disabled",
+          "detail": "ผู้ช่วยยังไม่เปิดให้บริการ",
+          "requestId": "6f1c2d8e-2c7b-4d0e-9d1c-3f1a2b3c4d5e",
+          "status": 404,
+          "title": "ผู้ช่วยยังไม่เปิดให้บริการ",
+          "type": "https://errors.packio/assistant.disabled"
+        }
+      },
+      "problem.assistant.not_configured": {
+        "summary": "assistant.not_configured",
+        "value": {
+          "code": "assistant.not_configured",
+          "detail": "ผู้ช่วยยังไม่ได้ตั้งค่าผู้ให้บริการหรือเพดานค่าใช้จ่าย",
+          "requestId": "6f1c2d8e-2c7b-4d0e-9d1c-3f1a2b3c4d5e",
+          "status": 409,
+          "title": "ผู้ช่วยยังไม่ได้ตั้งค่า",
+          "type": "https://errors.packio/assistant.not_configured"
+        }
+      },
+      "problem.assistant.rate_limited": {
+        "summary": "assistant.rate_limited",
+        "value": {
+          "code": "assistant.rate_limited",
+          "detail": "ส่งข้อความถึงผู้ช่วยถี่เกินไป ลองใหม่ในอีก {retryAfter} วินาที",
+          "requestId": "6f1c2d8e-2c7b-4d0e-9d1c-3f1a2b3c4d5e",
+          "status": 429,
+          "title": "ส่งข้อความถี่เกินไป",
+          "type": "https://errors.packio/assistant.rate_limited"
+        }
+      },
+      "problem.assistant.session_ended": {
+        "summary": "assistant.session_ended",
+        "value": {
+          "code": "assistant.session_ended",
+          "detail": "การสนทนากับผู้ช่วยนี้สิ้นสุดแล้ว ({reason}) เริ่มการสนทนาใหม่ได้",
+          "requestId": "6f1c2d8e-2c7b-4d0e-9d1c-3f1a2b3c4d5e",
+          "status": 409,
+          "title": "การสนทนาสิ้นสุดแล้ว",
+          "type": "https://errors.packio/assistant.session_ended"
+        }
+      },
       "problem.auth.account_inactive": {
         "summary": "auth.account_inactive",
         "value": {
@@ -13776,6 +13820,260 @@
         ],
         "type": "string"
       },
+      "AssistantClearanceDto": {
+        "properties": {
+          "cleared": {
+            "description": "The flag may be switched on outside local (D-306)",
+            "example": false,
+            "type": "boolean"
+          },
+          "reason": {
+            "example": "assistant.provider is not set to the ADR-0012 choice",
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "cleared",
+          "reason"
+        ],
+        "type": "object"
+      },
+      "AssistantDashboardDto": {
+        "properties": {
+          "clearance": {
+            "$ref": "#/components/schemas/AssistantClearanceDto"
+          },
+          "costUsd": {
+            "description": "Model cost of those sessions (USD)",
+            "example": "0.000000",
+            "type": "string"
+          },
+          "outcomes": {
+            "description": "Turns of the last 30 days by outcome",
+            "items": {
+              "$ref": "#/components/schemas/AssistantOutcomeCountDto"
+            },
+            "type": "array"
+          },
+          "runs": {
+            "description": "The last 14 runs, newest first",
+            "items": {
+              "$ref": "#/components/schemas/EvalRunDto"
+            },
+            "type": "array"
+          },
+          "sessions": {
+            "description": "Sessions in the last 30 days (still kept)",
+            "example": 42,
+            "type": "integer"
+          }
+        },
+        "required": [
+          "clearance",
+          "runs",
+          "sessions",
+          "outcomes",
+          "costUsd"
+        ],
+        "type": "object"
+      },
+      "AssistantEvalCaseKind": {
+        "enum": [
+          "standard",
+          "red_team"
+        ],
+        "type": "string"
+      },
+      "AssistantEvalTrigger": {
+        "enum": [
+          "nightly",
+          "manual"
+        ],
+        "type": "string"
+      },
+      "AssistantLoggingDto": {
+        "properties": {
+          "optOut": {
+            "example": true,
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "optOut"
+        ],
+        "type": "object"
+      },
+      "AssistantMessageDto": {
+        "properties": {
+          "text": {
+            "example": "กล่องไปรษณีย์ราคาเท่าไหร่",
+            "maxLength": 1000,
+            "minLength": 1,
+            "type": "string"
+          }
+        },
+        "required": [
+          "text"
+        ],
+        "type": "object"
+      },
+      "AssistantOutcomeCountDto": {
+        "properties": {
+          "outcome": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/AssistantTurnOutcome"
+              }
+            ],
+            "example": "answered"
+          },
+          "turns": {
+            "example": 120,
+            "type": "integer"
+          }
+        },
+        "required": [
+          "outcome",
+          "turns"
+        ],
+        "type": "object"
+      },
+      "AssistantSessionDto": {
+        "properties": {
+          "createdAt": {
+            "example": "2026-10-04T10:00:00+07:00",
+            "format": "date-time",
+            "type": "string"
+          },
+          "id": {
+            "example": "0192f3a0-7c1e-7d2a-9b1f-0000000e7601",
+            "format": "uuid",
+            "type": "string"
+          },
+          "loggingOptOut": {
+            "example": false,
+            "type": "boolean"
+          },
+          "status": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/AssistantSessionStatus"
+              }
+            ],
+            "example": "open"
+          },
+          "turns": {
+            "example": 2,
+            "type": "integer"
+          }
+        },
+        "required": [
+          "id",
+          "status",
+          "loggingOptOut",
+          "turns",
+          "createdAt"
+        ],
+        "type": "object"
+      },
+      "AssistantSessionStatus": {
+        "enum": [
+          "open",
+          "ended",
+          "limit_reached"
+        ],
+        "type": "string"
+      },
+      "AssistantTool": {
+        "enum": [
+          "search_styles",
+          "recommend_structure",
+          "get_quote",
+          "get_order_status",
+          "lookup_glossary",
+          "search_help",
+          "create_handoff"
+        ],
+        "type": "string"
+      },
+      "AssistantToolUseDto": {
+        "properties": {
+          "name": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/AssistantTool"
+              }
+            ],
+            "example": "get_quote"
+          },
+          "ok": {
+            "example": true,
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "name",
+          "ok"
+        ],
+        "type": "object"
+      },
+      "AssistantTurnDto": {
+        "properties": {
+          "outcome": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/AssistantTurnOutcome"
+              }
+            ],
+            "description": "`blocked_unsupported_fact`: the reply stated a fact no tool returned and was replaced (D-304)",
+            "example": "answered"
+          },
+          "reply": {
+            "example": "ราคาเริ่มต้น 4.50 บาทต่อชิ้น ที่จำนวน 1000 ชิ้น ราคาจริงตามขนาดดูได้ในหน้าออกแบบค่ะ",
+            "type": "string"
+          },
+          "sessionStatus": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/AssistantSessionStatus"
+              }
+            ],
+            "example": "open"
+          },
+          "tools": {
+            "items": {
+              "$ref": "#/components/schemas/AssistantToolUseDto"
+            },
+            "type": "array"
+          },
+          "turnNo": {
+            "example": 1,
+            "type": "integer"
+          }
+        },
+        "required": [
+          "turnNo",
+          "reply",
+          "outcome",
+          "tools",
+          "sessionStatus"
+        ],
+        "type": "object"
+      },
+      "AssistantTurnOutcome": {
+        "description": "`blocked_unsupported_fact`: the reply stated a fact no tool returned and was replaced (D-304)",
+        "enum": [
+          "answered",
+          "blocked_unsupported_fact",
+          "refused",
+          "handed_off",
+          "failed"
+        ],
+        "type": "string"
+      },
       "AttachedFileDto": {
         "properties": {
           "id": {
@@ -26344,6 +26642,63 @@
         ],
         "type": "object"
       },
+      "CreateGlossaryTermDto": {
+        "properties": {
+          "aliases": {
+            "example": [
+              "ลอน E"
+            ],
+            "items": {
+              "maxLength": 80,
+              "type": "string"
+            },
+            "maxItems": 20,
+            "type": "array"
+          },
+          "definitionEn": {
+            "example": "A thin corrugated flute for small, well-printed boxes.",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "definitionTh": {
+            "example": "ลอนกระดาษลูกฟูกแบบบาง เหมาะกับกล่องขนาดเล็กที่ต้องการพิมพ์สวย",
+            "type": "string"
+          },
+          "sort": {
+            "description": "Display order (ascending)",
+            "example": 10,
+            "maximum": 100000,
+            "minimum": 0,
+            "type": "integer"
+          },
+          "status": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ContentStatus"
+              }
+            ],
+            "example": "published"
+          },
+          "termEn": {
+            "example": "E-flute",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "termTh": {
+            "example": "ลอนอี",
+            "type": "string"
+          }
+        },
+        "required": [
+          "termTh",
+          "definitionTh"
+        ],
+        "type": "object"
+      },
       "CreateHomeSectionDto": {
         "properties": {
           "config": {
@@ -34624,6 +34979,195 @@
         ],
         "type": "object"
       },
+      "EvalCaseResultDto": {
+        "properties": {
+          "id": {
+            "example": "rt-106",
+            "type": "string"
+          },
+          "kind": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/AssistantEvalCaseKind"
+              }
+            ],
+            "example": "red_team"
+          },
+          "passed": {
+            "example": true,
+            "type": "boolean"
+          },
+          "reason": {
+            "example": null,
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "id",
+          "kind",
+          "passed",
+          "reason"
+        ],
+        "type": "object"
+      },
+      "EvalRunDetailDto": {
+        "properties": {
+          "cases": {
+            "example": 127,
+            "type": "integer"
+          },
+          "costUsd": {
+            "description": "Model cost of the run (USD, list prices)",
+            "example": "0.000000",
+            "type": "string"
+          },
+          "finishedAt": {
+            "example": "2026-10-04T03:30:00+07:00",
+            "format": "date-time",
+            "type": "string"
+          },
+          "id": {
+            "example": "0192f3a0-7c1e-7d2a-9b1f-0000000e7602",
+            "format": "uuid",
+            "type": "string"
+          },
+          "model": {
+            "example": "fake-rules-1",
+            "type": "string"
+          },
+          "passRatePct": {
+            "example": "100.00",
+            "type": "string"
+          },
+          "passed": {
+            "example": 127,
+            "type": "integer"
+          },
+          "provider": {
+            "example": "fake",
+            "type": "string"
+          },
+          "redTeamCases": {
+            "example": 22,
+            "type": "integer"
+          },
+          "redTeamPassed": {
+            "example": 22,
+            "type": "integer"
+          },
+          "results": {
+            "items": {
+              "$ref": "#/components/schemas/EvalCaseResultDto"
+            },
+            "type": "array"
+          },
+          "suiteVersion": {
+            "example": "th-2026-10-04",
+            "type": "string"
+          },
+          "trigger": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/AssistantEvalTrigger"
+              }
+            ],
+            "example": "nightly"
+          }
+        },
+        "required": [
+          "id",
+          "provider",
+          "model",
+          "trigger",
+          "suiteVersion",
+          "cases",
+          "passed",
+          "passRatePct",
+          "redTeamCases",
+          "redTeamPassed",
+          "costUsd",
+          "finishedAt",
+          "results"
+        ],
+        "type": "object"
+      },
+      "EvalRunDto": {
+        "properties": {
+          "cases": {
+            "example": 127,
+            "type": "integer"
+          },
+          "costUsd": {
+            "description": "Model cost of the run (USD, list prices)",
+            "example": "0.000000",
+            "type": "string"
+          },
+          "finishedAt": {
+            "example": "2026-10-04T03:30:00+07:00",
+            "format": "date-time",
+            "type": "string"
+          },
+          "id": {
+            "example": "0192f3a0-7c1e-7d2a-9b1f-0000000e7602",
+            "format": "uuid",
+            "type": "string"
+          },
+          "model": {
+            "example": "fake-rules-1",
+            "type": "string"
+          },
+          "passRatePct": {
+            "example": "100.00",
+            "type": "string"
+          },
+          "passed": {
+            "example": 127,
+            "type": "integer"
+          },
+          "provider": {
+            "example": "fake",
+            "type": "string"
+          },
+          "redTeamCases": {
+            "example": 22,
+            "type": "integer"
+          },
+          "redTeamPassed": {
+            "example": 22,
+            "type": "integer"
+          },
+          "suiteVersion": {
+            "example": "th-2026-10-04",
+            "type": "string"
+          },
+          "trigger": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/AssistantEvalTrigger"
+              }
+            ],
+            "example": "nightly"
+          }
+        },
+        "required": [
+          "id",
+          "provider",
+          "model",
+          "trigger",
+          "suiteVersion",
+          "cases",
+          "passed",
+          "passRatePct",
+          "redTeamCases",
+          "redTeamPassed",
+          "costUsd",
+          "finishedAt"
+        ],
+        "type": "object"
+      },
       "EvidenceDto": {
         "properties": {
           "fileId": {
@@ -38782,6 +39326,77 @@
           "debit",
           "credit",
           "balance"
+        ],
+        "type": "object"
+      },
+      "GlossaryTermDto": {
+        "properties": {
+          "aliases": {
+            "description": "Other spellings people type",
+            "example": [
+              "ลอน E",
+              "e flute"
+            ],
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "definitionEn": {
+            "example": "A thin corrugated flute for small, well-printed boxes.",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "definitionTh": {
+            "example": "ลอนกระดาษลูกฟูกแบบบาง เหมาะกับกล่องขนาดเล็กที่ต้องการพิมพ์สวย",
+            "type": "string"
+          },
+          "id": {
+            "example": "0192f3a0-7c1e-7d2a-9b1f-00000000a1f1",
+            "format": "uuid",
+            "type": "string"
+          },
+          "sort": {
+            "example": 10,
+            "type": "integer"
+          },
+          "status": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ContentStatus"
+              }
+            ],
+            "example": "published"
+          },
+          "termEn": {
+            "example": "E-flute",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "termTh": {
+            "example": "ลอนอี",
+            "type": "string"
+          },
+          "updatedAt": {
+            "example": "2026-09-25T10:00:00+07:00",
+            "format": "date-time",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "termTh",
+          "termEn",
+          "aliases",
+          "definitionTh",
+          "definitionEn",
+          "sort",
+          "status",
+          "updatedAt"
         ],
         "type": "object"
       },
@@ -69957,6 +70572,16 @@
         ],
         "type": "object"
       },
+      "StartAssistantDto": {
+        "properties": {
+          "loggingOptOut": {
+            "description": "Keep no message text of this session (D-305)",
+            "example": false,
+            "type": "boolean"
+          }
+        },
+        "type": "object"
+      },
       "StartProductionDto": {
         "properties": {
           "reason": {
@@ -80444,6 +81069,59 @@
             "description": "Legacy variable name (only the lock-bottom formula reads `b`)",
             "example": "a",
             "pattern": "^[a-z][a-z0-9_]*$",
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "UpdateGlossaryTermDto": {
+        "properties": {
+          "aliases": {
+            "example": [
+              "ลอน E"
+            ],
+            "items": {
+              "maxLength": 80,
+              "type": "string"
+            },
+            "maxItems": 20,
+            "type": "array"
+          },
+          "definitionEn": {
+            "example": "A thin corrugated flute for small, well-printed boxes.",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "definitionTh": {
+            "example": "ลอนกระดาษลูกฟูกแบบบาง เหมาะกับกล่องขนาดเล็กที่ต้องการพิมพ์สวย",
+            "type": "string"
+          },
+          "sort": {
+            "description": "Display order (ascending)",
+            "example": 10,
+            "maximum": 100000,
+            "minimum": 0,
+            "type": "integer"
+          },
+          "status": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ContentStatus"
+              }
+            ],
+            "example": "published"
+          },
+          "termEn": {
+            "example": "E-flute",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "termTh": {
+            "example": "ลอนอี",
             "type": "string"
           }
         },
@@ -94049,6 +94727,827 @@
         ],
         "x-required-permissions": [
           "fixed_assets.manage"
+        ]
+      }
+    },
+    "/v1/admin/assistant/dashboard": {
+      "get": {
+        "description": "Whether the assistant is cleared to be switched on outside local (D-306: ADR-0012 provider set, latest evaluation at or above `assistant.eval_min_pass_rate_pct`, every red-team case passed), the last 14 evaluation runs, and the last 30 days of sessions: turns by outcome and model cost. Aggregates only (D-305).\n\nImplements: D-304, D-305, D-306, D-218.",
+        "operationId": "admin.assistant.dashboard",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "clearance": {
+                    "cleared": false,
+                    "reason": "assistant.provider is not set to the ADR-0012 choice"
+                  },
+                  "costUsd": "0.000000",
+                  "outcomes": [
+                    {
+                      "outcome": "answered",
+                      "turns": 120
+                    }
+                  ],
+                  "runs": [
+                    {
+                      "cases": 127,
+                      "costUsd": "0.000000",
+                      "finishedAt": "2026-10-04T03:30:00+07:00",
+                      "id": "0192f3a0-7c1e-7d2a-9b1f-0000000e7602",
+                      "model": "fake-rules-1",
+                      "passRatePct": "100.00",
+                      "passed": 127,
+                      "provider": "fake",
+                      "redTeamCases": 22,
+                      "redTeamPassed": 22,
+                      "suiteVersion": "th-2026-10-04",
+                      "trigger": "nightly"
+                    }
+                  ],
+                  "sessions": 42
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/AssistantDashboardDto"
+                }
+              }
+            },
+            "description": "Dashboard",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.unauthenticated": {
+                    "$ref": "#/components/examples/problem.auth.unauthenticated"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.unauthenticated`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.forbidden": {
+                    "$ref": "#/components/examples/problem.auth.forbidden"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.forbidden`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "staff": []
+          }
+        ],
+        "summary": "Assistant evaluation and usage",
+        "tags": [
+          "admin.assistant"
+        ],
+        "x-required-permissions": [
+          "assistant.manage"
+        ]
+      }
+    },
+    "/v1/admin/assistant/eval-runs": {
+      "get": {
+        "description": "Newest first (D-306).\n\nImplements: D-306.",
+        "operationId": "admin.assistant.listEvalRuns",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "page",
+            "required": false,
+            "schema": {
+              "default": 1,
+              "minimum": 1,
+              "type": "integer"
+            }
+          },
+          {
+            "in": "query",
+            "name": "perPage",
+            "required": false,
+            "schema": {
+              "default": 25,
+              "maximum": 100,
+              "minimum": 1,
+              "type": "integer"
+            }
+          },
+          {
+            "description": "Sort field; each endpoint validates it against its own allow-list.",
+            "in": "query",
+            "name": "sort",
+            "required": false,
+            "schema": {
+              "example": "createdAt",
+              "maxLength": 64,
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "order",
+            "required": false,
+            "schema": {
+              "$ref": "#/components/schemas/SortOrder"
+            }
+          },
+          {
+            "description": "Free-text search",
+            "in": "query",
+            "name": "q",
+            "required": false,
+            "schema": {
+              "maxLength": 200,
+              "type": "string"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "data": [
+                    {
+                      "cases": 127,
+                      "costUsd": "0.000000",
+                      "finishedAt": "2026-10-04T03:30:00+07:00",
+                      "id": "0192f3a0-7c1e-7d2a-9b1f-0000000e7602",
+                      "model": "fake-rules-1",
+                      "passRatePct": "100.00",
+                      "passed": 127,
+                      "provider": "fake",
+                      "redTeamCases": 22,
+                      "redTeamPassed": 22,
+                      "suiteVersion": "th-2026-10-04",
+                      "trigger": "nightly"
+                    }
+                  ],
+                  "meta": {
+                    "page": 1,
+                    "perPage": 25,
+                    "total": 1
+                  }
+                },
+                "schema": {
+                  "properties": {
+                    "data": {
+                      "items": {
+                        "$ref": "#/components/schemas/EvalRunDto"
+                      },
+                      "type": "array"
+                    },
+                    "meta": {
+                      "$ref": "#/components/schemas/PageMeta"
+                    }
+                  },
+                  "required": [
+                    "data",
+                    "meta"
+                  ],
+                  "type": "object"
+                }
+              }
+            },
+            "description": "One page of results",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.unauthenticated": {
+                    "$ref": "#/components/examples/problem.auth.unauthenticated"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.unauthenticated`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.forbidden": {
+                    "$ref": "#/components/examples/problem.auth.forbidden"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.forbidden`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "validation.failed": {
+                    "$ref": "#/components/examples/problem.validation.failed"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `validation.failed`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "staff": []
+          }
+        ],
+        "summary": "List assistant evaluation runs",
+        "tags": [
+          "admin.assistant"
+        ],
+        "x-required-permissions": [
+          "assistant.manage"
+        ]
+      },
+      "post": {
+        "description": "Every case of the suite (≥ 100 Thai cases and the red-team set) against the configured model with fixture tools (D-306). Outside local it calls the ADR-0012 vendor and costs its usage. 409 while no model is configured.\n\nImplements: D-306.",
+        "operationId": "admin.assistant.runEval",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/IdempotencyKey"
+          },
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "cases": 127,
+                  "costUsd": "0.000000",
+                  "finishedAt": "2026-10-04T03:30:00+07:00",
+                  "id": "0192f3a0-7c1e-7d2a-9b1f-0000000e7602",
+                  "model": "fake-rules-1",
+                  "passRatePct": "100.00",
+                  "passed": 127,
+                  "provider": "fake",
+                  "redTeamCases": 22,
+                  "redTeamPassed": 22,
+                  "suiteVersion": "th-2026-10-04",
+                  "trigger": "manual"
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/EvalRunDto"
+                }
+              }
+            },
+            "description": "Run",
+            "headers": {
+              "Idempotent-Replayed": {
+                "$ref": "#/components/headers/IdempotentReplayed"
+              },
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "400": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "idempotency.key_invalid": {
+                    "$ref": "#/components/examples/problem.idempotency.key_invalid"
+                  },
+                  "idempotency.key_required": {
+                    "$ref": "#/components/examples/problem.idempotency.key_required"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `idempotency.key_invalid`, `idempotency.key_required`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.unauthenticated": {
+                    "$ref": "#/components/examples/problem.auth.unauthenticated"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.unauthenticated`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.forbidden": {
+                    "$ref": "#/components/examples/problem.auth.forbidden"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.forbidden`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "409": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "assistant.not_configured": {
+                    "$ref": "#/components/examples/problem.assistant.not_configured"
+                  },
+                  "idempotency.in_progress": {
+                    "$ref": "#/components/examples/problem.idempotency.in_progress"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `assistant.not_configured`, `idempotency.in_progress`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "idempotency.key_reused": {
+                    "$ref": "#/components/examples/problem.idempotency.key_reused"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `idempotency.key_reused`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "staff": []
+          }
+        ],
+        "summary": "Run the assistant evaluation now",
+        "tags": [
+          "admin.assistant"
+        ],
+        "x-required-permissions": [
+          "assistant.manage"
+        ]
+      }
+    },
+    "/v1/admin/assistant/eval-runs/{runId}": {
+      "get": {
+        "description": "Case ids, kinds, pass / fail and the reason — no customer data (fixture tools, D-306).\n\nImplements: D-306.",
+        "operationId": "admin.assistant.getEvalRun",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "runId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "cases": 127,
+                  "costUsd": "0.000000",
+                  "finishedAt": "2026-10-04T03:30:00+07:00",
+                  "id": "0192f3a0-7c1e-7d2a-9b1f-0000000e7602",
+                  "model": "fake-rules-1",
+                  "passRatePct": "100.00",
+                  "passed": 127,
+                  "provider": "fake",
+                  "redTeamCases": 22,
+                  "redTeamPassed": 22,
+                  "results": [
+                    {
+                      "id": "rt-106",
+                      "kind": "red_team",
+                      "passed": true,
+                      "reason": null
+                    }
+                  ],
+                  "suiteVersion": "th-2026-10-04",
+                  "trigger": "nightly"
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/EvalRunDetailDto"
+                }
+              }
+            },
+            "description": "Run",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.unauthenticated": {
+                    "$ref": "#/components/examples/problem.auth.unauthenticated"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.unauthenticated`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.forbidden": {
+                    "$ref": "#/components/examples/problem.auth.forbidden"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.forbidden`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "404": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.not_found": {
+                    "$ref": "#/components/examples/problem.http.not_found"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.not_found`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "validation.failed": {
+                    "$ref": "#/components/examples/problem.validation.failed"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `validation.failed`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "staff": []
+          }
+        ],
+        "summary": "An assistant evaluation run with its cases",
+        "tags": [
+          "admin.assistant"
+        ],
+        "x-required-permissions": [
+          "assistant.manage"
         ]
       }
     },
@@ -153049,6 +154548,1199 @@
         "summary": "Replace the catalogue products of a FAQ",
         "tags": [
           "admin.cmsFaqs"
+        ],
+        "x-required-permissions": [
+          "cms.manage"
+        ]
+      }
+    },
+    "/v1/admin/cms/glossary-terms": {
+      "get": {
+        "description": "Filters, sort and `q` (free text over termTh, termEn, definitionTh). Terms the assistant explains (`lookup_glossary`, D-304); only published ones are used.\n\nImplements: D-304.",
+        "operationId": "admin.cmsGlossaryTerms.list",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "page",
+            "required": false,
+            "schema": {
+              "default": 1,
+              "minimum": 1,
+              "type": "integer"
+            }
+          },
+          {
+            "in": "query",
+            "name": "perPage",
+            "required": false,
+            "schema": {
+              "default": 25,
+              "maximum": 100,
+              "minimum": 1,
+              "type": "integer"
+            }
+          },
+          {
+            "description": "Sort field; each endpoint validates it against its own allow-list.",
+            "in": "query",
+            "name": "sort",
+            "required": false,
+            "schema": {
+              "example": "createdAt",
+              "maxLength": 64,
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "order",
+            "required": false,
+            "schema": {
+              "$ref": "#/components/schemas/SortOrder"
+            }
+          },
+          {
+            "description": "Free-text search",
+            "in": "query",
+            "name": "q",
+            "required": false,
+            "schema": {
+              "maxLength": 200,
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "status",
+            "required": false,
+            "schema": {
+              "$ref": "#/components/schemas/ContentStatus"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "data": [
+                    {
+                      "aliases": [
+                        "ลอน E"
+                      ],
+                      "definitionEn": "A thin corrugated flute for small, well-printed boxes.",
+                      "definitionTh": "ลอนกระดาษลูกฟูกแบบบาง เหมาะกับกล่องขนาดเล็กที่ต้องการพิมพ์สวย",
+                      "id": "0192f3a0-7c1e-7d2a-9b1f-00000000a1f1",
+                      "sort": 10,
+                      "status": "published",
+                      "termEn": "E-flute",
+                      "termTh": "ลอนอี",
+                      "updatedAt": "2026-09-25T10:00:00+07:00"
+                    }
+                  ],
+                  "meta": {
+                    "page": 1,
+                    "perPage": 25,
+                    "total": 1
+                  }
+                },
+                "schema": {
+                  "properties": {
+                    "data": {
+                      "items": {
+                        "$ref": "#/components/schemas/GlossaryTermDto"
+                      },
+                      "type": "array"
+                    },
+                    "meta": {
+                      "$ref": "#/components/schemas/PageMeta"
+                    }
+                  },
+                  "required": [
+                    "data",
+                    "meta"
+                  ],
+                  "type": "object"
+                }
+              }
+            },
+            "description": "One page of results",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.unauthenticated": {
+                    "$ref": "#/components/examples/problem.auth.unauthenticated"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.unauthenticated`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.forbidden": {
+                    "$ref": "#/components/examples/problem.auth.forbidden"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.forbidden`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "validation.failed": {
+                    "$ref": "#/components/examples/problem.validation.failed"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `validation.failed`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "staff": []
+          }
+        ],
+        "summary": "List glossary terms",
+        "tags": [
+          "admin.cmsGlossaryTerms"
+        ],
+        "x-required-permissions": [
+          "cms.manage"
+        ]
+      },
+      "post": {
+        "description": "Audited (config) and published as `catalog.glossary_term.created`. Terms the assistant explains (`lookup_glossary`, D-304); only published ones are used.\n\nImplements: D-304.",
+        "operationId": "admin.cmsGlossaryTerms.create",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "examples": {
+                "default": {
+                  "value": {
+                    "definitionTh": "ลอนกระดาษลูกฟูกแบบบาง เหมาะกับกล่องขนาดเล็กที่ต้องการพิมพ์สวย",
+                    "termTh": "ลอนอี"
+                  }
+                }
+              },
+              "schema": {
+                "$ref": "#/components/schemas/CreateGlossaryTermDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "aliases": [
+                    "ลอน E"
+                  ],
+                  "definitionEn": "A thin corrugated flute for small, well-printed boxes.",
+                  "definitionTh": "ลอนกระดาษลูกฟูกแบบบาง เหมาะกับกล่องขนาดเล็กที่ต้องการพิมพ์สวย",
+                  "id": "0192f3a0-7c1e-7d2a-9b1f-00000000a1f1",
+                  "sort": 10,
+                  "status": "published",
+                  "termEn": "E-flute",
+                  "termTh": "ลอนอี",
+                  "updatedAt": "2026-09-25T10:00:00+07:00"
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/GlossaryTermDto"
+                }
+              }
+            },
+            "description": "Created",
+            "headers": {
+              "ETag": {
+                "$ref": "#/components/headers/ETag"
+              },
+              "Location": {
+                "$ref": "#/components/headers/Location"
+              },
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "400": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.bad_request": {
+                    "$ref": "#/components/examples/problem.http.bad_request"
+                  },
+                  "http.malformed_json": {
+                    "$ref": "#/components/examples/problem.http.malformed_json"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.bad_request`, `http.malformed_json`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.unauthenticated": {
+                    "$ref": "#/components/examples/problem.auth.unauthenticated"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.unauthenticated`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.forbidden": {
+                    "$ref": "#/components/examples/problem.auth.forbidden"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.forbidden`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "409": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "catalog.code_taken": {
+                    "$ref": "#/components/examples/problem.catalog.code_taken"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `catalog.code_taken`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "validation.failed": {
+                    "$ref": "#/components/examples/problem.validation.failed"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `validation.failed`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "staff": []
+          }
+        ],
+        "summary": "Create a glossary term",
+        "tags": [
+          "admin.cmsGlossaryTerms"
+        ],
+        "x-required-permissions": [
+          "cms.manage"
+        ]
+      }
+    },
+    "/v1/admin/cms/glossary-terms/{id}": {
+      "delete": {
+        "description": "Soft delete (`deleted_at`, schema-design §1.6): the glossary term disappears from every read; guarded by `If-Match`. Published as `catalog.glossary_term.deleted`.\n\nImplements: D-304.",
+        "operationId": "admin.cmsGlossaryTerms.delete",
+        "parameters": [
+          {
+            "description": "Public id of the glossary term",
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/IfMatch"
+          },
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Deleted",
+            "headers": {
+              "ETag": {
+                "$ref": "#/components/headers/ETag"
+              },
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.unauthenticated": {
+                    "$ref": "#/components/examples/problem.auth.unauthenticated"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.unauthenticated`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.forbidden": {
+                    "$ref": "#/components/examples/problem.auth.forbidden"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.forbidden`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "404": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.not_found": {
+                    "$ref": "#/components/examples/problem.http.not_found"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.not_found`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "412": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "concurrency.stale": {
+                    "$ref": "#/components/examples/problem.concurrency.stale"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `concurrency.stale`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "validation.failed": {
+                    "$ref": "#/components/examples/problem.validation.failed"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `validation.failed`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "428": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "concurrency.precondition_required": {
+                    "$ref": "#/components/examples/problem.concurrency.precondition_required"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `concurrency.precondition_required`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "staff": []
+          }
+        ],
+        "summary": "Delete a glossary term",
+        "tags": [
+          "admin.cmsGlossaryTerms"
+        ],
+        "x-required-permissions": [
+          "cms.manage"
+        ]
+      },
+      "get": {
+        "description": "Returns the glossary term and its ETag for a later update. Terms the assistant explains (`lookup_glossary`, D-304); only published ones are used.\n\nImplements: D-304.",
+        "operationId": "admin.cmsGlossaryTerms.get",
+        "parameters": [
+          {
+            "description": "Public id of the glossary term",
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "aliases": [
+                    "ลอน E"
+                  ],
+                  "definitionEn": "A thin corrugated flute for small, well-printed boxes.",
+                  "definitionTh": "ลอนกระดาษลูกฟูกแบบบาง เหมาะกับกล่องขนาดเล็กที่ต้องการพิมพ์สวย",
+                  "id": "0192f3a0-7c1e-7d2a-9b1f-00000000a1f1",
+                  "sort": 10,
+                  "status": "published",
+                  "termEn": "E-flute",
+                  "termTh": "ลอนอี",
+                  "updatedAt": "2026-09-25T10:00:00+07:00"
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/GlossaryTermDto"
+                }
+              }
+            },
+            "description": "The glossary term",
+            "headers": {
+              "ETag": {
+                "$ref": "#/components/headers/ETag"
+              },
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.unauthenticated": {
+                    "$ref": "#/components/examples/problem.auth.unauthenticated"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.unauthenticated`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.forbidden": {
+                    "$ref": "#/components/examples/problem.auth.forbidden"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.forbidden`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "404": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.not_found": {
+                    "$ref": "#/components/examples/problem.http.not_found"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.not_found`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "validation.failed": {
+                    "$ref": "#/components/examples/problem.validation.failed"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `validation.failed`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "staff": []
+          }
+        ],
+        "summary": "Get one glossary term",
+        "tags": [
+          "admin.cmsGlossaryTerms"
+        ],
+        "x-required-permissions": [
+          "cms.manage"
+        ]
+      },
+      "patch": {
+        "description": "Partial update guarded by `If-Match`. Rows are archived through `status`, never deleted (schema-design §1.6). Audited and published as `catalog.glossary_term.updated`. Terms the assistant explains (`lookup_glossary`, D-304); only published ones are used.\n\nImplements: D-304.",
+        "operationId": "admin.cmsGlossaryTerms.update",
+        "parameters": [
+          {
+            "description": "Public id of the glossary term",
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/IfMatch"
+          },
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "examples": {
+                "default": {
+                  "value": {
+                    "status": "published"
+                  }
+                }
+              },
+              "schema": {
+                "$ref": "#/components/schemas/UpdateGlossaryTermDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "aliases": [
+                    "ลอน E"
+                  ],
+                  "definitionEn": "A thin corrugated flute for small, well-printed boxes.",
+                  "definitionTh": "ลอนกระดาษลูกฟูกแบบบาง เหมาะกับกล่องขนาดเล็กที่ต้องการพิมพ์สวย",
+                  "id": "0192f3a0-7c1e-7d2a-9b1f-00000000a1f1",
+                  "sort": 10,
+                  "status": "published",
+                  "termEn": "E-flute",
+                  "termTh": "ลอนอี",
+                  "updatedAt": "2026-09-25T10:00:00+07:00"
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/GlossaryTermDto"
+                }
+              }
+            },
+            "description": "Updated",
+            "headers": {
+              "ETag": {
+                "$ref": "#/components/headers/ETag"
+              },
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "400": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.bad_request": {
+                    "$ref": "#/components/examples/problem.http.bad_request"
+                  },
+                  "http.malformed_json": {
+                    "$ref": "#/components/examples/problem.http.malformed_json"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.bad_request`, `http.malformed_json`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.unauthenticated": {
+                    "$ref": "#/components/examples/problem.auth.unauthenticated"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.unauthenticated`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.forbidden": {
+                    "$ref": "#/components/examples/problem.auth.forbidden"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.forbidden`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "404": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.not_found": {
+                    "$ref": "#/components/examples/problem.http.not_found"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.not_found`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "409": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "catalog.code_taken": {
+                    "$ref": "#/components/examples/problem.catalog.code_taken"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `catalog.code_taken`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "412": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "concurrency.stale": {
+                    "$ref": "#/components/examples/problem.concurrency.stale"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `concurrency.stale`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "validation.failed": {
+                    "$ref": "#/components/examples/problem.validation.failed"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `validation.failed`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "428": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "concurrency.precondition_required": {
+                    "$ref": "#/components/examples/problem.concurrency.precondition_required"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `concurrency.precondition_required`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "staff": []
+          }
+        ],
+        "summary": "Update a glossary term",
+        "tags": [
+          "admin.cmsGlossaryTerms"
         ],
         "x-required-permissions": [
           "cms.manage"
@@ -341974,6 +344666,1132 @@
         ]
       }
     },
+    "/v1/store/assistant/sessions": {
+      "post": {
+        "description": "Only while the assistant is switched on for me and configured (D-306; off at launch, D-218). Its answers come from seven tools (styles, advisor, starting prices, my orders, glossary, help, hand-off to CS) and never state a fact no tool returned (D-304). Kept `assistant.log_retention_days`; `loggingOptOut` keeps no text (D-305).\n\nImplements: D-304, D-305, D-306, D-218.",
+        "operationId": "store.assistant.startSession",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/IdempotencyKey"
+          },
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "examples": {
+                "default": {
+                  "value": {
+                    "loggingOptOut": false
+                  }
+                }
+              },
+              "schema": {
+                "$ref": "#/components/schemas/StartAssistantDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "createdAt": "2026-10-04T10:00:00+07:00",
+                  "id": "0192f3a0-7c1e-7d2a-9b1f-0000000e7601",
+                  "loggingOptOut": false,
+                  "status": "open",
+                  "turns": 0
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/AssistantSessionDto"
+                }
+              }
+            },
+            "description": "Session",
+            "headers": {
+              "Idempotent-Replayed": {
+                "$ref": "#/components/headers/IdempotentReplayed"
+              },
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "400": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.bad_request": {
+                    "$ref": "#/components/examples/problem.http.bad_request"
+                  },
+                  "http.malformed_json": {
+                    "$ref": "#/components/examples/problem.http.malformed_json"
+                  },
+                  "idempotency.key_invalid": {
+                    "$ref": "#/components/examples/problem.idempotency.key_invalid"
+                  },
+                  "idempotency.key_required": {
+                    "$ref": "#/components/examples/problem.idempotency.key_required"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.bad_request`, `http.malformed_json`, `idempotency.key_invalid`, `idempotency.key_required`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.unauthenticated": {
+                    "$ref": "#/components/examples/problem.auth.unauthenticated"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.unauthenticated`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.forbidden": {
+                    "$ref": "#/components/examples/problem.auth.forbidden"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.forbidden`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "404": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "assistant.disabled": {
+                    "$ref": "#/components/examples/problem.assistant.disabled"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `assistant.disabled`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "409": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "assistant.not_configured": {
+                    "$ref": "#/components/examples/problem.assistant.not_configured"
+                  },
+                  "idempotency.in_progress": {
+                    "$ref": "#/components/examples/problem.idempotency.in_progress"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `assistant.not_configured`, `idempotency.in_progress`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "idempotency.key_reused": {
+                    "$ref": "#/components/examples/problem.idempotency.key_reused"
+                  },
+                  "validation.failed": {
+                    "$ref": "#/components/examples/problem.validation.failed"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `idempotency.key_reused`, `validation.failed`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "customer": []
+          }
+        ],
+        "summary": "Start a conversation with the assistant",
+        "tags": [
+          "store.assistant"
+        ]
+      }
+    },
+    "/v1/store/assistant/sessions/{sessionId}": {
+      "get": {
+        "description": "Another customer’s → 404 (D-304).\n\nImplements: D-304, D-305, D-306, D-218.",
+        "operationId": "store.assistant.getSession",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "sessionId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "createdAt": "2026-10-04T10:00:00+07:00",
+                  "id": "0192f3a0-7c1e-7d2a-9b1f-0000000e7601",
+                  "loggingOptOut": false,
+                  "status": "open",
+                  "turns": 0
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/AssistantSessionDto"
+                }
+              }
+            },
+            "description": "Session",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.unauthenticated": {
+                    "$ref": "#/components/examples/problem.auth.unauthenticated"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.unauthenticated`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.forbidden": {
+                    "$ref": "#/components/examples/problem.auth.forbidden"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.forbidden`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "404": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.not_found": {
+                    "$ref": "#/components/examples/problem.http.not_found"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.not_found`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "validation.failed": {
+                    "$ref": "#/components/examples/problem.validation.failed"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `validation.failed`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "customer": []
+          }
+        ],
+        "summary": "One of my assistant conversations",
+        "tags": [
+          "store.assistant"
+        ]
+      }
+    },
+    "/v1/store/assistant/sessions/{sessionId}/actions/end": {
+      "post": {
+        "description": "The next question starts a new one (D-305).\n\nImplements: D-305.",
+        "operationId": "store.assistant.endSession",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "sessionId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "createdAt": "2026-10-04T10:00:00+07:00",
+                  "id": "0192f3a0-7c1e-7d2a-9b1f-0000000e7601",
+                  "loggingOptOut": false,
+                  "status": "ended",
+                  "turns": 0
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/AssistantSessionDto"
+                }
+              }
+            },
+            "description": "Session",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.unauthenticated": {
+                    "$ref": "#/components/examples/problem.auth.unauthenticated"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.unauthenticated`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.forbidden": {
+                    "$ref": "#/components/examples/problem.auth.forbidden"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.forbidden`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "404": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.not_found": {
+                    "$ref": "#/components/examples/problem.http.not_found"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.not_found`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "validation.failed": {
+                    "$ref": "#/components/examples/problem.validation.failed"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `validation.failed`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "customer": []
+          }
+        ],
+        "summary": "End my assistant conversation",
+        "tags": [
+          "store.assistant"
+        ]
+      }
+    },
+    "/v1/store/assistant/sessions/{sessionId}/logging": {
+      "put": {
+        "description": "Opting out also clears the text already kept for this session (D-305, PDPA).\n\nImplements: D-305.",
+        "operationId": "store.assistant.setLogging",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "sessionId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "examples": {
+                "default": {
+                  "value": {
+                    "optOut": true
+                  }
+                }
+              },
+              "schema": {
+                "$ref": "#/components/schemas/AssistantLoggingDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "createdAt": "2026-10-04T10:00:00+07:00",
+                  "id": "0192f3a0-7c1e-7d2a-9b1f-0000000e7601",
+                  "loggingOptOut": true,
+                  "status": "open",
+                  "turns": 0
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/AssistantSessionDto"
+                }
+              }
+            },
+            "description": "Session",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "400": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.bad_request": {
+                    "$ref": "#/components/examples/problem.http.bad_request"
+                  },
+                  "http.malformed_json": {
+                    "$ref": "#/components/examples/problem.http.malformed_json"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.bad_request`, `http.malformed_json`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.unauthenticated": {
+                    "$ref": "#/components/examples/problem.auth.unauthenticated"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.unauthenticated`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.forbidden": {
+                    "$ref": "#/components/examples/problem.auth.forbidden"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.forbidden`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "404": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.not_found": {
+                    "$ref": "#/components/examples/problem.http.not_found"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.not_found`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "validation.failed": {
+                    "$ref": "#/components/examples/problem.validation.failed"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `validation.failed`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "customer": []
+          }
+        ],
+        "summary": "Opt out of (or back into) keeping my messages",
+        "tags": [
+          "store.assistant"
+        ]
+      }
+    },
+    "/v1/store/assistant/sessions/{sessionId}/messages": {
+      "post": {
+        "description": "One turn: the assistant may run its tools as me, then answers; an answer stating a price, date, strength, number or policy no tool returned in this turn is replaced by an offer to reach CS (`blocked_unsupported_fact`, D-304). At most `assistant.messages_per_minute` / `assistant.messages_per_day` (429 with Retry-After); the session ends at `assistant.turns_per_session` or its cost ceiling (D-305).\n\nImplements: D-304, D-305, D-306, D-218.",
+        "operationId": "store.assistant.send",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "sessionId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/IdempotencyKey"
+          },
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "examples": {
+                "default": {
+                  "value": {
+                    "text": "กล่องไปรษณีย์ราคาเท่าไหร่"
+                  }
+                }
+              },
+              "schema": {
+                "$ref": "#/components/schemas/AssistantMessageDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "outcome": "answered",
+                  "reply": "ราคาเริ่มต้น 4.50 บาทต่อชิ้น ที่จำนวน 1000 ชิ้น ราคาจริงตามขนาดดูได้ในหน้าออกแบบค่ะ",
+                  "sessionStatus": "open",
+                  "tools": [
+                    {
+                      "name": "get_quote",
+                      "ok": true
+                    }
+                  ],
+                  "turnNo": 1
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/AssistantTurnDto"
+                }
+              }
+            },
+            "description": "The turn",
+            "headers": {
+              "Idempotent-Replayed": {
+                "$ref": "#/components/headers/IdempotentReplayed"
+              },
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "400": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.bad_request": {
+                    "$ref": "#/components/examples/problem.http.bad_request"
+                  },
+                  "http.malformed_json": {
+                    "$ref": "#/components/examples/problem.http.malformed_json"
+                  },
+                  "idempotency.key_invalid": {
+                    "$ref": "#/components/examples/problem.idempotency.key_invalid"
+                  },
+                  "idempotency.key_required": {
+                    "$ref": "#/components/examples/problem.idempotency.key_required"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.bad_request`, `http.malformed_json`, `idempotency.key_invalid`, `idempotency.key_required`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.unauthenticated": {
+                    "$ref": "#/components/examples/problem.auth.unauthenticated"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.unauthenticated`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.forbidden": {
+                    "$ref": "#/components/examples/problem.auth.forbidden"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.forbidden`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "404": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "assistant.disabled": {
+                    "$ref": "#/components/examples/problem.assistant.disabled"
+                  },
+                  "http.not_found": {
+                    "$ref": "#/components/examples/problem.http.not_found"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `assistant.disabled`, `http.not_found`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "409": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "assistant.not_configured": {
+                    "$ref": "#/components/examples/problem.assistant.not_configured"
+                  },
+                  "assistant.session_ended": {
+                    "$ref": "#/components/examples/problem.assistant.session_ended"
+                  },
+                  "idempotency.in_progress": {
+                    "$ref": "#/components/examples/problem.idempotency.in_progress"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `assistant.not_configured`, `assistant.session_ended`, `idempotency.in_progress`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "idempotency.key_reused": {
+                    "$ref": "#/components/examples/problem.idempotency.key_reused"
+                  },
+                  "validation.failed": {
+                    "$ref": "#/components/examples/problem.validation.failed"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `idempotency.key_reused`, `validation.failed`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "assistant.rate_limited": {
+                    "$ref": "#/components/examples/problem.assistant.rate_limited"
+                  },
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `assistant.rate_limited`, `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "customer": []
+          }
+        ],
+        "summary": "Ask the assistant",
+        "tags": [
+          "store.assistant"
+        ]
+      }
+    },
     "/v1/store/call-off-agreements": {
       "get": {
         "description": "Newest first, with their releases. A call-off locks the unit price of a saved quotation option for its quantity for up to `calloff.max_months`, once the quotation’s factory accepts. Each release (≥ the factory’s minimum order, ≤ what is left) is a quotation at the locked unit price — product only, shipping priced at checkout; the first release carries the quotation’s one-off amounts — and a normal order with the normal payment schedule (D-020). No deposit, no stock; what is not released lapses at expiry without charge (D-290).\n\nImplements: D-290, D-206.",
@@ -413599,6 +417417,10 @@
       "name": "admin.artwork"
     },
     {
+      "description": "Assistant evaluation (≥ 100 Thai cases + red team, nightly), the D-306 clearance and usage by outcome (D-218, ADR-0012).",
+      "name": "admin.assistant"
+    },
+    {
       "description": "The audit log: search and CSV export (itself audited).",
       "name": "admin.auditLogs"
     },
@@ -413797,6 +417619,10 @@
     {
       "description": "Frequently asked questions (D-005).",
       "name": "admin.cmsFaqs"
+    },
+    {
+      "description": "Glossary terms the assistant explains (D-304); Marketing, soft-deleted.",
+      "name": "admin.cmsGlossaryTerms"
     },
     {
       "description": "Home-page sections and their order (D-005).",
@@ -414361,6 +418187,10 @@
     {
       "description": "Artwork of my orders: versions, automated preflight with a Thai report (D-070), proofs and annotations (D-073).",
       "name": "store.artwork"
+    },
+    {
+      "description": "The customer assistant (D-304–D-306): off at launch (D-218); answers only from its seven tools, never a fact no tool returned, limits and a cost ceiling per session, logs kept 30 days with an opt-out.",
+      "name": "store.assistant"
     },
     {
       "description": "Company brand kits — logos, palette, font pairs, usage notes — managed by the Company Admin, used by every member (D-282, D-227).",

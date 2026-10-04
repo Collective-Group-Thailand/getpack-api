@@ -1,4 +1,3 @@
-import { PartnerDeepLinksController } from '@platform/notifications/deep-links.controller';
 import { ADVISORY_PARTNER_CONTROLLERS } from '@modules/advisory/advisory.registry';
 import { PartnerMeController } from '@modules/auth/controllers/me.controllers';
 import { CALL_OFFS_PARTNER_CONTROLLERS } from '@modules/call-offs/call-offs.registry';
@@ -19,6 +18,7 @@ import { STYLES_PARTNER_CONTROLLERS } from '@modules/styles/styles.registry';
 import { TOOLING_PARTNER_CONTROLLERS } from '@modules/tooling/tooling.registry';
 import { Module } from '@nestjs/common';
 import { PartnerFilesController } from '@platform/files/files.controllers';
+import { PartnerDeepLinksController } from '@platform/notifications/deep-links.controller';
 import {
   PartnerInboxController,
   PartnerMyNotificationSettingsController,

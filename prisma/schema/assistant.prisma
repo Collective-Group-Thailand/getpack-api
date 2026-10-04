@@ -1,0 +1,146 @@
+// U5.B5 assistant backend (schema-design A-113; D-304–D-306, D-218, ADR-0012).
+
+/// D-304 a glossary term the assistant (and the store) can explain — CMS content, Marketing (`cms.manage`).
+model GlossaryTerm {
+  id           BigInt        @id(map: "pk_glossary_terms") @default(autoincrement())
+  publicId     String        @unique(map: "ux_glossary_terms__public_id") @default(dbgenerated("uuidv7()")) @map("public_id") @db.Uuid
+  termTh       String        @map("term_th")
+  termEn       String?       @map("term_en")
+  /// Other spellings people type (`ลอนอี`, `E-flute`).
+  aliases      String[]      @default([])
+  definitionTh String        @map("definition_th")
+  definitionEn String?       @map("definition_en")
+  sort         Int           @default(0)
+  status       ContentStatus @default(draft)
+  deletedAt    DateTime?     @map("deleted_at") @db.Timestamptz(6)
+  createdAt    DateTime      @default(now()) @map("created_at") @db.Timestamptz(6)
+  createdById  BigInt?       @map("created_by")
+  updatedAt    DateTime      @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+  updatedById  BigInt?       @map("updated_by")
+  rowVersion   Int           @default(1) @map("row_version")
+
+  createdBy User? @relation("GlossaryTermCreatedBy", fields: [createdById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_glossary_terms__created_by")
+  updatedBy User? @relation("GlossaryTermUpdatedBy", fields: [updatedById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_glossary_terms__updated_by")
+
+  @@index([termTh(ops: raw("gin_trgm_ops"))], type: Gin, map: "ix_glossary_terms__term_th_trgm")
+  @@index([createdById], map: "ix_glossary_terms__created_by")
+  @@index([updatedById], map: "ix_glossary_terms__updated_by")
+  @@map("glossary_terms")
+}
+
+/// D-304 help search (pgvector, ADR-0001): one chunk of a published public article or FAQ, embedded per model.
+model HelpEmbedding {
+  id            BigInt                      @id(map: "pk_help_embeddings") @default(autoincrement())
+  /// `article` or `faq`.
+  subjectType   String                      @map("subject_type")
+  subjectId     BigInt                      @map("subject_id")
+  chunkIndex    Int                         @map("chunk_index") @db.SmallInt
+  model         String
+  modelVersion  String                      @map("model_version")
+  contentSha256 Bytes                       @map("content_sha256")
+  /// The chunk's text (Packio's own published content), returned as the search snippet.
+  content       String
+  embedding     Unsupported("vector(1536)")
+  createdAt     DateTime                    @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  @@unique([subjectType, subjectId, model, modelVersion, chunkIndex], map: "ux_help_embeddings__subject__model__chunk")
+  @@map("help_embeddings")
+}
+
+enum AssistantSessionStatus {
+  open
+  ended
+  /// The cost ceiling or the turn limit was reached (D-305).
+  limit_reached
+
+  @@map("assistant_session_status")
+}
+
+enum AssistantTurnOutcome {
+  answered
+  /// D-304: the reply stated a fact no tool returned; replaced by the safe answer.
+  blocked_unsupported_fact
+  refused
+  handed_off
+  /// The model provider failed; the customer was offered CS.
+  failed
+
+  @@map("assistant_turn_outcome")
+}
+
+/// D-305 an assistant conversation of a signed-in customer; purged `assistant.log_retention_days` after its last turn.
+model AssistantSession {
+  id             BigInt                 @id(map: "pk_assistant_sessions") @default(autoincrement())
+  publicId       String                 @unique(map: "ux_assistant_sessions__public_id") @default(dbgenerated("uuidv7()")) @map("public_id") @db.Uuid
+  customerUserId BigInt                 @map("customer_user_id")
+  status         AssistantSessionStatus @default(open)
+  /// D-305 opt-out: no message text is kept, only counts, tool names and outcomes.
+  loggingOptOut  Boolean                @default(false) @map("logging_opt_out")
+  provider       String
+  model          String
+  turns          Int                    @default(0)
+  inputTokens    Int                    @default(0) @map("input_tokens")
+  outputTokens   Int                    @default(0) @map("output_tokens")
+  costUsd        Decimal                @default(0) @map("cost_usd") @db.Decimal(12, 6)
+  lastTurnAt     DateTime?              @map("last_turn_at") @db.Timestamptz(6)
+  createdAt      DateTime               @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt      DateTime               @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  customer User            @relation("AssistantSessionCustomer", fields: [customerUserId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_assistant_sessions__customer_user_id")
+  turnRows AssistantTurn[]
+
+  @@index([customerUserId, createdAt(sort: Desc)], map: "ix_assistant_sessions__customer_user_id__created_at")
+  @@index([lastTurnAt], map: "ix_assistant_sessions__last_turn_at")
+  @@map("assistant_sessions")
+}
+
+model AssistantTurn {
+  id           BigInt               @id(map: "pk_assistant_turns") @default(autoincrement())
+  sessionId    BigInt               @map("session_id")
+  turnNo       Int                  @map("turn_no")
+  /// Null when the customer opted out of logging.
+  userText     String?              @map("user_text")
+  replyText    String?              @map("reply_text")
+  /// `[{ name, ok }]` — the tools the turn ran (inputs and results only with logging on).
+  toolCalls    Json                 @default("[]") @map("tool_calls")
+  outcome      AssistantTurnOutcome
+  /// D-304 what the validator found (unsupported facts, kept as their kind only when opted out).
+  validation   Json                 @default("{}")
+  inputTokens  Int                  @default(0) @map("input_tokens")
+  outputTokens Int                  @default(0) @map("output_tokens")
+  costUsd      Decimal              @default(0) @map("cost_usd") @db.Decimal(12, 6)
+  createdAt    DateTime             @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  session AssistantSession @relation(fields: [sessionId], references: [id], onDelete: Cascade, onUpdate: Restrict, map: "fk_assistant_turns__session_id")
+
+  @@unique([sessionId, turnNo], map: "ux_assistant_turns__session_id__turn_no")
+  @@map("assistant_turns")
+}
+
+/// D-306 one run of the evaluation harness (≥ 100 Thai cases + the red-team set) against a provider and model.
+model AssistantEvalRun {
+  id            BigInt   @id(map: "pk_assistant_eval_runs") @default(autoincrement())
+  publicId      String   @unique(map: "ux_assistant_eval_runs__public_id") @default(dbgenerated("uuidv7()")) @map("public_id") @db.Uuid
+  provider      String
+  model         String
+  /// `nightly` or `manual`.
+  trigger       String
+  suiteVersion  String   @map("suite_version")
+  cases         Int
+  passed        Int
+  redTeamCases  Int      @map("red_team_cases")
+  redTeamPassed Int      @map("red_team_passed")
+  passRatePct   Decimal  @map("pass_rate_pct") @db.Decimal(5, 2)
+  /// `[{ id, kind, passed, reason }]` — case ids and reasons, never customer data (fixture tools).
+  results       Json
+  costUsd       Decimal  @default(0) @map("cost_usd") @db.Decimal(12, 6)
+  requestedById BigInt?  @map("requested_by")
+  startedAt     DateTime @map("started_at") @db.Timestamptz(6)
+  finishedAt    DateTime @map("finished_at") @db.Timestamptz(6)
+
+  requestedBy User? @relation("AssistantEvalRunRequestedBy", fields: [requestedById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_assistant_eval_runs__requested_by")
+
+  @@index([provider, model, finishedAt(sort: Desc)], map: "ix_assistant_eval_runs__provider__model__finished_at")
+  @@index([requestedById], map: "ix_assistant_eval_runs__requested_by")
+  @@map("assistant_eval_runs")
+}

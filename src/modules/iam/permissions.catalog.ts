@@ -686,6 +686,12 @@ export const PERMISSIONS = [
     decisionRefs: ['D-151'],
   },
   {
+    key: 'assistant.manage',
+    audience: 'staff',
+    description: 'Run and read the assistant evaluation and its usage dashboard',
+    decisionRefs: ['D-306'],
+  },
+  {
     key: 'conversations.manage_canned',
     audience: 'staff',
     description: 'Maintain the canned responses CS reuses in conversations',

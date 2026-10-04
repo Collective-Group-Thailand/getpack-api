@@ -1598,5 +1598,27 @@
       "title": "Basket not submitted",
       "detail": "Items can be accepted only once the basket has been submitted and quoted."
     }
+  },
+  "assistant": {
+    "disabled": {
+      "title": "Assistant unavailable",
+      "detail": "The assistant is not available."
+    },
+    "not_configured": {
+      "title": "Assistant not configured",
+      "detail": "The assistant has no provider or cost ceiling set yet."
+    },
+    "rate_limited": {
+      "title": "Too many messages",
+      "detail": "Too many assistant messages; try again in {retryAfter} seconds."
+    },
+    "session_ended": {
+      "title": "Conversation ended",
+      "detail": "This assistant conversation has ended ({reason}); start a new one."
+    },
+    "not_cleared": {
+      "title": "Assistant not cleared",
+      "detail": "The assistant can be switched on here only after ADR-0012 and a passing evaluation: {reason}."
+    }
   }
 }

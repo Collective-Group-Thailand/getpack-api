@@ -8,6 +8,11 @@ export const FULFILMENT_FEATURE_FLAGS = [
     description:
       'Dieline drawing engine @packio/dieline (B4.1) — off until the package is published; drawings answer 501',
   },
+  {
+    key: 'assistant.enabled',
+    description:
+      'Customer assistant (U5.B5, D-218 / D-306) — off at launch; outside local it switches on only after ADR-0012 and a passing evaluation',
+  },
 ] as const;
 
 export interface RouteStepSeed {

@@ -29,6 +29,13 @@ export class FeatureFlagsAdminService implements OnModuleInit {
     this.bus.on(FLAGS_CACHE_TOPIC, () => this.flags.invalidate());
   }
 
+  private readonly guards = new Map<string, () => Promise<void>>();
+
+  /** A module's own condition for switching a flag on (it throws to refuse), e.g. the assistant gate (D-306). */
+  registerEnableGuard(key: string, guard: () => Promise<void>): void {
+    this.guards.set(key, guard);
+  }
+
   list() {
     return this.prisma.featureFlag.findMany({ orderBy: { key: 'asc' } });
   }
@@ -38,6 +45,7 @@ export class FeatureFlagsAdminService implements OnModuleInit {
     key: string,
     input: { enabled: boolean; description?: string; rules?: FeatureFlagRules },
   ) {
+    if (input.enabled) await this.guards.get(key)?.();
     const flag = await this.prisma.withTx(async (tx) => {
       const before = await tx.featureFlag.findUnique({ where: { key } });
       // D-296: a development aid is never switched on in production.
