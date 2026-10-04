@@ -80,6 +80,16 @@ export const HEADERS = {
     description: '`true` when this response is a replay of an earlier request with the same Idempotency-Key.',
     schema: { type: 'string', example: 'true' },
   },
+  Deprecation: {
+    description:
+      'RFC 9745: the operation is deprecated since this moment (`@<epoch seconds>`); move to the replacement named in ' +
+      'its description. Every call is counted; it is removed in a later release.',
+    schema: { type: 'string', example: '@1790960400' },
+  },
+  Sunset: {
+    description: 'RFC 8594: after this date the deprecated operation may stop answering.',
+    schema: { type: 'string', example: 'Sat, 31 Oct 2026 17:00:00 GMT' },
+  },
   RetryAfter: {
     description: 'Seconds to wait before retrying.',
     schema: { type: 'integer', example: 30 },
@@ -104,6 +114,8 @@ export const RESPONSE_HEADER_NAMES: Record<HeaderName, string> = {
   ETag: 'ETag',
   Location: 'Location',
   IdempotentReplayed: 'Idempotent-Replayed',
+  Deprecation: 'Deprecation',
+  Sunset: 'Sunset',
   RetryAfter: 'Retry-After',
   RateLimitLimit: 'X-RateLimit-Limit',
   RateLimitRemaining: 'X-RateLimit-Remaining',

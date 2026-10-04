@@ -3904,6 +3904,13 @@
       }
     },
     "headers": {
+      "Deprecation": {
+        "description": "RFC 9745: the operation is deprecated since this moment (`@<epoch seconds>`); move to the replacement named in its description. Every call is counted; it is removed in a later release.",
+        "schema": {
+          "example": "@1790960400",
+          "type": "string"
+        }
+      },
       "ETag": {
         "description": "Version of the returned resource; send it back as `If-Match` when updating.",
         "schema": {
@@ -86171,7 +86178,7 @@
     },
     "/v1/admin/agreement-templates/{key}/versions": {
       "post": {
-        "description": "Legal text from counsel (ADR-0005: effective-dated, never back-dated). Factories accept each new version; earlier acceptances keep referring to the version they accepted.\n\nImplements: D-011, D-044.",
+        "description": "Legal text from counsel (ADR-0005: effective-dated, never back-dated). Factories accept each new version; earlier acceptances keep referring to the version they accepted.\n\nImplements: D-011, D-044.\n\n**Files:** upload first — `admin.files.presign` → PUT the bytes to the returned URL → `…/actions/complete` — then send the `fileId` (contract §3).",
         "operationId": "admin.agreementTemplates.publishVersion",
         "parameters": [
           {
@@ -88092,7 +88099,7 @@
                 }
               }
             },
-            "description": "Queued",
+            "description": "Queued. Poll `admin.analytics.getProspectus` until it completes.",
             "headers": {
               "Idempotent-Replayed": {
                 "$ref": "#/components/headers/IdempotentReplayed"
@@ -88931,7 +88938,7 @@
                 }
               }
             },
-            "description": "Queued",
+            "description": "Queued. Poll `admin.analytics.rollupRuns` until it completes.",
             "headers": {
               "X-RateLimit-Limit": {
                 "$ref": "#/components/headers/RateLimitLimit"
@@ -99061,7 +99068,7 @@
     },
     "/v1/admin/bank-statements": {
       "post": {
-        "description": "A statement file (parsed by the bank adapter, D-093) or rows from a bank API. A file already imported is refused; lines already imported from an overlapping file are skipped. New lines are matched automatically by amount, reference and date window (setting `banking.auto_match`): slip transfers (P05), gateway settlements (P04), payout runs and refunds. Requires `Idempotency-Key`.\n\nImplements: D-061, D-093.",
+        "description": "A statement file (parsed by the bank adapter, D-093) or rows from a bank API. A file already imported is refused; lines already imported from an overlapping file are skipped. New lines are matched automatically by amount, reference and date window (setting `banking.auto_match`): slip transfers (P05), gateway settlements (P04), payout runs and refunds. Requires `Idempotency-Key`.\n\nImplements: D-061, D-093.\n\n**Files:** upload first — `admin.files.presign` → PUT the bytes to the returned URL → `…/actions/complete` — then send the `fileId` (contract §3).",
         "operationId": "admin.banking.importStatement",
         "parameters": [
           {
@@ -99877,7 +99884,7 @@
     },
     "/v1/admin/billing-statements/{statementId}/tax-invoices": {
       "post": {
-        "description": "Finance keys in the factory’s own tax invoice (e-Tax or PDF + number, date, seller tax id and branch) when the factory sent it by other means (D-090). Validated separately. Requires `Idempotency-Key`.\n\nImplements: D-090, D-022, D-165.",
+        "description": "Finance keys in the factory’s own tax invoice (e-Tax or PDF + number, date, seller tax id and branch) when the factory sent it by other means (D-090). Validated separately. Requires `Idempotency-Key`.\n\nImplements: D-090, D-022, D-165.\n\n**Files:** upload first — `admin.files.presign` → PUT the bytes to the returned URL → `…/actions/complete` — then send the `fileId` (contract §3).",
         "operationId": "admin.payables.captureTaxInvoice",
         "parameters": [
           {
@@ -100450,7 +100457,7 @@
         ]
       },
       "post": {
-        "description": "Keys in a partner’s **signed** board data sheet for one factory × corrugated board as a new version (D-236): ECT (kN/m), caliper (mm), grammage (g/m²), the test method and the signed file (upload purpose `document`). It takes effect at `effectiveFrom` (default now, never in the past) and supersedes the earlier version from then; nothing is edited. A board without a sheet in force is never recommended by the Structure Advisor (D-188). No approval step; audited and published as `factory.board_strength_sheet_recorded`.\n\nImplements: D-188, D-236.",
+        "description": "Keys in a partner’s **signed** board data sheet for one factory × corrugated board as a new version (D-236): ECT (kN/m), caliper (mm), grammage (g/m²), the test method and the signed file (upload purpose `document`). It takes effect at `effectiveFrom` (default now, never in the past) and supersedes the earlier version from then; nothing is edited. A board without a sheet in force is never recommended by the Structure Advisor (D-188). No approval step; audited and published as `factory.board_strength_sheet_recorded`.\n\nImplements: D-188, D-236.\n\n**Files:** upload first — `admin.files.presign` → PUT the bytes to the returned URL → `…/actions/complete` — then send the `fileId` (contract §3).",
         "operationId": "admin.boardStrengthSheets.create",
         "parameters": [
           {
@@ -104650,7 +104657,7 @@
         ]
       },
       "post": {
-        "description": "Audited (config) and published as `catalog.assembly.created`. A platform definition without prices: each factory prices it in its own price list (schema-design §3.3, D-044).\n\nImplements: D-005, D-040.",
+        "description": "Audited (config) and published as `catalog.assembly.created`. A platform definition without prices: each factory prices it in its own price list (schema-design §3.3, D-044).\n\nImplements: D-005, D-040.\n\n**Files:** upload first — `admin.files.presign` → PUT the bytes to the returned URL → `…/actions/complete` — then send the `fileId` (contract §3).",
         "operationId": "admin.catalogAssemblies.create",
         "parameters": [
           {
@@ -105089,7 +105096,7 @@
         ]
       },
       "patch": {
-        "description": "Partial update guarded by `If-Match`. Rows are archived through `status`, never deleted (schema-design §1.6). Audited and published as `catalog.assembly.updated`. A platform definition without prices: each factory prices it in its own price list (schema-design §3.3, D-044).\n\nImplements: D-005, D-040.",
+        "description": "Partial update guarded by `If-Match`. Rows are archived through `status`, never deleted (schema-design §1.6). Audited and published as `catalog.assembly.updated`. A platform definition without prices: each factory prices it in its own price list (schema-design §3.3, D-044).\n\nImplements: D-005, D-040.\n\n**Files:** upload first — `admin.files.presign` → PUT the bytes to the returned URL → `…/actions/complete` — then send the `fileId` (contract §3).",
         "operationId": "admin.catalogAssemblies.update",
         "parameters": [
           {
@@ -107489,7 +107496,7 @@
     },
     "/v1/admin/catalog/catalog-products/{id}/images": {
       "post": {
-        "description": "References an uploaded file (presign → PUT → complete). The image is served publicly only once the malware scan reports it clean. Guarded by the product ETag.\n\nImplements: D-005.",
+        "description": "References an uploaded file (presign → PUT → complete). The image is served publicly only once the malware scan reports it clean. Guarded by the product ETag.\n\nImplements: D-005.\n\n**Files:** upload first — `admin.files.presign` → PUT the bytes to the returned URL → `…/actions/complete` — then send the `fileId` (contract §3).",
         "operationId": "admin.catalogProducts.addImage",
         "parameters": [
           {
@@ -109584,7 +109591,7 @@
         ]
       },
       "post": {
-        "description": "Audited (config) and published as `catalog.design_font.created`. Fonts offered by semi-design templates; `licenceNote` records the licence that allows it.\n\nImplements: D-005, D-100.",
+        "description": "Audited (config) and published as `catalog.design_font.created`. Fonts offered by semi-design templates; `licenceNote` records the licence that allows it.\n\nImplements: D-005, D-100.\n\n**Files:** upload first — `admin.files.presign` → PUT the bytes to the returned URL → `…/actions/complete` — then send the `fileId` (contract §3).",
         "operationId": "admin.catalogDesignFonts.create",
         "parameters": [
           {
@@ -110014,7 +110021,7 @@
         ]
       },
       "patch": {
-        "description": "Partial update guarded by `If-Match`. Rows are archived through `status`, never deleted (schema-design §1.6). Audited and published as `catalog.design_font.updated`. Fonts offered by semi-design templates; `licenceNote` records the licence that allows it.\n\nImplements: D-005, D-100.",
+        "description": "Partial update guarded by `If-Match`. Rows are archived through `status`, never deleted (schema-design §1.6). Audited and published as `catalog.design_font.updated`. Fonts offered by semi-design templates; `licenceNote` records the licence that allows it.\n\nImplements: D-005, D-100.\n\n**Files:** upload first — `admin.files.presign` → PUT the bytes to the returned URL → `…/actions/complete` — then send the `fileId` (contract §3).",
         "operationId": "admin.catalogDesignFonts.update",
         "parameters": [
           {
@@ -111527,7 +111534,7 @@
         ]
       },
       "post": {
-        "description": "Audited (config) and published as `catalog.diecut_type.created`. A platform definition without prices: each factory prices it in its own price list (schema-design §3.3, D-044).\n\nImplements: D-005, D-040.",
+        "description": "Audited (config) and published as `catalog.diecut_type.created`. A platform definition without prices: each factory prices it in its own price list (schema-design §3.3, D-044).\n\nImplements: D-005, D-040.\n\n**Files:** upload first — `admin.files.presign` → PUT the bytes to the returned URL → `…/actions/complete` — then send the `fileId` (contract §3).",
         "operationId": "admin.catalogDiecutTypes.create",
         "parameters": [
           {
@@ -111954,7 +111961,7 @@
         ]
       },
       "patch": {
-        "description": "Partial update guarded by `If-Match`. Rows are archived through `status`, never deleted (schema-design §1.6). Audited and published as `catalog.diecut_type.updated`. A platform definition without prices: each factory prices it in its own price list (schema-design §3.3, D-044).\n\nImplements: D-005, D-040.",
+        "description": "Partial update guarded by `If-Match`. Rows are archived through `status`, never deleted (schema-design §1.6). Audited and published as `catalog.diecut_type.updated`. A platform definition without prices: each factory prices it in its own price list (schema-design §3.3, D-044).\n\nImplements: D-005, D-040.\n\n**Files:** upload first — `admin.files.presign` → PUT the bytes to the returned URL → `…/actions/complete` — then send the `fileId` (contract §3).",
         "operationId": "admin.catalogDiecutTypes.update",
         "parameters": [
           {
@@ -115600,7 +115607,7 @@
         ]
       },
       "post": {
-        "description": "Audited (config) and published as `catalog.finish.created`. A platform definition without prices: each factory prices it in its own price list (schema-design §3.3, D-044). `isSpecial` (foil, emboss, window) raises the inspection rate (D-076).\n\nImplements: D-005, D-040, D-076.",
+        "description": "Audited (config) and published as `catalog.finish.created`. A platform definition without prices: each factory prices it in its own price list (schema-design §3.3, D-044). `isSpecial` (foil, emboss, window) raises the inspection rate (D-076).\n\nImplements: D-005, D-040, D-076.\n\n**Files:** upload first — `admin.files.presign` → PUT the bytes to the returned URL → `…/actions/complete` — then send the `fileId` (contract §3).",
         "operationId": "admin.catalogFinishes.create",
         "parameters": [
           {
@@ -116038,7 +116045,7 @@
         ]
       },
       "patch": {
-        "description": "Partial update guarded by `If-Match`. Rows are archived through `status`, never deleted (schema-design §1.6). Audited and published as `catalog.finish.updated`. A platform definition without prices: each factory prices it in its own price list (schema-design §3.3, D-044). `isSpecial` (foil, emboss, window) raises the inspection rate (D-076).\n\nImplements: D-005, D-040, D-076.",
+        "description": "Partial update guarded by `If-Match`. Rows are archived through `status`, never deleted (schema-design §1.6). Audited and published as `catalog.finish.updated`. A platform definition without prices: each factory prices it in its own price list (schema-design §3.3, D-044). `isSpecial` (foil, emboss, window) raises the inspection rate (D-076).\n\nImplements: D-005, D-040, D-076.\n\n**Files:** upload first — `admin.files.presign` → PUT the bytes to the returned URL → `…/actions/complete` — then send the `fileId` (contract §3).",
         "operationId": "admin.catalogFinishes.update",
         "parameters": [
           {
@@ -120725,7 +120732,7 @@
     },
     "/v1/admin/catalog/imports/{kind}/actions/confirm": {
       "post": {
-        "description": "Re-plans the same file inside one transaction and writes it only if the plan is exactly the one previewed (`previewSha256`) and has no invalid rows; otherwise 409 `catalog.import_stale` or 422 `catalog.import_invalid`. Audited and published as `catalog.import_applied`.\n\nImplements: D-005, D-170, D-161.",
+        "description": "Re-plans the same file inside one transaction and writes it only if the plan is exactly the one previewed (`previewSha256`) and has no invalid rows; otherwise 409 `catalog.import_stale` or 422 `catalog.import_invalid`. Audited and published as `catalog.import_applied`.\n\nImplements: D-005, D-170, D-161.\n\n**Files:** upload first — `admin.files.presign` → PUT the bytes to the returned URL → `…/actions/complete` — then send the `fileId` (contract §3).",
         "operationId": "admin.catalogImports.confirm",
         "parameters": [
           {
@@ -121037,7 +121044,7 @@
     },
     "/v1/admin/catalog/imports/{kind}/actions/preview": {
       "post": {
-        "description": "Parses and validates the workbook and compares it with the database: counts of rows to create, update or leave unchanged, and row-level errors. Nothing is written. Geography also needs `geography.manage` (D-161, D-170).\n\nImplements: D-005, D-170, D-161.",
+        "description": "Parses and validates the workbook and compares it with the database: counts of rows to create, update or leave unchanged, and row-level errors. Nothing is written. Geography also needs `geography.manage` (D-161, D-170).\n\nImplements: D-005, D-170, D-161.\n\n**Files:** upload first — `admin.files.presign` → PUT the bytes to the returned URL → `…/actions/complete` — then send the `fileId` (contract §3).",
         "operationId": "admin.catalogImports.preview",
         "parameters": [
           {
@@ -122546,7 +122553,7 @@
         ]
       },
       "post": {
-        "description": "Audited (config) and published as `catalog.ink_colour.created`. A platform definition without prices: each factory prices it in its own price list (schema-design §3.3, D-044).\n\nImplements: D-005, D-040.",
+        "description": "Audited (config) and published as `catalog.ink_colour.created`. A platform definition without prices: each factory prices it in its own price list (schema-design §3.3, D-044).\n\nImplements: D-005, D-040.\n\n**Files:** upload first — `admin.files.presign` → PUT the bytes to the returned URL → `…/actions/complete` — then send the `fileId` (contract §3).",
         "operationId": "admin.catalogInkColours.create",
         "parameters": [
           {
@@ -122975,7 +122982,7 @@
         ]
       },
       "patch": {
-        "description": "Partial update guarded by `If-Match`. Rows are archived through `status`, never deleted (schema-design §1.6). Audited and published as `catalog.ink_colour.updated`. A platform definition without prices: each factory prices it in its own price list (schema-design §3.3, D-044).\n\nImplements: D-005, D-040.",
+        "description": "Partial update guarded by `If-Match`. Rows are archived through `status`, never deleted (schema-design §1.6). Audited and published as `catalog.ink_colour.updated`. A platform definition without prices: each factory prices it in its own price list (schema-design §3.3, D-044).\n\nImplements: D-005, D-040.\n\n**Files:** upload first — `admin.files.presign` → PUT the bytes to the returned URL → `…/actions/complete` — then send the `fileId` (contract §3).",
         "operationId": "admin.catalogInkColours.update",
         "parameters": [
           {
@@ -124509,7 +124516,7 @@
         ]
       },
       "post": {
-        "description": "Audited (config) and published as `catalog.material.created`. What the customer picks (paper, board, film, foil…). A platform definition without prices: each factory prices it in its own price list (schema-design §3.3, D-044). Bulk editing: Excel import kind `materials`.\n\nImplements: D-005, D-040.",
+        "description": "Audited (config) and published as `catalog.material.created`. What the customer picks (paper, board, film, foil…). A platform definition without prices: each factory prices it in its own price list (schema-design §3.3, D-044). Bulk editing: Excel import kind `materials`.\n\nImplements: D-005, D-040.\n\n**Files:** upload first — `admin.files.presign` → PUT the bytes to the returned URL → `…/actions/complete` — then send the `fileId` (contract §3).",
         "operationId": "admin.catalogMaterials.create",
         "parameters": [
           {
@@ -124961,7 +124968,7 @@
         ]
       },
       "patch": {
-        "description": "Partial update guarded by `If-Match`. Rows are archived through `status`, never deleted (schema-design §1.6). Audited and published as `catalog.material.updated`. What the customer picks (paper, board, film, foil…). A platform definition without prices: each factory prices it in its own price list (schema-design §3.3, D-044). Bulk editing: Excel import kind `materials`.\n\nImplements: D-005, D-040.",
+        "description": "Partial update guarded by `If-Match`. Rows are archived through `status`, never deleted (schema-design §1.6). Audited and published as `catalog.material.updated`. What the customer picks (paper, board, film, foil…). A platform definition without prices: each factory prices it in its own price list (schema-design §3.3, D-044). Bulk editing: Excel import kind `materials`.\n\nImplements: D-005, D-040.\n\n**Files:** upload first — `admin.files.presign` → PUT the bytes to the returned URL → `…/actions/complete` — then send the `fileId` (contract §3).",
         "operationId": "admin.catalogMaterials.update",
         "parameters": [
           {
@@ -126496,7 +126503,7 @@
         ]
       },
       "post": {
-        "description": "Audited (config) and published as `catalog.pattern.created`. Box styles; size constraints and geometry are indicative until each calculator is ported (B2.3).\n\nImplements: D-100, D-005.",
+        "description": "Audited (config) and published as `catalog.pattern.created`. Box styles; size constraints and geometry are indicative until each calculator is ported (B2.3).\n\nImplements: D-100, D-005.\n\n**Files:** upload first — `admin.files.presign` → PUT the bytes to the returned URL → `…/actions/complete` — then send the `fileId` (contract §3).",
         "operationId": "admin.catalogPatterns.create",
         "parameters": [
           {
@@ -126957,7 +126964,7 @@
         ]
       },
       "patch": {
-        "description": "Partial update guarded by `If-Match`. Rows are archived through `status`, never deleted (schema-design §1.6). Audited and published as `catalog.pattern.updated`. Box styles; size constraints and geometry are indicative until each calculator is ported (B2.3).\n\nImplements: D-100, D-005.",
+        "description": "Partial update guarded by `If-Match`. Rows are archived through `status`, never deleted (schema-design §1.6). Audited and published as `catalog.pattern.updated`. Box styles; size constraints and geometry are indicative until each calculator is ported (B2.3).\n\nImplements: D-100, D-005.\n\n**Files:** upload first — `admin.files.presign` → PUT the bytes to the returned URL → `…/actions/complete` — then send the `fileId` (contract §3).",
         "operationId": "admin.catalogPatterns.update",
         "parameters": [
           {
@@ -131816,7 +131823,7 @@
         ]
       },
       "post": {
-        "description": "Audited (config) and published as `catalog.semi_design_template.created`. One template per standard size of the semi-design; fonts are set through `PUT …/fonts`.\n\nImplements: D-005, D-100.",
+        "description": "Audited (config) and published as `catalog.semi_design_template.created`. One template per standard size of the semi-design; fonts are set through `PUT …/fonts`.\n\nImplements: D-005, D-100.\n\n**Files:** upload first — `admin.files.presign` → PUT the bytes to the returned URL → `…/actions/complete` — then send the `fileId` (contract §3).",
         "operationId": "admin.catalogSemiDesignTemplates.create",
         "parameters": [
           {
@@ -132241,7 +132248,7 @@
         ]
       },
       "patch": {
-        "description": "Partial update guarded by `If-Match`. Rows are archived through `status`, never deleted (schema-design §1.6). Audited and published as `catalog.semi_design_template.updated`. One template per standard size of the semi-design; fonts are set through `PUT …/fonts`.\n\nImplements: D-005, D-100.",
+        "description": "Partial update guarded by `If-Match`. Rows are archived through `status`, never deleted (schema-design §1.6). Audited and published as `catalog.semi_design_template.updated`. One template per standard size of the semi-design; fonts are set through `PUT …/fonts`.\n\nImplements: D-005, D-100.\n\n**Files:** upload first — `admin.files.presign` → PUT the bytes to the returned URL → `…/actions/complete` — then send the `fileId` (contract §3).",
         "operationId": "admin.catalogSemiDesignTemplates.update",
         "parameters": [
           {
@@ -133307,7 +133314,7 @@
         ]
       },
       "post": {
-        "description": "Audited (config) and published as `catalog.semi_design.created`. Semi-custom designs of a catalogue product; the palette is set through `PUT …/colours`.\n\nImplements: D-005, D-100.",
+        "description": "Audited (config) and published as `catalog.semi_design.created`. Semi-custom designs of a catalogue product; the palette is set through `PUT …/colours`.\n\nImplements: D-005, D-100.\n\n**Files:** upload first — `admin.files.presign` → PUT the bytes to the returned URL → `…/actions/complete` — then send the `fileId` (contract §3).",
         "operationId": "admin.catalogSemiDesigns.create",
         "parameters": [
           {
@@ -133733,7 +133740,7 @@
         ]
       },
       "patch": {
-        "description": "Partial update guarded by `If-Match`. Rows are archived through `status`, never deleted (schema-design §1.6). Audited and published as `catalog.semi_design.updated`. Semi-custom designs of a catalogue product; the palette is set through `PUT …/colours`.\n\nImplements: D-005, D-100.",
+        "description": "Partial update guarded by `If-Match`. Rows are archived through `status`, never deleted (schema-design §1.6). Audited and published as `catalog.semi_design.updated`. Semi-custom designs of a catalogue product; the palette is set through `PUT …/colours`.\n\nImplements: D-005, D-100.\n\n**Files:** upload first — `admin.files.presign` → PUT the bytes to the returned URL → `…/actions/complete` — then send the `fileId` (contract §3).",
         "operationId": "admin.catalogSemiDesigns.update",
         "parameters": [
           {
@@ -135544,7 +135551,7 @@
         ]
       },
       "post": {
-        "description": "Audited (config) and published as `catalog.showcase_product.created`. Pre-configured products (\"Product Groups\"): a catalogue product with a pre-filled configuration.\n\nImplements: D-005, D-100.",
+        "description": "Audited (config) and published as `catalog.showcase_product.created`. Pre-configured products (\"Product Groups\"): a catalogue product with a pre-filled configuration.\n\nImplements: D-005, D-100.\n\n**Files:** upload first — `admin.files.presign` → PUT the bytes to the returned URL → `…/actions/complete` — then send the `fileId` (contract §3).",
         "operationId": "admin.catalogShowcaseProducts.create",
         "parameters": [
           {
@@ -135991,7 +135998,7 @@
         ]
       },
       "patch": {
-        "description": "Partial update guarded by `If-Match`. Rows are archived through `status`, never deleted (schema-design §1.6). Audited and published as `catalog.showcase_product.updated`. Pre-configured products (\"Product Groups\"): a catalogue product with a pre-filled configuration.\n\nImplements: D-005, D-100.",
+        "description": "Partial update guarded by `If-Match`. Rows are archived through `status`, never deleted (schema-design §1.6). Audited and published as `catalog.showcase_product.updated`. Pre-configured products (\"Product Groups\"): a catalogue product with a pre-filled configuration.\n\nImplements: D-005, D-100.\n\n**Files:** upload first — `admin.files.presign` → PUT the bytes to the returned URL → `…/actions/complete` — then send the `fileId` (contract §3).",
         "operationId": "admin.catalogShowcaseProducts.update",
         "parameters": [
           {
@@ -140627,7 +140634,7 @@
     },
     "/v1/admin/catalog/stock-products/{id}/images": {
       "post": {
-        "description": "References an uploaded file; it is served publicly (storefront, Merchant feed) only once the scan reports it clean. Guarded by the product ETag.\n\nImplements: D-005.",
+        "description": "References an uploaded file; it is served publicly (storefront, Merchant feed) only once the scan reports it clean. Guarded by the product ETag.\n\nImplements: D-005.\n\n**Files:** upload first — `admin.files.presign` → PUT the bytes to the returned URL → `…/actions/complete` — then send the `fileId` (contract §3).",
         "operationId": "admin.catalogStockProducts.addImage",
         "parameters": [
           {
@@ -148367,7 +148374,7 @@
     },
     "/v1/admin/close-checklists/{period}/tasks/{taskKey}/evidence": {
       "post": {
-        "description": "An uploaded file kept as a financial record (§7 “owner & evidence”). Requires `Idempotency-Key`.\n\nImplements: D-033, D-169.",
+        "description": "An uploaded file kept as a financial record (§7 “owner & evidence”). Requires `Idempotency-Key`.\n\nImplements: D-033, D-169.\n\n**Files:** upload first — `admin.files.presign` → PUT the bytes to the returned URL → `…/actions/complete` — then send the `fileId` (contract §3).",
         "operationId": "admin.close.addEvidence",
         "parameters": [
           {
@@ -149930,7 +149937,7 @@
         ]
       },
       "post": {
-        "description": "Audited (config) and published as `catalog.article.created`. Categories are set through `PUT …/categories`. Publishing stamps `publishedAt` once.\n\nImplements: D-005.",
+        "description": "Audited (config) and published as `catalog.article.created`. Categories are set through `PUT …/categories`. Publishing stamps `publishedAt` once.\n\nImplements: D-005.\n\n**Files:** upload first — `admin.files.presign` → PUT the bytes to the returned URL → `…/actions/complete` — then send the `fileId` (contract §3).",
         "operationId": "admin.cmsArticles.create",
         "parameters": [
           {
@@ -150605,7 +150612,7 @@
         ]
       },
       "patch": {
-        "description": "Partial update guarded by `If-Match`. Rows are archived through `status`, never deleted (schema-design §1.6). Audited and published as `catalog.article.updated`. Categories are set through `PUT …/categories`. Publishing stamps `publishedAt` once.\n\nImplements: D-005.",
+        "description": "Partial update guarded by `If-Match`. Rows are archived through `status`, never deleted (schema-design §1.6). Audited and published as `catalog.article.updated`. Categories are set through `PUT …/categories`. Publishing stamps `publishedAt` once.\n\nImplements: D-005.\n\n**Files:** upload first — `admin.files.presign` → PUT the bytes to the returned URL → `…/actions/complete` — then send the `fileId` (contract §3).",
         "operationId": "admin.cmsArticles.update",
         "parameters": [
           {
@@ -151463,7 +151470,7 @@
         ]
       },
       "post": {
-        "description": "Audited (config) and published as `catalog.banner.created`. Shown on the storefront while `published` and inside `validFrom…validTo`.\n\nImplements: D-005.",
+        "description": "Audited (config) and published as `catalog.banner.created`. Shown on the storefront while `published` and inside `validFrom…validTo`.\n\nImplements: D-005.\n\n**Files:** upload first — `admin.files.presign` → PUT the bytes to the returned URL → `…/actions/complete` — then send the `fileId` (contract §3).",
         "operationId": "admin.cmsBanners.create",
         "parameters": [
           {
@@ -152114,7 +152121,7 @@
         ]
       },
       "patch": {
-        "description": "Partial update guarded by `If-Match`. Rows are archived through `status`, never deleted (schema-design §1.6). Audited and published as `catalog.banner.updated`. Shown on the storefront while `published` and inside `validFrom…validTo`.\n\nImplements: D-005.",
+        "description": "Partial update guarded by `If-Match`. Rows are archived through `status`, never deleted (schema-design §1.6). Audited and published as `catalog.banner.updated`. Shown on the storefront while `published` and inside `validFrom…validTo`.\n\nImplements: D-005.\n\n**Files:** upload first — `admin.files.presign` → PUT the bytes to the returned URL → `…/actions/complete` — then send the `fileId` (contract §3).",
         "operationId": "admin.cmsBanners.update",
         "parameters": [
           {
@@ -157714,7 +157721,7 @@
         ]
       },
       "post": {
-        "description": "Audited (config) and published as `catalog.seo_page.created`. SEO meta per route or slug (legacy `sitemaps`).\n\nImplements: D-005.",
+        "description": "Audited (config) and published as `catalog.seo_page.created`. SEO meta per route or slug (legacy `sitemaps`).\n\nImplements: D-005.\n\n**Files:** upload first — `admin.files.presign` → PUT the bytes to the returned URL → `…/actions/complete` — then send the `fileId` (contract §3).",
         "operationId": "admin.cmsSeoPages.create",
         "parameters": [
           {
@@ -158146,7 +158153,7 @@
         ]
       },
       "patch": {
-        "description": "Partial update guarded by `If-Match`. Rows are archived through `status`, never deleted (schema-design §1.6). Audited and published as `catalog.seo_page.updated`. SEO meta per route or slug (legacy `sitemaps`).\n\nImplements: D-005.",
+        "description": "Partial update guarded by `If-Match`. Rows are archived through `status`, never deleted (schema-design §1.6). Audited and published as `catalog.seo_page.updated`. SEO meta per route or slug (legacy `sitemaps`).\n\nImplements: D-005.\n\n**Files:** upload first — `admin.files.presign` → PUT the bytes to the returned URL → `…/actions/complete` — then send the `fileId` (contract §3).",
         "operationId": "admin.cmsSeoPages.update",
         "parameters": [
           {
@@ -161861,7 +161868,7 @@
     },
     "/v1/admin/companies/{companyId}/discount-memos": {
       "post": {
-        "description": "The company-level discount % through the same approval matrix (D-124); once approved it applies to the company’s orders, never below the margin floor.\n\nImplements: D-124, D-052, D-162.",
+        "description": "The company-level discount % through the same approval matrix (D-124); once approved it applies to the company’s orders, never below the margin floor.\n\nImplements: D-124, D-052, D-162.\n\n**Files:** upload first — `admin.files.presign` → PUT the bytes to the returned URL → `…/actions/complete` — then send the `fileId` (contract §3).",
         "operationId": "admin.discountMemos.raiseForCompany",
         "parameters": [
           {
@@ -166002,7 +166009,7 @@
         ]
       },
       "post": {
-        "description": "Text, files and / or a card to one of the customer’s records (D-300). Goes to the customer’s LINE when the thread’s reply channel is LINE (the customer’s choice, else the channel of their last message; files and cards stay in the thread, LINE gets a pointer to it), live on the web otherwise. The first reply answers the D-221 first-response clock and the thread’s support tickets; assigns the thread to me when unassigned.\n\nImplements: D-151, D-143, D-300, D-221.",
+        "description": "Text, files and / or a card to one of the customer’s records (D-300). Goes to the customer’s LINE when the thread’s reply channel is LINE (the customer’s choice, else the channel of their last message; files and cards stay in the thread, LINE gets a pointer to it), live on the web otherwise. The first reply answers the D-221 first-response clock and the thread’s support tickets; assigns the thread to me when unassigned.\n\nImplements: D-151, D-143, D-300, D-221.\n\n**Files:** upload first — `admin.files.presign` → PUT the bytes to the returned URL → `…/actions/complete` — then send the `fileId` (contract §3).",
         "operationId": "admin.conversations.reply",
         "parameters": [
           {
@@ -166305,7 +166312,7 @@
     },
     "/v1/admin/conversations/{conversationId}/notes": {
       "post": {
-        "description": "A note for colleagues on the thread (D-300): never shown or sent to the customer, does not answer the first-response clock.\n\nImplements: D-300.",
+        "description": "A note for colleagues on the thread (D-300): never shown or sent to the customer, does not answer the first-response clock.\n\nImplements: D-300.\n\n**Files:** upload first — `admin.files.presign` → PUT the bytes to the returned URL → `…/actions/complete` — then send the `fileId` (contract §3).",
         "operationId": "admin.conversations.addNote",
         "parameters": [
           {
@@ -171666,7 +171673,7 @@
                 }
               }
             },
-            "description": "Requested",
+            "description": "Requested. Poll `admin.customerDocuments.deliveries` until it completes.",
             "headers": {
               "Idempotent-Replayed": {
                 "$ref": "#/components/headers/IdempotentReplayed"
@@ -172860,7 +172867,7 @@
     },
     "/v1/admin/customer-wht-certificates/{certificateId}/actions/record": {
       "post": {
-        "description": "Certificate number and date, with the uploaded copy kept as a financial record (audited).\n\nImplements: D-033.",
+        "description": "Certificate number and date, with the uploaded copy kept as a financial record (audited).\n\nImplements: D-033.\n\n**Files:** upload first — `admin.files.presign` → PUT the bytes to the returned URL → `…/actions/complete` — then send the `fileId` (contract §3).",
         "operationId": "admin.receivables.recordWhtCertificate",
         "parameters": [
           {
@@ -182629,7 +182636,7 @@
     },
     "/v1/admin/design-services/{designServiceId}/actions/deliver": {
       "post": {
-        "description": "Becomes a new artwork version (source `design_service`): preflight, Prepress review and a proof follow (D-071, D-070).\n\nImplements: D-071, D-070.",
+        "description": "Becomes a new artwork version (source `design_service`): preflight, Prepress review and a proof follow (D-071, D-070).\n\nImplements: D-071, D-070.\n\n**Files:** upload first — `admin.files.presign` → PUT the bytes to the returned URL → `…/actions/complete` — then send the `fileId` (contract §3).",
         "operationId": "admin.designServices.deliver",
         "parameters": [
           {
@@ -183834,7 +183841,7 @@
         ]
       },
       "put": {
-        "description": "My own designs, or the customer’s studio design of a design-service request I am assigned to (D-286); any other is 409 `designs.read_only` (copy it first with `admin.designs.copy`). `If-Match` required.\n\nImplements: D-005, D-286.",
+        "description": "My own designs, or the customer’s studio design of a design-service request I am assigned to (D-286); any other is 409 `designs.read_only` (copy it first with `admin.designs.copy`). `If-Match` required.\n\nImplements: D-005, D-286.\n\n**Files:** upload first — `admin.files.presign` → PUT the bytes to the returned URL → `…/actions/complete` — then send the `fileId` (contract §3).",
         "operationId": "admin.designs.save",
         "parameters": [
           {
@@ -185132,7 +185139,7 @@
         ]
       },
       "post": {
-        "description": "Above `discounts.cs_limit_pct` (5 %): prices the customer’s CS cart now (order value, resulting margin) and routes the memo to the matching tier only — > 5–10 % Director, > 10–15 % VP, > 15 % or below the margin floor C-Level (D-052, D-162). Valid until the cart’s price lock (the quote validity); used once at checkout.\n\nImplements: D-052, D-162.",
+        "description": "Above `discounts.cs_limit_pct` (5 %): prices the customer’s CS cart now (order value, resulting margin) and routes the memo to the matching tier only — > 5–10 % Director, > 10–15 % VP, > 15 % or below the margin floor C-Level (D-052, D-162). Valid until the cart’s price lock (the quote validity); used once at checkout.\n\nImplements: D-052, D-162.\n\n**Files:** upload first — `admin.files.presign` → PUT the bytes to the returned URL → `…/actions/complete` — then send the `fileId` (contract §3).",
         "operationId": "admin.discountMemos.raise",
         "parameters": [
           {
@@ -189200,7 +189207,7 @@
     },
     "/v1/admin/factories/{factoryId}/agreements/{key}/signed-copies": {
       "post": {
-        "description": "When the factory signs on paper: the scan is the evidence (`signed_upload`), recorded by the Partner team.\n\nImplements: D-011, D-044.",
+        "description": "When the factory signs on paper: the scan is the evidence (`signed_upload`), recorded by the Partner team.\n\nImplements: D-011, D-044.\n\n**Files:** upload first — `admin.files.presign` → PUT the bytes to the returned URL → `…/actions/complete` — then send the `fileId` (contract §3).",
         "operationId": "admin.factories.recordSignedAgreement",
         "parameters": [
           {
@@ -194452,7 +194459,7 @@
         ]
       },
       "post": {
-        "description": "References an uploaded file (presign → PUT → complete); the file then belongs to the factory. The `kyc` step becomes submitted. Staff may edit at any status (assisted onboarding, D-100 note).\n\nImplements: D-011, D-171.",
+        "description": "References an uploaded file (presign → PUT → complete); the file then belongs to the factory. The `kyc` step becomes submitted. Staff may edit at any status (assisted onboarding, D-100 note).\n\nImplements: D-011, D-171.\n\n**Files:** upload first — `admin.files.presign` → PUT the bytes to the returned URL → `…/actions/complete` — then send the `fileId` (contract §3).",
         "operationId": "admin.factories.addKycDocument",
         "parameters": [
           {
@@ -201937,7 +201944,7 @@
         ]
       },
       "post": {
-        "description": "Checklist, result, inspectors and photos. A `pass` approves the `site_visit` step and allows activation (D-041).\n\nImplements: D-041.",
+        "description": "Checklist, result, inspectors and photos. A `pass` approves the `site_visit` step and allows activation (D-041).\n\nImplements: D-041.\n\n**Files:** upload first — `admin.files.presign` → PUT the bytes to the returned URL → `…/actions/complete` — then send the `fileId` (contract §3).",
         "operationId": "admin.factories.recordSiteVisit",
         "parameters": [
           {
@@ -213672,7 +213679,7 @@
     },
     "/v1/admin/inspections/{inspectionId}/actions/record": {
       "post": {
-        "description": "Defects found in the sample per class; passed when each is within its acceptance number (AQL 0 / 2.5 / 4.0, ISO 2859-1). A failure puts the job on hold for a decision. Feeds the scorecard (D-076, D-155).\n\nImplements: D-076, D-155.",
+        "description": "Defects found in the sample per class; passed when each is within its acceptance number (AQL 0 / 2.5 / 4.0, ISO 2859-1). A failure puts the job on hold for a decision. Feeds the scorecard (D-076, D-155).\n\nImplements: D-076, D-155.\n\n**Files:** upload first — `admin.files.presign` → PUT the bytes to the returned URL → `…/actions/complete` — then send the `fileId` (contract §3).",
         "operationId": "admin.inspections.record",
         "parameters": [
           {
@@ -229938,7 +229945,7 @@
         ]
       },
       "post": {
-        "description": "CS or Prepress uploads the customer’s files (channel `cs`); same rules and preflight as the customer’s own upload (D-070).\n\nImplements: D-070, D-073.",
+        "description": "CS or Prepress uploads the customer’s files (channel `cs`); same rules and preflight as the customer’s own upload (D-070).\n\nImplements: D-070, D-073.\n\n**Files:** upload first — `admin.files.presign` → PUT the bytes to the returned URL → `…/actions/complete` — then send the `fileId` (contract §3).",
         "operationId": "admin.artwork.submit",
         "parameters": [
           {
@@ -230215,7 +230222,7 @@
     },
     "/v1/admin/orders/{orderId}/claims": {
       "post": {
-        "description": "Staff record a claim received by phone or LINE (not bound by the window); photos optional.\n\nImplements: D-082, D-083.",
+        "description": "Staff record a claim received by phone or LINE (not bound by the window); photos optional.\n\nImplements: D-082, D-083.\n\n**Files:** upload first — `admin.files.presign` → PUT the bytes to the returned URL → `…/actions/complete` — then send the `fileId` (contract §3).",
         "operationId": "admin.claims.open",
         "parameters": [
           {
@@ -231626,7 +231633,7 @@
                 }
               }
             },
-            "description": "Queued",
+            "description": "Queued. Poll `admin.designs.listOrderDrawings` until it completes.",
             "headers": {
               "X-RateLimit-Limit": {
                 "$ref": "#/components/headers/RateLimitLimit"
@@ -231886,6 +231893,9 @@
             },
             "description": "Added",
             "headers": {
+              "Deprecation": {
+                "$ref": "#/components/headers/Deprecation"
+              },
               "Idempotent-Replayed": {
                 "$ref": "#/components/headers/IdempotentReplayed"
               },
@@ -233046,7 +233056,7 @@
         ]
       },
       "post": {
-        "description": "Answers the latest accepted submission (or the one given); a proof still waiting is superseded; the order artwork status becomes `proof_sent` and the customer is notified (D-070).\n\nImplements: D-070, D-073.",
+        "description": "Answers the latest accepted submission (or the one given); a proof still waiting is superseded; the order artwork status becomes `proof_sent` and the customer is notified (D-070).\n\nImplements: D-070, D-073.\n\n**Files:** upload first — `admin.files.presign` → PUT the bytes to the returned URL → `…/actions/complete` — then send the `fileId` (contract §3).",
         "operationId": "admin.artwork.sendProof",
         "parameters": [
           {
@@ -234072,7 +234082,7 @@
         ]
       },
       "post": {
-        "description": "A file Prepress uploaded; the customer is notified and designs on it. Its trim box becomes the size the preflight checks against (ADR-0009, D-070).\n\nImplements: D-070.",
+        "description": "A file Prepress uploaded; the customer is notified and designs on it. Its trim box becomes the size the preflight checks against (ADR-0009, D-070).\n\nImplements: D-070.\n\n**Files:** upload first — `admin.files.presign` → PUT the bytes to the returned URL → `…/actions/complete` — then send the `fileId` (contract §3).",
         "operationId": "admin.artwork.sendTemplate",
         "parameters": [
           {
@@ -237048,7 +237058,7 @@
     },
     "/v1/admin/payments/{paymentId}/slips": {
       "post": {
-        "description": "Same checks as the customer’s own slip (D-061); recorded as uploaded by CS.\n\nImplements: D-061, D-020, D-176.",
+        "description": "Same checks as the customer’s own slip (D-061); recorded as uploaded by CS.\n\nImplements: D-061, D-020, D-176.\n\n**Files:** upload first — `admin.files.presign` → PUT the bytes to the returned URL → `…/actions/complete` — then send the `fileId` (contract §3).",
         "operationId": "admin.payments.uploadSlip",
         "parameters": [
           {
@@ -238603,7 +238613,7 @@
     },
     "/v1/admin/payout-runs/{runId}/actions/confirm": {
       "post": {
-        "description": "Per item paid or failed (lines or the bank’s file). Paid items get a PV number and post (P14 / P17 / P18 / P25P), withholding gets its 50 ทวิ, balances open their retention payable (D-164); failed transfers return to the queue. Requires `Idempotency-Key`.\n\nImplements: D-022, D-093, D-164, D-166.",
+        "description": "Per item paid or failed (lines or the bank’s file). Paid items get a PV number and post (P14 / P17 / P18 / P25P), withholding gets its 50 ทวิ, balances open their retention payable (D-164); failed transfers return to the queue. Requires `Idempotency-Key`.\n\nImplements: D-022, D-093, D-164, D-166.\n\n**Files:** upload first — `admin.files.presign` → PUT the bytes to the returned URL → `…/actions/complete` — then send the `fileId` (contract §3).",
         "operationId": "admin.payouts.confirm",
         "parameters": [
           {
@@ -242763,7 +242773,7 @@
                 }
               }
             },
-            "description": "Queued",
+            "description": "Queued. Poll `admin.priceSuggestions.getSimulation` until it completes.",
             "headers": {
               "X-RateLimit-Limit": {
                 "$ref": "#/components/headers/RateLimitLimit"
@@ -253597,7 +253607,7 @@
                 }
               }
             },
-            "description": "Accepted",
+            "description": "Accepted. Poll `admin.quotes.getPdf` until it completes.",
             "headers": {
               "X-RateLimit-Limit": {
                 "$ref": "#/components/headers/RateLimitLimit"
@@ -259820,7 +259830,7 @@
                 }
               }
             },
-            "description": "Queued",
+            "description": "Queued. Poll `admin.reports.getRun` until it completes.",
             "headers": {
               "X-RateLimit-Limit": {
                 "$ref": "#/components/headers/RateLimitLimit"
@@ -260204,7 +260214,7 @@
                 }
               }
             },
-            "description": "Queued",
+            "description": "Queued. Poll `admin.reports.getRun` until it completes.",
             "headers": {
               "X-RateLimit-Limit": {
                 "$ref": "#/components/headers/RateLimitLimit"
@@ -263625,7 +263635,7 @@
         ]
       },
       "post": {
-        "description": "Same rules as the store; channel `cs`, the CS member is recorded (D-100).\n\nImplements: D-100, D-043, D-102.",
+        "description": "Same rules as the store; channel `cs`, the CS member is recorded (D-100).\n\nImplements: D-100, D-043, D-102.\n\n**Files:** upload first — `admin.files.presign` → PUT the bytes to the returned URL → `…/actions/complete` — then send the `fileId` (contract §3).",
         "operationId": "admin.rfqs.submit",
         "parameters": [
           {
@@ -266457,7 +266467,7 @@
     },
     "/v1/admin/rfqs/{rfqId}/messages": {
       "post": {
-        "description": "To the customer (the first one records the first response) or an internal note (D-100).\n\nImplements: D-100, D-043, D-102.",
+        "description": "To the customer (the first one records the first response) or an internal note (D-100).\n\nImplements: D-100, D-043, D-102.\n\n**Files:** upload first — `admin.files.presign` → PUT the bytes to the returned URL → `…/actions/complete` — then send the `fileId` (contract §3).",
         "operationId": "admin.rfqs.postMessage",
         "parameters": [
           {
@@ -267464,7 +267474,7 @@
         },
         "responses": {
           "202": {
-            "description": "Accepted",
+            "description": "Accepted. Nothing to poll.",
             "headers": {
               "X-RateLimit-Limit": {
                 "$ref": "#/components/headers/RateLimitLimit"
@@ -268754,7 +268764,7 @@
     },
     "/v1/admin/samples/{sampleId}/evidence": {
       "post": {
-        "description": "Measured size with its basis, the material used and photos (the actor’s own clean uploads), once, before it ships (D-255).\n\nImplements: D-253, D-192, D-072, D-255.",
+        "description": "Measured size with its basis, the material used and photos (the actor’s own clean uploads), once, before it ships (D-255).\n\nImplements: D-253, D-192, D-072, D-255.\n\n**Files:** upload first — `admin.files.presign` → PUT the bytes to the returned URL → `…/actions/complete` — then send the `fileId` (contract §3).",
         "operationId": "admin.samples.recordEvidence",
         "parameters": [
           {
@@ -274980,7 +274990,7 @@
     },
     "/v1/admin/shipments/{shipmentId}/proof-of-delivery": {
       "post": {
-        "description": "Mandatory for factory deliveries (D-013): receiver name, signature and at least one photo (evidence uploads), and the pieces accepted per destination on the trip (≤ shipped). Delivers the shipment; when every shipment of an order’s job is delivered the order is delivered and reconciled against the tolerance frozen in the quote (D-021, D-080: shortage within → pro-rata credit; overage within → no charge; outside → automatic claim; factory payable min(delivered, ordered), D-165). A packed shipment the factory delivers straight away is picked up first (shipping gate applies). Idempotent. Staff may instead record a carrier POD with `carrierPodRef`.\n\nImplements: D-013, D-021, D-080, D-165.",
+        "description": "Mandatory for factory deliveries (D-013): receiver name, signature and at least one photo (evidence uploads), and the pieces accepted per destination on the trip (≤ shipped). Delivers the shipment; when every shipment of an order’s job is delivered the order is delivered and reconciled against the tolerance frozen in the quote (D-021, D-080: shortage within → pro-rata credit; overage within → no charge; outside → automatic claim; factory payable min(delivered, ordered), D-165). A packed shipment the factory delivers straight away is picked up first (shipping gate applies). Idempotent. Staff may instead record a carrier POD with `carrierPodRef`.\n\nImplements: D-013, D-021, D-080, D-165.\n\n**Files:** upload first — `admin.files.presign` → PUT the bytes to the returned URL → `…/actions/complete` — then send the `fileId` (contract §3).",
         "operationId": "admin.shipments.recordPod",
         "parameters": [
           {
@@ -278074,7 +278084,7 @@
     },
     "/v1/admin/shipping/customer-rate-card/versions/{versionId}/actions/import-confirm": {
       "post": {
-        "description": "Re-reads the file and writes the rates only when the plan still matches `previewSha256` and has no errors (A-14, D-013).\n\nImplements: D-013, D-063.",
+        "description": "Re-reads the file and writes the rates only when the plan still matches `previewSha256` and has no errors (A-14, D-013).\n\nImplements: D-013, D-063.\n\n**Files:** upload first — `admin.files.presign` → PUT the bytes to the returned URL → `…/actions/complete` — then send the `fileId` (contract §3).",
         "operationId": "admin.customerShippingRates.confirmImport",
         "parameters": [
           {
@@ -278359,7 +278369,7 @@
     },
     "/v1/admin/shipping/customer-rate-card/versions/{versionId}/actions/import-preview": {
       "post": {
-        "description": "Dry run of an uploaded `.xlsx` (sheet `rates`: zone_code, postcode, weight_min_g, weight_max_g, volume_min_cm3, volume_max_cm3, price_amount, per_extra_kg). Returns row errors and `previewSha256` to confirm exactly this plan (A-14, D-013).\n\nImplements: D-013, D-063.",
+        "description": "Dry run of an uploaded `.xlsx` (sheet `rates`: zone_code, postcode, weight_min_g, weight_max_g, volume_min_cm3, volume_max_cm3, price_amount, per_extra_kg). Returns row errors and `previewSha256` to confirm exactly this plan (A-14, D-013).\n\nImplements: D-013, D-063.\n\n**Files:** upload first — `admin.files.presign` → PUT the bytes to the returned URL → `…/actions/complete` — then send the `fileId` (contract §3).",
         "operationId": "admin.customerShippingRates.previewImport",
         "parameters": [
           {
@@ -283833,7 +283843,7 @@
     },
     "/v1/admin/structural-requests/{requestId}/actions/deliver": {
       "post": {
-        "description": "The designer delivers the dieline (DXF / PDF / SVG); it reaches the customer once approved (D-273).\n\nImplements: D-273.",
+        "description": "The designer delivers the dieline (DXF / PDF / SVG); it reaches the customer once approved (D-273).\n\nImplements: D-273.\n\n**Files:** upload first — `admin.files.presign` → PUT the bytes to the returned URL → `…/actions/complete` — then send the `fileId` (contract §3).",
         "operationId": "admin.structuralRequests.deliver",
         "parameters": [
           {
@@ -285723,7 +285733,7 @@
         ]
       },
       "post": {
-        "description": "A draft by the in-house / design-service team — Packio’s own, never third-party (D-216).\n\nImplements: D-216, D-282.",
+        "description": "A draft by the in-house / design-service team — Packio’s own, never third-party (D-216).\n\nImplements: D-216, D-282.\n\n**Files:** upload first — `admin.files.presign` → PUT the bytes to the returned URL → `…/actions/complete` — then send the `fileId` (contract §3).",
         "operationId": "admin.studioTemplates.create",
         "parameters": [
           {
@@ -286206,7 +286216,7 @@
         ]
       },
       "put": {
-        "description": "Drafts only; a submitted or published template is not edited (D-282).\n\nImplements: D-282.",
+        "description": "Drafts only; a submitted or published template is not edited (D-282).\n\nImplements: D-282.\n\n**Files:** upload first — `admin.files.presign` → PUT the bytes to the returned URL → `…/actions/complete` — then send the `fileId` (contract §3).",
         "operationId": "admin.studioTemplates.update",
         "parameters": [
           {
@@ -299547,7 +299557,7 @@
     },
     "/v1/admin/vendors/{vendorId}/bills": {
       "post": {
-        "description": "A bill of a non-factory vendor (P25 / P26): expense, cost or asset lines, input VAT only on a valid tax invoice (§2), payable by the vendor’s terms. Whoever records a vendor’s bills cannot change its bank account (SoD, §8). Requires `Idempotency-Key`.\n\nImplements: D-033, D-169.",
+        "description": "A bill of a non-factory vendor (P25 / P26): expense, cost or asset lines, input VAT only on a valid tax invoice (§2), payable by the vendor’s terms. Whoever records a vendor’s bills cannot change its bank account (SoD, §8). Requires `Idempotency-Key`.\n\nImplements: D-033, D-169.\n\n**Files:** upload first — `admin.files.presign` → PUT the bytes to the returned URL → `…/actions/complete` — then send the `fileId` (contract §3).",
         "operationId": "admin.payables.recordBill",
         "parameters": [
           {
@@ -306480,7 +306490,7 @@
     },
     "/v1/partner/billing-statements/{statementId}/tax-invoices": {
       "post": {
-        "description": "The factory’s own tax invoice (its number, its name — Packio never issues it): e-Tax file or PDF upload + number, date, seller tax id and branch. Packio Finance validates it; input VAT is claimed only then (§2, D-090). Requires `Idempotency-Key`.\n\nImplements: D-090, D-022, D-165.",
+        "description": "The factory’s own tax invoice (its number, its name — Packio never issues it): e-Tax file or PDF upload + number, date, seller tax id and branch. Packio Finance validates it; input VAT is claimed only then (§2, D-090). Requires `Idempotency-Key`.\n\nImplements: D-090, D-022, D-165.\n\n**Files:** upload first — `partner.files.presign` → PUT the bytes to the returned URL → `…/actions/complete` — then send the `fileId` (contract §3).",
         "operationId": "partner.payables.submitTaxInvoice",
         "parameters": [
           {
@@ -308389,7 +308399,7 @@
     },
     "/v1/partner/claims/{claimId}/actions/respond": {
       "post": {
-        "description": "While Packio asks for the factory’s review, with the factory’s own evidence files when it has them (U-B0.3); Packio decides afterwards (D-083).\n\nImplements: D-083.",
+        "description": "While Packio asks for the factory’s review, with the factory’s own evidence files when it has them (U-B0.3); Packio decides afterwards (D-083).\n\nImplements: D-083.\n\n**Files:** upload first — `partner.files.presign` → PUT the bytes to the returned URL → `…/actions/complete` — then send the `fileId` (contract §3).",
         "operationId": "partner.claims.respond",
         "parameters": [
           {
@@ -316205,7 +316215,7 @@
         ]
       },
       "post": {
-        "description": "References an uploaded file (presign → PUT → complete); the file then belongs to the factory. The `kyc` step becomes submitted. Own factory only; the factory edits its data only while `applied` or `under_review`.\n\nImplements: D-011, D-171.",
+        "description": "References an uploaded file (presign → PUT → complete); the file then belongs to the factory. The `kyc` step becomes submitted. Own factory only; the factory edits its data only while `applied` or `under_review`.\n\nImplements: D-011, D-171.\n\n**Files:** upload first — `partner.files.presign` → PUT the bytes to the returned URL → `…/actions/complete` — then send the `fileId` (contract §3).",
         "operationId": "partner.factories.addKycDocument",
         "parameters": [
           {
@@ -321076,7 +321086,7 @@
         ]
       },
       "post": {
-        "description": "A file I uploaded (purpose `document` or `evidence`, scan not infected) with a note of up to 500 characters, while the proposal is open; 409 `partners.proposal_closed` once decided. Audited, on the factory activity (U-B0.3, D-040). Requires `Idempotency-Key`.\n\nImplements: D-040, D-042, D-043, D-044.",
+        "description": "A file I uploaded (purpose `document` or `evidence`, scan not infected) with a note of up to 500 characters, while the proposal is open; 409 `partners.proposal_closed` once decided. Audited, on the factory activity (U-B0.3, D-040). Requires `Idempotency-Key`.\n\nImplements: D-040, D-042, D-043, D-044.\n\n**Files:** upload first — `partner.files.presign` → PUT the bytes to the returned URL → `…/actions/complete` — then send the `fileId` (contract §3).",
         "operationId": "partner.priceProposals.addEvidence",
         "parameters": [
           {
@@ -325638,7 +325648,7 @@
     },
     "/v1/partner/factories/{factoryId}/samples/{sampleId}/evidence": {
       "post": {
-        "description": "Before the sample ships: the measured size with its basis, the material actually used and at least one photo (own clean uploads), once (D-255). Owner, Planner or QC.\n\nImplements: D-253, D-192, D-072, D-255.",
+        "description": "Before the sample ships: the measured size with its basis, the material actually used and at least one photo (own clean uploads), once (D-255). Owner, Planner or QC.\n\nImplements: D-253, D-192, D-072, D-255.\n\n**Files:** upload first — `partner.files.presign` → PUT the bytes to the returned URL → `…/actions/complete` — then send the `fileId` (contract §3).",
         "operationId": "partner.samples.recordEvidence",
         "parameters": [
           {
@@ -327898,7 +327908,7 @@
         ]
       },
       "post": {
-        "description": "The Owner or Planner offers an uploaded DXF / PDF (file purpose `dieline`) of a structure, accepting the intake terms version in force; the file’s sha256, the terms version and the submitter are kept as provenance and Prepress reviews it (D-272).\n\nImplements: D-272, D-242, D-044.",
+        "description": "The Owner or Planner offers an uploaded DXF / PDF (file purpose `dieline`) of a structure, accepting the intake terms version in force; the file’s sha256, the terms version and the submitter are kept as provenance and Prepress reviews it (D-272).\n\nImplements: D-272, D-242, D-044.\n\n**Files:** upload first — `partner.files.presign` → PUT the bytes to the returned URL → `…/actions/complete` — then send the `fileId` (contract §3).",
         "operationId": "partner.styleIntakes.submit",
         "parameters": [
           {
@@ -336032,7 +336042,7 @@
         ]
       },
       "post": {
-        "description": "Material shortage, machine down, a question about the artwork… (named kinds, D-232) with photos. Packio staff answer it; the factory may close an issue it raised itself (`partner.production.resolveIssue`).\n\nImplements: D-074, D-232.",
+        "description": "Material shortage, machine down, a question about the artwork… (named kinds, D-232) with photos. Packio staff answer it; the factory may close an issue it raised itself (`partner.production.resolveIssue`).\n\nImplements: D-074, D-232.\n\n**Files:** upload first — `partner.files.presign` → PUT the bytes to the returned URL → `…/actions/complete` — then send the `fileId` (contract §3).",
         "operationId": "partner.production.raiseIssue",
         "parameters": [
           {
@@ -336584,7 +336594,7 @@
     },
     "/v1/partner/production-jobs/{jobId}/milestones/{milestoneId}": {
       "post": {
-        "description": "In route order, with quantities in / out / scrap on steps that track them (out + scrap never exceed what came in) and the evidence the step needs — photos and / or the QC form (D-075, D-076). Idempotent: the `Idempotency-Key` and the device’s `clientRef` make replays harmless; on a conflict the server wins and answers `applied: false` with the current job. Completing on time counts for the scorecard (D-155).\n\nImplements: D-075, D-076, D-155.",
+        "description": "In route order, with quantities in / out / scrap on steps that track them (out + scrap never exceed what came in) and the evidence the step needs — photos and / or the QC form (D-075, D-076). Idempotent: the `Idempotency-Key` and the device’s `clientRef` make replays harmless; on a conflict the server wins and answers `applied: false` with the current job. Completing on time counts for the scorecard (D-155).\n\nImplements: D-075, D-076, D-155.\n\n**Files:** upload first — `partner.files.presign` → PUT the bytes to the returned URL → `…/actions/complete` — then send the `fileId` (contract §3).",
         "operationId": "partner.production.updateMilestone",
         "parameters": [
           {
@@ -337168,7 +337178,7 @@
         ]
       },
       "post": {
-        "description": "The factory’s QC checklist with photo evidence (D-076); the first check of a job decides “first pass” (D-155).\n\nImplements: D-076, D-155.",
+        "description": "The factory’s QC checklist with photo evidence (D-076); the first check of a job decides “first pass” (D-155).\n\nImplements: D-076, D-155.\n\n**Files:** upload first — `partner.files.presign` → PUT the bytes to the returned URL → `…/actions/complete` — then send the `fileId` (contract §3).",
         "operationId": "partner.production.recordQc",
         "parameters": [
           {
@@ -338466,7 +338476,7 @@
         },
         "responses": {
           "202": {
-            "description": "Accepted",
+            "description": "Accepted. Nothing to poll.",
             "headers": {
               "X-RateLimit-Limit": {
                 "$ref": "#/components/headers/RateLimitLimit"
@@ -341160,7 +341170,7 @@
     },
     "/v1/partner/shipments/{shipmentId}/proof-of-delivery": {
       "post": {
-        "description": "Mandatory for factory deliveries (D-013): receiver name, signature and at least one photo (evidence uploads), and the pieces accepted per destination on the trip (≤ shipped). Delivers the shipment; when every shipment of an order’s job is delivered the order is delivered and reconciled against the tolerance frozen in the quote (D-021, D-080: shortage within → pro-rata credit; overage within → no charge; outside → automatic claim; factory payable min(delivered, ordered), D-165). A packed shipment the factory delivers straight away is picked up first (shipping gate applies). Idempotent.\n\nImplements: D-013, D-021, D-080, D-165.",
+        "description": "Mandatory for factory deliveries (D-013): receiver name, signature and at least one photo (evidence uploads), and the pieces accepted per destination on the trip (≤ shipped). Delivers the shipment; when every shipment of an order’s job is delivered the order is delivered and reconciled against the tolerance frozen in the quote (D-021, D-080: shortage within → pro-rata credit; overage within → no charge; outside → automatic claim; factory payable min(delivered, ordered), D-165). A packed shipment the factory delivers straight away is picked up first (shipping gate applies). Idempotent.\n\nImplements: D-013, D-021, D-080, D-165.\n\n**Files:** upload first — `partner.files.presign` → PUT the bytes to the returned URL → `…/actions/complete` — then send the `fileId` (contract §3).",
         "operationId": "partner.shipments.recordPod",
         "parameters": [
           {
@@ -344825,7 +344835,7 @@
                 }
               }
             },
-            "description": "Accepted",
+            "description": "Accepted. Nothing to poll.",
             "headers": {
               "X-RateLimit-Limit": {
                 "$ref": "#/components/headers/RateLimitLimit"
@@ -356330,7 +356340,7 @@
     },
     "/v1/store/claims/{claimId}/info": {
       "post": {
-        "description": "Only while the claim needs information; more photos may be attached. The review continues.\n\nImplements: D-082.",
+        "description": "Only while the claim needs information; more photos may be attached. The review continues.\n\nImplements: D-082.\n\n**Files:** upload first — `store.files.presign` → PUT the bytes to the returned URL → `…/actions/complete` — then send the `fileId` (contract §3).",
         "operationId": "store.claims.respondInfo",
         "parameters": [
           {
@@ -360323,7 +360333,7 @@
         ]
       },
       "post": {
-        "description": "Company Admin: a file uploaded for the company (presign with `companyId`) or by me, scanned clean; audited (D-227). 409 `companies.asset_exists` when the file is in the library already.\n\nImplements: D-227.",
+        "description": "Company Admin: a file uploaded for the company (presign with `companyId`) or by me, scanned clean; audited (D-227). 409 `companies.asset_exists` when the file is in the library already.\n\nImplements: D-227.\n\n**Files:** upload first — `store.files.presign` → PUT the bytes to the returned URL → `…/actions/complete` — then send the `fileId` (contract §3).",
         "operationId": "store.companyAssets.add",
         "parameters": [
           {
@@ -363173,7 +363183,7 @@
     },
     "/v1/store/companies/{companyId}/kyc-documents": {
       "post": {
-        "description": "Company Admin, with a file I uploaded: company certificate (≤ 6 months), ภ.พ.20 if VAT-registered, signatory id (D-120).\n\nImplements: D-120.",
+        "description": "Company Admin, with a file I uploaded: company certificate (≤ 6 months), ภ.พ.20 if VAT-registered, signatory id (D-120).\n\nImplements: D-120.\n\n**Files:** upload first — `store.files.presign` → PUT the bytes to the returned URL → `…/actions/complete` — then send the `fileId` (contract §3).",
         "operationId": "store.companies.addKycDocument",
         "parameters": [
           {
@@ -368929,7 +368939,7 @@
         ]
       },
       "post": {
-        "description": "Opens (or continues) my live thread about the support chat or one of my orders, designs or RFQs, with my first message: text, my uploaded and scanned files (one message each) and / or a card to one of my records. Someone else’s record → 422 (never confirms it exists). The first message waiting for an answer starts the D-221 first-response clock.\n\nImplements: D-300, D-151, D-221.",
+        "description": "Opens (or continues) my live thread about the support chat or one of my orders, designs or RFQs, with my first message: text, my uploaded and scanned files (one message each) and / or a card to one of my records. Someone else’s record → 422 (never confirms it exists). The first message waiting for an answer starts the D-221 first-response clock.\n\nImplements: D-300, D-151, D-221.\n\n**Files:** upload first — `store.files.presign` → PUT the bytes to the returned URL → `…/actions/complete` — then send the `fileId` (contract §3).",
         "operationId": "store.conversations.open",
         "parameters": [
           {
@@ -369608,7 +369618,7 @@
         ]
       },
       "post": {
-        "description": "Text, files and / or a card, like opening one. A closed thread continues in a new live thread about the same subject — the response names the thread the messages went into.\n\nImplements: D-300, D-151, D-221.",
+        "description": "Text, files and / or a card, like opening one. A closed thread continues in a new live thread about the same subject — the response names the thread the messages went into.\n\nImplements: D-300, D-151, D-221.\n\n**Files:** upload first — `store.files.presign` → PUT the bytes to the returned URL → `…/actions/complete` — then send the `fileId` (contract §3).",
         "operationId": "store.conversations.post",
         "parameters": [
           {
@@ -372788,7 +372798,7 @@
         ]
       },
       "put": {
-        "description": "Versions are immutable; `If-Match` is required — a stale ETag is refused with 412. `kind` tells the editor’s autosaves from the customer’s saves (the history can hide autosaves) and `label` names the version; the box style, material and size can change with the save, and the studio box — style variant, print method and sides, finishes — and the calculator spec (D-275). Every version keeps its box and spec.\n\nImplements: D-152, D-070, D-275, D-276.",
+        "description": "Versions are immutable; `If-Match` is required — a stale ETag is refused with 412. `kind` tells the editor’s autosaves from the customer’s saves (the history can hide autosaves) and `label` names the version; the box style, material and size can change with the save, and the studio box — style variant, print method and sides, finishes — and the calculator spec (D-275). Every version keeps its box and spec.\n\nImplements: D-152, D-070, D-275, D-276.\n\n**Files:** upload first — `store.files.presign` → PUT the bytes to the returned URL → `…/actions/complete` — then send the `fileId` (contract §3).",
         "operationId": "store.designs.save",
         "parameters": [
           {
@@ -373506,6 +373516,9 @@
             },
             "description": "Shared",
             "headers": {
+              "Deprecation": {
+                "$ref": "#/components/headers/Deprecation"
+              },
               "X-RateLimit-Limit": {
                 "$ref": "#/components/headers/RateLimitLimit"
               },
@@ -373657,7 +373670,7 @@
     },
     "/v1/store/designs/{designId}/assets": {
       "post": {
-        "description": "A file you uploaded.\n\nImplements: D-152, D-070.",
+        "description": "A file you uploaded.\n\nImplements: D-152, D-070.\n\n**Files:** upload first — `store.files.presign` → PUT the bytes to the returned URL → `…/actions/complete` — then send the `fileId` (contract §3).",
         "operationId": "store.designs.addAsset",
         "parameters": [
           {
@@ -374617,6 +374630,9 @@
           "204": {
             "description": "Revoked",
             "headers": {
+              "Deprecation": {
+                "$ref": "#/components/headers/Deprecation"
+              },
               "X-RateLimit-Limit": {
                 "$ref": "#/components/headers/RateLimitLimit"
               },
@@ -376661,7 +376677,7 @@
                 }
               }
             },
-            "description": "Queued",
+            "description": "Queued. Poll `store.designs.getDrawing` until it completes.",
             "headers": {
               "X-RateLimit-Limit": {
                 "$ref": "#/components/headers/RateLimitLimit"
@@ -385659,7 +385675,7 @@
         ]
       },
       "post": {
-        "description": "A new version of the order’s artwork: uploaded files (purpose `artwork`, presign → PUT → complete) and/or https links. Replaces the version waiting for review and a proof not yet answered. The automated preflight runs in the background: it **blocks** on a size mismatch or missing bleed and **warns** on low resolution or RGB (D-070); poll `GET …/artwork-submissions/{submissionId}` for the report. Refused once the artwork is approved or production started (D-073).\n\nImplements: D-070, D-073.",
+        "description": "A new version of the order’s artwork: uploaded files (purpose `artwork`, presign → PUT → complete) and/or https links. Replaces the version waiting for review and a proof not yet answered. The automated preflight runs in the background: it **blocks** on a size mismatch or missing bleed and **warns** on low resolution or RGB (D-070); poll `GET …/artwork-submissions/{submissionId}` for the report. Refused once the artwork is approved or production started (D-073).\n\nImplements: D-070, D-073.\n\n**Files:** upload first — `store.files.presign` → PUT the bytes to the returned URL → `…/actions/complete` — then send the `fileId` (contract §3).",
         "operationId": "store.artwork.submit",
         "parameters": [
           {
@@ -386680,7 +386696,7 @@
     },
     "/v1/store/orders/{orderId}/claims": {
       "post": {
-        "description": "Within 7 days of receipt (D-082; `claims.window_closed` after), with photos of the product **and** of the shipping cartons (evidence uploads). Liability follows the rules (D-083); the claim holds the automatic completion of the order until it is settled.\n\nImplements: D-082, D-083.",
+        "description": "Within 7 days of receipt (D-082; `claims.window_closed` after), with photos of the product **and** of the shipping cartons (evidence uploads). Liability follows the rules (D-083); the claim holds the automatic completion of the order until it is settled.\n\nImplements: D-082, D-083.\n\n**Files:** upload first — `store.files.presign` → PUT the bytes to the returned URL → `…/actions/complete` — then send the `fileId` (contract §3).",
         "operationId": "store.claims.submit",
         "parameters": [
           {
@@ -387220,7 +387236,7 @@
     },
     "/v1/store/orders/{orderId}/design-service/actions/confirm-extra-round": {
       "post": {
-        "description": "Beyond the free revisions each round costs max(THB 500, 20 % of the design fee) (D-071): confirming adds it to the order with its own instalment, due now; the round starts once it is paid. Send the fee shown in `nextRevision.feeGross`; a different amount is refused (`design_services.fee_changed`).\n\nImplements: D-071, D-020.",
+        "description": "Beyond the free revisions each round costs max(THB 500, 20 % of the design fee) (D-071): confirming adds it to the order with its own instalment, due now; the round starts once it is paid. Send the fee shown in `nextRevision.feeGross`; a different amount is refused (`design_services.fee_changed`).\n\nImplements: D-071, D-020.\n\n**Files:** upload first — `store.files.presign` → PUT the bytes to the returned URL → `…/actions/complete` — then send the `fileId` (contract §3).",
         "operationId": "store.designServices.confirmExtraRound",
         "parameters": [
           {
@@ -387524,7 +387540,7 @@
     },
     "/v1/store/orders/{orderId}/design-service/brief": {
       "put": {
-        "description": "Brand name, category, description and attachments (legacy `brd_*`). Work starts once the brief is in and the order is paid for production (D-071).\n\nImplements: D-071.",
+        "description": "Brand name, category, description and attachments (legacy `brd_*`). Work starts once the brief is in and the order is paid for production (D-071).\n\nImplements: D-071.\n\n**Files:** upload first — `store.files.presign` → PUT the bytes to the returned URL → `…/actions/complete` — then send the `fileId` (contract §3).",
         "operationId": "store.designServices.submitBrief",
         "parameters": [
           {
@@ -390236,7 +390252,7 @@
     },
     "/v1/store/payments/{paymentId}/slips": {
       "post": {
-        "description": "The slip (file uploaded with purpose `slip`, scanned clean) is verified automatically — receiver account, amount, date and duplicate transaction reference (D-061). A pass is accepted at once, a duplicate refused, anything else goes to Finance (4 business hours). Requires `Idempotency-Key`.\n\nImplements: D-061, D-020, D-176.",
+        "description": "The slip (file uploaded with purpose `slip`, scanned clean) is verified automatically — receiver account, amount, date and duplicate transaction reference (D-061). A pass is accepted at once, a duplicate refused, anything else goes to Finance (4 business hours). Requires `Idempotency-Key`.\n\nImplements: D-061, D-020, D-176.\n\n**Files:** upload first — `store.files.presign` → PUT the bytes to the returned URL → `…/actions/complete` — then send the `fileId` (contract §3).",
         "operationId": "store.payments.uploadSlip",
         "parameters": [
           {
@@ -395191,7 +395207,7 @@
                 }
               }
             },
-            "description": "Accepted",
+            "description": "Accepted. Poll `store.quotes.getPdf` until it completes.",
             "headers": {
               "X-RateLimit-Limit": {
                 "$ref": "#/components/headers/RateLimitLimit"
@@ -399600,7 +399616,7 @@
     },
     "/v1/store/rfq-baskets/draft/items": {
       "post": {
-        "description": "The store RFQ form of a product type (`store.rfqs.getForm`: spec fields checked against its schema, sizes in mm, up to 10 quantities, my files, a published style, a target price) and optionally one of my design versions; up to 20 items (D-301, D-183).\n\nImplements: D-301, D-100, D-183.",
+        "description": "The store RFQ form of a product type (`store.rfqs.getForm`: spec fields checked against its schema, sizes in mm, up to 10 quantities, my files, a published style, a target price) and optionally one of my design versions; up to 20 items (D-301, D-183).\n\nImplements: D-301, D-100, D-183.\n\n**Files:** upload first — `store.files.presign` → PUT the bytes to the returned URL → `…/actions/complete` — then send the `fileId` (contract §3).",
         "operationId": "store.rfqBaskets.addItem",
         "parameters": [
           {
@@ -400062,7 +400078,7 @@
         ]
       },
       "put": {
-        "description": "Replaces the item, checked like adding it (D-301).\n\nImplements: D-301, D-100, D-183.",
+        "description": "Replaces the item, checked like adding it (D-301).\n\nImplements: D-301, D-100, D-183.\n\n**Files:** upload first — `store.files.presign` → PUT the bytes to the returned URL → `…/actions/complete` — then send the `fileId` (contract §3).",
         "operationId": "store.rfqBaskets.updateItem",
         "parameters": [
           {
@@ -401427,7 +401443,7 @@
         ]
       },
       "post": {
-        "description": "For every type not quoted instantly, and when no instant price path covers a configuration (D-100, D-043): spec fields of the category (validated against its schema), up to 10 quantity tiers, target date, delivery postcode, uploaded files. CS answers within the category SLA when one is set.\n\nImplements: D-100, D-043, D-102.",
+        "description": "For every type not quoted instantly, and when no instant price path covers a configuration (D-100, D-043): spec fields of the category (validated against its schema), up to 10 quantity tiers, target date, delivery postcode, uploaded files. CS answers within the category SLA when one is set.\n\nImplements: D-100, D-043, D-102.\n\n**Files:** upload first — `store.files.presign` → PUT the bytes to the returned URL → `…/actions/complete` — then send the `fileId` (contract §3).",
         "operationId": "store.rfqs.submit",
         "parameters": [
           {
@@ -402669,7 +402685,7 @@
     },
     "/v1/store/rfqs/{rfqId}/messages": {
       "post": {
-        "description": "A request waiting for information goes back to review (D-100).\n\nImplements: D-100, D-043, D-102.",
+        "description": "A request waiting for information goes back to review (D-100).\n\nImplements: D-100, D-043, D-102.\n\n**Files:** upload first — `store.files.presign` → PUT the bytes to the returned URL → `…/actions/complete` — then send the `fileId` (contract §3).",
         "operationId": "store.rfqs.postMessage",
         "parameters": [
           {
@@ -403015,7 +403031,7 @@
         },
         "responses": {
           "202": {
-            "description": "Accepted",
+            "description": "Accepted. Nothing to poll.",
             "headers": {
               "X-RateLimit-Limit": {
                 "$ref": "#/components/headers/RateLimitLimit"
@@ -406091,7 +406107,7 @@
         ]
       },
       "post": {
-        "description": "A structure the style library lacks: what it must do, the product type, sizes with their basis, quantity and up to 10 reference files. CS assigns a structural designer; a fee, when one applies, is quoted as a service RFQ; I am notified at every step (D-273).\n\nImplements: D-273.",
+        "description": "A structure the style library lacks: what it must do, the product type, sizes with their basis, quantity and up to 10 reference files. CS assigns a structural designer; a fee, when one applies, is quoted as a service RFQ; I am notified at every step (D-273).\n\nImplements: D-273.\n\n**Files:** upload first — `store.files.presign` → PUT the bytes to the returned URL → `…/actions/complete` — then send the `fileId` (contract §3).",
         "operationId": "store.structuralRequests.create",
         "parameters": [
           {
@@ -410643,7 +410659,7 @@
                 }
               }
             },
-            "description": "Print job queued",
+            "description": "Print job queued. Poll `store.studio.getPrintJob` until it completes.",
             "headers": {
               "Idempotent-Replayed": {
                 "$ref": "#/components/headers/IdempotentReplayed"
@@ -411646,7 +411662,7 @@
     },
     "/v1/store/studio/{designId}/rfq": {
       "post": {
-        "description": "For a type without an instant price: an RFQ that names the design version, with the sizes, basis and style variant taken from it and the form answers the studio pre-filled (D-277, D-269).\n\nImplements: D-277, D-275, D-051, D-269, D-100.",
+        "description": "For a type without an instant price: an RFQ that names the design version, with the sizes, basis and style variant taken from it and the form answers the studio pre-filled (D-277, D-269).\n\nImplements: D-277, D-275, D-051, D-269, D-100.\n\n**Files:** upload first — `store.files.presign` → PUT the bytes to the returned URL → `…/actions/complete` — then send the `fileId` (contract §3).",
         "operationId": "store.studio.requestQuote",
         "parameters": [
           {
@@ -412585,7 +412601,7 @@
     },
     "/v1/store/studio/{designId}/versions/{versionNo}/renders": {
       "post": {
-        "description": "The studio renders a version once (ADR-0011): 300 dpi JPEG tiles of the outside / inside artwork and PNG masks of finish areas, each placed on the sheet in mm. The server assembles the print file from them under the engine’s vector die; it never renders the scene itself (D-280).\n\nImplements: D-280.",
+        "description": "The studio renders a version once (ADR-0011): 300 dpi JPEG tiles of the outside / inside artwork and PNG masks of finish areas, each placed on the sheet in mm. The server assembles the print file from them under the engine’s vector die; it never renders the scene itself (D-280).\n\nImplements: D-280.\n\n**Files:** upload first — `store.files.presign` → PUT the bytes to the returned URL → `…/actions/complete` — then send the `fileId` (contract §3).",
         "operationId": "store.studio.addRender",
         "parameters": [
           {
@@ -416837,23 +416853,6 @@
               }
             }
           },
-          "201": {
-            "description": "",
-            "headers": {
-              "X-RateLimit-Limit": {
-                "$ref": "#/components/headers/RateLimitLimit"
-              },
-              "X-RateLimit-Remaining": {
-                "$ref": "#/components/headers/RateLimitRemaining"
-              },
-              "X-RateLimit-Reset": {
-                "$ref": "#/components/headers/RateLimitReset"
-              },
-              "X-Request-Id": {
-                "$ref": "#/components/headers/XRequestId"
-              }
-            }
-          },
           "400": {
             "content": {
               "application/problem+json": {
@@ -417052,23 +417051,6 @@
               }
             }
           },
-          "201": {
-            "description": "",
-            "headers": {
-              "X-RateLimit-Limit": {
-                "$ref": "#/components/headers/RateLimitLimit"
-              },
-              "X-RateLimit-Remaining": {
-                "$ref": "#/components/headers/RateLimitRemaining"
-              },
-              "X-RateLimit-Reset": {
-                "$ref": "#/components/headers/RateLimitReset"
-              },
-              "X-Request-Id": {
-                "$ref": "#/components/headers/XRequestId"
-              }
-            }
-          },
           "400": {
             "content": {
               "application/problem+json": {
@@ -417188,6 +417170,16 @@
         "description": "Sent by LINE for follows, unfollows and messages. Verified with `x-line-signature` (HMAC-SHA256 of the exact body with the channel secret), stored once per `webhookEventId` (redeliveries are no-ops). Messages reach the CS inbox (D-151).\n\nImplements: D-151, D-143.",
         "operationId": "webhooks.line.messaging",
         "parameters": [
+          {
+            "description": "Base64 HMAC-SHA256 of the exact request body with the channel secret (LINE signature)",
+            "in": "header",
+            "name": "x-line-signature",
+            "required": true,
+            "schema": {
+              "example": "c2lnbmF0dXJlLWV4YW1wbGU=",
+              "type": "string"
+            }
+          },
           {
             "$ref": "#/components/parameters/AcceptLanguage"
           }
@@ -418788,5 +418780,25 @@
       "description": "SCB, 2C2P and slip-verification callbacks, confirmed before any payment is accepted (D-061).",
       "name": "webhooks.payments"
     }
-  ]
+  ],
+  "webhooks": {
+    "carriers.deliveree": {
+      "$ref": "#/paths/~1webhooks~1carriers~1deliveree"
+    },
+    "carriers.flashExpress": {
+      "$ref": "#/paths/~1webhooks~1carriers~1flash-express"
+    },
+    "line.messaging": {
+      "$ref": "#/paths/~1webhooks~1line~1messaging"
+    },
+    "payments.scb": {
+      "$ref": "#/paths/~1webhooks~1scb~1payment-confirmation"
+    },
+    "payments.slipVerify": {
+      "$ref": "#/paths/~1webhooks~1slip-verify"
+    },
+    "payments.twoc2p": {
+      "$ref": "#/paths/~1webhooks~12c2p~1payment"
+    }
+  }
 }

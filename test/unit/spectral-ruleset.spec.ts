@@ -78,7 +78,27 @@ describe('Packio Spectral ruleset (contract/spectral)', () => {
       'packio-request-example',
       'packio-response-example',
       'packio-response-set',
+      'packio-status-by-kind',
       'packio-surface-security',
+    ]);
+  });
+
+  it('asks for 412 with If-Match, 409 with Idempotency-Key and a named poll with 202', () => {
+    const doc = structuredClone(badDocument) as unknown as {
+      paths: Record<string, { post: { parameters: unknown[] } }>;
+    };
+    doc.paths['/v1/store/things']!.post.parameters.push(
+      { name: 'If-Match', in: 'header', schema: { type: 'string' } },
+      { name: 'Idempotency-Key', in: 'header', schema: { type: 'string' } },
+    );
+    const messages = lintWithPackioRuleset(doc)
+      .filter((r) => r.code === 'packio-status-by-kind')
+      .map((r) => r.message)
+      .sort();
+    expect(messages).toEqual([
+      '202 must name the operation to poll (@ApiAsync)',
+      'Idempotency-Key operation without a 409 response',
+      'If-Match operation without a 412 response',
     ]);
   });
 

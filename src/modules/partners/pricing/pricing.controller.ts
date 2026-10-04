@@ -2,7 +2,7 @@ import { CurrentActor } from '@common/auth/auth.decorators';
 import { Can } from '@common/auth/can.decorator';
 import { type Actor } from '@common/context/actor';
 import { Idempotent } from '@common/idempotency/idempotent.decorator';
-import { ApiEndpoint, ApiStandardErrors, ApiSuccess } from '@common/openapi/decorators';
+import { ApiAsync, ApiEndpoint, ApiStandardErrors, ApiSuccess } from '@common/openapi/decorators';
 import { ApiPaginated } from '@common/pagination/api-paginated.decorator';
 import { paginated } from '@common/pagination/pagination';
 import { type Page } from '@common/pagination/pagination.dto';
@@ -860,6 +860,7 @@ export class AdminPriceSuggestionsController {
       'price, margin and selection-share change (D-040 note). Runs in the worker; poll the returned simulation.',
     implements: ['D-040', 'D-044'],
   })
+  @ApiAsync({ poll: 'admin.priceSuggestions.getSimulation' })
   @ApiSuccess(202, {
     description: 'Queued',
     type: PriceSimulationDto,

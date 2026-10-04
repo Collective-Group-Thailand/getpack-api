@@ -3,7 +3,7 @@ import { Can } from '@common/auth/can.decorator';
 import { type Actor, type UserActor } from '@common/context/actor';
 import { RequestContext } from '@common/context/request-context';
 import { DomainException } from '@common/errors/domain.exception';
-import { ApiEndpoint, ApiStandardErrors, ApiSuccess } from '@common/openapi/decorators';
+import { ApiAsync, ApiEndpoint, ApiStandardErrors, ApiSuccess } from '@common/openapi/decorators';
 import { ApiPaginated } from '@common/pagination/api-paginated.decorator';
 import { toBangkokIso } from '@common/time/bangkok';
 import { type Prisma } from '@generated/prisma/client';
@@ -445,6 +445,7 @@ export class StoreSavedQuotesController {
       '(D-010, D-092) in the background; poll `GET /v1/store/quotes/{quoteId}/pdf`. Signed-in owners only.',
     implements: [...DECISIONS, 'D-092'],
   })
+  @ApiAsync({ poll: 'store.quotes.getPdf' })
   @ApiSuccess(202, {
     description: 'Accepted',
     type: SavedQuoteDto,
@@ -690,6 +691,7 @@ export class AdminQuotesController {
       'Issues the QT number and renders the PDF in the background (D-010, D-092); poll `GET …/pdf`.',
     implements: [...DECISIONS, 'D-092'],
   })
+  @ApiAsync({ poll: 'admin.quotes.getPdf' })
   @ApiSuccess(202, {
     description: 'Accepted',
     type: AdminSavedQuoteDto,

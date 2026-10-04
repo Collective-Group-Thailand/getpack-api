@@ -52,7 +52,7 @@ Rules: \`docs/contract/api-conventions.md\` (shared with packio-web).
 - **Files:** presign → PUT to the returned URL → reference the \`fileId\`.`;
 
 /** Environments; real hosts are an open question (docs/PROGRESS.md) — `.invalid` is a reserved TLD. */
-const SERVERS: { url: string; description: string; host?: string }[] = [
+export const SERVERS: { url: string; description: string; host?: string }[] = [
   { url: 'http://localhost:3000', description: 'Local development (docker compose + pnpm dev)' },
   { url: 'https://{host}', description: 'Integration', host: 'integration.packio.invalid' },
   { url: 'https://{host}', description: 'Sandbox', host: 'sandbox.packio.invalid' },
@@ -89,6 +89,7 @@ export function buildOpenApiDocument(app: INestApplication, version: string): Op
   });
   const enriched = pruneUnusedComponents(enrichDocument(document));
   enriched.tags = usedTags(enriched);
+  addWebhooks(enriched);
   return normaliseDocument(enriched);
 }
 
@@ -127,6 +128,7 @@ export function enrichDocument(document: OpenAPIObject): OpenAPIObject {
       const isPublic = operation[EXT.public] === true;
       const optionalAudience = operation[EXT.optionalAuth] as string | undefined;
       const throttled = operation[EXT.unthrottled] !== true;
+      const poll = operation[EXT.async] as string | false | undefined;
       for (const key of Object.keys(operation)) if (key.startsWith('x-packio-')) delete operation[key];
 
       if (isPublic) operation.security = [];
@@ -156,11 +158,84 @@ export function enrichDocument(document: OpenAPIObject): OpenAPIObject {
         }
         if (status === '429') headers['Retry-After'] = ref('headers', 'RetryAfter');
         const target = response as ResponseObject;
+        if (status === '202' && poll !== undefined)
+          target.description = asyncDescription(target.description, poll);
         target.headers = { ...target.headers, ...headers };
       }
     }
   }
+  addUploadFlow(document);
   return document;
+}
+
+/**
+ * OpenAPI 3.1 `webhooks` (contract §5): every inbound provider callback, keyed by its operation id
+ * without the `webhooks.` prefix. Each entry references the callback's path item, so the payload,
+ * signature and expected response are defined once.
+ */
+export function addWebhooks(document: OpenAPIObject): void {
+  const webhooks: Record<string, ReferenceObject> = {};
+  for (const [route, item] of Object.entries(document.paths)) {
+    if (!route.startsWith('/webhooks/')) continue;
+    const id = HTTP_METHODS.map((m) => item[m]?.operationId).find(Boolean);
+    if (!id) continue;
+    webhooks[id.replace(/^webhooks\./, '')] = {
+      $ref: `#/paths/${route.replaceAll('~', '~0').replaceAll('/', '~1')}`,
+    };
+  }
+  if (Object.keys(webhooks).length > 0)
+    (document as OpenAPIObject & { webhooks?: unknown }).webhooks = webhooks;
+}
+
+/** The 202 description with its polling instruction (`@ApiAsync`). */
+export function asyncDescription(description: string, poll: string | false): string {
+  return poll ? `${description}. Poll \`${poll}\` until it completes.` : `${description}. Nothing to poll.`;
+}
+
+const UPLOAD_SURFACES = new Set(['store', 'admin', 'partner']);
+const FILE_FIELD = /^(fileId|fileIds|[a-z][A-Za-z]*FileIds?)$/;
+const UPLOAD_FLOW =
+  '**Files:** upload first — `<surface>.files.presign` → PUT the bytes to the returned URL → ' +
+  '`…/actions/complete` — then send the `fileId` (contract §3).';
+
+/**
+ * File-upload flow (contract §5): every operation whose request body references uploaded files
+ * (`fileId`, `fileIds`, `…FileId`, at any depth) gets the presign → PUT → reference note.
+ */
+function addUploadFlow(document: OpenAPIObject): void {
+  const schemas = (document.components?.schemas ?? {}) as Record<string, Record<string, unknown>>;
+  const memo = new Map<string, boolean>();
+  const takesFiles = (node: unknown, seen: Set<string>): boolean => {
+    if (Array.isArray(node)) return node.some((child) => takesFiles(child, seen));
+    if (!node || typeof node !== 'object') return false;
+    const record = node as Record<string, unknown>;
+    if (typeof record.$ref === 'string') {
+      const name = record.$ref.split('/').pop()!;
+      if (memo.has(name)) return memo.get(name)!;
+      if (seen.has(name)) return false;
+      const result = takesFiles(schemas[name], new Set([...seen, name]));
+      memo.set(name, result);
+      return result;
+    }
+    const properties = (record.properties ?? {}) as Record<string, unknown>;
+    if (Object.keys(properties).some((key) => FILE_FIELD.test(key))) return true;
+    return Object.values(record).some((child) => takesFiles(child, seen));
+  };
+  for (const item of Object.values(document.paths)) {
+    for (const method of HTTP_METHODS) {
+      const operation = item[method];
+      const body = operation?.requestBody as { content?: Record<string, unknown> } | undefined;
+      const [surface, resource] = operation?.operationId?.split('.') ?? [];
+      // Only the surfaces that have a presign operation; the files resource itself is the flow.
+      if (!operation || !body?.content || !surface || !UPLOAD_SURFACES.has(surface) || resource === 'files')
+        continue;
+      if (!takesFiles(body.content, new Set())) continue;
+      const note = UPLOAD_FLOW.replace('<surface>', surface);
+      if (!operation.description?.includes('.files.presign')) {
+        operation.description = `${operation.description ?? ''}\n\n${note}`;
+      }
+    }
+  }
 }
 
 /**
@@ -247,10 +322,25 @@ export function contractViolations(document: OpenAPIObject): string[] {
       problems.push(`schema ${name} references itself: an enum and a DTO probably share the name`);
   }
 
+  const operationIds = new Set<string>();
+  for (const item of Object.values(document.paths))
+    for (const method of HTTP_METHODS)
+      if (item[method]?.operationId) operationIds.add(item[method].operationId);
+
   for (const [route, item] of Object.entries(document.paths)) {
     for (const method of HTTP_METHODS) {
       const operation = item[method];
       if (!operation) continue;
+      const accepted = operation.responses?.['202'] as ResponseObject | undefined;
+      if (accepted) {
+        const poll = /Poll `([^`]+)`/.exec(accepted.description)?.[1];
+        if (!poll && !accepted.description.endsWith('Nothing to poll.'))
+          problems.push(
+            `${method.toUpperCase()} ${route}: 202 without @ApiAsync (name the operation to poll)`,
+          );
+        if (poll && !operationIds.has(poll))
+          problems.push(`${method.toUpperCase()} ${route}: polls unknown operation ${poll}`);
+      }
       const tags = operation.tags ?? [];
       if (tags.length === 0 || tags.some((tag) => !allowedPrefixes.some((p) => tag.startsWith(p)))) {
         problems.push(

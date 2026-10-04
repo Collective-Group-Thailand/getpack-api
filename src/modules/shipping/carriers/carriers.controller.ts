@@ -262,6 +262,7 @@ export class CarrierWebhooksController {
   constructor(private readonly service: CarriersService) {}
 
   @Post('flash-express')
+  @HttpCode(200)
   @Public()
   @ApiEndpoint({
     id: 'webhooks.carriers.flashExpress',
@@ -304,6 +305,7 @@ export class CarrierWebhooksController {
   }
 
   @Post('deliveree')
+  @HttpCode(200)
   @Public()
   @ApiEndpoint({
     id: 'webhooks.carriers.deliveree',

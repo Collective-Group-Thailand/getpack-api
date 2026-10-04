@@ -2,7 +2,7 @@ import { CurrentActor } from '@common/auth/auth.decorators';
 import { Can } from '@common/auth/can.decorator';
 import { type Actor, type UserActor } from '@common/context/actor';
 import { DomainException } from '@common/errors/domain.exception';
-import { ApiEndpoint, ApiStandardErrors, ApiSuccess } from '@common/openapi/decorators';
+import { ApiAsync, ApiEndpoint, ApiStandardErrors, ApiSuccess } from '@common/openapi/decorators';
 import { toBangkokIso } from '@common/time/bangkok';
 import { DocumentFilesService } from '@modules/receivables/document-files.service';
 import { ApiSurface } from '@modules/surfaces/surfaces';
@@ -225,6 +225,7 @@ export class AdminReportsController {
     type: CreateReportExportDto,
     examples: { default: { value: { format: 'xlsx', filters: { from: '2026-10-01', to: '2026-10-31' } } } },
   })
+  @ApiAsync({ poll: 'admin.reports.getRun' })
   @ApiSuccess(202, {
     description: 'Queued',
     type: ReportRunDto,
@@ -468,6 +469,7 @@ export class AdminReportSchedulesController {
       'Queues a run with the schedule’s filters resolved now; recipients are notified as usual. Poll `GET /v1/admin/report-runs/{runId}`.',
     implements: DOCS,
   })
+  @ApiAsync({ poll: 'admin.reports.getRun' })
   @ApiSuccess(202, {
     description: 'Queued',
     type: ReportRunDto,

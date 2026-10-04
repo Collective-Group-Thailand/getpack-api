@@ -13,6 +13,7 @@ generated `contract/openapi.json`. Any warning fails CI. The rules implement
 | `packio-operation-security-declared` | `security` is always present (`[]` = public, via `@ApiPublic` / `ApiSurface('auth'…)`) |
 | `packio-surface-security` | `/v1/store`, `/v1/admin`, `/v1/partner` use only their audience scheme, or are explicitly public (`security: []`, `@Public()`) / optionally authenticated (contract §2) |
 | `packio-response-set` | a 2xx and a 500; a 4xx (except `ops.*`); 401 and 403 when secured; 400 and 422 with a body; errors only as `application/problem+json` → `ProblemDetails` |
+| `packio-status-by-kind` | `If-Match` ⇒ 412; `Idempotency-Key` ⇒ 409; a 202 names the operation to poll or says "Nothing to poll." (`@ApiAsync`) |
 | `packio-response-example`, `packio-request-example` | every body has `example` or `examples` |
 | `packio-no-inline-enum` | enums are named components (`enumName`) |
 | `packio-object-shape` | no bare `type: object` |

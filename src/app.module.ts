@@ -1,6 +1,7 @@
 import { join } from 'node:path';
 
 import { RequestContextMiddleware } from '@common/context/request-context.middleware';
+import { DeprecationInterceptor } from '@common/deprecation/deprecation';
 import { ProblemDetailsFilter } from '@common/errors/problem-details.filter';
 import { EtagInterceptor } from '@common/etag/etag.interceptor';
 import { DEFAULT_LANGUAGE } from '@common/i18n/language';
@@ -171,6 +172,7 @@ import { LoggerModule } from 'nestjs-pino';
     { provide: APP_FILTER, useClass: ProblemDetailsFilter },
     { provide: APP_GUARD, useClass: ThrottlerGuard },
     { provide: APP_INTERCEPTOR, useClass: EtagInterceptor },
+    { provide: APP_INTERCEPTOR, useClass: DeprecationInterceptor },
   ],
 })
 export class AppModule implements NestModule {

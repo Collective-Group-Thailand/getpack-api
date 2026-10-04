@@ -1,6 +1,11 @@
-import { applyDecorators, type Type } from '@nestjs/common';
+import { applyDecorators, SetMetadata, type Type } from '@nestjs/common';
 import { ApiExtension, ApiExtraModels, ApiOperation, ApiResponse, getSchemaPath } from '@nestjs/swagger';
 
+import {
+  assertDeprecationInfo,
+  DEPRECATION_METADATA,
+  type DeprecationInfo,
+} from '../deprecation/deprecation';
 import { type ErrorCode } from '../errors/error-codes';
 import { type HeaderName, type ParameterName } from './components';
 
@@ -17,6 +22,7 @@ export const EXT = {
   public: 'x-packio-public',
   optionalAuth: 'x-packio-optional-auth',
   unthrottled: 'x-packio-unthrottled',
+  async: 'x-packio-async',
 } as const;
 
 /** Each contributing decorator writes its own extension key, so contributions never overwrite each other. */
@@ -35,8 +41,11 @@ export interface ApiEndpointOptions {
   description: string;
   /** Decision ids (`D-052`) — or ADR ids for platform endpoints — this operation implements. */
   implements: string[];
-  /** Kept for one release while clients move to its replacement (named in the description). */
-  deprecated?: boolean;
+  /**
+   * Kept while clients move to its replacement (named in the description): sends `Deprecation`
+   * (and `Sunset` once set) and logs every call (`DeprecationInterceptor`); removed in U-B5.
+   */
+  deprecated?: DeprecationInfo;
 }
 
 /** Operation id, summary and a description that cites the decisions it implements. */
@@ -47,12 +56,22 @@ export function ApiEndpoint(options: ApiEndpointOptions) {
   if (options.implements.length === 0 || !options.implements.every((ref) => REFERENCE_PATTERN.test(ref))) {
     throw new Error(`ApiEndpoint(${options.id}): implements must list D-### or ADR-#### ids`);
   }
-  return ApiOperation({
+  const operation = ApiOperation({
     operationId: options.id,
     summary: options.summary,
     description: `${options.description}\n\nImplements: ${options.implements.join(', ')}.`,
     ...(options.deprecated && { deprecated: true }),
   });
+  if (!options.deprecated) return operation;
+  assertDeprecationInfo(`ApiEndpoint(${options.id})`, options.deprecated);
+  return applyDecorators(
+    operation,
+    SetMetadata(DEPRECATION_METADATA, { ...options.deprecated, operationId: options.id }),
+    ext(EXT.successHeaders, 'deprecation', [
+      'Deprecation',
+      ...(options.deprecated.sunset ? (['Sunset'] as const) : []),
+    ] satisfies HeaderName[]),
+  );
 }
 
 export interface ApiSuccessOptions {
@@ -154,4 +173,15 @@ export function ApiUnthrottled() {
 /** Errors every secured surface operation can return (audience, permission, scope). */
 export function ApiAuthErrors() {
   return ext(EXT.errors, 'auth', ['auth.unauthenticated', 'auth.forbidden'] satisfies ErrorCode[]);
+}
+
+/**
+ * Asynchronous operation (contract §5): the 202 response names the operation to poll, or says there
+ * is nothing to poll (fire-and-forget). Pair with `@HttpCode(202)` and `@ApiSuccess(202, …)`.
+ */
+export function ApiAsync(options: { poll: string } | { poll: null }) {
+  if (options.poll !== null && !OPERATION_ID_PATTERN.test(options.poll)) {
+    throw new Error(`ApiAsync: poll "${options.poll}" must be an operation id`);
+  }
+  return ApiExtension(EXT.async, options.poll ?? false);
 }

@@ -70,7 +70,7 @@ export class AdminMockupsController {
       'Before production only; one per order. **Deprecated** (D-254): use `admin.samples.create`, which also keeps ' +
       'the factory’s buy amount; this one creates the same attached sample without it. Removed in U-B5.',
     implements: ['D-072', 'D-020', 'D-254'],
-    deprecated: true,
+    deprecated: { since: '2026-10-03' },
   })
   @ApiBody({
     type: AddMockupDto,

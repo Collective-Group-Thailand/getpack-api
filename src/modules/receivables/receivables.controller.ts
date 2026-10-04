@@ -3,7 +3,7 @@ import { Can } from '@common/auth/can.decorator';
 import { type Actor, type UserActor } from '@common/context/actor';
 import { DomainException } from '@common/errors/domain.exception';
 import { Idempotent } from '@common/idempotency/idempotent.decorator';
-import { ApiEndpoint, ApiStandardErrors, ApiSuccess } from '@common/openapi/decorators';
+import { ApiAsync, ApiEndpoint, ApiStandardErrors, ApiSuccess } from '@common/openapi/decorators';
 import { ApiPaginated } from '@common/pagination/api-paginated.decorator';
 import { bangkokDate, toBangkokIso } from '@common/time/bangkok';
 import { PrismaService } from '@database/prisma.service';
@@ -183,6 +183,7 @@ export class AdminCustomerDocumentsController {
       'where it went. A void document is refused (409). Audited.',
     implements: ['D-143', 'D-010'],
   })
+  @ApiAsync({ poll: 'admin.customerDocuments.deliveries' })
   @ApiSuccess(202, {
     description: 'Requested',
     type: DocumentSendResultDto,

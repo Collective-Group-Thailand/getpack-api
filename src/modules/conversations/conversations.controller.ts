@@ -24,7 +24,7 @@ import {
   Req,
   VERSION_NEUTRAL,
 } from '@nestjs/common';
-import { ApiBody, ApiParam } from '@nestjs/swagger';
+import { ApiBody, ApiHeader, ApiParam } from '@nestjs/swagger';
 
 import { ConversationStatsService } from './canned-responses.service';
 import { conversationView, messageViews } from './conversation-views';
@@ -114,6 +114,12 @@ export class LineWebhookController {
       },
     },
     examples: { default: { value: { destination: 'U0000000000000000000000000000fake', events: [] } } },
+  })
+  @ApiHeader({
+    name: 'x-line-signature',
+    required: true,
+    description: 'Base64 HMAC-SHA256 of the exact request body with the channel secret (LINE signature)',
+    schema: { type: 'string', example: 'c2lnbmF0dXJlLWV4YW1wbGU=' },
   })
   @ApiSuccess(200, { description: 'Accepted', type: LineWebhookAckDto, example: { ok: true } })
   @ApiStandardErrors('line.signature_invalid', 'http.bad_request', 'http.malformed_json', 'validation.failed')

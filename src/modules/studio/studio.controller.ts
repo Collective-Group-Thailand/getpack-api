@@ -2,7 +2,7 @@ import { CurrentActor, Public } from '@common/auth/auth.decorators';
 import { type Actor, type UserActor } from '@common/context/actor';
 import { DomainException } from '@common/errors/domain.exception';
 import { Idempotent } from '@common/idempotency/idempotent.decorator';
-import { ApiEndpoint, ApiStandardErrors, ApiSuccess } from '@common/openapi/decorators';
+import { ApiAsync, ApiEndpoint, ApiStandardErrors, ApiSuccess } from '@common/openapi/decorators';
 import { toBangkokIso } from '@common/time/bangkok';
 import { quoteDto } from '@modules/quotes/quote-views';
 import { QUOTE_EXAMPLE, SavedQuoteDto } from '@modules/quotes/quotes.dto';
@@ -182,6 +182,7 @@ export class StoreStudioController {
       },
     },
   })
+  @ApiAsync({ poll: 'store.studio.getPrintJob' })
   @ApiSuccess(202, { description: 'Print job queued', type: StudioPrintJobDto, example: PRINT_JOB_EXAMPLE })
   @ApiStandardErrors(
     'http.bad_request',

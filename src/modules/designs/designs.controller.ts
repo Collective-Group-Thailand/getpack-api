@@ -5,6 +5,7 @@ import { DomainException } from '@common/errors/domain.exception';
 import { IfMatch } from '@common/etag/etag.interceptor';
 import { Idempotent } from '@common/idempotency/idempotent.decorator';
 import {
+  ApiAsync,
   ApiConcurrency,
   ApiEndpoint,
   ApiEtag,
@@ -448,7 +449,7 @@ export class StoreDesignsController {
       'again replaces the previous link; it expires after `configurations.share_link_days` (D-185) and can be ' +
       'revoked (D-226). Deprecated: scoped links (`store.studio.createShareLink`, D-285) replace it.',
     implements: ['D-226', 'D-185'],
-    deprecated: true,
+    deprecated: { since: '2026-10-03' },
   })
   @ApiSuccess(201, {
     description: 'Shared',
@@ -484,7 +485,7 @@ export class StoreDesignsController {
       'Revokes the live link: it stops opening at once (D-226). 404 when not shared. Deprecated with ' +
       '`store.designs.share` (D-285).',
     implements: ['D-226'],
-    deprecated: true,
+    deprecated: { since: '2026-10-03' },
   })
   @ApiSuccess(204, { description: 'Revoked' })
   @ApiStandardErrors('http.not_found', 'validation.failed')
@@ -657,6 +658,7 @@ export class StoreDesignsController {
       },
     },
   })
+  @ApiAsync({ poll: 'store.designs.getDrawing' })
   @ApiSuccess(202, { description: 'Queued', type: DrawingJobDto, example: DRAWING_EXAMPLE })
   @ApiStandardErrors(
     'http.bad_request',
@@ -908,6 +910,7 @@ export class AdminDesignsController {
     implements: ['D-070'],
   })
   @ApiBody({ type: OrderDrawingDto, examples: { default: { value: { format: 'pdf' } } } })
+  @ApiAsync({ poll: 'admin.designs.listOrderDrawings' })
   @ApiSuccess(202, {
     description: 'Queued',
     type: DrawingJobDto,

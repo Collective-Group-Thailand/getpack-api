@@ -12,6 +12,7 @@ import helmet from 'helmet';
 import { DomainException } from '../errors/domain.exception';
 import { ipAllowed, parseCidrList } from '../http/cidr';
 import { buildOpenApiDocument } from './openapi.document';
+import { scalarOptions } from './scalar-options';
 
 /** Staff who may read the docs outside the allow-list (production, contract §5). */
 const DOCS_PERMISSION = 'settings.read';
@@ -65,17 +66,16 @@ export function setupDocs(app: INestApplication, version: string): void {
     // pnpm keeps packages under node_modules/.pnpm; `send` ignores dot-directories unless allowed.
     res.sendFile(SCALAR_BUNDLE, { dotfiles: 'allow' });
   });
+  const scalar = scalarOptions(!config.isProduction);
   http.get(DOCS_PATHS.scalar, (req: Request, res: Response) => {
     const render = apiReference({
+      // Scalar's option types are zod-inferred unions too large to check here; the values are pinned by
+      // scalar-options.spec.ts.
+      ...(scalar as object),
       url: DOCS_PATHS.json,
       cdn: DOCS_PATHS.scalarBundle,
       pageTitle: 'Packio API reference',
       nonce: String(res.locals.cspNonce),
-      // Nothing leaves the page: no telemetry, no Scalar fonts/proxy, no MCP integration.
-      telemetry: false,
-      withDefaultFonts: false,
-      mcp: { disabled: true },
-      defaultOpenAllTags: false,
     });
     render(req, res);
   });

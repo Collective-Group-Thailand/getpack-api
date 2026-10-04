@@ -3,7 +3,7 @@ import { Can } from '@common/auth/can.decorator';
 import { type Actor, type UserActor } from '@common/context/actor';
 import { DomainException } from '@common/errors/domain.exception';
 import { Idempotent } from '@common/idempotency/idempotent.decorator';
-import { ApiEndpoint, ApiStandardErrors, ApiSuccess } from '@common/openapi/decorators';
+import { ApiAsync, ApiEndpoint, ApiStandardErrors, ApiSuccess } from '@common/openapi/decorators';
 import { toBangkokIso } from '@common/time/bangkok';
 import { DocumentFilesService } from '@modules/receivables/document-files.service';
 import { ApiSurface } from '@modules/surfaces/surfaces';
@@ -92,6 +92,7 @@ export class StoreAnalyticsController {
       },
     },
   })
+  @ApiAsync({ poll: null })
   @ApiSuccess(202, {
     description: 'Accepted',
     type: AnalyticsIngestResultDto,
@@ -458,6 +459,7 @@ export class AdminAnalyticsController {
     type: RollupRequestDto,
     examples: { default: { value: { from: '2026-10-01', to: '2026-10-31' } } },
   })
+  @ApiAsync({ poll: 'admin.analytics.rollupRuns' })
   @ApiSuccess(202, { description: 'Queued', type: RollupQueuedDto, example: { queued: 372 } })
   @ApiStandardErrors('http.bad_request', 'http.malformed_json', ...RANGE_ERRORS)
   async queue(@CurrentActor() actor: Actor, @Body() body: RollupRequestDto): Promise<RollupQueuedDto> {
@@ -517,6 +519,7 @@ export class AdminAnalyticsController {
     type: CreateProspectusDto,
     examples: { default: { value: { from: '2026-10-01', to: '2026-12-31' } } },
   })
+  @ApiAsync({ poll: 'admin.analytics.getProspectus' })
   @ApiSuccess(202, {
     description: 'Queued',
     type: ProspectusExportDto,

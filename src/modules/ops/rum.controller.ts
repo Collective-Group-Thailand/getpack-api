@@ -1,7 +1,7 @@
 import { Public } from '@common/auth/auth.decorators';
 import { Can } from '@common/auth/can.decorator';
 import { DomainException } from '@common/errors/domain.exception';
-import { ApiEndpoint, ApiStandardErrors, ApiSuccess } from '@common/openapi/decorators';
+import { ApiAsync, ApiEndpoint, ApiStandardErrors, ApiSuccess } from '@common/openapi/decorators';
 import { ApiSurface } from '@modules/surfaces/surfaces';
 import { Body, Controller, Get, HttpCode, Post, Query, type Type } from '@nestjs/common';
 import { ApiBody, ApiQuery } from '@nestjs/swagger';
@@ -31,6 +31,7 @@ function rumController(zone: RumZone): Type<unknown> {
       implements: ['D-144'],
     })
     @ApiBody({ type: WebVitalDto, examples: { default: { value: { ...WEB_VITAL_EXAMPLE, zone } } } })
+    @ApiAsync({ poll: null })
     @ApiSuccess(202, { description: 'Accepted' })
     @ApiStandardErrors('http.bad_request', 'http.malformed_json', 'validation.failed')
     async record(@Body() body: WebVitalDto): Promise<void> {

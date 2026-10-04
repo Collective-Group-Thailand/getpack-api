@@ -10,6 +10,7 @@ functions:
   - noDuplicateSchemas
   - noRealPersonalData
   - surfaceSecurity
+  - statusByKind
 
 rules:
   # --- built-in rules tightened ---------------------------------------------------------------
@@ -90,6 +91,15 @@ rules:
     given: $.paths[*][get,put,post,delete,patch]
     then:
       function: responseSet
+
+  packio-status-by-kind:
+    description: If-Match ⇒ 412, Idempotency-Key ⇒ 409, 202 ⇒ the polling operation is named (@ApiAsync).
+    message: '{{error}}'
+    resolved: false
+    severity: error
+    given: $.paths[*][get,put,post,delete,patch]
+    then:
+      function: statusByKind
 
   # --- examples ------------------------------------------------------------------------------
   packio-response-example:
