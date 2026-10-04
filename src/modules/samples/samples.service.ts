@@ -11,6 +11,7 @@ import { canonical } from '@modules/catalog/imports/import-engine';
 import { FactoryAccess } from '@modules/partners/factories/factory-access';
 import { OrderChargesService } from '@modules/payment-schedules/order-charges.service';
 import { CsServicePricingService } from '@modules/pricing/quotes/cs-service-pricing.service';
+import { type ServiceAmountBasis } from '@modules/pricing/quotes/service-amount';
 import { SavedQuotesService } from '@modules/quotes/saved-quotes.service';
 import { ShippingRatesResolver } from '@modules/shipping/rates/shipping-rates.resolver';
 import { Injectable } from '@nestjs/common';
@@ -60,7 +61,7 @@ export interface SamplePhoto {
 export interface PriceInput {
   /** A service catalogue item (e.g. a mockup) whose sell table prices the CS amount (D-194). */
   serviceItemId: string;
-  basis: 'buy_cost_net' | 'sell_gross';
+  basis: ServiceAmountBasis;
   amount: number;
 }
 

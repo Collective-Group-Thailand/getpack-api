@@ -419,6 +419,7 @@ export class AdminPromotionsController {
     'validation.failed',
     'promotions.invalid_transition',
     'promotions.no_codes',
+    'promotions.system_managed',
   )
   async action(
     @CurrentActor() actor: Actor,

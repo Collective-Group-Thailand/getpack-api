@@ -69,6 +69,7 @@ import {
   SERVICE_CONFIGURATION_EXAMPLE,
   ServiceConfigurationDto,
 } from './service.dto';
+import { resolveServiceAmount } from './service-amount';
 import { ServiceInputDataService } from './service-input-data.service';
 import {
   STANDARD_PRODUCT_CONFIGURATION_EXAMPLE,
@@ -277,6 +278,9 @@ export class AdminCsFoldingController {
     'http.malformed_json',
     'validation.failed',
     'pricing.vat_rate_missing',
+    'specs.basis_not_accepted',
+    'specs.unit_not_accepted',
+    'specs.caliper_missing',
   )
   @ApiQuery({
     name: 'deliveryPostcode',
@@ -395,6 +399,9 @@ export class AdminCsCorrugateController {
     'http.malformed_json',
     'validation.failed',
     'pricing.vat_rate_missing',
+    'specs.basis_not_accepted',
+    'specs.caliper_missing',
+    'specs.unit_not_accepted',
   )
   @ApiQuery({
     name: 'deliveryPostcode',
@@ -507,6 +514,8 @@ export class AdminCsLabelController {
     'http.malformed_json',
     'validation.failed',
     'pricing.vat_rate_missing',
+    'specs.basis_not_accepted',
+    'specs.unit_not_accepted',
   )
   @ApiQuery({
     name: 'deliveryPostcode',
@@ -624,6 +633,9 @@ export class AdminCsTagSleeveController {
     'http.malformed_json',
     'validation.failed',
     'pricing.vat_rate_missing',
+    'specs.basis_not_accepted',
+    'specs.caliper_missing',
+    'specs.unit_not_accepted',
   )
   @ApiQuery({
     name: 'deliveryPostcode',
@@ -736,6 +748,8 @@ export class AdminCsPouchController {
     'http.malformed_json',
     'validation.failed',
     'pricing.vat_rate_missing',
+    'specs.basis_not_accepted',
+    'specs.unit_not_accepted',
   )
   @ApiQuery({
     name: 'deliveryPostcode',
@@ -988,10 +1002,11 @@ export class AdminCsServiceController {
     summary: 'Price a service from the amount CS enters',
     description:
       'Legacy `cs/service` maths, computed on the server (D-194: the price is entered by CS, no new formula): from a ' +
-      'net cost, Packio’s `service` margin and the dated VAT give the net and gross sell price; from a VAT-inclusive ' +
-      'sell price (design), the net and the cost — each rounded as legacy’s page did — and, for a hired freelancer, the ' +
-      'payable (legacy `design_cost`). Nothing is saved. A cost CS did not enter needs `factory_cost.read`, the margin ' +
-      '`margin.read` (D-141).',
+      'net buy price, Packio’s `service` margin and the dated VAT give the net and gross sell price; from a ' +
+      'VAT-inclusive sell price (design), the net and the buy price — each rounded as legacy’s page did — and, for a ' +
+      'hired freelancer, the payable (legacy `design_cost`). Nothing is saved. A buy price CS did not enter needs ' +
+      '`factory_cost.read`, the margin `margin.read` (D-141). The amount is `unitAmount` (money string); the numeric ' +
+      '`amount` and the basis `buy_cost_net` are deprecated spellings, still accepted (D-042).',
     implements: ['D-194', 'D-100', 'D-063', 'D-141'],
   })
   @ApiBody({ type: CsServicePriceDto, examples: { default: { value: CS_SERVICE_PRICE_EXAMPLE } } })
@@ -1012,10 +1027,14 @@ export class AdminCsServiceController {
   ): Promise<CsServicePriceResultDto> {
     const granted =
       actor.type === 'user' ? (await this.permissions.forUser(actor.userId)).permissions : new Set<string>();
-    return this.pricing.price(body, {
-      cost: granted.has('factory_cost.read'),
-      margin: granted.has('margin.read'),
-    });
+    const { basis, amount } = resolveServiceAmount(body, 'admin.csService.price');
+    return this.pricing.price(
+      { ...body, basis, amount, basisAsSent: body.basis },
+      {
+        cost: granted.has('factory_cost.read'),
+        margin: granted.has('margin.read'),
+      },
+    );
   }
 }
 

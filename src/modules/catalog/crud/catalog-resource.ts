@@ -80,6 +80,8 @@ export interface CatalogResource<
   sort: Record<string, string>;
   /** Code returned on a unique-key conflict (409). */
   conflict: ErrorCode;
+  /** Further problem codes this resource's create / update can return (documented on those operations). */
+  errors?: { create?: ErrorCode[]; update?: ErrorCode[] };
 }
 
 /** Keeps generic parameters when declaring a descriptor. */

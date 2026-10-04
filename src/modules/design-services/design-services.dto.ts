@@ -225,13 +225,13 @@ export class DesignRoundDto {
   })
   instalmentId!: string | null;
 
-  @ApiProperty({ example: '2026-09-27T10:00:00+07:00' })
+  @ApiProperty({ format: 'date-time', example: '2026-09-27T10:00:00+07:00' })
   requestedAt!: string;
 
-  @ApiProperty({ type: String, nullable: true, example: '2026-09-27T10:00:00+07:00' })
+  @ApiProperty({ format: 'date-time', type: String, nullable: true, example: '2026-09-27T10:00:00+07:00' })
   startedAt!: string | null;
 
-  @ApiProperty({ type: String, nullable: true, example: null })
+  @ApiProperty({ format: 'date-time', type: String, nullable: true, example: null })
   deliveredAt!: string | null;
 }
 
@@ -288,13 +288,14 @@ export class DesignServiceDto {
   @ApiProperty({ type: DesignBriefViewDto, nullable: true })
   brief!: DesignBriefViewDto | null;
 
-  @ApiProperty({ type: String, nullable: true, example: '2026-09-27T09:00:00+07:00' })
+  @ApiProperty({ format: 'date-time', type: String, nullable: true, example: '2026-09-27T09:00:00+07:00' })
   briefSubmittedAt!: string | null;
 
   @ApiProperty({ type: UserRefDto, nullable: true, description: 'Staff only; null on the store surface' })
   assignee!: UserRefDto | null;
 
   @ApiProperty({
+    format: 'date-time',
     type: String,
     nullable: true,
     example: '2026-10-04T10:00:00+07:00',
@@ -303,6 +304,7 @@ export class DesignServiceDto {
   targetDueAt!: string | null;
 
   @ApiProperty({
+    format: 'date-time',
     type: String,
     nullable: true,
     example: '2026-10-11T10:00:00+07:00',

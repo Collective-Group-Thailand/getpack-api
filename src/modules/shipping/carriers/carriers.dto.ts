@@ -126,12 +126,22 @@ export class CarrierPlaceDto {
   @Matches(POSTCODE)
   postcode!: string;
 
-  @ApiPropertyOptional({ type: Number, nullable: true, example: 13.7563 })
+  @ApiPropertyOptional({
+    description: 'Latitude, decimal degrees (WGS 84)',
+    type: Number,
+    nullable: true,
+    example: 13.7563,
+  })
   @IsOptional()
   @IsLatitude()
   lat?: number | null;
 
-  @ApiPropertyOptional({ type: Number, nullable: true, example: 100.5018 })
+  @ApiPropertyOptional({
+    description: 'Longitude, decimal degrees (WGS 84)',
+    type: Number,
+    nullable: true,
+    example: 100.5018,
+  })
   @IsOptional()
   @IsLongitude()
   lng?: number | null;

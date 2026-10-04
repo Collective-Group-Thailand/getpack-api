@@ -16,11 +16,11 @@ const JOURNEY_KEYS = JOURNEYS.map((j) => j.key);
 const DAY = /^\d{4}-\d{2}-\d{2}$/;
 
 export class JourneysQuery {
-  @ApiProperty({ example: '2026-10-01', description: 'First Bangkok day' })
+  @ApiProperty({ format: 'date', example: '2026-10-01', description: 'First Bangkok day' })
   @Matches(DAY)
   from!: string;
 
-  @ApiProperty({ example: '2026-10-31', description: 'Last Bangkok day (at most 400 days)' })
+  @ApiProperty({ format: 'date', example: '2026-10-31', description: 'Last Bangkok day (at most 400 days)' })
   @Matches(DAY)
   to!: string;
 }

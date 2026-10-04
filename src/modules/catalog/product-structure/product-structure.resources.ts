@@ -771,6 +771,11 @@ export const patterns = defineResource({
   search: ['code', 'name', 'technicalName'],
   sort: { code: 'code', updatedAt: 'updatedAt' },
   conflict: 'catalog.code_taken',
+  // D-184 / F6: publishing needs a style code; a published style keeps it.
+  errors: {
+    create: ['catalog.style_code_required'],
+    update: ['catalog.style_code_required', 'catalog.style_code_immutable'],
+  },
 });
 
 // ------------------------------------------------------------------------------------------------

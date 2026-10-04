@@ -211,13 +211,13 @@ export class AnnotationDto {
   @ApiProperty({ type: AnnotationAuthorDto })
   author!: AnnotationAuthorDto;
 
-  @ApiProperty({ type: String, nullable: true, example: null })
+  @ApiProperty({ format: 'date-time', type: String, nullable: true, example: null })
   resolvedAt!: string | null;
 
   @ApiProperty({ type: AnnotationAuthorDto, nullable: true, description: 'Who resolved it' })
   resolvedBy!: AnnotationAuthorDto | null;
 
-  @ApiProperty({ example: '2026-09-27T11:00:00+07:00' })
+  @ApiProperty({ format: 'date-time', example: '2026-09-27T11:00:00+07:00' })
   createdAt!: string;
 }
 
@@ -287,10 +287,10 @@ export class ProofDto {
   @ApiProperty({ type: String, nullable: true, example: 'ขยายโลโก้ตามที่ลูกค้าขอ' })
   changeNote!: string | null;
 
-  @ApiProperty({ example: '2026-09-27T11:00:00+07:00' })
+  @ApiProperty({ format: 'date-time', example: '2026-09-27T11:00:00+07:00' })
   sentAt!: string;
 
-  @ApiProperty({ type: String, nullable: true, example: null })
+  @ApiProperty({ format: 'date-time', type: String, nullable: true, example: null })
   decidedAt!: string | null;
 
   @ApiProperty({ enum: DECISION_CHANNELS, enumName: 'DecisionChannel', nullable: true, example: null })
@@ -359,7 +359,7 @@ export class DielineDeliveryDto {
   @ApiProperty({ type: String, nullable: true, example: 'แบบแปลนกล่องขนาด 100×100×50 มม.' })
   note!: string | null;
 
-  @ApiProperty({ example: '2026-09-27T09:00:00+07:00' })
+  @ApiProperty({ format: 'date-time', example: '2026-09-27T09:00:00+07:00' })
   sentAt!: string;
 }
 

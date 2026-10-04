@@ -54,10 +54,10 @@ export class StudioMetricDto {
 }
 
 export class StudioFunnelReportDto {
-  @ApiProperty({ example: '2026-10-01' })
+  @ApiProperty({ format: 'date', example: '2026-10-01' })
   from!: string;
 
-  @ApiProperty({ example: '2026-10-31' })
+  @ApiProperty({ format: 'date', example: '2026-10-31' })
   to!: string;
 
   @ApiProperty({ type: [StudioFunnelStepDto] })

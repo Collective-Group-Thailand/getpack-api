@@ -17,6 +17,7 @@ generated `contract/openapi.json`. Any warning fails CI. The rules implement
 | `packio-response-example`, `packio-request-example` | every body has `example` or `examples` |
 | `packio-no-inline-enum` | enums are named components (`enumName`) |
 | `packio-object-shape` | no bare `type: object` |
+| `packio-field-formats` | money (unit THB) is a decimal string, never a JSON number (deprecated fields excepted); `…At` → `date-time`; `…On` / `…Date` → `date` |
 | `packio-no-duplicate-schemas` | no two component schemas with the same shape |
 | `packio-no-real-personal-data` | examples use obviously fake data (below) |
 

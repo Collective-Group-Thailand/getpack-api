@@ -13,7 +13,19 @@ import { ServiceSnapshotLoader } from '../calculators/service/service-snapshot.l
 import { PricingError } from '../calculators/shared/pricing-error';
 import { loadSellSnapshot } from '../calculators/shared/sell-snapshot';
 import { quantityMargin } from '../calculators/standard-product/standard-product-calculator';
-import { type CsServicePriceDto, type CsServicePriceResultDto, type ServiceAmountsDto } from './service.dto';
+import { type CsServicePriceResultDto, type ServiceAmountsDto } from './service.dto';
+import { type ServiceAmountBasis } from './service-amount';
+
+/** A service amount already resolved from the request (`resolveServiceAmount`). */
+export interface ServicePriceInput {
+  catalogProductId: string;
+  basis: ServiceAmountBasis;
+  amount: number;
+  quantity?: number;
+  freelancer?: boolean;
+  /** The basis as the client spelled it, echoed back (a deprecated spelling stays as sent). */
+  basisAsSent?: string;
+}
 
 const money = (n: number) => formatMoney(n);
 
@@ -29,7 +41,7 @@ export class CsServicePricingService {
   ) {}
 
   async price(
-    body: CsServicePriceDto,
+    body: ServicePriceInput,
     grants: { cost: boolean; margin: boolean },
     at = new Date(),
   ): Promise<CsServicePriceResultDto> {
@@ -41,7 +53,7 @@ export class CsServicePricingService {
     try {
       marginPct = quantityMargin(sell.snapshot, quantity);
       unit =
-        body.basis === 'buy_cost_net'
+        body.basis === 'buy_price_net'
           ? fromCost(body.amount, marginPct, sell.snapshot.vatPct)
           : fromGross(body.amount, marginPct, sell.snapshot.vatPct);
     } catch (error) {
@@ -49,7 +61,7 @@ export class CsServicePricingService {
       throw new DomainException('validation.failed', {
         errors: [
           {
-            path: error.detail === 'sell margin' ? 'catalogProductId' : 'amount',
+            path: error.detail === 'sell margin' ? 'catalogProductId' : 'unitAmount',
             code: 'invalid',
             message: error.detail,
           },
@@ -57,20 +69,24 @@ export class CsServicePricingService {
       });
     }
     // The cost is shown when CS entered it, or with the buy-price grant (D-141); the margin with `margin.read`.
-    const showCost = body.basis === 'buy_cost_net' || grants.cost;
-    const amounts = (a: ServiceAmounts, n: number): ServiceAmountsDto => ({
-      costAmount: showCost ? money(a.cost * n) : null,
-      netAmount: money(a.net * n),
-      vatAmount: money(a.vat * n),
-      grossAmount: money(a.gross * n),
-      marginAmount: grants.margin ? money(a.margin * n) : null,
-    });
+    const showCost = body.basis === 'buy_price_net' || grants.cost;
+    const amounts = (a: ServiceAmounts, n: number): ServiceAmountsDto => {
+      const buy = showCost ? money(a.cost * n) : null;
+      return {
+        buyAmount: buy,
+        costAmount: buy,
+        netAmount: money(a.net * n),
+        vatAmount: money(a.vat * n),
+        grossAmount: money(a.gross * n),
+        marginAmount: grants.margin ? money(a.margin * n) : null,
+      };
+    };
     const payable =
       body.basis === 'sell_gross' && body.freelancer
         ? freelancerPayable(body.amount, marginPct, sell.snapshot.vatPct) * quantity
         : null;
     return {
-      basis: body.basis,
+      basis: body.basisAsSent ?? body.basis,
       quantity,
       marginPct: grants.margin ? String(marginPct) : null,
       vatPct: String(sell.snapshot.vatPct),

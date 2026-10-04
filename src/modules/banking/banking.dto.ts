@@ -175,7 +175,11 @@ export class ImportStatementDto {
   @IsUUID()
   companyBankAccountId!: string;
 
-  @ApiPropertyOptional({ format: 'uuid', description: 'An uploaded statement file, parsed by `format`' })
+  @ApiPropertyOptional({
+    example: '0192f3a0-7c1e-7d2a-9b1f-0000000b2005',
+    format: 'uuid',
+    description: 'An uploaded statement file, parsed by `format`',
+  })
   @IsOptional()
   @IsUUID()
   fileId?: string;
@@ -294,7 +298,7 @@ export class ManualMatchDto {
   @IsIn(MATCH_TARGETS)
   targetType!: (typeof MATCH_TARGETS)[number];
 
-  @ApiProperty({ format: 'uuid' })
+  @ApiProperty({ example: '0192f3a0-7c1e-7d2a-9b1f-0000000b2014', format: 'uuid' })
   @IsUUID()
   targetId!: string;
 }

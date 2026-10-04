@@ -360,10 +360,20 @@ export class FactoryAddressDto {
   @ApiProperty({ type: String, nullable: true, example: '10200' })
   postcode!: string | null;
 
-  @ApiProperty({ type: Number, nullable: true, example: 13.75 })
+  @ApiProperty({
+    description: 'Latitude, decimal degrees (WGS 84)',
+    type: Number,
+    nullable: true,
+    example: 13.75,
+  })
   lat!: number | null;
 
-  @ApiProperty({ type: Number, nullable: true, example: 100.5 })
+  @ApiProperty({
+    description: 'Longitude, decimal degrees (WGS 84)',
+    type: Number,
+    nullable: true,
+    example: 100.5,
+  })
   lng!: number | null;
 }
 
@@ -385,12 +395,26 @@ export class CreateFactoryAddressDto {
   @Matches(/^[0-9]{5}$/)
   postcode?: string | null;
 
-  @ApiPropertyOptional({ type: Number, nullable: true, example: 13.75, minimum: -90, maximum: 90 })
+  @ApiPropertyOptional({
+    description: 'Latitude, decimal degrees (WGS 84)',
+    type: Number,
+    nullable: true,
+    example: 13.75,
+    minimum: -90,
+    maximum: 90,
+  })
   @IsOptional()
   @Type(() => Number)
   lat?: number | null;
 
-  @ApiPropertyOptional({ type: Number, nullable: true, example: 100.5, minimum: -180, maximum: 180 })
+  @ApiPropertyOptional({
+    description: 'Longitude, decimal degrees (WGS 84)',
+    type: Number,
+    nullable: true,
+    example: 100.5,
+    minimum: -180,
+    maximum: 180,
+  })
   @IsOptional()
   @Type(() => Number)
   lng?: number | null;

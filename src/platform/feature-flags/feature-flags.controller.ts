@@ -148,7 +148,13 @@ export class FeatureFlagsController {
     examples: { default: { value: { enabled: true, rules: { audiences: ['staff'] } } } },
   })
   @ApiSuccess(200, { description: 'Saved', type: FeatureFlagDto, example: EXAMPLE })
-  @ApiStandardErrors('http.bad_request', 'http.malformed_json', 'validation.failed', 'feature_flags.dev_only')
+  @ApiStandardErrors(
+    'http.bad_request',
+    'http.malformed_json',
+    'validation.failed',
+    'feature_flags.dev_only',
+    'assistant.not_cleared',
+  )
   async set(
     @CurrentActor() actor: Actor,
     @Param('key') key: string,

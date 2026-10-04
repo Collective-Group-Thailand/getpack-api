@@ -297,10 +297,10 @@ export class FirstResponseStatsDto extends DurationStatsDto {
 }
 
 export class ConversationStatsDto {
-  @ApiProperty({ example: '2026-10-01' })
+  @ApiProperty({ format: 'date', example: '2026-10-01' })
   from!: string;
 
-  @ApiProperty({ example: '2026-10-31' })
+  @ApiProperty({ format: 'date', example: '2026-10-31' })
   to!: string;
 
   @ApiProperty({ type: 'integer', example: 51, description: 'Threads opened in the period' })

@@ -753,7 +753,14 @@ export class AdminClaimsController extends ClaimViews {
     type: AdminClaimDto,
     example: { ...ADMIN_CLAIM_EXAMPLE, status: 'approved' },
   })
-  @ApiStandardErrors(...WRITE, 'claims.invalid_status', 'claims.liability_undetermined')
+  @ApiStandardErrors(
+    ...WRITE,
+    'claims.invalid_status',
+    'claims.liability_undetermined',
+    'claims.remedy_not_allowed',
+    'claims.severity_required',
+    'discount_memos.not_usable',
+  )
   async decide(
     @CurrentActor() actor: Actor,
     @Param('claimId', ParseUUIDPipe) claimId: string,

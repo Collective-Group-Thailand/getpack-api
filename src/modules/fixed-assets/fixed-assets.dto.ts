@@ -297,6 +297,7 @@ export class RegisterAssetDto {
   source!: (typeof ASSET_SOURCES)[number];
 
   @ApiPropertyOptional({
+    example: '0192f3a0-7c1e-7d2a-9b1f-0000000b2020',
     format: 'uuid',
     description: 'Required for `vendor_bill`: the bill with the asset line',
   })
@@ -318,7 +319,11 @@ export class RegisterAssetDto {
   @MaxLength(200)
   location?: string;
 
-  @ApiPropertyOptional({ format: 'uuid', description: 'The staff member holding the asset' })
+  @ApiPropertyOptional({
+    example: '0192f3a0-7c1e-7d2a-9b1f-0000000b2019',
+    format: 'uuid',
+    description: 'The staff member holding the asset',
+  })
   @IsOptional()
   @IsUUID()
   custodianUserId?: string;

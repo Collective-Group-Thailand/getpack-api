@@ -38,6 +38,8 @@ interface FieldOptions {
   description?: string;
   /** Required on create (the update DTO makes everything optional). */
   optional?: boolean;
+  /** Still accepted, kept until U-B5 (the replacement is named in the description). */
+  deprecated?: boolean;
 }
 
 /** Swagger options only (validation-only keys such as `min`, `scale` or `unit` must not leak into the contract). */
@@ -52,6 +54,7 @@ const DOC_KEYS = [
   'pattern',
   'minimum',
   'maximum',
+  'deprecated',
 ] as const;
 const doc = (o: FieldOptions & Partial<Record<(typeof DOC_KEYS)[number], unknown>>) => {
   const source = o as unknown as Record<string, unknown>;

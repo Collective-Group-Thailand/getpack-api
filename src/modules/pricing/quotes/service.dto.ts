@@ -1,9 +1,12 @@
 import { BoolField, DecimalField, EnumField, IntField, RefField } from '@modules/catalog/crud/dto-fields';
-import { ApiProperty } from '@nestjs/swagger';
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { Type } from 'class-transformer';
-import { ArrayMaxSize, ArrayMinSize, IsArray, IsInt, Max, Min } from 'class-validator';
+import { ArrayMaxSize, ArrayMinSize, IsArray, IsInt, IsOptional, Matches, Max, Min } from 'class-validator';
 
 import { MAX_QUANTITY_TIERS } from './quote.dto';
+import { SERVICE_AMOUNT_BASES, UNIT_AMOUNT_PATTERN } from './service-amount';
+
+export { SERVICE_AMOUNT_BASES };
 
 /** Service configuration and CS service pricing DTOs (U-B6 service). Money is a 2-decimal string (contract §3). */
 
@@ -31,27 +34,39 @@ export class ServiceConfigurationDto {
 
 export const SERVICE_CONFIGURATION_EXAMPLE = { catalogProductId: SERVICE_IDS.item, quantities: [1] };
 
-export const SERVICE_AMOUNT_BASES = ['buy_cost_net', 'sell_gross'] as const;
-
 export class CsServicePriceDto {
   @RefField({ example: SERVICE_IDS.item, description: 'The service item' })
   catalogProductId!: string;
 
   @EnumField(SERVICE_AMOUNT_BASES, 'ServiceAmountBasis', {
-    example: 'buy_cost_net',
+    example: 'buy_price_net',
     description:
-      'What CS entered: `buy_cost_net` the net cost (plates, die blocks, molds, mockups, delivery) or `sell_gross` the ' +
-      'VAT-inclusive sell price (design) — legacy `cs/service` (D-194)',
+      'What CS entered: `buy_price_net` the factory’s net buy price (plates, die blocks, molds, mockups, delivery) or ' +
+      '`sell_gross` the VAT-inclusive sell price (design) — legacy `cs/service` (D-194). `buy_cost_net` is the ' +
+      'deprecated spelling of `buy_price_net` (D-042), accepted until removed',
   })
   basis!: (typeof SERVICE_AMOUNT_BASES)[number];
+
+  @ApiPropertyOptional({
+    type: String,
+    pattern: UNIT_AMOUNT_PATTERN.source,
+    example: '1000.00',
+    description:
+      'The amount CS entered, per unit (THB, money string). Required unless the deprecated `amount` is sent',
+  })
+  @IsOptional()
+  @Matches(UNIT_AMOUNT_PATTERN)
+  unitAmount?: string;
 
   @DecimalField({
     example: 1000,
     positive: true,
+    optional: true,
+    deprecated: true,
     unit: 'THB',
-    description: 'The amount CS entered, per unit',
+    description: 'Deprecated: the same amount as a JSON number — send `unitAmount`',
   })
-  amount!: number;
+  amount?: number;
 
   @IntField({ example: 1, optional: true, min: 1, max: 10_000, description: 'Units (default 1, as legacy)' })
   quantity?: number;
@@ -69,7 +84,16 @@ export class ServiceAmountsDto {
     type: String,
     nullable: true,
     example: '1000.00',
-    description: 'Net buy cost; null without D-141 grant',
+    description: 'The factory’s net buy price; null without the D-141 grant',
+  })
+  buyAmount!: string | null;
+
+  @ApiProperty({
+    type: String,
+    nullable: true,
+    example: '1000.00',
+    deprecated: true,
+    description: 'Deprecated: the same value as `buyAmount` (D-042 terminology)',
   })
   costAmount!: string | null;
 
@@ -92,7 +116,7 @@ export class ServiceAmountsDto {
 }
 
 export class CsServicePriceResultDto {
-  @ApiProperty({ example: 'buy_cost_net' })
+  @ApiProperty({ example: 'buy_price_net', description: 'The basis as sent' })
   basis!: string;
 
   @ApiProperty({ example: 1 })
@@ -126,17 +150,18 @@ export class CsServicePriceResultDto {
 
 export const CS_SERVICE_PRICE_EXAMPLE = {
   catalogProductId: SERVICE_IDS.item,
-  basis: 'buy_cost_net',
-  amount: 1000,
+  basis: 'buy_price_net',
+  unitAmount: '1000.00',
   quantity: 1,
 };
 
 export const CS_SERVICE_PRICE_RESULT_EXAMPLE: CsServicePriceResultDto = {
-  basis: 'buy_cost_net',
+  basis: 'buy_price_net',
   quantity: 1,
   marginPct: '6.5',
   vatPct: '7',
   unit: {
+    buyAmount: '1000.00',
     costAmount: '1000.00',
     netAmount: '1069.52',
     vatAmount: '74.87',
@@ -144,6 +169,7 @@ export const CS_SERVICE_PRICE_RESULT_EXAMPLE: CsServicePriceResultDto = {
     marginAmount: '69.52',
   },
   total: {
+    buyAmount: '1000.00',
     costAmount: '1000.00',
     netAmount: '1069.52',
     vatAmount: '74.87',

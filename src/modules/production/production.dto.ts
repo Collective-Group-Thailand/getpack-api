@@ -208,13 +208,13 @@ export class MilestoneDto {
   @ApiProperty({ example: true })
   customerVisible!: boolean;
 
-  @ApiProperty({ type: String, nullable: true, example: '2026-10-02T17:00:00+07:00' })
+  @ApiProperty({ format: 'date-time', type: String, nullable: true, example: '2026-10-02T17:00:00+07:00' })
   dueAt!: string | null;
 
-  @ApiProperty({ type: String, nullable: true, example: '2026-10-01T09:00:00+07:00' })
+  @ApiProperty({ format: 'date-time', type: String, nullable: true, example: '2026-10-01T09:00:00+07:00' })
   startedAt!: string | null;
 
-  @ApiProperty({ type: String, nullable: true, example: null })
+  @ApiProperty({ format: 'date-time', type: String, nullable: true, example: null })
   completedAt!: string | null;
 
   @ApiProperty({ type: 'integer', nullable: true, example: 1050 })
@@ -358,7 +358,7 @@ export class JobAssignmentDto {
   @ApiProperty({ type: String, nullable: true, example: null })
   note!: string | null;
 
-  @ApiProperty({ example: '2026-09-27T10:00:00+07:00' })
+  @ApiProperty({ format: 'date-time', example: '2026-09-27T10:00:00+07:00' })
   decidedAt!: string;
 }
 
@@ -375,22 +375,26 @@ export class PartnerJobDto {
   @ApiProperty({ enum: JOB_STATUSES, enumName: 'ProductionJobStatus', example: 'released' })
   status!: string;
 
-  @ApiProperty({ example: '2026-09-27T10:00:00+07:00' })
+  @ApiProperty({ format: 'date-time', example: '2026-09-27T10:00:00+07:00' })
   releasedAt!: string;
 
-  @ApiProperty({ example: '2026-09-28T10:00:00+07:00', description: 'Accept within 1 business day (D-074)' })
+  @ApiProperty({
+    format: 'date-time',
+    example: '2026-09-28T10:00:00+07:00',
+    description: 'Accept within 1 business day (D-074)',
+  })
   acceptDueAt!: string;
 
-  @ApiProperty({ type: String, nullable: true, example: null })
+  @ApiProperty({ format: 'date-time', type: String, nullable: true, example: null })
   acceptedAt!: string | null;
 
-  @ApiProperty({ type: String, nullable: true, example: '2026-09-28' })
+  @ApiProperty({ format: 'date', type: String, nullable: true, example: '2026-09-28' })
   plannedStartOn!: string | null;
 
-  @ApiProperty({ type: String, nullable: true, example: '2026-10-09' })
+  @ApiProperty({ format: 'date', type: String, nullable: true, example: '2026-10-09' })
   plannedFinishOn!: string | null;
 
-  @ApiProperty({ type: String, nullable: true, example: '2026-10-09' })
+  @ApiProperty({ format: 'date', type: String, nullable: true, example: '2026-10-09' })
   promisedShipDate!: string | null;
 
   @ApiProperty({ type: 'integer', example: 1000 })
@@ -465,7 +469,7 @@ export class PartnerJobDto {
   })
   riskReason!: string | null;
 
-  @ApiProperty({ type: String, nullable: true, example: null })
+  @ApiProperty({ format: 'date-time', type: String, nullable: true, example: null })
   rejectedAt!: string | null;
 
   @ApiProperty({ type: String, nullable: true, example: null })
@@ -524,6 +528,7 @@ export class AdminJobDto extends PartnerJobDto {
   releaseReason!: string | null;
 
   @ApiProperty({
+    format: 'date-time',
     type: String,
     nullable: true,
     example: null,
@@ -531,7 +536,7 @@ export class AdminJobDto extends PartnerJobDto {
   })
   escalatedAt!: string | null;
 
-  @ApiProperty({ type: String, nullable: true, example: null })
+  @ApiProperty({ format: 'date', type: String, nullable: true, example: null })
   predictedFinishOn!: string | null;
 
   @ApiProperty({ type: [String], example: [], description: 'Why Packio inspects (D-076)' })
@@ -853,7 +858,7 @@ export class QcCheckDto {
   @ApiProperty({ type: String, nullable: true, example: null })
   note!: string | null;
 
-  @ApiProperty({ example: '2026-10-05T10:00:00+07:00' })
+  @ApiProperty({ format: 'date-time', example: '2026-10-05T10:00:00+07:00' })
   performedAt!: string;
 
   @ApiProperty({ type: [String], format: 'uuid', example: [JOB_IDS.file] })
@@ -905,10 +910,10 @@ export class JobIssueDto {
   @ApiProperty({ enum: ['open', 'resolved'], enumName: 'IssueStatus', example: 'open' })
   status!: string;
 
-  @ApiProperty({ example: '2026-10-02T10:00:00+07:00' })
+  @ApiProperty({ format: 'date-time', example: '2026-10-02T10:00:00+07:00' })
   createdAt!: string;
 
-  @ApiProperty({ type: String, nullable: true, example: null })
+  @ApiProperty({ format: 'date-time', type: String, nullable: true, example: null })
   resolvedAt!: string | null;
 
   @ApiProperty({ type: String, nullable: true, example: null })
@@ -1077,7 +1082,7 @@ export class RouteVersionDto {
   })
   status!: string;
 
-  @ApiProperty({ example: '2026-01-01T00:00:00+07:00' })
+  @ApiProperty({ format: 'date-time', example: '2026-01-01T00:00:00+07:00' })
   effectiveFrom!: string;
 
   @ApiProperty({ example: 'B4.2 default route' })
@@ -1433,13 +1438,13 @@ export class InspectionDto {
   @ApiProperty({ type: UserRefDto, nullable: true, description: 'The scheduled inspector' })
   inspectorUser!: UserRefDto | null;
 
-  @ApiProperty({ type: String, nullable: true, example: null })
+  @ApiProperty({ format: 'date-time', type: String, nullable: true, example: null })
   scheduledAt!: string | null;
 
   @ApiProperty({ type: String, nullable: true, example: null })
   inspector!: string | null;
 
-  @ApiProperty({ type: String, nullable: true, example: null })
+  @ApiProperty({ format: 'date-time', type: String, nullable: true, example: null })
   resultAt!: string | null;
 
   @ApiProperty({ type: String, nullable: true, example: null })
@@ -1447,7 +1452,7 @@ export class InspectionDto {
 }
 
 export class ScorecardDto {
-  @ApiProperty({ example: '2026-09-01', description: 'First day of the month' })
+  @ApiProperty({ format: 'date', example: '2026-09-01', description: 'First day of the month' })
   month!: string;
 
   @ApiProperty({
@@ -1502,7 +1507,7 @@ export class ScorecardDto {
   })
   sampleAvgLeadDays!: string | null;
 
-  @ApiProperty({ example: '2026-10-01T02:00:00+07:00' })
+  @ApiProperty({ format: 'date-time', example: '2026-10-01T02:00:00+07:00' })
   computedAt!: string;
 }
 

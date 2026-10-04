@@ -208,12 +208,12 @@ export class ReportFiltersDto {
   @MaxLength(40)
   channel?: string;
 
-  @ApiPropertyOptional({ format: 'uuid' })
+  @ApiPropertyOptional({ example: '0192f3a0-7c1e-7d2a-9b1f-0000000b2022', format: 'uuid' })
   @IsOptional()
   @IsUUID()
   productTypeId?: string;
 
-  @ApiPropertyOptional({ format: 'uuid' })
+  @ApiPropertyOptional({ example: '0192f3a0-7c1e-7d2a-9b1f-0000000b2021', format: 'uuid' })
   @IsOptional()
   @IsUUID()
   factoryId?: string;
@@ -438,7 +438,11 @@ export class ReportScheduleDto {
   @ApiProperty({ enum: FREQUENCIES, enumName: 'ReportFrequency', example: 'weekly' })
   frequency!: string;
 
-  @ApiProperty({ example: '07:00' })
+  @ApiProperty({
+    example: '07:00',
+    pattern: '^([01]\\d|2[0-3]):[0-5]\\d$',
+    description: 'Time of day, Asia/Bangkok',
+  })
   runAt!: string;
 
   @ApiProperty({ type: 'integer', nullable: true, example: 1 })

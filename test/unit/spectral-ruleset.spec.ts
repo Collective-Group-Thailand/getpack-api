@@ -49,6 +49,14 @@ const badDocument = {
     securitySchemes: { staff: { type: 'http', scheme: 'bearer' } },
     schemas: {
       A: { type: 'object', properties: { name: { type: 'string' } } },
+      C: {
+        type: 'object',
+        properties: {
+          price: { type: 'number', description: 'Price per unit. Unit: THB.' },
+          sentAt: { type: 'string' },
+          dueOn: { type: 'string' },
+        },
+      },
       B: { type: 'object', properties: { name: { type: 'string', description: 'same shape as A' } } },
       ProblemDetails: { type: 'object', properties: { code: { type: 'string' } } },
     },
@@ -67,6 +75,7 @@ describe('Packio Spectral ruleset (contract/spectral)', () => {
     const results = lintWithPackioRuleset(badDocument);
     const codes = new Set(results.map((r) => r.code));
     expect([...codes].filter((code) => code.startsWith('packio-')).sort()).toEqual([
+      'packio-field-formats',
       'packio-no-duplicate-schemas',
       'packio-no-inline-enum',
       'packio-no-real-personal-data',
@@ -99,6 +108,18 @@ describe('Packio Spectral ruleset (contract/spectral)', () => {
       '202 must name the operation to poll (@ApiAsync)',
       'Idempotency-Key operation without a 409 response',
       'If-Match operation without a 412 response',
+    ]);
+  });
+
+  it('asks money as decimal strings and dates with their format', () => {
+    const messages = lintWithPackioRuleset(badDocument)
+      .filter((r) => r.code === 'packio-field-formats')
+      .map((r) => r.message)
+      .sort();
+    expect(messages).toEqual([
+      'C.dueOn: a …On / …Date field needs format date',
+      'C.price: money must be a decimal string, not a JSON number',
+      'C.sentAt: a …At field needs format date-time',
     ]);
   });
 

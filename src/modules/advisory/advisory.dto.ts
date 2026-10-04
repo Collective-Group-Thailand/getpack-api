@@ -536,6 +536,7 @@ export class AdvisoryMethodDto {
   ruleSetVersion!: RuleSetVersionRefDto | null;
 
   @ApiProperty({
+    example: { mckeeConstant: '5.87', uncertaintyPct: '15' },
     type: 'object',
     additionalProperties: true,
     nullable: true,

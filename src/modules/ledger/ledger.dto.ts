@@ -426,32 +426,36 @@ export class JournalLineDimensionsDto {
   @IsUUID()
   order?: string;
 
-  @ApiPropertyOptional({ format: 'uuid' })
+  @ApiPropertyOptional({ example: '0192f3a0-7c1e-7d2a-9b1f-0000000b2010', format: 'uuid' })
   @IsOptional()
   @IsUUID()
   orderGroup?: string;
 
-  @ApiPropertyOptional({ format: 'uuid', description: 'Customer user id' })
+  @ApiPropertyOptional({
+    example: '0192f3a0-7c1e-7d2a-9b1f-0000000b2008',
+    format: 'uuid',
+    description: 'Customer user id',
+  })
   @IsOptional()
   @IsUUID()
   customer?: string;
 
-  @ApiPropertyOptional({ format: 'uuid' })
+  @ApiPropertyOptional({ example: '0192f3a0-7c1e-7d2a-9b1f-0000000b2007', format: 'uuid' })
   @IsOptional()
   @IsUUID()
   company?: string;
 
-  @ApiPropertyOptional({ format: 'uuid' })
+  @ApiPropertyOptional({ example: '0192f3a0-7c1e-7d2a-9b1f-0000000b2009', format: 'uuid' })
   @IsOptional()
   @IsUUID()
   factory?: string;
 
-  @ApiPropertyOptional({ format: 'uuid' })
+  @ApiPropertyOptional({ example: '0192f3a0-7c1e-7d2a-9b1f-0000000b2013', format: 'uuid' })
   @IsOptional()
   @IsUUID()
   vendor?: string;
 
-  @ApiPropertyOptional({ format: 'uuid' })
+  @ApiPropertyOptional({ example: '0192f3a0-7c1e-7d2a-9b1f-0000000b2011', format: 'uuid' })
   @IsOptional()
   @IsUUID()
   productType?: string;
@@ -461,12 +465,12 @@ export class JournalLineDimensionsDto {
   @IsIn(SALES_CHANNELS)
   channel?: string;
 
-  @ApiPropertyOptional({ format: 'uuid' })
+  @ApiPropertyOptional({ example: '0192f3a0-7c1e-7d2a-9b1f-0000000b2006', format: 'uuid' })
   @IsOptional()
   @IsUUID()
   campaign?: string;
 
-  @ApiPropertyOptional({ format: 'uuid' })
+  @ApiPropertyOptional({ example: '0192f3a0-7c1e-7d2a-9b1f-0000000b2012', format: 'uuid' })
   @IsOptional()
   @IsUUID()
   promotion?: string;

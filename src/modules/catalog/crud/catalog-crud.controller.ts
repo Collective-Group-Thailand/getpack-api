@@ -118,7 +118,13 @@ export function catalogCrudController(r: AnyCatalogResource): Type<unknown> {
       example: r.example,
       headers: ['Location', 'ETag'],
     })
-    @ApiStandardErrors('http.bad_request', 'http.malformed_json', 'validation.failed', r.conflict)
+    @ApiStandardErrors(
+      'http.bad_request',
+      'http.malformed_json',
+      'validation.failed',
+      r.conflict,
+      ...(r.errors?.create ?? []),
+    )
     async create(
       @CurrentActor() actor: Actor,
       @Body() body: object,
@@ -150,6 +156,7 @@ export function catalogCrudController(r: AnyCatalogResource): Type<unknown> {
       'http.not_found',
       'validation.failed',
       r.conflict,
+      ...(r.errors?.update ?? []),
     )
     async update(
       @CurrentActor() actor: Actor,

@@ -62,7 +62,7 @@ export class PolicyStepInputDto {
   @IsOptional()
   condition?: unknown;
 
-  @ApiPropertyOptional({ type: 'integer', minimum: 1, maximum: 5, default: 1 })
+  @ApiPropertyOptional({ example: 1, type: 'integer', minimum: 1, maximum: 5, default: 1 })
   @IsOptional()
   @Type(() => Number)
   @IsInt()

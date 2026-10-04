@@ -832,10 +832,10 @@ export class DesignDocumentDto {
   })
   lock!: DesignLockDto | null;
 
-  @ApiProperty({ example: '2026-09-20T10:00:00+07:00' })
+  @ApiProperty({ format: 'date-time', example: '2026-09-20T10:00:00+07:00' })
   createdAt!: string;
 
-  @ApiProperty({ example: '2026-09-27T10:00:00+07:00' })
+  @ApiProperty({ format: 'date-time', example: '2026-09-27T10:00:00+07:00' })
   updatedAt!: string;
 }
 
@@ -915,7 +915,7 @@ export class DesignVersionDto {
   })
   spec!: Record<string, unknown> | null;
 
-  @ApiProperty({ example: '2026-09-27T10:00:00+07:00' })
+  @ApiProperty({ format: 'date-time', example: '2026-09-27T10:00:00+07:00' })
   createdAt!: string;
 }
 
@@ -1033,10 +1033,10 @@ export class DrawingJobDto {
   @ApiProperty({ type: String, nullable: true, example: null })
   error!: string | null;
 
-  @ApiProperty({ example: '2026-09-27T10:00:00+07:00' })
+  @ApiProperty({ format: 'date-time', example: '2026-09-27T10:00:00+07:00' })
   createdAt!: string;
 
-  @ApiProperty({ type: String, nullable: true, example: null })
+  @ApiProperty({ format: 'date-time', type: String, nullable: true, example: null })
   completedAt!: string | null;
 }
 

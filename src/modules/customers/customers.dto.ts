@@ -87,7 +87,14 @@ export class AddressInputDto {
   @RefField({ example: CUSTOMER_IDS.province })
   provinceId!: string;
 
-  @ApiPropertyOptional({ type: Number, nullable: true, example: 13.7563, minimum: -90, maximum: 90 })
+  @ApiPropertyOptional({
+    description: 'Latitude, decimal degrees (WGS 84)',
+    type: Number,
+    nullable: true,
+    example: 13.7563,
+    minimum: -90,
+    maximum: 90,
+  })
   @IsOptional()
   @Type(() => Number)
   @IsNumber({ maxDecimalPlaces: 6 })
@@ -95,7 +102,14 @@ export class AddressInputDto {
   @Max(90)
   lat?: number | null;
 
-  @ApiPropertyOptional({ type: Number, nullable: true, example: 100.5018, minimum: -180, maximum: 180 })
+  @ApiPropertyOptional({
+    description: 'Longitude, decimal degrees (WGS 84)',
+    type: Number,
+    nullable: true,
+    example: 100.5018,
+    minimum: -180,
+    maximum: 180,
+  })
   @IsOptional()
   @Type(() => Number)
   @IsNumber({ maxDecimalPlaces: 6 })
@@ -181,10 +195,20 @@ export class AddressDto {
   @ApiProperty({ example: '10110' })
   postcode!: string;
 
-  @ApiProperty({ type: Number, nullable: true, example: 13.7563 })
+  @ApiProperty({
+    description: 'Latitude, decimal degrees (WGS 84)',
+    type: Number,
+    nullable: true,
+    example: 13.7563,
+  })
   lat!: number | null;
 
-  @ApiProperty({ type: Number, nullable: true, example: 100.5018 })
+  @ApiProperty({
+    description: 'Longitude, decimal degrees (WGS 84)',
+    type: Number,
+    nullable: true,
+    example: 100.5018,
+  })
   lng!: number | null;
 
   @ApiProperty({ example: true })

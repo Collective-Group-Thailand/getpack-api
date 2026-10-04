@@ -11,6 +11,7 @@ functions:
   - noRealPersonalData
   - surfaceSecurity
   - statusByKind
+  - fieldFormats
 
 rules:
   # --- built-in rules tightened ---------------------------------------------------------------
@@ -147,6 +148,15 @@ rules:
     given: $
     then:
       function: objectShape
+
+  packio-field-formats:
+    description: Money fields are decimal strings (never numbers); …At → date-time; …On / …Date → date.
+    message: '{{error}}'
+    resolved: false
+    severity: error
+    given: $.components.schemas
+    then:
+      function: fieldFormats
 
   packio-no-duplicate-schemas:
     description: Two component schemas must not have the same shape.

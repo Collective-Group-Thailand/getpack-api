@@ -288,6 +288,7 @@ export class DecideClaimDto {
   remedy?: (typeof GUARANTEE_REMEDIES)[number];
 
   @ApiPropertyOptional({
+    example: '0192f3a0-7c1e-7d2a-9b1f-0000000b2004',
     format: 'uuid',
     description: 'An approved discount memo of the customer (goodwill, D-262)',
   })

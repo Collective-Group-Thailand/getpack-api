@@ -289,7 +289,7 @@ export class ArtworkSubmissionDto {
   @ApiProperty({ type: String, nullable: true, example: 'ใช้โลโก้สีทอง' })
   note!: string | null;
 
-  @ApiProperty({ example: '2026-09-27T10:00:00+07:00' })
+  @ApiProperty({ format: 'date-time', example: '2026-09-27T10:00:00+07:00' })
   submittedAt!: string;
 
   @ApiProperty({ type: [ArtworkFileDto] })
@@ -298,7 +298,7 @@ export class ArtworkSubmissionDto {
   @ApiProperty({ enum: PREFLIGHT_STATUSES, enumName: 'PreflightStatus', example: 'blocked' })
   preflightStatus!: string;
 
-  @ApiProperty({ type: String, nullable: true, example: '2026-09-27T10:01:00+07:00' })
+  @ApiProperty({ format: 'date-time', type: String, nullable: true, example: '2026-09-27T10:01:00+07:00' })
   preflightCompletedAt!: string | null;
 
   @ApiProperty({ type: PreflightReportDto, nullable: true })
@@ -307,7 +307,7 @@ export class ArtworkSubmissionDto {
   @ApiProperty({ type: String, nullable: true, example: null })
   rejectReason!: string | null;
 
-  @ApiProperty({ type: String, nullable: true, example: null })
+  @ApiProperty({ format: 'date-time', type: String, nullable: true, example: null })
   reviewedAt!: string | null;
 }
 
@@ -343,10 +343,15 @@ export class PrepressQueueItemDto {
   })
   preflightStatus!: string | null;
 
-  @ApiProperty({ example: '2026-09-27T10:00:00+07:00', description: 'When it entered the queue' })
+  @ApiProperty({
+    format: 'date-time',
+    example: '2026-09-27T10:00:00+07:00',
+    description: 'When it entered the queue',
+  })
   since!: string;
 
   @ApiProperty({
+    format: 'date-time',
     type: String,
     nullable: true,
     example: null,

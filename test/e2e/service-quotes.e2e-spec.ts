@@ -109,6 +109,32 @@ describe('service quotes (e2e, U-B6 service)', () => {
       .expect(422);
   });
 
+  it('takes the amount as a money string and the basis as buy_price_net, keeping the old spellings (U-B2, U-B3)', async () => {
+    const price = (body: Record<string, unknown>) =>
+      as('cs').post('/v1/admin/cs/service/actions/price', {
+        catalogProductId: fixture.platePublicId,
+        ...body,
+      });
+    const current = await price({ basis: 'buy_price_net', unitAmount: '1000.00' }).expect(200);
+    expect(current.body.basis).toBe('buy_price_net');
+    expect(current.body.unit).toMatchObject({
+      buyAmount: '1000.00',
+      costAmount: '1000.00',
+      netAmount: '1069.52',
+      grossAmount: '1144.39',
+    });
+    // The deprecated spellings price the same and are echoed as sent.
+    const old = await price({ basis: 'buy_cost_net', amount: 1000 }).expect(200);
+    expect(old.body.basis).toBe('buy_cost_net');
+    expect(old.body.unit).toEqual(current.body.unit);
+    const both = await price({ basis: 'buy_price_net', unitAmount: '1000.00', amount: 1000 }).expect(422);
+    expect(both.body.errors[0]).toMatchObject({ path: 'unitAmount', code: 'exclusive' });
+    const none = await price({ basis: 'buy_price_net' }).expect(422);
+    expect(none.body.errors[0]).toMatchObject({ path: 'unitAmount', code: 'required' });
+    await price({ basis: 'buy_price_net', unitAmount: '1000.001' }).expect(422);
+    await price({ basis: 'buy_price_net', unitAmount: '0.00' }).expect(422);
+  });
+
   it('prices the factory side on its own price list', async () => {
     const res = await as('partner-manager')
       .post(`/v1/partner/factories/${fixture.factoryPublicId}/pricing/service/calculate`, {

@@ -230,6 +230,7 @@ export const PAID_ITEM_EXAMPLE: PayoutItemDto = {
 
 export class CreatePayoutRunDto {
   @ApiProperty({
+    example: '0192f3a0-7c1e-7d2a-9b1f-0000000b2003',
     format: 'uuid',
     description: 'Active company bank account the money leaves from (purpose payout / both)',
   })
@@ -265,7 +266,11 @@ export class CreatePayoutRunDto {
 }
 
 export class ConfirmationLineDto {
-  @ApiProperty({ format: 'uuid', description: 'The payout item id echoed by the bank' })
+  @ApiProperty({
+    example: '0192f3a0-7c1e-7d2a-9b1f-0000000b2002',
+    format: 'uuid',
+    description: 'The payout item id echoed by the bank',
+  })
   @IsUUID()
   reference!: string;
 
@@ -300,6 +305,7 @@ export class ConfirmPayoutRunDto {
   confirmations?: ConfirmationLineDto[];
 
   @ApiPropertyOptional({
+    example: '0192f3a0-7c1e-7d2a-9b1f-0000000b2001',
     format: 'uuid',
     description: 'The bank’s confirmation file, parsed by the run’s adapter',
   })

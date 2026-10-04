@@ -7,6 +7,7 @@ import { ApiPaginated } from '@common/pagination/api-paginated.decorator';
 import { type Prisma } from '@generated/prisma/client';
 import { PermissionResolver } from '@modules/iam/permission-resolver.service';
 import { staffOrPartner } from '@modules/partners/partner-actor';
+import { resolveServiceAmount } from '@modules/pricing/quotes/service-amount';
 import { ApiSurface } from '@modules/surfaces/surfaces';
 import { Body, Controller, Get, HttpCode, Param, ParseUUIDPipe, Post, Query } from '@nestjs/common';
 import { ApiBody, ApiParam } from '@nestjs/swagger';
@@ -301,7 +302,7 @@ export class AdminSamplesController {
     id: 'admin.samples.create',
     summary: 'Add a sample to an order',
     description:
-      'CS prices a physical sample from an amount through the service sell table (buy cost or sell price, D-194) — an ' +
+      'CS prices a physical sample from an amount through the service sell table (buy price or sell price, D-194) — an ' +
       'add-on charge on the order with an instalment due now; once paid it goes to the order’s factory as a mockup job ' +
       'at the buy amount. The bulk order does not start production until the customer approves the sample (D-256). ' +
       'One sample in progress per order; after changes requested or a rejection, name it as `previousSampleId` ' +
@@ -314,8 +315,8 @@ export class AdminSamplesController {
       default: {
         value: {
           serviceItemId: '0192f3a0-7c1e-7d2a-9b1f-00000000f105',
-          basis: 'buy_cost_net',
-          amount: 600,
+          basis: 'buy_price_net',
+          unitAmount: '600.00',
           mockupOption: 'with_print',
           reason: 'ลูกค้าขอตัวอย่างจริงก่อนผลิต (fake)',
         },
@@ -333,7 +334,11 @@ export class AdminSamplesController {
     @Param('orderId', ParseUUIDPipe) orderId: string,
     @Body() body: CreateAttachedSampleDto,
   ): Promise<AdminSampleDto> {
-    return this.view(actor, await this.samples.createAttached(actor as UserActor, orderId, body));
+    const amount = resolveServiceAmount(body, 'admin.samples.create');
+    return this.view(
+      actor,
+      await this.samples.createAttached(actor as UserActor, orderId, { ...body, ...amount }),
+    );
   }
 
   @Post('samples/:sampleId/actions/quote')
@@ -355,8 +360,8 @@ export class AdminSamplesController {
       default: {
         value: {
           serviceItemId: '0192f3a0-7c1e-7d2a-9b1f-00000000f105',
-          basis: 'buy_cost_net',
-          amount: 600,
+          basis: 'buy_price_net',
+          unitAmount: '600.00',
           leadTimeDays: 7,
           parcelWeightG: 800,
         },
@@ -374,7 +379,11 @@ export class AdminSamplesController {
     @Param('sampleId', ParseUUIDPipe) id: string,
     @Body() body: QuoteSampleDto,
   ): Promise<AdminSampleDto> {
-    return this.view(actor, await this.samples.quoteStandalone(actor as UserActor, id, body));
+    const amount = resolveServiceAmount(body, 'admin.samples.quote');
+    return this.view(
+      actor,
+      await this.samples.quoteStandalone(actor as UserActor, id, { ...body, ...amount }),
+    );
   }
 
   @Post('samples/:sampleId/actions/cancel')

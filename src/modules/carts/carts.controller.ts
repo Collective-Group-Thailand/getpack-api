@@ -124,6 +124,7 @@ function cartController(surface: CartSurface): Type<unknown> {
       'cart.item_exists',
       'cart.design_option_unavailable',
       'cart.mockup_price_unavailable',
+      'designs.version_required',
     )
     async addItem(
       @CurrentActor() actor: Actor,

@@ -501,6 +501,7 @@ export class CaptureTaxInvoiceDto {
   source!: 'e_tax' | 'pdf_upload';
 
   @ApiPropertyOptional({
+    example: '0192f3a0-7c1e-7d2a-9b1f-0000000b2000',
     format: 'uuid',
     description:
       'The uploaded PDF / e-Tax file (purpose `document`). For `e_tax` this file is the e-Tax document itself; its ' +
@@ -830,17 +831,17 @@ export class RecordBillDto {
   @Type(() => BillLineInputDto)
   lines!: BillLineInputDto[];
 
-  @ApiPropertyOptional({ format: 'uuid' })
+  @ApiPropertyOptional({ example: '0192f3a0-7c1e-7d2a-9b1f-0000000b2016', format: 'uuid' })
   @IsOptional()
   @IsUUID()
   orderId?: string;
 
-  @ApiPropertyOptional({ format: 'uuid' })
+  @ApiPropertyOptional({ example: '0192f3a0-7c1e-7d2a-9b1f-0000000b2017', format: 'uuid' })
   @IsOptional()
   @IsUUID()
   shipmentId?: string;
 
-  @ApiPropertyOptional({ format: 'uuid' })
+  @ApiPropertyOptional({ example: '0192f3a0-7c1e-7d2a-9b1f-0000000b2015', format: 'uuid' })
   @IsOptional()
   @IsUUID()
   fileId?: string;

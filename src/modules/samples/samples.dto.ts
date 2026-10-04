@@ -1,5 +1,6 @@
 import { PageQuery } from '@common/pagination/pagination.dto';
 import { DecimalField, EnumField, IntField, RefField, TextField } from '@modules/catalog/crud/dto-fields';
+import { SERVICE_AMOUNT_BASES, UNIT_AMOUNT_PATTERN } from '@modules/pricing/quotes/service-amount';
 import { MEASUREMENT_BASES } from '@modules/specs/dimension-conversion';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import {
@@ -28,7 +29,6 @@ export const SAMPLE_STATUSES = [
   'expired',
 ] as const;
 export const SAMPLE_PRINT = ['with_print', 'without_print'] as const;
-export const SAMPLE_AMOUNT_BASES = ['buy_cost_net', 'sell_gross'] as const;
 
 const IDS = {
   sample: '0192f3a0-7c1e-7d2a-9b1f-00000000f101',
@@ -50,14 +50,33 @@ class SamplePriceFields {
   })
   serviceItemId!: string;
 
-  @EnumField(SAMPLE_AMOUNT_BASES, 'ServiceAmountBasis', {
-    example: 'buy_cost_net',
-    description: 'What CS entered: the factory’s net cost or the VAT-inclusive sell price (D-194, D-254)',
+  @EnumField(SERVICE_AMOUNT_BASES, 'ServiceAmountBasis', {
+    example: 'buy_price_net',
+    description:
+      'What CS entered: the factory’s net buy price or the VAT-inclusive sell price (D-194, D-254); ' +
+      '`buy_cost_net` is the deprecated spelling of `buy_price_net` (D-042)',
   })
-  basis!: (typeof SAMPLE_AMOUNT_BASES)[number];
+  basis!: (typeof SERVICE_AMOUNT_BASES)[number];
 
-  @DecimalField({ example: 800, positive: true, unit: 'THB', description: 'The amount per unit' })
-  amount!: number;
+  @ApiPropertyOptional({
+    type: String,
+    pattern: UNIT_AMOUNT_PATTERN.source,
+    example: '800.00',
+    description: 'The amount per unit (THB, money string). Required unless the deprecated `amount` is sent',
+  })
+  @IsOptional()
+  @Matches(UNIT_AMOUNT_PATTERN)
+  unitAmount?: string;
+
+  @DecimalField({
+    example: 800,
+    positive: true,
+    optional: true,
+    deprecated: true,
+    unit: 'THB',
+    description: 'Deprecated: the same amount as a JSON number — send `unitAmount`',
+  })
+  amount?: number;
 }
 
 export class CreateAttachedSampleDto extends SamplePriceFields {

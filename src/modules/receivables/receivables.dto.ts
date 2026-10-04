@@ -827,7 +827,11 @@ export class RecordWhtCertificateDto {
   @Matches(DAY)
   certificateDate!: string;
 
-  @ApiPropertyOptional({ format: 'uuid', description: 'Uploaded copy (purpose `document`)' })
+  @ApiPropertyOptional({
+    example: '0192f3a0-7c1e-7d2a-9b1f-0000000b2018',
+    format: 'uuid',
+    description: 'Uploaded copy (purpose `document`)',
+  })
   @IsOptional()
   @IsUUID()
   fileId?: string;

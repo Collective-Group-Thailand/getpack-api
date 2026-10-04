@@ -190,6 +190,7 @@ export class PartnerShipmentsController {
     'shipments.job_not_shippable',
     'shipments.destinations_differ',
     'shipments.quantity_exceeds',
+    'samples.evidence_missing',
   )
   async create(@CurrentActor() actor: Actor, @Body() body: CreateShipmentDto) {
     return this.dto(actor, await this.shipments.create(actor, body));

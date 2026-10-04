@@ -172,7 +172,11 @@ export function ApiUnthrottled() {
 
 /** Errors every secured surface operation can return (audience, permission, scope). */
 export function ApiAuthErrors() {
-  return ext(EXT.errors, 'auth', ['auth.unauthenticated', 'auth.forbidden'] satisfies ErrorCode[]);
+  return ext(EXT.errors, 'auth', [
+    'auth.unauthenticated',
+    'auth.forbidden',
+    'auth.wrong_audience',
+  ] satisfies ErrorCode[]);
 }
 
 /**

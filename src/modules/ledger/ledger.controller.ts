@@ -264,7 +264,7 @@ export class AdminLedgerPeriodsController {
     type: FiscalPeriodDto,
     example: { ...PERIOD_EXAMPLE, status: 'soft_closed', statusChangedAt: '2026-11-02T09:00:00+07:00' },
   })
-  @ApiStandardErrors(...WRITE, 'http.not_found', 'ledger.period_transition')
+  @ApiStandardErrors(...WRITE, 'http.not_found', 'ledger.period_transition', 'close.checklist_incomplete')
   async transition(
     @CurrentActor() actor: Actor,
     @Param('periodId', ParseUUIDPipe) periodId: string,
