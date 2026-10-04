@@ -272,6 +272,16 @@ export class EnvironmentVariables {
   @IsString()
   STOREFRONT_BASE_URL?: string;
 
+  /** D-308: where the web app revalidates cached cards (POST `{ tags }`); unset → tags are only recorded. */
+  @IsOptional()
+  @IsString()
+  STOREFRONT_REVALIDATE_URL?: string;
+
+  /** D-308: HMAC-SHA256 key of the revalidation POST (`X-Packio-Signature`). */
+  @IsOptional()
+  @IsString()
+  STOREFRONT_REVALIDATE_SECRET?: string;
+
   // --- Notifications (D-143)
 
   /** Verified SES sender, e.g. `Packio <no-reply@packio.example>`. */

@@ -186,7 +186,8 @@ describe('store catalogue (e2e, B2.1)', () => {
       },
     ]);
     expect((res.body.standardSizes as { code: string }[]).map((s) => s.code)).toEqual(['S']);
-    expect(JSON.stringify(res.body)).not.toMatch(/factory|price/i);
+    // No factory or buy-side data (D-050); the card's D-220 starting price is the customer's own price (U-B4).
+    expect(JSON.stringify(res.body)).not.toMatch(/factory|buy.?price|cost|margin/i);
   });
 
   it('filters stock products by attribute and reports availability without factories', async () => {

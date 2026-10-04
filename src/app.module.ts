@@ -22,6 +22,7 @@ import { BankingModule } from '@modules/banking/banking.module';
 import { CallOffsModule } from '@modules/call-offs/call-offs.module';
 import { CartsModule } from '@modules/carts/carts.module';
 import { CatalogModule } from '@modules/catalog/catalog.module';
+import { StorefrontRevalidationModule } from '@modules/catalog/store/revalidation';
 import { CheckoutModule } from '@modules/checkout/checkout.module';
 import { ClaimsModule } from '@modules/claims/claims.module';
 import { CloseModule } from '@modules/close/close.module';
@@ -114,6 +115,7 @@ import { LoggerModule } from 'nestjs-pino';
     FilesModule,
     SettingsAdminModule,
     CatalogModule,
+    StorefrontRevalidationModule,
     PartnersModule,
     PricingModule,
     ShippingModule,

@@ -8,6 +8,7 @@ import { SettingNotFoundError, SettingsService } from '@platform/settings/settin
 
 import { num } from '../crud/dto-fields';
 import { CONTENT_INCLUDE, type WithContent } from '../crud/option-content';
+import { CardFactsService } from './card-facts.service';
 import {
   type StoreArticleCardDto,
   type StoreArticleCategoryDto,
@@ -92,6 +93,7 @@ export class StoreCatalogService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly settings: SettingsService,
+    private readonly cards: CardFactsService,
   ) {}
 
   // --- product types & catalogue products ---------------------------------------------------
@@ -102,12 +104,14 @@ export class StoreCatalogService {
       include: { category: { select: { code: true } } },
       orderBy: [{ sort: 'asc' }, { code: 'asc' }],
     });
+    const facts = await this.cards.forTypes(rows.map((t) => t.id));
     return rows.map((t) => ({
       code: t.code,
       nameTh: t.nameTh,
       nameEn: t.nameEn,
       categoryCode: t.category.code,
       quoteMode: t.quoteMode,
+      ...facts.get(t.id)!,
     }));
   }
 
@@ -208,6 +212,7 @@ export class StoreCatalogService {
       }),
       this.prisma.catalogProduct.count({ where }),
     ]);
+    const facts = await this.cards.forProducts(rows.map((p) => p.id));
     return {
       rows: rows.map((p) => ({
         slug: p.slug,
@@ -216,6 +221,7 @@ export class StoreCatalogService {
         nameEn: p.nameEn,
         imageUrl: imageUrl(p.images[0]?.fileObject.publicId),
         templateAvailability: p.templateAvailability,
+        ...facts.get(p.id)!,
       })),
       total,
     };
@@ -242,7 +248,9 @@ export class StoreCatalogService {
       where: { subjectType: 'catalog_product', subjectId: p.id, deletedAt: null },
       orderBy: { sort: 'asc' },
     });
+    const facts = (await this.cards.forProducts([p.id])).get(p.id)!;
     return {
+      ...facts,
       slug: p.slug,
       productTypeCode: p.productType.code,
       nameTh: p.nameTh,
@@ -434,11 +442,28 @@ export class StoreCatalogService {
     attributes: { include: { value: true }, orderBy: { attribute: 'asc' } },
     images: { include: { fileObject: { select: { publicId: true } } }, orderBy: { sort: 'asc' } },
     levels: { select: { onHand: true, reserved: true } },
+    productType: { select: { id: true, publicId: true, code: true, category: { select: { code: true } } } },
   } satisfies Prisma.StockProductInclude;
+
+  /** D-307: a stock card may carry a campaign badge, never a reference price. */
+  private async stockDtos(
+    rows: Prisma.StockProductGetPayload<{ include: StoreCatalogService['stockInclude'] }>[],
+  ): Promise<StoreStockProductDto[]> {
+    const facts = await this.cards.forStock(
+      rows.map((s) => ({
+        sku: s.sku,
+        productTypeId: s.productType.id,
+        productTypeCode: s.productType.code,
+        productTypePublicId: s.productType.publicId,
+        categoryCode: s.productType.category.code,
+      })),
+    );
+    return rows.map((s) => ({ ...this.stockDto(s), ...facts.get(s.sku)! }));
+  }
 
   private stockDto(
     s: Prisma.StockProductGetPayload<{ include: StoreCatalogService['stockInclude'] }>,
-  ): StoreStockProductDto {
+  ): Omit<StoreStockProductDto, 'campaignBadge' | 'cacheTags'> {
     return {
       sku: s.sku,
       nameTh: s.nameTh,
@@ -497,7 +522,7 @@ export class StoreCatalogService {
       }),
       this.prisma.stockProduct.count({ where }),
     ]);
-    return { rows: rows.map((s) => this.stockDto(s)), total };
+    return { rows: await this.stockDtos(rows), total };
   }
 
   async stockProduct(sku: string): Promise<StoreStockProductDto> {
@@ -506,7 +531,7 @@ export class StoreCatalogService {
       include: this.stockInclude,
     });
     if (!s) throw new DomainException('http.not_found');
-    return this.stockDto(s);
+    return (await this.stockDtos([s]))[0]!;
   }
 
   // --- showcase -------------------------------------------------------------------------------

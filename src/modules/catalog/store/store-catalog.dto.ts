@@ -1,5 +1,7 @@
 import { CodeNameRefDto } from '@common/dto/code-name-ref.dto';
 import { PageQuery } from '@common/pagination/pagination.dto';
+import { BusinessDayRangeDto } from '@modules/pricing/hints/price-hints.dto';
+import { SpecLineDto } from '@modules/quotes/line-summary.dto';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { IsIn, IsOptional, IsString, Matches, MaxLength, MinLength } from 'class-validator';
 
@@ -9,7 +11,91 @@ import { STOCK_ATTRIBUTES } from '../stock/stock.dto';
 /** Public image URL: resolves to a short-lived signed URL once the file is scanned clean. */
 export const IMAGE_URL_EXAMPLE = '/v1/store/catalog/images/0192f3a0-7c1e-7d2a-9b1f-00000000c009';
 
-export class StoreProductTypeDto {
+/** D-307 a live automatic promotion targeting the card, with its real end date (D-181). */
+export class CampaignBadgeDto {
+  @ApiProperty({ example: 'ลดราคากล่องฝาเสียบ เดือนตุลาคม', description: 'The promotion’s name' })
+  label!: string;
+
+  @ApiProperty({
+    format: 'date-time',
+    example: '2026-10-31T23:59:59+07:00',
+    description: 'When it really ends',
+  })
+  endsAt!: string;
+
+  @ApiProperty({ format: 'uuid', example: '0192f3a0-7c1e-7d2a-9b1f-0000000e7701' })
+  promotionId!: string;
+}
+
+export class StartingPriceBasisDto {
+  @ApiProperty({
+    type: 'integer',
+    example: 1000,
+    description: 'The quantity the starting price is quoted at',
+  })
+  quantity!: number;
+
+  @ApiProperty({ type: [SpecLineDto], description: 'The reference configuration it assumes (D-220)' })
+  specs!: SpecLineDto[];
+}
+
+/** D-307 / D-181 what a made-to-order card may say: real starting prices, never manufactured urgency. */
+export class StoreCardFactsDto {
+  @ApiProperty({
+    type: String,
+    nullable: true,
+    example: '4.50',
+    description:
+      'Per piece incl. VAT, excluding delivery and design (D-220) — after a promotion when `referencePrice` is present; ' +
+      'null without a reference configuration or an instant path (the card shows the RFQ route)',
+  })
+  startingPricePerPiece!: string | null;
+
+  @ApiProperty({ type: StartingPriceBasisDto, nullable: true })
+  startingPriceAssumes!: StartingPriceBasisDto | null;
+
+  @ApiProperty({ type: 'integer', nullable: true, example: 500, description: 'Minimum order quantity' })
+  moq!: number | null;
+
+  @ApiProperty({
+    type: BusinessDayRangeDto,
+    nullable: true,
+    description: 'Production lead time in business days',
+  })
+  leadTimeDays!: BusinessDayRangeDto | null;
+
+  @ApiProperty({
+    enum: ['instant', 'partial', 'rfq'],
+    enumName: 'ProductAvailability',
+    example: 'instant',
+    description: 'How the type is priced (D-043, D-234)',
+  })
+  availability!: 'instant' | 'partial' | 'rfq';
+
+  @ApiProperty({
+    type: CampaignBadgeDto,
+    nullable: true,
+    description: 'Only from a live automatic promotion (D-307)',
+  })
+  campaignBadge!: CampaignBadgeDto | null;
+
+  @ApiPropertyOptional({
+    example: '5.00',
+    description:
+      'Struck-through price — present only while the badge’s promotion lowers this card’s starting price for everyone ' +
+      '(D-307, D-181); absent otherwise',
+  })
+  referencePrice?: string;
+
+  @ApiProperty({
+    type: [String],
+    example: ['catalog:type:0192f3a0-7c1e-7d2a-9b1f-0000000c0004', 'catalog:product:tuck-end-box'],
+    description: 'Revalidation tags (D-308)',
+  })
+  cacheTags!: string[];
+}
+
+export class StoreProductTypeDto extends StoreCardFactsDto {
   @ApiProperty({ example: 'folding_carton' })
   code!: string;
 
@@ -44,7 +130,7 @@ export class StoreImageDto {
   variant!: Record<string, unknown> | null;
 }
 
-export class StoreProductCardDto {
+export class StoreProductCardDto extends StoreCardFactsDto {
   @ApiProperty({ example: 'tuck-end-box' })
   slug!: string;
 
@@ -343,6 +429,16 @@ export class StoreStockProductDto {
     description: 'Some supplying factory has stock (no factory is ever named, D-050)',
   })
   inStock!: boolean;
+
+  @ApiProperty({
+    type: CampaignBadgeDto,
+    nullable: true,
+    description: 'Only from a live automatic promotion (D-307)',
+  })
+  campaignBadge!: CampaignBadgeDto | null;
+
+  @ApiProperty({ type: [String], example: ['catalog:type:0192f3a0-7c1e-7d2a-9b1f-0000000c0004'] })
+  cacheTags!: string[];
 
   @ApiProperty({ type: [StoreStockAttributeDto] })
   attributes!: StoreStockAttributeDto[];

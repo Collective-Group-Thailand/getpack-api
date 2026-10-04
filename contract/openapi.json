@@ -16886,6 +16886,32 @@
         ],
         "type": "string"
       },
+      "CampaignBadgeDto": {
+        "properties": {
+          "endsAt": {
+            "description": "When it really ends",
+            "example": "2026-10-31T23:59:59+07:00",
+            "format": "date-time",
+            "type": "string"
+          },
+          "label": {
+            "description": "The promotion’s name",
+            "example": "ลดราคากล่องฝาเสียบ เดือนตุลาคม",
+            "type": "string"
+          },
+          "promotionId": {
+            "example": "0192f3a0-7c1e-7d2a-9b1f-0000000e7701",
+            "format": "uuid",
+            "type": "string"
+          }
+        },
+        "required": [
+          "label",
+          "endsAt",
+          "promotionId"
+        ],
+        "type": "object"
+      },
       "CampaignDto": {
         "properties": {
           "alertThresholdPct": {
@@ -54040,7 +54066,7 @@
         "type": "object"
       },
       "ProductAvailability": {
-        "description": "instant: priced online · partial: priced online inside `envelope`, RFQ outside it · rfq",
+        "description": "How the type is priced (D-043, D-234)",
         "enum": [
           "instant",
           "partial",
@@ -70597,6 +70623,27 @@
         ],
         "type": "object"
       },
+      "StartingPriceBasisDto": {
+        "properties": {
+          "quantity": {
+            "description": "The quantity the starting price is quoted at",
+            "example": 1000,
+            "type": "integer"
+          },
+          "specs": {
+            "description": "The reference configuration it assumes (D-220)",
+            "items": {
+              "$ref": "#/components/schemas/SpecLineDto"
+            },
+            "type": "array"
+          }
+        },
+        "required": [
+          "quantity",
+          "specs"
+        ],
+        "type": "object"
+      },
       "StatementDto": {
         "properties": {
           "currency": {
@@ -72739,10 +72786,60 @@
       },
       "StoreProductCardDto": {
         "properties": {
+          "availability": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ProductAvailability"
+              }
+            ],
+            "description": "How the type is priced (D-043, D-234)",
+            "example": "instant"
+          },
+          "cacheTags": {
+            "description": "Revalidation tags (D-308)",
+            "example": [
+              "catalog:type:0192f3a0-7c1e-7d2a-9b1f-0000000c0004",
+              "catalog:product:tuck-end-box"
+            ],
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "campaignBadge": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/CampaignBadgeDto"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Only from a live automatic promotion (D-307)"
+          },
           "imageUrl": {
             "example": "/v1/store/catalog/images/0192f3a0-7c1e-7d2a-9b1f-00000000c009",
             "type": [
               "string",
+              "null"
+            ]
+          },
+          "leadTimeDays": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/BusinessDayRangeDto"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Production lead time in business days"
+          },
+          "moq": {
+            "description": "Minimum order quantity",
+            "example": 500,
+            "type": [
+              "integer",
               "null"
             ]
           },
@@ -72758,9 +72855,32 @@
             "example": "folding_carton",
             "type": "string"
           },
+          "referencePrice": {
+            "description": "Struck-through price — present only while the badge’s promotion lowers this card’s starting price for everyone (D-307, D-181); absent otherwise",
+            "example": "5.00",
+            "type": "string"
+          },
           "slug": {
             "example": "tuck-end-box",
             "type": "string"
+          },
+          "startingPriceAssumes": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/StartingPriceBasisDto"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "startingPricePerPiece": {
+            "description": "Per piece incl. VAT, excluding delivery and design (D-220) — after a promotion when `referencePrice` is present; null without a reference configuration or an instant path (the card shows the RFQ route)",
+            "example": "4.50",
+            "type": [
+              "string",
+              "null"
+            ]
           },
           "templateAvailability": {
             "allOf": [
@@ -72772,6 +72892,13 @@
           }
         },
         "required": [
+          "startingPricePerPiece",
+          "startingPriceAssumes",
+          "moq",
+          "leadTimeDays",
+          "availability",
+          "campaignBadge",
+          "cacheTags",
           "slug",
           "productTypeCode",
           "nameTh",
@@ -72819,6 +72946,37 @@
       },
       "StoreProductDetailDto": {
         "properties": {
+          "availability": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ProductAvailability"
+              }
+            ],
+            "description": "How the type is priced (D-043, D-234)",
+            "example": "instant"
+          },
+          "cacheTags": {
+            "description": "Revalidation tags (D-308)",
+            "example": [
+              "catalog:type:0192f3a0-7c1e-7d2a-9b1f-0000000c0004",
+              "catalog:product:tuck-end-box"
+            ],
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "campaignBadge": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/CampaignBadgeDto"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Only from a live automatic promotion (D-307)"
+          },
           "descriptionEn": {
             "example": "Reverse tuck-end folding box",
             "type": [
@@ -72850,6 +73008,25 @@
             "example": false,
             "type": "boolean"
           },
+          "leadTimeDays": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/BusinessDayRangeDto"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Production lead time in business days"
+          },
+          "moq": {
+            "description": "Minimum order quantity",
+            "example": 500,
+            "type": [
+              "integer",
+              "null"
+            ]
+          },
           "nameEn": {
             "example": "Tuck-end box",
             "type": "string"
@@ -72874,6 +73051,11 @@
             "example": "folding_carton",
             "type": "string"
           },
+          "referencePrice": {
+            "description": "Struck-through price — present only while the badge’s promotion lowers this card’s starting price for everyone (D-307, D-181); absent otherwise",
+            "example": "5.00",
+            "type": "string"
+          },
           "seo": {
             "anyOf": [
               {
@@ -72894,6 +73076,24 @@
             },
             "type": "array"
           },
+          "startingPriceAssumes": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/StartingPriceBasisDto"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "startingPricePerPiece": {
+            "description": "Per piece incl. VAT, excluding delivery and design (D-220) — after a promotion when `referencePrice` is present; null without a reference configuration or an instant path (the card shows the RFQ route)",
+            "example": "4.50",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
           "templateAvailability": {
             "allOf": [
               {
@@ -72910,6 +73110,13 @@
           }
         },
         "required": [
+          "startingPricePerPiece",
+          "startingPriceAssumes",
+          "moq",
+          "leadTimeDays",
+          "availability",
+          "campaignBadge",
+          "cacheTags",
           "slug",
           "productTypeCode",
           "nameTh",
@@ -72930,6 +73137,37 @@
       },
       "StoreProductTypeDto": {
         "properties": {
+          "availability": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ProductAvailability"
+              }
+            ],
+            "description": "How the type is priced (D-043, D-234)",
+            "example": "instant"
+          },
+          "cacheTags": {
+            "description": "Revalidation tags (D-308)",
+            "example": [
+              "catalog:type:0192f3a0-7c1e-7d2a-9b1f-0000000c0004",
+              "catalog:product:tuck-end-box"
+            ],
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "campaignBadge": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/CampaignBadgeDto"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Only from a live automatic promotion (D-307)"
+          },
           "categoryCode": {
             "description": "Reporting category code",
             "example": "folding_carton",
@@ -72938,6 +73176,25 @@
           "code": {
             "example": "folding_carton",
             "type": "string"
+          },
+          "leadTimeDays": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/BusinessDayRangeDto"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Production lead time in business days"
+          },
+          "moq": {
+            "description": "Minimum order quantity",
+            "example": 500,
+            "type": [
+              "integer",
+              "null"
+            ]
           },
           "nameEn": {
             "example": "Folding carton",
@@ -72955,9 +73212,39 @@
             ],
             "description": "How the type is quoted today (D-100); a given configuration may still route to RFQ (D-043)",
             "example": "rfq"
+          },
+          "referencePrice": {
+            "description": "Struck-through price — present only while the badge’s promotion lowers this card’s starting price for everyone (D-307, D-181); absent otherwise",
+            "example": "5.00",
+            "type": "string"
+          },
+          "startingPriceAssumes": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/StartingPriceBasisDto"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "startingPricePerPiece": {
+            "description": "Per piece incl. VAT, excluding delivery and design (D-220) — after a promotion when `referencePrice` is present; null without a reference configuration or an instant path (the card shows the RFQ route)",
+            "example": "4.50",
+            "type": [
+              "string",
+              "null"
+            ]
           }
         },
         "required": [
+          "startingPricePerPiece",
+          "startingPriceAssumes",
+          "moq",
+          "leadTimeDays",
+          "availability",
+          "campaignBadge",
+          "cacheTags",
           "code",
           "nameTh",
           "nameEn",
@@ -73714,6 +74001,26 @@
             },
             "type": "array"
           },
+          "cacheTags": {
+            "example": [
+              "catalog:type:0192f3a0-7c1e-7d2a-9b1f-0000000c0004"
+            ],
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "campaignBadge": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/CampaignBadgeDto"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Only from a live automatic promotion (D-307)"
+          },
           "capacityMl": {
             "description": "Unit: ml.",
             "example": 250,
@@ -73809,6 +74116,8 @@
           "minOrderQty",
           "isFoodGrade",
           "inStock",
+          "campaignBadge",
+          "cacheTags",
           "attributes",
           "imageUrls"
         ],
@@ -351989,11 +352298,34 @@
               "application/json": {
                 "example": [
                   {
+                    "availability": "instant",
+                    "cacheTags": [
+                      "catalog:type:0192f3a0-7c1e-7d2a-9b1f-0000000c0004"
+                    ],
+                    "campaignBadge": null,
                     "categoryCode": "folding_carton",
                     "code": "folding_carton",
+                    "leadTimeDays": {
+                      "max": 10,
+                      "min": 7
+                    },
+                    "moq": 500,
                     "nameEn": "Folding carton",
                     "nameTh": "กล่องกระดาษแข็ง",
-                    "quoteMode": "rfq"
+                    "quoteMode": "instant",
+                    "startingPriceAssumes": {
+                      "quantity": 1000,
+                      "specs": [
+                        {
+                          "key": "material",
+                          "labelEn": "Material",
+                          "labelTh": "วัสดุ",
+                          "valueEn": "Art card 350",
+                          "valueTh": "อาร์ตการ์ด 350"
+                        }
+                      ]
+                    },
+                    "startingPricePerPiece": "4.50"
                   }
                 ],
                 "schema": {
@@ -352177,11 +352509,35 @@
                 "example": {
                   "data": [
                     {
+                      "availability": "instant",
+                      "cacheTags": [
+                        "catalog:type:0192f3a0-7c1e-7d2a-9b1f-0000000c0004",
+                        "catalog:product:tuck-end-box"
+                      ],
+                      "campaignBadge": null,
                       "imageUrl": "/v1/store/catalog/images/0192f3a0-7c1e-7d2a-9b1f-00000000c009",
+                      "leadTimeDays": {
+                        "max": 10,
+                        "min": 7
+                      },
+                      "moq": 500,
                       "nameEn": "Tuck-end box",
                       "nameTh": "กล่องฝาเสียบ",
                       "productTypeCode": "folding_carton",
                       "slug": "tuck-end-box",
+                      "startingPriceAssumes": {
+                        "quantity": 1000,
+                        "specs": [
+                          {
+                            "key": "material",
+                            "labelEn": "Material",
+                            "labelTh": "วัสดุ",
+                            "valueEn": "Art card 350",
+                            "valueTh": "อาร์ตการ์ด 350"
+                          }
+                        ]
+                      },
+                      "startingPricePerPiece": "4.50",
                       "templateAvailability": "drawing"
                     }
                   ],
@@ -352321,6 +352677,12 @@
             "content": {
               "application/json": {
                 "example": {
+                  "availability": "instant",
+                  "cacheTags": [
+                    "catalog:type:0192f3a0-7c1e-7d2a-9b1f-0000000c0004",
+                    "catalog:product:tuck-end-box"
+                  ],
+                  "campaignBadge": null,
                   "descriptionEn": "Reverse tuck-end folding box",
                   "descriptionTh": "กล่องพับฝาเสียบบน-ล่าง",
                   "imageUrl": "/v1/store/catalog/images/0192f3a0-7c1e-7d2a-9b1f-00000000c009",
@@ -352331,6 +352693,11 @@
                     }
                   ],
                   "isCombination": false,
+                  "leadTimeDays": {
+                    "max": 10,
+                    "min": 7
+                  },
+                  "moq": 500,
                   "nameEn": "Tuck-end box",
                   "nameTh": "กล่องฝาเสียบ",
                   "optionGroups": [
@@ -352389,6 +352756,19 @@
                       "widthMm": 100
                     }
                   ],
+                  "startingPriceAssumes": {
+                    "quantity": 1000,
+                    "specs": [
+                      {
+                        "key": "material",
+                        "labelEn": "Material",
+                        "labelTh": "วัสดุ",
+                        "valueEn": "Art card 350",
+                        "valueTh": "อาร์ตการ์ด 350"
+                      }
+                    ]
+                  },
+                  "startingPricePerPiece": "4.50",
                   "templateAvailability": "drawing",
                   "videos": [
                     {
@@ -353932,6 +354312,10 @@
                           "nameTh": "ใส"
                         }
                       ],
+                      "cacheTags": [
+                        "catalog:type:0192f3a0-7c1e-7d2a-9b1f-0000000c0004"
+                      ],
+                      "campaignBadge": null,
                       "capacityMl": 250,
                       "description": "ขวดใส ฝาเกลียว 28 มม.",
                       "heightMm": 150,
@@ -354093,6 +354477,10 @@
                       "nameTh": "ใส"
                     }
                   ],
+                  "cacheTags": [
+                    "catalog:type:0192f3a0-7c1e-7d2a-9b1f-0000000c0004"
+                  ],
+                  "campaignBadge": null,
                   "capacityMl": 250,
                   "description": "ขวดใส ฝาเกลียว 28 มม.",
                   "heightMm": 150,

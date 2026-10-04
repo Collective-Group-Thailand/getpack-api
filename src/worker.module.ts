@@ -12,6 +12,7 @@ import { B2bWorkerModule } from '@modules/b2b/b2b.module';
 import { BankingModule } from '@modules/banking/banking.module';
 import { CallOffsModule } from '@modules/call-offs/call-offs.module';
 import { CartsModule } from '@modules/carts/carts.module';
+import { StorefrontRevalidationModule } from '@modules/catalog/store/revalidation';
 import { CheckoutModule } from '@modules/checkout/checkout.module';
 import { ClaimsModule } from '@modules/claims/claims.module';
 import { CloseModule } from '@modules/close/close.module';
@@ -121,6 +122,7 @@ import { WorkerLifecycle } from './worker.lifecycle';
     TimelineModule,
     ClaimsModule,
     ConversationsModule,
+    StorefrontRevalidationModule,
     AssistantModule,
     LedgerModule,
     ReceivablesModule,

@@ -47,7 +47,30 @@ const CACHE = 'public, max-age=60';
 const CATALOG = ['D-100', 'D-050'];
 const CMS = ['D-005'];
 
+const TYPE_ID = '0192f3a0-7c1e-7d2a-9b1f-0000000c0004';
+/** D-307: real starting prices and their basis; no promotion, so no reference price. */
+const FACTS = {
+  startingPricePerPiece: '4.50',
+  startingPriceAssumes: {
+    quantity: 1000,
+    specs: [
+      {
+        key: 'material',
+        labelTh: 'วัสดุ',
+        labelEn: 'Material',
+        valueTh: 'อาร์ตการ์ด 350',
+        valueEn: 'Art card 350',
+      },
+    ],
+  },
+  moq: 500,
+  leadTimeDays: { min: 7, max: 10 },
+  availability: 'instant' as const,
+  campaignBadge: null,
+  cacheTags: [`catalog:type:${TYPE_ID}`, 'catalog:product:tuck-end-box'],
+};
 const CARD: StoreProductCardDto = {
+  ...FACTS,
   slug: 'tuck-end-box',
   productTypeCode: 'folding_carton',
   nameTh: 'กล่องฝาเสียบ',
@@ -80,6 +103,8 @@ const STOCK: StoreStockProductDto = {
   inStock: true,
   attributes: [{ attribute: 'colour', code: 'clear', nameTh: 'ใส', nameEn: 'Clear' }],
   imageUrls: [IMAGE_URL_EXAMPLE],
+  campaignBadge: null,
+  cacheTags: [`catalog:type:${TYPE_ID}`],
 };
 const SHOWCASE: StoreShowcaseProductDto = {
   slug: 'serum-box-30ml',
@@ -137,7 +162,9 @@ export class StoreCatalogController {
         nameTh: 'กล่องกระดาษแข็ง',
         nameEn: 'Folding carton',
         categoryCode: 'folding_carton',
-        quoteMode: 'rfq',
+        quoteMode: 'instant',
+        ...FACTS,
+        cacheTags: [`catalog:type:${TYPE_ID}`],
       },
     ],
   })
