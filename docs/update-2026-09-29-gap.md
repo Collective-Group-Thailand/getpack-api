@@ -2,6 +2,29 @@
 
 Session 0 of every U-B session (`docs/prompts/U1-update-2026-09-29.md`) and every U2 session (`docs/prompts/U2-benchmark-2026-09-29.md`): one row per requirement → `met | partial | missing`, the evidence, and what the session changes. Requirements already `met` are not touched. Newest session on top.
 
+## U-B4 — Storefront card payload & promotion truthfulness (2026-10-04, planning)
+
+Prompt `docs/prompts/U1-update-2026-09-29.md` §U-B4 (D-181). Checked against `v0.37.0`. D-181 and D-220 stand; **D-307–D-308** proposed by this plan (the user approved the plan up front and asked for auto mode, 2026-10-04). U-B4 runs before the web's U-F3 (RUN-ORDER §1 row 11).
+
+| # | Requirement | Status | Evidence | Resolution |
+|---|---|---|---|---|
+| 1a | Cards expose `startingPricePerPiece` + `startingPriceAssumes` (quantity + spec summary) | partial | D-220 hints computed (`catalog_price_hints`, `PriceHintsService`) but served only by `store.catalog.listPriceHints`; `StoreProductCardDto` has no price (`store-catalog.dto.ts:47`) | the card read model carries them from the hint (same rounding `ceilMoney`); a type card the cheapest of its products |
+| 1b | `moq` | missing | `catalog_products.quantity_min` (configurator limit, `catalog.prisma:397`) | `moq` = `quantity_min` (type card: the smallest) |
+| 1c | `leadTimeDays {min,max}` | partial | hint `lead_time_days` (one value) | `{min,max}` from the hints (type card: across products) |
+| 1d | `availability` instant / rfq / partial | partial | `QuotePathService.availability` per type (`store.catalog.getTypeAvailability`) | on product and type cards |
+| 1e | `campaignBadge {label, endsAt, promotionId} | null` | missing | automatic promotions with conditions `channels`, `productTypeCodes`, `categoryCodes`, `catalogProductIds` (`promotion-schemas.ts`) | D-307 badge from a live automatic promotion for the web channel targeting the item, with a real end date |
+| 2 | `referencePrice` and `endsAt` only with a live promotion applying to the item and channel; guard test over store DTOs | missing | no such fields; no guard | D-307 `referencePrice` absent unless the promotion's benefit lowers the per-piece price of the hint's basis unconditionally; unit test scanning every `store.*` response schema in the contract |
+| 3 | Stock products keep their list price and stock; discounts only through a promotion | met (price) / missing (badge) | stock cards carry stock, no price (`StoreStockProductDto`) | badge only, never a reference price |
+| 4 | Cache tags `catalog:type:{id}`, `promo:{id}` emitted on price, tier and promotion changes | missing | no tags anywhere | D-308 `cacheTags` on every card; outbox subscriber emits `storefront.cache_invalidated` and posts the tags, signed, to `STOREFRONT_REVALIDATE_URL` when set |
+
+**Proposed decisions:**
+- **D-307 Card truthfulness** — a made-to-order card shows the D-220 starting price per piece with the quantity and spec it assumes, the MOQ (`quantity_min`), the lead time and how the type is priced (instant / partial / RFQ). A **campaign badge** appears only for a live *automatic* promotion (status active, started, with a real end date) whose conditions allow the web channel and target the item (its catalogue product, product type or category); its label is the promotion's name. A **reference price** (struck through) appears only on a catalogue product card, only with such a promotion whose benefit is a percentage or a unit-price override and whose other conditions (segments, first order, payment method, zones, a minimum quantity or value above the hint's basis) do not restrict it — the card then shows the promoted price and the hint's price as the reference; otherwise the field is absent. Coupon and referral promotions never badge a card. Stock products may carry a badge, never a reference price.
+- **D-308 Cache revalidation** — every card lists its cache tags (`catalog:type:{id}`, `catalog:product:{slug}`, `promo:{id}` of its badge); price-list approvals, participation (tier) and pricing-mode changes, catalogue product changes and promotion / campaign changes emit `storefront.cache_invalidated` with the tags concerned, posted to `STOREFRONT_REVALIDATE_URL` (HMAC-SHA256 with `STOREFRONT_REVALIDATE_SECRET`) when configured.
+
+**Assumptions:** (1) A price or tier change re-tags every active product type (a handful; the change rarely names the types it affects). (2) The promoted price is the hint's unit price less the percentage (or the override), rounded up to whole satang like the hint. (3) Type cards show no reference price (several products, several prices).
+
+**Plan:** a card facts service + product / type / stock card fields · b guard test · c revalidation subscriber + env → `v0.38.0`; merge to `main`.
+
 ## U5.B5 — Assistant backend, behind a flag and an evaluation gate (2026-10-04, planning)
 
 Prompt `docs/prompts/U5-ux-excellence.md` §U5.B5. Checked against `v0.36.0`. D-218 stands: **assistant off at launch**, vendor and data terms decided in an ADR before it is enabled anywhere — this session builds the backend against a **fake model** and writes **ADR-0012 as Proposed**; nothing calls a real vendor until the ADR is accepted and the settings below are set. Post-launch (D-219). **D-304–D-306** proposed by this plan (the user approved the plan up front and asked for auto mode, 2026-10-04).
