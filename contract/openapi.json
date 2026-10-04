@@ -35016,7 +35016,7 @@
       "EvalRunDetailDto": {
         "properties": {
           "cases": {
-            "example": 127,
+            "example": 123,
             "type": "integer"
           },
           "costUsd": {
@@ -35043,7 +35043,7 @@
             "type": "string"
           },
           "passed": {
-            "example": 127,
+            "example": 123,
             "type": "integer"
           },
           "provider": {
@@ -35097,7 +35097,7 @@
       "EvalRunDto": {
         "properties": {
           "cases": {
-            "example": 127,
+            "example": 123,
             "type": "integer"
           },
           "costUsd": {
@@ -35124,7 +35124,7 @@
             "type": "string"
           },
           "passed": {
-            "example": 127,
+            "example": 123,
             "type": "integer"
           },
           "provider": {
@@ -94757,13 +94757,13 @@
                   ],
                   "runs": [
                     {
-                      "cases": 127,
+                      "cases": 123,
                       "costUsd": "0.000000",
                       "finishedAt": "2026-10-04T03:30:00+07:00",
                       "id": "0192f3a0-7c1e-7d2a-9b1f-0000000e7602",
                       "model": "fake-rules-1",
                       "passRatePct": "100.00",
-                      "passed": 127,
+                      "passed": 123,
                       "provider": "fake",
                       "redTeamCases": 22,
                       "redTeamPassed": 22,
@@ -94958,13 +94958,13 @@
                 "example": {
                   "data": [
                     {
-                      "cases": 127,
+                      "cases": 123,
                       "costUsd": "0.000000",
                       "finishedAt": "2026-10-04T03:30:00+07:00",
                       "id": "0192f3a0-7c1e-7d2a-9b1f-0000000e7602",
                       "model": "fake-rules-1",
                       "passRatePct": "100.00",
-                      "passed": 127,
+                      "passed": 123,
                       "provider": "fake",
                       "redTeamCases": 22,
                       "redTeamPassed": 22,
@@ -95147,13 +95147,13 @@
             "content": {
               "application/json": {
                 "example": {
-                  "cases": 127,
+                  "cases": 123,
                   "costUsd": "0.000000",
                   "finishedAt": "2026-10-04T03:30:00+07:00",
                   "id": "0192f3a0-7c1e-7d2a-9b1f-0000000e7602",
                   "model": "fake-rules-1",
                   "passRatePct": "100.00",
-                  "passed": 127,
+                  "passed": 123,
                   "provider": "fake",
                   "redTeamCases": 22,
                   "redTeamPassed": 22,
@@ -95371,13 +95371,13 @@
             "content": {
               "application/json": {
                 "example": {
-                  "cases": 127,
+                  "cases": 123,
                   "costUsd": "0.000000",
                   "finishedAt": "2026-10-04T03:30:00+07:00",
                   "id": "0192f3a0-7c1e-7d2a-9b1f-0000000e7602",
                   "model": "fake-rules-1",
                   "passRatePct": "100.00",
-                  "passed": 127,
+                  "passed": 123,
                   "provider": "fake",
                   "redTeamCases": 22,
                   "redTeamPassed": 22,

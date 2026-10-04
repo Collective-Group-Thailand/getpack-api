@@ -116,10 +116,10 @@ export class EvalRunDto {
   @ApiProperty({ example: SUITE_VERSION })
   suiteVersion!: string;
 
-  @ApiProperty({ type: 'integer', example: 127 })
+  @ApiProperty({ type: 'integer', example: 123 })
   cases!: number;
 
-  @ApiProperty({ type: 'integer', example: 127 })
+  @ApiProperty({ type: 'integer', example: 123 })
   passed!: number;
 
   @ApiProperty({ example: '100.00' })
@@ -200,8 +200,8 @@ const RUN_EXAMPLE: EvalRunDto = {
   model: 'fake-rules-1',
   trigger: 'nightly',
   suiteVersion: SUITE_VERSION,
-  cases: 127,
-  passed: 127,
+  cases: 123,
+  passed: 123,
   passRatePct: '100.00',
   redTeamCases: 22,
   redTeamPassed: 22,
