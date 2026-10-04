@@ -12,3 +12,5 @@ src/generated/
 # The local legacy reference checkout at the root only (docs/legacy/ is tracked).
 /legacy/
 __pycache__/
+# Problems seen by the e2e run (pnpm contract:observed-errors, U-B2).
+.e2e-observed-errors/

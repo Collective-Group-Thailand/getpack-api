@@ -8,6 +8,7 @@ import { resolveLanguage } from '../i18n/language';
 import { requestIdOf } from '../request-id/request-id';
 import { DomainException } from './domain.exception';
 import { codeForStatus, type ErrorCode, PROBLEM_TYPE_BASE } from './error-codes';
+import { recordObservedError } from './observed-errors';
 import { type ProblemDetails, type ProblemExtensions, type ProblemFieldError } from './problem-details.dto';
 
 export const PROBLEM_CONTENT_TYPE = 'application/problem+json; charset=utf-8';
@@ -57,6 +58,7 @@ export class ProblemDetailsFilter implements ExceptionFilter {
     };
 
     if (res.headersSent) return;
+    recordObservedError(req, error.code);
     for (const [name, value] of Object.entries(error.headers)) res.setHeader(name, value);
     res
       .status(error.status)

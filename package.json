@@ -30,6 +30,7 @@
     "db:migrate:dev": "prisma migrate dev",
     "db:seed": "nest build && node dist/prisma/seed/run.js reference",
     "db:seed:dev": "nest build && node dist/prisma/seed/run.js dev",
+    "contract:observed-errors": "node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON scripts/contract-observed-errors.ts",
     "contract:lint": "spectral lint contract/openapi.json --ruleset contract/spectral/.spectral.yaml --fail-severity warn",
     "rbac:build": "nest build && node dist/scripts/rbac-build.js",
     "launch:settings": "nest build && node dist/scripts/launch-settings-build.js",

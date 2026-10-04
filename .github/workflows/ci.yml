@@ -58,6 +58,8 @@ jobs:
       - uses: actions/checkout@v4
       - uses: ./.github/actions/setup
       - run: pnpm test:e2e
+      - name: Every problem code the e2e run saw is documented (U-B2)
+        run: pnpm contract:observed-errors
 
   contract:
     name: contract lint · drift · oasdiff breaking

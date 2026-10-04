@@ -1,3 +1,6 @@
+import { rmSync } from 'node:fs';
+import { join } from 'node:path';
+
 import { startTestInfra, type TestInfra } from '../support/containers';
 import { migrateDeploy } from '../support/database';
 
@@ -11,4 +14,8 @@ export default async function globalSetup(): Promise<void> {
   migrateDeploy(infra.env.DATABASE_URL!);
   globalThis.__PACKIO_E2E_INFRA__ = infra;
   Object.assign(process.env, infra.env);
+  // Problems answered during the run, checked against the contract by `pnpm contract:observed-errors` (U-B2).
+  const observed = join(process.cwd(), '.e2e-observed-errors');
+  rmSync(observed, { recursive: true, force: true });
+  process.env.PACKIO_OBSERVED_ERRORS_DIR = observed;
 }
