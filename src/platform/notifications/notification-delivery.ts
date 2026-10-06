@@ -15,6 +15,7 @@ import { ScheduledJob } from '@platform/maintenance/scheduled-job.decorator';
 import { RealtimePublisher } from '@platform/realtime/realtime.publisher';
 
 import { DeepLinksService } from './deep-links.service';
+import { readablePayload } from './policy-labels';
 import { renderTemplate } from './template-renderer';
 
 const BATCH = 100;
@@ -97,7 +98,7 @@ export class NotificationDelivery {
       const link = LINKED_CHANNELS.has(row.channel) ? await this.deepLinks.issue(row, now) : null;
       const rendered = await renderTemplate(row.channel, row.templateVersion, {
         event: { type: row.event.type, occurredAt: toBangkokIso(row.event.occurredAt) },
-        payload: row.event.payload,
+        payload: readablePayload(row.event.payload, row.templateVersion.locale),
         recipient: { displayName: row.recipient?.displayName ?? row.route?.staffTeam?.nameTh ?? '' },
         link,
       });

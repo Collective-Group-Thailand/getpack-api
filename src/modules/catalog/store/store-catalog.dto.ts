@@ -387,6 +387,15 @@ export class StoreStockAttributeDto {
 }
 
 export class StoreStockProductDto {
+  @ApiProperty({
+    format: 'uuid',
+    example: '0192f3a0-7c1e-7d2a-9b1f-00000000c001',
+    description:
+      "The stock product's id — what `store.quotes.calculate` takes as `configuration.stockProductId` for a " +
+      '`standard_product`, so the product page can price a quantity and add it to the cart.',
+  })
+  id!: string;
+
   @ApiProperty({ example: 'PKO-BTL-0250' })
   sku!: string;
 

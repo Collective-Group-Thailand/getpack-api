@@ -89,6 +89,7 @@ const SEO: StoreSeoDto = {
   noindex: false,
 };
 const STOCK: StoreStockProductDto = {
+  id: '0192f3a0-7c1e-7d2a-9b1f-00000000c001',
   sku: 'PKO-BTL-0250',
   nameTh: 'ขวด PET 250 มล.',
   nameEn: 'PET bottle 250 ml',
