@@ -7,6 +7,7 @@ import {
 } from '../../src/modules/partners/pricing/price-component.registry';
 import { type FinalLine, PriceListBuilder } from '../../src/modules/partners/pricing/price-list-builder';
 import { FOLDING_PRICE_COMPONENTS } from '../../src/modules/pricing/calculators/folding/price-components';
+import { seedDevOnboardingSteps } from './dev-folding';
 
 type Tx = Prisma.TransactionClient;
 
@@ -68,6 +69,7 @@ export async function seedDevFoldingB(tx: Tx): Promise<{ created: boolean; fixtu
       activatedAt: new Date(),
     },
   });
+  await seedDevOnboardingSteps(tx, factory.id);
   await tx.factoryCapability.create({
     data: { factoryId: factory.id, productTypeId: folding.id, printTypeId: printType.id, status: 'active' },
   });
