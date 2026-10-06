@@ -4,7 +4,7 @@ import { type UserActor } from '@common/context/actor';
 import { DomainException } from '@common/errors/domain.exception';
 import { toBangkokIso } from '@common/time/bangkok';
 import { PrismaService, type Tx } from '@database/prisma.service';
-import { type Prisma } from '@generated/prisma/client';
+import { Prisma } from '@generated/prisma/client';
 import { Injectable } from '@nestjs/common';
 import { DomainEvents } from '@platform/domain-events/domain-events.service';
 import { SettingNotFoundError, SettingsService } from '@platform/settings/settings.service';
@@ -84,17 +84,15 @@ export class StudioChecksService {
         : createHash('sha256')
             .update([...undeclared].sort().join(','))
             .digest('hex');
-    const existing = await this.prisma.designCheckRun.findUnique({
-      where: {
-        versionId_rulesVersionId_source_contextKey: {
-          versionId: version.id,
-          rulesVersionId: catalogue.versionId,
-          source: 'document',
-          contextKey,
-        },
+    const runKey = {
+      versionId_rulesVersionId_source_contextKey: {
+        versionId: version.id,
+        rulesVersionId: catalogue.versionId,
+        source: 'document' as const,
+        contextKey,
       },
-      include: RUN_INCLUDE,
-    });
+    };
+    const existing = await this.prisma.designCheckRun.findUnique({ where: runKey, include: RUN_INCLUDE });
     if (existing) return this.view(existing);
     const rules: PrintRule[] = activeRules(catalogue.value, {
       printMethod: doc.printMethod,
@@ -109,35 +107,45 @@ export class StudioChecksService {
       undeclaredElements: undeclared,
     });
     const count = (s: string) => findings.filter((f) => f.severity === s).length;
-    const run = await this.prisma.withTx(async (tx) => {
-      const created = await tx.designCheckRun.create({
-        data: {
-          versionId: version.id,
-          rulesVersionId: catalogue.versionId,
-          source: 'document',
-          contextKey,
-          blockCount: count('block'),
-          warnCount: count('warn'),
-          infoCount: count('info'),
-          findings: {
-            create: findings.map((f) => ({
-              ruleId: f.ruleId,
-              severity: f.severity,
-              elementId: f.elementId,
-              details: f.details as Prisma.InputJsonValue,
-            })),
+    const run = await this.prisma
+      .withTx(async (tx) => {
+        const created = await tx.designCheckRun.create({
+          data: {
+            versionId: version.id,
+            rulesVersionId: catalogue.versionId,
+            source: 'document',
+            contextKey,
+            blockCount: count('block'),
+            warnCount: count('warn'),
+            infoCount: count('info'),
+            findings: {
+              create: findings.map((f) => ({
+                ruleId: f.ruleId,
+                severity: f.severity,
+                elementId: f.elementId,
+                details: f.details as Prisma.InputJsonValue,
+              })),
+            },
           },
-        },
-        include: RUN_INCLUDE,
+          include: RUN_INCLUDE,
+        });
+        await this.record(tx, actor, doc.publicId, 'design.checked', {
+          versionNo: version.versionNo,
+          rulesVersion: catalogue.versionNo,
+          block: created.blockCount,
+          warn: created.warnCount,
+        });
+        return created;
+      })
+      .catch(async (error: unknown) => {
+        // Two runs of the same version and rules at once: the second returns the run the first stored instead of
+        // failing on the unique key (create-or-return; packio-web integration.md, U4.5).
+        if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2002') {
+          const stored = await this.prisma.designCheckRun.findUnique({ where: runKey, include: RUN_INCLUDE });
+          if (stored) return stored;
+        }
+        throw error;
       });
-      await this.record(tx, actor, doc.publicId, 'design.checked', {
-        versionNo: version.versionNo,
-        rulesVersion: catalogue.versionNo,
-        block: created.blockCount,
-        warn: created.warnCount,
-      });
-      return created;
-    });
     return this.view(run);
   }
 

@@ -143,4 +143,20 @@ describe('studio print checks (e2e, U4.B3)', () => {
     const other = (await customerToken(ctx, 82)).token;
     await as(ctx, other).post(`/v1/store/studio/${id}/checks`, {}).expect(404);
   });
+
+  it('answers two concurrent checks of one version with the same stored run (create-or-return)', async () => {
+    // packio-web integration.md (U4.5): the second of two parallel runs broke the unique key and answered 500.
+    const created = await as(ctx, token)
+      .post('/v1/store/designs', { catalogProductId: productId, title: 'คู่ขนาน (fake)', document: doc(300) })
+      .expect(201);
+    const id = created.body.id as string;
+    const runs = await Promise.all(
+      [1, 2, 3].map(() => as(ctx, token).post(`/v1/store/studio/${id}/checks`, {})),
+    );
+    expect(runs.map((r) => r.status)).toEqual([200, 200, 200]);
+    const stored = await ctx.prisma.designCheckRun.count({
+      where: { version: { designDocument: { publicId: id } }, source: 'document' },
+    });
+    expect(stored).toBe(1);
+  });
 });
