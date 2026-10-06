@@ -14,6 +14,9 @@ const LINKS: Record<InboxSurface, Record<string, Link>> = {
     conversation: (id) => `/account/messages/${id}`,
     claim: (id, p) =>
       typeof p['orderId'] === 'string' ? `/account/orders/${p['orderId']}/claims/${id}` : null,
+    // A company approver decides in the business pages (round 2, B2); other policies are staff's.
+    approval_request: (id, p) =>
+      p['policyKey'] === 'company_order_approval' ? `/business/approvals?request=${id}` : null,
   },
   admin: {
     order: (id) => `/orders/${id}`,

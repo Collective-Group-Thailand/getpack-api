@@ -12,6 +12,7 @@ import { AuditService } from '@platform/audit/audit.service';
 import { DomainEvents } from '@platform/domain-events/domain-events.service';
 
 import { PARTNER_CATEGORIES, PARTNER_CHANNELS } from './notifications.dto';
+import { readablePayload } from './policy-labels';
 import { renderTemplate } from './template-renderer';
 
 const partnerLocked = (channel: string, category: string) =>
@@ -156,7 +157,7 @@ export class MyNotificationsService {
         const rendered = row.templateVersion
           ? await renderTemplate('in_app', row.templateVersion, {
               event: { type: row.event.type },
-              payload: row.event.payload,
+              payload: readablePayload(row.event.payload, row.templateVersion.locale),
               recipient: {},
             })
           : { subject: null, body: '' };

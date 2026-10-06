@@ -16,6 +16,13 @@ describe('in-app notification links (U-B0.3)', () => {
     expect(inboxLink('store', 'claim', ID, {})).toBeNull();
   });
 
+  it('takes a company approver to the business approvals (round 2, B2)', () => {
+    expect(inboxLink('store', 'approval_request', ID, { policyKey: 'company_order_approval' })).toBe(
+      `/business/approvals?request=${ID}`,
+    );
+    expect(inboxLink('store', 'approval_request', ID, { policyKey: 'discount_memo' })).toBeNull();
+  });
+
   it('answers null where the zone has no page', () => {
     expect(inboxLink('partner', 'order', ID, {})).toBeNull();
     expect(inboxLink('store', 'approval_request', ID, null)).toBeNull();

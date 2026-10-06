@@ -465,6 +465,7 @@ export class StoreCatalogService {
     s: Prisma.StockProductGetPayload<{ include: StoreCatalogService['stockInclude'] }>,
   ): Omit<StoreStockProductDto, 'campaignBadge' | 'cacheTags'> {
     return {
+      id: s.publicId,
       sku: s.sku,
       nameTh: s.nameTh,
       nameEn: s.nameEn,
