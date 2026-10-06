@@ -1,5 +1,6 @@
 /**
- * Seed runner: `node dist/prisma/seed/run.js reference|dev` (package scripts `db:seed`, `db:seed:dev`).
+ * Seed runner: `node dist/prisma/seed/run.js reference|dev|uat` (package scripts `db:seed`, `db:seed:dev`,
+ * `db:seed:uat`).
  * The reference seed takes the issuing entity from SEED_ENTITY_* variables (D-092: company data is
  * never hard-coded); the dev seed uses an obviously fake entity and refuses to run in production.
  */
@@ -7,17 +8,10 @@ import { PrismaPg } from '@prisma/adapter-pg';
 import { config } from 'dotenv';
 
 import { PrismaClient } from '../../src/generated/prisma/client';
-import { seedDevAdvisory } from './dev-advisory';
-import { seedDevCorrugate } from './dev-corrugate';
-import { seedDevFolding } from './dev-folding';
-import { seedDevFoldingB } from './dev-folding-b';
-import { seedDevLabel } from './dev-label';
-import { seedDevPouch } from './dev-pouch';
+import { seedDevPriceLists } from './dev-price-lists';
 import { seedDev } from './dev-seed';
-import { seedDevService } from './dev-service';
-import { seedDevStandardProduct } from './dev-standard-product';
-import { seedDevTagSleeve } from './dev-tag-sleeve';
 import { type EntitySeedInput, seedReference } from './reference-seed';
+import { seedUat } from './uat/uat-seed';
 
 config({ quiet: true });
 
@@ -46,9 +40,33 @@ function entityFromEnv(): EntitySeedInput {
 
 async function main(): Promise<void> {
   const mode = process.argv[2];
-  if (mode !== 'reference' && mode !== 'dev') throw new Error('usage: run.js reference|dev');
+  if (mode !== 'reference' && mode !== 'dev' && mode !== 'uat')
+    throw new Error('usage: run.js reference|dev|uat');
   if (mode === 'dev' && process.env.NODE_ENV === 'production') {
     throw new Error('the dev seed never runs in production');
+  }
+  if (mode === 'uat') {
+    // The UAT stack may run with NODE_ENV=production (same topology), so the guard is an explicit opt-in.
+    if (process.env.UAT_SEED_CONFIRM !== 'uat-only') {
+      throw new Error('the UAT rehearsal seed needs UAT_SEED_CONFIRM=uat-only (never on production data)');
+    }
+    const prisma = new PrismaClient({
+      adapter: new PrismaPg({ connectionString: required('DATABASE_URL') }),
+    });
+    try {
+      const report = await seedUat(prisma, {
+        password: optional('UAT_SEED_PASSWORD') ?? optional('DEV_SEED_PASSWORD'),
+        entity: optional('SEED_ENTITY_CODE') ? entityFromEnv() : undefined,
+        instantTypes: optional('UAT_INSTANT_TYPES')?.split(','),
+      });
+      const created = Object.entries(report)
+        .map(([what, n]) => `${what}=${n}`)
+        .join(' ');
+      console.log(`seed uat: ${created || 'nothing to create (already seeded)'}`);
+    } finally {
+      await prisma.$disconnect();
+    }
+    return;
   }
 
   const prisma = new PrismaClient({ adapter: new PrismaPg({ connectionString: required('DATABASE_URL') }) });
@@ -57,35 +75,7 @@ async function main(): Promise<void> {
       mode === 'dev'
         ? await seedDev(prisma, optional('DEV_SEED_PASSWORD'))
         : await seedReference(prisma, entityFromEnv());
-    if (mode === 'dev') {
-      // A fake folding factory so `pnpm dev` can price a folding box (B2.3).
-      const folding = await prisma.$transaction((tx) => seedDevFolding(tx), { timeout: 60_000 });
-      if (folding.created) report['dev_folding_factory'] = 1;
-      // A fake type-B folding factory, priced by engine B once `pricing.folding_engine_b` is on (U-B6 tail, D-233).
-      const foldingB = await prisma.$transaction((tx) => seedDevFoldingB(tx), { timeout: 60_000 });
-      if (foldingB.created) report['dev_folding_b_factory'] = 1;
-      // Its corrugate price list (U-B6).
-      const corrugate = await prisma.$transaction((tx) => seedDevCorrugate(tx), { timeout: 60_000 });
-      if (corrugate.created) report['dev_corrugate_price_list'] = 1;
-      // Its label price list (U-B6 label).
-      const label = await prisma.$transaction((tx) => seedDevLabel(tx), { timeout: 60_000 });
-      if (label.created) report['dev_label_price_list'] = 1;
-      // Its tag & sleeve price list (U-B6 tag & sleeve).
-      const tagSleeve = await prisma.$transaction((tx) => seedDevTagSleeve(tx), { timeout: 60_000 });
-      if (tagSleeve.created) report['dev_tag_sleeve_price_list'] = 1;
-      // Its pouch price list (U-B6 pouch).
-      const pouch = await prisma.$transaction((tx) => seedDevPouch(tx), { timeout: 60_000 });
-      if (pouch.created) report['dev_pouch_price_list'] = 1;
-      // Its standard-product price list (U-B6 standard product).
-      const standard = await prisma.$transaction((tx) => seedDevStandardProduct(tx), { timeout: 60_000 });
-      if (standard.created) report['dev_standard_product_price_list'] = 1;
-      // Its service price list (U-B6 service).
-      const service = await prisma.$transaction((tx) => seedDevService(tx), { timeout: 60_000 });
-      if (service.created) report['dev_service_price_list'] = 1;
-      // Structure Advisor rule-set proposal and fake board sheets (U2.2; the flag stays off).
-      const advisory = await prisma.$transaction((tx) => seedDevAdvisory(tx), { timeout: 60_000 });
-      if (advisory.created) report['dev_advisory'] = 1;
-    }
+    if (mode === 'dev') await seedDevPriceLists(prisma, report);
     const created = Object.entries(report)
       .map(([what, n]) => `${what}=${n}`)
       .join(' ');

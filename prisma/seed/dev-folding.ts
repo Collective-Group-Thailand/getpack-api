@@ -1,4 +1,5 @@
 import { type Prisma } from '../../src/generated/prisma/client';
+import { ONBOARDING_STEPS } from '../../src/modules/partners/factories/factories.dto';
 import {
   lineKeyOf,
   normaliseColumns,
@@ -117,6 +118,7 @@ export async function seedDevFolding(tx: Tx): Promise<{ created: boolean; fixtur
       activatedAt: new Date(),
     },
   });
+  await seedDevOnboardingSteps(tx, factory.id);
   await tx.factoryCapability.create({
     data: { factoryId: factory.id, productTypeId: folding.id, printTypeId: printType.id, status: 'active' },
   });
@@ -388,6 +390,24 @@ export async function seedDevFolding(tx: Tx): Promise<{ created: boolean; fixtur
     });
   }
   return { created: true, fixture: await describe(tx, factory.id) };
+}
+
+/**
+ * An active dev factory has passed onboarding (D-011): every step approved, as the API leaves a factory it creates
+ * and activates. Without the rows, admin edits that record a step (e.g. `admin.factories.replaceDeliveryZones`)
+ * found nothing to update and answered 500 (packio-web contract request `api.dev-seed-launch-path` (a)).
+ */
+export async function seedDevOnboardingSteps(tx: Tx, factoryId: bigint): Promise<void> {
+  const now = new Date();
+  await tx.factoryOnboardingStep.createMany({
+    data: ONBOARDING_STEPS.map((step) => ({
+      factoryId,
+      step,
+      status: 'approved' as const,
+      completedAt: now,
+    })),
+    skipDuplicates: true,
+  });
 }
 
 async function describe(tx: Tx, factoryId: bigint): Promise<DevFolding> {

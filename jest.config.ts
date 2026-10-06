@@ -60,6 +60,13 @@ const config: Config = {
       globalTeardown: '<rootDir>/test/e2e/global-teardown.ts',
       setupFilesAfterEnv: ['<rootDir>/test/support/container-timeout.ts'],
     },
+    {
+      // `pnpm uat:populate` only (docs/launch/UAT-DATA.md): writes to the UAT rehearsal database, never in CI.
+      ...shared,
+      displayName: 'uat',
+      testMatch: ['<rootDir>/test/uat/**/*.uat-spec.ts'],
+      setupFiles: ['<rootDir>/test/uat/uat-env.ts'],
+    },
   ],
 };
 

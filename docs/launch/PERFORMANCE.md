@@ -14,6 +14,12 @@
 
 The thresholds live in `perf/k6/targets.js`; k6 exits non-zero when one is missed.
 
+**Read paths added since B6.3 (U1–U5)** ride on the browse scenario and need no script of their own unless the
+business expects them to dominate: the catalogue cards with their starting price (U-B4, D-220 / D-307) are read from
+the cached `catalog_price_hints`, never priced per request — include `GET /v1/store/catalog/price-hints` in the
+catalogue step; the studio quote (D-277) is rate-limited per user and cached by `specHash`; the style library and
+the assistant are post-launch (D-219). Targets are unchanged.
+
 **Why these shapes:** the one launch factory (D-101) limits order volume, so the risk is the storefront — every
 configurator change is a server-side calculation (D-050, prices never computed in the browser) — and the burst of
 analytics events that comes with it (B6.1). Checkout exercises the money path (idempotency, row locks, the payment
@@ -23,8 +29,10 @@ adapter); partner updates the factories' mobile write path (B4.2).
 
 1. Deploy the release candidate to the load stack with `INTEGRATIONS_MODE=real` against **sandbox** providers only, or
    `fake` to measure Packio alone. Never against production.
-2. Prepare data with the UAT seed: the folding configuration ids of the environment in
-   `perf/k6/payloads/folding-quote.json`; one token per test customer in `tokens.txt` and a delivery address id per
+2. Prepare data with the UAT rehearsal seed (`docs/launch/UAT-DATA.md`: `pnpm db:seed:uat`, then
+   `pnpm uat:populate` for orders already in production): an instant configuration of the environment in
+   `perf/k6/payloads/folding-quote.json` — corrugated is the only signed type by default, so take a postal box's
+   reference configuration (`uat-postal-box-b`), or seed with `UAT_INSTANT_TYPES=all` to load the folding engine; one token per test customer in `tokens.txt` and a delivery address id per
    customer in `addresses.txt`; partner tokens of factory users with in-production jobs in `partner-tokens.txt`.
    Tokens are short-lived (10 – 15 min): issue them just before the run.
 3. Make sure the load generator reaches the API **through the BFF path the store uses**, or set `X-Forwarded-For` per

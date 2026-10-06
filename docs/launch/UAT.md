@@ -23,16 +23,21 @@
 | Messaging | LINE OA test channel, ThaiBulkSMS test sender, SES sandbox with the UAT team's addresses verified. | Admin |
 | Test customers | Staff create test customers with obviously fake names (`ทดสอบ …`, `@example.invalid` addresses are not deliverable — use team mailboxes in SES sandbox). No real customer data in UAT (PDPA). | CS Lead |
 | Settings | The values of `docs/launch/SETTINGS-REVIEW.md`, with the owners' confirmed changes applied as new versions. | Superadmin |
+| Rehearsal | Before the launch factory's data exists, the team rehearses every scenario on `pnpm db:seed:uat` + `pnpm uat:populate` (`docs/launch/UAT-DATA.md`: a market-like catalogue, 13 personas, orders parked at every stage). Rehearsal prices are **not** prices; a rehearsal never signs a scenario. | QA lead |
 
 Run order: UAT-01 → 03 first (catalogue, factory, prices), then the commerce and fulfilment scenarios, then finance
-(UAT-17 → 19) on the orders they produced, then analytics / reports / ops (UAT-20 → 22).
+(UAT-17 → 19) on the orders they produced, then analytics / reports / ops (UAT-20 → 22). The pre-launch U2 items (D-219) run with the
+fulfilment scenarios they extend: UAT-23 with UAT-03, UAT-24 with UAT-11 / UAT-15, UAT-25 with UAT-15, UAT-26 with
+UAT-07. The last run of the automated layer is recorded in `docs/launch/UAT-RUN-2026-10-06.md`.
 
 ---
 
 ## UAT-01 Partner onboarding to activation
 **Decisions:** D-011, D-041, D-042, D-043, D-100 (assisted onboarding), D-167, D-171, D-173 · **Actors:** Partner Manager, factory owner, Superadmin · **Automated:** `test/e2e/partners-onboarding.e2e-spec.ts`, `partners-configuration.e2e-spec.ts`
 
-**Pre-conditions:** catalogue of the 14 product types (A-16), national calendar with the year's holidays (D-161).
+**Pre-conditions:** catalogue of the 14 product types (A-16); the national calendar of the year keyed in by an Admin
+through `admin.calendar.putHoliday` or the Excel import, each holiday marked with who observes it (D-161, D-170 —
+`admin-platform.e2e-spec.ts`, `catalog-imports.e2e-spec.ts`).
 
 1. Partner Manager creates the factory (assisted mode) and invites the owner (D-171).
 2. Owner completes KYC, bank account (verified by a call — A-18), capability matrix, capacity, delivery zones, tolerance, payout policy, agreement e-acceptance.
@@ -49,13 +54,18 @@ Run order: UAT-01 → 03 first (catalogue, factory, prices), then the commerce a
 | Superadmin | | | | |
 
 ## UAT-02 Price governance
-**Decisions:** D-040, D-042, D-044, D-172 · **Actors:** factory owner, Partner Manager · **Automated:** `price-governance.e2e-spec.ts`, `price-suggestions.e2e-spec.ts`
+**Decisions:** D-040, D-042, D-043, D-044, D-172, D-234 · **Actors:** factory owner, Partner Manager · **Automated:** `price-governance.e2e-spec.ts`, `price-suggestions.e2e-spec.ts`, `tier-b-envelopes.e2e-spec.ts`, `test/unit/partner-price-protection.spec.ts`
 
 1. The factory proposes a price change (mode b) in the partner zone.
 2. Partner Manager reviews suggestion, basis, deviation and the 90-day impact simulation; counter-proposes, then approves.
 3. A quote saved before the change keeps its snapshot price; a new quote uses the new version.
+4. For a Packio rate card (mode a) the factory accepts the new version (evidence: who, when, IP, user agent — A-114);
+   it applies to new quotes only after acceptance.
+5. A Partner Manager reads the factory's price lines: the read is in the audit log with its purpose (D-044, D-141);
+   a CS user cannot read them.
 
-**Expected:** suggestions never visible to the factory; `above_band` not raised until a band is set (D-172).
+**Expected:** suggestions, benchmarks, margins and sell prices never visible to the factory; `above_band` not raised
+until a band is set (D-172).
 
 | Role | Name | Result | Date | Evidence / notes |
 |---|---|---|---|---|
@@ -63,10 +73,13 @@ Run order: UAT-01 → 03 first (catalogue, factory, prices), then the commerce a
 | Factory owner | | | | |
 
 ## UAT-03 Instant quote, RFQ routing and saved quotation
-**Decisions:** D-043, D-050, D-051, D-100 · **Actors:** test customer, CS · **Automated:** `folding-quotes.e2e-spec.ts`, `saved-quotes.e2e-spec.ts`, `rfqs.e2e-spec.ts`
+**Decisions:** D-043, D-050, D-051, D-100, D-233, D-234 · **Actors:** test customer, CS, Pricing owner · **Automated:** `folding-quotes.e2e-spec.ts`, `corrugate-quotes.e2e-spec.ts`, `label-quotes.e2e-spec.ts`, `tag-sleeve-quotes.e2e-spec.ts`, `pouch-quotes.e2e-spec.ts`, `standard-product-quotes.e2e-spec.ts`, `service-quotes.e2e-spec.ts`, `tier-b-envelopes.e2e-spec.ts`, `saved-quotes.e2e-spec.ts`, `rfqs.e2e-spec.ts`
 
-1. As an anonymous visitor, price each of the 7 instant types for 3 quantities; compare with the factory's reference prices (golden cases for folding: `docs/pricing-validation-folding.md`).
-2. Configure a spec outside the factory's tier-B envelope → routed to RFQ.
+1. As an anonymous visitor, price **each type whose validation document is signed** (`docs/pricing-validation-<type>.md`
+   — today corrugated only) for 3 quantities and compare with that document's cases and the factory's signed price
+   list; every type not signed yet routes to RFQ (A-16). Folding engine B stays off until
+   `docs/pricing-validation-folding-b.md` is signed (D-233).
+2. Configure a spec outside the factory's tier-B envelope → routed to RFQ; the store shows the type as `partial` (D-234).
 3. Save a quotation; sign in; claim it; download the PDF (QT number in the UAT series); share it.
 4. After 15 days (simulate by editing the validity in UAT only) the quote is re-priced (D-051).
 
@@ -172,7 +185,8 @@ Run order: UAT-01 → 03 first (catalogue, factory, prices), then the commerce a
 1. Upload artwork with a missing bleed → blocked; RGB → warning (D-070).
 2. Prepress sends a proof; the customer annotates, a new version is compared and approved.
 3. Paid + approved → production released automatically (D-073); a manual start requires a reason.
-4. Hired design: 3 free revision rounds, the 4th is charged max(THB 500, 20 %) and paid first (D-071); mockup add-on (D-072).
+4. Hired design: 3 free revision rounds, the 4th is charged max(THB 500, 20 %) and paid first (D-071). The mockup
+   add-on is now an attached sample — tested in UAT-24 (D-072, D-253).
 
 | Role | Name | Result | Date | Evidence / notes |
 |---|---|---|---|---|
@@ -218,8 +232,8 @@ Run order: UAT-01 → 03 first (catalogue, factory, prices), then the commerce a
 **Decisions:** D-081, D-082, D-083, D-153 · **Actors:** test customer, CS, factory owner · **Automated:** `claims.e2e-spec.ts`, `fulfilment-flow.e2e-spec.ts`
 
 1. Order auto-completes 7 days after delivery (simulate by clock in UAT) or on customer confirmation.
-2. Claim within 7 days with product and carton photos; print defect → factory liable, re-production or credit; approved-artwork error → customer liable.
-3. One-click reorder: re-priced at current cost, proof skipped when artwork unchanged, plate/die charges not repeated.
+2. Claim within 7 days with product and carton photos; print defect → factory liable, re-production or credit; approved-artwork error → customer liable. Severity, remedy and SLA clocks: UAT-25.
+3. One-click reorder: re-priced at current cost, proof skipped when artwork unchanged, plate/die charges not repeated (the tooling waiver: UAT-24).
 
 | Role | Name | Result | Date | Evidence / notes |
 |---|---|---|---|---|
@@ -296,11 +310,14 @@ Run order: UAT-01 → 03 first (catalogue, factory, prices), then the commerce a
 | Finance Manager | | | | |
 
 ## UAT-21 Roles, segregation of duties and visibility
-**Decisions:** D-140, D-141, D-142, D-168 · **Actors:** one tester per role · **Automated:** `iam.e2e-spec.ts`, `docs/rbac.md` (generated)
+**Decisions:** D-063, D-140, D-141, D-142, D-168, D-222 · **Actors:** one tester per role · **Automated:** `iam.e2e-spec.ts`, `admin-platform.e2e-spec.ts`, `docs/rbac.md` (generated)
 
 1. Each role signs in and sees only its menu; CS sees margin % only when discounting; Prepress and Logistics see neither cost nor margin (D-141).
 2. Factories see only recipient name, address and phone of customers (D-142).
 3. Conflicting duties are refused (e.g. Auditor with Finance, D-168; payout proposer approving).
+4. A Superadmin proposes a new version of an approval matrix (`admin.approvalPolicies.proposeVersion`); it applies
+   from its effective date only after its approval, never backwards (D-063).
+5. The Data Protection Officer answers a test customer's export request within `privacy.response_days` (D-222).
 
 | Role | Name | Result | Date | Evidence / notes |
 |---|---|---|---|---|
@@ -314,11 +331,90 @@ Run order: UAT-01 → 03 first (catalogue, factory, prices), then the commerce a
 2. Force a subscriber failure in UAT: the event is dead-lettered, the alert reaches Superadmins and Admins, the event is replayed from `admin.outbox`.
 3. Restore last night's backup to a new instance with PITR and run the verification queries of `docs/launch/SECURITY.md` §5.
 4. Deploy and roll back the release (`docs/RUNBOOK.md` §2 – §3).
+5. Release hygiene on the release build: `pnpm release:check` is clean, and an API started in production with a
+   `devOnly` flag on refuses to boot (D-210, D-296 — `test/unit/release-hygiene.spec.ts`).
 
 | Role | Name | Result | Date | Evidence / notes |
 |---|---|---|---|---|
 | Tech lead | | | | |
 | On-call engineer | | | | |
+
+## UAT-23 Specification model v2 and published tolerances (pre-launch, D-219)
+**Decisions:** D-182 – D-187 (findings F2, F5, F6) · **Actors:** test customer, CS, Prepress · **Automated:** `spec-model.e2e-spec.ts`, `rfqs.e2e-spec.ts`, `saved-quotes.e2e-spec.ts`
+
+1. Configure a box by its **outside** size: the customer must choose the basis (no silent default); the other bases
+   are shown from the material caliper; the price is computed on the inside size and the basis is frozen on the
+   quotation, the order line and the job sheet (D-182).
+2. Change the display unit to cm / in: the screen converts; a request that sends a unit to the API is refused (D-183).
+3. Before buying, the product shows its dimensional (± 1 mm folding, ± 3 mm corrugated) and colour (ΔE2000 ≤ 3, ≤ 5
+   flexo) tolerances; the quotation freezes them (D-186).
+4. An RFQ accepted by the customer freezes the factory's quantity tolerance (or the ± 5 % default) — its order is
+   reconciled with it at POD, never at 0 % (D-187, F2).
+5. Share a quotation and a draft configuration: the link works, is revoked on demand and stops resolving after 15 days
+   (D-185, F5); a draft is kept 90 days after its last change.
+6. Try to change a published style code: refused; quotations, orders, proofs and the job sheet carry the
+   `PK-<FAMILY>-<NN>` code (D-184, F6).
+
+| Role | Name | Result | Date | Evidence / notes |
+|---|---|---|---|---|
+| CS Lead | | | | |
+| Prepress | | | | |
+| Pricing owner (D-182: legacy calculators took inside sizes) | | | | |
+
+## UAT-24 Attached sample, production hold, tooling waiver, store credit (pre-launch, D-219)
+**Decisions:** D-072, D-193, D-196, D-205, D-253 – D-256, D-289 (findings F1, F3, F4) · **Actors:** test customer, CS, factory QC, Finance · **Automated:** `samples.e2e-spec.ts`, `tooling.e2e-spec.ts`, `receivables.e2e-spec.ts`
+
+1. CS adds a sample to a bulk order (price entered by CS, D-254); the factory records measured size, material and a
+   photo before it ships; the sample ships on its own shipment without touching the bulk order's tolerance (D-258).
+2. While the sample is not approved, bulk production does not start, automatically or manually (`sample_not_approved`,
+   D-256). The customer approves with evidence (who, when, IP, user agent, photo hashes); the spec and proof lock;
+   production releases. "Changes requested" leads to a new, re-quoted sample.
+3. A reorder of the same spec and artwork at the same factory within 12 months: the plates / die block are waived,
+   the quotation shows the waived amount and the tooling reference, the factory's buy price excludes it; the factory
+   reports a tool unusable → Packio absorbs the remake (D-205, D-289, F1).
+4. **Store credit at checkout (D-196, F3): not implemented** — see `docs/launch/UAT-RUN-2026-10-06.md` D-1. This step
+   stays failed until it is built and Finance confirms the posting (D-196 Still open): a customer with store credit
+   from a claim pays part of a new order with it, up to the order total.
+
+| Role | Name | Result | Date | Evidence / notes |
+|---|---|---|---|---|
+| CS | | | | |
+| Factory QC | | | | |
+| Finance Manager (F3 posting) | | | | |
+
+## UAT-25 Guarantee policy and claim SLA (pre-launch, D-219)
+**Decisions:** D-198 – D-200, D-260 – D-263 · **Actors:** test customer, CS, CS Lead, C-Level · **Automated:** `claims.e2e-spec.ts`, `ops.e2e-spec.ts`
+
+1. The public guarantee page (`store.guarantee.get`) shows version 1: remedies by claim type and severity, response
+   1 and decision 3 business days, no late-delivery guarantee.
+2. Approving a claim needs its severity and a remedy the policy stamped on the claim allows; the executed actions fit
+   the remedy (reprint → re-production, refund → refund or credit note, partial credit → credit note or store
+   credit); artwork the customer approved → no remedy (D-261, D-083).
+3. Goodwill is approved only with a discount memo through the D-052 matrix (D-262).
+4. The claim shows its owner and due times; asking the customer for information stops the decision clock; an
+   overdue claim raises `claim_response_overdue` / `claim_decision_overdue` (D-263; rehearsal: O8 in UAT-DATA.md).
+5. The CS Lead requests a new policy version; a C-Level approves; it applies from its effective date only (D-200).
+
+| Role | Name | Result | Date | Evidence / notes |
+|---|---|---|---|---|
+| CS Lead | | | | |
+| C-Level | | | | |
+
+## UAT-26 Storefront cards and promotion truthfulness (D-181)
+**Decisions:** D-181, D-220, D-307, D-308 · **Actors:** Marketing, test customer, tech lead · **Automated:** `storefront-cards.e2e-spec.ts`, `price-hints.e2e-spec.ts`
+
+1. Every made-to-order card shows the starting price per piece with the quantity and spec it assumes, the MOQ, the
+   lead time and instant / partial / RFQ; a product without a reference configuration or an instant path shows none.
+2. A struck-through price, a badge and an end date appear only while a live automatic promotion with a real end date
+   targets the item on the web; coupon and referral promotions never badge a card; no countdown or "only N left"
+   anywhere (D-181, D-307).
+3. Changing a price list, a promotion or a catalogue product revalidates the cards on the web (signed call to
+   `STOREFRONT_REVALIDATE_URL`, D-308).
+
+| Role | Name | Result | Date | Evidence / notes |
+|---|---|---|---|---|
+| Marketing | | | | |
+| Tech lead | | | | |
 
 ---
 
@@ -327,5 +423,6 @@ Run order: UAT-01 → 03 first (catalogue, factory, prices), then the commerce a
 | Scenario | Result | Blocking issues | Signed by | Date |
 |---|---|---|---|---|
 | UAT-01 … UAT-22 | | | | |
+| UAT-23 … UAT-26 (pre-launch U2 items, D-219) | | | | |
 
 A failed scenario reopens with a defect id; the go / no-go needs every scenario passed or a waiver signed by C-Level with the risk written down.

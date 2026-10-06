@@ -33,6 +33,23 @@ Status: ✅ in place · 🟡 partly / needs an ops step · ❌ open before go-li
 | V13 | API | ✅ | Contract lint (Spectral) enforces security on every operation; throttling (`THROTTLE_LIMIT` / TTL); 1 MB JSON limit (`json-body-parser.ts`). |
 | V14 | Configuration | 🟡 | Env validated at start-up; one image, non-root user (Dockerfile). **Ops step:** separate DB roles (§4), `TRUST_PROXY` set to the real hop count behind the ALB. |
 
+### 1.1 Surfaces added after B6.3 (U1–U5) — for the pen-test scope
+
+Reviewed in U-B5 (2026-10-06). Post-launch features (D-219) are listed because their code ships in the image even
+while their flags are off; the pen test covers what is reachable in production.
+
+| Surface | Control | Evidence |
+|---|---|---|
+| API reference `/docs`, `/docs/swagger`, `/docs-json`, `/docs.yaml` (U-B1) | off in production unless `DOCS_ENABLED`, then an IP allow-list or a staff token with `settings.read`; otherwise 404 | `docs-gating.e2e-spec.ts` |
+| Factory price data (U-B3, D-044) | partner responses never carry suggestions, benchmarks, margins, sell or target prices; staff reads of another factory's lines need `factory_buy_prices.read` and are audited with their purpose; acceptance evidence (IP, user agent) stored, never returned | `test/unit/partner-price-protection.spec.ts`, `price-governance.e2e-spec.ts` |
+| Share links of quotations, drafts and designs (D-185, D-226, D-285) | random tokens stored hashed, expire after `configurations.share_link_days` (15), revocable; edit / comment scopes need a signed-in member | `spec-model.e2e-spec.ts`, `studio-collaboration.e2e-spec.ts` |
+| Notification deep links `/l/<token>` (D-299) | SHA-256-stored token bound to one recipient and one page, 72 h; never signs anyone in; another signed-in user gets 404, an expired token 410 | `launchpad.e2e-spec.ts` |
+| Free dieline downloads (D-271) | signed-in customers only, 20 a day and 5 a minute per user, every download logged | `dieline-downloads.e2e-spec.ts` |
+| B2B API clients and outbound webhooks (D-291, post-launch) | client credentials issued by the Company Admin (max 5), secret shown once and stored hashed, scoped, revocable; deliveries signed HMAC-SHA256 per subscription, logged, retried | `b2b-api.e2e-spec.ts` |
+| Storefront revalidation call (D-308) | outbound POST signed HMAC-SHA256 (`X-Packio-Signature`) with `STOREFRONT_REVALIDATE_SECRET` | `storefront-cards.e2e-spec.ts` |
+| Customer assistant (D-218, D-304 – D-306, post-launch) | flag `assistant.enabled` off; outside local it can only be switched on after ADR-0012 and a passing evaluation (409 otherwise); per-customer rate limits; logs purged after 30 days | `assistant.e2e-spec.ts` |
+| UAT rehearsal tooling (U-B5) | `pnpm db:seed:uat` and `pnpm uat:populate` refuse to run without `UAT_SEED_CONFIRM` / `UAT_POPULATE_CONFIRM=uat-only`; fake people and accounts only; never run on production data | `test/integration/uat-seed.int-spec.ts`, `docs/launch/UAT-DATA.md` |
+
 ## 2. Penetration test
 
 - **Scope:** `/v1/auth`, `/v1/store`, `/v1/partner`, `/v1/admin`, `/webhooks` of the UAT stack with test data; packio-web (customer, partner, admin zones, BFF).

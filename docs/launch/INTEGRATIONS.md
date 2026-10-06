@@ -21,6 +21,8 @@
 | 11 | **Sentry / OpenTelemetry** | Tech lead | `SENTRY_DSN`, `OTEL_EXPORTER_OTLP_ENDPOINT` | — | An error from the UAT stack reaches Sentry with the release version; traces visible | UAT-22 | |
 | 12 | **Storefront links** | Tech lead | `STOREFRONT_BASE_URL` (links in e-mails, LINE, tracking) | — | Links in every template open the production store | UAT-16 | |
 | 13 | **Legal entity data** (D-092) | Finance Manager | `SEED_ENTITY_*` for the reference seed (legal names th / en, tax id, branch, address, phone) | — | Printed on a UAT tax invoice and checked against the company certificate and ภ.พ.20 | UAT-17 | |
+| 14 | **Storefront cache revalidation** (D-308, U-B4) | Tech lead with the packio-web owner | `STOREFRONT_REVALIDATE_URL` (packio-web's revalidation route), `STOREFRONT_REVALIDATE_SECRET` (HMAC-SHA256 key, header `X-Packio-Signature`; the same secret in packio-web; Secrets Manager). Unset → the tags are only recorded | — | A price-list approval and a promotion change refresh the affected product cards on the production store within a minute | UAT-26 | |
+| 15 | **Public API origin and merchant feed links** | Tech lead with Marketing | `PUBLIC_API_BASE_URL` (origin of this API, no trailing slash — absolute image links in feeds), `MERCHANT_FEED_LINK_TEMPLATE` (storefront URL of a stock product, must contain `{sku}`; the route belongs to packio-web) | — | The product feed opens real product pages and images | UAT-20 | |
 
 **Not opened for R1:** e-Tax invoice / e-Receipt sending to the Revenue Department (R2, D-091 — flag `e_tax.sending`
 stays off), 2C2P instalments and SCB direct debit (R2, D-111), the remaining legacy carriers (R2).

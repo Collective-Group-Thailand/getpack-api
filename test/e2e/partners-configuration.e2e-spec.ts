@@ -7,6 +7,7 @@ import { Test } from '@nestjs/testing';
 import { envelopeFromRow } from '@platform/domain-events/domain-event';
 import request from 'supertest';
 
+import { seedDevFolding } from '../../prisma/seed/dev-folding';
 import { seedDev } from '../../prisma/seed/dev-seed';
 import { AppModule } from '../../src/app.module';
 import { configureApp } from '../../src/bootstrap';
@@ -128,6 +129,30 @@ describe('partner configuration (e2e, B2.2)', () => {
     ]);
     const partner = await as(ownerToken).get(`/v1/partner/factories/${factoryId}/delivery-zones`).expect(200);
     expect(partner.body).toHaveLength(1);
+  });
+
+  it('records the zones of a seeded active factory too (dev F9001: every onboarding step approved)', async () => {
+    // packio-web `api.dev-seed-launch-path` (a): this answered 500 while the dev factory had no step rows.
+    const { fixture } = await prisma.$transaction((tx) => seedDevFolding(tx), { timeout: 60_000 });
+    const scheme = await pm()
+      .post('/v1/admin/shipping/zone-schemes', { code: `e2e_dev_${run}`, name: 'E2E dev zones' })
+      .expect(201);
+    const zone = await pm()
+      .post('/v1/admin/shipping/zones', {
+        schemeId: scheme.body.id,
+        code: 'DEV',
+        nameTh: 'ทดสอบ',
+        nameEn: 'Test',
+      })
+      .expect(201);
+    const served = await pm()
+      .put(`/v1/admin/factories/${fixture.factoryPublicId}/delivery-zones`, {
+        zones: [{ zoneId: zone.body.id, extraLeadDays: 0 }],
+      })
+      .expect(200);
+    expect(served.body).toEqual(
+      expect.arrayContaining([expect.objectContaining({ zoneCode: 'DEV', serves: true })]),
+    );
   });
 
   it('needs a capability before a participation tier (D-043)', async () => {

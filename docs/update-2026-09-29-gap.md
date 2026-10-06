@@ -2,6 +2,73 @@
 
 Session 0 of every U-B session (`docs/prompts/U1-update-2026-09-29.md`) and every U2 session (`docs/prompts/U2-benchmark-2026-09-29.md`): one row per requirement → `met | partial | missing`, the evidence, and what the session changes. Requirements already `met` are not touched. Newest session on top.
 
+## U-B5 — UAT on the integrated system, launch checklist, B6.3 refresh (2026-10-06, done — UAT part)
+
+Prompt `docs/prompts/U1-update-2026-09-29.md` §U-B5 (RUN-ORDER §1 row 12), **UAT part only** (the user: "Do U-B5 แล้วทำ UAT only"). Checked against `v0.41.0` (main `c82e2ee`) and packio-web `main` `1d22a41` (U-F3 + U-F4 merged 2026-10-06).
+
+**Scope boundary.** UAT in `docs/launch/UAT.md` is executed and signed by people (launch factory, staff, CPA observer — D-113); an agent cannot sign a scenario or a checklist line. This session does what can be done in the repository: bring the UAT package and the B6.3 documents up to date with U1–U5, run the automated layer of every scenario on the integrated stack (API + worker + PostgreSQL + Redis, and packio-web's `e2e:integration` against it), record the run as evidence for the signers, fix clear defects it reveals, and leave every sign-off cell empty. The removal of deprecated routes and fields is **not** in scope (user) and its gate is not met anyway (see 5.9).
+
+### UAT package (`docs/launch/UAT.md`)
+
+| # | Requirement | Status | Evidence | Resolution |
+|---|---|---|---|---|
+| 5.1 | 22 scenarios with decisions, actors, steps, automated coverage, sign-off sheets | met | `docs/launch/UAT.md` (B6.3, 2026-09-28); every `*.e2e-spec.ts` it names exists in `test/e2e/` | — |
+| 5.1a | Scenarios reflect U-B6: all 7 calculators ported, each type instant only once its validation doc and the factory's price list are signed (A-16, D-100) | partial | UAT-03 step 1 "price each of the 7 instant types" against folding golden cases only; validation docs: corrugate **signed**, folding, label, tag & sleeve, pouch, standard product, service, folding B **pending** | UAT-03: price every type whose validation doc is signed against its `docs/pricing-validation-<type>.md`; unsigned types must route to RFQ; folding B stays off (D-233); tier-B envelope case (D-234) |
+| 5.1b | Pre-launch U2 items (D-219) have UAT scenarios: spec model v2 (D-182–D-187), F1 tooling waiver, F2 RFQ tolerance, F3 store credit, F4 attached sample lifecycle and hold, F5 share-link expiry, F6 immutable style codes, U2.5 guarantee policy + claim SLA (D-260–D-263), release hygiene (D-210/D-296) | missing | none of UAT-01…22 covers them; automated: `spec-model`, `tooling`, `samples`, `claims`, `checkout`, `rfqs` e2e, `release-hygiene.spec.ts` | new scenarios **UAT-23** specification model & tolerances (D-182–D-187, F2, F5, F6), **UAT-24** attached sample, production hold, tooling waiver, store credit (F1, F3, F4), **UAT-25** guarantee policy and claim SLA (D-198–D-200, D-260–D-263); release hygiene goes to UAT-22 (ops drill) as a step |
+| 5.1c | U1 items have UAT coverage: storefront truthfulness (D-181, D-307), price-data protection (D-044), calendar and approval-policy admin (B6.3 gaps closed in U-B0.3) | missing | `storefront-cards`, `price-governance`, `factory-calendar`, `approvals` e2e exist; no scenario | **UAT-26** storefront cards and promotion truthfulness (D-181, D-220, D-307, D-308); D-044 checks added to UAT-02; calendar entry added to UAT-01 pre-conditions as a step (`admin.calendar.*`); approval-policy version (`admin.approvalPolicies.proposeVersion`) added to UAT-21 |
+| 5.1d | Scenarios touched by later decisions are current | partial | UAT-11 step 4 "mockup add-on (D-072)" — now an attached sample (D-253); UAT-14 claim decision has no severity / remedy (D-261); UAT-08 store credit not mentioned; UAT-20 "12 reports" — count to re-check | edit the steps and the decision lists; post-launch features (D-219) are **not** added as scenarios (they never block) |
+| 5.2 | UAT run on the integrated system | missing | never executed (U1 "never executed yet") | **automated pre-run**: (a) the full API suites (unit, integration, e2e) on the release candidate; (b) the automated specs of each scenario mapped to UAT-xx with pass / fail; (c) packio-web `pnpm e2e:integration` against a local API + worker on `v0.41.0`+; results in a new `docs/launch/UAT-RUN-2026-10-06.md` (environment, commit, per-scenario automated result, defects, what the human run must still prove). Sign-off cells stay empty |
+| 5.2a | Defects found by the run | — | — | a clear defect is fixed with a test (U1 rule); anything else is recorded in the run record and PROGRESS |
+
+### Launch checklist (`docs/LAUNCH-CHECKLIST.md`)
+
+| # | Requirement | Status | Evidence | Resolution |
+|---|---|---|---|---|
+| 5.3 | 5.4 gap "no admin endpoint creates a new policy version" | stale | `admin.approvalPolicies.proposeVersion` / `listVersions` (U-B0.3 slice 8) | gap note removed, evidence: operation + `approvals.e2e-spec.ts` |
+| 5.3a | 5.6 gap "no admin endpoint writes `business_calendar_days`" | stale | `admin.calendar.putHoliday` / `removeHoliday` / `putClosure` / `removeClosure` / `setFactoryHours` + Excel import (`calendar-import.ts`), `factory-calendar.e2e-spec.ts` | gap note removed, evidence linked |
+| 5.3b | 8.2 "types instant only where the calculator shipped" — now: only where the validation doc **and** the factory price list are signed (A-16) | partial | 1 of 7 validation docs signed (corrugate) | line reworded with the per-type status table; stays blocking |
+| 5.3c | 8.5 contract pin | partial | packio-web pins `v0.41.0` (PROGRESS) | evidence filled (tag + `contract.lock.json`) |
+| 5.3d | §9 evidence (9.1–9.4) | partial | PROGRESS entries U2.1 (`v0.13.0`), U2.4 (`v0.18.0`), U2.5 (`v0.19.0`), U2.6–U2.9 (`v0.31.0`); `pnpm release:check` | evidence column filled from PROGRESS + this session's runs; 9.2 F3 still needs Finance's posting confirmation (D-196 Still open) — stated |
+| 5.3e | New open decisions that block launch are listed | partial | 5.3 lists D-052, D-114, D-060, D-175, RFQ SLA; Still open now also has D-182 (internal dimensions — pre-launch U2.1), D-196 (store-credit posting — pre-launch F3), D-205 tooling ownership (F1) | added to 5.3; post-launch open items (D-211, D-216, D-217, D-237, D-244, D-272, D-218, D-305, D-306) listed as non-blocking under 9.5 |
+| 5.3f | Status column | — | — | the agent writes "evidence ready" where the automated part passed; **no line is marked signed** |
+
+### B6.3 documents
+
+| # | Requirement | Status | Evidence | Resolution |
+|---|---|---|---|---|
+| 5.4 | `MONITORING.md` lists every ops signal | partial | registry `src/modules/ops/ops.registry.ts` has `conversation_first_response_overdue` (U5.B2) and `journey_conversion_drops` (U5.B6), absent from the doc | rows added; a unit test fails when a registry signal is missing from the doc |
+| 5.5 | `INTEGRATIONS.md` / `RUNBOOK.md` / `SECURITY.md` cover every env variable | partial | not documented anywhere: `STOREFRONT_REVALIDATE_URL`, `STOREFRONT_REVALIDATE_SECRET` (D-308), `MERCHANT_FEED_LINK_TEMPLATE`, `PUBLIC_API_BASE_URL`, `PDF_CHROMIUM_PATH`, `S3_BUCKET`, `S3_FORCE_PATH_STYLE`, `AWS_REGION`, `AWS_ENDPOINT_URL`, `THROTTLE_TTL_SECONDS`, `LOG_*`, `OTEL_SERVICE_NAME`, `SENTRY_TRACES_SAMPLE_RATE`, `NODE_ENV` | integration rows (storefront revalidation, merchant feed) + a RUNBOOK env table for the platform ones; a unit test fails when `env.schema.ts` gains an undocumented key |
+| 5.6 | `SECURITY.md` covers the surfaces U1–U5 added | partial | written 2026-09-28; since then: docs gating (`DOCS_ENABLED`, U-B1), B2B API clients + signed outbound webhooks (D-291, post-launch), deep-link tokens (D-299), hashed share links (D-185 / D-226 / D-285), dieline download limits (D-271), price-data protection tests (D-044), acceptance evidence IP / UA (A-114, PDPA), assistant off (D-218) | §1 / §7 rows added with their tests; nothing changes in code |
+| 5.7 | `RUNBOOK.md` current | partial | line 121 "No admin API yet" for national holidays | procedure through `admin.calendar.*` / Excel import; approval-policy version procedure; env table (5.5) |
+| 5.8 | `SETTINGS-REVIEW.md` current | to verify | generated (`pnpm launch:settings`), last regenerated `v0.37.0` | regenerate; commit only if it differs |
+| 5.8a | `PERFORMANCE.md` current | partial | k6 scenarios from B6.3; new hot reads since: storefront cards / price hints (U-B4, D-220), studio quote (D-277) | add them to the read-path scenario list; thresholds unchanged (business confirms them, 3.1) |
+
+### Deprecations (U-B5 second paragraph — out of scope)
+
+| # | Requirement | Status | Evidence | Resolution |
+|---|---|---|---|---|
+| 5.9 | Remove deprecated routes / fields after U-F4 is merged **and** the deprecation counter shows 0 calls for 7 days in the integration environment | not started (gate not met) | U-F4 merged in packio-web `1d22a41` (2026-10-06); 10 deprecated items in `contract/openapi.json`; no integration environment exists yet, so no 7-day counter reading | left for a later U-B5 session (user: UAT only); the run record lists the 10 items and the gate |
+
+### Added on approval — UAT rehearsal data (the user: "prepare seed UAT data … as complete as possible, varied, close to real market products")
+
+| # | Requirement | Status | Resolution |
+|---|---|---|---|
+| 5.10 | A realistic, varied data set to rehearse every scenario before the launch factory's data exists | done | `pnpm db:seed:uat` (39 market-like products over all 14 types, 20 stock SKUs, 15 materials, 21 delivery areas, shipping zones and rates, FAQ drafts, factory users) + `pnpm uat:populate` (13 personas, B2B, campaign, 10 orders at every stage, 6 RFQs, referral, conversations, payout run — all through the API); `docs/launch/UAT-DATA.md`; `test/integration/uat-seed.int-spec.ts` |
+| 5.10a | No invented prices (CLAUDE.md) | done | rehearsal lines copy the dev seed's fake lines onto the new master data, values unchanged; stock SKUs scale the dev tiers by weight; the document says the levels are not market prices |
+
+### Outcome (2026-10-06)
+- 5.1a–5.1d, 5.3–5.3f, 5.4–5.8a: done as resolved above (UAT.md now 26 scenarios; checklist evidence and gaps
+  refreshed; MONITORING, INTEGRATIONS, RUNBOOK, SECURITY, PERFORMANCE refreshed; SETTINGS-REVIEW regenerated —
+  unchanged). Guard test `test/unit/launch-docs.spec.ts` keeps the signals, the environment variables and the UAT's
+  test references in step with the code.
+- 5.2: automated layer run — `docs/launch/UAT-RUN-2026-10-06.md` (API suites, packio-web `e2e:integration`
+  42 / 1 / 3, populate 56 / 56).
+- 5.2a defects: **D-1 F3 store credit at checkout is not implemented — blocking (checklist 9.2), left for its own
+  session after Finance confirms the D-196 posting**; D-2 dev factories without onboarding steps (500 on
+  `admin.factories.replaceDeliveryZones`) fixed in the dev seed with an e2e; D-3 concurrent studio check runs (500)
+  fixed create-or-return with an e2e; D-4 already fixed; D-5 answered by the rehearsal seed.
+- 5.9: not run (user: UAT only; gate not met). No contract change → no release tag.
+
 ## U-B1, U-B2.1–U-B2.5, U-B3 — documentation infrastructure, documentation backfill, pricing ownership gap check (2026-10-04, planning)
 
 Prompt `docs/prompts/U1-update-2026-09-29.md` §U-B1, §U-B2, §U-B3 (RUN-ORDER §1 row 11). Checked against `v0.38.0` (1 343 operations, 1 928 schemas, `pnpm contract:lint` clean). No new business decision is needed: the work is documentation, tests and additive renames; the choices below are recorded as assumptions.
