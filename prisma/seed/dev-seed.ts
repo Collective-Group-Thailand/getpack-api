@@ -224,8 +224,20 @@ const DEV_SERIES = [
   },
 ] as const;
 
-export async function seedDev(prisma: PrismaClient, devPassword?: string): Promise<SeedReport> {
-  const report = await seedReference(prisma, DEV_ENTITY);
+/** What the UAT rehearsal seed (`prisma/seed/uat/`) changes in the dev seed: its entity and series prefix. */
+export interface DevSeedOptions {
+  entity?: EntitySeedInput;
+  /** Replaces `DEV` in the document-series prefixes and descriptions (e.g. `UAT`). */
+  seriesPrefix?: string;
+}
+
+export async function seedDev(
+  prisma: PrismaClient,
+  devPassword?: string,
+  options: DevSeedOptions = {},
+): Promise<SeedReport> {
+  const report = await seedReference(prisma, options.entity ?? DEV_ENTITY);
+  const prefix = options.seriesPrefix ?? 'DEV';
   const count = (what: string) => (report[what] = (report[what] ?? 0) + 1);
   const passwordHash = devPassword ? await new PasswordService().hash(devPassword) : undefined;
 
@@ -273,7 +285,15 @@ export async function seedDev(prisma: PrismaClient, devPassword?: string): Promi
         })
       )
         continue;
-      await tx.documentSeries.create({ data: { entityId: entity.id, ...series, decisionRefs: ['D-092'] } });
+      await tx.documentSeries.create({
+        data: {
+          entityId: entity.id,
+          ...series,
+          prefix: series.prefix.replace(/^DEV/, prefix),
+          description: series.description.replace('[DEV]', `[${prefix}]`),
+          decisionRefs: ['D-092'],
+        },
+      });
       count('dev_document_series');
     }
 

@@ -14,3 +14,4 @@ src/generated/
 __pycache__/
 # Problems seen by the e2e run (pnpm contract:observed-errors, U-B2).
 .e2e-observed-errors/
+.uat-populate-report.json
