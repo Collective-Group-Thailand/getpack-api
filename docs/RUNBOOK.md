@@ -118,7 +118,9 @@ and Partner team; RFQ first response → CS; approvals → the approvers (delega
 
 | Task | When | How |
 |---|---|---|
-| National holidays for next year (D-161) | Each December | **No admin API yet** (`calendars.manage` exists, no endpoint) — see `docs/LAUNCH-CHECKLIST.md` 5.6 |
+| National holidays for next year (D-161) | Each December | An Admin with `calendars.manage` keys them in the national calendar (`admin.calendar.putHoliday`, or the Excel import with preview → confirm, D-170), marking who observes each day; factory closures and factory hours by the factory's Owner / Planner or the Partner Manager (D-209, D-292) |
+| Change an approval matrix (D-063) | When a decision changes | `admin.approvalPolicies.proposeVersion` (draft, effective date) → approval by a Superadmin → applies from its effective date; never edit a seeded policy in the database |
+| UAT rehearsal database | Before each UAT round | `docs/launch/UAT-DATA.md` (`pnpm db:seed:uat` + `pnpm uat:populate`, both refuse to run without their confirmation variable; never on production data) |
 | Partitions ahead | Nightly (automatic) | `partitions.ensure`; check `partitions.*_default` stays empty |
 | Analytics backfill | After a data fix | `POST /v1/admin/analytics/rollups {from, to}` (`analytics.manage`) |
 | Replay dead letters | On alert | §4.4 |
@@ -126,3 +128,24 @@ and Partner team; RFQ first response → CS; approvals → the approvers (delega
 | Secrets rotation | Per `docs/launch/SECURITY.md` §3 | |
 | Restore test | Quarterly | `docs/launch/SECURITY.md` §5 |
 | Settings review | Before launch and when a decision changes | `pnpm launch:settings` → `docs/launch/SETTINGS-REVIEW.md` |
+
+## 8. Platform environment variables
+
+Provider accounts and their variables are in `docs/launch/INTEGRATIONS.md`; secrets and keys in
+`docs/launch/SECURITY.md`. The platform variables below are validated at boot (`src/config/env.schema.ts`); a wrong
+value stops the process before it serves anything.
+
+| Variable | Production value | Notes |
+|---|---|---|
+| `NODE_ENV` | `production` | `production` refuses a `devOnly` feature flag that is on (D-296) and closes `/docs` unless `DOCS_ENABLED` |
+| `INTEGRATIONS_MODE` | `real` | `fake` keeps every provider in memory (development, tests, the UAT rehearsal) |
+| `AWS_REGION` | the deployment region (default `ap-southeast-1`) | |
+| `AWS_ENDPOINT_URL` | unset | LocalStack in development only |
+| `S3_BUCKET` | the private files bucket | |
+| `S3_FORCE_PATH_STYLE` | `false` | `true` for LocalStack only |
+| `THROTTLE_TTL_SECONDS` / `THROTTLE_LIMIT` | `60` / `300` | per-IP request budget; sign-in endpoints have their own `AUTH_LOGIN_THROTTLE_LIMIT` |
+| `LOG_LEVEL` | `info` | `debug` only for a time-boxed investigation (personal data stays redacted) |
+| `LOG_PRETTY` | `false` | JSON logs for CloudWatch |
+| `SENTRY_TRACES_SAMPLE_RATE` | `0`–`0.1` | performance tracing sample; errors are always sent when `SENTRY_DSN` is set |
+| `OTEL_SERVICE_NAME` | `packio-api` (default) | trace and metric service name |
+| `PDF_CHROMIUM_PATH` | the image's Chromium | set in the Dockerfile (Thai fonts embedded) |

@@ -20,6 +20,8 @@
 | Payout / bank-file failures | Signal `payout_item_failures_7d`; payout runs `partially_failed` | ≥ 1 | Finance + on-call, same day | §4.6 |
 | Ledger posting failures | Signal `ledger_posting_failures` (dead letters of `ledger.*` consumers) | ≥ 1 | Finance Manager + on-call, same day (the books miss an event) | §4.4 |
 | SLA breaches | Signals `acceptance_overdue` (D-074), `production_at_risk`, `rfq_first_response_overdue`, `approvals_overdue`, `slip_verification_wait_hours` (D-061: 4 business hours; the signal counts wall-clock hours, so it may fire early outside business hours), `claim_response_overdue` / `claim_decision_overdue` (D-263, U2.5; existing environments add both keys to `ops.alert_thresholds`) | ≥ 1 / 5 / 1 / 5 / 4 / 1 / 1 | Notice to the owning team (Partner, CS, approvers, Finance); on-call only if the signal is `unknown` | §4.7 |
+| CS conversations | Signal `conversation_first_response_overdue` — live CS threads whose first customer message is past its first-response due time (D-221, D-300, U5.B2) | ≥ 1 | Notice to CS / CS Lead; on-call only if `unknown` | §4.7 |
+| Journey conversion | Signal `journey_conversion_drops` — scorecard journeys whose first-to-last conversion fell more than `analytics.journey_drop_alert_pct` (15) week over week with ≥ `analytics.journey_alert_min_sessions` (30) sessions (D-303, U5.B6; checked on Mondays, Bangkok) | ≥ 1 | Notice to Marketing and the product owner; never pages | — (product review, not an incident) |
 
 A signal whose source cannot be read (e.g. Redis down for `queue_depth`) is `unknown` and alerts like a breach.
 
