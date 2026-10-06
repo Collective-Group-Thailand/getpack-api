@@ -20,15 +20,31 @@ export interface OtpChallengeIssued {
   maxAttempts: number;
 }
 
+/** Test numbers `080000xxxx` (E.164 `+6680000xxxx`) — the fake personas of the dev and UAT rehearsal data. */
+const TEST_PHONE = /^\+6680000\d{4}$/;
+
 /**
- * Customer phone OTP (ADR-0004, D-143 SMS for OTP). Codes are random, stored only as an HMAC bound
- * to the challenge id, never logged. Limits come from `auth.otp_policy`: expiry, attempts per
+ * The code a test phone gets without reading the SMS (UAT rehearsal, docs/launch/UAT-DATA.md): all zeros, only when
+ * every integration is fake (no SMS can be delivered anyway) and the process is not production. Null otherwise.
+ */
+export function fixedTestOtp(
+  phone: string,
+  codeLength: number,
+  env: { useFakes: boolean; isProduction: boolean },
+): string | null {
+  return env.useFakes && !env.isProduction && TEST_PHONE.test(phone) ? '0'.repeat(codeLength) : null;
+}
+
+/**
+ * Customer phone OTP (ADR-0004, D-143 SMS for OTP). Codes are random (except `fixedTestOtp` on a fake,
+ * non-production stack), stored only as an HMAC bound to the challenge id, never logged. Limits come from `auth.otp_policy`: expiry, attempts per
  * challenge, resend cool-down, requests per phone and per IP per hour (Redis counters; phone
  * numbers are HMAC-hashed before they become keys).
  */
 @Injectable()
 export class OtpService {
   private readonly secret: string;
+  private readonly env: { useFakes: boolean; isProduction: boolean };
 
   constructor(
     config: AppConfig,
@@ -39,6 +55,7 @@ export class OtpService {
   ) {
     // Production requires the variable (validateEnv); elsewhere a per-process key is enough.
     this.secret = config.get('OTP_HMAC_SECRET') ?? randomBytes(32).toString('hex');
+    this.env = { useFakes: config.useFakes, isProduction: config.isProduction };
   }
 
   async request(phone: string, purpose: OtpPurpose, ip: string | undefined): Promise<OtpChallengeIssued> {
@@ -62,9 +79,11 @@ export class OtpService {
     }
 
     const challengeId = uuidv7();
-    const code = randomInt(0, 10 ** policy.codeLength)
-      .toString()
-      .padStart(policy.codeLength, '0');
+    const code =
+      fixedTestOtp(phone, policy.codeLength, this.env) ??
+      randomInt(0, 10 ** policy.codeLength)
+        .toString()
+        .padStart(policy.codeLength, '0');
     const now = Date.now();
     const expiresAt = new Date(now + policy.expirySeconds * 1000);
     const created = await this.prisma.otpChallenge.create({
