@@ -3,6 +3,7 @@ import { seedDevPriceLists } from '../dev-price-lists';
 import { seedDev } from '../dev-seed';
 import { type EntitySeedInput, type SeedReport } from '../reference-seed';
 import { seedUatCatalog, SIGNED_INSTANT_TYPES } from './uat-catalog';
+import { UAT_CONSENT_TEXT } from './uat-data';
 
 /**
  * Obviously fake issuing entity for a UAT rehearsal that has no `SEED_ENTITY_*` (UAT.md §0 uses the real legal
@@ -24,7 +25,7 @@ export const UAT_FAKE_ENTITY: EntitySeedInput = {
  * (one per role), document series prefixed `UAT`, the dev factories' fake price lists, then the rehearsal layer —
  * a market-like catalogue (folding cartons, postal boxes, labels, tags, pouches, stock bottles and cups, services
  * and every RFQ type), prices copied from the dev fake lines, real-looking geography with shipping zones, FAQs and
- * the factory's users. Customers, companies, quotes, orders and the rest are created through the API by
+ * the factory's users, placeholder consent texts. Customers, companies, quotes, orders and the rest are created through the API by
  * `pnpm uat:populate`. Idempotent. Product types are instant only where their validation document is signed
  * (A-16) unless `instantTypes` says otherwise (a pricing rehearsal).
  */
@@ -45,5 +46,29 @@ export async function seedUat(
     (tx) => seedUatCatalog(tx, { password: opts.password, instantTypes }),
     { timeout: 300_000 },
   );
-  return { ...report, ...uat };
+  const consents = await seedUatConsentTexts(prisma);
+  return { ...report, ...uat, ...(consents && { uat_consent_texts: consents }) };
+}
+
+/**
+ * A fake text for every consent purpose that has none, effective now, so consents can be recorded in the
+ * rehearsal. Outside the run-once catalogue so an already-seeded UAT database gets them on the next run; a purpose
+ * that already has a version (e.g. one legal published) is left alone.
+ */
+async function seedUatConsentTexts(prisma: PrismaClient): Promise<number> {
+  const purposes = await prisma.consentPurpose.findMany({ where: { versions: { none: {} } } });
+  const now = new Date();
+  for (const purpose of purposes) {
+    await prisma.consentPurposeVersion.create({
+      data: {
+        purposeId: purpose.id,
+        versionNo: 1,
+        effectiveFrom: now,
+        status: 'approved',
+        ...UAT_CONSENT_TEXT,
+        decidedAt: now,
+      },
+    });
+  }
+  return purposes.length;
 }

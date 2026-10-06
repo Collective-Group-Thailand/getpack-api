@@ -2288,3 +2288,13 @@ export const UAT_FAQS: readonly {
     ],
   },
 ];
+
+/**
+ * Placeholder consent texts so the rehearsal can grant and withdraw consents (D-005, D-144). Obviously fake: the
+ * real texts are legal content that counsel publishes through `admin.consentPurposes.publishText`.
+ */
+export const UAT_CONSENT_TEXT = {
+  textTh: '[UAT] ข้อความทดสอบสำหรับซ้อม UAT เท่านั้น ไม่ใช่ข้อความทางกฎหมาย (ข้อมูลปลอม)',
+  textEn: '[UAT] Rehearsal placeholder only, not a legal text (fake data)',
+  reason: 'UAT rehearsal seed (fake text, replaced by legal counsel)',
+} as const;
