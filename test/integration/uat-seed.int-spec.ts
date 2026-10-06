@@ -84,6 +84,30 @@ describe('UAT rehearsal seed (PostgreSQL 18)', () => {
     expect(costs.rows.map((r) => r.code).sort()).toEqual(['dev-art-350', 'uat-art-400']);
   });
 
+  it('stocks every ready-to-ship SKU at the launch factory, a few out of stock, each in a store category', async () => {
+    const skus = await prisma.stockProduct.findMany({
+      where: { sku: { startsWith: 'UAT-' } },
+      include: { levels: true, attributes: true },
+    });
+    expect(skus).toHaveLength(UAT_STOCK_PRODUCTS.length);
+    expect(skus.every((s) => s.levels.length === 1)).toBe(true);
+    const out = skus
+      .filter((s) => s.levels[0]!.onHand === 0)
+      .map((s) => s.sku)
+      .sort();
+    expect(out).toEqual(['UAT-BUBBLE-ROLL-65', 'UAT-GLS-CANDLE-180', 'UAT-POSTBOX-F']);
+    expect(skus.every((s) => s.attributes.some((a) => a.attribute === 'type'))).toBe(true);
+    expect(first['uat_stock_products_in_stock']).toBe(UAT_STOCK_PRODUCTS.length - 3);
+    // Every SKU is priced from its own minimum order.
+    const firstTiers = await db.client.query<{ sku: string; min_order_qty: number; first: number }>(
+      `SELECT s.sku, s.min_order_qty, min(p.min_qty) AS first
+         FROM stock_products s JOIN pl_stock_product_prices p ON p.stock_product_id = s.id
+        WHERE s.sku LIKE 'UAT-%' GROUP BY s.sku, s.min_order_qty`,
+    );
+    expect(firstTiers.rows).toHaveLength(UAT_STOCK_PRODUCTS.length);
+    expect(firstTiers.rows.filter((r) => Number(r.first) !== r.min_order_qty)).toEqual([]);
+  });
+
   it('gives every product with a calculator a reference configuration and every RFQ product none', async () => {
     const products = await prisma.catalogProduct.findMany({
       where: { slug: { startsWith: 'uat-' } },
