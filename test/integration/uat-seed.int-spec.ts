@@ -28,8 +28,16 @@ describe('UAT rehearsal seed (PostgreSQL 18)', () => {
       uat_catalog_products: UAT_PRODUCTS.length,
       uat_stock_products: UAT_STOCK_PRODUCTS.length,
       uat_people: 8,
+      uat_consent_texts: 7,
     });
     expect(await seedUat(prisma, {})).toEqual({});
+    // Every consent purpose has an approved, effective placeholder text (consents can be recorded).
+    const purposes = await prisma.consentPurpose.findMany({
+      include: { versions: { where: { status: 'approved', effectiveFrom: { lte: new Date() } } } },
+    });
+    expect(purposes.every((p) => p.versions.length === 1 && p.versions[0]!.textEn.startsWith('[UAT]'))).toBe(
+      true,
+    );
     const prefixes = (await prisma.documentSeries.findMany()).map((s) => s.prefix);
     expect(prefixes.length).toBeGreaterThan(0);
     expect(prefixes.every((p) => p.startsWith('UAT'))).toBe(true);

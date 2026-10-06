@@ -15,7 +15,7 @@
 | Catalogue | `pnpm db:seed:uat` | **39 catalogue products** over all 14 product types and **101 ready-to-ship SKUs** with stock on hand (§3), 15 materials, finishes, die-cuts, folding box geometries (tuck end, crash-lock bottom) |
 | Prices | `pnpm db:seed:uat` | the rehearsal factory's price lists for the 7 calculators (§4) — **rehearsal values, not prices** |
 | Geography & shipping | `pnpm db:seed:uat` | 21 delivery areas in 15 provinces, four shipping zones, customer rates and factory payouts by weight band |
-| Content | `pnpm db:seed:uat` | 11 FAQ drafts in 4 categories, each answer citing its decision |
+| Content | `pnpm db:seed:uat` | 11 FAQ drafts in 4 categories, each answer citing its decision; a `[UAT]` placeholder text for every consent purpose without one (fake, so consents can be granted — legal publishes the real texts) |
 | Activity | `pnpm uat:populate` | 13 customers, a B2B company, a campaign with promotions and coupons, saved quotations, 14 orders parked at every stage, 7 RFQs in every state, a referral, conversations, a payout run (§5–§6) |
 | Partner zone | `pnpm uat:populate` | the launch factory's profile, hours, closure, capacity override, change requests, site visit, price proposals, next month's payout card, partner knowledge base, scorecard; jobs with an issue, on the factory's own truck, a claim and a sample for the factory to act on, a call-off request; three new factories at each onboarding stage (§6.1) |
 
