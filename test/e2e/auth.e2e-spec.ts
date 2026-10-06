@@ -129,6 +129,23 @@ describe('auth (e2e, ADR-0004)', () => {
     expect(events).toBe(1);
   });
 
+  it('signs in a Thai mobile typed without its leading zero as the same E.164 number', async () => {
+    const requested = await request(server)
+      .post('/v1/auth/customer/otp/request')
+      .send({ phone: '810001009' })
+      .expect(200);
+    const code = /\b(\d{6})\b/.exec(sms.lastTo('+66810001009')!.text)![1]!;
+    const tokens = await request(server)
+      .post('/v1/auth/customer/otp/verify')
+      .send({ challengeId: requested.body.challengeId, code })
+      .expect(200);
+    const me = await request(server)
+      .get('/v1/store/me')
+      .auth(tokens.body.accessToken, { type: 'bearer' })
+      .expect(200);
+    expect(me.body.phone).toBe('+66810001009');
+  });
+
   it('rejects a wrong OTP, spends attempts, and rate-limits resends', async () => {
     const { challengeId, code, codeLength, maxAttempts } = await otpLogin('081-000-1002');
     expect(codeLength).toBe(code.length); // auth.otp_policy, not a UI constant
