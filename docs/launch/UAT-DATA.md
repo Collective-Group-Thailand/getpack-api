@@ -12,7 +12,7 @@
 |---|---|---|
 | Reference data | `pnpm db:seed:uat` (reference seed) | settings, roles, approval matrices, chart of accounts, posting rules, notification matrix, guarantee policy v1, payment schedule templates, feature flags (all integration flags off) |
 | People | `pnpm db:seed:uat` | one staff user per D-140 role, a second Finance Manager and a second CS (maker-checker), the rehearsal factory's six users |
-| Catalogue | `pnpm db:seed:uat` | **39 catalogue products** over all 14 product types and **20 stock SKUs** (§3), 15 materials, finishes, die-cuts, folding box geometries (tuck end, crash-lock bottom) |
+| Catalogue | `pnpm db:seed:uat` | **39 catalogue products** over all 14 product types and **101 ready-to-ship SKUs** with stock on hand (§3), 15 materials, finishes, die-cuts, folding box geometries (tuck end, crash-lock bottom) |
 | Prices | `pnpm db:seed:uat` | the rehearsal factory's price lists for the 7 calculators (§4) — **rehearsal values, not prices** |
 | Geography & shipping | `pnpm db:seed:uat` | 21 delivery areas in 15 provinces, four shipping zones, customer rates and factory payouts by weight band |
 | Content | `pnpm db:seed:uat` | 11 FAQ drafts in 4 categories, each answer citing its decision |
@@ -43,7 +43,7 @@ UAT_DATABASE_URL=postgresql://…/packio_uat UAT_POPULATE_CONFIRM=uat-only UAT_S
 |---|---|
 | `UAT_SEED_PASSWORD` | password of every seeded staff and factory user (argon2id in the database; never written in a document) |
 | `SEED_ENTITY_*` | when set, the issuing entity is the real Collective Group (Thailand) data (UAT.md §0, D-092); otherwise an obviously fake "UAT rehearsal entity" |
-| `UAT_INSTANT_TYPES` | `all` switches every type with a calculator to instant for a **pricing rehearsal**; default: only types whose validation document is signed (A-16) — today **corrugated** only |
+| `UAT_INSTANT_TYPES` | `all` switches every type with a calculator to instant for a **pricing rehearsal**, or a list such as `corrugated,standard_product` (ready-to-ship items priced online); default: only types whose validation document is signed (A-16) — today **corrugated** only |
 
 `pnpm uat:populate` prints one line per step (`✓` / `✗`) and writes `.uat-populate-report.json`. A failed step does
 not stop the others. Run the API on the same database afterwards (`DATABASE_URL=…/packio_uat pnpm dev` and
@@ -63,7 +63,7 @@ real in form and numbering rules, never mistaken for production ones (UAT.md §0
 
 ## 4. Catalogue and prices
 
-### Products (39) and stock SKUs (20)
+### Products (39) and ready-to-ship SKUs (101)
 | Product type | Products (sizes) | Materials / options |
 |---|---|---|
 | Folding carton (10) | serum / skincare box (30 ml, 50 ml, 50 g jar), bar-soap box, supplement box (30 / 60 capsules, 10 sachets), lipstick box, drip-coffee box (10 bags), candle box with crash-lock bottom (180 g, 300 g), sauce / honey bottle box (250 / 500 ml), bakery & cookie box (food grade), tea-bag box, thank-you / insert card (name-card, A6) | art card C2S 300 / 350 / 400 gsm, ivory FBB 350 (food grade), duplex grey-back 350, kraft 350; matt OPP, gloss OPP, aqueous varnish, soft-touch; reverse / straight tuck end, crash-lock bottom, flat |
@@ -71,9 +71,35 @@ real in form and numbering rules, never mistaken for production ones (UAT.md §0
 | Labels (5) | round logo sticker Ø 3–6 cm, rounded-rectangle product label (5×3 – 10×7 cm), wrap-around bottle label, clear cosmetic label, box-seal sticker | white PP, clear PP, semi-gloss art paper, kraft paper, silver PP; circle / rounded-rectangle / oval / custom die-cut |
 | Tags & sleeves (2) | clothing hang tag (4×7, 5×9, 5.5×8.5 cm, punched hole, optional gold foil), paper sleeve for food boxes | art card 350 / 400, kraft 350 |
 | Flexible pouch (3) | printed stand-up zip pouch (doypack, 12×20 – 20×30 cm), foil coffee pouch (250 g, 500 g), 3-side-seal snack pouch | PET/LLDPE clear, PET/AL/LLDPE foil, MOPP/VMPET/LLDPE, kraft/PET/LLDPE; zipper, tear notch |
-| Standard products (20 SKUs) | PET bottles 100 ml – 1 l, amber dropper 30 ml, glass jar 200 ml, PET jar 500 ml, HDPE 1 l, paper cups 8 / 16 oz, kraft food boxes 650 / 1,000 ml, PP container 750 ml, kraft bags S / M, mailing bags 25×35 / 32×45, bubble mailer, clear zip bag, plain foil stand-up pouch | sold by the piece or the pouch, minimum order per SKU |
+| Ready-to-ship / standard products (101 SKUs, §3.1) | unprinted postal boxes, bottles, sprays and pumps, glass, jars, tubes, cups / lids / straws, food containers, paper bags, plastic bags and zip pouches, mailers, packing supplies | sold by the piece, the pouch or the tube, each with its own minimum order; stock on hand at the launch factory |
 | Services (1 + 3 renamed) | structural / dieline design, packaging graphic design, offset print plates, die-cut block, physical sample (mockup) | |
 | RFQ types (11) | rigid gift box (lid & base, magnetic, drawer), rope-handle and twisted-handle paper bags, printed paper cup, printed food box, paper tube, printed OPP tape, counter display, floor display stand, printed tissue paper | no calculator (D-100): quoted by CS within the SLA |
+
+### 3.1 Ready-to-ship (สินค้าพร้อมส่ง)
+Every SKU carries a store category (stock attribute `type`) plus material, colour, cap, shape or size where they
+apply, its capacity / dimensions, a food-grade flag, a minimum order, and **stock on hand at the launch factory**
+(200 × the minimum order, received once as an opening-stock movement) — so the store shows it as in stock.
+
+| Category | SKUs | Examples |
+|---|---|---|
+| กล่องไปรษณีย์พร้อมส่ง | 9 | unprinted RSC postal boxes 00, 0, A, 2A, B, C, D, E, F — packs of 20 |
+| ขวดพลาสติก | 10 | PET 60 ml flip-top – 1.5 l, square 150 ml, HDPE 1 l and 3.8 l gallon |
+| ขวดสเปรย์และขวดปั๊ม | 6 | mist sprays 30 / 100 ml, pumps 250 / 500 ml, foam pump, airless 30 ml |
+| ขวดและโหลแก้ว | 10 | amber droppers 10 – 100 ml, jars 100 – 500 ml, juice bottle, candle glass, bird's-nest bottle |
+| กระปุกครีมและโหล | 6 | PP jars 30 / 50 g, double-wall acrylic, PET jars 250 ml – 1 l |
+| หลอดเครื่องสำอาง | 3 | lip-balm tube, squeeze tubes 50 / 100 ml |
+| แก้วเครื่องดื่มและฝา | 12 | paper cups 4 – 22 oz, PET cups, U-shape cup, dome / flat / sip lids, paper straws |
+| กล่องและภาชนะอาหาร | 13 | kraft boxes 500 – 1,400 ml, paper bowls, bagasse box and plate, PP containers, bakery box, cake box, window snack box |
+| ถุงกระดาษ | 5 | flat-bottom and twisted-handle kraft bags, white paper bag |
+| ถุงพลาสติกและซองซิป | 10 | T-shirt bag, clear zip bags, foil and kraft stand-up zip pouches, OPP adhesive bags, vacuum bags |
+| ซองไปรษณีย์ | 10 | plastic mailing bags 17×30 – 38×52 cm (white, black), bubble mailers, kraft A4 envelope |
+| อุปกรณ์แพ็กสินค้า | 7 | OPP tape clear / brown, fragile tape, bubble wrap roll, stretch film, paper filler, air-column bags |
+
+**Stock states to test:** three SKUs are **out of stock** (`UAT-POSTBOX-F`, `UAT-GLS-CANDLE-180`,
+`UAT-BUBBLE-ROLL-65`) and one is **low** (`UAT-AIRLESS-30`, 150 on hand). Ready-to-ship items price online only when
+`standard_product` is instant (`UAT_INSTANT_TYPES=corrugated,standard_product`); otherwise they route to RFQ (A-16).
+Rehearsal prices copy the dev bottle's fake tiers scaled by the SKU's weight (or the dev stock pouch's tiers for
+items sold by the pouch or tube) — not market prices (§4).
 
 Every made-to-order product has standard sizes, a quantity range with presets and a **reference configuration** for
 its "starting from" price (D-220, D-307): 5 cards show a starting price in the default rehearsal, 24 with
@@ -118,7 +144,7 @@ person's data in UAT).
 | Record | State after populate | Use it in |
 |---|---|---|
 | Campaign `uat-launch` (THB 50,000 budget) with an automatic 10 % on postal boxes (ends in 30 days) and coupon `UATWELCOME10` + 20 unique `UAT…` codes | active | UAT-07, UAT-26 (badge and reference price on the postal-box card) |
-| Saved quotations (C04 white mailer, C06 fruit box and tray, C07 postal box D, C08 moving carton; all 17 with `UAT_INSTANT_TYPES=all`) | live 15 days | UAT-03, UAT-23 |
+| Saved quotations (C04 white mailer, C06 fruit box and tray, C07 postal box D, C08 moving carton; all 17 with `UAT_INSTANT_TYPES=all`) and 10 ready-to-ship quotations (cups, lids, food boxes, postal box C, mailing bags, airless and dropper bottles, bakery box, foil pouches, glass jar) when standard products are instant | live 15 days | UAT-03, UAT-23 |
 | Expired quotation (C05 postal box B) | validity in the past | UAT-03 step 4 (re-priced, D-051) |
 | **O1** C01 postal box C × 1,000 | waiting for payment | UAT-05 (expiry, D-060), UAT-06 |
 | **O2** C02 postal box B × 500 | paid by QR, waiting for artwork | UAT-11 step 1 |

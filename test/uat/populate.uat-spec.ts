@@ -626,6 +626,41 @@ describe('UAT populate (rehearsal data through the API)', () => {
       });
     }
 
+    // Ready-to-ship (standard products): quotations by SKU when the type is instant in this rehearsal.
+    const STOCK_QUOTES: [string, string, number[]][] = [
+      ['C12', 'UAT-CUP-16OZ', [1000, 5000]],
+      ['C12', 'UAT-LID-SIP-90', [1000, 5000]],
+      ['C12', 'UAT-KRAFT-BOX-1000', [500, 2000]],
+      ['C04', 'UAT-POSTBOX-C', [20, 100, 500]],
+      ['C04', 'UAT-MAIL-BAG-28X42', [500, 5000]],
+      ['C01', 'UAT-AIRLESS-30', [100, 500]],
+      ['C01', 'UAT-AMB-DROP-30', [100, 1000]],
+      ['C03', 'UAT-PET-BAKERY-S', [500, 1000]],
+      ['C02', 'UAT-ZIP-FOIL-15X22', [500, 5000]],
+      ['C05', 'UAT-GLS-JAR-200', [100, 500]],
+    ];
+    for (const [key, code, quantities] of STOCK_QUOTES) {
+      await step(`ready-to-ship quotation ${key} ${code} × ${quantities.join('/')}`, async () => {
+        const type = await ctx.prisma.productType.findUniqueOrThrow({ where: { code: 'standard_product' } });
+        if (type.quoteMode !== 'instant')
+          return 'skipped: standard products route to RFQ in this rehearsal (A-16)';
+        const stock = await ctx.prisma.stockProduct.findUniqueOrThrow({ where: { sku: code } });
+        const q = await ok<{ options: { quantity: number; grossAmount: string }[] }>(
+          as(ctx, C(key).token).post('/v1/store/quotes', {
+            productTypeCode: 'standard_product',
+            configuration: {
+              stockProductId: stock.publicId,
+              quantities,
+              design: { graphic: false, structure: false },
+            },
+            deliveryPostcode: C(key).postcode,
+          }),
+          201,
+        );
+        return q.options.map((o) => `${o.quantity} pcs THB ${o.grossAmount}`).join(', ');
+      });
+    }
+
     await step(
       'expired quotation (C05 postal box B, validity moved into the past — re-priced on use, D-051)',
       async () => {

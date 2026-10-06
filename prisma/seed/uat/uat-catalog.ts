@@ -5,6 +5,8 @@ import { PasswordService } from '../../../src/modules/auth/password.service';
 import { type FinalLine } from '../../../src/modules/partners/pricing/price-list-builder';
 import {
   type ProductSeed,
+  type StockSeedAttribute,
+  stockTypeOf,
   UAT_DIECUTS,
   UAT_FAQS,
   UAT_FINISHES,
@@ -545,9 +547,10 @@ async function seedProducts(tx: Tx): Promise<number> {
 }
 
 /** Stock products and their rehearsal buy-price lines (dev tiers, scaled by weight from the dev 18 g bottle). */
-async function seedStockProducts(tx: Tx): Promise<{ count: number; lines: FinalLine[] }> {
+async function seedStockProducts(tx: Tx): Promise<{ count: number; inStock: number; lines: FinalLine[] }> {
   const type = await tx.productType.findUniqueOrThrow({ where: { code: 'standard_product' } });
   const printType = await tx.printType.findUniqueOrThrow({ where: { code: 'dev_std_product' } });
+  const factory = await tx.factory.findUniqueOrThrow({ where: { code: UAT_FACTORY_CODE } });
   // The dev tiers (prisma/seed/dev-standard-product.ts): bottle 18 g, pouch sold by the pouch.
   const BOTTLE_TIERS: [number, number | null, number, string][] = [
     [100, 499, 2.5, '5'],
@@ -559,7 +562,7 @@ async function seedStockProducts(tx: Tx): Promise<{ count: number; lines: FinalL
     [5000, null, 0.95, '3'],
   ];
   const values = new Map<string, bigint>();
-  const valueId = async (attribute: 'material' | 'colour' | 'cap_type' | 'shape', nameTh: string) => {
+  const valueId = async (attribute: StockSeedAttribute, nameTh: string) => {
     const code = `uat-${attribute}-${createHash('sha256').update(nameTh).digest('hex').slice(0, 8)}`;
     if (!values.has(code)) {
       const row =
@@ -572,13 +575,12 @@ async function seedStockProducts(tx: Tx): Promise<{ count: number; lines: FinalL
     return values.get(code)!;
   };
   const lines: FinalLine[] = [];
+  let inStock = 0;
   for (const s of UAT_STOCK_PRODUCTS) {
     const attributes = [];
-    for (const [attribute, nameTh] of Object.entries(s.attributes)) {
-      attributes.push({
-        attribute: attribute as 'material',
-        valueId: await valueId(attribute as 'material', nameTh),
-      });
+    for (const [attribute, nameTh] of Object.entries({ type: stockTypeOf(s.sku), ...s.attributes })) {
+      const key = attribute as StockSeedAttribute;
+      attributes.push({ attribute: key, valueId: await valueId(key, nameTh) });
     }
     const product = await tx.stockProduct.create({
       data: {
@@ -599,15 +601,33 @@ async function seedStockProducts(tx: Tx): Promise<{ count: number; lines: FinalL
         attributes: { create: attributes },
       },
     });
-    const tiers = s.weightG ? BOTTLE_TIERS : POUCH_TIERS;
+    // Stock on hand at the launch factory, received once (the store shows `inStock` from it).
+    const onHand = s.onHand ?? s.minOrderQty * 200;
+    await tx.stockLevel.create({ data: { stockProductId: product.id, factoryId: factory.id, onHand } });
+    if (onHand > 0) {
+      inStock += 1;
+      await tx.stockMovement.create({
+        data: {
+          stockProductId: product.id,
+          factoryId: factory.id,
+          kind: 'receipt',
+          quantity: onHand,
+          balanceAfter: onHand,
+          reason: 'UAT rehearsal seed: opening stock (fake)',
+        },
+      });
+    }
+    // Price tiers: the dev tiers (scaled by weight for pieces), starting at the SKU's own minimum order.
+    const tiers = (s.weightG ? BOTTLE_TIERS : POUCH_TIERS).filter(
+      ([, maxQty]) => maxQty === null || maxQty >= s.minOrderQty,
+    );
     const scale = s.weightG ? s.weightG / 18 : 1;
-    for (const [minQty, maxQty, price, lead] of tiers) {
-      if (maxQty !== null && maxQty < s.minOrderQty) continue;
+    for (const [i, [minQty, maxQty, price, lead]] of tiers.entries()) {
       lines.push(
         newLine('standard_product', 'stock_product_prices', {
           printTypeId: printType.publicId,
           stockProductId: product.publicId,
-          minQty: Math.max(minQty, s.minOrderQty),
+          minQty: i === 0 ? s.minOrderQty : minQty,
           maxQty,
           unitBuyPrice: Math.max(0.1, price * scale).toFixed(2),
           leadTimeDays: lead,
@@ -615,7 +635,7 @@ async function seedStockProducts(tx: Tx): Promise<{ count: number; lines: FinalL
       );
     }
   }
-  return { count: UAT_STOCK_PRODUCTS.length, lines };
+  return { count: UAT_STOCK_PRODUCTS.length, inStock, lines };
 }
 
 async function seedFaqs(tx: Tx): Promise<number> {
@@ -731,6 +751,7 @@ export async function seedUatCatalog(
   report['uat_catalog_products'] = await seedProducts(tx);
   const stock = await seedStockProducts(tx);
   report['uat_stock_products'] = stock.count;
+  report['uat_stock_products_in_stock'] = stock.inStock;
   const plate = await tx.catalogProduct.findUniqueOrThrow({ where: { slug: 'dev-print-plate' } });
   const block = await tx.catalogProduct.findUniqueOrThrow({ where: { slug: 'uat-diecut-block' } });
   alike.set(plate.publicId, [block.publicId]);
