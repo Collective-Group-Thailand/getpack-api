@@ -11,6 +11,7 @@ import { UAT_FACTORY_CODE } from '../../prisma/seed/uat/uat-catalog';
 import { UAT_GEOGRAPHY } from '../../prisma/seed/uat/uat-data';
 import { uploadSlipFile } from '../support/commerce-e2e';
 import { type FulfilmentApp, makePdf, uploadBytes, uploadPdf } from '../support/fulfilment-e2e';
+import { populatePartnerZone } from './populate-partner';
 import {
   as,
   bootUatApp,
@@ -213,6 +214,7 @@ describe('UAT populate (rehearsal data through the API)', () => {
     tokens['factory_owner'] = await partnerSignIn(ctx, 'factory_owner');
     tokens['factory_operator'] = await partnerSignIn(ctx, 'factory_operator');
     tokens['factory_qc'] = await partnerSignIn(ctx, 'factory_qc');
+    tokens['factory_shipping'] = await partnerSignIn(ctx, 'factory_shipping');
     await setFlag(ctx, 'payments.scb', true);
     await setFlag(ctx, 'payments.slip_verify', true);
   }, 300_000);
@@ -1190,6 +1192,24 @@ describe('UAT populate (rehearsal data through the API)', () => {
       );
       await ctx.pump();
       return statement.publicId;
+    });
+
+    // The partner zone: the launch factory's own data, more jobs for it, and new factories onboarding.
+    await populatePartnerZone({
+      ctx,
+      tokens,
+      step,
+      C,
+      placeOrder,
+      saveQuote,
+      payDue: (token, groupId) => payDueByQr(ctx, token, groupId),
+      approveArtwork,
+      produce,
+      ship,
+      deliver,
+      photo,
+      rfq,
+      taxId,
     });
 
     await step('second staff sign-in works for the maker-checker people of the seed', async () => {

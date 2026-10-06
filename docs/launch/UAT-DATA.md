@@ -16,7 +16,8 @@
 | Prices | `pnpm db:seed:uat` | the rehearsal factory's price lists for the 7 calculators (§4) — **rehearsal values, not prices** |
 | Geography & shipping | `pnpm db:seed:uat` | 21 delivery areas in 15 provinces, four shipping zones, customer rates and factory payouts by weight band |
 | Content | `pnpm db:seed:uat` | 11 FAQ drafts in 4 categories, each answer citing its decision |
-| Activity | `pnpm uat:populate` | 13 customers, a B2B company, a campaign with promotions and coupons, saved quotations, 10 orders parked at every stage, 6 RFQs in every state, a referral, conversations, a payout run (§5–§6) |
+| Activity | `pnpm uat:populate` | 13 customers, a B2B company, a campaign with promotions and coupons, saved quotations, 14 orders parked at every stage, 7 RFQs in every state, a referral, conversations, a payout run (§5–§6) |
+| Partner zone | `pnpm uat:populate` | the launch factory's profile, hours, closure, capacity override, change requests, site visit, price proposals, next month's payout card, partner knowledge base, scorecard; jobs with an issue, on the factory's own truck, a claim and a sample for the factory to act on, a call-off request; three new factories at each onboarding stage (§6.1) |
 
 Everything is created **through the real code**: the seed writes master data like an admin would, and the populate
 step calls the real HTTP API (the same endpoints the web app uses) with the worker's subscribers running, so every
@@ -59,6 +60,7 @@ real in form and numbering rules, never mistaken for production ones (UAT.md §0
 | Staff, one per role | `<role-with-dashes>@example.invalid` (e.g. `cs-lead@example.invalid`, `finance-manager@example.invalid`, `c-level@example.invalid`) | password `UAT_SEED_PASSWORD` |
 | Second maker-checker staff | `finance-manager-2@example.invalid`, `cs-2@example.invalid` | for the close (two Finance Managers, UAT-19) and four-eyes checks |
 | Rehearsal factory (F9001) | `factory-owner@uat.example.invalid`, `factory-planner@…`, `factory-operator@…`, `factory-qc@…`, `factory-shipping@…`, `factory-accountant@…` | partner zone |
+| New factories onboarding (UAT-01) | `applicant-owner@uat.example.invalid` (applied, empty application), `review-owner@uat.example.invalid` (application submitted, under review), `trial-owner@uat.example.invalid` (assisted, on trial) | partner zone, password `UAT_SEED_PASSWORD`; §6.1 |
 | Customers | phone OTP; in a fake-integration stack the code is in the API log / fake SMS sender | phones `0800000101` – `0800000113` (§5) |
 
 ## 4. Catalogue and prices
@@ -166,6 +168,45 @@ person's data in UAT).
 | Referral code of C01, attributed by C13 | attributed, reward after the claim window | UAT-07 step 4 |
 | Two support conversations (C02, C06) | open, first-response clock running | UAT-16, ops signal `conversation_first_response_overdue` |
 | Payout run for the factory's eligible payables (30 % advances) | proposed by Finance, approved by C-Level | UAT-18 (generate the bank file, confirm, 50 ทวิ) |
+
+### 6.1 Partner zone — what each factory user finds
+
+Sign in at the partner zone as the rehearsal factory's users (§3). Records are those of F9001 unless the row says
+otherwise.
+
+| Record | State after populate | Who acts | Use it in |
+|---|---|---|---|
+| **O4** job (postal box A × 2,000) | released, waiting for acceptance | Owner / Planner: accept, or reject with a reason; let it pass 1 business day for the overdue alert (D-074) | UAT-12 |
+| **O5** job (fruit box) | accepted, two milestones done | Operator, QC: next milestones with photos and QC (D-076) | UAT-13 |
+| **O11** job (postal box C × 1,000) | accepted, first milestone done, **open material-shortage issue** raised by the operator | Owner: resolve the issue; Partner Manager / CS Lead sees it in admin | UAT-13 |
+| **O6** shipment | packed, ready | Shipping: dispatch on the own truck, then POD | UAT-14 |
+| **O12** shipment (postal box 2A × 500) | dispatched by the factory's own fleet, **in transit** | Shipping: out for delivery, POD with signature and photos | UAT-14 |
+| **O13** claim (postal box 0+4, damaged cartons, 40 pcs) | **sent to the factory**, waiting for its answer (first response SLA, D-199) | Owner: accept or dispute with evidence | UAT-25 |
+| **O8** claim | under CS review (not yet with the factory) | CS first; send it to the factory to rehearse a second response | UAT-25 |
+| **O14** sample job (white mailer S, attached mockup) | released with the bulk order held until the sample is approved (D-256) | Owner: accept; record measured size, material and photo before shipping (D-255) | UAT-24 |
+| **R2** consultation | answered with buy prices per tier | — (history) | UAT-04 |
+| **R7** consultation (counter display) | **requested**, not answered | Owner: answer a buy price per tier, or decline | UAT-04 |
+| Call-off request (C07, postal box D × 10,000, 6 months) | requested, waiting for the factory | Owner: accept or decline (D-290) | — (post-launch, D-219) |
+| Billing statements | one confirmed (O7), one sent | Accountant: dispute or confirm the sent one; record the factory's tax invoice on the confirmed one (D-090) | UAT-18 |
+| Payout run | approved by C-Level, bank file not generated | Finance generates and confirms; the Accountant then sees the payout, its documents and the 50 ทวิ | UAT-18 |
+| Profile | 3 addresses, 3 contacts, 3 verified KYC documents; the **factory licence expires in 25 days** | read-only for the factory once active (D-171); changes go through a change request | UAT-01 |
+| Weekly hours | Mon–Fri 08:00–17:00, Sat 08:00–12:00, from tomorrow (D-292) | Owner / Planner | UAT-12 (SLA clock) |
+| Closure and capacity override | one closed day and **half the corrugated capacity** in the week three weeks ahead | Owner / Planner: see the capacity calendar; reopen the day | UAT-12 |
+| Change requests | one **open** (more corrugated capacity), one site-visit request **in progress** | Partner Manager answers; the factory reads the answer | UAT-01 |
+| Site visit | passed, a month ago (date and result only, D-041) | — | UAT-01 |
+| Price proposals | own-list mode (`factory_price_list`); a **draft** for corrugated (current lines, values unchanged — edit and submit), a **submitted** label proposal asking to stop one line, with a document | Owner: edit and submit the draft; Partner Manager reviews, counters or approves the submitted one (maker-checker) | UAT-02 |
+| Shipping payout card | next month's version **sent**, amounts copied from the current card | Owner: accept or counter per line; Partner Manager answers counters | UAT-02 |
+| Agreements | partner agreement and price-data confidentiality **accepted** — rehearsal placeholder texts | — | UAT-01 |
+| Knowledge base | 5 published partner articles, one per category (draft texts restating D-022, D-074, D-076, D-090, D-186) | every factory role reads them | — (post-launch, D-219) |
+| Scorecard | current month recomputed (month to date) | Owner reads it (D-075) | UAT-13 |
+| **N1** new factory (self-service) | `applied`, nothing filled | `applicant-owner@…`: fill the company data, addresses, contacts, KYC, accept the agreements, propose the bank account, submit | UAT-01 |
+| **N2** new factory (self-service) | `under_review`: profile, 2 addresses, a contact, 3 KYC documents, agreements accepted, a bank account **waiting for Finance's two approvals and the call-back** | Partner Manager: review KYC, start the trial; Finance: approve the bank account | UAT-01 |
+| **N3** new factory (assisted) | `trial`, data entered by the Partner team | Partner Manager: capabilities, site visit, activation request (D-041); `trial-owner@…`: sign off the data Packio entered | UAT-01 |
+
+Rehearsal inputs, not business values: the capacity override (half the agreed capacity), the sample's buy amount
+(THB 600, typed by CS as for any sample), the agreement texts (placeholders until counsel's text, UAT-01) and the
+knowledge-base texts (drafts; the Partner team writes the final ones). The price-proposal and payout-card lines are
+the current lines with their values unchanged.
 
 ## 7. Shortcuts and limits of the rehearsal
 
