@@ -28,6 +28,7 @@ import { DomainEvents } from '@platform/domain-events/domain-events.service';
 import { FilesService } from '@platform/files/files.service';
 import { SettingsService } from '@platform/settings/settings.service';
 
+import { type DesignIssues, summariseIssues, UNCHECKED } from './design-issues';
 import {
   type DesignAssetDto,
   type DesignDocumentDto,
@@ -730,9 +731,11 @@ export class DesignsService implements OnModuleInit {
   /** Designs as returned to their author or staff: product, signed URLs of the assets and preview, order links. */
   async views(rows: DesignRow[], withDocument: boolean): Promise<DesignDocumentDto[]> {
     const links = await this.orderLinks(rows.map((r) => r.id));
+    const issues = await this.issues(rows);
     return Promise.all(
       rows.map(async (row) => ({
         ...(await this.base(row, withDocument)),
+        ...(issues.get(row.id) ?? UNCHECKED),
         id: row.publicId,
         catalogProductId: row.catalogProduct.publicId,
         patternId: row.pattern?.publicId ?? null,
@@ -762,6 +765,35 @@ export class DesignsService implements OnModuleInit {
         updatedAt: toBangkokIso(row.updatedAt),
       })),
     );
+  }
+
+  /** UX r2 A4: the current version's latest print check of each design, as issues left (one query for the page). */
+  private async issues(rows: DesignRow[]): Promise<Map<bigint, DesignIssues>> {
+    const versionIds = rows.map((r) => r.currentVersionId).filter((id): id is bigint => id !== null);
+    if (versionIds.length === 0) return new Map();
+    const [runs, acks] = await Promise.all([
+      this.prisma.designCheckRun.findMany({
+        where: { versionId: { in: versionIds }, source: 'document' },
+        orderBy: [{ evaluatedAt: 'desc' }, { id: 'desc' }],
+        select: { versionId: true, findings: { select: { ruleId: true, severity: true, elementId: true } } },
+      }),
+      this.prisma.designCheckAcknowledgement.findMany({
+        where: { versionId: { in: versionIds } },
+        select: { versionId: true, ruleId: true, elementId: true },
+      }),
+    ]);
+    const latest = new Map<bigint, (typeof runs)[number]>();
+    for (const run of runs) if (!latest.has(run.versionId)) latest.set(run.versionId, run);
+    const out = new Map<bigint, DesignIssues>();
+    for (const row of rows) {
+      const run = row.currentVersionId === null ? undefined : latest.get(row.currentVersionId);
+      if (!run) continue;
+      const acknowledged = new Set(
+        acks.filter((a) => a.versionId === row.currentVersionId).map((a) => `${a.ruleId}|${a.elementId}`),
+      );
+      out.set(row.id, summariseIssues(run.findings, acknowledged));
+    }
+    return out;
   }
 
   async view(row: DesignRow, withDocument = true): Promise<DesignDocumentDto> {

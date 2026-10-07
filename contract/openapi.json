@@ -6740,6 +6740,14 @@
             },
             "type": "array"
           },
+          "hasIssues": {
+            "description": "`issueCount > 0`; null until checked",
+            "example": true,
+            "type": [
+              "boolean",
+              "null"
+            ]
+          },
           "heightMm": {
             "description": "mm",
             "example": 40,
@@ -6752,6 +6760,21 @@
             "example": "0192f3a0-7c1e-7d2a-9b1f-0000000e5001",
             "format": "uuid",
             "type": "string"
+          },
+          "issueCount": {
+            "description": "What still needs checking on the current version (D-278): its blocks plus the warnings the customer has not acknowledged, from the latest print check — run by the worker when the design is saved; null until checked",
+            "example": 2,
+            "type": [
+              "integer",
+              "null"
+            ]
+          },
+          "issueSummary": {
+            "description": "Per rule, blocks first; empty when none or not checked",
+            "items": {
+              "$ref": "#/components/schemas/DesignIssueDto"
+            },
+            "type": "array"
           },
           "lengthMm": {
             "description": "mm",
@@ -6936,6 +6959,9 @@
           "orders",
           "share",
           "styleVariantCode",
+          "issueCount",
+          "hasIssues",
+          "issueSummary",
           "printMethod",
           "printSides",
           "finishes",
@@ -32530,6 +32556,14 @@
             },
             "type": "array"
           },
+          "hasIssues": {
+            "description": "`issueCount > 0`; null until checked",
+            "example": true,
+            "type": [
+              "boolean",
+              "null"
+            ]
+          },
           "heightMm": {
             "description": "mm",
             "example": 40,
@@ -32542,6 +32576,21 @@
             "example": "0192f3a0-7c1e-7d2a-9b1f-0000000e5001",
             "format": "uuid",
             "type": "string"
+          },
+          "issueCount": {
+            "description": "What still needs checking on the current version (D-278): its blocks plus the warnings the customer has not acknowledged, from the latest print check — run by the worker when the design is saved; null until checked",
+            "example": 2,
+            "type": [
+              "integer",
+              "null"
+            ]
+          },
+          "issueSummary": {
+            "description": "Per rule, blocks first; empty when none or not checked",
+            "items": {
+              "$ref": "#/components/schemas/DesignIssueDto"
+            },
+            "type": "array"
           },
           "lengthMm": {
             "description": "mm",
@@ -32723,6 +32772,9 @@
           "orders",
           "share",
           "styleVariantCode",
+          "issueCount",
+          "hasIssues",
+          "issueSummary",
           "printMethod",
           "printSides",
           "finishes",
@@ -32822,6 +32874,45 @@
           "deleted"
         ],
         "type": "string"
+      },
+      "DesignIssueDto": {
+        "properties": {
+          "code": {
+            "description": "Print-check rule id (`studio.print_rules`)",
+            "example": "image_resolution",
+            "type": "string"
+          },
+          "count": {
+            "description": "Elements breaking it",
+            "example": 2,
+            "type": "integer"
+          },
+          "messageEn": {
+            "example": "Low-resolution image: it may print soft",
+            "type": "string"
+          },
+          "messageTh": {
+            "example": "รูปความละเอียดต่ำ อาจพิมพ์ไม่คม",
+            "type": "string"
+          },
+          "severity": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/PreflightSeverity"
+              }
+            ],
+            "description": "`block` or `warn` (info findings are not issues)",
+            "example": "warn"
+          }
+        },
+        "required": [
+          "code",
+          "severity",
+          "count",
+          "messageTh",
+          "messageEn"
+        ],
+        "type": "object"
       },
       "DesignLinkFilter": {
         "enum": [
@@ -52221,6 +52312,7 @@
         "type": "object"
       },
       "PreflightSeverity": {
+        "description": "`block` or `warn` (info findings are not issues)",
         "enum": [
           "block",
           "warn",
@@ -185786,8 +185878,19 @@
                   "finishes": [
                     "dev-matt"
                   ],
+                  "hasIssues": true,
                   "heightMm": 40,
                   "id": "0192f3a0-7c1e-7d2a-9b1f-0000000e5001",
+                  "issueCount": 1,
+                  "issueSummary": [
+                    {
+                      "code": "image_resolution",
+                      "count": 1,
+                      "messageEn": "Low-resolution image: it may print soft",
+                      "messageTh": "รูปความละเอียดต่ำ อาจพิมพ์ไม่คม",
+                      "severity": "warn"
+                    }
+                  ],
                   "lengthMm": 100,
                   "lock": {
                     "lockedAt": "2026-09-27T11:00:00+07:00",
@@ -186099,8 +186202,19 @@
                   "finishes": [
                     "dev-matt"
                   ],
+                  "hasIssues": true,
                   "heightMm": 40,
                   "id": "0192f3a0-7c1e-7d2a-9b1f-0000000e5001",
+                  "issueCount": 1,
+                  "issueSummary": [
+                    {
+                      "code": "image_resolution",
+                      "count": 1,
+                      "messageEn": "Low-resolution image: it may print soft",
+                      "messageTh": "รูปความละเอียดต่ำ อาจพิมพ์ไม่คม",
+                      "severity": "warn"
+                    }
+                  ],
                   "lengthMm": 100,
                   "lock": {
                     "lockedAt": "2026-09-27T11:00:00+07:00",
@@ -186402,8 +186516,19 @@
                   "finishes": [
                     "dev-matt"
                   ],
+                  "hasIssues": true,
                   "heightMm": 40,
                   "id": "0192f3a0-7c1e-7d2a-9b1f-0000000e5001",
+                  "issueCount": 1,
+                  "issueSummary": [
+                    {
+                      "code": "image_resolution",
+                      "count": 1,
+                      "messageEn": "Low-resolution image: it may print soft",
+                      "messageTh": "รูปความละเอียดต่ำ อาจพิมพ์ไม่คม",
+                      "severity": "warn"
+                    }
+                  ],
                   "lengthMm": 100,
                   "lock": {
                     "lockedAt": "2026-09-27T11:00:00+07:00",
@@ -186778,8 +186903,19 @@
                   "finishes": [
                     "dev-matt"
                   ],
+                  "hasIssues": true,
                   "heightMm": 40,
                   "id": "0192f3a0-7c1e-7d2a-9b1f-0000000e5001",
+                  "issueCount": 1,
+                  "issueSummary": [
+                    {
+                      "code": "image_resolution",
+                      "count": 1,
+                      "messageEn": "Low-resolution image: it may print soft",
+                      "messageTh": "รูปความละเอียดต่ำ อาจพิมพ์ไม่คม",
+                      "severity": "warn"
+                    }
+                  ],
                   "lengthMm": 100,
                   "lock": {
                     "lockedAt": "2026-09-27T11:00:00+07:00",
@@ -376625,8 +376761,19 @@
                       "finishes": [
                         "dev-matt"
                       ],
+                      "hasIssues": true,
                       "heightMm": 40,
                       "id": "0192f3a0-7c1e-7d2a-9b1f-0000000e5001",
+                      "issueCount": 1,
+                      "issueSummary": [
+                        {
+                          "code": "image_resolution",
+                          "count": 1,
+                          "messageEn": "Low-resolution image: it may print soft",
+                          "messageTh": "รูปความละเอียดต่ำ อาจพิมพ์ไม่คม",
+                          "severity": "warn"
+                        }
+                      ],
                       "lengthMm": 100,
                       "lock": {
                         "lockedAt": "2026-09-27T11:00:00+07:00",
@@ -376913,8 +377060,19 @@
                   "finishes": [
                     "dev-matt"
                   ],
+                  "hasIssues": true,
                   "heightMm": 40,
                   "id": "0192f3a0-7c1e-7d2a-9b1f-0000000e5001",
+                  "issueCount": 1,
+                  "issueSummary": [
+                    {
+                      "code": "image_resolution",
+                      "count": 1,
+                      "messageEn": "Low-resolution image: it may print soft",
+                      "messageTh": "รูปความละเอียดต่ำ อาจพิมพ์ไม่คม",
+                      "severity": "warn"
+                    }
+                  ],
                   "lengthMm": 100,
                   "lock": {
                     "lockedAt": "2026-09-27T11:00:00+07:00",
@@ -377665,8 +377823,19 @@
                   "finishes": [
                     "dev-matt"
                   ],
+                  "hasIssues": true,
                   "heightMm": 40,
                   "id": "0192f3a0-7c1e-7d2a-9b1f-0000000e5001",
+                  "issueCount": 1,
+                  "issueSummary": [
+                    {
+                      "code": "image_resolution",
+                      "count": 1,
+                      "messageEn": "Low-resolution image: it may print soft",
+                      "messageTh": "รูปความละเอียดต่ำ อาจพิมพ์ไม่คม",
+                      "severity": "warn"
+                    }
+                  ],
                   "lengthMm": 100,
                   "lock": {
                     "lockedAt": "2026-09-27T11:00:00+07:00",
@@ -377959,8 +378128,19 @@
                   "finishes": [
                     "dev-matt"
                   ],
+                  "hasIssues": true,
                   "heightMm": 40,
                   "id": "0192f3a0-7c1e-7d2a-9b1f-0000000e5001",
+                  "issueCount": 1,
+                  "issueSummary": [
+                    {
+                      "code": "image_resolution",
+                      "count": 1,
+                      "messageEn": "Low-resolution image: it may print soft",
+                      "messageTh": "รูปความละเอียดต่ำ อาจพิมพ์ไม่คม",
+                      "severity": "warn"
+                    }
+                  ],
                   "lengthMm": 100,
                   "lock": {
                     "lockedAt": "2026-09-27T11:00:00+07:00",
@@ -378306,8 +378486,19 @@
                   "finishes": [
                     "dev-matt"
                   ],
+                  "hasIssues": true,
                   "heightMm": 40,
                   "id": "0192f3a0-7c1e-7d2a-9b1f-0000000e5001",
+                  "issueCount": 1,
+                  "issueSummary": [
+                    {
+                      "code": "image_resolution",
+                      "count": 1,
+                      "messageEn": "Low-resolution image: it may print soft",
+                      "messageTh": "รูปความละเอียดต่ำ อาจพิมพ์ไม่คม",
+                      "severity": "warn"
+                    }
+                  ],
                   "lengthMm": 100,
                   "lock": {
                     "lockedAt": "2026-09-27T11:00:00+07:00",
@@ -378820,8 +379011,19 @@
                   "finishes": [
                     "dev-matt"
                   ],
+                  "hasIssues": true,
                   "heightMm": 40,
                   "id": "0192f3a0-7c1e-7d2a-9b1f-0000000e5001",
+                  "issueCount": 1,
+                  "issueSummary": [
+                    {
+                      "code": "image_resolution",
+                      "count": 1,
+                      "messageEn": "Low-resolution image: it may print soft",
+                      "messageTh": "รูปความละเอียดต่ำ อาจพิมพ์ไม่คม",
+                      "severity": "warn"
+                    }
+                  ],
                   "lengthMm": 100,
                   "lock": {
                     "lockedAt": "2026-09-27T11:00:00+07:00",
@@ -379097,8 +379299,19 @@
                   "finishes": [
                     "dev-matt"
                   ],
+                  "hasIssues": true,
                   "heightMm": 40,
                   "id": "0192f3a0-7c1e-7d2a-9b1f-0000000e5001",
+                  "issueCount": 1,
+                  "issueSummary": [
+                    {
+                      "code": "image_resolution",
+                      "count": 1,
+                      "messageEn": "Low-resolution image: it may print soft",
+                      "messageTh": "รูปความละเอียดต่ำ อาจพิมพ์ไม่คม",
+                      "severity": "warn"
+                    }
+                  ],
                   "lengthMm": 100,
                   "lock": {
                     "lockedAt": "2026-09-27T11:00:00+07:00",
@@ -379383,8 +379596,19 @@
                   "finishes": [
                     "dev-matt"
                   ],
+                  "hasIssues": true,
                   "heightMm": 40,
                   "id": "0192f3a0-7c1e-7d2a-9b1f-0000000e5001",
+                  "issueCount": 1,
+                  "issueSummary": [
+                    {
+                      "code": "image_resolution",
+                      "count": 1,
+                      "messageEn": "Low-resolution image: it may print soft",
+                      "messageTh": "รูปความละเอียดต่ำ อาจพิมพ์ไม่คม",
+                      "severity": "warn"
+                    }
+                  ],
                   "lengthMm": 100,
                   "lock": {
                     "lockedAt": "2026-09-27T11:00:00+07:00",
@@ -380411,8 +380635,19 @@
                   "finishes": [
                     "dev-matt"
                   ],
+                  "hasIssues": true,
                   "heightMm": 40,
                   "id": "0192f3a0-7c1e-7d2a-9b1f-0000000e5001",
+                  "issueCount": 1,
+                  "issueSummary": [
+                    {
+                      "code": "image_resolution",
+                      "count": 1,
+                      "messageEn": "Low-resolution image: it may print soft",
+                      "messageTh": "รูปความละเอียดต่ำ อาจพิมพ์ไม่คม",
+                      "severity": "warn"
+                    }
+                  ],
                   "lengthMm": 100,
                   "lock": {
                     "lockedAt": "2026-09-27T11:00:00+07:00",
@@ -414378,8 +414613,19 @@
                   "finishes": [
                     "dev-matt"
                   ],
+                  "hasIssues": true,
                   "heightMm": 40,
                   "id": "0192f3a0-7c1e-7d2a-9b1f-0000000e5001",
+                  "issueCount": 1,
+                  "issueSummary": [
+                    {
+                      "code": "image_resolution",
+                      "count": 1,
+                      "messageEn": "Low-resolution image: it may print soft",
+                      "messageTh": "รูปความละเอียดต่ำ อาจพิมพ์ไม่คม",
+                      "severity": "warn"
+                    }
+                  ],
                   "lengthMm": 100,
                   "lock": {
                     "lockedAt": "2026-09-27T11:00:00+07:00",
