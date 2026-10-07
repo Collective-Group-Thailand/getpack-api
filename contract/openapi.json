@@ -23268,6 +23268,37 @@
         ],
         "type": "string"
       },
+      "ContactDto": {
+        "properties": {
+          "email": {
+            "example": "support@example.invalid",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "lineOaId": {
+            "example": "@packio-test",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "phone": {
+            "example": "0800000000",
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "phone",
+          "lineOaId",
+          "email"
+        ],
+        "type": "object"
+      },
       "ContentStatus": {
         "enum": [
           "draft",
@@ -45141,6 +45172,31 @@
         ],
         "type": "object"
       },
+      "MinOrderQtyDto": {
+        "properties": {
+          "custom": {
+            "description": "Lowest minimum quantity among active made-to-order catalogue products (D-307); null without one",
+            "example": 500,
+            "type": [
+              "integer",
+              "null"
+            ]
+          },
+          "readyStock": {
+            "description": "Lowest minimum order quantity among active stock products; null without one",
+            "example": 1,
+            "type": [
+              "integer",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "custom",
+          "readyStock"
+        ],
+        "type": "object"
+      },
       "MockupKind": {
         "enum": [
           "with_print",
@@ -56726,6 +56782,83 @@
           "method",
           "targetAmount",
           "amount"
+        ],
+        "type": "object"
+      },
+      "PublicConfigDto": {
+        "properties": {
+          "claimWindowDays": {
+            "description": "Days after receipt a customer may open a claim — `claims.window_days` (D-082)",
+            "example": 7,
+            "type": "integer"
+          },
+          "contact": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ContactDto"
+              }
+            ],
+            "description": "From `storefront.support_channels` (D-221)"
+          },
+          "factoryCount": {
+            "description": "Active partner factories, published only from `trust.network_min_factories` (D-264); null below it",
+            "example": null,
+            "type": [
+              "integer",
+              "null"
+            ]
+          },
+          "minOrderQty": {
+            "$ref": "#/components/schemas/MinOrderQtyDto"
+          },
+          "priceLockDays": {
+            "description": "Days a quotation’s price stays locked — `quotes.validity_days` (D-051)",
+            "example": 15,
+            "type": "integer"
+          },
+          "proofSlaBusinessDays": {
+            "description": "Business days from an accepted file to the first proof — `artwork.first_proof_business_days` (Prepress); null until set: omit the sentence",
+            "example": null,
+            "type": [
+              "integer",
+              "null"
+            ]
+          },
+          "supportHours": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/SupportHoursDto"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "CS answering hours — `storefront.support_hours` (CS Lead); null until set"
+          },
+          "supportReplyMinutes": {
+            "description": "Typical CS reply time within support hours — `support.reply_minutes` (CS Lead); null until set",
+            "example": null,
+            "type": [
+              "integer",
+              "null"
+            ]
+          },
+          "templateCount": {
+            "description": "Published styles in the template library (the count `store.styles.list` shows)",
+            "example": 42,
+            "type": "integer"
+          }
+        },
+        "required": [
+          "minOrderQty",
+          "priceLockDays",
+          "claimWindowDays",
+          "proofSlaBusinessDays",
+          "supportHours",
+          "supportReplyMinutes",
+          "templateCount",
+          "factoryCount",
+          "contact"
         ],
         "type": "object"
       },
@@ -78397,6 +78530,16 @@
         ],
         "type": "object"
       },
+      "SupportDays": {
+        "description": "`business_days` = working days of the national calendar (D-161)",
+        "enum": [
+          "daily",
+          "business_days",
+          "mon_fri",
+          "mon_sat"
+        ],
+        "type": "string"
+      },
       "SupportHandoffDto": {
         "properties": {
           "answers": {
@@ -78449,6 +78592,41 @@
         },
         "required": [
           "page"
+        ],
+        "type": "object"
+      },
+      "SupportHoursDto": {
+        "properties": {
+          "close": {
+            "example": "18:00",
+            "pattern": "^\\d{2}:\\d{2}$",
+            "type": "string"
+          },
+          "days": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/SupportDays"
+              }
+            ],
+            "description": "`business_days` = working days of the national calendar (D-161)",
+            "example": "mon_fri"
+          },
+          "open": {
+            "example": "09:00",
+            "pattern": "^\\d{2}:\\d{2}$",
+            "type": "string"
+          },
+          "tz": {
+            "description": "Time zone of `open` and `close`",
+            "example": "Asia/Bangkok",
+            "type": "string"
+          }
+        },
+        "required": [
+          "tz",
+          "days",
+          "open",
+          "close"
         ],
         "type": "object"
       },
@@ -397525,6 +397703,117 @@
         "summary": "Annotate my proof",
         "tags": [
           "store.artwork"
+        ]
+      }
+    },
+    "/v1/store/public-config": {
+      "get": {
+        "description": "Every figure has one source and is null without one — the storefront then leaves the sentence out, never a number of its own (D-309): minimum quantities from the catalogue (D-307), the price lock (`quotes.validity_days`, D-051), the claim window (`claims.window_days`, D-082), the first-proof turnaround, support hours and reply time (settings kept by Prepress and the CS Lead), the template library size, the partner count (null below `trust.network_min_factories`, D-264) and the contacts (D-221). Anonymous, cacheable 5 minutes; a matching `If-None-Match` gets 304.\n\nImplements: D-309, D-051, D-082, D-221, D-264, D-307.",
+        "operationId": "store.publicConfig.get",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "claimWindowDays": 7,
+                  "contact": {
+                    "email": "support@example.invalid",
+                    "lineOaId": "@packio-test",
+                    "phone": "0800000000"
+                  },
+                  "factoryCount": null,
+                  "minOrderQty": {
+                    "custom": 500,
+                    "readyStock": 1
+                  },
+                  "priceLockDays": 15,
+                  "proofSlaBusinessDays": null,
+                  "supportHours": {
+                    "close": "18:00",
+                    "days": "mon_fri",
+                    "open": "09:00",
+                    "tz": "Asia/Bangkok"
+                  },
+                  "supportReplyMinutes": null,
+                  "templateCount": 42
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/PublicConfigDto"
+                }
+              }
+            },
+            "description": "Storefront figures",
+            "headers": {
+              "ETag": {
+                "$ref": "#/components/headers/ETag"
+              },
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [],
+        "summary": "Get the figures the storefront states",
+        "tags": [
+          "store.catalog"
         ]
       }
     },

@@ -1236,6 +1236,115 @@ export const SETTINGS: readonly SettingSeed[] = [
     ownerRole: 'cs_lead',
   },
   {
+    key: 'artwork.first_proof_business_days',
+    valueType: 'integer',
+    value: null,
+    unset: true,
+    valueSchema: { minimum: 1, maximum: 30 },
+    description:
+      'D-309 business days Prepress commits to from an accepted file to the first proof, stated on the storefront; no decision gives it — null on the storefront until Prepress sets it',
+    decisions: ['D-309', 'D-070'],
+    confirmation: 'pending_business',
+    ownerRole: 'prepress',
+  },
+  {
+    key: 'storefront.support_hours',
+    valueType: 'json',
+    value: null,
+    unset: true,
+    valueSchema: {
+      type: 'object',
+      additionalProperties: false,
+      required: ['days', 'open', 'close'],
+      properties: {
+        days: { enum: ['daily', 'business_days', 'mon_fri', 'mon_sat'] },
+        open: { type: 'string', pattern: '^([01][0-9]|2[0-3]):[0-5][0-9]$' },
+        close: { type: 'string', pattern: '^([01][0-9]|2[0-3]):[0-5][0-9]$' },
+      },
+    },
+    description:
+      'D-309 hours CS answers on the storefront (Asia/Bangkok): which days and the opening and closing time; not seeded — null until the CS Lead sets it',
+    decisions: ['D-309', 'D-221'],
+    confirmation: 'pending_business',
+    ownerRole: 'cs_lead',
+  },
+  {
+    key: 'support.reply_minutes',
+    valueType: 'integer',
+    value: null,
+    unset: true,
+    valueSchema: { minimum: 1, maximum: 1440 },
+    description:
+      'D-309 typical CS reply time in minutes within support hours, stated on the storefront; no decision gives it — null until the CS Lead sets it',
+    decisions: ['D-309', 'D-221'],
+    confirmation: 'pending_business',
+    ownerRole: 'cs_lead',
+  },
+  {
+    key: 'catalog.hero_presets',
+    valueType: 'json',
+    value: null,
+    unset: true,
+    valueSchema: {
+      type: 'object',
+      additionalProperties: false,
+      required: ['shapes', 'materials', 'prints', 'quantities'],
+      properties: {
+        shapes: {
+          type: 'array',
+          maxItems: 3,
+          items: {
+            type: 'object',
+            additionalProperties: false,
+            required: ['id', 'productSlug'],
+            properties: {
+              id: { enum: ['mailer', 'lid', 'tuck'] },
+              productSlug: { type: 'string', maxLength: 120 },
+              sizeCodes: { type: 'array', maxItems: 6, items: { type: 'string', maxLength: 60 } },
+            },
+          },
+        },
+        materials: {
+          type: 'array',
+          maxItems: 3,
+          items: {
+            type: 'object',
+            additionalProperties: false,
+            required: ['id', 'optionCodes'],
+            properties: {
+              id: { enum: ['kraft350', 'art350', 'corrE'] },
+              optionCodes: {
+                type: 'array',
+                minItems: 1,
+                maxItems: 10,
+                items: { type: 'string', maxLength: 80 },
+              },
+            },
+          },
+        },
+        prints: {
+          type: 'array',
+          maxItems: 3,
+          items: {
+            type: 'object',
+            additionalProperties: false,
+            required: ['id', 'optionCodes'],
+            properties: {
+              id: { enum: ['none', 'one', 'full'] },
+              optionCodes: { type: 'array', maxItems: 10, items: { type: 'string', maxLength: 80 } },
+            },
+          },
+        },
+        quantities: { type: 'array', minItems: 1, maxItems: 6, items: { type: 'integer', minimum: 1 } },
+      },
+    },
+    description:
+      'D-310 the homepage Studio hero: which catalogue product each shape opens (with its standard sizes), which material options each board and which front-ink options each print means, and the quantities offered; priced by store.quotes.calculate; not seeded — the hero only points to the studio until Admin sets it',
+    decisions: ['D-310', 'D-043'],
+    confirmation: 'pending_business',
+    ownerRole: 'admin',
+  },
+  {
     key: 'notifications.deep_link_ttl_hours',
     valueType: 'integer',
     value: 72,

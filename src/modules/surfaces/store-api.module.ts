@@ -6,6 +6,7 @@ import { StoreMeController } from '@modules/auth/controllers/me.controllers';
 import { B2B_STORE_CONTROLLERS } from '@modules/b2b/b2b.registry';
 import { CALL_OFFS_STORE_CONTROLLERS } from '@modules/call-offs/call-offs.registry';
 import { CARTS_STORE_CONTROLLERS } from '@modules/carts/carts.registry';
+import { StorePublicConfigController } from '@modules/catalog/store/public-config';
 import { StoreStatusLabelsController } from '@modules/catalog/store/status-labels.controller';
 import { StoreCatalogController } from '@modules/catalog/store/store-catalog.controller';
 import {
@@ -64,6 +65,7 @@ import { RealtimeModule } from '@platform/realtime/realtime.module';
     StoreSitemapController,
     StoreSupportChannelsController,
     StoreStatusLabelsController,
+    StorePublicConfigController,
     StoreQuotePathController,
     ...PRICING_STORE_CONTROLLERS,
     ...QUOTES_STORE_CONTROLLERS,

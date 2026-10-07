@@ -171,6 +171,23 @@ export interface SettingValues {
   };
   /** D-221 first-response target of a contact-form / hand-off conversation, in business days. */
   'support.first_response_business_days': number;
+  /** D-309 first-proof turnaround Prepress commits to (business days); unset until Prepress sets it. */
+  'artwork.first_proof_business_days': number;
+  /** D-309 CS answering hours on the storefront (Asia/Bangkok); unset until the CS Lead sets them. */
+  'storefront.support_hours': {
+    days: 'daily' | 'business_days' | 'mon_fri' | 'mon_sat';
+    open: string;
+    close: string;
+  };
+  /** D-309 typical CS reply time within support hours (minutes); unset until the CS Lead sets it. */
+  'support.reply_minutes': number;
+  /** D-310 homepage Studio hero presets, mapped to catalogue products and options; unset until Admin sets them. */
+  'catalog.hero_presets': {
+    shapes: { id: 'mailer' | 'lid' | 'tuck'; productSlug: string; sizeCodes?: string[] }[];
+    materials: { id: 'kraft350' | 'art350' | 'corrE'; optionCodes: string[] }[];
+    prints: { id: 'none' | 'one' | 'full'; optionCodes: string[] }[];
+    quantities: number[];
+  };
   /** D-306 the assistant provider chosen by ADR-0012; unset until accepted. */
   'assistant.provider': string;
   /** D-306 the provider model id the assistant uses; unset until ADR-0012. */
