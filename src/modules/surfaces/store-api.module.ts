@@ -29,6 +29,7 @@ import { ORDERS_STORE_CONTROLLERS } from '@modules/orders/orders.registry';
 import { PAYMENT_SCHEDULES_STORE_CONTROLLERS } from '@modules/payment-schedules/payment-schedules.registry';
 import { PAYMENTS_STORE_CONTROLLERS } from '@modules/payments/payments.registry';
 import { PRICING_STORE_CONTROLLERS } from '@modules/pricing/pricing.registry';
+import { HeroPresetsService } from '@modules/pricing/quotes/hero-presets.service';
 import { StoreQuotePathController } from '@modules/pricing/quotes/store-quote-path.controller';
 import { PROMOTIONS_STORE_CONTROLLERS } from '@modules/promotions/promotions.registry';
 import { QUOTES_STORE_CONTROLLERS } from '@modules/quotes/quotes.registry';
@@ -51,6 +52,8 @@ import { RealtimeModule } from '@platform/realtime/realtime.module';
 /** `/v1/store/*` — each deliverable adds the controllers it owns. */
 @Module({
   imports: [RealtimeModule],
+  // API-only: the hero presets read the catalogue's store configurator, which the worker does not load (D-310).
+  providers: [HeroPresetsService],
   controllers: [
     ...OPS_STORE_CONTROLLERS,
     StoreFilesController,

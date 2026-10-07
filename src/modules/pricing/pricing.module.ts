@@ -25,7 +25,6 @@ import { PriceHintsService } from './hints/price-hints.service';
 import { CorrugateInputDataService } from './quotes/corrugate-input-data.service';
 import { CsServicePricingService } from './quotes/cs-service-pricing.service';
 import { FoldingInputDataService } from './quotes/folding-input-data.service';
-import { HeroPresetsService } from './quotes/hero-presets.service';
 import { LabelInputDataService } from './quotes/label-input-data.service';
 import { PouchInputDataService } from './quotes/pouch-input-data.service';
 import { QuoteEngineService } from './quotes/quote-engine.service';
@@ -61,7 +60,6 @@ const SERVICES = [
   CsServicePricingService,
   SellMarginsService,
   PriceHintsService,
-  HeroPresetsService,
 ];
 
 /**
