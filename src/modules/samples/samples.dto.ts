@@ -1,3 +1,5 @@
+import { ApiStatusLabelAdminTh, ApiStatusLabelTh } from '@common/labels/status-label.decorators';
+import { statusLabels } from '@common/labels/status-labels';
 import { PageQuery } from '@common/pagination/pagination.dto';
 import { DecimalField, EnumField, IntField, RefField, TextField } from '@modules/catalog/crud/dto-fields';
 import { SERVICE_AMOUNT_BASES, UNIT_AMOUNT_PATTERN } from '@modules/pricing/quotes/service-amount';
@@ -321,6 +323,12 @@ export class SampleDto {
   @ApiProperty({ enum: SAMPLE_STATUSES, enumName: 'SampleStatus', example: 'delivered' })
   status!: (typeof SAMPLE_STATUSES)[number];
 
+  @ApiStatusLabelTh('SampleStatus')
+  statusLabelTh!: string;
+
+  @ApiStatusLabelAdminTh('SampleStatus')
+  statusLabelAdminTh!: string;
+
   @ApiProperty({ format: 'date-time', example: '2026-10-10T10:00:00+07:00' })
   statusChangedAt!: string;
 
@@ -452,6 +460,12 @@ export class PartnerSampleDto {
   @ApiProperty({ enum: SAMPLE_STATUSES, enumName: 'SampleStatus', example: 'in_production' })
   status!: (typeof SAMPLE_STATUSES)[number];
 
+  @ApiStatusLabelTh('SampleStatus')
+  statusLabelTh!: string;
+
+  @ApiStatusLabelAdminTh('SampleStatus')
+  statusLabelAdminTh!: string;
+
   @ApiProperty({ example: 'folding_carton' })
   productTypeCode!: string;
 
@@ -502,6 +516,7 @@ export const SAMPLE_EXAMPLE: SampleDto = {
   id: IDS.sample,
   kind: 'attached',
   status: 'delivered',
+  ...statusLabels('SampleStatus', 'delivered'),
   statusChangedAt: '2026-10-10T10:00:00+07:00',
   productTypeCode: 'folding_carton',
   configuration: { patternId: IDS.quote, quantities: [1000] },
@@ -541,6 +556,7 @@ export const ADMIN_SAMPLE_EXAMPLE: AdminSampleDto = {
 export const PARTNER_SAMPLE_EXAMPLE: PartnerSampleDto = {
   id: IDS.sample,
   status: 'in_production',
+  ...statusLabels('SampleStatus', 'in_production'),
   productTypeCode: 'folding_carton',
   configuration: { patternId: IDS.quote },
   mockupOption: 'with_print',

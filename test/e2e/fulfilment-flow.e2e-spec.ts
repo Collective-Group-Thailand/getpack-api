@@ -218,7 +218,7 @@ describe('fulfilment from payment to re-production (e2e, B4 quality)', () => {
     const claim = (
       await post(token, `/v1/store/orders/${orderId}/claims`, {
         type: 'print_defect',
-        description: 'สีเพี้ยนจากพรูฟ 100 ชิ้น',
+        description: 'สีเพี้ยนจากแบบตัวอย่าง 100 ชิ้น',
         requestedResolution: 'reprint',
         shipmentId: s1,
         claimedQuantity: 100,
@@ -232,7 +232,7 @@ describe('fulfilment from payment to re-production (e2e, B4 quality)', () => {
     const decided = await post(cs, `/v1/admin/claims/${claim.id}/actions/decide`, {
       decision: 'approved',
       severity: 'major',
-      note: 'สีไม่ตรงพรูฟ',
+      note: 'สีไม่ตรงแบบตัวอย่าง',
     }).expect(200);
     expect(decided.body).toMatchObject({ liability: 'factory', liabilityByRule: 'factory' });
     await post(lead, `/v1/admin/claims/${claim.id}/actions/resolve`, {

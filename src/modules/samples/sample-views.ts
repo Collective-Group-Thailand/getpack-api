@@ -1,3 +1,4 @@
+import { statusLabels } from '@common/labels/status-labels';
 import { toBangkokIso } from '@common/time/bangkok';
 
 import {
@@ -30,6 +31,7 @@ export function sampleDto(s: SampleRow, photos: SamplePhoto[], creditWindowDays:
     id: s.publicId,
     kind: s.kind,
     status: s.status,
+    ...statusLabels('SampleStatus', s.status),
     statusChangedAt: toBangkokIso(s.statusChangedAt),
     productTypeCode: s.productType.code,
     configuration: s.configuration as Record<string, unknown>,
@@ -100,6 +102,7 @@ export function partnerSampleDto(s: SampleRow, photos: SamplePhoto[]): PartnerSa
   return {
     id: s.publicId,
     status: s.status,
+    ...statusLabels('SampleStatus', s.status),
     productTypeCode: s.productType.code,
     configuration: s.configuration as Record<string, unknown>,
     mockupOption: s.mockupOption as PartnerSampleDto['mockupOption'],

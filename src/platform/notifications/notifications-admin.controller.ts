@@ -2,6 +2,7 @@ import { CurrentActor } from '@common/auth/auth.decorators';
 import { Can } from '@common/auth/can.decorator';
 import { type Actor, type UserActor } from '@common/context/actor';
 import { DomainException } from '@common/errors/domain.exception';
+import { consentLabels } from '@common/labels/consent-labels';
 import { ApiEndpoint, ApiStandardErrors, ApiSuccess } from '@common/openapi/decorators';
 import { toBangkokIso } from '@common/time/bangkok';
 import { PrismaService } from '@database/prisma.service';
@@ -351,6 +352,7 @@ export class ConsentPurposesController {
   private static toDto(p: Awaited<ReturnType<ConsentPurposesAdminService['publish']>>): ConsentPurposeDto {
     return {
       key: p.key,
+      ...consentLabels(p.key),
       required: p.required,
       versions: p.versions.map((v) => ({
         versionNo: v.versionNo,
@@ -375,6 +377,8 @@ export class ConsentPurposesController {
     example: [
       {
         key: 'marketing_line',
+        labelTh: 'รับข่าวสารและโปรโมชันทาง LINE',
+        labelEn: 'News and offers on LINE',
         required: false,
         versions: [
           {
@@ -419,6 +423,8 @@ export class ConsentPurposesController {
     type: ConsentPurposeDto,
     example: {
       key: 'marketing_line',
+      labelTh: 'รับข่าวสารและโปรโมชันทาง LINE',
+      labelEn: 'News and offers on LINE',
       required: false,
       versions: [
         {
@@ -471,6 +477,8 @@ export class AdminCustomerConsentsController {
     example: [
       {
         purpose: 'marketing_line',
+        labelTh: 'รับข่าวสารและโปรโมชันทาง LINE',
+        labelEn: 'News and offers on LINE',
         required: false,
         versionNo: 2,
         granted: true,
@@ -487,6 +495,7 @@ export class AdminCustomerConsentsController {
     if (!user) throw new DomainException('http.not_found');
     return (await this.mine.consents(user.id)).map(({ purpose, version, latest }) => ({
       purpose: purpose.key,
+      ...consentLabels(purpose.key),
       required: purpose.required,
       versionNo: version?.versionNo ?? null,
       granted: latest?.granted ?? null,

@@ -1,3 +1,5 @@
+import { ApiStatusLabelAdminTh, ApiStatusLabelTh } from '@common/labels/status-label.decorators';
+import { statusLabels } from '@common/labels/status-labels';
 import { NextActionDto } from '@common/next-actions/next-action.dto';
 import { PageQuery } from '@common/pagination/pagination.dto';
 import { GeoRefDto } from '@modules/customers/customers.dto';
@@ -427,6 +429,12 @@ export class ShipmentEventDto {
   @ApiProperty({ enum: SHIPMENT_STATUSES, enumName: 'ShipmentStatus', example: 'in_transit' })
   status!: ShipmentStatusValue;
 
+  @ApiStatusLabelTh('ShipmentStatus')
+  statusLabelTh!: string;
+
+  @ApiStatusLabelAdminTh('ShipmentStatus')
+  statusLabelAdminTh!: string;
+
   @ApiProperty({
     enum: ['factory', 'carrier_webhook', 'carrier_poll', 'staff'],
     enumName: 'ShipmentEventSource',
@@ -516,6 +524,12 @@ export class PartnerShipmentDto {
 
   @ApiProperty({ enum: SHIPMENT_STATUSES, enumName: 'ShipmentStatus', example: 'ready' })
   status!: ShipmentStatusValue;
+
+  @ApiStatusLabelTh('ShipmentStatus')
+  statusLabelTh!: string;
+
+  @ApiStatusLabelAdminTh('ShipmentStatus')
+  statusLabelAdminTh!: string;
 
   @ApiProperty({ enum: CARRIER_CODES, enumName: 'CarrierCode', example: 'factory_fleet' })
   carrier!: string;
@@ -739,6 +753,7 @@ const SHIPMENT_BASE = {
   id: SHIPMENT_IDS.shipment,
   shipmentNo: 'SH-2610-0001',
   status: 'ready',
+  ...statusLabels('ShipmentStatus', 'ready'),
   carrier: 'factory_fleet',
   trackingNo: null,
   destination: {
@@ -773,6 +788,7 @@ const SHIPMENT_BASE = {
     {
       occurredAt: '2026-10-19T16:00:00+07:00',
       status: 'ready',
+      ...statusLabels('ShipmentStatus', 'ready'),
       source: 'factory',
       location: null,
       note: null,
@@ -889,6 +905,12 @@ export class StoreShipmentEventDto {
   @ApiProperty({ enum: SHIPMENT_STATUSES, enumName: 'ShipmentStatus', example: 'in_transit' })
   status!: ShipmentStatusValue;
 
+  @ApiStatusLabelTh('ShipmentStatus')
+  statusLabelTh!: string;
+
+  @ApiStatusLabelAdminTh('ShipmentStatus')
+  statusLabelAdminTh!: string;
+
   @ApiProperty({ nullable: true, example: 'ศูนย์กระจายสินค้าบางนา' })
   location!: string | null;
 }
@@ -914,6 +936,12 @@ export class StoreShipmentDto {
 
   @ApiProperty({ enum: SHIPMENT_STATUSES, enumName: 'ShipmentStatus', example: 'delivered' })
   status!: ShipmentStatusValue;
+
+  @ApiStatusLabelTh('ShipmentStatus')
+  statusLabelTh!: string;
+
+  @ApiStatusLabelAdminTh('ShipmentStatus')
+  statusLabelAdminTh!: string;
 
   @ApiProperty({
     enum: ['packio', 'flash_express', 'deliveree'],
@@ -954,6 +982,7 @@ export const STORE_SHIPMENT_EXAMPLE = {
   id: SHIPMENT_IDS.shipment,
   shipmentNo: 'SH-2610-0001',
   status: 'delivered',
+  ...statusLabels('ShipmentStatus', 'delivered'),
   carrier: 'packio',
   trackingNo: null,
   trackingUrl: null,
@@ -963,8 +992,18 @@ export const STORE_SHIPMENT_EXAMPLE = {
   deliveredAt: '2026-10-21T14:05:00+07:00',
   items: [{ orderCode: 'PK-2610-0001-01', quantity: 600, deliveredQuantity: 590 }],
   events: [
-    { occurredAt: '2026-10-20T08:00:00+07:00', status: 'picked_up', location: null },
-    { occurredAt: '2026-10-21T14:05:00+07:00', status: 'delivered', location: null },
+    {
+      occurredAt: '2026-10-20T08:00:00+07:00',
+      status: 'picked_up',
+      ...statusLabels('ShipmentStatus', 'picked_up'),
+      location: null,
+    },
+    {
+      occurredAt: '2026-10-21T14:05:00+07:00',
+      status: 'delivered',
+      ...statusLabels('ShipmentStatus', 'delivered'),
+      location: null,
+    },
   ],
   proofOfDelivery: {
     receiverName: 'สมหญิง ใจดี',

@@ -1,3 +1,5 @@
+import { ApiStatusLabelAdminTh, ApiStatusLabelTh } from '@common/labels/status-label.decorators';
+import { statusLabels } from '@common/labels/status-labels';
 import { PageQuery } from '@common/pagination/pagination.dto';
 import { OrderRefDto } from '@modules/carts/carts.dto';
 import { IdField } from '@modules/catalog/crud/dto-fields';
@@ -88,6 +90,12 @@ export class InstalmentDto {
 
   @ApiProperty({ enum: INSTALMENT_STATUSES, enumName: 'InstalmentStatus', example: 'due' })
   status!: string;
+
+  @ApiStatusLabelTh('InstalmentStatus')
+  statusLabelTh!: string;
+
+  @ApiStatusLabelAdminTh('InstalmentStatus')
+  statusLabelAdminTh!: string;
 
   @ApiProperty({ example: '7091.40', description: 'Incl. VAT' })
   grossAmount!: string;
@@ -193,6 +201,7 @@ const INSTALMENT_EXAMPLE: InstalmentDto = {
   requiredBefore: 'production',
   dueAt: '2026-10-01T10:00:00+07:00',
   status: 'due',
+  ...statusLabels('InstalmentStatus', 'due'),
   grossAmount: '7091.40',
   whtAmount: '0.00',
   cashAmount: '7091.40',

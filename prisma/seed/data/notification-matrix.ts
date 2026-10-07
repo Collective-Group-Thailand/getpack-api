@@ -204,9 +204,9 @@ const ROWS: Row[] = [
   C(
     'proof.sent',
     ['email', 'line', 'web_push'],
-    { th: 'พรูฟพร้อมให้ตรวจแล้ว', en: 'Your proof is ready' },
+    { th: 'แบบตัวอย่างพร้อมให้ตรวจแล้ว', en: 'Your proof is ready' },
     {
-      th: 'พรูฟงานของคุณพร้อมแล้ว โปรดตรวจและอนุมัติเพื่อเริ่มผลิต',
+      th: 'แบบตัวอย่างงานของคุณพร้อมแล้ว โปรดตรวจและอนุมัติเพื่อเริ่มผลิต',
       en: 'Your proof is ready; review and approve it to start production',
     },
     'Customer: a proof waits for approval (D-070)',
@@ -386,9 +386,9 @@ const ROWS: Row[] = [
     'proof.changes_requested',
     'prepress',
     ['in_app'],
-    { th: 'ลูกค้าขอแก้พรูฟ', en: 'Proof changes requested' },
+    { th: 'ลูกค้าขอแก้ Proof', en: 'Proof changes requested' },
     {
-      th: 'ลูกค้าขอแก้ไขพรูฟ โปรดดูความเห็นและส่งพรูฟใหม่',
+      th: 'ลูกค้าขอแก้ไข Proof โปรดดูความเห็นและส่ง Proof ใหม่',
       en: 'The customer asked for proof changes; see the comments and send a new version',
     },
     'Prepress: proof changes requested (D-070)',

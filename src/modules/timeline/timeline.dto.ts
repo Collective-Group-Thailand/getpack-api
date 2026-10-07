@@ -1,3 +1,4 @@
+import { ApiStatusLabelAdminTh, ApiStatusLabelTh } from '@common/labels/status-label.decorators';
 import { CursorQuery } from '@common/pagination/pagination.dto';
 import { ApiProperty } from '@nestjs/swagger';
 import { UserRefDto } from '@platform/approvals/approvals.dto';
@@ -47,9 +48,30 @@ export class TimelineEntryDto {
 
   @ApiProperty({
     example: 'activity.production.milestone_reached',
-    description: 'i18n key the client renders',
+    description: 'i18n key (kept for compatibility; render `messageTh` / `messageEn` instead)',
   })
   messageKey!: string;
+
+  @ApiProperty({
+    example: 'แบบตัวอย่างพร้อมให้ตรวจ',
+    description:
+      'What happened, in Thai, for this entry’s reader — one sentence per action or shipment step (customers: ' +
+      '"แบบตัวอย่าง" / "ตรวจแบบก่อนพิมพ์", never a factory, D-050; D-313)',
+  })
+  messageTh!: string;
+
+  @ApiProperty({ example: 'Your proof is ready to check' })
+  messageEn!: string;
+
+  @ApiProperty({
+    type: 'integer',
+    minimum: 1,
+    example: 1,
+    description:
+      'Consecutive repeats of the same event (same type and words) are one entry in the customer timeline: how ' +
+      'many it stands for; `occurredAt` is the latest. Always 1 in the staff timeline.',
+  })
+  count!: number;
 
   @ApiProperty({
     type: 'object',
@@ -131,6 +153,12 @@ export class ProgressStepDto {
   })
   status!: string;
 
+  @ApiStatusLabelTh('MilestoneStatus')
+  statusLabelTh!: string;
+
+  @ApiStatusLabelAdminTh('MilestoneStatus')
+  statusLabelAdminTh!: string;
+
   @ApiProperty({
     type: String,
     format: 'date-time',
@@ -202,6 +230,12 @@ export class TrackingStepDto {
   })
   status!: string;
 
+  @ApiProperty({
+    example: 'กำลังส่ง',
+    description: '`status` in Thai for the customer (D-313); the enum value never changes',
+  })
+  statusLabelTh!: string;
+
   @ApiProperty({ format: 'date-time', example: '2026-10-19T12:00:00+07:00' })
   occurredAt!: string;
 }
@@ -216,6 +250,12 @@ export class TrackingShipmentDto {
     example: 'in_transit',
   })
   status!: string;
+
+  @ApiProperty({
+    example: 'กำลังส่ง',
+    description: '`status` in Thai for the customer (D-313); the enum value never changes',
+  })
+  statusLabelTh!: string;
 
   @ApiProperty({
     enum: ['packio', 'flash_express', 'deliveree'],
@@ -283,6 +323,8 @@ const STEP = {
   labelTh: 'กำลังพิมพ์',
   labelEn: 'Printing',
   status: 'completed',
+  statusLabelTh: 'เสร็จแล้ว',
+  statusLabelAdminTh: 'เสร็จแล้ว',
   promisedAt: '2026-10-14T18:00:00+07:00',
   completedAt: '2026-10-14T16:00:00+07:00',
 };
@@ -291,6 +333,9 @@ export const TIMELINE_ENTRY_EXAMPLE = {
   occurredAt: '2026-10-14T16:00:00+07:00',
   type: 'production.milestone_reached',
   messageKey: 'activity.production.milestone_reached',
+  messageTh: 'กำลังพิมพ์',
+  messageEn: 'Printing',
+  count: 1,
   params: { stepKey: 'printing', labelTh: 'กำลังพิมพ์', labelEn: 'Printing' },
   photoFileIds: [TIMELINE_IDS.photo],
   shipment: null,
@@ -329,13 +374,14 @@ export const TRACKING_EXAMPLE = {
     {
       shipmentNo: 'SH-2610-0001',
       status: 'in_transit',
+      statusLabelTh: 'กำลังส่ง',
       carrier: 'packio',
       trackingNo: null,
       trackingUrl: null,
       cartonsCount: 3,
       steps: [
-        { status: 'picked_up', occurredAt: '2026-10-19T08:00:00+07:00' },
-        { status: 'in_transit', occurredAt: '2026-10-19T12:00:00+07:00' },
+        { status: 'picked_up', statusLabelTh: 'ออกจากโรงงานแล้ว', occurredAt: '2026-10-19T08:00:00+07:00' },
+        { status: 'in_transit', statusLabelTh: 'กำลังส่ง', occurredAt: '2026-10-19T12:00:00+07:00' },
       ],
     },
   ],

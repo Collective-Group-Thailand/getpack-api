@@ -14,7 +14,7 @@ import { StudioCatalogService } from './studio-catalog.service';
 
 /** D-215: what every soft proof says about itself. */
 export const SOFT_PROOF_LABEL = {
-  th: 'ภาพจำลองเพื่อดูตัวอย่าง ไม่ใช่ปรู๊ฟสัญญา',
+  th: 'ภาพจำลองเพื่อดูตัวอย่าง ไม่ใช่แบบตัวอย่างสำหรับอนุมัติพิมพ์',
   en: 'Preview, not a contract proof',
 };
 

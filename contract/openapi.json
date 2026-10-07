@@ -1831,7 +1831,7 @@
         "summary": "idempotency.key_invalid",
         "value": {
           "code": "idempotency.key_invalid",
-          "detail": "Idempotency-Key ต้องเป็น uuid",
+          "detail": "ไม่สามารถส่งคำขอได้ กรุณารีเฟรชหน้าแล้วลองใหม่อีกครั้ง (รหัสคำขอ Idempotency-Key ต้องเป็น uuid) — ยังไม่มีการสร้างรายการใด ๆ",
           "requestId": "6f1c2d8e-2c7b-4d0e-9d1c-3f1a2b3c4d5e",
           "status": 400,
           "title": "Idempotency-Key ไม่ถูกต้อง",
@@ -1842,7 +1842,7 @@
         "summary": "idempotency.key_required",
         "value": {
           "code": "idempotency.key_required",
-          "detail": "คำขอนี้ต้องมี header Idempotency-Key (uuid)",
+          "detail": "ไม่สามารถส่งคำขอได้ กรุณารีเฟรชหน้าแล้วลองใหม่อีกครั้ง (ไม่มีรหัสคำขอ Idempotency-Key)",
           "requestId": "6f1c2d8e-2c7b-4d0e-9d1c-3f1a2b3c4d5e",
           "status": 400,
           "title": "ต้องระบุ Idempotency-Key",
@@ -1996,10 +1996,10 @@
         "summary": "mockups.exists",
         "value": {
           "code": "mockups.exists",
-          "detail": "คำสั่งซื้อนี้มีม็อกอัพ (ปรู๊ฟจริง) แล้ว",
+          "detail": "คำสั่งซื้อนี้มีตัวอย่างจริง (ม็อกอัพ) แล้ว",
           "requestId": "6f1c2d8e-2c7b-4d0e-9d1c-3f1a2b3c4d5e",
           "status": 409,
-          "title": "มีม็อกอัพแล้ว",
+          "title": "มีตัวอย่างจริงแล้ว",
           "type": "https://errors.packio/mockups.exists"
         }
       },
@@ -2887,7 +2887,7 @@
         "summary": "proofs.annotation_closed",
         "value": {
           "code": "proofs.annotation_closed",
-          "detail": "พรูฟนี้อยู่ในสถานะ {status} จึงเพิ่มความเห็นไม่ได้",
+          "detail": "แบบตัวอย่างนี้อยู่ในสถานะ {status} จึงเพิ่มความเห็นไม่ได้",
           "requestId": "6f1c2d8e-2c7b-4d0e-9d1c-3f1a2b3c4d5e",
           "status": 409,
           "title": "ปิดรับความเห็นแล้ว",
@@ -2898,7 +2898,7 @@
         "summary": "proofs.no_accepted_artwork",
         "value": {
           "code": "proofs.no_accepted_artwork",
-          "detail": "ต้องรับไฟล์งานเข้าทำพรูฟ (accept) ก่อนส่งพรูฟ",
+          "detail": "ต้องรับไฟล์งานเข้าทำ Proof (accept) ก่อนส่ง Proof",
           "requestId": "6f1c2d8e-2c7b-4d0e-9d1c-3f1a2b3c4d5e",
           "status": 409,
           "title": "ยังไม่มีไฟล์งานที่ผ่านการตรวจ",
@@ -2909,10 +2909,10 @@
         "summary": "proofs.not_pending",
         "value": {
           "code": "proofs.not_pending",
-          "detail": "พรูฟนี้อยู่ในสถานะ {status} ไม่รอการตัดสินใจแล้ว",
+          "detail": "แบบตัวอย่างนี้อยู่ในสถานะ {status} ไม่รอการตัดสินใจแล้ว",
           "requestId": "6f1c2d8e-2c7b-4d0e-9d1c-3f1a2b3c4d5e",
           "status": 409,
-          "title": "พรูฟนี้ตัดสินแล้ว",
+          "title": "แบบตัวอย่างนี้ตัดสินแล้ว",
           "type": "https://errors.packio/proofs.not_pending"
         }
       },
@@ -5966,6 +5966,16 @@
             ],
             "example": "under_review"
           },
+          "statusLabelAdminTh": {
+            "description": "`status` (ClaimStatus) in Thai for staff and partner factories (D-313).",
+            "example": "แจ้งเคลมแล้ว",
+            "type": "string"
+          },
+          "statusLabelTh": {
+            "description": "`status` (ClaimStatus) in Thai for the customer — render this, not a label map of your own (D-313). The enum value in `status` never changes.",
+            "example": "แจ้งเคลมแล้ว",
+            "type": "string"
+          },
           "submittedAt": {
             "example": "2026-10-22T09:00:00+07:00",
             "format": "date-time",
@@ -6001,6 +6011,8 @@
           "type",
           "origin",
           "status",
+          "statusLabelTh",
+          "statusLabelAdminTh",
           "description",
           "requestedResolution",
           "claimedQuantity",
@@ -6410,6 +6422,15 @@
               "null"
             ]
           },
+          "labelEn": {
+            "example": "News and offers on LINE",
+            "type": "string"
+          },
+          "labelTh": {
+            "description": "The purpose in Thai words (render this, not `purpose`)",
+            "example": "รับข่าวสารและโปรโมชันทาง LINE",
+            "type": "string"
+          },
           "outdated": {
             "description": "The latest decision was for an older text version",
             "example": true,
@@ -6453,6 +6474,8 @@
         },
         "required": [
           "purpose",
+          "labelTh",
+          "labelEn",
           "required",
           "versionNo",
           "granted",
@@ -7238,6 +7261,16 @@
             ],
             "example": "released"
           },
+          "statusLabelAdminTh": {
+            "description": "`status` (ProductionJobStatus) in Thai for staff and partner factories (D-313).",
+            "example": "รอโรงงานรับงาน",
+            "type": "string"
+          },
+          "statusLabelTh": {
+            "description": "`status` (ProductionJobStatus) in Thai for the customer — render this, not a label map of your own (D-313). The enum value in `status` never changes.",
+            "example": "เตรียมผลิต",
+            "type": "string"
+          },
           "title": {
             "description": "Short label: product type and quantity",
             "example": "กล่องพับ · 1000 ชิ้น",
@@ -7260,6 +7293,8 @@
           "jobNo",
           "kind",
           "status",
+          "statusLabelTh",
+          "statusLabelAdminTh",
           "releasedAt",
           "acceptDueAt",
           "acceptedAt",
@@ -7487,6 +7522,16 @@
             ],
             "example": "awaiting_template"
           },
+          "artworkStatusLabelAdminTh": {
+            "description": "`artworkStatus` (ArtworkStatus) in Thai for staff and partner factories (D-313).",
+            "example": "รอแบบไดคัท",
+            "type": "string"
+          },
+          "artworkStatusLabelTh": {
+            "description": "`artworkStatus` (ArtworkStatus) in Thai for the customer — render this, not a label map of your own (D-313). The enum value in `artworkStatus` never changes.",
+            "example": "รอแบบไดคัท",
+            "type": "string"
+          },
           "cancelReasonCode": {
             "description": "Code of the cancellation reason",
             "example": null,
@@ -7622,6 +7667,16 @@
             "format": "date-time",
             "type": "string"
           },
+          "statusLabelAdminTh": {
+            "description": "`status` (OrderStatus) in Thai for staff and partner factories (D-313).",
+            "example": "รอชำระเงิน",
+            "type": "string"
+          },
+          "statusLabelTh": {
+            "description": "`status` (OrderStatus) in Thai for the customer — render this, not a label map of your own (D-313). The enum value in `status` never changes.",
+            "example": "รอชำระเงิน",
+            "type": "string"
+          },
           "summary": {
             "allOf": [
               {
@@ -7680,7 +7735,11 @@
           "id",
           "orderCode",
           "status",
+          "statusLabelTh",
+          "statusLabelAdminTh",
           "artworkStatus",
+          "artworkStatusLabelTh",
+          "artworkStatusLabelAdminTh",
           "productTypeCode",
           "summary",
           "quoteId",
@@ -7815,6 +7874,16 @@
             ],
             "example": "waiting_payment"
           },
+          "statusLabelAdminTh": {
+            "description": "`status` (OrderGroupStatus) in Thai for staff and partner factories (D-313).",
+            "example": "รอผู้อนุมัติของบริษัท",
+            "type": "string"
+          },
+          "statusLabelTh": {
+            "description": "`status` (OrderGroupStatus) in Thai for the customer — render this, not a label map of your own (D-313). The enum value in `status` never changes.",
+            "example": "รอผู้อนุมัติของบริษัท",
+            "type": "string"
+          },
           "taxProfile": {
             "additionalProperties": true,
             "description": "The tax profile the documents are issued to, as placed (snapshot)",
@@ -7850,6 +7919,8 @@
           "id",
           "groupCode",
           "status",
+          "statusLabelTh",
+          "statusLabelAdminTh",
           "channel",
           "customerId",
           "poNumber",
@@ -7934,6 +8005,16 @@
               }
             ],
             "example": "approved"
+          },
+          "artworkStatusLabelAdminTh": {
+            "description": "`artworkStatus` (ArtworkStatus) in Thai for staff and partner factories (D-313).",
+            "example": "รอแบบไดคัท",
+            "type": "string"
+          },
+          "artworkStatusLabelTh": {
+            "description": "`artworkStatus` (ArtworkStatus) in Thai for the customer — render this, not a label map of your own (D-313). The enum value in `artworkStatus` never changes.",
+            "example": "รอแบบไดคัท",
+            "type": "string"
           },
           "channel": {
             "allOf": [
@@ -8037,6 +8118,16 @@
             ],
             "example": "in_production"
           },
+          "statusLabelAdminTh": {
+            "description": "`status` (OrderStatus) in Thai for staff and partner factories (D-313).",
+            "example": "รอชำระเงิน",
+            "type": "string"
+          },
+          "statusLabelTh": {
+            "description": "`status` (OrderStatus) in Thai for the customer — render this, not a label map of your own (D-313). The enum value in `status` never changes.",
+            "example": "รอชำระเงิน",
+            "type": "string"
+          },
           "unit": {
             "example": "piece",
             "type": "string"
@@ -8048,7 +8139,11 @@
           "groupId",
           "groupCode",
           "status",
+          "statusLabelTh",
+          "statusLabelAdminTh",
           "artworkStatus",
+          "artworkStatusLabelTh",
+          "artworkStatusLabelAdminTh",
           "channel",
           "productTypeCode",
           "quantity",
@@ -8204,6 +8299,16 @@
             ],
             "example": "pending"
           },
+          "statusLabelAdminTh": {
+            "description": "`status` (PaymentStatus) in Thai for staff and partner factories (D-313).",
+            "example": "เริ่มชำระเงิน",
+            "type": "string"
+          },
+          "statusLabelTh": {
+            "description": "`status` (PaymentStatus) in Thai for the customer — render this, not a label map of your own (D-313). The enum value in `status` never changes.",
+            "example": "เริ่มชำระเงิน",
+            "type": "string"
+          },
           "whtAmount": {
             "example": "0.00",
             "type": "string"
@@ -8215,6 +8320,8 @@
           "groupId",
           "method",
           "status",
+          "statusLabelTh",
+          "statusLabelAdminTh",
           "amount",
           "whtAmount",
           "cashAmount",
@@ -9296,6 +9403,16 @@
             "format": "date-time",
             "type": "string"
           },
+          "statusLabelAdminTh": {
+            "description": "`status` (SampleStatus) in Thai for staff and partner factories (D-313).",
+            "example": "รอใบเสนอราคา",
+            "type": "string"
+          },
+          "statusLabelTh": {
+            "description": "`status` (SampleStatus) in Thai for the customer — render this, not a label map of your own (D-313). The enum value in `status` never changes.",
+            "example": "รอใบเสนอราคา",
+            "type": "string"
+          },
           "validUntil": {
             "example": null,
             "format": "date-time",
@@ -9309,6 +9426,8 @@
           "id",
           "kind",
           "status",
+          "statusLabelTh",
+          "statusLabelAdminTh",
           "statusChangedAt",
           "productTypeCode",
           "configuration",
@@ -9581,6 +9700,16 @@
             ],
             "example": "saved"
           },
+          "statusLabelAdminTh": {
+            "description": "`status` (QuoteStatus) in Thai for staff and partner factories (D-313).",
+            "example": "คำนวณแล้ว",
+            "type": "string"
+          },
+          "statusLabelTh": {
+            "description": "`status` (QuoteStatus) in Thai for the customer — render this, not a label map of your own (D-313). The enum value in `status` never changes.",
+            "example": "คำนวณแล้ว",
+            "type": "string"
+          },
           "summary": {
             "allOf": [
               {
@@ -9608,6 +9737,8 @@
           "id",
           "quoteCode",
           "status",
+          "statusLabelTh",
+          "statusLabelAdminTh",
           "source",
           "productTypeCode",
           "summary",
@@ -10054,6 +10185,16 @@
             ],
             "example": "ready"
           },
+          "statusLabelAdminTh": {
+            "description": "`status` (ShipmentStatus) in Thai for staff and partner factories (D-313).",
+            "example": "ร่างรอบส่ง",
+            "type": "string"
+          },
+          "statusLabelTh": {
+            "description": "`status` (ShipmentStatus) in Thai for the customer — render this, not a label map of your own (D-313). The enum value in `status` never changes.",
+            "example": "เตรียมจัดส่ง",
+            "type": "string"
+          },
           "trackingNo": {
             "example": null,
             "type": [
@@ -10084,6 +10225,8 @@
           "id",
           "shipmentNo",
           "status",
+          "statusLabelTh",
+          "statusLabelAdminTh",
           "carrier",
           "trackingNo",
           "destination",
@@ -13521,6 +13664,16 @@
             ],
             "example": "blocked"
           },
+          "preflightStatusLabelAdminTh": {
+            "description": "`preflightStatus` (PreflightStatus) in Thai for staff and partner factories (D-313).",
+            "example": "รอตรวจไฟล์อัตโนมัติ",
+            "type": "string"
+          },
+          "preflightStatusLabelTh": {
+            "description": "`preflightStatus` (PreflightStatus) in Thai for the customer — render this, not a label map of your own (D-313). The enum value in `preflightStatus` never changes.",
+            "example": "รอตรวจไฟล์อัตโนมัติ",
+            "type": "string"
+          },
           "rejectReason": {
             "example": null,
             "type": [
@@ -13552,6 +13705,16 @@
             ],
             "example": "submitted"
           },
+          "statusLabelAdminTh": {
+            "description": "`status` (SubmissionStatus) in Thai for staff and partner factories (D-313).",
+            "example": "ส่งไฟล์แล้ว",
+            "type": "string"
+          },
+          "statusLabelTh": {
+            "description": "`status` (SubmissionStatus) in Thai for the customer — render this, not a label map of your own (D-313). The enum value in `status` never changes.",
+            "example": "ส่งไฟล์แล้ว",
+            "type": "string"
+          },
           "submittedAt": {
             "example": "2026-09-27T10:00:00+07:00",
             "format": "date-time",
@@ -13570,10 +13733,14 @@
           "source",
           "channel",
           "status",
+          "statusLabelTh",
+          "statusLabelAdminTh",
           "note",
           "submittedAt",
           "files",
           "preflightStatus",
+          "preflightStatusLabelTh",
+          "preflightStatusLabelAdminTh",
           "preflightCompletedAt",
           "preflightReport",
           "rejectReason",
@@ -22925,6 +23092,15 @@
               "null"
             ]
           },
+          "labelEn": {
+            "example": "News and offers on LINE",
+            "type": "string"
+          },
+          "labelTh": {
+            "description": "The purpose in Thai words (render this, not `purpose`)",
+            "example": "รับข่าวสารและโปรโมชันทาง LINE",
+            "type": "string"
+          },
           "outdated": {
             "description": "The latest decision was for an older text version",
             "example": false,
@@ -22964,6 +23140,8 @@
         },
         "required": [
           "purpose",
+          "labelTh",
+          "labelEn",
           "required",
           "versionNo",
           "summary",
@@ -22979,6 +23157,15 @@
             "example": "marketing_line",
             "type": "string"
           },
+          "labelEn": {
+            "example": "News and offers on LINE",
+            "type": "string"
+          },
+          "labelTh": {
+            "description": "The purpose in Thai words (render this, not `purpose`)",
+            "example": "รับข่าวสารและโปรโมชันทาง LINE",
+            "type": "string"
+          },
           "required": {
             "example": false,
             "type": "boolean"
@@ -22992,6 +23179,8 @@
         },
         "required": [
           "key",
+          "labelTh",
+          "labelEn",
           "required",
           "versions"
         ],
@@ -32885,6 +33074,16 @@
             ],
             "example": "in_progress"
           },
+          "statusLabelAdminTh": {
+            "description": "`status` (DesignRoundStatus) in Thai for staff and partner factories (D-313).",
+            "example": "รอชำระค่าแก้ไขเพิ่ม",
+            "type": "string"
+          },
+          "statusLabelTh": {
+            "description": "`status` (DesignRoundStatus) in Thai for the customer — render this, not a label map of your own (D-313). The enum value in `status` never changes.",
+            "example": "รอชำระค่าแก้ไขเพิ่ม",
+            "type": "string"
+          },
           "submissionId": {
             "description": "The artwork version delivered",
             "example": null,
@@ -32902,6 +33101,8 @@
           "chargeable",
           "feeNet",
           "status",
+          "statusLabelTh",
+          "statusLabelAdminTh",
           "changeRequest",
           "referenceFileIds",
           "submissionId",
@@ -33044,6 +33245,16 @@
             ],
             "example": "in_progress"
           },
+          "statusLabelAdminTh": {
+            "description": "`status` (DesignServiceStatus) in Thai for staff and partner factories (D-313).",
+            "example": "รอบรีฟงานออกแบบ",
+            "type": "string"
+          },
+          "statusLabelTh": {
+            "description": "`status` (DesignServiceStatus) in Thai for the customer — render this, not a label map of your own (D-313). The enum value in `status` never changes.",
+            "example": "รอบรีฟงานออกแบบ",
+            "type": "string"
+          },
           "targetDueAt": {
             "description": "5 business days from the start (D-071)",
             "example": "2026-10-04T10:00:00+07:00",
@@ -33059,6 +33270,8 @@
           "orderId",
           "orderCode",
           "status",
+          "statusLabelTh",
+          "statusLabelAdminTh",
           "brief",
           "briefSubmittedAt",
           "assignee",
@@ -40634,7 +40847,7 @@
       "InboxItemDto": {
         "properties": {
           "body": {
-            "example": "คำขอ discount_memo รอการอนุมัติของคุณ",
+            "example": "คำขออนุมัติ บันทึกขอส่วนลด รอการตัดสินใจของคุณ",
             "type": "string"
           },
           "createdAt": {
@@ -40644,6 +40857,15 @@
           },
           "eventType": {
             "example": "approval.requested",
+            "type": "string"
+          },
+          "eventTypeLabelEn": {
+            "example": "Approval",
+            "type": "string"
+          },
+          "eventTypeLabelTh": {
+            "description": "What the item is about, in Thai, for the inbox chip — never the raw event or policy key (D-313)",
+            "example": "คำขออนุมัติ",
             "type": "string"
           },
           "id": {
@@ -40679,6 +40901,8 @@
         "required": [
           "id",
           "eventType",
+          "eventTypeLabelTh",
+          "eventTypeLabelEn",
           "title",
           "body",
           "createdAt",
@@ -41534,6 +41758,16 @@
             ],
             "example": "due"
           },
+          "statusLabelAdminTh": {
+            "description": "`status` (InstalmentStatus) in Thai for staff and partner factories (D-313).",
+            "example": "ยังไม่ถึงกำหนด",
+            "type": "string"
+          },
+          "statusLabelTh": {
+            "description": "`status` (InstalmentStatus) in Thai for the customer — render this, not a label map of your own (D-313). The enum value in `status` never changes.",
+            "example": "ยังไม่ถึงกำหนด",
+            "type": "string"
+          },
           "whtAmount": {
             "description": "Expected customer withholding (D-174)",
             "example": "0.00",
@@ -41550,6 +41784,8 @@
           "requiredBefore",
           "dueAt",
           "status",
+          "statusLabelTh",
+          "statusLabelAdminTh",
           "grossAmount",
           "whtAmount",
           "cashAmount",
@@ -43914,7 +44150,7 @@
             "type": "string"
           },
           "th": {
-            "example": "ภาพจำลองเพื่อดูตัวอย่าง ไม่ใช่ปรู๊ฟสัญญา",
+            "example": "ภาพจำลองเพื่อดูตัวอย่าง ไม่ใช่แบบตัวอย่างสำหรับอนุมัติพิมพ์",
             "type": "string"
           }
         },
@@ -44774,6 +45010,16 @@
             ],
             "example": "in_progress"
           },
+          "statusLabelAdminTh": {
+            "description": "`status` (MilestoneStatus) in Thai for staff and partner factories (D-313).",
+            "example": "ยังไม่เริ่ม",
+            "type": "string"
+          },
+          "statusLabelTh": {
+            "description": "`status` (MilestoneStatus) in Thai for the customer — render this, not a label map of your own (D-313). The enum value in `status` never changes.",
+            "example": "ยังไม่เริ่ม",
+            "type": "string"
+          },
           "tracksQuantity": {
             "example": true,
             "type": "boolean"
@@ -44786,6 +45032,8 @@
           "nameTh",
           "nameEn",
           "status",
+          "statusLabelTh",
+          "statusLabelAdminTh",
           "evidence",
           "tracksQuantity",
           "customerVisible",
@@ -46257,6 +46505,16 @@
             ],
             "example": "awaiting_template"
           },
+          "artworkStatusLabelAdminTh": {
+            "description": "`artworkStatus` (ArtworkStatus) in Thai for staff and partner factories (D-313).",
+            "example": "รอแบบไดคัท",
+            "type": "string"
+          },
+          "artworkStatusLabelTh": {
+            "description": "`artworkStatus` (ArtworkStatus) in Thai for the customer — render this, not a label map of your own (D-313). The enum value in `artworkStatus` never changes.",
+            "example": "รอแบบไดคัท",
+            "type": "string"
+          },
           "cancelReasonCode": {
             "description": "Code of the cancellation reason",
             "example": null,
@@ -46389,6 +46647,16 @@
             "format": "date-time",
             "type": "string"
           },
+          "statusLabelAdminTh": {
+            "description": "`status` (OrderStatus) in Thai for staff and partner factories (D-313).",
+            "example": "รอชำระเงิน",
+            "type": "string"
+          },
+          "statusLabelTh": {
+            "description": "`status` (OrderStatus) in Thai for the customer — render this, not a label map of your own (D-313). The enum value in `status` never changes.",
+            "example": "รอชำระเงิน",
+            "type": "string"
+          },
           "summary": {
             "allOf": [
               {
@@ -46447,7 +46715,11 @@
           "id",
           "orderCode",
           "status",
+          "statusLabelTh",
+          "statusLabelAdminTh",
           "artworkStatus",
+          "artworkStatusLabelTh",
+          "artworkStatusLabelAdminTh",
           "productTypeCode",
           "summary",
           "quoteId",
@@ -46552,6 +46824,16 @@
             ],
             "example": "waiting_payment"
           },
+          "statusLabelAdminTh": {
+            "description": "`status` (OrderGroupStatus) in Thai for staff and partner factories (D-313).",
+            "example": "รอผู้อนุมัติของบริษัท",
+            "type": "string"
+          },
+          "statusLabelTh": {
+            "description": "`status` (OrderGroupStatus) in Thai for the customer — render this, not a label map of your own (D-313). The enum value in `status` never changes.",
+            "example": "รอผู้อนุมัติของบริษัท",
+            "type": "string"
+          },
           "totals": {
             "$ref": "#/components/schemas/MoneyTotalsDto"
           }
@@ -46560,6 +46842,8 @@
           "id",
           "groupCode",
           "status",
+          "statusLabelTh",
+          "statusLabelAdminTh",
           "channel",
           "customerId",
           "poNumber",
@@ -46847,6 +47131,16 @@
             ],
             "example": "uploaded"
           },
+          "artworkStatusLabelAdminTh": {
+            "description": "`artworkStatus` (ArtworkStatus) in Thai for staff and partner factories (D-313).",
+            "example": "รอแบบไดคัท",
+            "type": "string"
+          },
+          "artworkStatusLabelTh": {
+            "description": "`artworkStatus` (ArtworkStatus) in Thai for the customer — render this, not a label map of your own (D-313). The enum value in `artworkStatus` never changes.",
+            "example": "รอแบบไดคัท",
+            "type": "string"
+          },
           "customerName": {
             "example": "สมชาย ทดสอบ",
             "type": "string"
@@ -46905,6 +47199,16 @@
               }
             ],
             "example": "paid_for_production"
+          },
+          "statusLabelAdminTh": {
+            "description": "`status` (OrderStatus) in Thai for staff and partner factories (D-313).",
+            "example": "รอชำระเงิน",
+            "type": "string"
+          },
+          "statusLabelTh": {
+            "description": "`status` (OrderStatus) in Thai for the customer — render this, not a label map of your own (D-313). The enum value in `status` never changes.",
+            "example": "รอชำระเงิน",
+            "type": "string"
           }
         },
         "required": [
@@ -46914,7 +47218,11 @@
           "groupCode",
           "customerName",
           "status",
+          "statusLabelTh",
+          "statusLabelAdminTh",
           "artworkStatus",
+          "artworkStatusLabelTh",
+          "artworkStatusLabelAdminTh",
           "productTypeCode",
           "promisedShipDate",
           "grossAmount",
@@ -47722,6 +48030,16 @@
             ],
             "example": "under_review"
           },
+          "statusLabelAdminTh": {
+            "description": "`status` (ClaimStatus) in Thai for staff and partner factories (D-313).",
+            "example": "แจ้งเคลมแล้ว",
+            "type": "string"
+          },
+          "statusLabelTh": {
+            "description": "`status` (ClaimStatus) in Thai for the customer — render this, not a label map of your own (D-313). The enum value in `status` never changes.",
+            "example": "แจ้งเคลมแล้ว",
+            "type": "string"
+          },
           "submittedAt": {
             "example": "2026-10-22T09:00:00+07:00",
             "format": "date-time",
@@ -47757,6 +48075,8 @@
           "type",
           "origin",
           "status",
+          "statusLabelTh",
+          "statusLabelAdminTh",
           "description",
           "requestedResolution",
           "claimedQuantity",
@@ -48019,6 +48339,16 @@
             ],
             "example": "released"
           },
+          "statusLabelAdminTh": {
+            "description": "`status` (ProductionJobStatus) in Thai for staff and partner factories (D-313).",
+            "example": "รอโรงงานรับงาน",
+            "type": "string"
+          },
+          "statusLabelTh": {
+            "description": "`status` (ProductionJobStatus) in Thai for the customer — render this, not a label map of your own (D-313). The enum value in `status` never changes.",
+            "example": "เตรียมผลิต",
+            "type": "string"
+          },
           "title": {
             "description": "Short label: product type and quantity",
             "example": "กล่องพับ · 1000 ชิ้น",
@@ -48041,6 +48371,8 @@
           "jobNo",
           "kind",
           "status",
+          "statusLabelTh",
+          "statusLabelAdminTh",
           "releasedAt",
           "acceptDueAt",
           "acceptedAt",
@@ -48594,11 +48926,23 @@
               }
             ],
             "example": "in_production"
+          },
+          "statusLabelAdminTh": {
+            "description": "`status` (SampleStatus) in Thai for staff and partner factories (D-313).",
+            "example": "รอใบเสนอราคา",
+            "type": "string"
+          },
+          "statusLabelTh": {
+            "description": "`status` (SampleStatus) in Thai for the customer — render this, not a label map of your own (D-313). The enum value in `status` never changes.",
+            "example": "รอใบเสนอราคา",
+            "type": "string"
           }
         },
         "required": [
           "id",
           "status",
+          "statusLabelTh",
+          "statusLabelAdminTh",
           "productTypeCode",
           "configuration",
           "mockupOption",
@@ -48751,6 +49095,16 @@
             ],
             "example": "ready"
           },
+          "statusLabelAdminTh": {
+            "description": "`status` (ShipmentStatus) in Thai for staff and partner factories (D-313).",
+            "example": "ร่างรอบส่ง",
+            "type": "string"
+          },
+          "statusLabelTh": {
+            "description": "`status` (ShipmentStatus) in Thai for the customer — render this, not a label map of your own (D-313). The enum value in `status` never changes.",
+            "example": "เตรียมจัดส่ง",
+            "type": "string"
+          },
           "trackingNo": {
             "example": null,
             "type": [
@@ -48774,6 +49128,8 @@
           "id",
           "shipmentNo",
           "status",
+          "statusLabelTh",
+          "statusLabelAdminTh",
           "carrier",
           "trackingNo",
           "destination",
@@ -49510,6 +49866,16 @@
             ],
             "example": "pending"
           },
+          "statusLabelAdminTh": {
+            "description": "`status` (PaymentStatus) in Thai for staff and partner factories (D-313).",
+            "example": "เริ่มชำระเงิน",
+            "type": "string"
+          },
+          "statusLabelTh": {
+            "description": "`status` (PaymentStatus) in Thai for the customer — render this, not a label map of your own (D-313). The enum value in `status` never changes.",
+            "example": "เริ่มชำระเงิน",
+            "type": "string"
+          },
           "whtAmount": {
             "example": "0.00",
             "type": "string"
@@ -49521,6 +49887,8 @@
           "groupId",
           "method",
           "status",
+          "statusLabelTh",
+          "statusLabelAdminTh",
           "amount",
           "whtAmount",
           "cashAmount",
@@ -51844,6 +52212,16 @@
             ],
             "example": "in_review"
           },
+          "artworkStatusLabelAdminTh": {
+            "description": "`artworkStatus` (ArtworkStatus) in Thai for staff and partner factories (D-313).",
+            "example": "รอแบบไดคัท",
+            "type": "string"
+          },
+          "artworkStatusLabelTh": {
+            "description": "`artworkStatus` (ArtworkStatus) in Thai for the customer — render this, not a label map of your own (D-313). The enum value in `artworkStatus` never changes.",
+            "example": "รอแบบไดคัท",
+            "type": "string"
+          },
           "assignee": {
             "anyOf": [
               {
@@ -51910,6 +52288,22 @@
             ],
             "example": "passed_with_warnings"
           },
+          "preflightStatusLabelAdminTh": {
+            "description": "`preflightStatus` (PreflightStatus) in Thai for staff and partner factories (D-313).",
+            "example": "รอตรวจไฟล์อัตโนมัติ",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "preflightStatusLabelTh": {
+            "description": "`preflightStatus` (PreflightStatus) in Thai for the customer — render this, not a label map of your own (D-313). The enum value in `preflightStatus` never changes. Null when `preflightStatus` is null.",
+            "example": "รอตรวจไฟล์อัตโนมัติ",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
           "productTypeCode": {
             "example": "folding_box",
             "type": "string"
@@ -51932,12 +52326,16 @@
           "itemId",
           "versionNo",
           "preflightStatus",
+          "preflightStatusLabelTh",
+          "preflightStatusLabelAdminTh",
           "since",
           "dueAt",
           "overdue",
           "customer",
           "productTypeCode",
           "artworkStatus",
+          "artworkStatusLabelTh",
+          "artworkStatusLabelAdminTh",
           "assignee"
         ],
         "type": "object"
@@ -54815,6 +55213,16 @@
               }
             ],
             "example": "completed"
+          },
+          "statusLabelAdminTh": {
+            "description": "`status` (MilestoneStatus) in Thai for staff and partner factories (D-313).",
+            "example": "ยังไม่เริ่ม",
+            "type": "string"
+          },
+          "statusLabelTh": {
+            "description": "`status` (MilestoneStatus) in Thai for the customer — render this, not a label map of your own (D-313). The enum value in `status` never changes.",
+            "example": "ยังไม่เริ่ม",
+            "type": "string"
           }
         },
         "required": [
@@ -54822,6 +55230,8 @@
           "labelTh",
           "labelEn",
           "status",
+          "statusLabelTh",
+          "statusLabelAdminTh",
           "promisedAt",
           "completedAt"
         ],
@@ -55402,6 +55812,16 @@
             ],
             "example": "changes_requested"
           },
+          "previousStatusLabelAdminTh": {
+            "description": "`previousStatus` (ProofStatus) in Thai for staff and partner factories (D-313).",
+            "example": "รอ Proof จากลูกค้า",
+            "type": "string"
+          },
+          "previousStatusLabelTh": {
+            "description": "`previousStatus` (ProofStatus) in Thai for the customer — render this, not a label map of your own (D-313). The enum value in `previousStatus` never changes.",
+            "example": "รอคุณตรวจแบบตัวอย่าง",
+            "type": "string"
+          },
           "previousVersionNo": {
             "example": 1,
             "type": "integer"
@@ -55412,6 +55832,8 @@
           "previousVersionNo",
           "previousProofFileId",
           "previousStatus",
+          "previousStatusLabelTh",
+          "previousStatusLabelAdminTh",
           "previousDecisionComment",
           "openAnnotationsOnPrevious"
         ],
@@ -55548,6 +55970,16 @@
             ],
             "example": "pending_customer"
           },
+          "statusLabelAdminTh": {
+            "description": "`status` (ProofStatus) in Thai for staff and partner factories (D-313).",
+            "example": "รอ Proof จากลูกค้า",
+            "type": "string"
+          },
+          "statusLabelTh": {
+            "description": "`status` (ProofStatus) in Thai for the customer — render this, not a label map of your own (D-313). The enum value in `status` never changes.",
+            "example": "รอคุณตรวจแบบตัวอย่าง",
+            "type": "string"
+          },
           "submissionId": {
             "example": "0192f3a0-7c1e-7d2a-9b1f-0000000e2006",
             "format": "uuid",
@@ -55567,6 +55999,8 @@
           "orderCode",
           "versionNo",
           "status",
+          "statusLabelTh",
+          "statusLabelAdminTh",
           "submissionId",
           "proofFile",
           "dielineFileId",
@@ -59516,6 +59950,16 @@
               }
             ],
             "example": "pending_approval"
+          },
+          "statusLabelAdminTh": {
+            "description": "`status` (RefundStatus) in Thai for staff and partner factories (D-313).",
+            "example": "ขอคืนเงินแล้ว",
+            "type": "string"
+          },
+          "statusLabelTh": {
+            "description": "`status` (RefundStatus) in Thai for the customer — render this, not a label map of your own (D-313). The enum value in `status` never changes.",
+            "example": "ขอคืนเงินแล้ว",
+            "type": "string"
           }
         },
         "required": [
@@ -59526,6 +59970,8 @@
           "currency",
           "channel",
           "status",
+          "statusLabelTh",
+          "statusLabelAdminTh",
           "reasonNote",
           "approvalRequestId",
           "providerRef",
@@ -62512,6 +62958,16 @@
             ],
             "example": "quoted"
           },
+          "statusLabelAdminTh": {
+            "description": "`status` (RfqStatus) in Thai for staff and partner factories (D-313).",
+            "example": "ได้รับคำขอแล้ว",
+            "type": "string"
+          },
+          "statusLabelTh": {
+            "description": "`status` (RfqStatus) in Thai for the customer — render this, not a label map of your own (D-313). The enum value in `status` never changes.",
+            "example": "ได้รับคำขอแล้ว",
+            "type": "string"
+          },
           "style": {
             "anyOf": [
               {
@@ -62556,6 +63012,8 @@
           "id",
           "rfqCode",
           "status",
+          "statusLabelTh",
+          "statusLabelAdminTh",
           "productTypeCode",
           "productTypeName",
           "spec",
@@ -62870,6 +63328,16 @@
             ],
             "example": "sent"
           },
+          "statusLabelAdminTh": {
+            "description": "`status` (RfqQuoteStatus) in Thai for staff and partner factories (D-313).",
+            "example": "ร่างใบเสนอราคา",
+            "type": "string"
+          },
+          "statusLabelTh": {
+            "description": "`status` (RfqQuoteStatus) in Thai for the customer — render this, not a label map of your own (D-313). The enum value in `status` never changes.",
+            "example": "ร่างใบเสนอราคา",
+            "type": "string"
+          },
           "validUntil": {
             "example": "2026-10-16T09:00:00+07:00",
             "format": "date-time",
@@ -62887,6 +63355,8 @@
           "id",
           "versionNo",
           "status",
+          "statusLabelTh",
+          "statusLabelAdminTh",
           "validUntil",
           "sentAt",
           "note",
@@ -64268,6 +64738,16 @@
             "format": "date-time",
             "type": "string"
           },
+          "statusLabelAdminTh": {
+            "description": "`status` (SampleStatus) in Thai for staff and partner factories (D-313).",
+            "example": "รอใบเสนอราคา",
+            "type": "string"
+          },
+          "statusLabelTh": {
+            "description": "`status` (SampleStatus) in Thai for the customer — render this, not a label map of your own (D-313). The enum value in `status` never changes.",
+            "example": "รอใบเสนอราคา",
+            "type": "string"
+          },
           "validUntil": {
             "example": null,
             "format": "date-time",
@@ -64281,6 +64761,8 @@
           "id",
           "kind",
           "status",
+          "statusLabelTh",
+          "statusLabelAdminTh",
           "statusChangedAt",
           "productTypeCode",
           "configuration",
@@ -65037,6 +65519,16 @@
             ],
             "example": "saved"
           },
+          "statusLabelAdminTh": {
+            "description": "`status` (QuoteStatus) in Thai for staff and partner factories (D-313).",
+            "example": "คำนวณแล้ว",
+            "type": "string"
+          },
+          "statusLabelTh": {
+            "description": "`status` (QuoteStatus) in Thai for the customer — render this, not a label map of your own (D-313). The enum value in `status` never changes.",
+            "example": "คำนวณแล้ว",
+            "type": "string"
+          },
           "summary": {
             "allOf": [
               {
@@ -65064,6 +65556,8 @@
           "id",
           "quoteCode",
           "status",
+          "statusLabelTh",
+          "statusLabelAdminTh",
           "source",
           "productTypeCode",
           "summary",
@@ -67966,11 +68460,23 @@
               }
             ],
             "example": "in_transit"
+          },
+          "statusLabelAdminTh": {
+            "description": "`status` (ShipmentStatus) in Thai for staff and partner factories (D-313).",
+            "example": "ร่างรอบส่ง",
+            "type": "string"
+          },
+          "statusLabelTh": {
+            "description": "`status` (ShipmentStatus) in Thai for the customer — render this, not a label map of your own (D-313). The enum value in `status` never changes.",
+            "example": "เตรียมจัดส่ง",
+            "type": "string"
           }
         },
         "required": [
           "occurredAt",
           "status",
+          "statusLabelTh",
+          "statusLabelAdminTh",
           "source",
           "location",
           "note"
@@ -68842,11 +69348,23 @@
               }
             ],
             "example": "passed"
+          },
+          "statusLabelAdminTh": {
+            "description": "`status` (SlipStatus) in Thai for staff and partner factories (D-313).",
+            "example": "รอตรวจสลิป",
+            "type": "string"
+          },
+          "statusLabelTh": {
+            "description": "`status` (SlipStatus) in Thai for the customer — render this, not a label map of your own (D-313). The enum value in `status` never changes.",
+            "example": "รอตรวจสลิป",
+            "type": "string"
           }
         },
         "required": [
           "id",
           "status",
+          "statusLabelTh",
+          "statusLabelAdminTh",
           "declaredAmount",
           "declaredTransferredAt",
           "slaDueAt",
@@ -68941,11 +69459,23 @@
               }
             ],
             "example": "passed"
+          },
+          "statusLabelAdminTh": {
+            "description": "`status` (SlipStatus) in Thai for staff and partner factories (D-313).",
+            "example": "รอตรวจสลิป",
+            "type": "string"
+          },
+          "statusLabelTh": {
+            "description": "`status` (SlipStatus) in Thai for the customer — render this, not a label map of your own (D-313). The enum value in `status` never changes.",
+            "example": "รอตรวจสลิป",
+            "type": "string"
           }
         },
         "required": [
           "id",
           "status",
+          "statusLabelTh",
+          "statusLabelAdminTh",
           "declaredAmount",
           "declaredTransferredAt",
           "slaDueAt",
@@ -70037,6 +70567,16 @@
             ],
             "example": "quoted"
           },
+          "statusLabelAdminTh": {
+            "description": "`status` (RfqStatus) in Thai for staff and partner factories (D-313).",
+            "example": "ได้รับคำขอแล้ว",
+            "type": "string"
+          },
+          "statusLabelTh": {
+            "description": "`status` (RfqStatus) in Thai for the customer — render this, not a label map of your own (D-313). The enum value in `status` never changes.",
+            "example": "ได้รับคำขอแล้ว",
+            "type": "string"
+          },
           "style": {
             "anyOf": [
               {
@@ -70081,6 +70621,8 @@
           "id",
           "rfqCode",
           "status",
+          "statusLabelTh",
+          "statusLabelAdminTh",
           "productTypeCode",
           "productTypeName",
           "spec",
@@ -70241,6 +70783,16 @@
             ],
             "example": "sent"
           },
+          "statusLabelAdminTh": {
+            "description": "`status` (RfqQuoteStatus) in Thai for staff and partner factories (D-313).",
+            "example": "ร่างใบเสนอราคา",
+            "type": "string"
+          },
+          "statusLabelTh": {
+            "description": "`status` (RfqQuoteStatus) in Thai for the customer — render this, not a label map of your own (D-313). The enum value in `status` never changes.",
+            "example": "ร่างใบเสนอราคา",
+            "type": "string"
+          },
           "validUntil": {
             "example": "2026-10-16T09:00:00+07:00",
             "format": "date-time",
@@ -70258,6 +70810,8 @@
           "id",
           "versionNo",
           "status",
+          "statusLabelTh",
+          "statusLabelAdminTh",
           "validUntil",
           "sentAt",
           "note",
@@ -70572,6 +71126,12 @@
               "null"
             ]
           },
+          "count": {
+            "description": "Consecutive repeats of the same event (same type and words) are one entry in the customer timeline: how many it stands for; `occurredAt` is the latest. Always 1 in the staff timeline.",
+            "example": 1,
+            "minimum": 1,
+            "type": "integer"
+          },
           "id": {
             "description": "Stable id of the entry within the timeline",
             "example": "a:1042",
@@ -70584,9 +71144,18 @@
             },
             "type": "array"
           },
+          "messageEn": {
+            "example": "Your proof is ready to check",
+            "type": "string"
+          },
           "messageKey": {
-            "description": "i18n key the client renders",
+            "description": "i18n key (kept for compatibility; render `messageTh` / `messageEn` instead)",
             "example": "activity.production.milestone_reached",
+            "type": "string"
+          },
+          "messageTh": {
+            "description": "What happened, in Thai, for this entry’s reader — one sentence per action or shipment step (customers: \"แบบตัวอย่าง\" / \"ตรวจแบบก่อนพิมพ์\", never a factory, D-050; D-313)",
+            "example": "แบบตัวอย่างพร้อมให้ตรวจ",
             "type": "string"
           },
           "occurredAt": {
@@ -70662,6 +71231,9 @@
           "occurredAt",
           "type",
           "messageKey",
+          "messageTh",
+          "messageEn",
+          "count",
           "params",
           "photoFileIds",
           "shipment",
@@ -71192,6 +71764,56 @@
           "txnDate",
           "amount",
           "description"
+        ],
+        "type": "object"
+      },
+      "StatusLabelEnumDto": {
+        "properties": {
+          "enumName": {
+            "description": "The OpenAPI enum component the values belong to",
+            "example": "ProofStatus",
+            "type": "string"
+          },
+          "values": {
+            "items": {
+              "$ref": "#/components/schemas/StatusLabelValueDto"
+            },
+            "type": "array"
+          }
+        },
+        "required": [
+          "enumName",
+          "values"
+        ],
+        "type": "object"
+      },
+      "StatusLabelValueDto": {
+        "properties": {
+          "labelAdminTh": {
+            "description": "Back-office and factory words (\"Proof\")",
+            "example": "รอ Proof จากลูกค้า",
+            "type": "string"
+          },
+          "labelEn": {
+            "example": "Awaiting customer",
+            "type": "string"
+          },
+          "labelTh": {
+            "description": "Customer words (glossary; never a factory, D-050)",
+            "example": "รอคุณตรวจแบบตัวอย่าง",
+            "type": "string"
+          },
+          "value": {
+            "description": "The enum value, as every response carries it",
+            "example": "pending_customer",
+            "type": "string"
+          }
+        },
+        "required": [
+          "value",
+          "labelTh",
+          "labelAdminTh",
+          "labelEn"
         ],
         "type": "object"
       },
@@ -71843,6 +72465,16 @@
             ],
             "example": "under_review"
           },
+          "statusLabelAdminTh": {
+            "description": "`status` (ClaimStatus) in Thai for staff and partner factories (D-313).",
+            "example": "แจ้งเคลมแล้ว",
+            "type": "string"
+          },
+          "statusLabelTh": {
+            "description": "`status` (ClaimStatus) in Thai for the customer — render this, not a label map of your own (D-313). The enum value in `status` never changes.",
+            "example": "แจ้งเคลมแล้ว",
+            "type": "string"
+          },
           "submittedAt": {
             "example": "2026-10-22T09:00:00+07:00",
             "format": "date-time",
@@ -71878,6 +72510,8 @@
           "type",
           "origin",
           "status",
+          "statusLabelTh",
+          "statusLabelAdminTh",
           "description",
           "requestedResolution",
           "claimedQuantity",
@@ -72666,6 +73300,16 @@
             ],
             "example": "due"
           },
+          "statusLabelAdminTh": {
+            "description": "`status` (InstalmentStatus) in Thai for staff and partner factories (D-313).",
+            "example": "ยังไม่ถึงกำหนด",
+            "type": "string"
+          },
+          "statusLabelTh": {
+            "description": "`status` (InstalmentStatus) in Thai for the customer — render this, not a label map of your own (D-313). The enum value in `status` never changes.",
+            "example": "ยังไม่ถึงกำหนด",
+            "type": "string"
+          },
           "whtAmount": {
             "description": "Expected customer withholding (D-174)",
             "example": "0.00",
@@ -72682,6 +73326,8 @@
           "requiredBefore",
           "dueAt",
           "status",
+          "statusLabelTh",
+          "statusLabelAdminTh",
           "grossAmount",
           "whtAmount",
           "cashAmount",
@@ -73944,6 +74590,16 @@
             ],
             "example": "delivered"
           },
+          "statusLabelAdminTh": {
+            "description": "`status` (ShipmentStatus) in Thai for staff and partner factories (D-313).",
+            "example": "ร่างรอบส่ง",
+            "type": "string"
+          },
+          "statusLabelTh": {
+            "description": "`status` (ShipmentStatus) in Thai for the customer — render this, not a label map of your own (D-313). The enum value in `status` never changes.",
+            "example": "เตรียมจัดส่ง",
+            "type": "string"
+          },
           "trackingNo": {
             "example": null,
             "type": [
@@ -73963,6 +74619,8 @@
           "id",
           "shipmentNo",
           "status",
+          "statusLabelTh",
+          "statusLabelAdminTh",
           "carrier",
           "trackingNo",
           "trackingUrl",
@@ -73997,11 +74655,23 @@
               }
             ],
             "example": "in_transit"
+          },
+          "statusLabelAdminTh": {
+            "description": "`status` (ShipmentStatus) in Thai for staff and partner factories (D-313).",
+            "example": "ร่างรอบส่ง",
+            "type": "string"
+          },
+          "statusLabelTh": {
+            "description": "`status` (ShipmentStatus) in Thai for the customer — render this, not a label map of your own (D-313). The enum value in `status` never changes.",
+            "example": "เตรียมจัดส่ง",
+            "type": "string"
           }
         },
         "required": [
           "occurredAt",
           "status",
+          "statusLabelTh",
+          "statusLabelAdminTh",
           "location"
         ],
         "type": "object"
@@ -79028,14 +79698,29 @@
       },
       "TimelineEntryDto": {
         "properties": {
+          "count": {
+            "description": "Consecutive repeats of the same event (same type and words) are one entry in the customer timeline: how many it stands for; `occurredAt` is the latest. Always 1 in the staff timeline.",
+            "example": 1,
+            "minimum": 1,
+            "type": "integer"
+          },
           "id": {
             "description": "Stable id of the entry within the timeline",
             "example": "a:1042",
             "type": "string"
           },
+          "messageEn": {
+            "example": "Your proof is ready to check",
+            "type": "string"
+          },
           "messageKey": {
-            "description": "i18n key the client renders",
+            "description": "i18n key (kept for compatibility; render `messageTh` / `messageEn` instead)",
             "example": "activity.production.milestone_reached",
+            "type": "string"
+          },
+          "messageTh": {
+            "description": "What happened, in Thai, for this entry’s reader — one sentence per action or shipment step (customers: \"แบบตัวอย่าง\" / \"ตรวจแบบก่อนพิมพ์\", never a factory, D-050; D-313)",
+            "example": "แบบตัวอย่างพร้อมให้ตรวจ",
             "type": "string"
           },
           "occurredAt": {
@@ -79084,6 +79769,9 @@
           "occurredAt",
           "type",
           "messageKey",
+          "messageTh",
+          "messageEn",
+          "count",
           "params",
           "photoFileIds",
           "shipment"
@@ -79651,6 +80339,11 @@
             ],
             "example": "in_transit"
           },
+          "statusLabelTh": {
+            "description": "`status` in Thai for the customer (D-313); the enum value never changes",
+            "example": "กำลังส่ง",
+            "type": "string"
+          },
           "steps": {
             "items": {
               "$ref": "#/components/schemas/TrackingStepDto"
@@ -79675,6 +80368,7 @@
         "required": [
           "shipmentNo",
           "status",
+          "statusLabelTh",
           "carrier",
           "trackingNo",
           "trackingUrl",
@@ -79709,10 +80403,16 @@
               }
             ],
             "example": "in_transit"
+          },
+          "statusLabelTh": {
+            "description": "`status` in Thai for the customer (D-313); the enum value never changes",
+            "example": "กำลังส่ง",
+            "type": "string"
           }
         },
         "required": [
           "status",
+          "statusLabelTh",
           "occurredAt"
         ],
         "type": "object"
@@ -82097,7 +82797,7 @@
             "type": "string"
           },
           "note": {
-            "example": "พิมพ์เสร็จ สีตรงตามพรูฟ",
+            "example": "พิมพ์เสร็จ สีตรงตาม Proof",
             "maxLength": 1000,
             "type": "string"
           },
@@ -93701,10 +94401,14 @@
                     "warnCount": 0
                   },
                   "preflightStatus": "blocked",
+                  "preflightStatusLabelAdminTh": "ไม่ผ่าน ต้องแก้ไฟล์",
+                  "preflightStatusLabelTh": "ไม่ผ่าน ต้องแก้ไฟล์",
                   "rejectReason": null,
                   "reviewedAt": null,
                   "source": "upload",
                   "status": "submitted",
+                  "statusLabelAdminTh": "ส่งไฟล์แล้ว",
+                  "statusLabelTh": "ส่งไฟล์แล้ว",
                   "submittedAt": "2026-09-27T10:00:00+07:00",
                   "versionNo": 2
                 },
@@ -93960,10 +94664,14 @@
                     "warnCount": 0
                   },
                   "preflightStatus": "passed",
+                  "preflightStatusLabelAdminTh": "ไม่ผ่าน ต้องแก้ไฟล์",
+                  "preflightStatusLabelTh": "ไม่ผ่าน ต้องแก้ไฟล์",
                   "rejectReason": null,
                   "reviewedAt": null,
                   "source": "upload",
                   "status": "accepted_for_proof",
+                  "statusLabelAdminTh": "ส่งไฟล์แล้ว",
+                  "statusLabelTh": "ส่งไฟล์แล้ว",
                   "submittedAt": "2026-09-27T10:00:00+07:00",
                   "versionNo": 2
                 },
@@ -94271,10 +94979,14 @@
                     "warnCount": 0
                   },
                   "preflightStatus": "blocked",
+                  "preflightStatusLabelAdminTh": "ไม่ผ่าน ต้องแก้ไฟล์",
+                  "preflightStatusLabelTh": "ไม่ผ่าน ต้องแก้ไฟล์",
                   "rejectReason": "ขนาดไฟล์ไม่ตรงกับแบบแปลน",
                   "reviewedAt": null,
                   "source": "upload",
                   "status": "rejected",
+                  "statusLabelAdminTh": "ส่งไฟล์แล้ว",
+                  "statusLabelTh": "ส่งไฟล์แล้ว",
                   "submittedAt": "2026-09-27T10:00:00+07:00",
                   "versionNo": 2
                 },
@@ -94559,10 +95271,14 @@
                     "warnCount": 0
                   },
                   "preflightStatus": "pending",
+                  "preflightStatusLabelAdminTh": "ไม่ผ่าน ต้องแก้ไฟล์",
+                  "preflightStatusLabelTh": "ไม่ผ่าน ต้องแก้ไฟล์",
                   "rejectReason": null,
                   "reviewedAt": null,
                   "source": "upload",
                   "status": "submitted",
+                  "statusLabelAdminTh": "ส่งไฟล์แล้ว",
+                  "statusLabelTh": "ส่งไฟล์แล้ว",
                   "submittedAt": "2026-09-27T10:00:00+07:00",
                   "versionNo": 2
                 },
@@ -143378,6 +144094,8 @@
                         "responseOverdue": false
                       },
                       "status": "under_review",
+                      "statusLabelAdminTh": "กำลังพิจารณาเคลม",
+                      "statusLabelTh": "กำลังพิจารณาเคลม",
                       "submittedAt": "2026-10-22T09:00:00+07:00",
                       "tolerance": {
                         "colourDeltaE": "3.00",
@@ -143643,6 +144361,8 @@
                     "responseOverdue": false
                   },
                   "status": "under_review",
+                  "statusLabelAdminTh": "กำลังพิจารณาเคลม",
+                  "statusLabelTh": "กำลังพิจารณาเคลม",
                   "submittedAt": "2026-10-22T09:00:00+07:00",
                   "tolerance": {
                     "colourDeltaE": "3.00",
@@ -143921,6 +144641,8 @@
                     "responseOverdue": false
                   },
                   "status": "closed",
+                  "statusLabelAdminTh": "ดำเนินการเรียบร้อย",
+                  "statusLabelTh": "ดำเนินการเรียบร้อย",
                   "submittedAt": "2026-10-22T09:00:00+07:00",
                   "tolerance": {
                     "colourDeltaE": "3.00",
@@ -144257,6 +144979,8 @@
                     "responseOverdue": false
                   },
                   "status": "approved",
+                  "statusLabelAdminTh": "กำลังพิจารณาเคลม",
+                  "statusLabelTh": "กำลังพิจารณาเคลม",
                   "submittedAt": "2026-10-22T09:00:00+07:00",
                   "tolerance": {
                     "colourDeltaE": "3.00",
@@ -144611,6 +145335,8 @@
                     "responseOverdue": false
                   },
                   "status": "under_review",
+                  "statusLabelAdminTh": "กำลังพิจารณาเคลม",
+                  "statusLabelTh": "กำลังพิจารณาเคลม",
                   "submittedAt": "2026-10-22T09:00:00+07:00",
                   "tolerance": {
                     "colourDeltaE": "3.00",
@@ -144955,6 +145681,8 @@
                     "responseOverdue": false
                   },
                   "status": "need_info",
+                  "statusLabelAdminTh": "กำลังพิจารณาเคลม",
+                  "statusLabelTh": "กำลังพิจารณาเคลม",
                   "submittedAt": "2026-10-22T09:00:00+07:00",
                   "tolerance": {
                     "colourDeltaE": "3.00",
@@ -145310,6 +146038,8 @@
                     "responseOverdue": false
                   },
                   "status": "resolved",
+                  "statusLabelAdminTh": "ดำเนินการเรียบร้อย",
+                  "statusLabelTh": "ดำเนินการเรียบร้อย",
                   "submittedAt": "2026-10-22T09:00:00+07:00",
                   "tolerance": {
                     "colourDeltaE": "3.00",
@@ -145646,6 +146376,8 @@
                     "responseOverdue": false
                   },
                   "status": "under_review",
+                  "statusLabelAdminTh": "กำลังพิจารณาเคลม",
+                  "statusLabelTh": "กำลังพิจารณาเคลม",
                   "submittedAt": "2026-10-22T09:00:00+07:00",
                   "tolerance": {
                     "colourDeltaE": "3.00",
@@ -145964,6 +146696,8 @@
                     "responseOverdue": false
                   },
                   "status": "factory_review",
+                  "statusLabelAdminTh": "กำลังพิจารณาเคลม",
+                  "statusLabelTh": "กำลังพิจารณาเคลม",
                   "submittedAt": "2026-10-22T09:00:00+07:00",
                   "tolerance": {
                     "colourDeltaE": "3.00",
@@ -165213,6 +165947,8 @@
                 "example": [
                   {
                     "key": "marketing_line",
+                    "labelEn": "News and offers on LINE",
+                    "labelTh": "รับข่าวสารและโปรโมชันทาง LINE",
                     "required": false,
                     "versions": [
                       {
@@ -165412,6 +166148,8 @@
               "application/json": {
                 "example": {
                   "key": "marketing_line",
+                  "labelEn": "News and offers on LINE",
+                  "labelTh": "รับข่าวสารและโปรโมชันทาง LINE",
                   "required": false,
                   "versions": [
                     {
@@ -179514,6 +180252,8 @@
                   "orders": [
                     {
                       "artworkStatus": "awaiting_template",
+                      "artworkStatusLabelAdminTh": "รอแบบไดคัท",
+                      "artworkStatusLabelTh": "รอแบบไดคัท",
                       "cancelReasonCode": null,
                       "cancelReasonNameEn": null,
                       "cancelReasonNameTh": null,
@@ -179591,6 +180331,8 @@
                       },
                       "status": "waiting_payment",
                       "statusChangedAt": "2026-10-01T10:00:00+07:00",
+                      "statusLabelAdminTh": "รอชำระเงิน",
+                      "statusLabelTh": "รอชำระเงิน",
                       "summary": {
                         "product": {
                           "imageUrl": "/v1/store/catalog/images/0192f3a0-7c1e-7d2a-9b1f-00000000c009",
@@ -179651,6 +180393,8 @@
                   "placedById": "0192f3a0-7c1e-7d2a-9b1f-0000000c0001",
                   "poNumber": null,
                   "status": "waiting_payment",
+                  "statusLabelAdminTh": "รอชำระเงิน",
+                  "statusLabelTh": "รอชำระเงิน",
                   "taxProfile": null,
                   "totals": {
                     "cashAmount": "14182.80",
@@ -180395,6 +181139,8 @@
                   {
                     "decidedVersionNo": 1,
                     "granted": true,
+                    "labelEn": "News and offers on LINE",
+                    "labelTh": "รับข่าวสารและโปรโมชันทาง LINE",
                     "outdated": true,
                     "purpose": "marketing_line",
                     "recordedAt": "2026-10-01T10:00:00+07:00",
@@ -183173,10 +183919,14 @@
                           "roundNo": 1,
                           "startedAt": "2026-09-27T10:00:00+07:00",
                           "status": "in_progress",
+                          "statusLabelAdminTh": "กำลังแก้ไข",
+                          "statusLabelTh": "กำลังแก้ไข",
                           "submissionId": null
                         }
                       ],
                       "status": "in_progress",
+                      "statusLabelAdminTh": "กำลังออกแบบ",
+                      "statusLabelTh": "กำลังออกแบบ",
                       "targetDueAt": "2026-10-04T10:00:00+07:00"
                     }
                   ],
@@ -183400,10 +184150,14 @@
                       "roundNo": 1,
                       "startedAt": "2026-09-27T10:00:00+07:00",
                       "status": "in_progress",
+                      "statusLabelAdminTh": "กำลังแก้ไข",
+                      "statusLabelTh": "กำลังแก้ไข",
                       "submissionId": null
                     }
                   ],
                   "status": "in_progress",
+                  "statusLabelAdminTh": "กำลังออกแบบ",
+                  "statusLabelTh": "กำลังออกแบบ",
                   "targetDueAt": "2026-10-04T10:00:00+07:00"
                 },
                 "schema": {
@@ -183645,10 +184399,14 @@
                       "roundNo": 1,
                       "startedAt": "2026-09-27T10:00:00+07:00",
                       "status": "in_progress",
+                      "statusLabelAdminTh": "กำลังแก้ไข",
+                      "statusLabelTh": "กำลังแก้ไข",
                       "submissionId": null
                     }
                   ],
                   "status": "in_progress",
+                  "statusLabelAdminTh": "กำลังออกแบบ",
+                  "statusLabelTh": "กำลังออกแบบ",
                   "targetDueAt": "2026-10-04T10:00:00+07:00"
                 },
                 "schema": {
@@ -183930,10 +184688,14 @@
                       "roundNo": 1,
                       "startedAt": "2026-09-27T10:00:00+07:00",
                       "status": "in_progress",
+                      "statusLabelAdminTh": "กำลังแก้ไข",
+                      "statusLabelTh": "กำลังแก้ไข",
                       "submissionId": null
                     }
                   ],
                   "status": "cancelled",
+                  "statusLabelAdminTh": "กำลังออกแบบ",
+                  "statusLabelTh": "กำลังออกแบบ",
                   "targetDueAt": "2026-10-04T10:00:00+07:00"
                 },
                 "schema": {
@@ -184221,10 +184983,14 @@
                       "roundNo": 1,
                       "startedAt": "2026-09-27T10:00:00+07:00",
                       "status": "in_progress",
+                      "statusLabelAdminTh": "กำลังแก้ไข",
+                      "statusLabelTh": "กำลังแก้ไข",
                       "submissionId": null
                     }
                   ],
                   "status": "delivered",
+                  "statusLabelAdminTh": "กำลังออกแบบ",
+                  "statusLabelTh": "กำลังออกแบบ",
                   "targetDueAt": "2026-10-04T10:00:00+07:00"
                 },
                 "schema": {
@@ -184527,10 +185293,14 @@
                       "roundNo": 1,
                       "startedAt": "2026-09-27T10:00:00+07:00",
                       "status": "in_progress",
+                      "statusLabelAdminTh": "กำลังแก้ไข",
+                      "statusLabelTh": "กำลังแก้ไข",
                       "submissionId": null
                     }
                   ],
                   "status": "requoted",
+                  "statusLabelAdminTh": "กำลังออกแบบ",
+                  "statusLabelTh": "กำลังออกแบบ",
                   "targetDueAt": "2026-10-04T10:00:00+07:00"
                 },
                 "schema": {
@@ -224976,9 +225746,11 @@
                 "example": {
                   "data": [
                     {
-                      "body": "คำขอ discount_memo รอการอนุมัติของคุณ",
+                      "body": "คำขออนุมัติ บันทึกขอส่วนลด รอการตัดสินใจของคุณ",
                       "createdAt": "2026-09-23T14:05:00+07:00",
                       "eventType": "approval.requested",
+                      "eventTypeLabelEn": "Approval",
+                      "eventTypeLabelTh": "คำขออนุมัติ",
                       "id": "0192f3a0-7c1e-7d2a-9b1f-00000000e001",
                       "readAt": null,
                       "title": "มีคำขออนุมัติรอคุณ",
@@ -226019,6 +226791,8 @@
                       "orders": [
                         {
                           "artworkStatus": "awaiting_template",
+                          "artworkStatusLabelAdminTh": "รอแบบไดคัท",
+                          "artworkStatusLabelTh": "รอแบบไดคัท",
                           "cancelReasonCode": null,
                           "cancelReasonNameEn": null,
                           "cancelReasonNameTh": null,
@@ -226096,6 +226870,8 @@
                           },
                           "status": "waiting_payment",
                           "statusChangedAt": "2026-10-01T10:00:00+07:00",
+                          "statusLabelAdminTh": "รอชำระเงิน",
+                          "statusLabelTh": "รอชำระเงิน",
                           "summary": {
                             "product": {
                               "imageUrl": "/v1/store/catalog/images/0192f3a0-7c1e-7d2a-9b1f-00000000c009",
@@ -226156,6 +226932,8 @@
                       "placedById": "0192f3a0-7c1e-7d2a-9b1f-0000000c0001",
                       "poNumber": null,
                       "status": "waiting_payment",
+                      "statusLabelAdminTh": "รอชำระเงิน",
+                      "statusLabelTh": "รอชำระเงิน",
                       "taxProfile": null,
                       "totals": {
                         "cashAmount": "14182.80",
@@ -226374,6 +227152,8 @@
                   "orders": [
                     {
                       "artworkStatus": "awaiting_template",
+                      "artworkStatusLabelAdminTh": "รอแบบไดคัท",
+                      "artworkStatusLabelTh": "รอแบบไดคัท",
                       "cancelReasonCode": null,
                       "cancelReasonNameEn": null,
                       "cancelReasonNameTh": null,
@@ -226451,6 +227231,8 @@
                       },
                       "status": "waiting_payment",
                       "statusChangedAt": "2026-10-01T10:00:00+07:00",
+                      "statusLabelAdminTh": "รอชำระเงิน",
+                      "statusLabelTh": "รอชำระเงิน",
                       "summary": {
                         "product": {
                           "imageUrl": "/v1/store/catalog/images/0192f3a0-7c1e-7d2a-9b1f-00000000c009",
@@ -226511,6 +227293,8 @@
                   "placedById": "0192f3a0-7c1e-7d2a-9b1f-0000000c0001",
                   "poNumber": null,
                   "status": "waiting_payment",
+                  "statusLabelAdminTh": "รอชำระเงิน",
+                  "statusLabelTh": "รอชำระเงิน",
                   "taxProfile": null,
                   "totals": {
                     "cashAmount": "14182.80",
@@ -226748,6 +227532,8 @@
                   "orders": [
                     {
                       "artworkStatus": "awaiting_template",
+                      "artworkStatusLabelAdminTh": "รอแบบไดคัท",
+                      "artworkStatusLabelTh": "รอแบบไดคัท",
                       "cancelReasonCode": null,
                       "cancelReasonNameEn": null,
                       "cancelReasonNameTh": null,
@@ -226825,6 +227611,8 @@
                       },
                       "status": "waiting_payment",
                       "statusChangedAt": "2026-10-01T10:00:00+07:00",
+                      "statusLabelAdminTh": "รอชำระเงิน",
+                      "statusLabelTh": "รอชำระเงิน",
                       "summary": {
                         "product": {
                           "imageUrl": "/v1/store/catalog/images/0192f3a0-7c1e-7d2a-9b1f-00000000c009",
@@ -226885,6 +227673,8 @@
                   "placedById": "0192f3a0-7c1e-7d2a-9b1f-0000000c0001",
                   "poNumber": null,
                   "status": "waiting_payment",
+                  "statusLabelAdminTh": "รอชำระเงิน",
+                  "statusLabelTh": "รอชำระเงิน",
                   "taxProfile": null,
                   "totals": {
                     "cashAmount": "14182.80",
@@ -227190,6 +227980,8 @@
                   "orders": [
                     {
                       "artworkStatus": "awaiting_template",
+                      "artworkStatusLabelAdminTh": "รอแบบไดคัท",
+                      "artworkStatusLabelTh": "รอแบบไดคัท",
                       "cancelReasonCode": null,
                       "cancelReasonNameEn": null,
                       "cancelReasonNameTh": null,
@@ -227267,6 +228059,8 @@
                       },
                       "status": "waiting_payment",
                       "statusChangedAt": "2026-10-01T10:00:00+07:00",
+                      "statusLabelAdminTh": "รอชำระเงิน",
+                      "statusLabelTh": "รอชำระเงิน",
                       "summary": {
                         "product": {
                           "imageUrl": "/v1/store/catalog/images/0192f3a0-7c1e-7d2a-9b1f-00000000c009",
@@ -227327,6 +228121,8 @@
                   "placedById": "0192f3a0-7c1e-7d2a-9b1f-0000000c0001",
                   "poNumber": null,
                   "status": "cancelled",
+                  "statusLabelAdminTh": "รอชำระเงิน",
+                  "statusLabelTh": "รอชำระเงิน",
                   "taxProfile": null,
                   "totals": {
                     "cashAmount": "14182.80",
@@ -227661,6 +228457,8 @@
                   "orders": [
                     {
                       "artworkStatus": "awaiting_template",
+                      "artworkStatusLabelAdminTh": "รอแบบไดคัท",
+                      "artworkStatusLabelTh": "รอแบบไดคัท",
                       "cancelReasonCode": null,
                       "cancelReasonNameEn": null,
                       "cancelReasonNameTh": null,
@@ -227738,6 +228536,8 @@
                       },
                       "status": "waiting_payment",
                       "statusChangedAt": "2026-10-01T10:00:00+07:00",
+                      "statusLabelAdminTh": "รอชำระเงิน",
+                      "statusLabelTh": "รอชำระเงิน",
                       "summary": {
                         "product": {
                           "imageUrl": "/v1/store/catalog/images/0192f3a0-7c1e-7d2a-9b1f-00000000c009",
@@ -227798,6 +228598,8 @@
                   "placedById": "0192f3a0-7c1e-7d2a-9b1f-0000000c0001",
                   "poNumber": null,
                   "status": "waiting_payment",
+                  "statusLabelAdminTh": "รอชำระเงิน",
+                  "statusLabelTh": "รอชำระเงิน",
                   "taxProfile": null,
                   "totals": {
                     "cashAmount": "14182.80",
@@ -228107,6 +228909,8 @@
                       "requiredBefore": "production",
                       "seq": 1,
                       "status": "due",
+                      "statusLabelAdminTh": "ถึงกำหนดชำระ",
+                      "statusLabelTh": "ถึงกำหนดชำระ",
                       "whtAmount": "0.00"
                     },
                     {
@@ -228132,6 +228936,8 @@
                       "requiredBefore": "shipping",
                       "seq": 2,
                       "status": "pending",
+                      "statusLabelAdminTh": "ถึงกำหนดชำระ",
+                      "statusLabelTh": "ถึงกำหนดชำระ",
                       "whtAmount": "0.00"
                     }
                   ],
@@ -228378,6 +229184,8 @@
                       "requiredBefore": "production",
                       "seq": 1,
                       "status": "due",
+                      "statusLabelAdminTh": "ถึงกำหนดชำระ",
+                      "statusLabelTh": "ถึงกำหนดชำระ",
                       "whtAmount": "0.00"
                     },
                     {
@@ -228403,6 +229211,8 @@
                       "requiredBefore": "shipping",
                       "seq": 2,
                       "status": "pending",
+                      "statusLabelAdminTh": "ถึงกำหนดชำระ",
+                      "statusLabelTh": "ถึงกำหนดชำระ",
                       "whtAmount": "0.00"
                     }
                   ],
@@ -228727,6 +229537,8 @@
                   "refundedAmount": "0.00",
                   "slips": [],
                   "status": "pending",
+                  "statusLabelAdminTh": "รอชำระเงิน",
+                  "statusLabelTh": "รอชำระเงิน",
                   "whtAmount": "0.00"
                 },
                 "schema": {
@@ -229065,6 +229877,8 @@
                   "data": [
                     {
                       "artworkStatus": "uploaded",
+                      "artworkStatusLabelAdminTh": "อัปโหลดไฟล์แล้ว",
+                      "artworkStatusLabelTh": "อัปโหลดไฟล์แล้ว",
                       "customerName": "สมชาย ทดสอบ",
                       "grossAmount": "14182.80",
                       "groupCode": "OG-2610-00042",
@@ -229075,7 +229889,9 @@
                       "placedAt": "2026-10-01T10:00:00+07:00",
                       "productTypeCode": "folding_carton",
                       "promisedShipDate": "2026-10-12",
-                      "status": "paid_for_production"
+                      "status": "paid_for_production",
+                      "statusLabelAdminTh": "ชำระเงินแล้ว",
+                      "statusLabelTh": "ชำระเงินแล้ว"
                     }
                   ],
                   "meta": {
@@ -229392,6 +230208,8 @@
                   "data": [
                     {
                       "artworkStatus": "approved",
+                      "artworkStatusLabelAdminTh": "อนุมัติไฟล์แล้ว",
+                      "artworkStatusLabelTh": "อนุมัติแบบตัวอย่างแล้ว",
                       "channel": "web",
                       "currency": "THB",
                       "customer": {
@@ -229422,6 +230240,8 @@
                       "quantity": 1000,
                       "slipReviewDueAt": null,
                       "status": "in_production",
+                      "statusLabelAdminTh": "กำลังผลิต",
+                      "statusLabelTh": "กำลังผลิต",
                       "unit": "piece"
                     }
                   ],
@@ -229850,6 +230670,8 @@
               "application/json": {
                 "example": {
                   "artworkStatus": "awaiting_template",
+                  "artworkStatusLabelAdminTh": "รอแบบไดคัท",
+                  "artworkStatusLabelTh": "รอแบบไดคัท",
                   "cancelReasonCode": null,
                   "cancelReasonNameEn": null,
                   "cancelReasonNameTh": null,
@@ -229927,6 +230749,8 @@
                   },
                   "status": "waiting_payment",
                   "statusChangedAt": "2026-10-01T10:00:00+07:00",
+                  "statusLabelAdminTh": "รอชำระเงิน",
+                  "statusLabelTh": "รอชำระเงิน",
                   "summary": {
                     "product": {
                       "imageUrl": "/v1/store/catalog/images/0192f3a0-7c1e-7d2a-9b1f-00000000c009",
@@ -230404,6 +231228,8 @@
               "application/json": {
                 "example": {
                   "artworkStatus": "awaiting_template",
+                  "artworkStatusLabelAdminTh": "รอแบบไดคัท",
+                  "artworkStatusLabelTh": "รอแบบไดคัท",
                   "cancelReasonCode": null,
                   "cancelReasonNameEn": null,
                   "cancelReasonNameTh": null,
@@ -230481,6 +231307,8 @@
                   },
                   "status": "cancelled",
                   "statusChangedAt": "2026-10-01T10:00:00+07:00",
+                  "statusLabelAdminTh": "รอชำระเงิน",
+                  "statusLabelTh": "รอชำระเงิน",
                   "summary": {
                     "product": {
                       "imageUrl": "/v1/store/catalog/images/0192f3a0-7c1e-7d2a-9b1f-00000000c009",
@@ -230795,6 +231623,8 @@
               "application/json": {
                 "example": {
                   "artworkStatus": "awaiting_template",
+                  "artworkStatusLabelAdminTh": "รอแบบไดคัท",
+                  "artworkStatusLabelTh": "รอแบบไดคัท",
                   "cancelReasonCode": null,
                   "cancelReasonNameEn": null,
                   "cancelReasonNameTh": null,
@@ -230872,6 +231702,8 @@
                   },
                   "status": "waiting_payment",
                   "statusChangedAt": "2026-10-01T10:00:00+07:00",
+                  "statusLabelAdminTh": "รอชำระเงิน",
+                  "statusLabelTh": "รอชำระเงิน",
                   "summary": {
                     "product": {
                       "imageUrl": "/v1/store/catalog/images/0192f3a0-7c1e-7d2a-9b1f-00000000c009",
@@ -231532,6 +232364,8 @@
                       "seq": 4,
                       "startedAt": "2026-10-01T09:00:00+07:00",
                       "status": "in_progress",
+                      "statusLabelAdminTh": "กำลังทำ",
+                      "statusLabelTh": "กำลังทำ",
                       "tracksQuantity": true
                     }
                   ],
@@ -231565,6 +232399,8 @@
                     "quantity": 1000
                   },
                   "status": "released",
+                  "statusLabelAdminTh": "รอโรงงานรับงาน",
+                  "statusLabelTh": "เตรียมผลิต",
                   "title": "กล่องพับ · 1000 ชิ้น",
                   "tolerance": {
                     "colourDeltaE": "3.00",
@@ -231870,10 +232706,14 @@
                       "warnCount": 0
                     },
                     "preflightStatus": "blocked",
+                    "preflightStatusLabelAdminTh": "ไม่ผ่าน ต้องแก้ไฟล์",
+                    "preflightStatusLabelTh": "ไม่ผ่าน ต้องแก้ไฟล์",
                     "rejectReason": null,
                     "reviewedAt": null,
                     "source": "upload",
                     "status": "submitted",
+                    "statusLabelAdminTh": "ส่งไฟล์แล้ว",
+                    "statusLabelTh": "ส่งไฟล์แล้ว",
                     "submittedAt": "2026-09-27T10:00:00+07:00",
                     "versionNo": 2
                   }
@@ -232106,10 +232946,14 @@
                   "preflightCompletedAt": null,
                   "preflightReport": null,
                   "preflightStatus": "pending",
+                  "preflightStatusLabelAdminTh": "ไม่ผ่าน ต้องแก้ไฟล์",
+                  "preflightStatusLabelTh": "ไม่ผ่าน ต้องแก้ไฟล์",
                   "rejectReason": null,
                   "reviewedAt": null,
                   "source": "upload",
                   "status": "submitted",
+                  "statusLabelAdminTh": "ส่งไฟล์แล้ว",
+                  "statusLabelTh": "ส่งไฟล์แล้ว",
                   "submittedAt": "2026-09-27T10:00:00+07:00",
                   "versionNo": 2
                 },
@@ -232436,6 +233280,8 @@
                     "responseOverdue": false
                   },
                   "status": "submitted",
+                  "statusLabelAdminTh": "กำลังพิจารณาเคลม",
+                  "statusLabelTh": "กำลังพิจารณาเคลม",
                   "submittedAt": "2026-10-22T09:00:00+07:00",
                   "tolerance": {
                     "colourDeltaE": "3.00",
@@ -234782,7 +235628,9 @@
                       "labelEn": "Printing",
                       "labelTh": "กำลังพิมพ์",
                       "promisedAt": "2026-10-14T18:00:00+07:00",
-                      "status": "completed"
+                      "status": "completed",
+                      "statusLabelAdminTh": "เสร็จแล้ว",
+                      "statusLabelTh": "เสร็จแล้ว"
                     }
                   ]
                 },
@@ -235001,6 +235849,8 @@
                       "previousProofFileId": "0192f3a0-7c1e-7d2a-9b1f-0000000e2004",
                       "previousProofId": "0192f3a0-7c1e-7d2a-9b1f-0000000e2003",
                       "previousStatus": "changes_requested",
+                      "previousStatusLabelAdminTh": "ขอให้แก้ไข Proof",
+                      "previousStatusLabelTh": "ขอแก้ไขแบบตัวอย่าง",
                       "previousVersionNo": 1
                     },
                     "decidedAt": null,
@@ -235021,6 +235871,8 @@
                     },
                     "sentAt": "2026-09-27T11:00:00+07:00",
                     "status": "pending_customer",
+                    "statusLabelAdminTh": "รอ Proof จากลูกค้า",
+                    "statusLabelTh": "รอคุณตรวจแบบตัวอย่าง",
                     "submissionId": "0192f3a0-7c1e-7d2a-9b1f-0000000e2006",
                     "versionNo": 2
                   }
@@ -235262,6 +236114,8 @@
                     "previousProofFileId": "0192f3a0-7c1e-7d2a-9b1f-0000000e2004",
                     "previousProofId": "0192f3a0-7c1e-7d2a-9b1f-0000000e2003",
                     "previousStatus": "changes_requested",
+                    "previousStatusLabelAdminTh": "ขอให้แก้ไข Proof",
+                    "previousStatusLabelTh": "ขอแก้ไขแบบตัวอย่าง",
                     "previousVersionNo": 1
                   },
                   "decidedAt": null,
@@ -235282,6 +236136,8 @@
                   },
                   "sentAt": "2026-09-27T11:00:00+07:00",
                   "status": "pending_customer",
+                  "statusLabelAdminTh": "รอ Proof จากลูกค้า",
+                  "statusLabelTh": "รอคุณตรวจแบบตัวอย่าง",
                   "submissionId": "0192f3a0-7c1e-7d2a-9b1f-0000000e2006",
                   "versionNo": 2
                 },
@@ -235602,6 +236458,8 @@
                   "shippedAt": "2026-10-09T09:00:00+07:00",
                   "status": "quoted",
                   "statusChangedAt": "2026-10-10T10:00:00+07:00",
+                  "statusLabelAdminTh": "ถึงแล้ว รอตรวจ",
+                  "statusLabelTh": "ถึงแล้ว รอตรวจ",
                   "validUntil": null
                 },
                 "schema": {
@@ -236546,9 +237404,12 @@
                         "type": "user"
                       },
                       "body": null,
+                      "count": 1,
                       "id": "a:1042",
                       "mentions": [],
+                      "messageEn": "Printing",
                       "messageKey": "activity.production.milestone_reached",
+                      "messageTh": "กำลังพิมพ์",
                       "occurredAt": "2026-10-14T16:00:00+07:00",
                       "params": {
                         "labelEn": "Printing",
@@ -238296,6 +239157,8 @@
                       "refundedAmount": "0.00",
                       "slips": [],
                       "status": "pending",
+                      "statusLabelAdminTh": "รอชำระเงิน",
+                      "statusLabelTh": "รอชำระเงิน",
                       "whtAmount": "0.00"
                     }
                   ],
@@ -238506,6 +239369,8 @@
                   "refundedAmount": "0.00",
                   "slips": [],
                   "status": "pending",
+                  "statusLabelAdminTh": "รอชำระเงิน",
+                  "statusLabelTh": "รอชำระเงิน",
                   "whtAmount": "0.00"
                 },
                 "schema": {
@@ -238734,6 +239599,8 @@
                   "refundedAmount": "0.00",
                   "slips": [],
                   "status": "pending",
+                  "statusLabelAdminTh": "รอชำระเงิน",
+                  "statusLabelTh": "รอชำระเงิน",
                   "whtAmount": "0.00"
                 },
                 "schema": {
@@ -239016,7 +239883,9 @@
                   "paymentId": "0192f3a0-7c1e-7d2a-9b1f-0000000a0001",
                   "providerRef": null,
                   "reasonNote": "ยกเลิกคำสั่งซื้อก่อนผลิต",
-                  "status": "pending_approval"
+                  "status": "pending_approval",
+                  "statusLabelAdminTh": "รออนุมัติคืนเงิน",
+                  "statusLabelTh": "รออนุมัติคืนเงิน"
                 },
                 "schema": {
                   "$ref": "#/components/schemas/RefundDto"
@@ -239310,6 +240179,8 @@
                   "refundedAmount": "0.00",
                   "slips": [],
                   "status": "pending",
+                  "statusLabelAdminTh": "รอชำระเงิน",
+                  "statusLabelTh": "รอชำระเงิน",
                   "whtAmount": "0.00"
                 },
                 "schema": {
@@ -242463,6 +243334,8 @@
                   "data": [
                     {
                       "artworkStatus": "in_review",
+                      "artworkStatusLabelAdminTh": "กำลังตรวจไฟล์",
+                      "artworkStatusLabelTh": "กำลังตรวจแบบก่อนพิมพ์",
                       "assignee": null,
                       "customer": {
                         "displayName": "สมชาย ทดสอบ",
@@ -242475,6 +243348,8 @@
                       "orderId": "0192f3a0-7c1e-7d2a-9b1f-0000000e1001",
                       "overdue": false,
                       "preflightStatus": "passed_with_warnings",
+                      "preflightStatusLabelAdminTh": "ผ่านแต่มีคำเตือน",
+                      "preflightStatusLabelTh": "ผ่านแต่มีคำเตือน",
                       "productTypeCode": "folding_box",
                       "since": "2026-09-27T10:00:00+07:00",
                       "versionNo": 2
@@ -247200,6 +248075,8 @@
                           "seq": 4,
                           "startedAt": "2026-10-01T09:00:00+07:00",
                           "status": "in_progress",
+                          "statusLabelAdminTh": "กำลังทำ",
+                          "statusLabelTh": "กำลังทำ",
                           "tracksQuantity": true
                         }
                       ],
@@ -247233,6 +248110,8 @@
                         "quantity": 1000
                       },
                       "status": "released",
+                      "statusLabelAdminTh": "รอโรงงานรับงาน",
+                      "statusLabelTh": "เตรียมผลิต",
                       "title": "กล่องพับ · 1000 ชิ้น",
                       "tolerance": {
                         "colourDeltaE": "3.00",
@@ -247496,6 +248375,8 @@
                       "seq": 4,
                       "startedAt": "2026-10-01T09:00:00+07:00",
                       "status": "in_progress",
+                      "statusLabelAdminTh": "กำลังทำ",
+                      "statusLabelTh": "กำลังทำ",
                       "tracksQuantity": true
                     }
                   ],
@@ -247529,6 +248410,8 @@
                     "quantity": 1000
                   },
                   "status": "released",
+                  "statusLabelAdminTh": "รอโรงงานรับงาน",
+                  "statusLabelTh": "เตรียมผลิต",
                   "title": "กล่องพับ · 1000 ชิ้น",
                   "tolerance": {
                     "colourDeltaE": "3.00",
@@ -247807,6 +248690,8 @@
                       "seq": 4,
                       "startedAt": "2026-10-01T09:00:00+07:00",
                       "status": "in_progress",
+                      "statusLabelAdminTh": "กำลังทำ",
+                      "statusLabelTh": "กำลังทำ",
                       "tracksQuantity": true
                     }
                   ],
@@ -247840,6 +248725,8 @@
                     "quantity": 1000
                   },
                   "status": "on_hold",
+                  "statusLabelAdminTh": "รอโรงงานรับงาน",
+                  "statusLabelTh": "เตรียมผลิต",
                   "title": "กล่องพับ · 1000 ชิ้น",
                   "tolerance": {
                     "colourDeltaE": "3.00",
@@ -248162,6 +249049,8 @@
                       "seq": 4,
                       "startedAt": "2026-10-01T09:00:00+07:00",
                       "status": "in_progress",
+                      "statusLabelAdminTh": "กำลังทำ",
+                      "statusLabelTh": "กำลังทำ",
                       "tracksQuantity": true
                     }
                   ],
@@ -248195,6 +249084,8 @@
                     "quantity": 1000
                   },
                   "status": "released",
+                  "statusLabelAdminTh": "รอโรงงานรับงาน",
+                  "statusLabelTh": "เตรียมผลิต",
                   "title": "กล่องพับ · 1000 ชิ้น",
                   "tolerance": {
                     "colourDeltaE": "3.00",
@@ -248508,6 +249399,8 @@
                       "seq": 4,
                       "startedAt": "2026-10-01T09:00:00+07:00",
                       "status": "in_progress",
+                      "statusLabelAdminTh": "กำลังทำ",
+                      "statusLabelTh": "กำลังทำ",
                       "tracksQuantity": true
                     }
                   ],
@@ -248541,6 +249434,8 @@
                     "quantity": 1000
                   },
                   "status": "in_progress",
+                  "statusLabelAdminTh": "รอโรงงานรับงาน",
+                  "statusLabelTh": "เตรียมผลิต",
                   "title": "กล่องพับ · 1000 ชิ้น",
                   "tolerance": {
                     "colourDeltaE": "3.00",
@@ -252370,6 +253265,8 @@
                     "previousProofFileId": "0192f3a0-7c1e-7d2a-9b1f-0000000e2004",
                     "previousProofId": "0192f3a0-7c1e-7d2a-9b1f-0000000e2003",
                     "previousStatus": "changes_requested",
+                    "previousStatusLabelAdminTh": "ขอให้แก้ไข Proof",
+                    "previousStatusLabelTh": "ขอแก้ไขแบบตัวอย่าง",
                     "previousVersionNo": 1
                   },
                   "decidedAt": null,
@@ -252390,6 +253287,8 @@
                   },
                   "sentAt": "2026-09-27T11:00:00+07:00",
                   "status": "pending_customer",
+                  "statusLabelAdminTh": "รอ Proof จากลูกค้า",
+                  "statusLabelTh": "รอคุณตรวจแบบตัวอย่าง",
                   "submissionId": "0192f3a0-7c1e-7d2a-9b1f-0000000e2006",
                   "versionNo": 2
                 },
@@ -252607,6 +253506,8 @@
                     "previousProofFileId": "0192f3a0-7c1e-7d2a-9b1f-0000000e2004",
                     "previousProofId": "0192f3a0-7c1e-7d2a-9b1f-0000000e2003",
                     "previousStatus": "changes_requested",
+                    "previousStatusLabelAdminTh": "ขอให้แก้ไข Proof",
+                    "previousStatusLabelTh": "ขอแก้ไขแบบตัวอย่าง",
                     "previousVersionNo": 1
                   },
                   "decidedAt": null,
@@ -252627,6 +253528,8 @@
                   },
                   "sentAt": "2026-09-27T11:00:00+07:00",
                   "status": "pending_customer",
+                  "statusLabelAdminTh": "รอ Proof จากลูกค้า",
+                  "statusLabelTh": "รอคุณตรวจแบบตัวอย่าง",
                   "submissionId": "0192f3a0-7c1e-7d2a-9b1f-0000000e2006",
                   "versionNo": 2
                 },
@@ -252865,6 +253768,8 @@
                     "previousProofFileId": "0192f3a0-7c1e-7d2a-9b1f-0000000e2004",
                     "previousProofId": "0192f3a0-7c1e-7d2a-9b1f-0000000e2003",
                     "previousStatus": "changes_requested",
+                    "previousStatusLabelAdminTh": "ขอให้แก้ไข Proof",
+                    "previousStatusLabelTh": "ขอแก้ไขแบบตัวอย่าง",
                     "previousVersionNo": 1
                   },
                   "decidedAt": "2026-09-27T12:00:00+07:00",
@@ -252885,6 +253790,8 @@
                   },
                   "sentAt": "2026-09-27T11:00:00+07:00",
                   "status": "approved",
+                  "statusLabelAdminTh": "รอ Proof จากลูกค้า",
+                  "statusLabelTh": "รอคุณตรวจแบบตัวอย่าง",
                   "submissionId": "0192f3a0-7c1e-7d2a-9b1f-0000000e2006",
                   "versionNo": 2
                 },
@@ -253185,6 +254092,8 @@
                     "previousProofFileId": "0192f3a0-7c1e-7d2a-9b1f-0000000e2004",
                     "previousProofId": "0192f3a0-7c1e-7d2a-9b1f-0000000e2003",
                     "previousStatus": "changes_requested",
+                    "previousStatusLabelAdminTh": "ขอให้แก้ไข Proof",
+                    "previousStatusLabelTh": "ขอแก้ไขแบบตัวอย่าง",
                     "previousVersionNo": 1
                   },
                   "decidedAt": "2026-09-27T12:00:00+07:00",
@@ -253205,6 +254114,8 @@
                   },
                   "sentAt": "2026-09-27T11:00:00+07:00",
                   "status": "changes_requested",
+                  "statusLabelAdminTh": "รอ Proof จากลูกค้า",
+                  "statusLabelTh": "รอคุณตรวจแบบตัวอย่าง",
                   "submissionId": "0192f3a0-7c1e-7d2a-9b1f-0000000e2006",
                   "versionNo": 2
                 },
@@ -253492,6 +254403,8 @@
                     "previousProofFileId": "0192f3a0-7c1e-7d2a-9b1f-0000000e2004",
                     "previousProofId": "0192f3a0-7c1e-7d2a-9b1f-0000000e2003",
                     "previousStatus": "changes_requested",
+                    "previousStatusLabelAdminTh": "ขอให้แก้ไข Proof",
+                    "previousStatusLabelTh": "ขอแก้ไขแบบตัวอย่าง",
                     "previousVersionNo": 1
                   },
                   "decidedAt": null,
@@ -253512,6 +254425,8 @@
                   },
                   "sentAt": "2026-09-27T11:00:00+07:00",
                   "status": "pending_customer",
+                  "statusLabelAdminTh": "รอ Proof จากลูกค้า",
+                  "statusLabelTh": "รอคุณตรวจแบบตัวอย่าง",
                   "submissionId": "0192f3a0-7c1e-7d2a-9b1f-0000000e2006",
                   "versionNo": 2
                 },
@@ -254429,6 +255344,8 @@
                       "sharedAt": null,
                       "source": "instant",
                       "status": "saved",
+                      "statusLabelAdminTh": "บันทึกแล้ว",
+                      "statusLabelTh": "บันทึกแล้ว",
                       "summary": {
                         "product": {
                           "imageUrl": "/v1/store/catalog/images/0192f3a0-7c1e-7d2a-9b1f-00000000c009",
@@ -254829,6 +255746,8 @@
                   "sharedAt": null,
                   "source": "instant",
                   "status": "saved",
+                  "statusLabelAdminTh": "บันทึกแล้ว",
+                  "statusLabelTh": "บันทึกแล้ว",
                   "summary": {
                     "product": {
                       "imageUrl": "/v1/store/catalog/images/0192f3a0-7c1e-7d2a-9b1f-00000000c009",
@@ -255210,6 +256129,8 @@
                   "sharedAt": null,
                   "source": "instant",
                   "status": "saved",
+                  "statusLabelAdminTh": "บันทึกแล้ว",
+                  "statusLabelTh": "บันทึกแล้ว",
                   "summary": {
                     "product": {
                       "imageUrl": "/v1/store/catalog/images/0192f3a0-7c1e-7d2a-9b1f-00000000c009",
@@ -255562,6 +256483,8 @@
                   "sharedAt": null,
                   "source": "instant",
                   "status": "saved",
+                  "statusLabelAdminTh": "บันทึกแล้ว",
+                  "statusLabelTh": "บันทึกแล้ว",
                   "summary": {
                     "product": {
                       "imageUrl": "/v1/store/catalog/images/0192f3a0-7c1e-7d2a-9b1f-00000000c009",
@@ -255943,6 +256866,8 @@
                   "sharedAt": null,
                   "source": "instant",
                   "status": "saved",
+                  "statusLabelAdminTh": "บันทึกแล้ว",
+                  "statusLabelTh": "บันทึกแล้ว",
                   "summary": {
                     "product": {
                       "imageUrl": "/v1/store/catalog/images/0192f3a0-7c1e-7d2a-9b1f-00000000c009",
@@ -256274,6 +257199,8 @@
                     "sharedAt": null,
                     "source": "instant",
                     "status": "shared",
+                    "statusLabelAdminTh": "บันทึกแล้ว",
+                    "statusLabelTh": "บันทึกแล้ว",
                     "summary": {
                       "product": {
                         "imageUrl": "/v1/store/catalog/images/0192f3a0-7c1e-7d2a-9b1f-00000000c009",
@@ -257032,6 +257959,8 @@
                   "sharedAt": null,
                   "source": "instant",
                   "status": "saved",
+                  "statusLabelAdminTh": "บันทึกแล้ว",
+                  "statusLabelTh": "บันทึกแล้ว",
                   "summary": {
                     "product": {
                       "imageUrl": "/v1/store/catalog/images/0192f3a0-7c1e-7d2a-9b1f-00000000c009",
@@ -259093,7 +260022,9 @@
                       "paymentId": "0192f3a0-7c1e-7d2a-9b1f-0000000a0001",
                       "providerRef": null,
                       "reasonNote": "ยกเลิกคำสั่งซื้อก่อนผลิต",
-                      "status": "pending_approval"
+                      "status": "pending_approval",
+                      "statusLabelAdminTh": "รออนุมัติคืนเงิน",
+                      "statusLabelTh": "รออนุมัติคืนเงิน"
                     }
                   ],
                   "meta": {
@@ -259294,7 +260225,9 @@
                   "paymentId": "0192f3a0-7c1e-7d2a-9b1f-0000000a0001",
                   "providerRef": null,
                   "reasonNote": "ยกเลิกคำสั่งซื้อก่อนผลิต",
-                  "status": "pending_approval"
+                  "status": "pending_approval",
+                  "statusLabelAdminTh": "รออนุมัติคืนเงิน",
+                  "statusLabelTh": "รออนุมัติคืนเงิน"
                 },
                 "schema": {
                   "$ref": "#/components/schemas/RefundDto"
@@ -259513,7 +260446,9 @@
                   "paymentId": "0192f3a0-7c1e-7d2a-9b1f-0000000a0001",
                   "providerRef": null,
                   "reasonNote": "ยกเลิกคำสั่งซื้อก่อนผลิต",
-                  "status": "succeeded"
+                  "status": "succeeded",
+                  "statusLabelAdminTh": "รออนุมัติคืนเงิน",
+                  "statusLabelTh": "รออนุมัติคืนเงิน"
                 },
                 "schema": {
                   "$ref": "#/components/schemas/RefundDto"
@@ -264257,6 +265192,8 @@
                       "note": "Price includes delivery to Bangkok (fake)",
                       "sentAt": "2026-10-01T09:00:00+07:00",
                       "status": "sent",
+                      "statusLabelAdminTh": "ส่งใบเสนอราคาแล้ว",
+                      "statusLabelTh": "ส่งใบเสนอราคาแล้ว",
                       "validUntil": "2026-10-16T09:00:00+07:00",
                       "versionNo": 1
                     }
@@ -264283,6 +265220,8 @@
                     }
                   ],
                   "status": "quoted",
+                  "statusLabelAdminTh": "เสนอราคาแล้ว",
+                  "statusLabelTh": "เสนอราคาแล้ว",
                   "style": null,
                   "submittedAt": "2026-09-30T15:00:00+07:00",
                   "targetDate": "2026-11-15",
@@ -264689,6 +265628,8 @@
                       "note": "Price includes delivery to Bangkok (fake)",
                       "sentAt": "2026-10-01T09:00:00+07:00",
                       "status": "sent",
+                      "statusLabelAdminTh": "ส่งใบเสนอราคาแล้ว",
+                      "statusLabelTh": "ส่งใบเสนอราคาแล้ว",
                       "validUntil": "2026-10-16T09:00:00+07:00",
                       "versionNo": 1
                     }
@@ -264715,6 +265656,8 @@
                     }
                   ],
                   "status": "quoted",
+                  "statusLabelAdminTh": "เสนอราคาแล้ว",
+                  "statusLabelTh": "เสนอราคาแล้ว",
                   "style": null,
                   "submittedAt": "2026-09-30T15:00:00+07:00",
                   "targetDate": "2026-11-15",
@@ -265055,6 +265998,8 @@
                       "note": "Price includes delivery to Bangkok (fake)",
                       "sentAt": "2026-10-01T09:00:00+07:00",
                       "status": "sent",
+                      "statusLabelAdminTh": "ส่งใบเสนอราคาแล้ว",
+                      "statusLabelTh": "ส่งใบเสนอราคาแล้ว",
                       "validUntil": "2026-10-16T09:00:00+07:00",
                       "versionNo": 1
                     }
@@ -265081,6 +266026,8 @@
                     }
                   ],
                   "status": "accepted",
+                  "statusLabelAdminTh": "เสนอราคาแล้ว",
+                  "statusLabelTh": "เสนอราคาแล้ว",
                   "style": null,
                   "submittedAt": "2026-09-30T15:00:00+07:00",
                   "targetDate": "2026-11-15",
@@ -265439,6 +266386,8 @@
                       "note": "Price includes delivery to Bangkok (fake)",
                       "sentAt": "2026-10-01T09:00:00+07:00",
                       "status": "sent",
+                      "statusLabelAdminTh": "ส่งใบเสนอราคาแล้ว",
+                      "statusLabelTh": "ส่งใบเสนอราคาแล้ว",
                       "validUntil": "2026-10-16T09:00:00+07:00",
                       "versionNo": 1
                     }
@@ -265465,6 +266414,8 @@
                     }
                   ],
                   "status": "quoted",
+                  "statusLabelAdminTh": "เสนอราคาแล้ว",
+                  "statusLabelTh": "เสนอราคาแล้ว",
                   "style": null,
                   "submittedAt": "2026-09-30T15:00:00+07:00",
                   "targetDate": "2026-11-15",
@@ -265938,6 +266889,8 @@
                           "note": "Price includes delivery to Bangkok (fake)",
                           "sentAt": "2026-10-01T09:00:00+07:00",
                           "status": "sent",
+                          "statusLabelAdminTh": "ส่งใบเสนอราคาแล้ว",
+                          "statusLabelTh": "ส่งใบเสนอราคาแล้ว",
                           "validUntil": "2026-10-16T09:00:00+07:00",
                           "versionNo": 1
                         }
@@ -265964,6 +266917,8 @@
                         }
                       ],
                       "status": "quoted",
+                      "statusLabelAdminTh": "เสนอราคาแล้ว",
+                      "statusLabelTh": "เสนอราคาแล้ว",
                       "style": null,
                       "submittedAt": "2026-09-30T15:00:00+07:00",
                       "targetDate": "2026-11-15",
@@ -266290,6 +267245,8 @@
                       "note": "Price includes delivery to Bangkok (fake)",
                       "sentAt": "2026-10-01T09:00:00+07:00",
                       "status": "sent",
+                      "statusLabelAdminTh": "ส่งใบเสนอราคาแล้ว",
+                      "statusLabelTh": "ส่งใบเสนอราคาแล้ว",
                       "validUntil": "2026-10-16T09:00:00+07:00",
                       "versionNo": 1
                     }
@@ -266316,6 +267273,8 @@
                     }
                   ],
                   "status": "submitted",
+                  "statusLabelAdminTh": "เสนอราคาแล้ว",
+                  "statusLabelTh": "เสนอราคาแล้ว",
                   "style": null,
                   "submittedAt": "2026-09-30T15:00:00+07:00",
                   "targetDate": "2026-11-15",
@@ -266671,6 +267630,8 @@
                       "note": "Price includes delivery to Bangkok (fake)",
                       "sentAt": "2026-10-01T09:00:00+07:00",
                       "status": "sent",
+                      "statusLabelAdminTh": "ส่งใบเสนอราคาแล้ว",
+                      "statusLabelTh": "ส่งใบเสนอราคาแล้ว",
                       "validUntil": "2026-10-16T09:00:00+07:00",
                       "versionNo": 1
                     }
@@ -266697,6 +267658,8 @@
                     }
                   ],
                   "status": "quoted",
+                  "statusLabelAdminTh": "เสนอราคาแล้ว",
+                  "statusLabelTh": "เสนอราคาแล้ว",
                   "style": null,
                   "submittedAt": "2026-09-30T15:00:00+07:00",
                   "targetDate": "2026-11-15",
@@ -267014,6 +267977,8 @@
                       "note": "Price includes delivery to Bangkok (fake)",
                       "sentAt": "2026-10-01T09:00:00+07:00",
                       "status": "sent",
+                      "statusLabelAdminTh": "ส่งใบเสนอราคาแล้ว",
+                      "statusLabelTh": "ส่งใบเสนอราคาแล้ว",
                       "validUntil": "2026-10-16T09:00:00+07:00",
                       "versionNo": 1
                     }
@@ -267040,6 +268005,8 @@
                     }
                   ],
                   "status": "quoted",
+                  "statusLabelAdminTh": "เสนอราคาแล้ว",
+                  "statusLabelTh": "เสนอราคาแล้ว",
                   "style": null,
                   "submittedAt": "2026-09-30T15:00:00+07:00",
                   "targetDate": "2026-11-15",
@@ -267404,6 +268371,8 @@
                       "note": "Price includes delivery to Bangkok (fake)",
                       "sentAt": "2026-10-01T09:00:00+07:00",
                       "status": "sent",
+                      "statusLabelAdminTh": "ส่งใบเสนอราคาแล้ว",
+                      "statusLabelTh": "ส่งใบเสนอราคาแล้ว",
                       "validUntil": "2026-10-16T09:00:00+07:00",
                       "versionNo": 1
                     }
@@ -267430,6 +268399,8 @@
                     }
                   ],
                   "status": "declined",
+                  "statusLabelAdminTh": "เสนอราคาแล้ว",
+                  "statusLabelTh": "เสนอราคาแล้ว",
                   "style": null,
                   "submittedAt": "2026-09-30T15:00:00+07:00",
                   "targetDate": "2026-11-15",
@@ -267799,6 +268770,8 @@
                       "note": "Price includes delivery to Bangkok (fake)",
                       "sentAt": "2026-10-01T09:00:00+07:00",
                       "status": "sent",
+                      "statusLabelAdminTh": "ส่งใบเสนอราคาแล้ว",
+                      "statusLabelTh": "ส่งใบเสนอราคาแล้ว",
                       "validUntil": "2026-10-16T09:00:00+07:00",
                       "versionNo": 1
                     }
@@ -267825,6 +268798,8 @@
                     }
                   ],
                   "status": "need_info",
+                  "statusLabelAdminTh": "เสนอราคาแล้ว",
+                  "statusLabelTh": "เสนอราคาแล้ว",
                   "style": null,
                   "submittedAt": "2026-09-30T15:00:00+07:00",
                   "targetDate": "2026-11-15",
@@ -268168,6 +269143,8 @@
                       "note": "Price includes delivery to Bangkok (fake)",
                       "sentAt": "2026-10-01T09:00:00+07:00",
                       "status": "sent",
+                      "statusLabelAdminTh": "ส่งใบเสนอราคาแล้ว",
+                      "statusLabelTh": "ส่งใบเสนอราคาแล้ว",
                       "validUntil": "2026-10-16T09:00:00+07:00",
                       "versionNo": 1
                     }
@@ -268194,6 +269171,8 @@
                     }
                   ],
                   "status": "quoted",
+                  "statusLabelAdminTh": "เสนอราคาแล้ว",
+                  "statusLabelTh": "เสนอราคาแล้ว",
                   "style": null,
                   "submittedAt": "2026-09-30T15:00:00+07:00",
                   "targetDate": "2026-11-15",
@@ -268736,6 +269715,8 @@
                       "note": "Price includes delivery to Bangkok (fake)",
                       "sentAt": "2026-10-01T09:00:00+07:00",
                       "status": "sent",
+                      "statusLabelAdminTh": "ส่งใบเสนอราคาแล้ว",
+                      "statusLabelTh": "ส่งใบเสนอราคาแล้ว",
                       "validUntil": "2026-10-16T09:00:00+07:00",
                       "versionNo": 1
                     }
@@ -268762,6 +269743,8 @@
                     }
                   ],
                   "status": "quoted",
+                  "statusLabelAdminTh": "เสนอราคาแล้ว",
+                  "statusLabelTh": "เสนอราคาแล้ว",
                   "style": null,
                   "submittedAt": "2026-09-30T15:00:00+07:00",
                   "targetDate": "2026-11-15",
@@ -269135,6 +270118,8 @@
                       "note": "Price includes delivery to Bangkok (fake)",
                       "sentAt": "2026-10-01T09:00:00+07:00",
                       "status": "sent",
+                      "statusLabelAdminTh": "ส่งใบเสนอราคาแล้ว",
+                      "statusLabelTh": "ส่งใบเสนอราคาแล้ว",
                       "validUntil": "2026-10-16T09:00:00+07:00",
                       "versionNo": 1
                     }
@@ -269161,6 +270146,8 @@
                     }
                   ],
                   "status": "quoted",
+                  "statusLabelAdminTh": "เสนอราคาแล้ว",
+                  "statusLabelTh": "เสนอราคาแล้ว",
                   "style": null,
                   "submittedAt": "2026-09-30T15:00:00+07:00",
                   "targetDate": "2026-11-15",
@@ -269530,6 +270517,8 @@
                       "note": "Price includes delivery to Bangkok (fake)",
                       "sentAt": "2026-10-01T09:00:00+07:00",
                       "status": "sent",
+                      "statusLabelAdminTh": "ส่งใบเสนอราคาแล้ว",
+                      "statusLabelTh": "ส่งใบเสนอราคาแล้ว",
                       "validUntil": "2026-10-16T09:00:00+07:00",
                       "versionNo": 1
                     }
@@ -269556,6 +270545,8 @@
                     }
                   ],
                   "status": "quoted",
+                  "statusLabelAdminTh": "เสนอราคาแล้ว",
+                  "statusLabelTh": "เสนอราคาแล้ว",
                   "style": null,
                   "submittedAt": "2026-09-30T15:00:00+07:00",
                   "targetDate": "2026-11-15",
@@ -270305,6 +271296,8 @@
                       "shippedAt": "2026-10-09T09:00:00+07:00",
                       "status": "delivered",
                       "statusChangedAt": "2026-10-10T10:00:00+07:00",
+                      "statusLabelAdminTh": "ถึงแล้ว รอตรวจ",
+                      "statusLabelTh": "ถึงแล้ว รอตรวจ",
                       "validUntil": null
                     }
                   ],
@@ -270544,6 +271537,8 @@
                   "shippedAt": "2026-10-09T09:00:00+07:00",
                   "status": "delivered",
                   "statusChangedAt": "2026-10-10T10:00:00+07:00",
+                  "statusLabelAdminTh": "ถึงแล้ว รอตรวจ",
+                  "statusLabelTh": "ถึงแล้ว รอตรวจ",
                   "validUntil": null
                 },
                 "schema": {
@@ -270798,6 +271793,8 @@
                   "shippedAt": "2026-10-09T09:00:00+07:00",
                   "status": "cancelled",
                   "statusChangedAt": "2026-10-10T10:00:00+07:00",
+                  "statusLabelAdminTh": "ถึงแล้ว รอตรวจ",
+                  "statusLabelTh": "ถึงแล้ว รอตรวจ",
                   "validUntil": null
                 },
                 "schema": {
@@ -271099,6 +272096,8 @@
                   "shippedAt": "2026-10-09T09:00:00+07:00",
                   "status": "quoted",
                   "statusChangedAt": "2026-10-10T10:00:00+07:00",
+                  "statusLabelAdminTh": "ถึงแล้ว รอตรวจ",
+                  "statusLabelTh": "ถึงแล้ว รอตรวจ",
                   "validUntil": null
                 },
                 "schema": {
@@ -271406,6 +272405,8 @@
                   "shippedAt": "2026-10-09T09:00:00+07:00",
                   "status": "delivered",
                   "statusChangedAt": "2026-10-10T10:00:00+07:00",
+                  "statusLabelAdminTh": "ถึงแล้ว รอตรวจ",
+                  "statusLabelTh": "ถึงแล้ว รอตรวจ",
                   "validUntil": null
                 },
                 "schema": {
@@ -274626,7 +275627,9 @@
                           "note": null,
                           "occurredAt": "2026-10-19T16:00:00+07:00",
                           "source": "factory",
-                          "status": "ready"
+                          "status": "ready",
+                          "statusLabelAdminTh": "พร้อมส่ง",
+                          "statusLabelTh": "พร้อมส่ง"
                         }
                       ],
                       "exception": null,
@@ -274657,6 +275660,8 @@
                       "shipmentNo": "SH-2610-0001",
                       "splitFrom": null,
                       "status": "ready",
+                      "statusLabelAdminTh": "พร้อมส่ง",
+                      "statusLabelTh": "พร้อมส่ง",
                       "trackingNo": null,
                       "trackingUrl": null,
                       "volumeCm3": 120000,
@@ -274893,7 +275898,9 @@
                       "note": null,
                       "occurredAt": "2026-10-19T16:00:00+07:00",
                       "source": "factory",
-                      "status": "ready"
+                      "status": "ready",
+                      "statusLabelAdminTh": "พร้อมส่ง",
+                      "statusLabelTh": "พร้อมส่ง"
                     }
                   ],
                   "exception": null,
@@ -274924,6 +275931,8 @@
                   "shipmentNo": "SH-2610-0001",
                   "splitFrom": null,
                   "status": "ready",
+                  "statusLabelAdminTh": "พร้อมส่ง",
+                  "statusLabelTh": "พร้อมส่ง",
                   "trackingNo": null,
                   "trackingUrl": null,
                   "volumeCm3": 120000,
@@ -275185,7 +276194,9 @@
                       "note": null,
                       "occurredAt": "2026-10-19T16:00:00+07:00",
                       "source": "factory",
-                      "status": "ready"
+                      "status": "ready",
+                      "statusLabelAdminTh": "พร้อมส่ง",
+                      "statusLabelTh": "พร้อมส่ง"
                     }
                   ],
                   "exception": null,
@@ -275216,6 +276227,8 @@
                   "shipmentNo": "SH-2610-0001",
                   "splitFrom": null,
                   "status": "ready",
+                  "statusLabelAdminTh": "พร้อมส่ง",
+                  "statusLabelTh": "พร้อมส่ง",
                   "trackingNo": "TH0123",
                   "trackingUrl": null,
                   "volumeCm3": 120000,
@@ -275580,7 +276593,9 @@
                       "note": null,
                       "occurredAt": "2026-10-19T16:00:00+07:00",
                       "source": "factory",
-                      "status": "ready"
+                      "status": "ready",
+                      "statusLabelAdminTh": "พร้อมส่ง",
+                      "statusLabelTh": "พร้อมส่ง"
                     }
                   ],
                   "exception": null,
@@ -275611,6 +276626,8 @@
                   "shipmentNo": "SH-2610-0001",
                   "splitFrom": null,
                   "status": "cancelled",
+                  "statusLabelAdminTh": "พร้อมส่ง",
+                  "statusLabelTh": "พร้อมส่ง",
                   "trackingNo": null,
                   "trackingUrl": null,
                   "volumeCm3": 120000,
@@ -275950,7 +276967,9 @@
                       "note": null,
                       "occurredAt": "2026-10-19T16:00:00+07:00",
                       "source": "factory",
-                      "status": "ready"
+                      "status": "ready",
+                      "statusLabelAdminTh": "พร้อมส่ง",
+                      "statusLabelTh": "พร้อมส่ง"
                     }
                   ],
                   "exception": null,
@@ -275981,6 +277000,8 @@
                   "shipmentNo": "SH-2610-0001",
                   "splitFrom": null,
                   "status": "in_transit",
+                  "statusLabelAdminTh": "พร้อมส่ง",
+                  "statusLabelTh": "พร้อมส่ง",
                   "trackingNo": null,
                   "trackingUrl": null,
                   "volumeCm3": 120000,
@@ -276309,7 +277330,9 @@
                         "note": null,
                         "occurredAt": "2026-10-19T16:00:00+07:00",
                         "source": "factory",
-                        "status": "ready"
+                        "status": "ready",
+                        "statusLabelAdminTh": "พร้อมส่ง",
+                        "statusLabelTh": "พร้อมส่ง"
                       }
                     ],
                     "exception": null,
@@ -276343,6 +277366,8 @@
                       "shipmentNo": "SH-2610-0001"
                     },
                     "status": "draft",
+                    "statusLabelAdminTh": "พร้อมส่ง",
+                    "statusLabelTh": "พร้อมส่ง",
                     "trackingNo": null,
                     "trackingUrl": null,
                     "volumeCm3": 120000,
@@ -276377,7 +277402,9 @@
                         "note": null,
                         "occurredAt": "2026-10-19T16:00:00+07:00",
                         "source": "factory",
-                        "status": "ready"
+                        "status": "ready",
+                        "statusLabelAdminTh": "พร้อมส่ง",
+                        "statusLabelTh": "พร้อมส่ง"
                       }
                     ],
                     "exception": null,
@@ -276408,6 +277435,8 @@
                     "shipmentNo": "SH-2610-0001",
                     "splitFrom": null,
                     "status": "draft",
+                    "statusLabelAdminTh": "พร้อมส่ง",
+                    "statusLabelTh": "พร้อมส่ง",
                     "trackingNo": null,
                     "trackingUrl": null,
                     "volumeCm3": 120000,
@@ -276971,7 +278000,9 @@
                       "note": null,
                       "occurredAt": "2026-10-19T16:00:00+07:00",
                       "source": "factory",
-                      "status": "ready"
+                      "status": "ready",
+                      "statusLabelAdminTh": "พร้อมส่ง",
+                      "statusLabelTh": "พร้อมส่ง"
                     }
                   ],
                   "exception": null,
@@ -277002,6 +278033,8 @@
                   "shipmentNo": "SH-2610-0001",
                   "splitFrom": null,
                   "status": "out_for_delivery",
+                  "statusLabelAdminTh": "พร้อมส่ง",
+                  "statusLabelTh": "พร้อมส่ง",
                   "trackingNo": null,
                   "trackingUrl": null,
                   "volumeCm3": 120000,
@@ -277322,7 +278355,9 @@
                       "note": null,
                       "occurredAt": "2026-10-19T16:00:00+07:00",
                       "source": "factory",
-                      "status": "ready"
+                      "status": "ready",
+                      "statusLabelAdminTh": "พร้อมส่ง",
+                      "statusLabelTh": "พร้อมส่ง"
                     }
                   ],
                   "exception": null,
@@ -277371,6 +278406,8 @@
                   "shipmentNo": "SH-2610-0001",
                   "splitFrom": null,
                   "status": "delivered",
+                  "statusLabelAdminTh": "พร้อมส่ง",
+                  "statusLabelTh": "พร้อมส่ง",
                   "trackingNo": null,
                   "trackingUrl": null,
                   "volumeCm3": 120000,
@@ -277703,7 +278740,9 @@
                       "note": null,
                       "occurredAt": "2026-10-19T16:00:00+07:00",
                       "source": "factory",
-                      "status": "ready"
+                      "status": "ready",
+                      "statusLabelAdminTh": "พร้อมส่ง",
+                      "statusLabelTh": "พร้อมส่ง"
                     }
                   ],
                   "exception": null,
@@ -277744,6 +278783,8 @@
                   "shipmentNo": "SH-2610-0001",
                   "splitFrom": null,
                   "status": "delivered",
+                  "statusLabelAdminTh": "พร้อมส่ง",
+                  "statusLabelTh": "พร้อมส่ง",
                   "trackingNo": null,
                   "trackingUrl": null,
                   "volumeCm3": 120000,
@@ -284551,7 +285592,9 @@
                       "overdue": false,
                       "paymentId": "0192f3a0-7c1e-7d2a-9b1f-0000000a0001",
                       "slaDueAt": "2026-10-01T14:30:00+07:00",
-                      "status": "manual_review"
+                      "status": "manual_review",
+                      "statusLabelAdminTh": "รอการเงินตรวจสอบ",
+                      "statusLabelTh": "รอเจ้าหน้าที่ตรวจสอบ"
                     }
                   ],
                   "meta": {
@@ -284783,6 +285826,8 @@
                   "refundedAmount": "0.00",
                   "slips": [],
                   "status": "pending",
+                  "statusLabelAdminTh": "รอชำระเงิน",
+                  "statusLabelTh": "รอชำระเงิน",
                   "whtAmount": "0.00"
                 },
                 "schema": {
@@ -306010,6 +307055,8 @@
                       "orders": [
                         {
                           "artworkStatus": "awaiting_template",
+                          "artworkStatusLabelAdminTh": "รอแบบไดคัท",
+                          "artworkStatusLabelTh": "รอแบบไดคัท",
                           "cancelReasonCode": null,
                           "cancelReasonNameEn": null,
                           "cancelReasonNameTh": null,
@@ -306079,6 +307126,8 @@
                           },
                           "status": "waiting_payment",
                           "statusChangedAt": "2026-10-01T10:00:00+07:00",
+                          "statusLabelAdminTh": "รอชำระเงิน",
+                          "statusLabelTh": "รอชำระเงิน",
                           "summary": {
                             "product": {
                               "imageUrl": "/v1/store/catalog/images/0192f3a0-7c1e-7d2a-9b1f-00000000c009",
@@ -306134,6 +307183,8 @@
                       "placedAt": "2026-10-01T10:00:00+07:00",
                       "poNumber": null,
                       "status": "waiting_payment",
+                      "statusLabelAdminTh": "รอชำระเงิน",
+                      "statusLabelTh": "รอชำระเงิน",
                       "totals": {
                         "cashAmount": "14182.80",
                         "currency": "THB",
@@ -306362,6 +307413,8 @@
                   "orders": [
                     {
                       "artworkStatus": "awaiting_template",
+                      "artworkStatusLabelAdminTh": "รอแบบไดคัท",
+                      "artworkStatusLabelTh": "รอแบบไดคัท",
                       "cancelReasonCode": null,
                       "cancelReasonNameEn": null,
                       "cancelReasonNameTh": null,
@@ -306431,6 +307484,8 @@
                       },
                       "status": "waiting_payment",
                       "statusChangedAt": "2026-10-01T10:00:00+07:00",
+                      "statusLabelAdminTh": "รอชำระเงิน",
+                      "statusLabelTh": "รอชำระเงิน",
                       "summary": {
                         "product": {
                           "imageUrl": "/v1/store/catalog/images/0192f3a0-7c1e-7d2a-9b1f-00000000c009",
@@ -306486,6 +307541,8 @@
                   "placedAt": "2026-10-01T10:00:00+07:00",
                   "poNumber": null,
                   "status": "waiting_payment",
+                  "statusLabelAdminTh": "รอชำระเงิน",
+                  "statusLabelTh": "รอชำระเงิน",
                   "totals": {
                     "cashAmount": "14182.80",
                     "currency": "THB",
@@ -306756,6 +307813,8 @@
               "application/json": {
                 "example": {
                   "artworkStatus": "awaiting_template",
+                  "artworkStatusLabelAdminTh": "รอแบบไดคัท",
+                  "artworkStatusLabelTh": "รอแบบไดคัท",
                   "cancelReasonCode": null,
                   "cancelReasonNameEn": null,
                   "cancelReasonNameTh": null,
@@ -306825,6 +307884,8 @@
                   },
                   "status": "waiting_payment",
                   "statusChangedAt": "2026-10-01T10:00:00+07:00",
+                  "statusLabelAdminTh": "รอชำระเงิน",
+                  "statusLabelTh": "รอชำระเงิน",
                   "summary": {
                     "product": {
                       "imageUrl": "/v1/store/catalog/images/0192f3a0-7c1e-7d2a-9b1f-00000000c009",
@@ -307190,6 +308251,8 @@
                       "sharedAt": null,
                       "source": "instant",
                       "status": "saved",
+                      "statusLabelAdminTh": "บันทึกแล้ว",
+                      "statusLabelTh": "บันทึกแล้ว",
                       "summary": {
                         "product": {
                           "imageUrl": "/v1/store/catalog/images/0192f3a0-7c1e-7d2a-9b1f-00000000c009",
@@ -310989,6 +312052,8 @@
                         "responseOverdue": false
                       },
                       "status": "factory_review",
+                      "statusLabelAdminTh": "รอโรงงานตรวจสอบ",
+                      "statusLabelTh": "กำลังพิจารณาเคลม",
                       "submittedAt": "2026-10-22T09:00:00+07:00",
                       "tolerance": {
                         "colourDeltaE": "3.00",
@@ -311231,6 +312296,8 @@
                     "responseOverdue": false
                   },
                   "status": "factory_review",
+                  "statusLabelAdminTh": "รอโรงงานตรวจสอบ",
+                  "statusLabelTh": "กำลังพิจารณาเคลม",
                   "submittedAt": "2026-10-22T09:00:00+07:00",
                   "tolerance": {
                     "colourDeltaE": "3.00",
@@ -311492,6 +312559,8 @@
                     "responseOverdue": false
                   },
                   "status": "under_review",
+                  "statusLabelAdminTh": "รอโรงงานตรวจสอบ",
+                  "statusLabelTh": "กำลังพิจารณาเคลม",
                   "submittedAt": "2026-10-22T09:00:00+07:00",
                   "tolerance": {
                     "colourDeltaE": "3.00",
@@ -328680,7 +329749,9 @@
                       "productTypeCode": "folding_carton",
                       "productionJobId": "0192f3a0-7c1e-7d2a-9b1f-00000000f107",
                       "quantity": 1,
-                      "status": "in_production"
+                      "status": "in_production",
+                      "statusLabelAdminTh": "กำลังทำตัวอย่าง",
+                      "statusLabelTh": "กำลังทำตัวอย่างจริง"
                     }
                   ],
                   "meta": {
@@ -328940,7 +330011,9 @@
                   "productTypeCode": "folding_carton",
                   "productionJobId": "0192f3a0-7c1e-7d2a-9b1f-00000000f107",
                   "quantity": 1,
-                  "status": "in_production"
+                  "status": "in_production",
+                  "statusLabelAdminTh": "กำลังทำตัวอย่าง",
+                  "statusLabelTh": "กำลังทำตัวอย่างจริง"
                 },
                 "schema": {
                   "$ref": "#/components/schemas/PartnerSampleDto"
@@ -331529,6 +332602,8 @@
                           "seq": 4,
                           "startedAt": "2026-10-01T09:00:00+07:00",
                           "status": "in_progress",
+                          "statusLabelAdminTh": "กำลังทำ",
+                          "statusLabelTh": "กำลังทำ",
                           "tracksQuantity": true
                         }
                       ],
@@ -331557,6 +332632,8 @@
                         "quantity": 1000
                       },
                       "status": "released",
+                      "statusLabelAdminTh": "รอโรงงานรับงาน",
+                      "statusLabelTh": "เตรียมผลิต",
                       "title": "กล่องพับ · 1000 ชิ้น",
                       "tolerance": {
                         "colourDeltaE": "3.00",
@@ -336402,9 +337479,11 @@
                 "example": {
                   "data": [
                     {
-                      "body": "คำขอ discount_memo รอการอนุมัติของคุณ",
+                      "body": "คำขออนุมัติ บันทึกขอส่วนลด รอการตัดสินใจของคุณ",
                       "createdAt": "2026-09-23T14:05:00+07:00",
                       "eventType": "approval.requested",
+                      "eventTypeLabelEn": "Approval",
+                      "eventTypeLabelTh": "คำขออนุมัติ",
                       "id": "0192f3a0-7c1e-7d2a-9b1f-00000000e001",
                       "readAt": null,
                       "title": "มีคำขออนุมัติรอคุณ",
@@ -337581,6 +338660,8 @@
                           "seq": 4,
                           "startedAt": "2026-10-01T09:00:00+07:00",
                           "status": "in_progress",
+                          "statusLabelAdminTh": "กำลังทำ",
+                          "statusLabelTh": "กำลังทำ",
                           "tracksQuantity": true
                         }
                       ],
@@ -337609,6 +338690,8 @@
                         "quantity": 1000
                       },
                       "status": "released",
+                      "statusLabelAdminTh": "รอโรงงานรับงาน",
+                      "statusLabelTh": "เตรียมผลิต",
                       "title": "กล่องพับ · 1000 ชิ้น",
                       "tolerance": {
                         "colourDeltaE": "3.00",
@@ -338046,6 +339129,8 @@
                       "seq": 4,
                       "startedAt": "2026-10-01T09:00:00+07:00",
                       "status": "in_progress",
+                      "statusLabelAdminTh": "กำลังทำ",
+                      "statusLabelTh": "กำลังทำ",
                       "tracksQuantity": true
                     }
                   ],
@@ -338074,6 +339159,8 @@
                     "quantity": 1000
                   },
                   "status": "released",
+                  "statusLabelAdminTh": "รอโรงงานรับงาน",
+                  "statusLabelTh": "เตรียมผลิต",
                   "title": "กล่องพับ · 1000 ชิ้น",
                   "tolerance": {
                     "colourDeltaE": "3.00",
@@ -338321,6 +339408,8 @@
                       "seq": 4,
                       "startedAt": "2026-10-01T09:00:00+07:00",
                       "status": "in_progress",
+                      "statusLabelAdminTh": "กำลังทำ",
+                      "statusLabelTh": "กำลังทำ",
                       "tracksQuantity": true
                     }
                   ],
@@ -338349,6 +339438,8 @@
                     "quantity": 1000
                   },
                   "status": "accepted",
+                  "statusLabelAdminTh": "รอโรงงานรับงาน",
+                  "statusLabelTh": "เตรียมผลิต",
                   "title": "กล่องพับ · 1000 ชิ้น",
                   "tolerance": {
                     "colourDeltaE": "3.00",
@@ -338666,6 +339757,8 @@
                       "seq": 4,
                       "startedAt": "2026-10-01T09:00:00+07:00",
                       "status": "in_progress",
+                      "statusLabelAdminTh": "กำลังทำ",
+                      "statusLabelTh": "กำลังทำ",
                       "tracksQuantity": true
                     }
                   ],
@@ -338694,6 +339787,8 @@
                     "quantity": 1000
                   },
                   "status": "rejected",
+                  "statusLabelAdminTh": "รอโรงงานรับงาน",
+                  "statusLabelTh": "เตรียมผลิต",
                   "title": "กล่องพับ · 1000 ชิ้น",
                   "tolerance": {
                     "colourDeltaE": "3.00",
@@ -340068,6 +341163,8 @@
                         "seq": 4,
                         "startedAt": "2026-10-01T09:00:00+07:00",
                         "status": "completed",
+                        "statusLabelAdminTh": "กำลังทำ",
+                        "statusLabelTh": "กำลังทำ",
                         "tracksQuantity": true
                       }
                     ],
@@ -340096,6 +341193,8 @@
                       "quantity": 1000
                     },
                     "status": "in_progress",
+                    "statusLabelAdminTh": "รอโรงงานรับงาน",
+                    "statusLabelTh": "เตรียมผลิต",
                     "title": "กล่องพับ · 1000 ชิ้น",
                     "tolerance": {
                       "colourDeltaE": "3.00",
@@ -342154,7 +343253,9 @@
                           "note": null,
                           "occurredAt": "2026-10-19T16:00:00+07:00",
                           "source": "factory",
-                          "status": "ready"
+                          "status": "ready",
+                          "statusLabelAdminTh": "พร้อมส่ง",
+                          "statusLabelTh": "พร้อมส่ง"
                         }
                       ],
                       "id": "0192f3a0-7c1e-7d2a-9b1f-0000000f2001",
@@ -342179,6 +343280,8 @@
                       "readyAt": "2026-10-19T16:00:00+07:00",
                       "shipmentNo": "SH-2610-0001",
                       "status": "ready",
+                      "statusLabelAdminTh": "พร้อมส่ง",
+                      "statusLabelTh": "พร้อมส่ง",
                       "trackingNo": null,
                       "volumeCm3": 120000,
                       "weightG": 18000
@@ -342429,7 +343532,9 @@
                       "note": null,
                       "occurredAt": "2026-10-19T16:00:00+07:00",
                       "source": "factory",
-                      "status": "ready"
+                      "status": "ready",
+                      "statusLabelAdminTh": "พร้อมส่ง",
+                      "statusLabelTh": "พร้อมส่ง"
                     }
                   ],
                   "id": "0192f3a0-7c1e-7d2a-9b1f-0000000f2001",
@@ -342454,6 +343559,8 @@
                   "readyAt": null,
                   "shipmentNo": "SH-2610-0001",
                   "status": "draft",
+                  "statusLabelAdminTh": "พร้อมส่ง",
+                  "statusLabelTh": "พร้อมส่ง",
                   "trackingNo": null,
                   "volumeCm3": 120000,
                   "weightG": 18000
@@ -342750,7 +343857,9 @@
                       "note": null,
                       "occurredAt": "2026-10-19T16:00:00+07:00",
                       "source": "factory",
-                      "status": "ready"
+                      "status": "ready",
+                      "statusLabelAdminTh": "พร้อมส่ง",
+                      "statusLabelTh": "พร้อมส่ง"
                     }
                   ],
                   "id": "0192f3a0-7c1e-7d2a-9b1f-0000000f2001",
@@ -342775,6 +343884,8 @@
                   "readyAt": "2026-10-19T16:00:00+07:00",
                   "shipmentNo": "SH-2610-0001",
                   "status": "ready",
+                  "statusLabelAdminTh": "พร้อมส่ง",
+                  "statusLabelTh": "พร้อมส่ง",
                   "trackingNo": null,
                   "volumeCm3": 120000,
                   "weightG": 18000
@@ -343024,7 +344135,9 @@
                       "note": null,
                       "occurredAt": "2026-10-19T16:00:00+07:00",
                       "source": "factory",
-                      "status": "ready"
+                      "status": "ready",
+                      "statusLabelAdminTh": "พร้อมส่ง",
+                      "statusLabelTh": "พร้อมส่ง"
                     }
                   ],
                   "id": "0192f3a0-7c1e-7d2a-9b1f-0000000f2001",
@@ -343049,6 +344162,8 @@
                   "readyAt": "2026-10-19T16:00:00+07:00",
                   "shipmentNo": "SH-2610-0001",
                   "status": "cancelled",
+                  "statusLabelAdminTh": "พร้อมส่ง",
+                  "statusLabelTh": "พร้อมส่ง",
                   "trackingNo": null,
                   "volumeCm3": 120000,
                   "weightG": 18000
@@ -343339,7 +344454,9 @@
                       "note": null,
                       "occurredAt": "2026-10-19T16:00:00+07:00",
                       "source": "factory",
-                      "status": "ready"
+                      "status": "ready",
+                      "statusLabelAdminTh": "พร้อมส่ง",
+                      "statusLabelTh": "พร้อมส่ง"
                     }
                   ],
                   "id": "0192f3a0-7c1e-7d2a-9b1f-0000000f2001",
@@ -343364,6 +344481,8 @@
                   "readyAt": "2026-10-19T16:00:00+07:00",
                   "shipmentNo": "SH-2610-0001",
                   "status": "picked_up",
+                  "statusLabelAdminTh": "พร้อมส่ง",
+                  "statusLabelTh": "พร้อมส่ง",
                   "trackingNo": null,
                   "volumeCm3": 120000,
                   "weightG": 18000
@@ -343654,7 +344773,9 @@
                       "note": null,
                       "occurredAt": "2026-10-19T16:00:00+07:00",
                       "source": "factory",
-                      "status": "ready"
+                      "status": "ready",
+                      "statusLabelAdminTh": "พร้อมส่ง",
+                      "statusLabelTh": "พร้อมส่ง"
                     }
                   ],
                   "id": "0192f3a0-7c1e-7d2a-9b1f-0000000f2001",
@@ -343679,6 +344800,8 @@
                   "readyAt": "2026-10-19T16:00:00+07:00",
                   "shipmentNo": "SH-2610-0001",
                   "status": "ready",
+                  "statusLabelAdminTh": "พร้อมส่ง",
+                  "statusLabelTh": "พร้อมส่ง",
                   "trackingNo": null,
                   "volumeCm3": 120000,
                   "weightG": 18000
@@ -344003,7 +345126,9 @@
                       "note": null,
                       "occurredAt": "2026-10-19T16:00:00+07:00",
                       "source": "factory",
-                      "status": "ready"
+                      "status": "ready",
+                      "statusLabelAdminTh": "พร้อมส่ง",
+                      "statusLabelTh": "พร้อมส่ง"
                     }
                   ],
                   "id": "0192f3a0-7c1e-7d2a-9b1f-0000000f2001",
@@ -344028,6 +345153,8 @@
                   "readyAt": "2026-10-19T16:00:00+07:00",
                   "shipmentNo": "SH-2610-0001",
                   "status": "ready",
+                  "statusLabelAdminTh": "พร้อมส่ง",
+                  "statusLabelTh": "พร้อมส่ง",
                   "trackingNo": null,
                   "volumeCm3": 120000,
                   "weightG": 18000
@@ -344337,7 +345464,9 @@
                       "note": null,
                       "occurredAt": "2026-10-19T16:00:00+07:00",
                       "source": "factory",
-                      "status": "ready"
+                      "status": "ready",
+                      "statusLabelAdminTh": "พร้อมส่ง",
+                      "statusLabelTh": "พร้อมส่ง"
                     }
                   ],
                   "id": "0192f3a0-7c1e-7d2a-9b1f-0000000f2001",
@@ -344362,6 +345491,8 @@
                   "readyAt": "2026-10-19T16:00:00+07:00",
                   "shipmentNo": "SH-2610-0001",
                   "status": "out_for_delivery",
+                  "statusLabelAdminTh": "พร้อมส่ง",
+                  "statusLabelTh": "พร้อมส่ง",
                   "trackingNo": null,
                   "volumeCm3": 120000,
                   "weightG": 18000
@@ -344681,7 +345812,9 @@
                       "note": null,
                       "occurredAt": "2026-10-19T16:00:00+07:00",
                       "source": "factory",
-                      "status": "ready"
+                      "status": "ready",
+                      "statusLabelAdminTh": "พร้อมส่ง",
+                      "statusLabelTh": "พร้อมส่ง"
                     }
                   ],
                   "id": "0192f3a0-7c1e-7d2a-9b1f-0000000f2001",
@@ -344716,6 +345849,8 @@
                   "readyAt": "2026-10-19T16:00:00+07:00",
                   "shipmentNo": "SH-2610-0001",
                   "status": "delivered",
+                  "statusLabelAdminTh": "พร้อมส่ง",
+                  "statusLabelTh": "พร้อมส่ง",
                   "trackingNo": null,
                   "volumeCm3": 120000,
                   "weightG": 18000
@@ -358536,6 +359671,8 @@
                   "orders": [
                     {
                       "artworkStatus": "awaiting_template",
+                      "artworkStatusLabelAdminTh": "รอแบบไดคัท",
+                      "artworkStatusLabelTh": "รอแบบไดคัท",
                       "cancelReasonCode": null,
                       "cancelReasonNameEn": null,
                       "cancelReasonNameTh": null,
@@ -358605,6 +359742,8 @@
                       },
                       "status": "waiting_payment",
                       "statusChangedAt": "2026-10-01T10:00:00+07:00",
+                      "statusLabelAdminTh": "รอชำระเงิน",
+                      "statusLabelTh": "รอชำระเงิน",
                       "summary": {
                         "product": {
                           "imageUrl": "/v1/store/catalog/images/0192f3a0-7c1e-7d2a-9b1f-00000000c009",
@@ -358660,6 +359799,8 @@
                   "placedAt": "2026-10-01T10:00:00+07:00",
                   "poNumber": null,
                   "status": "waiting_payment",
+                  "statusLabelAdminTh": "รอชำระเงิน",
+                  "statusLabelTh": "รอชำระเงิน",
                   "totals": {
                     "cashAmount": "14182.80",
                     "currency": "THB",
@@ -359480,6 +360621,8 @@
                         "responseOverdue": false
                       },
                       "status": "under_review",
+                      "statusLabelAdminTh": "กำลังพิจารณาเคลม",
+                      "statusLabelTh": "กำลังพิจารณาเคลม",
                       "submittedAt": "2026-10-22T09:00:00+07:00",
                       "tolerance": {
                         "colourDeltaE": "3.00",
@@ -359709,6 +360852,8 @@
                     "responseOverdue": false
                   },
                   "status": "under_review",
+                  "statusLabelAdminTh": "กำลังพิจารณาเคลม",
+                  "statusLabelTh": "กำลังพิจารณาเคลม",
                   "submittedAt": "2026-10-22T09:00:00+07:00",
                   "tolerance": {
                     "colourDeltaE": "3.00",
@@ -359959,6 +361104,8 @@
                     "responseOverdue": false
                   },
                   "status": "under_review",
+                  "statusLabelAdminTh": "กำลังพิจารณาเคลม",
+                  "statusLabelTh": "กำลังพิจารณาเคลม",
                   "submittedAt": "2026-10-22T09:00:00+07:00",
                   "tolerance": {
                     "colourDeltaE": "3.00",
@@ -370869,6 +372016,8 @@
                     "sharedAt": null,
                     "source": "instant",
                     "status": "saved",
+                    "statusLabelAdminTh": "บันทึกแล้ว",
+                    "statusLabelTh": "บันทึกแล้ว",
                     "summary": {
                       "product": {
                         "imageUrl": "/v1/store/catalog/images/0192f3a0-7c1e-7d2a-9b1f-00000000c009",
@@ -382454,6 +383603,8 @@
                       "requiredBefore": "production",
                       "seq": 1,
                       "status": "due",
+                      "statusLabelAdminTh": "ถึงกำหนดชำระ",
+                      "statusLabelTh": "ถึงกำหนดชำระ",
                       "whtAmount": "0.00"
                     }
                   ],
@@ -383199,6 +384350,8 @@
                 "example": [
                   {
                     "granted": true,
+                    "labelEn": "News and offers on LINE",
+                    "labelTh": "รับข่าวสารและโปรโมชันทาง LINE",
                     "outdated": false,
                     "purpose": "marketing_line",
                     "required": false,
@@ -383382,6 +384535,8 @@
                 "example": [
                   {
                     "granted": true,
+                    "labelEn": "News and offers on LINE",
+                    "labelTh": "รับข่าวสารและโปรโมชันทาง LINE",
                     "outdated": false,
                     "purpose": "marketing_line",
                     "required": false,
@@ -385395,9 +386550,11 @@
                 "example": {
                   "data": [
                     {
-                      "body": "คำขอ discount_memo รอการอนุมัติของคุณ",
+                      "body": "คำขออนุมัติ บันทึกขอส่วนลด รอการตัดสินใจของคุณ",
                       "createdAt": "2026-09-23T14:05:00+07:00",
                       "eventType": "approval.requested",
+                      "eventTypeLabelEn": "Approval",
+                      "eventTypeLabelTh": "คำขออนุมัติ",
                       "id": "0192f3a0-7c1e-7d2a-9b1f-00000000e001",
                       "readAt": null,
                       "title": "มีคำขออนุมัติรอคุณ",
@@ -385930,6 +387087,8 @@
                       "orders": [
                         {
                           "artworkStatus": "awaiting_template",
+                          "artworkStatusLabelAdminTh": "รอแบบไดคัท",
+                          "artworkStatusLabelTh": "รอแบบไดคัท",
                           "cancelReasonCode": null,
                           "cancelReasonNameEn": null,
                           "cancelReasonNameTh": null,
@@ -385999,6 +387158,8 @@
                           },
                           "status": "waiting_payment",
                           "statusChangedAt": "2026-10-01T10:00:00+07:00",
+                          "statusLabelAdminTh": "รอชำระเงิน",
+                          "statusLabelTh": "รอชำระเงิน",
                           "summary": {
                             "product": {
                               "imageUrl": "/v1/store/catalog/images/0192f3a0-7c1e-7d2a-9b1f-00000000c009",
@@ -386054,6 +387215,8 @@
                       "placedAt": "2026-10-01T10:00:00+07:00",
                       "poNumber": null,
                       "status": "waiting_payment",
+                      "statusLabelAdminTh": "รอชำระเงิน",
+                      "statusLabelTh": "รอชำระเงิน",
                       "totals": {
                         "cashAmount": "14182.80",
                         "currency": "THB",
@@ -386259,6 +387422,8 @@
                   "orders": [
                     {
                       "artworkStatus": "awaiting_template",
+                      "artworkStatusLabelAdminTh": "รอแบบไดคัท",
+                      "artworkStatusLabelTh": "รอแบบไดคัท",
                       "cancelReasonCode": null,
                       "cancelReasonNameEn": null,
                       "cancelReasonNameTh": null,
@@ -386328,6 +387493,8 @@
                       },
                       "status": "waiting_payment",
                       "statusChangedAt": "2026-10-01T10:00:00+07:00",
+                      "statusLabelAdminTh": "รอชำระเงิน",
+                      "statusLabelTh": "รอชำระเงิน",
                       "summary": {
                         "product": {
                           "imageUrl": "/v1/store/catalog/images/0192f3a0-7c1e-7d2a-9b1f-00000000c009",
@@ -386383,6 +387550,8 @@
                   "placedAt": "2026-10-01T10:00:00+07:00",
                   "poNumber": null,
                   "status": "waiting_payment",
+                  "statusLabelAdminTh": "รอชำระเงิน",
+                  "statusLabelTh": "รอชำระเงิน",
                   "totals": {
                     "cashAmount": "14182.80",
                     "currency": "THB",
@@ -386610,6 +387779,8 @@
                   "orders": [
                     {
                       "artworkStatus": "awaiting_template",
+                      "artworkStatusLabelAdminTh": "รอแบบไดคัท",
+                      "artworkStatusLabelTh": "รอแบบไดคัท",
                       "cancelReasonCode": null,
                       "cancelReasonNameEn": null,
                       "cancelReasonNameTh": null,
@@ -386679,6 +387850,8 @@
                       },
                       "status": "waiting_payment",
                       "statusChangedAt": "2026-10-01T10:00:00+07:00",
+                      "statusLabelAdminTh": "รอชำระเงิน",
+                      "statusLabelTh": "รอชำระเงิน",
                       "summary": {
                         "product": {
                           "imageUrl": "/v1/store/catalog/images/0192f3a0-7c1e-7d2a-9b1f-00000000c009",
@@ -386734,6 +387907,8 @@
                   "placedAt": "2026-10-01T10:00:00+07:00",
                   "poNumber": null,
                   "status": "cancelled",
+                  "statusLabelAdminTh": "รอชำระเงิน",
+                  "statusLabelTh": "รอชำระเงิน",
                   "totals": {
                     "cashAmount": "14182.80",
                     "currency": "THB",
@@ -387033,6 +388208,8 @@
                       "requiredBefore": "production",
                       "seq": 1,
                       "status": "due",
+                      "statusLabelAdminTh": "ถึงกำหนดชำระ",
+                      "statusLabelTh": "ถึงกำหนดชำระ",
                       "whtAmount": "0.00"
                     },
                     {
@@ -387050,6 +388227,8 @@
                       "requiredBefore": "shipping",
                       "seq": 2,
                       "status": "pending",
+                      "statusLabelAdminTh": "ถึงกำหนดชำระ",
+                      "statusLabelTh": "ถึงกำหนดชำระ",
                       "whtAmount": "0.00"
                     }
                   ],
@@ -387311,6 +388490,8 @@
                       "referenceCode": "PKAB23CD45EF67GH",
                       "slips": [],
                       "status": "pending",
+                      "statusLabelAdminTh": "รอชำระเงิน",
+                      "statusLabelTh": "รอชำระเงิน",
                       "whtAmount": "0.00"
                     }
                   ],
@@ -387551,6 +388732,8 @@
                   "referenceCode": "PKAB23CD45EF67GH",
                   "slips": [],
                   "status": "pending",
+                  "statusLabelAdminTh": "รอชำระเงิน",
+                  "statusLabelTh": "รอชำระเงิน",
                   "whtAmount": "0.00"
                 },
                 "schema": {
@@ -387823,6 +389006,8 @@
               "application/json": {
                 "example": {
                   "artworkStatus": "awaiting_template",
+                  "artworkStatusLabelAdminTh": "รอแบบไดคัท",
+                  "artworkStatusLabelTh": "รอแบบไดคัท",
                   "cancelReasonCode": null,
                   "cancelReasonNameEn": null,
                   "cancelReasonNameTh": null,
@@ -387892,6 +389077,8 @@
                   },
                   "status": "waiting_payment",
                   "statusChangedAt": "2026-10-01T10:00:00+07:00",
+                  "statusLabelAdminTh": "รอชำระเงิน",
+                  "statusLabelTh": "รอชำระเงิน",
                   "summary": {
                     "product": {
                       "imageUrl": "/v1/store/catalog/images/0192f3a0-7c1e-7d2a-9b1f-00000000c009",
@@ -388106,6 +389293,8 @@
               "application/json": {
                 "example": {
                   "artworkStatus": "awaiting_template",
+                  "artworkStatusLabelAdminTh": "รอแบบไดคัท",
+                  "artworkStatusLabelTh": "รอแบบไดคัท",
                   "cancelReasonCode": null,
                   "cancelReasonNameEn": null,
                   "cancelReasonNameTh": null,
@@ -388175,6 +389364,8 @@
                   },
                   "status": "waiting_payment",
                   "statusChangedAt": "2026-10-01T10:00:00+07:00",
+                  "statusLabelAdminTh": "รอชำระเงิน",
+                  "statusLabelTh": "รอชำระเงิน",
                   "summary": {
                     "product": {
                       "imageUrl": "/v1/store/catalog/images/0192f3a0-7c1e-7d2a-9b1f-00000000c009",
@@ -388412,6 +389603,8 @@
               "application/json": {
                 "example": {
                   "artworkStatus": "awaiting_template",
+                  "artworkStatusLabelAdminTh": "รอแบบไดคัท",
+                  "artworkStatusLabelTh": "รอแบบไดคัท",
                   "cancelReasonCode": null,
                   "cancelReasonNameEn": null,
                   "cancelReasonNameTh": null,
@@ -388481,6 +389674,8 @@
                   },
                   "status": "completed",
                   "statusChangedAt": "2026-10-01T10:00:00+07:00",
+                  "statusLabelAdminTh": "รอชำระเงิน",
+                  "statusLabelTh": "รอชำระเงิน",
                   "summary": {
                     "product": {
                       "imageUrl": "/v1/store/catalog/images/0192f3a0-7c1e-7d2a-9b1f-00000000c009",
@@ -389402,10 +390597,14 @@
                       "warnCount": 0
                     },
                     "preflightStatus": "blocked",
+                    "preflightStatusLabelAdminTh": "ไม่ผ่าน ต้องแก้ไฟล์",
+                    "preflightStatusLabelTh": "ไม่ผ่าน ต้องแก้ไฟล์",
                     "rejectReason": null,
                     "reviewedAt": null,
                     "source": "upload",
                     "status": "submitted",
+                    "statusLabelAdminTh": "ส่งไฟล์แล้ว",
+                    "statusLabelTh": "ส่งไฟล์แล้ว",
                     "submittedAt": "2026-09-27T10:00:00+07:00",
                     "versionNo": 2
                   }
@@ -389638,10 +390837,14 @@
                   "preflightCompletedAt": null,
                   "preflightReport": null,
                   "preflightStatus": "pending",
+                  "preflightStatusLabelAdminTh": "ไม่ผ่าน ต้องแก้ไฟล์",
+                  "preflightStatusLabelTh": "ไม่ผ่าน ต้องแก้ไฟล์",
                   "rejectReason": null,
                   "reviewedAt": null,
                   "source": "upload",
                   "status": "submitted",
+                  "statusLabelAdminTh": "ส่งไฟล์แล้ว",
+                  "statusLabelTh": "ส่งไฟล์แล้ว",
                   "submittedAt": "2026-09-27T10:00:00+07:00",
                   "versionNo": 2
                 },
@@ -389911,10 +391114,14 @@
                   "preflightCompletedAt": null,
                   "preflightReport": null,
                   "preflightStatus": "pending",
+                  "preflightStatusLabelAdminTh": "ไม่ผ่าน ต้องแก้ไฟล์",
+                  "preflightStatusLabelTh": "ไม่ผ่าน ต้องแก้ไฟล์",
                   "rejectReason": null,
                   "reviewedAt": null,
                   "source": "designer",
                   "status": "submitted",
+                  "statusLabelAdminTh": "ส่งไฟล์แล้ว",
+                  "statusLabelTh": "ส่งไฟล์แล้ว",
                   "submittedAt": "2026-09-27T10:00:00+07:00",
                   "versionNo": 2
                 },
@@ -390205,10 +391412,14 @@
                     "warnCount": 0
                   },
                   "preflightStatus": "blocked",
+                  "preflightStatusLabelAdminTh": "ไม่ผ่าน ต้องแก้ไฟล์",
+                  "preflightStatusLabelTh": "ไม่ผ่าน ต้องแก้ไฟล์",
                   "rejectReason": null,
                   "reviewedAt": null,
                   "source": "upload",
                   "status": "submitted",
+                  "statusLabelAdminTh": "ส่งไฟล์แล้ว",
+                  "statusLabelTh": "ส่งไฟล์แล้ว",
                   "submittedAt": "2026-09-27T10:00:00+07:00",
                   "versionNo": 2
                 },
@@ -390691,6 +391902,8 @@
                     "responseOverdue": false
                   },
                   "status": "submitted",
+                  "statusLabelAdminTh": "กำลังพิจารณาเคลม",
+                  "statusLabelTh": "กำลังพิจารณาเคลม",
                   "submittedAt": "2026-10-22T09:00:00+07:00",
                   "tolerance": {
                     "colourDeltaE": "3.00",
@@ -390984,10 +392197,14 @@
                       "roundNo": 1,
                       "startedAt": "2026-09-27T10:00:00+07:00",
                       "status": "in_progress",
+                      "statusLabelAdminTh": "กำลังแก้ไข",
+                      "statusLabelTh": "กำลังแก้ไข",
                       "submissionId": null
                     }
                   ],
                   "status": "in_progress",
+                  "statusLabelAdminTh": "กำลังออกแบบ",
+                  "statusLabelTh": "กำลังออกแบบ",
                   "targetDueAt": "2026-10-04T10:00:00+07:00"
                 },
                 "schema": {
@@ -391227,10 +392444,14 @@
                       "roundNo": 1,
                       "startedAt": "2026-09-27T10:00:00+07:00",
                       "status": "in_progress",
+                      "statusLabelAdminTh": "กำลังแก้ไข",
+                      "statusLabelTh": "กำลังแก้ไข",
                       "submissionId": null
                     }
                   ],
                   "status": "revision_requested",
+                  "statusLabelAdminTh": "กำลังออกแบบ",
+                  "statusLabelTh": "กำลังออกแบบ",
                   "targetDueAt": "2026-10-04T10:00:00+07:00"
                 },
                 "schema": {
@@ -391535,10 +392756,14 @@
                       "roundNo": 1,
                       "startedAt": "2026-09-27T10:00:00+07:00",
                       "status": "in_progress",
+                      "statusLabelAdminTh": "กำลังแก้ไข",
+                      "statusLabelTh": "กำลังแก้ไข",
                       "submissionId": null
                     }
                   ],
                   "status": "in_progress",
+                  "statusLabelAdminTh": "กำลังออกแบบ",
+                  "statusLabelTh": "กำลังออกแบบ",
                   "targetDueAt": "2026-10-04T10:00:00+07:00"
                 },
                 "schema": {
@@ -391787,7 +393012,9 @@
                       "labelEn": "Printing",
                       "labelTh": "กำลังพิมพ์",
                       "promisedAt": "2026-10-14T18:00:00+07:00",
-                      "status": "completed"
+                      "status": "completed",
+                      "statusLabelAdminTh": "เสร็จแล้ว",
+                      "statusLabelTh": "เสร็จแล้ว"
                     }
                   ]
                 },
@@ -392003,6 +393230,8 @@
                       "previousProofFileId": "0192f3a0-7c1e-7d2a-9b1f-0000000e2004",
                       "previousProofId": "0192f3a0-7c1e-7d2a-9b1f-0000000e2003",
                       "previousStatus": "changes_requested",
+                      "previousStatusLabelAdminTh": "ขอให้แก้ไข Proof",
+                      "previousStatusLabelTh": "ขอแก้ไขแบบตัวอย่าง",
                       "previousVersionNo": 1
                     },
                     "decidedAt": null,
@@ -392023,6 +393252,8 @@
                     },
                     "sentAt": "2026-09-27T11:00:00+07:00",
                     "status": "pending_customer",
+                    "statusLabelAdminTh": "รอ Proof จากลูกค้า",
+                    "statusLabelTh": "รอคุณตรวจแบบตัวอย่าง",
                     "submissionId": "0192f3a0-7c1e-7d2a-9b1f-0000000e2006",
                     "versionNo": 2
                   }
@@ -392930,12 +394161,16 @@
                       {
                         "location": null,
                         "occurredAt": "2026-10-20T08:00:00+07:00",
-                        "status": "picked_up"
+                        "status": "picked_up",
+                        "statusLabelAdminTh": "ออกจากโรงงานแล้ว",
+                        "statusLabelTh": "ออกจากโรงงานแล้ว"
                       },
                       {
                         "location": null,
                         "occurredAt": "2026-10-21T14:05:00+07:00",
-                        "status": "delivered"
+                        "status": "delivered",
+                        "statusLabelAdminTh": "ส่งถึงแล้ว",
+                        "statusLabelTh": "ส่งถึงแล้ว"
                       }
                     ],
                     "id": "0192f3a0-7c1e-7d2a-9b1f-0000000f2001",
@@ -392956,6 +394191,8 @@
                     },
                     "shipmentNo": "SH-2610-0001",
                     "status": "delivered",
+                    "statusLabelAdminTh": "ส่งถึงแล้ว",
+                    "statusLabelTh": "ส่งถึงแล้ว",
                     "trackingNo": null,
                     "trackingUrl": null
                   }
@@ -393574,8 +394811,11 @@
                 "example": {
                   "data": [
                     {
+                      "count": 1,
                       "id": "a:1042",
+                      "messageEn": "Printing",
                       "messageKey": "activity.production.milestone_reached",
+                      "messageTh": "กำลังพิมพ์",
                       "occurredAt": "2026-10-14T16:00:00+07:00",
                       "params": {
                         "labelEn": "Printing",
@@ -394043,6 +395283,8 @@
                   "referenceCode": "PKAB23CD45EF67GH",
                   "slips": [],
                   "status": "pending",
+                  "statusLabelAdminTh": "รอชำระเงิน",
+                  "statusLabelTh": "รอชำระเงิน",
                   "whtAmount": "0.00"
                 },
                 "schema": {
@@ -394265,6 +395507,8 @@
                   "referenceCode": "PKAB23CD45EF67GH",
                   "slips": [],
                   "status": "pending",
+                  "statusLabelAdminTh": "รอชำระเงิน",
+                  "statusLabelTh": "รอชำระเงิน",
                   "whtAmount": "0.00"
                 },
                 "schema": {
@@ -394936,6 +396180,8 @@
                     "previousProofFileId": "0192f3a0-7c1e-7d2a-9b1f-0000000e2004",
                     "previousProofId": "0192f3a0-7c1e-7d2a-9b1f-0000000e2003",
                     "previousStatus": "changes_requested",
+                    "previousStatusLabelAdminTh": "ขอให้แก้ไข Proof",
+                    "previousStatusLabelTh": "ขอแก้ไขแบบตัวอย่าง",
                     "previousVersionNo": 1
                   },
                   "decidedAt": null,
@@ -394956,6 +396202,8 @@
                   },
                   "sentAt": "2026-09-27T11:00:00+07:00",
                   "status": "pending_customer",
+                  "statusLabelAdminTh": "รอ Proof จากลูกค้า",
+                  "statusLabelTh": "รอคุณตรวจแบบตัวอย่าง",
                   "submissionId": "0192f3a0-7c1e-7d2a-9b1f-0000000e2006",
                   "versionNo": 2
                 },
@@ -395170,6 +396418,8 @@
                     "previousProofFileId": "0192f3a0-7c1e-7d2a-9b1f-0000000e2004",
                     "previousProofId": "0192f3a0-7c1e-7d2a-9b1f-0000000e2003",
                     "previousStatus": "changes_requested",
+                    "previousStatusLabelAdminTh": "ขอให้แก้ไข Proof",
+                    "previousStatusLabelTh": "ขอแก้ไขแบบตัวอย่าง",
                     "previousVersionNo": 1
                   },
                   "decidedAt": null,
@@ -395190,6 +396440,8 @@
                   },
                   "sentAt": "2026-09-27T11:00:00+07:00",
                   "status": "pending_customer",
+                  "statusLabelAdminTh": "รอ Proof จากลูกค้า",
+                  "statusLabelTh": "รอคุณตรวจแบบตัวอย่าง",
                   "submissionId": "0192f3a0-7c1e-7d2a-9b1f-0000000e2006",
                   "versionNo": 2
                 },
@@ -395427,6 +396679,8 @@
                     "previousProofFileId": "0192f3a0-7c1e-7d2a-9b1f-0000000e2004",
                     "previousProofId": "0192f3a0-7c1e-7d2a-9b1f-0000000e2003",
                     "previousStatus": "changes_requested",
+                    "previousStatusLabelAdminTh": "ขอให้แก้ไข Proof",
+                    "previousStatusLabelTh": "ขอแก้ไขแบบตัวอย่าง",
                     "previousVersionNo": 1
                   },
                   "decidedAt": "2026-09-27T12:00:00+07:00",
@@ -395447,6 +396701,8 @@
                   },
                   "sentAt": "2026-09-27T11:00:00+07:00",
                   "status": "approved",
+                  "statusLabelAdminTh": "รอ Proof จากลูกค้า",
+                  "statusLabelTh": "รอคุณตรวจแบบตัวอย่าง",
                   "submissionId": "0192f3a0-7c1e-7d2a-9b1f-0000000e2006",
                   "versionNo": 2
                 },
@@ -395736,6 +396992,8 @@
                     "previousProofFileId": "0192f3a0-7c1e-7d2a-9b1f-0000000e2004",
                     "previousProofId": "0192f3a0-7c1e-7d2a-9b1f-0000000e2003",
                     "previousStatus": "changes_requested",
+                    "previousStatusLabelAdminTh": "ขอให้แก้ไข Proof",
+                    "previousStatusLabelTh": "ขอแก้ไขแบบตัวอย่าง",
                     "previousVersionNo": 1
                   },
                   "decidedAt": "2026-09-27T12:00:00+07:00",
@@ -395756,6 +397014,8 @@
                   },
                   "sentAt": "2026-09-27T11:00:00+07:00",
                   "status": "changes_requested",
+                  "statusLabelAdminTh": "รอ Proof จากลูกค้า",
+                  "statusLabelTh": "รอคุณตรวจแบบตัวอย่าง",
                   "submissionId": "0192f3a0-7c1e-7d2a-9b1f-0000000e2006",
                   "versionNo": 2
                 },
@@ -396039,6 +397299,8 @@
                     "previousProofFileId": "0192f3a0-7c1e-7d2a-9b1f-0000000e2004",
                     "previousProofId": "0192f3a0-7c1e-7d2a-9b1f-0000000e2003",
                     "previousStatus": "changes_requested",
+                    "previousStatusLabelAdminTh": "ขอให้แก้ไข Proof",
+                    "previousStatusLabelTh": "ขอแก้ไขแบบตัวอย่าง",
                     "previousVersionNo": 1
                   },
                   "decidedAt": null,
@@ -396059,6 +397321,8 @@
                   },
                   "sentAt": "2026-09-27T11:00:00+07:00",
                   "status": "pending_customer",
+                  "statusLabelAdminTh": "รอ Proof จากลูกค้า",
+                  "statusLabelTh": "รอคุณตรวจแบบตัวอย่าง",
                   "submissionId": "0192f3a0-7c1e-7d2a-9b1f-0000000e2006",
                   "versionNo": 2
                 },
@@ -396424,6 +397688,8 @@
                       "sharedAt": null,
                       "source": "instant",
                       "status": "saved",
+                      "statusLabelAdminTh": "บันทึกแล้ว",
+                      "statusLabelTh": "บันทึกแล้ว",
                       "summary": {
                         "product": {
                           "imageUrl": "/v1/store/catalog/images/0192f3a0-7c1e-7d2a-9b1f-00000000c009",
@@ -396778,6 +398044,8 @@
                   "sharedAt": null,
                   "source": "instant",
                   "status": "saved",
+                  "statusLabelAdminTh": "บันทึกแล้ว",
+                  "statusLabelTh": "บันทึกแล้ว",
                   "summary": {
                     "product": {
                       "imageUrl": "/v1/store/catalog/images/0192f3a0-7c1e-7d2a-9b1f-00000000c009",
@@ -397504,6 +398772,8 @@
                   "sharedAt": null,
                   "source": "instant",
                   "status": "shared",
+                  "statusLabelAdminTh": "บันทึกแล้ว",
+                  "statusLabelTh": "บันทึกแล้ว",
                   "summary": {
                     "product": {
                       "imageUrl": "/v1/store/catalog/images/0192f3a0-7c1e-7d2a-9b1f-00000000c009",
@@ -397796,6 +399066,8 @@
                   "sharedAt": null,
                   "source": "instant",
                   "status": "saved",
+                  "statusLabelAdminTh": "บันทึกแล้ว",
+                  "statusLabelTh": "บันทึกแล้ว",
                   "summary": {
                     "product": {
                       "imageUrl": "/v1/store/catalog/images/0192f3a0-7c1e-7d2a-9b1f-00000000c009",
@@ -398115,6 +399387,8 @@
                   "sharedAt": null,
                   "source": "instant",
                   "status": "saved",
+                  "statusLabelAdminTh": "บันทึกแล้ว",
+                  "statusLabelTh": "บันทึกแล้ว",
                   "summary": {
                     "product": {
                       "imageUrl": "/v1/store/catalog/images/0192f3a0-7c1e-7d2a-9b1f-00000000c009",
@@ -398477,6 +399751,8 @@
                   "sharedAt": null,
                   "source": "instant",
                   "status": "declined",
+                  "statusLabelAdminTh": "บันทึกแล้ว",
+                  "statusLabelTh": "บันทึกแล้ว",
                   "summary": {
                     "product": {
                       "imageUrl": "/v1/store/catalog/images/0192f3a0-7c1e-7d2a-9b1f-00000000c009",
@@ -398832,6 +400108,8 @@
                   "sharedAt": null,
                   "source": "instant",
                   "status": "saved",
+                  "statusLabelAdminTh": "บันทึกแล้ว",
+                  "statusLabelTh": "บันทึกแล้ว",
                   "summary": {
                     "product": {
                       "imageUrl": "/v1/store/catalog/images/0192f3a0-7c1e-7d2a-9b1f-00000000c009",
@@ -399163,6 +400441,8 @@
                   "sharedAt": null,
                   "source": "instant",
                   "status": "saved",
+                  "statusLabelAdminTh": "บันทึกแล้ว",
+                  "statusLabelTh": "บันทึกแล้ว",
                   "summary": {
                     "product": {
                       "imageUrl": "/v1/store/catalog/images/0192f3a0-7c1e-7d2a-9b1f-00000000c009",
@@ -399753,6 +401033,8 @@
                     "sharedAt": null,
                     "source": "instant",
                     "status": "shared",
+                    "statusLabelAdminTh": "บันทึกแล้ว",
+                    "statusLabelTh": "บันทึกแล้ว",
                     "summary": {
                       "product": {
                         "imageUrl": "/v1/store/catalog/images/0192f3a0-7c1e-7d2a-9b1f-00000000c009",
@@ -400357,6 +401639,8 @@
                   "sharedAt": null,
                   "source": "instant",
                   "status": "saved",
+                  "statusLabelAdminTh": "บันทึกแล้ว",
+                  "statusLabelTh": "บันทึกแล้ว",
                   "summary": {
                     "product": {
                       "imageUrl": "/v1/store/catalog/images/0192f3a0-7c1e-7d2a-9b1f-00000000c009",
@@ -400881,6 +402165,8 @@
                   "sharedAt": null,
                   "source": "instant",
                   "status": "saved",
+                  "statusLabelAdminTh": "บันทึกแล้ว",
+                  "statusLabelTh": "บันทึกแล้ว",
                   "summary": {
                     "product": {
                       "imageUrl": "/v1/store/catalog/images/0192f3a0-7c1e-7d2a-9b1f-00000000c009",
@@ -405341,6 +406627,8 @@
                           "note": "Price includes delivery to Bangkok (fake)",
                           "sentAt": "2026-10-01T09:00:00+07:00",
                           "status": "sent",
+                          "statusLabelAdminTh": "ส่งใบเสนอราคาแล้ว",
+                          "statusLabelTh": "ส่งใบเสนอราคาแล้ว",
                           "validUntil": "2026-10-16T09:00:00+07:00",
                           "versionNo": 1
                         }
@@ -405353,6 +406641,8 @@
                         "print": "1 colour one side"
                       },
                       "status": "quoted",
+                      "statusLabelAdminTh": "เสนอราคาแล้ว",
+                      "statusLabelTh": "เสนอราคาแล้ว",
                       "style": null,
                       "submittedAt": "2026-09-30T15:00:00+07:00",
                       "targetDate": "2026-11-15",
@@ -405611,6 +406901,8 @@
                     "print": "1 colour one side"
                   },
                   "status": "submitted",
+                  "statusLabelAdminTh": "เสนอราคาแล้ว",
+                  "statusLabelTh": "เสนอราคาแล้ว",
                   "style": null,
                   "submittedAt": "2026-09-30T15:00:00+07:00",
                   "targetDate": "2026-11-15",
@@ -405918,6 +407210,8 @@
                       "note": "Price includes delivery to Bangkok (fake)",
                       "sentAt": "2026-10-01T09:00:00+07:00",
                       "status": "sent",
+                      "statusLabelAdminTh": "ส่งใบเสนอราคาแล้ว",
+                      "statusLabelTh": "ส่งใบเสนอราคาแล้ว",
                       "validUntil": "2026-10-16T09:00:00+07:00",
                       "versionNo": 1
                     }
@@ -405930,6 +407224,8 @@
                     "print": "1 colour one side"
                   },
                   "status": "quoted",
+                  "statusLabelAdminTh": "เสนอราคาแล้ว",
+                  "statusLabelTh": "เสนอราคาแล้ว",
                   "style": null,
                   "submittedAt": "2026-09-30T15:00:00+07:00",
                   "targetDate": "2026-11-15",
@@ -406199,6 +407495,8 @@
                       "note": "Price includes delivery to Bangkok (fake)",
                       "sentAt": "2026-10-01T09:00:00+07:00",
                       "status": "sent",
+                      "statusLabelAdminTh": "ส่งใบเสนอราคาแล้ว",
+                      "statusLabelTh": "ส่งใบเสนอราคาแล้ว",
                       "validUntil": "2026-10-16T09:00:00+07:00",
                       "versionNo": 1
                     }
@@ -406211,6 +407509,8 @@
                     "print": "1 colour one side"
                   },
                   "status": "accepted",
+                  "statusLabelAdminTh": "เสนอราคาแล้ว",
+                  "statusLabelTh": "เสนอราคาแล้ว",
                   "style": null,
                   "submittedAt": "2026-09-30T15:00:00+07:00",
                   "targetDate": "2026-11-15",
@@ -406552,6 +407852,8 @@
                       "note": "Price includes delivery to Bangkok (fake)",
                       "sentAt": "2026-10-01T09:00:00+07:00",
                       "status": "sent",
+                      "statusLabelAdminTh": "ส่งใบเสนอราคาแล้ว",
+                      "statusLabelTh": "ส่งใบเสนอราคาแล้ว",
                       "validUntil": "2026-10-16T09:00:00+07:00",
                       "versionNo": 1
                     }
@@ -406564,6 +407866,8 @@
                     "print": "1 colour one side"
                   },
                   "status": "declined",
+                  "statusLabelAdminTh": "เสนอราคาแล้ว",
+                  "statusLabelTh": "เสนอราคาแล้ว",
                   "style": null,
                   "submittedAt": "2026-09-30T15:00:00+07:00",
                   "targetDate": "2026-11-15",
@@ -406870,6 +408174,8 @@
                       "note": "Price includes delivery to Bangkok (fake)",
                       "sentAt": "2026-10-01T09:00:00+07:00",
                       "status": "sent",
+                      "statusLabelAdminTh": "ส่งใบเสนอราคาแล้ว",
+                      "statusLabelTh": "ส่งใบเสนอราคาแล้ว",
                       "validUntil": "2026-10-16T09:00:00+07:00",
                       "versionNo": 1
                     }
@@ -406882,6 +408188,8 @@
                     "print": "1 colour one side"
                   },
                   "status": "quoted",
+                  "statusLabelAdminTh": "เสนอราคาแล้ว",
+                  "statusLabelTh": "เสนอราคาแล้ว",
                   "style": null,
                   "submittedAt": "2026-09-30T15:00:00+07:00",
                   "targetDate": "2026-11-15",
@@ -407410,6 +408718,8 @@
                       "shippedAt": "2026-10-09T09:00:00+07:00",
                       "status": "delivered",
                       "statusChangedAt": "2026-10-10T10:00:00+07:00",
+                      "statusLabelAdminTh": "ถึงแล้ว รอตรวจ",
+                      "statusLabelTh": "ถึงแล้ว รอตรวจ",
                       "validUntil": null
                     }
                   ],
@@ -407645,6 +408955,8 @@
                   "shippedAt": "2026-10-09T09:00:00+07:00",
                   "status": "requested",
                   "statusChangedAt": "2026-10-10T10:00:00+07:00",
+                  "statusLabelAdminTh": "ถึงแล้ว รอตรวจ",
+                  "statusLabelTh": "ถึงแล้ว รอตรวจ",
                   "validUntil": null
                 },
                 "schema": {
@@ -407894,6 +409206,8 @@
                   "shippedAt": "2026-10-09T09:00:00+07:00",
                   "status": "delivered",
                   "statusChangedAt": "2026-10-10T10:00:00+07:00",
+                  "statusLabelAdminTh": "ถึงแล้ว รอตรวจ",
+                  "statusLabelTh": "ถึงแล้ว รอตรวจ",
                   "validUntil": null
                 },
                 "schema": {
@@ -408135,6 +409449,8 @@
                   "shippedAt": "2026-10-09T09:00:00+07:00",
                   "status": "approved",
                   "statusChangedAt": "2026-10-10T10:00:00+07:00",
+                  "statusLabelAdminTh": "ถึงแล้ว รอตรวจ",
+                  "statusLabelTh": "ถึงแล้ว รอตรวจ",
                   "validUntil": null
                 },
                 "schema": {
@@ -408676,6 +409992,8 @@
                   "shippedAt": "2026-10-09T09:00:00+07:00",
                   "status": "rejected",
                   "statusChangedAt": "2026-10-10T10:00:00+07:00",
+                  "statusLabelAdminTh": "ถึงแล้ว รอตรวจ",
+                  "statusLabelTh": "ถึงแล้ว รอตรวจ",
                   "validUntil": null
                 },
                 "schema": {
@@ -408962,6 +410280,8 @@
                   "shippedAt": "2026-10-09T09:00:00+07:00",
                   "status": "changes_requested",
                   "statusChangedAt": "2026-10-10T10:00:00+07:00",
+                  "statusLabelAdminTh": "ถึงแล้ว รอตรวจ",
+                  "statusLabelTh": "ถึงแล้ว รอตรวจ",
                   "validUntil": null
                 },
                 "schema": {
@@ -409922,6 +411242,128 @@
         "summary": "Show a size on every measurement basis",
         "tags": [
           "store.specs"
+        ]
+      }
+    },
+    "/v1/store/status-labels": {
+      "get": {
+        "description": "For each labelled status enum (order, order group, payment, instalment, slip, refund, artwork, submission, Proof, preflight, production job, milestone, shipment, claim, quotation, RFQ, RFQ quotation, sample, design service and round) its values with the customer’s words (`labelTh`: \"ตรวจแบบก่อนพิมพ์\" / \"แบบตัวอย่าง\", never a factory — D-050), the back office’s and factories’ words (`labelAdminTh`: \"Proof\") and English. The same words are on every response next to the status (`statusLabelTh`, `statusLabelAdminTh`); enum values never change (D-313). Anonymous, cacheable 5 minutes; a matching `If-None-Match` gets 304.\n\nImplements: D-313, D-050.",
+        "operationId": "store.statusLabels.list",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "example": [
+                  {
+                    "enumName": "ProofStatus",
+                    "values": [
+                      {
+                        "labelAdminTh": "รอ Proof จากลูกค้า",
+                        "labelEn": "Awaiting customer",
+                        "labelTh": "รอคุณตรวจแบบตัวอย่าง",
+                        "value": "pending_customer"
+                      },
+                      {
+                        "labelAdminTh": "Proof อนุมัติแล้ว",
+                        "labelEn": "Approved",
+                        "labelTh": "อนุมัติแบบตัวอย่างแล้ว",
+                        "value": "approved"
+                      },
+                      {
+                        "labelAdminTh": "ขอให้แก้ไข Proof",
+                        "labelEn": "Changes requested",
+                        "labelTh": "ขอแก้ไขแบบตัวอย่าง",
+                        "value": "changes_requested"
+                      },
+                      {
+                        "labelAdminTh": "มี Proof ฉบับใหม่แทนแล้ว",
+                        "labelEn": "Superseded",
+                        "labelTh": "มีแบบตัวอย่างฉบับใหม่แล้ว",
+                        "value": "superseded"
+                      }
+                    ]
+                  }
+                ],
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/StatusLabelEnumDto"
+                  },
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Status words per enum",
+            "headers": {
+              "ETag": {
+                "$ref": "#/components/headers/ETag"
+              },
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [],
+        "summary": "List the words for every status",
+        "tags": [
+          "store.catalog"
         ]
       }
     },
@@ -412018,7 +413460,7 @@
                   "softProof": {
                     "label": {
                       "en": "Preview, not a contract proof",
-                      "th": "ภาพจำลองเพื่อดูตัวอย่าง ไม่ใช่ปรู๊ฟสัญญา"
+                      "th": "ภาพจำลองเพื่อดูตัวอย่าง ไม่ใช่แบบตัวอย่างสำหรับอนุมัติพิมพ์"
                     },
                     "profiles": []
                   },
@@ -415570,6 +417012,8 @@
                   "sharedAt": null,
                   "source": "instant",
                   "status": "saved",
+                  "statusLabelAdminTh": "บันทึกแล้ว",
+                  "statusLabelTh": "บันทึกแล้ว",
                   "summary": {
                     "product": {
                       "imageUrl": "/v1/store/catalog/images/0192f3a0-7c1e-7d2a-9b1f-00000000c009",
@@ -415953,6 +417397,8 @@
                     "print": "1 colour one side"
                   },
                   "status": "submitted",
+                  "statusLabelAdminTh": "เสนอราคาแล้ว",
+                  "statusLabelTh": "เสนอราคาแล้ว",
                   "style": null,
                   "submittedAt": "2026-09-30T15:00:00+07:00",
                   "targetDate": "2026-11-15",
@@ -420180,14 +421626,17 @@
                       "cartonsCount": 3,
                       "shipmentNo": "SH-2610-0001",
                       "status": "in_transit",
+                      "statusLabelTh": "กำลังส่ง",
                       "steps": [
                         {
                           "occurredAt": "2026-10-19T08:00:00+07:00",
-                          "status": "picked_up"
+                          "status": "picked_up",
+                          "statusLabelTh": "ออกจากโรงงานแล้ว"
                         },
                         {
                           "occurredAt": "2026-10-19T12:00:00+07:00",
-                          "status": "in_transit"
+                          "status": "in_transit",
+                          "statusLabelTh": "กำลังส่ง"
                         }
                       ],
                       "trackingNo": null,
@@ -420203,7 +421652,9 @@
                       "labelEn": "Printing",
                       "labelTh": "กำลังพิมพ์",
                       "promisedAt": "2026-10-14T18:00:00+07:00",
-                      "status": "completed"
+                      "status": "completed",
+                      "statusLabelAdminTh": "เสร็จแล้ว",
+                      "statusLabelTh": "เสร็จแล้ว"
                     }
                   ]
                 },

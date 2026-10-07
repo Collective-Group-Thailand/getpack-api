@@ -37,12 +37,15 @@ function quotation(q: QuoteRow): RfqQuotationDto {
     id: q.publicId,
     versionNo: q.versionNo,
     status: q.status,
+    ...statusLabels('RfqQuoteStatus', q.status),
     validUntil: iso(q.validUntil),
     sentAt: iso(q.sentAt),
     note: q.note,
     lines: q.lines.map(line),
   };
 }
+
+import { statusLabels } from '@common/labels/status-labels';
 
 import { ADMIN_RFQ_ACTIONS, STORE_RFQ_ACTIONS } from './rfq-actions';
 
@@ -54,6 +57,7 @@ export function rfqDto(r: RfqRow, files: RfqFiles = NO_FILES): RfqDto {
     id: r.publicId,
     rfqCode: r.rfqCode,
     status: r.status,
+    ...statusLabels('RfqStatus', r.status),
     productTypeCode: r.productType.code,
     productTypeName: r.productType.nameTh,
     spec: r.spec as Record<string, unknown>,

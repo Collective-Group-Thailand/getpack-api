@@ -1,4 +1,6 @@
 import { FactoryRefDto } from '@common/dto/factory-ref.dto';
+import { ApiStatusLabelAdminTh, ApiStatusLabelTh } from '@common/labels/status-label.decorators';
+import { statusLabels } from '@common/labels/status-labels';
 import { NextActionDto } from '@common/next-actions/next-action.dto';
 import { PageQuery } from '@common/pagination/pagination.dto';
 import { FACTORY_ROLES } from '@modules/auth/me.dto';
@@ -199,6 +201,12 @@ export class MilestoneDto {
   @ApiProperty({ enum: MILESTONE_STATUSES, enumName: 'MilestoneStatus', example: 'in_progress' })
   status!: string;
 
+  @ApiStatusLabelTh('MilestoneStatus')
+  statusLabelTh!: string;
+
+  @ApiStatusLabelAdminTh('MilestoneStatus')
+  statusLabelAdminTh!: string;
+
   @ApiProperty({ enum: EVIDENCE, enumName: 'EvidenceRequirement', example: 'photo' })
   evidence!: string;
 
@@ -374,6 +382,12 @@ export class PartnerJobDto {
 
   @ApiProperty({ enum: JOB_STATUSES, enumName: 'ProductionJobStatus', example: 'released' })
   status!: string;
+
+  @ApiStatusLabelTh('ProductionJobStatus')
+  statusLabelTh!: string;
+
+  @ApiStatusLabelAdminTh('ProductionJobStatus')
+  statusLabelAdminTh!: string;
 
   @ApiProperty({ format: 'date-time', example: '2026-09-27T10:00:00+07:00' })
   releasedAt!: string;
@@ -570,6 +584,7 @@ export const MILESTONE_EXAMPLE: MilestoneDto = {
   nameTh: 'พิมพ์',
   nameEn: 'Printing',
   status: 'in_progress',
+  ...statusLabels('MilestoneStatus', 'in_progress'),
   evidence: 'photo',
   tracksQuantity: true,
   customerVisible: true,
@@ -589,6 +604,7 @@ export const PARTNER_JOB_EXAMPLE: PartnerJobDto = {
   jobNo: 'JOB-2609-00001',
   kind: 'production',
   status: 'released',
+  ...statusLabels('ProductionJobStatus', 'released'),
   releasedAt: '2026-09-27T10:00:00+07:00',
   acceptDueAt: '2026-09-28T10:00:00+07:00',
   acceptedAt: null,
@@ -699,7 +715,7 @@ export class UpdateMilestoneDto {
   @Min(0)
   quantityScrap?: number;
 
-  @ApiPropertyOptional({ example: 'พิมพ์เสร็จ สีตรงตามพรูฟ', maxLength: 1000 })
+  @ApiPropertyOptional({ example: 'พิมพ์เสร็จ สีตรงตาม Proof', maxLength: 1000 })
   @IsOptional()
   @IsString()
   @MaxLength(1000)

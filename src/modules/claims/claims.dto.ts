@@ -1,3 +1,5 @@
+import { ApiStatusLabelAdminTh, ApiStatusLabelTh } from '@common/labels/status-label.decorators';
+import { statusLabels } from '@common/labels/status-labels';
 import { NextActionDto } from '@common/next-actions/next-action.dto';
 import { PageQuery } from '@common/pagination/pagination.dto';
 import { DECISION_CHANNELS } from '@modules/artwork/proofs.dto';
@@ -593,6 +595,12 @@ export class StoreClaimDto {
   @ApiProperty({ enum: CLAIM_STATUSES, enumName: 'ClaimStatus', example: 'under_review' })
   status!: string;
 
+  @ApiStatusLabelTh('ClaimStatus')
+  statusLabelTh!: string;
+
+  @ApiStatusLabelAdminTh('ClaimStatus')
+  statusLabelAdminTh!: string;
+
   @ApiProperty({ example: 'กล่องบุบ 2 ลัง สินค้าด้านในเสียหาย' })
   description!: string;
 
@@ -812,6 +820,7 @@ const BASE = {
   type: 'damaged',
   origin: 'customer',
   status: 'under_review',
+  ...statusLabels('ClaimStatus', 'under_review'),
   description: 'กล่องบุบ 2 ลัง สินค้าด้านในเสียหาย',
   requestedResolution: 'reprint',
   claimedQuantity: 120,
@@ -842,6 +851,7 @@ export const STORE_CLAIM_EXAMPLE = BASE;
 export const PARTNER_CLAIM_EXAMPLE = {
   ...BASE,
   status: 'factory_review',
+  ...statusLabels('ClaimStatus', 'factory_review'),
   jobId: CLAIM_IDS.job,
   jobNo: 'DEVJOB-2610-00001',
   liability: 'factory',
@@ -856,6 +866,7 @@ export const PARTNER_CLAIM_EXAMPLE = {
 export const ADMIN_CLAIM_EXAMPLE = {
   ...PARTNER_CLAIM_EXAMPLE,
   status: 'under_review',
+  ...statusLabels('ClaimStatus', 'under_review'),
   liabilityByRule: 'factory',
   overrideReason: null,
   factoryId: CLAIM_IDS.factory,
@@ -883,6 +894,7 @@ export const ADMIN_CLAIM_EXAMPLE = {
 export const RESOLVED_EXAMPLE = {
   ...ADMIN_CLAIM_EXAMPLE,
   status: 'resolved',
+  ...statusLabels('ClaimStatus', 'resolved'),
   decidedAt: '2026-10-24T10:00:00+07:00',
   resolutions: [
     {

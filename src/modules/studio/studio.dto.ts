@@ -255,7 +255,7 @@ export class PrintRuleDto {
 }
 
 export class LocalisedLabelDto {
-  @ApiProperty({ example: 'ภาพจำลองเพื่อดูตัวอย่าง ไม่ใช่ปรู๊ฟสัญญา' })
+  @ApiProperty({ example: 'ภาพจำลองเพื่อดูตัวอย่าง ไม่ใช่แบบตัวอย่างสำหรับอนุมัติพิมพ์' })
   th!: string;
 
   @ApiProperty({ example: 'Preview, not a contract proof' })
@@ -405,7 +405,10 @@ export const RULES_EXAMPLE: StudioRulesDto = {
     },
   ],
   softProof: {
-    label: { th: 'ภาพจำลองเพื่อดูตัวอย่าง ไม่ใช่ปรู๊ฟสัญญา', en: 'Preview, not a contract proof' },
+    label: {
+      th: 'ภาพจำลองเพื่อดูตัวอย่าง ไม่ใช่แบบตัวอย่างสำหรับอนุมัติพิมพ์',
+      en: 'Preview, not a contract proof',
+    },
     profiles: [],
   },
 };

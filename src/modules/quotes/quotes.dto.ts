@@ -1,3 +1,5 @@
+import { ApiStatusLabelAdminTh, ApiStatusLabelTh } from '@common/labels/status-label.decorators';
+import { statusLabels } from '@common/labels/status-labels';
 import { PageQuery } from '@common/pagination/pagination.dto';
 import { RefField } from '@modules/catalog/crud/dto-fields';
 import {
@@ -272,6 +274,12 @@ export class SavedQuoteDto {
   @ApiProperty({ enum: QUOTE_STATUSES, enumName: 'QuoteStatus', example: 'saved' })
   status!: string;
 
+  @ApiStatusLabelTh('QuoteStatus')
+  statusLabelTh!: string;
+
+  @ApiStatusLabelAdminTh('QuoteStatus')
+  statusLabelAdminTh!: string;
+
   @ApiProperty({
     enum: QUOTE_SOURCES,
     enumName: 'QuoteSource',
@@ -483,6 +491,7 @@ export const QUOTE_EXAMPLE: SavedQuoteDto = {
   id: IDS.quote,
   quoteCode: null,
   status: 'saved',
+  ...statusLabels('QuoteStatus', 'saved'),
   source: 'instant',
   productTypeCode: 'folding_carton',
   summary: LINE_SUMMARY_EXAMPLE,

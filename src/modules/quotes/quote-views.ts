@@ -1,3 +1,4 @@
+import { statusLabels } from '@common/labels/status-labels';
 import { toBangkokIso } from '@common/time/bangkok';
 import { type QuoteStepView } from '@modules/pricing/quotes/quote-engine.service';
 import { targetGap, targetString } from '@modules/pricing/quotes/target-price';
@@ -53,6 +54,7 @@ export function quoteDto(q: QuoteRow, now = new Date()): SavedQuoteDto {
     id: q.publicId,
     quoteCode: q.quoteCode,
     status: q.status,
+    ...statusLabels('QuoteStatus', q.status),
     source: q.source,
     productTypeCode: q.productType.code,
     summary: lineSummary(q, q.options[0]?.unit ?? 'piece'),

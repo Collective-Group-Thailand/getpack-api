@@ -1,3 +1,4 @@
+import { statusLabels } from '@common/labels/status-labels';
 import { MoneyDecimal } from '@common/money/money';
 import { nextActions, NO_PERMISSIONS } from '@common/next-actions/next-actions';
 import { toBangkokIso } from '@common/time/bangkok';
@@ -21,6 +22,7 @@ export function storeClaimDto(c: ClaimRow, photos: Photos = { product: [], carto
     type: c.type,
     origin: c.origin,
     status: c.status,
+    ...statusLabels('ClaimStatus', c.status),
     description: c.description,
     requestedResolution: c.requestedResolution,
     claimedQuantity: c.claimedQuantity,

@@ -2,6 +2,7 @@ import { randomBytes } from 'node:crypto';
 
 import { type Actor } from '@common/context/actor';
 import { DomainException } from '@common/errors/domain.exception';
+import { statusLabels } from '@common/labels/status-labels';
 import { cursorPaginated, decodeCursor } from '@common/pagination/pagination';
 import { type CursorPage } from '@common/pagination/pagination.dto';
 import { bangkokDate, toBangkokIso } from '@common/time/bangkok';
@@ -15,6 +16,7 @@ import { Injectable, type OnModuleInit } from '@nestjs/common';
 import { ActivityLogService } from '@platform/activity/activity-log.service';
 import { FilesService } from '@platform/files/files.service';
 
+import { activityMessage } from './activity-messages';
 import {
   type OrderProgressDto,
   type ProgressStepDto,
@@ -99,14 +101,28 @@ export class TimelineService implements OnModuleInit {
     }));
     entries.push(...(await this.shipmentEntries(order.id, true)));
     return this.page(
-      entries,
+      collapseRepeats(entries),
       cursor,
       limit,
-      ({ id, occurredAt, type, messageKey, params, photoFileIds, shipment }): TimelineEntryDto => ({
+      ({
         id,
         occurredAt,
         type,
         messageKey,
+        messageTh,
+        messageEn,
+        count,
+        params,
+        photoFileIds,
+        shipment,
+      }): TimelineEntryDto => ({
+        id,
+        occurredAt,
+        type,
+        messageKey,
+        messageTh,
+        messageEn,
+        count,
         params,
         photoFileIds,
         shipment,
@@ -164,6 +180,9 @@ export class TimelineService implements OnModuleInit {
         occurredAt: toBangkokIso(n.createdAt),
         type: 'order.note_added',
         messageKey: 'activity.order.note_added',
+        messageTh: 'บันทึกภายใน',
+        messageEn: 'Internal note',
+        count: 1,
         params: { noteId: n.publicId },
         photoFileIds: [],
         shipment: null,
@@ -264,12 +283,14 @@ export class TimelineService implements OnModuleInit {
         .map((s) => ({
           shipmentNo: s.shipmentNo,
           status: s.status,
+          statusLabelTh: statusLabels('ShipmentStatus', s.status).statusLabelTh,
           carrier: storeCarrier(s.carrier.code),
           trackingNo: s.trackingNo,
           trackingUrl: s.trackingUrl,
           cartonsCount: s.cartonsCount,
           steps: dedupe(s.events.filter((e) => SHOWN.includes(e.status))).map((e) => ({
             status: e.status,
+            statusLabelTh: statusLabels('ShipmentStatus', e.status).statusLabelTh,
             occurredAt: toBangkokIso(e.occurredAt),
           })),
         })),
@@ -295,6 +316,8 @@ export class TimelineService implements OnModuleInit {
       occurredAt: toBangkokIso(r.occurredAt),
       type: r.action,
       messageKey: r.messageKey,
+      ...words(r.action, (r.messageParams ?? {}) as Record<string, unknown>),
+      count: 1,
       params: (r.messageParams ?? {}) as Record<string, unknown>,
       photoFileIds: [],
       shipment: null,
@@ -369,6 +392,8 @@ export class TimelineService implements OnModuleInit {
           occurredAt: toBangkokIso(e.occurredAt),
           type: `shipment.${e.status}`,
           messageKey: `timeline.shipment.${e.status}`,
+          ...words(`shipment.${e.status}`, {}),
+          count: 1,
           params: {
             location: e.location,
             ...(!customer && { source: e.source, note: e.note }),
@@ -409,6 +434,7 @@ export class TimelineService implements OnModuleInit {
         labelTh: step?.customerLabelTh ?? step?.nameTh ?? m.stepKey,
         labelEn: step?.customerLabelEn ?? step?.nameEn ?? m.stepKey,
         status: m.status,
+        ...statusLabels('MilestoneStatus', m.status),
         promisedAt: iso(m.dueAt),
         completedAt: iso(m.completedAt),
       };
@@ -440,6 +466,29 @@ export class TimelineService implements OnModuleInit {
     const page = cursorPaginated(rest.slice(0, limit + 1), limit, (e) => ({ k: e._key }));
     return { data: page.data.map(view), meta: page.meta };
   }
+}
+
+function words(type: string, params: Record<string, unknown>) {
+  const m = activityMessage(type, params);
+  return { messageTh: m.th, messageEn: m.en };
+}
+
+/**
+ * UX r2 B13: in the customer's timeline, consecutive entries of the same type that read the same are one entry —
+ * the latest, with how many it stands for (a reminder sent twice, a status recorded by two facts).
+ */
+export function collapseRepeats<T extends { _key: string; type: string; messageTh: string; count: number }>(
+  entries: T[],
+): T[] {
+  const sorted = [...entries].sort((a, b) => (a._key < b._key ? -1 : a._key > b._key ? 1 : 0));
+  const out: T[] = [];
+  for (const e of sorted) {
+    const last = out[out.length - 1];
+    if (last && last.type === e.type && last.messageTh === e.messageTh)
+      out[out.length - 1] = { ...e, count: last.count + e.count };
+    else out.push(e);
+  }
+  return out;
 }
 
 /** Consecutive repeats of one status (a carrier resending it) are one step outside Packio. */

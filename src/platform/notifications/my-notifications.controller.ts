@@ -1,6 +1,7 @@
 import { CurrentActor } from '@common/auth/auth.decorators';
 import { type Actor, type UserActor } from '@common/context/actor';
 import { DomainException } from '@common/errors/domain.exception';
+import { consentLabels } from '@common/labels/consent-labels';
 import { ApiEndpoint, ApiStandardErrors, ApiSuccess } from '@common/openapi/decorators';
 import { CursorQuery, DEFAULT_CURSOR_LIMIT } from '@common/pagination/pagination.dto';
 import { toBangkokIso } from '@common/time/bangkok';
@@ -19,6 +20,7 @@ import {
 } from '@nestjs/common';
 import { ApiBody } from '@nestjs/swagger';
 
+import { eventTypeLabels } from './event-type-labels';
 import { inboxLink } from './inbox-links';
 import { MyNotificationsService } from './my-notifications.service';
 import {
@@ -70,6 +72,7 @@ function inboxController(surface: Extract<Surface, 'store' | 'admin' | 'partner'
         data: items.map(({ row, title, body }) => ({
           id: row.eventId,
           eventType: row.event.type,
+          ...eventTypeLabels(row.event.type),
           title,
           body,
           createdAt: toBangkokIso(row.createdAt),
@@ -188,6 +191,8 @@ export class StoreMyNotificationSettingsController {
     example: [
       {
         purpose: 'marketing_line',
+        labelTh: 'รับข่าวสารและโปรโมชันทาง LINE',
+        labelEn: 'News and offers on LINE',
         required: false,
         versionNo: 1,
         summary: 'รับข่าวสารและโปรโมชันทาง LINE',
@@ -220,6 +225,8 @@ export class StoreMyNotificationSettingsController {
     example: [
       {
         purpose: 'marketing_line',
+        labelTh: 'รับข่าวสารและโปรโมชันทาง LINE',
+        labelEn: 'News and offers on LINE',
         required: false,
         versionNo: 1,
         summary: 'รับข่าวสารและโปรโมชันทาง LINE',
@@ -298,6 +305,7 @@ export class PartnerMyNotificationSettingsController {
 function toConsentDtos(rows: Awaited<ReturnType<MyNotificationsService['consents']>>): ConsentDto[] {
   return rows.map(({ purpose, version, latest }) => ({
     purpose: purpose.key,
+    ...consentLabels(purpose.key),
     required: purpose.required,
     versionNo: version?.versionNo ?? null,
     summary: version?.summaryTh ?? null,

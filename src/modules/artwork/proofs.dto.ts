@@ -1,3 +1,5 @@
+import { ApiStatusLabelAdminTh, ApiStatusLabelTh } from '@common/labels/status-label.decorators';
+import { statusLabels } from '@common/labels/status-labels';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { Type } from 'class-transformer';
 import {
@@ -248,6 +250,12 @@ export class ProofCompareDto {
   @ApiProperty({ enum: PROOF_STATUSES, enumName: 'ProofStatus', example: 'changes_requested' })
   previousStatus!: string;
 
+  @ApiStatusLabelTh('ProofStatus', 'previousStatus')
+  previousStatusLabelTh!: string;
+
+  @ApiStatusLabelAdminTh('ProofStatus', 'previousStatus')
+  previousStatusLabelAdminTh!: string;
+
   @ApiProperty({ type: String, nullable: true, example: 'สีพื้นหลังเข้มเกินไป' })
   previousDecisionComment!: string | null;
 
@@ -274,6 +282,12 @@ export class ProofDto {
 
   @ApiProperty({ enum: PROOF_STATUSES, enumName: 'ProofStatus', example: 'pending_customer' })
   status!: string;
+
+  @ApiStatusLabelTh('ProofStatus')
+  statusLabelTh!: string;
+
+  @ApiStatusLabelAdminTh('ProofStatus')
+  statusLabelAdminTh!: string;
 
   @ApiProperty({ type: String, format: 'uuid', nullable: true, example: PROOF_IDS.submission })
   submissionId!: string | null;
@@ -382,6 +396,7 @@ export const PROOF_EXAMPLE: ProofDto = {
   orderCode: 'OR2609270001',
   versionNo: 2,
   status: 'pending_customer',
+  ...statusLabels('ProofStatus', 'pending_customer'),
   submissionId: PROOF_IDS.submission,
   proofFile: { id: PROOF_IDS.file, originalName: 'proof-v2.pdf', mimeType: 'application/pdf', pageCount: 1 },
   dielineFileId: PROOF_IDS.dieline,
@@ -400,6 +415,7 @@ export const PROOF_EXAMPLE: ProofDto = {
     previousVersionNo: 1,
     previousProofFileId: PROOF_IDS.file,
     previousStatus: 'changes_requested',
+    ...statusLabels('ProofStatus', 'changes_requested', 'previousStatus'),
     previousDecisionComment: 'สีพื้นหลังเข้มเกินไป',
     openAnnotationsOnPrevious: 0,
   },
