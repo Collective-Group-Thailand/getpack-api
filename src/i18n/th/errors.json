@@ -128,11 +128,11 @@
   "idempotency": {
     "key_required": {
       "title": "ต้องระบุ Idempotency-Key",
-      "detail": "คำขอนี้ต้องมี header Idempotency-Key (uuid)"
+      "detail": "ไม่สามารถส่งคำขอได้ กรุณารีเฟรชหน้าแล้วลองใหม่อีกครั้ง (ไม่มีรหัสคำขอ Idempotency-Key)"
     },
     "key_invalid": {
       "title": "Idempotency-Key ไม่ถูกต้อง",
-      "detail": "Idempotency-Key ต้องเป็น uuid"
+      "detail": "ไม่สามารถส่งคำขอได้ กรุณารีเฟรชหน้าแล้วลองใหม่อีกครั้ง (รหัสคำขอ Idempotency-Key ต้องเป็น uuid) — ยังไม่มีการสร้างรายการใด ๆ"
     },
     "key_reused": {
       "title": "Idempotency-Key ถูกใช้แล้ว",
@@ -874,15 +874,15 @@
   "proofs": {
     "no_accepted_artwork": {
       "title": "ยังไม่มีไฟล์งานที่ผ่านการตรวจ",
-      "detail": "ต้องรับไฟล์งานเข้าทำพรูฟ (accept) ก่อนส่งพรูฟ"
+      "detail": "ต้องรับไฟล์งานเข้าทำ Proof (accept) ก่อนส่ง Proof"
     },
     "not_pending": {
-      "title": "พรูฟนี้ตัดสินแล้ว",
-      "detail": "พรูฟนี้อยู่ในสถานะ {status} ไม่รอการตัดสินใจแล้ว"
+      "title": "แบบตัวอย่างนี้ตัดสินแล้ว",
+      "detail": "แบบตัวอย่างนี้อยู่ในสถานะ {status} ไม่รอการตัดสินใจแล้ว"
     },
     "annotation_closed": {
       "title": "ปิดรับความเห็นแล้ว",
-      "detail": "พรูฟนี้อยู่ในสถานะ {status} จึงเพิ่มความเห็นไม่ได้"
+      "detail": "แบบตัวอย่างนี้อยู่ในสถานะ {status} จึงเพิ่มความเห็นไม่ได้"
     }
   },
   "design_services": {
@@ -901,8 +901,8 @@
   },
   "mockups": {
     "exists": {
-      "title": "มีม็อกอัพแล้ว",
-      "detail": "คำสั่งซื้อนี้มีม็อกอัพ (ปรู๊ฟจริง) แล้ว"
+      "title": "มีตัวอย่างจริงแล้ว",
+      "detail": "คำสั่งซื้อนี้มีตัวอย่างจริง (ม็อกอัพ) แล้ว"
     }
   },
   "designs": {

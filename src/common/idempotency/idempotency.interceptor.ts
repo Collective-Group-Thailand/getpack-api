@@ -26,7 +26,8 @@ import {
 } from './idempotency.store';
 import { IDEMPOTENCY_KEY_HEADER, IDEMPOTENT_METADATA, type IdempotentMode } from './idempotent.decorator';
 
-const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+/** Any RFC 4122 / 9562 textual uuid (every version and variant, nil and max included) — the key is opaque (UX r2 B1). */
+const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 /** Response headers worth replaying; everything else is recomputed per request. */
 const REPLAYED_HEADERS = ['location', 'etag'];
 export const IDEMPOTENT_REPLAY_HEADER = 'Idempotent-Replayed';

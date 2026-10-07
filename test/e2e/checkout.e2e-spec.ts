@@ -218,6 +218,35 @@ describe('checkout (e2e, B3.1)', () => {
       .expect((res) => expect(res.body.code).toBe('checkout.price_expired'));
   });
 
+  it('creates no order when the Idempotency-Key or the body is invalid, then places with any uuid key (UX r2 B1)', async () => {
+    const { token } = await twoItemCart(5);
+    const preview = await as(ctx, token).post('/v1/store/checkout/actions/preview', {}).expect(200);
+    const expectedGrossAmount = preview.body.totals.grossAmount as string;
+    const groups = async () =>
+      (await as(ctx, token).get('/v1/store/order-groups').expect(200)).body.meta.total as number;
+
+    const invalidKey = await as(ctx, token)
+      .post('/v1/store/checkout', { expectedGrossAmount })
+      .set('Idempotency-Key', 'not-a-uuid')
+      .expect(400);
+    expect(invalidKey.body.code).toBe('idempotency.key_invalid');
+    expect(invalidKey.body.detail).toMatch(/ลองใหม่/);
+
+    // A uuid of an unusual version is still a key; the invalid body is refused and the key released.
+    const key = '0192f5a0-7c1e-7b3a-9f00-2b6c1d4e5f60';
+    await as(ctx, token)
+      .post('/v1/store/checkout', { expectedGrossAmount: 'not-money' })
+      .set('Idempotency-Key', key)
+      .expect(422);
+    expect(await groups()).toBe(0);
+
+    await as(ctx, token)
+      .post('/v1/store/checkout', { expectedGrossAmount })
+      .set('Idempotency-Key', key)
+      .expect(201);
+    expect(await groups()).toBe(1);
+  });
+
   it('lets CS place a customer’s order on their behalf with cost masked by permission (D-141)', async () => {
     const { token } = await customerToken(ctx, 4);
     const me = await as(ctx, token).get('/v1/store/customer-profile').expect(200);

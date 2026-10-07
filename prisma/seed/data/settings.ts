@@ -503,11 +503,11 @@ export const SETTINGS: readonly SettingSeed[] = [
   {
     key: 'payments.qr_validity_minutes',
     valueType: 'integer',
-    value: 1440,
+    value: 15,
     valueSchema: { minimum: 5, maximum: 10080 },
     description:
-      'D-060 / D-176 lifetime of one SCB QR payment attempt (minutes); legacy used SCB_DAYS_UNTIL_EXPIRATION (sample 1 day); never shortens the order expiry',
-    decisions: ['D-060', 'D-176'],
+      'D-312 (was D-060 / D-176: legacy SCB_DAYS_UNTIL_EXPIRATION, sample 1 day) lifetime of one SCB QR payment attempt (minutes) — 15; a new QR can be generated after it lapses; never shortens the order expiry',
+    decisions: ['D-312', 'D-060', 'D-176'],
     confirmation: 'proposed',
   },
   {

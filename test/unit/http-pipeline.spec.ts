@@ -125,6 +125,21 @@ describe('HTTP pipeline', () => {
       expect(res.body.code).toBe('idempotency.key_invalid');
     });
 
+    it('accepts any RFC 4122 uuid as a key, whatever its version or variant (UX r2 B1)', async () => {
+      for (const key of [
+        '00000000-0000-0000-0000-000000000000',
+        '0192f5a0-7c1e-7b3a-9f00-2b6c1d4e5f60',
+        'A3BB189E-8BF9-3888-9912-ACE4E6543002',
+        '6ba7b810-9dad-11d1-c0b4-00c04fd430c8',
+      ]) {
+        await request(server)
+          .post('/v1/pipeline-test/things')
+          .set('Idempotency-Key', key)
+          .send(body)
+          .expect(201);
+      }
+    });
+
     it('replays the original response for the same key and body', async () => {
       const first = await request(server)
         .post('/v1/pipeline-test/things')
