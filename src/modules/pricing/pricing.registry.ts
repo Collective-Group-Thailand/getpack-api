@@ -2,6 +2,7 @@ import { StoreSpecsController } from '@modules/specs/specs.controller';
 import { type Type } from '@nestjs/common';
 
 import { StorePriceHintsController } from './hints/price-hints.controller';
+import { StoreHeroPresetsController } from './quotes/hero-presets.controller';
 import {
   AdminCsCorrugateController,
   AdminCsFoldingController,
@@ -26,6 +27,7 @@ export const PRICING_STORE_CONTROLLERS: Type<unknown>[] = [
   StoreQuotesController,
   StorePriceHintsController,
   StoreSpecsController,
+  StoreHeroPresetsController,
 ];
 
 /** `/v1/admin/*` controllers of the pricing context. */

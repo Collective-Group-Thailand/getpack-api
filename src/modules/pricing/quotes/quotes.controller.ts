@@ -4,6 +4,7 @@ import { type Actor } from '@common/context/actor';
 import { RequestContext } from '@common/context/request-context';
 import { DomainException } from '@common/errors/domain.exception';
 import { ApiEndpoint, ApiStandardErrors, ApiSuccess } from '@common/openapi/decorators';
+import { toBangkokIso } from '@common/time/bangkok';
 import { PrismaService } from '@database/prisma.service';
 import { PermissionResolver } from '@modules/iam/permission-resolver.service';
 import { FactoryAccess } from '@modules/partners/factories/factory-access';
@@ -20,8 +21,17 @@ import {
   Query,
 } from '@nestjs/common';
 import { ApiBody, ApiExtraModels, ApiParam, ApiQuery, ApiTags } from '@nestjs/swagger';
+import { Throttle } from '@nestjs/throttler';
+import { SettingsService } from '@platform/settings/settings.service';
 
 import { assertStoreRules, validateConfiguration } from './configurations';
+import { HERO_PREVIEW_EXAMPLE, HeroPreviewDto, HeroPreviewRequestDto } from './hero-presets.dto';
+import { HeroPresetsService } from './hero-presets.service';
+
+/** UX r2 A2: the hero preview is anonymous; 30 a minute per client (env `HERO_PREVIEW_THROTTLE_LIMIT`). */
+const HERO_PREVIEW_THROTTLE = {
+  default: { limit: () => Number(process.env.HERO_PREVIEW_THROTTLE_LIMIT ?? 30), ttl: 60_000 },
+};
 import {
   CORRUGATE_CONFIGURATION_EXAMPLE,
   CorrugateConfigurationDto,
@@ -164,6 +174,8 @@ export class StoreQuotesController {
   constructor(
     private readonly engine: QuoteEngineService,
     private readonly prisma: PrismaService,
+    private readonly hero: HeroPresetsService,
+    private readonly settings: SettingsService,
   ) {}
 
   @Post('actions/calculate')
@@ -204,9 +216,79 @@ export class StoreQuotesController {
     'pricing.vat_rate_missing',
     'specs.unit_not_accepted',
   )
-  async calculate(
+  calculate(
     @OptionalActor() actor: Actor | undefined,
     @Body() body: CalculateQuoteDto,
+  ): Promise<QuoteCalculationDto> {
+    return this.priceForStore(actor, body);
+  }
+
+  @Post('actions/preview')
+  @HttpCode(200)
+  @Public()
+  @Throttle(HERO_PREVIEW_THROTTLE)
+  @ApiEndpoint({
+    id: 'store.quotes.preview',
+    summary: 'Price a homepage Studio hero choice',
+    description:
+      'The hero’s shape, board, print, inside size (mm, D-182) and quantity, mapped by `catalog.hero_presets` to the ' +
+      'catalogue product and options (`store.catalog.getHeroPresets`), priced by the very `store.quotes.calculate` ' +
+      'path `/configure` uses — no formula of its own (D-310, D-043); `calculation` is the body it priced. Anonymous, ' +
+      '30 requests per minute per client. 409 `quotes.preview_unavailable` when the presets do not offer the choice, ' +
+      '`pricing.not_instant` when the quantity has no instant price. No factory data (D-050).',
+    implements: ['D-310', 'D-043', 'D-051', 'D-050'],
+  })
+  @ApiBody({
+    type: HeroPreviewRequestDto,
+    examples: {
+      default: {
+        value: {
+          shape: 'mailer',
+          lengthMm: 200,
+          widthMm: 150,
+          heightMm: 80,
+          material: 'kraft350',
+          print: 'one',
+          qty: 1000,
+        },
+      },
+    },
+  })
+  @ApiSuccess(200, { description: 'Hero price', type: HeroPreviewDto, example: HERO_PREVIEW_EXAMPLE })
+  @ApiStandardErrors(
+    'http.bad_request',
+    'http.malformed_json',
+    'validation.failed',
+    'quotes.preview_unavailable',
+    'pricing.not_instant',
+    'pricing.vat_rate_missing',
+  )
+  async preview(
+    @OptionalActor() actor: Actor | undefined,
+    @Body() body: HeroPreviewRequestDto,
+  ): Promise<HeroPreviewDto> {
+    const { body: calculation, presetId } = await this.hero.body(body);
+    const view = await this.priceForStore(actor, calculation);
+    const step = view.steps[0];
+    if (!step?.instant || step.unitPrice === null || step.grossAmount === null)
+      throw new DomainException('pricing.not_instant');
+    const validity = await this.settings.at('quotes.validity_days');
+    return {
+      unitPrice: step.unitPrice,
+      total: step.grossAmount,
+      currency: 'THB',
+      vatIncluded: true,
+      leadTimeBusinessDays: { min: step.leadTimeDays ?? 0, max: step.leadTimeDays ?? 0 },
+      priceLockUntil: toBangkokIso(new Date(Date.now() + Number(validity.value) * 86_400_000)),
+      presetId,
+      calculation: calculation as unknown as Record<string, unknown>,
+    };
+  }
+
+  /** The store's instant price of a calculator configuration — the one path `/configure` and the hero share. */
+  private async priceForStore(
+    actor: Actor | undefined,
+    body: CalculateQuoteDto,
   ): Promise<QuoteCalculationDto> {
     const type = await this.prisma.productType.findFirst({
       where: { code: body.productTypeCode, status: 'active' },

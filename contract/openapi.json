@@ -2971,6 +2971,17 @@
           "type": "https://errors.packio/quotes.nothing_to_save"
         }
       },
+      "problem.quotes.preview_unavailable": {
+        "summary": "quotes.preview_unavailable",
+        "value": {
+          "code": "quotes.preview_unavailable",
+          "detail": "ตัวเลือกนี้ยังไม่เปิดให้คำนวณราคาจากหน้าแรก กรุณาเปิดหน้าออกแบบเพื่อดูราคา",
+          "requestId": "6f1c2d8e-2c7b-4d0e-9d1c-3f1a2b3c4d5e",
+          "status": 409,
+          "title": "ยังคำนวณราคาตัวเลือกนี้ไม่ได้",
+          "type": "https://errors.packio/quotes.preview_unavailable"
+        }
+      },
       "problem.quotes.still_valid": {
         "summary": "quotes.still_valid",
         "value": {
@@ -40312,6 +40323,440 @@
           "shutting_down"
         ],
         "type": "string"
+      },
+      "HeroMaterial": {
+        "enum": [
+          "kraft350",
+          "art350",
+          "corrE"
+        ],
+        "type": "string"
+      },
+      "HeroMaterialDto": {
+        "properties": {
+          "id": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/HeroMaterial"
+              }
+            ],
+            "example": "kraft350"
+          },
+          "labelEn": {
+            "example": "Kraft 350 gsm",
+            "type": "string"
+          },
+          "labelTh": {
+            "description": "The catalogue material’s name",
+            "example": "กระดาษคราฟท์ 350 แกรม",
+            "type": "string"
+          },
+          "options": {
+            "description": "What the board is on each shape that offers it",
+            "items": {
+              "$ref": "#/components/schemas/HeroMaterialOptionDto"
+            },
+            "type": "array"
+          }
+        },
+        "required": [
+          "id",
+          "labelTh",
+          "labelEn",
+          "options"
+        ],
+        "type": "object"
+      },
+      "HeroMaterialOptionDto": {
+        "properties": {
+          "materialId": {
+            "description": "Material option id",
+            "example": "0192f3a0-7c1e-7d2a-9b1f-0000000a0003",
+            "format": "uuid",
+            "type": "string"
+          },
+          "shapeId": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/HeroShape"
+              }
+            ],
+            "example": "mailer"
+          }
+        },
+        "required": [
+          "shapeId",
+          "materialId"
+        ],
+        "type": "object"
+      },
+      "HeroPresetsDto": {
+        "properties": {
+          "materials": {
+            "items": {
+              "$ref": "#/components/schemas/HeroMaterialDto"
+            },
+            "type": "array"
+          },
+          "prints": {
+            "items": {
+              "$ref": "#/components/schemas/HeroPrintDto"
+            },
+            "type": "array"
+          },
+          "qtys": {
+            "example": [
+              500,
+              1000,
+              2000,
+              5000
+            ],
+            "items": {
+              "type": "number"
+            },
+            "type": "array"
+          },
+          "shapes": {
+            "items": {
+              "$ref": "#/components/schemas/HeroShapeDto"
+            },
+            "type": "array"
+          },
+          "sizes": {
+            "items": {
+              "$ref": "#/components/schemas/HeroSizeDto"
+            },
+            "type": "array"
+          }
+        },
+        "required": [
+          "shapes",
+          "sizes",
+          "materials",
+          "prints",
+          "qtys"
+        ],
+        "type": "object"
+      },
+      "HeroPreviewDto": {
+        "properties": {
+          "calculation": {
+            "additionalProperties": true,
+            "description": "The `store.quotes.calculate` body this preview priced — `/configure` sends the same for the same choices",
+            "example": {
+              "configuration": {
+                "d": 80,
+                "l": 200,
+                "patternId": "…",
+                "w": 150
+              },
+              "productTypeCode": "corrugated"
+            },
+            "type": "object"
+          },
+          "currency": {
+            "example": "THB",
+            "type": "string"
+          },
+          "leadTimeBusinessDays": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/BusinessDayRangeDto"
+              }
+            ],
+            "description": "Production lead time (business days)"
+          },
+          "presetId": {
+            "description": "The preset size the dimensions match; null for a size of the customer’s own",
+            "example": "mailer:M",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "priceLockUntil": {
+            "description": "Until when a quotation saved now keeps this price (`quotes.validity_days`, D-051); the preview itself locks nothing",
+            "example": "2026-10-22T10:15:00+07:00",
+            "format": "date-time",
+            "type": "string"
+          },
+          "total": {
+            "description": "Total incl. VAT — the calculation’s `grossAmount` (no shipping without a postcode; decimal string)",
+            "example": "13380.00",
+            "type": "string"
+          },
+          "unitPrice": {
+            "description": "Price per piece incl. VAT (decimal string)",
+            "example": "13.38",
+            "type": "string"
+          },
+          "vatIncluded": {
+            "description": "Prices include VAT",
+            "example": true,
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "unitPrice",
+          "total",
+          "currency",
+          "vatIncluded",
+          "leadTimeBusinessDays",
+          "priceLockUntil",
+          "calculation"
+        ],
+        "type": "object"
+      },
+      "HeroPreviewRequestDto": {
+        "properties": {
+          "heightMm": {
+            "description": "Inside height (mm)",
+            "example": 80,
+            "maximum": 2000,
+            "minimum": 1,
+            "type": "number"
+          },
+          "lengthMm": {
+            "description": "Inside length (mm, D-182)",
+            "example": 200,
+            "maximum": 2000,
+            "minimum": 1,
+            "type": "number"
+          },
+          "material": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/HeroMaterial"
+              }
+            ],
+            "example": "kraft350"
+          },
+          "print": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/HeroPrint"
+              }
+            ],
+            "example": "one"
+          },
+          "qty": {
+            "description": "One of `qtys` of `store.catalog.getHeroPresets`",
+            "example": 1000,
+            "minimum": 1,
+            "type": "integer"
+          },
+          "shape": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/HeroShape"
+              }
+            ],
+            "example": "mailer"
+          },
+          "widthMm": {
+            "description": "Inside width (mm)",
+            "example": 150,
+            "maximum": 2000,
+            "minimum": 1,
+            "type": "number"
+          }
+        },
+        "required": [
+          "shape",
+          "lengthMm",
+          "widthMm",
+          "heightMm",
+          "material",
+          "print",
+          "qty"
+        ],
+        "type": "object"
+      },
+      "HeroPrint": {
+        "enum": [
+          "none",
+          "one",
+          "full"
+        ],
+        "type": "string"
+      },
+      "HeroPrintDto": {
+        "properties": {
+          "id": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/HeroPrint"
+              }
+            ],
+            "example": "one"
+          },
+          "labelEn": {
+            "example": "One colour",
+            "type": "string"
+          },
+          "labelTh": {
+            "example": "พิมพ์ 1 สี",
+            "type": "string"
+          },
+          "options": {
+            "items": {
+              "$ref": "#/components/schemas/HeroPrintOptionDto"
+            },
+            "type": "array"
+          }
+        },
+        "required": [
+          "id",
+          "labelTh",
+          "labelEn",
+          "options"
+        ],
+        "type": "object"
+      },
+      "HeroPrintOptionDto": {
+        "properties": {
+          "inkIds": {
+            "description": "Front ink option ids; empty for no print",
+            "example": [
+              "0192f3a0-7c1e-7d2a-9b1f-0000000a0004"
+            ],
+            "items": {
+              "format": "uuid",
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "shapeId": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/HeroShape"
+              }
+            ],
+            "example": "mailer"
+          }
+        },
+        "required": [
+          "shapeId",
+          "inkIds"
+        ],
+        "type": "object"
+      },
+      "HeroShape": {
+        "enum": [
+          "mailer",
+          "lid",
+          "tuck"
+        ],
+        "type": "string"
+      },
+      "HeroShapeDto": {
+        "properties": {
+          "calculator": {
+            "description": "The calculator that prices it (folding or corrugate)",
+            "example": "corrugate",
+            "type": "string"
+          },
+          "catalogProductId": {
+            "example": "0192f3a0-7c1e-7d2a-9b1f-0000000a0001",
+            "format": "uuid",
+            "type": "string"
+          },
+          "dielineKey": {
+            "example": "FEFCO-0427",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "id": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/HeroShape"
+              }
+            ],
+            "example": "mailer"
+          },
+          "labelTh": {
+            "description": "The product’s box style name",
+            "example": "กล่องไปรษณีย์",
+            "type": "string"
+          },
+          "patternId": {
+            "example": "0192f3a0-7c1e-7d2a-9b1f-0000000a0002",
+            "format": "uuid",
+            "type": "string"
+          },
+          "productSlug": {
+            "description": "The catalogue product `/configure` opens",
+            "example": "mailer-box",
+            "type": "string"
+          },
+          "productTypeCode": {
+            "example": "corrugated",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "labelTh",
+          "productSlug",
+          "catalogProductId",
+          "productTypeCode",
+          "calculator",
+          "patternId",
+          "dielineKey"
+        ],
+        "type": "object"
+      },
+      "HeroSizeDto": {
+        "properties": {
+          "code": {
+            "example": "M",
+            "type": "string"
+          },
+          "heightMm": {
+            "description": "Inside height (mm)",
+            "example": 80,
+            "type": "number"
+          },
+          "id": {
+            "description": "`<shape>:<standard size code>`, returned as `presetId`",
+            "example": "mailer:M",
+            "type": "string"
+          },
+          "labelTh": {
+            "example": "กลาง 20×15×8 ซม.",
+            "type": "string"
+          },
+          "lengthMm": {
+            "description": "Inside length (mm, D-182)",
+            "example": 200,
+            "type": "number"
+          },
+          "shapeId": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/HeroShape"
+              }
+            ],
+            "example": "mailer"
+          },
+          "widthMm": {
+            "description": "Inside width (mm)",
+            "example": 150,
+            "type": "number"
+          }
+        },
+        "required": [
+          "id",
+          "shapeId",
+          "code",
+          "labelTh",
+          "lengthMm",
+          "widthMm",
+          "heightMm"
+        ],
+        "type": "object"
       },
       "HoldJobDto": {
         "properties": {
@@ -356588,6 +357033,153 @@
         ]
       }
     },
+    "/v1/store/catalog/hero-presets": {
+      "get": {
+        "description": "Shapes (`mailer`, `lid`, `tuck`) with the catalogue product each opens and its standard sizes, boards (`kraft350`, `art350`, `corrE`) and prints (`none`, `one`, `full`) with the option ids they mean on each shape, and the quantities — from the setting `catalog.hero_presets` kept by Admin, never the CMS (D-310). Only what the live catalogue can price instantly is listed; everything is empty until Admin sets the presets (the hero then points to the studio). Price a choice with `store.quotes.preview`. Anonymous, cacheable 5 minutes; a matching `If-None-Match` gets 304.\n\nImplements: D-310, D-043.",
+        "operationId": "store.catalog.getHeroPresets",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "materials": [
+                    {
+                      "id": "kraft350",
+                      "labelEn": "E-flute kraft",
+                      "labelTh": "ลูกฟูกลอน E คราฟท์",
+                      "options": [
+                        {
+                          "materialId": "0192f3a0-7c1e-7d2a-9b1f-0000000a0003",
+                          "shapeId": "mailer"
+                        }
+                      ]
+                    }
+                  ],
+                  "prints": [
+                    {
+                      "id": "one",
+                      "labelEn": "One colour",
+                      "labelTh": "พิมพ์ 1 สี",
+                      "options": [
+                        {
+                          "inkIds": [
+                            "0192f3a0-7c1e-7d2a-9b1f-0000000a0004"
+                          ],
+                          "shapeId": "mailer"
+                        }
+                      ]
+                    }
+                  ],
+                  "qtys": [
+                    500,
+                    1000,
+                    2000,
+                    5000
+                  ],
+                  "shapes": [
+                    {
+                      "calculator": "corrugate",
+                      "catalogProductId": "0192f3a0-7c1e-7d2a-9b1f-0000000a0001",
+                      "dielineKey": "FEFCO-0427",
+                      "id": "mailer",
+                      "labelTh": "กล่องไปรษณีย์",
+                      "patternId": "0192f3a0-7c1e-7d2a-9b1f-0000000a0002",
+                      "productSlug": "mailer-box",
+                      "productTypeCode": "corrugated"
+                    }
+                  ],
+                  "sizes": [
+                    {
+                      "code": "M",
+                      "heightMm": 80,
+                      "id": "mailer:M",
+                      "labelTh": "กลาง 20×15×8 ซม.",
+                      "lengthMm": 200,
+                      "shapeId": "mailer",
+                      "widthMm": 150
+                    }
+                  ]
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/HeroPresetsDto"
+                }
+              }
+            },
+            "description": "Hero presets",
+            "headers": {
+              "ETag": {
+                "$ref": "#/components/headers/ETag"
+              },
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [],
+        "summary": "Get the homepage Studio hero presets",
+        "tags": [
+          "store.catalog"
+        ]
+      }
+    },
     "/v1/store/catalog/home-sections": {
       "get": {
         "description": "Published sections in display order.\n\nImplements: D-005.",
@@ -399182,6 +399774,224 @@
         },
         "security": [],
         "summary": "Calculate an instant price for a configuration",
+        "tags": [
+          "store.quotes"
+        ]
+      }
+    },
+    "/v1/store/quotes/actions/preview": {
+      "post": {
+        "description": "The hero’s shape, board, print, inside size (mm, D-182) and quantity, mapped by `catalog.hero_presets` to the catalogue product and options (`store.catalog.getHeroPresets`), priced by the very `store.quotes.calculate` path `/configure` uses — no formula of its own (D-310, D-043); `calculation` is the body it priced. Anonymous, 30 requests per minute per client. 409 `quotes.preview_unavailable` when the presets do not offer the choice, `pricing.not_instant` when the quantity has no instant price. No factory data (D-050).\n\nImplements: D-310, D-043, D-051, D-050.",
+        "operationId": "store.quotes.preview",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "examples": {
+                "default": {
+                  "value": {
+                    "heightMm": 80,
+                    "lengthMm": 200,
+                    "material": "kraft350",
+                    "print": "one",
+                    "qty": 1000,
+                    "shape": "mailer",
+                    "widthMm": 150
+                  }
+                }
+              },
+              "schema": {
+                "$ref": "#/components/schemas/HeroPreviewRequestDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "calculation": {
+                    "configuration": {
+                      "d": 80,
+                      "l": 200,
+                      "patternId": "0192f3a0-7c1e-7d2a-9b1f-0000000a0002",
+                      "quantities": [
+                        1000
+                      ],
+                      "w": 150
+                    },
+                    "productTypeCode": "corrugated"
+                  },
+                  "currency": "THB",
+                  "leadTimeBusinessDays": {
+                    "max": 7,
+                    "min": 7
+                  },
+                  "presetId": "mailer:M",
+                  "priceLockUntil": "2026-10-22T10:15:00+07:00",
+                  "total": "13380.00",
+                  "unitPrice": "13.38",
+                  "vatIncluded": true
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/HeroPreviewDto"
+                }
+              }
+            },
+            "description": "Hero price",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "400": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.bad_request": {
+                    "$ref": "#/components/examples/problem.http.bad_request"
+                  },
+                  "http.malformed_json": {
+                    "$ref": "#/components/examples/problem.http.malformed_json"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.bad_request`, `http.malformed_json`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "409": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "quotes.preview_unavailable": {
+                    "$ref": "#/components/examples/problem.quotes.preview_unavailable"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `quotes.preview_unavailable`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "pricing.not_instant": {
+                    "$ref": "#/components/examples/problem.pricing.not_instant"
+                  },
+                  "validation.failed": {
+                    "$ref": "#/components/examples/problem.validation.failed"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `pricing.not_instant`, `validation.failed`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "503": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "pricing.vat_rate_missing": {
+                    "$ref": "#/components/examples/problem.pricing.vat_rate_missing"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `pricing.vat_rate_missing`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [],
+        "summary": "Price a homepage Studio hero choice",
         "tags": [
           "store.quotes"
         ]

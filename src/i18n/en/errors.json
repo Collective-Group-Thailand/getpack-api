@@ -490,6 +490,10 @@
     }
   },
   "quotes": {
+    "preview_unavailable": {
+      "title": "This choice cannot be priced here",
+      "detail": "The homepage does not offer this choice yet; open the configurator for its price"
+    },
     "nothing_to_save": {
       "title": "Nothing to save",
       "detail": "No quantity has an instant price; send a request for quote instead (D-100)."
