@@ -144,6 +144,8 @@ export const ERROR_CODES = {
   'quotes.not_repriceable': HttpStatus.CONFLICT,
   'quotes.no_target': HttpStatus.UNPROCESSABLE_ENTITY,
   'quotes.preview_unavailable': HttpStatus.CONFLICT,
+  'cms.case_consent_required': HttpStatus.UNPROCESSABLE_ENTITY,
+  'cms.case_invalid_status': HttpStatus.CONFLICT,
   'rfq.closed': HttpStatus.CONFLICT,
   'rfq.invalid_transition': HttpStatus.CONFLICT,
   'rfq.quote_not_open': HttpStatus.CONFLICT,

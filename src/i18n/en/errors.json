@@ -1624,5 +1624,15 @@
       "title": "Assistant not cleared",
       "detail": "The assistant can be switched on here only after ADR-0012 and a passing evaluation: {reason}."
     }
+  },
+  "cms": {
+    "case_consent_required": {
+      "title": "This customer story cannot be approved yet",
+      "detail": "Attach the customer's written permission and a photo before approving"
+    },
+    "case_invalid_status": {
+      "title": "Invalid customer story status",
+      "detail": "This customer story is {status}"
+    }
   }
 }

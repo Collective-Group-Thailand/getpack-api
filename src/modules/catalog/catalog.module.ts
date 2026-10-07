@@ -7,6 +7,7 @@ import { KnowledgeBaseService } from './knowledge-base/knowledge-base';
 import { ProductStructureService } from './product-structure/product-structure.service';
 import { StockProductsService } from './stock/stock.service';
 import { CardFactsService } from './store/card-facts.service';
+import { HomeContentService } from './store/home-content';
 import { PublicConfigService } from './store/public-config';
 import { StoreCatalogService } from './store/store-catalog.service';
 import { StoreConfiguratorService } from './store/store-configurator.service';
@@ -27,6 +28,7 @@ import { StoreMediaService } from './store/store-media.service';
     StoreMediaService,
     KnowledgeBaseService,
     PublicConfigService,
+    HomeContentService,
   ],
   exports: [
     CatalogCrudService,
@@ -40,6 +42,7 @@ import { StoreMediaService } from './store/store-media.service';
     StoreMediaService,
     KnowledgeBaseService,
     PublicConfigService,
+    HomeContentService,
   ],
 })
 export class CatalogModule {}

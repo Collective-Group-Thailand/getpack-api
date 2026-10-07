@@ -114,6 +114,12 @@ export const PERMISSIONS = [
     audience: 'staff',
     description: 'Edit banners, home sections, articles, FAQs and videos',
   },
+  {
+    key: 'cms.cases.approve',
+    audience: 'staff',
+    description: 'Approve or withdraw a customer story on the home page (written permission on file)',
+    decisionRefs: ['D-311'],
+  },
   { key: 'seo.manage', audience: 'staff', description: 'Edit SEO meta per page' },
   {
     key: 'business_calendar.manage',

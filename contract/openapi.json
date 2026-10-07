@@ -1068,6 +1068,28 @@
           "type": "https://errors.packio/close.tasks_open"
         }
       },
+      "problem.cms.case_consent_required": {
+        "summary": "cms.case_consent_required",
+        "value": {
+          "code": "cms.case_consent_required",
+          "detail": "ต้องแนบหนังสือยินยอมของลูกค้าและรูปภาพก่อนอนุมัติ",
+          "requestId": "6f1c2d8e-2c7b-4d0e-9d1c-3f1a2b3c4d5e",
+          "status": 422,
+          "title": "ยังอนุมัติเรื่องราวลูกค้านี้ไม่ได้",
+          "type": "https://errors.packio/cms.case_consent_required"
+        }
+      },
+      "problem.cms.case_invalid_status": {
+        "summary": "cms.case_invalid_status",
+        "value": {
+          "code": "cms.case_invalid_status",
+          "detail": "เรื่องราวลูกค้านี้อยู่ในสถานะ {status}",
+          "requestId": "6f1c2d8e-2c7b-4d0e-9d1c-3f1a2b3c4d5e",
+          "status": 409,
+          "title": "สถานะเรื่องราวลูกค้าไม่ถูกต้อง",
+          "type": "https://errors.packio/cms.case_invalid_status"
+        }
+      },
       "problem.companies.account_not_found": {
         "summary": "companies.account_not_found",
         "value": {
@@ -27159,6 +27181,75 @@
         ],
         "type": "object"
       },
+      "CreateHomeCaseDto": {
+        "properties": {
+          "brandNameTh": {
+            "example": "ร้านขนมทดสอบ (fake)",
+            "type": "string"
+          },
+          "consentFileId": {
+            "description": "Uploaded written permission (private)",
+            "example": "0192f3a0-7c1e-7d2a-9b1f-0000000c5003",
+            "format": "uuid",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "leadTimeDays": {
+            "description": "Days from order to delivery",
+            "example": 9,
+            "maximum": 365,
+            "minimum": 1,
+            "type": "integer"
+          },
+          "photoFileId": {
+            "description": "Uploaded photo (shown on the home page)",
+            "example": "0192f3a0-7c1e-7d2a-9b1f-0000000c5002",
+            "format": "uuid",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "productTh": {
+            "example": "กล่องไปรษณีย์พิมพ์ 1 สี",
+            "type": "string"
+          },
+          "provinceTh": {
+            "example": "เชียงใหม่",
+            "type": "string"
+          },
+          "quantity": {
+            "example": 1000,
+            "maximum": 10000000,
+            "minimum": 1,
+            "type": "integer"
+          },
+          "quoteTh": {
+            "example": "กล่องสวย ส่งตรงเวลา (ข้อความทดสอบ)",
+            "type": "string"
+          },
+          "sort": {
+            "description": "Display order (ascending)",
+            "example": 10,
+            "maximum": 100000,
+            "minimum": 0,
+            "type": "integer"
+          }
+        },
+        "required": [
+          "brandNameTh",
+          "provinceTh",
+          "productTh",
+          "quantity",
+          "leadTimeDays",
+          "quoteTh",
+          "photoFileId",
+          "consentFileId"
+        ],
+        "type": "object"
+      },
       "CreateHomeSectionDto": {
         "properties": {
           "config": {
@@ -40780,6 +40871,190 @@
           "financial_institutions"
         ],
         "type": "string"
+      },
+      "HomeCaseCardDto": {
+        "properties": {
+          "brandNameTh": {
+            "example": "ร้านขนมทดสอบ (fake)",
+            "type": "string"
+          },
+          "leadTimeDays": {
+            "example": 9,
+            "type": "integer"
+          },
+          "photoUrl": {
+            "example": "/v1/store/catalog/images/0192f3a0-7c1e-7d2a-9b1f-0000000c5002",
+            "type": "string"
+          },
+          "productTh": {
+            "example": "กล่องไปรษณีย์พิมพ์ 1 สี",
+            "type": "string"
+          },
+          "provinceTh": {
+            "example": "เชียงใหม่",
+            "type": "string"
+          },
+          "qty": {
+            "example": 1000,
+            "type": "integer"
+          },
+          "quoteTh": {
+            "example": "กล่องสวย ส่งตรงเวลา (ข้อความทดสอบ)",
+            "type": "string"
+          }
+        },
+        "required": [
+          "brandNameTh",
+          "provinceTh",
+          "productTh",
+          "qty",
+          "leadTimeDays",
+          "quoteTh",
+          "photoUrl"
+        ],
+        "type": "object"
+      },
+      "HomeCaseDto": {
+        "properties": {
+          "approvedAt": {
+            "example": "2026-10-07T10:00:00+07:00",
+            "format": "date-time",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "approvedBy": {
+            "description": "Who approved it",
+            "example": "การตลาด (fake)",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "brandNameTh": {
+            "description": "The customer’s brand, as they allowed it to be shown",
+            "example": "ร้านขนมทดสอบ (fake)",
+            "type": "string"
+          },
+          "consentFileId": {
+            "description": "The customer’s written permission (a private file, never on the storefront); required to approve",
+            "example": "0192f3a0-7c1e-7d2a-9b1f-0000000c5003",
+            "format": "uuid",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "id": {
+            "example": "0192f3a0-7c1e-7d2a-9b1f-0000000c5001",
+            "format": "uuid",
+            "type": "string"
+          },
+          "leadTimeDays": {
+            "description": "Days from order to delivery",
+            "example": 9,
+            "type": "integer"
+          },
+          "photoFileId": {
+            "example": "0192f3a0-7c1e-7d2a-9b1f-0000000c5002",
+            "format": "uuid",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "productTh": {
+            "example": "กล่องไปรษณีย์พิมพ์ 1 สี",
+            "type": "string"
+          },
+          "provinceTh": {
+            "example": "เชียงใหม่",
+            "type": "string"
+          },
+          "quantity": {
+            "example": 1000,
+            "type": "integer"
+          },
+          "quoteTh": {
+            "example": "กล่องสวย ส่งตรงเวลา (ข้อความทดสอบ)",
+            "type": "string"
+          },
+          "sort": {
+            "example": 10,
+            "type": "integer"
+          },
+          "status": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/HomeCaseStatus"
+              }
+            ],
+            "example": "approved"
+          },
+          "updatedAt": {
+            "example": "2026-10-07T10:00:00+07:00",
+            "format": "date-time",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "brandNameTh",
+          "provinceTh",
+          "productTh",
+          "quantity",
+          "leadTimeDays",
+          "quoteTh",
+          "photoFileId",
+          "consentFileId",
+          "status",
+          "sort",
+          "approvedBy",
+          "approvedAt",
+          "updatedAt"
+        ],
+        "type": "object"
+      },
+      "HomeCaseStatus": {
+        "enum": [
+          "draft",
+          "approved",
+          "withdrawn"
+        ],
+        "type": "string"
+      },
+      "HomePhotoDto": {
+        "properties": {
+          "altTh": {
+            "example": "กล่องไปรษณีย์คราฟท์วางบนโต๊ะ",
+            "type": "string"
+          },
+          "captionTh": {
+            "example": "กล่องไปรษณีย์ พิมพ์ 1 สี",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "position": {
+            "description": "`hero`, `mosaic-1` … `mosaic-5`, `frame-4` / `frame-9` (sample / packing), `sage` or `template-<style code>`",
+            "example": "hero",
+            "pattern": "^(hero|sage|frame-4|frame-9|mosaic-[1-5]|template-PK-[A-Z0-9]+-[0-9]+)$",
+            "type": "string"
+          },
+          "url": {
+            "example": "/v1/store/catalog/images/0192f3a0-7c1e-7d2a-9b1f-0000000c5002",
+            "type": "string"
+          }
+        },
+        "required": [
+          "url",
+          "altTh",
+          "captionTh",
+          "position"
+        ],
+        "type": "object"
       },
       "HomeSectionDto": {
         "properties": {
@@ -73783,6 +74058,28 @@
         ],
         "type": "object"
       },
+      "StoreHomeContentDto": {
+        "properties": {
+          "cases": {
+            "description": "Approved stories with written permission on file; empty below 3 (hide the section)",
+            "items": {
+              "$ref": "#/components/schemas/HomeCaseCardDto"
+            },
+            "type": "array"
+          },
+          "photos": {
+            "items": {
+              "$ref": "#/components/schemas/HomePhotoDto"
+            },
+            "type": "array"
+          }
+        },
+        "required": [
+          "photos",
+          "cases"
+        ],
+        "type": "object"
+      },
       "StoreHomeSectionDto": {
         "properties": {
           "config": {
@@ -83141,6 +83438,65 @@
           "termTh": {
             "example": "ลอนอี",
             "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "UpdateHomeCaseDto": {
+        "properties": {
+          "brandNameTh": {
+            "example": "ร้านขนมทดสอบ (fake)",
+            "type": "string"
+          },
+          "consentFileId": {
+            "description": "Uploaded written permission (private)",
+            "example": "0192f3a0-7c1e-7d2a-9b1f-0000000c5003",
+            "format": "uuid",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "leadTimeDays": {
+            "description": "Days from order to delivery",
+            "example": 9,
+            "maximum": 365,
+            "minimum": 1,
+            "type": "integer"
+          },
+          "photoFileId": {
+            "description": "Uploaded photo (shown on the home page)",
+            "example": "0192f3a0-7c1e-7d2a-9b1f-0000000c5002",
+            "format": "uuid",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "productTh": {
+            "example": "กล่องไปรษณีย์พิมพ์ 1 สี",
+            "type": "string"
+          },
+          "provinceTh": {
+            "example": "เชียงใหม่",
+            "type": "string"
+          },
+          "quantity": {
+            "example": 1000,
+            "maximum": 10000000,
+            "minimum": 1,
+            "type": "integer"
+          },
+          "quoteTh": {
+            "example": "กล่องสวย ส่งตรงเวลา (ข้อความทดสอบ)",
+            "type": "string"
+          },
+          "sort": {
+            "description": "Display order (ascending)",
+            "example": 10,
+            "maximum": 100000,
+            "minimum": 0,
+            "type": "integer"
           }
         },
         "type": "object"
@@ -158668,6 +159024,1782 @@
         ],
         "x-required-permissions": [
           "cms.manage"
+        ]
+      }
+    },
+    "/v1/admin/cms/home-cases": {
+      "get": {
+        "description": "Filters, sort and `q` (free text over brandNameTh, productTh). Shown on the home page only while `approved` with the written permission on file, and only with at least 3 approved (D-311). Editing an approved story sends it back to `draft`. Approve and withdraw with `actions/approve` / `actions/withdraw`.\n\nImplements: D-311.",
+        "operationId": "admin.cmsHomeCases.list",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "page",
+            "required": false,
+            "schema": {
+              "default": 1,
+              "minimum": 1,
+              "type": "integer"
+            }
+          },
+          {
+            "in": "query",
+            "name": "perPage",
+            "required": false,
+            "schema": {
+              "default": 25,
+              "maximum": 100,
+              "minimum": 1,
+              "type": "integer"
+            }
+          },
+          {
+            "description": "Sort field; each endpoint validates it against its own allow-list.",
+            "in": "query",
+            "name": "sort",
+            "required": false,
+            "schema": {
+              "example": "createdAt",
+              "maxLength": 64,
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "order",
+            "required": false,
+            "schema": {
+              "$ref": "#/components/schemas/SortOrder"
+            }
+          },
+          {
+            "description": "Free-text search",
+            "in": "query",
+            "name": "q",
+            "required": false,
+            "schema": {
+              "maxLength": 200,
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "status",
+            "required": false,
+            "schema": {
+              "$ref": "#/components/schemas/HomeCaseStatus"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "data": [
+                    {
+                      "approvedAt": "2026-10-07T10:00:00+07:00",
+                      "approvedBy": "การตลาด (fake)",
+                      "brandNameTh": "ร้านขนมทดสอบ (fake)",
+                      "consentFileId": "0192f3a0-7c1e-7d2a-9b1f-0000000c5003",
+                      "id": "0192f3a0-7c1e-7d2a-9b1f-0000000c5001",
+                      "leadTimeDays": 9,
+                      "photoFileId": "0192f3a0-7c1e-7d2a-9b1f-0000000c5002",
+                      "productTh": "กล่องไปรษณีย์พิมพ์ 1 สี",
+                      "provinceTh": "เชียงใหม่",
+                      "quantity": 1000,
+                      "quoteTh": "กล่องสวย ส่งตรงเวลา (ข้อความทดสอบ)",
+                      "sort": 10,
+                      "status": "approved",
+                      "updatedAt": "2026-10-07T10:00:00+07:00"
+                    }
+                  ],
+                  "meta": {
+                    "page": 1,
+                    "perPage": 25,
+                    "total": 1
+                  }
+                },
+                "schema": {
+                  "properties": {
+                    "data": {
+                      "items": {
+                        "$ref": "#/components/schemas/HomeCaseDto"
+                      },
+                      "type": "array"
+                    },
+                    "meta": {
+                      "$ref": "#/components/schemas/PageMeta"
+                    }
+                  },
+                  "required": [
+                    "data",
+                    "meta"
+                  ],
+                  "type": "object"
+                }
+              }
+            },
+            "description": "One page of results",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.unauthenticated": {
+                    "$ref": "#/components/examples/problem.auth.unauthenticated"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.unauthenticated`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.forbidden": {
+                    "$ref": "#/components/examples/problem.auth.forbidden"
+                  },
+                  "auth.wrong_audience": {
+                    "$ref": "#/components/examples/problem.auth.wrong_audience"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.forbidden`, `auth.wrong_audience`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "validation.failed": {
+                    "$ref": "#/components/examples/problem.validation.failed"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `validation.failed`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "staff": []
+          }
+        ],
+        "summary": "List customer stories",
+        "tags": [
+          "admin.cmsHomeCases"
+        ],
+        "x-required-permissions": [
+          "cms.manage"
+        ]
+      },
+      "post": {
+        "description": "Audited (config) and published as `catalog.home_case.created`. Shown on the home page only while `approved` with the written permission on file, and only with at least 3 approved (D-311). Editing an approved story sends it back to `draft`. Approve and withdraw with `actions/approve` / `actions/withdraw`.\n\nImplements: D-311.\n\n**Files:** upload first — `admin.files.presign` → PUT the bytes to the returned URL → `…/actions/complete` — then send the `fileId` (contract §3).",
+        "operationId": "admin.cmsHomeCases.create",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "examples": {
+                "default": {
+                  "value": {
+                    "brandNameTh": "ร้านขนมทดสอบ (fake)",
+                    "consentFileId": "0192f3a0-7c1e-7d2a-9b1f-0000000c5003",
+                    "leadTimeDays": 9,
+                    "photoFileId": "0192f3a0-7c1e-7d2a-9b1f-0000000c5002",
+                    "productTh": "กล่องไปรษณีย์พิมพ์ 1 สี",
+                    "provinceTh": "เชียงใหม่",
+                    "quantity": 1000,
+                    "quoteTh": "กล่องสวย ส่งตรงเวลา (ข้อความทดสอบ)"
+                  }
+                }
+              },
+              "schema": {
+                "$ref": "#/components/schemas/CreateHomeCaseDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "approvedAt": "2026-10-07T10:00:00+07:00",
+                  "approvedBy": "การตลาด (fake)",
+                  "brandNameTh": "ร้านขนมทดสอบ (fake)",
+                  "consentFileId": "0192f3a0-7c1e-7d2a-9b1f-0000000c5003",
+                  "id": "0192f3a0-7c1e-7d2a-9b1f-0000000c5001",
+                  "leadTimeDays": 9,
+                  "photoFileId": "0192f3a0-7c1e-7d2a-9b1f-0000000c5002",
+                  "productTh": "กล่องไปรษณีย์พิมพ์ 1 สี",
+                  "provinceTh": "เชียงใหม่",
+                  "quantity": 1000,
+                  "quoteTh": "กล่องสวย ส่งตรงเวลา (ข้อความทดสอบ)",
+                  "sort": 10,
+                  "status": "approved",
+                  "updatedAt": "2026-10-07T10:00:00+07:00"
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/HomeCaseDto"
+                }
+              }
+            },
+            "description": "Created",
+            "headers": {
+              "ETag": {
+                "$ref": "#/components/headers/ETag"
+              },
+              "Location": {
+                "$ref": "#/components/headers/Location"
+              },
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "400": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.bad_request": {
+                    "$ref": "#/components/examples/problem.http.bad_request"
+                  },
+                  "http.malformed_json": {
+                    "$ref": "#/components/examples/problem.http.malformed_json"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.bad_request`, `http.malformed_json`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.unauthenticated": {
+                    "$ref": "#/components/examples/problem.auth.unauthenticated"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.unauthenticated`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.forbidden": {
+                    "$ref": "#/components/examples/problem.auth.forbidden"
+                  },
+                  "auth.wrong_audience": {
+                    "$ref": "#/components/examples/problem.auth.wrong_audience"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.forbidden`, `auth.wrong_audience`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "409": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "catalog.code_taken": {
+                    "$ref": "#/components/examples/problem.catalog.code_taken"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `catalog.code_taken`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "validation.failed": {
+                    "$ref": "#/components/examples/problem.validation.failed"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `validation.failed`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "staff": []
+          }
+        ],
+        "summary": "Create a customer story",
+        "tags": [
+          "admin.cmsHomeCases"
+        ],
+        "x-required-permissions": [
+          "cms.manage"
+        ]
+      }
+    },
+    "/v1/admin/cms/home-cases/{id}": {
+      "delete": {
+        "description": "Soft delete (`deleted_at`, schema-design §1.6): the customer story disappears from every read; guarded by `If-Match`. Published as `catalog.home_case.deleted`.\n\nImplements: D-311.",
+        "operationId": "admin.cmsHomeCases.delete",
+        "parameters": [
+          {
+            "description": "Public id of the customer story",
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/IfMatch"
+          },
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Deleted",
+            "headers": {
+              "ETag": {
+                "$ref": "#/components/headers/ETag"
+              },
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.unauthenticated": {
+                    "$ref": "#/components/examples/problem.auth.unauthenticated"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.unauthenticated`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.forbidden": {
+                    "$ref": "#/components/examples/problem.auth.forbidden"
+                  },
+                  "auth.wrong_audience": {
+                    "$ref": "#/components/examples/problem.auth.wrong_audience"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.forbidden`, `auth.wrong_audience`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "404": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.not_found": {
+                    "$ref": "#/components/examples/problem.http.not_found"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.not_found`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "412": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "concurrency.stale": {
+                    "$ref": "#/components/examples/problem.concurrency.stale"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `concurrency.stale`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "validation.failed": {
+                    "$ref": "#/components/examples/problem.validation.failed"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `validation.failed`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "428": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "concurrency.precondition_required": {
+                    "$ref": "#/components/examples/problem.concurrency.precondition_required"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `concurrency.precondition_required`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "staff": []
+          }
+        ],
+        "summary": "Delete a customer story",
+        "tags": [
+          "admin.cmsHomeCases"
+        ],
+        "x-required-permissions": [
+          "cms.manage"
+        ]
+      },
+      "get": {
+        "description": "Returns the customer story and its ETag for a later update. Shown on the home page only while `approved` with the written permission on file, and only with at least 3 approved (D-311). Editing an approved story sends it back to `draft`. Approve and withdraw with `actions/approve` / `actions/withdraw`.\n\nImplements: D-311.",
+        "operationId": "admin.cmsHomeCases.get",
+        "parameters": [
+          {
+            "description": "Public id of the customer story",
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "approvedAt": "2026-10-07T10:00:00+07:00",
+                  "approvedBy": "การตลาด (fake)",
+                  "brandNameTh": "ร้านขนมทดสอบ (fake)",
+                  "consentFileId": "0192f3a0-7c1e-7d2a-9b1f-0000000c5003",
+                  "id": "0192f3a0-7c1e-7d2a-9b1f-0000000c5001",
+                  "leadTimeDays": 9,
+                  "photoFileId": "0192f3a0-7c1e-7d2a-9b1f-0000000c5002",
+                  "productTh": "กล่องไปรษณีย์พิมพ์ 1 สี",
+                  "provinceTh": "เชียงใหม่",
+                  "quantity": 1000,
+                  "quoteTh": "กล่องสวย ส่งตรงเวลา (ข้อความทดสอบ)",
+                  "sort": 10,
+                  "status": "approved",
+                  "updatedAt": "2026-10-07T10:00:00+07:00"
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/HomeCaseDto"
+                }
+              }
+            },
+            "description": "The customer story",
+            "headers": {
+              "ETag": {
+                "$ref": "#/components/headers/ETag"
+              },
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.unauthenticated": {
+                    "$ref": "#/components/examples/problem.auth.unauthenticated"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.unauthenticated`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.forbidden": {
+                    "$ref": "#/components/examples/problem.auth.forbidden"
+                  },
+                  "auth.wrong_audience": {
+                    "$ref": "#/components/examples/problem.auth.wrong_audience"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.forbidden`, `auth.wrong_audience`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "404": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.not_found": {
+                    "$ref": "#/components/examples/problem.http.not_found"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.not_found`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "validation.failed": {
+                    "$ref": "#/components/examples/problem.validation.failed"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `validation.failed`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "staff": []
+          }
+        ],
+        "summary": "Get one customer story",
+        "tags": [
+          "admin.cmsHomeCases"
+        ],
+        "x-required-permissions": [
+          "cms.manage"
+        ]
+      },
+      "patch": {
+        "description": "Partial update guarded by `If-Match`. Rows are archived through `status`, never deleted (schema-design §1.6). Audited and published as `catalog.home_case.updated`. Shown on the home page only while `approved` with the written permission on file, and only with at least 3 approved (D-311). Editing an approved story sends it back to `draft`. Approve and withdraw with `actions/approve` / `actions/withdraw`.\n\nImplements: D-311.\n\n**Files:** upload first — `admin.files.presign` → PUT the bytes to the returned URL → `…/actions/complete` — then send the `fileId` (contract §3).",
+        "operationId": "admin.cmsHomeCases.update",
+        "parameters": [
+          {
+            "description": "Public id of the customer story",
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/IfMatch"
+          },
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "examples": {
+                "default": {
+                  "value": {
+                    "quoteTh": "กล่องสวยมาก (ข้อความทดสอบ)"
+                  }
+                }
+              },
+              "schema": {
+                "$ref": "#/components/schemas/UpdateHomeCaseDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "approvedAt": "2026-10-07T10:00:00+07:00",
+                  "approvedBy": "การตลาด (fake)",
+                  "brandNameTh": "ร้านขนมทดสอบ (fake)",
+                  "consentFileId": "0192f3a0-7c1e-7d2a-9b1f-0000000c5003",
+                  "id": "0192f3a0-7c1e-7d2a-9b1f-0000000c5001",
+                  "leadTimeDays": 9,
+                  "photoFileId": "0192f3a0-7c1e-7d2a-9b1f-0000000c5002",
+                  "productTh": "กล่องไปรษณีย์พิมพ์ 1 สี",
+                  "provinceTh": "เชียงใหม่",
+                  "quantity": 1000,
+                  "quoteTh": "กล่องสวย ส่งตรงเวลา (ข้อความทดสอบ)",
+                  "sort": 10,
+                  "status": "approved",
+                  "updatedAt": "2026-10-07T10:00:00+07:00"
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/HomeCaseDto"
+                }
+              }
+            },
+            "description": "Updated",
+            "headers": {
+              "ETag": {
+                "$ref": "#/components/headers/ETag"
+              },
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "400": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.bad_request": {
+                    "$ref": "#/components/examples/problem.http.bad_request"
+                  },
+                  "http.malformed_json": {
+                    "$ref": "#/components/examples/problem.http.malformed_json"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.bad_request`, `http.malformed_json`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.unauthenticated": {
+                    "$ref": "#/components/examples/problem.auth.unauthenticated"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.unauthenticated`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.forbidden": {
+                    "$ref": "#/components/examples/problem.auth.forbidden"
+                  },
+                  "auth.wrong_audience": {
+                    "$ref": "#/components/examples/problem.auth.wrong_audience"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.forbidden`, `auth.wrong_audience`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "404": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.not_found": {
+                    "$ref": "#/components/examples/problem.http.not_found"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.not_found`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "409": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "catalog.code_taken": {
+                    "$ref": "#/components/examples/problem.catalog.code_taken"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `catalog.code_taken`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "412": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "concurrency.stale": {
+                    "$ref": "#/components/examples/problem.concurrency.stale"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `concurrency.stale`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "validation.failed": {
+                    "$ref": "#/components/examples/problem.validation.failed"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `validation.failed`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "428": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "concurrency.precondition_required": {
+                    "$ref": "#/components/examples/problem.concurrency.precondition_required"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `concurrency.precondition_required`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "staff": []
+          }
+        ],
+        "summary": "Update a customer story",
+        "tags": [
+          "admin.cmsHomeCases"
+        ],
+        "x-required-permissions": [
+          "cms.manage"
+        ]
+      }
+    },
+    "/v1/admin/cms/home-cases/{id}/actions/approve": {
+      "post": {
+        "description": "Needs the customer’s written permission (`consentFileId`) and a photo on file; records who and when, audited, event `catalog.home_case.approved` (D-311). The story shows once at least 3 are approved.\n\nImplements: D-311.",
+        "operationId": "admin.cmsHomeCases.approve",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/IfMatch"
+          },
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "approvedAt": "2026-10-07T10:00:00+07:00",
+                  "approvedBy": "การตลาด (fake)",
+                  "brandNameTh": "ร้านขนมทดสอบ (fake)",
+                  "consentFileId": "0192f3a0-7c1e-7d2a-9b1f-0000000c5003",
+                  "id": "0192f3a0-7c1e-7d2a-9b1f-0000000c5001",
+                  "leadTimeDays": 9,
+                  "photoFileId": "0192f3a0-7c1e-7d2a-9b1f-0000000c5002",
+                  "productTh": "กล่องไปรษณีย์พิมพ์ 1 สี",
+                  "provinceTh": "เชียงใหม่",
+                  "quantity": 1000,
+                  "quoteTh": "กล่องสวย ส่งตรงเวลา (ข้อความทดสอบ)",
+                  "sort": 10,
+                  "status": "approved",
+                  "updatedAt": "2026-10-07T10:00:00+07:00"
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/HomeCaseDto"
+                }
+              }
+            },
+            "description": "Approved story",
+            "headers": {
+              "ETag": {
+                "$ref": "#/components/headers/ETag"
+              },
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "400": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.bad_request": {
+                    "$ref": "#/components/examples/problem.http.bad_request"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.bad_request`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.unauthenticated": {
+                    "$ref": "#/components/examples/problem.auth.unauthenticated"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.unauthenticated`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.forbidden": {
+                    "$ref": "#/components/examples/problem.auth.forbidden"
+                  },
+                  "auth.wrong_audience": {
+                    "$ref": "#/components/examples/problem.auth.wrong_audience"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.forbidden`, `auth.wrong_audience`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "404": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.not_found": {
+                    "$ref": "#/components/examples/problem.http.not_found"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.not_found`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "409": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "cms.case_invalid_status": {
+                    "$ref": "#/components/examples/problem.cms.case_invalid_status"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `cms.case_invalid_status`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "412": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "concurrency.stale": {
+                    "$ref": "#/components/examples/problem.concurrency.stale"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `concurrency.stale`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "cms.case_consent_required": {
+                    "$ref": "#/components/examples/problem.cms.case_consent_required"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `cms.case_consent_required`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "428": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "concurrency.precondition_required": {
+                    "$ref": "#/components/examples/problem.concurrency.precondition_required"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `concurrency.precondition_required`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "staff": []
+          }
+        ],
+        "summary": "Approve a customer story for the home page",
+        "tags": [
+          "admin.cmsHomeCases"
+        ],
+        "x-required-permissions": [
+          "cms.cases.approve"
+        ]
+      }
+    },
+    "/v1/admin/cms/home-cases/{id}/actions/withdraw": {
+      "post": {
+        "description": "Takes the story off the home page at once (the customer revoked their permission, or it is out of date); audited, event `catalog.home_case.withdrawn` (D-311). Editing it brings it back as a draft.\n\nImplements: D-311.",
+        "operationId": "admin.cmsHomeCases.withdraw",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/IfMatch"
+          },
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "approvedAt": "2026-10-07T10:00:00+07:00",
+                  "approvedBy": "การตลาด (fake)",
+                  "brandNameTh": "ร้านขนมทดสอบ (fake)",
+                  "consentFileId": "0192f3a0-7c1e-7d2a-9b1f-0000000c5003",
+                  "id": "0192f3a0-7c1e-7d2a-9b1f-0000000c5001",
+                  "leadTimeDays": 9,
+                  "photoFileId": "0192f3a0-7c1e-7d2a-9b1f-0000000c5002",
+                  "productTh": "กล่องไปรษณีย์พิมพ์ 1 สี",
+                  "provinceTh": "เชียงใหม่",
+                  "quantity": 1000,
+                  "quoteTh": "กล่องสวย ส่งตรงเวลา (ข้อความทดสอบ)",
+                  "sort": 10,
+                  "status": "withdrawn",
+                  "updatedAt": "2026-10-07T10:00:00+07:00"
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/HomeCaseDto"
+                }
+              }
+            },
+            "description": "Withdrawn story",
+            "headers": {
+              "ETag": {
+                "$ref": "#/components/headers/ETag"
+              },
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "400": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.bad_request": {
+                    "$ref": "#/components/examples/problem.http.bad_request"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.bad_request`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.unauthenticated": {
+                    "$ref": "#/components/examples/problem.auth.unauthenticated"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.unauthenticated`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.forbidden": {
+                    "$ref": "#/components/examples/problem.auth.forbidden"
+                  },
+                  "auth.wrong_audience": {
+                    "$ref": "#/components/examples/problem.auth.wrong_audience"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.forbidden`, `auth.wrong_audience`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "404": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.not_found": {
+                    "$ref": "#/components/examples/problem.http.not_found"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.not_found`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "409": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "cms.case_invalid_status": {
+                    "$ref": "#/components/examples/problem.cms.case_invalid_status"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `cms.case_invalid_status`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "412": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "concurrency.stale": {
+                    "$ref": "#/components/examples/problem.concurrency.stale"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `concurrency.stale`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "428": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "concurrency.precondition_required": {
+                    "$ref": "#/components/examples/problem.concurrency.precondition_required"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `concurrency.precondition_required`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "staff": []
+          }
+        ],
+        "summary": "Withdraw a customer story from the home page",
+        "tags": [
+          "admin.cmsHomeCases"
+        ],
+        "x-required-permissions": [
+          "cms.cases.approve"
         ]
       }
     },
@@ -362446,6 +364578,105 @@
         ]
       }
     },
+    "/v1/store/cms/home": {
+      "get": {
+        "description": "Photos of the published `home-photos` home section as a list with their place on the page (`hero`, `mosaic-1..5`, `frame-4` / `frame-9`, `sage`, `template-<style code>`; entries without a scanned catalogue image or alt text are left out), and customer stories that are approved with the customer’s written permission on file — none below 3 (D-311). An empty block is an empty list, never placeholder content: the storefront leaves it out. Anonymous, cacheable 5 minutes; a matching `If-None-Match` gets 304.\n\nImplements: D-311, D-005.",
+        "operationId": "store.cms.getHome",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "cases": [],
+                  "photos": [
+                    {
+                      "altTh": "กล่องไปรษณีย์คราฟท์วางบนโต๊ะ",
+                      "captionTh": "กล่องไปรษณีย์ พิมพ์ 1 สี",
+                      "position": "hero",
+                      "url": "/v1/store/catalog/images/0192f3a0-7c1e-7d2a-9b1f-0000000c5004"
+                    }
+                  ]
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/StoreHomeContentDto"
+                }
+              }
+            },
+            "description": "Home content",
+            "headers": {
+              "ETag": {
+                "$ref": "#/components/headers/ETag"
+              },
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [],
+        "summary": "Get the home page photos and customer stories",
+        "tags": [
+          "store.catalog"
+        ]
+      }
+    },
     "/v1/store/companies": {
       "get": {
         "description": "Companies I am an active member of (D-125).\n\nImplements: D-120, D-123, D-125.",
@@ -425065,6 +427296,10 @@
     {
       "description": "Glossary terms the assistant explains (D-304); Marketing, soft-deleted.",
       "name": "admin.cmsGlossaryTerms"
+    },
+    {
+      "description": "Customer stories for the home page, shown only when approved with written permission (D-311).",
+      "name": "admin.cmsHomeCases"
     },
     {
       "description": "Home-page sections and their order (D-005).",

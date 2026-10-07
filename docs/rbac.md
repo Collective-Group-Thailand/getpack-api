@@ -40,6 +40,7 @@ Legend: ● granted · ◆ granted and sensitive (cost/margin data, D-141).
 | `catalog.manage` — Create and edit catalogue rows (product types, patterns, materials, stock products …) (D-005, D-100) | ● |  |  |  | ● |  |  |  |  |  |  |  |  |  |  |
 | `catalog.import` — Import and export catalogue tables with Excel (preview → confirm) (D-005) | ● |  |  |  | ● |  |  |  |  |  |  |  |  |  |  |
 | `cms.manage` — Edit banners, home sections, articles, FAQs and videos | ● |  |  |  | ● |  |  |  |  |  |  | ● |  |  |  |
+| `cms.cases.approve` — Approve or withdraw a customer story on the home page (written permission on file) (D-311) | ● |  |  |  | ● |  |  |  |  |  |  | ● |  |  |  |
 | `seo.manage` — Edit SEO meta per page | ● |  |  |  | ● |  |  |  |  |  |  | ● |  |  |  |
 | `business_calendar.manage` — Key in the national holidays once a year, by form or Excel import (D-161, D-170) | ● |  |  |  | ● |  |  |  |  |  |  |  |  |  |  |
 | `geography.manage` — Maintain provinces, districts, subdistricts and postcodes (D-161, D-170) | ● |  |  |  | ● |  |  |  |  |  |  |  |  |  |  |

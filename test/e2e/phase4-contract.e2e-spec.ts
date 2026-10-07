@@ -2,11 +2,14 @@ import request from 'supertest';
 
 import { seedDevCorrugate } from '../../prisma/seed/dev-corrugate';
 import {
+  as,
   bootCommerceApp,
   type CommerceApp,
+  customerToken,
   foldingBackToRfq,
   foldingReady,
   setSetting,
+  staffToken,
 } from '../support/commerce-e2e';
 
 /** UX round 2 Phase 4 contract (D-309, D-313): the storefront's figures and words come from the API. */
@@ -202,5 +205,119 @@ describe('Phase 4 contract (e2e)', () => {
       await ctx.prisma.productType.update({ where: { code: 'corrugated' }, data: { quoteMode: 'rfq' } });
       await ctx.prisma.catalogProductOption.delete({ where: { id: inkLink.id } });
     }
+  });
+
+  it('shows customer stories only when at least 3 are approved with written permission (D-311)', async () => {
+    const run = Date.now().toString(36);
+    const marketing = await staffToken(ctx, 'marketing');
+    const owner = await ctx.prisma.user.findFirstOrThrow({ where: { email: 'marketing@example.invalid' } });
+    const file = (name: string, mimeType: string) =>
+      ctx.prisma.fileObject.create({
+        data: {
+          bucket: 'test',
+          storageKey: `cms/e2e/${run}/${name}`,
+          originalName: name,
+          mimeType,
+          sizeBytes: 1024n,
+          uploadStatus: 'uploaded',
+          scanStatus: 'clean',
+          ownerUserId: owner.id,
+        },
+      });
+    const home = async () =>
+      (await request(ctx.server).get('/v1/store/cms/home').expect(200)).body as { cases: unknown[] };
+    await ctx.prisma.homeCustomerCase.updateMany({ data: { deletedAt: new Date() } });
+    expect((await home()).cases).toEqual([]);
+
+    const story = async (n: number, withConsent: boolean) => {
+      const photo = await file(`photo-${n}.jpg`, 'image/jpeg');
+      const consent = withConsent ? await file(`consent-${n}.pdf`, 'application/pdf') : null;
+      return as(ctx, marketing)
+        .post('/v1/admin/cms/home-cases', {
+          brandNameTh: `ร้านทดสอบ ${n} (fake)`,
+          provinceTh: 'เชียงใหม่',
+          productTh: 'กล่องไปรษณีย์',
+          quantity: 500 * (n + 1),
+          leadTimeDays: 9,
+          quoteTh: 'ข้อความทดสอบ',
+          photoFileId: photo.publicId,
+          ...(consent ? { consentFileId: consent.publicId } : {}),
+          sort: n,
+        })
+        .expect(201);
+    };
+    const approve = (created: request.Response) =>
+      as(ctx, marketing)
+        .post(`/v1/admin/cms/home-cases/${created.body.id}/actions/approve`, {})
+        .set('If-Match', created.headers['etag'] as string);
+
+    const noConsent = await story(0, false);
+    expect((await approve(noConsent).expect(422)).body.code).toBe('cms.case_consent_required');
+    const customer = (await customerToken(ctx, 91)).token;
+    await as(ctx, customer)
+      .post(`/v1/admin/cms/home-cases/${noConsent.body.id}/actions/approve`, {})
+      .expect(403);
+
+    const approved: request.Response[] = [];
+    for (const n of [1, 2]) approved.push(await approve(await story(n, true)).expect(200));
+    expect(approved[0]!.body).toMatchObject({ status: 'approved', approvedAt: expect.any(String) });
+    expect((await home()).cases).toEqual([]); // two are not enough
+    approved.push(await approve(await story(3, true)).expect(200));
+    const shown = (await home()).cases as { brandNameTh: string; qty: number; photoUrl: string }[];
+    expect(shown.map((c) => c.qty)).toEqual([1000, 1500, 2000]);
+    expect(shown[0]!.photoUrl).toMatch(/^\/v1\/store\/catalog\/images\/[0-9a-f-]{36}$/);
+    expect(JSON.stringify(shown)).not.toMatch(/consent/i);
+
+    // Editing what an approved story says takes it back to draft; withdrawing takes it off at once.
+    const edited = await as(ctx, marketing)
+      .patch(`/v1/admin/cms/home-cases/${approved[0]!.body.id}`)
+      .set('If-Match', approved[0]!.headers['etag'] as string)
+      .send({ quoteTh: 'ข้อความทดสอบใหม่' })
+      .expect(200);
+    expect(edited.body).toMatchObject({ status: 'draft', approvedAt: null });
+    expect((await home()).cases).toEqual([]);
+    await approve(edited).expect(200);
+    expect((await home()).cases).toHaveLength(3);
+    const withdrawn = await as(ctx, marketing)
+      .post(`/v1/admin/cms/home-cases/${approved[1]!.body.id}/actions/withdraw`, {})
+      .set('If-Match', approved[1]!.headers['etag'] as string)
+      .expect(200);
+    expect(withdrawn.body.status).toBe('withdrawn');
+    expect((await home()).cases).toEqual([]);
+  });
+
+  it('lists the home photos in the shape the home-photos section holds, leaving out malformed ones', async () => {
+    const id = '0192f3a0-7c1e-7d2a-9b1f-0000000c5009';
+    const img = `/v1/store/catalog/images/${id}`;
+    await ctx.prisma.homeSection.updateMany({
+      where: { slug: 'home-photos' },
+      data: { deletedAt: new Date() },
+    });
+    await ctx.prisma.homeSection.create({
+      data: {
+        slug: 'home-photos',
+        kind: 'custom',
+        status: 'published',
+        config: {
+          hero: { url: img, alt: { th: 'กล่องบนโต๊ะ' }, caption: { th: 'กล่องไปรษณีย์' } },
+          mosaic: [
+            null,
+            { url: img, alt: { th: 'ภาพสอง' }, caption: null },
+            { url: 'https://example.invalid/x.jpg', alt: { th: 'นอก' } },
+          ],
+          quality: { url: img, alt: { th: '' } },
+          templates: { 'PK-TE-01': { url: img, alt: { th: 'ฝาเสียบ' }, caption: null } },
+        },
+      },
+    });
+    expect((await request(ctx.server).get('/v1/store/cms/home').expect(200)).body.photos).toEqual([
+      { url: img, altTh: 'กล่องบนโต๊ะ', captionTh: 'กล่องไปรษณีย์', position: 'hero' },
+      { url: img, altTh: 'ภาพสอง', captionTh: null, position: 'mosaic-2' },
+      { url: img, altTh: 'ฝาเสียบ', captionTh: null, position: 'template-PK-TE-01' },
+    ]);
+    await ctx.prisma.homeSection.updateMany({
+      where: { slug: 'home-photos' },
+      data: { deletedAt: new Date() },
+    });
   });
 });
