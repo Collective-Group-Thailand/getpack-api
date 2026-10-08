@@ -75,4 +75,31 @@ describe('hero preview adapter (UX r2 A2, D-310)', () => {
     const blank = heroCalculateBody(corrugate, { ...selection, inkIds: [] });
     expect((blank.configuration['parts'] as { printFront: unknown[] }[])[0]!.printFront).toEqual([]);
   });
+
+  it('configures every part of a two-part box (body and lid), printed alike', () => {
+    const telescope = {
+      ...base,
+      productTypeCode: 'corrugated',
+      calculator: 'corrugate',
+      printAreas: ['top'],
+      patterns: [
+        {
+          id: 'pt-tele',
+          parts: [
+            { subPatternId: 'sp-body', seq: 1, name: 'body' },
+            { subPatternId: 'sp-lid', seq: 2, name: 'lid' },
+          ],
+        },
+      ],
+    } as unknown as StoreConfiguratorDto;
+    const body = heroCalculateBody(telescope, { ...selection, inkIds: ['ink-black'] });
+    expect(body.configuration['parts']).toEqual(
+      ['sp-body', 'sp-lid'].map((subPatternId) => ({
+        subPatternId,
+        printFront: [{ inkColourId: 'ink-black', area: 'top' }],
+        printBack: [],
+        assemblies: [],
+      })),
+    );
+  });
 });

@@ -1,3 +1,5 @@
+import { HERO_PRESETS, type HeroPresetsSeed } from '../data/hero-presets';
+
 /**
  * Data of the UAT rehearsal seed (`pnpm db:seed:uat`, docs/launch/UAT-DATA.md).
  *
@@ -290,7 +292,7 @@ export interface MaterialSeed {
   micron?: number;
   caliperMm: string;
   /** Corrugated boards on the BC flute use the UAT BC flute instead of the dev B flute. */
-  flute?: 'B' | 'BC';
+  flute?: 'B' | 'BC' | 'E';
   insideColour?: string;
   outsideColour?: string;
   isFoodGrade?: boolean;
@@ -393,6 +395,21 @@ export const UAT_MATERIALS: readonly MaterialSeed[] = [
     outsideColour: 'น้ำตาล',
     coatable: false,
     descriptionTh: 'สำหรับสินค้าหนักและการส่งออก',
+  },
+  // E flute: the homepage hero's mailer board (D-310). Priced like dev-ka125-b in this rehearsal.
+  {
+    code: 'uat-ka125-e',
+    likeCode: 'dev-ka125-b',
+    kind: 'corrugated_board',
+    nameTh: 'ลูกฟูก KA125 ลอน E (3 ชั้น)',
+    nameEn: 'Corrugated KA125 E-flute (3-ply)',
+    gsm: 400,
+    caliperMm: '1.600',
+    flute: 'E',
+    insideColour: 'น้ำตาล',
+    outsideColour: 'น้ำตาล',
+    coatable: false,
+    descriptionTh: 'ลอนเล็ก ผิวเรียบ พิมพ์สวย สำหรับกล่องไปรษณีย์และกล่องสินค้า',
   },
   // Labels (like dev-pp-white-80).
   {
@@ -524,6 +541,8 @@ export interface ProductSeed {
   /** Pattern codes (dev patterns renamed, or the UAT folding patterns). */
   patterns?: string[];
   materials?: string[];
+  /** Front-ink options offered (ink colour codes); none means the configurator offers no print. */
+  inks?: string[];
   finishes?: string[];
   diecuts?: string[];
   assemblies?: string[];
@@ -533,6 +552,30 @@ export interface ProductSeed {
 }
 
 const COSMETIC_FINISHES = ['dev-matt', 'uat-gloss-opp', 'uat-aqueous-varnish', 'uat-soft-touch'];
+/** The homepage hero's products offer one spot colour and full colour (D-310). */
+const HERO_INKS = ['uat-black', 'dev-cmyk'];
+
+/**
+ * `catalog.hero_presets` for the rehearsal (D-310): the product owner's values (`HERO_PRESETS`) with this
+ * catalogue's mapping — in production the Admin maps their own products and options. Ported from
+ * `feat/ux-r2-p4-hero-presets` (b44a6cb).
+ */
+export const UAT_HERO_PRESETS: HeroPresetsSeed = {
+  ...HERO_PRESETS,
+  shapes: HERO_PRESETS.shapes.map((s) => ({
+    ...s,
+    productSlug: { mailer: 'uat-postal-box-b', lid: 'uat-fruit-box-tele', tuck: 'uat-soap-box' }[s.id],
+  })),
+  materials: HERO_PRESETS.materials.map((m) => ({
+    ...m,
+    optionCodes: { kraft350: ['uat-kraft-350'], art350: ['dev-art-350'], corrE: ['uat-ka125-e'] }[m.id],
+  })),
+  prints: HERO_PRESETS.prints.map((p) => ({
+    ...p,
+    optionCodes: { none: [], one: ['uat-black'], full: ['dev-cmyk'] }[p.id],
+  })),
+};
+
 const FOLDING_QTY = { min: 500, presets: [500, 1000, 2000, 3000, 5000, 10000] };
 const CORRUGATE_QTY = { min: 100, presets: [100, 300, 500, 1000, 2000, 5000] };
 const LABEL_QTY = { min: 500, presets: [500, 1000, 3000, 5000, 10000] };
@@ -566,6 +609,7 @@ export const UAT_PRODUCTS: readonly ProductSeed[] = [
     descriptionTh: 'กล่องฝาเสียบสำหรับสบู่ก้อน 80–120 กรัม เหมาะกับแบรนด์สบู่สมุนไพรและสบู่ทำมือ',
     patterns: ['UAT-RTE'],
     materials: ['dev-art-350', 'uat-kraft-350', 'uat-duplex-350'],
+    inks: HERO_INKS,
     finishes: ['dev-matt', 'uat-aqueous-varnish'],
     sizes: [
       ['S', 'สบู่ 80 กรัม (9×6×3 ซม.)', 90, 60, 30],
@@ -702,7 +746,8 @@ export const UAT_PRODUCTS: readonly ProductSeed[] = [
     nameEn: 'Postal box RSC 3-ply (B-flute)',
     descriptionTh: 'กล่องพัสดุขนาดมาตรฐานยอดนิยมสำหรับร้านค้าออนไลน์ เลือกพิมพ์โลโก้ 1–2 สีได้',
     patterns: ['DEV-RSC'],
-    materials: ['dev-ka125-b', 'uat-kt125-b', 'dev-ka185-b'],
+    materials: ['dev-ka125-b', 'uat-kt125-b', 'dev-ka185-b', 'uat-ka125-e'],
+    inks: HERO_INKS,
     sizes: [
       ['00', 'เบอร์ 00 (9.75×14×6 ซม.)', 140, 97.5, 60],
       ['0', 'เบอร์ 0 (11×17×6 ซม.)', 170, 110, 60],
@@ -756,7 +801,8 @@ export const UAT_PRODUCTS: readonly ProductSeed[] = [
     nameEn: 'Fruit box telescope (body + lid)',
     descriptionTh: 'กล่องฝาครอบเจาะระบายอากาศได้ สำหรับมะม่วง ทุเรียน และผลไม้ของฝาก',
     patterns: ['DEV-TELE'],
-    materials: ['dev-ka125-b', 'dev-ka185-b'],
+    materials: ['dev-ka125-b', 'dev-ka185-b', 'uat-ka125-e'],
+    inks: HERO_INKS,
     sizes: [
       ['4KG', 'ผลไม้ 4 กก. (30×40×15 ซม.)', 400, 300, 150],
       ['10KG', 'ผลไม้ 10 กก. (35×50×20 ซม.)', 500, 350, 200],

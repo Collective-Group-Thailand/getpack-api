@@ -181,12 +181,14 @@ export interface SettingValues {
   };
   /** D-309 typical CS reply time within support hours (minutes); unset until the CS Lead sets it. */
   'support.reply_minutes': number;
-  /** D-310 homepage Studio hero presets, mapped to catalogue products and options; unset until Admin sets them. */
+  /** D-310 homepage Studio hero presets (product owner's values; catalogue mapping per environment). */
   'catalog.hero_presets': {
-    shapes: { id: 'mailer' | 'lid' | 'tuck'; productSlug: string; sizeCodes?: string[] }[];
-    materials: { id: 'kraft350' | 'art350' | 'corrE'; optionCodes: string[] }[];
-    prints: { id: 'none' | 'one' | 'full'; optionCodes: string[] }[];
+    shapes: { id: 'mailer' | 'lid' | 'tuck'; labelTh: string; styleCode?: string; productSlug?: string }[];
+    sizesMm: { w: number; d: number; h: number }[];
+    materials: { id: 'kraft350' | 'art350' | 'corrE'; labelTh: string; optionCodes?: string[] }[];
+    prints: { id: 'none' | 'one' | 'full'; labelTh: string; optionCodes?: string[] }[];
     quantities: number[];
+    default: { shape: string; size: number; material: string; print: string; qty: number };
   };
   /** D-306 the assistant provider chosen by ADR-0012; unset until accepted. */
   'assistant.provider': string;

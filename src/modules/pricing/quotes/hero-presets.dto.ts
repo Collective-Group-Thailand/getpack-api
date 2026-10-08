@@ -28,19 +28,37 @@ export class HeroShapeDto {
 
   @ApiProperty({ type: String, nullable: true, example: 'FEFCO-0427' })
   dielineKey!: string | null;
+
+  @ApiProperty({
+    type: String,
+    nullable: true,
+    example: 'PK-CF-01',
+    description: 'The style-library code of the shape (the preset’s, else the pattern’s)',
+  })
+  styleCode!: string | null;
+
+  @ApiProperty({
+    type: [Number],
+    example: [300, 500, 1000, 2000],
+    description: 'Quantities this shape offers (the product’s own minimum and maximum applied)',
+  })
+  qtys!: number[];
 }
 
 export class HeroSizeDto {
-  @ApiProperty({ example: 'mailer:M', description: '`<shape>:<standard size code>`, returned as `presetId`' })
+  @ApiProperty({
+    example: 'mailer:s0',
+    description: '`<shape>:s<index of the preset size>`, returned as `presetId`',
+  })
   id!: string;
 
   @ApiProperty({ enum: HERO_SHAPES, enumName: 'HeroShape', example: 'mailer' })
   shapeId!: string;
 
-  @ApiProperty({ example: 'M' })
+  @ApiProperty({ example: 's0', description: 'The preset size’s index, as `s<index>`' })
   code!: string;
 
-  @ApiProperty({ example: 'กลาง 20×15×8 ซม.' })
+  @ApiProperty({ example: '18×12×5 ซม.', description: 'Inside W × D × H in centimetres' })
   labelTh!: string;
 
   @ApiProperty({ example: 200, description: 'Inside length (mm, D-182)' })
@@ -109,7 +127,37 @@ export class HeroPrintDto {
   options!: HeroPrintOptionDto[];
 }
 
-/** D-310: everything the hero offers, each with what it means in the catalogue. Empty until Admin sets it. */
+/** The selection the hero opens on — always one the presets offer. */
+export class HeroDefaultDto {
+  @ApiProperty({ enum: HERO_SHAPES, enumName: 'HeroShape', example: 'mailer' })
+  shape!: string;
+
+  @ApiProperty({ example: 'mailer:s0' })
+  sizeId!: string;
+
+  @ApiProperty({ example: 180, description: 'Inside length (mm)' })
+  lengthMm!: number;
+
+  @ApiProperty({ example: 120, description: 'Inside width (mm)' })
+  widthMm!: number;
+
+  @ApiProperty({ example: 50, description: 'Inside height (mm)' })
+  heightMm!: number;
+
+  @ApiProperty({ enum: HERO_MATERIALS, enumName: 'HeroMaterial', example: 'corrE' })
+  material!: string;
+
+  @ApiProperty({ enum: HERO_PRINTS, enumName: 'HeroPrint', example: 'one' })
+  print!: string;
+
+  @ApiProperty({ type: 'integer', example: 500 })
+  qty!: number;
+}
+
+/**
+ * D-310: everything the hero offers per shape, each with what it means in the catalogue — only what the catalogue
+ * can price; empty when nothing maps.
+ */
 export class HeroPresetsDto {
   @ApiProperty({ type: [HeroShapeDto] })
   shapes!: HeroShapeDto[];
@@ -123,8 +171,27 @@ export class HeroPresetsDto {
   @ApiProperty({ type: [HeroPrintDto] })
   prints!: HeroPrintDto[];
 
-  @ApiProperty({ type: [Number], example: [500, 1000, 2000, 5000] })
+  @ApiProperty({
+    type: [Number],
+    example: [300, 500, 1000, 2000],
+    description: 'Every quantity some shape offers',
+  })
   qtys!: number[];
+
+  @ApiProperty({
+    type: HeroDefaultDto,
+    nullable: true,
+    description: 'The selection to open on; null when nothing is offered',
+  })
+  default!: HeroDefaultDto | null;
+
+  @ApiProperty({
+    example: true,
+    description:
+      'The owner’s default is not offered by the catalogue (e.g. a board the shape cannot take): `default` is the ' +
+      'nearest offered selection instead',
+  })
+  defaultAdjusted!: boolean;
 }
 
 export class HeroPreviewRequestDto {
@@ -200,7 +267,7 @@ export class HeroPreviewDto {
   @ApiPropertyOptional({
     type: String,
     nullable: true,
-    example: 'mailer:M',
+    example: 'mailer:s0',
     description: 'The preset size the dimensions match; null for a size of the customer’s own',
   })
   presetId!: string | null;
@@ -222,7 +289,7 @@ export const HERO_PREVIEW_EXAMPLE: HeroPreviewDto = {
   vatIncluded: true,
   leadTimeBusinessDays: { min: 7, max: 7 },
   priceLockUntil: '2026-10-22T10:15:00+07:00',
-  presetId: 'mailer:M',
+  presetId: 'mailer:s0',
   calculation: {
     productTypeCode: 'corrugated',
     configuration: {
@@ -239,30 +306,32 @@ export const HERO_PRESETS_EXAMPLE: HeroPresetsDto = {
   shapes: [
     {
       id: 'mailer',
-      labelTh: 'กล่องไปรษณีย์',
+      labelTh: 'ไปรษณีย์',
       productSlug: 'mailer-box',
       catalogProductId: '0192f3a0-7c1e-7d2a-9b1f-0000000a0001',
       productTypeCode: 'corrugated',
       calculator: 'corrugate',
       patternId: '0192f3a0-7c1e-7d2a-9b1f-0000000a0002',
       dielineKey: 'FEFCO-0427',
+      styleCode: 'PK-CF-01',
+      qtys: [300, 500, 1000, 2000],
     },
   ],
   sizes: [
     {
-      id: 'mailer:M',
+      id: 'mailer:s0',
       shapeId: 'mailer',
-      code: 'M',
-      labelTh: 'กลาง 20×15×8 ซม.',
-      lengthMm: 200,
-      widthMm: 150,
-      heightMm: 80,
+      code: 's0',
+      labelTh: '18×12×5 ซม.',
+      lengthMm: 180,
+      widthMm: 120,
+      heightMm: 50,
     },
   ],
   materials: [
     {
-      id: 'kraft350',
-      labelTh: 'ลูกฟูกลอน E คราฟท์',
+      id: 'corrE',
+      labelTh: 'ลูกฟูก E',
       labelEn: 'E-flute kraft',
       options: [{ shapeId: 'mailer', materialId: '0192f3a0-7c1e-7d2a-9b1f-0000000a0003' }],
     },
@@ -270,10 +339,21 @@ export const HERO_PRESETS_EXAMPLE: HeroPresetsDto = {
   prints: [
     {
       id: 'one',
-      labelTh: 'พิมพ์ 1 สี',
+      labelTh: '1 สี',
       labelEn: 'One colour',
       options: [{ shapeId: 'mailer', inkIds: ['0192f3a0-7c1e-7d2a-9b1f-0000000a0004'] }],
     },
   ],
-  qtys: [500, 1000, 2000, 5000],
+  qtys: [300, 500, 1000, 2000],
+  default: {
+    shape: 'mailer',
+    sizeId: 'mailer:s0',
+    lengthMm: 180,
+    widthMm: 120,
+    heightMm: 50,
+    material: 'corrE',
+    print: 'one',
+    qty: 500,
+  },
+  defaultAdjusted: true,
 };

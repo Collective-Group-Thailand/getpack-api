@@ -5,7 +5,7 @@
 > (a new effective-dated version, audited — D-063) and signs item 5 of `docs/LAUNCH-CHECKLIST.md`. A *proposed* or
 > *pending* value is not a decision: it goes live only once its owner confirms it.
 
-**115 settings** — 65 confirmed · 20 proposed · 4 pending the CPA (⚖) · 1 pending the business · 25 defined without a value (not set until their owner sets them).
+**115 settings** — 67 confirmed · 19 proposed · 4 pending the CPA (⚖) · 1 pending the business · 24 defined without a value (not set until their owner sets them).
 
 ## Settings
 
@@ -45,7 +45,7 @@
 | `calendar.business_hours` | `{"from":"09:00","to":"18:00","timezone":"Asia/Bangkok"}` | proposed | superadmin | D-175, D-061 | D-175 business hours of working days (national calendar) for business-hour SLAs such as the D-061 slip review |
 | `calloff.max_months` | `6` | confirmed | superadmin | D-206, D-290 | D-206 / D-290 longest a call-off agreement may hold a quotation’s unit price (months, from the factory’s acceptance) |
 | `campaigns.budget_alert_pct` | `80` | confirmed | superadmin | D-154 | D-154 Marketing is alerted when a campaign has used this share of its budget |
-| `catalog.hero_presets` | `— (not set)` | not set | admin | D-310, D-043 | D-310 the homepage Studio hero: which catalogue product each shape opens (with its standard sizes), which material options each board and which front-ink options each print means, and the quantities offered; priced by store.quotes.calculate; not seeded — the hero only points to the studio until Admin sets it |
+| `catalog.hero_presets` | `{"shapes":[{"id":"mailer","labelTh":"ไปรษณีย์","styleCode":"PK-CF-01"},{"id":"lid","labelTh":"ฝาครอบ"},{"id":"tuck","labelTh":"ฝาเสียบ"}],"sizesMm":[{"w":180,"d":120,"h":50},{"w":250,"d":180,"h":80},{"w":100,"d":100,"h":180}],"materials":[{"id":"kraft350","labelTh":"คราฟท์ 350g"},{"id":"art350","labelTh":"อาร์ตการ์ด 350g"},{"id":"corrE","labelTh":"ลูกฟูก E"}],"prints":[{"id":"none","labelTh":"ไม่พิมพ์"},{"id":"one","labelTh":"1 สี"},{"id":"full","labelTh":"เต็มสี"}],"quantities":[300,500,1000,2000],"default":{"shape":"mailer","size":0,"material":"kraft350","print":"one","qty":500}}` | confirmed | admin | D-310, D-043 | D-310 the homepage Studio hero (product owner, 2026-10-08): shapes (by style code or catalogue product), inside sizes W×D×H mm, boards and prints with their labels, quantities and the default selection. Which product a shape opens (`productSlug` / `styleCode`) and which material / ink options a board or print means (`optionCodes`) are mapped by Admin per catalogue; an entry the catalogue cannot price is dropped on read. Priced by store.quotes.calculate |
 | `claims.window_days` | `7` | confirmed | superadmin | D-082 | D-082 claim window after receipt (days) |
 | `close.unmatched_items_threshold` | `0` | proposed | finance_manager | D-033 | D-033 / accounting-design §7 step 1: unmatched bank / gateway items allowed at close before each must be explained (proposed: none) |
 | `configurations.draft_retention_days` | `90` | confirmed | superadmin | D-185 | D-185 days a draft configuration is kept after its last change, then deleted |
@@ -79,7 +79,7 @@
 | `partners.peer_benchmark_min_factories` | `3` | confirmed | superadmin | D-101, D-044 | D-101 / D-044 active factories per product type before peer benchmarks are computed |
 | `partners.suggestion_deviation_band_pct` | `— (not set)` | not set | superadmin | D-172, D-040 | D-040 / D-172 band above which a proposed buy price is flagged against its suggestion; not seeded (D-172) — no above_band flag until a superadmin sets it |
 | `payments.method_fees` | `— (not set)` | not set | finance_manager | D-176 | D-176 fee Packio expects per payment method ({method: {pct, fixedAmount}}), recorded on each payment for P04; not seeded — fee 0 until Finance sets it |
-| `payments.qr_validity_minutes` | `15` | proposed | superadmin | D-312, D-060, D-176 | D-312 (was D-060 / D-176: legacy SCB_DAYS_UNTIL_EXPIRATION, sample 1 day) lifetime of one SCB QR payment attempt (minutes) — 15; a new QR can be generated after it lapses; never shortens the order expiry |
+| `payments.qr_validity_minutes` | `15` | confirmed | superadmin | D-312, D-060, D-176 | D-312 (accepted 2026-10-08; was D-060 / D-176: legacy SCB_DAYS_UNTIL_EXPIRATION, sample 1 day) lifetime of one SCB QR payment attempt (minutes) — 15; a new QR can be generated after it lapses; never shortens the order expiry |
 | `payments.schedule_split_threshold` | `20000.00` | confirmed | superadmin | D-020 | D-020 order value (THB) from which the 50 % deposit + 50 % before shipping schedule applies |
 | `payments.slip_receiver_accounts` | `— (not set)` | not set | finance_manager | D-061 | D-061 collection accounts a slip must pay into ([{accountType, accountNumber}] in the Slip2Go form); not seeded — until set, no slip passes automatically (all go to Finance) |
 | `payments.slip_review_sla_business_hours` | `4` | confirmed | superadmin | D-061 | D-061 Finance SLA for slips that fail automatic verification (business hours) |
