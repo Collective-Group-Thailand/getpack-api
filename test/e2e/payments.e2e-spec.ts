@@ -5,6 +5,7 @@ import { type FakeScbGateway, type FakeTwoC2PGateway } from '@integrations/payme
 import { SCB_GATEWAY, TWOC2P_GATEWAY } from '@integrations/payments/payment-gateways.port';
 import { OrdersService } from '@modules/orders/orders.service';
 import { PaymentSchedulesService } from '@modules/payment-schedules/payment-schedules.service';
+import { PaymentsService } from '@modules/payments/payments.service';
 import request from 'supertest';
 
 import { type DevFolding } from '../../prisma/seed/dev-folding';
@@ -77,6 +78,34 @@ describe('payments (e2e, B3.2)', () => {
       .expect(422)
       .expect((res) => expect(res.body.code).toBe('payments.method_unavailable'));
     await initiate(token, group.id, 'card_instalment_2c2p').expect(422);
+  });
+
+  it('lets the customer make a new QR after one lapses, on the same order (D-312, UX r2 B12)', async () => {
+    await setFlag(ctx, 'payments.scb', true);
+    const { token } = await customerToken(ctx, 7);
+    const group = await placeOrder(ctx, token, fixture, postcode);
+    const first = (await initiate(token, group.id, 'scb_qr').expect(201)).body as {
+      id: string;
+      expiresAt: string;
+    };
+    // 15 minutes later the attempt lapses (the scheduled expiry job).
+    await ctx.app.get(PaymentsService).expireDue(new Date(Date.parse(first.expiresAt) + 1000));
+    const lapsed = await as(ctx, token).get(`/v1/store/payments/${first.id}`).expect(200);
+    expect(lapsed.body.status).toBe('expired');
+    // "สร้าง QR ใหม่": a new attempt on the same order group, checkout untouched.
+    const again = (await initiate(token, group.id, 'scb_qr').expect(201)).body as {
+      id: string;
+      status: string;
+      groupId: string;
+      expiresAt: string;
+    };
+    expect(again).toMatchObject({ status: 'pending', groupId: group.id });
+    expect(again.id).not.toBe(first.id);
+    const ahead = Date.parse(again.expiresAt) - Date.now();
+    expect(ahead).toBeGreaterThan(0);
+    expect(ahead).toBeLessThanOrEqual(15 * 60_000);
+    const placed = await as(ctx, token).get(`/v1/store/order-groups/${group.id}`).expect(200);
+    expect(placed.body.status).toBe('waiting_payment');
   });
 
   it('takes a deposit by SCB QR confirmed by inquiry, never twice, and opens production with the artwork (D-061, D-073)', async () => {
