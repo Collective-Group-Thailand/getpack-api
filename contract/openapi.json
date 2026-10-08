@@ -40554,12 +40554,7 @@
                 "type": "null"
               }
             ],
-            "description": "The selection to open on; null when nothing is offered"
-          },
-          "defaultAdjusted": {
-            "description": "The owner’s default is not offered by the catalogue (e.g. a board the shape cannot take): `default` is the nearest offered selection instead",
-            "example": true,
-            "type": "boolean"
+            "description": "The selection to open on — the product owner’s default (`catalog.hero_presets.default`) when the catalogue offers it; null otherwise (open on the first offered options)"
           },
           "materials": {
             "items": {
@@ -40605,8 +40600,7 @@
           "materials",
           "prints",
           "qtys",
-          "default",
-          "defaultAdjusted"
+          "default"
         ],
         "type": "object"
       },
@@ -359295,7 +359289,6 @@
                     "sizeId": "mailer:s0",
                     "widthMm": 120
                   },
-                  "defaultAdjusted": true,
                   "materials": [
                     {
                       "id": "corrE",

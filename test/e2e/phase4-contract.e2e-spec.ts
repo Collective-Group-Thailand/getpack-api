@@ -111,7 +111,6 @@ describe('Phase 4 contract (e2e)', () => {
         prints: [],
         qtys: [],
         default: null,
-        defaultAdjusted: true,
       });
       const choice = {
         shape: 'mailer',
@@ -160,9 +159,8 @@ describe('Phase 4 contract (e2e)', () => {
           },
         ],
         qtys: [500, 1000],
-        // kraft350 is not on this product: the nearest offered default.
-        default: { shape: 'mailer', sizeId: 'mailer:s0', material: 'corrE', print: 'one', qty: 500 },
-        defaultAdjusted: true,
+        // kraft350 is not on this product: the owner's default is not offered, so none.
+        default: null,
       });
       expect(presets.sizes).toHaveLength(1);
       // A print whose ink is not on the product is not offered.
