@@ -1,3 +1,4 @@
+import { SettingsService } from '@platform/settings/settings.service';
 import request from 'supertest';
 
 import { seedDevCorrugate } from '../../prisma/seed/dev-corrugate';
@@ -58,9 +59,11 @@ describe('Phase 4 contract (e2e)', () => {
       string,
       string | null
     >;
+    // The settings in force (other suites share the e2e database and may have changed them).
+    const settings = ctx.app.get(SettingsService);
     expect(first.body).toMatchObject({
-      priceLockDays: 15,
-      claimWindowDays: 7,
+      priceLockDays: (await settings.at('quotes.validity_days')).value,
+      claimWindowDays: (await settings.at('claims.window_days')).value,
       proofSlaBusinessDays: null,
       supportHours: null,
       supportReplyMinutes: null,
