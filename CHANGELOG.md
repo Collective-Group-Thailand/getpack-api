@@ -3,6 +3,26 @@
 Contract-facing changes per release. The contract itself is `contract/openapi.json`; mappings for `packio-web` are in
 `docs/contract-requests-triage.md`.
 
+## v0.43.1 — Phase 4 review follow-ups
+
+All changes are additive (`oasdiff breaking` against `v0.43.0`: none).
+
+### Changed fields
+- `HeroShapeDto`: new `styleCode` (nullable) and `qtys[]` — the quantities that shape offers.
+- `HeroPresetsDto`: new `default` (`HeroDefaultDto`: shape, sizeId, inside mm, material, print, qty; nullable) and
+  `defaultAdjusted` (the owner's default is not offered by the catalogue; `default` is the nearest offered one).
+- `HeroSizeDto`: ids are now `<shape>:s<index>` of the preset sizes (were `<shape>:<standard size code>`); `code` is
+  `s<index>`; `labelTh` is the inside W × D × H in cm. `store.quotes.preview` returns the same `presetId`.
+- Labels of shapes, boards and prints come from the setting when given.
+
+### Behaviour
+- `catalog.hero_presets` is seeded with the product owner's values; the catalogue mapping is per environment, so a
+  catalogue without it offers nothing. Per shape, only boards / prints published on the product, sizes its calculator
+  accepts and quantities within its limits are offered; `store.quotes.preview` refuses (409) the rest.
+- The hero prices every part of a multi-part box (telescope body + lid).
+- D-312 (15-minute QR) accepted; a lapsed QR is replaced by a new one on the same order group.
+- `pnpm test:int` runs with a 6 GiB heap (the suite outgrew Node's default).
+
 ## v0.43.0 — Phase 4 contract (UX round 2, Homepage v10 / design language v3)
 
 All changes are additive: no field, operation or enum value was removed or renamed.
