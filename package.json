@@ -38,6 +38,7 @@
     "launch:settings": "nest build && node dist/scripts/launch-settings-build.js",
     "release:check": "nest build && node dist/scripts/release-hygiene.js",
     "styles:import": "nest build && node dist/scripts/styles-import.js",
+    "cms:home-photos": "nest build && node dist/scripts/cms-home-photos.js",
     "dieline:vendor": "bash scripts/dieline-vendor.sh",
     "styles:recipes-from-engine": "nest build && node dist/scripts/styles-recipes-from-engine.js"
   },

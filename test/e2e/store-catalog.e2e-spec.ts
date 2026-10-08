@@ -228,6 +228,36 @@ describe('store catalogue (e2e, B2.1)', () => {
     await get(`/v1/store/catalog/images/${pending.publicId}`).expect(404);
   });
 
+  it('serves a home photo only while the published home-photos section references it', async () => {
+    const hero = await file();
+    const story = await file();
+    const url = (f: { publicId: string }) => `/v1/store/catalog/images/${f.publicId}`;
+    await prisma.homeSection.updateMany({ where: { slug: 'home-photos' }, data: { deletedAt: new Date() } });
+    const section = await prisma.homeSection.create({
+      data: {
+        slug: 'home-photos',
+        kind: 'custom',
+        status: 'draft',
+        config: { mosaic: [null, { url: url(hero), alt: { th: 'ภาพ' }, caption: null }] },
+      },
+    });
+    // Another custom section (customer stories, D-311) does not make its photos public.
+    await prisma.homeSection.create({
+      data: {
+        slug: `customer-cases-${run}`,
+        kind: 'custom',
+        status: 'published',
+        config: { cases: [{ approved: false, image: { url: url(story) } }] },
+      },
+    });
+    await get(url(hero)).expect(404);
+    await prisma.homeSection.update({ where: { id: section.id }, data: { status: 'published' } });
+    await get(url(hero)).expect(200);
+    await get(url(story)).expect(404);
+    await prisma.homeSection.update({ where: { id: section.id }, data: { deletedAt: new Date() } });
+    await get(url(hero)).expect(404);
+  });
+
   it('shows banners only while published and inside their window', async () => {
     const desktop = await file();
     const title = `banner-${run}`;

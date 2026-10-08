@@ -7,6 +7,7 @@ import { PrismaService } from '@database/prisma.service';
 import { OBJECT_STORAGE, type ObjectStorage } from '@integrations/s3/object-storage.port';
 import { Inject, Injectable } from '@nestjs/common';
 
+import { HOME_PHOTOS_SLUG } from '../cms/home-photos';
 import { imageUrl } from './store-catalog.service';
 
 export interface PublicImage {
@@ -29,6 +30,8 @@ const xml = (value: string) =>
  * Public media of the catalogue (B2.1): images referenced by visible catalogue / CMS content, and
  * the Google Merchant feed. Private files stay private: an image is served only while an active or
  * published row references it, and only after its malware scan is clean (contract §3 "Files").
+ * Of the home sections only `home-photos` counts: other `custom` configs (customer stories, D-311)
+ * may hold photos not yet cleared for publication.
  */
 @Injectable()
 export class StoreMediaService {
@@ -63,6 +66,11 @@ export class StoreMediaService {
         OR EXISTS (SELECT 1 FROM diecut_types o WHERE o.image_file_id = fo.id AND o.status = 'active')
         OR EXISTS (SELECT 1 FROM assemblies o WHERE o.image_file_id = fo.id AND o.status = 'active')
         OR EXISTS (SELECT 1 FROM patterns o WHERE o.image_file_id = fo.id AND o.status = 'active')
+        OR EXISTS (SELECT 1 FROM home_sections h
+                    WHERE h.slug = ${HOME_PHOTOS_SLUG} AND h.kind = 'custom'
+                      AND h.status = 'published' AND h.deleted_at IS NULL
+                      AND jsonb_path_exists(h.config, 'lax $.** ? (@ == $u)',
+                            jsonb_build_object('u', '/v1/store/catalog/images/' || fo.public_id::text)))
          )`;
     if (!visible) throw new DomainException('http.not_found');
     const file = await this.prisma.fileObject.findUniqueOrThrow({ where: { id: visible.id } });
