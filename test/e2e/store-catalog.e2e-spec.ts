@@ -258,6 +258,37 @@ describe('store catalogue (e2e, B2.1)', () => {
     await get(url(hero)).expect(404);
   });
 
+  it('serves a customer story photo only while the story is approved with permission on file (D-311)', async () => {
+    const photo = await file();
+    const consent = await file();
+    const url = `/v1/store/catalog/images/${photo.publicId}`;
+    const story = await prisma.homeCustomerCase.create({
+      data: {
+        brandNameTh: `ร้านทดสอบ ${run} (fake)`,
+        provinceTh: 'เชียงใหม่',
+        productTh: 'กล่องไปรษณีย์',
+        quantity: 1000,
+        leadTimeDays: 9,
+        quoteTh: 'ข้อความทดสอบ',
+        photoFileId: photo.id,
+        consentFileId: consent.id,
+      },
+    });
+    await get(url).expect(404); // draft
+    const approver = await prisma.user.findFirstOrThrow({ where: { kind: 'staff' } });
+    await prisma.homeCustomerCase.update({
+      where: { id: story.id },
+      data: { status: 'approved', approvedById: approver.id, approvedAt: new Date() },
+    });
+    await get(url).expect(200);
+    await get(`/v1/store/catalog/images/${consent.publicId}`).expect(404); // the permission stays private
+    await prisma.homeCustomerCase.update({
+      where: { id: story.id },
+      data: { status: 'withdrawn', withdrawnAt: new Date() },
+    });
+    await get(url).expect(404);
+  });
+
   it('shows banners only while published and inside their window', async () => {
     const desktop = await file();
     const title = `banner-${run}`;
