@@ -1,0 +1,16 @@
+{
+  "license": "Unsplash License / Pexels License — free commercial use; interim set, replace with originals via API. Per-asset source unverified (no credit recorded): every asset is `interim-unverified`, which fails packio-web production builds.",
+  "assets": [
+    {"file": "wrap.jpg", "position": "hero", "source": "interim-unverified", "altTh": "ห่อสินค้าด้วยกระดาษคราฟท์", "captionTh": "กระดาษห่อคราฟท์ พิมพ์ลาย 1 สี"},
+    {"file": "packing.jpg", "position": "mosaic-1", "source": "interim-unverified", "altTh": "แพ็กสินค้าลงกล่องลูกฟูก", "captionTh": "กล่องลูกฟูก E-flute สำหรับส่งพัสดุ"},
+    {"file": "kraft-boxes.jpg", "position": "mosaic-2", "source": "interim-unverified", "altTh": "กล่องฝาครอบคราฟท์ ปั๊มฟอยล์ทอง", "captionTh": "กล่องฝาครอบคราฟท์ ปั๊มฟอยล์ทอง"},
+    {"file": "hands.jpg", "position": "mosaic-3", "source": "interim-unverified", "altTh": "ตรวจสีหน้าแท่นพิมพ์", "captionTh": "ตรวจสีหน้าแท่นพิมพ์"},
+    {"file": "soap-set.jpg", "position": "mosaic-4", "source": "interim-unverified", "altTh": "กล่องฝาเสียบ อาร์ตการ์ด", "captionTh": "กล่องฝาเสียบ อาร์ตการ์ด พิมพ์ 1 สี"},
+    {"file": "kraft-bag.jpg", "position": "mosaic-5", "source": "interim-unverified", "altTh": "ถุงกระดาษคราฟท์หูแบน", "captionTh": "ถุงกระดาษคราฟท์หูแบน"},
+    {"file": "press.jpg", "position": "sage", "source": "interim-unverified", "altTh": "เครื่องพิมพ์ออฟเซ็ตในโรงงาน", "captionTh": ""},
+    {"file": "kraft-boxes.jpg", "position": "frame-4", "source": "interim-unverified", "altTh": "ตัวอย่างกล่องคราฟท์ที่ผลิตแล้ว", "captionTh": ""},
+    {"file": "packing.jpg", "position": "frame-9", "source": "interim-unverified", "altTh": "แพ็กกล่องเตรียมจัดส่ง", "captionTh": ""},
+    {"file": "stack.jpg", "position": "template-mailer", "styleCode": "PK-CF-01", "source": "interim-unverified", "altTh": "กล่องฝาครอบคราฟท์ซ้อนกัน", "captionTh": ""},
+    {"file": "bakery-bag.jpg", "position": "template-bakery", "styleCode": "PK-PG-02", "source": "interim-unverified", "altTh": "ถุงเบเกอรี่พิมพ์ลาย", "captionTh": ""}
+  ]
+}
