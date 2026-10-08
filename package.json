@@ -22,7 +22,7 @@
     "typecheck": "tsc --noEmit -p tsconfig.json",
     "test": "node --experimental-vm-modules node_modules/jest/bin/jest.js --config jest.config.ts --selectProjects unit",
     "uat:populate": "node --experimental-vm-modules node_modules/jest/bin/jest.js --config jest.config.ts --selectProjects uat --runInBand",
-    "test:int": "node --experimental-vm-modules node_modules/jest/bin/jest.js --config jest.config.ts --selectProjects integration --runInBand",
+    "test:int": "NODE_OPTIONS=--max-old-space-size=6144 node --experimental-vm-modules node_modules/jest/bin/jest.js --config jest.config.ts --selectProjects integration --runInBand",
     "test:e2e": "node --experimental-vm-modules node_modules/jest/bin/jest.js --config jest.config.ts --selectProjects e2e --maxWorkers=1 --workerIdleMemoryLimit=1536MB",
     "test:cov": "node --experimental-vm-modules node_modules/jest/bin/jest.js --config jest.config.ts --selectProjects unit --coverage",
     "contract:build": "nest build && node dist/scripts/contract-build.js",
