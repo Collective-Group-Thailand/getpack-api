@@ -40415,6 +40415,68 @@
         ],
         "type": "string"
       },
+      "HeroDefaultDto": {
+        "properties": {
+          "heightMm": {
+            "description": "Inside height (mm)",
+            "example": 50,
+            "type": "number"
+          },
+          "lengthMm": {
+            "description": "Inside length (mm)",
+            "example": 180,
+            "type": "number"
+          },
+          "material": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/HeroMaterial"
+              }
+            ],
+            "example": "corrE"
+          },
+          "print": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/HeroPrint"
+              }
+            ],
+            "example": "one"
+          },
+          "qty": {
+            "example": 500,
+            "type": "integer"
+          },
+          "shape": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/HeroShape"
+              }
+            ],
+            "example": "mailer"
+          },
+          "sizeId": {
+            "example": "mailer:s0",
+            "type": "string"
+          },
+          "widthMm": {
+            "description": "Inside width (mm)",
+            "example": 120,
+            "type": "number"
+          }
+        },
+        "required": [
+          "shape",
+          "sizeId",
+          "lengthMm",
+          "widthMm",
+          "heightMm",
+          "material",
+          "print",
+          "qty"
+        ],
+        "type": "object"
+      },
       "HeroMaterial": {
         "enum": [
           "kraft350",
@@ -40483,6 +40545,22 @@
       },
       "HeroPresetsDto": {
         "properties": {
+          "default": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/HeroDefaultDto"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "The selection to open on; null when nothing is offered"
+          },
+          "defaultAdjusted": {
+            "description": "The owner’s default is not offered by the catalogue (e.g. a board the shape cannot take): `default` is the nearest offered selection instead",
+            "example": true,
+            "type": "boolean"
+          },
           "materials": {
             "items": {
               "$ref": "#/components/schemas/HeroMaterialDto"
@@ -40496,11 +40574,12 @@
             "type": "array"
           },
           "qtys": {
+            "description": "Every quantity some shape offers",
             "example": [
+              300,
               500,
               1000,
-              2000,
-              5000
+              2000
             ],
             "items": {
               "type": "number"
@@ -40525,7 +40604,9 @@
           "sizes",
           "materials",
           "prints",
-          "qtys"
+          "qtys",
+          "default",
+          "defaultAdjusted"
         ],
         "type": "object"
       },
@@ -40559,7 +40640,7 @@
           },
           "presetId": {
             "description": "The preset size the dimensions match; null for a size of the customer’s own",
-            "example": "mailer:M",
+            "example": "mailer:s0",
             "type": [
               "string",
               "null"
@@ -40785,6 +40866,27 @@
           "productTypeCode": {
             "example": "corrugated",
             "type": "string"
+          },
+          "qtys": {
+            "description": "Quantities this shape offers (the product’s own minimum and maximum applied)",
+            "example": [
+              300,
+              500,
+              1000,
+              2000
+            ],
+            "items": {
+              "type": "number"
+            },
+            "type": "array"
+          },
+          "styleCode": {
+            "description": "The style-library code of the shape (the preset’s, else the pattern’s)",
+            "example": "PK-CF-01",
+            "type": [
+              "string",
+              "null"
+            ]
           }
         },
         "required": [
@@ -40795,14 +40897,17 @@
           "productTypeCode",
           "calculator",
           "patternId",
-          "dielineKey"
+          "dielineKey",
+          "styleCode",
+          "qtys"
         ],
         "type": "object"
       },
       "HeroSizeDto": {
         "properties": {
           "code": {
-            "example": "M",
+            "description": "The preset size’s index, as `s<index>`",
+            "example": "s0",
             "type": "string"
           },
           "heightMm": {
@@ -40811,12 +40916,13 @@
             "type": "number"
           },
           "id": {
-            "description": "`<shape>:<standard size code>`, returned as `presetId`",
-            "example": "mailer:M",
+            "description": "`<shape>:s<index of the preset size>`, returned as `presetId`",
+            "example": "mailer:s0",
             "type": "string"
           },
           "labelTh": {
-            "example": "กลาง 20×15×8 ซม.",
+            "description": "Inside W × D × H in centimetres",
+            "example": "18×12×5 ซม.",
             "type": "string"
           },
           "lengthMm": {
@@ -86667,7 +86773,7 @@
     "contact": {},
     "description": "Packio — Your Packaging Production Partner, operated by Collective Group (Thailand).\nRules: `docs/contract/api-conventions.md` (shared with packio-web).\n\n- **Surfaces:** `/v1/auth`, `/v1/store` (customer), `/v1/admin` (staff), `/v1/partner` (factories), `/v1/b2b` (company API clients, D-291), `/webhooks`. A token is accepted only on its own audience's prefix.\n- **Money:** decimal strings with exactly 2 decimals (`\"1234.50\"`) plus `currency: \"THB\"` on the object; never JSON numbers. Clients never compute prices.\n- **Dates:** ISO 8601 with offset, rendered in `Asia/Bangkok` (`2026-09-22T14:05:00+07:00`); date-only fields `YYYY-MM-DD`.\n- **IDs:** uuid only; business keys (`orderCode`) are separate fields.\n- **Errors:** RFC 9457 `application/problem+json` with a stable `code`; `title`/`detail` localised by `Accept-Language` (`th` default, `en`).\n- **Lists:** `?page&perPage(≤100)&sort&order&q` → `{ data, meta: { page, perPage, total } }`; feeds use `?cursor&limit` → `{ data, meta: { nextCursor } }`.\n- **Idempotency:** irreversible POSTs require `Idempotency-Key` (uuid); replays within 24 h return the original response.\n- **Concurrency:** editable resources return `ETag`; updates send `If-Match` (412 `concurrency.stale`).\n- **Files:** presign → PUT to the returned URL → reference the `fileId`.",
     "title": "Packio API",
-    "version": "0.43.0"
+    "version": "0.43.1"
   },
   "openapi": "3.1.0",
   "paths": {
@@ -359179,11 +359285,22 @@
             "content": {
               "application/json": {
                 "example": {
+                  "default": {
+                    "heightMm": 50,
+                    "lengthMm": 180,
+                    "material": "corrE",
+                    "print": "one",
+                    "qty": 500,
+                    "shape": "mailer",
+                    "sizeId": "mailer:s0",
+                    "widthMm": 120
+                  },
+                  "defaultAdjusted": true,
                   "materials": [
                     {
-                      "id": "kraft350",
+                      "id": "corrE",
                       "labelEn": "E-flute kraft",
-                      "labelTh": "ลูกฟูกลอน E คราฟท์",
+                      "labelTh": "ลูกฟูก E",
                       "options": [
                         {
                           "materialId": "0192f3a0-7c1e-7d2a-9b1f-0000000a0003",
@@ -359196,7 +359313,7 @@
                     {
                       "id": "one",
                       "labelEn": "One colour",
-                      "labelTh": "พิมพ์ 1 สี",
+                      "labelTh": "1 สี",
                       "options": [
                         {
                           "inkIds": [
@@ -359208,10 +359325,10 @@
                     }
                   ],
                   "qtys": [
+                    300,
                     500,
                     1000,
-                    2000,
-                    5000
+                    2000
                   ],
                   "shapes": [
                     {
@@ -359219,21 +359336,28 @@
                       "catalogProductId": "0192f3a0-7c1e-7d2a-9b1f-0000000a0001",
                       "dielineKey": "FEFCO-0427",
                       "id": "mailer",
-                      "labelTh": "กล่องไปรษณีย์",
+                      "labelTh": "ไปรษณีย์",
                       "patternId": "0192f3a0-7c1e-7d2a-9b1f-0000000a0002",
                       "productSlug": "mailer-box",
-                      "productTypeCode": "corrugated"
+                      "productTypeCode": "corrugated",
+                      "qtys": [
+                        300,
+                        500,
+                        1000,
+                        2000
+                      ],
+                      "styleCode": "PK-CF-01"
                     }
                   ],
                   "sizes": [
                     {
-                      "code": "M",
-                      "heightMm": 80,
-                      "id": "mailer:M",
-                      "labelTh": "กลาง 20×15×8 ซม.",
-                      "lengthMm": 200,
+                      "code": "s0",
+                      "heightMm": 50,
+                      "id": "mailer:s0",
+                      "labelTh": "18×12×5 ซม.",
+                      "lengthMm": 180,
                       "shapeId": "mailer",
-                      "widthMm": 150
+                      "widthMm": 120
                     }
                   ]
                 },
@@ -402064,7 +402188,7 @@
                     "max": 7,
                     "min": 7
                   },
-                  "presetId": "mailer:M",
+                  "presetId": "mailer:s0",
                   "priceLockUntil": "2026-10-22T10:15:00+07:00",
                   "total": "13380.00",
                   "unitPrice": "13.38",

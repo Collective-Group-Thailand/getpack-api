@@ -5,6 +5,7 @@
  * Money and percentages are decimal strings (CLAUDE.md); percentages are in percent (10 = 10 %).
  */
 import { ADVISORY_RULE_SET_SCHEMA } from '../../../src/modules/advisory/rule-set';
+import { HERO_PRESETS } from './hero-presets';
 import { STUDIO_PRINT_RULES } from './studio';
 
 export type Confirmation = 'confirmed' | 'proposed' | 'pending_cpa' | 'pending_business';
@@ -506,9 +507,8 @@ export const SETTINGS: readonly SettingSeed[] = [
     value: 15,
     valueSchema: { minimum: 5, maximum: 10080 },
     description:
-      'D-312 (was D-060 / D-176: legacy SCB_DAYS_UNTIL_EXPIRATION, sample 1 day) lifetime of one SCB QR payment attempt (minutes) — 15; a new QR can be generated after it lapses; never shortens the order expiry',
+      'D-312 (accepted 2026-10-08; was D-060 / D-176: legacy SCB_DAYS_UNTIL_EXPIRATION, sample 1 day) lifetime of one SCB QR payment attempt (minutes) — 15; a new QR can be generated after it lapses; never shortens the order expiry',
     decisions: ['D-312', 'D-060', 'D-176'],
-    confirmation: 'proposed',
   },
   {
     key: 'payments.method_fees',
@@ -1283,12 +1283,11 @@ export const SETTINGS: readonly SettingSeed[] = [
   {
     key: 'catalog.hero_presets',
     valueType: 'json',
-    value: null,
-    unset: true,
+    value: HERO_PRESETS,
     valueSchema: {
       type: 'object',
       additionalProperties: false,
-      required: ['shapes', 'materials', 'prints', 'quantities'],
+      required: ['shapes', 'sizesMm', 'materials', 'prints', 'quantities', 'default'],
       properties: {
         shapes: {
           type: 'array',
@@ -1296,11 +1295,27 @@ export const SETTINGS: readonly SettingSeed[] = [
           items: {
             type: 'object',
             additionalProperties: false,
-            required: ['id', 'productSlug'],
+            required: ['id', 'labelTh'],
             properties: {
               id: { enum: ['mailer', 'lid', 'tuck'] },
+              labelTh: { type: 'string', minLength: 1, maxLength: 40 },
+              styleCode: { type: 'string', pattern: '^PK-[A-Z0-9]{2,8}-[0-9]{2,3}$' },
               productSlug: { type: 'string', maxLength: 120 },
-              sizeCodes: { type: 'array', maxItems: 6, items: { type: 'string', maxLength: 60 } },
+            },
+          },
+        },
+        sizesMm: {
+          type: 'array',
+          minItems: 1,
+          maxItems: 6,
+          items: {
+            type: 'object',
+            additionalProperties: false,
+            required: ['w', 'd', 'h'],
+            properties: {
+              w: { type: 'number', exclusiveMinimum: 0, maximum: 2000 },
+              d: { type: 'number', exclusiveMinimum: 0, maximum: 2000 },
+              h: { type: 'number', exclusiveMinimum: 0, maximum: 2000 },
             },
           },
         },
@@ -1310,15 +1325,11 @@ export const SETTINGS: readonly SettingSeed[] = [
           items: {
             type: 'object',
             additionalProperties: false,
-            required: ['id', 'optionCodes'],
+            required: ['id', 'labelTh'],
             properties: {
               id: { enum: ['kraft350', 'art350', 'corrE'] },
-              optionCodes: {
-                type: 'array',
-                minItems: 1,
-                maxItems: 10,
-                items: { type: 'string', maxLength: 80 },
-              },
+              labelTh: { type: 'string', minLength: 1, maxLength: 40 },
+              optionCodes: { type: 'array', maxItems: 10, items: { type: 'string', maxLength: 80 } },
             },
           },
         },
@@ -1328,20 +1339,32 @@ export const SETTINGS: readonly SettingSeed[] = [
           items: {
             type: 'object',
             additionalProperties: false,
-            required: ['id', 'optionCodes'],
+            required: ['id', 'labelTh'],
             properties: {
               id: { enum: ['none', 'one', 'full'] },
+              labelTh: { type: 'string', minLength: 1, maxLength: 40 },
               optionCodes: { type: 'array', maxItems: 10, items: { type: 'string', maxLength: 80 } },
             },
           },
         },
         quantities: { type: 'array', minItems: 1, maxItems: 6, items: { type: 'integer', minimum: 1 } },
+        default: {
+          type: 'object',
+          additionalProperties: false,
+          required: ['shape', 'size', 'material', 'print', 'qty'],
+          properties: {
+            shape: { enum: ['mailer', 'lid', 'tuck'] },
+            size: { type: 'integer', minimum: 0 },
+            material: { enum: ['kraft350', 'art350', 'corrE'] },
+            print: { enum: ['none', 'one', 'full'] },
+            qty: { type: 'integer', minimum: 1 },
+          },
+        },
       },
     },
     description:
-      'D-310 the homepage Studio hero: which catalogue product each shape opens (with its standard sizes), which material options each board and which front-ink options each print means, and the quantities offered; priced by store.quotes.calculate; not seeded — the hero only points to the studio until Admin sets it',
+      'D-310 the homepage Studio hero (product owner, 2026-10-08): shapes (by style code or catalogue product), inside sizes W×D×H mm, boards and prints with their labels, quantities and the default selection. Which product a shape opens (`productSlug` / `styleCode`) and which material / ink options a board or print means (`optionCodes`) are mapped by Admin per catalogue; an entry the catalogue cannot price is dropped on read. Priced by store.quotes.calculate',
     decisions: ['D-310', 'D-043'],
-    confirmation: 'pending_business',
     ownerRole: 'admin',
   },
   {

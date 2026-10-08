@@ -103,19 +103,15 @@ describe('Phase 4 contract (e2e)', () => {
     });
     await ctx.prisma.productType.update({ where: { code: 'corrugated' }, data: { quoteMode: 'instant' } });
     try {
-      // Not configured: nothing offered, nothing priced.
-      await setSetting(ctx, 'catalog.hero_presets', {
-        shapes: [],
-        materials: [],
-        prints: [],
-        quantities: [1000],
-      });
+      // The owner's presets as seeded everywhere: no catalogue mapping here, so nothing is offered or priced.
       expect((await request(ctx.server).get('/v1/store/catalog/hero-presets').expect(200)).body).toEqual({
         shapes: [],
         sizes: [],
         materials: [],
         prints: [],
         qtys: [],
+        default: null,
+        defaultAdjusted: true,
       });
       const choice = {
         shape: 'mailer',
@@ -130,22 +126,45 @@ describe('Phase 4 contract (e2e)', () => {
       expect(off.body.code).toBe('quotes.preview_unavailable');
 
       await setSetting(ctx, 'catalog.hero_presets', {
-        shapes: [{ id: 'mailer', productSlug: 'dev-rsc-carton', sizeCodes: ['M'] }],
-        materials: [{ id: 'corrE', optionCodes: [board.code] }],
+        shapes: [{ id: 'mailer', labelTh: 'ไปรษณีย์', productSlug: 'dev-rsc-carton' }],
+        sizesMm: [
+          { w: 400, d: 300, h: 250 },
+          { w: 100, d: 300, h: 600 }, // outside the RSC's size rules: not offered
+        ],
+        materials: [{ id: 'corrE', labelTh: 'ลูกฟูก E', optionCodes: [board.code] }],
         prints: [
-          { id: 'none', optionCodes: [] },
-          { id: 'one', optionCodes: [ink.code] },
-          { id: 'full', optionCodes: ['no-such-ink'] },
+          { id: 'none', labelTh: 'ไม่พิมพ์', optionCodes: [] },
+          { id: 'one', labelTh: '1 สี', optionCodes: [ink.code] },
+          { id: 'full', labelTh: 'เต็มสี', optionCodes: ['no-such-ink'] },
         ],
         quantities: [1000, 500],
+        default: { shape: 'mailer', size: 0, material: 'kraft350', print: 'one', qty: 500 },
       });
       const presets = (await request(ctx.server).get('/v1/store/catalog/hero-presets').expect(200)).body;
       expect(presets).toMatchObject({
-        shapes: [{ id: 'mailer', productSlug: 'dev-rsc-carton', calculator: 'corrugate' }],
-        sizes: [{ id: 'mailer:M', lengthMm: 400, widthMm: 300, heightMm: 250 }],
-        materials: [{ id: 'corrE', options: [{ shapeId: 'mailer', materialId: fixture.boardPublicId }] }],
+        shapes: [
+          {
+            id: 'mailer',
+            labelTh: 'ไปรษณีย์',
+            productSlug: 'dev-rsc-carton',
+            calculator: 'corrugate',
+            qtys: [500, 1000],
+          },
+        ],
+        sizes: [{ id: 'mailer:s0', labelTh: '40×30×25 ซม.', lengthMm: 400, widthMm: 300, heightMm: 250 }],
+        materials: [
+          {
+            id: 'corrE',
+            labelTh: 'ลูกฟูก E',
+            options: [{ shapeId: 'mailer', materialId: fixture.boardPublicId }],
+          },
+        ],
         qtys: [500, 1000],
+        // kraft350 is not on this product: the nearest offered default.
+        default: { shape: 'mailer', sizeId: 'mailer:s0', material: 'corrE', print: 'one', qty: 500 },
+        defaultAdjusted: true,
       });
+      expect(presets.sizes).toHaveLength(1);
       // A print whose ink is not on the product is not offered.
       expect((presets.prints as { id: string }[]).map((p) => p.id)).toEqual(['none', 'one']);
 
@@ -156,7 +175,7 @@ describe('Phase 4 contract (e2e)', () => {
       expect(preview.body).toMatchObject({
         currency: 'THB',
         vatIncluded: true,
-        presetId: 'mailer:M',
+        presetId: 'mailer:s0',
         unitPrice: expect.stringMatching(/^\d+\.\d{2}$/),
         total: expect.stringMatching(/^\d+\.\d{2}$/),
       });

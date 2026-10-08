@@ -28,6 +28,8 @@ export interface HeroSelection {
   /** Front ink option ids the print maps to for this product (empty = no print). */
   inkIds: string[];
   quantity: number;
+  /** The pattern to draw (a shape chosen by style code); the product's first pattern otherwise. */
+  patternId?: string;
 }
 
 export interface CalculateBody {
@@ -46,9 +48,12 @@ function isProcessInk(configurator: StoreConfiguratorDto, id: string): boolean {
 }
 
 export function heroCalculateBody(configurator: StoreConfiguratorDto, s: HeroSelection): CalculateBody {
-  const pattern = configurator.patterns[0];
+  const pattern = configurator.patterns.find((p) => p.id === s.patternId) ?? configurator.patterns[0];
   if (!pattern) throw new Error('a hero product has a pattern');
-  const subPattern = pattern.parts[0]?.subPatternId;
+  // One part per sub-pattern (a telescope box is body + lid; the calculator prices each). The board is the box's; the
+  // print goes on every part — the higher, never an under-quoted, price for "1 colour" on a two-part box.
+  const subPatterns: (string | undefined)[] =
+    pattern.parts.length > 0 ? pattern.parts.map((p) => p.subPatternId) : [undefined];
   const common = {
     catalogProductId: configurator.catalogProductId,
     quantities: [s.quantity],
@@ -66,14 +71,12 @@ export function heroCalculateBody(configurator: StoreConfiguratorDto, s: HeroSel
       productTypeCode: configurator.productTypeCode,
       configuration: {
         ...common,
-        parts: [
-          {
-            ...(subPattern ? { subPatternId: subPattern } : {}),
-            printFront: s.inkIds.map((inkColourId) => ({ inkColourId, area })),
-            printBack: [],
-            assemblies: [],
-          },
-        ],
+        parts: subPatterns.map((subPattern) => ({
+          ...(subPattern ? { subPatternId: subPattern } : {}),
+          printFront: s.inkIds.map((inkColourId) => ({ inkColourId, area })),
+          printBack: [],
+          assemblies: [],
+        })),
       },
     };
   }
@@ -81,20 +84,18 @@ export function heroCalculateBody(configurator: StoreConfiguratorDto, s: HeroSel
     productTypeCode: configurator.productTypeCode,
     configuration: {
       ...common,
-      parts: [
-        {
-          ...(subPattern ? { subPatternId: subPattern } : {}),
-          printFront: s.inkIds.flatMap((inkColourId) =>
-            Array.from({ length: isProcessInk(configurator, inkColourId) ? 4 : 1 }, () => ({
-              inkColourId,
-              percent: FULL_COVERAGE,
-            })),
-          ),
-          printBack: [],
-          finish2: [],
-          assemblies: [],
-        },
-      ],
+      parts: subPatterns.map((subPattern) => ({
+        ...(subPattern ? { subPatternId: subPattern } : {}),
+        printFront: s.inkIds.flatMap((inkColourId) =>
+          Array.from({ length: isProcessInk(configurator, inkColourId) ? 4 : 1 }, () => ({
+            inkColourId,
+            percent: FULL_COVERAGE,
+          })),
+        ),
+        printBack: [],
+        finish2: [],
+        assemblies: [],
+      })),
     },
   };
 }

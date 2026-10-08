@@ -11,6 +11,7 @@ import {
   UAT_FAQS,
   UAT_FINISHES,
   UAT_GEOGRAPHY,
+  UAT_HERO_PRESETS,
   UAT_MATERIALS,
   UAT_PRODUCTS,
   UAT_RENAMES,
@@ -262,6 +263,42 @@ async function seedMasterData(tx: Tx): Promise<Map<string, string[]>> {
     where: { code: 'DEV-RSC' },
     data: { fluteTypes: { create: { fluteTypeId: bcFlute.id } } },
   });
+  // E flute for the homepage hero's mailer and lid boxes (D-310). Rehearsal geometry: B flute's allowances
+  // until Prepress gives E's, and priced like B.
+  const eFlute = await tx.fluteType.create({
+    data: {
+      code: 'UAT-E',
+      name: 'ลอน E',
+      layers: bFlute.layers,
+      colA: bFlute.colA,
+      colC: bFlute.colC,
+      colDd: bFlute.colDd,
+      colG: bFlute.colG,
+      colFh: bFlute.colFh,
+      ct: bFlute.ct,
+      z: bFlute.z,
+      status: 'active',
+    },
+  });
+  like(bFlute.publicId, eFlute.publicId);
+  for (const code of ['DEV-RSC', 'DEV-TELE'])
+    await tx.pattern.update({
+      where: { code },
+      data: { fluteTypes: { create: { fluteTypeId: eFlute.id } } },
+    });
+  // One spot colour beside the process set, so "1 colour" is a real choice (D-310); priced like CMYK here.
+  const cmyk = await tx.inkColour.findUniqueOrThrow({ where: { code: 'dev-cmyk' } });
+  const black = await tx.inkColour.create({
+    data: {
+      groupId: cmyk.groupId,
+      code: 'uat-black',
+      name: 'ดำ',
+      colourKind: 'spot',
+      swatchHex: '#1A1A1A',
+      status: 'active',
+    },
+  });
+  like(cmyk.publicId, black.publicId);
 
   const family = async (code: string, nameTh: string, nameEn: string) =>
     tx.materialFamily.create({ data: { code, nameTh, nameEn, indexUnit: 'THB/kg', status: 'active' } });
@@ -284,7 +321,8 @@ async function seedMasterData(tx: Tx): Promise<Map<string, string[]>> {
         gsm: m.gsm ?? null,
         micron: m.micron ?? null,
         caliperMm: m.caliperMm,
-        fluteTypeId: m.flute === 'BC' ? bcFlute.id : m.flute === 'B' ? bFlute.id : null,
+        fluteTypeId:
+          m.flute === 'BC' ? bcFlute.id : m.flute === 'E' ? eFlute.id : m.flute === 'B' ? bFlute.id : null,
         insideColour: m.insideColour ?? null,
         outsideColour: m.outsideColour ?? null,
         isFoodGrade: m.isFoodGrade ?? false,
@@ -453,7 +491,10 @@ async function referenceConfiguration(tx: Tx, p: ProductSeed): Promise<Prisma.In
 async function seedProducts(tx: Tx): Promise<number> {
   const types = new Map((await tx.productType.findMany()).map((t) => [t.code, t]));
   const difficulty = await tx.difficultyLevel.findUniqueOrThrow({ where: { code: 'dev-normal' } });
-  const optionKind = async (kind: 'material' | 'finish' | 'diecut' | 'assembly', code: string) => {
+  const optionKind = async (
+    kind: 'material' | 'ink_colour' | 'finish' | 'diecut' | 'assembly',
+    code: string,
+  ) => {
     switch (kind) {
       case 'material':
         return {
@@ -467,6 +508,11 @@ async function seedProducts(tx: Tx): Promise<number> {
           optionId: f.id,
         };
       }
+      case 'ink_colour':
+        return {
+          optionKind: 'ink_colour' as const,
+          optionId: (await tx.inkColour.findUniqueOrThrow({ where: { code } })).id,
+        };
       case 'diecut':
         return {
           optionKind: 'diecut' as const,
@@ -484,13 +530,14 @@ async function seedProducts(tx: Tx): Promise<number> {
     const type = types.get(p.type);
     if (!type) throw new Error(`uat product ${p.slug}: unknown product type ${p.type}`);
     const options: {
-      optionKind: 'material' | 'finish' | 'coating' | 'diecut' | 'assembly';
+      optionKind: 'material' | 'ink_colour' | 'finish' | 'coating' | 'diecut' | 'assembly';
       optionId: bigint;
       isDefault: boolean;
       sort: number;
     }[] = [];
     for (const [kind, codes] of [
       ['material', p.materials],
+      ['ink_colour', p.inks],
       ['finish', p.finishes],
       ['diecut', p.diecuts],
       ['assembly', p.assemblies],
@@ -638,6 +685,26 @@ async function seedStockProducts(tx: Tx): Promise<{ count: number; inStock: numb
   return { count: UAT_STOCK_PRODUCTS.length, inStock, lines };
 }
 
+/** `catalog.hero_presets` as the Admin would set it (D-310): a new approved version of the platform setting. */
+async function seedHeroPresets(tx: Tx): Promise<number> {
+  const setting = await tx.setting.findFirstOrThrow({
+    where: { key: 'catalog.hero_presets', scopeType: 'platform', scopeId: null },
+    include: { versions: { orderBy: { versionNo: 'desc' }, take: 1 } },
+  });
+  await tx.settingVersion.create({
+    data: {
+      settingId: setting.id,
+      versionNo: (setting.versions[0]?.versionNo ?? 0) + 1,
+      effectiveFrom: UAT_EFFECTIVE_FROM,
+      status: 'approved',
+      value: UAT_HERO_PRESETS as unknown as Prisma.InputJsonValue,
+      reason: 'UAT rehearsal: the homepage Studio hero (D-310)',
+      decidedAt: new Date(),
+    },
+  });
+  return 1;
+}
+
 async function seedFaqs(tx: Tx): Promise<number> {
   let n = 0;
   for (const [ci, group] of UAT_FAQS.entries()) {
@@ -758,6 +825,7 @@ export async function seedUatCatalog(
   const added = await cloneFactoryPriceLines(tx, UAT_FACTORY_CODE, alike, { standard_product: stock.lines });
   for (const [type, n] of Object.entries(added)) report[`uat_price_lines_${type}`] = n;
   report['uat_faqs'] = await seedFaqs(tx);
+  report['uat_hero_presets'] = await seedHeroPresets(tx);
   report['uat_people'] = await seedPeople(
     tx,
     opts.password ? await new PasswordService().hash(opts.password) : undefined,
