@@ -6,6 +6,9 @@ import { StoreMeController } from '@modules/auth/controllers/me.controllers';
 import { B2B_STORE_CONTROLLERS } from '@modules/b2b/b2b.registry';
 import { CALL_OFFS_STORE_CONTROLLERS } from '@modules/call-offs/call-offs.registry';
 import { CARTS_STORE_CONTROLLERS } from '@modules/carts/carts.registry';
+import { StoreHomeContentController } from '@modules/catalog/store/home-content';
+import { StorePublicConfigController } from '@modules/catalog/store/public-config';
+import { StoreStatusLabelsController } from '@modules/catalog/store/status-labels.controller';
 import { StoreCatalogController } from '@modules/catalog/store/store-catalog.controller';
 import {
   StoreSitemapController,
@@ -26,6 +29,7 @@ import { ORDERS_STORE_CONTROLLERS } from '@modules/orders/orders.registry';
 import { PAYMENT_SCHEDULES_STORE_CONTROLLERS } from '@modules/payment-schedules/payment-schedules.registry';
 import { PAYMENTS_STORE_CONTROLLERS } from '@modules/payments/payments.registry';
 import { PRICING_STORE_CONTROLLERS } from '@modules/pricing/pricing.registry';
+import { HeroPresetsService } from '@modules/pricing/quotes/hero-presets.service';
 import { StoreQuotePathController } from '@modules/pricing/quotes/store-quote-path.controller';
 import { PROMOTIONS_STORE_CONTROLLERS } from '@modules/promotions/promotions.registry';
 import { QUOTES_STORE_CONTROLLERS } from '@modules/quotes/quotes.registry';
@@ -48,6 +52,8 @@ import { RealtimeModule } from '@platform/realtime/realtime.module';
 /** `/v1/store/*` — each deliverable adds the controllers it owns. */
 @Module({
   imports: [RealtimeModule],
+  // API-only: the hero presets read the catalogue's store configurator, which the worker does not load (D-310).
+  providers: [HeroPresetsService],
   controllers: [
     ...OPS_STORE_CONTROLLERS,
     StoreFilesController,
@@ -62,6 +68,9 @@ import { RealtimeModule } from '@platform/realtime/realtime.module';
     StoreCatalogController,
     StoreSitemapController,
     StoreSupportChannelsController,
+    StoreStatusLabelsController,
+    StorePublicConfigController,
+    StoreHomeContentController,
     StoreQuotePathController,
     ...PRICING_STORE_CONTROLLERS,
     ...QUOTES_STORE_CONTROLLERS,

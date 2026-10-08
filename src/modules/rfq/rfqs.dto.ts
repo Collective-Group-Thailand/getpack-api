@@ -1,4 +1,5 @@
 import { OptionalNoteDto } from '@common/dto/optional-note.dto';
+import { ApiStatusLabelAdminTh, ApiStatusLabelTh } from '@common/labels/status-label.decorators';
 import { NextActionDto } from '@common/next-actions/next-action.dto';
 import { PageQuery } from '@common/pagination/pagination.dto';
 import { EnumField, IntField, RefField, TextField } from '@modules/catalog/crud/dto-fields';
@@ -579,6 +580,12 @@ export class RfqQuotationDto {
   @ApiProperty({ enum: RFQ_QUOTE_STATUSES, enumName: 'RfqQuoteStatus', example: 'sent' })
   status!: string;
 
+  @ApiStatusLabelTh('RfqQuoteStatus')
+  statusLabelTh!: string;
+
+  @ApiStatusLabelAdminTh('RfqQuoteStatus')
+  statusLabelAdminTh!: string;
+
   @ApiProperty({ type: String, format: 'date-time', nullable: true, example: '2026-10-16T09:00:00+07:00' })
   validUntil!: string | null;
 
@@ -650,6 +657,12 @@ export class RfqDto {
 
   @ApiProperty({ enum: RFQ_STATUSES, enumName: 'RfqStatus', example: 'quoted' })
   status!: string;
+
+  @ApiStatusLabelTh('RfqStatus')
+  statusLabelTh!: string;
+
+  @ApiStatusLabelAdminTh('RfqStatus')
+  statusLabelAdminTh!: string;
 
   @ApiProperty({ example: 'paper_bag' })
   productTypeCode!: string;

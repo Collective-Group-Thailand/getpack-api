@@ -1,5 +1,6 @@
 import { type Actor, systemActor, type UserActor } from '@common/context/actor';
 import { DomainException } from '@common/errors/domain.exception';
+import { statusLabels } from '@common/labels/status-labels';
 import { formatMoney, MoneyDecimal } from '@common/money/money';
 import { toBangkokIso } from '@common/time/bangkok';
 import { PrismaService, type Tx } from '@database/prisma.service';
@@ -626,6 +627,7 @@ export class DesignServicesService implements OnModuleInit {
       orderId: row.order.publicId,
       orderCode: row.order.orderCode,
       status: row.status,
+      ...statusLabels('DesignServiceStatus', row.status),
       brief: brief
         ? {
             brandName: brief.brandName,
@@ -654,6 +656,7 @@ export class DesignServicesService implements OnModuleInit {
         chargeable: r.chargeable,
         feeNet: r.feeAmount?.toFixed(2) ?? null,
         status: r.status,
+        ...statusLabels('DesignRoundStatus', r.status),
         changeRequest: r.changeRequest,
         referenceFileIds: r.referenceFileIds,
         submissionId: r.submission?.publicId ?? null,

@@ -1,3 +1,5 @@
+import { DesignChecksSubscriber } from '@modules/studio/design-checks.subscriber';
+import { type DomainEventEnvelope } from '@platform/domain-events/domain-event';
 import request from 'supertest';
 
 import { as, bootCommerceApp, type CommerceApp, customerToken } from '../support/commerce-e2e';
@@ -116,6 +118,64 @@ describe('studio print checks (e2e, U4.B3)', () => {
     // The earlier version is still blocked: acknowledgements are per version.
     const v1 = await as(ctx, token).post(`/v1/store/studio/${id}/checks`, { versionNo: 1 }).expect(200);
     expect(v1.body.ready).toBe(false);
+  });
+
+  it('tells the design list what still needs checking once the worker checked the save (UX r2 A4)', async () => {
+    const created = await as(ctx, token)
+      .post('/v1/store/designs', {
+        catalogProductId: productId,
+        title: 'ตรวจในรายการ (fake)',
+        document: doc(300),
+      })
+      .expect(201);
+    const id = created.body.id as string;
+    const listed = async () =>
+      (
+        (await as(ctx, token).get('/v1/store/designs?perPage=100').expect(200)).body.data as {
+          id: string;
+          issueCount: number | null;
+          hasIssues: boolean | null;
+          issueSummary: { code: string; severity: string; count: number; messageTh: string }[];
+        }[]
+      ).find((d) => d.id === id)!;
+    expect(await listed()).toMatchObject({ issueCount: null, hasIssues: null, issueSummary: [] });
+
+    const saved = (designId: string) =>
+      ctx.app
+        .get(DesignChecksSubscriber)
+        .onSaved({ payload: { designId } } as unknown as DomainEventEnvelope);
+    await saved(id);
+    await saved(id); // idempotent: the stored run is kept
+    expect(await listed()).toMatchObject({
+      issueCount: 1,
+      hasIssues: true,
+      issueSummary: [
+        { code: 'image_resolution', severity: 'block', count: 1, messageTh: expect.any(String) },
+      ],
+    });
+    const detail = await as(ctx, token).get(`/v1/store/designs/${id}`).expect(200);
+    expect(detail.body.issueCount).toBe(1);
+
+    const fixed = await as(ctx, token)
+      .patch(`/v1/store/designs/${id}/document`)
+      .set('If-Match', created.headers['etag'] as string)
+      .send({
+        operations: [
+          { op: 'replace', path: '/content/elements/0/naturalWidth', value: 1000 },
+          { op: 'replace', path: '/content/elements/0/naturalHeight', value: 1000 },
+        ],
+      })
+      .expect(200);
+    expect(fixed.body.issueCount).toBeNull(); // the new version is not checked yet
+    await saved(id);
+    expect(await listed()).toMatchObject({ issueCount: 1, issueSummary: [{ severity: 'warn' }] });
+    await as(ctx, token)
+      .post(`/v1/store/studio/${id}/checks/acknowledgements`, {
+        ruleId: 'image_resolution',
+        elementId: 'logo',
+      })
+      .expect(200);
+    expect(await listed()).toMatchObject({ issueCount: 0, hasIssues: false, issueSummary: [] });
   });
 
   it('flags an invalid barcode and refuses acknowledging what is not a finding', async () => {

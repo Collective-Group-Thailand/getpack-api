@@ -295,6 +295,15 @@ export class ConsentDto {
   purpose!: string;
 
   @ApiProperty({
+    example: 'รับข่าวสารและโปรโมชันทาง LINE',
+    description: 'The purpose in Thai words (render this, not `purpose`)',
+  })
+  labelTh!: string;
+
+  @ApiProperty({ example: 'News and offers on LINE' })
+  labelEn!: string;
+
+  @ApiProperty({
     example: false,
     description: 'Required purposes (terms, privacy notice) are needed to use Packio',
   })
@@ -334,6 +343,15 @@ export class ConsentDto {
 export class AdminConsentDto {
   @ApiProperty({ example: 'marketing_line' })
   purpose!: string;
+
+  @ApiProperty({
+    example: 'รับข่าวสารและโปรโมชันทาง LINE',
+    description: 'The purpose in Thai words (render this, not `purpose`)',
+  })
+  labelTh!: string;
+
+  @ApiProperty({ example: 'News and offers on LINE' })
+  labelEn!: string;
 
   @ApiProperty({ example: false })
   required!: boolean;
@@ -393,10 +411,20 @@ export class InboxItemDto {
   @ApiProperty({ example: 'approval.requested' })
   eventType!: string;
 
+  @ApiProperty({
+    example: 'คำขออนุมัติ',
+    description:
+      'What the item is about, in Thai, for the inbox chip — never the raw event or policy key (D-313)',
+  })
+  eventTypeLabelTh!: string;
+
+  @ApiProperty({ example: 'Approval' })
+  eventTypeLabelEn!: string;
+
   @ApiProperty({ type: String, nullable: true, example: 'มีคำขออนุมัติรอคุณ' })
   title!: string | null;
 
-  @ApiProperty({ example: 'คำขอ discount_memo รอการอนุมัติของคุณ' })
+  @ApiProperty({ example: 'คำขออนุมัติ บันทึกขอส่วนลด รอการตัดสินใจของคุณ' })
   body!: string;
 
   @ApiProperty({ format: 'date-time', example: '2026-09-23T14:05:00+07:00' })
@@ -429,8 +457,10 @@ export class InboxMetaDto {
 export const INBOX_EXAMPLE: InboxItemDto = {
   id: '0192f3a0-7c1e-7d2a-9b1f-00000000e001',
   eventType: 'approval.requested',
+  eventTypeLabelTh: 'คำขออนุมัติ',
+  eventTypeLabelEn: 'Approval',
   title: 'มีคำขออนุมัติรอคุณ',
-  body: 'คำขอ discount_memo รอการอนุมัติของคุณ',
+  body: 'คำขออนุมัติ บันทึกขอส่วนลด รอการตัดสินใจของคุณ',
   createdAt: '2026-09-23T14:05:00+07:00',
   readAt: null,
   url: '/approvals/0192f3a0-7c1e-7d2a-9b1f-00000000e002',
@@ -520,6 +550,15 @@ export class ConsentPurposeVersionDto {
 export class ConsentPurposeDto {
   @ApiProperty({ example: 'marketing_line' })
   key!: string;
+
+  @ApiProperty({
+    example: 'รับข่าวสารและโปรโมชันทาง LINE',
+    description: 'The purpose in Thai words (render this, not `purpose`)',
+  })
+  labelTh!: string;
+
+  @ApiProperty({ example: 'News and offers on LINE' })
+  labelEn!: string;
 
   @ApiProperty({ example: false })
   required!: boolean;

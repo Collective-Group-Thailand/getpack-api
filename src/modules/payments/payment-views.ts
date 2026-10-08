@@ -1,3 +1,4 @@
+import { statusLabels } from '@common/labels/status-labels';
 import { toBangkokIso } from '@common/time/bangkok';
 
 import {
@@ -17,6 +18,7 @@ export function slipDto(s: SlipRow | QueueRow): SlipDto {
   return {
     id: s.publicId,
     status: s.verificationStatus,
+    ...statusLabels('SlipStatus', s.verificationStatus),
     declaredAmount: s.declaredAmount.toFixed(2),
     declaredTransferredAt: toBangkokIso(s.declaredTransferredAt),
     slaDueAt: s.slaDueAt ? toBangkokIso(s.slaDueAt) : null,
@@ -35,6 +37,7 @@ export function paymentDto(p: PaymentRow, receivers: readonly ReceiverAccount[] 
     groupId: p.orderGroup?.publicId ?? null,
     method: p.method,
     status: p.status,
+    ...statusLabels('PaymentStatus', p.status),
     amount: p.amount.toFixed(2),
     whtAmount: p.whtAmount.toFixed(2),
     cashAmount: p.cashAmount.toFixed(2),
@@ -88,6 +91,7 @@ export function refundDto(r: RefundRow): RefundDto {
     currency: 'THB',
     channel: r.channel,
     status: r.status,
+    ...statusLabels('RefundStatus', r.status),
     reasonNote: r.reasonNote,
     approvalRequestId: r.approvalRequest?.publicId ?? null,
     providerRef: r.providerRef,

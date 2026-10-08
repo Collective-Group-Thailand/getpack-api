@@ -1,5 +1,6 @@
 import { type Actor, type UserActor } from '@common/context/actor';
 import { DomainException } from '@common/errors/domain.exception';
+import { statusLabels } from '@common/labels/status-labels';
 import { toBangkokIso } from '@common/time/bangkok';
 import { PrismaService, type Tx } from '@database/prisma.service';
 import {
@@ -528,6 +529,7 @@ export class ArtworkService implements OnModuleInit {
           itemId: i.itemId,
           versionNo: i.versionNo,
           preflightStatus: i.preflight,
+          ...statusLabels('PreflightStatus', i.preflight, 'preflightStatus'),
           since: toBangkokIso(i.since),
           dueAt: dueAt ? toBangkokIso(dueAt) : null,
           overdue: dueAt !== null && dueAt < now,
@@ -537,6 +539,7 @@ export class ArtworkService implements OnModuleInit {
           },
           productTypeCode: i.order.productType.code,
           artworkStatus: i.order.artworkStatus,
+          ...statusLabels('ArtworkStatus', i.order.artworkStatus, 'artworkStatus'),
           assignee: i.order.prepressAssignee
             ? { id: i.order.prepressAssignee.publicId, displayName: i.order.prepressAssignee.displayName }
             : null,

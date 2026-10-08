@@ -1,3 +1,5 @@
+import { ApiStatusLabelAdminTh, ApiStatusLabelTh } from '@common/labels/status-label.decorators';
+import { statusLabels } from '@common/labels/status-labels';
 import { PageQuery } from '@common/pagination/pagination.dto';
 import { IdField, TimestampField } from '@modules/catalog/crud/dto-fields';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
@@ -104,6 +106,12 @@ export class SlipDto {
   @ApiProperty({ enum: SLIP_STATUSES, enumName: 'SlipStatus', example: 'passed' })
   status!: string;
 
+  @ApiStatusLabelTh('SlipStatus')
+  statusLabelTh!: string;
+
+  @ApiStatusLabelAdminTh('SlipStatus')
+  statusLabelAdminTh!: string;
+
   @ApiProperty({ example: '7091.40' })
   declaredAmount!: string;
 
@@ -171,6 +179,12 @@ export class PaymentDto {
 
   @ApiProperty({ enum: PAYMENT_STATUSES, enumName: 'PaymentStatus', example: 'pending' })
   status!: string;
+
+  @ApiStatusLabelTh('PaymentStatus')
+  statusLabelTh!: string;
+
+  @ApiStatusLabelAdminTh('PaymentStatus')
+  statusLabelAdminTh!: string;
 
   @ApiProperty({
     example: '7091.40',
@@ -253,6 +267,7 @@ export class AdminPaymentDto extends PaymentDto {
 export const SLIP_EXAMPLE: SlipDto = {
   id: IDS.slip,
   status: 'manual_review',
+  ...statusLabels('SlipStatus', 'manual_review'),
   declaredAmount: '7091.40',
   declaredTransferredAt: '2026-10-01T10:30:00+07:00',
   slaDueAt: '2026-10-01T14:30:00+07:00',
@@ -267,6 +282,7 @@ export const PAYMENT_EXAMPLE: PaymentDto = {
   groupId: IDS.group,
   method: 'scb_qr',
   status: 'pending',
+  ...statusLabels('PaymentStatus', 'pending'),
   amount: '7091.40',
   whtAmount: '0.00',
   cashAmount: '7091.40',
@@ -470,6 +486,12 @@ export class RefundDto {
   @ApiProperty({ enum: REFUND_STATUSES, enumName: 'RefundStatus', example: 'pending_approval' })
   status!: string;
 
+  @ApiStatusLabelTh('RefundStatus')
+  statusLabelTh!: string;
+
+  @ApiStatusLabelAdminTh('RefundStatus')
+  statusLabelAdminTh!: string;
+
   @ApiProperty({ example: 'ยกเลิกคำสั่งซื้อก่อนผลิต' })
   reasonNote!: string;
 
@@ -503,6 +525,7 @@ export const REFUND_EXAMPLE: RefundDto = {
   currency: 'THB',
   channel: 'bank_transfer',
   status: 'pending_approval',
+  ...statusLabels('RefundStatus', 'pending_approval'),
   reasonNote: 'ยกเลิกคำสั่งซื้อก่อนผลิต',
   approvalRequestId: '0192f3a0-7c1e-7d2a-9b1f-0000000f0101',
   providerRef: null,

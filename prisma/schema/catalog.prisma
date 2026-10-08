@@ -1586,6 +1586,54 @@ model HomeSection {
   @@map("home_sections")
 }
 
+enum HomeCaseStatus {
+  draft
+  approved
+  withdrawn
+
+  @@map("home_case_status")
+}
+
+/// D-311 a customer story on the home page: shown only when approved with the customer's written permission on file.
+model HomeCustomerCase {
+  id            BigInt         @id(map: "pk_home_customer_cases") @default(autoincrement())
+  publicId      String         @unique(map: "ux_home_customer_cases__public_id") @default(dbgenerated("uuidv7()")) @map("public_id") @db.Uuid
+  brandNameTh   String         @map("brand_name_th")
+  provinceTh    String         @map("province_th")
+  productTh     String         @map("product_th")
+  quantity      Int
+  leadTimeDays  Int            @map("lead_time_days")
+  quoteTh       String         @map("quote_th")
+  photoFileId   BigInt?        @map("photo_file_id")
+  /// The customer's written permission (private file, never served publicly); required to approve.
+  consentFileId BigInt?        @map("consent_file_id")
+  status        HomeCaseStatus @default(draft)
+  sort          Int            @default(0)
+  approvedById  BigInt?        @map("approved_by")
+  approvedAt    DateTime?      @map("approved_at") @db.Timestamptz(6)
+  withdrawnAt   DateTime?      @map("withdrawn_at") @db.Timestamptz(6)
+  deletedAt     DateTime?      @map("deleted_at") @db.Timestamptz(6)
+  createdAt     DateTime       @default(now()) @map("created_at") @db.Timestamptz(6)
+  createdById   BigInt?        @map("created_by")
+  updatedAt     DateTime       @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+  updatedById   BigInt?        @map("updated_by")
+  rowVersion    Int            @default(1) @map("row_version")
+
+  photoFile   FileObject? @relation("HomeCasePhotoFile", fields: [photoFileId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_home_customer_cases__photo_file_id")
+  consentFile FileObject? @relation("HomeCaseConsentFile", fields: [consentFileId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_home_customer_cases__consent_file_id")
+  approvedBy  User?       @relation("HomeCaseApprovedBy", fields: [approvedById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_home_customer_cases__approved_by")
+  createdBy   User?       @relation("HomeCaseCreatedBy", fields: [createdById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_home_customer_cases__created_by")
+  updatedBy   User?       @relation("HomeCaseUpdatedBy", fields: [updatedById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_home_customer_cases__updated_by")
+
+  @@index([status, sort], map: "ix_home_customer_cases__status__sort")
+  @@index([photoFileId], map: "ix_home_customer_cases__photo_file_id")
+  @@index([consentFileId], map: "ix_home_customer_cases__consent_file_id")
+  @@index([approvedById], map: "ix_home_customer_cases__approved_by")
+  @@index([createdById], map: "ix_home_customer_cases__created_by")
+  @@index([updatedById], map: "ix_home_customer_cases__updated_by")
+  @@map("home_customer_cases")
+}
+
 enum ArticleAudience {
   public
   partner

@@ -324,6 +324,47 @@ export class FilesService {
   }
 
   /**
+   * Stores a file a staff member imports from disk (CLI tools, e.g. the home photos) as if uploaded by
+   * them: `uploaded`, scan `pending` — the content is not ours, so it goes through the scan pipeline
+   * (`FileProcessingJobs`) like any upload before anything serves it.
+   */
+  async storeImported(
+    actor: UserActor,
+    input: { body: Buffer; fileName: string; mimeType: string; retentionClass: FileRetentionClass },
+  ): Promise<FileObject> {
+    const now = new Date();
+    const file = await this.prisma.fileObject.create({
+      data: {
+        bucket: this.config.get('S3_BUCKET'),
+        storageKey: `pending/${randomUUID()}`,
+        originalName: input.fileName.slice(0, 255),
+        mimeType: input.mimeType,
+        sizeBytes: BigInt(input.body.length),
+        uploadStatus: 'uploaded',
+        retentionClass: input.retentionClass,
+        ownerUserId: actor.userId,
+        createdById: actor.userId,
+      },
+    });
+    const storageKey = `${input.retentionClass}/${now.getUTCFullYear()}/${String(now.getUTCMonth() + 1).padStart(2, '0')}/${file.publicId}`;
+    await this.storage.put(storageKey, input.body, input.mimeType);
+    return this.prisma.withTx(async (tx) => {
+      const stored = await tx.fileObject.update({ where: { id: file.id }, data: { storageKey } });
+      await this.events.record(tx, {
+        type: 'file.uploaded',
+        aggregateType: 'file',
+        aggregateId: stored.publicId,
+        payload: {
+          fileId: stored.publicId,
+          retentionClass: stored.retentionClass,
+          sizeBytes: stored.sizeBytes.toString(),
+        },
+      });
+      return stored;
+    });
+  }
+
+  /**
    * A locked copy of a clean, hashed file (the approved proof, B4.1): a new object under its own key with the
    * same SHA-256, under legal hold, that no workflow edits or replaces. Written in the caller's transaction;
    * the S3 copy happens first (a rolled-back approval leaves only an unreferenced object).

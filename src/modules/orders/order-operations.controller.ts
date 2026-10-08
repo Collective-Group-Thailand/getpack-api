@@ -3,6 +3,7 @@ import { Can } from '@common/auth/can.decorator';
 import { type Actor, type UserActor } from '@common/context/actor';
 import { DomainException } from '@common/errors/domain.exception';
 import { IfMatch } from '@common/etag/etag.interceptor';
+import { statusLabels } from '@common/labels/status-labels';
 import { ApiConcurrency, ApiEndpoint, ApiStandardErrors, ApiSuccess } from '@common/openapi/decorators';
 import { ApiPaginated } from '@common/pagination/api-paginated.decorator';
 import { PageQuery } from '@common/pagination/pagination.dto';
@@ -279,7 +280,9 @@ export class AdminOrderOperationsController {
         groupCode: o.orderGroup.groupCode,
         customerName: o.orderGroup.customer.displayName,
         status: o.status,
+        ...statusLabels('OrderStatus', o.status),
         artworkStatus: o.artworkStatus,
+        ...statusLabels('ArtworkStatus', o.artworkStatus, 'artworkStatus'),
         productTypeCode: o.productType.code,
         promisedShipDate: o.promisedShipDate ? bangkokDate(o.promisedShipDate) : null,
         grossAmount: o.grossAmount.toFixed(2),

@@ -1,4 +1,6 @@
 import { OptionalNoteDto } from '@common/dto/optional-note.dto';
+import { ApiStatusLabelAdminTh, ApiStatusLabelTh } from '@common/labels/status-label.decorators';
+import { statusLabels } from '@common/labels/status-labels';
 import { PageQuery } from '@common/pagination/pagination.dto';
 import { ARTWORK_STATUSES as ARTWORK_STATUS_VALUES } from '@modules/orders/orders.dto';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
@@ -286,6 +288,12 @@ export class ArtworkSubmissionDto {
   @ApiProperty({ enum: SUBMISSION_STATUSES, enumName: 'SubmissionStatus', example: 'submitted' })
   status!: string;
 
+  @ApiStatusLabelTh('SubmissionStatus')
+  statusLabelTh!: string;
+
+  @ApiStatusLabelAdminTh('SubmissionStatus')
+  statusLabelAdminTh!: string;
+
   @ApiProperty({ type: String, nullable: true, example: 'ใช้โลโก้สีทอง' })
   note!: string | null;
 
@@ -297,6 +305,12 @@ export class ArtworkSubmissionDto {
 
   @ApiProperty({ enum: PREFLIGHT_STATUSES, enumName: 'PreflightStatus', example: 'blocked' })
   preflightStatus!: string;
+
+  @ApiStatusLabelTh('PreflightStatus', 'preflightStatus')
+  preflightStatusLabelTh!: string;
+
+  @ApiStatusLabelAdminTh('PreflightStatus', 'preflightStatus')
+  preflightStatusLabelAdminTh!: string;
 
   @ApiProperty({ format: 'date-time', type: String, nullable: true, example: '2026-09-27T10:01:00+07:00' })
   preflightCompletedAt!: string | null;
@@ -343,6 +357,12 @@ export class PrepressQueueItemDto {
   })
   preflightStatus!: string | null;
 
+  @ApiStatusLabelTh('PreflightStatus', 'preflightStatus', true)
+  preflightStatusLabelTh!: string | null;
+
+  @ApiStatusLabelAdminTh('PreflightStatus', 'preflightStatus', true)
+  preflightStatusLabelAdminTh!: string | null;
+
   @ApiProperty({
     format: 'date-time',
     example: '2026-09-27T10:00:00+07:00',
@@ -371,6 +391,12 @@ export class PrepressQueueItemDto {
   @ApiProperty({ enum: ARTWORK_STATUS_VALUES, enumName: 'ArtworkStatus', example: 'in_review' })
   artworkStatus!: string;
 
+  @ApiStatusLabelTh('ArtworkStatus', 'artworkStatus')
+  artworkStatusLabelTh!: string;
+
+  @ApiStatusLabelAdminTh('ArtworkStatus', 'artworkStatus')
+  artworkStatusLabelAdminTh!: string;
+
   @ApiProperty({ type: UserRefDto, nullable: true, description: 'The Prepress owner' })
   assignee!: UserRefDto | null;
 }
@@ -383,6 +409,7 @@ export const SUBMISSION_EXAMPLE: ArtworkSubmissionDto = {
   source: 'upload',
   channel: 'web',
   status: 'submitted',
+  ...statusLabels('SubmissionStatus', 'submitted'),
   note: 'ใช้โลโก้สีทอง',
   submittedAt: '2026-09-27T10:00:00+07:00',
   files: [
@@ -397,6 +424,7 @@ export const SUBMISSION_EXAMPLE: ArtworkSubmissionDto = {
     },
   ],
   preflightStatus: 'blocked',
+  ...statusLabels('PreflightStatus', 'blocked', 'preflightStatus'),
   preflightCompletedAt: '2026-09-27T10:01:00+07:00',
   preflightReport: {
     run: 1,
@@ -435,12 +463,14 @@ export const QUEUE_EXAMPLE: PrepressQueueItemDto = {
   itemId: ARTWORK_IDS.submission,
   versionNo: 2,
   preflightStatus: 'passed_with_warnings',
+  ...statusLabels('PreflightStatus', 'passed_with_warnings', 'preflightStatus'),
   since: '2026-09-27T10:00:00+07:00',
   dueAt: null,
   overdue: false,
   customer: { id: '0192f3a0-7c1e-7d2a-9b1f-0000000c0001', displayName: 'สมชาย ทดสอบ' },
   productTypeCode: 'folding_box',
   artworkStatus: 'in_review',
+  ...statusLabels('ArtworkStatus', 'in_review', 'artworkStatus'),
   assignee: null,
 };
 

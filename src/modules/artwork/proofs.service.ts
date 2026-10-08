@@ -1,6 +1,7 @@
 import { type UserActor } from '@common/context/actor';
 import { RequestContext } from '@common/context/request-context';
 import { DomainException } from '@common/errors/domain.exception';
+import { statusLabels } from '@common/labels/status-labels';
 import { toBangkokIso } from '@common/time/bangkok';
 import { PrismaService, type Tx } from '@database/prisma.service';
 import { type DecisionChannel, type FileObject, type Prisma } from '@generated/prisma/client';
@@ -525,6 +526,7 @@ export function proofDto(row: ProofRow, forCustomer: boolean): ProofDto {
     orderCode: row.order.orderCode,
     versionNo: row.versionNo,
     status: row.status,
+    ...statusLabels('ProofStatus', row.status),
     submissionId: row.submission?.publicId ?? null,
     proofFile: {
       id: row.proofFile.publicId,
@@ -553,6 +555,7 @@ export function proofDto(row: ProofRow, forCustomer: boolean): ProofDto {
           previousVersionNo: previous.versionNo,
           previousProofFileId: previous.proofFile.publicId,
           previousStatus: previous.status,
+          ...statusLabels('ProofStatus', previous.status, 'previousStatus'),
           previousDecisionComment: previous.decisionComment,
           openAnnotationsOnPrevious: previous.annotations.length,
         }

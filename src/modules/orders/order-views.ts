@@ -1,3 +1,4 @@
+import { statusLabels } from '@common/labels/status-labels';
 import { nextActions, NO_PERMISSIONS } from '@common/next-actions/next-actions';
 import { bangkokDate, toBangkokIso } from '@common/time/bangkok';
 import { type Prisma } from '@generated/prisma/client';
@@ -148,7 +149,9 @@ export function orderDto(row: OrderRow, ctx: OrderViewContext = { autoCompleteDa
     id: row.publicId,
     orderCode: row.orderCode,
     status: row.status,
+    ...statusLabels('OrderStatus', row.status),
     artworkStatus: row.artworkStatus,
+    ...statusLabels('ArtworkStatus', row.artworkStatus, 'artworkStatus'),
     productTypeCode: row.productType.code,
     summary: lineSummary(
       {
@@ -224,6 +227,7 @@ export function orderGroupDto(row: OrderGroupRow, ctx?: OrderViewContext): Order
     id: row.publicId,
     groupCode: row.groupCode,
     status: row.status,
+    ...statusLabels('OrderGroupStatus', row.status),
     channel: row.channel,
     customerId: row.customer.publicId,
     poNumber: row.poNumber,

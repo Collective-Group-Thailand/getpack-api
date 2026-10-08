@@ -1,3 +1,5 @@
+import { ApiStatusLabelAdminTh, ApiStatusLabelTh } from '@common/labels/status-label.decorators';
+import { statusLabels } from '@common/labels/status-labels';
 import { PageQuery } from '@common/pagination/pagination.dto';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { UserRefDto } from '@platform/approvals/approvals.dto';
@@ -201,6 +203,12 @@ export class DesignRoundDto {
   @ApiProperty({ enum: DESIGN_ROUND_STATUSES, enumName: 'DesignRoundStatus', example: 'in_progress' })
   status!: string;
 
+  @ApiStatusLabelTh('DesignRoundStatus')
+  statusLabelTh!: string;
+
+  @ApiStatusLabelAdminTh('DesignRoundStatus')
+  statusLabelAdminTh!: string;
+
   @ApiProperty({ type: String, nullable: true, example: null })
   changeRequest!: string | null;
 
@@ -285,6 +293,12 @@ export class DesignServiceDto {
   @ApiProperty({ enum: DESIGN_SERVICE_STATUSES, enumName: 'DesignServiceStatus', example: 'in_progress' })
   status!: string;
 
+  @ApiStatusLabelTh('DesignServiceStatus')
+  statusLabelTh!: string;
+
+  @ApiStatusLabelAdminTh('DesignServiceStatus')
+  statusLabelAdminTh!: string;
+
   @ApiProperty({ type: DesignBriefViewDto, nullable: true })
   brief!: DesignBriefViewDto | null;
 
@@ -350,6 +364,7 @@ export const DESIGN_SERVICE_EXAMPLE: DesignServiceDto = {
   orderId: DS_IDS.order,
   orderCode: 'OR2609270001',
   status: 'in_progress',
+  ...statusLabels('DesignServiceStatus', 'in_progress'),
   brief: {
     brandName: 'ร้านกาแฟทดสอบ',
     brandCategory: 'เครื่องดื่ม',
@@ -374,6 +389,7 @@ export const DESIGN_SERVICE_EXAMPLE: DesignServiceDto = {
       chargeable: false,
       feeNet: null,
       status: 'in_progress',
+      ...statusLabels('DesignRoundStatus', 'in_progress'),
       changeRequest: null,
       referenceFileIds: [],
       submissionId: null,

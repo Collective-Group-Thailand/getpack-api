@@ -727,6 +727,29 @@ export class DesignLockDto {
   lockedAt!: string;
 }
 
+/** One print-check rule the design still breaks (UX r2 A4, D-278). */
+export class DesignIssueDto {
+  @ApiProperty({ example: 'image_resolution', description: 'Print-check rule id (`studio.print_rules`)' })
+  code!: string;
+
+  @ApiProperty({
+    enum: ['block', 'warn', 'info'],
+    enumName: 'PreflightSeverity',
+    example: 'warn',
+    description: '`block` or `warn` (info findings are not issues)',
+  })
+  severity!: string;
+
+  @ApiProperty({ type: 'integer', example: 2, description: 'Elements breaking it' })
+  count!: number;
+
+  @ApiProperty({ example: 'รูปความละเอียดต่ำ อาจพิมพ์ไม่คม' })
+  messageTh!: string;
+
+  @ApiProperty({ example: 'Low-resolution image: it may print soft' })
+  messageEn!: string;
+}
+
 export class DesignDocumentDto {
   @ApiProperty({ format: 'uuid', example: DESIGN_IDS.design })
   id!: string;
@@ -806,6 +829,30 @@ export class DesignDocumentDto {
 
   @ApiProperty({ type: String, nullable: true, example: 'PK-TE-01-K7QD' })
   styleVariantCode!: string | null;
+
+  @ApiProperty({
+    type: 'integer',
+    nullable: true,
+    example: 2,
+    description:
+      'What still needs checking on the current version (D-278): its blocks plus the warnings the customer has not ' +
+      'acknowledged, from the latest print check — run by the worker when the design is saved; null until checked',
+  })
+  issueCount!: number | null;
+
+  @ApiProperty({
+    type: Boolean,
+    nullable: true,
+    example: true,
+    description: '`issueCount > 0`; null until checked',
+  })
+  hasIssues!: boolean | null;
+
+  @ApiProperty({
+    type: [DesignIssueDto],
+    description: 'Per rule, blocks first; empty when none or not checked',
+  })
+  issueSummary!: DesignIssueDto[];
 
   @ApiProperty({ enum: PRINT_METHODS, enumName: 'PrintMethod', nullable: true, example: 'digital' })
   printMethod!: string | null;
@@ -1082,6 +1129,17 @@ export const DESIGN_EXAMPLE: DesignDocumentDto = {
   orders: [{ orderId: DESIGN_IDS.order, orderCode: 'PK-2610-0001-01' }],
   share: null,
   styleVariantCode: 'PK-TE-01-K7QD',
+  issueCount: 1,
+  hasIssues: true,
+  issueSummary: [
+    {
+      code: 'image_resolution',
+      severity: 'warn',
+      count: 1,
+      messageTh: 'รูปความละเอียดต่ำ อาจพิมพ์ไม่คม',
+      messageEn: 'Low-resolution image: it may print soft',
+    },
+  ],
   printMethod: 'digital',
   printSides: 'outside',
   finishes: ['dev-matt'],

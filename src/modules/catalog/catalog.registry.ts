@@ -18,6 +18,7 @@ import {
   seoPages,
   videos,
 } from './cms/cms.resources';
+import { HomeCaseActionsController, homeCases } from './cms/home-cases';
 import { catalogCrudController } from './crud/catalog-crud.controller';
 import { type AnyCatalogResource } from './crud/catalog-resource';
 import { geoDistricts, geoProvinces, geoSubdistricts } from './geography/geography.resources';
@@ -106,6 +107,7 @@ export const CATALOG_RESOURCES: readonly AnyCatalogResource[] = [
   designFonts,
   banners,
   homeSections,
+  homeCases,
   articleCategories,
   articles,
   faqCategories,
@@ -131,6 +133,7 @@ export const CATALOG_ADMIN_CONTROLLERS: Type<unknown>[] = [
   GeometryBandTableActionsController,
   StockProductRelationsController,
   HomeSectionActionsController,
+  HomeCaseActionsController,
   ArticleActionsController,
   FaqActionsController,
   SemiDesignActionsController,

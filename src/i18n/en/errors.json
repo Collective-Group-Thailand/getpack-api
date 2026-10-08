@@ -128,11 +128,11 @@
   "idempotency": {
     "key_required": {
       "title": "Idempotency-Key required",
-      "detail": "This request requires an Idempotency-Key header (uuid)."
+      "detail": "The request could not be sent. Please refresh the page and try again (Idempotency-Key header missing)."
     },
     "key_invalid": {
       "title": "Invalid Idempotency-Key",
-      "detail": "Idempotency-Key must be a uuid."
+      "detail": "The request could not be sent. Please refresh the page and try again (the Idempotency-Key must be a uuid) — nothing was created."
     },
     "key_reused": {
       "title": "Idempotency-Key reused",
@@ -490,6 +490,10 @@
     }
   },
   "quotes": {
+    "preview_unavailable": {
+      "title": "This choice cannot be priced here",
+      "detail": "The homepage does not offer this choice yet; open the configurator for its price"
+    },
     "nothing_to_save": {
       "title": "Nothing to save",
       "detail": "No quantity has an instant price; send a request for quote instead (D-100)."
@@ -1619,6 +1623,16 @@
     "not_cleared": {
       "title": "Assistant not cleared",
       "detail": "The assistant can be switched on here only after ADR-0012 and a passing evaluation: {reason}."
+    }
+  },
+  "cms": {
+    "case_consent_required": {
+      "title": "This customer story cannot be approved yet",
+      "detail": "Attach the customer's written permission and a photo before approving"
+    },
+    "case_invalid_status": {
+      "title": "Invalid customer story status",
+      "detail": "This customer story is {status}"
     }
   }
 }

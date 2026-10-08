@@ -4,6 +4,7 @@ import { type Actor, type UserActor } from '@common/context/actor';
 import { DomainException } from '@common/errors/domain.exception';
 import { IfMatch } from '@common/etag/etag.interceptor';
 import { Idempotent } from '@common/idempotency/idempotent.decorator';
+import { statusLabels } from '@common/labels/status-labels';
 import {
   ApiConcurrency,
   ApiEndpoint,
@@ -70,6 +71,7 @@ const QUOTATION = {
   id: RFQ_IDS.quote,
   versionNo: 1,
   status: 'sent',
+  ...statusLabels('RfqQuoteStatus', 'sent'),
   validUntil: '2026-10-16T09:00:00+07:00',
   sentAt: '2026-10-01T09:00:00+07:00',
   note: 'Price includes delivery to Bangkok (fake)',
@@ -89,6 +91,7 @@ export const RFQ_EXAMPLE: RfqDto = {
   id: RFQ_IDS.rfq,
   rfqCode: 'RFQ-2610-00001',
   status: 'quoted',
+  ...statusLabels('RfqStatus', 'quoted'),
   productTypeCode: 'paper_bag',
   productTypeName: 'ถุงกระดาษ',
   spec: UNMET_EXAMPLE,

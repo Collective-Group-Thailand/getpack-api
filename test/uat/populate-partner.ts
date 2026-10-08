@@ -5,26 +5,33 @@ import { UAT_FACTORY_CODE } from '../../prisma/seed/uat/uat-catalog';
 import { type FulfilmentApp, makePdf, uploadPdf } from '../support/fulfilment-e2e';
 import { as, ok, UAT_PASSWORD } from './uat-support';
 
+/** The part of a populate-run customer the partner-zone steps use. */
+export interface UatCustomer {
+  token: string;
+  addressId: string;
+  postcode: string;
+}
+
 /** What the partner-zone steps need from the populate run (its customers, tokens and lifecycle helpers). */
-export interface PartnerZoneDeps {
+export interface PartnerZoneDeps<Cust extends UatCustomer = UatCustomer> {
   ctx: FulfilmentApp;
   tokens: Record<string, string>;
   step: (name: string, fn: () => Promise<string | void>) => Promise<void>;
-  C: (key: string) => { token: string; addressId: string; postcode: string };
+  C: (key: string) => Cust;
   placeOrder: (
-    c: { token: string; addressId: string; postcode: string },
+    c: Cust,
     slug: string,
     sizeCode: string,
     quantity: number,
   ) => Promise<{ group: { id: string; groupCode: string }; orderId: string; orderCode: string }>;
   saveQuote: (
-    c: { token: string; addressId: string; postcode: string },
+    c: Cust,
     slug: string,
     sizeCode: string | null,
     quantities: number[],
   ) => Promise<{ id: string; options: { id: string; quantity: number }[] }>;
   payDue: (token: string, groupId: string) => Promise<unknown>;
-  approveArtwork: (c: { token: string }, orderId: string) => Promise<void>;
+  approveArtwork: (c: Cust, orderId: string) => Promise<void>;
   produce: (
     orderId: string,
     quantity: number,
@@ -34,7 +41,7 @@ export interface PartnerZoneDeps {
   deliver: (shipmentId: string, destinationId: string, deliveredQuantity: number) => Promise<void>;
   photo: (token: string, surface: 'store' | 'partner') => Promise<string>;
   rfq: (
-    c: { token: string; postcode: string },
+    c: Cust,
     productTypeCode: string,
     notes: string,
     dims: [number, number, number],
@@ -68,7 +75,7 @@ const WEEK = {
  * request, partner knowledge-base articles, a month-to-date scorecard — and three new factories at the start of
  * onboarding (UAT-01). Everything goes through the API, as in the rest of `uat:populate`.
  */
-export async function populatePartnerZone(d: PartnerZoneDeps): Promise<void> {
+export async function populatePartnerZone<Cust extends UatCustomer>(d: PartnerZoneDeps<Cust>): Promise<void> {
   const { ctx, tokens, step, C } = d;
   const pm = () => as(ctx, tokens['partner_manager']!);
   const owner = () => as(ctx, tokens['factory_owner']!);
@@ -465,9 +472,9 @@ export async function populatePartnerZone(d: PartnerZoneDeps): Promise<void> {
           category: 'kb-file-handling',
           slug: 'uat-kb-approved-proof',
           titleTh: 'ผลิตตามไฟล์ที่ลูกค้าอนุมัติเท่านั้น',
-          excerptTh: 'ใช้ไฟล์ปรู๊ฟที่อนุมัติแล้วจากหน้างาน ไม่รับไฟล์ทางช่องทางอื่น',
+          excerptTh: 'ใช้ไฟล์ Proof ที่อนุมัติแล้วจากหน้างาน ไม่รับไฟล์ทางช่องทางอื่น',
           body: doc(
-            'สีต้องอยู่ใน ΔE2000 ≤ 3 เทียบกับปรู๊ฟที่อนุมัติ (≤ 5 สำหรับงานเฟล็กโซ) ขนาด ± 3 มม. สำหรับกล่องลูกฟูก (D-186)',
+            'สีต้องอยู่ใน ΔE2000 ≤ 3 เทียบกับ Proof ที่อนุมัติ (≤ 5 สำหรับงานเฟล็กโซ) ขนาด ± 3 มม. สำหรับกล่องลูกฟูก (D-186)',
             'หากไฟล์มีปัญหา ให้แจ้งปัญหาในงาน (ประเภท “คำถามเรื่องอาร์ตเวิร์ก”) แทนการแก้ไฟล์เอง',
           ),
         },

@@ -89,6 +89,12 @@ describe('payments (e2e, B3.2)', () => {
       status: 'pending',
       qrPayload: expect.stringContaining(payment.referenceCode),
     });
+    // UX r2 B12 / D-312: an ISO timestamp with the Bangkok offset, at most 15 minutes ahead.
+    const expiresAt = (started.body as { expiresAt: string }).expiresAt;
+    expect(expiresAt).toMatch(/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(\.\d{3})?\+07:00$/);
+    const ahead = Date.parse(expiresAt) - Date.now();
+    expect(ahead).toBeGreaterThan(0);
+    expect(ahead).toBeLessThanOrEqual(15 * 60_000);
     const schedule = await as(ctx, token)
       .get(`/v1/store/order-groups/${group.id}/payment-schedule`)
       .expect(200);

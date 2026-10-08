@@ -1,3 +1,4 @@
+import { statusLabels } from '@common/labels/status-labels';
 import { toBangkokIso } from '@common/time/bangkok';
 import { type Prisma } from '@generated/prisma/client';
 
@@ -25,6 +26,7 @@ export function submissionDto(row: SubmissionRow): ArtworkSubmissionDto {
     source: row.source,
     channel: row.channel,
     status: row.status,
+    ...statusLabels('SubmissionStatus', row.status),
     note: row.note,
     submittedAt: toBangkokIso(row.submittedAt),
     files: row.files.map((f) => ({
@@ -37,6 +39,7 @@ export function submissionDto(row: SubmissionRow): ArtworkSubmissionDto {
       sizeBytes: f.fileObject ? Number(f.fileObject.sizeBytes) : null,
     })),
     preflightStatus: row.preflightStatus,
+    ...statusLabels('PreflightStatus', row.preflightStatus, 'preflightStatus'),
     preflightCompletedAt: row.preflightCompletedAt ? toBangkokIso(row.preflightCompletedAt) : null,
     preflightReport: report
       ? {

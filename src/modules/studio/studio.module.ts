@@ -1,6 +1,7 @@
 import { Global, Module } from '@nestjs/common';
 
 import { CollaborationService } from './collaboration.service';
+import { DesignChecksSubscriber } from './design-checks.subscriber';
 import { StudioCatalogService } from './studio-catalog.service';
 import { StudioCheckout } from './studio-checkout.extension';
 import { StudioChecksService } from './studio-checks.service';
@@ -20,6 +21,7 @@ import { StudioQuotesService } from './studio-quotes.service';
     StudioCheckout,
     StudioCatalogService,
     CollaborationService,
+    DesignChecksSubscriber,
   ],
   exports: [
     StudioQuotesService,

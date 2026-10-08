@@ -1,3 +1,4 @@
+import { statusLabels } from '@common/labels/status-labels';
 import { formatMoney, MoneyDecimal } from '@common/money/money';
 import { toBangkokIso } from '@common/time/bangkok';
 
@@ -33,6 +34,7 @@ function instalmentDto(i: InstalmentBase, staff: boolean): InstalmentDto {
     requiredBefore: i.requiredBefore,
     dueAt: i.dueAt ? toBangkokIso(i.dueAt) : null,
     status: i.status,
+    ...statusLabels('InstalmentStatus', i.status),
     grossAmount: i.grossAmount.toFixed(2),
     whtAmount: i.whtAmount.toFixed(2),
     cashAmount: i.cashAmount.toFixed(2),

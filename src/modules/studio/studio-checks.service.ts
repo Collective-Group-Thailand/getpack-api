@@ -14,7 +14,7 @@ import { StudioCatalogService } from './studio-catalog.service';
 
 /** D-215: what every soft proof says about itself. */
 export const SOFT_PROOF_LABEL = {
-  th: 'ภาพจำลองเพื่อดูตัวอย่าง ไม่ใช่ปรู๊ฟสัญญา',
+  th: 'ภาพจำลองเพื่อดูตัวอย่าง ไม่ใช่แบบตัวอย่างสำหรับอนุมัติพิมพ์',
   en: 'Preview, not a contract proof',
 };
 
@@ -75,6 +75,31 @@ export class StudioChecksService {
 
   async run(actor: UserActor, designId: string, versionNo?: number): Promise<CheckRunView> {
     const { doc, version } = await this.version(actor, designId, versionNo);
+    return this.view(await this.evaluate(doc, version, actor));
+  }
+
+  /**
+   * UX r2 A4: the worker checks a design's current version right after it is saved, so the design lists can say what
+   * still needs checking without the studio being open. The run is the one the studio would store (same key); no
+   * `design.checked` event, which records a customer's own check.
+   */
+  async evaluateCurrent(designPublicId: string): Promise<void> {
+    const doc = await this.prisma.designDocument.findFirst({
+      where: { publicId: designPublicId, deletedAt: null },
+      include: { styleVariant: { select: { base: { select: { materialClass: true } } } } },
+    });
+    if (!doc?.currentVersionId) return;
+    const version = await this.prisma.designDocumentVersion.findUnique({
+      where: { id: doc.currentVersionId },
+    });
+    if (version) await this.evaluate(doc, version, null);
+  }
+
+  private async evaluate(
+    doc: Awaited<ReturnType<StudioChecksService['version']>>['doc'],
+    version: Awaited<ReturnType<StudioChecksService['version']>>['version'],
+    actor: UserActor | null,
+  ): Promise<RunRow> {
     const catalogue = await this.settings.at('studio.print_rules');
     // What the evaluation depends on besides the document and the catalogue: the rights still missing (D-282).
     const undeclared = await this.undeclaredElements(version.document, doc.ownerUserId);
@@ -93,7 +118,7 @@ export class StudioChecksService {
       },
     };
     const existing = await this.prisma.designCheckRun.findUnique({ where: runKey, include: RUN_INCLUDE });
-    if (existing) return this.view(existing);
+    if (existing) return existing;
     const rules: PrintRule[] = activeRules(catalogue.value, {
       printMethod: doc.printMethod,
       materialClass: doc.styleVariant?.base.materialClass ?? null,
@@ -129,12 +154,13 @@ export class StudioChecksService {
           },
           include: RUN_INCLUDE,
         });
-        await this.record(tx, actor, doc.publicId, 'design.checked', {
-          versionNo: version.versionNo,
-          rulesVersion: catalogue.versionNo,
-          block: created.blockCount,
-          warn: created.warnCount,
-        });
+        if (actor)
+          await this.record(tx, actor, doc.publicId, 'design.checked', {
+            versionNo: version.versionNo,
+            rulesVersion: catalogue.versionNo,
+            block: created.blockCount,
+            warn: created.warnCount,
+          });
         return created;
       })
       .catch(async (error: unknown) => {
@@ -146,7 +172,7 @@ export class StudioChecksService {
         }
         throw error;
       });
-    return this.view(run);
+    return run;
   }
 
   /** The customer accepts a warning of the version's latest run; a block cannot be acknowledged. */

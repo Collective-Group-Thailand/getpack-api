@@ -1,3 +1,4 @@
+import { statusLabels } from '@common/labels/status-labels';
 import { formatMoney, MoneyDecimal } from '@common/money/money';
 import { addCalendarDays, bangkokDate, startOfBangkokDay, toBangkokIso } from '@common/time/bangkok';
 import { PrismaService } from '@database/prisma.service';
@@ -123,7 +124,9 @@ export class AdminOrdersService {
       groupId: g.publicId,
       groupCode: g.groupCode,
       status: o.status,
+      ...statusLabels('OrderStatus', o.status),
       artworkStatus: o.artworkStatus,
+      ...statusLabels('ArtworkStatus', o.artworkStatus, 'artworkStatus'),
       channel: g.channel,
       productTypeCode: o.productType.code,
       quantity: o.quantityOrdered,

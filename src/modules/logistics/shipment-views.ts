@@ -1,3 +1,4 @@
+import { statusLabels } from '@common/labels/status-labels';
 import { nextActions, NO_PERMISSIONS } from '@common/next-actions/next-actions';
 import { toBangkokIso } from '@common/time/bangkok';
 import { type DeliveryReconciliation, type Prisma } from '@generated/prisma/client';
@@ -102,6 +103,7 @@ export function partnerShipmentDto(
     id: row.publicId,
     shipmentNo: row.shipmentNo,
     status: row.status,
+    ...statusLabels('ShipmentStatus', row.status),
     carrier: row.carrier.code,
     trackingNo: row.trackingNo,
     destination: {
@@ -133,6 +135,7 @@ export function partnerShipmentDto(
     events: row.events.map((e) => ({
       occurredAt: toBangkokIso(e.occurredAt),
       status: e.status,
+      ...statusLabels('ShipmentStatus', e.status),
       source: e.source,
       location: e.location,
       note: e.note,
@@ -192,6 +195,7 @@ export function storeShipmentDto(
     id: row.publicId,
     shipmentNo: row.shipmentNo,
     status: row.status,
+    ...statusLabels('ShipmentStatus', row.status),
     carrier: row.carrier.code === 'factory_fleet' ? 'packio' : row.carrier.code,
     trackingNo: row.trackingNo,
     trackingUrl: row.trackingUrl,
@@ -218,6 +222,7 @@ export function storeShipmentDto(
       .map((e) => ({
         occurredAt: toBangkokIso(e.occurredAt),
         status: e.status,
+        ...statusLabels('ShipmentStatus', e.status),
         location: e.location,
       })),
     proofOfDelivery: pod

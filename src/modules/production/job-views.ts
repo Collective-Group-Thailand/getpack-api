@@ -1,3 +1,4 @@
+import { statusLabels } from '@common/labels/status-labels';
 import { nextActions, NO_PERMISSIONS } from '@common/next-actions/next-actions';
 import { toBangkokIso } from '@common/time/bangkok';
 import { type Prisma } from '@generated/prisma/client';
@@ -53,6 +54,7 @@ export function milestoneDtos(row: JobRow, photos: Map<bigint, string[]>): Miles
       nameTh: step?.nameTh ?? m.stepKey,
       nameEn: step?.nameEn ?? m.stepKey,
       status: m.status,
+      ...statusLabels('MilestoneStatus', m.status),
       evidence: m.evidence,
       tracksQuantity: m.tracksQuantity,
       customerVisible: m.customerVisible,
@@ -94,6 +96,7 @@ export function partnerJobDto(
     jobNo: row.jobNo,
     kind: row.jobKind,
     status: row.status,
+    ...statusLabels('ProductionJobStatus', row.status),
     releasedAt: toBangkokIso(row.releasedAt),
     acceptDueAt: toBangkokIso(row.acceptDueAt),
     acceptedAt: iso(row.acceptedAt),

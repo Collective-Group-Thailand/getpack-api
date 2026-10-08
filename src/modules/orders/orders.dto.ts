@@ -1,3 +1,5 @@
+import { ApiStatusLabelAdminTh, ApiStatusLabelTh } from '@common/labels/status-label.decorators';
+import { statusLabels } from '@common/labels/status-labels';
 import { NextActionDto } from '@common/next-actions/next-action.dto';
 import { PageQuery } from '@common/pagination/pagination.dto';
 import { IdField, TimestampField } from '@modules/catalog/crud/dto-fields';
@@ -242,8 +244,20 @@ export class OrderDto {
   @ApiProperty({ enum: ORDER_STATUSES, enumName: 'OrderStatus', example: 'waiting_payment' })
   status!: string;
 
+  @ApiStatusLabelTh('OrderStatus')
+  statusLabelTh!: string;
+
+  @ApiStatusLabelAdminTh('OrderStatus')
+  statusLabelAdminTh!: string;
+
   @ApiProperty({ enum: ARTWORK_STATUSES, enumName: 'ArtworkStatus', example: 'awaiting_template' })
   artworkStatus!: string;
+
+  @ApiStatusLabelTh('ArtworkStatus', 'artworkStatus')
+  artworkStatusLabelTh!: string;
+
+  @ApiStatusLabelAdminTh('ArtworkStatus', 'artworkStatus')
+  artworkStatusLabelAdminTh!: string;
 
   @ApiProperty({ example: 'folding_carton' })
   productTypeCode!: string;
@@ -371,6 +385,12 @@ export class OrderGroupDto {
 
   @ApiProperty({ enum: ORDER_GROUP_STATUSES, enumName: 'OrderGroupStatus', example: 'waiting_payment' })
   status!: string;
+
+  @ApiStatusLabelTh('OrderGroupStatus')
+  statusLabelTh!: string;
+
+  @ApiStatusLabelAdminTh('OrderGroupStatus')
+  statusLabelAdminTh!: string;
 
   @ApiProperty({ enum: ['web', 'cs', 'line', 'b2b'], enumName: 'SalesChannel', example: 'web' })
   channel!: string;
@@ -518,7 +538,9 @@ export const ORDER_EXAMPLE: OrderDto = {
   id: ORDER_IDS.order,
   orderCode: 'OR-2610-00042',
   status: 'waiting_payment',
+  ...statusLabels('OrderStatus', 'waiting_payment'),
   artworkStatus: 'awaiting_template',
+  ...statusLabels('ArtworkStatus', 'awaiting_template', 'artworkStatus'),
   productTypeCode: 'folding_carton',
   summary: LINE_SUMMARY_EXAMPLE,
   quoteId: ORDER_IDS.quote,
@@ -592,6 +614,7 @@ export const ORDER_GROUP_EXAMPLE: OrderGroupDto = {
   id: ORDER_IDS.group,
   groupCode: 'OG-2610-00042',
   status: 'waiting_payment',
+  ...statusLabels('OrderGroupStatus', 'waiting_payment'),
   channel: 'web',
   customerId: ORDER_IDS.customer,
   poNumber: null,
@@ -797,8 +820,20 @@ export class OrderQueueItemDto {
   @ApiProperty({ enum: ORDER_STATUSES, enumName: 'OrderStatus', example: 'paid_for_production' })
   status!: string;
 
+  @ApiStatusLabelTh('OrderStatus')
+  statusLabelTh!: string;
+
+  @ApiStatusLabelAdminTh('OrderStatus')
+  statusLabelAdminTh!: string;
+
   @ApiProperty({ enum: ARTWORK_STATUSES, enumName: 'ArtworkStatus', example: 'uploaded' })
   artworkStatus!: string;
+
+  @ApiStatusLabelTh('ArtworkStatus', 'artworkStatus')
+  artworkStatusLabelTh!: string;
+
+  @ApiStatusLabelAdminTh('ArtworkStatus', 'artworkStatus')
+  artworkStatusLabelAdminTh!: string;
 
   @ApiProperty({ example: 'folding_carton' })
   productTypeCode!: string;
@@ -823,7 +858,9 @@ export const QUEUE_ITEM_EXAMPLE: OrderQueueItemDto = {
   groupCode: 'OG-2610-00042',
   customerName: 'สมชาย ทดสอบ',
   status: 'paid_for_production',
+  ...statusLabels('OrderStatus', 'paid_for_production'),
   artworkStatus: 'uploaded',
+  ...statusLabels('ArtworkStatus', 'uploaded', 'artworkStatus'),
   productTypeCode: 'folding_carton',
   promisedShipDate: '2026-10-12',
   grossAmount: '14182.80',

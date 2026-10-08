@@ -291,6 +291,7 @@ export const API_TAGS: Record<string, string> = {
   'admin.catalogDesignFonts': 'Fonts offered by semi-design templates, with their licence (D-005).',
   'admin.cmsBanners': 'Storefront banners by position and validity window (D-005).',
   'admin.cmsHomeSections': 'Home-page sections and their order (D-005).',
+  'admin.cmsHomeCases': 'Customer stories for the home page, shown only when approved with written permission (D-311).',
   'admin.cmsArticleCategories': 'Article categories (D-005).',
   'admin.cmsArticles': 'Articles with rich text, cover and categories (D-005).',
   'admin.cmsFaqCategories': 'FAQ categories (D-005).',

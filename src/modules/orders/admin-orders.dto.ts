@@ -1,4 +1,6 @@
 import { FactoryRefDto } from '@common/dto/factory-ref.dto';
+import { ApiStatusLabelAdminTh, ApiStatusLabelTh } from '@common/labels/status-label.decorators';
+import { statusLabels } from '@common/labels/status-labels';
 import { PageQuery } from '@common/pagination/pagination.dto';
 import { SALES_CHANNELS } from '@modules/ledger/ledger.dto';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
@@ -96,8 +98,20 @@ export class AdminOrderListItemDto {
   @ApiProperty({ enum: ORDER_STATUSES, enumName: 'OrderStatus', example: 'in_production' })
   status!: string;
 
+  @ApiStatusLabelTh('OrderStatus')
+  statusLabelTh!: string;
+
+  @ApiStatusLabelAdminTh('OrderStatus')
+  statusLabelAdminTh!: string;
+
   @ApiProperty({ enum: ARTWORK_STATUSES, enumName: 'ArtworkStatus', example: 'approved' })
   artworkStatus!: string;
+
+  @ApiStatusLabelTh('ArtworkStatus', 'artworkStatus')
+  artworkStatusLabelTh!: string;
+
+  @ApiStatusLabelAdminTh('ArtworkStatus', 'artworkStatus')
+  artworkStatusLabelAdminTh!: string;
 
   @ApiProperty({ enum: SALES_CHANNELS, enumName: 'SalesChannel', example: 'web' })
   channel!: string;
@@ -156,7 +170,9 @@ export const ADMIN_ORDER_ROW_EXAMPLE: AdminOrderListItemDto = {
   groupId: ORDER_IDS.group,
   groupCode: 'PK-2610-0001',
   status: 'in_production',
+  ...statusLabels('OrderStatus', 'in_production'),
   artworkStatus: 'approved',
+  ...statusLabels('ArtworkStatus', 'approved', 'artworkStatus'),
   channel: 'web',
   productTypeCode: 'folding_box',
   quantity: 1000,
