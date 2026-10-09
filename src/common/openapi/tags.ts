@@ -196,6 +196,16 @@ export const API_TAGS: Record<string, string> = {
     'My factory’s jobs: accept / reject, milestones with photos and quantities, QC, issues, capacity and scorecard (D-074…D-076, D-142, D-155).',
   'admin.milestoneRoutes': 'Milestone routes per product type and variant, versioned (D-075).',
   'partner.factoryUsers': 'The users of my factory and their factory roles (factory owner, D-140).',
+  'partner.erpSettings':
+    'Packio Factory ERP: modules, document prefixes and stock rules of my factory (D-318, D-322, D-323). Factory-private (D-317).',
+  'partner.erpPartners': 'Packio Factory ERP: my factory’s own suppliers and customers (D-317, D-319).',
+  'partner.erpWarehouses': 'Packio Factory ERP: my factory’s warehouses (D-320).',
+  'partner.erpItems': 'Packio Factory ERP: my factory’s item master — materials, consumables, spare parts, goods (D-320).',
+  'partner.erpStock':
+    'Packio Factory ERP: stock balances, the append-only stock ledger, adjustments, counts, issues, transfers and the reorder list (D-321 – D-327).',
+  'partner.erpPurchaseOrders':
+    'Packio Factory ERP: my factory’s purchase orders — draft, issue, receive, close, cancel (D-325, D-326).',
+  'partner.erpGoodsReceipts': 'Packio Factory ERP: goods received from my suppliers into stock at cost (D-321, D-325).',
   'partner.changeRequests':
     'Requests to the Partner team for changes only staff make, or a site visit; with the team’s answer (U-B0.3).',
   'admin.factoryChangeRequests':

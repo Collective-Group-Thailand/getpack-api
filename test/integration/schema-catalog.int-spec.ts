@@ -844,6 +844,32 @@ const CHECKS = [
   'ck_quote_options__spec_tolerance',
   'ck_orders__spec_tolerance',
   'ck_production_jobs__spec_tolerance',
+  'ck_erp_document_series__next_no',
+  'ck_erp_document_series__period',
+  'ck_erp_factory_settings__over_receipt_pct',
+  'ck_erp_factory_settings__prefixes',
+  'ck_erp_goods_receipt_lines__cost',
+  'ck_erp_goods_receipt_lines__quantity',
+  'ck_erp_items__last_purchase_price',
+  'ck_erp_items__lead_time_days',
+  'ck_erp_items__purchase_factor',
+  'ck_erp_items__reorder',
+  'ck_erp_purchase_order_lines__discount_pct',
+  'ck_erp_purchase_order_lines__price',
+  'ck_erp_purchase_order_lines__quantity',
+  'ck_erp_purchase_orders__amounts',
+  'ck_erp_purchase_orders__expected_on',
+  'ck_erp_purchase_orders__po_no',
+  'ck_erp_purchase_orders__vat_rate_pct',
+  'ck_erp_stock_balances__avg_cost',
+  'ck_erp_stock_balances__reserved',
+  'ck_erp_stock_movements__quantity',
+  'ck_erp_stock_movements__sign',
+  'ck_erp_stock_movements__unit_cost',
+  'ck_erp_trading_partners__branch_code',
+  'ck_erp_trading_partners__credit_limit',
+  'ck_erp_trading_partners__payment_term_days',
+  'ck_erp_trading_partners__tax_id',
 ];
 
 const TRIGGERS = [
@@ -1080,6 +1106,9 @@ const TRIGGERS = [
   'tg_pl_code_margins__version_frozen',
   // --- U2.1 style codes (A-81)
   'tg_patterns__publication',
+  'tg_erp_goods_receipt_lines__append_only',
+  'tg_erp_goods_receipts__append_only',
+  'tg_erp_stock_movements__append_only',
 ];
 
 /** Expression (hand-written) and partial (Prisma preview) indexes. */
@@ -1187,6 +1216,7 @@ const INDEXES = [
   // --- B5.3 payables, payouts, banking
   'ux_company_bank_accounts__gl_account_id',
   'ux_payout_items__pv_number',
+  'ux_erp_warehouses__factory_id__default',
 ];
 
 const EXPRESSION_INDEXES = [

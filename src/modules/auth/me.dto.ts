@@ -83,6 +83,8 @@ export const FACTORY_ROLES = [
   'factory_qc',
   'factory_shipping',
   'factory_accountant',
+  'factory_storekeeper',
+  'factory_purchaser',
 ] as const;
 
 export class FactoryAccessDto {

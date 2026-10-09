@@ -1634,5 +1634,51 @@
       "title": "สถานะเรื่องราวลูกค้าไม่ถูกต้อง",
       "detail": "เรื่องราวลูกค้านี้อยู่ในสถานะ {status}"
     }
+  },
+  "erp": {
+    "stock_insufficient": {
+      "title": "สต็อกไม่พอ",
+      "detail": "{item} มีพอใช้ {available} {unit} ไม่พอสำหรับ {requested} {unit}"
+    },
+    "sku_taken": {
+      "title": "รหัสสินค้าซ้ำ",
+      "detail": "มีสินค้ารหัส {sku} อยู่แล้ว"
+    },
+    "code_taken": {
+      "title": "รหัสซ้ำ",
+      "detail": "รหัส {code} มีอยู่แล้ว"
+    },
+    "invalid_status": {
+      "title": "ทำรายการนี้ไม่ได้ในสถานะนี้",
+      "detail": "เอกสารอยู่ในสถานะ {status}"
+    },
+    "over_receipt": {
+      "title": "รับเกินที่สั่ง",
+      "detail": "รับ {item} ได้ไม่เกิน {max} {unit} (สั่งไว้ {ordered} {unit})"
+    },
+    "lot_required": {
+      "title": "ต้องระบุเลขล็อต",
+      "detail": "{item} ต้องระบุเลขล็อตหรือเลขม้วน"
+    },
+    "not_a_supplier": {
+      "title": "ไม่ใช่ผู้ขาย",
+      "detail": "{name} ไม่ได้ตั้งเป็นผู้ขาย"
+    },
+    "archived": {
+      "title": "ถูกเก็บเข้าคลังแล้ว",
+      "detail": "{name} ถูกปิดใช้งานแล้ว ใช้ในเอกสารใหม่ไม่ได้"
+    },
+    "unit_not_allowed": {
+      "title": "หน่วยไม่ตรง",
+      "detail": "{item} ใช้หน่วย {units} เท่านั้น"
+    },
+    "empty_document": {
+      "title": "ยังไม่มีรายการ",
+      "detail": "เพิ่มอย่างน้อยหนึ่งรายการ"
+    },
+    "same_warehouse": {
+      "title": "คลังต้นทางและปลายทางซ้ำกัน",
+      "detail": "เลือกคลังปลายทางที่ต่างจากคลังต้นทาง"
+    }
   }
 }

@@ -896,6 +896,62 @@ export const PERMISSIONS = [
     decisionRefs: ['D-013'],
   },
 
+
+  // --- Packio Factory ERP (factory-scoped, factory-private data, D-316 – D-319)
+  {
+    key: 'factory_trading_partners.read',
+    audience: 'partner',
+    description: 'Read the factory’s own suppliers and customers (Packio Factory ERP)',
+    decisionRefs: ['D-317', 'D-319'],
+  },
+  {
+    key: 'factory_trading_partners.manage',
+    audience: 'partner',
+    description: 'Add and edit the factory’s own suppliers and customers',
+    decisionRefs: ['D-317', 'D-319'],
+  },
+  {
+    key: 'factory_inventory.read',
+    audience: 'partner',
+    description: 'Read the factory’s items, warehouses, stock balances and stock ledger',
+    decisionRefs: ['D-319', 'D-324'],
+  },
+  {
+    key: 'factory_inventory.manage',
+    audience: 'partner',
+    description: 'Manage items and warehouses, issue, return and transfer stock, post goods receipts',
+    decisionRefs: ['D-319', 'D-324', 'D-325'],
+  },
+  {
+    key: 'factory_inventory.adjust',
+    audience: 'partner',
+    description: 'Post opening balances, stock adjustments and counts',
+    decisionRefs: ['D-319', 'D-324'],
+  },
+  {
+    key: 'factory_procurement.read',
+    audience: 'partner',
+    description: 'Read the factory’s purchase orders, goods receipts and the reorder list',
+    decisionRefs: ['D-319', 'D-325', 'D-326'],
+  },
+  {
+    key: 'factory_procurement.manage',
+    audience: 'partner',
+    description: 'Draft, edit, cancel and close the factory’s purchase orders',
+    decisionRefs: ['D-319', 'D-325'],
+  },
+  {
+    key: 'factory_procurement.approve',
+    audience: 'partner',
+    description: 'Issue (approve) the factory’s purchase orders',
+    decisionRefs: ['D-319', 'D-325'],
+  },
+  {
+    key: 'factory_erp.configure',
+    audience: 'partner',
+    description: 'Configure the factory’s ERP: modules, document prefixes, stock and receiving rules',
+    decisionRefs: ['D-318', 'D-322', 'D-323'],
+  },
   // --- B2B company (company-scoped)
   { key: 'company_profile.read', audience: 'customer', description: 'Read the own company profile' },
   { key: 'company_members.manage', audience: 'customer', description: 'Invite and remove company members' },

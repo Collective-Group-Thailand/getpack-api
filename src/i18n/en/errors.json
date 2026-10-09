@@ -1634,5 +1634,51 @@
       "title": "Invalid customer story status",
       "detail": "This customer story is {status}"
     }
+  },
+  "erp": {
+    "stock_insufficient": {
+      "title": "Not enough stock",
+      "detail": "{item} has {available} {unit} available, not enough for {requested} {unit}"
+    },
+    "sku_taken": {
+      "title": "SKU already used",
+      "detail": "An item with SKU {sku} already exists"
+    },
+    "code_taken": {
+      "title": "Code already used",
+      "detail": "Code {code} is already used"
+    },
+    "invalid_status": {
+      "title": "Not possible in this status",
+      "detail": "The document is {status}"
+    },
+    "over_receipt": {
+      "title": "Receiving more than ordered",
+      "detail": "{item} can be received up to {max} {unit} ({ordered} {unit} ordered)"
+    },
+    "lot_required": {
+      "title": "Lot number required",
+      "detail": "{item} needs a lot or roll number"
+    },
+    "not_a_supplier": {
+      "title": "Not a supplier",
+      "detail": "{name} is not set up as a supplier"
+    },
+    "archived": {
+      "title": "Archived",
+      "detail": "{name} is archived and cannot be used on new documents"
+    },
+    "unit_not_allowed": {
+      "title": "Unit not allowed",
+      "detail": "{item} uses only {units}"
+    },
+    "empty_document": {
+      "title": "No lines",
+      "detail": "Add at least one line"
+    },
+    "same_warehouse": {
+      "title": "Same warehouse",
+      "detail": "Choose a destination different from the source"
+    }
   }
 }

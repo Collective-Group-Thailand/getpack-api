@@ -723,6 +723,21 @@ model User {
 
   factoryBusinessHoursSet FactoryBusinessHours[] @relation("FactoryBusinessHoursCreatedBy")
 
+  // --- Packio Factory ERP E1 (back-relations)
+  erpSettingsUpdated       ErpFactorySettings[] @relation("ErpFactorySettingsUpdatedBy")
+  erpPartnersCreated       ErpTradingPartner[]  @relation("ErpTradingPartnerCreatedBy")
+  erpPartnersUpdated       ErpTradingPartner[]  @relation("ErpTradingPartnerUpdatedBy")
+  erpWarehousesCreated     ErpWarehouse[]       @relation("ErpWarehouseCreatedBy")
+  erpWarehousesUpdated     ErpWarehouse[]       @relation("ErpWarehouseUpdatedBy")
+  erpItemsCreated          ErpItem[]            @relation("ErpItemCreatedBy")
+  erpItemsUpdated          ErpItem[]            @relation("ErpItemUpdatedBy")
+  erpStockMovementsCreated ErpStockMovement[]   @relation("ErpStockMovementCreatedBy")
+  erpPurchaseOrdersIssued  ErpPurchaseOrder[]   @relation("ErpPurchaseOrderIssuedBy")
+  erpPurchaseOrdersCreated ErpPurchaseOrder[]   @relation("ErpPurchaseOrderCreatedBy")
+  erpPurchaseOrdersUpdated ErpPurchaseOrder[]   @relation("ErpPurchaseOrderUpdatedBy")
+  erpGoodsReceiptsCreated  ErpGoodsReceipt[]    @relation("ErpGoodsReceiptCreatedBy")
+  // --- end Packio Factory ERP E1
+
   @@unique([kind, email], map: "ux_users__kind__email", where: raw("((email IS NOT NULL) AND (anonymised_at IS NULL))"))
   @@unique([kind, phone], map: "ux_users__kind__phone", where: raw("((phone IS NOT NULL) AND (anonymised_at IS NULL))"))
   @@index([createdById], map: "ix_users__created_by")

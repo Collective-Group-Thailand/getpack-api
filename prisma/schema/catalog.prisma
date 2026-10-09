@@ -794,6 +794,7 @@ model Material {
   boardStrengthSheets     BoardStrengthSheet[]     @relation("BoardStrengthSheetMaterial")
   advisoryRecommendations AdvisoryRecommendation[] @relation("AdvisoryRecommendationMaterial")
   advisoryChoices         AdvisoryChoice[]         @relation("AdvisoryChoiceMaterial")
+  erpItems                ErpItem[]                @relation("ErpItemMaterial")
 
   @@index([familyId], map: "ix_materials__family_id")
   @@index([fluteTypeId], map: "ix_materials__flute_type_id")

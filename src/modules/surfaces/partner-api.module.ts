@@ -3,6 +3,7 @@ import { PartnerMeController } from '@modules/auth/controllers/me.controllers';
 import { CALL_OFFS_PARTNER_CONTROLLERS } from '@modules/call-offs/call-offs.registry';
 import { CATALOG_PARTNER_CONTROLLERS } from '@modules/catalog/catalog.registry';
 import { CLAIMS_PARTNER_CONTROLLERS } from '@modules/claims/claims.registry';
+import { FACTORY_ERP_PARTNER_CONTROLLERS } from '@modules/factory-erp/factory-erp.registry';
 import { LOGISTICS_PARTNER_CONTROLLERS } from '@modules/logistics/logistics.registry';
 import { OPS_PARTNER_CONTROLLERS } from '@modules/ops/ops.registry';
 import { ORDERS_PARTNER_CONTROLLERS } from '@modules/orders/orders.registry';
@@ -56,6 +57,7 @@ import { RealtimeModule } from '@platform/realtime/realtime.module';
     ...PRODUCTION_PARTNER_CONTROLLERS,
     ...LOGISTICS_PARTNER_CONTROLLERS,
     ...CLAIMS_PARTNER_CONTROLLERS,
+    ...FACTORY_ERP_PARTNER_CONTROLLERS,
   ],
 })
 export class PartnerApiModule {}
