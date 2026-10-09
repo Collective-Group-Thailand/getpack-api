@@ -107,6 +107,7 @@ async function main(): Promise<void> {
     const capabilities = app.get(ProcessCapabilitiesService);
     const proposer = await actorOf(ACCOUNTS.proposer);
     const verifier = await actorOf(ACCOUNTS.partnerManager);
+    const skipped = new Set<string>();
     for (const key of [...needed].sort()) {
       const [processCode, materialClass] = key.split('|') as [string, string];
       const held = await prisma.factoryProcessCapability.findFirst({
@@ -118,6 +119,12 @@ async function main(): Promise<void> {
         },
       });
       if (held) continue;
+      // A process the engine names but the D-244 taxonomy lacks cannot be proposed: report it and go on, so the
+      // other capabilities are still verified (the bases needing it stay unpublished).
+      if (!(await prisma.processType.findFirst({ where: { code: processCode } }))) {
+        skipped.add(processCode);
+        continue;
+      }
       const proposed = await capabilities.propose(proposer, factory.publicId, {
         processCode,
         materialClass,
@@ -128,6 +135,8 @@ async function main(): Promise<void> {
       await capabilities.verify(verifier, factory.publicId, proposed.id, visit.publicId);
       console.log(`verified ${FACTORY} ${processCode} / ${materialClass}`);
     }
+    if (skipped.size > 0)
+      console.log(`not in the process taxonomy (D-244), so not verified: ${[...skipped].sort().join(' ')}`);
 
     // 5 — publishability recomputed; a variant passing every gate is published.
     const result = await prisma.withTx((tx) =>
