@@ -7,6 +7,13 @@ import { UAT_FACTORY_CODE } from './uat-catalog';
  * per balance, average cost = the opening cost), one issued purchase order waiting for goods and one draft.
  * Obviously fake names; idempotent — a factory that already has ERP items is left alone.
  */
+/** An obviously fake 13-digit tax id (`0000…`) with a valid check digit, so forms accept it. */
+function fakeTaxId(code: string): string {
+  const twelve = `00005000${code.slice(1).padStart(4, '0')}`.slice(0, 12);
+  const sum = [...twelve].reduce((total, digit, index) => total + Number(digit) * (13 - index), 0);
+  return `${twelve}${(11 - (sum % 11)) % 10}`;
+}
+
 export async function seedUatErp(prisma: PrismaClient): Promise<number> {
   const factory = await prisma.factory.findUnique({ where: { code: UAT_FACTORY_CODE } });
   if (!factory) return 0;
@@ -33,7 +40,7 @@ export async function seedUatErp(prisma: PrismaClient): Promise<number> {
             name,
             phone,
             contactName: 'คุณทดสอบ (ข้อมูลปลอม)',
-            taxId: `000050000${code.slice(1)}`.slice(0, 13).padEnd(13, '0'),
+            taxId: fakeTaxId(code),
             branchCode: '00000',
             paymentTermDays: days,
             createdById: by,
@@ -175,7 +182,8 @@ export async function seedUatErp(prisma: PrismaClient): Promise<number> {
         },
       ];
       const created = new Map<string, { id: bigint; factor: number }>();
-      const day = new Date().toISOString().slice(2, 7).replace('-', '');
+      const bangkok = new Date(Date.now() + 7 * 3_600_000).toISOString().slice(0, 10);
+      const day = bangkok.slice(2, 7).replace('-', '');
       await tx.erpDocumentSeries.create({
         data: { factoryId: factory.id, docType: 'adj', period: day, nextNo: 2 },
       });
@@ -237,7 +245,7 @@ export async function seedUatErp(prisma: PrismaClient): Promise<number> {
         data: { factoryId: factory.id, docType: 'po', period: day, nextNo: 2 },
       });
       const art = created.get('ART-300')!;
-      const today = new Date(new Date().toISOString().slice(0, 10));
+      const today = new Date(`${bangkok}T00:00:00.000Z`);
       const inAWeek = new Date(today.getTime() + 7 * 86_400_000);
       await tx.erpPurchaseOrder.create({
         data: {
