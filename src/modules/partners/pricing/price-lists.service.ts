@@ -57,7 +57,13 @@ export class PriceListsService {
     private readonly recorder: PriceProposalRecorder,
   ) {}
 
-  components(): PriceComponentDto[] {
+  /** Every registered component with its columns and the product types whose calculator reads it. */
+  async components(): Promise<PriceComponentDto[]> {
+    const types = await this.prisma.productType.findMany({
+      where: { calculatorKey: { not: null } },
+      select: { code: true, calculatorKey: true },
+      orderBy: { code: 'asc' },
+    });
     const column = (c: {
       key: string;
       type: PriceComponentDto['values'][number]['type'];
@@ -74,6 +80,11 @@ export class PriceListsService {
       group: d.group,
       dimensions: d.dimensions.map(column),
       values: d.values.map(column),
+      productTypeCodes: types
+        .filter(
+          (t) => t.calculatorKey !== null && this.registry.readersOf(d.component).includes(t.calculatorKey),
+        )
+        .map((t) => t.code),
     }));
   }
 

@@ -114,6 +114,8 @@ export function normaliseValue(c: PriceColumn, raw: unknown): { value: PriceValu
 @Injectable()
 export class PriceComponentRegistry {
   private readonly components = new Map<PriceComponent, PriceComponentDescriptor>();
+  /** Which calculators read each component (a component can be read by several, e.g. folding and label). */
+  private readonly readers = new Map<PriceComponent, Set<string>>();
 
   register(descriptor: PriceComponentDescriptor): void {
     if (this.components.has(descriptor.component)) {
@@ -136,6 +138,23 @@ export class PriceComponentRegistry {
   /** For tests: forget a component registered by the test. */
   unregister(component: PriceComponent): void {
     this.components.delete(component);
+  }
+
+  /**
+   * A calculator declares the components its snapshot loader reads (partner UX, 2026-10-09), so a
+   * product type's price list can offer only those; `calculatorKey` is `product_types.calculator_key`.
+   */
+  declareReads(calculatorKey: string, components: readonly PriceComponent[]): void {
+    for (const component of components) {
+      const readers = this.readers.get(component) ?? new Set<string>();
+      readers.add(calculatorKey);
+      this.readers.set(component, readers);
+    }
+  }
+
+  /** The calculators that read `component`, sorted; empty when none declared it. */
+  readersOf(component: PriceComponent): string[] {
+    return [...(this.readers.get(component) ?? [])].sort();
   }
 
   get(component: PriceComponent): PriceComponentDescriptor | undefined {

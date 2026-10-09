@@ -91,6 +91,15 @@ export class FactoryRateDto extends FactoryRateInputDto {
   @ApiProperty({ example: 'bkk' })
   zoneCode!: string;
 
+  @ApiProperty({
+    example: 'กรุงเทพฯ และปริมณฑล',
+    description: 'The zone as the factory reads it (partner UX, 2026-10-09)',
+  })
+  zoneNameTh!: string;
+
+  @ApiProperty({ example: 'Bangkok metropolitan' })
+  zoneNameEn!: string;
+
   @ApiProperty({ enum: RATE_LINE_ACCEPTANCES, enumName: 'RateLineAcceptance', example: 'accepted' })
   acceptance!: string;
 
@@ -380,6 +389,8 @@ export const FACTORY_VERSION_EXAMPLE: FactoryRateVersionDto = {
       ...FACTORY_RATE_INPUT_EXAMPLE,
       id: IDS.rate,
       zoneCode: 'bkk',
+      zoneNameTh: 'กรุงเทพฯ และปริมณฑล',
+      zoneNameEn: 'Bangkok metropolitan',
       acceptance: 'accepted',
       counterAmount: null,
       counterPerExtraKg: null,

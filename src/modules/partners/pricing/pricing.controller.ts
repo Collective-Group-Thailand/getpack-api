@@ -115,7 +115,7 @@ export class AdminPriceListsController {
     example: [PRICE_COMPONENT_EXAMPLE],
   })
   @ApiStandardErrors()
-  components(): PriceComponentDto[] {
+  components(): Promise<PriceComponentDto[]> {
     return this.lists.components();
   }
 
@@ -412,7 +412,7 @@ export class PartnerPriceListsController {
     example: [PRICE_COMPONENT_EXAMPLE],
   })
   @ApiStandardErrors()
-  components(): PriceComponentDto[] {
+  components(): Promise<PriceComponentDto[]> {
     return this.lists.components();
   }
 

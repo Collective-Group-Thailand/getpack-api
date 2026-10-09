@@ -1,6 +1,7 @@
 import { PriceComponentRegistry } from '@modules/partners/pricing/price-component.registry';
 import { Injectable, type OnModuleInit } from '@nestjs/common';
 
+import { CALCULATOR_READS } from '../component-reads';
 import { POUCH_PRICE_COMPONENTS } from './price-components';
 
 /** Registers the pouch price components with price governance (proposals, versions, suggestions). */
@@ -10,5 +11,6 @@ export class PouchPriceComponentsRegistrar implements OnModuleInit {
 
   onModuleInit(): void {
     for (const descriptor of POUCH_PRICE_COMPONENTS) this.registry.register(descriptor);
+    this.registry.declareReads('pouch', CALCULATOR_READS.pouch);
   }
 }
