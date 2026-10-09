@@ -40,7 +40,8 @@
     "styles:import": "nest build && node dist/scripts/styles-import.js",
     "cms:home-photos": "nest build && node dist/scripts/cms-home-photos.js",
     "dieline:vendor": "bash scripts/dieline-vendor.sh",
-    "styles:recipes-from-engine": "nest build && node dist/scripts/styles-recipes-from-engine.js"
+    "styles:recipes-from-engine": "nest build && node dist/scripts/styles-recipes-from-engine.js",
+    "uat:styles": "nest build && node dist/scripts/uat-style-fixture.js"
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.1138.0",
