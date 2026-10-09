@@ -3,6 +3,16 @@
 Contract-facing changes per release. The contract itself is `contract/openapi.json`; mappings for `packio-web` are in
 `docs/contract-requests-triage.md`.
 
+## v0.43.4 — partner UX: price components name their product types; rate lines name their zone
+
+All changes are additive.
+
+- `PriceComponentDto.productTypeCodes` (new, `string[]`): the product types whose calculator reads the component.
+  A factory's price list for one of them offers it, others do not — packio-web drops its own copy of the mapping
+  (`components-by-type.ts`, CONTRACT-GAP `partner.price-components-by-type`).
+- `FactoryRateDto.zoneNameTh` / `zoneNameEn` (new): the zone as the factory reads it, beside `zoneCode`.
+- Behaviour: accepting a production job completes its `job_received` step (no start-and-finish by hand).
+
 ## v0.43.3 — the whole drawing engine; engine fingerprint in the contract
 
 All changes are additive.
