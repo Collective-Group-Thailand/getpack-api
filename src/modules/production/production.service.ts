@@ -597,6 +597,19 @@ export class ProductionService {
           },
         });
       }
+      // Accepting *is* receiving the job: the route's "รับงาน" step closes with it, so the factory is
+      // not asked to start and then finish a step that has no work in it (partner UX, 2026-10-09).
+      await tx.jobMilestone.updateMany({
+        where: { jobId: job.id, stepKey: 'job_received', status: { in: ['pending', 'in_progress'] } },
+        data: {
+          status: 'completed',
+          startedAt: at,
+          completedAt: at,
+          onTime: at <= job.acceptDueAt,
+          reportedById: actor.type === 'user' ? actor.userId : null,
+          rowVersion: { increment: 1 },
+        },
+      });
       await this.record(tx, job.id, 'production_job.accepted', { onTime: at <= job.acceptDueAt }, actor);
       return tx.productionJob.findUniqueOrThrow({ where: { id: job.id } });
     });
