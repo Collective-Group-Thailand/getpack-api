@@ -2,7 +2,7 @@
 
 > ข้อมูลปลอมทั้งหมด (`@example.invalid`, นามสกุล `ทดสอบ`, เบอร์ `080000xxxx`) — ห้ามใช้กับ production
 > ที่มา: `pnpm db:seed:dev` / `pnpm db:seed:uat` + `pnpm uat:populate` (ดู [UAT-DATA.md](UAT-DATA.md))
-> ตรวจกับฐานข้อมูล `packio_uat_partner` แล้วเมื่อ 2026-10-06
+> ตรวจกับฐานข้อมูล `packio_uat_20261009` (seed ใหม่ + `uat:populate` 84/84) แล้วเมื่อ 2026-10-09
 
 ## วิธี sign-in
 
