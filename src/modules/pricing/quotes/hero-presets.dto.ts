@@ -127,7 +127,7 @@ export class HeroPrintDto {
   options!: HeroPrintOptionDto[];
 }
 
-/** The selection the hero opens on — always one the presets offer. */
+/** The selection the hero opens on — one the presets offer. */
 export class HeroDefaultDto {
   @ApiProperty({ enum: HERO_SHAPES, enumName: 'HeroShape', example: 'mailer' })
   shape!: string;
@@ -181,17 +181,11 @@ export class HeroPresetsDto {
   @ApiProperty({
     type: HeroDefaultDto,
     nullable: true,
-    description: 'The selection to open on; null when nothing is offered',
+    description:
+      'The selection to open on — the product owner’s default (`catalog.hero_presets.default`) when the catalogue ' +
+      'offers it; null otherwise (open on the first offered options)',
   })
   default!: HeroDefaultDto | null;
-
-  @ApiProperty({
-    example: true,
-    description:
-      'The owner’s default is not offered by the catalogue (e.g. a board the shape cannot take): `default` is the ' +
-      'nearest offered selection instead',
-  })
-  defaultAdjusted!: boolean;
 }
 
 export class HeroPreviewRequestDto {
@@ -355,5 +349,4 @@ export const HERO_PRESETS_EXAMPLE: HeroPresetsDto = {
     print: 'one',
     qty: 500,
   },
-  defaultAdjusted: true,
 };

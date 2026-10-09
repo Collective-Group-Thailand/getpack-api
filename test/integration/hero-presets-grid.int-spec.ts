@@ -17,7 +17,6 @@ interface Presets {
   materials: { id: string; options: { shapeId: string }[] }[];
   prints: { id: string; options: { shapeId: string }[] }[];
   default: { shape: string; sizeId: string; material: string; print: string; qty: number } | null;
-  defaultAdjusted: boolean;
 }
 
 /**
@@ -38,7 +37,8 @@ describe('hero presets grid on the UAT catalogue (D-310)', () => {
     const moduleRef = await Test.createTestingModule({ imports: [AppModule] }).compile();
     app = moduleRef.createNestApplication({ logger: false });
     configureApp(app);
-    await app.init();
+    // Bound to IPv4 loopback so a Docker-published port can never shadow the test server (stray 404s).
+    await app.listen(0, '127.0.0.1');
     prisma = app.get(PrismaService);
     await seedUat(prisma, {});
   }, 600_000);
@@ -120,7 +120,7 @@ describe('hero presets grid on the UAT catalogue (D-310)', () => {
     // eslint-disable-next-line no-console
     console.info(
       `[hero grid, ${label}] offered ${offered.length}/324; dropped by ${JSON.stringify(dropped)}; ` +
-        `default ${JSON.stringify(d)}${presets.defaultAdjusted ? ' (adjusted from the owner’s)' : ''}`,
+        `default ${JSON.stringify(d)}`,
     );
     return { presets, offered, dropped };
   }
@@ -128,9 +128,16 @@ describe('hero presets grid on the UAT catalogue (D-310)', () => {
   it('prices every offered combination as seeded (folding still RFQ)', async () => {
     const { presets, offered } = await walk('UAT as seeded');
     expect(offered.length).toBeGreaterThan(0);
-    // The owner's default board (kraft350) is not on the corrugated mailer: the nearest offered one is used.
-    expect(presets.defaultAdjusted).toBe(true);
-    expect(presets.default).toMatchObject({ shape: 'mailer', print: 'one', qty: 500, material: 'corrE' });
+    // The owner's default is offered as is.
+    expect(presets.default).toEqual(
+      expect.objectContaining({
+        shape: 'mailer',
+        sizeId: 'mailer:s0',
+        material: 'corrE',
+        print: 'one',
+        qty: 500,
+      }),
+    );
   }, 600_000);
 
   it('prices every offered combination once folding is instant (the tuck box joins)', async () => {

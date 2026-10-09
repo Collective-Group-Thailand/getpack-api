@@ -60,7 +60,6 @@ export interface HeroResolution {
   presets: Presets | null;
   shapes: ResolvedShape[];
   default: HeroSelection | null;
-  defaultAdjusted: boolean;
 }
 
 export interface HeroPreviewInput {
@@ -77,36 +76,28 @@ export interface HeroPreviewInput {
 export const sizeLabelTh = (s: { lengthMm: number; widthMm: number; heightMm: number }) =>
   `${[s.lengthMm, s.widthMm, s.heightMm].map((mm) => String(Math.round(mm) / 10)).join('×')} ซม.`;
 
-/**
- * The owner's default when the catalogue offers it; otherwise the nearest offered selection — the owner's shape,
- * print and quantity kept where that shape offers them — so the hero always opens on a price (D-310).
- */
-export function pickDefault(
+/** The owner's default selection, when the catalogue offers every part of it; otherwise none (D-310). */
+export function offeredDefault(
   shapes: ResolvedShape[],
   wanted: Presets['default'] | undefined,
-): { selection: HeroSelection | null; adjusted: boolean } {
-  if (shapes.length === 0) return { selection: null, adjusted: wanted !== undefined };
-  const shape = shapes.find((s) => s.id === wanted?.shape) ?? shapes[0]!;
-  const pick = <T>(options: T[], want: T | undefined): T =>
-    want !== undefined && options.includes(want) ? want : options[0]!;
-  const selection: HeroSelection = {
-    shape: shape.id,
-    size: pick(
-      shape.sizes.map((s) => s.index),
-      wanted?.size,
-    ),
-    material: pick([...shape.materials.keys()], wanted?.material as HeroMaterial | undefined),
-    print: pick([...shape.prints.keys()], wanted?.print as HeroPrint | undefined),
-    qty: pick(shape.qtys, wanted?.qty),
-  };
-  const adjusted =
+): HeroSelection | null {
+  const shape = shapes.find((s) => s.id === wanted?.shape);
+  if (
     !wanted ||
-    wanted.shape !== selection.shape ||
-    wanted.size !== selection.size ||
-    wanted.material !== selection.material ||
-    wanted.print !== selection.print ||
-    wanted.qty !== selection.qty;
-  return { selection, adjusted };
+    !shape ||
+    !shape.sizes.some((s) => s.index === wanted.size) ||
+    !shape.materials.has(wanted.material as HeroMaterial) ||
+    !shape.prints.has(wanted.print as HeroPrint) ||
+    !shape.qtys.includes(wanted.qty)
+  )
+    return null;
+  return {
+    shape: shape.id,
+    size: wanted.size,
+    material: wanted.material as HeroMaterial,
+    print: wanted.print as HeroPrint,
+    qty: wanted.qty,
+  };
 }
 
 /**
@@ -132,14 +123,13 @@ export class HeroPresetsService {
       if (!(error instanceof SettingNotFoundError)) throw error;
       presets = null;
     }
-    if (!presets) return { presets: null, shapes: [], default: null, defaultAdjusted: false };
+    if (!presets) return { presets: null, shapes: [], default: null };
     const shapes: ResolvedShape[] = [];
     for (const shape of presets.shapes) {
       const resolved = await this.resolveShape(presets, shape);
       if (resolved) shapes.push(resolved);
     }
-    const { selection, adjusted } = pickDefault(shapes, presets.default);
-    return { presets, shapes, default: selection, defaultAdjusted: adjusted };
+    return { presets, shapes, default: offeredDefault(shapes, presets.default) };
   }
 
   private async resolveShape(
@@ -249,7 +239,7 @@ export class HeroPresetsService {
   }
 
   async presets(): Promise<HeroPresetsDto> {
-    const { presets, shapes, default: selection, defaultAdjusted } = await this.resolve();
+    const { presets, shapes, default: selection } = await this.resolve();
     const materialIds = (['kraft350', 'art350', 'corrE'] as const).filter((m) =>
       shapes.some((s) => s.materials.has(m)),
     );
@@ -316,7 +306,6 @@ export class HeroPresetsService {
       })),
       qtys: [...new Set(shapes.flatMap((s) => s.qtys))].sort((a, b) => a - b),
       default: defaultDto,
-      defaultAdjusted,
     };
   }
 

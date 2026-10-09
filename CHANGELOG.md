@@ -3,6 +3,20 @@
 Contract-facing changes per release. The contract itself is `contract/openapi.json`; mappings for `packio-web` are in
 `docs/contract-requests-triage.md`.
 
+## v0.43.2 — hero default and style codes (**breaking for one field**)
+
+### Breaking
+- `HeroPresetsDto.defaultAdjusted` removed (`oasdiff`: response-required-property-removed). `default` is now the
+  product owner's selection when the catalogue offers it and `null` otherwise — there is no adjusted state. packio-web
+  reads the field only in generated types (pinned `v0.43.1`); re-run `pnpm gen:api` when adopting. The CI check needs
+  the `contract:breaking` label on this change.
+
+### Changed values
+- Seeded `catalog.hero_presets`: default `{ mailer, size 0, corrE, one, 500 }`; lid `styleCode` `PK-CT-02`, tuck
+  `PK-TE-01`.
+- UAT / dev FAQ seed: answers no longer show decision ids; the `[DEV]` FAQ fixture is a draft.
+- `docs/decisions.md`: D-314 (interim photography, accepted 2026-10-07).
+
 ## v0.43.1 — Phase 4 review follow-ups
 
 All changes are additive (`oasdiff breaking` against `v0.43.0`: none).

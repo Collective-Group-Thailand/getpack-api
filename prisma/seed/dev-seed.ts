@@ -451,7 +451,8 @@ async function seedDevCatalog(tx: Prisma.TransactionClient): Promise<boolean> {
       code: 'dev_ordering',
       nameTh: '[DEV] การสั่งซื้อ',
       nameEn: '[DEV] Ordering',
-      status: 'published',
+      // A fixture for the admin CMS, never the storefront: it stays a draft (home review, Main board).
+      status: 'draft',
     },
   });
   await tx.faq.create({
@@ -459,7 +460,7 @@ async function seedDevCatalog(tx: Prisma.TransactionClient): Promise<boolean> {
       categoryId: faqCategory.id,
       questionTh: '[DEV] คำถามทดสอบ',
       answerTh: '[DEV] คำตอบทดสอบ',
-      status: 'published',
+      status: 'draft',
     },
   });
   return true;
