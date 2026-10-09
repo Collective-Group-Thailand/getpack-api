@@ -3,6 +3,18 @@
 Contract-facing changes per release. The contract itself is `contract/openapi.json`; mappings for `packio-web` are in
 `docs/contract-requests-triage.md`.
 
+## v0.43.3 — the whole drawing engine; engine fingerprint in the contract
+
+All changes are additive.
+
+- `info.x-packio-dieline` (new): the `@packio/dieline` engine the drawing service runs — `package`, `version`,
+  `sourceTree` (git tree of packio-web `packages/dieline`), `packioWebCommit`, `bundleSha256`. packio-web's
+  `pnpm dieline:check` compares its own engine with it in CI.
+- The vendored engine now carries the whole style library (`@packio/dieline/library`): 96 bases instead of 20, so
+  style recipes, dieline downloads and drawings cover every base the web draws (PK-CT-02, PK-PG-02 included).
+- `docs/decisions.md` D-309: note — the homepage hero states the lowest quantity of `catalog.hero_presets`, not
+  `minOrderQty.custom`; both intentional.
+
 ## v0.43.2 — hero default and style codes (**breaking for one field**)
 
 ### Breaking
