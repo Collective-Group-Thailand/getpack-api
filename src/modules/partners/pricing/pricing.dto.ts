@@ -109,6 +109,15 @@ export class PriceComponentDto {
 
   @ApiProperty({ type: [PriceColumnDto], description: 'Columns a proposal changes' })
   values!: PriceColumnDto[];
+
+  @ApiProperty({
+    type: [String],
+    example: ['folding_carton', 'label_sticker', 'tag_sleeve'],
+    description:
+      'Product types whose calculator reads this component (`product_types.calculator_key`); a price list ' +
+      'for one of them offers it, others do not (partner UX, 2026-10-09). Empty: no calculator reads it yet.',
+  })
+  productTypeCodes!: string[];
 }
 
 // --- price lists ---------------------------------------------------------------------------------------
@@ -567,6 +576,7 @@ export const PRICE_COMPONENT_EXAMPLE: PriceComponentDto = {
     { key: 'qtyTo', type: 'integer', nullable: true, scale: null },
   ],
   values: [{ key: 'rate', type: 'decimal', nullable: false, scale: 6 }],
+  productTypeCodes: ['folding_carton', 'label_sticker', 'tag_sleeve'],
 };
 
 // --- suggestions & simulations (staff only, D-040 note, D-044) ------------------------------------

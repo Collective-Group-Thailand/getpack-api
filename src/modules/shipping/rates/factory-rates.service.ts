@@ -37,7 +37,7 @@ const SUMMARY_INCLUDE = {
 type SummaryRow = Prisma.FactoryShippingRateCardVersionGetPayload<{ include: typeof SUMMARY_INCLUDE }>;
 
 const RATE_INCLUDE = {
-  zone: { select: { publicId: true, code: true } },
+  zone: { select: { publicId: true, code: true, nameTh: true, nameEn: true } },
 } satisfies Prisma.FactoryShippingRateInclude;
 type RateRow = Prisma.FactoryShippingRateGetPayload<{ include: typeof RATE_INCLUDE }>;
 
@@ -47,6 +47,8 @@ const rateDto = (r: RateRow): FactoryRateDto => ({
   id: r.publicId,
   zoneId: r.zone.publicId,
   zoneCode: r.zone.code,
+  zoneNameTh: r.zone.nameTh,
+  zoneNameEn: r.zone.nameEn,
   postcode: r.postcode,
   weightMinG: r.weightMinG,
   weightMaxG: r.weightMaxG,
