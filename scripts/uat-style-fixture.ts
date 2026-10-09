@@ -27,7 +27,6 @@ import { ProcessCapabilitiesService } from '../src/modules/styles/process-capabi
 import { StyleImportService } from '../src/modules/styles/style-import.service';
 import { StylePublishingService } from '../src/modules/styles/style-publishing.service';
 import { StylesAdminService } from '../src/modules/styles/styles-admin.service';
-
 import { databaseName, isUatDatabase } from './uat-guard';
 
 /** The UAT fixture accounts (`prisma/seed/uat`) and the UAT launch factory with its passing site visit. */
