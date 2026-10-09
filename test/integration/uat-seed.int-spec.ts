@@ -129,4 +129,31 @@ describe('UAT rehearsal seed (PostgreSQL 18)', () => {
       ]);
     }
   });
+
+  it('offers on each product only boards whose flute its patterns accept (store rule: listed flutes, or any)', async () => {
+    const products = await prisma.catalogProduct.findMany({
+      where: { slug: { startsWith: 'uat-' } },
+      include: { patterns: { include: { pattern: { include: { fluteTypes: true } } } } },
+    });
+    const refused: string[] = [];
+    for (const p of products) {
+      const boardIds = (
+        await prisma.catalogProductOption.findMany({
+          where: { catalogProductId: p.id, optionKind: 'material' },
+          select: { optionId: true },
+        })
+      ).map((o) => o.optionId);
+      const boards = await prisma.material.findMany({
+        where: { id: { in: boardIds }, fluteTypeId: { not: null } },
+        select: { code: true, fluteTypeId: true },
+      });
+      for (const { pattern } of p.patterns) {
+        const listed = pattern.fluteTypes.map((f) => f.fluteTypeId);
+        if (listed.length === 0) continue;
+        for (const b of boards)
+          if (!listed.includes(b.fluteTypeId!)) refused.push(`${p.slug} / ${pattern.code} / ${b.code}`);
+      }
+    }
+    expect(refused).toEqual([]);
+  });
 });

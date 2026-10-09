@@ -281,11 +281,16 @@ async function seedMasterData(tx: Tx): Promise<Map<string, string[]>> {
     },
   });
   like(bFlute.publicId, eFlute.publicId);
-  for (const code of ['DEV-RSC', 'DEV-TELE'])
+  for (const code of ['DEV-RSC', 'DEV-TELE']) {
+    // A pattern without a flute list takes any flute; listing only E would refuse its B-flute boards (the fruit box's
+    // ka125 / ka185 B), so such a pattern gets B listed too.
+    const listed = await tx.patternFluteType.count({ where: { pattern: { code } } });
+    const flutes = listed === 0 ? [bFlute.id, eFlute.id] : [eFlute.id];
     await tx.pattern.update({
       where: { code },
-      data: { fluteTypes: { create: { fluteTypeId: eFlute.id } } },
+      data: { fluteTypes: { create: flutes.map((fluteTypeId) => ({ fluteTypeId })) } },
     });
+  }
   // One spot colour beside the process set, so "1 colour" is a real choice (D-310); priced like CMYK here.
   const cmyk = await tx.inkColour.findUniqueOrThrow({ where: { code: 'dev-cmyk' } });
   const black = await tx.inkColour.create({
