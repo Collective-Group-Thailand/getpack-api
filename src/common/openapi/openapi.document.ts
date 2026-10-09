@@ -1,3 +1,4 @@
+import { existsSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
 
 import { AUDIENCES, SURFACES } from '@modules/surfaces/surfaces';
@@ -90,7 +91,35 @@ export function buildOpenApiDocument(app: INestApplication, version: string): Op
   const enriched = pruneUnusedComponents(enrichDocument(document));
   enriched.tags = usedTags(enriched);
   addWebhooks(enriched);
+  const engine = dielineEngineInfo();
+  if (engine) (enriched.info as unknown as Record<string, unknown>)['x-packio-dieline'] = engine;
   return normaliseDocument(enriched);
+}
+
+/**
+ * The vendored `@packio/dieline` engine (ADR-0010) the drawing service runs, from `vendor/packio-dieline/VERSION.json`:
+ * packio-web's CI compares its own `packages/dieline` git tree with `sourceTree`, so the two engines cannot drift
+ * silently. Null when no bundle is vendored.
+ */
+export function dielineEngineInfo(
+  file = join(process.cwd(), 'vendor/packio-dieline/VERSION.json'),
+): {
+  package: string;
+  version: string;
+  sourceTree: string;
+  packioWebCommit: string;
+  bundleSha256: string;
+} | null {
+  if (!existsSync(file)) return null;
+  const meta = JSON.parse(readFileSync(file, 'utf8')) as Record<string, string>;
+  if (!meta['sourceTree']) return null;
+  return {
+    package: meta['package']!,
+    version: meta['version']!,
+    sourceTree: meta['sourceTree'],
+    packioWebCommit: meta['packioWebCommit']!,
+    bundleSha256: meta['bundleSha256']!,
+  };
 }
 
 const ref = (kind: 'parameters' | 'headers' | 'examples', name: string): ReferenceObject => ({

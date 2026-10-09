@@ -53,8 +53,15 @@ interface Image {
 }
 
 /** What the API uses from `@packio/dieline` (README "Recipes and modules", "Solver", "Exports"). */
+/** Every recipe the vendored engine draws: the whole library when the bundle carries it, the core recipes otherwise. */
+const recipesOf = (pkg: DielinePackage): EngineRecipe[] => pkg.ALL_RECIPES ?? pkg.RECIPES;
+
 interface DielinePackage {
   RECIPES: EngineRecipe[];
+  /** The whole style library (`@packio/dieline/library`): core recipes as the library extends them + the waves. */
+  ALL_RECIPES?: EngineRecipe[];
+  /** Adds the library's styles to the engine's registry (once). */
+  registerLibrary?(): void;
   REFERENCE_MATERIALS: Record<string, DielineMaterial>;
   parseRecipe(raw: unknown): EngineRecipe;
   buildFromRecipe(
@@ -148,7 +155,7 @@ export class PackioDielineEngine implements DielineEngine {
 
   async draw(request: DielineRequest): Promise<DielineDrawing> {
     const { pkg, version } = await this.engine();
-    const recipe = pkg.RECIPES.find((r) => r.legacy?.patternKeys.includes(request.dielineKey));
+    const recipe = recipesOf(pkg).find((r) => r.legacy?.patternKeys.includes(request.dielineKey));
     if (!recipe)
       throw new DielineBuildError('variant_not_in_recipe', `no recipe for pattern key ${request.dielineKey}`);
     const material = Object.values(pkg.REFERENCE_MATERIALS).find((m) =>
@@ -238,7 +245,7 @@ export class PackioDielineEngine implements DielineEngine {
   async recipesByBase(): Promise<Record<string, unknown[]>> {
     const { pkg } = await this.engine();
     const out: Record<string, unknown[]> = {};
-    for (const r of pkg.RECIPES) if (r.base) (out[r.base] ??= []).push(r);
+    for (const r of recipesOf(pkg)) if (r.base) (out[r.base] ??= []).push(r);
     return out;
   }
 
@@ -403,6 +410,8 @@ export class PackioDielineEngine implements DielineEngine {
         // The bundle must be the one recorded (ADR-0010): a hand-edited bundle never loads.
         if (createHash('sha256').update(bundle).digest('hex') !== meta.bundleSha256) return null;
         const pkg = (await import(pathToFileURL(join(dir, 'index.mjs')).href)) as DielinePackage;
+        // The library's styles drawn like the core ones (the bundle carries `@packio/dieline/library`).
+        pkg.registerLibrary?.();
         return { pkg, version: `${PACKAGE}@${meta.version}+${meta.bundleSha256.slice(0, 8)}` };
       } catch {
         return null;
