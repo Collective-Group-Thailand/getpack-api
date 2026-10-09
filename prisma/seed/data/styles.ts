@@ -26,6 +26,10 @@ export const PROCESS_TYPES = [
   { code: 'pouch_making', nameTh: 'ขึ้นรูปซอง', nameEn: 'Pouch making' },
   { code: 'label_press', nameTh: 'เครื่องพิมพ์ฉลาก', nameEn: 'Label press' },
   { code: 'shrink_sleeve', nameTh: 'ผลิตปลอกฟิล์มหด', nameEn: 'Shrink sleeve' },
+  // D-315 (proposed, Prepress confirms): processes the drawing engine's library recipes name (U3.4 waves).
+  { code: 'hand_assembly', nameTh: 'ประกอบด้วยมือ', nameEn: 'Hand assembly' },
+  { code: 'adhesive_strip_applicator', nameTh: 'เครื่องติดแถบกาว', nameEn: 'Adhesive strip applicator' },
+  { code: 'tear_strip_applicator', nameTh: 'เครื่องติดแถบฉีก', nameEn: 'Tear strip applicator' },
 ] as const;
 
 type Scope = 'source_product_type' | 'category' | 'family' | 'option';
