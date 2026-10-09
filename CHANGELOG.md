@@ -3,6 +3,23 @@
 Contract-facing changes per release. The contract itself is `contract/openapi.json`; mappings for `packio-web` are in
 `docs/contract-requests-triage.md`.
 
+## v0.44.0 — Packio Factory ERP, phase E1: trading partners, inventory, purchasing
+
+All changes are additive. Blueprint `docs/prompts/E1-factory-erp.md`; decisions D-316 – D-332.
+
+- New partner endpoints under `/v1/partner/factories/{factoryId}/erp/*` (tags `partner.erp*`), factory-private
+  (D-317): `settings` (get / patch with ETag), `partners` (suppliers and the factory's own customers),
+  `warehouses`, `items` (with stock across warehouses), `stock` (balances, `overview`, `movements` ledger,
+  `reorder`, `actions/adjust|issue|transfer` — idempotent), `purchase-orders` (draft, edit, `actions/issue|cancel|close`,
+  `actions/from-reorder`, `nextActions` keys `erp_po.*`), `goods-receipts` (post, list, get).
+- New permissions `factory_trading_partners.read/manage`, `factory_inventory.read/manage/adjust`,
+  `factory_procurement.read/manage/approve`, `factory_erp.configure`; new factory roles **Storekeeper**
+  (`factory_storekeeper`) and **Purchaser** (`factory_purchaser`) — `FactoryRole` / `FactoryStaffRole` enums grow.
+- New problem codes `erp.*` (stock_insufficient, sku_taken, code_taken, invalid_status, over_receipt, lot_required,
+  not_a_supplier, archived, unit_not_allowed, empty_document, same_warehouse).
+- Migration `20261130000001_factory_erp` (12 tables, append-only stock ledger and goods receipts). `db:seed:uat`
+  adds ERP rehearsal data to the UAT factory (F9001).
+
 ## v0.43.4 — partner UX: price components name their product types; rate lines name their zone
 
 All changes are additive.

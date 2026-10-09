@@ -377,6 +377,18 @@ model Factory {
   // --- end Quotes & RFQ
   ordersSelected Order[] @relation("OrderSelectedFactory")
 
+  // --- Packio Factory ERP E1 (back-relations)
+  erpSettings       ErpFactorySettings? @relation("ErpFactorySettingsFactory")
+  erpDocumentSeries ErpDocumentSeries[] @relation("ErpDocumentSeriesFactory")
+  erpPartners       ErpTradingPartner[] @relation("ErpTradingPartnerFactory")
+  erpWarehouses     ErpWarehouse[]      @relation("ErpWarehouseFactory")
+  erpItems          ErpItem[]           @relation("ErpItemFactory")
+  erpStockBalances  ErpStockBalance[]   @relation("ErpStockBalanceFactory")
+  erpStockMovements ErpStockMovement[]  @relation("ErpStockMovementFactory")
+  erpPurchaseOrders ErpPurchaseOrder[]  @relation("ErpPurchaseOrderFactory")
+  erpGoodsReceipts  ErpGoodsReceipt[]   @relation("ErpGoodsReceiptFactory")
+  // --- end Packio Factory ERP E1
+
   // --- Fulfilment B4.2 (generated back-relations)
   productionJobs     ProductionJob[]    @relation("ProductionJobFactory")
   jobAssignmentsFrom JobAssignment[]    @relation("JobAssignmentFrom")
