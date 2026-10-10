@@ -264,6 +264,7 @@ describe('Packio Factory ERP E2 (e2e)', () => {
       materialCost: '5650.00',
       materials: [{ issuedQty: '2000.000', reservedQty: '0.000' }],
     });
+    expect((issued.nextActions as { key: string }[]).map((a) => a.key)).not.toContain('erp_mo.issue');
     expect((await get(`/items/${paper.id}`)).stock).toMatchObject({ onHand: '0.000', reserved: '0.000' });
 
     // The floor: the operator starts and finishes the step, but cannot complete the order.

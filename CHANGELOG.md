@@ -3,6 +3,11 @@
 Contract-facing changes per release. The contract itself is `contract/openapi.json`; mappings for `packio-web` are in
 `docs/contract-requests-triage.md`.
 
+## v0.45.2 — production orders offer an issue only while something is left to issue
+
+- `ErpProductionOrderDto.nextActions`: `erp_mo.issue` is offered only while a material's required quantity is not
+  fully issued (it was offered on every running order, and the call then failed with `erp.nothing_to_issue`).
+
 ## v0.45.1 — contract fix: production movements name their source
 
 - `ErpStockMovementDto.sourceType` (`ErpMovementSource`) gains `production_order`: the movements a production order
