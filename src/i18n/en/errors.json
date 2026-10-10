@@ -1707,6 +1707,26 @@
     "nothing_to_request": {
       "title": "Nothing short",
       "detail": "The chosen materials are no longer short"
+    },
+    "supplier_not_approved": {
+      "title": "Supplier not approved",
+      "detail": "{{supplier}} is not on the approved supplier list for {{item}} — approve it before issuing the order"
+    },
+    "machine_down": {
+      "title": "Machine down",
+      "detail": "{{machine}} has an open breakdown {{mtNo}} — finish it before working on the machine"
+    },
+    "file_not_usable": {
+      "title": "File not usable",
+      "detail": "The file must be fully uploaded for this factory and pass the virus scan"
+    },
+    "folder_exists": {
+      "title": "Folder exists",
+      "detail": "A folder named \"{{name}}\" is already here"
+    },
+    "folder_not_empty": {
+      "title": "Folder not empty",
+      "detail": "Move or archive the documents and sub-folders in \"{{name}}\" first"
     }
   }
 }

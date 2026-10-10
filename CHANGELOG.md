@@ -3,6 +3,40 @@
 Contract-facing changes per release. The contract itself is `contract/openapi.json`; mappings for `packio-web` are in
 `docs/contract-requests-triage.md`.
 
+## v0.46.0 — Packio Factory ERP E2.1 + E3: sourcing, machine schedule, kiosk, maintenance, documents
+
+Decisions D-346 – D-358 (D-344, the E6 plan, is now accepted). Additive except value sets: `ErpMovementKind` gains
+`landed_cost` and `maintenance_issue`, `ErpMovementSource` gains `maintenance_order`, `ErpOperationStatus` gains
+`paused` (clients that switch over them need a default). New factory role `factory_maintenance`.
+
+- **Sourcing (E2.1)**: `PUT items/{itemId}/suppliers/{linkId}/price-breaks` (If-Match), `POST …/actions/approve`,
+  `…/actions/suspend`, `GET partners/{partnerId}/scorecard`, `POST goods-receipts/{grId}/charges`.
+  `ErpItemSupplierDto` gains `approval`, `approvalNote`, `approvedAt`, `approvedBy`, `reviewOn`, `priceBreaks`,
+  `breaksValidUntil`, `score`. `ErpCreateGoodsReceiptDto` gains `charges[]`; its lines `rejectedQuantity`,
+  `rejectReason`; `ErpGoodsReceiptDto` gains `chargesTotal`, `charges[]`, `nextActions` (`erp_gr.add_charge`), lines
+  `rejectedQuantity`, `rejectReason`, `landedAmount`, `landedUnitCost`. `ErpPurchaseOrderDto.warnings[]`
+  (`supplier_not_approved`, `supplier_suspended`, `price_rise`). Settings gain `priceAlertPct`, `quoteExpiryDays`,
+  `supplierApproval` (`off` / `warn` / `enforce`); issuing a PO under `enforce` may answer `erp.supplier_not_approved`.
+- **Alerts**: `alerts` (paginated; `status`, `kind`), `alerts/count`, `alerts/{id}/actions/acknowledge`,
+  `alerts/actions/acknowledge-all`; notifications `erp_alert.*` to the factory's users.
+- **Requests for quotation**: `rfqs` (list, create, get, `PUT`), `actions/send`, `suppliers/{rfqSupplierId}/quote`
+  (`PUT`), `suppliers/{rfqSupplierId}/actions/decline`, `comparison`, `actions/award`, `actions/cancel`
+  (`nextActions` `erp_rfq.*`).
+- **Machines and floor (E3)**: `machines` (list, create, get, `PATCH`), `machines/{machineId}/dispatch`;
+  `schedule`, `schedule/actions/auto-plan`, `production-orders/{moId}/operations/{operationId}/schedule` (`PUT`),
+  `…/actions/lock`, `…/actions/pause`, `…/actions/resume`, `…/events`. `ErpProductionOperationDto` gains
+  `scheduledStart`, `scheduledEnd`, `locked`, `startedAt`, `finishedAt`, `pausedMinutes`, `actualMinutes`,
+  `pauseReason`, `milestone`, `milestoneSync`, `milestoneSyncError`. Finishing takes `note` and `photoFileIds`;
+  starting / resuming on a machine with an open breakdown answers `erp.machine_down`. Production orders of Packio
+  jobs now carry one operation per job milestone.
+- **Maintenance**: `maintenance/orders` (list), `maintenance/orders/breakdowns`, `maintenance/orders/{mtId}`
+  (+ `actions/schedule|start|parts|finish|cancel`, `nextActions` `erp_mt.*`), `maintenance/plans` (list, create,
+  get, `PUT`, `actions/open`).
+- **Documents**: `documents/folders` (list, create, `PATCH`, `DELETE`), `documents` (list, create, get, `PATCH`),
+  `documents/{docId}/versions`.
+- New problem codes: `erp.supplier_not_approved`, `erp.machine_down`, `erp.file_not_usable`, `erp.folder_exists`,
+  `erp.folder_not_empty`. New permissions: `factory_maintenance.read/report/manage`, `factory_documents.read/manage`.
+
 ## v0.45.2 — production orders offer an issue only while something is left to issue
 
 - `ErpProductionOrderDto.nextActions`: `erp_mo.issue` is offered only while a material's required quantity is not

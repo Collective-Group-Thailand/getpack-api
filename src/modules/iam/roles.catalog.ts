@@ -693,6 +693,11 @@ export const ROLES: readonly RoleDefinition[] = [
       'factory_planning.read',
       'factory_planning.manage',
       'factory_production.record',
+      'factory_maintenance.read',
+      'factory_maintenance.report',
+      'factory_maintenance.manage',
+      'factory_documents.read',
+      'factory_documents.manage',
     ],
   },
   {
@@ -724,6 +729,11 @@ export const ROLES: readonly RoleDefinition[] = [
       'factory_planning.read',
       'factory_planning.manage',
       'factory_production.record',
+      'factory_maintenance.read',
+      'factory_maintenance.report',
+      'factory_maintenance.manage',
+      'factory_documents.read',
+      'factory_documents.manage',
     ],
   },
   {
@@ -740,6 +750,9 @@ export const ROLES: readonly RoleDefinition[] = [
       'factory_inventory.read',
       'factory_planning.read',
       'factory_production.record',
+      'factory_maintenance.read',
+      'factory_maintenance.report',
+      'factory_documents.read',
     ],
   },
   {
@@ -758,6 +771,7 @@ export const ROLES: readonly RoleDefinition[] = [
       'factory_qc.record',
       'factory_issues.raise',
       'factory_scorecard.read',
+      'factory_documents.read',
     ],
   },
   {
@@ -794,6 +808,7 @@ export const ROLES: readonly RoleDefinition[] = [
       'factory_procurement.read',
       'factory_ap.read',
       'factory_ap.manage',
+      'factory_documents.read',
     ],
   },
 
@@ -812,6 +827,9 @@ export const ROLES: readonly RoleDefinition[] = [
       'factory_procurement.read',
       'factory_procurement.request',
       'factory_planning.read',
+      'factory_maintenance.read',
+      'factory_documents.read',
+      'factory_documents.manage',
     ],
   },
   {
@@ -829,6 +847,27 @@ export const ROLES: readonly RoleDefinition[] = [
       'factory_procurement.manage',
       'factory_procurement.request',
       'factory_ap.read',
+      'factory_maintenance.read',
+      'factory_documents.read',
+      'factory_documents.manage',
+    ],
+  },
+
+  {
+    key: 'factory_maintenance',
+    audience: 'partner',
+    scopeType: 'factory',
+    nameTh: 'ช่างซ่อมบำรุง',
+    nameEn: 'Maintenance',
+    permissions: [
+      'factory_profile.read',
+      'factory_jobs.read',
+      'factory_inventory.read',
+      'factory_planning.read',
+      'factory_maintenance.read',
+      'factory_maintenance.report',
+      'factory_maintenance.manage',
+      'factory_documents.read',
     ],
   },
 

@@ -293,3 +293,116 @@ export function finishedUnitCost(materialValue: MoneyValue, goodQty: MoneyValue)
   if (!goodQty.gt(0)) return dec(0);
   return cost6(materialValue.div(goodQty));
 }
+
+// ------------------------------------------------------------------------ E2.1 sourcing (D-346 – D-350)
+
+/** D-346: the price for `qty` (supplier's unit) — the break with the largest minimum not above it. */
+export function breakPrice(
+  breaks: { minQty: MoneyValue; unitPrice: MoneyValue }[],
+  qty: MoneyValue,
+): MoneyValue | null {
+  let best: { minQty: MoneyValue; unitPrice: MoneyValue } | null = null;
+  for (const b of breaks) if (b.minQty.lte(qty) && (!best || b.minQty.gt(best.minQty))) best = b;
+  return best ? best.unitPrice : null;
+}
+
+/** D-347: is `now` (per base unit) more than `alertPct` % above `before`? Returns the change % when it is. */
+export function priceRise(
+  now: MoneyValue,
+  before: MoneyValue | null,
+  alertPct: MoneyValue,
+): MoneyValue | null {
+  if (!before || !before.gt(0)) return null;
+  const change = now.minus(before).times(100).div(before);
+  return change.gt(alertPct) ? change.toDecimalPlaces(2) : null;
+}
+
+/**
+ * D-350: splits `total` (money) over `weights` in proportion, in satang, the remainder going to the largest
+ * fractions (ties: earlier lines). All-zero weights split evenly.
+ */
+export function allocate(total: MoneyValue, weights: MoneyValue[]): MoneyValue[] {
+  if (weights.length === 0) return [];
+  const cents = total.times(100).toDecimalPlaces(0);
+  const sum = weights.reduce((a, w) => a.plus(w), dec(0));
+  const w = sum.gt(0) ? weights : weights.map(() => dec(1));
+  const s = sum.gt(0) ? sum : dec(weights.length);
+  const exact = w.map((x) => cents.times(x).div(s));
+  const floors = exact.map((x) => x.floor());
+  let left = cents.minus(floors.reduce((a, x) => a.plus(x), dec(0))).toNumber();
+  const order = exact
+    .map((x, i) => ({ i, frac: x.minus(floors[i]!) }))
+    .sort((a, b) => b.frac.comparedTo(a.frac) || a.i - b.i);
+  const out = [...floors];
+  for (const { i } of order) {
+    if (left <= 0) break;
+    out[i] = out[i]!.plus(1);
+    left -= 1;
+  }
+  return out.map((c) => c.div(100));
+}
+
+/**
+ * D-350: the part of a later charge on a receipt line that can still go into stock value — in proportion to
+ * how much of the line's base quantity is still on hand (at most all of it).
+ */
+export function absorbable(amount: MoneyValue, onHand: MoneyValue, receivedBase: MoneyValue): MoneyValue {
+  if (!onHand.gt(0) || !receivedBase.gt(0)) return dec(0);
+  if (onHand.gte(receivedBase)) return amount;
+  return money2(amount.times(onHand).div(receivedBase));
+}
+
+export type SupplierGrade = 'A' | 'B' | 'C' | 'D';
+
+/**
+ * D-349: a supplier's score over 12 months — 60 % quality (accepted ÷ delivered value) + 40 % on time — and
+ * its grade; null below 3 receipts.
+ */
+export function supplierScore(input: {
+  receipts: number;
+  deliveredValue: MoneyValue;
+  acceptedValue: MoneyValue;
+  onTime: number;
+  timed: number;
+}): {
+  qualityPct: MoneyValue | null;
+  onTimePct: MoneyValue | null;
+  score: MoneyValue | null;
+  grade: SupplierGrade | null;
+} {
+  const qualityPct = input.deliveredValue.gt(0)
+    ? input.acceptedValue.times(100).div(input.deliveredValue).toDecimalPlaces(2)
+    : null;
+  const onTimePct = input.timed > 0 ? dec(input.onTime).times(100).div(input.timed).toDecimalPlaces(2) : null;
+  if (input.receipts < 3 || qualityPct === null) return { qualityPct, onTimePct, score: null, grade: null };
+  const score = qualityPct
+    .times(60)
+    .plus((onTimePct ?? qualityPct).times(40))
+    .div(100)
+    .toDecimalPlaces(2);
+  const grade: SupplierGrade = score.gte(95) ? 'A' : score.gte(85) ? 'B' : score.gte(70) ? 'C' : 'D';
+  return { qualityPct, onTimePct, score, grade };
+}
+
+// ----------------------------------------------------------------------------- E3 maintenance (D-355)
+
+/**
+ * D-355: how far a preventive plan is from due — days left (from the last done, else the plan's start) and
+ * impressions left — and whether an order should be opened now (3 days or 10 % of impressions left).
+ */
+export function maintenanceDue(input: {
+  everyDays: number | null;
+  everyImpressions: number | null;
+  daysSince: number;
+  impressionsSince: number;
+}): { daysLeft: number | null; impressionsLeft: number | null; due: boolean } {
+  const daysLeft = input.everyDays === null ? null : input.everyDays - input.daysSince;
+  const impressionsLeft =
+    input.everyImpressions === null ? null : input.everyImpressions - input.impressionsSince;
+  const due =
+    (daysLeft !== null && daysLeft <= 3) ||
+    (impressionsLeft !== null &&
+      input.everyImpressions !== null &&
+      impressionsLeft <= input.everyImpressions * 0.1);
+  return { daysLeft, impressionsLeft, due };
+}

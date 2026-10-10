@@ -1148,6 +1148,7 @@ export const FACTORY_STAFF_ROLES = [
   'factory_accountant',
   'factory_storekeeper',
   'factory_purchaser',
+  'factory_maintenance',
 ] as const;
 
 export class CreateFactoryUserDto {

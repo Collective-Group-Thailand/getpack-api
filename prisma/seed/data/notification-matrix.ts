@@ -617,6 +617,73 @@ const ROWS: Row[] = [
   ),
 
   // --- factories -------------------------------------------------------------------------------------------
+  // --- Packio Factory ERP alerts (D-347, D-355, D-356, D-358): the factory's own users only -------------
+  F(
+    'erp_alert.price_rise',
+    ['in_app'],
+    {
+      th: 'ราคาซื้อขึ้น {{payload.changePct}}% — {{payload.item}}',
+      en: 'Price up {{payload.changePct}}% — {{payload.item}}',
+    },
+    {
+      th: '{{payload.supplier}} ใน {{payload.documentNo}} ราคา {{payload.price}} บาท/{{payload.unit}} (ครั้งก่อน {{payload.previous}})',
+      en: '{{payload.supplier}} on {{payload.documentNo}}: {{payload.price}} THB/{{payload.unit}} (last paid {{payload.previous}})',
+    },
+    'Factory ERP: a purchase price rose above the alert threshold (D-347)',
+  ),
+  F(
+    'erp_alert.quote_expiring',
+    ['in_app'],
+    { th: 'ราคาเสนอใกล้หมดอายุ — {{payload.item}}', en: 'Quotation ending — {{payload.item}}' },
+    {
+      th: 'ราคาของ {{payload.supplier}} ใช้ได้ถึง {{payload.validUntil}} ขอราคาใหม่หรือเปิดใบสั่งซื้อก่อนหมดอายุ',
+      en: '{{payload.supplier}}’s price holds until {{payload.validUntil}}: ask again or order before then',
+    },
+    'Factory ERP: a quotation or quantity-break price list is about to end (D-347)',
+  ),
+  F(
+    'erp_alert.supplier_review_due',
+    ['in_app'],
+    { th: 'ถึงรอบทบทวนผู้ขาย — {{payload.supplier}}', en: 'Supplier review due — {{payload.supplier}}' },
+    {
+      th: 'การอนุมัติ {{payload.supplier}} สำหรับ {{payload.item}} ครบกำหนดทบทวน {{payload.reviewOn}}',
+      en: '{{payload.supplier}}’s approval for {{payload.item}} is due for review on {{payload.reviewOn}}',
+    },
+    'Factory ERP: an approved supplier is due for review (D-351)',
+  ),
+  F(
+    'erp_alert.maintenance_due',
+    ['in_app', 'email'],
+    { th: 'ถึงรอบซ่อมบำรุง {{payload.machine}}', en: 'Maintenance due — {{payload.machine}}' },
+    {
+      th: '{{payload.title}} ({{payload.mtNo}}) ถึงกำหนดแล้ว นัดเวลาในตารางเครื่องจักร',
+      en: '{{payload.title}} ({{payload.mtNo}}) is due: give it a window on the machine schedule',
+    },
+    'Factory ERP: a preventive maintenance plan is due (D-355)',
+  ),
+  F(
+    'erp_alert.machine_breakdown',
+    ['in_app', 'email', 'line'],
+    {
+      th: 'เครื่องเสีย {{payload.machine}} — {{payload.mtNo}}',
+      en: 'Breakdown on {{payload.machine}} — {{payload.mtNo}}',
+    },
+    {
+      th: '{{payload.title}} (แจ้งโดย {{payload.reportedBy}}) เครื่องหยุดจนกว่าจะปิดงานซ่อม',
+      en: '{{payload.title}} (reported by {{payload.reportedBy}}): the machine is down until the repair is done',
+    },
+    'Factory ERP: a machine breakdown was reported (D-355)',
+  ),
+  F(
+    'erp_alert.document_expiring',
+    ['in_app', 'email'],
+    { th: 'เอกสารใกล้หมดอายุ — {{payload.title}}', en: 'Document expiring — {{payload.title}}' },
+    {
+      th: '{{payload.title}} หมดอายุ {{payload.expiresOn}} อัปโหลดฉบับใหม่ในเอกสารโรงงาน',
+      en: '{{payload.title}} expires on {{payload.expiresOn}}: upload the renewed version in the factory’s documents',
+    },
+    'Factory ERP: a certificate, permit or contract is near or past its expiry (D-356)',
+  ),
   F(
     'factory_change_request.answered',
     ['in_app', 'email'],

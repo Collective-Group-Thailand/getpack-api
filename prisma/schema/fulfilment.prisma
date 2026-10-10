@@ -992,10 +992,11 @@ model JobMilestone {
   updatedAt          DateTime            @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
   rowVersion         Int                 @default(1) @map("row_version")
 
-  job              ProductionJob @relation(fields: [jobId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_job_milestones__job_id")
-  factory          Factory       @relation("JobMilestoneFactory", fields: [factoryId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_job_milestones__factory_id")
-  reportedBy       User?         @relation("JobMilestoneReportedBy", fields: [reportedById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_job_milestones__reported_by")
-  reportedByClient ApiClient?    @relation("JobMilestoneReportedByClient", fields: [reportedByClientId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_job_milestones__reported_by_client_id")
+  job                    ProductionJob           @relation(fields: [jobId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_job_milestones__job_id")
+  factory                Factory                 @relation("JobMilestoneFactory", fields: [factoryId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_job_milestones__factory_id")
+  reportedBy             User?                   @relation("JobMilestoneReportedBy", fields: [reportedById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_job_milestones__reported_by")
+  reportedByClient       ApiClient?              @relation("JobMilestoneReportedByClient", fields: [reportedByClientId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_job_milestones__reported_by_client_id")
+  erpProductionOperation ErpProductionOperation? @relation("ErpProductionOperationMilestone")
 
   @@unique([jobId, seq], map: "ux_job_milestones__job_id__seq")
   @@unique([jobId, clientRef], map: "ux_job_milestones__job_id__client_ref", where: raw("(client_ref IS NOT NULL)"))

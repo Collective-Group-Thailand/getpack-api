@@ -39,6 +39,22 @@ const LINKS: Record<InboxSurface, Record<string, Link>> = {
     billing_statement: (id) => `/billing/${id}`,
     price_proposal: (id) => `/prices/proposals/${id}`,
     factory_change_request: () => '/requests',
+    // Packio Factory ERP alerts open what they are about (D-358).
+    erp_alert: (_id, p) => {
+      const id = typeof p['subjectId'] === 'string' ? p['subjectId'] : null;
+      switch (p['subjectType']) {
+        case 'item':
+          return id ? `/stock/items/${id}` : '/alerts';
+        case 'maintenance_order':
+          return id ? `/maintenance/${id}` : '/alerts';
+        case 'maintenance_plan':
+          return id ? `/maintenance/plans/${id}` : '/maintenance';
+        case 'document':
+          return id ? `/documents/${id}` : '/alerts';
+        default:
+          return '/alerts';
+      }
+    },
   },
 };
 

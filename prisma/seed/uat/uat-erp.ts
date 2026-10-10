@@ -350,6 +350,11 @@ export async function seedUatErpE2(prisma: PrismaClient): Promise<number> {
             lastPricedOn: last ? daysAgo(12) : null,
             lastPurchasedOn: last ? daysAgo(12) : null,
             preferred: true,
+            // D-351: the factory's usual suppliers are on its approved list.
+            approval: 'approved',
+            approvedAt: new Date(),
+            approvedById: by,
+            approvalNote: 'ผู้ขายประจำ (ข้อมูลทดสอบ)',
             createdById: by,
           },
         });
@@ -533,4 +538,65 @@ export async function seedUatErpE2(prisma: PrismaClient): Promise<number> {
     },
     { timeout: 60_000 },
   );
+}
+
+/**
+ * E2.1 + E3 rehearsal data (D-346, D-355): quantity breaks on the first priced supplier link, and a preventive
+ * plan on each of the UAT factory's machines (every 30 days or 500,000 impressions), started 25 days ago so one
+ * comes due within the week. Idempotent — a factory with maintenance plans is left alone.
+ */
+export async function seedUatErpE3(prisma: PrismaClient): Promise<number> {
+  const factory = await prisma.factory.findUnique({ where: { code: UAT_FACTORY_CODE } });
+  if (!factory) return 0;
+  if (await prisma.erpMaintenancePlan.count({ where: { factoryId: factory.id } })) return 0;
+  const owner = await prisma.userRole.findFirst({
+    where: { scopeType: 'factory', scopeId: factory.id, role: { key: 'factory_owner' }, revokedAt: null },
+  });
+  const by = owner?.userId ?? (await prisma.user.findFirstOrThrow({ where: { kind: 'staff' } })).id;
+  const machines = await prisma.factoryMachine.findMany({
+    where: { factoryId: factory.id, status: 'active' },
+    orderBy: { id: 'asc' },
+  });
+  const spare = await prisma.erpItem.findFirst({ where: { factoryId: factory.id, kind: 'spare_part' } });
+  const link = await prisma.erpItemSupplier.findFirst({
+    where: { factoryId: factory.id, lastPrice: { not: null } },
+    orderBy: { id: 'asc' },
+  });
+  return prisma.$transaction(async (tx) => {
+    let n = 0;
+    if (link) {
+      const p = new Prisma.Decimal(link.lastPrice!);
+      for (const [min, k] of [
+        ['10', '1'],
+        ['50', '0.97'],
+        ['100', '0.95'],
+      ] as const)
+        await tx.erpPriceBreak.create({
+          data: {
+            itemSupplierId: link.id,
+            minQty: min,
+            unitPrice: p.times(k).toDecimalPlaces(2).toFixed(6),
+            createdById: by,
+          },
+        });
+    }
+    for (const [i, m] of machines.entries()) {
+      await tx.erpMaintenancePlan.create({
+        data: {
+          factoryId: factory.id,
+          machineId: m.id,
+          title: i === 0 ? 'ล้างระบบหมึก + อัดจาระบี (ทดสอบ)' : 'ตรวจใบมีด + ทำความสะอาด (ทดสอบ)',
+          instructions: '1) ทำความสะอาด 2) ตรวจสภาพ 3) อัดจาระบีตามคู่มือ',
+          everyDays: 30,
+          everyImpressions: 500_000,
+          durationMinutes: 120,
+          lastDoneAt: new Date(Date.now() - (i === 0 ? 25 : 10) * 86_400_000),
+          createdById: by,
+          ...(spare && { parts: { create: [{ itemId: spare.id, quantity: '1' }] } }),
+        },
+      });
+      n += 1;
+    }
+    return n;
+  });
 }

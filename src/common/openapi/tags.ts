@@ -222,6 +222,18 @@ export const API_TAGS: Record<string, string> = {
     'Packio Factory ERP: production orders from Packio jobs or the factory’s own — reservations, issues, floor operations, completion (D-340, D-341).',
   'partner.erpPlanning':
     'Packio Factory ERP: the planning board, machine load, the floor queue and MRP (D-342).',
+  'partner.erpAlerts':
+    'Packio Factory ERP: alerts — price rises, quotations and reviews ending, maintenance due, breakdowns, documents expiring (D-347, D-358).',
+  'partner.erpRfqs':
+    'Packio Factory ERP: requests for quotation to several suppliers, the comparison and the award (D-348).',
+  'partner.erpMachines':
+    'Packio Factory ERP: my factory’s machines, their state and the kiosk’s dispatch list (D-352, D-353, D-355).',
+  'partner.erpSchedule':
+    'Packio Factory ERP: the machine schedule — auto-plan, move and lock — and pausing / resuming on the floor (D-352, D-353).',
+  'partner.erpMaintenance':
+    'Packio Factory ERP: breakdowns, preventive plans, maintenance windows and spare parts (D-355).',
+  'partner.erpDocuments':
+    'Packio Factory ERP: folders and versioned documents linked to ERP records, with expiry reminders (D-356).',
   'partner.changeRequests':
     'Requests to the Partner team for changes only staff make, or a site visit; with the team’s answer (U-B0.3).',
   'admin.factoryChangeRequests':

@@ -13,8 +13,20 @@ import {
   Prisma,
 } from '@generated/prisma/client';
 import { Injectable } from '@nestjs/common';
+import { AuditService } from '@platform/audit/audit.service';
 
-import { basePrice, changePct, cost6, dec, fmtCost, fmtQty, priceSpread } from './erp.math';
+import {
+  basePrice,
+  breakPrice,
+  changePct,
+  cost6,
+  dec,
+  fmtCost,
+  fmtMoney,
+  fmtQty,
+  priceSpread,
+  supplierScore,
+} from './erp.math';
 import {
   type ErpCreateItemSupplierDto,
   type ErpItemSupplierDto,
@@ -22,8 +34,14 @@ import {
   type ErpPriceRecordDto,
   type ErpPriceStatsDto,
   type ErpRecordPriceDto,
+  type ErpSupplierScoreDto,
   type ErpUpdateItemSupplierDto,
 } from './erp-e2.dto';
+import {
+  type ErpApproveSupplierDto,
+  type ErpSavePriceBreaksDto,
+  type ErpSupplierScorecardDto,
+} from './erp-e3.dto';
 import { itemRef, partnerEtag, partnerRef } from './erp-views';
 import { type ErpScope, ErpWorkspace } from './erp-workspace.service';
 
@@ -31,7 +49,25 @@ const day = (s: string) => new Date(`${s}T00:00:00.000Z`);
 const iso = (d: Date | null) => (d ? d.toISOString().slice(0, 10) : null);
 const today = () => bangkokDate(new Date());
 
-type LinkRow = ErpItemSupplier & { item: ErpItem; supplier: ErpTradingPartner };
+export const LINK_INCLUDE = {
+  item: true,
+  supplier: true,
+  approvedBy: { select: { displayName: true } },
+  priceBreaks: { orderBy: { minQty: 'asc' } },
+} as const;
+
+type LinkRow = Prisma.ErpItemSupplierGetPayload<{ include: typeof LINK_INCLUDE }>;
+
+const ZERO_SCORE: ErpSupplierScoreDto = {
+  receipts: 0,
+  deliveredValue: '0.00',
+  acceptedValue: '0.00',
+  rejectedLines: 0,
+  qualityPct: null,
+  onTimePct: null,
+  score: null,
+  grade: null,
+};
 
 /** One price the factory met, to write into the history (D-334). Prices are net, without VAT. */
 export interface PriceNote {
@@ -59,7 +95,10 @@ export interface PriceNote {
  */
 @Injectable()
 export class ErpPricingService {
-  constructor(private readonly workspace: ErpWorkspace) {}
+  constructor(
+    private readonly workspace: ErpWorkspace,
+    private readonly audit: AuditService,
+  ) {}
 
   // --------------------------------------------------------------------------------- recording
 
@@ -231,7 +270,7 @@ export class ErpPricingService {
     const item = await this.item(this.workspace.db, scope, itemPublicId);
     const rows = await this.workspace.db.erpItemSupplier.findMany({
       where: { itemId: item.id },
-      include: { item: true, supplier: true },
+      include: LINK_INCLUDE,
       orderBy: [{ preferred: 'desc' }, { status: 'asc' }, { lastPricedOn: { sort: 'desc', nulls: 'last' } }],
     });
     return this.views(scope.factory.id, rows);
@@ -244,7 +283,7 @@ export class ErpPricingService {
     if (!s) throw new DomainException('http.not_found');
     const rows = await this.workspace.db.erpItemSupplier.findMany({
       where: { supplierId: s.id },
-      include: { item: true, supplier: true },
+      include: LINK_INCLUDE,
       orderBy: [{ status: 'asc' }, { item: { sku: 'asc' } }],
     });
     return this.views(scope.factory.id, rows);
@@ -254,7 +293,7 @@ export class ErpPricingService {
     const item = await this.item(this.workspace.db, scope, itemPublicId);
     const row = await this.workspace.db.erpItemSupplier.findFirst({
       where: { itemId: item.id, publicId: linkPublicId },
-      include: { item: true, supplier: true },
+      include: LINK_INCLUDE,
     });
     if (!row) throw new DomainException('http.not_found');
     return (await this.views(scope.factory.id, [row]))[0]!;
@@ -433,6 +472,259 @@ export class ErpPricingService {
     return priceDto(row);
   }
 
+  // ------------------------------------------------------------- E2.1 breaks, approval, scores
+
+  /**
+   * D-346: the price per the link's unit for `qty` of that unit — the largest break not above it while the
+   * breaks hold, else the latest price.
+   */
+  async priceFor(db: Tx | PrismaService, link: ErpItemSupplier, qty: MoneyValue): Promise<MoneyValue | null> {
+    const valid = !link.breaksValidUntil || iso(link.breaksValidUntil)! >= today();
+    if (valid) {
+      const breaks = await db.erpPriceBreak.findMany({ where: { itemSupplierId: link.id } });
+      const p = breakPrice(
+        breaks.map((b) => ({ minQty: dec(b.minQty), unitPrice: dec(b.unitPrice) })),
+        qty,
+      );
+      if (p) return p;
+    }
+    return link.lastPrice === null ? null : dec(link.lastPrice);
+  }
+
+  /** The last price paid (goods receipt) per base unit to a supplier for an item, if any (D-347). */
+  async lastPaid(db: Tx | PrismaService, itemId: bigint, supplierId: bigint): Promise<MoneyValue | null> {
+    const r = await db.erpPriceRecord.findFirst({
+      where: { itemId, supplierId, source: 'goods_receipt' },
+      orderBy: [{ pricedOn: 'desc' }, { id: 'desc' }],
+    });
+    return r ? dec(r.baseUnitPrice) : null;
+  }
+
+  private async lockedLink(tx: Tx, scope: ErpScope, itemPublicId: string, linkPublicId: string) {
+    const item = await this.item(tx, scope, itemPublicId);
+    const link = await tx.erpItemSupplier.findFirst({
+      where: { itemId: item.id, publicId: linkPublicId },
+      include: { supplier: true },
+    });
+    if (!link) throw new DomainException('http.not_found');
+    await tx.$queryRaw`SELECT id FROM erp_item_suppliers WHERE id = ${link.id} FOR UPDATE`;
+    return { item, link };
+  }
+
+  /** D-346: replaces the link's quantity breaks; each is written into the price history as a quotation. */
+  async saveBreaks(
+    scope: ErpScope,
+    itemPublicId: string,
+    linkPublicId: string,
+    ifMatch: string | undefined,
+    body: ErpSavePriceBreaksDto,
+  ) {
+    const mins = body.breaks.map((b) => dec(b.minQty));
+    if (mins.some((m) => !m.gt(0)) || new Set(mins.map((m) => m.toFixed(3))).size !== mins.length)
+      throw new DomainException('validation.failed', {
+        errors: [
+          { path: 'breaks', code: 'invalid', message: 'Minimum quantities must be positive and different' },
+        ],
+      });
+    if (body.validUntil && body.validUntil < today())
+      throw new DomainException('validation.failed', {
+        errors: [{ path: 'validUntil', code: 'invalid', message: 'Today or later' }],
+      });
+    await this.workspace.tx(async (tx) => {
+      const { item, link } = await this.lockedLink(tx, scope, itemPublicId, linkPublicId);
+      assertIfMatch(ifMatch, partnerEtag(link));
+      await tx.erpPriceBreak.deleteMany({ where: { itemSupplierId: link.id } });
+      if (body.breaks.length)
+        await tx.erpPriceBreak.createMany({
+          data: body.breaks.map((b) => ({
+            itemSupplierId: link.id,
+            minQty: fmtQty(b.minQty),
+            unitPrice: fmtCost(b.unitPrice),
+            createdById: scope.actor.userId,
+          })),
+        });
+      for (const b of body.breaks)
+        await tx.erpPriceRecord.create({
+          data: {
+            factoryId: scope.factory.id,
+            itemId: item.id,
+            supplierId: link.supplierId,
+            source: 'quotation',
+            unit: link.purchaseUnit,
+            factor: fmtCost(link.purchaseFactor),
+            unitPrice: fmtCost(b.unitPrice),
+            baseUnitPrice: fmtCost(basePrice(dec(b.unitPrice), dec(link.purchaseFactor))),
+            quantity: fmtQty(b.minQty),
+            pricedOn: day(today()),
+            validUntil: body.validUntil ? day(body.validUntil) : null,
+            note: 'ราคาตามขั้นจำนวน',
+            createdById: scope.actor.userId,
+          },
+        });
+      await tx.erpItemSupplier.update({
+        where: { id: link.id },
+        data: {
+          breaksValidUntil: body.validUntil ? day(body.validUntil) : null,
+          updatedById: scope.actor.userId,
+          rowVersion: { increment: 1 },
+        },
+      });
+      await this.workspace.record(tx, scope, 'erp_item_supplier.breaks_saved', 'erp_item', item.publicId, {
+        supplierId: link.supplier.publicId,
+        breaks: body.breaks.length,
+      });
+    });
+    return this.getLink(scope, itemPublicId, linkPublicId);
+  }
+
+  /** D-351: approves (with an optional review date) or suspends (with a reason) a supplier for an item. */
+  async decideApproval(
+    scope: ErpScope,
+    itemPublicId: string,
+    linkPublicId: string,
+    decision: 'approved' | 'suspended',
+    body: ErpApproveSupplierDto,
+  ) {
+    if (body.reviewOn && body.reviewOn <= today())
+      throw new DomainException('validation.failed', {
+        errors: [{ path: 'reviewOn', code: 'invalid', message: 'After today' }],
+      });
+    await this.workspace.tx(async (tx) => {
+      const { item, link } = await this.lockedLink(tx, scope, itemPublicId, linkPublicId);
+      await tx.erpItemSupplier.update({
+        where: { id: link.id },
+        data: {
+          approval: decision,
+          approvalNote: body.note ?? null,
+          ...(decision === 'approved'
+            ? {
+                approvedAt: new Date(),
+                approvedById: scope.actor.userId,
+                reviewOn: body.reviewOn ? day(body.reviewOn) : null,
+              }
+            : { reviewOn: null }),
+          ...(decision === 'suspended' && link.preferred && { preferred: false }),
+          updatedById: scope.actor.userId,
+          rowVersion: { increment: 1 },
+        },
+      });
+      if (decision === 'suspended' && link.preferred)
+        await tx.erpItem.update({ where: { id: item.id }, data: { defaultSupplierId: null } });
+      await this.audit.record(tx, {
+        category: 'approval',
+        action: decision === 'approved' ? 'erp.supplier_approved' : 'erp.supplier_suspended',
+        resourceType: 'erp_item',
+        resourcePublicId: item.publicId,
+        data: { supplierId: link.supplier.publicId },
+      });
+      await this.workspace.record(
+        tx,
+        scope,
+        decision === 'approved' ? 'erp_item_supplier.approved' : 'erp_item_supplier.suspended',
+        'erp_item',
+        item.publicId,
+        { supplierId: link.supplier.publicId },
+      );
+    });
+    return this.getLink(scope, itemPublicId, linkPublicId);
+  }
+
+  /** D-349: 12-month quality, on-time and score per supplier. */
+  async scores(factoryId: bigint, supplierIds: bigint[]): Promise<Map<bigint, ErpSupplierScoreDto>> {
+    const out = new Map<bigint, ErpSupplierScoreDto>();
+    if (supplierIds.length === 0) return out;
+    const since = day(addCalendarDays(today(), -365));
+    const [values, timing] = await Promise.all([
+      this.workspace.db.$queryRaw<
+        {
+          supplier_id: bigint;
+          receipts: bigint;
+          accepted: Prisma.Decimal;
+          rejected: Prisma.Decimal;
+          rejected_lines: bigint;
+        }[]
+      >(Prisma.sql`
+        SELECT g.supplier_id, count(DISTINCT g.id) AS receipts, coalesce(sum(l.amount), 0) AS accepted,
+               coalesce(sum(round(l.rejected_quantity * l.factor * l.unit_cost, 2)), 0) AS rejected,
+               count(*) FILTER (WHERE l.rejected_quantity > 0) AS rejected_lines
+          FROM erp_goods_receipt_lines l JOIN erp_goods_receipts g ON g.id = l.goods_receipt_id
+         WHERE g.factory_id = ${factoryId} AND g.supplier_id IN (${Prisma.join(supplierIds)})
+           AND g.received_on >= ${since}
+         GROUP BY g.supplier_id`),
+      this.workspace.db.$queryRaw<{ supplier_id: bigint; timed: bigint; on_time: bigint }[]>(Prisma.sql`
+        SELECT g.supplier_id, count(*) AS timed, count(*) FILTER (WHERE g.received_on <= p.expected_on) AS on_time
+          FROM erp_goods_receipts g JOIN erp_purchase_orders p ON p.id = g.purchase_order_id
+         WHERE g.factory_id = ${factoryId} AND g.supplier_id IN (${Prisma.join(supplierIds)})
+           AND g.received_on >= ${since} AND p.expected_on IS NOT NULL
+         GROUP BY g.supplier_id`),
+    ]);
+    for (const id of supplierIds) {
+      const v = values.find((x) => x.supplier_id === id);
+      const t = timing.find((x) => x.supplier_id === id);
+      const accepted = dec(v?.accepted ?? 0);
+      const delivered = accepted.plus(dec(v?.rejected ?? 0));
+      const s = supplierScore({
+        receipts: Number(v?.receipts ?? 0),
+        deliveredValue: delivered,
+        acceptedValue: accepted,
+        onTime: Number(t?.on_time ?? 0),
+        timed: Number(t?.timed ?? 0),
+      });
+      out.set(id, {
+        receipts: Number(v?.receipts ?? 0),
+        deliveredValue: fmtMoney(delivered),
+        acceptedValue: fmtMoney(accepted),
+        rejectedLines: Number(v?.rejected_lines ?? 0),
+        qualityPct: s.qualityPct?.toFixed(2) ?? null,
+        onTimePct: s.onTimePct?.toFixed(2) ?? null,
+        score: s.score?.toFixed(2) ?? null,
+        grade: s.grade,
+      });
+    }
+    return out;
+  }
+
+  /** D-349: a supplier's scorecard — score, approvals and the latest rejections. */
+  async scorecard(scope: ErpScope, partnerPublicId: string): Promise<ErpSupplierScorecardDto> {
+    const s = await this.workspace.db.erpTradingPartner.findFirst({
+      where: { factoryId: scope.factory.id, publicId: partnerPublicId },
+    });
+    if (!s) throw new DomainException('http.not_found');
+    const since = day(addCalendarDays(today(), -365));
+    const [scores, approvals, rejections] = await Promise.all([
+      this.scores(scope.factory.id, [s.id]),
+      this.workspace.db.erpItemSupplier.groupBy({
+        by: ['approval'],
+        where: { supplierId: s.id, status: 'active' },
+        _count: { _all: true },
+      }),
+      this.workspace.db.erpGoodsReceiptLine.findMany({
+        where: {
+          rejectedQuantity: { gt: 0 },
+          goodsReceipt: { supplierId: s.id, receivedOn: { gte: since } },
+        },
+        include: { item: true, goodsReceipt: true },
+        orderBy: [{ goodsReceipt: { receivedOn: 'desc' } }, { id: 'desc' }],
+        take: 20,
+      }),
+    ]);
+    const n = (a: string) => approvals.find((x) => x.approval === a)?._count._all ?? 0;
+    return {
+      ...(scores.get(s.id) ?? ZERO_SCORE),
+      supplier: partnerRef(s),
+      approvedItems: n('approved'),
+      pendingItems: n('pending'),
+      rejections: rejections.map((r) => ({
+        goodsReceipt: { id: r.goodsReceipt.publicId, code: r.goodsReceipt.grNo, name: r.goodsReceipt.grNo },
+        receivedOn: iso(r.goodsReceipt.receivedOn)!,
+        item: itemRef(r.item),
+        rejectedQuantity: fmtQty(r.rejectedQuantity),
+        unit: r.unit,
+        reason: r.rejectReason,
+      })),
+    };
+  }
+
   // ------------------------------------------------------------------------------------ stats
 
   /** Links with their 12-month purchase statistics and the cheapest flag (D-334, D-335). */
@@ -468,6 +760,7 @@ export class ErpPricingService {
         where: { itemId: { in: itemIds }, status: 'active', lastPrice: { not: null } },
       }),
     ]);
+    const scores = await this.scores(factoryId, [...new Set(rows.map((r) => r.supplierId))]);
     const cheapest = new Map<bigint, MoneyValue>();
     for (const s of siblings) {
       const p = dec(s.lastPrice!).div(dec(s.purchaseFactor));
@@ -528,6 +821,18 @@ export class ErpPricingService {
         note: r.note,
         status: r.status,
         stats,
+        approval: r.approval,
+        approvalNote: r.approvalNote,
+        approvedAt: r.approvedAt ? toBangkokIso(r.approvedAt) : null,
+        approvedBy: r.approvedBy?.displayName ?? null,
+        reviewOn: iso(r.reviewOn),
+        priceBreaks: r.priceBreaks.map((b) => ({
+          minQty: fmtQty(b.minQty),
+          unitPrice: fmtCost(b.unitPrice),
+          baseUnitPrice: fmtCost(dec(b.unitPrice).div(dec(r.purchaseFactor))),
+        })),
+        breaksValidUntil: iso(r.breaksValidUntil),
+        score: scores.get(r.supplierId) ?? ZERO_SCORE,
         version: r.rowVersion,
       };
     });

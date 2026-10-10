@@ -985,8 +985,38 @@ export const PERMISSIONS = [
   {
     key: 'factory_production.record',
     audience: 'partner',
-    description: 'Start, finish or skip operations of production orders on the floor',
+    description: 'Start, pause, resume, finish or skip operations of production orders on the floor (kiosk)',
     decisionRefs: ['D-319', 'D-341'],
+  },
+  {
+    key: 'factory_maintenance.read',
+    audience: 'partner',
+    description: 'Read the factory’s machines’ maintenance: breakdowns, preventive plans and their orders',
+    decisionRefs: ['D-355', 'D-357'],
+  },
+  {
+    key: 'factory_maintenance.report',
+    audience: 'partner',
+    description: 'Report a machine breakdown (with photos)',
+    decisionRefs: ['D-355', 'D-357'],
+  },
+  {
+    key: 'factory_maintenance.manage',
+    audience: 'partner',
+    description: 'Plan, schedule, carry out and close maintenance; issue spare parts to it',
+    decisionRefs: ['D-355', 'D-357'],
+  },
+  {
+    key: 'factory_documents.read',
+    audience: 'partner',
+    description: 'Read the factory’s documents and their versions',
+    decisionRefs: ['D-356', 'D-357'],
+  },
+  {
+    key: 'factory_documents.manage',
+    audience: 'partner',
+    description: 'Add, version, link, file and archive the factory’s documents and folders',
+    decisionRefs: ['D-356', 'D-357'],
   },
   {
     key: 'factory_erp.configure',

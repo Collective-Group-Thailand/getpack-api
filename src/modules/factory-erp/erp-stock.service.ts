@@ -28,10 +28,12 @@ import {
 import {
   applyMovement,
   type BalanceState,
+  cost6,
   dec,
   fmtCost,
   fmtMoney,
   fmtQty,
+  money2,
   type MovementEffect,
 } from './erp.math';
 import { isLow, itemRef, movementDto, type MovementRow, warehouseRef } from './erp-views';
@@ -54,7 +56,7 @@ export interface StockEntry {
 }
 
 export interface StockSource {
-  type: 'goods_receipt' | 'adjustment' | 'issue' | 'transfer' | 'production_order';
+  type: 'goods_receipt' | 'adjustment' | 'issue' | 'transfer' | 'production_order' | 'maintenance_order';
   publicId: string;
   documentNo: string;
   occurredAt?: Date;
@@ -179,6 +181,55 @@ export class ErpStockService {
       out.push(movement);
     }
     return out;
+  }
+
+  /**
+   * D-350: adds `value` to what is on hand of an item in a warehouse without changing the quantity — a
+   * `landed_cost` movement — so the moving average carries a charge that came after the receipt.
+   */
+  async revalue(
+    tx: Tx,
+    scope: ErpScope,
+    _settings: ErpFactorySettings,
+    e: {
+      item: ErpItem;
+      warehouse: ErpWarehouse;
+      value: MoneyValue;
+      source: StockSource;
+      reason: string | null;
+    },
+  ): Promise<void> {
+    const [row] = await tx.$queryRaw<
+      { id: bigint; on_hand: Prisma.Decimal; value: Prisma.Decimal; avg_cost: Prisma.Decimal }[]
+    >(Prisma.sql`
+      SELECT id, on_hand, value, avg_cost FROM erp_stock_balances
+       WHERE item_id = ${e.item.id} AND warehouse_id = ${e.warehouse.id} FOR UPDATE`);
+    if (!row || !dec(row.on_hand).gt(0)) return;
+    const value = money2(dec(row.value).plus(e.value));
+    const avgCost = cost6(value.div(dec(row.on_hand)));
+    await tx.erpStockBalance.update({
+      where: { id: row.id },
+      data: { value: fmtMoney(value), avgCost: fmtCost(avgCost) },
+    });
+    await tx.erpStockMovement.create({
+      data: {
+        factoryId: scope.factory.id,
+        itemId: e.item.id,
+        warehouseId: e.warehouse.id,
+        kind: 'landed_cost',
+        quantity: '0',
+        unitCost: fmtCost(avgCost),
+        value: fmtMoney(e.value),
+        balanceAfter: fmtQty(row.on_hand),
+        avgCostAfter: fmtCost(avgCost),
+        sourceType: e.source.type,
+        sourcePublicId: e.source.publicId,
+        documentNo: e.source.documentNo,
+        reason: e.reason,
+        occurredAt: new Date(),
+        createdById: scope.actor.userId,
+      },
+    });
   }
 
   /**

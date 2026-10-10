@@ -31,6 +31,7 @@ const DOMAINS: Record<string, { th: string; en: string }> = {
   style_intake: { th: 'คำขอเพิ่มแบบกล่อง', en: 'Style request' },
   ops: { th: 'การแจ้งเตือนระบบ', en: 'Operations alert' },
   report_run: { th: 'รายงาน', en: 'Report' },
+  erp_alert: { th: 'ระบบโรงงาน', en: 'Factory ERP' },
 };
 const OTHER = { th: 'การแจ้งเตือน', en: 'Notification' };
 

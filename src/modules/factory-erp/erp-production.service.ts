@@ -7,10 +7,12 @@ import { addCalendarDays, bangkokDate, toBangkokIso } from '@common/time/bangkok
 import { type PrismaService, type Tx } from '@database/prisma.service';
 import {
   type ErpItem,
+  type ErpPauseReason,
   type ErpProductionStatus,
   type ErpRecordStatus,
   type Prisma,
 } from '@generated/prisma/client';
+import { MilestonesService } from '@modules/production/milestones.service';
 import { Injectable, Logger } from '@nestjs/common';
 import { type DomainEventEnvelope } from '@platform/domain-events/domain-event';
 import { OnDomainEvent } from '@platform/domain-events/on-domain-event.decorator';
@@ -33,6 +35,7 @@ import {
   type ErpOperationOutputDto,
   type ErpOperationQueueItemDto,
   type ErpPlanningOverviewDto,
+  type ErpProductionOperationDto,
   type ErpProductionOrderDto,
   type ErpProductionOrderListQuery,
   type ErpProductionOrderSummaryDto,
@@ -42,6 +45,7 @@ import {
   type ErpSaveRecipeDto,
   type ErpUpdateProductionOrderDto,
 } from './erp-e2.dto';
+import { type ErpFinishOperationDto, type ErpOperationEventDto } from './erp-e3.dto';
 import { ErpPricingService } from './erp-pricing.service';
 import { ErpRequestsService } from './erp-requests.service';
 import { ErpStockService, type StockEntry } from './erp-stock.service';
@@ -66,11 +70,30 @@ const MO_INCLUDE = {
   warehouse: true,
   productionJob: true,
   materials: { include: { item: true }, orderBy: { lineNo: 'asc' } },
-  operations: { include: { machine: true }, orderBy: { seq: 'asc' } },
+  operations: {
+    include: {
+      machine: true,
+      jobMilestone: true,
+      events: { where: { kind: 'pause' }, orderBy: { occurredAt: 'desc' }, take: 1 },
+    },
+    orderBy: { seq: 'asc' },
+  },
 } as const;
+export { MO_INCLUDE };
 
 type RecipeRow = Prisma.ErpRecipeGetPayload<{ include: typeof RECIPE_INCLUDE }>;
-type MoRow = Prisma.ErpProductionOrderGetPayload<{ include: typeof MO_INCLUDE }>;
+export type MoRow = Prisma.ErpProductionOrderGetPayload<{ include: typeof MO_INCLUDE }>;
+
+export type OperationAction = 'start' | 'pause' | 'resume' | 'finish' | 'skip';
+
+const PAST: Record<OperationAction, string> = {
+  start: 'started',
+  pause: 'paused',
+  resume: 'resumed',
+  finish: 'finished',
+  skip: 'skipped',
+};
+const minutesBetween = (a: Date, b: Date) => Math.max(0, Math.round((b.getTime() - a.getTime()) / 60_000));
 
 interface MoFacts {
   status: string;
@@ -139,6 +162,7 @@ export class ErpProductionService {
     private readonly stock: ErpStockService,
     private readonly pricing: ErpPricingService,
     private readonly requests: ErpRequestsService,
+    private readonly milestones: MilestonesService,
   ) {}
 
   // ------------------------------------------------------------------------------------ recipes
@@ -839,7 +863,131 @@ export class ErpProductionService {
 
   // ------------------------------------------------------------------------------- shop floor
 
-  /** An operator starts, finishes or skips an operation (D-341); the order is in progress from the first. */
+  /**
+   * An operator works an operation (D-341, D-353): start, pause with a reason, resume, finish with good and
+   * scrap, or skip — each an append-only event with who and when; the order is in progress from the first.
+   * A machine with an open breakdown cannot start or resume (D-355). An operation standing for a Packio job
+   * milestone then starts / completes that milestone as the same person (D-354).
+   */
+  async operate(
+    scope: ErpScope,
+    publicId: string,
+    operationId: string,
+    action: OperationAction,
+    body: ErpFinishOperationDto & { reason?: string; note?: string | null },
+    perms: ReadonlySet<string>,
+  ): Promise<ErpProductionOrderDto> {
+    const now = new Date();
+    const done = await this.workspace.tx(async (tx) => {
+      const mo = await this.lock(tx, scope, publicId);
+      if (!RUNNING.includes(mo.status))
+        throw new DomainException('erp.invalid_status', { params: { status: mo.status } });
+      const op = mo.operations.find((o) => o.publicId === operationId);
+      if (!op) throw new DomainException('http.not_found');
+      const allowed: Record<OperationAction, boolean> = {
+        start: op.status === 'pending',
+        pause: op.status === 'in_progress',
+        resume: op.status === 'paused',
+        finish: ['pending', 'in_progress', 'paused'].includes(op.status),
+        skip: op.status === 'pending' && op.jobMilestoneId === null,
+      };
+      if (!allowed[action])
+        throw new DomainException('erp.invalid_status', { params: { status: op.status } });
+      if ((action === 'start' || action === 'resume') && op.machineId !== null) {
+        const down = await tx.erpMaintenanceOrder.findFirst({
+          where: {
+            machineId: op.machineId,
+            kind: 'breakdown',
+            status: { in: ['open', 'scheduled', 'in_progress'] },
+          },
+          include: { machine: true },
+        });
+        if (down)
+          throw new DomainException('erp.machine_down', {
+            params: { machine: down.machine.name, mtNo: down.mtNo },
+          });
+      }
+      const paused = op.status === 'paused' && op.pausedAt ? minutesBetween(op.pausedAt, now) : 0;
+      const good = action === 'finish' ? dec(body.goodQty ?? mo.quantity.toString()) : null;
+      const scrap = action === 'finish' ? dec(body.scrapQty ?? '0') : null;
+      await tx.erpProductionOperation.update({
+        where: { id: op.id },
+        data: {
+          ...(action === 'start' && { status: 'in_progress', startedAt: now }),
+          ...(action === 'pause' && { status: 'paused', pausedAt: now }),
+          ...(action === 'resume' && {
+            status: 'in_progress',
+            pausedAt: null,
+            pausedMinutes: { increment: paused },
+          }),
+          ...(action === 'finish' && {
+            status: 'done',
+            startedAt: op.startedAt ?? now,
+            finishedAt: now,
+            pausedAt: null,
+            pausedMinutes: { increment: paused },
+            goodQty: fmtQty(good!),
+            scrapQty: fmtQty(scrap!),
+            // D-352: the slot shrinks / grows to what really happened.
+            scheduledStart: op.startedAt ?? now,
+            scheduledEnd: now,
+          }),
+          ...(action === 'skip' && { status: 'skipped' }),
+        },
+      });
+      const event = await tx.erpOperationEvent.create({
+        data: {
+          factoryId: scope.factory.id,
+          operationId: op.id,
+          kind: action,
+          reason: action === 'pause' ? (body.reason as ErpPauseReason) : null,
+          note: body.note ?? null,
+          goodQty: good ? fmtQty(good) : null,
+          scrapQty: scrap ? fmtQty(scrap) : null,
+          occurredAt: now,
+          createdById: scope.actor.userId,
+        },
+      });
+      if (mo.status !== 'in_progress' && action !== 'skip')
+        await tx.erpProductionOrder.update({
+          where: { id: mo.id },
+          data: { status: 'in_progress', rowVersion: { increment: 1 } },
+        });
+      else
+        await tx.erpProductionOrder.update({ where: { id: mo.id }, data: { rowVersion: { increment: 1 } } });
+      await this.workspace.record(
+        tx,
+        scope,
+        `erp_production_operation.${PAST[action]}`,
+        'erp_production_order',
+        publicId,
+        {
+          moNo: mo.moNo,
+          seq: op.seq,
+          ...(action === 'pause' && { reason: body.reason }),
+        },
+      );
+      return {
+        milestone:
+          op.jobMilestone && mo.productionJob ? { job: mo.productionJob, milestone: op.jobMilestone } : null,
+        opId: op.id,
+        clientRef: event.publicId,
+        good,
+        scrap,
+      };
+    });
+    if (done.milestone && (action === 'start' || action === 'finish'))
+      await this.syncMilestone(scope, perms, done.opId, done.milestone, action, {
+        clientRef: done.clientRef,
+        good: done.good,
+        scrap: done.scrap,
+        note: body.note ?? null,
+        photoFileIds: body.photoFileIds ?? [],
+      });
+    return this.get(scope, publicId, perms);
+  }
+
+  /** Backward-compatible E2 entry: start, finish or skip (D-341). */
   async operation(
     scope: ErpScope,
     publicId: string,
@@ -848,61 +996,95 @@ export class ErpProductionService {
     body: ErpOperationOutputDto,
     perms: ReadonlySet<string>,
   ) {
-    await this.workspace.tx(async (tx) => {
-      const mo = await this.lock(tx, scope, publicId);
-      if (!RUNNING.includes(mo.status))
-        throw new DomainException('erp.invalid_status', { params: { status: mo.status } });
-      const op = mo.operations.find((o) => o.publicId === operationId);
-      if (!op) throw new DomainException('http.not_found');
-      const allowed =
-        action === 'start'
-          ? op.status === 'pending'
-          : action === 'finish'
-            ? op.status !== 'done' && op.status !== 'skipped'
-            : op.status === 'pending';
-      if (!allowed) throw new DomainException('erp.invalid_status', { params: { status: op.status } });
-      await tx.erpProductionOperation.update({
-        where: { id: op.id },
-        data: {
-          status: action === 'start' ? 'in_progress' : action === 'finish' ? 'done' : 'skipped',
-          ...(action === 'finish' && {
-            goodQty: fmtQty(body.goodQty ?? mo.quantity),
-            scrapQty: fmtQty(body.scrapQty ?? '0'),
-          }),
-        },
-      });
-      await tx.erpProductionOrder.update({
-        where: { id: mo.id },
-        data: { status: 'in_progress', rowVersion: { increment: 1 } },
-      });
-      await this.workspace.record(
-        tx,
-        scope,
-        `erp_production_operation.${action === 'start' ? 'started' : action === 'finish' ? 'finished' : 'skipped'}`,
-        'erp_production_order',
-        publicId,
-        {
-          moNo: mo.moNo,
-          seq: op.seq,
-        },
-      );
+    return this.operate(scope, publicId, operationId, action, body, perms);
+  }
+
+  /**
+   * D-354: the same press on the Packio job — start or complete its milestone with the same quantities, as
+   * the operator. What the job refuses (a QC form, out of order, no permission) is kept on the operation for
+   * someone to finish on the job page.
+   */
+  private async syncMilestone(
+    scope: ErpScope,
+    perms: ReadonlySet<string>,
+    opId: bigint,
+    link: { job: { publicId: string }; milestone: { publicId: string; status: string } },
+    action: 'start' | 'finish',
+    input: {
+      clientRef: string;
+      good: MoneyValue | null;
+      scrap: MoneyValue | null;
+      note: string | null;
+      photoFileIds: string[];
+    },
+  ) {
+    let error: string | null = null;
+    if (!perms.has('factory_milestones.update')) error = 'auth.forbidden';
+    else
+      try {
+        if (action === 'start' && link.milestone.status === 'pending')
+          await this.milestones.update(scope.actor, link.job.publicId, link.milestone.publicId, {
+            action: 'start',
+            clientRef: input.clientRef,
+          });
+        if (action === 'finish')
+          await this.milestones.update(scope.actor, link.job.publicId, link.milestone.publicId, {
+            action: 'complete',
+            quantityOut: input.good ? Math.floor(input.good.toNumber()) : undefined,
+            quantityScrap: input.scrap ? Math.floor(input.scrap.toNumber()) : undefined,
+            ...(input.note && { note: input.note }),
+            photoFileIds: input.photoFileIds,
+            clientRef: input.clientRef,
+          });
+      } catch (e) {
+        error = e instanceof DomainException ? e.code : 'internal';
+        this.logger.warn(`milestone sync ${link.milestone.publicId}: ${error}`);
+      }
+    if (action === 'start' && !error) return;
+    await this.workspace.db.erpProductionOperation.update({
+      where: { id: opId },
+      data: { milestoneSync: error ? 'failed' : 'synced', milestoneSyncError: error },
     });
-    return this.get(scope, publicId, perms);
+  }
+
+  /** The events of one operation, oldest first (D-353). */
+  async events(scope: ErpScope, publicId: string, operationId: string): Promise<ErpOperationEventDto[]> {
+    const op = await this.workspace.db.erpProductionOperation.findFirst({
+      where: { publicId: operationId, productionOrder: { factoryId: scope.factory.id, publicId } },
+      include: {
+        events: { include: { createdBy: { select: { displayName: true } } }, orderBy: { occurredAt: 'asc' } },
+      },
+    });
+    if (!op) throw new DomainException('http.not_found');
+    return op.events.map((e) => ({
+      id: e.publicId,
+      kind: e.kind,
+      reason: e.reason,
+      note: e.note,
+      goodQty: e.goodQty === null ? null : fmtQty(e.goodQty),
+      scrapQty: e.scrapQty === null ? null : fmtQty(e.scrapQty),
+      at: toBangkokIso(e.occurredAt),
+      by: e.createdBy.displayName,
+    }));
   }
 
   /** The floor's queue (D-341): operations still to do on released orders, most urgent first. */
   async queue(scope: ErpScope, machineId?: string): Promise<ErpOperationQueueItemDto[]> {
     const rows = await this.workspace.db.erpProductionOperation.findMany({
       where: {
-        status: { in: ['pending', 'in_progress'] },
+        status: { in: ['pending', 'in_progress', 'paused'] },
         productionOrder: { factoryId: scope.factory.id, status: { in: RUNNING } },
         ...(machineId && { machine: { publicId: machineId } }),
       },
-      include: { machine: true, productionOrder: { include: MO_INCLUDE } },
+      include: { ...MO_INCLUDE.operations.include, productionOrder: { include: MO_INCLUDE } },
     });
     const items = rows.map((r) => ({ op: r, mo: r.productionOrder }));
+    // D-352: in planned order where planned, then by priority and due date.
+    const at = (x: { op: { scheduledStart: Date | null } }) =>
+      x.op.scheduledStart?.getTime() ?? Number.MAX_SAFE_INTEGER;
     items.sort(
       (a, b) =>
+        at(a) - at(b) ||
         b.mo.priority - a.mo.priority ||
         (iso(a.mo.dueOn) ?? '9999').localeCompare(iso(b.mo.dueOn) ?? '9999') ||
         (a.mo.id < b.mo.id ? -1 : a.mo.id > b.mo.id ? 1 : 0) ||
@@ -1018,6 +1200,7 @@ export class ErpProductionService {
       const link = links.get(id);
       const factor = link ? dec(link.purchaseFactor) : dec(r.item.purchaseFactor);
       const rounded = roundToPurchase(shortage, factor, link?.minOrderQty ? dec(link.minOrderQty) : null);
+      const price = link ? await this.pricing.priceFor(this.workspace.db, link, rounded.purchaseQty) : null;
       out.push({
         item: itemRef(r.item),
         required: fmtQty(r.required),
@@ -1029,7 +1212,7 @@ export class ErpProductionService {
         toOrderPurchaseQty: fmtQty(rounded.purchaseQty),
         purchaseUnit: link?.purchaseUnit ?? r.item.purchaseUnit ?? r.item.baseUnit,
         supplier: link ? partnerRef(link.supplier) : null,
-        unitPrice: link?.lastPrice != null ? fmtCost(link.lastPrice) : null,
+        unitPrice: price ? fmtCost(price) : null,
         neededBy: r.due,
         orders: r.orders.size,
       });
@@ -1108,6 +1291,24 @@ export class ErpProductionService {
           note: 'ตามจำนวนแผ่นที่ใช้คำนวณราคางาน',
         });
     }
+    // D-354: one operation per job milestone, named by the route's step, for the floor to work on.
+    const steps = new Map(
+      (((job.routeSnapshot ?? {}) as { steps?: { key?: string; nameTh?: string }[] }).steps ?? []).map(
+        (st) => [st.key, st.nameTh],
+      ),
+    );
+    const milestones = await tx.jobMilestone.findMany({ where: { jobId: job.id }, orderBy: { seq: 'asc' } });
+    const operations = milestones.map((m, i) => ({
+      seq: (i + 1) * 10,
+      name: steps.get(m.stepKey) ?? m.stepKey,
+      jobMilestoneId: m.id,
+      status:
+        m.status === 'completed'
+          ? ('done' as const)
+          : m.status === 'skipped'
+            ? ('skipped' as const)
+            : ('pending' as const),
+    }));
     const warehouse = await this.workspace.defaultWarehouse(tx, job.factoryId, null);
     const moNo = await this.workspace.nextNumber(tx, job.factoryId, 'mo');
     const mo = await tx.erpProductionOrder.create({
@@ -1124,6 +1325,7 @@ export class ErpProductionService {
         priority: Math.max(0, Math.min(9, job.priority)),
         warehouseId: warehouse.id,
         materials: { create: materials },
+        operations: { create: operations },
       },
     });
     await this.workspace.recordSystem(
@@ -1139,6 +1341,37 @@ export class ErpProductionService {
       },
     );
     this.logger.log(`${job.jobNo} → ${moNo}`);
+  }
+
+  /**
+   * D-354: a milestone completed on the job page finishes the operation that stands for it (with the job's
+   * quantities), unless the floor already did.
+   */
+  @OnDomainEvent(['production_job.milestone_completed'], { consumer: 'factory_erp.milestone_to_operation' })
+  async onMilestoneCompleted(event: DomainEventEnvelope, tx: Tx): Promise<void> {
+    const milestoneId = (event.payload as { milestoneId?: string }).milestoneId;
+    if (!milestoneId) return;
+    const milestone = await tx.jobMilestone.findUnique({
+      where: { publicId: milestoneId },
+      include: { erpProductionOperation: { include: { productionOrder: true } } },
+    });
+    const op = milestone?.erpProductionOperation;
+    if (!milestone || !op || op.status === 'done' || op.status === 'skipped') return;
+    if (!RUNNING.includes(op.productionOrder.status) && op.productionOrder.status !== 'planned') return;
+    const at = milestone.completedAt ?? new Date();
+    await tx.erpProductionOperation.update({
+      where: { id: op.id },
+      data: {
+        status: 'done',
+        startedAt: op.startedAt ?? milestone.startedAt ?? at,
+        finishedAt: at,
+        pausedAt: null,
+        goodQty: fmtQty(milestone.quantityOut ?? op.productionOrder.quantity),
+        scrapQty: fmtQty(milestone.quantityScrap ?? 0),
+        milestoneSync: 'synced',
+        milestoneSyncError: null,
+      },
+    });
   }
 
   /** A job taken away (rejected, reassigned) cancels its open production order when nothing was issued. */
@@ -1227,7 +1460,7 @@ export function recipeDto(r: RecipeRow): ErpRecipeDto {
   };
 }
 
-function operationDto(o: MoRow['operations'][number]) {
+export function operationDto(o: MoRow['operations'][number]): ErpProductionOperationDto {
   return {
     id: o.publicId,
     seq: o.seq,
@@ -1237,6 +1470,22 @@ function operationDto(o: MoRow['operations'][number]) {
     status: o.status,
     goodQty: fmtQty(o.goodQty),
     scrapQty: fmtQty(o.scrapQty),
+    scheduledStart: o.scheduledStart ? toBangkokIso(o.scheduledStart) : null,
+    scheduledEnd: o.scheduledEnd ? toBangkokIso(o.scheduledEnd) : null,
+    locked: o.locked,
+    startedAt: o.startedAt ? toBangkokIso(o.startedAt) : null,
+    finishedAt: o.finishedAt ? toBangkokIso(o.finishedAt) : null,
+    pausedMinutes: o.pausedMinutes,
+    actualMinutes:
+      o.startedAt && o.finishedAt
+        ? Math.max(0, minutesBetween(o.startedAt, o.finishedAt) - o.pausedMinutes)
+        : null,
+    pauseReason: o.status === 'paused' ? (o.events[0]?.reason ?? null) : null,
+    milestone: o.jobMilestone
+      ? { id: o.jobMilestone.publicId, stepKey: o.jobMilestone.stepKey, status: o.jobMilestone.status }
+      : null,
+    milestoneSync: o.milestoneSync,
+    milestoneSyncError: o.milestoneSyncError,
   };
 }
 

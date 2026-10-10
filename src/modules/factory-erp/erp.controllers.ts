@@ -201,6 +201,7 @@ const PO: ErpPurchaseOrderDto = {
     },
   ],
   receipts: [{ id: ERP_IDS.gr, grNo: 'GR-2610-0003', receivedOn: '2026-10-12', total: '14250.00' }],
+  warnings: [],
   nextActions: [
     { key: 'erp_po.receive', irreversible: false, disabledReason: null },
     { key: 'erp_po.close', irreversible: false, disabledReason: null },
@@ -220,7 +221,7 @@ const PO_SUMMARY: ErpPurchaseOrderSummaryDto = {
   lineCount: 1,
   receivedPct: '50.00',
 };
-const GR: ErpGoodsReceiptDto = {
+export const GR: ErpGoodsReceiptDto = {
   id: ERP_IDS.gr,
   grNo: 'GR-2610-0003',
   purchaseOrder: { id: ERP_IDS.po, code: 'PO-2610-0007', name: 'PO-2610-0007' },
@@ -243,8 +244,31 @@ const GR: ErpGoodsReceiptDto = {
       unitCost: '2.850000',
       amount: '14250.00',
       lotNo: null,
+      rejectedQuantity: '0.000',
+      rejectReason: null,
+      landedAmount: '1200.00',
+      landedUnitCost: '3.090000',
     },
   ],
+  chargesTotal: '1200.00',
+  charges: [
+    {
+      id: '0192f3a0-7c1e-7d2a-9b1f-00000000ee21',
+      kind: 'freight',
+      description: 'ค่าขนส่งรถ 6 ล้อ',
+      amount: '1200.00',
+      allocation: 'by_value',
+      partner: null,
+      reference: 'INV-TR-0912',
+      atReceipt: true,
+      absorbed: '1200.00',
+      notAbsorbed: '0.00',
+      by: 'คลัง ทดสอบ',
+      createdAt: '2026-10-12T14:02:00+07:00',
+      lines: [{ lineNo: 1, amount: '1200.00', absorbed: '1200.00' }],
+    },
+  ],
+  nextActions: [{ key: 'erp_gr.add_charge', irreversible: false, disabledReason: null }],
 };
 const SAVE_PO_EXAMPLE = {
   supplierId: ERP_IDS.supplier,
@@ -261,6 +285,9 @@ const SETTINGS: ErpSettingsDto = {
   overReceiptPct: '10.0000',
   priceTolerancePct: '2.0000',
   requireRequestApproval: true,
+  priceAlertPct: '5.0000',
+  quoteExpiryDays: 7,
+  supplierApproval: 'warn',
   prefixes: {
     po: 'PO',
     gr: 'GR',
@@ -271,6 +298,8 @@ const SETTINGS: ErpSettingsDto = {
     ap: 'AP',
     pv: 'PV',
     mo: 'MO',
+    rfq: 'RFQ',
+    mt: 'MT',
   },
   vatRegistered: true,
   version: 1,
@@ -1049,11 +1078,12 @@ export class PartnerErpPurchaseOrdersController {
     id: 'partner.erpPurchaseOrders.issue',
     summary: 'Issue (approve) a purchase order',
     description:
-      'Numbers it `PO-YYMM-NNNN` and freezes it; it can then be sent and received (D-325). Audited.',
-    implements: ['D-319', 'D-323', 'D-325'],
+      'Numbers it `PO-YYMM-NNNN` and freezes it; it can then be sent and received (D-325). Refused with ' +
+      '`erp.supplier_not_approved` when the factory requires approved suppliers and a line’s link is not (D-351). Audited.',
+    implements: ['D-319', 'D-323', 'D-325', 'D-351'],
   })
   @ApiSuccess(200, { description: 'Issued', type: ErpPurchaseOrderDto, example: { ...PO, status: 'issued' } })
-  @ApiStandardErrors('http.not_found', 'erp.invalid_status', 'erp.archived')
+  @ApiStandardErrors('http.not_found', 'erp.invalid_status', 'erp.archived', 'erp.supplier_not_approved')
   async issue(
     @CurrentActor() actor: Actor,
     @Param('factoryId', ParseUUIDPipe) factoryId: string,
@@ -1134,6 +1164,7 @@ export class PartnerErpGoodsReceiptsController {
   constructor(
     private readonly workspace: ErpWorkspace,
     private readonly purchasing: ErpPurchasingService,
+    private readonly permissions: PermissionResolver,
   ) {}
 
   @Get()
@@ -1215,6 +1246,10 @@ export class PartnerErpGoodsReceiptsController {
     @Param('factoryId', ParseUUIDPipe) factoryId: string,
     @Param('grId', ParseUUIDPipe) grId: string,
   ) {
-    return this.purchasing.getReceipt(await this.workspace.open(actor, factoryId), grId);
+    return this.purchasing.getReceipt(
+      await this.workspace.open(actor, factoryId),
+      grId,
+      await permissionsOf(this.permissions, actor),
+    );
   }
 }

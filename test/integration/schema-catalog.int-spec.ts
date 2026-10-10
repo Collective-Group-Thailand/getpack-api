@@ -900,6 +900,36 @@ const CHECKS = [
   'ck_erp_supplier_invoices__payable',
   'ck_erp_supplier_invoices__rates',
   'ck_erp_supplier_payments__amount',
+  'ck_erp_docs__current_version',
+  'ck_erp_docs__link',
+  'ck_erp_docs__remind_days',
+  'ck_erp_factory_settings__price_alert_pct',
+  'ck_erp_factory_settings__quote_expiry_days',
+  'ck_erp_goods_receipt_lines__landed_amount',
+  'ck_erp_goods_receipt_lines__rejected_quantity',
+  'ck_erp_goods_receipts__charges_total',
+  'ck_erp_item_suppliers__approval',
+  'ck_erp_landed_charge_lines__amount',
+  'ck_erp_landed_charges__amount',
+  'ck_erp_landed_charges__at_receipt',
+  'ck_erp_maintenance_orders__downtime_minutes',
+  'ck_erp_maintenance_orders__plan',
+  'ck_erp_maintenance_orders__window',
+  'ck_erp_maintenance_parts__quantity',
+  'ck_erp_maintenance_plan_parts__quantity',
+  'ck_erp_maintenance_plans__duration_minutes',
+  'ck_erp_maintenance_plans__interval',
+  'ck_erp_operation_events__quantities',
+  'ck_erp_operation_events__reason',
+  'ck_erp_price_breaks__min_qty',
+  'ck_erp_price_breaks__unit_price',
+  'ck_erp_production_operations__paused_minutes',
+  'ck_erp_production_operations__schedule',
+  'ck_erp_rfq_lines__quantity',
+  'ck_erp_rfq_quotes__awarded',
+  'ck_erp_rfq_quotes__lead_time_days',
+  'ck_erp_rfq_quotes__min_order_qty',
+  'ck_erp_rfq_quotes__price',
 ];
 
 const TRIGGERS = [
@@ -1142,6 +1172,11 @@ const TRIGGERS = [
   'tg_erp_payment_allocations__append_only',
   'tg_erp_price_records__append_only',
   'tg_erp_supplier_payments__append_only',
+  'tg_erp_doc_versions__append_only',
+  'tg_erp_landed_charge_lines__append_only',
+  'tg_erp_landed_charges__append_only',
+  'tg_erp_maintenance_parts__append_only',
+  'tg_erp_operation_events__append_only',
 ];
 
 /** Expression (hand-written) and partial (Prisma preview) indexes. */
@@ -1251,6 +1286,9 @@ const INDEXES = [
   'ux_payout_items__pv_number',
   'ux_erp_warehouses__factory_id__default',
   'ux_erp_item_suppliers__item_id__preferred',
+  'ux_erp_doc_folders__factory_id__name__root',
+  'ux_erp_doc_folders__factory_id__parent_id__name',
+  'ux_erp_maintenance_orders__plan_id__open',
 ];
 
 const EXPRESSION_INDEXES = [
@@ -1268,6 +1306,9 @@ const EXPRESSION_INDEXES = [
   'ux_pattern_geometry_conditions__slot',
   // --- B4.2 production
   'ux_milestone_routes__type__print__variant',
+  // --- E3 documents (case-insensitive folder names among siblings)
+  'ux_erp_doc_folders__factory_id__name__root',
+  'ux_erp_doc_folders__factory_id__parent_id__name',
 ];
 
 const PARTIAL_INDEXES = INDEXES.filter((name) => !EXPRESSION_INDEXES.includes(name));
