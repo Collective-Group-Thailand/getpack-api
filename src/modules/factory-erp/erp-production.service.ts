@@ -75,6 +75,8 @@ type MoRow = Prisma.ErpProductionOrderGetPayload<{ include: typeof MO_INCLUDE }>
 interface MoFacts {
   status: string;
   issued: boolean;
+  /** A material still has something to issue. */
+  remaining: boolean;
 }
 
 /** The factory's actions on a production order (D-340, D-341). */
@@ -88,7 +90,7 @@ export const MO_ACTIONS: ActionRule<MoFacts>[] = [
   {
     key: 'erp_mo.issue',
     permissions: ['factory_inventory.manage'],
-    when: (m) => RUNNING.includes(m.status as never),
+    when: (m) => RUNNING.includes(m.status as never) && m.remaining,
   },
   {
     key: 'erp_mo.return',
@@ -1302,7 +1304,11 @@ export function moDto(m: MoRow, materialCost: MoneyValue, perms: ReadonlySet<str
     }),
     operations: m.operations.map(operationDto),
     nextActions: nextActions(
-      { status: m.status, issued: m.materials.some((x) => dec(x.issuedQty).gt(0)) },
+      {
+        status: m.status,
+        issued: m.materials.some((x) => dec(x.issuedQty).gt(0)),
+        remaining: m.materials.some((x) => dec(x.requiredQty).gt(dec(x.issuedQty))),
+      },
       MO_ACTIONS,
       perms,
     ),
