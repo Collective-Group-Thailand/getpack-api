@@ -870,6 +870,36 @@ const CHECKS = [
   'ck_erp_trading_partners__credit_limit',
   'ck_erp_trading_partners__payment_term_days',
   'ck_erp_trading_partners__tax_id',
+  'ck_erp_factory_settings__price_tolerance_pct',
+  'ck_erp_item_suppliers__last_price',
+  'ck_erp_item_suppliers__lead_time_days',
+  'ck_erp_item_suppliers__min_order_qty',
+  'ck_erp_item_suppliers__purchase_factor',
+  'ck_erp_payment_allocations__amount',
+  'ck_erp_price_records__price',
+  'ck_erp_price_records__quantity',
+  'ck_erp_price_records__valid_until',
+  'ck_erp_production_materials__origin',
+  'ck_erp_production_materials__quantities',
+  'ck_erp_production_operations__quantities',
+  'ck_erp_production_orders__dates',
+  'ck_erp_production_orders__item',
+  'ck_erp_production_orders__quantity',
+  'ck_erp_production_orders__source',
+  'ck_erp_purchase_request_lines__estimated_unit_cost',
+  'ck_erp_purchase_request_lines__quantity',
+  'ck_erp_purchase_requests__estimated_total',
+  'ck_erp_recipe_materials__quantity',
+  'ck_erp_recipe_operations__times',
+  'ck_erp_recipes__batch_qty',
+  'ck_erp_supplier_invoice_lines__amounts',
+  'ck_erp_supplier_invoice_lines__variance',
+  'ck_erp_supplier_invoices__amounts',
+  'ck_erp_supplier_invoices__due_date',
+  'ck_erp_supplier_invoices__paid',
+  'ck_erp_supplier_invoices__payable',
+  'ck_erp_supplier_invoices__rates',
+  'ck_erp_supplier_payments__amount',
 ];
 
 const TRIGGERS = [
@@ -1109,6 +1139,9 @@ const TRIGGERS = [
   'tg_erp_goods_receipt_lines__append_only',
   'tg_erp_goods_receipts__append_only',
   'tg_erp_stock_movements__append_only',
+  'tg_erp_payment_allocations__append_only',
+  'tg_erp_price_records__append_only',
+  'tg_erp_supplier_payments__append_only',
 ];
 
 /** Expression (hand-written) and partial (Prisma preview) indexes. */
@@ -1217,6 +1250,7 @@ const INDEXES = [
   'ux_company_bank_accounts__gl_account_id',
   'ux_payout_items__pv_number',
   'ux_erp_warehouses__factory_id__default',
+  'ux_erp_item_suppliers__item_id__preferred',
 ];
 
 const EXPRESSION_INDEXES = [

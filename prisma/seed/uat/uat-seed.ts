@@ -4,7 +4,7 @@ import { seedDev } from '../dev-seed';
 import { type EntitySeedInput, type SeedReport } from '../reference-seed';
 import { seedUatCatalog, SIGNED_INSTANT_TYPES } from './uat-catalog';
 import { UAT_CONSENT_TEXT } from './uat-data';
-import { seedUatErp } from './uat-erp';
+import { seedUatErp, seedUatErpE2 } from './uat-erp';
 
 /**
  * Obviously fake issuing entity for a UAT rehearsal that has no `SEED_ENTITY_*` (UAT.md §0 uses the real legal
@@ -49,11 +49,13 @@ export async function seedUat(
   );
   const consents = await seedUatConsentTexts(prisma);
   const erp = await seedUatErp(prisma);
+  const erpE2 = await seedUatErpE2(prisma);
   return {
     ...report,
     ...uat,
     ...(consents && { uat_consent_texts: consents }),
     ...(erp && { uat_erp_items: erp }),
+    ...(erpE2 && { uat_erp_supplier_links: erpE2 }),
   };
 }
 

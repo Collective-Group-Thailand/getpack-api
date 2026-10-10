@@ -912,7 +912,8 @@ model ProductionJob {
 
   sample Sample? @relation("SampleJob")
 
-  toolingRemakes ToolingRemake[] @relation("ToolingRemakeJob")
+  toolingRemakes     ToolingRemake[]     @relation("ToolingRemakeJob")
+  erpProductionOrder ErpProductionOrder? @relation("ErpProductionOrderJob")
 
   @@unique([orderId], map: "ux_production_jobs__one_live_production", where: raw("((job_kind = 'production'::job_kind) AND (status <> ALL (ARRAY['rejected'::production_job_status, 'cancelled'::production_job_status])))"))
   @@unique([orderId], map: "ux_production_jobs__one_live_mockup", where: raw("((job_kind = 'mockup'::job_kind) AND (status <> ALL (ARRAY['rejected'::production_job_status, 'cancelled'::production_job_status, 'completed'::production_job_status])))"))

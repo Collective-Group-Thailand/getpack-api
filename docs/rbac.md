@@ -231,12 +231,19 @@ Legend: ● granted · ◆ granted and sensitive (cost/margin data, D-141).
 | `factory_shipments.manage` — Create, pack, dispatch and deliver shipments with proof of delivery (D-013) | ● |  |  |  | ● |  |  |  |
 | `factory_trading_partners.read` — Read the factory’s own suppliers and customers (Packio Factory ERP) (D-317, D-319) | ● | ● |  |  |  | ● | ● | ● |
 | `factory_trading_partners.manage` — Add and edit the factory’s own suppliers and customers (D-317, D-319) | ● |  |  |  |  | ● |  | ● |
-| `factory_inventory.read` — Read the factory’s items, warehouses, stock balances and stock ledger (D-319, D-324) | ● | ● |  |  |  | ● | ● | ● |
+| `factory_inventory.read` — Read the factory’s items, warehouses, stock balances and stock ledger (D-319, D-324) | ● | ● | ● |  |  | ● | ● | ● |
 | `factory_inventory.manage` — Manage items and warehouses, issue, return and transfer stock, post goods receipts (D-319, D-324, D-325) | ● |  |  |  |  |  | ● |  |
 | `factory_inventory.adjust` — Post opening balances, stock adjustments and counts (D-319, D-324) | ● |  |  |  |  |  |  |  |
 | `factory_procurement.read` — Read the factory’s purchase orders, goods receipts and the reorder list (D-319, D-325, D-326) | ● | ● |  |  |  | ● | ● | ● |
 | `factory_procurement.manage` — Draft, edit, cancel and close the factory’s purchase orders (D-319, D-325) | ● |  |  |  |  |  |  | ● |
 | `factory_procurement.approve` — Issue (approve) the factory’s purchase orders (D-319, D-325) | ● |  |  |  |  |  |  |  |
+| `factory_procurement.request` — Raise the factory’s purchase requests (from need, the reorder list or MRP) (D-319, D-336) | ● | ● |  |  |  |  | ● | ● |
+| `factory_ap.read` — Read the factory’s supplier invoices, payments and payables aging (D-319, D-337, D-338) | ● |  |  |  |  | ● |  | ● |
+| `factory_ap.manage` — Record supplier invoices (3-way matched) and pay or reverse supplier payments (D-319, D-337, D-338) | ● |  |  |  |  | ● |  |  |
+| `factory_ap.approve` — Approve supplier invoices that did not match the order or the goods received (D-319, D-337) | ● |  |  |  |  |  |  |  |
+| `factory_planning.read` — Read the factory’s recipes, production orders, the floor queue and MRP (D-319, D-339, D-340, D-342) | ● | ● | ● |  |  |  | ● |  |
+| `factory_planning.manage` — Manage recipes; plan, release, complete and cancel production orders; request MRP shortages (D-319, D-339, D-340, D-341, D-342) | ● | ● |  |  |  |  |  |  |
+| `factory_production.record` — Start, finish or skip operations of production orders on the floor (D-319, D-341) | ● | ● | ● |  |  |  |  |  |
 | `factory_erp.configure` — Configure the factory’s ERP: modules, document prefixes, stock and receiving rules (D-318, D-322, D-323) | ● |  |  |  |  |  |  |  |
 
 | Role | Name (th) | Name (en) |

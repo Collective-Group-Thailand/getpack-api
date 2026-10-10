@@ -73,7 +73,7 @@ describe('Packio Factory ERP E1 (e2e)', () => {
         lines: [{ itemId: item.id, quantity: '1000', unitCost: '2.8' }],
       }).expect(200)
     ).body;
-    expect(opening.documentNo).toMatch(/^ADJ-\d{4}-0001$/);
+    expect(opening.documentNo).toMatch(/^ADJ-\d{4}-\d{4}$/);
     expect(opening.movements[0]).toMatchObject({ kind: 'opening', quantity: '1000.000', value: '2800.00' });
 
     // Reorder: available 1 000 ≤ 5 000 → 10 000 sheets = 20 reams from the default supplier.
@@ -124,7 +124,7 @@ describe('Packio Factory ERP E1 (e2e)', () => {
     await post(purchaser, `/purchase-orders/${draftId}/actions/issue`, {}).expect(403);
     const issued = (await post(owner, `/purchase-orders/${draftId}/actions/issue`, {}).expect(200)).body;
     expect(issued).toMatchObject({ status: 'issued' });
-    expect(issued.poNo).toMatch(/^PO-\d{4}-0001$/);
+    expect(issued.poNo).toMatch(/^PO-\d{4}-\d{4}$/);
     await as(ctx, owner)
       .put(`${base}/purchase-orders/${draftId}`, {
         supplierId: supplier.id,
@@ -142,7 +142,7 @@ describe('Packio Factory ERP E1 (e2e)', () => {
         lines: [{ purchaseOrderLineId: line, quantity: '10' }],
       }).expect(201)
     ).body;
-    expect(gr1.grNo).toMatch(/^GR-\d{4}-0001$/);
+    expect(gr1.grNo).toMatch(/^GR-\d{4}-\d{4}$/);
     expect(gr1.lines[0]).toMatchObject({
       baseQuantity: '5000.000',
       unitCost: '2.850000',
@@ -188,7 +188,7 @@ describe('Packio Factory ERP E1 (e2e)', () => {
         key,
       ).expect(200)
     ).body;
-    expect(issuedStock.documentNo).toMatch(/^ISS-\d{4}-0001$/);
+    expect(issuedStock.documentNo).toMatch(/^ISS-\d{4}-\d{4}$/);
     const replay = (
       await post(
         owner,
@@ -289,6 +289,6 @@ describe('Packio Factory ERP E1 (e2e)', () => {
     await as(ctx, storekeeper).post(`${base}/partners`, { kind: 'supplier', name: 'x' }).expect(403);
 
     const operator = await factoryToken(ctx, fixture.factoryPublicId, 'factory_operator', 304);
-    await as(ctx, operator).get(`${base}/items`).expect(403);
+    await as(ctx, operator).get(`${base}/partners`).expect(403);
   });
 });

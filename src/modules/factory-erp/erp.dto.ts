@@ -63,6 +63,9 @@ export const ERP_MOVEMENT_KINDS = [
   'count',
   'transfer_out',
   'transfer_in',
+  'production_issue',
+  'production_return',
+  'production_receipt',
 ] as const;
 export const ERP_VAT_MODES = ['exclusive', 'inclusive', 'none'] as const;
 export const ERP_PO_STATUSES = [
@@ -160,9 +163,31 @@ export class ErpSettingsDto {
   overReceiptPct!: string;
 
   @ApiProperty({
+    example: '2.0000',
+    description: 'A supplier invoice priced within this % of the order matches (3-way match, D-337)',
+  })
+  priceTolerancePct!: string;
+
+  @ApiProperty({
+    example: true,
+    description: 'Purchase requests wait for an approver (D-336); off → approved when submitted',
+  })
+  requireRequestApproval!: boolean;
+
+  @ApiProperty({
     type: 'object',
     additionalProperties: { type: 'string' },
-    example: { po: 'PO', gr: 'GR', adj: 'ADJ', trf: 'TRF', iss: 'ISS' },
+    example: {
+      po: 'PO',
+      gr: 'GR',
+      adj: 'ADJ',
+      trf: 'TRF',
+      iss: 'ISS',
+      pr: 'PR',
+      ap: 'AP',
+      pv: 'PV',
+      mo: 'MO',
+    },
     description: 'Document number prefixes by document type (D-323)',
   })
   prefixes!: Record<string, string>;
@@ -198,6 +223,16 @@ export class UpdateErpSettingsDto {
   @IsOptional()
   @Matches(PCT)
   overReceiptPct?: string;
+
+  @ApiPropertyOptional({ example: '2', pattern: PCT.source })
+  @IsOptional()
+  @Matches(PCT)
+  priceTolerancePct?: string;
+
+  @ApiPropertyOptional({ example: true })
+  @IsOptional()
+  @IsBoolean()
+  requireRequestApproval?: boolean;
 
   @ApiPropertyOptional({
     type: 'object',

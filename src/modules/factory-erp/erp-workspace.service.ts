@@ -1,4 +1,4 @@
-import { type Actor, type UserActor } from '@common/context/actor';
+import { type Actor, systemActor, type UserActor } from '@common/context/actor';
 import { DomainException } from '@common/errors/domain.exception';
 import { bangkokDate } from '@common/time/bangkok';
 import { PrismaService, type Tx } from '@database/prisma.service';
@@ -19,6 +19,10 @@ export const DEFAULT_PREFIXES: Record<ErpDocumentType, string> = {
   adj: 'ADJ',
   trf: 'TRF',
   iss: 'ISS',
+  pr: 'PR',
+  ap: 'AP',
+  pv: 'PV',
+  mo: 'MO',
 };
 
 /** A person working in their own factory's ERP (D-317): partner users only, never staff or machines. */
@@ -58,7 +62,7 @@ export class ErpWorkspace {
   }
 
   /** The default warehouse, created as `MAIN` ("คลังหลัก") on first use. */
-  async defaultWarehouse(tx: Tx, factoryId: bigint, userId: bigint): Promise<ErpWarehouse> {
+  async defaultWarehouse(tx: Tx, factoryId: bigint, userId: bigint | null): Promise<ErpWarehouse> {
     const found = await tx.erpWarehouse.findFirst({ where: { factoryId, isDefault: true } });
     if (found) return found;
     const main = await tx.erpWarehouse.findUnique({ where: { factoryId_code: { factoryId, code: 'MAIN' } } });
@@ -117,6 +121,22 @@ export class ErpWorkspace {
       tx,
       { type, aggregateType, aggregateId, payload: { factoryId: scope.factory.publicId, ...payload } },
       scope.actor,
+    );
+  }
+
+  /** A domain event the ERP records on its own (a Packio job turned into a production order, D-340). */
+  async recordSystem(
+    tx: Tx,
+    factoryPublicId: string,
+    type: string,
+    aggregateType: string,
+    aggregateId: string,
+    payload: Record<string, unknown> = {},
+  ): Promise<void> {
+    await this.events.record(
+      tx,
+      { type, aggregateType, aggregateId, payload: { factoryId: factoryPublicId, ...payload } },
+      systemActor('factory-erp'),
     );
   }
 

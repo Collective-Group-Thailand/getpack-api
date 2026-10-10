@@ -36,8 +36,10 @@ import {
   purchaseUnitCost,
   receivableUpTo,
   reorderQuantity,
+  roundToPurchase,
   toBase,
 } from './erp.math';
+import { ErpPricingService } from './erp-pricing.service';
 import { ErpStockService, type StockEntry } from './erp-stock.service';
 import { grDto, itemRef, partnerRef, poEtag as etagOfPo, type PoRow, poSummaryDto } from './erp-views';
 import { type ErpScope, ErpWorkspace } from './erp-workspace.service';
@@ -57,6 +59,18 @@ const GR_INCLUDE = {
 } as const;
 
 const OPEN: ErpPurchaseOrderStatus[] = ['issued', 'partially_received'];
+
+/** One line to buy: in the supplier's unit, at its price (per that unit). */
+export interface DraftLine {
+  item: ErpItem;
+  supplierId: string;
+  quantity: string;
+  unit: string;
+  unitPrice: string;
+  lead: number;
+  /** The purchase-request line it comes from. */
+  requestLineId?: bigint;
+}
 const day = (s: string) => new Date(`${s}T00:00:00.000Z`);
 const today = () => bangkokDate(new Date());
 
@@ -70,6 +84,7 @@ export class ErpPurchasingService {
     private readonly workspace: ErpWorkspace,
     private readonly stock: ErpStockService,
     private readonly audit: AuditService,
+    private readonly pricing: ErpPricingService,
   ) {}
 
   // ------------------------------------------------------------------------- purchase orders
@@ -128,26 +143,41 @@ export class ErpPurchasingService {
     item: ErpItem,
     unit: string | undefined,
     path: string,
+    link?: { purchaseUnit: ErpUnit; purchaseFactor: Prisma.Decimal } | null,
   ): { unit: ErpUnit; factor: MoneyValue } {
-    const purchase = item.purchaseUnit ?? item.baseUnit;
+    const purchase = link?.purchaseUnit ?? item.purchaseUnit ?? item.baseUnit;
     const chosen = (unit ?? purchase) as ErpUnit;
     if (chosen === item.baseUnit) return { unit: chosen, factor: dec(1) };
+    // D-333: the unit this supplier sells the item in, else the item's own purchase unit.
+    if (link && chosen === link.purchaseUnit) return { unit: chosen, factor: dec(link.purchaseFactor) };
     if (chosen === item.purchaseUnit) return { unit: chosen, factor: dec(item.purchaseFactor) };
     throw new DomainException('erp.unit_not_allowed', {
-      params: { item: item.name, units: [item.baseUnit, item.purchaseUnit].filter(Boolean).join(', ') },
+      params: {
+        item: item.name,
+        units: [...new Set([item.baseUnit, item.purchaseUnit, link?.purchaseUnit].filter(Boolean))].join(
+          ', ',
+        ),
+      },
       errors: [{ path, code: 'unit_not_allowed', message: 'Use the purchase unit or the base unit' }],
     });
   }
 
-  private async lines(tx: Tx, scope: ErpScope, body: ErpSavePurchaseOrderDto) {
+  private async lines(tx: Tx, scope: ErpScope, body: ErpSavePurchaseOrderDto, supplierId: bigint) {
     const items = await this.stock.items(
       tx,
       scope.factory.id,
       body.lines.map((l) => l.itemId),
     );
+    const links = new Map(
+      (
+        await tx.erpItemSupplier.findMany({
+          where: { supplierId, itemId: { in: items.map((i) => i.id) } },
+        })
+      ).map((l) => [l.itemId, l]),
+    );
     return body.lines.map((l, i) => {
       const item = items[i]!;
-      const { unit, factor } = this.unitOf(item, l.unit, `lines.${i}.unit`);
+      const { unit, factor } = this.unitOf(item, l.unit, `lines.${i}.unit`, links.get(item.id));
       const quantity = dec(l.quantity);
       if (!quantity.gt(0))
         throw new DomainException('validation.failed', {
@@ -204,7 +234,7 @@ export class ErpPurchasingService {
   async create(scope: ErpScope, body: ErpSavePurchaseOrderDto): Promise<PoRow> {
     const id = await this.workspace.tx(async (tx) => {
       const supplier = await this.supplier(tx, scope, body.supplierId);
-      const lines = await this.lines(tx, scope, body);
+      const lines = await this.lines(tx, scope, body, supplier.id);
       const po = await tx.erpPurchaseOrder.create({
         data: {
           factoryId: scope.factory.id,
@@ -236,7 +266,7 @@ export class ErpPurchasingService {
       if (current.status !== 'draft')
         throw new DomainException('erp.invalid_status', { params: { status: current.status } });
       const supplier = await this.supplier(tx, scope, body.supplierId);
-      const lines = await this.lines(tx, scope, body);
+      const lines = await this.lines(tx, scope, body, supplier.id);
       await tx.erpPurchaseOrderLine.deleteMany({ where: { purchaseOrderId: current.id } });
       await tx.erpPurchaseOrder.update({
         where: { id: current.id },
@@ -285,6 +315,32 @@ export class ErpPurchasingService {
           rowVersion: { increment: 1 },
         },
       });
+      // D-334: the agreed prices go into the price history (net, without VAT).
+      const poLines = await tx.erpPurchaseOrderLine.findMany({
+        where: { purchaseOrderId: current.id },
+        include: { item: true },
+      });
+      for (const line of poLines)
+        await this.pricing.note(tx, {
+          factoryId: scope.factory.id,
+          userId: scope.actor.userId,
+          item: line.item,
+          supplier,
+          source: 'purchase_order',
+          unit: line.unit,
+          factor: dec(line.factor),
+          unitPrice: purchaseUnitCost(
+            dec(line.unitPrice),
+            dec(line.discountPct),
+            current.vatMode,
+            dec(current.vatRatePct),
+            true,
+          ),
+          quantity: dec(line.quantity),
+          pricedOn: current.orderedOn.toISOString().slice(0, 10),
+          sourcePublicId: publicId,
+          documentNo: poNo,
+        });
       await this.audit.record(tx, {
         category: 'approval',
         action: 'erp.purchase_order_issued',
@@ -347,7 +403,10 @@ export class ErpPurchasingService {
 
   // ------------------------------------------------------------------------------------ reorder
 
-  /** Items at or below their reorder point with what to buy (D-326), most urgent first. */
+  /**
+   * Items at or below their reorder point with what to buy (D-326), most urgent first: from the preferred
+   * supplier (D-333) in its unit, rounded up to whole units and its minimum order (D-335), at its latest price.
+   */
   async reorder(scope: ErpScope): Promise<ErpReorderSuggestionDto[]> {
     const factoryId = scope.factory.id;
     const items = await this.workspace.db.erpItem.findMany({
@@ -355,74 +414,103 @@ export class ErpPurchasingService {
       include: { defaultSupplier: true },
       orderBy: { sku: 'asc' },
     });
-    const [totals, onOrder] = await Promise.all([
+    const [totals, onOrder, links] = await Promise.all([
       this.stock.totals(
         factoryId,
         items.map((i) => i.id),
       ),
       this.stock.onOrder(factoryId),
+      this.pricing.preferred(
+        this.workspace.db,
+        factoryId,
+        items.map((i) => i.id),
+      ),
     ]);
     const out: (ErpReorderSuggestionDto & { gap: MoneyValue })[] = [];
     for (const item of items) {
       const t = totals.get(item.id);
       const available = dec(t?.onHand ?? 0).minus(dec(t?.reserved ?? 0));
       const ordered = onOrder.get(item.id) ?? dec(0);
-      const factor = dec(item.purchaseFactor);
-      const suggested = reorderQuantity(
+      const link = links.get(item.id);
+      const factor = link ? dec(link.purchaseFactor) : dec(item.purchaseFactor);
+      const needed = reorderQuantity(
         available.plus(ordered),
         dec(item.reorderPoint!),
         item.reorderQty === null ? null : dec(item.reorderQty),
         factor,
       );
-      if (suggested.isZero()) continue;
+      if (needed.isZero()) continue;
+      const rounded = roundToPurchase(
+        needed,
+        factor,
+        link?.minOrderQty === null || !link ? null : dec(link.minOrderQty),
+      );
+      const supplier = link?.supplier ?? item.defaultSupplier;
+      const price = link?.lastPrice ?? (link ? null : item.lastPurchasePrice);
+      const lead = link?.leadTimeDays ?? item.leadTimeDays;
       out.push({
         item: itemRef(item),
-        supplier: item.defaultSupplier ? partnerRef(item.defaultSupplier) : null,
+        supplier: supplier ? partnerRef(supplier) : null,
         available: fmtQty(available),
         onOrder: fmtQty(ordered),
         reorderPoint: fmtQty(item.reorderPoint!),
-        toOrderQty: fmtQty(suggested),
-        toOrderPurchaseQty: fmtQty(suggested.div(factor)),
-        purchaseUnit: item.purchaseUnit ?? item.baseUnit,
-        lastPurchasePrice: item.lastPurchasePrice === null ? null : fmtCost(item.lastPurchasePrice),
-        needBy: item.leadTimeDays === null ? null : addCalendarDays(today(), item.leadTimeDays),
+        toOrderQty: fmtQty(rounded.baseQty),
+        toOrderPurchaseQty: fmtQty(rounded.purchaseQty),
+        purchaseUnit: link?.purchaseUnit ?? item.purchaseUnit ?? item.baseUnit,
+        lastPurchasePrice: price === null ? null : fmtCost(price),
+        needBy: lead === null ? null : addCalendarDays(today(), lead),
         gap: available.plus(ordered).div(dec(item.reorderPoint!).gt(0) ? dec(item.reorderPoint!) : dec(1)),
       });
     }
     return out.sort((a, b) => a.gap.comparedTo(b.gap)).map(({ gap: _gap, ...rest }) => rest);
   }
 
-  /** One draft purchase order per default supplier from the chosen reorder suggestions (D-326). */
+  /** One draft purchase order per supplier from the chosen reorder suggestions (D-326). */
   async draftFromReorder(scope: ErpScope, itemIds: string[]): Promise<ErpDraftFromReorderResultDto> {
     const suggestions = new Map((await this.reorder(scope)).map((s) => [s.item.id, s]));
     const items = await this.stock.items(this.workspace.db, scope.factory.id, itemIds);
-    const bySupplier = new Map<string, { item: ErpItem; s: ErpReorderSuggestionDto }[]>();
     const skipped: ReturnType<typeof itemRef>[] = [];
+    const wanted: DraftLine[] = [];
     for (const item of items) {
       const s = suggestions.get(item.publicId);
       if (!s || !s.supplier) {
         skipped.push(itemRef(item));
         continue;
       }
-      bySupplier.set(s.supplier.id, [...(bySupplier.get(s.supplier.id) ?? []), { item, s }]);
+      wanted.push({
+        item,
+        supplierId: s.supplier.id,
+        quantity: s.toOrderPurchaseQty,
+        unit: s.purchaseUnit,
+        unitPrice: s.lastPurchasePrice ?? '0',
+        lead: item.leadTimeDays ?? 0,
+      });
     }
+    const created = await this.draftOrders(scope, wanted, 'สร้างจากรายการของใกล้หมด');
+    return { created: created.map((c) => c.summary), skipped };
+  }
+
+  /** Draft purchase orders, one per supplier, from priced lines (reorder, purchase requests, MRP). */
+  async draftOrders(scope: ErpScope, lines: DraftLine[], note: string) {
+    const bySupplier = new Map<string, DraftLine[]>();
+    for (const l of lines) bySupplier.set(l.supplierId, [...(bySupplier.get(l.supplierId) ?? []), l]);
     const created = [];
     for (const [supplierId, rows] of bySupplier) {
-      const lead = Math.max(0, ...rows.map((r) => r.item.leadTimeDays ?? 0));
+      const lead = Math.max(0, ...rows.map((r) => r.lead));
       const po = await this.create(scope, {
         supplierId,
         expectedOn: lead > 0 ? addCalendarDays(today(), lead) : null,
-        note: 'สร้างจากรายการของใกล้หมด',
-        lines: rows.map(({ item, s }) => ({
-          itemId: item.publicId,
-          quantity: s.toOrderPurchaseQty,
-          unit: s.purchaseUnit,
-          unitPrice: item.lastPurchasePrice === null ? '0' : dec(item.lastPurchasePrice).toFixed(6),
+        note,
+        lines: rows.map((r) => ({
+          itemId: r.item.publicId,
+          quantity: r.quantity,
+          unit: r.unit,
+          unitPrice: dec(r.unitPrice).toFixed(6),
         })),
       });
-      created.push(poSummaryDto(po));
+      created.push({ summary: poSummaryDto(po), po, rows });
     }
-    return { created, skipped };
+    return created;
   }
 
   // ----------------------------------------------------------------------------- goods receipts
@@ -518,6 +606,13 @@ export class ErpPurchasingService {
         scope.factory.id,
         body.lines.filter((l) => !l.purchaseOrderLineId).map((l) => l.itemId ?? ''),
       );
+      const freeLinks = new Map(
+        (
+          await tx.erpItemSupplier.findMany({
+            where: { supplierId: supplier.id, itemId: { in: freeItems.map((x) => x.id) } },
+          })
+        ).map((x) => [x.itemId, x]),
+      );
       let free = 0;
       const lines = body.lines.map((l, i) => {
         const quantity = dec(l.quantity);
@@ -593,7 +688,7 @@ export class ErpPurchasingService {
               },
             ],
           });
-        const { unit, factor } = this.unitOf(item, l.unit, `lines.${i}.unit`);
+        const { unit, factor } = this.unitOf(item, l.unit, `lines.${i}.unit`, freeLinks.get(item.id));
         const price = dec(l.unitPrice);
         return {
           line: {
@@ -649,10 +744,30 @@ export class ErpPurchasingService {
       });
 
       for (const l of lines) {
-        if (!l.purchaseUnit) continue;
+        // D-334: what was paid, per the unit it came in (net, without VAT), into the price history.
+        await this.pricing.note(tx, {
+          factoryId: scope.factory.id,
+          userId: scope.actor.userId,
+          item: l.item,
+          supplier,
+          source: 'goods_receipt',
+          unit: l.line.unit,
+          factor: dec(l.line.factor),
+          unitPrice: l.lastPrice,
+          quantity: dec(l.line.quantity),
+          pricedOn: receivedOn,
+          sourcePublicId: gr.publicId,
+          documentNo: grNo,
+        });
         await tx.erpItem.update({
           where: { id: l.item.id },
-          data: { lastPurchasePrice: fmtCost(l.lastPrice) },
+          data: {
+            lastPurchasePrice: fmtCost(
+              l.purchaseUnit
+                ? l.lastPrice
+                : l.lastPrice.div(dec(l.line.factor)).times(dec(l.item.purchaseFactor)),
+            ),
+          },
         });
       }
       if (po) {

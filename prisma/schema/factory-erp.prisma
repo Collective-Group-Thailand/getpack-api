@@ -59,6 +59,9 @@ enum ErpMovementKind {
   count
   transfer_out
   transfer_in
+  production_issue
+  production_return
+  production_receipt
 
   @@map("erp_movement_kind")
 }
@@ -90,24 +93,32 @@ enum ErpDocumentType {
   adj
   trf
   iss
+  pr
+  ap
+  pv
+  mo
 
   @@map("erp_document_type")
 }
 
 /// D-318, D-322, D-323, D-325: one row per factory, created on first use.
 model ErpFactorySettings {
-  id                 BigInt   @id(map: "pk_erp_factory_settings") @default(autoincrement())
-  factoryId          BigInt   @unique(map: "ux_erp_factory_settings__factory_id") @map("factory_id")
+  id                     BigInt   @id(map: "pk_erp_factory_settings") @default(autoincrement())
+  factoryId              BigInt   @unique(map: "ux_erp_factory_settings__factory_id") @map("factory_id")
   /// Switched-off module keys (D-318); everything else is on.
-  disabledModules    String[] @default([]) @map("disabled_modules")
-  allowNegativeStock Boolean  @default(false) @map("allow_negative_stock")
-  overReceiptPct     Decimal  @default(10) @map("over_receipt_pct") @db.Decimal(7, 4)
+  disabledModules        String[] @default([]) @map("disabled_modules")
+  allowNegativeStock     Boolean  @default(false) @map("allow_negative_stock")
+  overReceiptPct         Decimal  @default(10) @map("over_receipt_pct") @db.Decimal(7, 4)
+  /// D-337: a supplier invoice priced within this % of the order matches (3-way match).
+  priceTolerancePct      Decimal  @default(2) @map("price_tolerance_pct") @db.Decimal(7, 4)
+  /// D-336: purchase requests need an approver (`factory_procurement.approve`) when on.
+  requireRequestApproval Boolean  @default(true) @map("require_request_approval")
   /// Document prefixes by `ErpDocumentType` (D-323); a missing key uses the default (`PO`, `GR`, ...).
-  prefixes           Json     @default("{}")
-  createdAt          DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
-  updatedAt          DateTime @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
-  updatedById        BigInt?  @map("updated_by")
-  rowVersion         Int      @default(1) @map("row_version")
+  prefixes               Json     @default("{}")
+  createdAt              DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt              DateTime @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+  updatedById            BigInt?  @map("updated_by")
+  rowVersion             Int      @default(1) @map("row_version")
 
   factory   Factory @relation("ErpFactorySettingsFactory", fields: [factoryId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_erp_factory_settings__factory_id")
   updatedBy User?   @relation("ErpFactorySettingsUpdatedBy", fields: [updatedById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_erp_factory_settings__updated_by")
@@ -154,12 +165,17 @@ model ErpTradingPartner {
   updatedById     BigInt?         @map("updated_by")
   rowVersion      Int             @default(1) @map("row_version")
 
-  factory        Factory            @relation("ErpTradingPartnerFactory", fields: [factoryId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_erp_trading_partners__factory_id")
-  createdBy      User               @relation("ErpTradingPartnerCreatedBy", fields: [createdById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_erp_trading_partners__created_by")
-  updatedBy      User?              @relation("ErpTradingPartnerUpdatedBy", fields: [updatedById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_erp_trading_partners__updated_by")
-  suppliedItems  ErpItem[]          @relation("ErpItemDefaultSupplier")
-  purchaseOrders ErpPurchaseOrder[] @relation("ErpPurchaseOrderSupplier")
-  goodsReceipts  ErpGoodsReceipt[]  @relation("ErpGoodsReceiptSupplier")
+  factory          Factory                  @relation("ErpTradingPartnerFactory", fields: [factoryId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_erp_trading_partners__factory_id")
+  createdBy        User                     @relation("ErpTradingPartnerCreatedBy", fields: [createdById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_erp_trading_partners__created_by")
+  updatedBy        User?                    @relation("ErpTradingPartnerUpdatedBy", fields: [updatedById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_erp_trading_partners__updated_by")
+  suppliedItems    ErpItem[]                @relation("ErpItemDefaultSupplier")
+  purchaseOrders   ErpPurchaseOrder[]       @relation("ErpPurchaseOrderSupplier")
+  goodsReceipts    ErpGoodsReceipt[]        @relation("ErpGoodsReceiptSupplier")
+  itemLinks        ErpItemSupplier[]        @relation("ErpItemSupplierSupplier")
+  priceRecords     ErpPriceRecord[]         @relation("ErpPriceRecordSupplier")
+  requestLines     ErpPurchaseRequestLine[] @relation("ErpPurchaseRequestLineSupplier")
+  supplierInvoices ErpSupplierInvoice[]     @relation("ErpSupplierInvoiceSupplier")
+  supplierPayments ErpSupplierPayment[]     @relation("ErpSupplierPaymentSupplier")
 
   @@unique([factoryId, code], map: "ux_erp_trading_partners__factory_id__code")
   @@index([factoryId, kind, status], map: "ix_erp_trading_partners__factory_id__kind__status")
@@ -182,12 +198,13 @@ model ErpWarehouse {
   updatedById BigInt?         @map("updated_by")
   rowVersion  Int             @default(1) @map("row_version")
 
-  factory       Factory            @relation("ErpWarehouseFactory", fields: [factoryId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_erp_warehouses__factory_id")
-  createdBy     User?              @relation("ErpWarehouseCreatedBy", fields: [createdById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_erp_warehouses__created_by")
-  updatedBy     User?              @relation("ErpWarehouseUpdatedBy", fields: [updatedById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_erp_warehouses__updated_by")
-  balances      ErpStockBalance[]
-  movements     ErpStockMovement[]
-  goodsReceipts ErpGoodsReceipt[]
+  factory          Factory              @relation("ErpWarehouseFactory", fields: [factoryId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_erp_warehouses__factory_id")
+  createdBy        User?                @relation("ErpWarehouseCreatedBy", fields: [createdById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_erp_warehouses__created_by")
+  updatedBy        User?                @relation("ErpWarehouseUpdatedBy", fields: [updatedById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_erp_warehouses__updated_by")
+  balances         ErpStockBalance[]
+  movements        ErpStockMovement[]
+  goodsReceipts    ErpGoodsReceipt[]
+  productionOrders ErpProductionOrder[]
 
   @@unique([factoryId, code], map: "ux_erp_warehouses__factory_id__code")
   @@index([createdById], map: "ix_erp_warehouses__created_by")
@@ -224,15 +241,23 @@ model ErpItem {
   updatedById       BigInt?         @map("updated_by")
   rowVersion        Int             @default(1) @map("row_version")
 
-  factory         Factory                @relation("ErpItemFactory", fields: [factoryId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_erp_items__factory_id")
-  material        Material?              @relation("ErpItemMaterial", fields: [materialId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_erp_items__material_id")
-  defaultSupplier ErpTradingPartner?     @relation("ErpItemDefaultSupplier", fields: [defaultSupplierId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_erp_items__default_supplier_id")
-  createdBy       User                   @relation("ErpItemCreatedBy", fields: [createdById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_erp_items__created_by")
-  updatedBy       User?                  @relation("ErpItemUpdatedBy", fields: [updatedById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_erp_items__updated_by")
-  balances        ErpStockBalance[]
-  movements       ErpStockMovement[]
-  poLines         ErpPurchaseOrderLine[]
-  grLines         ErpGoodsReceiptLine[]
+  factory          Factory                  @relation("ErpItemFactory", fields: [factoryId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_erp_items__factory_id")
+  material         Material?                @relation("ErpItemMaterial", fields: [materialId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_erp_items__material_id")
+  defaultSupplier  ErpTradingPartner?       @relation("ErpItemDefaultSupplier", fields: [defaultSupplierId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_erp_items__default_supplier_id")
+  createdBy        User                     @relation("ErpItemCreatedBy", fields: [createdById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_erp_items__created_by")
+  updatedBy        User?                    @relation("ErpItemUpdatedBy", fields: [updatedById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_erp_items__updated_by")
+  balances         ErpStockBalance[]
+  movements        ErpStockMovement[]
+  poLines          ErpPurchaseOrderLine[]
+  grLines          ErpGoodsReceiptLine[]
+  suppliers        ErpItemSupplier[]
+  priceRecords     ErpPriceRecord[]
+  requestLines     ErpPurchaseRequestLine[]
+  invoiceLines     ErpSupplierInvoiceLine[]
+  recipes          ErpRecipe[]              @relation("ErpRecipeItem")
+  recipeUses       ErpRecipeMaterial[]      @relation("ErpRecipeMaterialItem")
+  productionOrders ErpProductionOrder[]     @relation("ErpProductionOrderItem")
+  productionUses   ErpProductionMaterial[]  @relation("ErpProductionMaterialItem")
 
   @@unique([factoryId, sku], map: "ux_erp_items__factory_id__sku")
   @@index([factoryId, kind, status], map: "ix_erp_items__factory_id__kind__status")
@@ -332,13 +357,14 @@ model ErpPurchaseOrder {
   updatedById  BigInt?                @map("updated_by")
   rowVersion   Int                    @default(1) @map("row_version")
 
-  factory       Factory                @relation("ErpPurchaseOrderFactory", fields: [factoryId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_erp_purchase_orders__factory_id")
-  supplier      ErpTradingPartner      @relation("ErpPurchaseOrderSupplier", fields: [supplierId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_erp_purchase_orders__supplier_id")
-  issuedBy      User?                  @relation("ErpPurchaseOrderIssuedBy", fields: [issuedById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_erp_purchase_orders__issued_by")
-  createdBy     User                   @relation("ErpPurchaseOrderCreatedBy", fields: [createdById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_erp_purchase_orders__created_by")
-  updatedBy     User?                  @relation("ErpPurchaseOrderUpdatedBy", fields: [updatedById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_erp_purchase_orders__updated_by")
-  lines         ErpPurchaseOrderLine[]
-  goodsReceipts ErpGoodsReceipt[]
+  factory          Factory                @relation("ErpPurchaseOrderFactory", fields: [factoryId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_erp_purchase_orders__factory_id")
+  supplier         ErpTradingPartner      @relation("ErpPurchaseOrderSupplier", fields: [supplierId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_erp_purchase_orders__supplier_id")
+  issuedBy         User?                  @relation("ErpPurchaseOrderIssuedBy", fields: [issuedById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_erp_purchase_orders__issued_by")
+  createdBy        User                   @relation("ErpPurchaseOrderCreatedBy", fields: [createdById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_erp_purchase_orders__created_by")
+  updatedBy        User?                  @relation("ErpPurchaseOrderUpdatedBy", fields: [updatedById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_erp_purchase_orders__updated_by")
+  lines            ErpPurchaseOrderLine[]
+  goodsReceipts    ErpGoodsReceipt[]
+  supplierInvoices ErpSupplierInvoice[]
 
   @@unique([factoryId, poNo], map: "ux_erp_purchase_orders__factory_id__po_no")
   @@index([factoryId, status], map: "ix_erp_purchase_orders__factory_id__status")
@@ -366,9 +392,11 @@ model ErpPurchaseOrderLine {
   /// In `unit`.
   receivedQty     Decimal @default(0) @map("received_qty") @db.Decimal(14, 3)
 
-  purchaseOrder ErpPurchaseOrder      @relation(fields: [purchaseOrderId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_erp_purchase_order_lines__purchase_order_id")
-  item          ErpItem               @relation(fields: [itemId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_erp_purchase_order_lines__item_id")
+  purchaseOrder ErpPurchaseOrder         @relation(fields: [purchaseOrderId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_erp_purchase_order_lines__purchase_order_id")
+  item          ErpItem                  @relation(fields: [itemId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_erp_purchase_order_lines__item_id")
   receiptLines  ErpGoodsReceiptLine[]
+  requestLines  ErpPurchaseRequestLine[]
+  invoiceLines  ErpSupplierInvoiceLine[]
 
   @@unique([purchaseOrderId, lineNo], map: "ux_erp_purchase_order_lines__purchase_order_id__line_no")
   @@index([itemId], map: "ix_erp_purchase_order_lines__item_id")
@@ -430,4 +458,507 @@ model ErpGoodsReceiptLine {
   @@index([purchaseOrderLineId], map: "ix_erp_goods_receipt_lines__purchase_order_line_id")
   @@index([itemId], map: "ix_erp_goods_receipt_lines__item_id")
   @@map("erp_goods_receipt_lines")
+}
+
+// ============================================================================ E1.1 and E2
+// Supplier prices (D-333 – D-335), purchase requests (D-336), supplier invoices and payments (D-337, D-338),
+// production recipes (D-339), production orders with reservations (D-340, D-341), MRP (D-342).
+
+enum ErpPriceSource {
+  goods_receipt
+  purchase_order
+  quotation
+  manual
+
+  @@map("erp_price_source")
+}
+
+enum ErpPurchaseRequestStatus {
+  draft
+  submitted
+  approved
+  rejected
+  ordered
+  cancelled
+
+  @@map("erp_purchase_request_status")
+}
+
+enum ErpRequestSource {
+  manual
+  reorder
+  mrp
+
+  @@map("erp_request_source")
+}
+
+enum ErpSupplierInvoiceStatus {
+  matched
+  variance
+  approved
+  partially_paid
+  paid
+  cancelled
+
+  @@map("erp_supplier_invoice_status")
+}
+
+enum ErpPaymentMethod {
+  transfer
+  cash
+  cheque
+  other
+
+  @@map("erp_payment_method")
+}
+
+enum ErpProductionSource {
+  packio_job
+  stock
+  sales_order
+
+  @@map("erp_production_source")
+}
+
+enum ErpProductionStatus {
+  planned
+  released
+  in_progress
+  completed
+  closed
+  cancelled
+
+  @@map("erp_production_status")
+}
+
+enum ErpOperationStatus {
+  pending
+  in_progress
+  done
+  skipped
+
+  @@map("erp_operation_status")
+}
+
+/// D-333: what the factory buys from whom — the supplier's code, unit and terms, and the latest price.
+model ErpItemSupplier {
+  id              BigInt          @id(map: "pk_erp_item_suppliers") @default(autoincrement())
+  publicId        String          @unique(map: "ux_erp_item_suppliers__public_id") @default(dbgenerated("uuidv7()")) @map("public_id") @db.Uuid
+  factoryId       BigInt          @map("factory_id")
+  itemId          BigInt          @map("item_id")
+  supplierId      BigInt          @map("supplier_id")
+  supplierSku     String?         @map("supplier_sku")
+  supplierName    String?         @map("supplier_name")
+  /// The unit this supplier sells in, and base units per it.
+  purchaseUnit    ErpUnit         @map("purchase_unit")
+  purchaseFactor  Decimal         @default(1) @map("purchase_factor") @db.Decimal(18, 6)
+  minOrderQty     Decimal?        @map("min_order_qty") @db.Decimal(14, 3)
+  leadTimeDays    Int?            @map("lead_time_days")
+  /// Per `purchaseUnit`, net of discount, without VAT (D-334).
+  lastPrice       Decimal?        @map("last_price") @db.Decimal(18, 6)
+  lastPricedOn    DateTime?       @map("last_priced_on") @db.Date
+  lastPurchasedOn DateTime?       @map("last_purchased_on") @db.Date
+  preferred       Boolean         @default(false)
+  note            String?
+  status          ErpRecordStatus @default(active)
+  createdAt       DateTime        @default(now()) @map("created_at") @db.Timestamptz(6)
+  createdById     BigInt?         @map("created_by")
+  updatedAt       DateTime        @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+  updatedById     BigInt?         @map("updated_by")
+  rowVersion      Int             @default(1) @map("row_version")
+
+  factory   Factory           @relation("ErpItemSupplierFactory", fields: [factoryId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_erp_item_suppliers__factory_id")
+  item      ErpItem           @relation(fields: [itemId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_erp_item_suppliers__item_id")
+  supplier  ErpTradingPartner @relation("ErpItemSupplierSupplier", fields: [supplierId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_erp_item_suppliers__supplier_id")
+  createdBy User?             @relation("ErpItemSupplierCreatedBy", fields: [createdById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_erp_item_suppliers__created_by")
+  updatedBy User?             @relation("ErpItemSupplierUpdatedBy", fields: [updatedById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_erp_item_suppliers__updated_by")
+
+  @@unique([itemId, supplierId], map: "ux_erp_item_suppliers__item_id__supplier_id")
+  @@index([factoryId], map: "ix_erp_item_suppliers__factory_id")
+  @@index([supplierId], map: "ix_erp_item_suppliers__supplier_id")
+  @@index([createdById], map: "ix_erp_item_suppliers__created_by")
+  @@index([updatedById], map: "ix_erp_item_suppliers__updated_by")
+  @@map("erp_item_suppliers")
+}
+
+/// D-334: every price the factory met — paid on a receipt, ordered, quoted, or noted — append-only.
+model ErpPriceRecord {
+  id             BigInt         @id(map: "pk_erp_price_records") @default(autoincrement())
+  publicId       String         @unique(map: "ux_erp_price_records__public_id") @default(dbgenerated("uuidv7()")) @map("public_id") @db.Uuid
+  factoryId      BigInt         @map("factory_id")
+  itemId         BigInt         @map("item_id")
+  supplierId     BigInt         @map("supplier_id")
+  source         ErpPriceSource
+  unit           ErpUnit
+  factor         Decimal        @db.Decimal(18, 6)
+  /// Per `unit`, net of discount, without VAT.
+  unitPrice      Decimal        @map("unit_price") @db.Decimal(18, 6)
+  /// Per base unit (`unitPrice / factor`), to compare suppliers selling in different units.
+  baseUnitPrice  Decimal        @map("base_unit_price") @db.Decimal(18, 6)
+  quantity       Decimal?       @db.Decimal(14, 3)
+  pricedOn       DateTime       @map("priced_on") @db.Date
+  validUntil     DateTime?      @map("valid_until") @db.Date
+  sourcePublicId String?        @map("source_public_id") @db.Uuid
+  documentNo     String?        @map("document_no")
+  note           String?
+  createdAt      DateTime       @default(now()) @map("created_at") @db.Timestamptz(6)
+  createdById    BigInt         @map("created_by")
+
+  factory   Factory           @relation("ErpPriceRecordFactory", fields: [factoryId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_erp_price_records__factory_id")
+  item      ErpItem           @relation(fields: [itemId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_erp_price_records__item_id")
+  supplier  ErpTradingPartner @relation("ErpPriceRecordSupplier", fields: [supplierId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_erp_price_records__supplier_id")
+  createdBy User              @relation("ErpPriceRecordCreatedBy", fields: [createdById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_erp_price_records__created_by")
+
+  @@index([itemId, pricedOn(sort: Desc)], map: "ix_erp_price_records__item_id__priced_on")
+  @@index([supplierId, pricedOn(sort: Desc)], map: "ix_erp_price_records__supplier_id__priced_on")
+  @@index([factoryId], map: "ix_erp_price_records__factory_id")
+  @@index([createdById], map: "ix_erp_price_records__created_by")
+  @@map("erp_price_records")
+}
+
+/// D-336: a request to buy, approved before it becomes a purchase order.
+model ErpPurchaseRequest {
+  id             BigInt                   @id(map: "pk_erp_purchase_requests") @default(autoincrement())
+  publicId       String                   @unique(map: "ux_erp_purchase_requests__public_id") @default(dbgenerated("uuidv7()")) @map("public_id") @db.Uuid
+  factoryId      BigInt                   @map("factory_id")
+  prNo           String                   @map("pr_no")
+  status         ErpPurchaseRequestStatus @default(draft)
+  source         ErpRequestSource         @default(manual)
+  neededBy       DateTime?                @map("needed_by") @db.Date
+  note           String?
+  /// Estimated at the suppliers' latest prices, without VAT.
+  estimatedTotal Decimal                  @default(0) @map("estimated_total") @db.Decimal(14, 2)
+  submittedAt    DateTime?                @map("submitted_at") @db.Timestamptz(6)
+  decidedAt      DateTime?                @map("decided_at") @db.Timestamptz(6)
+  decidedById    BigInt?                  @map("decided_by")
+  decisionNote   String?                  @map("decision_note")
+  createdAt      DateTime                 @default(now()) @map("created_at") @db.Timestamptz(6)
+  createdById    BigInt                   @map("created_by")
+  updatedAt      DateTime                 @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+  updatedById    BigInt?                  @map("updated_by")
+  rowVersion     Int                      @default(1) @map("row_version")
+
+  factory   Factory                  @relation("ErpPurchaseRequestFactory", fields: [factoryId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_erp_purchase_requests__factory_id")
+  decidedBy User?                    @relation("ErpPurchaseRequestDecidedBy", fields: [decidedById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_erp_purchase_requests__decided_by")
+  createdBy User                     @relation("ErpPurchaseRequestCreatedBy", fields: [createdById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_erp_purchase_requests__created_by")
+  updatedBy User?                    @relation("ErpPurchaseRequestUpdatedBy", fields: [updatedById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_erp_purchase_requests__updated_by")
+  lines     ErpPurchaseRequestLine[]
+
+  @@unique([factoryId, prNo], map: "ux_erp_purchase_requests__factory_id__pr_no")
+  @@index([factoryId, status], map: "ix_erp_purchase_requests__factory_id__status")
+  @@index([decidedById], map: "ix_erp_purchase_requests__decided_by")
+  @@index([createdById], map: "ix_erp_purchase_requests__created_by")
+  @@index([updatedById], map: "ix_erp_purchase_requests__updated_by")
+  @@map("erp_purchase_requests")
+}
+
+model ErpPurchaseRequestLine {
+  id                  BigInt    @id(map: "pk_erp_purchase_request_lines") @default(autoincrement())
+  publicId            String    @unique(map: "ux_erp_purchase_request_lines__public_id") @default(dbgenerated("uuidv7()")) @map("public_id") @db.Uuid
+  purchaseRequestId   BigInt    @map("purchase_request_id")
+  lineNo              Int       @map("line_no")
+  itemId              BigInt    @map("item_id")
+  /// In the item's base unit.
+  quantity            Decimal   @db.Decimal(14, 3)
+  supplierId          BigInt?   @map("supplier_id")
+  /// Per base unit, without VAT.
+  estimatedUnitCost   Decimal?  @map("estimated_unit_cost") @db.Decimal(18, 6)
+  neededBy            DateTime? @map("needed_by") @db.Date
+  note                String?
+  purchaseOrderLineId BigInt?   @map("purchase_order_line_id")
+
+  purchaseRequest   ErpPurchaseRequest    @relation(fields: [purchaseRequestId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_erp_purchase_request_lines__purchase_request_id")
+  item              ErpItem               @relation(fields: [itemId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_erp_purchase_request_lines__item_id")
+  supplier          ErpTradingPartner?    @relation("ErpPurchaseRequestLineSupplier", fields: [supplierId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_erp_purchase_request_lines__supplier_id")
+  purchaseOrderLine ErpPurchaseOrderLine? @relation(fields: [purchaseOrderLineId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_erp_purchase_request_lines__purchase_order_line_id")
+
+  @@unique([purchaseRequestId, lineNo], map: "ux_erp_purchase_request_lines__purchase_request_id__line_no")
+  @@index([itemId], map: "ix_erp_purchase_request_lines__item_id")
+  @@index([supplierId], map: "ix_erp_purchase_request_lines__supplier_id")
+  @@index([purchaseOrderLineId], map: "ix_erp_purchase_request_lines__purchase_order_line_id")
+  @@map("erp_purchase_request_lines")
+}
+
+/// D-337: a supplier's invoice, matched against what was ordered and received (3-way).
+model ErpSupplierInvoice {
+  id              BigInt                   @id(map: "pk_erp_supplier_invoices") @default(autoincrement())
+  publicId        String                   @unique(map: "ux_erp_supplier_invoices__public_id") @default(dbgenerated("uuidv7()")) @map("public_id") @db.Uuid
+  factoryId       BigInt                   @map("factory_id")
+  docNo           String                   @map("doc_no")
+  supplierId      BigInt                   @map("supplier_id")
+  purchaseOrderId BigInt?                  @map("purchase_order_id")
+  invoiceNo       String                   @map("invoice_no")
+  /// The supplier's tax invoice (input VAT), when it is one.
+  taxInvoiceNo    String?                  @map("tax_invoice_no")
+  invoiceDate     DateTime                 @map("invoice_date") @db.Date
+  dueDate         DateTime                 @map("due_date") @db.Date
+  vatMode         ErpVatMode               @default(exclusive) @map("vat_mode")
+  vatRatePct      Decimal                  @default(7) @map("vat_rate_pct") @db.Decimal(7, 4)
+  subtotal        Decimal                  @db.Decimal(14, 2)
+  vatAmount       Decimal                  @map("vat_amount") @db.Decimal(14, 2)
+  total           Decimal                  @db.Decimal(14, 2)
+  whtRatePct      Decimal                  @default(0) @map("wht_rate_pct") @db.Decimal(7, 4)
+  whtAmount       Decimal                  @default(0) @map("wht_amount") @db.Decimal(14, 2)
+  /// total − WHT: what is paid to the supplier.
+  payableAmount   Decimal                  @map("payable_amount") @db.Decimal(14, 2)
+  paidAmount      Decimal                  @default(0) @map("paid_amount") @db.Decimal(14, 2)
+  status          ErpSupplierInvoiceStatus
+  matchNote       String?                  @map("match_note")
+  note            String?
+  fileId          BigInt?                  @map("file_id")
+  approvedAt      DateTime?                @map("approved_at") @db.Timestamptz(6)
+  approvedById    BigInt?                  @map("approved_by")
+  cancelReason    String?                  @map("cancel_reason")
+  createdAt       DateTime                 @default(now()) @map("created_at") @db.Timestamptz(6)
+  createdById     BigInt                   @map("created_by")
+  updatedAt       DateTime                 @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+  rowVersion      Int                      @default(1) @map("row_version")
+
+  factory       Factory                  @relation("ErpSupplierInvoiceFactory", fields: [factoryId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_erp_supplier_invoices__factory_id")
+  supplier      ErpTradingPartner        @relation("ErpSupplierInvoiceSupplier", fields: [supplierId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_erp_supplier_invoices__supplier_id")
+  purchaseOrder ErpPurchaseOrder?        @relation(fields: [purchaseOrderId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_erp_supplier_invoices__purchase_order_id")
+  file          FileObject?              @relation("ErpSupplierInvoiceFile", fields: [fileId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_erp_supplier_invoices__file_id")
+  approvedBy    User?                    @relation("ErpSupplierInvoiceApprovedBy", fields: [approvedById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_erp_supplier_invoices__approved_by")
+  createdBy     User                     @relation("ErpSupplierInvoiceCreatedBy", fields: [createdById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_erp_supplier_invoices__created_by")
+  lines         ErpSupplierInvoiceLine[]
+  allocations   ErpPaymentAllocation[]
+
+  @@unique([factoryId, docNo], map: "ux_erp_supplier_invoices__factory_id__doc_no")
+  @@unique([supplierId, invoiceNo], map: "ux_erp_supplier_invoices__supplier_id__invoice_no")
+  @@index([factoryId, status, dueDate], map: "ix_erp_supplier_invoices__factory_id__status__due_date")
+  @@index([purchaseOrderId], map: "ix_erp_supplier_invoices__purchase_order_id")
+  @@index([fileId], map: "ix_erp_supplier_invoices__file_id")
+  @@index([approvedById], map: "ix_erp_supplier_invoices__approved_by")
+  @@index([createdById], map: "ix_erp_supplier_invoices__created_by")
+  @@map("erp_supplier_invoices")
+}
+
+model ErpSupplierInvoiceLine {
+  id                  BigInt   @id(map: "pk_erp_supplier_invoice_lines") @default(autoincrement())
+  supplierInvoiceId   BigInt   @map("supplier_invoice_id")
+  lineNo              Int      @map("line_no")
+  purchaseOrderLineId BigInt?  @map("purchase_order_line_id")
+  itemId              BigInt?  @map("item_id")
+  description         String
+  /// In the purchase-order line's unit (or the item's purchase unit).
+  quantity            Decimal  @db.Decimal(14, 3)
+  unitPrice           Decimal  @map("unit_price") @db.Decimal(18, 6)
+  amount              Decimal  @db.Decimal(14, 2)
+  /// Received but not yet invoiced at matching time.
+  receivedQty         Decimal? @map("received_qty") @db.Decimal(14, 3)
+  orderedPrice        Decimal? @map("ordered_price") @db.Decimal(18, 6)
+  variance            String?
+
+  supplierInvoice   ErpSupplierInvoice    @relation(fields: [supplierInvoiceId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_erp_supplier_invoice_lines__supplier_invoice_id")
+  purchaseOrderLine ErpPurchaseOrderLine? @relation(fields: [purchaseOrderLineId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_erp_supplier_invoice_lines__purchase_order_line_id")
+  item              ErpItem?              @relation(fields: [itemId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_erp_supplier_invoice_lines__item_id")
+
+  @@unique([supplierInvoiceId, lineNo], map: "ux_erp_supplier_invoice_lines__supplier_invoice_id__line_no")
+  @@index([purchaseOrderLineId], map: "ix_erp_supplier_invoice_lines__purchase_order_line_id")
+  @@index([itemId], map: "ix_erp_supplier_invoice_lines__item_id")
+  @@map("erp_supplier_invoice_lines")
+}
+
+/// D-338: money paid to a supplier, allocated to its invoices; append-only.
+model ErpSupplierPayment {
+  id          BigInt           @id(map: "pk_erp_supplier_payments") @default(autoincrement())
+  publicId    String           @unique(map: "ux_erp_supplier_payments__public_id") @default(dbgenerated("uuidv7()")) @map("public_id") @db.Uuid
+  factoryId   BigInt           @map("factory_id")
+  paymentNo   String           @map("payment_no")
+  supplierId  BigInt           @map("supplier_id")
+  paidOn      DateTime         @map("paid_on") @db.Date
+  method      ErpPaymentMethod
+  reference   String?
+  /// Negative on a reversal (D-338): a payment is never edited, a wrong one is reversed.
+  amount      Decimal          @db.Decimal(14, 2)
+  reversesId  BigInt?          @unique(map: "ux_erp_supplier_payments__reverses_id") @map("reverses_id")
+  note        String?
+  createdAt   DateTime         @default(now()) @map("created_at") @db.Timestamptz(6)
+  createdById BigInt           @map("created_by")
+
+  factory     Factory                @relation("ErpSupplierPaymentFactory", fields: [factoryId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_erp_supplier_payments__factory_id")
+  supplier    ErpTradingPartner      @relation("ErpSupplierPaymentSupplier", fields: [supplierId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_erp_supplier_payments__supplier_id")
+  createdBy   User                   @relation("ErpSupplierPaymentCreatedBy", fields: [createdById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_erp_supplier_payments__created_by")
+  allocations ErpPaymentAllocation[]
+  reverses    ErpSupplierPayment?    @relation("ErpSupplierPaymentReversal", fields: [reversesId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_erp_supplier_payments__reverses_id")
+  reversedBy  ErpSupplierPayment?    @relation("ErpSupplierPaymentReversal")
+
+  @@unique([factoryId, paymentNo], map: "ux_erp_supplier_payments__factory_id__payment_no")
+  @@index([supplierId], map: "ix_erp_supplier_payments__supplier_id")
+  @@index([createdById], map: "ix_erp_supplier_payments__created_by")
+  @@map("erp_supplier_payments")
+}
+
+model ErpPaymentAllocation {
+  id                BigInt  @id(map: "pk_erp_payment_allocations") @default(autoincrement())
+  paymentId         BigInt  @map("payment_id")
+  supplierInvoiceId BigInt  @map("supplier_invoice_id")
+  amount            Decimal @db.Decimal(14, 2)
+
+  payment         ErpSupplierPayment @relation(fields: [paymentId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_erp_payment_allocations__payment_id")
+  supplierInvoice ErpSupplierInvoice @relation(fields: [supplierInvoiceId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_erp_payment_allocations__supplier_invoice_id")
+
+  @@unique([paymentId, supplierInvoiceId], map: "ux_erp_payment_allocations__payment_id__supplier_invoice_id")
+  @@index([supplierInvoiceId], map: "ix_erp_payment_allocations__supplier_invoice_id")
+  @@map("erp_payment_allocations")
+}
+
+/// D-339: how a product is made — materials per batch and the steps on the factory's machines.
+model ErpRecipe {
+  id          BigInt          @id(map: "pk_erp_recipes") @default(autoincrement())
+  publicId    String          @unique(map: "ux_erp_recipes__public_id") @default(dbgenerated("uuidv7()")) @map("public_id") @db.Uuid
+  factoryId   BigInt          @map("factory_id")
+  itemId      BigInt          @map("item_id")
+  name        String
+  /// Base units of the product one batch of the recipe makes.
+  batchQty    Decimal         @default(1) @map("batch_qty") @db.Decimal(14, 3)
+  note        String?
+  status      ErpRecordStatus @default(active)
+  createdAt   DateTime        @default(now()) @map("created_at") @db.Timestamptz(6)
+  createdById BigInt          @map("created_by")
+  updatedAt   DateTime        @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+  updatedById BigInt?         @map("updated_by")
+  rowVersion  Int             @default(1) @map("row_version")
+
+  factory             Factory              @relation("ErpRecipeFactory", fields: [factoryId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_erp_recipes__factory_id")
+  item                ErpItem              @relation("ErpRecipeItem", fields: [itemId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_erp_recipes__item_id")
+  createdBy           User                 @relation("ErpRecipeCreatedBy", fields: [createdById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_erp_recipes__created_by")
+  updatedBy           User?                @relation("ErpRecipeUpdatedBy", fields: [updatedById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_erp_recipes__updated_by")
+  materials           ErpRecipeMaterial[]
+  operations          ErpRecipeOperation[]
+  erpProductionOrders ErpProductionOrder[]
+
+  @@index([factoryId, status], map: "ix_erp_recipes__factory_id__status")
+  @@index([itemId], map: "ix_erp_recipes__item_id")
+  @@index([createdById], map: "ix_erp_recipes__created_by")
+  @@index([updatedById], map: "ix_erp_recipes__updated_by")
+  @@map("erp_recipes")
+}
+
+model ErpRecipeMaterial {
+  id       BigInt  @id(map: "pk_erp_recipe_materials") @default(autoincrement())
+  recipeId BigInt  @map("recipe_id")
+  lineNo   Int     @map("line_no")
+  itemId   BigInt  @map("item_id")
+  /// Base units of the material per batch.
+  quantity Decimal @db.Decimal(14, 6)
+  scrapPct Decimal @default(0) @map("scrap_pct") @db.Decimal(7, 4)
+
+  recipe ErpRecipe @relation(fields: [recipeId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_erp_recipe_materials__recipe_id")
+  item   ErpItem   @relation("ErpRecipeMaterialItem", fields: [itemId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_erp_recipe_materials__item_id")
+
+  @@unique([recipeId, lineNo], map: "ux_erp_recipe_materials__recipe_id__line_no")
+  @@index([itemId], map: "ix_erp_recipe_materials__item_id")
+  @@map("erp_recipe_materials")
+}
+
+model ErpRecipeOperation {
+  id             BigInt   @id(map: "pk_erp_recipe_operations") @default(autoincrement())
+  recipeId       BigInt   @map("recipe_id")
+  seq            Int
+  name           String
+  machineId      BigInt?  @map("machine_id")
+  setupMinutes   Int      @default(0) @map("setup_minutes")
+  /// Base units of the product per hour on this step.
+  runRatePerHour Decimal? @map("run_rate_per_hour") @db.Decimal(14, 3)
+
+  recipe  ErpRecipe       @relation(fields: [recipeId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_erp_recipe_operations__recipe_id")
+  machine FactoryMachine? @relation("ErpRecipeOperationMachine", fields: [machineId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_erp_recipe_operations__machine_id")
+
+  @@unique([recipeId, seq], map: "ux_erp_recipe_operations__recipe_id__seq")
+  @@index([machineId], map: "ix_erp_recipe_operations__machine_id")
+  @@map("erp_recipe_operations")
+}
+
+/// D-340: a production order — a Packio job, or the factory's own (for stock or a sales order).
+model ErpProductionOrder {
+  id              BigInt              @id(map: "pk_erp_production_orders") @default(autoincrement())
+  publicId        String              @unique(map: "ux_erp_production_orders__public_id") @default(dbgenerated("uuidv7()")) @map("public_id") @db.Uuid
+  factoryId       BigInt              @map("factory_id")
+  moNo            String              @map("mo_no")
+  source          ErpProductionSource
+  productionJobId BigInt?             @map("production_job_id")
+  itemId          BigInt?             @map("item_id")
+  recipeId        BigInt?             @map("recipe_id")
+  title           String
+  quantity        Decimal             @db.Decimal(14, 3)
+  unit            String
+  dueOn           DateTime?           @map("due_on") @db.Date
+  plannedStartOn  DateTime?           @map("planned_start_on") @db.Date
+  priority        Int                 @default(0)
+  warehouseId     BigInt              @map("warehouse_id")
+  status          ErpProductionStatus @default(planned)
+  goodQty         Decimal             @default(0) @map("good_qty") @db.Decimal(14, 3)
+  scrapQty        Decimal             @default(0) @map("scrap_qty") @db.Decimal(14, 3)
+  note            String?
+  releasedAt      DateTime?           @map("released_at") @db.Timestamptz(6)
+  completedAt     DateTime?           @map("completed_at") @db.Timestamptz(6)
+  cancelReason    String?             @map("cancel_reason")
+  createdAt       DateTime            @default(now()) @map("created_at") @db.Timestamptz(6)
+  createdById     BigInt?             @map("created_by")
+  updatedAt       DateTime            @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+  updatedById     BigInt?             @map("updated_by")
+  rowVersion      Int                 @default(1) @map("row_version")
+
+  factory       Factory                  @relation("ErpProductionOrderFactory", fields: [factoryId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_erp_production_orders__factory_id")
+  productionJob ProductionJob?           @relation("ErpProductionOrderJob", fields: [productionJobId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_erp_production_orders__production_job_id")
+  item          ErpItem?                 @relation("ErpProductionOrderItem", fields: [itemId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_erp_production_orders__item_id")
+  recipe        ErpRecipe?               @relation(fields: [recipeId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_erp_production_orders__recipe_id")
+  warehouse     ErpWarehouse             @relation(fields: [warehouseId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_erp_production_orders__warehouse_id")
+  createdBy     User?                    @relation("ErpProductionOrderCreatedBy", fields: [createdById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_erp_production_orders__created_by")
+  updatedBy     User?                    @relation("ErpProductionOrderUpdatedBy", fields: [updatedById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_erp_production_orders__updated_by")
+  materials     ErpProductionMaterial[]
+  operations    ErpProductionOperation[]
+
+  @@unique([factoryId, moNo], map: "ux_erp_production_orders__factory_id__mo_no")
+  @@unique([productionJobId], map: "ux_erp_production_orders__production_job_id")
+  @@index([factoryId, status, dueOn], map: "ix_erp_production_orders__factory_id__status__due_on")
+  @@index([itemId], map: "ix_erp_production_orders__item_id")
+  @@index([recipeId], map: "ix_erp_production_orders__recipe_id")
+  @@index([warehouseId], map: "ix_erp_production_orders__warehouse_id")
+  @@index([createdById], map: "ix_erp_production_orders__created_by")
+  @@index([updatedById], map: "ix_erp_production_orders__updated_by")
+  @@map("erp_production_orders")
+}
+
+model ErpProductionMaterial {
+  id                BigInt  @id(map: "pk_erp_production_materials") @default(autoincrement())
+  publicId          String  @unique(map: "ux_erp_production_materials__public_id") @default(dbgenerated("uuidv7()")) @map("public_id") @db.Uuid
+  productionOrderId BigInt  @map("production_order_id")
+  lineNo            Int     @map("line_no")
+  itemId            BigInt  @map("item_id")
+  /// Base units.
+  requiredQty       Decimal @map("required_qty") @db.Decimal(14, 3)
+  reservedQty       Decimal @default(0) @map("reserved_qty") @db.Decimal(14, 3)
+  issuedQty         Decimal @default(0) @map("issued_qty") @db.Decimal(14, 3)
+  /// `recipe`, `packio_spec` or `manual`.
+  origin            String
+  note              String?
+
+  productionOrder ErpProductionOrder @relation(fields: [productionOrderId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_erp_production_materials__production_order_id")
+  item            ErpItem            @relation("ErpProductionMaterialItem", fields: [itemId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_erp_production_materials__item_id")
+
+  @@unique([productionOrderId, lineNo], map: "ux_erp_production_materials__production_order_id__line_no")
+  @@index([itemId], map: "ix_erp_production_materials__item_id")
+  @@map("erp_production_materials")
+}
+
+model ErpProductionOperation {
+  id                BigInt             @id(map: "pk_erp_production_operations") @default(autoincrement())
+  publicId          String             @unique(map: "ux_erp_production_operations__public_id") @default(dbgenerated("uuidv7()")) @map("public_id") @db.Uuid
+  productionOrderId BigInt             @map("production_order_id")
+  seq               Int
+  name              String
+  machineId         BigInt?            @map("machine_id")
+  plannedMinutes    Int                @default(0) @map("planned_minutes")
+  status            ErpOperationStatus @default(pending)
+  goodQty           Decimal            @default(0) @map("good_qty") @db.Decimal(14, 3)
+  scrapQty          Decimal            @default(0) @map("scrap_qty") @db.Decimal(14, 3)
+
+  productionOrder ErpProductionOrder @relation(fields: [productionOrderId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_erp_production_operations__production_order_id")
+  machine         FactoryMachine?    @relation("ErpProductionOperationMachine", fields: [machineId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_erp_production_operations__machine_id")
+
+  @@unique([productionOrderId, seq], map: "ux_erp_production_operations__production_order_id__seq")
+  @@index([machineId], map: "ix_erp_production_operations__machine_id")
+  @@map("erp_production_operations")
 }

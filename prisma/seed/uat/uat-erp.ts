@@ -308,3 +308,229 @@ export async function seedUatErp(prisma: PrismaClient): Promise<number> {
     { timeout: 60_000 },
   );
 }
+
+/**
+ * E1.1 + E2 rehearsal data (D-333 – D-342) on top of `seedUatErp`: each item linked to its supplier with a
+ * short price history, a second paper supplier selling by the pack (cheaper per sheet, quoted), a finished
+ * product with its recipe and one planned production order. Idempotent — skipped once links exist.
+ */
+export async function seedUatErpE2(prisma: PrismaClient): Promise<number> {
+  const factory = await prisma.factory.findUnique({ where: { code: UAT_FACTORY_CODE } });
+  if (!factory) return 0;
+  if (await prisma.erpItemSupplier.count({ where: { factoryId: factory.id } })) return 0;
+  const items = await prisma.erpItem.findMany({
+    where: { factoryId: factory.id, defaultSupplierId: { not: null } },
+  });
+  if (items.length === 0) return 0;
+  const owner = await prisma.userRole.findFirst({
+    where: { scopeType: 'factory', scopeId: factory.id, role: { key: 'factory_owner' }, revokedAt: null },
+  });
+  const by = owner?.userId ?? (await prisma.user.findFirstOrThrow({ where: { kind: 'staff' } })).id;
+  const bangkok = new Date(Date.now() + 7 * 3_600_000).toISOString().slice(0, 10);
+  const today = new Date(`${bangkok}T00:00:00.000Z`);
+  const daysAgo = (n: number) => new Date(today.getTime() - n * 86_400_000);
+  const D = (v: string | number | Prisma.Decimal) => new Prisma.Decimal(v);
+
+  return prisma.$transaction(
+    async (tx) => {
+      let n = 0;
+      for (const item of items) {
+        const factor = D(item.purchaseFactor);
+        const unit = item.purchaseUnit ?? item.baseUnit;
+        const last = item.lastPurchasePrice ? D(item.lastPurchasePrice) : null;
+        await tx.erpItemSupplier.create({
+          data: {
+            factoryId: factory.id,
+            itemId: item.id,
+            supplierId: item.defaultSupplierId!,
+            purchaseUnit: unit,
+            purchaseFactor: factor.toFixed(6),
+            leadTimeDays: item.leadTimeDays,
+            lastPrice: last?.toFixed(6) ?? null,
+            lastPricedOn: last ? daysAgo(12) : null,
+            lastPurchasedOn: last ? daysAgo(12) : null,
+            preferred: true,
+            createdById: by,
+          },
+        });
+        if (last)
+          // Three receipts over two months: the price crept up 3 % then 2 %.
+          for (const [ago, k] of [
+            [70, '0.95'],
+            [40, '0.98'],
+            [12, '1'],
+          ] as const) {
+            const price = last.times(k).toDecimalPlaces(2);
+            await tx.erpPriceRecord.create({
+              data: {
+                factoryId: factory.id,
+                itemId: item.id,
+                supplierId: item.defaultSupplierId!,
+                source: 'goods_receipt',
+                unit,
+                factor: factor.toFixed(6),
+                unitPrice: price.toFixed(6),
+                baseUnitPrice: price.div(factor).toFixed(6),
+                quantity: '10',
+                pricedOn: daysAgo(ago),
+                documentNo: `GR-UAT-${ago}`,
+                note: 'ประวัติราคา (ข้อมูลปลอม)',
+                createdById: by,
+              },
+            });
+          }
+        n += 1;
+      }
+
+      // A second paper supplier for KA-350, by the pack of 250 — cheaper per sheet, quoted for 60 days.
+      const kraft = items.find((i) => i.sku === 'KA-350');
+      if (kraft) {
+        const taken = await tx.erpTradingPartner.findMany({
+          where: { factoryId: factory.id, code: { startsWith: 'S' } },
+          select: { code: true },
+        });
+        const altCode = `S${String(Math.max(0, ...taken.map((t) => Number(t.code.slice(1)) || 0)) + 1).padStart(4, '0')}`;
+        const alt = await tx.erpTradingPartner.create({
+          data: {
+            factoryId: factory.id,
+            code: altCode,
+            kind: 'supplier',
+            name: 'บจก. กระดาษทางเลือกทดสอบ (ข้อมูลปลอม)',
+            phone: '020000004',
+            contactName: 'คุณทดสอบ (ข้อมูลปลอม)',
+            taxId: fakeTaxId(altCode),
+            branchCode: '00000',
+            paymentTermDays: 45,
+            createdById: by,
+          },
+        });
+        await tx.erpItemSupplier.create({
+          data: {
+            factoryId: factory.id,
+            itemId: kraft.id,
+            supplierId: alt.id,
+            supplierSku: 'KF350-P250',
+            purchaseUnit: 'pack',
+            purchaseFactor: '250.000000',
+            minOrderQty: '8',
+            leadTimeDays: 10,
+            lastPrice: '690.000000',
+            lastPricedOn: daysAgo(3),
+            createdById: by,
+          },
+        });
+        await tx.erpPriceRecord.create({
+          data: {
+            factoryId: factory.id,
+            itemId: kraft.id,
+            supplierId: alt.id,
+            source: 'quotation',
+            unit: 'pack',
+            factor: '250.000000',
+            unitPrice: '690.000000',
+            baseUnitPrice: '2.760000',
+            pricedOn: daysAgo(3),
+            validUntil: new Date(today.getTime() + 60 * 86_400_000),
+            documentNo: 'QT-UAT-001',
+            note: 'ใบเสนอราคา (ข้อมูลปลอม)',
+            createdById: by,
+          },
+        });
+
+        // A finished product, its recipe and one planned production order of 4 000.
+        const main = await tx.erpWarehouse.findFirstOrThrow({
+          where: { factoryId: factory.id, isDefault: true },
+        });
+        const glue = items.find((i) => i.sku === 'GLUE-PVA');
+        const box = await tx.erpItem.create({
+          data: {
+            factoryId: factory.id,
+            sku: 'FG-CRM-30',
+            name: 'กล่องครีม 30 ml (ข้อมูลปลอม)',
+            kind: 'finished_good',
+            baseUnit: 'pcs',
+            createdById: by,
+          },
+        });
+        const machines = await tx.factoryMachine.findMany({
+          where: { factoryId: factory.id },
+          take: 2,
+          orderBy: { id: 'asc' },
+        });
+        const recipe = await tx.erpRecipe.create({
+          data: {
+            factoryId: factory.id,
+            itemId: box.id,
+            name: 'กล่องครีม 30 ml — มาตรฐาน',
+            createdById: by,
+            materials: {
+              create: [
+                { lineNo: 1, itemId: kraft.id, quantity: '0.125000', scrapPct: '5.0000' },
+                ...(glue ? [{ lineNo: 2, itemId: glue.id, quantity: '0.000400', scrapPct: '0.0000' }] : []),
+              ],
+            },
+            operations: {
+              create: [
+                {
+                  seq: 10,
+                  name: 'พิมพ์ออฟเซ็ต 4 สี',
+                  machineId: machines[0]?.id ?? null,
+                  setupMinutes: 30,
+                  runRatePerHour: '3000',
+                },
+                {
+                  seq: 20,
+                  name: 'ไดคัท',
+                  machineId: machines[1]?.id ?? null,
+                  setupMinutes: 20,
+                  runRatePerHour: '2500',
+                },
+                { seq: 30, name: 'ปะกาว', setupMinutes: 15, runRatePerHour: '4000' },
+              ],
+            },
+          },
+        });
+        const period = bangkok.slice(2, 7).replace('-', '');
+        await tx.erpDocumentSeries.create({
+          data: { factoryId: factory.id, docType: 'mo', period, nextNo: 2 },
+        });
+        await tx.erpProductionOrder.create({
+          data: {
+            factoryId: factory.id,
+            moNo: `MO-${period}-0001`,
+            source: 'stock',
+            itemId: box.id,
+            recipeId: recipe.id,
+            title: 'กล่องครีม 30 ml (ข้อมูลปลอม)',
+            quantity: '4000',
+            unit: 'pcs',
+            dueOn: new Date(today.getTime() + 10 * 86_400_000),
+            plannedStartOn: new Date(today.getTime() + 3 * 86_400_000),
+            warehouseId: main.id,
+            createdById: by,
+            materials: {
+              create: [
+                { lineNo: 1, itemId: kraft.id, requiredQty: '526.316', origin: 'recipe' },
+                ...(glue ? [{ lineNo: 2, itemId: glue.id, requiredQty: '1.600', origin: 'recipe' }] : []),
+              ],
+            },
+            operations: {
+              create: [
+                {
+                  seq: 10,
+                  name: 'พิมพ์ออฟเซ็ต 4 สี',
+                  machineId: machines[0]?.id ?? null,
+                  plannedMinutes: 110,
+                },
+                { seq: 20, name: 'ไดคัท', machineId: machines[1]?.id ?? null, plannedMinutes: 116 },
+                { seq: 30, name: 'ปะกาว', plannedMinutes: 75 },
+              ],
+            },
+          },
+        });
+      }
+      return n;
+    },
+    { timeout: 60_000 },
+  );
+}

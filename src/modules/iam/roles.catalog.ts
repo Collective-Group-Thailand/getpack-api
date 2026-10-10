@@ -686,6 +686,13 @@ export const ROLES: readonly RoleDefinition[] = [
       'factory_procurement.manage',
       'factory_procurement.approve',
       'factory_erp.configure',
+      'factory_procurement.request',
+      'factory_ap.read',
+      'factory_ap.manage',
+      'factory_ap.approve',
+      'factory_planning.read',
+      'factory_planning.manage',
+      'factory_production.record',
     ],
   },
   {
@@ -713,6 +720,10 @@ export const ROLES: readonly RoleDefinition[] = [
       'factory_trading_partners.read',
       'factory_inventory.read',
       'factory_procurement.read',
+      'factory_procurement.request',
+      'factory_planning.read',
+      'factory_planning.manage',
+      'factory_production.record',
     ],
   },
   {
@@ -726,6 +737,9 @@ export const ROLES: readonly RoleDefinition[] = [
       'factory_jobs.read',
       'factory_milestones.update',
       'factory_issues.raise',
+      'factory_inventory.read',
+      'factory_planning.read',
+      'factory_production.record',
     ],
   },
   {
@@ -778,6 +792,8 @@ export const ROLES: readonly RoleDefinition[] = [
       'factory_trading_partners.manage',
       'factory_inventory.read',
       'factory_procurement.read',
+      'factory_ap.read',
+      'factory_ap.manage',
     ],
   },
 
@@ -794,6 +810,8 @@ export const ROLES: readonly RoleDefinition[] = [
       'factory_inventory.read',
       'factory_inventory.manage',
       'factory_procurement.read',
+      'factory_procurement.request',
+      'factory_planning.read',
     ],
   },
   {
@@ -809,6 +827,8 @@ export const ROLES: readonly RoleDefinition[] = [
       'factory_inventory.read',
       'factory_procurement.read',
       'factory_procurement.manage',
+      'factory_procurement.request',
+      'factory_ap.read',
     ],
   },
 

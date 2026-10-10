@@ -200,12 +200,28 @@ export const API_TAGS: Record<string, string> = {
     'Packio Factory ERP: modules, document prefixes and stock rules of my factory (D-318, D-322, D-323). Factory-private (D-317).',
   'partner.erpPartners': 'Packio Factory ERP: my factory’s own suppliers and customers (D-317, D-319).',
   'partner.erpWarehouses': 'Packio Factory ERP: my factory’s warehouses (D-320).',
-  'partner.erpItems': 'Packio Factory ERP: my factory’s item master — materials, consumables, spare parts, goods (D-320).',
+  'partner.erpItems':
+    'Packio Factory ERP: my factory’s item master — materials, consumables, spare parts, goods (D-320).',
   'partner.erpStock':
     'Packio Factory ERP: stock balances, the append-only stock ledger, adjustments, counts, issues, transfers and the reorder list (D-321 – D-327).',
   'partner.erpPurchaseOrders':
     'Packio Factory ERP: my factory’s purchase orders — draft, issue, receive, close, cancel (D-325, D-326).',
-  'partner.erpGoodsReceipts': 'Packio Factory ERP: goods received from my suppliers into stock at cost (D-321, D-325).',
+  'partner.erpGoodsReceipts':
+    'Packio Factory ERP: goods received from my suppliers into stock at cost (D-321, D-325).',
+  'partner.erpItemSuppliers':
+    'Packio Factory ERP: who sells each item at what price — supplier links, latest prices and price history (D-333 – D-335).',
+  'partner.erpPurchaseRequests':
+    'Packio Factory ERP: purchase requests, approval and conversion to purchase orders (D-336).',
+  'partner.erpSupplierInvoices':
+    'Packio Factory ERP: supplier invoices matched 3-way, withholding tax and aging (D-337).',
+  'partner.erpSupplierPayments':
+    'Packio Factory ERP: payments to suppliers allocated to invoices; reversals (D-338).',
+  'partner.erpRecipes':
+    'Packio Factory ERP: how each product is made — materials per batch and operations (D-339).',
+  'partner.erpProductionOrders':
+    'Packio Factory ERP: production orders from Packio jobs or the factory’s own — reservations, issues, floor operations, completion (D-340, D-341).',
+  'partner.erpPlanning':
+    'Packio Factory ERP: the planning board, machine load, the floor queue and MRP (D-342).',
   'partner.changeRequests':
     'Requests to the Partner team for changes only staff make, or a site visit; with the team’s answer (U-B0.3).',
   'admin.factoryChangeRequests':
@@ -301,7 +317,8 @@ export const API_TAGS: Record<string, string> = {
   'admin.catalogDesignFonts': 'Fonts offered by semi-design templates, with their licence (D-005).',
   'admin.cmsBanners': 'Storefront banners by position and validity window (D-005).',
   'admin.cmsHomeSections': 'Home-page sections and their order (D-005).',
-  'admin.cmsHomeCases': 'Customer stories for the home page, shown only when approved with written permission (D-311).',
+  'admin.cmsHomeCases':
+    'Customer stories for the home page, shown only when approved with written permission (D-311).',
   'admin.cmsArticleCategories': 'Article categories (D-005).',
   'admin.cmsArticles': 'Articles with rich text, cover and categories (D-005).',
   'admin.cmsFaqCategories': 'FAQ categories (D-005).',
