@@ -916,7 +916,7 @@ export class ErpStockMovementDto {
   documentNo!: string;
 
   @ApiProperty({
-    enum: ['goods_receipt', 'adjustment', 'issue', 'transfer'],
+    enum: ['goods_receipt', 'adjustment', 'issue', 'transfer', 'production_order'],
     enumName: 'ErpMovementSource',
     example: 'goods_receipt',
   })

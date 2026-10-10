@@ -3,6 +3,12 @@
 Contract-facing changes per release. The contract itself is `contract/openapi.json`; mappings for `packio-web` are in
 `docs/contract-requests-triage.md`.
 
+## v0.45.1 — contract fix: production movements name their source
+
+- `ErpStockMovementDto.sourceType` (`ErpMovementSource`) gains `production_order`: the movements a production order
+  posts (`production_issue`, `production_return`, `production_receipt`, D-341) name it; v0.45.0 returned the value
+  without listing it. Clients that switch over the source need a default.
+
 ## v0.45.0 — Packio Factory ERP E1.1 + E2: supplier prices, purchase requests, payables, production, MRP
 
 All changes are additive except one value set: `ErpMovementKind` gains `production_issue`, `production_return`,
