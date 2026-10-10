@@ -49,10 +49,12 @@ export interface StockEntry {
   costOfPrevious?: boolean;
   lotNo?: string | null;
   reason?: string | null;
+  /** Of an outgoing quantity, the part that was reserved for it and is released now (D-341). */
+  releaseReserved?: MoneyValue;
 }
 
 export interface StockSource {
-  type: 'goods_receipt' | 'adjustment' | 'issue' | 'transfer';
+  type: 'goods_receipt' | 'adjustment' | 'issue' | 'transfer' | 'production_order';
   publicId: string;
   documentNo: string;
   occurredAt?: Date;
@@ -124,8 +126,10 @@ export class ErpStockService {
       if (e.item.trackLots && !e.lotNo)
         throw new DomainException('erp.lot_required', { params: { item: e.item.name } });
       const before = state.get(key(e))!;
+      const release = e.releaseReserved && e.releaseReserved.gt(0) ? e.releaseReserved : dec(0);
+      if (release.gt(before.reserved)) throw new RangeError('Releasing more than is reserved');
       if (e.quantity.isNegative() && !settings.allowNegativeStock) {
-        const available = before.onHand.minus(before.reserved);
+        const available = before.onHand.minus(before.reserved).plus(release);
         if (available.plus(e.quantity).isNegative())
           throw new DomainException('erp.stock_insufficient', {
             params: {
@@ -141,10 +145,11 @@ export class ErpStockService {
         fallbackCost: fallbackCost(e.item),
       });
       previous = effect;
-      state.set(key(e), { ...before, ...effect.after });
+      state.set(key(e), { ...before, ...effect.after, reserved: before.reserved.minus(release) });
       await tx.erpStockBalance.update({
         where: { id: before.id },
         data: {
+          ...(release.gt(0) && { reserved: fmtQty(before.reserved.minus(release)) }),
           onHand: fmtQty(effect.after.onHand),
           avgCost: fmtCost(effect.after.avgCost),
           value: fmtMoney(effect.after.value),
@@ -174,6 +179,44 @@ export class ErpStockService {
       out.push(movement);
     }
     return out;
+  }
+
+  /**
+   * Holds stock for a production order (D-341): up to `wanted`, never more than is free (on hand less what is
+   * already reserved) in the warehouse; returns what was reserved. The balance row is locked.
+   */
+  async reserve(tx: Tx, factoryId: bigint, itemId: bigint, warehouseId: bigint, wanted: MoneyValue) {
+    if (!wanted.gt(0)) return dec(0);
+    await tx.$executeRaw(Prisma.sql`
+      INSERT INTO erp_stock_balances (factory_id, item_id, warehouse_id)
+      VALUES (${factoryId}, ${itemId}, ${warehouseId})
+      ON CONFLICT (item_id, warehouse_id) DO NOTHING`);
+    const [row] = await tx.$queryRaw<{ id: bigint; on_hand: Prisma.Decimal; reserved: Prisma.Decimal }[]>(
+      Prisma.sql`SELECT id, on_hand, reserved FROM erp_stock_balances
+                  WHERE item_id = ${itemId} AND warehouse_id = ${warehouseId} FOR UPDATE`,
+    );
+    const free = dec(row!.on_hand).minus(dec(row!.reserved));
+    const take = free.gt(wanted) ? wanted : free;
+    if (!take.gt(0)) return dec(0);
+    await tx.erpStockBalance.update({
+      where: { id: row!.id },
+      data: { reserved: fmtQty(dec(row!.reserved).plus(take)) },
+    });
+    return take;
+  }
+
+  /** Gives back a reservation (an order cancelled, completed or reduced). */
+  async unreserve(tx: Tx, itemId: bigint, warehouseId: bigint, quantity: MoneyValue) {
+    if (!quantity.gt(0)) return;
+    const [row] = await tx.$queryRaw<{ id: bigint; reserved: Prisma.Decimal }[]>(Prisma.sql`
+      SELECT id, reserved FROM erp_stock_balances
+       WHERE item_id = ${itemId} AND warehouse_id = ${warehouseId} FOR UPDATE`);
+    if (!row) return;
+    const left = dec(row.reserved).minus(quantity);
+    await tx.erpStockBalance.update({
+      where: { id: row.id },
+      data: { reserved: fmtQty(left.isNegative() ? 0 : left) },
+    });
   }
 
   /** Items of this factory by public id, in the order asked; unknown ids are 404, archived ones refused. */

@@ -162,12 +162,29 @@ later **factory_sales** (ฝ่ายขาย), **factory_maintenance** (ช่
 | Phase | Scope | Exit |
 |---|---|---|
 | **E1** | M13 basics (settings, numbering, roles), M1 trading partners, M2 inventory, M3 PO + goods receipt, reorder list; web: ระบบคลัง / จัดซื้อ / คู่ค้า sections | contract released, web adopted, e2e on phone |
-| E2 | Purchase requests + approval, supplier invoice match, BOM/routing, production orders from Packio jobs, MRP shortages → PR | Packio job reserves stock |
+| **E1.1** | Item suppliers (unit, minimum order, lead time, latest price), price history, cheapest/on-time statistics (D-333 – D-335) | done v0.45.0 |
+| **E2** | Purchase requests + approval, supplier invoices 3-way matched + payments + aging, recipes, production orders from Packio jobs / stock / sales orders with reservations, issues and completion at cost, floor operations, MRP shortages → PR (D-336 – D-343) | done v0.45.0 — Packio job reserves stock |
 | E3 | Machine schedule (auto + manual), shop floor kiosk, maintenance, DMS | operators run a day without paper |
 | E4 | Sales & CRM, accounting documents, AR/AP, VAT/WHT reports, exports | first own tax invoice issued |
 | E5 | Quality, costing, OEE, owner dashboard, LINE summaries, people-lite | owner dashboard live |
+| E6 | Factory general ledger, financial statements, tax returns, fixed assets, bank reconciliation (D-344; `E6-factory-general-ledger.md`) | first month closed with a CPA |
 
 ## 8. Definition of done (per phase)
 Same as `00-master-plan.md` §8, plus: every ERP read is factory-scoped (e2e: another factory's id → 404,
 a Packio staff token → 403 on private ERP data, D-317), stock ledger invariants tested
 (sum of movements = balance; no negative stock unless allowed), money and quantity rounding tested.
+
+## 9. E1.1 + E2 as built (v0.45.0)
+- Tables: `erp_item_suppliers`, `erp_price_records` (append-only), `erp_purchase_requests` / `_lines`,
+  `erp_supplier_invoices` / `_lines`, `erp_supplier_payments` + `erp_payment_allocations` (append-only, reversal by
+  a negative payment), `erp_recipes` + `_materials` + `_operations`, `erp_production_orders` + `_materials` +
+  `_operations`; settings `price_tolerance_pct`, `require_request_approval`; series PR, AP, PV, MO; movement kinds
+  `production_issue`, `production_return`, `production_receipt`.
+- Endpoints: `items/{id}/suppliers`, `items/{id}/prices`, `partners/{id}/items`, `purchase-requests` (+ submit,
+  approve, reject, cancel, convert), `supplier-invoices` (+ aging, approve, cancel), `supplier-payments` (+ reverse),
+  `recipes`, `production-orders` (+ release, issue, return, complete, cancel, operations start/finish/skip),
+  `planning/overview`, `planning/queue`, `planning/mrp` (+ request).
+- Subscribers: `production_job.accepted` → production order; `.rejected` / `.reassigned` → cancel;
+  `.completed` → complete (consumers `factory_erp.*`, run by the worker).
+- Not yet (later phases): per-lot balances, finite-capacity scheduling and drag (E3), labour/overhead costing (E5),
+  supplier credit notes and 50 ทวิ printing (E4), posting to a factory ledger (E6).

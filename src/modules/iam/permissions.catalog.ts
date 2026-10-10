@@ -896,7 +896,6 @@ export const PERMISSIONS = [
     decisionRefs: ['D-013'],
   },
 
-
   // --- Packio Factory ERP (factory-scoped, factory-private data, D-316 – D-319)
   {
     key: 'factory_trading_partners.read',
@@ -945,6 +944,49 @@ export const PERMISSIONS = [
     audience: 'partner',
     description: 'Issue (approve) the factory’s purchase orders',
     decisionRefs: ['D-319', 'D-325'],
+  },
+  {
+    key: 'factory_procurement.request',
+    audience: 'partner',
+    description: 'Raise the factory’s purchase requests (from need, the reorder list or MRP)',
+    decisionRefs: ['D-319', 'D-336'],
+  },
+  {
+    key: 'factory_ap.read',
+    audience: 'partner',
+    description: 'Read the factory’s supplier invoices, payments and payables aging',
+    decisionRefs: ['D-319', 'D-337', 'D-338'],
+  },
+  {
+    key: 'factory_ap.manage',
+    audience: 'partner',
+    description: 'Record supplier invoices (3-way matched) and pay or reverse supplier payments',
+    decisionRefs: ['D-319', 'D-337', 'D-338'],
+  },
+  {
+    key: 'factory_ap.approve',
+    audience: 'partner',
+    description: 'Approve supplier invoices that did not match the order or the goods received',
+    decisionRefs: ['D-319', 'D-337'],
+  },
+  {
+    key: 'factory_planning.read',
+    audience: 'partner',
+    description: 'Read the factory’s recipes, production orders, the floor queue and MRP',
+    decisionRefs: ['D-319', 'D-339', 'D-340', 'D-342'],
+  },
+  {
+    key: 'factory_planning.manage',
+    audience: 'partner',
+    description:
+      'Manage recipes; plan, release, complete and cancel production orders; request MRP shortages',
+    decisionRefs: ['D-319', 'D-339', 'D-340', 'D-341', 'D-342'],
+  },
+  {
+    key: 'factory_production.record',
+    audience: 'partner',
+    description: 'Start, finish or skip operations of production orders on the floor',
+    decisionRefs: ['D-319', 'D-341'],
   },
   {
     key: 'factory_erp.configure',

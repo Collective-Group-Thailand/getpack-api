@@ -1679,6 +1679,34 @@
     "same_warehouse": {
       "title": "Same warehouse",
       "detail": "Choose a destination different from the source"
+    },
+    "supplier_linked": {
+      "title": "Supplier already linked",
+      "detail": "{name} already supplies this item"
+    },
+    "invoice_duplicate": {
+      "title": "Duplicate invoice",
+      "detail": "Invoice {invoiceNo} of this supplier is already recorded as {docNo}"
+    },
+    "invoice_not_payable": {
+      "title": "Invoice not payable",
+      "detail": "{docNo} is {status} (an invoice that did not match needs approval first)"
+    },
+    "overpayment": {
+      "title": "More than is open",
+      "detail": "{docNo} has {open} THB open"
+    },
+    "nothing_to_issue": {
+      "title": "Nothing to issue",
+      "detail": "Every material is already issued"
+    },
+    "materials_issued": {
+      "title": "Materials issued",
+      "detail": "Return the materials first, or complete the order instead"
+    },
+    "nothing_to_request": {
+      "title": "Nothing short",
+      "detail": "The chosen materials are no longer short"
     }
   }
 }

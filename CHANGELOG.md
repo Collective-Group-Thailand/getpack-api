@@ -3,6 +3,35 @@
 Contract-facing changes per release. The contract itself is `contract/openapi.json`; mappings for `packio-web` are in
 `docs/contract-requests-triage.md`.
 
+## v0.45.0 — Packio Factory ERP E1.1 + E2: supplier prices, purchase requests, payables, production, MRP
+
+All changes are additive except one value set: `ErpMovementKind` gains `production_issue`, `production_return`,
+`production_receipt` (clients that switch over movement kinds need a default). Decisions D-333 – D-345; the plan
+for a factory general ledger is `docs/prompts/E6-factory-general-ledger.md` (D-344, proposed).
+
+- **Supplier prices (E1.1)**: `items/{itemId}/suppliers` (list, add, `PATCH` with If-Match), `items/{itemId}/prices`
+  (history, paginated; `POST` a quotation or a noted price), `partners/{partnerId}/items` — tag
+  `partner.erpItemSuppliers`. Each link: supplier code / name, unit and factor, minimum order, lead time, latest
+  price and per base unit, preferred, cheapest, quotation validity, 12-month min / avg / max, change %, on-time %,
+  average lead days. Issued POs and goods receipts write the history; POs and receipts accept the supplier's unit.
+  The reorder list and drafts from it use the preferred supplier's unit, minimum order and price.
+- **Purchase requests**: `purchase-requests` (+ `actions/submit|approve|reject|cancel|convert`, `nextActions`
+  `erp_pr.*`).
+- **Payables**: `supplier-invoices` (3-way match → `matched` / `variance`, WHT, due date; `aging`,
+  `actions/approve|cancel`, `erp_ap.*`), `supplier-payments` (allocations, `actions/reverse`, `erp_pay.reverse`).
+- **Production**: `recipes`, `production-orders` (+ `actions/release|issue|return|complete|cancel`,
+  `operations/{id}/actions/start|finish|skip`, `erp_mo.*`), `planning/overview`, `planning/queue`, `planning/mrp`
+  (+ `actions/request`). An accepted Packio job becomes a production order automatically (worker consumer
+  `factory_erp.job_to_production_order`).
+- `ErpSettingsDto` / `UpdateErpSettingsDto`: `priceTolerancePct`, `requireRequestApproval`; prefixes include
+  `pr`, `ap`, `pv`, `mo`.
+- New permissions `factory_procurement.request`, `factory_ap.read/manage/approve`, `factory_planning.read/manage`,
+  `factory_production.record`; role grants per D-343.
+- New problem codes `erp.supplier_linked`, `erp.invoice_duplicate`, `erp.invoice_not_payable`, `erp.overpayment`,
+  `erp.nothing_to_issue`, `erp.materials_issued`, `erp.nothing_to_request`.
+- Migration `20261201000001_factory_erp_e2` (14 tables, 3 append-only triggers, 30 checks). `db:seed:uat` adds supplier
+  links with price history, a second paper supplier, a product recipe and a planned production order.
+
 ## v0.44.0 — Packio Factory ERP, phase E1: trading partners, inventory, purchasing
 
 All changes are additive. Blueprint `docs/prompts/E1-factory-erp.md`; decisions D-316 – D-332.

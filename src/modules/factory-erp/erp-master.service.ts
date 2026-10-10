@@ -21,6 +21,7 @@ import {
   type UpdateErpSettingsDto,
 } from './erp.dto';
 import { dec } from './erp.math';
+import { ErpPricingService } from './erp-pricing.service';
 import { ErpStockService } from './erp-stock.service';
 import { itemDto, partnerEtag, tradingPartnerDto, warehouseDto } from './erp-views';
 import { DEFAULT_PREFIXES, type ErpScope, ErpWorkspace } from './erp-workspace.service';
@@ -41,6 +42,7 @@ export class ErpMasterService {
     private readonly workspace: ErpWorkspace,
     private readonly stock: ErpStockService,
     private readonly audit: AuditService,
+    private readonly pricing: ErpPricingService,
   ) {}
 
   // -------------------------------------------------------------------------------- settings
@@ -72,6 +74,10 @@ export class ErpMasterService {
           ...(body.modules && { disabledModules: ERP_MODULES.filter((m) => !body.modules!.includes(m)) }),
           ...(body.allowNegativeStock !== undefined && { allowNegativeStock: body.allowNegativeStock }),
           ...(body.overReceiptPct !== undefined && { overReceiptPct: body.overReceiptPct }),
+          ...(body.priceTolerancePct !== undefined && { priceTolerancePct: body.priceTolerancePct }),
+          ...(body.requireRequestApproval !== undefined && {
+            requireRequestApproval: body.requireRequestApproval,
+          }),
           ...(body.prefixes && { prefixes: { ...(current.prefixes as object), ...body.prefixes } }),
           updatedById: scope.actor.userId,
           rowVersion: { increment: 1 },
@@ -97,6 +103,8 @@ export class ErpMasterService {
       disabledModules: string[];
       allowNegativeStock: boolean;
       overReceiptPct: Prisma.Decimal;
+      priceTolerancePct: Prisma.Decimal;
+      requireRequestApproval: boolean;
       prefixes: unknown;
       rowVersion: number;
     },
@@ -105,6 +113,8 @@ export class ErpMasterService {
       modules: ERP_MODULES.filter((m) => !s.disabledModules.includes(m)),
       allowNegativeStock: s.allowNegativeStock,
       overReceiptPct: dec(s.overReceiptPct).toFixed(4),
+      priceTolerancePct: dec(s.priceTolerancePct).toFixed(4),
+      requireRequestApproval: s.requireRequestApproval,
       prefixes: { ...DEFAULT_PREFIXES, ...(s.prefixes as Record<string, string>) },
       vatRegistered: scope.factory.isVatRegistered,
       version: s.rowVersion,
@@ -457,6 +467,8 @@ export class ErpMasterService {
           },
           include: ITEM_INCLUDE,
         });
+        if (created.defaultSupplierId !== null)
+          await this.pricing.syncDefault(tx, created, created.defaultSupplierId, scope.actor.userId);
         await this.workspace.record(tx, scope, 'erp_item.created', 'erp_item', created.publicId, { sku });
         return created;
       });
@@ -502,6 +514,8 @@ export class ErpMasterService {
           rowVersion: { increment: 1 },
         },
       });
+      if (refs.defaultSupplierId !== undefined && refs.defaultSupplierId !== current.defaultSupplierId)
+        await this.pricing.syncDefault(tx, row, refs.defaultSupplierId, scope.actor.userId);
       await this.workspace.record(tx, scope, 'erp_item.updated', 'erp_item', row.publicId, {
         fields: Object.keys(body),
       });
