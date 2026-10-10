@@ -48,7 +48,7 @@ const LINKS: Record<InboxSurface, Record<string, Link>> = {
         case 'maintenance_order':
           return id ? `/maintenance/${id}` : '/alerts';
         case 'maintenance_plan':
-          return '/maintenance?view=plans';
+          return id ? `/maintenance/plans/${id}` : '/maintenance';
         case 'document':
           return id ? `/documents/${id}` : '/alerts';
         default:

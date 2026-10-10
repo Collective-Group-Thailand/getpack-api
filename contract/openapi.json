@@ -1772,6 +1772,17 @@
           "type": "https://errors.packio/erp.supplier_linked"
         }
       },
+      "problem.erp.supplier_not_approved": {
+        "summary": "erp.supplier_not_approved",
+        "value": {
+          "code": "erp.supplier_not_approved",
+          "detail": "{{supplier}} ยังไม่อยู่ในรายชื่อผู้ขายที่อนุมัติสำหรับ {{item}} — อนุมัติผู้ขายก่อนออกใบสั่งซื้อ",
+          "requestId": "6f1c2d8e-2c7b-4d0e-9d1c-3f1a2b3c4d5e",
+          "status": 422,
+          "title": "ผู้ขายยังไม่ได้รับอนุมัติ",
+          "type": "https://errors.packio/erp.supplier_not_approved"
+        }
+      },
       "problem.erp.unit_not_allowed": {
         "summary": "erp.unit_not_allowed",
         "value": {
@@ -357028,7 +357039,7 @@
     },
     "/v1/partner/factories/{factoryId}/erp/purchase-orders/{poId}/actions/issue": {
       "post": {
-        "description": "Numbers it `PO-YYMM-NNNN` and freezes it; it can then be sent and received (D-325). Audited.\n\nImplements: D-319, D-323, D-325.",
+        "description": "Numbers it `PO-YYMM-NNNN` and freezes it; it can then be sent and received (D-325). Refused with `erp.supplier_not_approved` when the factory requires approved suppliers and a line’s link is not (D-351). Audited.\n\nImplements: D-319, D-323, D-325, D-351.",
         "operationId": "partner.erpPurchaseOrders.issue",
         "parameters": [
           {
@@ -357295,6 +357306,9 @@
                   "erp.archived": {
                     "$ref": "#/components/examples/problem.erp.archived"
                   },
+                  "erp.supplier_not_approved": {
+                    "$ref": "#/components/examples/problem.erp.supplier_not_approved"
+                  },
                   "idempotency.key_reused": {
                     "$ref": "#/components/examples/problem.idempotency.key_reused"
                   }
@@ -357304,7 +357318,7 @@
                 }
               }
             },
-            "description": "Problem: `erp.archived`, `idempotency.key_reused`",
+            "description": "Problem: `erp.archived`, `erp.supplier_not_approved`, `idempotency.key_reused`",
             "headers": {
               "X-Request-Id": {
                 "$ref": "#/components/headers/XRequestId"

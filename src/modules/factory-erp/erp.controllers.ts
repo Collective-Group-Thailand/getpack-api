@@ -1078,11 +1078,12 @@ export class PartnerErpPurchaseOrdersController {
     id: 'partner.erpPurchaseOrders.issue',
     summary: 'Issue (approve) a purchase order',
     description:
-      'Numbers it `PO-YYMM-NNNN` and freezes it; it can then be sent and received (D-325). Audited.',
-    implements: ['D-319', 'D-323', 'D-325'],
+      'Numbers it `PO-YYMM-NNNN` and freezes it; it can then be sent and received (D-325). Refused with ' +
+      '`erp.supplier_not_approved` when the factory requires approved suppliers and a line’s link is not (D-351). Audited.',
+    implements: ['D-319', 'D-323', 'D-325', 'D-351'],
   })
   @ApiSuccess(200, { description: 'Issued', type: ErpPurchaseOrderDto, example: { ...PO, status: 'issued' } })
-  @ApiStandardErrors('http.not_found', 'erp.invalid_status', 'erp.archived')
+  @ApiStandardErrors('http.not_found', 'erp.invalid_status', 'erp.archived', 'erp.supplier_not_approved')
   async issue(
     @CurrentActor() actor: Actor,
     @Param('factoryId', ParseUUIDPipe) factoryId: string,
