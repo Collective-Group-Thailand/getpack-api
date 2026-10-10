@@ -18,8 +18,17 @@ import {
   PartnerErpSupplierInvoicesController,
   PartnerErpSupplierPaymentsController,
 } from './erp-e2.controllers';
+import {
+  PartnerErpAlertsController,
+  PartnerErpDocumentsController,
+  PartnerErpMachinesController,
+  PartnerErpMaintenanceController,
+  PartnerErpRfqsController,
+  PartnerErpScheduleController,
+  PartnerErpSourcingController,
+} from './erp-e3.controllers';
 
-/** `/v1/partner/factories/{factoryId}/erp/*` (E1, E1.1, E2). */
+/** `/v1/partner/factories/{factoryId}/erp/*` (E1, E1.1, E2, E2.1, E3). */
 export const FACTORY_ERP_PARTNER_CONTROLLERS: Type<unknown>[] = [
   PartnerErpSettingsController,
   PartnerErpPartnersController,
@@ -35,4 +44,11 @@ export const FACTORY_ERP_PARTNER_CONTROLLERS: Type<unknown>[] = [
   PartnerErpRecipesController,
   PartnerErpProductionOrdersController,
   PartnerErpPlanningController,
+  PartnerErpSourcingController,
+  PartnerErpAlertsController,
+  PartnerErpRfqsController,
+  PartnerErpMachinesController,
+  PartnerErpScheduleController,
+  PartnerErpMaintenanceController,
+  PartnerErpDocumentsController,
 ];

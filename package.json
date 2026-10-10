@@ -1,6 +1,6 @@
 {
   "name": "packio-api",
-  "version": "0.45.2",
+  "version": "0.46.0",
   "description": "Packio — Your Packaging Production Partner · backend (NestJS)",
   "private": true,
   "license": "UNLICENSED",

@@ -37,7 +37,6 @@ import {
   ErpItemSupplierDto,
   ErpMaterialMoveDto,
   ErpMrpRowDto,
-  ErpOperationOutputDto,
   ErpOperationQueueItemDto,
   ErpOperationQueueQuery,
   ErpPlanningOverviewDto,
@@ -62,6 +61,7 @@ import {
   ErpUpdateItemSupplierDto,
   ErpUpdateProductionOrderDto,
 } from './erp-e2.dto';
+import { ErpFinishOperationDto } from './erp-e3.dto';
 import { ErpPayablesService } from './erp-payables.service';
 import { ErpPricingService } from './erp-pricing.service';
 import { ErpProductionService } from './erp-production.service';
@@ -98,7 +98,7 @@ const MACHINE_REF = { id: E2_IDS.machine, name: 'Heidelberg SM 74 (ทดสอ�
 
 // ----------------------------------------------------------------------------------- examples
 
-const LINK: ErpItemSupplierDto = {
+export const LINK: ErpItemSupplierDto = {
   id: E2_IDS.link,
   item: ITEM_REF,
   supplier: SUPPLIER_REF,
@@ -125,6 +125,26 @@ const LINK: ErpItemSupplierDto = {
     changePct: '1.79',
     onTimePct: '75.00',
     avgLeadDays: '6.5',
+  },
+  approval: 'approved',
+  approvalNote: 'ผ่านการตรวจโรงงาน ได้ FSC',
+  approvedAt: '2026-10-10T10:00:00+07:00',
+  approvedBy: 'เจ้าของ ทดสอบ',
+  reviewOn: '2027-10-01',
+  priceBreaks: [
+    { minQty: '10.000', unitPrice: '1425.000000', baseUnitPrice: '2.850000' },
+    { minQty: '50.000', unitPrice: '1380.000000', baseUnitPrice: '2.760000' },
+  ],
+  breaksValidUntil: '2026-12-31',
+  score: {
+    receipts: 6,
+    deliveredValue: '84200.00',
+    acceptedValue: '83350.00',
+    rejectedLines: 1,
+    qualityPct: '98.99',
+    onTimePct: '83.33',
+    score: '92.73',
+    grade: 'B',
   },
   version: 1,
 };
@@ -195,7 +215,7 @@ const SAVE_PR = {
   lines: [{ itemId: ERP_IDS.item, quantity: '10000' }],
 };
 
-const PO_SUMMARY = {
+export const PO_SUMMARY = {
   id: ERP_IDS.po,
   poNo: null,
   status: 'draft',
@@ -335,7 +355,7 @@ const SAVE_RECIPE = {
   ],
 };
 
-const MO_SUMMARY: ErpProductionOrderSummaryDto = {
+export const MO_SUMMARY: ErpProductionOrderSummaryDto = {
   id: E2_IDS.mo,
   moNo: 'MO-2610-0005',
   source: 'stock',
@@ -351,7 +371,7 @@ const MO_SUMMARY: ErpProductionOrderSummaryDto = {
   short: false,
 };
 
-const OPERATION = {
+export const OPERATION = {
   id: E2_IDS.moOperation,
   seq: 10,
   name: 'พิมพ์ออฟเซ็ท 4 สี',
@@ -360,9 +380,20 @@ const OPERATION = {
   status: 'pending',
   goodQty: '0.000',
   scrapQty: '0.000',
+  scheduledStart: '2026-10-20T08:30:00+07:00',
+  scheduledEnd: '2026-10-20T09:20:00+07:00',
+  locked: false,
+  startedAt: null,
+  finishedAt: null,
+  pausedMinutes: 0,
+  actualMinutes: null,
+  pauseReason: null,
+  milestone: null,
+  milestoneSync: 'none',
+  milestoneSyncError: null,
 };
 
-const MO: ErpProductionOrderDto = {
+export const MO: ErpProductionOrderDto = {
   ...MO_SUMMARY,
   job: null,
   recipe: { id: E2_IDS.recipe, code: 'FG-CRM-30', name: 'กล่องครีม 30 ml — มาตรฐาน' },
@@ -1584,7 +1615,7 @@ export class PartnerErpProductionOrdersController {
     type: ErpProductionOrderDto,
     example: { ...MO, status: 'in_progress' },
   })
-  @ApiStandardErrors('http.not_found', 'erp.invalid_status')
+  @ApiStandardErrors('http.not_found', 'erp.invalid_status', 'erp.machine_down')
   async start(
     @CurrentActor() actor: Actor,
     @Param('factoryId', ParseUUIDPipe) factoryId: string,
@@ -1616,7 +1647,7 @@ export class PartnerErpProductionOrdersController {
     implements: ['D-341'],
   })
   @ApiBody({
-    type: ErpOperationOutputDto,
+    type: ErpFinishOperationDto,
     examples: { default: { value: { goodQty: '1000', scrapQty: '12' } } },
   })
   @ApiSuccess(200, {
@@ -1630,10 +1661,10 @@ export class PartnerErpProductionOrdersController {
     @Param('factoryId', ParseUUIDPipe) factoryId: string,
     @Param('moId', ParseUUIDPipe) moId: string,
     @Param('operationId', ParseUUIDPipe) operationId: string,
-    @Body() body: ErpOperationOutputDto,
+    @Body() body: ErpFinishOperationDto,
   ) {
     const scope = await this.workspace.open(actor, factoryId);
-    return this.production.operation(
+    return this.production.operate(
       scope,
       moId,
       operationId,

@@ -33,6 +33,7 @@ describe('IAM catalogues (D-140, D-141)', () => {
         'factory_accountant',
         'factory_storekeeper',
         'factory_purchaser',
+        'factory_maintenance',
         'company_admin',
         'company_buyer',
         'company_approver',

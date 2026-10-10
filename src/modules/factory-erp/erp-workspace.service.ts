@@ -23,6 +23,8 @@ export const DEFAULT_PREFIXES: Record<ErpDocumentType, string> = {
   ap: 'AP',
   pv: 'PV',
   mo: 'MO',
+  rfq: 'RFQ',
+  mt: 'MT',
 };
 
 /** A person working in their own factory's ERP (D-317): partner users only, never staff or machines. */

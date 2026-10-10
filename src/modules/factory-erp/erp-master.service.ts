@@ -2,7 +2,12 @@ import { DomainException } from '@common/errors/domain.exception';
 import { assertIfMatch } from '@common/etag/etag';
 import { paginated, toSkipTake } from '@common/pagination/pagination';
 import { type Tx } from '@database/prisma.service';
-import { type ErpItem, type ErpPartnerKind, Prisma } from '@generated/prisma/client';
+import {
+  type ErpItem,
+  type ErpPartnerKind,
+  type ErpSupplierApprovalPolicy,
+  Prisma,
+} from '@generated/prisma/client';
 import { Injectable } from '@nestjs/common';
 import { AuditService } from '@platform/audit/audit.service';
 
@@ -78,6 +83,11 @@ export class ErpMasterService {
           ...(body.requireRequestApproval !== undefined && {
             requireRequestApproval: body.requireRequestApproval,
           }),
+          ...(body.priceAlertPct !== undefined && { priceAlertPct: body.priceAlertPct }),
+          ...(body.quoteExpiryDays !== undefined && { quoteExpiryDays: body.quoteExpiryDays }),
+          ...(body.supplierApproval !== undefined && {
+            supplierApproval: body.supplierApproval as ErpSupplierApprovalPolicy,
+          }),
           ...(body.prefixes && { prefixes: { ...(current.prefixes as object), ...body.prefixes } }),
           updatedById: scope.actor.userId,
           rowVersion: { increment: 1 },
@@ -105,6 +115,9 @@ export class ErpMasterService {
       overReceiptPct: Prisma.Decimal;
       priceTolerancePct: Prisma.Decimal;
       requireRequestApproval: boolean;
+      priceAlertPct: Prisma.Decimal;
+      quoteExpiryDays: number;
+      supplierApproval: string;
       prefixes: unknown;
       rowVersion: number;
     },
@@ -115,6 +128,9 @@ export class ErpMasterService {
       overReceiptPct: dec(s.overReceiptPct).toFixed(4),
       priceTolerancePct: dec(s.priceTolerancePct).toFixed(4),
       requireRequestApproval: s.requireRequestApproval,
+      priceAlertPct: dec(s.priceAlertPct).toFixed(4),
+      quoteExpiryDays: s.quoteExpiryDays,
+      supplierApproval: s.supplierApproval,
       prefixes: { ...DEFAULT_PREFIXES, ...(s.prefixes as Record<string, string>) },
       vatRegistered: scope.factory.isVatRegistered,
       version: s.rowVersion,

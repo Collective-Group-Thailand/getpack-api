@@ -68,7 +68,10 @@ export const ERP_MO_STATUSES = [
   'closed',
   'cancelled',
 ] as const;
-export const ERP_OPERATION_STATUSES = ['pending', 'in_progress', 'done', 'skipped'] as const;
+export const ERP_OPERATION_STATUSES = ['pending', 'in_progress', 'paused', 'done', 'skipped'] as const;
+export const ERP_SUPPLIER_APPROVALS = ['pending', 'approved', 'suspended'] as const;
+export const ERP_GRADES = ['A', 'B', 'C', 'D'] as const;
+export const ERP_MILESTONE_SYNCS = ['none', 'synced', 'failed'] as const;
 export const ERP_LINE_VARIANCES = ['price', 'quantity', 'price_quantity', 'unordered'] as const;
 export const ERP_MATERIAL_ORIGINS = ['recipe', 'packio_spec', 'manual'] as const;
 
@@ -146,6 +149,53 @@ export class ErpPriceStatsDto {
     description: 'Average days from order to receipt',
   })
   avgLeadDays!: string | null;
+}
+
+export class ErpPriceBreakDto {
+  @ApiProperty({ example: '50.000', description: 'From this many (the link’s purchase unit)' })
+  minQty!: string;
+
+  @ApiProperty({ example: '1380.000000', description: 'Per purchase unit, net, without VAT' })
+  unitPrice!: string;
+
+  @ApiProperty({ example: '2.760000', description: 'Per base unit' })
+  baseUnitPrice!: string;
+}
+
+export class ErpSupplierScoreDto {
+  @ApiProperty({ example: 6, description: 'Goods receipts in the last 12 months' })
+  receipts!: number;
+
+  @ApiProperty({ example: '84200.00', description: 'Value delivered (accepted + rejected), 12 months' })
+  deliveredValue!: string;
+
+  @ApiProperty({ example: '83350.00' })
+  acceptedValue!: string;
+
+  @ApiProperty({ example: 1, description: 'Receipt lines with a rejected quantity' })
+  rejectedLines!: number;
+
+  @ApiProperty({
+    type: String,
+    nullable: true,
+    example: '98.99',
+    description: 'Accepted ÷ delivered value, %',
+  })
+  qualityPct!: string | null;
+
+  @ApiProperty({ type: String, nullable: true, example: '83.33' })
+  onTimePct!: string | null;
+
+  @ApiProperty({
+    type: String,
+    nullable: true,
+    example: '92.73',
+    description: '60 % quality + 40 % on time; null below 3 receipts (D-349)',
+  })
+  score!: string | null;
+
+  @ApiProperty({ enum: ERP_GRADES, enumName: 'ErpSupplierGrade', nullable: true, example: 'B' })
+  grade!: string | null;
 }
 
 export class ErpItemSupplierDto {
@@ -239,6 +289,41 @@ export class ErpItemSupplierDto {
 
   @ApiProperty({ type: ErpPriceStatsDto })
   stats!: ErpPriceStatsDto;
+
+  @ApiProperty({
+    enum: ERP_SUPPLIER_APPROVALS,
+    enumName: 'ErpSupplierApproval',
+    example: 'approved',
+    description: 'D-351',
+  })
+  approval!: string;
+
+  @ApiProperty({ type: String, nullable: true, example: 'ผ่านการตรวจโรงงาน' })
+  approvalNote!: string | null;
+
+  @ApiProperty({ type: String, nullable: true, format: 'date-time', example: '2026-10-10T10:00:00+07:00' })
+  approvedAt!: string | null;
+
+  @ApiProperty({ type: String, nullable: true, example: 'เจ้าของ ทดสอบ' })
+  approvedBy!: string | null;
+
+  @ApiProperty({
+    type: String,
+    nullable: true,
+    format: 'date',
+    example: null,
+    description: 'Review the approval by',
+  })
+  reviewOn!: string | null;
+
+  @ApiProperty({ type: [ErpPriceBreakDto], description: 'Quantity breaks, smallest first (D-346)' })
+  priceBreaks!: ErpPriceBreakDto[];
+
+  @ApiProperty({ type: String, nullable: true, format: 'date', example: null })
+  breaksValidUntil!: string | null;
+
+  @ApiProperty({ type: ErpSupplierScoreDto, description: 'The supplier’s 12-month score (D-349)' })
+  score!: ErpSupplierScoreDto;
 
   @ApiProperty({ example: 1 })
   version!: number;
@@ -1321,6 +1406,17 @@ export class ErpProductionMaterialDto {
   note!: string | null;
 }
 
+export class ErpJobMilestoneRefDto {
+  @ApiProperty({ format: 'uuid', example: '0192f3a0-7c1e-7d2a-9b1f-00000000ee61' })
+  id!: string;
+
+  @ApiProperty({ example: 'printing' })
+  stepKey!: string;
+
+  @ApiProperty({ example: 'pending', description: 'The milestone’s status on the job' })
+  status!: string;
+}
+
 export class ErpProductionOperationDto {
   @ApiProperty({ format: 'uuid', example: E2_IDS.moOperation })
   id!: string;
@@ -1345,6 +1441,43 @@ export class ErpProductionOperationDto {
 
   @ApiProperty({ example: '0.000' })
   scrapQty!: string;
+
+  @ApiProperty({ type: String, nullable: true, format: 'date-time', example: '2026-10-13T08:30:00+07:00' })
+  scheduledStart!: string | null;
+
+  @ApiProperty({ type: String, nullable: true, format: 'date-time', example: '2026-10-13T09:20:00+07:00' })
+  scheduledEnd!: string | null;
+
+  @ApiProperty({ example: false, description: 'Kept where it is by auto-planning (D-352)' })
+  locked!: boolean;
+
+  @ApiProperty({ type: String, nullable: true, format: 'date-time', example: null })
+  startedAt!: string | null;
+
+  @ApiProperty({ type: String, nullable: true, format: 'date-time', example: null })
+  finishedAt!: string | null;
+
+  @ApiProperty({ example: 0, description: 'Minutes paused so far (D-353)' })
+  pausedMinutes!: number;
+
+  @ApiProperty({ type: Number, nullable: true, example: null, description: 'Finish − start − paused' })
+  actualMinutes!: number | null;
+
+  @ApiProperty({ type: String, nullable: true, example: null, description: 'Why it is paused now' })
+  pauseReason!: string | null;
+
+  @ApiProperty({
+    type: ErpJobMilestoneRefDto,
+    nullable: true,
+    description: 'The Packio job step it stands for (D-354)',
+  })
+  milestone!: ErpJobMilestoneRefDto | null;
+
+  @ApiProperty({ enum: ERP_MILESTONE_SYNCS, enumName: 'ErpMilestoneSync', example: 'none' })
+  milestoneSync!: string;
+
+  @ApiProperty({ type: String, nullable: true, example: null })
+  milestoneSyncError!: string | null;
 }
 
 export class ErpProductionOrderSummaryDto {

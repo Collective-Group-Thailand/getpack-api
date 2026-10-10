@@ -19,6 +19,8 @@ import {
   type ErpGoodsReceiptDto,
   type ErpItemDto,
   type ErpItemRefDto,
+  type ErpLandedChargeDto,
+  type ErpPoWarningDto,
   type ErpPurchaseOrderDto,
   type ErpPurchaseOrderSummaryDto,
   type ErpRefDto,
@@ -193,6 +195,8 @@ export type PoRow = ErpPurchaseOrder & {
   supplier: ErpTradingPartner;
   lines: (ErpPurchaseOrderLine & { item: ErpItem })[];
   goodsReceipts: ErpGoodsReceipt[];
+  /** D-347, D-351: worked out by the purchasing service when it reads the order. */
+  warnings?: ErpPoWarningDto[];
 };
 
 export function isLate(
@@ -278,10 +282,19 @@ export function poDto(p: PoRow, perms: ReadonlySet<string>): ErpPurchaseOrderDto
         receivedOn: day(g.receivedOn)!,
         total: fmtMoney(g.total),
       })),
+    warnings: p.warnings ?? [],
     nextActions: nextActions({ status: p.status }, PO_ACTIONS, perms),
     version: p.rowVersion,
   };
 }
+
+export type ChargeRow = Prisma.ErpLandedChargeGetPayload<{
+  include: {
+    partner: true;
+    createdBy: { select: { displayName: true } };
+    lines: { include: { goodsReceiptLine: { select: { lineNo: true } } } };
+  };
+}>;
 
 export type GrRow = ErpGoodsReceipt & {
   purchaseOrder: ErpPurchaseOrder | null;
@@ -289,9 +302,53 @@ export type GrRow = ErpGoodsReceipt & {
   warehouse: ErpWarehouse;
   createdBy: Pick<User, 'displayName'>;
   lines: (ErpGoodsReceiptLine & { item: ErpItem })[];
+  landedCharges?: ChargeRow[];
 };
 
-export function grDto(g: GrRow): ErpGoodsReceiptDto {
+/** The actions on a posted goods receipt: only adding a landed charge (D-350). */
+export const GR_ACTIONS: ActionRule<{ posted: boolean }>[] = [
+  { key: 'erp_gr.add_charge', permissions: ['factory_procurement.manage'], when: (g) => g.posted },
+];
+
+export function chargeDto(c: ChargeRow): ErpLandedChargeDto {
+  return {
+    id: c.publicId,
+    kind: c.kind,
+    description: c.description,
+    amount: fmtMoney(c.amount),
+    allocation: c.allocation,
+    partner: c.partner ? partnerRef(c.partner) : null,
+    reference: c.reference,
+    atReceipt: c.atReceipt,
+    absorbed: fmtMoney(c.absorbed),
+    notAbsorbed: fmtMoney(dec(c.amount).minus(dec(c.absorbed))),
+    by: c.createdBy.displayName,
+    createdAt: toBangkokIso(c.createdAt),
+    lines: [...c.lines]
+      .sort((a, b) => a.goodsReceiptLine.lineNo - b.goodsReceiptLine.lineNo)
+      .map((l) => ({
+        lineNo: l.goodsReceiptLine.lineNo,
+        amount: fmtMoney(l.amount),
+        absorbed: fmtMoney(l.absorbed),
+      })),
+  };
+}
+
+export function grDto(g: GrRow, perms: ReadonlySet<string> = new Set()): ErpGoodsReceiptDto {
+  const charges = [...(g.landedCharges ?? [])].sort((a, b) => (a.id < b.id ? -1 : 1));
+  // D-350: every charge's share of the line, at the receipt or later (receipt lines are append-only).
+  const landed = (l: { lineNo: number; landedAmount: Prisma.Decimal }) =>
+    charges.length
+      ? charges.reduce(
+          (a, c) =>
+            a.plus(
+              c.lines
+                .filter((x) => x.goodsReceiptLine.lineNo === l.lineNo)
+                .reduce((b, x) => b.plus(dec(x.amount)), dec(0)),
+            ),
+          dec(0),
+        )
+      : dec(l.landedAmount);
   return {
     id: g.publicId,
     grNo: g.grNo,
@@ -318,6 +375,15 @@ export function grDto(g: GrRow): ErpGoodsReceiptDto {
         unitCost: fmtCost(l.unitCost),
         amount: fmtMoney(l.amount),
         lotNo: l.lotNo,
+        rejectedQuantity: fmtQty(l.rejectedQuantity),
+        rejectReason: l.rejectReason,
+        landedAmount: fmtMoney(landed(l)),
+        landedUnitCost: dec(l.baseQuantity).gt(0)
+          ? fmtCost(dec(l.unitCost).plus(landed(l).div(dec(l.baseQuantity))))
+          : fmtCost(l.unitCost),
       })),
+    chargesTotal: fmtMoney(charges.reduce((a, c) => a.plus(dec(c.amount)), dec(0))),
+    charges: charges.map(chargeDto),
+    nextActions: nextActions({ posted: true }, GR_ACTIONS, perms),
   };
 }

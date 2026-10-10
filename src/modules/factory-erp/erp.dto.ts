@@ -66,6 +66,8 @@ export const ERP_MOVEMENT_KINDS = [
   'production_issue',
   'production_return',
   'production_receipt',
+  'landed_cost',
+  'maintenance_issue',
 ] as const;
 export const ERP_VAT_MODES = ['exclusive', 'inclusive', 'none'] as const;
 export const ERP_PO_STATUSES = [
@@ -76,6 +78,10 @@ export const ERP_PO_STATUSES = [
   'closed',
   'cancelled',
 ] as const;
+export const ERP_CHARGE_KINDS = ['freight', 'insurance', 'duty', 'handling', 'other'] as const;
+export const ERP_CHARGE_ALLOCATIONS = ['by_value', 'by_quantity'] as const;
+export const ERP_PO_WARNINGS = ['supplier_not_approved', 'supplier_suspended', 'price_rise'] as const;
+export const ERP_APPROVAL_POLICIES = ['off', 'warn', 'enforce'] as const;
 export const ERP_MODULES = [
   'inventory',
   'procurement',
@@ -175,6 +181,27 @@ export class ErpSettingsDto {
   requireRequestApproval!: boolean;
 
   @ApiProperty({
+    example: '5.0000',
+    description: 'A price this % above the last paid raises an alert (D-347)',
+  })
+  priceAlertPct!: string;
+
+  @ApiProperty({
+    example: 7,
+    description: 'Quotations and supplier reviews ending within these days raise an alert',
+  })
+  quoteExpiryDays!: number;
+
+  @ApiProperty({
+    enum: ERP_APPROVAL_POLICIES,
+    enumName: 'ErpSupplierApprovalPolicy',
+    example: 'warn',
+    description:
+      'A supplier not approved for an item on a purchase order: ignored, warned or refused (D-351)',
+  })
+  supplierApproval!: string;
+
+  @ApiProperty({
     type: 'object',
     additionalProperties: { type: 'string' },
     example: {
@@ -233,6 +260,27 @@ export class UpdateErpSettingsDto {
   @IsOptional()
   @IsBoolean()
   requireRequestApproval?: boolean;
+
+  @ApiPropertyOptional({ example: '5', pattern: PCT.source })
+  @IsOptional()
+  @Matches(PCT)
+  priceAlertPct?: string;
+
+  @ApiPropertyOptional({ example: 7, minimum: 0, maximum: 90 })
+  @IsOptional()
+  @IsInt()
+  @Min(0)
+  @Max(90)
+  quoteExpiryDays?: number;
+
+  @ApiPropertyOptional({
+    enum: ERP_APPROVAL_POLICIES,
+    enumName: 'ErpSupplierApprovalPolicy',
+    example: 'warn',
+  })
+  @IsOptional()
+  @IsIn(ERP_APPROVAL_POLICIES)
+  supplierApproval?: string;
 
   @ApiPropertyOptional({
     type: 'object',
@@ -916,7 +964,7 @@ export class ErpStockMovementDto {
   documentNo!: string;
 
   @ApiProperty({
-    enum: ['goods_receipt', 'adjustment', 'issue', 'transfer', 'production_order'],
+    enum: ['goods_receipt', 'adjustment', 'issue', 'transfer', 'production_order', 'maintenance_order'],
     enumName: 'ErpMovementSource',
     example: 'goods_receipt',
   })
@@ -1176,6 +1224,22 @@ export class ErpPurchaseOrderLineDto {
   remainingQty!: string;
 }
 
+export class ErpPoWarningDto {
+  @ApiProperty({ example: 1 })
+  lineNo!: number;
+
+  @ApiProperty({ enum: ERP_PO_WARNINGS, enumName: 'ErpPoWarning', example: 'price_rise' })
+  code!: string;
+
+  @ApiProperty({
+    type: String,
+    nullable: true,
+    example: '7.02',
+    description: 'Price rise against the last paid, %',
+  })
+  changePct!: string | null;
+}
+
 export class ErpPurchaseOrderReceiptRefDto {
   @ApiProperty({ format: 'uuid', example: ERP_IDS.gr })
   id!: string;
@@ -1253,6 +1317,13 @@ export class ErpPurchaseOrderDto {
 
   @ApiProperty({ type: [ErpPurchaseOrderReceiptRefDto] })
   receipts!: ErpPurchaseOrderReceiptRefDto[];
+
+  @ApiProperty({
+    type: [ErpPoWarningDto],
+    description:
+      'Lines from a supplier not approved for the item, or priced above the last paid (D-347, D-351)',
+  })
+  warnings!: ErpPoWarningDto[];
 
   @ApiProperty({
     type: [NextActionDto],
@@ -1431,6 +1502,95 @@ export class ErpDraftFromReorderResultDto {
 
 // ------------------------------------------------------------------------------- goods receipts
 
+export class ErpChargeInput {
+  @ApiProperty({ enum: ERP_CHARGE_KINDS, enumName: 'ErpChargeKind', example: 'freight' })
+  @IsIn(ERP_CHARGE_KINDS)
+  kind!: string;
+
+  @ApiPropertyOptional({ type: String, nullable: true, example: 'ค่าขนส่งรถ 6 ล้อ', maxLength: 200 })
+  @IsOptional()
+  @Transform(emptyToNull)
+  @IsString()
+  @MaxLength(200)
+  description?: string | null;
+
+  @ApiProperty({ example: '1200', pattern: AMOUNT.source, description: 'Net of VAT' })
+  @Matches(AMOUNT)
+  amount!: string;
+
+  @ApiPropertyOptional({ enum: ERP_CHARGE_ALLOCATIONS, enumName: 'ErpChargeAllocation', example: 'by_value' })
+  @IsOptional()
+  @IsIn(ERP_CHARGE_ALLOCATIONS)
+  allocation?: string;
+
+  @ApiPropertyOptional({ format: 'uuid', description: 'The carrier or broker who billed it' })
+  @IsOptional()
+  @IsUUID()
+  partnerId?: string;
+
+  @ApiPropertyOptional({ type: String, nullable: true, example: 'INV-TR-0912', maxLength: 60 })
+  @IsOptional()
+  @Transform(emptyToNull)
+  @IsString()
+  @MaxLength(60)
+  reference?: string | null;
+}
+
+export class ErpLandedChargeLineDto {
+  @ApiProperty({ example: 1 })
+  lineNo!: number;
+
+  @ApiProperty({ example: '1200.00' })
+  amount!: string;
+
+  @ApiProperty({ example: '1200.00', description: 'Into stock value' })
+  absorbed!: string;
+}
+
+export class ErpLandedChargeDto {
+  @ApiProperty({ format: 'uuid', example: '0192f3a0-7c1e-7d2a-9b1f-00000000ee21' })
+  id!: string;
+
+  @ApiProperty({ enum: ERP_CHARGE_KINDS, enumName: 'ErpChargeKind', example: 'freight' })
+  kind!: string;
+
+  @ApiProperty({ type: String, nullable: true, example: 'ค่าขนส่งรถ 6 ล้อ' })
+  description!: string | null;
+
+  @ApiProperty({ example: '1200.00' })
+  amount!: string;
+
+  @ApiProperty({ enum: ERP_CHARGE_ALLOCATIONS, enumName: 'ErpChargeAllocation', example: 'by_value' })
+  allocation!: string;
+
+  @ApiProperty({ type: ErpRefDto, nullable: true })
+  partner!: ErpRefDto | null;
+
+  @ApiProperty({ type: String, nullable: true, example: 'INV-TR-0912' })
+  reference!: string | null;
+
+  @ApiProperty({ example: true, description: 'Entered with the receipt' })
+  atReceipt!: boolean;
+
+  @ApiProperty({ example: '1200.00' })
+  absorbed!: string;
+
+  @ApiProperty({
+    example: '0.00',
+    description: 'Already used when the charge came: not in stock value (D-350)',
+  })
+  notAbsorbed!: string;
+
+  @ApiProperty({ example: 'คลัง ทดสอบ' })
+  by!: string;
+
+  @ApiProperty({ format: 'date-time', example: '2026-10-12T14:02:00+07:00' })
+  createdAt!: string;
+
+  @ApiProperty({ type: [ErpLandedChargeLineDto] })
+  lines!: ErpLandedChargeLineDto[];
+}
+
 export class ErpGoodsReceiptLineDto {
   @ApiProperty({ example: 1 })
   lineNo!: number;
@@ -1455,6 +1615,18 @@ export class ErpGoodsReceiptLineDto {
 
   @ApiProperty({ type: String, nullable: true, example: 'R-2610-018' })
   lotNo!: string | null;
+
+  @ApiProperty({ example: '0.000', description: 'Refused at inspection, in `unit` (D-349)' })
+  rejectedQuantity!: string;
+
+  @ApiProperty({ type: String, nullable: true, example: null })
+  rejectReason!: string | null;
+
+  @ApiProperty({ example: '1200.00', description: 'Landed charges allocated to the line (D-350)' })
+  landedAmount!: string;
+
+  @ApiProperty({ example: '3.090000', description: 'Unit cost with the landed charges, per base unit' })
+  landedUnitCost!: string;
 }
 
 export class ErpGoodsReceiptDto {
@@ -1496,6 +1668,15 @@ export class ErpGoodsReceiptDto {
 
   @ApiProperty({ type: [ErpGoodsReceiptLineDto] })
   lines!: ErpGoodsReceiptLineDto[];
+
+  @ApiProperty({ example: '1200.00', description: 'All landed charges (D-350)' })
+  chargesTotal!: string;
+
+  @ApiProperty({ type: [ErpLandedChargeDto] })
+  charges!: ErpLandedChargeDto[];
+
+  @ApiProperty({ type: [NextActionDto], description: 'Offered: `erp_gr.add_charge`' })
+  nextActions!: NextActionDto[];
 }
 
 export class ErpGoodsReceiptListQuery extends PageQuery {
@@ -1556,6 +1737,28 @@ export class ErpGoodsReceiptLineInput {
   @IsString()
   @MaxLength(60)
   lotNo?: string | null;
+
+  @ApiPropertyOptional({
+    example: '0',
+    pattern: QTY.source,
+    description: 'Delivered but refused at inspection, in `unit`; not stocked nor received (D-349)',
+  })
+  @IsOptional()
+  @Matches(QTY)
+  rejectedQuantity?: string;
+
+  @ApiPropertyOptional({
+    type: String,
+    nullable: true,
+    example: null,
+    maxLength: 300,
+    description: 'Required with a rejected quantity',
+  })
+  @IsOptional()
+  @Transform(emptyToNull)
+  @IsString()
+  @MaxLength(300)
+  rejectReason?: string | null;
 }
 
 export class ErpCreateGoodsReceiptDto {
@@ -1604,4 +1807,15 @@ export class ErpCreateGoodsReceiptDto {
   @ValidateNested({ each: true })
   @Type(() => ErpGoodsReceiptLineInput)
   lines!: ErpGoodsReceiptLineInput[];
+
+  @ApiPropertyOptional({
+    type: [ErpChargeInput],
+    description: 'Freight, duty, ... allocated into the stock cost (D-350)',
+  })
+  @IsOptional()
+  @IsArray()
+  @ArrayMaxSize(10)
+  @ValidateNested({ each: true })
+  @Type(() => ErpChargeInput)
+  charges?: ErpChargeInput[];
 }

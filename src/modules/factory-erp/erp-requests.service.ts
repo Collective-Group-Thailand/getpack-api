@@ -158,9 +158,21 @@ export class ErpRequestsService {
         supplierId = s.id;
       }
       const link = supplierId ? await this.pricing.link(tx, item.id, supplierId) : preferred.get(item.id);
+      // D-346: priced at the supplier's break for the quantity in its unit, else its latest price.
+      const linkPrice = link
+        ? await this.pricing.priceFor(
+            tx,
+            link,
+            roundToPurchase(
+              quantity,
+              dec(link.purchaseFactor),
+              link.minOrderQty ? dec(link.minOrderQty) : null,
+            ).purchaseQty,
+          )
+        : null;
       const cost =
-        link?.lastPrice != null
-          ? dec(link.lastPrice).div(dec(link.purchaseFactor))
+        link && linkPrice
+          ? linkPrice.div(dec(link.purchaseFactor))
           : item.lastPurchasePrice !== null
             ? dec(item.lastPurchasePrice).div(dec(item.purchaseFactor))
             : null;
@@ -392,9 +404,12 @@ export class ErpRequestsService {
         factor,
         link?.minOrderQty ? dec(link.minOrderQty) : null,
       );
+      const breakPrice = link
+        ? await this.pricing.priceFor(this.workspace.db, link, rounded.purchaseQty)
+        : null;
       const price =
-        link?.lastPrice != null
-          ? dec(link.lastPrice)
+        breakPrice !== null
+          ? breakPrice
           : l.estimatedUnitCost !== null
             ? dec(l.estimatedUnitCost).times(factor)
             : dec(0);

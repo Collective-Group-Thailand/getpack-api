@@ -920,8 +920,10 @@ model FileObject {
 
   homeCasePhotos HomeCustomerCase[] @relation("HomeCasePhotoFile")
 
-  homeCaseConsents    HomeCustomerCase[]   @relation("HomeCaseConsentFile")
-  erpSupplierInvoices ErpSupplierInvoice[] @relation("ErpSupplierInvoiceFile")
+  homeCaseConsents     HomeCustomerCase[]    @relation("HomeCaseConsentFile")
+  erpSupplierInvoices  ErpSupplierInvoice[]  @relation("ErpSupplierInvoiceFile")
+  erpMaintenancePhotos ErpMaintenancePhoto[] @relation("ErpMaintenancePhotoFile")
+  erpDocVersions       ErpDocVersion[]       @relation("ErpDocVersionFile")
 
   @@index([sha256], map: "ix_file_objects__sha256")
   @@index([uploadStatus, expiresAt], map: "ix_file_objects__upload_status__expires_at")

@@ -62,6 +62,8 @@ enum ErpMovementKind {
   production_issue
   production_return
   production_receipt
+  landed_cost
+  maintenance_issue
 
   @@map("erp_movement_kind")
 }
@@ -97,28 +99,36 @@ enum ErpDocumentType {
   ap
   pv
   mo
+  rfq
+  mt
 
   @@map("erp_document_type")
 }
 
 /// D-318, D-322, D-323, D-325: one row per factory, created on first use.
 model ErpFactorySettings {
-  id                     BigInt   @id(map: "pk_erp_factory_settings") @default(autoincrement())
-  factoryId              BigInt   @unique(map: "ux_erp_factory_settings__factory_id") @map("factory_id")
+  id                     BigInt                    @id(map: "pk_erp_factory_settings") @default(autoincrement())
+  factoryId              BigInt                    @unique(map: "ux_erp_factory_settings__factory_id") @map("factory_id")
   /// Switched-off module keys (D-318); everything else is on.
-  disabledModules        String[] @default([]) @map("disabled_modules")
-  allowNegativeStock     Boolean  @default(false) @map("allow_negative_stock")
-  overReceiptPct         Decimal  @default(10) @map("over_receipt_pct") @db.Decimal(7, 4)
+  disabledModules        String[]                  @default([]) @map("disabled_modules")
+  allowNegativeStock     Boolean                   @default(false) @map("allow_negative_stock")
+  overReceiptPct         Decimal                   @default(10) @map("over_receipt_pct") @db.Decimal(7, 4)
   /// D-337: a supplier invoice priced within this % of the order matches (3-way match).
-  priceTolerancePct      Decimal  @default(2) @map("price_tolerance_pct") @db.Decimal(7, 4)
+  priceTolerancePct      Decimal                   @default(2) @map("price_tolerance_pct") @db.Decimal(7, 4)
   /// D-336: purchase requests need an approver (`factory_procurement.approve`) when on.
-  requireRequestApproval Boolean  @default(true) @map("require_request_approval")
+  requireRequestApproval Boolean                   @default(true) @map("require_request_approval")
+  /// D-347: a price more than this % above the last one paid raises an alert.
+  priceAlertPct          Decimal                   @default(5) @map("price_alert_pct") @db.Decimal(7, 4)
+  /// D-347, D-351: quotations and supplier reviews ending within this many days raise an alert.
+  quoteExpiryDays        Int                       @default(7) @map("quote_expiry_days")
+  /// D-351: what a supplier not approved for an item means on a purchase order.
+  supplierApproval       ErpSupplierApprovalPolicy @default(warn) @map("supplier_approval")
   /// Document prefixes by `ErpDocumentType` (D-323); a missing key uses the default (`PO`, `GR`, ...).
-  prefixes               Json     @default("{}")
-  createdAt              DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
-  updatedAt              DateTime @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
-  updatedById            BigInt?  @map("updated_by")
-  rowVersion             Int      @default(1) @map("row_version")
+  prefixes               Json                      @default("{}")
+  createdAt              DateTime                  @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt              DateTime                  @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+  updatedById            BigInt?                   @map("updated_by")
+  rowVersion             Int                       @default(1) @map("row_version")
 
   factory   Factory @relation("ErpFactorySettingsFactory", fields: [factoryId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_erp_factory_settings__factory_id")
   updatedBy User?   @relation("ErpFactorySettingsUpdatedBy", fields: [updatedById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_erp_factory_settings__updated_by")
@@ -176,6 +186,8 @@ model ErpTradingPartner {
   requestLines     ErpPurchaseRequestLine[] @relation("ErpPurchaseRequestLineSupplier")
   supplierInvoices ErpSupplierInvoice[]     @relation("ErpSupplierInvoiceSupplier")
   supplierPayments ErpSupplierPayment[]     @relation("ErpSupplierPaymentSupplier")
+  erpRfqSuppliers  ErpRfqSupplier[]         @relation("ErpRfqSupplierSupplier")
+  erpLandedCharges ErpLandedCharge[]        @relation("ErpLandedChargePartner")
 
   @@unique([factoryId, code], map: "ux_erp_trading_partners__factory_id__code")
   @@index([factoryId, kind, status], map: "ix_erp_trading_partners__factory_id__kind__status")
@@ -198,13 +210,14 @@ model ErpWarehouse {
   updatedById BigInt?         @map("updated_by")
   rowVersion  Int             @default(1) @map("row_version")
 
-  factory          Factory              @relation("ErpWarehouseFactory", fields: [factoryId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_erp_warehouses__factory_id")
-  createdBy        User?                @relation("ErpWarehouseCreatedBy", fields: [createdById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_erp_warehouses__created_by")
-  updatedBy        User?                @relation("ErpWarehouseUpdatedBy", fields: [updatedById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_erp_warehouses__updated_by")
-  balances         ErpStockBalance[]
-  movements        ErpStockMovement[]
-  goodsReceipts    ErpGoodsReceipt[]
-  productionOrders ErpProductionOrder[]
+  factory             Factory              @relation("ErpWarehouseFactory", fields: [factoryId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_erp_warehouses__factory_id")
+  createdBy           User?                @relation("ErpWarehouseCreatedBy", fields: [createdById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_erp_warehouses__created_by")
+  updatedBy           User?                @relation("ErpWarehouseUpdatedBy", fields: [updatedById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_erp_warehouses__updated_by")
+  balances            ErpStockBalance[]
+  movements           ErpStockMovement[]
+  goodsReceipts       ErpGoodsReceipt[]
+  productionOrders    ErpProductionOrder[]
+  erpMaintenanceParts ErpMaintenancePart[]
 
   @@unique([factoryId, code], map: "ux_erp_warehouses__factory_id__code")
   @@index([createdById], map: "ix_erp_warehouses__created_by")
@@ -241,23 +254,26 @@ model ErpItem {
   updatedById       BigInt?         @map("updated_by")
   rowVersion        Int             @default(1) @map("row_version")
 
-  factory          Factory                  @relation("ErpItemFactory", fields: [factoryId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_erp_items__factory_id")
-  material         Material?                @relation("ErpItemMaterial", fields: [materialId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_erp_items__material_id")
-  defaultSupplier  ErpTradingPartner?       @relation("ErpItemDefaultSupplier", fields: [defaultSupplierId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_erp_items__default_supplier_id")
-  createdBy        User                     @relation("ErpItemCreatedBy", fields: [createdById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_erp_items__created_by")
-  updatedBy        User?                    @relation("ErpItemUpdatedBy", fields: [updatedById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_erp_items__updated_by")
-  balances         ErpStockBalance[]
-  movements        ErpStockMovement[]
-  poLines          ErpPurchaseOrderLine[]
-  grLines          ErpGoodsReceiptLine[]
-  suppliers        ErpItemSupplier[]
-  priceRecords     ErpPriceRecord[]
-  requestLines     ErpPurchaseRequestLine[]
-  invoiceLines     ErpSupplierInvoiceLine[]
-  recipes          ErpRecipe[]              @relation("ErpRecipeItem")
-  recipeUses       ErpRecipeMaterial[]      @relation("ErpRecipeMaterialItem")
-  productionOrders ErpProductionOrder[]     @relation("ErpProductionOrderItem")
-  productionUses   ErpProductionMaterial[]  @relation("ErpProductionMaterialItem")
+  factory                 Factory                  @relation("ErpItemFactory", fields: [factoryId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_erp_items__factory_id")
+  material                Material?                @relation("ErpItemMaterial", fields: [materialId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_erp_items__material_id")
+  defaultSupplier         ErpTradingPartner?       @relation("ErpItemDefaultSupplier", fields: [defaultSupplierId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_erp_items__default_supplier_id")
+  createdBy               User                     @relation("ErpItemCreatedBy", fields: [createdById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_erp_items__created_by")
+  updatedBy               User?                    @relation("ErpItemUpdatedBy", fields: [updatedById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_erp_items__updated_by")
+  balances                ErpStockBalance[]
+  movements               ErpStockMovement[]
+  poLines                 ErpPurchaseOrderLine[]
+  grLines                 ErpGoodsReceiptLine[]
+  suppliers               ErpItemSupplier[]
+  priceRecords            ErpPriceRecord[]
+  requestLines            ErpPurchaseRequestLine[]
+  invoiceLines            ErpSupplierInvoiceLine[]
+  recipes                 ErpRecipe[]              @relation("ErpRecipeItem")
+  recipeUses              ErpRecipeMaterial[]      @relation("ErpRecipeMaterialItem")
+  productionOrders        ErpProductionOrder[]     @relation("ErpProductionOrderItem")
+  productionUses          ErpProductionMaterial[]  @relation("ErpProductionMaterialItem")
+  erpRfqLines             ErpRfqLine[]
+  erpMaintenancePlanParts ErpMaintenancePlanPart[]
+  erpMaintenanceParts     ErpMaintenancePart[]
 
   @@unique([factoryId, sku], map: "ux_erp_items__factory_id__sku")
   @@index([factoryId, kind, status], map: "ix_erp_items__factory_id__kind__status")
@@ -397,6 +413,7 @@ model ErpPurchaseOrderLine {
   receiptLines  ErpGoodsReceiptLine[]
   requestLines  ErpPurchaseRequestLine[]
   invoiceLines  ErpSupplierInvoiceLine[]
+  rfqQuote      ErpRfqQuote?
 
   @@unique([purchaseOrderId, lineNo], map: "ux_erp_purchase_order_lines__purchase_order_id__line_no")
   @@index([itemId], map: "ix_erp_purchase_order_lines__item_id")
@@ -425,6 +442,9 @@ model ErpGoodsReceipt {
   warehouse     ErpWarehouse          @relation(fields: [warehouseId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_erp_goods_receipts__warehouse_id")
   createdBy     User                  @relation("ErpGoodsReceiptCreatedBy", fields: [createdById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_erp_goods_receipts__created_by")
   lines         ErpGoodsReceiptLine[]
+  /// D-350: landed charges entered with the receipt (later ones are in `landedCharges`).
+  chargesTotal  Decimal               @default(0) @map("charges_total") @db.Decimal(14, 2)
+  landedCharges ErpLandedCharge[]
 
   @@unique([factoryId, grNo], map: "ux_erp_goods_receipts__factory_id__gr_no")
   @@index([factoryId, receivedOn(sort: Desc)], map: "ix_erp_goods_receipts__factory_id__received_on")
@@ -453,6 +473,12 @@ model ErpGoodsReceiptLine {
   goodsReceipt      ErpGoodsReceipt       @relation(fields: [goodsReceiptId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_erp_goods_receipt_lines__goods_receipt_id")
   purchaseOrderLine ErpPurchaseOrderLine? @relation(fields: [purchaseOrderLineId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_erp_goods_receipt_lines__purchase_order_line_id")
   item              ErpItem               @relation(fields: [itemId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_erp_goods_receipt_lines__item_id")
+  /// D-349: delivered but refused at inspection, in `unit`; not in stock nor received on the order.
+  rejectedQuantity  Decimal               @default(0) @map("rejected_quantity") @db.Decimal(14, 3)
+  rejectReason      String?               @map("reject_reason")
+  /// D-350: landed charges allocated to this line when it was received (later ones are in the charges' lines).
+  landedAmount      Decimal               @default(0) @map("landed_amount") @db.Decimal(14, 2)
+  chargeLines       ErpLandedChargeLine[]
 
   @@unique([goodsReceiptId, lineNo], map: "ux_erp_goods_receipt_lines__goods_receipt_id__line_no")
   @@index([purchaseOrderLineId], map: "ix_erp_goods_receipt_lines__purchase_order_line_id")
@@ -536,6 +562,7 @@ enum ErpOperationStatus {
   in_progress
   done
   skipped
+  paused
 
   @@map("erp_operation_status")
 }
@@ -567,17 +594,29 @@ model ErpItemSupplier {
   updatedById     BigInt?         @map("updated_by")
   rowVersion      Int             @default(1) @map("row_version")
 
-  factory   Factory           @relation("ErpItemSupplierFactory", fields: [factoryId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_erp_item_suppliers__factory_id")
-  item      ErpItem           @relation(fields: [itemId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_erp_item_suppliers__item_id")
-  supplier  ErpTradingPartner @relation("ErpItemSupplierSupplier", fields: [supplierId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_erp_item_suppliers__supplier_id")
-  createdBy User?             @relation("ErpItemSupplierCreatedBy", fields: [createdById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_erp_item_suppliers__created_by")
-  updatedBy User?             @relation("ErpItemSupplierUpdatedBy", fields: [updatedById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_erp_item_suppliers__updated_by")
+  factory          Factory             @relation("ErpItemSupplierFactory", fields: [factoryId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_erp_item_suppliers__factory_id")
+  item             ErpItem             @relation(fields: [itemId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_erp_item_suppliers__item_id")
+  supplier         ErpTradingPartner   @relation("ErpItemSupplierSupplier", fields: [supplierId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_erp_item_suppliers__supplier_id")
+  createdBy        User?               @relation("ErpItemSupplierCreatedBy", fields: [createdById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_erp_item_suppliers__created_by")
+  updatedBy        User?               @relation("ErpItemSupplierUpdatedBy", fields: [updatedById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_erp_item_suppliers__updated_by")
+  /// D-351: approved supplier list.
+  approval         ErpSupplierApproval @default(pending)
+  approvalNote     String?             @map("approval_note")
+  approvedAt       DateTime?           @map("approved_at") @db.Timestamptz(6)
+  approvedById     BigInt?             @map("approved_by")
+  /// When the approval should be looked at again.
+  reviewOn         DateTime?           @map("review_on") @db.Date
+  /// D-346: until when the price breaks hold.
+  breaksValidUntil DateTime?           @map("breaks_valid_until") @db.Date
+  approvedBy       User?               @relation("ErpItemSupplierApprovedBy", fields: [approvedById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_erp_item_suppliers__approved_by")
+  priceBreaks      ErpPriceBreak[]
 
   @@unique([itemId, supplierId], map: "ux_erp_item_suppliers__item_id__supplier_id")
   @@index([factoryId], map: "ix_erp_item_suppliers__factory_id")
   @@index([supplierId], map: "ix_erp_item_suppliers__supplier_id")
   @@index([createdById], map: "ix_erp_item_suppliers__created_by")
   @@index([updatedById], map: "ix_erp_item_suppliers__updated_by")
+  @@index([approvedById], map: "ix_erp_item_suppliers__approved_by")
   @@map("erp_item_suppliers")
 }
 
@@ -643,6 +682,7 @@ model ErpPurchaseRequest {
   createdBy User                     @relation("ErpPurchaseRequestCreatedBy", fields: [createdById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_erp_purchase_requests__created_by")
   updatedBy User?                    @relation("ErpPurchaseRequestUpdatedBy", fields: [updatedById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_erp_purchase_requests__updated_by")
   lines     ErpPurchaseRequestLine[]
+  rfqs      ErpRfq[]
 
   @@unique([factoryId, prNo], map: "ux_erp_purchase_requests__factory_id__pr_no")
   @@index([factoryId, status], map: "ix_erp_purchase_requests__factory_id__status")
@@ -955,10 +995,25 @@ model ErpProductionOperation {
   goodQty           Decimal            @default(0) @map("good_qty") @db.Decimal(14, 3)
   scrapQty          Decimal            @default(0) @map("scrap_qty") @db.Decimal(14, 3)
 
-  productionOrder ErpProductionOrder @relation(fields: [productionOrderId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_erp_production_operations__production_order_id")
-  machine         FactoryMachine?    @relation("ErpProductionOperationMachine", fields: [machineId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_erp_production_operations__machine_id")
+  productionOrder    ErpProductionOrder  @relation(fields: [productionOrderId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_erp_production_operations__production_order_id")
+  machine            FactoryMachine?     @relation("ErpProductionOperationMachine", fields: [machineId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_erp_production_operations__machine_id")
+  /// D-352: the planned slot on its machine; `locked` keeps auto-planning off it.
+  scheduledStart     DateTime?           @map("scheduled_start") @db.Timestamptz(6)
+  scheduledEnd       DateTime?           @map("scheduled_end") @db.Timestamptz(6)
+  locked             Boolean             @default(false)
+  /// D-353: actual times; paused minutes add up across pauses.
+  startedAt          DateTime?           @map("started_at") @db.Timestamptz(6)
+  finishedAt         DateTime?           @map("finished_at") @db.Timestamptz(6)
+  pausedAt           DateTime?           @map("paused_at") @db.Timestamptz(6)
+  pausedMinutes      Int                 @default(0) @map("paused_minutes")
+  /// D-354: the Packio job milestone it stands for.
+  jobMilestoneId     BigInt?             @unique(map: "ux_erp_production_operations__job_milestone_id") @map("job_milestone_id")
+  milestoneSync      ErpMilestoneSync    @default(none) @map("milestone_sync")
+  milestoneSyncError String?             @map("milestone_sync_error")
+  jobMilestone       JobMilestone?       @relation("ErpProductionOperationMilestone", fields: [jobMilestoneId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_erp_production_operations__job_milestone_id")
+  events             ErpOperationEvent[]
 
   @@unique([productionOrderId, seq], map: "ux_erp_production_operations__production_order_id__seq")
-  @@index([machineId], map: "ix_erp_production_operations__machine_id")
+  @@index([machineId, scheduledStart], map: "ix_erp_production_operations__machine_id__scheduled_start")
   @@map("erp_production_operations")
 }

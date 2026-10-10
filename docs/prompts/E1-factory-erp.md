@@ -164,7 +164,8 @@ later **factory_sales** (ฝ่ายขาย), **factory_maintenance** (ช่
 | **E1** | M13 basics (settings, numbering, roles), M1 trading partners, M2 inventory, M3 PO + goods receipt, reorder list; web: ระบบคลัง / จัดซื้อ / คู่ค้า sections | contract released, web adopted, e2e on phone |
 | **E1.1** | Item suppliers (unit, minimum order, lead time, latest price), price history, cheapest/on-time statistics (D-333 – D-335) | done v0.45.0 |
 | **E2** | Purchase requests + approval, supplier invoices 3-way matched + payments + aging, recipes, production orders from Packio jobs / stock / sales orders with reservations, issues and completion at cost, floor operations, MRP shortages → PR (D-336 – D-343) | done v0.45.0 — Packio job reserves stock |
-| E3 | Machine schedule (auto + manual), shop floor kiosk, maintenance, DMS | operators run a day without paper |
+| **E2.1** | Quantity breaks, price-rise and quotation-expiry alerts, RFQs with a comparison and award, receiving inspection and supplier scores, landed cost, approved supplier list (D-346 – D-351) | done v0.46.0 |
+| **E3** | Machine schedule (auto + manual), shop floor kiosk, maintenance, DMS (D-352 – D-358) | done v0.46.0 — operators run a day without paper |
 | E4 | Sales & CRM, accounting documents, AR/AP, VAT/WHT reports, exports | first own tax invoice issued |
 | E5 | Quality, costing, OEE, owner dashboard, LINE summaries, people-lite | owner dashboard live |
 | E6 | Factory general ledger, financial statements, tax returns, fixed assets, bank reconciliation (D-344; `E6-factory-general-ledger.md`) | first month closed with a CPA |
@@ -188,3 +189,25 @@ a Packio staff token → 403 on private ERP data, D-317), stock ledger invariant
   `.completed` → complete (consumers `factory_erp.*`, run by the worker).
 - Not yet (later phases): per-lot balances, finite-capacity scheduling and drag (E3), labour/overhead costing (E5),
   supplier credit notes and 50 ทวิ printing (E4), posting to a factory ledger (E6).
+
+## 10. E2.1 + E3 as built (v0.46.0)
+- Tables: `erp_price_breaks`, `erp_alerts` (one per `dedupe_key`), `erp_rfqs` + `_lines` + `_suppliers` +
+  `_quotes`, `erp_landed_charges` + `_lines` (append-only), `erp_operation_events` (append-only),
+  `erp_maintenance_plans` + `_plan_parts`, `erp_maintenance_orders` + `_photos` + `_parts` (parts append-only; one
+  open preventive order per plan), `erp_doc_folders`, `erp_docs`, `erp_doc_versions` (append-only). New columns:
+  settings `price_alert_pct`, `quote_expiry_days`, `supplier_approval`; item suppliers `approval`, `approved_*`,
+  `review_on`, `breaks_valid_until`; receipt lines `rejected_quantity`, `reject_reason`, `landed_amount`; receipts
+  `charges_total`; operations `scheduled_start/end`, `locked`, `started_at`, `finished_at`, `paused_at`,
+  `paused_minutes`, `job_milestone_id`, `milestone_sync(_error)`. Series RFQ, MT; movement kinds `landed_cost` (no
+  quantity) and `maintenance_issue`; operation status `paused`. Existing supplier links were approved on migration.
+- Endpoints (tags `partner.erpItemSuppliers`, `erpAlerts`, `erpRfqs`, `erpMachines`, `erpSchedule`,
+  `erpMaintenance`, `erpDocuments`): price breaks, approve / suspend, supplier scorecard, landed charge on a receipt;
+  alerts (+ count, acknowledge, acknowledge all); RFQs (+ send, record quote, decline, comparison, award, cancel);
+  machines (+ dispatch for the kiosk); schedule (+ auto-plan, move, lock), operations pause / resume / events;
+  maintenance orders (+ breakdown report, schedule, start, parts, finish, cancel) and plans (+ open now); document
+  folders and documents (+ versions). Goods receipts take rejected quantities and charges; POs show warnings.
+- Scheduled jobs: `factory_erp.sourcing_alerts` (07:10), `factory_erp.maintenance_due` (07:15),
+  `factory_erp.document_expiry` (07:20), Bangkok. Subscriber `production_job.milestone_completed` → the
+  operation that stands for the milestone is done. Notification matrix rows `erp_alert.*` (factory audience).
+- Not yet: printing / e-mailing an RFQ to suppliers from Packio, scanning QR codes with the camera (the kiosk
+  takes a typed or scanner-typed order number), per-lot landed cost, OEE (E5).
