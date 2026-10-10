@@ -3,6 +3,33 @@
 Contract-facing changes per release. The contract itself is `contract/openapi.json`; mappings for `packio-web` are in
 `docs/contract-requests-triage.md`.
 
+## v0.47.0 — Packio Factory ERP E4: CRM, quotations, sales orders, delivery notes, invoices, receipts, tax
+
+Decisions D-359 – D-371. Additive except value sets: `ErpMovementKind` gains `sales_issue` and `sales_return`,
+`ErpMovementSource` gains `delivery_note` and `sales_note`, `ErpAlertKind` gains `quote_follow_up`,
+`invoice_overdue`, `activity_overdue` (clients that switch over them need a default). New factory role
+`factory_sales`; new permissions `factory_sales.*`, `factory_delivery.manage`, `factory_receivables.*`,
+`factory_tax.read`.
+
+- **CRM**: `leads` (+ `actions/convert`, `actions/lose`), `opportunities` (+ `actions/win`, `actions/lose`),
+  `pipeline`, `activities` (+ `actions/complete`), `salespeople`.
+- **Quotations**: `quotations` (list, create, get, `PUT`), `actions/send` (returns the customer link), `revise`,
+  `accept`, `reject`, `cancel`, `order`, `pdf`. Public `GET /v1/store/quote-links/{token}`, `POST …/actions/accept`,
+  `POST …/actions/decline` (no account; throttled).
+- **Sales orders and delivery**: `sales-orders` (+ `confirm` with `overrideReason` past the credit limit, `close`,
+  `cancel`, `pdf`); `delivery-notes` (+ `issue`, `deliver`, `cancel`, `pdf`).
+- **Receivables**: `sales-invoices` (+ `PATCH`, `DELETE` draft, `issue`, `void`, `pdf`), `sales-notes` (+ `issue`,
+  `void`, `DELETE` draft, `pdf`), `receipts` (+ `cancel`, `pdf`), `billing-notes` (+ `cancel`, `pdf`),
+  `receivables/aging`.
+- **Tax**: `supplier-payments/{paymentId}/wht`, `wht-certificates` (+ `void`, `pdf`), `tax/sales-vat`,
+  `tax/purchase-vat`, `tax/vat30`, `tax/wht?form=`, `tax/exports`, `sales/report`, `PUT sales/targets`.
+- Settings gain `quoteValidDays`, `documentLogoFileId`, `documentFooter`, `bankDetails`, `signatoryName`; trading
+  partners `entityType`, `salesperson`. Reason bodies use the common `ReasonDto`.
+- Errors: `erp.credit_limit_exceeded`, `erp.quotation_expired`, `erp.over_delivery`, `erp.invoice_date_order`,
+  `erp.note_exceeds_invoice`, `erp.allocation_exceeds_open`, `erp.document_settled`, `erp.nothing_to_deliver`,
+  `erp.nothing_to_invoice`, `erp.no_withholding`, `erp.recipe_required`, `erp.customer_required`,
+  `erp.seller_incomplete`.
+
 ## v0.46.0 — Packio Factory ERP E2.1 + E3: sourcing, machine schedule, kiosk, maintenance, documents
 
 Decisions D-346 – D-358 (D-344, the E6 plan, is now accepted). Additive except value sets: `ErpMovementKind` gains

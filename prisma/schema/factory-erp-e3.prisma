@@ -25,6 +25,9 @@ enum ErpAlertKind {
   maintenance_due
   machine_breakdown
   document_expiring
+  quote_follow_up
+  invoice_overdue
+  activity_overdue
 
   @@map("erp_alert_kind")
 }

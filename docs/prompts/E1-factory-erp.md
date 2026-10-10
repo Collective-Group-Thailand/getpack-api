@@ -211,3 +211,31 @@ a Packio staff token → 403 on private ERP data, D-317), stock ledger invariant
   operation that stands for the milestone is done. Notification matrix rows `erp_alert.*` (factory audience).
 - Not yet: printing / e-mailing an RFQ to suppliers from Packio, scanning QR codes with the camera (the kiosk
   takes a typed or scanner-typed order number), per-lot landed cost, OEE (E5).
+
+## 11. E4 as built (v0.47.0)
+- Tables: `erp_leads`, `erp_opportunities`, `erp_activities` (one subject: lead, opportunity or customer),
+  `erp_quotations` + `_lines` (revisions chain through `previous_id`; the customer link token stored as SHA-256),
+  `erp_sales_orders` + `_lines` (`fulfilment` stock / make / service; reserved, delivered, invoiced quantities; one
+  production order per make line), `erp_delivery_notes` + `_lines` (stock cost recorded at issue),
+  `erp_sales_invoices` + `_lines` (number and date taken at issue in date order; seller and buyer snapshots),
+  `erp_sales_notes` + `_lines` (credit / debit, goods returned to stock), `erp_customer_receipts` (receipt or refund,
+  the customer's WHT), `erp_receipt_allocations` (append-only), `erp_billing_notes` + `_invoices`,
+  `erp_wht_certificates` + `_lines` (append-only; one issued per supplier payment), `erp_sales_targets`. New columns:
+  settings `document_logo_file_id`, `document_footer`, `bank_details`, `signatory_name`, `quote_valid_days`; trading
+  partners `entity_type` (juristic / individual → ภ.ง.ด.53 / 3), `salesperson_id`. Series QT, SO, DO, IV, CN, DR, RC,
+  BN, WHT; movement kinds `sales_issue`, `sales_return`.
+- Endpoints (tags `partner.erpCrm`, `erpQuotations`, `erpSalesOrders`, `erpDeliveryNotes`, `erpSalesInvoices`,
+  `erpReceivables`, `erpTax`; `store.quoteLinks`): leads (+ convert, lose), opportunities (+ win, lose), pipeline,
+  activities (+ complete), salespeople; quotations (+ send → link, revise, accept, reject, cancel, order, pdf); the
+  public link (`/v1/store/quote-links/{token}`: view, accept, decline); sales orders (+ confirm with the credit check,
+  close, cancel, pdf); delivery notes (+ issue, deliver with proof, cancel, pdf); sales invoices (+ issue with an
+  optional cash receipt, void, pdf), sales notes (+ issue, void, pdf); receipts (+ cancel, pdf), billing notes
+  (+ cancel, pdf), aging; WHT suggestion for a supplier payment, certificates (+ void, pdf); sales VAT, purchase VAT,
+  ภ.พ.30 summary, ภ.ง.ด.3 / 53 lines, exports (CSV with BOM or XLSX), sales report and targets.
+- Roles: new `factory_sales`; permissions `factory_sales.read/manage/approve`, `factory_delivery.manage`,
+  `factory_receivables.read/manage`, `factory_tax.read`.
+- Scheduled jobs: `factory_erp.quotation_expiry` (07:25), `factory_erp.receivables_alerts` (07:30), Bangkok;
+  alerts `quote_follow_up`, `invoice_overdue` (weekly per invoice), `activity_overdue`.
+- PDFs rendered by the host's Chromium under the factory's name; issued documents keep their PDF as a financial
+  record. Not yet: e-Tax Invoice (ETDA XML / signing), layouts for named accounting packages, e-mailing documents
+  from Packio.

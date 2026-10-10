@@ -47,7 +47,9 @@ export function itemRef(i: Pick<ErpItem, 'publicId' | 'sku' | 'name' | 'kind' | 
   return { id: i.publicId, sku: i.sku, name: i.name, kind: i.kind, baseUnit: i.baseUnit };
 }
 
-export function tradingPartnerDto(p: ErpTradingPartner): ErpTradingPartnerDto {
+export function tradingPartnerDto(
+  p: ErpTradingPartner & { salesperson?: Pick<User, 'publicId' | 'displayName'> | null },
+): ErpTradingPartnerDto {
   return {
     id: p.publicId,
     code: p.code,
@@ -61,6 +63,8 @@ export function tradingPartnerDto(p: ErpTradingPartner): ErpTradingPartnerDto {
     address: p.address,
     paymentTermDays: p.paymentTermDays,
     creditLimit: p.creditLimit === null ? null : fmtMoney(p.creditLimit),
+    entityType: p.entityType,
+    salesperson: p.salesperson ? { id: p.salesperson.publicId, name: p.salesperson.displayName } : null,
     note: p.note,
     status: p.status,
     version: p.rowVersion,

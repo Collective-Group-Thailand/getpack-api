@@ -685,6 +685,36 @@ const ROWS: Row[] = [
     'Factory ERP: a certificate, permit or contract is near or past its expiry (D-356)',
   ),
   F(
+    'erp_alert.quote_follow_up',
+    ['in_app', 'email'],
+    { th: 'ใบเสนอราคาใกล้หมดอายุ — {{payload.quoteNo}}', en: 'Quotation expiring — {{payload.quoteNo}}' },
+    {
+      th: 'ใบเสนอราคา {{payload.quoteNo}} ของ {{payload.customer}} ใช้ได้ถึง {{payload.validUntil}} ติดตามลูกค้าก่อนหมดอายุ',
+      en: 'Quotation {{payload.quoteNo}} for {{payload.customer}} is valid until {{payload.validUntil}}: follow up before it lapses',
+    },
+    'Factory ERP: a sent quotation is near its validity date (D-360)',
+  ),
+  F(
+    'erp_alert.invoice_overdue',
+    ['in_app', 'email'],
+    { th: 'ใบแจ้งหนี้เกินกำหนด — {{payload.invoiceNo}}', en: 'Invoice overdue — {{payload.invoiceNo}}' },
+    {
+      th: '{{payload.customer}} ยังค้างชำระ {{payload.open}} บาท ตามใบแจ้งหนี้ {{payload.invoiceNo}} (ครบกำหนด {{payload.dueDate}})',
+      en: '{{payload.customer}} still owes THB {{payload.open}} on invoice {{payload.invoiceNo}} (due {{payload.dueDate}})',
+    },
+    'Factory ERP: a customer invoice is past its due date (D-365)',
+  ),
+  F(
+    'erp_alert.activity_overdue',
+    ['in_app'],
+    { th: 'งานติดตามลูกค้าเลยกำหนด', en: 'Follow-up overdue' },
+    {
+      th: '{{payload.subject}} ของ {{payload.assignee}} เลยกำหนดแล้ว',
+      en: '{{payload.subject}} assigned to {{payload.assignee}} is overdue',
+    },
+    'Factory ERP: a CRM activity is past its due time (D-359)',
+  ),
+  F(
     'factory_change_request.answered',
     ['in_app', 'email'],
     { th: 'ทีมพาร์ทเนอร์ตอบคำขอของคุณ', en: 'The Partner team answered your request' },

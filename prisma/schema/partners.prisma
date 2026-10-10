@@ -443,7 +443,19 @@ model Factory {
 
   callOffAgreements CallOffAgreement[] @relation("CallOffFactory")
 
-  businessHours FactoryBusinessHours[] @relation("FactoryBusinessHoursFactory")
+  businessHours       FactoryBusinessHours[] @relation("FactoryBusinessHoursFactory")
+  erpLeads            ErpLead[]              @relation("ErpLeadFactory")
+  erpOpportunities    ErpOpportunity[]       @relation("ErpOpportunityFactory")
+  erpActivities       ErpActivity[]          @relation("ErpActivityFactory")
+  erpQuotations       ErpQuotation[]         @relation("ErpQuotationFactory")
+  erpSalesOrders      ErpSalesOrder[]        @relation("ErpSalesOrderFactory")
+  erpDeliveryNotes    ErpDeliveryNote[]      @relation("ErpDeliveryNoteFactory")
+  erpSalesInvoices    ErpSalesInvoice[]      @relation("ErpSalesInvoiceFactory")
+  erpSalesNotes       ErpSalesNote[]         @relation("ErpSalesNoteFactory")
+  erpCustomerReceipts ErpCustomerReceipt[]   @relation("ErpCustomerReceiptFactory")
+  erpBillingNotes     ErpBillingNote[]       @relation("ErpBillingNoteFactory")
+  erpWhtCertificates  ErpWhtCertificate[]    @relation("ErpWhtCertificateFactory")
+  erpSalesTargets     ErpSalesTarget[]       @relation("ErpSalesTargetFactory")
 
   @@unique([taxId, branchCode], map: "ux_factories__tax_id__branch_code")
   @@index([status], map: "ix_factories__status")

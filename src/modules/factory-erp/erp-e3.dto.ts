@@ -55,6 +55,9 @@ export const ERP_ALERT_KINDS = [
   'maintenance_due',
   'machine_breakdown',
   'document_expiring',
+  'quote_follow_up',
+  'invoice_overdue',
+  'activity_overdue',
 ] as const;
 export const ERP_ALERT_STATUSES = ['open', 'acknowledged'] as const;
 export const ERP_RFQ_STATUSES = ['draft', 'sent', 'awarded', 'cancelled'] as const;

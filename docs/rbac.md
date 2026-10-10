@@ -199,57 +199,64 @@ Legend: ● granted · ◆ granted and sensitive (cost/margin data, D-141).
 
 ## Partner factory (factory scope)
 
-| Permission | `factory_owner` | `factory_planner` | `factory_operator` | `factory_qc` | `factory_shipping` | `factory_accountant` | `factory_storekeeper` | `factory_purchaser` | `factory_maintenance` |
-|---|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|
-| `factory_style_intakes.submit` — Offer the factory’s dielines to the style library under the intake terms (D-272) (D-272) | ● | ● |  |  |  |  |  |  |  |
-| `factory_process_capabilities.propose` — Propose or withdraw the factory’s process capabilities (verified by the Partner team) (D-244) | ● | ● |  |  |  |  |  |  |  |
-| `factory_profile.read` — Read the own factory profile | ● | ● | ● | ● | ● | ● | ● | ● | ● |
-| `factory_users.manage` — Manage users of the own factory | ● |  |  |  |  |  |  |  |  |
-| `factory_profile.manage` — Edit the own factory profile, addresses, contacts and KYC documents | ● |  |  |  |  |  |  |  |  |
-| `factory_onboarding.sign_off` — Sign off data Packio entered on the factory’s behalf (D-100) | ● |  |  |  |  |  |  |  |  |
-| `factory_prices.read` — Read the own factory price lists (D-044) | ● |  |  |  |  | ● |  |  |  |
-| `factory_prices.propose` — Propose price-list changes (factory price list mode) (D-040, D-042) | ● |  |  |  |  |  |  |  |  |
-| `factory_rate_card.accept` — Accept, counter or refuse a platform rate card (D-042) | ● |  |  |  |  |  |  |  |  |
-| `factory_agreements.accept` — Accept the partner agreement on behalf of the factory (D-011) | ● |  |  |  |  |  |  |  |  |
-| `factory_bank_account.propose` — Propose a new bank account for payouts (dual approval by Packio Finance) (D-033) | ● |  |  |  |  | ● |  |  |  |
-| `factory_capacity.read` — Read the own capacity and bookings (D-101) | ● | ● |  |  |  |  |  |  |  |
-| `factory_rfq.read` — Read the requests for a buy price Packio sent the factory (never the sell price) (D-100, D-044) | ● | ● |  |  |  |  |  |  |  |
-| `factory_rfq.respond` — Answer a request for a buy price per quantity tier, or decline it (D-100) | ● | ● |  |  |  |  |  |  |  |
-| `factory_jobs.read` — Read the own factory’s production jobs: spec, approved artwork, delivery contacts (D-142) | ● | ● | ● | ● | ● | ● | ● |  | ● |
-| `factory_jobs.respond` — Accept or reject released jobs within the acceptance time (D-074) | ● | ● |  |  |  |  |  |  |  |
-| `factory_samples.record_evidence` — Record a sample’s measured size, the material used and its photos before it ships (D-255) | ● | ● |  | ● |  |  |  |  |  |
-| `factory_milestones.update` — Start and complete milestones with quantities and photos (D-075) | ● | ● | ● | ● | ● |  |  |  |  |
-| `factory_qc.record` — Record QC checklists with photos (D-076) | ● |  |  | ● |  |  |  |  |  |
-| `factory_issues.raise` — Raise production issues on own jobs | ● | ● | ● | ● | ● |  |  |  |  |
-| `factory_capacity.manage` — Set weekly capacity overrides of the own factory (D-101) | ● | ● |  |  |  |  |  |  |  |
-| `factory_scorecard.read` — Read the own factory’s monthly scorecard (D-155) | ● | ● |  | ● |  |  |  |  |  |
-| `factory_shipments.read` — Read the own factory’s shipments, labels and packing lists (D-013, D-142) | ● | ● |  |  | ● |  |  |  |  |
-| `factory_claims.read` — Read the claims about the own factory’s jobs (D-083) | ● | ● |  | ● |  |  |  |  |  |
-| `factory_claims.respond` — Accept or dispute a claim Packio sent for review (D-083) | ● |  |  | ● |  |  |  |  |  |
-| `factory_payables.read` — Read the own factory’s POs, goods receipts, billing statements, payouts and 50 ทวิ (D-090, D-022) | ● |  |  |  |  | ● |  |  |  |
-| `factory_payables.manage` — Confirm or dispute billing statements and submit the factory’s tax invoices (D-090) | ● |  |  |  |  | ● |  |  |  |
-| `factory_shipments.manage` — Create, pack, dispatch and deliver shipments with proof of delivery (D-013) | ● |  |  |  | ● |  |  |  |  |
-| `factory_trading_partners.read` — Read the factory’s own suppliers and customers (Packio Factory ERP) (D-317, D-319) | ● | ● |  |  |  | ● | ● | ● |  |
-| `factory_trading_partners.manage` — Add and edit the factory’s own suppliers and customers (D-317, D-319) | ● |  |  |  |  | ● |  | ● |  |
-| `factory_inventory.read` — Read the factory’s items, warehouses, stock balances and stock ledger (D-319, D-324) | ● | ● | ● |  |  | ● | ● | ● | ● |
-| `factory_inventory.manage` — Manage items and warehouses, issue, return and transfer stock, post goods receipts (D-319, D-324, D-325) | ● |  |  |  |  |  | ● |  |  |
-| `factory_inventory.adjust` — Post opening balances, stock adjustments and counts (D-319, D-324) | ● |  |  |  |  |  |  |  |  |
-| `factory_procurement.read` — Read the factory’s purchase orders, goods receipts and the reorder list (D-319, D-325, D-326) | ● | ● |  |  |  | ● | ● | ● |  |
-| `factory_procurement.manage` — Draft, edit, cancel and close the factory’s purchase orders (D-319, D-325) | ● |  |  |  |  |  |  | ● |  |
-| `factory_procurement.approve` — Issue (approve) the factory’s purchase orders (D-319, D-325) | ● |  |  |  |  |  |  |  |  |
-| `factory_procurement.request` — Raise the factory’s purchase requests (from need, the reorder list or MRP) (D-319, D-336) | ● | ● |  |  |  |  | ● | ● |  |
-| `factory_ap.read` — Read the factory’s supplier invoices, payments and payables aging (D-319, D-337, D-338) | ● |  |  |  |  | ● |  | ● |  |
-| `factory_ap.manage` — Record supplier invoices (3-way matched) and pay or reverse supplier payments (D-319, D-337, D-338) | ● |  |  |  |  | ● |  |  |  |
-| `factory_ap.approve` — Approve supplier invoices that did not match the order or the goods received (D-319, D-337) | ● |  |  |  |  |  |  |  |  |
-| `factory_planning.read` — Read the factory’s recipes, production orders, the floor queue and MRP (D-319, D-339, D-340, D-342) | ● | ● | ● |  |  |  | ● |  | ● |
-| `factory_planning.manage` — Manage recipes; plan, release, complete and cancel production orders; request MRP shortages (D-319, D-339, D-340, D-341, D-342) | ● | ● |  |  |  |  |  |  |  |
-| `factory_production.record` — Start, pause, resume, finish or skip operations of production orders on the floor (kiosk) (D-319, D-341) | ● | ● | ● |  |  |  |  |  |  |
-| `factory_maintenance.read` — Read the factory’s machines’ maintenance: breakdowns, preventive plans and their orders (D-355, D-357) | ● | ● | ● |  |  |  | ● | ● | ● |
-| `factory_maintenance.report` — Report a machine breakdown (with photos) (D-355, D-357) | ● | ● | ● |  |  |  |  |  | ● |
-| `factory_maintenance.manage` — Plan, schedule, carry out and close maintenance; issue spare parts to it (D-355, D-357) | ● | ● |  |  |  |  |  |  | ● |
-| `factory_documents.read` — Read the factory’s documents and their versions (D-356, D-357) | ● | ● | ● | ● |  | ● | ● | ● | ● |
-| `factory_documents.manage` — Add, version, link, file and archive the factory’s documents and folders (D-356, D-357) | ● | ● |  |  |  |  | ● | ● |  |
-| `factory_erp.configure` — Configure the factory’s ERP: modules, document prefixes, stock and receiving rules (D-318, D-322, D-323) | ● |  |  |  |  |  |  |  |  |
+| Permission | `factory_owner` | `factory_planner` | `factory_operator` | `factory_qc` | `factory_shipping` | `factory_accountant` | `factory_storekeeper` | `factory_purchaser` | `factory_maintenance` | `factory_sales` |
+|---|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|
+| `factory_style_intakes.submit` — Offer the factory’s dielines to the style library under the intake terms (D-272) (D-272) | ● | ● |  |  |  |  |  |  |  |  |
+| `factory_process_capabilities.propose` — Propose or withdraw the factory’s process capabilities (verified by the Partner team) (D-244) | ● | ● |  |  |  |  |  |  |  |  |
+| `factory_profile.read` — Read the own factory profile | ● | ● | ● | ● | ● | ● | ● | ● | ● | ● |
+| `factory_users.manage` — Manage users of the own factory | ● |  |  |  |  |  |  |  |  |  |
+| `factory_profile.manage` — Edit the own factory profile, addresses, contacts and KYC documents | ● |  |  |  |  |  |  |  |  |  |
+| `factory_onboarding.sign_off` — Sign off data Packio entered on the factory’s behalf (D-100) | ● |  |  |  |  |  |  |  |  |  |
+| `factory_prices.read` — Read the own factory price lists (D-044) | ● |  |  |  |  | ● |  |  |  |  |
+| `factory_prices.propose` — Propose price-list changes (factory price list mode) (D-040, D-042) | ● |  |  |  |  |  |  |  |  |  |
+| `factory_rate_card.accept` — Accept, counter or refuse a platform rate card (D-042) | ● |  |  |  |  |  |  |  |  |  |
+| `factory_agreements.accept` — Accept the partner agreement on behalf of the factory (D-011) | ● |  |  |  |  |  |  |  |  |  |
+| `factory_bank_account.propose` — Propose a new bank account for payouts (dual approval by Packio Finance) (D-033) | ● |  |  |  |  | ● |  |  |  |  |
+| `factory_capacity.read` — Read the own capacity and bookings (D-101) | ● | ● |  |  |  |  |  |  |  |  |
+| `factory_rfq.read` — Read the requests for a buy price Packio sent the factory (never the sell price) (D-100, D-044) | ● | ● |  |  |  |  |  |  |  |  |
+| `factory_rfq.respond` — Answer a request for a buy price per quantity tier, or decline it (D-100) | ● | ● |  |  |  |  |  |  |  |  |
+| `factory_jobs.read` — Read the own factory’s production jobs: spec, approved artwork, delivery contacts (D-142) | ● | ● | ● | ● | ● | ● | ● |  | ● | ● |
+| `factory_jobs.respond` — Accept or reject released jobs within the acceptance time (D-074) | ● | ● |  |  |  |  |  |  |  |  |
+| `factory_samples.record_evidence` — Record a sample’s measured size, the material used and its photos before it ships (D-255) | ● | ● |  | ● |  |  |  |  |  |  |
+| `factory_milestones.update` — Start and complete milestones with quantities and photos (D-075) | ● | ● | ● | ● | ● |  |  |  |  |  |
+| `factory_qc.record` — Record QC checklists with photos (D-076) | ● |  |  | ● |  |  |  |  |  |  |
+| `factory_issues.raise` — Raise production issues on own jobs | ● | ● | ● | ● | ● |  |  |  |  |  |
+| `factory_capacity.manage` — Set weekly capacity overrides of the own factory (D-101) | ● | ● |  |  |  |  |  |  |  |  |
+| `factory_scorecard.read` — Read the own factory’s monthly scorecard (D-155) | ● | ● |  | ● |  |  |  |  |  |  |
+| `factory_shipments.read` — Read the own factory’s shipments, labels and packing lists (D-013, D-142) | ● | ● |  |  | ● |  |  |  |  |  |
+| `factory_claims.read` — Read the claims about the own factory’s jobs (D-083) | ● | ● |  | ● |  |  |  |  |  |  |
+| `factory_claims.respond` — Accept or dispute a claim Packio sent for review (D-083) | ● |  |  | ● |  |  |  |  |  |  |
+| `factory_payables.read` — Read the own factory’s POs, goods receipts, billing statements, payouts and 50 ทวิ (D-090, D-022) | ● |  |  |  |  | ● |  |  |  |  |
+| `factory_payables.manage` — Confirm or dispute billing statements and submit the factory’s tax invoices (D-090) | ● |  |  |  |  | ● |  |  |  |  |
+| `factory_shipments.manage` — Create, pack, dispatch and deliver shipments with proof of delivery (D-013) | ● |  |  |  | ● |  |  |  |  |  |
+| `factory_trading_partners.read` — Read the factory’s own suppliers and customers (Packio Factory ERP) (D-317, D-319) | ● | ● |  |  |  | ● | ● | ● |  | ● |
+| `factory_trading_partners.manage` — Add and edit the factory’s own suppliers and customers (D-317, D-319) | ● |  |  |  |  | ● |  | ● |  | ● |
+| `factory_inventory.read` — Read the factory’s items, warehouses, stock balances and stock ledger (D-319, D-324) | ● | ● | ● |  |  | ● | ● | ● | ● | ● |
+| `factory_inventory.manage` — Manage items and warehouses, issue, return and transfer stock, post goods receipts (D-319, D-324, D-325) | ● |  |  |  |  |  | ● |  |  |  |
+| `factory_inventory.adjust` — Post opening balances, stock adjustments and counts (D-319, D-324) | ● |  |  |  |  |  |  |  |  |  |
+| `factory_procurement.read` — Read the factory’s purchase orders, goods receipts and the reorder list (D-319, D-325, D-326) | ● | ● |  |  |  | ● | ● | ● |  |  |
+| `factory_procurement.manage` — Draft, edit, cancel and close the factory’s purchase orders (D-319, D-325) | ● |  |  |  |  |  |  | ● |  |  |
+| `factory_procurement.approve` — Issue (approve) the factory’s purchase orders (D-319, D-325) | ● |  |  |  |  |  |  |  |  |  |
+| `factory_procurement.request` — Raise the factory’s purchase requests (from need, the reorder list or MRP) (D-319, D-336) | ● | ● |  |  |  |  | ● | ● |  |  |
+| `factory_ap.read` — Read the factory’s supplier invoices, payments and payables aging (D-319, D-337, D-338) | ● |  |  |  |  | ● |  | ● |  |  |
+| `factory_ap.manage` — Record supplier invoices (3-way matched) and pay or reverse supplier payments (D-319, D-337, D-338) | ● |  |  |  |  | ● |  |  |  |  |
+| `factory_ap.approve` — Approve supplier invoices that did not match the order or the goods received (D-319, D-337) | ● |  |  |  |  |  |  |  |  |  |
+| `factory_planning.read` — Read the factory’s recipes, production orders, the floor queue and MRP (D-319, D-339, D-340, D-342) | ● | ● | ● |  |  |  | ● |  | ● | ● |
+| `factory_planning.manage` — Manage recipes; plan, release, complete and cancel production orders; request MRP shortages (D-319, D-339, D-340, D-341, D-342) | ● | ● |  |  |  |  |  |  |  |  |
+| `factory_production.record` — Start, pause, resume, finish or skip operations of production orders on the floor (kiosk) (D-319, D-341) | ● | ● | ● |  |  |  |  |  |  |  |
+| `factory_maintenance.read` — Read the factory’s machines’ maintenance: breakdowns, preventive plans and their orders (D-355, D-357) | ● | ● | ● |  |  |  | ● | ● | ● |  |
+| `factory_maintenance.report` — Report a machine breakdown (with photos) (D-355, D-357) | ● | ● | ● |  |  |  |  |  | ● |  |
+| `factory_maintenance.manage` — Plan, schedule, carry out and close maintenance; issue spare parts to it (D-355, D-357) | ● | ● |  |  |  |  |  |  | ● |  |
+| `factory_documents.read` — Read the factory’s documents and their versions (D-356, D-357) | ● | ● | ● | ● |  | ● | ● | ● | ● | ● |
+| `factory_documents.manage` — Add, version, link, file and archive the factory’s documents and folders (D-356, D-357) | ● | ● |  |  |  |  | ● | ● |  |  |
+| `factory_sales.read` — Read the factory’s CRM, quotations, sales orders, targets and sales reports (D-359, D-360, D-361, D-370) | ● | ● |  |  |  | ● | ● |  |  | ● |
+| `factory_sales.manage` — Work leads, opportunities and activities; draft, send and revise quotations; enter and confirm sales orders (D-359, D-360, D-361, D-370) | ● |  |  |  |  |  |  |  |  | ● |
+| `factory_sales.approve` — Confirm a sales order over the customer’s credit limit; set sales targets and commission rates (D-361, D-369, D-370) | ● |  |  |  |  |  |  |  |  |  |
+| `factory_delivery.manage` — Prepare, issue (take out of stock), confirm and cancel delivery notes (D-362, D-370) | ● |  |  |  |  |  | ● |  |  | ● |
+| `factory_receivables.read` — Read the factory’s invoices, tax invoices, credit / debit notes, receipts, billing notes and receivables aging (D-363, D-364, D-365, D-370) | ● |  |  |  |  | ● |  |  |  | ● |
+| `factory_receivables.manage` — Issue and void the factory’s invoices / tax invoices and credit / debit notes; record and cancel receipts and refunds; issue billing notes (D-363, D-364, D-365, D-370) | ● |  |  |  |  | ● |  |  |  |  |
+| `factory_tax.read` — Read and export the factory’s VAT and withholding-tax reports and its accounting export (D-366, D-367, D-370) | ● |  |  |  |  | ● |  |  |  |  |
+| `factory_erp.configure` — Configure the factory’s ERP: modules, document prefixes, stock and receiving rules (D-318, D-322, D-323) | ● |  |  |  |  |  |  |  |  |  |
 
 | Role | Name (th) | Name (en) |
 |---|---|---|
@@ -262,6 +269,7 @@ Legend: ● granted · ◆ granted and sensitive (cost/margin data, D-141).
 | `factory_storekeeper` | เจ้าหน้าที่คลังสินค้า | Storekeeper |
 | `factory_purchaser` | เจ้าหน้าที่จัดซื้อ | Purchaser |
 | `factory_maintenance` | ช่างซ่อมบำรุง | Maintenance |
+| `factory_sales` | ฝ่ายขาย | Sales |
 
 ## B2B company members (company scope)
 

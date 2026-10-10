@@ -19,6 +19,9 @@ const EVENT_OF: Record<ErpAlertKind, string> = {
   maintenance_due: 'erp_alert.maintenance_due',
   machine_breakdown: 'erp_alert.machine_breakdown',
   document_expiring: 'erp_alert.document_expiring',
+  quote_follow_up: 'erp_alert.quote_follow_up',
+  invoice_overdue: 'erp_alert.invoice_overdue',
+  activity_overdue: 'erp_alert.activity_overdue',
 };
 
 export interface AlertInput {

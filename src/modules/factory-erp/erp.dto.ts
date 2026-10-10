@@ -1,6 +1,7 @@
 import { CodedRefDto } from '@common/dto/factory-ref.dto';
 import { NextActionDto } from '@common/next-actions/next-action.dto';
 import { PageQuery } from '@common/pagination/pagination.dto';
+import { PersonRefDto } from '@modules/financial-reports/financial-reports.dto';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { Transform, Type } from 'class-transformer';
 import {
@@ -68,6 +69,8 @@ export const ERP_MOVEMENT_KINDS = [
   'production_receipt',
   'landed_cost',
   'maintenance_issue',
+  'sales_issue',
+  'sales_return',
 ] as const;
 export const ERP_VAT_MODES = ['exclusive', 'inclusive', 'none'] as const;
 export const ERP_PO_STATUSES = [
@@ -225,6 +228,27 @@ export class ErpSettingsDto {
   })
   vatRegistered!: boolean;
 
+  @ApiProperty({ example: 30, description: 'Days a new quotation holds (D-360)' })
+  quoteValidDays!: number;
+
+  @ApiProperty({
+    type: String,
+    nullable: true,
+    format: 'uuid',
+    example: null,
+    description: 'The logo on the factory’s documents (an uploaded image, D-368)',
+  })
+  documentLogoFileId!: string | null;
+
+  @ApiProperty({ type: String, nullable: true, example: 'โทร 02-123-4567 · sales@factory.example.invalid' })
+  documentFooter!: string | null;
+
+  @ApiProperty({ type: String, nullable: true, example: 'โอนเข้า ธ.กสิกรไทย 123-4-56789-0 บจก. กล่องดี แพคเกจจิ้ง' })
+  bankDetails!: string | null;
+
+  @ApiProperty({ type: String, nullable: true, example: 'นายสมชาย ใจดี' })
+  signatoryName!: string | null;
+
   @ApiProperty({ example: 1 })
   version!: number;
 }
@@ -289,6 +313,40 @@ export class UpdateErpSettingsDto {
   })
   @IsOptional()
   prefixes?: Record<string, string>;
+
+  @ApiPropertyOptional({ example: 30, minimum: 1, maximum: 365 })
+  @IsOptional()
+  @IsInt()
+  @Min(1)
+  @Max(365)
+  quoteValidDays?: number;
+
+  @ApiPropertyOptional({ type: String, nullable: true, format: 'uuid', description: 'An uploaded image of this factory; null removes it' })
+  @IsOptional()
+  @Transform(emptyToNull)
+  @IsUUID()
+  documentLogoFileId?: string | null;
+
+  @ApiPropertyOptional({ type: String, nullable: true, maxLength: 300 })
+  @IsOptional()
+  @Transform(emptyToNull)
+  @IsString()
+  @MaxLength(300)
+  documentFooter?: string | null;
+
+  @ApiPropertyOptional({ type: String, nullable: true, maxLength: 500 })
+  @IsOptional()
+  @Transform(emptyToNull)
+  @IsString()
+  @MaxLength(500)
+  bankDetails?: string | null;
+
+  @ApiPropertyOptional({ type: String, nullable: true, maxLength: 120 })
+  @IsOptional()
+  @Transform(emptyToNull)
+  @IsString()
+  @MaxLength(120)
+  signatoryName?: string | null;
 }
 
 // ----------------------------------------------------------------------------- trading partners
@@ -329,6 +387,17 @@ export class ErpTradingPartnerDto {
 
   @ApiProperty({ type: String, nullable: true, example: '500000.00' })
   creditLimit!: string | null;
+
+  @ApiProperty({
+    enum: ['juristic', 'individual'],
+    enumName: 'ErpEntityType',
+    example: 'juristic',
+    description: 'For 50 ทวิ: ภ.ง.ด.53 (juristic) or ภ.ง.ด.3 (individual), D-366',
+  })
+  entityType!: string;
+
+  @ApiProperty({ type: PersonRefDto, nullable: true, description: 'The customer’s salesperson (D-359)' })
+  salesperson!: PersonRefDto | null;
 
   @ApiProperty({ type: String, nullable: true, example: null })
   note!: string | null;
@@ -432,6 +501,17 @@ export class ErpCreateTradingPartnerDto {
   @IsString()
   @MaxLength(1000)
   note?: string | null;
+
+  @ApiPropertyOptional({ enum: ['juristic', 'individual'], enumName: 'ErpEntityType', example: 'juristic' })
+  @IsOptional()
+  @IsIn(['juristic', 'individual'])
+  entityType?: string;
+
+  @ApiPropertyOptional({ type: String, nullable: true, format: 'uuid', description: 'A user of this factory' })
+  @IsOptional()
+  @Transform(emptyToNull)
+  @IsUUID()
+  salespersonId?: string | null;
 }
 
 export class ErpUpdateTradingPartnerDto {
@@ -512,6 +592,17 @@ export class ErpUpdateTradingPartnerDto {
   @IsOptional()
   @IsIn(ERP_RECORD_STATUSES)
   status?: string;
+
+  @ApiPropertyOptional({ enum: ['juristic', 'individual'], enumName: 'ErpEntityType', example: 'juristic' })
+  @IsOptional()
+  @IsIn(['juristic', 'individual'])
+  entityType?: string;
+
+  @ApiPropertyOptional({ type: String, nullable: true, format: 'uuid', description: 'A user of this factory' })
+  @IsOptional()
+  @Transform(emptyToNull)
+  @IsUUID()
+  salespersonId?: string | null;
 }
 
 export class ErpTradingPartnerListQuery extends PageQuery {
@@ -964,7 +1055,16 @@ export class ErpStockMovementDto {
   documentNo!: string;
 
   @ApiProperty({
-    enum: ['goods_receipt', 'adjustment', 'issue', 'transfer', 'production_order', 'maintenance_order'],
+    enum: [
+      'goods_receipt',
+      'adjustment',
+      'issue',
+      'transfer',
+      'production_order',
+      'maintenance_order',
+      'delivery_note',
+      'sales_note',
+    ],
     enumName: 'ErpMovementSource',
     example: 'goods_receipt',
   })

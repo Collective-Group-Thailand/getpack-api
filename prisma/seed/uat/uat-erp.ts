@@ -600,3 +600,147 @@ export async function seedUatErpE3(prisma: PrismaClient): Promise<number> {
     return n;
   });
 }
+
+/** Factory users the E3/E4 menus need beyond the original six (storekeeper, purchaser, maintenance, sales). */
+const E4_PEOPLE = [
+  { email: 'factory-storekeeper@uat.example.invalid', role: 'factory_storekeeper', name: 'คลังสินค้า ทดสอบ' },
+  { email: 'factory-purchaser@uat.example.invalid', role: 'factory_purchaser', name: 'จัดซื้อ ทดสอบ' },
+  { email: 'factory-maintenance@uat.example.invalid', role: 'factory_maintenance', name: 'ช่างซ่อมบำรุง ทดสอบ' },
+  { email: 'factory-sales@uat.example.invalid', role: 'factory_sales', name: 'ฝ่ายขาย ทดสอบ' },
+] as const;
+
+/**
+ * E4 rehearsal data (D-359 – D-371): one user per remaining factory role, the customers' addresses and a second
+ * customer with a credit limit, a lead and an open opportunity for the sales user, and this month's target.
+ * Idempotent — users are added when missing; the sales data only when the factory has no leads yet.
+ */
+export async function seedUatErpE4(prisma: PrismaClient, passwordHash: string | undefined): Promise<number> {
+  const factory = await prisma.factory.findUnique({ where: { code: UAT_FACTORY_CODE } });
+  if (!factory) return 0;
+  let n = 0;
+  for (const p of E4_PEOPLE) {
+    if (await prisma.user.findFirst({ where: { email: p.email } })) continue;
+    const role = await prisma.role.findUnique({ where: { key: p.role } });
+    if (!role) continue;
+    await prisma.user.create({
+      data: {
+        kind: 'partner',
+        status: 'active',
+        email: p.email,
+        emailVerifiedAt: new Date(),
+        displayName: p.name,
+        ...(passwordHash && { passwordHash, passwordChangedAt: new Date() }),
+        roles: {
+          create: {
+            roleId: role.id,
+            scopeType: 'factory',
+            scopeId: factory.id,
+            reason: 'UAT rehearsal seed (fake user)',
+          },
+        },
+      },
+    });
+    n += 1;
+  }
+  // A tax invoice needs the seller's registered address (s.86/4, D-363).
+  if (!(await prisma.factoryAddress.findFirst({ where: { factoryId: factory.id, kind: 'registered' } }))) {
+    const sub = await prisma.geoSubdistrict.findFirst({
+      where: { district: { province: { nameTh: { contains: 'สมุทรสาคร' } } } },
+      orderBy: { id: 'asc' },
+    });
+    await prisma.factoryAddress.create({
+      data: {
+        factoryId: factory.id,
+        kind: 'registered',
+        line1: '99/1 หมู่ 2 ถนนทดสอบ (ข้อมูลปลอม)',
+        subdistrictId: sub?.id ?? null,
+        postcode: sub?.postcode ?? '74000',
+      },
+    });
+    n += 1;
+  }
+  if (await prisma.erpLead.count({ where: { factoryId: factory.id } })) return n;
+  const owner = await prisma.userRole.findFirst({
+    where: { scopeType: 'factory', scopeId: factory.id, role: { key: 'factory_owner' }, revokedAt: null },
+  });
+  const by = owner?.userId ?? (await prisma.user.findFirstOrThrow({ where: { kind: 'staff' } })).id;
+  const sales = await prisma.user.findFirst({ where: { email: 'factory-sales@uat.example.invalid' } });
+  const seller = sales?.id ?? by;
+  return prisma.$transaction(async (tx) => {
+    await tx.erpTradingPartner.updateMany({
+      where: { factoryId: factory.id, kind: { in: ['customer', 'both'] }, address: null },
+      data: { address: '88/8 ถนนทดสอบ แขวงทดสอบ เขตทดสอบ กรุงเทพฯ 10000 (ข้อมูลปลอม)', salespersonId: seller },
+    });
+    const taken = await tx.erpTradingPartner.findFirst({ where: { factoryId: factory.id, code: 'C0002' } });
+    const customer =
+      taken ??
+      (await tx.erpTradingPartner.create({
+        data: {
+          factoryId: factory.id,
+          code: 'C0002',
+          kind: 'customer',
+          name: 'บจก. ขนมทดสอบ (ข้อมูลปลอม)',
+          phone: '020000011',
+          contactName: 'คุณทดสอบ (ข้อมูลปลอม)',
+          taxId: fakeTaxId('C0002'),
+          branchCode: '00000',
+          address: '77/7 ถนนทดสอบ ต.ทดสอบ อ.ทดสอบ จ.นนทบุรี 11000 (ข้อมูลปลอม)',
+          paymentTermDays: 30,
+          creditLimit: '200000',
+          entityType: 'juristic',
+          salespersonId: seller,
+          createdById: by,
+        },
+      }));
+    const lead = await tx.erpLead.create({
+      data: {
+        factoryId: factory.id,
+        salespersonId: seller,
+        name: 'ร้านกาแฟทดสอบ (ข้อมูลปลอม)',
+        contactName: 'คุณลีดทดสอบ',
+        phone: '0800000001',
+        source: 'facebook',
+        stage: 'contacted',
+        expectedValue: '25000',
+        note: 'สนใจแก้วกระดาษพิมพ์โลโก้ 5,000 ใบ/เดือน',
+        createdById: by,
+      },
+    });
+    await tx.erpOpportunity.create({
+      data: {
+        factoryId: factory.id,
+        customerId: customer.id,
+        salespersonId: seller,
+        title: 'กล่องขนมพิมพ์ 4 สี — ล็อตเทศกาล (ทดสอบ)',
+        stage: 'proposal',
+        value: '120000',
+        probabilityPct: 40,
+        expectedCloseOn: new Date(Date.now() + 21 * 86_400_000),
+        createdById: by,
+      },
+    });
+    await tx.erpActivity.create({
+      data: {
+        factoryId: factory.id,
+        leadId: lead.id,
+        assigneeId: seller,
+        kind: 'call',
+        subject: 'โทรนัดส่งตัวอย่างแก้ว (ทดสอบ)',
+        dueAt: new Date(Date.now() + 2 * 86_400_000),
+        createdById: by,
+      },
+    });
+    const now = new Date();
+    await tx.erpSalesTarget.create({
+      data: {
+        factoryId: factory.id,
+        salespersonId: seller,
+        month: new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), 1)),
+        targetNet: '300000',
+        commissionPct: '2',
+        createdById: by,
+      },
+    });
+    return n + 4;
+  });
+}

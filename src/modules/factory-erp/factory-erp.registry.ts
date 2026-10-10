@@ -27,8 +27,18 @@ import {
   PartnerErpScheduleController,
   PartnerErpSourcingController,
 } from './erp-e3.controllers';
+import {
+  PartnerErpCrmController,
+  PartnerErpDeliveryNotesController,
+  PartnerErpQuotationsController,
+  PartnerErpReceivablesController,
+  PartnerErpSalesInvoicesController,
+  PartnerErpSalesOrdersController,
+  PartnerErpTaxController,
+  PublicQuotationLinksController,
+} from './erp-e4.controllers';
 
-/** `/v1/partner/factories/{factoryId}/erp/*` (E1, E1.1, E2, E2.1, E3). */
+/** `/v1/partner/factories/{factoryId}/erp/*` (E1, E1.1, E2, E2.1, E3, E4). */
 export const FACTORY_ERP_PARTNER_CONTROLLERS: Type<unknown>[] = [
   PartnerErpSettingsController,
   PartnerErpPartnersController,
@@ -51,4 +61,14 @@ export const FACTORY_ERP_PARTNER_CONTROLLERS: Type<unknown>[] = [
   PartnerErpScheduleController,
   PartnerErpMaintenanceController,
   PartnerErpDocumentsController,
+  PartnerErpCrmController,
+  PartnerErpQuotationsController,
+  PartnerErpSalesOrdersController,
+  PartnerErpDeliveryNotesController,
+  PartnerErpSalesInvoicesController,
+  PartnerErpReceivablesController,
+  PartnerErpTaxController,
 ];
+
+/** `/v1/store/quote-links/{token}` — the customer's quotation link (D-360). */
+export const FACTORY_ERP_STORE_CONTROLLERS: Type<unknown>[] = [PublicQuotationLinksController];

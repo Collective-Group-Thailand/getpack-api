@@ -1,10 +1,11 @@
 import { type PrismaClient } from '../../../src/generated/prisma/client';
+import { PasswordService } from '../../../src/modules/auth/password.service';
 import { seedDevPriceLists } from '../dev-price-lists';
 import { seedDev } from '../dev-seed';
 import { type EntitySeedInput, type SeedReport } from '../reference-seed';
 import { seedUatCatalog, SIGNED_INSTANT_TYPES } from './uat-catalog';
 import { UAT_CONSENT_TEXT } from './uat-data';
-import { seedUatErp, seedUatErpE2, seedUatErpE3 } from './uat-erp';
+import { seedUatErp, seedUatErpE2, seedUatErpE3, seedUatErpE4 } from './uat-erp';
 
 /**
  * Obviously fake issuing entity for a UAT rehearsal that has no `SEED_ENTITY_*` (UAT.md §0 uses the real legal
@@ -51,6 +52,10 @@ export async function seedUat(
   const erp = await seedUatErp(prisma);
   const erpE2 = await seedUatErpE2(prisma);
   const erpE3 = await seedUatErpE3(prisma);
+  const erpE4 = await seedUatErpE4(
+    prisma,
+    opts.password ? await new PasswordService().hash(opts.password) : undefined,
+  );
   return {
     ...report,
     ...uat,
@@ -58,6 +63,7 @@ export async function seedUat(
     ...(erp && { uat_erp_items: erp }),
     ...(erpE2 && { uat_erp_supplier_links: erpE2 }),
     ...(erpE3 && { uat_erp_maintenance_plans: erpE3 }),
+    ...(erpE4 && { uat_erp_sales: erpE4 }),
   };
 }
 

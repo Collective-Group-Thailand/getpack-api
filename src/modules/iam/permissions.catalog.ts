@@ -1019,6 +1019,48 @@ export const PERMISSIONS = [
     decisionRefs: ['D-356', 'D-357'],
   },
   {
+    key: 'factory_sales.read',
+    audience: 'partner',
+    description: 'Read the factory’s CRM, quotations, sales orders, targets and sales reports',
+    decisionRefs: ['D-359', 'D-360', 'D-361', 'D-370'],
+  },
+  {
+    key: 'factory_sales.manage',
+    audience: 'partner',
+    description: 'Work leads, opportunities and activities; draft, send and revise quotations; enter and confirm sales orders',
+    decisionRefs: ['D-359', 'D-360', 'D-361', 'D-370'],
+  },
+  {
+    key: 'factory_sales.approve',
+    audience: 'partner',
+    description: 'Confirm a sales order over the customer’s credit limit; set sales targets and commission rates',
+    decisionRefs: ['D-361', 'D-369', 'D-370'],
+  },
+  {
+    key: 'factory_delivery.manage',
+    audience: 'partner',
+    description: 'Prepare, issue (take out of stock), confirm and cancel delivery notes',
+    decisionRefs: ['D-362', 'D-370'],
+  },
+  {
+    key: 'factory_receivables.read',
+    audience: 'partner',
+    description: 'Read the factory’s invoices, tax invoices, credit / debit notes, receipts, billing notes and receivables aging',
+    decisionRefs: ['D-363', 'D-364', 'D-365', 'D-370'],
+  },
+  {
+    key: 'factory_receivables.manage',
+    audience: 'partner',
+    description: 'Issue and void the factory’s invoices / tax invoices and credit / debit notes; record and cancel receipts and refunds; issue billing notes',
+    decisionRefs: ['D-363', 'D-364', 'D-365', 'D-370'],
+  },
+  {
+    key: 'factory_tax.read',
+    audience: 'partner',
+    description: 'Read and export the factory’s VAT and withholding-tax reports and its accounting export',
+    decisionRefs: ['D-366', 'D-367', 'D-370'],
+  },
+  {
     key: 'factory_erp.configure',
     audience: 'partner',
     description: 'Configure the factory’s ERP: modules, document prefixes, stock and receiving rules',
