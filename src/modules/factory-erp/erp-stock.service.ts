@@ -56,7 +56,15 @@ export interface StockEntry {
 }
 
 export interface StockSource {
-  type: 'goods_receipt' | 'adjustment' | 'issue' | 'transfer' | 'production_order' | 'maintenance_order';
+  type:
+    | 'goods_receipt'
+    | 'adjustment'
+    | 'issue'
+    | 'transfer'
+    | 'production_order'
+    | 'maintenance_order'
+    | 'delivery_note'
+    | 'sales_note';
   publicId: string;
   documentNo: string;
   occurredAt?: Date;

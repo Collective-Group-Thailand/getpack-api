@@ -21,6 +21,7 @@ import { CONVERSATIONS_STORE_CONTROLLERS } from '@modules/conversations/conversa
 import { CUSTOMERS_STORE_CONTROLLERS } from '@modules/customers/customers.registry';
 import { DESIGN_SERVICES_STORE_CONTROLLERS } from '@modules/design-services/design-services.registry';
 import { DESIGNS_STORE_CONTROLLERS } from '@modules/designs/designs.registry';
+import { FACTORY_ERP_STORE_CONTROLLERS } from '@modules/factory-erp/factory-erp.registry';
 import { LAUNCHPAD_STORE_CONTROLLERS } from '@modules/launchpad/launchpad.registry';
 import { LOGISTICS_STORE_CONTROLLERS } from '@modules/logistics/logistics.registry';
 import { LOYALTY_STORE_CONTROLLERS } from '@modules/loyalty/loyalty.registry';
@@ -101,6 +102,7 @@ import { RealtimeModule } from '@platform/realtime/realtime.module';
     ...DESIGN_SERVICES_STORE_CONTROLLERS,
     ...DESIGNS_STORE_CONTROLLERS,
     ...ANALYTICS_STORE_CONTROLLERS,
+    ...FACTORY_ERP_STORE_CONTROLLERS,
   ],
 })
 export class StoreApiModule {}

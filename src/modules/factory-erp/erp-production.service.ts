@@ -425,63 +425,70 @@ export class ErpProductionService {
     body: ErpCreateProductionOrderDto,
     perms: ReadonlySet<string>,
   ): Promise<ErpProductionOrderDto> {
-    const id = await this.workspace.tx(async (tx) => {
-      const [item] = await this.stock.items(tx, scope.factory.id, [body.itemId]);
-      const quantity = dec(body.quantity);
-      if (!quantity.gt(0))
-        throw new DomainException('validation.failed', {
-          errors: [{ path: 'quantity', code: 'invalid', message: 'Must be more than zero' }],
-        });
-      const recipe = body.recipeId
-        ? await tx.erpRecipe.findFirst({
-            where: { factoryId: scope.factory.id, publicId: body.recipeId, itemId: item!.id },
-            include: RECIPE_INCLUDE,
-          })
-        : await tx.erpRecipe.findFirst({
-            where: { factoryId: scope.factory.id, itemId: item!.id, status: 'active' },
-            include: RECIPE_INCLUDE,
-            orderBy: { updatedAt: 'desc' },
-          });
-      if (body.recipeId && !recipe) throw new DomainException('http.not_found');
-      const fromRecipe = recipe ? this.fromRecipe(recipe, quantity) : { materials: [], operations: [] };
-      const manual = await this.manualParts(tx, scope, body.materials, body.operations);
-      const warehouse = await this.workspace.warehouse(tx, scope, body.warehouseId);
-      this.dates(body.plannedStartOn ?? null, body.dueOn ?? null);
-      const moNo = await this.workspace.nextNumber(tx, scope.factory.id, 'mo');
-      const mo = await tx.erpProductionOrder.create({
-        data: {
-          factoryId: scope.factory.id,
-          moNo,
-          source: body.source as MoRow['source'],
-          itemId: item!.id,
-          recipeId: recipe?.id ?? null,
-          title: body.title ?? item!.name,
-          quantity: fmtQty(quantity),
-          unit: item!.baseUnit,
-          dueOn: body.dueOn ? day(body.dueOn) : null,
-          plannedStartOn: body.plannedStartOn ? day(body.plannedStartOn) : null,
-          priority: body.priority ?? 0,
-          warehouseId: warehouse.id,
-          note: body.note ?? null,
-          createdById: scope.actor.userId,
-          materials: { create: manual.materials ?? fromRecipe.materials },
-          operations: { create: manual.operations ?? fromRecipe.operations },
-        },
-      });
-      await this.workspace.record(
-        tx,
-        scope,
-        'erp_production_order.planned',
-        'erp_production_order',
-        mo.publicId,
-        {
-          moNo,
-          source: body.source,
-        },
-      );
-      return mo.publicId;
-    });
+    const id = await this.workspace.tx(async (tx) => (await this.plan(tx, scope, body)).publicId);
     return this.get(scope, id, perms);
+  }
+
+  /** Plans a production order in the caller's transaction (a sales order's make-to-order line, D-361). */
+  async plan(
+    tx: Tx,
+    scope: ErpScope,
+    body: ErpCreateProductionOrderDto,
+  ): Promise<{ id: bigint; publicId: string; moNo: string; hasRecipe: boolean }> {
+    const [item] = await this.stock.items(tx, scope.factory.id, [body.itemId]);
+    const quantity = dec(body.quantity);
+    if (!quantity.gt(0))
+      throw new DomainException('validation.failed', {
+        errors: [{ path: 'quantity', code: 'invalid', message: 'Must be more than zero' }],
+      });
+    const recipe = body.recipeId
+      ? await tx.erpRecipe.findFirst({
+          where: { factoryId: scope.factory.id, publicId: body.recipeId, itemId: item!.id },
+          include: RECIPE_INCLUDE,
+        })
+      : await tx.erpRecipe.findFirst({
+          where: { factoryId: scope.factory.id, itemId: item!.id, status: 'active' },
+          include: RECIPE_INCLUDE,
+          orderBy: { updatedAt: 'desc' },
+        });
+    if (body.recipeId && !recipe) throw new DomainException('http.not_found');
+    const fromRecipe = recipe ? this.fromRecipe(recipe, quantity) : { materials: [], operations: [] };
+    const manual = await this.manualParts(tx, scope, body.materials, body.operations);
+    const warehouse = await this.workspace.warehouse(tx, scope, body.warehouseId);
+    this.dates(body.plannedStartOn ?? null, body.dueOn ?? null);
+    const moNo = await this.workspace.nextNumber(tx, scope.factory.id, 'mo');
+    const mo = await tx.erpProductionOrder.create({
+      data: {
+        factoryId: scope.factory.id,
+        moNo,
+        source: body.source as MoRow['source'],
+        itemId: item!.id,
+        recipeId: recipe?.id ?? null,
+        title: body.title ?? item!.name,
+        quantity: fmtQty(quantity),
+        unit: item!.baseUnit,
+        dueOn: body.dueOn ? day(body.dueOn) : null,
+        plannedStartOn: body.plannedStartOn ? day(body.plannedStartOn) : null,
+        priority: body.priority ?? 0,
+        warehouseId: warehouse.id,
+        note: body.note ?? null,
+        createdById: scope.actor.userId,
+        materials: { create: manual.materials ?? fromRecipe.materials },
+        operations: { create: manual.operations ?? fromRecipe.operations },
+      },
+    });
+    await this.workspace.record(
+      tx,
+      scope,
+      'erp_production_order.planned',
+      'erp_production_order',
+      mo.publicId,
+      {
+        moNo,
+        source: body.source,
+      },
+    );
+    return { id: mo.id, publicId: mo.publicId, moNo, hasRecipe: recipe !== null };
   }
 
   private dates(start: string | null, due: string | null) {
@@ -832,33 +839,36 @@ export class ErpProductionService {
 
   /** Cancels an open order nothing was issued to (return materials first); reservations are released. */
   async cancel(scope: ErpScope, publicId: string, reason: string, perms: ReadonlySet<string>) {
-    await this.workspace.tx(async (tx) => {
-      const mo = await this.lock(tx, scope, publicId);
-      if (!OPEN.includes(mo.status))
-        throw new DomainException('erp.invalid_status', { params: { status: mo.status } });
-      if (mo.materials.some((m) => dec(m.issuedQty).gt(0))) throw new DomainException('erp.materials_issued');
-      await this.releaseAll(tx, mo);
-      await tx.erpProductionOrder.update({
-        where: { id: mo.id },
-        data: {
-          status: 'cancelled',
-          cancelReason: reason,
-          updatedById: scope.actor.userId,
-          rowVersion: { increment: 1 },
-        },
-      });
-      await this.workspace.record(
-        tx,
-        scope,
-        'erp_production_order.cancelled',
-        'erp_production_order',
-        publicId,
-        {
-          moNo: mo.moNo,
-        },
-      );
-    });
+    await this.workspace.tx((tx) => this.cancelIn(tx, scope, publicId, reason));
     return this.get(scope, publicId, perms);
+  }
+
+  /** Cancels an open order in the caller's transaction (a cancelled sales order, D-361). */
+  async cancelIn(tx: Tx, scope: ErpScope, publicId: string, reason: string): Promise<void> {
+    const mo = await this.lock(tx, scope, publicId);
+    if (!OPEN.includes(mo.status))
+      throw new DomainException('erp.invalid_status', { params: { status: mo.status } });
+    if (mo.materials.some((m) => dec(m.issuedQty).gt(0))) throw new DomainException('erp.materials_issued');
+    await this.releaseAll(tx, mo);
+    await tx.erpProductionOrder.update({
+      where: { id: mo.id },
+      data: {
+        status: 'cancelled',
+        cancelReason: reason,
+        updatedById: scope.actor.userId,
+        rowVersion: { increment: 1 },
+      },
+    });
+    await this.workspace.record(
+      tx,
+      scope,
+      'erp_production_order.cancelled',
+      'erp_production_order',
+      publicId,
+      {
+        moNo: mo.moNo,
+      },
+    );
   }
 
   // ------------------------------------------------------------------------------- shop floor

@@ -1727,6 +1727,58 @@
     "folder_not_empty": {
       "title": "Folder not empty",
       "detail": "Move or archive the documents and sub-folders in \"{{name}}\" first"
+    },
+    "credit_limit_exceeded": {
+      "title": "Over the credit limit",
+      "detail": "{{customer}} would owe {{exposure}} THB with open orders, over its {{limit}} THB limit — an approver may confirm with a reason"
+    },
+    "quotation_expired": {
+      "title": "Quotation expired",
+      "detail": "Quotation {{quoteNo}} expired on {{validUntil}} — ask the seller for a new one"
+    },
+    "over_delivery": {
+      "title": "More than was ordered",
+      "detail": "{{item}}: {{remaining}} left to deliver, {{requested}} asked"
+    },
+    "invoice_date_order": {
+      "title": "Document date out of order",
+      "detail": "The last invoice is dated {{last}} — numbers and dates run together, and no date may be in the future"
+    },
+    "note_exceeds_invoice": {
+      "title": "Credit beyond the invoice",
+      "detail": "At most {{max}} THB can be credited (its value after earlier notes)"
+    },
+    "allocation_exceeds_open": {
+      "title": "More than is open",
+      "detail": "{{docNo}} has {{open}} THB open, {{amount}} THB was allocated"
+    },
+    "document_settled": {
+      "title": "Already settled",
+      "detail": "{{docNo}} has receipts or credit / debit notes — cancel those first"
+    },
+    "nothing_to_deliver": {
+      "title": "Nothing to deliver",
+      "detail": "Every line of {{soNo}} has been delivered"
+    },
+    "nothing_to_invoice": {
+      "title": "Nothing to invoice",
+      "detail": "The chosen lines have all been invoiced"
+    },
+    "no_withholding": {
+      "title": "No withholding tax",
+      "detail": "Payment {{paymentNo}} withheld no tax"
+    },
+    "recipe_required": {
+      "title": "No recipe yet",
+      "detail": "{{item}} has no active recipe — add one, or deliver from stock"
+    },
+    "customer_required": {
+      "title": "Not a customer",
+      "detail": "{{name}} is not a customer — make the trading partner a customer first"
+    },
+    "seller_incomplete": {
+      "title": "Seller details missing",
+      "detail": "A tax invoice needs the factory’s name, registered address and tax id — add the registered address to the factory profile"
     }
   }
 }

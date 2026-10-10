@@ -3,6 +3,7 @@ import { assertIfMatch } from '@common/etag/etag';
 import { paginated, toSkipTake } from '@common/pagination/pagination';
 import { type Tx } from '@database/prisma.service';
 import {
+  type ErpEntityType,
   type ErpItem,
   type ErpPartnerKind,
   type ErpSupplierApprovalPolicy,
@@ -27,6 +28,7 @@ import {
 } from './erp.dto';
 import { dec } from './erp.math';
 import { ErpPricingService } from './erp-pricing.service';
+import { factoryUser } from './erp-sales.shared';
 import { ErpStockService } from './erp-stock.service';
 import { itemDto, partnerEtag, tradingPartnerDto, warehouseDto } from './erp-views';
 import { DEFAULT_PREFIXES, type ErpScope, ErpWorkspace } from './erp-workspace.service';
@@ -53,7 +55,8 @@ export class ErpMasterService {
   // -------------------------------------------------------------------------------- settings
 
   async getSettings(scope: ErpScope): Promise<ErpSettingsDto> {
-    return this.settingsDto(scope, await this.workspace.settings(this.workspace.db, scope.factory.id));
+    const s = await this.workspace.settings(this.workspace.db, scope.factory.id);
+    return this.settingsDto(scope, s, await this.logoPublicId(this.workspace.db, s.documentLogoFileId));
   }
 
   async updateSettings(scope: ErpScope, ifMatch: string | undefined, body: UpdateErpSettingsDto) {
@@ -89,6 +92,13 @@ export class ErpMasterService {
             supplierApproval: body.supplierApproval as ErpSupplierApprovalPolicy,
           }),
           ...(body.prefixes && { prefixes: { ...(current.prefixes as object), ...body.prefixes } }),
+          ...(body.quoteValidDays !== undefined && { quoteValidDays: body.quoteValidDays }),
+          ...(body.documentLogoFileId !== undefined && {
+            documentLogoFileId: await this.logoFile(tx, scope, body.documentLogoFileId),
+          }),
+          ...(body.documentFooter !== undefined && { documentFooter: body.documentFooter }),
+          ...(body.bankDetails !== undefined && { bankDetails: body.bankDetails }),
+          ...(body.signatoryName !== undefined && { signatoryName: body.signatoryName }),
           updatedById: scope.actor.userId,
           rowVersion: { increment: 1 },
         },
@@ -103,8 +113,28 @@ export class ErpMasterService {
       await this.workspace.record(tx, scope, 'erp_settings.updated', 'factory', scope.factory.publicId, {
         fields: Object.keys(body),
       });
-      return this.settingsDto(scope, updated);
+      return this.settingsDto(scope, updated, await this.logoPublicId(tx, updated.documentLogoFileId));
     });
+  }
+
+  private async logoPublicId(tx: Tx, id: bigint | null): Promise<string | null> {
+    if (!id) return null;
+    return (await tx.fileObject.findUnique({ where: { id }, select: { publicId: true } }))?.publicId ?? null;
+  }
+
+  /** D-368: the logo must be an uploaded, clean image owned by this factory. */
+  private async logoFile(tx: Tx, scope: ErpScope, publicId: string | null): Promise<bigint | null> {
+    if (publicId === null) return null;
+    const f = await tx.fileObject.findUnique({ where: { publicId } });
+    if (
+      !f ||
+      f.ownerFactoryId !== scope.factory.id ||
+      f.uploadStatus !== 'uploaded' ||
+      f.scanStatus === 'infected' ||
+      !f.mimeType.startsWith('image/')
+    )
+      throw new DomainException('erp.file_not_usable');
+    return f.id;
   }
 
   private settingsDto(
@@ -120,7 +150,13 @@ export class ErpMasterService {
       supplierApproval: string;
       prefixes: unknown;
       rowVersion: number;
+      quoteValidDays: number;
+      documentLogoFileId: bigint | null;
+      documentFooter: string | null;
+      bankDetails: string | null;
+      signatoryName: string | null;
     },
+    logoPublicId: string | null = null,
   ): ErpSettingsDto {
     return {
       modules: ERP_MODULES.filter((m) => !s.disabledModules.includes(m)),
@@ -133,6 +169,11 @@ export class ErpMasterService {
       supplierApproval: s.supplierApproval,
       prefixes: { ...DEFAULT_PREFIXES, ...(s.prefixes as Record<string, string>) },
       vatRegistered: scope.factory.isVatRegistered,
+      quoteValidDays: s.quoteValidDays,
+      documentLogoFileId: logoPublicId,
+      documentFooter: s.documentFooter,
+      bankDetails: s.bankDetails,
+      signatoryName: s.signatoryName,
       version: s.rowVersion,
     };
   }
@@ -156,7 +197,12 @@ export class ErpMasterService {
       }),
     };
     const [rows, total] = await Promise.all([
-      this.workspace.db.erpTradingPartner.findMany({ where, orderBy: [{ code: 'asc' }], ...toSkipTake(q) }),
+      this.workspace.db.erpTradingPartner.findMany({
+        where,
+        include: { salesperson: true },
+        orderBy: [{ code: 'asc' }],
+        ...toSkipTake(q),
+      }),
       this.workspace.db.erpTradingPartner.count({ where }),
     ]);
     return paginated(rows.map(tradingPartnerDto), total, q);
@@ -165,6 +211,7 @@ export class ErpMasterService {
   async getPartner(scope: ErpScope, publicId: string) {
     const row = await this.workspace.db.erpTradingPartner.findFirst({
       where: { factoryId: scope.factory.id, publicId },
+      include: { salesperson: true },
     });
     if (!row) throw new DomainException('http.not_found');
     return row;
@@ -191,8 +238,13 @@ export class ErpMasterService {
               paymentTermDays: body.paymentTermDays ?? 0,
               creditLimit: body.creditLimit ?? null,
               note: body.note ?? null,
+              entityType: (body.entityType ?? 'juristic') as ErpEntityType,
+              salespersonId: body.salespersonId
+                ? (await factoryUser(tx, scope.factory.id, body.salespersonId)).id
+                : null,
               createdById: scope.actor.userId,
             },
+            include: { salesperson: true },
           });
           await this.workspace.record(tx, scope, 'erp_partner.created', 'erp_trading_partner', row.publicId, {
             code: row.code,
@@ -242,9 +294,14 @@ export class ErpMasterService {
           ...(body.creditLimit !== undefined && { creditLimit: body.creditLimit }),
           ...(body.note !== undefined && { note: body.note }),
           ...(body.status !== undefined && { status: body.status as 'active' | 'archived' }),
+          ...(body.entityType !== undefined && { entityType: body.entityType as ErpEntityType }),
+          ...(body.salespersonId !== undefined && {
+            salespersonId: body.salespersonId ? (await factoryUser(tx, scope.factory.id, body.salespersonId)).id : null,
+          }),
           updatedById: scope.actor.userId,
           rowVersion: { increment: 1 },
         },
+        include: { salesperson: true },
       });
       await this.workspace.record(tx, scope, 'erp_partner.updated', 'erp_trading_partner', row.publicId, {
         fields: Object.keys(body),

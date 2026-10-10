@@ -133,6 +133,8 @@ export const API_TAGS: Record<string, string> = {
     'Samples made as the factory’s jobs (D-255): what to make and the evidence to record before shipping; no customer or price.',
   'store.specs':
     'Measurement bases of a size (D-182): inside, outside and score-to-score sizes from the material caliper; millimetres only (D-183).',
+  'store.quoteLinks':
+    'A factory’s quotation opened from the link it sent its customer: view, accept or decline without an account (D-360).',
   'store.quotes':
     'Instant price calculation per quantity (D-043, D-100); save it as a quotation with `store.savedQuotes` (D-051).',
   'store.savedQuotes':
@@ -234,6 +236,20 @@ export const API_TAGS: Record<string, string> = {
     'Packio Factory ERP: breakdowns, preventive plans, maintenance windows and spare parts (D-355).',
   'partner.erpDocuments':
     'Packio Factory ERP: folders and versioned documents linked to ERP records, with expiry reminders (D-356).',
+  'partner.erpCrm':
+    'Packio Factory ERP: leads, opportunities, the sales pipeline and follow-up activities (D-359).',
+  'partner.erpQuotations':
+    'Packio Factory ERP: quotations to the factory’s own customers — revisions, the online acceptance link, PDF (D-360).',
+  'partner.erpSalesOrders':
+    'Packio Factory ERP: sales orders with the credit check, stock reservation and production orders (D-361).',
+  'partner.erpDeliveryNotes':
+    'Packio Factory ERP: delivery notes that issue stock to customers, with proof of delivery (D-362).',
+  'partner.erpSalesInvoices':
+    'Packio Factory ERP: invoices and tax invoices in the factory’s name, credit and debit notes (D-363, D-364).',
+  'partner.erpReceivables':
+    'Packio Factory ERP: receipts and refunds, billing notes and the customers’ aging (D-365).',
+  'partner.erpTax':
+    'Packio Factory ERP: 50 ทวิ certificates, VAT and withholding reports, exports, sales targets and the sales report (D-366, D-367, D-370).',
   'partner.changeRequests':
     'Requests to the Partner team for changes only staff make, or a site visit; with the team’s answer (U-B0.3).',
   'admin.factoryChangeRequests':
