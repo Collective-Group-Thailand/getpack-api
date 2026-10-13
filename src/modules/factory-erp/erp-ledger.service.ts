@@ -114,6 +114,18 @@ export interface AccountBalance {
   credit: MoneyValue;
 }
 
+/** Thai names of the close checks, for the problem detail (D-390). */
+const CHECK_TH: Record<CloseCheckKey, string> = {
+  stock_valuation: 'มูลค่าสต็อก',
+  payables: 'เจ้าหนี้',
+  receivables: 'ลูกหนี้',
+  vat: 'ภาษีมูลค่าเพิ่ม',
+  wht: 'ภาษีหัก ณ ที่จ่าย',
+  bank: 'กระทบยอดธนาคาร',
+  depreciation: 'ค่าเสื่อมราคา',
+  open_wip: 'งานระหว่างทำ',
+};
+
 const TRANSITIONS: Record<string, { from: PeriodStatus[]; to: PeriodStatus }> = {
   soft_close: { from: ['open'], to: 'soft_closed' },
   close: { from: ['open', 'soft_closed'], to: 'closed' },
@@ -143,7 +155,7 @@ const SETTINGS_ACTIONS: ActionRule<{ started: boolean }>[] = [
   { key: 'erp_ledger.catch_up', permissions: ['factory_ledger.configure'], when: (s) => s.started },
 ];
 const ACCOUNT_ACTIONS: ActionRule<{ status: string; pending: boolean }>[] = [
-  { key: 'erp_account.propose', permissions: ['factory_ledger.configure'], when: (a) => (a.pending ? 'A change is waiting for approval' : true) },
+  { key: 'erp_account.propose', permissions: ['factory_ledger.configure'], when: (a) => (a.pending ? 'มีคำขอแก้ไขรออนุมัติอยู่' : true) },
 ];
 const CHANGE_ACTIONS: ActionRule<{ status: string }>[] = [
   { key: 'erp_account_change.approve', permissions: ['factory_ledger.approve'], when: (c) => c.status === 'proposed' },
@@ -151,10 +163,10 @@ const CHANGE_ACTIONS: ActionRule<{ status: string }>[] = [
 ];
 const PERIOD_ACTIONS: ActionRule<{ status: PeriodStatus; previousClosed: boolean; lastOfYear: boolean }>[] = [
   { key: 'erp_period.soft_close', permissions: ['factory_ledger.close'], when: (p) => p.status === 'open' },
-  { key: 'erp_period.close', permissions: ['factory_ledger.close'], when: (p) => (p.status === 'open' || p.status === 'soft_closed' ? (p.previousClosed ? true : 'Close the previous period first') : false) },
+  { key: 'erp_period.close', permissions: ['factory_ledger.close'], when: (p) => (p.status === 'open' || p.status === 'soft_closed' ? (p.previousClosed ? true : 'ปิดงวดก่อนหน้าก่อน') : false) },
   { key: 'erp_period.lock', permissions: ['factory_ledger.close'], when: (p) => p.status === 'closed' },
   { key: 'erp_period.reopen', permissions: ['factory_ledger.close'], when: (p) => p.status === 'soft_closed' || p.status === 'closed' },
-  { key: 'erp_period.close_year', permissions: ['factory_ledger.close'], irreversible: true, when: (p) => p.lastOfYear && p.status === 'soft_closed' && (p.previousClosed ? true : 'Close months 1 – 11 first') },
+  { key: 'erp_period.close_year', permissions: ['factory_ledger.close'], irreversible: true, when: (p) => p.lastOfYear && p.status === 'soft_closed' && (p.previousClosed ? true : 'ปิดงวดเดือนที่ 1 – 11 ก่อน') },
 ];
 
 @Injectable()
@@ -728,12 +740,12 @@ export class ErpLedgerService {
         });
         const settings = await this.book(tx, scope.factory.id, scope.actor.userId);
         if (previous && dayOf(previous.endDate) >= dayOf(settings.ledgerStartOn))
-          throw new DomainException('erp.ledger_close_blocked', { params: { count: 1, items: `period ${monthOf(previous.startDate)} is still ${previous.status}` } });
+          throw new DomainException('erp.ledger_close_blocked', { params: { count: 1, items: `งวด ${monthOf(previous.startDate)}` } });
         if (body.action === 'close') {
           const list = await this.checklist(tx, scope, p, settings);
           const failing = list.checks.filter((c) => c.blocking && !c.ok);
           if (failing.length > 0)
-            throw new DomainException('erp.ledger_close_blocked', { params: { count: failing.length, items: failing.map((c) => c.key).join(', ') } });
+            throw new DomainException('erp.ledger_close_blocked', { params: { count: failing.length, items: failing.map((c) => CHECK_TH[c.key as CloseCheckKey]).join(', ') } });
           checklist = list.checks;
         }
       }
@@ -811,7 +823,7 @@ export class ErpLedgerService {
     const inventoryCodes = new Set(Object.values({ ...ITEM_KIND_ACCOUNTS, ...(settings.itemKindAccounts as Record<string, string>) }));
     inventoryCodes.add(m('wip'));
     const inventoryLedger = [...inventoryCodes].reduce((a, code) => a.plus(bal(code)), new MoneyDecimal(0));
-    push('stock_valuation', dec(stock!.value), inventoryLedger, `${Number(stock!.items)} items with movements; accounts ${[...inventoryCodes].sort().join(', ')}`);
+    push('stock_valuation', dec(stock!.value), inventoryLedger, `สินค้า ${Number(stock!.items)} รายการ · บัญชี ${[...inventoryCodes].sort().join(', ')}`);
 
     // 2. AP sub-ledger = trade payables
     const [ap] = await tx.$queryRaw<{ open: Prisma.Decimal }[]>(Prisma.sql`
@@ -827,7 +839,7 @@ export class ErpLedgerService {
       SELECT coalesce(sum(c.wht_amount), 0) AS wht FROM erp_wht_certificates c
        WHERE c.factory_id = ${factoryId} AND c.status = 'issued' AND c.paid_on >= ${settings.ledgerStartOn}::date AND c.paid_on <= ${endDate}::date`);
     const grir = bal(m('grir'));
-    push('payables', dec(ap!.open).minus(dec(wht!.wht)), bal(m('payables')), `GR/IR clearing ${money(grir)}; supplier invoices since ${dayOf(settings.ledgerStartOn)}`);
+    push('payables', dec(ap!.open).minus(dec(wht!.wht)), bal(m('payables')), `สินค้ารับแล้วยังไม่ได้รับใบแจ้งหนี้ ${money(grir)} · ใบแจ้งหนี้ตั้งแต่ ${dayOf(settings.ledgerStartOn)}`);
 
     // 3. AR sub-ledger = trade receivables
     const [ar] = await tx.$queryRaw<{ open: Prisma.Decimal }[]>(Prisma.sql`
@@ -842,7 +854,7 @@ export class ErpLedgerService {
         FROM erp_sales_invoices i
        WHERE i.factory_id = ${factoryId} AND i.status IN ('issued', 'partially_paid', 'paid')
          AND i.issue_date >= ${settings.ledgerStartOn}::date AND i.issue_date <= ${endDate}::date`);
-    push('receivables', dec(ar!.open), bal(m('receivables')), `sales invoices, notes and receipts since ${dayOf(settings.ledgerStartOn)}`);
+    push('receivables', dec(ar!.open), bal(m('receivables')), `ใบแจ้งหนี้ ใบลด/เพิ่มหนี้ และใบเสร็จตั้งแต่ ${dayOf(settings.ledgerStartOn)}`);
 
     // 4. VAT registers = VAT accounts movement in the month
     const [vat] = await tx.$queryRaw<{ output: Prisma.Decimal; input: Prisma.Decimal }[]>(Prisma.sql`
@@ -857,7 +869,7 @@ export class ErpLedgerService {
                           AND i.invoice_date >= ${p.startDate}::date AND i.invoice_date <= ${endDate}::date), 0) AS input`);
     const outputMove = bal(m('outputVat'), inPeriod);
     const inputMove = bal(m('inputVat'), inPeriod);
-    push('vat', dec(vat!.output).minus(dec(vat!.input)), outputMove.minus(inputMove), `output ${money(dec(vat!.output))} / input ${money(dec(vat!.input))} by documents; ledger output ${money(outputMove)} / input ${money(inputMove)}`);
+    push('vat', dec(vat!.output).minus(dec(vat!.input)), outputMove.minus(inputMove), `ตามเอกสาร: ภาษีขาย ${money(dec(vat!.output))} / ภาษีซื้อ ${money(dec(vat!.input))} · ตามบัญชี: ${money(outputMove)} / ${money(inputMove)}`);
 
     // 5. WHT registers = WHT payable movement in the month
     const [whtMonth] = await tx.$queryRaw<{ pnd3: Prisma.Decimal; pnd53: Prisma.Decimal }[]>(Prisma.sql`
@@ -865,23 +877,23 @@ export class ErpLedgerService {
              coalesce(sum(CASE WHEN form = 'pnd53' THEN wht_amount END), 0) AS pnd53
         FROM erp_wht_certificates WHERE factory_id = ${factoryId} AND status = 'issued'
          AND paid_on >= ${p.startDate}::date AND paid_on <= ${endDate}::date`);
-    push('wht', dec(whtMonth!.pnd3).plus(dec(whtMonth!.pnd53)), bal(m('whtPnd3'), inPeriod).plus(bal(m('whtPnd53'), inPeriod)), `PND 3 ${money(dec(whtMonth!.pnd3))} · PND 53 ${money(dec(whtMonth!.pnd53))} by certificates`);
+    push('wht', dec(whtMonth!.pnd3).plus(dec(whtMonth!.pnd53)), bal(m('whtPnd3'), inPeriod).plus(bal(m('whtPnd53'), inPeriod)), `ภ.ง.ด.3 ${money(dec(whtMonth!.pnd3))} · ภ.ง.ด.53 ${money(dec(whtMonth!.pnd53))} ตามหนังสือรับรอง`);
 
     // 6. bank reconciled: no open statement line up to the period end
     const banks = await tx.erpGlBankAccount.findMany({ where: { factoryId, status: 'active' }, include: { _count: { select: { statement: { where: { status: 'open', txnDate: { lte: endDate } } } } } } });
     const openLines = banks.reduce((n, b) => n + b._count.statement, 0);
-    push('bank', null, null, banks.length === 0 ? 'no bank account set up' : `${openLines} open statement line(s) on ${banks.length} account(s)`, openLines === 0);
+    push('bank', null, null, banks.length === 0 ? 'ยังไม่มีบัญชีธนาคาร' : `รอกระทบ ${openLines} รายการ ใน ${banks.length} บัญชี`, openLines === 0);
 
     // 7. depreciation run posted (when there are active assets)
     const activeAssets = await tx.erpGlFixedAsset.count({ where: { factoryId, status: 'active', depreciationStart: { lte: endDate } } });
     const run = await tx.erpGlDepreciationRun.findUnique({ where: { periodId: p.id } });
-    push('depreciation', null, null, activeAssets === 0 ? 'no depreciable asset' : run ? `run posted (${money(dec(run.total))})` : `${activeAssets} active asset(s), no run yet`, activeAssets === 0 || !!run);
+    push('depreciation', null, null, activeAssets === 0 ? 'ไม่มีสินทรัพย์ที่ต้องคิดค่าเสื่อม' : run ? `บันทึกแล้ว ${money(dec(run.total))}` : `สินทรัพย์ ${activeAssets} รายการ ยังไม่คิดค่าเสื่อม`, activeAssets === 0 || !!run);
 
     // 8. open production orders at month end (information)
     const openMos = await tx.erpProductionOrder.count({
       where: { factoryId, status: { in: ['released', 'in_progress'] }, createdAt: { lt: nextDay } },
     });
-    push('open_wip', null, bal(m('wip')), `${openMos} production order(s) open; WIP balance ${money(bal(m('wip')))}`, true);
+    push('open_wip', null, bal(m('wip')), `ใบสั่งผลิตเปิดอยู่ ${openMos} ใบ · งานระหว่างทำ ${money(bal(m('wip')))}`, true);
 
     return {
       periodId: p.publicId,

@@ -55,10 +55,10 @@ type JournalFacts = { kind: JournalKind; status: JournalStatus; own: boolean; re
 const JOURNAL_ACTIONS: ActionRule<JournalFacts>[] = [
   { key: 'erp_journal.edit', permissions: ['factory_ledger.post'], when: (j) => j.kind === 'manual' && j.status === 'draft' },
   { key: 'erp_journal.submit', permissions: ['factory_ledger.post'], when: (j) => j.kind === 'manual' && j.status === 'draft' },
-  { key: 'erp_journal.approve', permissions: ['factory_ledger.approve'], when: (j) => (j.status === 'pending_approval' ? (j.own ? 'Another approver must approve your own entry' : true) : false) },
+  { key: 'erp_journal.approve', permissions: ['factory_ledger.approve'], when: (j) => (j.status === 'pending_approval' ? (j.own ? 'ต้องให้ผู้อนุมัติคนอื่นอนุมัติรายการของตัวเอง' : true) : false) },
   { key: 'erp_journal.reject', permissions: ['factory_ledger.approve'], when: (j) => j.status === 'pending_approval' },
   { key: 'erp_journal.delete', permissions: ['factory_ledger.post'], when: (j) => j.kind === 'manual' && j.status === 'draft' },
-  { key: 'erp_journal.reverse', permissions: ['factory_ledger.post'], irreversible: true, when: (j) => (j.status === 'posted' && j.kind !== 'reversal' ? (j.reversed ? 'Already reversed' : true) : false) },
+  { key: 'erp_journal.reverse', permissions: ['factory_ledger.post'], irreversible: true, when: (j) => (j.status === 'posted' && j.kind !== 'reversal' ? (j.reversed ? 'กลับรายการแล้ว' : true) : false) },
 ];
 const RECURRING_ACTIONS: ActionRule<{ status: string }>[] = [
   { key: 'erp_recurring.edit', permissions: ['factory_ledger.post'], when: () => true },

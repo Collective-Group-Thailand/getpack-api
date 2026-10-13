@@ -371730,7 +371730,7 @@
                     {
                       "actual": "845000.00",
                       "blocking": true,
-                      "detail": "6 items with movements",
+                      "detail": "สินค้า 6 รายการ · บัญชี 1141, 1143",
                       "difference": "0.00",
                       "expected": "845000.00",
                       "key": "stock_valuation",
@@ -371739,7 +371739,7 @@
                     {
                       "actual": null,
                       "blocking": true,
-                      "detail": "2 open statement line(s) on 1 account(s)",
+                      "detail": "รอกระทบ 2 รายการ ใน 1 บัญชี",
                       "difference": null,
                       "expected": null,
                       "key": "bank",
@@ -372031,7 +372031,7 @@
                     {
                       "actual": "845000.00",
                       "blocking": true,
-                      "detail": "6 items with movements",
+                      "detail": "สินค้า 6 รายการ · บัญชี 1141, 1143",
                       "difference": "0.00",
                       "expected": "845000.00",
                       "key": "stock_valuation",
@@ -372040,7 +372040,7 @@
                     {
                       "actual": null,
                       "blocking": true,
-                      "detail": "2 open statement line(s) on 1 account(s)",
+                      "detail": "รอกระทบ 2 รายการ ใน 1 บัญชี",
                       "difference": null,
                       "expected": null,
                       "key": "bank",
