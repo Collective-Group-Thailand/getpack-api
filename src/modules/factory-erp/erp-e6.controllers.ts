@@ -170,8 +170,8 @@ const CHANGE: ErpGlAccountChangeDto = {
   nextActions: [ACTION('erp_account_change.approve'), ACTION('erp_account_change.reject')],
 };
 const CHECKS = [
-  { key: 'stock_valuation', blocking: true, ok: true, expected: '845000.00', actual: '845000.00', difference: '0.00', detail: '6 items with movements' },
-  { key: 'bank', blocking: true, ok: false, expected: null, actual: null, difference: null, detail: '2 open statement line(s) on 1 account(s)' },
+  { key: 'stock_valuation', blocking: true, ok: true, expected: '845000.00', actual: '845000.00', difference: '0.00', detail: 'สินค้า 6 รายการ · บัญชี 1141, 1143' },
+  { key: 'bank', blocking: true, ok: false, expected: null, actual: null, difference: null, detail: 'รอกระทบ 2 รายการ ใน 1 บัญชี' },
 ];
 const PERIOD: ErpGlPeriodDto = {
   id: E6_IDS.period,
