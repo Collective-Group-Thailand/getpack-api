@@ -149,11 +149,12 @@ const CHANGE_ACTIONS: ActionRule<{ status: string }>[] = [
   { key: 'erp_account_change.approve', permissions: ['factory_ledger.approve'], when: (c) => c.status === 'proposed' },
   { key: 'erp_account_change.reject', permissions: ['factory_ledger.approve'], when: (c) => c.status === 'proposed' },
 ];
-const PERIOD_ACTIONS: ActionRule<{ status: PeriodStatus; previousClosed: boolean }>[] = [
+const PERIOD_ACTIONS: ActionRule<{ status: PeriodStatus; previousClosed: boolean; lastOfYear: boolean }>[] = [
   { key: 'erp_period.soft_close', permissions: ['factory_ledger.close'], when: (p) => p.status === 'open' },
   { key: 'erp_period.close', permissions: ['factory_ledger.close'], when: (p) => (p.status === 'open' || p.status === 'soft_closed' ? (p.previousClosed ? true : 'Close the previous period first') : false) },
   { key: 'erp_period.lock', permissions: ['factory_ledger.close'], when: (p) => p.status === 'closed' },
   { key: 'erp_period.reopen', permissions: ['factory_ledger.close'], when: (p) => p.status === 'soft_closed' || p.status === 'closed' },
+  { key: 'erp_period.close_year', permissions: ['factory_ledger.close'], irreversible: true, when: (p) => p.lastOfYear && p.status === 'soft_closed' && (p.previousClosed ? true : 'Close months 1 – 11 first') },
 ];
 
 @Injectable()
@@ -699,7 +700,7 @@ export class ErpLedgerService {
       statusChangedAt: isoTs(p.statusChangedAt),
       closeNote: p.closeNote,
       closeChecklist: ((p.closeChecklist as unknown as ErpGlCloseCheckDto[] | null) ?? []),
-      nextActions: nextActions({ status: p.status, previousClosed }, PERIOD_ACTIONS, perms),
+      nextActions: nextActions({ status: p.status, previousClosed, lastOfYear: p.periodNo === 12 }, PERIOD_ACTIONS, perms),
     };
   }
 
