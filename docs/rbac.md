@@ -229,9 +229,9 @@ Legend: ● granted · ◆ granted and sensitive (cost/margin data, D-141).
 | `factory_payables.read` — Read the own factory’s POs, goods receipts, billing statements, payouts and 50 ทวิ (D-090, D-022) | ● |  |  |  |  | ● |  |  |  |  |
 | `factory_payables.manage` — Confirm or dispute billing statements and submit the factory’s tax invoices (D-090) | ● |  |  |  |  | ● |  |  |  |  |
 | `factory_shipments.manage` — Create, pack, dispatch and deliver shipments with proof of delivery (D-013) | ● |  |  |  | ● |  |  |  |  |  |
-| `factory_trading_partners.read` — Read the factory’s own suppliers and customers (Packio Factory ERP) (D-317, D-319) | ● | ● |  |  |  | ● | ● | ● |  | ● |
+| `factory_trading_partners.read` — Read the factory’s own suppliers and customers (Packio Factory ERP) (D-317, D-319) | ● | ● |  | ● |  | ● | ● | ● |  | ● |
 | `factory_trading_partners.manage` — Add and edit the factory’s own suppliers and customers (D-317, D-319) | ● |  |  |  |  | ● |  | ● |  | ● |
-| `factory_inventory.read` — Read the factory’s items, warehouses, stock balances and stock ledger (D-319, D-324) | ● | ● | ● |  |  | ● | ● | ● | ● | ● |
+| `factory_inventory.read` — Read the factory’s items, warehouses, stock balances and stock ledger (D-319, D-324) | ● | ● | ● | ● |  | ● | ● | ● | ● | ● |
 | `factory_inventory.manage` — Manage items and warehouses, issue, return and transfer stock, post goods receipts (D-319, D-324, D-325) | ● |  |  |  |  |  | ● |  |  |  |
 | `factory_inventory.adjust` — Post opening balances, stock adjustments and counts (D-319, D-324) | ● |  |  |  |  |  |  |  |  |  |
 | `factory_procurement.read` — Read the factory’s purchase orders, goods receipts and the reorder list (D-319, D-325, D-326) | ● | ● |  |  |  | ● | ● | ● |  |  |
@@ -241,7 +241,7 @@ Legend: ● granted · ◆ granted and sensitive (cost/margin data, D-141).
 | `factory_ap.read` — Read the factory’s supplier invoices, payments and payables aging (D-319, D-337, D-338) | ● |  |  |  |  | ● |  | ● |  |  |
 | `factory_ap.manage` — Record supplier invoices (3-way matched) and pay or reverse supplier payments (D-319, D-337, D-338) | ● |  |  |  |  | ● |  |  |  |  |
 | `factory_ap.approve` — Approve supplier invoices that did not match the order or the goods received (D-319, D-337) | ● |  |  |  |  |  |  |  |  |  |
-| `factory_planning.read` — Read the factory’s recipes, production orders, the floor queue and MRP (D-319, D-339, D-340, D-342) | ● | ● | ● |  |  |  | ● |  | ● | ● |
+| `factory_planning.read` — Read the factory’s recipes, production orders, the floor queue and MRP (D-319, D-339, D-340, D-342) | ● | ● | ● | ● |  |  | ● |  | ● | ● |
 | `factory_planning.manage` — Manage recipes; plan, release, complete and cancel production orders; request MRP shortages (D-319, D-339, D-340, D-341, D-342) | ● | ● |  |  |  |  |  |  |  |  |
 | `factory_production.record` — Start, pause, resume, finish or skip operations of production orders on the floor (kiosk) (D-319, D-341) | ● | ● | ● |  |  |  |  |  |  |  |
 | `factory_maintenance.read` — Read the factory’s machines’ maintenance: breakdowns, preventive plans and their orders (D-355, D-357) | ● | ● | ● |  |  |  | ● | ● | ● |  |
@@ -256,6 +256,13 @@ Legend: ● granted · ◆ granted and sensitive (cost/margin data, D-141).
 | `factory_receivables.read` — Read the factory’s invoices, tax invoices, credit / debit notes, receipts, billing notes and receivables aging (D-363, D-364, D-365, D-370) | ● |  |  |  |  | ● |  |  |  | ● |
 | `factory_receivables.manage` — Issue and void the factory’s invoices / tax invoices and credit / debit notes; record and cancel receipts and refunds; issue billing notes (D-363, D-364, D-365, D-370) | ● |  |  |  |  | ● |  |  |  |  |
 | `factory_tax.read` — Read and export the factory’s VAT and withholding-tax reports and its accounting export (D-366, D-367, D-370) | ● |  |  |  |  | ● |  |  |  |  |
+| `factory_quality.read` — Read the factory’s quality checks, inspection templates, NCRs and certificates of analysis (D-372, D-373, D-374, D-375, D-382) | ● | ● | ● | ● |  | ● | ● |  | ● |  |
+| `factory_quality.record` — Record quality checks and their checkpoints and photos; raise NCRs (D-372, D-374, D-382) | ● |  | ● | ● |  |  | ● |  |  |  |
+| `factory_quality.manage` — Keep inspection templates; override a check result; dispose, verify, close and cancel NCRs (D-372, D-373, D-374, D-382) | ● |  |  | ● |  |  |  |  |  |  |
+| `factory_insight.read` — Read the owner’s dashboard, job costs and margins, OEE; receive the daily LINE summary (D-376, D-377, D-378, D-379, D-382) | ● | ● |  |  |  | ● |  |  |  |  |
+| `factory_people.read` — Read the factory’s shifts, operator skills and work log (D-380, D-382) | ● | ● | ● |  |  |  |  |  | ● |  |
+| `factory_people.manage` — Keep shifts and operator skills (D-380, D-382) | ● | ● |  |  |  |  |  |  |  |  |
+| `factory_support.grant` — Grant and revoke Packio support time-boxed read access to the factory’s ERP (D-381, D-382) | ● |  |  |  |  |  |  |  |  |  |
 | `factory_erp.configure` — Configure the factory’s ERP: modules, document prefixes, stock and receiving rules (D-318, D-322, D-323) | ● |  |  |  |  |  |  |  |  |  |
 
 | Role | Name (th) | Name (en) |

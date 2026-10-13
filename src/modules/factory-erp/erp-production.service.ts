@@ -46,6 +46,7 @@ import {
   type ErpUpdateProductionOrderDto,
 } from './erp-e2.dto';
 import { type ErpFinishOperationDto, type ErpOperationEventDto } from './erp-e3.dto';
+import { moForCost, orderCost } from './erp-insight.service';
 import { ErpPricingService } from './erp-pricing.service';
 import { ErpRequestsService } from './erp-requests.service';
 import { ErpStockService, type StockEntry } from './erp-stock.service';
@@ -347,7 +348,19 @@ export class ErpProductionService {
 
   async get(scope: ErpScope, publicId: string, perms: ReadonlySet<string>): Promise<ErpProductionOrderDto> {
     const row = await this.row(this.workspace.db, scope, publicId);
-    return moDto(row, await this.materialCost(this.workspace.db, row.publicId), perms);
+    const receipt =
+      row.status === 'completed' || row.status === 'closed'
+        ? await this.workspace.db.erpStockMovement.findFirst({
+            where: { sourcePublicId: row.publicId, kind: 'production_receipt' },
+            orderBy: { id: 'desc' },
+          })
+        : null;
+    return moDto(
+      row,
+      await this.materialCost(this.workspace.db, row.publicId),
+      perms,
+      receipt ? dec(receipt.unitCost) : null,
+    );
   }
 
   /** Value of the materials consumed: production issues less returns (D-341). */
@@ -803,9 +816,10 @@ export class ErpProductionService {
   ) {
     await this.releaseAll(tx, mo);
     if (mo.item && good.gt(0) && scope) {
-      const cost = await this.materialCost(tx, mo.publicId);
-      const unitCost = finishedUnitCost(cost, good);
+      // D-376: the product is received at its full cost — materials, machine, labour and overhead.
       const settings = await this.workspace.settings(tx, mo.factoryId);
+      const { cost } = await orderCost(tx, await moForCost(tx, mo.id), settings);
+      const unitCost = finishedUnitCost(cost.total, good);
       await this.stock.post(
         tx,
         scope,
@@ -1527,7 +1541,12 @@ export function moSummary(m: MoRow): ErpProductionOrderSummaryDto {
   };
 }
 
-export function moDto(m: MoRow, materialCost: MoneyValue, perms: ReadonlySet<string>): ErpProductionOrderDto {
+export function moDto(
+  m: MoRow,
+  materialCost: MoneyValue,
+  perms: ReadonlySet<string>,
+  receivedUnitCost: MoneyValue | null = null,
+): ErpProductionOrderDto {
   const good = dec(m.goodQty);
   return {
     ...moSummary(m),
@@ -1540,7 +1559,11 @@ export function moDto(m: MoRow, materialCost: MoneyValue, perms: ReadonlySet<str
     goodQty: fmtQty(m.goodQty),
     scrapQty: fmtQty(m.scrapQty),
     materialCost: fmtMoney(materialCost),
-    unitCost: m.status === 'completed' && good.gt(0) ? fmtCost(finishedUnitCost(materialCost, good)) : null,
+    // D-376: what the product was received at (full cost); before E5 orders, the materials only.
+    unitCost:
+      m.status === 'completed' && good.gt(0)
+        ? fmtCost(receivedUnitCost ?? finishedUnitCost(materialCost, good))
+        : null,
     note: m.note,
     releasedAt: m.releasedAt ? toBangkokIso(m.releasedAt) : null,
     completedAt: m.completedAt ? toBangkokIso(m.completedAt) : null,

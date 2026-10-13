@@ -1,0 +1,415 @@
+// Packio Factory ERP E5 (D-372 – D-383): quality checks and templates, NCRs, machine rates, shifts, operator skills,
+// support grants.
+
+enum ErpCheckKind {
+  incoming
+  in_process
+  final
+  other
+
+  @@map("erp_check_kind")
+}
+
+enum ErpCheckResult {
+  pending
+  pass
+  fail
+  conditional
+
+  @@map("erp_check_result")
+}
+
+enum ErpCheckpointType {
+  pass_fail
+  measurement
+  note
+
+  @@map("erp_checkpoint_type")
+}
+
+enum ErpCheckpointOutcome {
+  pass
+  fail
+  na
+
+  @@map("erp_checkpoint_outcome")
+}
+
+enum ErpNcrSource {
+  quality_check
+  goods_receipt
+  production_order
+  customer_complaint
+  internal
+
+  @@map("erp_ncr_source")
+}
+
+enum ErpNcrSeverity {
+  minor
+  major
+  critical
+
+  @@map("erp_ncr_severity")
+}
+
+enum ErpNcrDisposition {
+  rework
+  scrap
+  return_to_supplier
+  use_as_is
+  hold
+
+  @@map("erp_ncr_disposition")
+}
+
+enum ErpNcrStatus {
+  open
+  in_progress
+  verified
+  closed
+  cancelled
+
+  @@map("erp_ncr_status")
+}
+
+enum ErpSkillLevel {
+  learner
+  competent
+  expert
+
+  @@map("erp_skill_level")
+}
+
+/// D-373: a named checklist for one kind of check, optionally for one item.
+model ErpInspectionTemplate {
+  id             BigInt          @id(map: "pk_erp_inspection_templates") @default(autoincrement())
+  publicId       String          @unique(map: "ux_erp_inspection_templates__public_id") @default(dbgenerated("uuidv7()")) @map("public_id") @db.Uuid
+  factoryId      BigInt          @map("factory_id")
+  itemId         BigInt?         @map("item_id")
+  name           String
+  kind           ErpCheckKind
+  sampleSizeHint String?         @map("sample_size_hint")
+  note           String?
+  status         ErpRecordStatus @default(active)
+  createdAt      DateTime        @default(now()) @map("created_at") @db.Timestamptz(6)
+  createdById    BigInt          @map("created_by")
+  updatedAt      DateTime        @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+  updatedById    BigInt?         @map("updated_by")
+  rowVersion     Int             @default(1) @map("row_version")
+
+  factory     Factory                   @relation("ErpInspectionTemplateFactory", fields: [factoryId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_erp_inspection_templates__factory_id")
+  createdBy   User                      @relation("ErpInspectionTemplateCreatedBy", fields: [createdById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_erp_inspection_templates__created_by")
+  updatedBy   User?                     @relation("ErpInspectionTemplateUpdatedBy", fields: [updatedById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_erp_inspection_templates__updated_by")
+  item        ErpItem?                  @relation("ErpInspectionTemplateItem", fields: [itemId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_erp_inspection_templates__item_id")
+  checkpoints ErpInspectionCheckpoint[] @relation("ErpInspectionTemplateCheckpoints")
+  checks      ErpQualityCheck[]         @relation("ErpQualityCheckTemplate")
+
+  @@index([factoryId, kind, status], map: "ix_erp_inspection_templates__factory_id__kind__status")
+  @@index([itemId], map: "ix_erp_inspection_templates__item_id")
+  @@index([createdById], map: "ix_erp_inspection_templates__created_by_id")
+  @@index([updatedById], map: "ix_erp_inspection_templates__updated_by_id")
+  @@map("erp_inspection_templates")
+}
+
+model ErpInspectionCheckpoint {
+  id          BigInt            @id(map: "pk_erp_inspection_checkpoints") @default(autoincrement())
+  templateId  BigInt            @map("template_id")
+  seq         Int
+  name        String
+  type        ErpCheckpointType
+  unit        String?
+  minValue    Decimal?          @map("min_value") @db.Decimal(14, 4)
+  maxValue    Decimal?          @map("max_value") @db.Decimal(14, 4)
+  targetValue Decimal?          @map("target_value") @db.Decimal(14, 4)
+  instruction String?
+
+  template ErpInspectionTemplate @relation("ErpInspectionTemplateCheckpoints", fields: [templateId], references: [id], onDelete: Cascade, onUpdate: Restrict, map: "fk_erp_inspection_checkpoints__template_id")
+
+  @@unique([templateId, seq], map: "ux_erp_inspection_checkpoints__template_id__seq")
+  @@map("erp_inspection_checkpoints")
+}
+
+/// D-372: one inspection — incoming, in-process, final or other.
+model ErpQualityCheck {
+  id                 BigInt         @id(map: "pk_erp_quality_checks") @default(autoincrement())
+  publicId           String         @unique(map: "ux_erp_quality_checks__public_id") @default(dbgenerated("uuidv7()")) @map("public_id") @db.Uuid
+  factoryId          BigInt         @map("factory_id")
+  templateId         BigInt?        @map("template_id")
+  itemId             BigInt?        @map("item_id")
+  goodsReceiptLineId BigInt?        @map("goods_receipt_line_id")
+  operationId        BigInt?        @map("operation_id")
+  productionOrderId  BigInt?        @map("production_order_id")
+  supplierId         BigInt?        @map("supplier_id")
+  inspectorId        BigInt         @map("inspector_id")
+  qcNo               String         @map("qc_no")
+  kind               ErpCheckKind
+  result             ErpCheckResult @default(pending)
+  resultOverridden   Boolean        @default(false) @map("result_overridden")
+  sampleSize         Decimal?       @map("sample_size") @db.Decimal(14, 3)
+  inspectedQty       Decimal?       @map("inspected_qty") @db.Decimal(14, 3)
+  acceptedQty        Decimal?       @map("accepted_qty") @db.Decimal(14, 3)
+  rejectedQty        Decimal        @default(0) @map("rejected_qty") @db.Decimal(14, 3)
+  remarks            String?
+  photoFileIds       Json           @default("[]") @map("photo_file_ids")
+  inspectedAt        DateTime       @map("inspected_at") @db.Timestamptz(6)
+  lotNo              String?        @map("lot_no")
+  pdfFileId          BigInt?        @map("pdf_file_id")
+  pdfVersion         Int?           @map("pdf_version")
+  createdAt          DateTime       @default(now()) @map("created_at") @db.Timestamptz(6)
+  createdById        BigInt         @map("created_by")
+  updatedAt          DateTime       @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+  updatedById        BigInt?        @map("updated_by")
+  rowVersion         Int            @default(1) @map("row_version")
+
+  factory          Factory                 @relation("ErpQualityCheckFactory", fields: [factoryId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_erp_quality_checks__factory_id")
+  createdBy        User                    @relation("ErpQualityCheckCreatedBy", fields: [createdById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_erp_quality_checks__created_by")
+  updatedBy        User?                   @relation("ErpQualityCheckUpdatedBy", fields: [updatedById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_erp_quality_checks__updated_by")
+  template         ErpInspectionTemplate?  @relation("ErpQualityCheckTemplate", fields: [templateId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_erp_quality_checks__template_id")
+  item             ErpItem?                @relation("ErpQualityCheckItem", fields: [itemId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_erp_quality_checks__item_id")
+  goodsReceiptLine ErpGoodsReceiptLine?    @relation("ErpQualityCheckGrLine", fields: [goodsReceiptLineId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_erp_quality_checks__goods_receipt_line_id")
+  operation        ErpProductionOperation? @relation("ErpQualityCheckOperation", fields: [operationId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_erp_quality_checks__operation_id")
+  productionOrder  ErpProductionOrder?     @relation("ErpQualityCheckMo", fields: [productionOrderId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_erp_quality_checks__production_order_id")
+  supplier         ErpTradingPartner?      @relation("ErpQualityCheckSupplier", fields: [supplierId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_erp_quality_checks__supplier_id")
+  inspector        User                    @relation("ErpQualityCheckInspector", fields: [inspectorId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_erp_quality_checks__inspector_id")
+  pdfFile          FileObject?             @relation("ErpQualityCheckPdf", fields: [pdfFileId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_erp_quality_checks__pdf_file_id")
+  checkpoints      ErpQualityCheckpoint[]  @relation("ErpQualityCheckpoints")
+  ncrs             ErpNcr[]                @relation("ErpNcrCheck")
+
+  @@unique([factoryId, qcNo], map: "ux_erp_quality_checks__factory_id__qc_no")
+  @@index([factoryId, kind, result, inspectedAt(sort: Desc)], map: "ix_erp_quality_checks__factory_id__kind__result__inspected_at")
+  @@index([templateId], map: "ix_erp_quality_checks__template_id")
+  @@index([itemId], map: "ix_erp_quality_checks__item_id")
+  @@index([goodsReceiptLineId], map: "ix_erp_quality_checks__goods_receipt_line_id")
+  @@index([operationId], map: "ix_erp_quality_checks__operation_id")
+  @@index([productionOrderId], map: "ix_erp_quality_checks__production_order_id")
+  @@index([supplierId], map: "ix_erp_quality_checks__supplier_id")
+  @@index([inspectorId], map: "ix_erp_quality_checks__inspector_id")
+  @@index([pdfFileId], map: "ix_erp_quality_checks__pdf_file_id")
+  @@index([createdById], map: "ix_erp_quality_checks__created_by_id")
+  @@index([updatedById], map: "ix_erp_quality_checks__updated_by_id")
+  @@map("erp_quality_checks")
+}
+
+model ErpQualityCheckpoint {
+  id          BigInt                @id(map: "pk_erp_quality_checkpoints") @default(autoincrement())
+  checkId     BigInt                @map("check_id")
+  seq         Int
+  name        String
+  type        ErpCheckpointType
+  unit        String?
+  minValue    Decimal?              @map("min_value") @db.Decimal(14, 4)
+  maxValue    Decimal?              @map("max_value") @db.Decimal(14, 4)
+  targetValue Decimal?              @map("target_value") @db.Decimal(14, 4)
+  measured    Decimal?              @db.Decimal(14, 4)
+  outcome     ErpCheckpointOutcome?
+  note        String?
+
+  check ErpQualityCheck @relation("ErpQualityCheckpoints", fields: [checkId], references: [id], onDelete: Cascade, onUpdate: Restrict, map: "fk_erp_quality_checkpoints__check_id")
+
+  @@unique([checkId, seq], map: "ux_erp_quality_checkpoints__check_id__seq")
+  @@map("erp_quality_checkpoints")
+}
+
+/// D-374: a nonconformance report with its disposition and corrective action.
+model ErpNcr {
+  id                 BigInt             @id(map: "pk_erp_ncrs") @default(autoincrement())
+  publicId           String             @unique(map: "ux_erp_ncrs__public_id") @default(dbgenerated("uuidv7()")) @map("public_id") @db.Uuid
+  factoryId          BigInt             @map("factory_id")
+  checkId            BigInt?            @map("check_id")
+  supplierId         BigInt?            @map("supplier_id")
+  customerId         BigInt?            @map("customer_id")
+  itemId             BigInt?            @map("item_id")
+  machineId          BigInt?            @map("machine_id")
+  productionOrderId  BigInt?            @map("production_order_id")
+  goodsReceiptId     BigInt?            @map("goods_receipt_id")
+  warehouseId        BigInt?            @map("warehouse_id")
+  ownerId            BigInt?            @map("owner_id")
+  verifiedById       BigInt?            @map("verified_by_id")
+  ncrNo              String             @map("ncr_no")
+  source             ErpNcrSource
+  severity           ErpNcrSeverity     @default(minor)
+  status             ErpNcrStatus       @default(open)
+  title              String
+  description        String
+  quantity           Decimal?           @db.Decimal(14, 3)
+  unit               ErpUnit?
+  disposition        ErpNcrDisposition?
+  dispositionNote    String?            @map("disposition_note")
+  dispositionAt      DateTime?          @map("disposition_at") @db.Timestamptz(6)
+  rootCause          String?            @map("root_cause")
+  correctiveAction   String?            @map("corrective_action")
+  preventiveAction   String?            @map("preventive_action")
+  actionDueOn        DateTime?          @map("action_due_on") @db.Date
+  verifiedAt         DateTime?          @map("verified_at") @db.Timestamptz(6)
+  verificationNote   String?            @map("verification_note")
+  closedAt           DateTime?          @map("closed_at") @db.Timestamptz(6)
+  cancelReason       String?            @map("cancel_reason")
+  photoFileIds       Json               @default("[]") @map("photo_file_ids")
+  lastOverdueAlertOn DateTime?          @map("last_overdue_alert_on") @db.Date
+  createdAt          DateTime           @default(now()) @map("created_at") @db.Timestamptz(6)
+  createdById        BigInt             @map("created_by")
+  updatedAt          DateTime           @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+  updatedById        BigInt?            @map("updated_by")
+  rowVersion         Int                @default(1) @map("row_version")
+
+  factory         Factory             @relation("ErpNcrFactory", fields: [factoryId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_erp_ncrs__factory_id")
+  createdBy       User                @relation("ErpNcrCreatedBy", fields: [createdById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_erp_ncrs__created_by")
+  updatedBy       User?               @relation("ErpNcrUpdatedBy", fields: [updatedById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_erp_ncrs__updated_by")
+  check           ErpQualityCheck?    @relation("ErpNcrCheck", fields: [checkId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_erp_ncrs__check_id")
+  supplier        ErpTradingPartner?  @relation("ErpNcrSupplier", fields: [supplierId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_erp_ncrs__supplier_id")
+  customer        ErpTradingPartner?  @relation("ErpNcrCustomer", fields: [customerId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_erp_ncrs__customer_id")
+  item            ErpItem?            @relation("ErpNcrItem", fields: [itemId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_erp_ncrs__item_id")
+  machine         FactoryMachine?     @relation("ErpNcrMachine", fields: [machineId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_erp_ncrs__machine_id")
+  productionOrder ErpProductionOrder? @relation("ErpNcrMo", fields: [productionOrderId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_erp_ncrs__production_order_id")
+  goodsReceipt    ErpGoodsReceipt?    @relation("ErpNcrGr", fields: [goodsReceiptId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_erp_ncrs__goods_receipt_id")
+  warehouse       ErpWarehouse?       @relation("ErpNcrWarehouse", fields: [warehouseId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_erp_ncrs__warehouse_id")
+  owner           User?               @relation("ErpNcrOwner", fields: [ownerId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_erp_ncrs__owner_id")
+  verifiedBy      User?               @relation("ErpNcrVerifiedBy", fields: [verifiedById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_erp_ncrs__verified_by_id")
+
+  @@unique([factoryId, ncrNo], map: "ux_erp_ncrs__factory_id__ncr_no")
+  @@index([factoryId, status, actionDueOn], map: "ix_erp_ncrs__factory_id__status__action_due_on")
+  @@index([checkId], map: "ix_erp_ncrs__check_id")
+  @@index([supplierId], map: "ix_erp_ncrs__supplier_id")
+  @@index([customerId], map: "ix_erp_ncrs__customer_id")
+  @@index([itemId], map: "ix_erp_ncrs__item_id")
+  @@index([machineId], map: "ix_erp_ncrs__machine_id")
+  @@index([productionOrderId], map: "ix_erp_ncrs__production_order_id")
+  @@index([goodsReceiptId], map: "ix_erp_ncrs__goods_receipt_id")
+  @@index([warehouseId], map: "ix_erp_ncrs__warehouse_id")
+  @@index([ownerId], map: "ix_erp_ncrs__owner_id")
+  @@index([verifiedById], map: "ix_erp_ncrs__verified_by_id")
+  @@index([createdById], map: "ix_erp_ncrs__created_by_id")
+  @@index([updatedById], map: "ix_erp_ncrs__updated_by_id")
+  @@map("erp_ncrs")
+}
+
+/// D-376: a machine’s hourly cost, the owner’s figure.
+model ErpMachineRate {
+  id          BigInt   @id(map: "pk_erp_machine_rates") @default(autoincrement())
+  publicId    String   @unique(map: "ux_erp_machine_rates__public_id") @default(dbgenerated("uuidv7()")) @map("public_id") @db.Uuid
+  factoryId   BigInt   @map("factory_id")
+  machineId   BigInt   @map("machine_id")
+  hourlyRate  Decimal  @map("hourly_rate") @db.Decimal(14, 2)
+  note        String?
+  createdAt   DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  createdById BigInt   @map("created_by")
+  updatedAt   DateTime @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+  updatedById BigInt?  @map("updated_by")
+  rowVersion  Int      @default(1) @map("row_version")
+
+  factory   Factory        @relation("ErpMachineRateFactory", fields: [factoryId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_erp_machine_rates__factory_id")
+  createdBy User           @relation("ErpMachineRateCreatedBy", fields: [createdById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_erp_machine_rates__created_by")
+  updatedBy User?          @relation("ErpMachineRateUpdatedBy", fields: [updatedById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_erp_machine_rates__updated_by")
+  machine   FactoryMachine @relation("ErpMachineRateMachine", fields: [machineId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_erp_machine_rates__machine_id")
+
+  @@unique([factoryId, machineId], map: "ux_erp_machine_rates__factory_id__machine_id")
+  @@index([machineId], map: "ix_erp_machine_rates__machine_id")
+  @@index([createdById], map: "ix_erp_machine_rates__created_by_id")
+  @@index([updatedById], map: "ix_erp_machine_rates__updated_by_id")
+  @@map("erp_machine_rates")
+}
+
+/// D-380: a working shift.
+model ErpShift {
+  id          BigInt          @id(map: "pk_erp_shifts") @default(autoincrement())
+  publicId    String          @unique(map: "ux_erp_shifts__public_id") @default(dbgenerated("uuidv7()")) @map("public_id") @db.Uuid
+  factoryId   BigInt          @map("factory_id")
+  name        String
+  startTime   String          @map("start_time")
+  endTime     String          @map("end_time")
+  days        Json            @default("[1,2,3,4,5,6]")
+  note        String?
+  status      ErpRecordStatus @default(active)
+  createdAt   DateTime        @default(now()) @map("created_at") @db.Timestamptz(6)
+  createdById BigInt          @map("created_by")
+  updatedAt   DateTime        @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+  updatedById BigInt?         @map("updated_by")
+  rowVersion  Int             @default(1) @map("row_version")
+
+  factory   Factory @relation("ErpShiftFactory", fields: [factoryId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_erp_shifts__factory_id")
+  createdBy User    @relation("ErpShiftCreatedBy", fields: [createdById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_erp_shifts__created_by")
+  updatedBy User?   @relation("ErpShiftUpdatedBy", fields: [updatedById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_erp_shifts__updated_by")
+
+  @@unique([factoryId, name], map: "ux_erp_shifts__factory_id__name")
+  @@index([createdById], map: "ix_erp_shifts__created_by_id")
+  @@index([updatedById], map: "ix_erp_shifts__updated_by_id")
+  @@map("erp_shifts")
+}
+
+/// D-380: how well an operator runs a machine.
+model ErpOperatorSkill {
+  id          BigInt        @id(map: "pk_erp_operator_skills") @default(autoincrement())
+  publicId    String        @unique(map: "ux_erp_operator_skills__public_id") @default(dbgenerated("uuidv7()")) @map("public_id") @db.Uuid
+  factoryId   BigInt        @map("factory_id")
+  userId      BigInt        @map("user_id")
+  machineId   BigInt        @map("machine_id")
+  level       ErpSkillLevel @default(learner)
+  certifiedOn DateTime?     @map("certified_on") @db.Date
+  note        String?
+  createdAt   DateTime      @default(now()) @map("created_at") @db.Timestamptz(6)
+  createdById BigInt        @map("created_by")
+  updatedAt   DateTime      @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+  updatedById BigInt?       @map("updated_by")
+  rowVersion  Int           @default(1) @map("row_version")
+
+  factory   Factory        @relation("ErpOperatorSkillFactory", fields: [factoryId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_erp_operator_skills__factory_id")
+  createdBy User           @relation("ErpOperatorSkillCreatedBy", fields: [createdById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_erp_operator_skills__created_by")
+  updatedBy User?          @relation("ErpOperatorSkillUpdatedBy", fields: [updatedById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_erp_operator_skills__updated_by")
+  user      User           @relation("ErpOperatorSkillUser", fields: [userId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_erp_operator_skills__user_id")
+  machine   FactoryMachine @relation("ErpOperatorSkillMachine", fields: [machineId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_erp_operator_skills__machine_id")
+
+  @@unique([factoryId, userId, machineId], map: "ux_erp_operator_skills__factory_id__user_id__machine_id")
+  @@index([userId], map: "ix_erp_operator_skills__user_id")
+  @@index([machineId], map: "ix_erp_operator_skills__machine_id")
+  @@index([createdById], map: "ix_erp_operator_skills__created_by_id")
+  @@index([updatedById], map: "ix_erp_operator_skills__updated_by_id")
+  @@map("erp_operator_skills")
+}
+
+/// D-381: the owner’s time-boxed permission for Packio support to read the dashboard and settings.
+model ErpSupportGrant {
+  id           BigInt    @id(map: "pk_erp_support_grants") @default(autoincrement())
+  publicId     String    @unique(map: "ux_erp_support_grants__public_id") @default(dbgenerated("uuidv7()")) @map("public_id") @db.Uuid
+  factoryId    BigInt    @map("factory_id")
+  revokedById  BigInt?   @map("revoked_by_id")
+  reason       String
+  expiresAt    DateTime  @map("expires_at") @db.Timestamptz(6)
+  revokedAt    DateTime? @map("revoked_at") @db.Timestamptz(6)
+  revokeReason String?   @map("revoke_reason")
+  viewCount    Int       @default(0) @map("view_count")
+  lastViewedAt DateTime? @map("last_viewed_at") @db.Timestamptz(6)
+  createdAt    DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+  createdById  BigInt    @map("created_by")
+  updatedAt    DateTime  @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+  updatedById  BigInt?   @map("updated_by")
+  rowVersion   Int       @default(1) @map("row_version")
+
+  factory   Factory          @relation("ErpSupportGrantFactory", fields: [factoryId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_erp_support_grants__factory_id")
+  createdBy User             @relation("ErpSupportGrantCreatedBy", fields: [createdById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_erp_support_grants__created_by")
+  updatedBy User?            @relation("ErpSupportGrantUpdatedBy", fields: [updatedById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_erp_support_grants__updated_by")
+  revokedBy User?            @relation("ErpSupportGrantRevokedBy", fields: [revokedById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_erp_support_grants__revoked_by_id")
+  views     ErpSupportView[] @relation("ErpSupportGrantViews")
+
+  @@index([factoryId, expiresAt(sort: Desc)], map: "ix_erp_support_grants__factory_id__expires_at")
+  @@index([revokedById], map: "ix_erp_support_grants__revoked_by_id")
+  @@index([createdById], map: "ix_erp_support_grants__created_by_id")
+  @@index([updatedById], map: "ix_erp_support_grants__updated_by_id")
+  @@map("erp_support_grants")
+}
+
+/// D-381: one read by staff under a grant.
+model ErpSupportView {
+  id       BigInt   @id(map: "pk_erp_support_views") @default(autoincrement())
+  grantId  BigInt   @map("grant_id")
+  staffId  BigInt   @map("staff_id")
+  viewedAt DateTime @default(now()) @map("viewed_at") @db.Timestamptz(6)
+  what     String
+
+  grant ErpSupportGrant @relation("ErpSupportGrantViews", fields: [grantId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_erp_support_views__grant_id")
+  staff User            @relation("ErpSupportViewStaff", fields: [staffId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_erp_support_views__staff_id")
+
+  @@index([grantId, viewedAt(sort: Desc)], map: "ix_erp_support_views__grant_id__viewed_at")
+  @@index([staffId], map: "ix_erp_support_views__staff_id")
+  @@map("erp_support_views")
+}

@@ -64,7 +64,8 @@ export interface StockSource {
     | 'production_order'
     | 'maintenance_order'
     | 'delivery_note'
-    | 'sales_note';
+    | 'sales_note'
+    | 'ncr';
   publicId: string;
   documentNo: string;
   occurredAt?: Date;

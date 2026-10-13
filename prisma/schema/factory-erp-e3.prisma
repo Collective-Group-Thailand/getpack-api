@@ -28,6 +28,8 @@ enum ErpAlertKind {
   quote_follow_up
   invoice_overdue
   activity_overdue
+  ncr_overdue
+  oee_low
 
   @@map("erp_alert_kind")
 }

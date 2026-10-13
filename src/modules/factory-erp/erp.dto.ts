@@ -95,6 +95,9 @@ export const ERP_MODULES = [
   'accounting',
   'maintenance',
   'documents',
+  'quality',
+  'insight',
+  'people',
 ] as const;
 
 export type ErpUnitValue = (typeof ERP_UNITS)[number];
@@ -249,6 +252,18 @@ export class ErpSettingsDto {
   @ApiProperty({ type: String, nullable: true, example: 'นายสมชาย ใจดี' })
   signatoryName!: string | null;
 
+  @ApiProperty({ example: '120.00', description: 'Labour cost per run hour on a production order (D-376)' })
+  labourRatePerHour!: string;
+
+  @ApiProperty({ example: '15.0000', description: 'Overhead, % on top of materials, machine and labour (D-376)' })
+  overheadPct!: string;
+
+  @ApiProperty({ example: true, description: 'Send the 07:40 daily summary to whoever reads insight (D-379)' })
+  dailySummary!: boolean;
+
+  @ApiProperty({ example: '50.0000', description: 'A machine’s OEE under this % yesterday raises an alert (D-383)' })
+  oeeAlertPct!: string;
+
   @ApiProperty({ example: 1 })
   version!: number;
 }
@@ -347,6 +362,26 @@ export class UpdateErpSettingsDto {
   @IsString()
   @MaxLength(120)
   signatoryName?: string | null;
+
+  @ApiPropertyOptional({ example: '120', pattern: AMOUNT.source })
+  @IsOptional()
+  @Matches(AMOUNT)
+  labourRatePerHour?: string;
+
+  @ApiPropertyOptional({ example: '15', pattern: PCT.source })
+  @IsOptional()
+  @Matches(PCT)
+  overheadPct?: string;
+
+  @ApiPropertyOptional({ example: true })
+  @IsOptional()
+  @IsBoolean()
+  dailySummary?: boolean;
+
+  @ApiPropertyOptional({ example: '50', pattern: PCT.source })
+  @IsOptional()
+  @Matches(PCT)
+  oeeAlertPct?: string;
 }
 
 // ----------------------------------------------------------------------------- trading partners
@@ -1064,6 +1099,7 @@ export class ErpStockMovementDto {
       'maintenance_order',
       'delivery_note',
       'sales_note',
+      'ncr',
     ],
     enumName: 'ErpMovementSource',
     example: 'goods_receipt',

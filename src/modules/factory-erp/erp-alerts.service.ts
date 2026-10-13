@@ -22,6 +22,8 @@ const EVENT_OF: Record<ErpAlertKind, string> = {
   quote_follow_up: 'erp_alert.quote_follow_up',
   invoice_overdue: 'erp_alert.invoice_overdue',
   activity_overdue: 'erp_alert.activity_overdue',
+  ncr_overdue: 'erp_alert.ncr_overdue',
+  oee_low: 'erp_alert.oee_low',
 };
 
 export interface AlertInput {

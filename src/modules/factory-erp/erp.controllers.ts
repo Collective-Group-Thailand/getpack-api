@@ -281,7 +281,7 @@ const SAVE_PO_EXAMPLE = {
 
 // ------------------------------------------------------------------------------------ settings
 
-const SETTINGS: ErpSettingsDto = {
+export const SETTINGS: ErpSettingsDto = {
   modules: ['inventory', 'procurement', 'partners'],
   allowNegativeStock: false,
   overReceiptPct: '10.0000',
@@ -311,6 +311,8 @@ const SETTINGS: ErpSettingsDto = {
     rc: 'RC',
     bn: 'BN',
     wht: 'WHT',
+    qc: 'QC',
+    ncr: 'NCR',
   },
   vatRegistered: true,
   quoteValidDays: 30,
@@ -318,6 +320,10 @@ const SETTINGS: ErpSettingsDto = {
   documentFooter: 'ขอบคุณที่ใช้บริการ',
   bankDetails: 'ธนาคารทดสอบ สาขาทดสอบ บัญชีออมทรัพย์ 000-0-00000-0 ชื่อบัญชี บจก. ทดสอบ',
   signatoryName: 'คุณเจ้าของ ทดสอบ',
+  labourRatePerHour: '120.00',
+  overheadPct: '15.0000',
+  dailySummary: true,
+  oeeAlertPct: '50.0000',
   version: 1,
 };
 

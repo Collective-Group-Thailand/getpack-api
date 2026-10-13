@@ -196,6 +196,9 @@ export class ErpSupplierScoreDto {
 
   @ApiProperty({ enum: ERP_GRADES, enumName: 'ErpSupplierGrade', nullable: true, example: 'B' })
   grade!: string | null;
+
+  @ApiProperty({ example: 1, description: 'Nonconformance reports against the supplier, 12 months (D-374)' })
+  ncrs!: number;
 }
 
 export class ErpItemSupplierDto {

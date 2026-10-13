@@ -67,6 +67,7 @@ const ZERO_SCORE: ErpSupplierScoreDto = {
   onTimePct: null,
   score: null,
   grade: null,
+  ncrs: 0,
 };
 
 /** One price the factory met, to write into the history (D-334). Prices are net, without VAT. */
@@ -634,7 +635,7 @@ export class ErpPricingService {
     const out = new Map<bigint, ErpSupplierScoreDto>();
     if (supplierIds.length === 0) return out;
     const since = day(addCalendarDays(today(), -365));
-    const [values, timing] = await Promise.all([
+    const [values, timing, ncrs] = await Promise.all([
       this.workspace.db.$queryRaw<
         {
           supplier_id: bigint;
@@ -657,6 +658,11 @@ export class ErpPricingService {
          WHERE g.factory_id = ${factoryId} AND g.supplier_id IN (${Prisma.join(supplierIds)})
            AND g.received_on >= ${since} AND p.expected_on IS NOT NULL
          GROUP BY g.supplier_id`),
+      this.workspace.db.erpNcr.groupBy({
+        by: ['supplierId'],
+        where: { factoryId, supplierId: { in: supplierIds }, createdAt: { gte: since }, status: { not: 'cancelled' } },
+        _count: { _all: true },
+      }),
     ]);
     for (const id of supplierIds) {
       const v = values.find((x) => x.supplier_id === id);
@@ -679,6 +685,7 @@ export class ErpPricingService {
         onTimePct: s.onTimePct?.toFixed(2) ?? null,
         score: s.score?.toFixed(2) ?? null,
         grade: s.grade,
+        ncrs: ncrs.find((x) => x.supplierId === id)?._count._all ?? 0,
       });
     }
     return out;

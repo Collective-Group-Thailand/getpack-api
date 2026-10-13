@@ -250,6 +250,14 @@ export const API_TAGS: Record<string, string> = {
     'Packio Factory ERP: receipts and refunds, billing notes and the customers’ aging (D-365).',
   'partner.erpTax':
     'Packio Factory ERP: 50 ทวิ certificates, VAT and withholding reports, exports, sales targets and the sales report (D-366, D-367, D-370).',
+  'partner.erpQuality':
+    'Packio Factory ERP: inspection templates, quality checks, NCRs and certificates of analysis (D-372 – D-375).',
+  'partner.erpInsight':
+    'Packio Factory ERP: the owner’s dashboard, machine rates, job costs, profitability and OEE (D-376 – D-378).',
+  'partner.erpPeople':
+    'Packio Factory ERP: shifts, operator skills, the work log and Packio support access (D-380, D-381).',
+  'admin.erpSupport':
+    'Packio support’s read of a factory’s ERP dashboard and settings under the owner’s time-boxed grant (D-381).',
   'partner.changeRequests':
     'Requests to the Partner team for changes only staff make, or a site visit; with the team’s answer (U-B0.3).',
   'admin.factoryChangeRequests':
