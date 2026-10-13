@@ -3,6 +3,11 @@
 Contract-facing changes per release. The contract itself is `contract/openapi.json`; mappings for `packio-web` are in
 `docs/contract-requests-triage.md`.
 
+## v0.48.1 — ERP units
+
+Decision D-384. Value set: `ErpUnit` gains `pouch`, `tube`, `job`, `round`, `trip` (clients that switch over it need a
+default). Factory documents print them in Thai (ซอง, หลอด, งาน, รอบ, เที่ยว).
+
 ## v0.48.0 — Packio Factory ERP E5: quality, costing, OEE, the owner's dashboard, people-lite, support access
 
 Decisions D-372 – D-383. Additive except value sets: `ErpAlertKind` gains `ncr_overdue`, `oee_low`; `ErpModule`

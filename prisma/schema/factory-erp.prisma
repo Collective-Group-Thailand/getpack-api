@@ -45,6 +45,11 @@ enum ErpUnit {
   set
   l
   ml
+  pouch
+  tube
+  job
+  round
+  trip
 
   @@map("erp_unit")
 }
