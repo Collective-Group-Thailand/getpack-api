@@ -92,6 +92,11 @@ export const UNIT_TH: Record<string, string> = {
   set: 'ชุด',
   l: 'ลิตร',
   ml: 'มล.',
+  pouch: 'ซอง',
+  tube: 'หลอด',
+  job: 'งาน',
+  round: 'รอบ',
+  trip: 'เที่ยว',
 };
 
 const STYLE = `

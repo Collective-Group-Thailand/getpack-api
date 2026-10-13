@@ -54,6 +54,11 @@ export const ERP_UNITS = [
   'set',
   'l',
   'ml',
+  'pouch',
+  'tube',
+  'job',
+  'round',
+  'trip',
 ] as const;
 export const ERP_MOVEMENT_KINDS = [
   'opening',
