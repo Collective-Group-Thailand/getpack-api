@@ -32,6 +32,7 @@ const DOMAINS: Record<string, { th: string; en: string }> = {
   ops: { th: 'การแจ้งเตือนระบบ', en: 'Operations alert' },
   report_run: { th: 'รายงาน', en: 'Report' },
   erp_alert: { th: 'ระบบโรงงาน', en: 'Factory ERP' },
+  erp_daily: { th: 'สรุปโรงงานประจำวัน', en: 'Factory daily summary' },
 };
 const OTHER = { th: 'การแจ้งเตือน', en: 'Notification' };
 

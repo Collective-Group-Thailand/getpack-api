@@ -1061,6 +1061,48 @@ export const PERMISSIONS = [
     decisionRefs: ['D-366', 'D-367', 'D-370'],
   },
   {
+    key: 'factory_quality.read',
+    audience: 'partner',
+    description: 'Read the factory’s quality checks, inspection templates, NCRs and certificates of analysis',
+    decisionRefs: ['D-372', 'D-373', 'D-374', 'D-375', 'D-382'],
+  },
+  {
+    key: 'factory_quality.record',
+    audience: 'partner',
+    description: 'Record quality checks and their checkpoints and photos; raise NCRs',
+    decisionRefs: ['D-372', 'D-374', 'D-382'],
+  },
+  {
+    key: 'factory_quality.manage',
+    audience: 'partner',
+    description: 'Keep inspection templates; override a check result; dispose, verify, close and cancel NCRs',
+    decisionRefs: ['D-372', 'D-373', 'D-374', 'D-382'],
+  },
+  {
+    key: 'factory_insight.read',
+    audience: 'partner',
+    description: 'Read the owner’s dashboard, job costs and margins, OEE; receive the daily LINE summary',
+    decisionRefs: ['D-376', 'D-377', 'D-378', 'D-379', 'D-382'],
+  },
+  {
+    key: 'factory_people.read',
+    audience: 'partner',
+    description: 'Read the factory’s shifts, operator skills and work log',
+    decisionRefs: ['D-380', 'D-382'],
+  },
+  {
+    key: 'factory_people.manage',
+    audience: 'partner',
+    description: 'Keep shifts and operator skills',
+    decisionRefs: ['D-380', 'D-382'],
+  },
+  {
+    key: 'factory_support.grant',
+    audience: 'partner',
+    description: 'Grant and revoke Packio support time-boxed read access to the factory’s ERP',
+    decisionRefs: ['D-381', 'D-382'],
+  },
+  {
     key: 'factory_erp.configure',
     audience: 'partner',
     description: 'Configure the factory’s ERP: modules, document prefixes, stock and receiving rules',

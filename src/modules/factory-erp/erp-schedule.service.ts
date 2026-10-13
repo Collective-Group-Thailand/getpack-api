@@ -48,7 +48,7 @@ export class ErpScheduleService {
   ) {}
 
   /** The factory's calendar and the platform window its own hours replace. */
-  private async clock(scope: ErpScope): Promise<{
+  async clock(scope: Pick<ErpScope, 'factory'>): Promise<{
     calendar: WorkingDayCalendar;
     window: { from: string; to: string };
     add: (start: number, minutes: number) => number;

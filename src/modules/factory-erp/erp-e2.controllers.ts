@@ -145,6 +145,7 @@ export const LINK: ErpItemSupplierDto = {
     onTimePct: '83.33',
     score: '92.73',
     grade: 'B',
+    ncrs: 1,
   },
   version: 1,
 };

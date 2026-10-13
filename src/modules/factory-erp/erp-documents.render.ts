@@ -264,3 +264,66 @@ ${c.voided ? '<div class="stamp">ยกเลิก</div>' : ''}
 }
 
 export const thaiDay = thaiDate;
+
+// ------------------------------------------------------------------------- certificate of analysis
+
+export interface CoaView {
+  seller: DocParty;
+  logo: string | null;
+  footer: string | null;
+  qcNo: string;
+  product: string;
+  sku: string | null;
+  lotNo: string | null;
+  quantity: string | null;
+  orderNo: string | null;
+  inspectedOn: string;
+  inspector: string;
+  /** pass or conditional (D-375). */
+  result: string;
+  points: { name: string; spec: string; reading: string; outcome: string }[];
+  remarks: string | null;
+}
+
+const OUTCOME_TH: Record<string, string> = { pass: 'ผ่าน', fail: 'ไม่ผ่าน', na: 'ไม่ประเมิน', '': '-' };
+
+/** D-375: the certificate of analysis a passed final check prints for the customer, under the factory's name. */
+export function renderCoaHtml(c: CoaView): string {
+  const rows = c.points
+    .map(
+      (p, i) =>
+        `<tr><td class="c">${i + 1}</td><td>${esc(p.name)}</td><td>${esc(p.spec)}</td><td class="n">${esc(p.reading)}</td><td class="c">${esc(OUTCOME_TH[p.outcome] ?? p.outcome)}</td></tr>`,
+    )
+    .join('');
+  const meta: [string, string | null][] = [
+    ['สินค้า', c.sku ? `${c.product} (${c.sku})` : c.product],
+    ['ล็อต', c.lotNo],
+    ['จำนวน', c.quantity],
+    ['ใบสั่งผลิต', c.orderNo],
+    ['วันที่ตรวจ', thaiDate(c.inspectedOn)],
+    ['ผู้ตรวจ', c.inspector],
+  ];
+  return `<!doctype html><html lang="th"><head><meta charset="utf-8"><title>${esc(c.qcNo)}</title><style>${STYLE}</style></head><body><div class="page">
+<div class="row">
+  <div class="seller">${c.logo ? `<img src="${c.logo}" alt="">` : ''}
+    <div class="name">${esc(c.seller.name)}</div>
+    <div>${esc(c.seller.address)}</div>
+  </div>
+  <div class="title"><h1>ใบรับรองคุณภาพสินค้า</h1><div class="en">Certificate of Analysis</div></div>
+</div>
+<div class="row" style="margin-top:10px">
+  <div class="box" style="flex:1"><table class="meta"><tbody>${meta
+    .filter(([, v]) => v)
+    .map(([k, v]) => `<tr><td>${esc(k)}</td><td>${esc(v)}</td></tr>`)
+    .join('')}</tbody></table></div>
+  <div class="box" style="min-width:30%"><table class="meta"><tbody>
+    <tr><td>เลขที่</td><td><b>${esc(c.qcNo)}</b></td></tr>
+    <tr><td>ผลการตรวจ</td><td><b>${c.result === 'pass' ? 'ผ่าน' : 'ผ่านแบบมีเงื่อนไข'}</b></td></tr>
+  </tbody></table></div>
+</div>
+<table class="lines"><thead><tr><th style="width:6%">ลำดับ</th><th>หัวข้อตรวจ</th><th style="width:26%">เกณฑ์</th><th class="n" style="width:14%">ค่าที่วัดได้</th><th style="width:12%">ผล</th></tr></thead><tbody>${rows}</tbody></table>
+${c.remarks ? `<div class="notes"><b>หมายเหตุ</b> ${esc(c.remarks)}</div>` : ''}
+<div class="sigs"><div class="sig"><div class="line"></div>ผู้ตรวจสอบ<br>วันที่ ........./........./.........</div><div class="sig"><div class="line"></div>ผู้อนุมัติ<br>วันที่ ........./........./.........</div></div>
+<div class="foot"><span>${esc(c.footer)}</span><span>สร้างด้วย Packio Factory</span></div>
+</div></body></html>`;
+}

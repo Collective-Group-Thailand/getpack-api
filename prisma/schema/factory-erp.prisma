@@ -112,6 +112,8 @@ enum ErpDocumentType {
   rc
   bn
   wht
+  qc
+  ncr
 
   @@map("erp_document_type")
 }
@@ -143,6 +145,13 @@ model ErpFactorySettings {
   signatoryName          String?                   @map("signatory_name")
   /// D-360: days a new quotation holds.
   quoteValidDays         Int                       @default(30) @map("quote_valid_days")
+  /// D-376: labour cost per run hour and overhead on top of materials, machine and labour.
+  labourRatePerHour      Decimal                   @default(0) @map("labour_rate_per_hour") @db.Decimal(14, 2)
+  overheadPct            Decimal                   @default(0) @map("overhead_pct") @db.Decimal(7, 4)
+  /// D-379: the 07:40 LINE summary to whoever reads insight.
+  dailySummary           Boolean                   @default(true) @map("daily_summary")
+  /// D-383: a machine's OEE below this % yesterday raises an alert.
+  oeeAlertPct            Decimal                   @default(50) @map("oee_alert_pct") @db.Decimal(7, 4)
   createdAt              DateTime                  @default(now()) @map("created_at") @db.Timestamptz(6)
   updatedAt              DateTime                  @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
   updatedById            BigInt?                   @map("updated_by")
@@ -227,6 +236,10 @@ model ErpTradingPartner {
 
   salesperson User? @relation("ErpTradingPartnerSalesperson", fields: [salespersonId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_erp_trading_partners__salesperson_id")
 
+  erpQualityCheckSupplier ErpQualityCheck[] @relation("ErpQualityCheckSupplier")
+  erpNcrSupplier          ErpNcr[]          @relation("ErpNcrSupplier")
+  erpNcrCustomer          ErpNcr[]          @relation("ErpNcrCustomer")
+
   @@unique([factoryId, code], map: "ux_erp_trading_partners__factory_id__code")
   @@index([factoryId, kind, status], map: "ix_erp_trading_partners__factory_id__kind__status")
   @@index([createdById], map: "ix_erp_trading_partners__created_by")
@@ -260,6 +273,8 @@ model ErpWarehouse {
   erpSalesOrderWarehouse   ErpSalesOrder[]      @relation("ErpSalesOrderWarehouse")
   erpDeliveryNoteWarehouse ErpDeliveryNote[]    @relation("ErpDeliveryNoteWarehouse")
   erpSalesNoteWarehouse    ErpSalesNote[]       @relation("ErpSalesNoteWarehouse")
+
+  erpNcrWarehouse ErpNcr[] @relation("ErpNcrWarehouse")
 
   @@unique([factoryId, code], map: "ux_erp_warehouses__factory_id__code")
   @@index([createdById], map: "ix_erp_warehouses__created_by")
@@ -321,6 +336,10 @@ model ErpItem {
   erpDeliveryNoteLineItem ErpDeliveryNoteLine[]    @relation("ErpDeliveryNoteLineItem")
   erpSalesInvoiceLineItem ErpSalesInvoiceLine[]    @relation("ErpSalesInvoiceLineItem")
   erpSalesNoteLineItem    ErpSalesNoteLine[]       @relation("ErpSalesNoteLineItem")
+
+  erpInspectionTemplateItem ErpInspectionTemplate[] @relation("ErpInspectionTemplateItem")
+  erpQualityCheckItem       ErpQualityCheck[]       @relation("ErpQualityCheckItem")
+  erpNcrItem                ErpNcr[]                @relation("ErpNcrItem")
 
   @@unique([factoryId, sku], map: "ux_erp_items__factory_id__sku")
   @@index([factoryId, kind, status], map: "ix_erp_items__factory_id__kind__status")
@@ -493,6 +512,8 @@ model ErpGoodsReceipt {
   chargesTotal  Decimal               @default(0) @map("charges_total") @db.Decimal(14, 2)
   landedCharges ErpLandedCharge[]
 
+  erpNcrGr ErpNcr[] @relation("ErpNcrGr")
+
   @@unique([factoryId, grNo], map: "ux_erp_goods_receipts__factory_id__gr_no")
   @@index([factoryId, receivedOn(sort: Desc)], map: "ix_erp_goods_receipts__factory_id__received_on")
   @@index([purchaseOrderId], map: "ix_erp_goods_receipts__purchase_order_id")
@@ -526,6 +547,8 @@ model ErpGoodsReceiptLine {
   /// D-350: landed charges allocated to this line when it was received (later ones are in the charges' lines).
   landedAmount      Decimal               @default(0) @map("landed_amount") @db.Decimal(14, 2)
   chargeLines       ErpLandedChargeLine[]
+
+  erpQualityCheckGrLine ErpQualityCheck[] @relation("ErpQualityCheckGrLine")
 
   @@unique([goodsReceiptId, lineNo], map: "ux_erp_goods_receipt_lines__goods_receipt_id__line_no")
   @@index([purchaseOrderLineId], map: "ix_erp_goods_receipt_lines__purchase_order_line_id")
@@ -999,6 +1022,9 @@ model ErpProductionOrder {
   operations     ErpProductionOperation[]
   salesOrderLine ErpSalesOrderLine?       @relation("ErpSalesOrderLineProduction")
 
+  erpQualityCheckMo ErpQualityCheck[] @relation("ErpQualityCheckMo")
+  erpNcrMo          ErpNcr[]          @relation("ErpNcrMo")
+
   @@unique([factoryId, moNo], map: "ux_erp_production_orders__factory_id__mo_no")
   @@unique([productionJobId], map: "ux_erp_production_orders__production_job_id")
   @@index([factoryId, status, dueOn], map: "ix_erp_production_orders__factory_id__status__due_on")
@@ -1061,6 +1087,8 @@ model ErpProductionOperation {
   milestoneSyncError String?             @map("milestone_sync_error")
   jobMilestone       JobMilestone?       @relation("ErpProductionOperationMilestone", fields: [jobMilestoneId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_erp_production_operations__job_milestone_id")
   events             ErpOperationEvent[]
+
+  erpQualityCheckOperation ErpQualityCheck[] @relation("ErpQualityCheckOperation")
 
   @@unique([productionOrderId, seq], map: "ux_erp_production_operations__production_order_id__seq")
   @@index([machineId, scheduledStart], map: "ix_erp_production_operations__machine_id__scheduled_start")

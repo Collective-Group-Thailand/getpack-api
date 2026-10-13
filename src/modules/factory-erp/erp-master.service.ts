@@ -99,6 +99,10 @@ export class ErpMasterService {
           ...(body.documentFooter !== undefined && { documentFooter: body.documentFooter }),
           ...(body.bankDetails !== undefined && { bankDetails: body.bankDetails }),
           ...(body.signatoryName !== undefined && { signatoryName: body.signatoryName }),
+          ...(body.labourRatePerHour !== undefined && { labourRatePerHour: body.labourRatePerHour }),
+          ...(body.overheadPct !== undefined && { overheadPct: body.overheadPct }),
+          ...(body.dailySummary !== undefined && { dailySummary: body.dailySummary }),
+          ...(body.oeeAlertPct !== undefined && { oeeAlertPct: body.oeeAlertPct }),
           updatedById: scope.actor.userId,
           rowVersion: { increment: 1 },
         },
@@ -155,6 +159,10 @@ export class ErpMasterService {
       documentFooter: string | null;
       bankDetails: string | null;
       signatoryName: string | null;
+      labourRatePerHour: Prisma.Decimal;
+      overheadPct: Prisma.Decimal;
+      dailySummary: boolean;
+      oeeAlertPct: Prisma.Decimal;
     },
     logoPublicId: string | null = null,
   ): ErpSettingsDto {
@@ -174,6 +182,10 @@ export class ErpMasterService {
       documentFooter: s.documentFooter,
       bankDetails: s.bankDetails,
       signatoryName: s.signatoryName,
+      labourRatePerHour: dec(s.labourRatePerHour).toFixed(2),
+      overheadPct: dec(s.overheadPct).toFixed(4),
+      dailySummary: s.dailySummary,
+      oeeAlertPct: dec(s.oeeAlertPct).toFixed(4),
       version: s.rowVersion,
     };
   }

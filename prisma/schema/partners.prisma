@@ -457,6 +457,14 @@ model Factory {
   erpWhtCertificates  ErpWhtCertificate[]    @relation("ErpWhtCertificateFactory")
   erpSalesTargets     ErpSalesTarget[]       @relation("ErpSalesTargetFactory")
 
+  erpInspectionTemplates ErpInspectionTemplate[] @relation("ErpInspectionTemplateFactory")
+  erpQualityChecks       ErpQualityCheck[]       @relation("ErpQualityCheckFactory")
+  erpNcrs                ErpNcr[]                @relation("ErpNcrFactory")
+  erpMachineRates        ErpMachineRate[]        @relation("ErpMachineRateFactory")
+  erpShifts              ErpShift[]              @relation("ErpShiftFactory")
+  erpOperatorSkills      ErpOperatorSkill[]      @relation("ErpOperatorSkillFactory")
+  erpSupportGrants       ErpSupportGrant[]       @relation("ErpSupportGrantFactory")
+
   @@unique([taxId, branchCode], map: "ux_factories__tax_id__branch_code")
   @@index([status], map: "ix_factories__status")
   @@index([calendarId], map: "ix_factories__calendar_id")
@@ -796,6 +804,10 @@ model FactoryMachine {
   erpProductionOperations    ErpProductionOperation[] @relation("ErpProductionOperationMachine")
   erpMaintenancePlans        ErpMaintenancePlan[]     @relation("ErpMaintenancePlanMachine")
   erpMaintenanceOrders       ErpMaintenanceOrder[]    @relation("ErpMaintenanceOrderMachine")
+
+  erpNcrMachine           ErpNcr[]           @relation("ErpNcrMachine")
+  erpMachineRateMachine   ErpMachineRate[]   @relation("ErpMachineRateMachine")
+  erpOperatorSkillMachine ErpOperatorSkill[] @relation("ErpOperatorSkillMachine")
 
   @@index([factoryId], map: "ix_factory_machines__factory_id")
   @@index([printTypeId], map: "ix_factory_machines__print_type_id")

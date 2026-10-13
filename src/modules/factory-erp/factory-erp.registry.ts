@@ -37,8 +37,14 @@ import {
   PartnerErpTaxController,
   PublicQuotationLinksController,
 } from './erp-e4.controllers';
+import {
+  AdminErpSupportController,
+  PartnerErpInsightController,
+  PartnerErpPeopleController,
+  PartnerErpQualityController,
+} from './erp-e5.controllers';
 
-/** `/v1/partner/factories/{factoryId}/erp/*` (E1, E1.1, E2, E2.1, E3, E4). */
+/** `/v1/partner/factories/{factoryId}/erp/*` (E1, E1.1, E2, E2.1, E3, E4, E5). */
 export const FACTORY_ERP_PARTNER_CONTROLLERS: Type<unknown>[] = [
   PartnerErpSettingsController,
   PartnerErpPartnersController,
@@ -68,7 +74,13 @@ export const FACTORY_ERP_PARTNER_CONTROLLERS: Type<unknown>[] = [
   PartnerErpSalesInvoicesController,
   PartnerErpReceivablesController,
   PartnerErpTaxController,
+  PartnerErpQualityController,
+  PartnerErpInsightController,
+  PartnerErpPeopleController,
 ];
 
 /** `/v1/store/quote-links/{token}` — the customer's quotation link (D-360). */
 export const FACTORY_ERP_STORE_CONTROLLERS: Type<unknown>[] = [PublicQuotationLinksController];
+
+/** `/v1/admin/factories/{factoryId}/erp/*` — Packio support's read under the owner's grant (D-381). */
+export const FACTORY_ERP_ADMIN_CONTROLLERS: Type<unknown>[] = [AdminErpSupportController];

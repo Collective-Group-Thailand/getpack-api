@@ -744,3 +744,84 @@ export async function seedUatErpE4(prisma: PrismaClient, passwordHash: string | 
     return n + 4;
   });
 }
+
+/**
+ * E5 rehearsal data (D-372 – D-383): an incoming and a final inspection template, the day shift, machine rates,
+ * labour and overhead for costing, and the operator's skill on the first machine. Run-once per factory.
+ */
+export async function seedUatErpE5(prisma: PrismaClient): Promise<number> {
+  const factory = await prisma.factory.findUnique({ where: { code: UAT_FACTORY_CODE } });
+  if (!factory) return 0;
+  if (await prisma.erpInspectionTemplate.count({ where: { factoryId: factory.id } })) return 0;
+  const owner = await prisma.userRole.findFirst({
+    where: { scopeType: 'factory', scopeId: factory.id, role: { key: 'factory_owner' }, revokedAt: null },
+  });
+  const by = owner?.userId ?? (await prisma.user.findFirstOrThrow({ where: { kind: 'staff' } })).id;
+  const operator = await prisma.user.findFirst({ where: { email: 'factory-operator@uat.example.invalid' } });
+  const machines = await prisma.factoryMachine.findMany({ where: { factoryId: factory.id, status: 'active' }, orderBy: { id: 'asc' } });
+  const finished = await prisma.erpItem.findFirst({ where: { factoryId: factory.id, kind: 'finished_good' }, orderBy: { id: 'asc' } });
+  return prisma.$transaction(async (tx) => {
+    let n = 0;
+    await tx.erpInspectionTemplate.create({
+      data: {
+        factoryId: factory.id,
+        name: 'ตรวจรับกระดาษ/บอร์ด (ทดสอบ)',
+        kind: 'incoming',
+        sampleSizeHint: 'สุ่ม 5 แผ่นต่อพาเลท',
+        createdById: by,
+        checkpoints: {
+          create: [
+            { seq: 1, name: 'แกรมกระดาษ', type: 'measurement', unit: 'gsm', minValue: '340', maxValue: '360', targetValue: '350' },
+            { seq: 2, name: 'ความชื้น', type: 'measurement', unit: '%', minValue: '6', maxValue: '9' },
+            { seq: 3, name: 'ไม่มีรอยฉีก/เปียก', type: 'pass_fail' },
+          ],
+        },
+      },
+    });
+    await tx.erpInspectionTemplate.create({
+      data: {
+        factoryId: factory.id,
+        name: 'ตรวจขั้นสุดท้ายกล่อง (ทดสอบ)',
+        kind: 'final',
+        itemId: finished?.id ?? null,
+        sampleSizeHint: 'สุ่ม 13 ใบต่อล็อต (AQL 2.5)',
+        createdById: by,
+        checkpoints: {
+          create: [
+            { seq: 1, name: 'ขนาดกว้าง', type: 'measurement', unit: 'mm', minValue: '298', maxValue: '302', targetValue: '300' },
+            { seq: 2, name: 'สีตรงตามตัวอย่างที่อนุมัติ', type: 'pass_fail' },
+            { seq: 3, name: 'กาว/รอยพับเรียบร้อย', type: 'pass_fail' },
+            { seq: 4, name: 'หมายเหตุการบรรจุ', type: 'note' },
+          ],
+        },
+      },
+    });
+    n += 2;
+    if (!(await tx.erpShift.count({ where: { factoryId: factory.id } }))) {
+      await tx.erpShift.create({
+        data: { factoryId: factory.id, name: 'กะเช้า', startTime: '08:00', endTime: '17:00', days: [1, 2, 3, 4, 5, 6], note: 'พัก 12:00–13:00', createdById: by },
+      });
+      n += 1;
+    }
+    for (const [i, m] of machines.entries()) {
+      await tx.erpMachineRate.upsert({
+        where: { factoryId_machineId: { factoryId: factory.id, machineId: m.id } },
+        create: { factoryId: factory.id, machineId: m.id, hourlyRate: i === 0 ? '850' : '450', note: 'ค่าเสื่อม + ไฟ + ซ่อมบำรุง (ทดสอบ)', createdById: by },
+        update: {},
+      });
+      n += 1;
+    }
+    await tx.erpFactorySettings.upsert({
+      where: { factoryId: factory.id },
+      create: { factoryId: factory.id, labourRatePerHour: '120', overheadPct: '15' },
+      update: { labourRatePerHour: '120', overheadPct: '15' },
+    });
+    if (operator && machines[0])
+      await tx.erpOperatorSkill.upsert({
+        where: { factoryId_userId_machineId: { factoryId: factory.id, userId: operator.id, machineId: machines[0].id } },
+        create: { factoryId: factory.id, userId: operator.id, machineId: machines[0].id, level: 'competent', certifiedOn: new Date('2026-09-15'), createdById: by },
+        update: {},
+      });
+    return n;
+  });
+}

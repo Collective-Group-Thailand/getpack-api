@@ -935,6 +935,8 @@ model FileObject {
   erpWhtCertificatePdf      ErpWhtCertificate[]   @relation("ErpWhtCertificatePdf")
   erpSettingsLogos          ErpFactorySettings[]  @relation("ErpFactorySettingsLogo")
 
+  erpQualityCheckPdf ErpQualityCheck[] @relation("ErpQualityCheckPdf")
+
   @@index([sha256], map: "ix_file_objects__sha256")
   @@index([uploadStatus, expiresAt], map: "ix_file_objects__upload_status__expires_at")
   @@index([ownerUserId], map: "ix_file_objects__owner_user_id")

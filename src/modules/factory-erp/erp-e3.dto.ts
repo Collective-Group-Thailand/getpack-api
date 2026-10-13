@@ -58,6 +58,8 @@ export const ERP_ALERT_KINDS = [
   'quote_follow_up',
   'invoice_overdue',
   'activity_overdue',
+  'ncr_overdue',
+  'oee_low',
 ] as const;
 export const ERP_ALERT_STATUSES = ['open', 'acknowledged'] as const;
 export const ERP_RFQ_STATUSES = ['draft', 'sent', 'awarded', 'cancelled'] as const;

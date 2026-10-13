@@ -3,6 +3,30 @@
 Contract-facing changes per release. The contract itself is `contract/openapi.json`; mappings for `packio-web` are in
 `docs/contract-requests-triage.md`.
 
+## v0.48.0 — Packio Factory ERP E5: quality, costing, OEE, the owner's dashboard, people-lite, support access
+
+Decisions D-372 – D-383. Additive except value sets: `ErpAlertKind` gains `ncr_overdue`, `oee_low`; `ErpModule`
+gains `quality`, `insight`, `people`; `ErpMovementSource` gains `ncr` (clients that switch over them need a
+default). New permissions `factory_quality.read/record/manage`, `factory_insight.read`, `factory_people.read/manage`,
+`factory_support.grant` (owner only); QC, operator, storekeeper, planner, accountant and maintenance gain the read or
+record grants listed in D-382. A completed production order now receives its product at full cost (materials +
+machine + labour + overhead), so `ErpProductionOrder.unitCost` is that figure.
+
+- **Quality** (`partner.erpQuality`): `inspection-templates` (list, create, get, `PUT`), `quality-checks` (list,
+  create, get, `PUT` to record, `actions/override`, `coa` PDF), `ncrs` (list, create, get, `PUT`, `actions/dispose`,
+  `verify`, `close`, `cancel`). A failed check opens an NCR; a scrap posts a stock adjustment out.
+- **Insight** (`partner.erpInsight`): `dashboard`, `machine-rates` (+ `PUT machine-rates/{machineId}`),
+  `production-orders/{orderId}/cost`, `insight/costs?month=`, `insight/profitability?month=&by=`,
+  `insight/oee?from=&to=`.
+- **People** (`partner.erpPeople`): `shifts` (+ `PUT`), `operator-skills` (`PUT` upsert, `DELETE`), `work-log`,
+  `support-grants` (+ `actions/revoke`).
+- **Admin** (`admin.erpSupport`): `GET /v1/admin/factories/{factoryId}/erp/support-view` (`partners.read`, only under
+  an active grant; audited).
+- Settings gain `labourRatePerHour`, `overheadPct`, `dailySummary`, `oeeAlertPct`; the supplier score gains `ncrs`.
+- Notifications: `erp_alert.ncr_overdue`, `erp_alert.oee_low`, `erp_daily.summary` (LINE, to roles with
+  `factory_insight.read`; the factory audience honours a `recipientRoles` payload).
+- Errors: `erp.check_not_passed`, `erp.ncr_action_required`, `erp.support_grant_active`, `erp.support_not_granted`.
+
 ## v0.47.0 — Packio Factory ERP E4: CRM, quotations, sales orders, delivery notes, invoices, receipts, tax
 
 Decisions D-359 – D-371. Additive except value sets: `ErpMovementKind` gains `sales_issue` and `sales_return`,

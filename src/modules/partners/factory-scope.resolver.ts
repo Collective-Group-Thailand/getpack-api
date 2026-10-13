@@ -22,6 +22,10 @@ export class FactoryScopeResolver implements ScopeResolver, OnModuleInit {
     this.recipients.register('factory', async (event, _route, tx) => {
       const factoryId = event.payload['factoryId'];
       if (typeof factoryId !== 'string') return [];
+      // D-379: an event may narrow its audience to some roles (the daily summary goes to who reads insight).
+      const roles = event.payload['recipientRoles'];
+      const roleFilter =
+        Array.isArray(roles) && roles.every((r) => typeof r === 'string') ? { role: { key: { in: roles } } } : {};
       const now = new Date();
       const grants = await tx.userRole.findMany({
         where: {
@@ -30,6 +34,7 @@ export class FactoryScopeResolver implements ScopeResolver, OnModuleInit {
           validFrom: { lte: now },
           OR: [{ validTo: null }, { validTo: { gt: now } }],
           user: { kind: 'partner', status: 'active', anonymisedAt: null },
+          ...roleFilter,
           scopeId:
             (await tx.factory.findUnique({ where: { publicId: factoryId }, select: { id: true } }))?.id ??
             -1n,

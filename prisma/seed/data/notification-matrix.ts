@@ -715,6 +715,36 @@ const ROWS: Row[] = [
     'Factory ERP: a CRM activity is past its due time (D-359)',
   ),
   F(
+    'erp_alert.ncr_overdue',
+    ['in_app', 'line'],
+    { th: 'NCR เลยกำหนดแก้ไข — {{payload.ncrNo}}', en: 'NCR action overdue — {{payload.ncrNo}}' },
+    {
+      th: '{{payload.title}} ({{payload.owner}}) ครบกำหนดแก้ไข {{payload.dueOn}} แล้ว ยังไม่ปิด',
+      en: '{{payload.title}} ({{payload.owner}}) was due {{payload.dueOn}} and is still open',
+    },
+    'Factory ERP: a nonconformance is past its corrective-action date (D-374, D-383)',
+  ),
+  F(
+    'erp_alert.oee_low',
+    ['in_app'],
+    { th: 'OEE ต่ำ — {{payload.machine}}', en: 'Low OEE — {{payload.machine}}' },
+    {
+      th: 'เมื่อวาน ({{payload.day}}) {{payload.machine}} ได้ OEE {{payload.oeePct}}% ต่ำกว่าเกณฑ์ {{payload.thresholdPct}}%',
+      en: 'Yesterday ({{payload.day}}) {{payload.machine}} ran at {{payload.oeePct}}% OEE, under the {{payload.thresholdPct}}% threshold',
+    },
+    'Factory ERP: a machine ran under the factory’s OEE threshold yesterday (D-377, D-383)',
+  ),
+  F(
+    'erp_daily.summary',
+    ['in_app', 'line'],
+    { th: 'สรุปโรงงานประจำวัน {{payload.day}}', en: 'Factory daily summary {{payload.day}}' },
+    {
+      th: 'ยอดขายเดือนนี้ {{payload.salesMonth}} บาท ({{payload.salesPct}}% ของเป้า) · ลูกหนี้เกินกำหนด {{payload.arOverdue}} บาท · ใบสั่งผลิตล่าช้า {{payload.lateOrders}} · เครื่องเสีย {{payload.machinesDown}} · OEE เมื่อวาน {{payload.oeePct}}% · NCR เปิดอยู่ {{payload.openNcrs}}',
+      en: 'Sales this month THB {{payload.salesMonth}} ({{payload.salesPct}}% of target) · overdue receivables THB {{payload.arOverdue}} · late orders {{payload.lateOrders}} · machines down {{payload.machinesDown}} · yesterday’s OEE {{payload.oeePct}}% · open NCRs {{payload.openNcrs}}',
+    },
+    'Factory ERP: the owner’s 07:40 summary to whoever reads insight (D-379)',
+  ),
+  F(
     'factory_change_request.answered',
     ['in_app', 'email'],
     { th: 'ทีมพาร์ทเนอร์ตอบคำขอของคุณ', en: 'The Partner team answered your request' },

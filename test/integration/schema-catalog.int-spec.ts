@@ -980,6 +980,21 @@ const CHECKS = [
   'ck_erp_wht_certificates__amounts',
   'ck_erp_wht_certificates__status',
   'ck_erp_wht_certificates__void',
+  // E5 (D-372 – D-383)
+  'ck_erp_factory_settings__costing',
+  'ck_erp_factory_settings__oee_alert_pct',
+  'ck_erp_inspection_checkpoints__seq',
+  'ck_erp_inspection_checkpoints__limits',
+  'ck_erp_quality_checks__quantities',
+  'ck_erp_quality_checks__incoming',
+  'ck_erp_quality_checkpoints__seq',
+  'ck_erp_ncrs__quantity',
+  'ck_erp_ncrs__closed',
+  'ck_erp_ncrs__cancelled',
+  'ck_erp_machine_rates__hourly_rate',
+  'ck_erp_shifts__times',
+  'ck_erp_support_grants__window',
+  'ck_erp_support_grants__views',
 ];
 
 const TRIGGERS = [

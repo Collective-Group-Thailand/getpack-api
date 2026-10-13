@@ -1779,6 +1779,22 @@
     "seller_incomplete": {
       "title": "Seller details missing",
       "detail": "A tax invoice needs the factory’s name, registered address and tax id — add the registered address to the factory profile"
+    },
+    "check_not_passed": {
+      "title": "Check not passed",
+      "detail": "A certificate of analysis needs a final check that passed (or passed with conditions)"
+    },
+    "ncr_action_required": {
+      "title": "Disposition and action needed",
+      "detail": "Record the disposition and the corrective action before verifying or closing the NCR"
+    },
+    "support_grant_active": {
+      "title": "Support access already granted",
+      "detail": "Packio support already has access to this factory — revoke it before granting again"
+    },
+    "support_not_granted": {
+      "title": "No support access",
+      "detail": "The factory owner has not granted Packio support access, or it has expired"
     }
   }
 }

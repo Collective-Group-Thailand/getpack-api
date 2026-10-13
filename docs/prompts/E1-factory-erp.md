@@ -239,3 +239,24 @@ a Packio staff token → 403 on private ERP data, D-317), stock ledger invariant
 - PDFs rendered by the host's Chromium under the factory's name; issued documents keep their PDF as a financial
   record. Not yet: e-Tax Invoice (ETDA XML / signing), layouts for named accounting packages, e-mailing documents
   from Packio.
+
+## 12. E5 as built (v0.48.0)
+- Tables: `erp_inspection_templates` + `_checkpoints`, `erp_quality_checks` + `erp_quality_checkpoints` (points
+  copied from the template; the result follows them unless overridden), `erp_ncrs` (disposition, root cause,
+  corrective / preventive action, verified, closed), `erp_machine_rates` (one per machine), `erp_shifts`,
+  `erp_operator_skills` (one per person × machine), `erp_support_grants` + `erp_support_views`. New settings
+  `labour_rate_per_hour`, `overhead_pct`, `daily_summary`, `oee_alert_pct`. Series QC, NCR.
+- Endpoints (tags `partner.erpQuality`, `erpInsight`, `erpPeople`; `admin.erpSupport`): templates; checks (+ record,
+  override, COA PDF); NCRs (+ dispose — a scrap posts an adjustment out of stock — verify, close, cancel); dashboard;
+  machine rates; a production order's cost; month job costs; profitability by sales order, customer or item; OEE by
+  machine and day with pause losses; shifts; operator skills; work log; support grants (+ revoke) and the staff
+  support view.
+- Costing: run minutes come from the floor's events (pauses excluded); completion receives the product at
+  materials + machine + labour + overhead. OEE planned time = active shifts of the weekday, else the factory
+  calendar's hours.
+- Roles: no new role; permissions `factory_quality.*`, `factory_insight.read`, `factory_people.*`,
+  `factory_support.grant` (D-382).
+- Scheduled jobs: `factory_erp.quality_alerts` (07:35: `ncr_overdue` weekly per NCR, `oee_low`),
+  `factory_erp.daily_summary` (07:40, `erp_daily.summary` on LINE to roles with insight).
+- Not yet: per-operator labour rates, SPC charts, e-mailing COAs, a wall OEE board.
+
