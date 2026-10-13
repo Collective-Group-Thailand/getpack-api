@@ -225,3 +225,16 @@ As `00-master-plan.md` §8 and E1 §8, plus: every rule has a balancing unit tes
 journal; a golden month (opening TB → E1 / E2 / E4 activity → close) reproduces the expected TB, P&L, BS,
 ภ.พ.30 and ภ.ง.ด.53 to the satang; reversing any document reverses its entries; another factory's id → 404 and a
 staff token → 403 on every ledger endpoint (D-317).
+
+## 18. As built (v0.49.0, 2026-10-14)
+
+Decisions D-385 – D-396. Option B with `src/common/ledger-core/` (template renderer, expressions, dates) shared with
+Packio's ledger. Schema `prisma/schema/factory-ledger.prisma` (`erp_gl_*`, 18 tables) with the same database discipline
+as Packio's books. Chart template v1 (79 accounts) and rules F01 – F18 in `src/modules/factory-erp/erp-ledger.template.ts`.
+Differences from the sketch above: WHT certificates and tax reports stay where E4 built them (`erp_wht_certificates`,
+`erp-tax.service`); the ledger reconciles against them and records filings (`erp_gl_tax_filings`); the close checklist is
+computed (stored on the period at close) rather than kept as tasks; F14 / F15 (Packio statements and payouts) wait for
+a factory's Packio payables to be posted from the factory side — they are entered as manual journals until then;
+labour / overhead absorption posts at completion (F08) rather than at month end. API under
+`/v1/partner/factories/{factoryId}/erp/ledger/*` (tags `partner.erpLedger`, `erpJournals`, `erpLedgerReports`,
+`erpFixedAssets`, `erpBank`).

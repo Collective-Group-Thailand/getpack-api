@@ -2,7 +2,7 @@
  * Customer-side default posting rules (accounting-design §5): receipts, delivery, discounts, points,
  * credit notes, refunds (ADR-0007).
  */
-import { type PostingTemplate } from '../../../src/modules/ledger/posting/template';
+import { type PostingTemplate } from '../../../src/common/ledger-core/template';
 import {
   all,
   any,

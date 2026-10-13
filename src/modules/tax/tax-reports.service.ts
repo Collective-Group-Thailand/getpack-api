@@ -10,7 +10,7 @@ import {
   type TaxReportKind,
 } from '@generated/prisma/client';
 import { CompanyBankAccountsService } from '@modules/banking/company-bank-accounts.service';
-import { dateOnly, dayOf, isDay } from '@modules/ledger/ledger-dates';
+import { dateOnly, dayOf, isDay } from '@common/ledger-core/dates';
 import { PeriodsService } from '@modules/ledger/periods.service';
 import { type BuyerSnapshot } from '@modules/receivables/customer-documents.service';
 import { Injectable } from '@nestjs/common';

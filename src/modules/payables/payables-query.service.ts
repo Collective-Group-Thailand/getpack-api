@@ -4,7 +4,7 @@ import { MoneyDecimal, type MoneyValue } from '@common/money/money';
 import { PrismaService } from '@database/prisma.service';
 import { type Prisma } from '@generated/prisma/client';
 import { ScopingService } from '@modules/iam/scoping.service';
-import { dateOnly } from '@modules/ledger/ledger-dates';
+import { dateOnly } from '@common/ledger-core/dates';
 import { Injectable } from '@nestjs/common';
 
 import { INVOICE_INCLUDE } from './vendor-invoices.service';

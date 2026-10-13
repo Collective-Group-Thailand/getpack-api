@@ -9,7 +9,7 @@ import {
   type FiscalPeriod,
   type Prisma,
 } from '@generated/prisma/client';
-import { addMonths, dateOnly, dayOf, isDay } from '@modules/ledger/ledger-dates';
+import { addMonths, dateOnly, dayOf, isDay } from '@common/ledger-core/dates';
 import { PeriodsService } from '@modules/ledger/periods.service';
 import { Injectable } from '@nestjs/common';
 import { AuditService } from '@platform/audit/audit.service';

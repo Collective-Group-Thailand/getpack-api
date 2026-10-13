@@ -1,7 +1,7 @@
 import { nextActions, NO_PERMISSIONS } from '@common/next-actions/next-actions';
 import { toBangkokIso } from '@common/time/bangkok';
 import { type CompanyStatement } from '@generated/prisma/client';
-import { dayOf } from '@modules/ledger/ledger-dates';
+import { dayOf } from '@common/ledger-core/dates';
 
 import { type CreditNoteRequestRow } from './credit-notes.service';
 import { type BuyerSnapshot, type DocumentRow, type SellerSnapshot } from './customer-documents.service';

@@ -28,7 +28,7 @@ import {
   type RecurringJournalDto,
   type TaxRateDto,
 } from './ledger.dto';
-import { dayOf } from './ledger-dates';
+import { dayOf } from '@common/ledger-core/dates';
 import { type JournalRow } from './manual-journals.service';
 
 export const accountDto = (a: Account & { parent: { code: string } | null }): AccountDto => ({

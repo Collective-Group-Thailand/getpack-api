@@ -9,7 +9,7 @@ import {
   SubledgerReconciliationDto,
   SubledgerReconciliationQuery,
 } from '@modules/financial-reports/financial-reports.dto';
-import { dayOf } from '@modules/ledger/ledger-dates';
+import { dayOf } from '@common/ledger-core/dates';
 import { ReasonDto } from '@modules/receivables/receivables.dto';
 import { ApiSurface } from '@modules/surfaces/surfaces';
 import { Body, Controller, Get, HttpCode, Param, Post, Query } from '@nestjs/common';

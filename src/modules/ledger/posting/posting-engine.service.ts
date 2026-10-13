@@ -9,14 +9,14 @@ import { OnDomainEvent } from '@platform/domain-events/on-domain-event.decorator
 import { EntitiesService } from '@platform/entities/entities.service';
 
 import { JournalPostingService } from '../journal-posting.service';
-import { businessDay } from '../ledger-dates';
+import { businessDay } from '@common/ledger-core/dates';
 import {
   type PostingTemplate,
   type RenderedJournal,
   renderJournal,
   ruleApplies,
   TemplateError,
-} from './template';
+} from '@common/ledger-core/template';
 
 const TYPES_TTL_MS = 30_000;
 

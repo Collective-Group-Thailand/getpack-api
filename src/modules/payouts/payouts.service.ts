@@ -15,7 +15,7 @@ import {
 import { PDF_RENDERER, type PdfRenderer } from '@integrations/pdf/pdf-renderer.port';
 import { OBJECT_STORAGE, type ObjectStorage } from '@integrations/s3/object-storage.port';
 import { CompanyBankAccountsService } from '@modules/banking/company-bank-accounts.service';
-import { dateOnly, dayOf, isDay } from '@modules/ledger/ledger-dates';
+import { dateOnly, dayOf, isDay } from '@common/ledger-core/dates';
 import { TaxRatesReader, WHT_RATE_CODE } from '@modules/ledger/tax-rates.reader';
 import { PurchasingService } from '@modules/payables/purchasing.service';
 import { VendorInvoicesService } from '@modules/payables/vendor-invoices.service';

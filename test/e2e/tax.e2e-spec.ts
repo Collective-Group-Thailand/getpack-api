@@ -2,7 +2,7 @@ import { randomUUID } from 'node:crypto';
 
 import { MoneyDecimal } from '@common/money/money';
 import { bangkokDate } from '@common/time/bangkok';
-import { addMonths } from '@modules/ledger/ledger-dates';
+import { addMonths } from '@common/ledger-core/dates';
 import { TaxCalendarService } from '@modules/tax/tax-calendar.service';
 
 import { type DevFolding } from '../../prisma/seed/dev-folding';

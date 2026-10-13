@@ -7,7 +7,7 @@ import {
   toBangkokIso,
 } from '@common/time/bangkok';
 import { PrismaService } from '@database/prisma.service';
-import { dateOnly } from '@modules/ledger/ledger-dates';
+import { dateOnly } from '@common/ledger-core/dates';
 import { FACTORY_ACCOUNTS } from '@modules/payables/payables-query.service';
 import { Injectable } from '@nestjs/common';
 import { BusinessCalendarService } from '@platform/calendar/business-calendar.service';

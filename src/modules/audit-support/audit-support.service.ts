@@ -8,7 +8,7 @@ import { PrismaService } from '@database/prisma.service';
 import { type FiscalPeriod, type Prisma, type SampleMethod } from '@generated/prisma/client';
 import { FinancialReportsService } from '@modules/financial-reports/financial-reports.service';
 import { FixedAssetsService } from '@modules/fixed-assets/fixed-assets.service';
-import { addMonths, dateOnly, dayOf } from '@modules/ledger/ledger-dates';
+import { addMonths, dateOnly, dayOf } from '@common/ledger-core/dates';
 import { PeriodsService } from '@modules/ledger/periods.service';
 import { Injectable } from '@nestjs/common';
 import { AuditService } from '@platform/audit/audit.service';

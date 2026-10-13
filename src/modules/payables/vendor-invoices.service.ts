@@ -5,7 +5,7 @@ import { addCalendarDays, bangkokDate } from '@common/time/bangkok';
 import { PrismaService, type Tx } from '@database/prisma.service';
 import { type JuristicType, type Prisma, type VendorKind, type WhtCategory } from '@generated/prisma/client';
 import { sodPartyKey, SodService } from '@modules/iam/sod.service';
-import { dateOnly, isDay } from '@modules/ledger/ledger-dates';
+import { dateOnly, isDay } from '@common/ledger-core/dates';
 import { Injectable } from '@nestjs/common';
 import { AuditService } from '@platform/audit/audit.service';
 import { DomainEvents } from '@platform/domain-events/domain-events.service';

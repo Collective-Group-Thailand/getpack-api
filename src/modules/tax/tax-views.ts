@@ -1,5 +1,5 @@
 import { toBangkokIso } from '@common/time/bangkok';
-import { dayOf } from '@modules/ledger/ledger-dates';
+import { dayOf } from '@common/ledger-core/dates';
 
 import { type TaxCalendarItemDto, type TaxReportDto, type TaxReportSummaryDto } from './tax.dto';
 import { type TaxCalendarService } from './tax-calendar.service';

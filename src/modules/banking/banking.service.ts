@@ -8,7 +8,7 @@ import { PrismaService, type Tx } from '@database/prisma.service';
 import { type BankMatchTarget, type BankStatementLine, type Prisma } from '@generated/prisma/client';
 import { bankFileAdapter, BankFileError, type StatementRow } from '@integrations/bank-files/bank-files';
 import { OBJECT_STORAGE, type ObjectStorage } from '@integrations/s3/object-storage.port';
-import { dateOnly, dayOf, isDay } from '@modules/ledger/ledger-dates';
+import { dateOnly, dayOf, isDay } from '@common/ledger-core/dates';
 import { PaymentsService } from '@modules/payments/payments.service';
 import { readObject } from '@modules/payouts/read-object';
 import { StoreCreditService } from '@modules/receivables/store-credit.service';

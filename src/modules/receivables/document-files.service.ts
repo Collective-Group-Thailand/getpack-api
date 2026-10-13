@@ -8,7 +8,7 @@ import { PrismaService, type Tx } from '@database/prisma.service';
 import { type Prisma } from '@generated/prisma/client';
 import { PDF_RENDERER, type PdfRenderer } from '@integrations/pdf/pdf-renderer.port';
 import { OBJECT_STORAGE, type ObjectStorage } from '@integrations/s3/object-storage.port';
-import { addMonths, dateOnly, dayOf } from '@modules/ledger/ledger-dates';
+import { addMonths, dateOnly, dayOf } from '@common/ledger-core/dates';
 import { Inject, Injectable, Logger } from '@nestjs/common';
 import { type DomainEventEnvelope } from '@platform/domain-events/domain-event';
 import { DomainEvents } from '@platform/domain-events/domain-events.service';

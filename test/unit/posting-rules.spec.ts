@@ -4,7 +4,7 @@ import {
   renderJournal,
   ruleApplies,
   validateTemplate,
-} from '@modules/ledger/posting/template';
+} from '@common/ledger-core/template';
 import fc from 'fast-check';
 
 import { CHART_OF_ACCOUNTS } from '../../prisma/seed/data/finance-accounts';

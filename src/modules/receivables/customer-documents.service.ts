@@ -13,7 +13,7 @@ import {
   type RevenueCategory,
   type TaxNature,
 } from '@generated/prisma/client';
-import { dateOnly, dayOf } from '@modules/ledger/ledger-dates';
+import { dateOnly, dayOf } from '@common/ledger-core/dates';
 import { Injectable } from '@nestjs/common';
 import { ActivityLogService } from '@platform/activity/activity-log.service';
 import { AuditService } from '@platform/audit/audit.service';

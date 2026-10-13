@@ -3,7 +3,7 @@ import { Injectable } from '@nestjs/common';
 import { EntitiesService } from '@platform/entities/entities.service';
 import { ScheduledJob } from '@platform/maintenance/scheduled-job.decorator';
 
-import { addMonths } from './ledger-dates';
+import { addMonths } from '@common/ledger-core/dates';
 import { ManualJournalsService } from './manual-journals.service';
 import { PeriodsService } from './periods.service';
 import { RecurringJournalsService } from './recurring-journals.service';

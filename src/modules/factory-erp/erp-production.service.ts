@@ -683,7 +683,7 @@ export class ErpProductionService {
           reason: body.note ?? null,
         };
       });
-      await this.stock.post(tx, scope, settings, entries, {
+      const issued = await this.stock.post(tx, scope, settings, entries, {
         type: 'production_order',
         publicId: mo.publicId,
         documentNo: mo.moNo,
@@ -709,6 +709,7 @@ export class ErpProductionService {
         {
           moNo: mo.moNo,
           lines: wanted.length,
+          movementIds: issued.map((m) => m.publicId),
         },
       );
     });
@@ -743,7 +744,7 @@ export class ErpProductionService {
           });
         return { m, quantity: q, lotNo: l.lotNo ?? null };
       });
-      await this.stock.post(
+      const returned = await this.stock.post(
         tx,
         scope,
         settings,
@@ -771,6 +772,7 @@ export class ErpProductionService {
         publicId,
         {
           moNo: mo.moNo,
+          movementIds: returned.map((m) => m.publicId),
         },
       );
     });
@@ -791,7 +793,7 @@ export class ErpProductionService {
       const mo = await this.lock(tx, scope, publicId);
       if (!RUNNING.includes(mo.status))
         throw new DomainException('erp.invalid_status', { params: { status: mo.status } });
-      await this.finish(tx, mo, dec(body.goodQty), dec(body.scrapQty ?? '0'), body.note ?? null, scope);
+      const received = await this.finish(tx, mo, dec(body.goodQty), dec(body.scrapQty ?? '0'), body.note ?? null, scope);
       await this.workspace.record(
         tx,
         scope,
@@ -800,6 +802,7 @@ export class ErpProductionService {
         publicId,
         {
           moNo: mo.moNo,
+          movementIds: received,
         },
       );
     });
@@ -813,14 +816,15 @@ export class ErpProductionService {
     scrap: MoneyValue,
     note: string | null,
     scope: ErpScope | null,
-  ) {
+  ): Promise<string[]> {
     await this.releaseAll(tx, mo);
+    const movementIds: string[] = [];
     if (mo.item && good.gt(0) && scope) {
       // D-376: the product is received at its full cost — materials, machine, labour and overhead.
       const settings = await this.workspace.settings(tx, mo.factoryId);
       const { cost } = await orderCost(tx, await moForCost(tx, mo.id), settings);
       const unitCost = finishedUnitCost(cost.total, good);
-      await this.stock.post(
+      const moved = await this.stock.post(
         tx,
         scope,
         settings,
@@ -836,6 +840,7 @@ export class ErpProductionService {
         ],
         { type: 'production_order', publicId: mo.publicId, documentNo: mo.moNo },
       );
+      movementIds.push(...moved.map((m) => m.publicId));
     }
     await tx.erpProductionOrder.update({
       where: { id: mo.id },
@@ -849,6 +854,7 @@ export class ErpProductionService {
         rowVersion: { increment: 1 },
       },
     });
+    return movementIds;
   }
 
   /** Cancels an open order nothing was issued to (return materials first); reservations are released. */

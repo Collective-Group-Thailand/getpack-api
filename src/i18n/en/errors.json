@@ -1795,6 +1795,70 @@
     "support_not_granted": {
       "title": "No support access",
       "detail": "The factory owner has not granted Packio support access, or it has expired"
+    },
+    "ledger_period_closed": {
+      "title": "Period closed",
+      "detail": "The fiscal period {date} is {status} — reopen it or post into the next open month"
+    },
+    "ledger_unbalanced": {
+      "title": "Journal does not balance",
+      "detail": "Debits {debit} and credits {credit} must be equal, with at least two lines"
+    },
+    "ledger_account_invalid": {
+      "title": "Account cannot take this line",
+      "detail": "Account {code}: {reason}"
+    },
+    "ledger_period_transition": {
+      "title": "Period cannot change to that status",
+      "detail": "A fiscal period moves open → soft-closed → closed → locked, in order; the period is {status}"
+    },
+    "ledger_close_blocked": {
+      "title": "Close checklist not complete",
+      "detail": "{count} close check(s) still fail: {items}"
+    },
+    "ledger_journal_not_editable": {
+      "title": "Journal cannot be changed",
+      "detail": "The journal entry is {status}"
+    },
+    "ledger_rule_invalid": {
+      "title": "Posting rule invalid",
+      "detail": "{reason}"
+    },
+    "ledger_already_posted": {
+      "title": "Already posted",
+      "detail": "This document already has a journal entry ({entryNo})"
+    },
+    "ledger_change_pending": {
+      "title": "A change is already proposed",
+      "detail": "Account {code} already has a proposed change waiting for approval"
+    },
+    "ledger_self_approval": {
+      "title": "Cannot approve your own entry",
+      "detail": "Another person with approval rights must approve what you proposed"
+    },
+    "ledger_depreciation_done": {
+      "title": "Depreciation already run",
+      "detail": "Depreciation for {month} has already been posted"
+    },
+    "ledger_asset_not_active": {
+      "title": "Asset is not active",
+      "detail": "The asset is {status}"
+    },
+    "ledger_bank_line_settled": {
+      "title": "Bank line already handled",
+      "detail": "The statement line is {status}"
+    },
+    "ledger_bank_file_invalid": {
+      "title": "Statement file not readable",
+      "detail": "{reason}"
+    },
+    "ledger_tax_filed": {
+      "title": "Return already filed",
+      "detail": "{form} for {month} is already marked filed"
+    },
+    "ledger_not_started": {
+      "title": "Ledger not started",
+      "detail": "Set the ledger start date and fiscal year in the ledger settings first"
     }
   }
 }

@@ -2,7 +2,7 @@ import { type UserActor } from '@common/context/actor';
 import { DomainException } from '@common/errors/domain.exception';
 import { PrismaService } from '@database/prisma.service';
 import { type Prisma, type WhtCertStatus } from '@generated/prisma/client';
-import { dateOnly, isDay } from '@modules/ledger/ledger-dates';
+import { dateOnly, isDay } from '@common/ledger-core/dates';
 import { Injectable } from '@nestjs/common';
 import { AuditService } from '@platform/audit/audit.service';
 import { DomainEvents } from '@platform/domain-events/domain-events.service';
