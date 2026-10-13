@@ -256,6 +256,16 @@ export const API_TAGS: Record<string, string> = {
     'Packio Factory ERP: the owner’s dashboard, machine rates, job costs, profitability and OEE (D-376 – D-378).',
   'partner.erpPeople':
     'Packio Factory ERP: shifts, operator skills, the work log and Packio support access (D-380, D-381).',
+  'partner.erpLedger':
+    'Packio Factory ERP: the factory’s general ledger — settings, chart of accounts, posting rules, periods and the close, tax returns (D-385 – D-392).',
+  'partner.erpJournals':
+    'Packio Factory ERP: journal entries, manual journals under maker-checker, reversals, recurring journals and the CSV export (D-389, D-396).',
+  'partner.erpLedgerReports':
+    'Packio Factory ERP: trial balance, general ledger, profit and loss, balance sheet, cash flow and stock valuation (D-391).',
+  'partner.erpFixedAssets':
+    'Packio Factory ERP: asset categories, the fixed-asset register, monthly depreciation and disposals (D-393).',
+  'partner.erpBank':
+    'Packio Factory ERP: bank accounts, statement import, reconciliation and the cash position (D-394).',
   'admin.erpSupport':
     'Packio support’s read of a factory’s ERP dashboard and settings under the owner’s time-boxed grant (D-381).',
   'partner.changeRequests':

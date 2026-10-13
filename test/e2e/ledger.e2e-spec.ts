@@ -1,7 +1,7 @@
 import { randomUUID } from 'node:crypto';
 
 import { bangkokDate } from '@common/time/bangkok';
-import { addMonths } from '@modules/ledger/ledger-dates';
+import { addMonths } from '@common/ledger-core/dates';
 import { ManualJournalsService } from '@modules/ledger/manual-journals.service';
 import { RecurringJournalsService } from '@modules/ledger/recurring-journals.service';
 

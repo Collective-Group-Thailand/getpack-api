@@ -6,7 +6,7 @@ import { Idempotent } from '@common/idempotency/idempotent.decorator';
 import { ApiEndpoint, ApiStandardErrors, ApiSuccess } from '@common/openapi/decorators';
 import { toBangkokIso } from '@common/time/bangkok';
 import { type Prisma } from '@generated/prisma/client';
-import { dateOnly } from '@modules/ledger/ledger-dates';
+import { dateOnly } from '@common/ledger-core/dates';
 import { DocumentFilesService } from '@modules/receivables/document-files.service';
 import { ApiSurface } from '@modules/surfaces/surfaces';
 import { Body, Controller, Get, HttpCode, Param, ParseUUIDPipe, Post, Query } from '@nestjs/common';

@@ -18,7 +18,7 @@ import { DomainEvents } from '@platform/domain-events/domain-events.service';
 import { EntitiesService } from '@platform/entities/entities.service';
 
 import { PostingEngine } from './posting/posting-engine.service';
-import { accountCodesOf, type PostingTemplate, ruleApplies, validateTemplate } from './posting/template';
+import { accountCodesOf, type PostingTemplate, ruleApplies, validateTemplate } from '@common/ledger-core/template';
 
 export interface AccountFields {
   code?: string;

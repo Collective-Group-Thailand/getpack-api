@@ -1076,6 +1076,7 @@ export class ErpPurchasingService {
         lines.map((l) => ({ amount: dec(l.amount), base: dec(l.baseQuantity) })),
       );
       const settings = await this.workspace.settings(tx, scope.factory.id);
+      const movementIds: string[] = [];
       const absorbedBy: MoneyValue[] = [];
       for (const [i, l] of lines.entries()) {
         const share = charge!.split[i]!;
@@ -1088,17 +1089,19 @@ export class ErpPurchasingService {
         });
         const take = absorbable(share, dec(balance?.onHand ?? 0), dec(l.baseQuantity));
         absorbedBy.push(take);
-        if (take.gt(0))
-          await this.stock.revalue(tx, scope, settings, {
+        if (take.gt(0)) {
+          const moved = await this.stock.revalue(tx, scope, settings, {
             item: l.item,
             warehouse: gr.warehouse,
             value: take,
             source: { type: 'goods_receipt', publicId: gr.publicId, documentNo: gr.grNo },
             reason: `ต้นทุนแฝง ${body.kind}${body.reference ? ` ${body.reference}` : ''}`,
           });
+          if (moved) movementIds.push(moved);
+        }
       }
       const absorbed = absorbedBy.reduce((a, x) => a.plus(x), dec(0));
-      await tx.erpLandedCharge.create({
+      const landed = await tx.erpLandedCharge.create({
         data: {
           factoryId: scope.factory.id,
           goodsReceiptId: gr.id,
@@ -1129,6 +1132,8 @@ export class ErpPurchasingService {
         {
           grNo: gr.grNo,
           kind: body.kind,
+          chargeId: landed.publicId,
+          movementIds,
         },
       );
     });

@@ -655,6 +655,7 @@ export class ErpMaintenanceService {
         {
           mtNo: current.mtNo,
           lines: entries.length,
+          movementIds: moves.map((m) => m.publicId),
         },
       );
     });

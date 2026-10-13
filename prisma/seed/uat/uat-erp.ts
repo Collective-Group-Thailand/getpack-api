@@ -601,12 +601,14 @@ export async function seedUatErpE3(prisma: PrismaClient): Promise<number> {
   });
 }
 
-/** Factory users the E3/E4 menus need beyond the original six (storekeeper, purchaser, maintenance, sales). */
+/** Factory users the E3 – E6 menus need beyond the original six (storekeeper, purchaser, maintenance, sales, auditor). */
 const E4_PEOPLE = [
   { email: 'factory-storekeeper@uat.example.invalid', role: 'factory_storekeeper', name: 'คลังสินค้า ทดสอบ' },
   { email: 'factory-purchaser@uat.example.invalid', role: 'factory_purchaser', name: 'จัดซื้อ ทดสอบ' },
   { email: 'factory-maintenance@uat.example.invalid', role: 'factory_maintenance', name: 'ช่างซ่อมบำรุง ทดสอบ' },
   { email: 'factory-sales@uat.example.invalid', role: 'factory_sales', name: 'ฝ่ายขาย ทดสอบ' },
+  // E6 (D-396): the factory's external auditor / CPA, read-only on the books.
+  { email: 'factory-auditor@uat.example.invalid', role: 'factory_auditor', name: 'ผู้สอบบัญชี ทดสอบ' },
 ] as const;
 
 /**

@@ -5,6 +5,11 @@ import { ErpCrmService } from './erp-crm.service';
 import { ErpDocsService } from './erp-docs.service';
 import { ErpFilesService } from './erp-files.service';
 import { ErpInsightService } from './erp-insight.service';
+import { ErpLedgerService } from './erp-ledger.service';
+import { ErpLedgerAssetsService } from './erp-ledger-assets.service';
+import { ErpLedgerJournalsService } from './erp-ledger-journals.service';
+import { ErpLedgerPostingService } from './erp-ledger-posting.service';
+import { ErpLedgerReportsService } from './erp-ledger-reports.service';
 import { ErpMaintenanceService } from './erp-maintenance.service';
 import { ErpMasterService } from './erp-master.service';
 import { ErpPayablesService } from './erp-payables.service';
@@ -48,11 +53,16 @@ const SERVICES = [
   ErpQualityService,
   ErpInsightService,
   ErpPeopleService,
+  ErpLedgerService,
+  ErpLedgerPostingService,
+  ErpLedgerJournalsService,
+  ErpLedgerReportsService,
+  ErpLedgerAssetsService,
 ];
 
 /** Packio Factory ERP (D-316 – D-332): E1 trading partners, inventory, purchasing; E1.1
  * supplier prices; E2 purchase requests, payables, recipes, production orders and MRP; E2.1 sourcing
- * (breaks, alerts, RFQs, inspection, landed cost, approved suppliers); E3 schedule, kiosk, maintenance and documents; E4 sales, CRM, receivables and tax documents; E5 quality, insight and people. */
+ * (breaks, alerts, RFQs, inspection, landed cost, approved suppliers); E3 schedule, kiosk, maintenance and documents; E4 sales, CRM, receivables and tax documents; E5 quality, insight and people; E6 the factory's general ledger. */
 @Global()
 @Module({ providers: SERVICES, exports: SERVICES })
 export class FactoryErpModule {}

@@ -1103,6 +1103,42 @@ export const PERMISSIONS = [
     decisionRefs: ['D-381', 'D-382'],
   },
   {
+    key: 'factory_ledger.read',
+    audience: 'partner',
+    description: 'Read the factory’s general ledger: chart of accounts, periods, journals, reports, fixed assets, bank',
+    decisionRefs: ['D-385', 'D-396'],
+  },
+  {
+    key: 'factory_ledger.post',
+    audience: 'partner',
+    description: 'Draft and submit manual journals, keep recurring journals, match bank lines, run depreciation',
+    decisionRefs: ['D-389', 'D-393', 'D-394', 'D-396'],
+  },
+  {
+    key: 'factory_ledger.approve',
+    audience: 'partner',
+    description: 'Approve or reject manual journals and chart-of-accounts changes',
+    decisionRefs: ['D-386', 'D-389', 'D-396'],
+  },
+  {
+    key: 'factory_ledger.close',
+    audience: 'partner',
+    description: 'Soft-close, close, lock and reopen fiscal periods; post into a soft-closed period',
+    decisionRefs: ['D-390', 'D-396'],
+  },
+  {
+    key: 'factory_ledger.configure',
+    audience: 'partner',
+    description: 'Configure the factory’s ledger: settings, chart changes, posting rules, asset categories, bank accounts',
+    decisionRefs: ['D-385', 'D-386', 'D-387', 'D-396'],
+  },
+  {
+    key: 'factory_tax.file',
+    audience: 'partner',
+    description: 'Mark the factory’s VAT and WHT returns as filed',
+    decisionRefs: ['D-392', 'D-396'],
+  },
+  {
     key: 'factory_erp.configure',
     audience: 'partner',
     description: 'Configure the factory’s ERP: modules, document prefixes, stock and receiving rules',

@@ -207,20 +207,20 @@ export class ErpStockService {
       source: StockSource;
       reason: string | null;
     },
-  ): Promise<void> {
+  ): Promise<string | null> {
     const [row] = await tx.$queryRaw<
       { id: bigint; on_hand: Prisma.Decimal; value: Prisma.Decimal; avg_cost: Prisma.Decimal }[]
     >(Prisma.sql`
       SELECT id, on_hand, value, avg_cost FROM erp_stock_balances
        WHERE item_id = ${e.item.id} AND warehouse_id = ${e.warehouse.id} FOR UPDATE`);
-    if (!row || !dec(row.on_hand).gt(0)) return;
+    if (!row || !dec(row.on_hand).gt(0)) return null;
     const value = money2(dec(row.value).plus(e.value));
     const avgCost = cost6(value.div(dec(row.on_hand)));
     await tx.erpStockBalance.update({
       where: { id: row.id },
       data: { value: fmtMoney(value), avgCost: fmtCost(avgCost) },
     });
-    await tx.erpStockMovement.create({
+    const movement = await tx.erpStockMovement.create({
       data: {
         factoryId: scope.factory.id,
         itemId: e.item.id,
@@ -239,6 +239,7 @@ export class ErpStockService {
         createdById: scope.actor.userId,
       },
     });
+    return movement.publicId;
   }
 
   /**

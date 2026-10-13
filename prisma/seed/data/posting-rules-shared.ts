@@ -3,7 +3,7 @@
  * conditions use the approval-engine shape over `payload.<path>`, its template names accounts, sides,
  * amount expressions, dimensions and tax tagging.
  */
-import { type PostingTemplate } from '../../../src/modules/ledger/posting/template';
+import { type PostingTemplate } from '../../../src/common/ledger-core/template';
 
 export interface PostingRuleSeed {
   key: string;

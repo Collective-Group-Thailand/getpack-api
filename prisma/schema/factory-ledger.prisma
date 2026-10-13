@@ -1,0 +1,612 @@
+// Packio Factory ERP E6 (D-385 – D-396): the factory's own general ledger — chart of accounts, periods,
+// journals posted from ERP documents by versioned rules, manual and recurring journals, fixed assets,
+// bank reconciliation and the month-end close. Factory-private (D-317): `erp_gl_*` tables keyed by factory,
+// never read by a staff endpoint; Packio's own books stay in `accounts` / `journal_entries`.
+
+enum ErpGlDimension {
+  item
+  partner
+  warehouse
+  production_order
+  machine
+  bank_account
+
+  @@map("erp_gl_dimension")
+}
+
+enum ErpGlAssetStatus {
+  active
+  disposed
+  written_off
+
+  @@map("erp_gl_asset_status")
+}
+
+enum ErpGlBankLineStatus {
+  open
+  matched
+  ignored
+
+  @@map("erp_gl_bank_line_status")
+}
+
+enum ErpGlBankMatchTarget {
+  supplier_payment
+  customer_receipt
+  journal_entry
+  bank_fee
+  interest
+
+  @@map("erp_gl_bank_match_target")
+}
+
+enum ErpGlTaxReturn {
+  pp30
+  pnd3
+  pnd53
+
+  @@map("erp_gl_tax_return")
+}
+
+/// D-385: one row per factory, created when the owner switches the ledger on.
+model ErpGlSettings {
+  id                   BigInt   @id(map: "pk_erp_gl_settings") @default(autoincrement())
+  factoryId            BigInt   @unique(map: "ux_erp_gl_settings__factory_id") @map("factory_id")
+  /// First month of the fiscal year (1 = January).
+  fiscalYearStartMonth Int      @default(1) @map("fiscal_year_start_month")
+  /// Documents dated before this day are not posted (the opening balance covers them).
+  ledgerStartOn        DateTime @map("ledger_start_on") @db.Date
+  /// Item kind → inventory account code (D-386), overriding the template.
+  itemKindAccounts     Json     @default("{}") @map("item_kind_accounts")
+  /// Bank / cash account code for payments and receipts by method (`transfer`, `cash`, `cheque`, `other`).
+  methodAccounts       Json     @default("{}") @map("method_accounts")
+  cpaName              String?  @map("cpa_name")
+  cpaContact           String?  @map("cpa_contact")
+  chartTemplateVersion Int      @default(1) @map("chart_template_version")
+  rulesTemplateVersion Int      @default(1) @map("rules_template_version")
+  createdAt            DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  createdById          BigInt   @map("created_by")
+  updatedAt            DateTime @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+  updatedById          BigInt?  @map("updated_by")
+  rowVersion           Int      @default(1) @map("row_version")
+
+  factory   Factory @relation("ErpGlSettingsFactory", fields: [factoryId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_erp_gl_settings__factory_id")
+  createdBy User    @relation("ErpGlSettingsCreatedBy", fields: [createdById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_erp_gl_settings__created_by")
+  updatedBy User?   @relation("ErpGlSettingsUpdatedBy", fields: [updatedById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_erp_gl_settings__updated_by")
+
+  @@index([createdById], map: "ix_erp_gl_settings__created_by")
+  @@index([updatedById], map: "ix_erp_gl_settings__updated_by")
+  @@map("erp_gl_settings")
+}
+
+/// D-386: the factory's chart of accounts (TFRS for NPAEs, DBD layout), from the template on first use.
+model ErpGlAccount {
+  id            BigInt        @id(map: "pk_erp_gl_accounts") @default(autoincrement())
+  publicId      String        @unique(map: "ux_erp_gl_accounts__public_id") @default(dbgenerated("uuidv7()")) @map("public_id") @db.Uuid
+  factoryId     BigInt        @map("factory_id")
+  code          String
+  nameTh        String        @map("name_th")
+  nameEn        String        @map("name_en")
+  accountType   AccountType   @map("account_type")
+  normalSide    LedgerSide    @map("normal_side")
+  parentId      BigInt?       @map("parent_id")
+  /// Sub-ledger (automatic) postings only: AR, AP, inventory, GR/IR.
+  isControl     Boolean       @default(false) @map("is_control")
+  isPostable    Boolean       @default(true) @map("is_postable")
+  cashFlowClass CashFlowClass @map("cash_flow_class")
+  /// DBD financial-statement line the account rolls into (`BS.A1`, `PL.R1`, ...).
+  statementLine String        @map("statement_line")
+  status        AccountStatus @default(active)
+  createdAt     DateTime      @default(now()) @map("created_at") @db.Timestamptz(6)
+  createdById   BigInt?       @map("created_by")
+  updatedAt     DateTime      @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+  updatedById   BigInt?       @map("updated_by")
+  rowVersion    Int           @default(1) @map("row_version")
+
+  factory   Factory        @relation("ErpGlAccountFactory", fields: [factoryId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_erp_gl_accounts__factory_id")
+  parent    ErpGlAccount?  @relation("ErpGlAccountParent", fields: [parentId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_erp_gl_accounts__parent_id")
+  children  ErpGlAccount[] @relation("ErpGlAccountParent")
+  createdBy User?          @relation("ErpGlAccountCreatedBy", fields: [createdById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_erp_gl_accounts__created_by")
+  updatedBy User?          @relation("ErpGlAccountUpdatedBy", fields: [updatedById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_erp_gl_accounts__updated_by")
+
+  lines              ErpGlJournalLine[]
+  changes            ErpGlAccountChange[]
+  bankAccounts       ErpGlBankAccount[]   @relation("ErpGlBankAccountGl")
+  categoriesAsset    ErpGlAssetCategory[] @relation("ErpGlAssetCategoryAsset")
+  categoriesAccum    ErpGlAssetCategory[] @relation("ErpGlAssetCategoryAccumulated")
+  categoriesExpense  ErpGlAssetCategory[] @relation("ErpGlAssetCategoryExpense")
+  categoriesGainLoss ErpGlAssetCategory[] @relation("ErpGlAssetCategoryGainLoss")
+
+  @@unique([factoryId, code], map: "ux_erp_gl_accounts__factory_id__code")
+  @@index([parentId], map: "ix_erp_gl_accounts__parent_id")
+  @@index([createdById], map: "ix_erp_gl_accounts__created_by")
+  @@index([updatedById], map: "ix_erp_gl_accounts__updated_by")
+  @@map("erp_gl_accounts")
+}
+
+/// D-386: a chart change proposed by `factory_ledger.configure`, applied when `factory_ledger.approve` approves it.
+model ErpGlAccountChange {
+  id           BigInt              @id(map: "pk_erp_gl_account_changes") @default(autoincrement())
+  publicId     String              @unique(map: "ux_erp_gl_account_changes__public_id") @default(dbgenerated("uuidv7()")) @map("public_id") @db.Uuid
+  factoryId    BigInt              @map("factory_id")
+  accountId    BigInt?             @map("account_id")
+  kind         AccountChangeKind
+  proposed     Json
+  reason       String
+  status       ConfigVersionStatus @default(proposed)
+  decisionNote String?             @map("decision_note")
+  createdAt    DateTime            @default(now()) @map("created_at") @db.Timestamptz(6)
+  createdById  BigInt              @map("created_by")
+  decidedAt    DateTime?           @map("decided_at") @db.Timestamptz(6)
+  decidedById  BigInt?             @map("decided_by")
+
+  factory   Factory       @relation("ErpGlAccountChangeFactory", fields: [factoryId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_erp_gl_account_changes__factory_id")
+  account   ErpGlAccount? @relation(fields: [accountId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_erp_gl_account_changes__account_id")
+  createdBy User          @relation("ErpGlAccountChangeCreatedBy", fields: [createdById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_erp_gl_account_changes__created_by")
+  decidedBy User?         @relation("ErpGlAccountChangeDecidedBy", fields: [decidedById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_erp_gl_account_changes__decided_by")
+
+  @@index([factoryId, status], map: "ix_erp_gl_account_changes__factory_id__status")
+  @@index([accountId], map: "ix_erp_gl_account_changes__account_id")
+  @@index([createdById], map: "ix_erp_gl_account_changes__created_by")
+  @@index([decidedById], map: "ix_erp_gl_account_changes__decided_by")
+  @@map("erp_gl_account_changes")
+}
+
+/// D-387: a fiscal year of the factory with its 12 monthly periods, created on demand.
+model ErpGlFiscalYear {
+  id             BigInt   @id(map: "pk_erp_gl_fiscal_years") @default(autoincrement())
+  publicId       String   @unique(map: "ux_erp_gl_fiscal_years__public_id") @default(dbgenerated("uuidv7()")) @map("public_id") @db.Uuid
+  factoryId      BigInt   @map("factory_id")
+  label          String
+  startDate      DateTime @map("start_date") @db.Date
+  endDate        DateTime @map("end_date") @db.Date
+  locked         Boolean  @default(false)
+  /// The closing entry (profit to retained earnings) once the year is closed.
+  closingEntryId BigInt?  @map("closing_entry_id")
+  createdAt      DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  factory Factory       @relation("ErpGlFiscalYearFactory", fields: [factoryId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_erp_gl_fiscal_years__factory_id")
+  periods ErpGlPeriod[]
+
+  @@unique([factoryId, startDate], map: "ux_erp_gl_fiscal_years__factory_id__start_date")
+  @@map("erp_gl_fiscal_years")
+}
+
+/// D-387: a month: `open → soft_closed → closed → locked`, closing in order.
+model ErpGlPeriod {
+  id                BigInt       @id(map: "pk_erp_gl_periods") @default(autoincrement())
+  publicId          String       @unique(map: "ux_erp_gl_periods__public_id") @default(dbgenerated("uuidv7()")) @map("public_id") @db.Uuid
+  factoryId         BigInt       @map("factory_id")
+  fiscalYearId      BigInt       @map("fiscal_year_id")
+  periodNo          Int          @map("period_no") @db.SmallInt
+  startDate         DateTime     @map("start_date") @db.Date
+  endDate           DateTime     @map("end_date") @db.Date
+  status            PeriodStatus @default(open)
+  statusChangedAt   DateTime?    @map("status_changed_at") @db.Timestamptz(6)
+  statusChangedById BigInt?      @map("status_changed_by")
+  /// The close checklist as it stood when the month closed (D-393).
+  closeChecklist    Json?        @map("close_checklist")
+  closeNote         String?      @map("close_note")
+
+  factory          Factory                @relation("ErpGlPeriodFactory", fields: [factoryId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_erp_gl_periods__factory_id")
+  fiscalYear       ErpGlFiscalYear        @relation(fields: [fiscalYearId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_erp_gl_periods__fiscal_year_id")
+  statusChangedBy  User?                  @relation("ErpGlPeriodStatusChangedBy", fields: [statusChangedById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_erp_gl_periods__status_changed_by")
+  entries          ErpGlJournalEntry[]
+  lines            ErpGlJournalLine[]
+  depreciationRuns ErpGlDepreciationRun[]
+
+  @@unique([fiscalYearId, periodNo], map: "ux_erp_gl_periods__fiscal_year_id__period_no")
+  @@index([factoryId, startDate], map: "ix_erp_gl_periods__factory_id__start_date")
+  @@index([statusChangedById], map: "ix_erp_gl_periods__status_changed_by")
+  @@map("erp_gl_periods")
+}
+
+/// D-388: a journal entry. Posted entries never change; corrections are reversals. One entry per (event, rule).
+model ErpGlJournalEntry {
+  id                     BigInt        @id(map: "pk_erp_gl_journal_entries") @default(autoincrement())
+  publicId               String        @unique(map: "ux_erp_gl_journal_entries__public_id") @default(dbgenerated("uuidv7()")) @map("public_id") @db.Uuid
+  factoryId              BigInt        @map("factory_id")
+  periodId               BigInt        @map("period_id")
+  /// `JV-YYMM-NNNN`, assigned at posting (D-323).
+  entryNo                String?       @map("entry_no")
+  entryDate              DateTime      @map("entry_date") @db.Date
+  documentDate           DateTime      @map("document_date") @db.Date
+  kind                   JournalKind
+  status                 JournalStatus @default(draft)
+  sourceDocumentType     String?       @map("source_document_type")
+  sourceDocumentPublicId String?       @map("source_document_public_id") @db.Uuid
+  sourceDocumentNo       String?       @map("source_document_no")
+  domainEventId          String?       @map("domain_event_id") @db.Uuid
+  postingRuleId          BigInt?       @map("posting_rule_id")
+  postingRuleVersionId   BigInt?       @map("posting_rule_version_id")
+  reversesEntryId        BigInt?       @unique(map: "ux_erp_gl_journal_entries__reverses_entry_id") @map("reverses_entry_id")
+  recurringJournalId     BigInt?       @map("recurring_journal_id")
+  autoReverseOn          DateTime?     @map("auto_reverse_on") @db.Date
+  description            String
+  totalDebit             Decimal       @default(0) @map("total_debit") @db.Decimal(14, 2)
+  totalCredit            Decimal       @default(0) @map("total_credit") @db.Decimal(14, 2)
+  rejectionReason        String?       @map("rejection_reason")
+  createdAt              DateTime      @default(now()) @map("created_at") @db.Timestamptz(6)
+  createdById            BigInt?       @map("created_by")
+  approvedAt             DateTime?     @map("approved_at") @db.Timestamptz(6)
+  approvedById           BigInt?       @map("approved_by")
+  postedAt               DateTime?     @map("posted_at") @db.Timestamptz(6)
+  postedById             BigInt?       @map("posted_by")
+  updatedAt              DateTime      @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+  rowVersion             Int           @default(1) @map("row_version")
+
+  factory            Factory                  @relation("ErpGlJournalEntryFactory", fields: [factoryId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_erp_gl_journal_entries__factory_id")
+  period             ErpGlPeriod              @relation(fields: [periodId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_erp_gl_journal_entries__period_id")
+  postingRule        ErpGlPostingRule?        @relation(fields: [postingRuleId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_erp_gl_journal_entries__posting_rule_id")
+  postingRuleVersion ErpGlPostingRuleVersion? @relation(fields: [postingRuleVersionId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_erp_gl_journal_entries__posting_rule_version_id")
+  reverses           ErpGlJournalEntry?       @relation("ErpGlJournalEntryReversal", fields: [reversesEntryId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_erp_gl_journal_entries__reverses_entry_id")
+  reversedBy         ErpGlJournalEntry?       @relation("ErpGlJournalEntryReversal")
+  recurringJournal   ErpGlRecurringJournal?   @relation(fields: [recurringJournalId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_erp_gl_journal_entries__recurring_journal_id")
+  createdBy          User?                    @relation("ErpGlJournalEntryCreatedBy", fields: [createdById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_erp_gl_journal_entries__created_by")
+  approvedBy         User?                    @relation("ErpGlJournalEntryApprovedBy", fields: [approvedById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_erp_gl_journal_entries__approved_by")
+  postedBy           User?                    @relation("ErpGlJournalEntryPostedBy", fields: [postedById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_erp_gl_journal_entries__posted_by")
+  lines              ErpGlJournalLine[]
+  depreciationRun    ErpGlDepreciationRun?
+  bankMatches        ErpGlBankMatch[]
+
+  @@unique([factoryId, entryNo], map: "ux_erp_gl_journal_entries__factory_id__entry_no")
+  @@unique([domainEventId, postingRuleId], map: "ux_erp_gl_journal_entries__domain_event_id__posting_rule_id", where: raw("(domain_event_id IS NOT NULL)"))
+  @@index([factoryId, entryDate], map: "ix_erp_gl_journal_entries__factory_id__entry_date")
+  @@index([periodId, status], map: "ix_erp_gl_journal_entries__period_id__status")
+  @@index([factoryId, sourceDocumentType, sourceDocumentPublicId], map: "ix_erp_gl_journal_entries__source")
+  @@index([postingRuleId], map: "ix_erp_gl_journal_entries__posting_rule_id")
+  @@index([postingRuleVersionId], map: "ix_erp_gl_journal_entries__posting_rule_version_id")
+  @@index([recurringJournalId], map: "ix_erp_gl_journal_entries__recurring_journal_id")
+  @@index([createdById], map: "ix_erp_gl_journal_entries__created_by")
+  @@index([approvedById], map: "ix_erp_gl_journal_entries__approved_by")
+  @@index([postedById], map: "ix_erp_gl_journal_entries__posted_by")
+  @@index([autoReverseOn], map: "ix_erp_gl_journal_entries__auto_reverse_on", where: raw("(auto_reverse_on IS NOT NULL)"))
+  @@map("erp_gl_journal_entries")
+}
+
+/// D-388: one side of an entry with the ERP dimensions it is about and its tax tag.
+model ErpGlJournalLine {
+  id                BigInt   @id(map: "pk_erp_gl_journal_lines") @default(autoincrement())
+  entryId           BigInt   @map("entry_id")
+  lineNo            Int      @map("line_no") @db.SmallInt
+  accountId         BigInt   @map("account_id")
+  debit             Decimal  @default(0) @db.Decimal(14, 2)
+  credit            Decimal  @default(0) @db.Decimal(14, 2)
+  description       String?
+  itemId            BigInt?  @map("item_id")
+  partnerId         BigInt?  @map("partner_id")
+  warehouseId       BigInt?  @map("warehouse_id")
+  productionOrderId BigInt?  @map("production_order_id")
+  machineId         BigInt?  @map("machine_id")
+  bankAccountId     BigInt?  @map("bank_account_id")
+  taxCode           TaxCode? @map("tax_code")
+  taxBaseAmount     Decimal? @map("tax_base_amount") @db.Decimal(14, 2)
+  factoryId         BigInt   @map("factory_id")
+  periodId          BigInt   @map("period_id")
+  entryDate         DateTime @map("entry_date") @db.Date
+  createdAt         DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  entry           ErpGlJournalEntry   @relation(fields: [entryId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_erp_gl_journal_lines__entry_id")
+  account         ErpGlAccount        @relation(fields: [accountId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_erp_gl_journal_lines__account_id")
+  item            ErpItem?            @relation("ErpGlJournalLineItem", fields: [itemId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_erp_gl_journal_lines__item_id")
+  partner         ErpTradingPartner?  @relation("ErpGlJournalLinePartner", fields: [partnerId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_erp_gl_journal_lines__partner_id")
+  warehouse       ErpWarehouse?       @relation("ErpGlJournalLineWarehouse", fields: [warehouseId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_erp_gl_journal_lines__warehouse_id")
+  productionOrder ErpProductionOrder? @relation("ErpGlJournalLineMo", fields: [productionOrderId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_erp_gl_journal_lines__production_order_id")
+  machine         FactoryMachine?     @relation("ErpGlJournalLineMachine", fields: [machineId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_erp_gl_journal_lines__machine_id")
+  bankAccount     ErpGlBankAccount?   @relation("ErpGlJournalLineBank", fields: [bankAccountId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_erp_gl_journal_lines__bank_account_id")
+  factory         Factory             @relation("ErpGlJournalLineFactory", fields: [factoryId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_erp_gl_journal_lines__factory_id")
+  period          ErpGlPeriod         @relation(fields: [periodId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_erp_gl_journal_lines__period_id")
+
+  @@unique([entryId, lineNo], map: "ux_erp_gl_journal_lines__entry_id__line_no")
+  @@index([accountId, entryDate], map: "ix_erp_gl_journal_lines__account_id__entry_date")
+  @@index([factoryId, periodId, accountId], map: "ix_erp_gl_journal_lines__factory_id__period_id__account_id")
+  @@index([periodId], map: "ix_erp_gl_journal_lines__period_id")
+  @@index([itemId], map: "ix_erp_gl_journal_lines__item_id", where: raw("(item_id IS NOT NULL)"))
+  @@index([partnerId], map: "ix_erp_gl_journal_lines__partner_id", where: raw("(partner_id IS NOT NULL)"))
+  @@index([warehouseId], map: "ix_erp_gl_journal_lines__warehouse_id", where: raw("(warehouse_id IS NOT NULL)"))
+  @@index([productionOrderId], map: "ix_erp_gl_journal_lines__production_order_id", where: raw("(production_order_id IS NOT NULL)"))
+  @@index([machineId], map: "ix_erp_gl_journal_lines__machine_id", where: raw("(machine_id IS NOT NULL)"))
+  @@index([bankAccountId], map: "ix_erp_gl_journal_lines__bank_account_id", where: raw("(bank_account_id IS NOT NULL)"))
+  @@index([taxCode, entryDate], map: "ix_erp_gl_journal_lines__tax_code__entry_date", where: raw("(tax_code IS NOT NULL)"))
+  @@map("erp_gl_journal_lines")
+}
+
+/// D-389: a posting rule of the factory (F01 – F15), copied from the template; versions hold the journal template.
+model ErpGlPostingRule {
+  id          BigInt   @id(map: "pk_erp_gl_posting_rules") @default(autoincrement())
+  publicId    String   @unique(map: "ux_erp_gl_posting_rules__public_id") @default(dbgenerated("uuidv7()")) @map("public_id") @db.Uuid
+  factoryId   BigInt   @map("factory_id")
+  key         String
+  eventType   String   @map("event_type")
+  name        String
+  description String
+  createdAt   DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  factory  Factory                   @relation("ErpGlPostingRuleFactory", fields: [factoryId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_erp_gl_posting_rules__factory_id")
+  versions ErpGlPostingRuleVersion[]
+  entries  ErpGlJournalEntry[]
+
+  @@unique([factoryId, key], map: "ux_erp_gl_posting_rules__factory_id__key")
+  @@index([factoryId, eventType], map: "ix_erp_gl_posting_rules__factory_id__event_type")
+  @@map("erp_gl_posting_rules")
+}
+
+model ErpGlPostingRuleVersion {
+  id            BigInt              @id(map: "pk_erp_gl_posting_rule_versions") @default(autoincrement())
+  publicId      String              @unique(map: "ux_erp_gl_posting_rule_versions__public_id") @default(dbgenerated("uuidv7()")) @map("public_id") @db.Uuid
+  ruleId        BigInt              @map("rule_id")
+  versionNo     Int                 @map("version_no")
+  effectiveFrom DateTime            @map("effective_from") @db.Timestamptz(6)
+  status        ConfigVersionStatus @default(draft)
+  conditions    Json?
+  template      Json
+  reason        String
+  createdAt     DateTime            @default(now()) @map("created_at") @db.Timestamptz(6)
+  createdById   BigInt?             @map("created_by")
+  decidedAt     DateTime?           @map("decided_at") @db.Timestamptz(6)
+  decidedById   BigInt?             @map("decided_by")
+
+  rule      ErpGlPostingRule    @relation(fields: [ruleId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_erp_gl_posting_rule_versions__rule_id")
+  createdBy User?               @relation("ErpGlPostingRuleVersionCreatedBy", fields: [createdById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_erp_gl_posting_rule_versions__created_by")
+  decidedBy User?               @relation("ErpGlPostingRuleVersionDecidedBy", fields: [decidedById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_erp_gl_posting_rule_versions__decided_by")
+  entries   ErpGlJournalEntry[]
+
+  @@unique([ruleId, versionNo], map: "ux_erp_gl_posting_rule_versions__rule_id__version_no")
+  @@index([ruleId, effectiveFrom(sort: Desc), versionNo(sort: Desc)], map: "ix_erp_gl_posting_rule_versions__resolution", where: raw("(status = 'approved'::config_version_status)"))
+  @@index([createdById], map: "ix_erp_gl_posting_rule_versions__created_by")
+  @@index([decidedById], map: "ix_erp_gl_posting_rule_versions__decided_by")
+  @@map("erp_gl_posting_rule_versions")
+}
+
+/// D-390: a recurring journal (rent, insurance), run on its day of the month; optionally auto-reversed.
+model ErpGlRecurringJournal {
+  id           BigInt        @id(map: "pk_erp_gl_recurring_journals") @default(autoincrement())
+  publicId     String        @unique(map: "ux_erp_gl_recurring_journals__public_id") @default(dbgenerated("uuidv7()")) @map("public_id") @db.Uuid
+  factoryId    BigInt        @map("factory_id")
+  name         String
+  description  String
+  dayOfMonth   Int           @map("day_of_month") @db.SmallInt
+  startOn      DateTime      @map("start_on") @db.Date
+  endOn        DateTime?     @map("end_on") @db.Date
+  autoReverse  Boolean       @default(false) @map("auto_reverse")
+  /// `[{ accountCode, side, amount, description }]`.
+  lines        Json
+  status       AccountStatus @default(active)
+  lastRunMonth String?       @map("last_run_month")
+  createdAt    DateTime      @default(now()) @map("created_at") @db.Timestamptz(6)
+  createdById  BigInt        @map("created_by")
+  updatedAt    DateTime      @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+  updatedById  BigInt?       @map("updated_by")
+  rowVersion   Int           @default(1) @map("row_version")
+
+  factory   Factory             @relation("ErpGlRecurringJournalFactory", fields: [factoryId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_erp_gl_recurring_journals__factory_id")
+  createdBy User                @relation("ErpGlRecurringJournalCreatedBy", fields: [createdById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_erp_gl_recurring_journals__created_by")
+  updatedBy User?               @relation("ErpGlRecurringJournalUpdatedBy", fields: [updatedById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_erp_gl_recurring_journals__updated_by")
+  entries   ErpGlJournalEntry[]
+
+  @@index([factoryId, status], map: "ix_erp_gl_recurring_journals__factory_id__status")
+  @@index([createdById], map: "ix_erp_gl_recurring_journals__created_by")
+  @@index([updatedById], map: "ix_erp_gl_recurring_journals__updated_by")
+  @@map("erp_gl_recurring_journals")
+}
+
+/// D-394: an asset class with its accounts and useful life.
+model ErpGlAssetCategory {
+  id                   BigInt        @id(map: "pk_erp_gl_asset_categories") @default(autoincrement())
+  publicId             String        @unique(map: "ux_erp_gl_asset_categories__public_id") @default(dbgenerated("uuidv7()")) @map("public_id") @db.Uuid
+  factoryId            BigInt        @map("factory_id")
+  name                 String
+  usefulLifeMonths     Int           @map("useful_life_months")
+  assetAccountId       BigInt        @map("asset_account_id")
+  accumulatedAccountId BigInt        @map("accumulated_account_id")
+  expenseAccountId     BigInt        @map("expense_account_id")
+  gainLossAccountId    BigInt        @map("gain_loss_account_id")
+  status               AccountStatus @default(active)
+  createdAt            DateTime      @default(now()) @map("created_at") @db.Timestamptz(6)
+  createdById          BigInt        @map("created_by")
+
+  factory            Factory           @relation("ErpGlAssetCategoryFactory", fields: [factoryId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_erp_gl_asset_categories__factory_id")
+  assetAccount       ErpGlAccount      @relation("ErpGlAssetCategoryAsset", fields: [assetAccountId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_erp_gl_asset_categories__asset_account_id")
+  accumulatedAccount ErpGlAccount      @relation("ErpGlAssetCategoryAccumulated", fields: [accumulatedAccountId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_erp_gl_asset_categories__accumulated_account_id")
+  expenseAccount     ErpGlAccount      @relation("ErpGlAssetCategoryExpense", fields: [expenseAccountId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_erp_gl_asset_categories__expense_account_id")
+  gainLossAccount    ErpGlAccount      @relation("ErpGlAssetCategoryGainLoss", fields: [gainLossAccountId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_erp_gl_asset_categories__gain_loss_account_id")
+  createdBy          User              @relation("ErpGlAssetCategoryCreatedBy", fields: [createdById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_erp_gl_asset_categories__created_by")
+  assets             ErpGlFixedAsset[]
+
+  @@unique([factoryId, name], map: "ux_erp_gl_asset_categories__factory_id__name")
+  @@index([assetAccountId], map: "ix_erp_gl_asset_categories__asset_account_id")
+  @@index([accumulatedAccountId], map: "ix_erp_gl_asset_categories__accumulated_account_id")
+  @@index([expenseAccountId], map: "ix_erp_gl_asset_categories__expense_account_id")
+  @@index([gainLossAccountId], map: "ix_erp_gl_asset_categories__gain_loss_account_id")
+  @@index([createdById], map: "ix_erp_gl_asset_categories__created_by")
+  @@map("erp_gl_asset_categories")
+}
+
+/// D-394: a fixed asset, straight-line monthly depreciation; a machine may link to its asset.
+model ErpGlFixedAsset {
+  id                 BigInt           @id(map: "pk_erp_gl_fixed_assets") @default(autoincrement())
+  publicId           String           @unique(map: "ux_erp_gl_fixed_assets__public_id") @default(dbgenerated("uuidv7()")) @map("public_id") @db.Uuid
+  factoryId          BigInt           @map("factory_id")
+  categoryId         BigInt           @map("category_id")
+  machineId          BigInt?          @map("machine_id")
+  assetNo            String           @map("asset_no")
+  name               String
+  acquiredOn         DateTime         @map("acquired_on") @db.Date
+  cost               Decimal          @db.Decimal(14, 2)
+  salvageValue       Decimal          @default(0) @map("salvage_value") @db.Decimal(14, 2)
+  usefulLifeMonths   Int              @map("useful_life_months")
+  depreciationStart  DateTime         @map("depreciation_start") @db.Date
+  /// Depreciation already taken before the ledger started (opening balance).
+  openingAccumulated Decimal          @default(0) @map("opening_accumulated") @db.Decimal(14, 2)
+  accumulated        Decimal          @default(0) @db.Decimal(14, 2)
+  monthsDepreciated  Int              @default(0) @map("months_depreciated")
+  status             ErpGlAssetStatus @default(active)
+  disposedOn         DateTime?        @map("disposed_on") @db.Date
+  proceeds           Decimal?         @db.Decimal(14, 2)
+  disposalEntryId    BigInt?          @map("disposal_entry_id")
+  note               String?
+  createdAt          DateTime         @default(now()) @map("created_at") @db.Timestamptz(6)
+  createdById        BigInt           @map("created_by")
+  updatedAt          DateTime         @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+  updatedById        BigInt?          @map("updated_by")
+  rowVersion         Int              @default(1) @map("row_version")
+
+  factory   Factory                 @relation("ErpGlFixedAssetFactory", fields: [factoryId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_erp_gl_fixed_assets__factory_id")
+  category  ErpGlAssetCategory      @relation(fields: [categoryId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_erp_gl_fixed_assets__category_id")
+  machine   FactoryMachine?         @relation("ErpGlFixedAssetMachine", fields: [machineId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_erp_gl_fixed_assets__machine_id")
+  createdBy User                    @relation("ErpGlFixedAssetCreatedBy", fields: [createdById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_erp_gl_fixed_assets__created_by")
+  updatedBy User?                   @relation("ErpGlFixedAssetUpdatedBy", fields: [updatedById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_erp_gl_fixed_assets__updated_by")
+  runLines  ErpGlDepreciationLine[]
+
+  @@unique([factoryId, assetNo], map: "ux_erp_gl_fixed_assets__factory_id__asset_no")
+  @@index([factoryId, status], map: "ix_erp_gl_fixed_assets__factory_id__status")
+  @@index([categoryId], map: "ix_erp_gl_fixed_assets__category_id")
+  @@index([machineId], map: "ix_erp_gl_fixed_assets__machine_id")
+  @@index([createdById], map: "ix_erp_gl_fixed_assets__created_by")
+  @@index([updatedById], map: "ix_erp_gl_fixed_assets__updated_by")
+  @@map("erp_gl_fixed_assets")
+}
+
+/// D-394: one month's depreciation, posted as one journal.
+model ErpGlDepreciationRun {
+  id          BigInt   @id(map: "pk_erp_gl_depreciation_runs") @default(autoincrement())
+  publicId    String   @unique(map: "ux_erp_gl_depreciation_runs__public_id") @default(dbgenerated("uuidv7()")) @map("public_id") @db.Uuid
+  factoryId   BigInt   @map("factory_id")
+  periodId    BigInt   @unique(map: "ux_erp_gl_depreciation_runs__period_id") @map("period_id")
+  entryId     BigInt?  @unique(map: "ux_erp_gl_depreciation_runs__entry_id") @map("entry_id")
+  total       Decimal  @db.Decimal(14, 2)
+  createdAt   DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  createdById BigInt   @map("created_by")
+
+  factory   Factory                 @relation("ErpGlDepreciationRunFactory", fields: [factoryId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_erp_gl_depreciation_runs__factory_id")
+  period    ErpGlPeriod             @relation(fields: [periodId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_erp_gl_depreciation_runs__period_id")
+  entry     ErpGlJournalEntry?      @relation(fields: [entryId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_erp_gl_depreciation_runs__entry_id")
+  createdBy User                    @relation("ErpGlDepreciationRunCreatedBy", fields: [createdById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_erp_gl_depreciation_runs__created_by")
+  lines     ErpGlDepreciationLine[]
+
+  @@index([factoryId], map: "ix_erp_gl_depreciation_runs__factory_id")
+  @@index([createdById], map: "ix_erp_gl_depreciation_runs__created_by")
+  @@map("erp_gl_depreciation_runs")
+}
+
+model ErpGlDepreciationLine {
+  id      BigInt  @id(map: "pk_erp_gl_depreciation_lines") @default(autoincrement())
+  runId   BigInt  @map("run_id")
+  assetId BigInt  @map("asset_id")
+  amount  Decimal @db.Decimal(14, 2)
+
+  run   ErpGlDepreciationRun @relation(fields: [runId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_erp_gl_depreciation_lines__run_id")
+  asset ErpGlFixedAsset      @relation(fields: [assetId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_erp_gl_depreciation_lines__asset_id")
+
+  @@unique([runId, assetId], map: "ux_erp_gl_depreciation_lines__run_id__asset_id")
+  @@index([assetId], map: "ix_erp_gl_depreciation_lines__asset_id")
+  @@map("erp_gl_depreciation_lines")
+}
+
+/// D-395: a bank account of the factory and the GL account it books to.
+model ErpGlBankAccount {
+  id             BigInt        @id(map: "pk_erp_gl_bank_accounts") @default(autoincrement())
+  publicId       String        @unique(map: "ux_erp_gl_bank_accounts__public_id") @default(dbgenerated("uuidv7()")) @map("public_id") @db.Uuid
+  factoryId      BigInt        @map("factory_id")
+  name           String
+  bankName       String        @map("bank_name")
+  /// Last 4 digits only.
+  accountNoLast4 String        @map("account_no_last4")
+  glAccountId    BigInt        @map("gl_account_id")
+  /// The payment methods (D-338, D-365) that settle through this account.
+  isDefault      Boolean       @default(false) @map("is_default")
+  status         AccountStatus @default(active)
+  createdAt      DateTime      @default(now()) @map("created_at") @db.Timestamptz(6)
+  createdById    BigInt        @map("created_by")
+  updatedAt      DateTime      @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+  updatedById    BigInt?       @map("updated_by")
+  rowVersion     Int           @default(1) @map("row_version")
+
+  factory   Factory                  @relation("ErpGlBankAccountFactory", fields: [factoryId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_erp_gl_bank_accounts__factory_id")
+  glAccount ErpGlAccount             @relation("ErpGlBankAccountGl", fields: [glAccountId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_erp_gl_bank_accounts__gl_account_id")
+  createdBy User                     @relation("ErpGlBankAccountCreatedBy", fields: [createdById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_erp_gl_bank_accounts__created_by")
+  updatedBy User?                    @relation("ErpGlBankAccountUpdatedBy", fields: [updatedById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_erp_gl_bank_accounts__updated_by")
+  lines     ErpGlJournalLine[]       @relation("ErpGlJournalLineBank")
+  statement ErpGlBankStatementLine[]
+
+  @@index([factoryId, status], map: "ix_erp_gl_bank_accounts__factory_id__status")
+  @@index([glAccountId], map: "ix_erp_gl_bank_accounts__gl_account_id")
+  @@index([createdById], map: "ix_erp_gl_bank_accounts__created_by")
+  @@index([updatedById], map: "ix_erp_gl_bank_accounts__updated_by")
+  @@map("erp_gl_bank_accounts")
+}
+
+/// D-395: a line of a bank statement the factory imported; matched to a payment, a receipt or an entry.
+model ErpGlBankStatementLine {
+  id            BigInt              @id(map: "pk_erp_gl_bank_statement_lines") @default(autoincrement())
+  publicId      String              @unique(map: "ux_erp_gl_bank_statement_lines__public_id") @default(dbgenerated("uuidv7()")) @map("public_id") @db.Uuid
+  factoryId     BigInt              @map("factory_id")
+  bankAccountId BigInt              @map("bank_account_id")
+  txnDate       DateTime            @map("txn_date") @db.Date
+  /// Signed: money in positive, money out negative.
+  amount        Decimal             @db.Decimal(14, 2)
+  description   String
+  reference     String?
+  /// SHA-256 of (account, date, amount, description, reference): the same line is never imported twice.
+  lineHash      Bytes               @map("line_hash")
+  status        ErpGlBankLineStatus @default(open)
+  ignoreReason  String?             @map("ignore_reason")
+  importedAt    DateTime            @default(now()) @map("imported_at") @db.Timestamptz(6)
+  importedById  BigInt              @map("imported_by")
+
+  factory     Factory          @relation("ErpGlBankStatementLineFactory", fields: [factoryId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_erp_gl_bank_statement_lines__factory_id")
+  bankAccount ErpGlBankAccount @relation(fields: [bankAccountId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_erp_gl_bank_statement_lines__bank_account_id")
+  importedBy  User             @relation("ErpGlBankStatementLineImportedBy", fields: [importedById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_erp_gl_bank_statement_lines__imported_by")
+  matches     ErpGlBankMatch[]
+
+  @@unique([bankAccountId, lineHash], map: "ux_erp_gl_bank_statement_lines__bank_account_id__line_hash")
+  @@index([factoryId, status, txnDate], map: "ix_erp_gl_bank_statement_lines__factory_id__status__txn_date")
+  @@index([importedById], map: "ix_erp_gl_bank_statement_lines__imported_by")
+  @@map("erp_gl_bank_statement_lines")
+}
+
+/// D-395: what a statement line was matched to.
+model ErpGlBankMatch {
+  id             BigInt               @id(map: "pk_erp_gl_bank_matches") @default(autoincrement())
+  lineId         BigInt               @map("line_id")
+  targetType     ErpGlBankMatchTarget @map("target_type")
+  targetPublicId String?              @map("target_public_id") @db.Uuid
+  targetNo       String?              @map("target_no")
+  entryId        BigInt?              @map("entry_id")
+  amount         Decimal              @db.Decimal(14, 2)
+  auto           Boolean              @default(false)
+  matchedAt      DateTime             @default(now()) @map("matched_at") @db.Timestamptz(6)
+  matchedById    BigInt?              @map("matched_by")
+
+  line      ErpGlBankStatementLine @relation(fields: [lineId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_erp_gl_bank_matches__line_id")
+  entry     ErpGlJournalEntry?     @relation(fields: [entryId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_erp_gl_bank_matches__entry_id")
+  matchedBy User?                  @relation("ErpGlBankMatchMatchedBy", fields: [matchedById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_erp_gl_bank_matches__matched_by")
+
+  @@index([lineId], map: "ix_erp_gl_bank_matches__line_id")
+  @@index([targetType, targetPublicId], map: "ix_erp_gl_bank_matches__target")
+  @@index([entryId], map: "ix_erp_gl_bank_matches__entry_id")
+  @@index([matchedById], map: "ix_erp_gl_bank_matches__matched_by")
+  @@map("erp_gl_bank_matches")
+}
+
+/// D-392: a tax return the factory marked as filed (ภ.พ.30, ภ.ง.ด.3, ภ.ง.ด.53) for a month.
+model ErpGlTaxFiling {
+  id          BigInt         @id(map: "pk_erp_gl_tax_filings") @default(autoincrement())
+  publicId    String         @unique(map: "ux_erp_gl_tax_filings__public_id") @default(dbgenerated("uuidv7()")) @map("public_id") @db.Uuid
+  factoryId   BigInt         @map("factory_id")
+  form        ErpGlTaxReturn
+  month       DateTime       @db.Date
+  filedOn     DateTime       @map("filed_on") @db.Date
+  reference   String?
+  amount      Decimal        @db.Decimal(14, 2)
+  note        String?
+  createdAt   DateTime       @default(now()) @map("created_at") @db.Timestamptz(6)
+  createdById BigInt         @map("created_by")
+
+  factory   Factory @relation("ErpGlTaxFilingFactory", fields: [factoryId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_erp_gl_tax_filings__factory_id")
+  createdBy User    @relation("ErpGlTaxFilingCreatedBy", fields: [createdById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_erp_gl_tax_filings__created_by")
+
+  @@unique([factoryId, form, month], map: "ux_erp_gl_tax_filings__factory_id__form__month")
+  @@index([createdById], map: "ix_erp_gl_tax_filings__created_by")
+  @@map("erp_gl_tax_filings")
+}

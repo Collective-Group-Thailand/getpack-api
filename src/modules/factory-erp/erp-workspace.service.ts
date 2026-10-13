@@ -36,6 +36,8 @@ export const DEFAULT_PREFIXES: Record<ErpDocumentType, string> = {
   wht: 'WHT',
   qc: 'QC',
   ncr: 'NCR',
+  jv: 'JV',
+  fa: 'FA',
 };
 
 /** A person working in their own factory's ERP (D-317): partner users only, never staff or machines. */

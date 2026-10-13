@@ -2,7 +2,7 @@ import { randomUUID } from 'node:crypto';
 
 import { MoneyDecimal } from '@common/money/money';
 import { bangkokDate } from '@common/time/bangkok';
-import { addMonths } from '@modules/ledger/ledger-dates';
+import { addMonths } from '@common/ledger-core/dates';
 
 import { as, staffToken } from '../support/commerce-e2e';
 import { bootFulfilmentApp, type FulfilmentApp } from '../support/fulfilment-e2e';

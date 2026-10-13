@@ -995,6 +995,57 @@ const CHECKS = [
   'ck_erp_shifts__times',
   'ck_erp_support_grants__window',
   'ck_erp_support_grants__views',
+  // --- E6 factory ledger (D-385 – D-396)
+  'ck_erp_gl_settings__fiscal_year_start_month',
+  'ck_erp_gl_settings__templates',
+  'ck_erp_gl_accounts__code',
+  'ck_erp_gl_accounts__names',
+  'ck_erp_gl_accounts__statement_line',
+  'ck_erp_gl_accounts__not_own_parent',
+  'ck_erp_gl_account_changes__reason',
+  'ck_erp_gl_account_changes__target',
+  'ck_erp_gl_account_changes__status',
+  'ck_erp_gl_account_changes__decided',
+  'ck_erp_gl_fiscal_years__dates',
+  'ck_erp_gl_fiscal_years__label',
+  'ck_erp_gl_periods__dates',
+  'ck_erp_gl_periods__period_no',
+  'ck_erp_gl_periods__status_changed',
+  'ck_erp_gl_journal_entries__description',
+  'ck_erp_gl_journal_entries__totals',
+  'ck_erp_gl_journal_entries__posted',
+  'ck_erp_gl_journal_entries__rejected',
+  'ck_erp_gl_journal_entries__auto',
+  'ck_erp_gl_journal_entries__reversal',
+  'ck_erp_gl_journal_entries__manual',
+  'ck_erp_gl_journal_entries__recurring',
+  'ck_erp_gl_journal_entries__source',
+  'ck_erp_gl_journal_lines__sides',
+  'ck_erp_gl_journal_lines__line_no',
+  'ck_erp_gl_journal_lines__tax',
+  'ck_erp_gl_posting_rules__key',
+  'ck_erp_gl_posting_rules__event_type',
+  'ck_erp_gl_posting_rule_versions__version_no',
+  'ck_erp_gl_posting_rule_versions__reason',
+  'ck_erp_gl_posting_rule_versions__decided',
+  'ck_erp_gl_posting_rule_versions__template',
+  'ck_erp_gl_recurring_journals__day_of_month',
+  'ck_erp_gl_recurring_journals__window',
+  'ck_erp_gl_recurring_journals__name',
+  'ck_erp_gl_recurring_journals__lines',
+  'ck_erp_gl_asset_categories__name',
+  'ck_erp_gl_asset_categories__life',
+  'ck_erp_gl_fixed_assets__name',
+  'ck_erp_gl_fixed_assets__amounts',
+  'ck_erp_gl_fixed_assets__life',
+  'ck_erp_gl_fixed_assets__disposed',
+  'ck_erp_gl_depreciation_runs__total',
+  'ck_erp_gl_depreciation_lines__amount',
+  'ck_erp_gl_bank_accounts__name',
+  'ck_erp_gl_bank_statement_lines__amount',
+  'ck_erp_gl_bank_statement_lines__ignored',
+  'ck_erp_gl_bank_matches__amount',
+  'ck_erp_gl_tax_filings__month',
 ];
 
 const TRIGGERS = [
@@ -1244,6 +1295,16 @@ const TRIGGERS = [
   'tg_erp_operation_events__append_only',
   'tg_erp_receipt_allocations__append_only',
   'tg_erp_wht_certificate_lines__append_only',
+  // --- E6 factory ledger (D-385 – D-396)
+  'tg_erp_gl_account_changes__immutable',
+  'tg_erp_gl_accounts__no_delete',
+  'tg_erp_gl_journal_entries__balanced',
+  'tg_erp_gl_journal_entries__guard',
+  'tg_erp_gl_journal_entries__period',
+  'tg_erp_gl_journal_entries__sync_lines',
+  'tg_erp_gl_journal_lines__guard',
+  'tg_erp_gl_periods__guard',
+  'tg_erp_gl_posting_rule_versions__immutable',
 ];
 
 /** Expression (hand-written) and partial (Prisma preview) indexes. */
@@ -1358,6 +1419,17 @@ const INDEXES = [
   'ux_erp_maintenance_orders__plan_id__open',
   'ux_erp_quotations__link_token_hash',
   'ux_erp_wht_certificates__payment_id__issued',
+  // --- E6 factory ledger (D-385 – D-396)
+  'ix_erp_gl_journal_entries__auto_reverse_on',
+  'ix_erp_gl_journal_lines__bank_account_id',
+  'ix_erp_gl_journal_lines__item_id',
+  'ix_erp_gl_journal_lines__machine_id',
+  'ix_erp_gl_journal_lines__partner_id',
+  'ix_erp_gl_journal_lines__production_order_id',
+  'ix_erp_gl_journal_lines__tax_code__entry_date',
+  'ix_erp_gl_journal_lines__warehouse_id',
+  'ix_erp_gl_posting_rule_versions__resolution',
+  'ux_erp_gl_journal_entries__domain_event_id__posting_rule_id',
 ];
 
 const EXPRESSION_INDEXES = [
@@ -1411,6 +1483,9 @@ const EXCLUSIONS = [
   'ex_geometry_bands__no_overlap',
   'ex_fiscal_periods__no_overlap',
   'ex_fiscal_years__no_overlap',
+  // --- E6 factory ledger (D-385 – D-396)
+  'ex_erp_gl_fiscal_years__no_overlap',
+  'ex_erp_gl_periods__no_overlap',
 ];
 
 const EXTENSIONS = ['vector', 'pgcrypto', 'pg_trgm', 'citext', 'btree_gist'];

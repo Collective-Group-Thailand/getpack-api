@@ -12,7 +12,7 @@ import { CompaniesService } from '@modules/companies/companies.service';
 import { CustomersService } from '@modules/customers/customers.service';
 import { permissionsOf } from '@modules/iam/actor-permissions';
 import { PermissionResolver } from '@modules/iam/permission-resolver.service';
-import { dateOnly } from '@modules/ledger/ledger-dates';
+import { dateOnly } from '@common/ledger-core/dates';
 import { ApiSurface } from '@modules/surfaces/surfaces';
 import { Body, Controller, Get, HttpCode, Param, ParseUUIDPipe, Post, Query } from '@nestjs/common';
 import { ApiBody, ApiParam } from '@nestjs/swagger';

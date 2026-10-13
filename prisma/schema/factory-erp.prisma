@@ -119,6 +119,8 @@ enum ErpDocumentType {
   wht
   qc
   ncr
+  jv
+  fa
 
   @@map("erp_document_type")
 }
@@ -241,9 +243,10 @@ model ErpTradingPartner {
 
   salesperson User? @relation("ErpTradingPartnerSalesperson", fields: [salespersonId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_erp_trading_partners__salesperson_id")
 
-  erpQualityCheckSupplier ErpQualityCheck[] @relation("ErpQualityCheckSupplier")
-  erpNcrSupplier          ErpNcr[]          @relation("ErpNcrSupplier")
-  erpNcrCustomer          ErpNcr[]          @relation("ErpNcrCustomer")
+  erpQualityCheckSupplier ErpQualityCheck[]  @relation("ErpQualityCheckSupplier")
+  erpNcrSupplier          ErpNcr[]           @relation("ErpNcrSupplier")
+  erpNcrCustomer          ErpNcr[]           @relation("ErpNcrCustomer")
+  erpGlJournalLinePartner ErpGlJournalLine[] @relation("ErpGlJournalLinePartner")
 
   @@unique([factoryId, code], map: "ux_erp_trading_partners__factory_id__code")
   @@index([factoryId, kind, status], map: "ix_erp_trading_partners__factory_id__kind__status")
@@ -279,7 +282,8 @@ model ErpWarehouse {
   erpDeliveryNoteWarehouse ErpDeliveryNote[]    @relation("ErpDeliveryNoteWarehouse")
   erpSalesNoteWarehouse    ErpSalesNote[]       @relation("ErpSalesNoteWarehouse")
 
-  erpNcrWarehouse ErpNcr[] @relation("ErpNcrWarehouse")
+  erpNcrWarehouse           ErpNcr[]           @relation("ErpNcrWarehouse")
+  erpGlJournalLineWarehouse ErpGlJournalLine[] @relation("ErpGlJournalLineWarehouse")
 
   @@unique([factoryId, code], map: "ux_erp_warehouses__factory_id__code")
   @@index([createdById], map: "ix_erp_warehouses__created_by")
@@ -345,6 +349,7 @@ model ErpItem {
   erpInspectionTemplateItem ErpInspectionTemplate[] @relation("ErpInspectionTemplateItem")
   erpQualityCheckItem       ErpQualityCheck[]       @relation("ErpQualityCheckItem")
   erpNcrItem                ErpNcr[]                @relation("ErpNcrItem")
+  erpGlJournalLineItem      ErpGlJournalLine[]      @relation("ErpGlJournalLineItem")
 
   @@unique([factoryId, sku], map: "ux_erp_items__factory_id__sku")
   @@index([factoryId, kind, status], map: "ix_erp_items__factory_id__kind__status")
@@ -1027,8 +1032,9 @@ model ErpProductionOrder {
   operations     ErpProductionOperation[]
   salesOrderLine ErpSalesOrderLine?       @relation("ErpSalesOrderLineProduction")
 
-  erpQualityCheckMo ErpQualityCheck[] @relation("ErpQualityCheckMo")
-  erpNcrMo          ErpNcr[]          @relation("ErpNcrMo")
+  erpQualityCheckMo  ErpQualityCheck[]  @relation("ErpQualityCheckMo")
+  erpNcrMo           ErpNcr[]           @relation("ErpNcrMo")
+  erpGlJournalLineMo ErpGlJournalLine[] @relation("ErpGlJournalLineMo")
 
   @@unique([factoryId, moNo], map: "ux_erp_production_orders__factory_id__mo_no")
   @@unique([productionJobId], map: "ux_erp_production_orders__production_job_id")

@@ -43,8 +43,15 @@ import {
   PartnerErpPeopleController,
   PartnerErpQualityController,
 } from './erp-e5.controllers';
+import {
+  PartnerErpBankController,
+  PartnerErpFixedAssetsController,
+  PartnerErpJournalsController,
+  PartnerErpLedgerController,
+  PartnerErpLedgerReportsController,
+} from './erp-e6.controllers';
 
-/** `/v1/partner/factories/{factoryId}/erp/*` (E1, E1.1, E2, E2.1, E3, E4, E5). */
+/** `/v1/partner/factories/{factoryId}/erp/*` (E1, E1.1, E2, E2.1, E3, E4, E5, E6). */
 export const FACTORY_ERP_PARTNER_CONTROLLERS: Type<unknown>[] = [
   PartnerErpSettingsController,
   PartnerErpPartnersController,
@@ -77,6 +84,11 @@ export const FACTORY_ERP_PARTNER_CONTROLLERS: Type<unknown>[] = [
   PartnerErpQualityController,
   PartnerErpInsightController,
   PartnerErpPeopleController,
+  PartnerErpLedgerController,
+  PartnerErpJournalsController,
+  PartnerErpLedgerReportsController,
+  PartnerErpFixedAssetsController,
+  PartnerErpBankController,
 ];
 
 /** `/v1/store/quote-links/{token}` — the customer's quotation link (D-360). */

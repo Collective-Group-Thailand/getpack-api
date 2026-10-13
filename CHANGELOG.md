@@ -3,6 +3,26 @@
 Contract-facing changes per release. The contract itself is `contract/openapi.json`; mappings for `packio-web` are in
 `docs/contract-requests-triage.md`.
 
+## v0.49.0 — Packio Factory ERP E6: the factory's general ledger
+
+Decisions D-385 – D-396. Additive except value sets: `ErpDocumentType` gains `jv`, `fa`; `FactoryRole` gains
+`factory_auditor` (clients that switch over them need a default). New permissions `factory_ledger.read/post/approve/
+close/configure`, `factory_tax.file`; accountant gains read, post, close and tax file; new role External auditor / CPA.
+ERP events `erp_production_order.materials_issued/materials_returned/completed`, `erp_maintenance.parts_issued` and
+`erp_goods_receipt.charge_added` now carry `movementIds`.
+
+- **Ledger** (`partner.erpLedger`, `/erp/ledger/*`): `settings` (+ `PUT`), `rules`, `actions/catch-up`, `accounts`,
+  `account-changes` (+ `actions/approve|reject`), `periods`, `periods/{id}/checklist`, `periods/{id}/actions/transition`,
+  `fiscal-years/{id}/actions/close`, `tax-filings` (+ `POST` mark filed).
+- **Journals** (`partner.erpJournals`): `journals` (list, create, get, `PUT`, `DELETE`, `actions/submit|approve|reject|
+  reverse`), `exports/journals` (CSV link), `recurring-journals` (+ `PUT`, `actions/run`).
+- **Reports** (`partner.erpLedgerReports`): `reports/trial-balance`, `general-ledger`, `profit-and-loss`,
+  `balance-sheet`, `cash-flow`, `stock-valuation`.
+- **Fixed assets** (`partner.erpFixedAssets`): `asset-categories` (+ `PUT`), `fixed-assets` (+ get,
+  `actions/dispose`), `depreciation-runs` (list, `POST` run a month).
+- **Bank** (`partner.erpBank`): `bank-accounts` (+ `PUT`, `statements` import), `bank-lines` (+ `actions/match|
+  ignore|unmatch`), `cash-position`.
+
 ## v0.48.1 — ERP units
 
 Decision D-384. Value set: `ErpUnit` gains `pouch`, `tube`, `job`, `round`, `trip` (clients that switch over it need a

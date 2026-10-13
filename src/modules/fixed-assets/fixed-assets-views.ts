@@ -1,4 +1,4 @@
-import { dayOf } from '@modules/ledger/ledger-dates';
+import { dayOf } from '@common/ledger-core/dates';
 
 import {
   type AssetCategoryDto,

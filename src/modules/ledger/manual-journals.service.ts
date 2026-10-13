@@ -14,9 +14,9 @@ import { EntitiesService } from '@platform/entities/entities.service';
 import { DocumentNumberingService } from '@platform/numbering/document-numbering.service';
 
 import { type JournalDraftLine, JournalPostingService } from './journal-posting.service';
-import { addMonths, dateOnly, dayOf, isDay } from './ledger-dates';
+import { addMonths, dateOnly, dayOf, isDay } from '@common/ledger-core/dates';
 import { PeriodsService } from './periods.service';
-import { type DimensionKey } from './posting/template';
+import { type DimensionKey } from '@common/ledger-core/template';
 
 export const JOURNAL_INCLUDE = {
   lines: {

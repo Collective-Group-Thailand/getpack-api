@@ -13,9 +13,9 @@ import {
 } from '@generated/prisma/client';
 import { Injectable } from '@nestjs/common';
 
-import { dateOnly } from './ledger-dates';
+import { dateOnly } from '@common/ledger-core/dates';
 import { PeriodsService } from './periods.service';
-import { type DimensionKey } from './posting/template';
+import { type DimensionKey } from '@common/ledger-core/template';
 
 const SALES_CHANNELS: readonly string[] = ['web', 'cs', 'line', 'b2b'];
 

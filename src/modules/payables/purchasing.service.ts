@@ -3,7 +3,7 @@ import { formatMoney, MoneyDecimal, type MoneyValue } from '@common/money/money'
 import { bangkokDate } from '@common/time/bangkok';
 import { type Tx } from '@database/prisma.service';
 import { type Prisma, type PurchaseOrder } from '@generated/prisma/client';
-import { dateOnly } from '@modules/ledger/ledger-dates';
+import { dateOnly } from '@common/ledger-core/dates';
 import { TaxRatesReader } from '@modules/ledger/tax-rates.reader';
 import { Injectable, Logger } from '@nestjs/common';
 import { type DomainEventEnvelope } from '@platform/domain-events/domain-event';

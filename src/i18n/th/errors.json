@@ -1795,6 +1795,70 @@
     "support_not_granted": {
       "title": "ไม่มีสิทธิ์เข้าดู",
       "detail": "เจ้าของโรงงานยังไม่ได้ให้สิทธิ์ทีมซัพพอร์ต Packio หรือสิทธิ์หมดอายุแล้ว"
+    },
+    "ledger_period_closed": {
+      "title": "งวดบัญชีปิดแล้ว",
+      "detail": "งวดบัญชีของวันที่ {date} อยู่ในสถานะ {status} — เปิดงวดใหม่หรือบันทึกในเดือนถัดไปที่ยังเปิดอยู่"
+    },
+    "ledger_unbalanced": {
+      "title": "รายการไม่สมดุล",
+      "detail": "ยอดเดบิต {debit} และเครดิต {credit} ต้องเท่ากัน และมีอย่างน้อย 2 บรรทัด"
+    },
+    "ledger_account_invalid": {
+      "title": "บัญชีนี้ใช้ไม่ได้",
+      "detail": "บัญชี {code}: {reason}"
+    },
+    "ledger_period_transition": {
+      "title": "เปลี่ยนสถานะงวดไม่ได้",
+      "detail": "งวดบัญชีเปลี่ยนได้ตามลำดับ เปิด → ปิดชั่วคราว → ปิด → ล็อก; งวดนี้อยู่ในสถานะ {status}"
+    },
+    "ledger_close_blocked": {
+      "title": "ยังปิดงวดไม่ได้",
+      "detail": "รายการตรวจสอบก่อนปิดงวดยังไม่ผ่าน {count} ข้อ: {items}"
+    },
+    "ledger_journal_not_editable": {
+      "title": "แก้ไขรายการไม่ได้",
+      "detail": "รายการบันทึกบัญชีอยู่ในสถานะ {status}"
+    },
+    "ledger_rule_invalid": {
+      "title": "กฎการบันทึกบัญชีไม่ถูกต้อง",
+      "detail": "{reason}"
+    },
+    "ledger_already_posted": {
+      "title": "บันทึกบัญชีแล้ว",
+      "detail": "เอกสารนี้มีรายการบันทึกบัญชีแล้ว ({entryNo})"
+    },
+    "ledger_change_pending": {
+      "title": "มีคำขอแก้ไขค้างอยู่",
+      "detail": "บัญชี {code} มีคำขอแก้ไขที่รออนุมัติอยู่แล้ว"
+    },
+    "ledger_self_approval": {
+      "title": "อนุมัติรายการของตัวเองไม่ได้",
+      "detail": "ต้องให้ผู้มีสิทธิ์อนุมัติอีกคนเป็นผู้อนุมัติรายการที่คุณเสนอ"
+    },
+    "ledger_depreciation_done": {
+      "title": "คิดค่าเสื่อมราคาแล้ว",
+      "detail": "เดือน {month} บันทึกค่าเสื่อมราคาไปแล้ว"
+    },
+    "ledger_asset_not_active": {
+      "title": "ทรัพย์สินไม่ได้ใช้งาน",
+      "detail": "ทรัพย์สินอยู่ในสถานะ {status}"
+    },
+    "ledger_bank_line_settled": {
+      "title": "รายการธนาคารจัดการแล้ว",
+      "detail": "รายการในสเตทเมนต์อยู่ในสถานะ {status}"
+    },
+    "ledger_bank_file_invalid": {
+      "title": "อ่านไฟล์สเตทเมนต์ไม่ได้",
+      "detail": "{reason}"
+    },
+    "ledger_tax_filed": {
+      "title": "ยื่นแบบแล้ว",
+      "detail": "{form} ของเดือน {month} ถูกบันทึกว่ายื่นแล้ว"
+    },
+    "ledger_not_started": {
+      "title": "ยังไม่เริ่มใช้สมุดบัญชี",
+      "detail": "ตั้งค่าวันเริ่มต้นสมุดบัญชีและปีบัญชีในการตั้งค่าสมุดบัญชีก่อน"
     }
   }
 }

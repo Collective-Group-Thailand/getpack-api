@@ -37,7 +37,7 @@ export const DIMENSION_KEYS = [
 ] as const;
 export type DimensionKey = (typeof DIMENSION_KEYS)[number];
 /** Template dimension → payload path (public ids; `channel` a sales channel; `costCentre` a code). */
-export type DimensionMap = Partial<Record<DimensionKey, string>>;
+export type DimensionMap = Partial<Record<string, string>>;
 
 /**
  * `"1131"` (an account code), `{ path }` (a code carried by the event, e.g. a bank's GL account) or
@@ -86,7 +86,7 @@ export interface RenderedLine {
   amount: MoneyValue;
   description: string | null;
   /** Dimension key → raw payload value (resolved to ids by the engine). */
-  dimensions: Partial<Record<DimensionKey, string>>;
+  dimensions: Partial<Record<string, string>>;
   taxCode: TaxCodeValue | null;
   taxBase: MoneyValue | null;
 }
@@ -142,11 +142,12 @@ function interpolate(text: string, scope: Scope): string {
   });
 }
 
-function dimensionsOf(map: DimensionMap | undefined, scope: Scope): Partial<Record<DimensionKey, string>> {
-  const out: Partial<Record<DimensionKey, string>> = {};
+function dimensionsOf(map: DimensionMap | undefined, scope: Scope): Partial<Record<string, string>> {
+  const out: Partial<Record<string, string>> = {};
   for (const [key, path] of Object.entries(map ?? {})) {
+    if (!path) continue;
     const value = readPath(scope, path);
-    if (typeof value === 'string' && value !== '') out[key as DimensionKey] = value;
+    if (typeof value === 'string' && value !== '') out[key] = value;
   }
   return out;
 }
@@ -251,20 +252,23 @@ function checkTaxCode(selector: unknown, at: string, errors: string[]): void {
   if (s['default'] !== undefined && !ok(s['default'])) errors.push(`${at}.default: unknown tax code`);
 }
 
-function checkDimensions(map: unknown, at: string, errors: string[]): void {
+function checkDimensions(map: unknown, at: string, errors: string[], keys: readonly string[]): void {
   if (map === undefined) return;
   if (!map || typeof map !== 'object') {
     errors.push(`${at}: dimensions must be an object`);
     return;
   }
   for (const [k, v] of Object.entries(map)) {
-    if (!(DIMENSION_KEYS as readonly string[]).includes(k)) errors.push(`${at}.${k}: unknown dimension`);
+    if (!keys.includes(k)) errors.push(`${at}.${k}: unknown dimension`);
     if (typeof v !== 'string') errors.push(`${at}.${k}: must be a payload path`);
   }
 }
 
-/** Structural validation of a template before a version is proposed; returns the problems found. */
-export function validateTemplate(template: unknown): string[] {
+/**
+ * Structural validation of a template before a version is proposed; returns the problems found. `dimensionKeys`
+ * are the dimensions the ledger knows (Packio's by default; the factory ledger passes its own, E6).
+ */
+export function validateTemplate(template: unknown, dimensionKeys: readonly string[] = DIMENSION_KEYS): string[] {
   const errors: string[] = [];
   if (!template || typeof template !== 'object') return ['template must be an object'];
   const t = template as Record<string, unknown>;
@@ -272,7 +276,7 @@ export function validateTemplate(template: unknown): string[] {
     errors.push('description required');
   if (t['documentDate'] !== undefined && typeof t['documentDate'] !== 'string')
     errors.push('documentDate must be a path');
-  checkDimensions(t['dimensions'], 'dimensions', errors);
+  checkDimensions(t['dimensions'], 'dimensions', errors, dimensionKeys);
   if (!Array.isArray(t['lines'])) return [...errors, 'lines must be an array'];
   t['lines'].forEach((raw: unknown, i: number) => {
     const at = `lines[${i}]`;
@@ -298,7 +302,7 @@ export function validateTemplate(template: unknown): string[] {
     if (line['forEach'] !== undefined && typeof line['forEach'] !== 'string')
       errors.push(`${at}.forEach: must be a path`);
     checkTaxCode(line['taxCode'], `${at}.taxCode`, errors);
-    checkDimensions(line['dimensions'], `${at}.dimensions`, errors);
+    checkDimensions(line['dimensions'], `${at}.dimensions`, errors, dimensionKeys);
   });
   return errors;
 }
