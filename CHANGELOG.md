@@ -3,6 +3,13 @@
 Contract-facing changes per release. The contract itself is `contract/openapi.json`; mappings for `packio-web` are in
 `docs/contract-requests-triage.md`.
 
+## v0.51.0 — UX round 1: the day's work
+
+Decisions D-399, D-400. Additive. New `GET /v1/partner/factories/{factoryId}/erp/inbox` (`partner.erpInsight.inbox`,
+`factory_profile.read`): `ErpInboxDto` with `items[]` (`section` approve / overdue / today / soon, `kind`, `tone`, `count`,
+`document` {type, id, number} or null, `party`, `amount`, `date`) and `counts`. Production orders from Packio jobs use the
+ERP unit `pcs` (existing rows migrated).
+
 ## v0.50.0 — Ledger: Packio revenue (F14 / F15) and the rule editor
 
 Decisions D-397, D-398. Additive. `ErpGlRuleDto` gains `pending`; `GET …/ledger/rules` now shows the version in force

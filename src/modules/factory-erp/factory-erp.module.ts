@@ -4,6 +4,7 @@ import { ErpAlertsService } from './erp-alerts.service';
 import { ErpCrmService } from './erp-crm.service';
 import { ErpDocsService } from './erp-docs.service';
 import { ErpFilesService } from './erp-files.service';
+import { ErpInboxService } from './erp-inbox.service';
 import { ErpInsightService } from './erp-insight.service';
 import { ErpLedgerService } from './erp-ledger.service';
 import { ErpLedgerAssetsService } from './erp-ledger-assets.service';
@@ -57,6 +58,7 @@ const SERVICES = [
   ErpLedgerService,
   ErpLedgerPostingService,
   ErpLedgerRulesService,
+  ErpInboxService,
   ErpLedgerJournalsService,
   ErpLedgerReportsService,
   ErpLedgerAssetsService,

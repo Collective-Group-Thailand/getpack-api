@@ -67,6 +67,8 @@ import {
   ErpWorkLogDto,
   ErpWorkLogQuery,
 } from './erp-e5.dto';
+import { ErpInboxDto } from './erp-inbox.dto';
+import { ErpInboxService } from './erp-inbox.service';
 import { ErpInsightService } from './erp-insight.service';
 import { ErpPeopleService } from './erp-people.service';
 import { ErpQualityService } from './erp-quality.service';
@@ -359,6 +361,15 @@ const GRANT: ErpSupportGrantDto = {
   createdAt: '2026-10-13T10:00:00+07:00',
   views: [{ at: '2026-10-13T10:12:00+07:00', staff: 'ทีมพาร์ทเนอร์ Packio (ทดสอบ)', what: 'dashboard,settings' }],
   nextActions: [ACTION('erp_support.revoke')],
+};
+
+const INBOX: ErpInboxDto = {
+  asOf: '2026-10-14',
+  items: [
+    { key: 'purchase_request:0192f3a0-7c1e-7d2a-9b1f-00000000f901', section: 'approve', kind: 'purchase_request', tone: 'warning', count: 1, document: { type: 'erp_purchase_request', id: '0192f3a0-7c1e-7d2a-9b1f-00000000f901', number: 'PR-2610-0004' }, party: 'ฝ่ายจัดซื้อ ทดสอบ', amount: null, date: '2026-10-13' },
+    { key: 'receivable_overdue:all', section: 'overdue', kind: 'receivable_overdue', tone: 'danger', count: 3, document: null, party: null, amount: '48150.00', date: null },
+  ],
+  counts: { approve: 1, overdue: 3, today: 0, soon: 0 },
 };
 
 // ====================================================================================== quality
@@ -719,7 +730,24 @@ export class PartnerErpInsightController {
   constructor(
     private readonly workspace: ErpWorkspace,
     private readonly insight: ErpInsightService,
+    private readonly inboxes: ErpInboxService,
+    private readonly permissions: PermissionResolver,
   ) {}
+
+  @Get('inbox')
+  @Op({
+    id: 'partner.erpInsight.inbox',
+    summary: 'What is waiting for me',
+    description:
+      'Across the ERP, what the signed-in person can act on now, by their permissions: approvals (never their own proposals), ' +
+      'what is overdue, due today and coming soon — each item names the document or the list it opens (D-399).',
+    implements: ['D-399'],
+    can: 'factory_profile.read',
+    success: { status: 200, description: 'The inbox', type: ErpInboxDto, example: INBOX },
+  })
+  async inbox(@CurrentActor() actor: Actor, @Param('factoryId', ParseUUIDPipe) factoryId: string) {
+    return this.inboxes.inbox(await this.workspace.open(actor, factoryId), await perms(this.permissions, actor));
+  }
 
   @Get('dashboard')
   @Op({
