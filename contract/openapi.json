@@ -44260,6 +44260,225 @@
         ],
         "type": "object"
       },
+      "ErpInboxCountsDto": {
+        "properties": {
+          "approve": {
+            "example": 2,
+            "type": "number"
+          },
+          "overdue": {
+            "example": 1,
+            "type": "number"
+          },
+          "soon": {
+            "example": 4,
+            "type": "number"
+          },
+          "today": {
+            "example": 3,
+            "type": "number"
+          }
+        },
+        "required": [
+          "approve",
+          "overdue",
+          "today",
+          "soon"
+        ],
+        "type": "object"
+      },
+      "ErpInboxDocumentDto": {
+        "properties": {
+          "id": {
+            "description": "Its public id (a period, a filing: its own key)",
+            "example": "0192f3a0-7c1e-7d2a-9b1f-00000000f901",
+            "type": "string"
+          },
+          "number": {
+            "example": "PR-2610-0004",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "type": {
+            "description": "What the item opens: an ERP document type",
+            "example": "erp_purchase_request",
+            "type": "string"
+          }
+        },
+        "required": [
+          "type",
+          "id",
+          "number"
+        ],
+        "type": "object"
+      },
+      "ErpInboxDto": {
+        "properties": {
+          "asOf": {
+            "example": "2026-10-14",
+            "format": "date",
+            "type": "string"
+          },
+          "counts": {
+            "$ref": "#/components/schemas/ErpInboxCountsDto"
+          },
+          "items": {
+            "description": "Approvals first, then overdue, today and soon",
+            "items": {
+              "$ref": "#/components/schemas/ErpInboxItemDto"
+            },
+            "type": "array"
+          }
+        },
+        "required": [
+          "asOf",
+          "items",
+          "counts"
+        ],
+        "type": "object"
+      },
+      "ErpInboxItemDto": {
+        "properties": {
+          "amount": {
+            "example": "12500.00",
+            "pattern": "^-?\\d+\\.\\d{2}$",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "count": {
+            "description": "Documents behind the item (1 for one document; more for a count)",
+            "example": 1,
+            "type": "number"
+          },
+          "date": {
+            "description": "Its due / reference day",
+            "example": "2026-10-14",
+            "format": "date",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "document": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ErpInboxDocumentDto"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "The one document it is about; null for a count"
+          },
+          "key": {
+            "example": "purchase_request:0192f3a0-7c1e-7d2a-9b1f-00000000f901",
+            "type": "string"
+          },
+          "kind": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ErpInboxKind"
+              }
+            ],
+            "example": "purchase_request"
+          },
+          "party": {
+            "description": "Who or what it concerns (supplier, customer, machine, proposer)",
+            "example": "ฝ่ายจัดซื้อ ทดสอบ",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "section": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ErpInboxSection"
+              }
+            ],
+            "example": "approve"
+          },
+          "tone": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ErpInboxTone"
+              }
+            ],
+            "example": "warning"
+          }
+        },
+        "required": [
+          "key",
+          "section",
+          "kind",
+          "tone",
+          "count",
+          "document",
+          "party",
+          "amount",
+          "date"
+        ],
+        "type": "object"
+      },
+      "ErpInboxKind": {
+        "enum": [
+          "purchase_request",
+          "purchase_request_more",
+          "invoice_variance",
+          "invoice_variance_more",
+          "journal",
+          "journal_more",
+          "account_change",
+          "rule_version",
+          "receipt_late",
+          "receipt_late_more",
+          "receipt_today",
+          "po_draft",
+          "stock_low",
+          "payable_overdue",
+          "payable_week",
+          "mo_late",
+          "mo_late_more",
+          "mo_to_release",
+          "machine_down",
+          "ncr_due",
+          "ncr_due_more",
+          "quotation_expiring",
+          "so_draft",
+          "followup_today",
+          "followup_late",
+          "delivery_late",
+          "delivery_late_more",
+          "delivery_today",
+          "receivable_overdue",
+          "period_to_close",
+          "bank_lines",
+          "tax_due",
+          "alerts"
+        ],
+        "type": "string"
+      },
+      "ErpInboxSection": {
+        "enum": [
+          "approve",
+          "overdue",
+          "today",
+          "soon"
+        ],
+        "type": "string"
+      },
+      "ErpInboxTone": {
+        "enum": [
+          "danger",
+          "warning",
+          "info"
+        ],
+        "type": "string"
+      },
       "ErpInspectionTemplateDto": {
         "properties": {
           "checkpoints": {
@@ -108751,7 +108970,7 @@
     "contact": {},
     "description": "Packio — Your Packaging Production Partner, operated by Collective Group (Thailand).\nRules: `docs/contract/api-conventions.md` (shared with packio-web).\n\n- **Surfaces:** `/v1/auth`, `/v1/store` (customer), `/v1/admin` (staff), `/v1/partner` (factories), `/v1/b2b` (company API clients, D-291), `/webhooks`. A token is accepted only on its own audience's prefix.\n- **Money:** decimal strings with exactly 2 decimals (`\"1234.50\"`) plus `currency: \"THB\"` on the object; never JSON numbers. Clients never compute prices.\n- **Dates:** ISO 8601 with offset, rendered in `Asia/Bangkok` (`2026-09-22T14:05:00+07:00`); date-only fields `YYYY-MM-DD`.\n- **IDs:** uuid only; business keys (`orderCode`) are separate fields.\n- **Errors:** RFC 9457 `application/problem+json` with a stable `code`; `title`/`detail` localised by `Accept-Language` (`th` default, `en`).\n- **Lists:** `?page&perPage(≤100)&sort&order&q` → `{ data, meta: { page, perPage, total } }`; feeds use `?cursor&limit` → `{ data, meta: { nextCursor } }`.\n- **Idempotency:** irreversible POSTs require `Idempotency-Key` (uuid); replays within 24 h return the original response.\n- **Concurrency:** editable resources return `ETag`; updates send `If-Match` (412 `concurrency.stale`).\n- **Files:** presign → PUT to the returned URL → reference the `fileId`.",
     "title": "Packio API",
-    "version": "0.50.0",
+    "version": "0.51.0",
     "x-packio-dieline": {
       "bundleSha256": "ff9416bcbd835e409e7c889465b22193b347975c641c6c20dcd557716f02c449",
       "package": "@packio/dieline",
@@ -354386,6 +354605,207 @@
         ],
         "x-required-permissions": [
           "factory_procurement.manage"
+        ]
+      }
+    },
+    "/v1/partner/factories/{factoryId}/erp/inbox": {
+      "get": {
+        "description": "Across the ERP, what the signed-in person can act on now, by their permissions: approvals (never their own proposals), what is overdue, due today and coming soon — each item names the document or the list it opens (D-399).\n\nImplements: D-399.",
+        "operationId": "partner.erpInsight.inbox",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "factoryId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "asOf": "2026-10-14",
+                  "counts": {
+                    "approve": 1,
+                    "overdue": 3,
+                    "soon": 0,
+                    "today": 0
+                  },
+                  "items": [
+                    {
+                      "amount": null,
+                      "count": 1,
+                      "date": "2026-10-13",
+                      "document": {
+                        "id": "0192f3a0-7c1e-7d2a-9b1f-00000000f901",
+                        "number": "PR-2610-0004",
+                        "type": "erp_purchase_request"
+                      },
+                      "key": "purchase_request:0192f3a0-7c1e-7d2a-9b1f-00000000f901",
+                      "kind": "purchase_request",
+                      "party": "ฝ่ายจัดซื้อ ทดสอบ",
+                      "section": "approve",
+                      "tone": "warning"
+                    },
+                    {
+                      "amount": "48150.00",
+                      "count": 3,
+                      "date": null,
+                      "document": null,
+                      "key": "receivable_overdue:all",
+                      "kind": "receivable_overdue",
+                      "party": null,
+                      "section": "overdue",
+                      "tone": "danger"
+                    }
+                  ]
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ErpInboxDto"
+                }
+              }
+            },
+            "description": "The inbox",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.unauthenticated": {
+                    "$ref": "#/components/examples/problem.auth.unauthenticated"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.unauthenticated`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.forbidden": {
+                    "$ref": "#/components/examples/problem.auth.forbidden"
+                  },
+                  "auth.wrong_audience": {
+                    "$ref": "#/components/examples/problem.auth.wrong_audience"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.forbidden`, `auth.wrong_audience`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "404": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.not_found": {
+                    "$ref": "#/components/examples/problem.http.not_found"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.not_found`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "partner": []
+          }
+        ],
+        "summary": "What is waiting for me",
+        "tags": [
+          "partner.erpInsight"
+        ],
+        "x-required-permissions": [
+          "factory_profile.read"
         ]
       }
     },
