@@ -130,18 +130,7 @@ export class PriceListsService {
     query: PriceRowsQuery,
     factoryPublicId?: string,
   ): Promise<{ rows: PriceRowDto[]; total: number }> {
-    const version = await this.prisma.priceListVersion.findUnique({
-      where: { publicId: versionPublicId },
-      include: { priceList: { include: { factory: { select: { id: true, publicId: true, code: true } } } } },
-    });
-    if (!version) throw new DomainException('http.not_found');
-    const factory = version.priceList.factory;
-    if (factoryPublicId !== undefined) {
-      if (factory.publicId !== factoryPublicId) throw new DomainException('http.not_found');
-      await this.access.factory(actor, factoryPublicId);
-      // A factory never sees Packio's drafts of its own rate card before they are sent (D-042).
-      if (version.status === 'draft') throw new DomainException('http.not_found');
-    }
+    const { version, factory } = await this.readableVersion(actor, versionPublicId, factoryPublicId);
     const component = query.component as PriceComponent;
     if (!this.registry.get(component)) return { rows: [], total: 0 };
     const { rows, total } = await this.builder.rows(this.prisma, version.id, component, {
@@ -164,6 +153,29 @@ export class PriceListsService {
       });
     }
     return { rows: rows.map((r) => ({ component, lineKey: r.lineKey, values: r.values })), total };
+  }
+
+  /** Lines per component of one of the factory's own versions — the price screens' navigation (D-406). */
+  async componentCounts(actor: Actor, versionPublicId: string, factoryPublicId: string) {
+    const { version } = await this.readableVersion(actor, versionPublicId, factoryPublicId);
+    return this.builder.counts(this.prisma, version.id);
+  }
+
+  /** A version the caller may read: on the partner path its own factory's, never a Packio draft (D-042, D-044). */
+  private async readableVersion(actor: Actor, versionPublicId: string, factoryPublicId?: string) {
+    const version = await this.prisma.priceListVersion.findUnique({
+      where: { publicId: versionPublicId },
+      include: { priceList: { include: { factory: { select: { id: true, publicId: true, code: true } } } } },
+    });
+    if (!version) throw new DomainException('http.not_found');
+    const factory = version.priceList.factory;
+    if (factoryPublicId !== undefined) {
+      if (factory.publicId !== factoryPublicId) throw new DomainException('http.not_found');
+      await this.access.factory(actor, factoryPublicId);
+      // A factory never sees Packio's drafts of its own rate card before they are sent (D-042).
+      if (version.status === 'draft') throw new DomainException('http.not_found');
+    }
+    return { version, factory };
   }
 
   /**

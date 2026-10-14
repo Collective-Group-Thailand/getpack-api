@@ -243,6 +243,11 @@ describe('price governance (e2e, B2.2)', () => {
       [1000, '9.500000'],
     ]);
     expect(JSON.stringify(rows.body)).not.toMatch(/suggest|benchmark/i);
+    // D-406: line counts per component for the price screens' navigation
+    const counts = (await owner.get(`${partner(own.a)}/price-list-versions/${firstVersionId}/component-counts`).expect(200))
+      .body as { component: string; lines: number }[];
+    expect(counts.find((c) => c.component === 'material_prices')).toEqual({ component: 'material_prices', lines: 2 });
+    expect(counts.filter((c) => c.component !== 'material_prices').every((c) => c.lines === 0)).toBe(true);
   });
 
   it('freezes the rows of an approved version (copy-on-write, A-7)', async () => {
