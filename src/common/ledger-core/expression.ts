@@ -166,3 +166,11 @@ export function evaluate(source: string, scope: Scope): MoneyValue {
 export function assertExpression(source: string): void {
   new Parser(tokenize(source), () => '1', source).parse();
 }
+
+/** The payload paths an expression reads (function names excluded); throws `ExpressionError` on bad input. */
+export function expressionPaths(source: string): string[] {
+  const tokens = tokenize(source);
+  return tokens
+    .filter((t, i) => t.kind === 'path' && !(FUNCTIONS.has(t.value) && tokens[i + 1]?.value === '('))
+    .map((t) => t.value);
+}

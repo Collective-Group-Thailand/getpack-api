@@ -10,6 +10,7 @@ import { ErpLedgerAssetsService } from './erp-ledger-assets.service';
 import { ErpLedgerJournalsService } from './erp-ledger-journals.service';
 import { ErpLedgerPostingService } from './erp-ledger-posting.service';
 import { ErpLedgerReportsService } from './erp-ledger-reports.service';
+import { ErpLedgerRulesService } from './erp-ledger-rules.service';
 import { ErpMaintenanceService } from './erp-maintenance.service';
 import { ErpMasterService } from './erp-master.service';
 import { ErpPayablesService } from './erp-payables.service';
@@ -55,6 +56,7 @@ const SERVICES = [
   ErpPeopleService,
   ErpLedgerService,
   ErpLedgerPostingService,
+  ErpLedgerRulesService,
   ErpLedgerJournalsService,
   ErpLedgerReportsService,
   ErpLedgerAssetsService,

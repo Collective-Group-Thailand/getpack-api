@@ -852,6 +852,7 @@ export const ROLES: readonly RoleDefinition[] = [
       'factory_ledger.read',
       'factory_ledger.post',
       'factory_ledger.close',
+      'factory_ledger.configure',
       'factory_tax.file',
     ],
   },

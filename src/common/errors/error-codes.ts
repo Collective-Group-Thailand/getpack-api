@@ -307,6 +307,7 @@ export const ERROR_CODES = {
   'erp.ledger_rule_invalid': HttpStatus.UNPROCESSABLE_ENTITY,
   'erp.ledger_already_posted': HttpStatus.CONFLICT,
   'erp.ledger_change_pending': HttpStatus.CONFLICT,
+  'erp.ledger_version_pending': HttpStatus.CONFLICT,
   'erp.ledger_self_approval': HttpStatus.FORBIDDEN,
   'erp.ledger_depreciation_done': HttpStatus.CONFLICT,
   'erp.ledger_asset_not_active': HttpStatus.CONFLICT,

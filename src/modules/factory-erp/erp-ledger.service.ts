@@ -196,7 +196,10 @@ export class ErpLedgerService {
       });
     }
     if ((await tx.erpGlAccount.count({ where: { factoryId } })) === 0) await this.createChart(tx, factoryId, userId);
-    if ((await tx.erpGlPostingRule.count({ where: { factoryId } })) === 0) await this.createRules(tx, factoryId, userId);
+    if (settings.rulesTemplateVersion < RULES_TEMPLATE_VERSION || (await tx.erpGlPostingRule.count({ where: { factoryId } })) === 0) {
+      await this.createRules(tx, factoryId, userId);
+      settings = await tx.erpGlSettings.update({ where: { id: settings.id }, data: { rulesTemplateVersion: RULES_TEMPLATE_VERSION } });
+    }
     return settings;
   }
 
@@ -232,8 +235,10 @@ export class ErpLedgerService {
     }
   }
 
+  /** Creates the template's rules the factory does not have yet (a newer template adds rules; existing ones are kept). */
   private async createRules(tx: Tx, factoryId: bigint, userId: bigint | null): Promise<void> {
-    for (const r of RULES_TEMPLATE) {
+    const have = new Set((await tx.erpGlPostingRule.findMany({ where: { factoryId }, select: { key: true } })).map((r) => r.key));
+    for (const r of RULES_TEMPLATE.filter((x) => !have.has(x.key))) {
       const rule = await tx.erpGlPostingRule.create({
         data: { factoryId, key: r.key, eventType: r.eventType, name: r.name, description: r.description },
       });
@@ -353,8 +358,8 @@ export class ErpLedgerService {
     const rules = await this.workspace.db.erpGlPostingRule.findMany({
       where: { factoryId: scope.factory.id },
       include: {
-        versions: { where: { status: 'approved' }, orderBy: [{ effectiveFrom: 'desc' }, { versionNo: 'desc' }], take: 1 },
-        _count: { select: { entries: true } },
+        versions: { where: { status: 'approved', effectiveFrom: { lte: new Date() } }, orderBy: [{ effectiveFrom: 'desc' }, { versionNo: 'desc' }], take: 1 },
+        _count: { select: { entries: true, versions: { where: { status: 'proposed' } } } },
       },
       orderBy: { key: 'asc' },
     });
@@ -371,11 +376,12 @@ export class ErpLedgerService {
         template: template as unknown as Record<string, unknown>,
         accountCodes: accountCodesOf(template),
         entries: r._count.entries,
+        pending: r._count.versions > 0,
       };
     });
   }
 
-  /** Structural check of a template against the factory ledger's dimensions (used by tests and future rule editing). */
+  /** Structural check of a template against the factory ledger's dimensions (used by tests; the rule editor, D-398). */
   templateProblems(template: unknown): string[] {
     return validateTemplate(template, ERP_GL_DIMENSIONS);
   }
@@ -863,7 +869,10 @@ export class ErpLedgerService {
                           AND i.issue_date >= ${p.startDate}::date AND i.issue_date <= ${endDate}::date), 0)
            + coalesce((SELECT sum(CASE WHEN n.status = 'voided' THEN 0 WHEN n.kind = 'credit' THEN -n.vat_amount ELSE n.vat_amount END) FROM erp_sales_notes n
                         WHERE n.factory_id = ${factoryId} AND n.is_tax_document AND n.note_no IS NOT NULL
-                          AND n.issue_date >= ${p.startDate}::date AND n.issue_date <= ${endDate}::date), 0) AS output,
+                          AND n.issue_date >= ${p.startDate}::date AND n.issue_date <= ${endDate}::date), 0)
+           + coalesce((SELECT sum(b.vat_amount) FROM billing_statements b
+                        WHERE b.factory_id = ${factoryId} AND b.confirmed_at IS NOT NULL
+                          AND (b.confirmed_at AT TIME ZONE 'Asia/Bangkok')::date BETWEEN ${p.startDate}::date AND ${endDate}::date), 0) AS output,
              coalesce((SELECT sum(i.vat_amount) FROM erp_supplier_invoices i
                         WHERE i.factory_id = ${factoryId} AND i.tax_invoice_no IS NOT NULL AND i.status <> 'cancelled'
                           AND i.invoice_date >= ${p.startDate}::date AND i.invoice_date <= ${endDate}::date), 0) AS input`);

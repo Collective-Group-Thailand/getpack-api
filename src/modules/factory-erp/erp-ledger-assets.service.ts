@@ -718,8 +718,17 @@ export class ErpLedgerAssetsService {
       return a ? this.ledger.natural(a, balances.get(a.id)) : new MoneyDecimal(0);
     };
     if (form === 'pp30') {
-      const [sales, purchases] = await Promise.all([this.tax.salesVat(scope, month), this.tax.purchaseVat(scope, month)]);
-      return { ledgerAmount: move('outputVat', '2121').minus(move('inputVat', '1151')), documentsAmount: dec(sales.vat).minus(dec(purchases.vat)) };
+      const [sales, purchases, packio] = await Promise.all([
+        this.tax.salesVat(scope, month),
+        this.tax.purchaseVat(scope, month),
+        // VAT on Packio statements the factory confirmed (F14, D-397): its own tax invoice to Packio
+        db.$queryRaw<{ vat: Prisma.Decimal | null }[]>(Prisma.sql`
+          SELECT sum(vat_amount) AS vat FROM billing_statements
+           WHERE factory_id = ${scope.factory.id} AND confirmed_at IS NOT NULL
+             AND (confirmed_at AT TIME ZONE 'Asia/Bangkok')::date BETWEEN ${dateOnly(from)}::date AND ${dateOnly(to)}::date`),
+      ]);
+      const packioVat = dec(packio[0]?.vat ?? 0);
+      return { ledgerAmount: move('outputVat', '2121').minus(move('inputVat', '1151')), documentsAmount: dec(sales.vat).plus(packioVat).minus(dec(purchases.vat)) };
     }
     const report = await this.tax.wht(scope, month, form);
     return { ledgerAmount: form === 'pnd3' ? move('whtPnd3', '2131') : move('whtPnd53', '2132'), documentsAmount: dec(report.whtAmount) };

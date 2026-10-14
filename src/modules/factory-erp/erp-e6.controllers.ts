@@ -50,12 +50,17 @@ import {
   ErpGlPeriodDto,
   ErpGlPeriodListQuery,
   ErpGlPeriodTransitionDto,
+  ErpGlPreviewDto,
+  ErpGlPreviewRuleDto,
   ErpGlProfitAndLossDto,
   ErpGlProposeAccountChangeDto,
+  ErpGlProposeRuleVersionDto,
   ErpGlRangeQuery,
   ErpGlRecurringDto,
   ErpGlReverseJournalDto,
+  ErpGlRuleDetailDto,
   ErpGlRuleDto,
+  ErpGlRuleVersionDto,
   ErpGlSaveAssetCategoryDto,
   ErpGlSaveBankAccountDto,
   ErpGlSaveJournalDto,
@@ -72,6 +77,7 @@ import { ErpLedgerAssetsService } from './erp-ledger-assets.service';
 import { ErpLedgerJournalsService } from './erp-ledger-journals.service';
 import { ErpLedgerPostingService } from './erp-ledger-posting.service';
 import { ErpLedgerReportsService } from './erp-ledger-reports.service';
+import { ErpLedgerRulesService } from './erp-ledger-rules.service';
 import { ErpWorkspace } from './erp-workspace.service';
 
 /**
@@ -254,6 +260,55 @@ const RULE: ErpGlRuleDto = {
   template: { description: 'รับสินค้า {documentNo}', lines: [] },
   accountCodes: [],
   entries: 12,
+  pending: false,
+};
+const RULE_TEMPLATE_EXAMPLE = {
+  description: 'รับสินค้า {documentNo} — {partnerName}',
+  lines: [
+    { forEach: 'movements', when: null, accountCode: null, accountPath: 'item.inventoryAccount', side: 'debit', amount: 'item.value', description: null, taxCode: null, taxBase: null },
+    { forEach: null, when: null, accountCode: null, accountPath: 'accounts.grir', side: 'credit', amount: 'goodsValue', description: null, taxCode: null, taxBase: null },
+  ],
+};
+const RULE_VERSION: ErpGlRuleVersionDto = {
+  id: E6_IDS.ruleVersion,
+  versionNo: 2,
+  status: 'proposed',
+  effectiveFrom: '2026-11-01T00:00:00+07:00',
+  current: false,
+  template: RULE_TEMPLATE_EXAMPLE,
+  reason: 'แยกค่าขนส่งขาเข้าไปบัญชีค่าขนส่ง',
+  createdBy: 'ฝ่ายบัญชีโรงงาน ทดสอบ',
+  createdAt: '2026-10-14T09:00:00+07:00',
+  decidedBy: null,
+  decidedAt: null,
+  nextActions: [ACTION('erp_rule_version.approve'), ACTION('erp_rule_version.reject')],
+};
+const RULE_DETAIL: ErpGlRuleDetailDto = {
+  id: E6_IDS.rule,
+  key: 'F01',
+  eventType: 'erp_goods_receipt.posted',
+  name: 'รับสินค้าเข้าคลัง',
+  description: 'Goods receipt: inventory at cost excl. VAT against GR/IR clearing',
+  versions: [RULE_VERSION, { ...RULE_VERSION, id: E6_IDS.rule, versionNo: 1, status: 'approved', effectiveFrom: '1970-01-01T07:00:00+07:00', current: true, reason: 'Template v2', createdBy: null, decidedBy: null, decidedAt: '2026-10-01T09:00:00+07:00', nextActions: [] }],
+  variables: [
+    { path: 'goodsValue', kind: 'amount', label: 'มูลค่าสินค้าไม่รวมค่าใช้จ่ายนำเข้า' },
+    { path: 'movements', kind: 'list', label: 'รายการเคลื่อนไหวสต็อก (ทีละบรรทัด)' },
+  ],
+  purposes: ['grir', 'payables', 'inputVat'],
+  nextActions: [],
+};
+const PREVIEW: ErpGlPreviewDto = {
+  sampleNo: 'GR-2610-0003',
+  sampleAt: '2026-10-13T10:00:00+07:00',
+  description: 'รับสินค้า GR-2610-0003 — บริษัท กระดาษ ทดสอบ จำกัด',
+  lines: [
+    { accountCode: '1141', accountName: 'วัตถุดิบ', side: 'debit', amount: '12500.00', description: null, taxCode: null },
+    { accountCode: '2115', accountName: 'สินค้ารับแล้วรอใบแจ้งหนี้', side: 'credit', amount: '12500.00', description: null, taxCode: null },
+  ],
+  totalDebit: '12500.00',
+  totalCredit: '12500.00',
+  balanced: true,
+  problems: [],
 };
 const TB: ErpGlTrialBalanceDto = {
   from: '2026-10-01',
@@ -414,6 +469,7 @@ export class PartnerErpLedgerController {
     private readonly workspace: ErpWorkspace,
     private readonly ledger: ErpLedgerService,
     private readonly posting: ErpLedgerPostingService,
+    private readonly rulesEditor: ErpLedgerRulesService,
     private readonly reports: ErpLedgerReportsService,
     private readonly assets: ErpLedgerAssetsService,
     private readonly permissions: PermissionResolver,
@@ -461,6 +517,107 @@ export class PartnerErpLedgerController {
   })
   async rules(@CurrentActor() actor: Actor, @Param('factoryId', ParseUUIDPipe) factoryId: string) {
     return this.ledger.rulesDto(await this.workspace.open(actor, factoryId));
+  }
+
+  @Get('rules/:ruleId')
+  @Op({
+    id: 'partner.erpLedger.getRule',
+    summary: 'A posting rule with its versions',
+    description: 'Every version newest first (the one in force flagged), what the document carries for the template and the purpose accounts (D-398).',
+    implements: ['D-388', 'D-398'],
+    can: 'factory_ledger.read',
+    params: ['ruleId'],
+    success: { status: 200, description: 'The rule', type: ErpGlRuleDetailDto, example: RULE_DETAIL },
+  })
+  async getRule(@CurrentActor() actor: Actor, @Param('factoryId', ParseUUIDPipe) factoryId: string, @Param('ruleId', ParseUUIDPipe) ruleId: string) {
+    return this.rulesEditor.getRule(await this.workspace.open(actor, factoryId), ruleId, await perms(this.permissions, actor));
+  }
+
+  @Post('rules/:ruleId/actions/preview')
+  @Op({
+    id: 'partner.erpLedger.previewRule',
+    summary: 'Try a template on the latest document',
+    description: 'Renders the template against the factory’s latest document of the rule’s kind without posting; lists what is wrong with it (D-398).',
+    implements: ['D-398'],
+    can: 'factory_ledger.read',
+    params: ['ruleId'],
+    status: 200,
+    body: { type: ErpGlPreviewRuleDto, example: { template: RULE_TEMPLATE_EXAMPLE } },
+    success: { status: 200, description: 'The entry it would post', type: ErpGlPreviewDto, example: PREVIEW },
+    errors: WRITE,
+  })
+  async previewRule(@CurrentActor() actor: Actor, @Param('factoryId', ParseUUIDPipe) factoryId: string, @Param('ruleId', ParseUUIDPipe) ruleId: string, @Body() body: ErpGlPreviewRuleDto) {
+    return this.rulesEditor.preview(await this.workspace.open(actor, factoryId), ruleId, body.template);
+  }
+
+  @Post('rules/:ruleId/versions')
+  @Op({
+    id: 'partner.erpLedger.proposeRuleVersion',
+    summary: 'Propose a new rule version',
+    description: 'Waits for another person’s approval and is in force from its day; refused while another version waits, or when the template has problems or does not balance on the latest document (D-398).',
+    implements: ['D-398'],
+    can: 'factory_ledger.configure',
+    params: ['ruleId'],
+    idempotent: true,
+    body: { type: ErpGlProposeRuleVersionDto, example: { template: RULE_TEMPLATE_EXAMPLE, effectiveFrom: '2026-11-01', reason: 'แยกค่าขนส่งขาเข้าไปบัญชีค่าขนส่ง' } },
+    success: { status: 201, description: 'Proposed', type: ErpGlRuleDetailDto, example: RULE_DETAIL },
+    errors: [...WRITE, 'erp.ledger_version_pending'],
+  })
+  async proposeRuleVersion(@CurrentActor() actor: Actor, @Param('factoryId', ParseUUIDPipe) factoryId: string, @Param('ruleId', ParseUUIDPipe) ruleId: string, @Body() body: ErpGlProposeRuleVersionDto) {
+    return this.rulesEditor.propose(await this.workspace.open(actor, factoryId), ruleId, body, await perms(this.permissions, actor));
+  }
+
+  @Post('rules/:ruleId/versions/:versionId/actions/approve')
+  @Op({
+    id: 'partner.erpLedger.approveRuleVersion',
+    summary: 'Approve a rule version',
+    description: 'Documents dated from its day post with it; never your own proposal (D-398).',
+    implements: ['D-398'],
+    can: 'factory_ledger.approve',
+    params: ['ruleId', 'versionId'],
+    idempotent: true,
+    status: 200,
+    body: { type: ErpGlDecisionDto, example: { note: 'เห็นชอบ' } },
+    success: { status: 200, description: 'Approved', type: ErpGlRuleDetailDto, example: RULE_DETAIL },
+    errors: [...WRITE, 'erp.invalid_status', 'erp.ledger_self_approval'],
+  })
+  async approveRuleVersion(@CurrentActor() actor: Actor, @Param('factoryId', ParseUUIDPipe) factoryId: string, @Param('ruleId', ParseUUIDPipe) ruleId: string, @Param('versionId', ParseUUIDPipe) versionId: string, @Body() body: ErpGlDecisionDto) {
+    return this.rulesEditor.decide(await this.workspace.open(actor, factoryId), ruleId, versionId, 'approve', body.note ?? null, await perms(this.permissions, actor));
+  }
+
+  @Post('rules/:ruleId/versions/:versionId/actions/reject')
+  @Op({
+    id: 'partner.erpLedger.rejectRuleVersion',
+    summary: 'Reject a rule version',
+    description: 'The rule keeps the version in force (D-398).',
+    implements: ['D-398'],
+    can: 'factory_ledger.approve',
+    params: ['ruleId', 'versionId'],
+    idempotent: true,
+    status: 200,
+    body: { type: ErpGlDecisionDto, example: { note: 'ใช้บัญชีเดิมต่อไป' } },
+    success: { status: 200, description: 'Rejected', type: ErpGlRuleDetailDto, example: RULE_DETAIL },
+    errors: [...WRITE, 'erp.invalid_status', 'erp.ledger_self_approval'],
+  })
+  async rejectRuleVersion(@CurrentActor() actor: Actor, @Param('factoryId', ParseUUIDPipe) factoryId: string, @Param('ruleId', ParseUUIDPipe) ruleId: string, @Param('versionId', ParseUUIDPipe) versionId: string, @Body() body: ErpGlDecisionDto) {
+    return this.rulesEditor.decide(await this.workspace.open(actor, factoryId), ruleId, versionId, 'reject', body.note ?? null, await perms(this.permissions, actor));
+  }
+
+  @Post('rules/:ruleId/versions/:versionId/actions/withdraw')
+  @Op({
+    id: 'partner.erpLedger.withdrawRuleVersion',
+    summary: 'Withdraw your rule version',
+    description: 'Only the proposer, while it waits (D-398).',
+    implements: ['D-398'],
+    can: 'factory_ledger.configure',
+    params: ['ruleId', 'versionId'],
+    idempotent: true,
+    status: 200,
+    success: { status: 200, description: 'Withdrawn', type: ErpGlRuleDetailDto, example: RULE_DETAIL },
+    errors: [...WRITE, 'erp.invalid_status'],
+  })
+  async withdrawRuleVersion(@CurrentActor() actor: Actor, @Param('factoryId', ParseUUIDPipe) factoryId: string, @Param('ruleId', ParseUUIDPipe) ruleId: string, @Param('versionId', ParseUUIDPipe) versionId: string) {
+    return this.rulesEditor.decide(await this.workspace.open(actor, factoryId), ruleId, versionId, 'withdraw', null, await perms(this.permissions, actor));
   }
 
   @Post('actions/catch-up')

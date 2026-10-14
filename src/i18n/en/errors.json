@@ -1832,6 +1832,10 @@
       "title": "A change is already proposed",
       "detail": "Account {code} already has a proposed change waiting for approval"
     },
+    "ledger_version_pending": {
+      "title": "A version is waiting",
+      "detail": "Rule {key} already has a version waiting for approval — approve, reject or withdraw it first"
+    },
     "ledger_self_approval": {
       "title": "Cannot approve your own entry",
       "detail": "Another person with approval rights must approve what you proposed"

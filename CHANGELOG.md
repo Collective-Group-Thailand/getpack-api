@@ -3,6 +3,18 @@
 Contract-facing changes per release. The contract itself is `contract/openapi.json`; mappings for `packio-web` are in
 `docs/contract-requests-triage.md`.
 
+## v0.50.0 — Ledger: Packio revenue (F14 / F15) and the rule editor
+
+Decisions D-397, D-398. Additive. `ErpGlRuleDto` gains `pending`; `GET …/ledger/rules` now shows the version in force
+today (a future-dated approved version is not shown until its day). New error `erp.ledger_version_pending` (409). Role Accountant (`factory_accountant`) gains
+`factory_ledger.configure` (proposes; the owner approves).
+
+- **Rules** (`partner.erpLedger`): `rules/{ruleId}` (versions, payload variables, purpose accounts),
+  `rules/{ruleId}/actions/preview`, `rules/{ruleId}/versions` (propose), `rules/{ruleId}/versions/{versionId}/actions/
+  approve|reject|withdraw`. Next-action keys `erp_rule.propose`, `erp_rule_version.approve|reject|withdraw`.
+- **Posting**: rules F14 (Packio billing statement confirmed → 1132 / 4120 + 2121) and F15 (Packio payout paid → bank +
+  1153 / 1132); the VAT close check and ภ.พ.30 include Packio statements.
+
 ## v0.49.0 — Packio Factory ERP E6: the factory's general ledger
 
 Decisions D-385 – D-396. Additive except value sets: `ErpDocumentType` gains `jv`, `fa`; `FactoryRole` gains

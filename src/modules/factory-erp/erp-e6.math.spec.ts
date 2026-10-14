@@ -8,11 +8,13 @@ import {
   METHOD_ACCOUNTS,
   POSTING_EVENT_TYPES,
   REVERSING_EVENTS,
+  RULE_VARIABLES,
   RULES_TEMPLATE,
   STATEMENT_LINES,
   SYNC_EVENT_TYPES,
 } from './erp-ledger.template';
 import { depreciationDue, lineHash, monthlyDepreciation } from './erp-ledger-assets.service';
+import { templateFromDto, templateIssues, templateToDto } from './erp-ledger-rules.service';
 
 const d = (v: string | number) => new MoneyDecimal(v);
 const accounts = { ...METHOD_ACCOUNTS };
@@ -118,6 +120,70 @@ describe('E6 posting rules (D-388)', () => {
     });
     expect(j.totalDebit.eq(j.totalCredit)).toBe(true);
     expect(j.lines.find((l) => l.accountCode === '4920')?.side).toBe('credit'); // a 10,000 gain
+  });
+});
+
+describe('E6 Packio revenue F14 / F15 (D-397)', () => {
+  const base = { documentId: 'bs', documentNo: 'BS-2610-0001', documentDate: '2026-10-20', accounts };
+
+  it('F14 a confirmed statement: receivable from Packio = job revenue + output VAT', () => {
+    const j = renderJournal(rule('F14'), { ...base, net: '100000.00', vat: '7000.00', gross: '107000.00' });
+    expect(j.totalDebit.toFixed(2)).toBe('107000.00');
+    expect(j.totalDebit.eq(j.totalCredit)).toBe(true);
+    expect(j.lines.find((l) => l.taxCode === 'output_vat')?.taxBase?.toFixed(2)).toBe('100000.00');
+  });
+
+  it('F15 a payout: bank + WHT withheld settle the receivable; a retention is not cash yet', () => {
+    const j = renderJournal(rule('F15'), { ...base, kind: 'balance', cashAccount: '1112', cash: '97000.00', wht: '3000.00', whtBase: '100000.00', retention: '5000.00' });
+    expect(j.totalDebit.eq(j.totalCredit)).toBe(true);
+    expect(j.totalCredit.toFixed(2)).toBe('100000.00');
+    expect(j.lines.find((l) => l.taxCode === 'wht_receivable')?.amount.toFixed(2)).toBe('3000.00');
+  });
+});
+
+describe('E6 rule editor (D-398)', () => {
+  const chart = new Map(CHART_TEMPLATE.map((a) => [a.code, { isPostable: a.postable !== false, status: 'active' }]));
+
+  it('every template round-trips through the editor shape and has no problems', () => {
+    for (const r of RULES_TEMPLATE) {
+      const dto = templateToDto(r.template);
+      expect([r.key, templateIssues(dto, RULE_VARIABLES[r.eventType] ?? [], chart)]).toEqual([r.key, []]);
+      expect([r.key, templateFromDto(dto, r.template)]).toEqual([r.key, r.template]);
+    }
+  });
+
+  it('every posting event names what its payload carries', () => {
+    for (const r of RULES_TEMPLATE) expect([r.key, (RULE_VARIABLES[r.eventType] ?? []).length > 0]).toEqual([r.key, true]);
+  });
+
+  it('flags unknown accounts, paths, lists and bad formulas', () => {
+    const issues = templateIssues(
+      {
+        description: 'x',
+        lines: [
+          { accountCode: '9999', side: 'debit', amount: 'goodsValue' },
+          { accountPath: 'accounts.nope', side: 'credit', amount: 'goodsValue +' },
+          { accountPath: 'item.inventoryAccount', side: 'credit', amount: 'unknownValue' },
+          { forEach: 'lines', accountCode: '1141', accountPath: 'accounts.grir', side: 'debit', amount: '1' },
+        ],
+      },
+      RULE_VARIABLES['erp_goods_receipt.posted']!,
+      chart,
+    );
+    expect(issues).toEqual([
+      'บรรทัด 1: ไม่มีบัญชี 9999 ในผังบัญชี',
+      'บรรทัด 2: "accounts.nope" ไม่ใช่บัญชีที่เอกสารนี้ระบุ',
+      expect.stringContaining('บรรทัด 2: จำนวนเงิน — สูตรไม่ถูกต้อง'),
+      'บรรทัด 3: "item.inventoryAccount" ไม่ใช่บัญชีที่เอกสารนี้ระบุ',
+      'บรรทัด 3: จำนวนเงิน อ่าน "unknownValue" ซึ่งเอกสารนี้ไม่มี',
+      'บรรทัด 4: "lines" ไม่ใช่รายการที่เอกสารนี้มี',
+      'บรรทัด 4: เลือกบัญชีคงที่ หรือบัญชีจากเอกสาร อย่างใดอย่างหนึ่ง',
+    ]);
+  });
+
+  it('stores a condition with its payload prefix and typed value', () => {
+    const t = templateFromDto({ description: 'd', lines: [{ when: { field: 'taxInvoice', op: 'eq', value: 'true' }, accountCode: '1150', side: 'debit', amount: 'vatAmount' }] }, null);
+    expect(t.lines[0]!.when).toEqual({ field: 'payload.taxInvoice', op: 'eq', value: true });
   });
 });
 
