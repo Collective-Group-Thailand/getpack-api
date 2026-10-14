@@ -74,7 +74,7 @@ export const ERP_NCR_SEVERITIES = ['minor', 'major', 'critical'] as const;
 export const ERP_NCR_DISPOSITIONS = ['rework', 'scrap', 'return_to_supplier', 'use_as_is', 'hold'] as const;
 export const ERP_NCR_STATUSES = ['open', 'in_progress', 'verified', 'closed', 'cancelled'] as const;
 export const ERP_SKILL_LEVELS = ['learner', 'competent', 'expert'] as const;
-export const ERP_PROFIT_BY = ['sales_order', 'customer', 'item'] as const;
+export const ERP_PROFIT_BY = ['sales_order', 'customer', 'item', 'packio_job'] as const;
 
 /** A machine by id and name (the same shape as a person reference, so one schema). */
 export const ErpMachineRefDto = PersonRefDto;
@@ -1052,7 +1052,10 @@ export class ErpProfitQuery {
 }
 
 export class ErpProfitRowDto {
-  @ApiProperty({ type: ErpRefDto, description: 'The sales order (code = number), customer or item (code = SKU)' })
+  @ApiProperty({
+    type: ErpRefDto,
+    description: 'The sales order (code = number), customer, item (code = SKU) or, for `packio_job`, the production order (code = the Packio job number)',
+  })
   key!: ErpRefDto;
 
   @ApiProperty({ example: '62500.00', description: 'Net invoiced (issued, not voided) in the month' })
@@ -1307,6 +1310,23 @@ export class ErpDashFollowUpsDto {
   alerts!: number;
 }
 
+export class ErpDashPackioDto {
+  @ApiProperty({ example: '239951.41', description: 'Net of the Packio billing statements confirmed this month — the factory’s revenue from Packio (F14, D-397)' })
+  confirmedNet!: string;
+
+  @ApiProperty({ example: 2 })
+  confirmedStatements!: number;
+
+  @ApiProperty({ example: 2, description: 'Statements sent by Packio, waiting for the factory to check and confirm' })
+  toConfirm!: number;
+
+  @ApiProperty({ example: '44999.33' })
+  toConfirmGross!: string;
+
+  @ApiProperty({ example: 1, description: 'Confirmed statements without the factory’s tax invoice (Packio pays once it is attached)' })
+  toInvoice!: number;
+}
+
 export class ErpDashboardDto {
   @ApiProperty({ format: 'date', example: '2026-10-13' })
   asOf!: string;
@@ -1316,6 +1336,9 @@ export class ErpDashboardDto {
 
   @ApiProperty({ type: ErpDashSalesDto })
   sales!: ErpDashSalesDto;
+
+  @ApiProperty({ type: ErpDashPackioDto, description: 'Work for Packio (D-402)' })
+  packio!: ErpDashPackioDto;
 
   @ApiProperty({ type: ErpDashReceivablesDto })
   receivables!: ErpDashReceivablesDto;

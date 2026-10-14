@@ -131,7 +131,8 @@ export interface Oee {
 
 /**
  * D-377: availability = run ÷ planned time; performance = ideal minutes for what was made ÷ run, capped at
- * 100%; quality = good ÷ (good + scrap). Nothing planned or nothing run → zeros (quality 1 with nothing made).
+ * 100%; quality = good ÷ (good + scrap). Nothing run → zeros (quality 1 with nothing made). Running beyond the
+ * planned time (overtime, a day with no shift) extends the planned time to the run (D-403), so such a day is not 0%.
  */
 export function oeeOf(input: {
   plannedMinutes: number;
@@ -140,7 +141,8 @@ export function oeeOf(input: {
   good: MoneyValue;
   scrap: MoneyValue;
 }): Oee {
-  const availability = input.plannedMinutes > 0 ? Math.min(1, input.runMinutes / input.plannedMinutes) : 0;
+  const plannedTime = Math.max(input.plannedMinutes, input.runMinutes);
+  const availability = plannedTime > 0 ? input.runMinutes / plannedTime : 0;
   const performance = input.runMinutes > 0 ? Math.min(1, input.idealMinutes / input.runMinutes) : 0;
   const made = input.good.plus(input.scrap);
   const quality = made.gt(0) ? input.good.div(made).toNumber() : 1;
