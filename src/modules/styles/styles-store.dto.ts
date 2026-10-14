@@ -337,6 +337,15 @@ export class StyleDetailDto extends StyleCardDto {
   @ApiProperty({ example: 'Four side panels + glue flap; …' })
   construction!: string;
 
+  @ApiProperty({
+    type: String,
+    nullable: true,
+    example: 'folding_carton',
+    description:
+      'The product type the style is priced and quoted as (its RFQ form, `store.rfqs.getForm`); null while unmapped (D-407).',
+  })
+  productTypeCode!: string | null;
+
   @ApiProperty({ type: String, nullable: true, example: null })
   descriptionTh!: string | null;
 
@@ -416,6 +425,7 @@ export const LIST_EXAMPLE: StyleListDto = {
 export const DETAIL_EXAMPLE: StyleDetailDto = {
   ...CARD_EXAMPLE,
   construction: 'Four side panels + glue flap; top and bottom closures chosen from the tuck/lock/seal set.',
+  productTypeCode: 'folding_carton',
   descriptionTh: null,
   descriptionEn: null,
   axes: [{ axis: 'tuck_bottom', values: ['tuck', 'crash_lock'], multiSelect: false }],
