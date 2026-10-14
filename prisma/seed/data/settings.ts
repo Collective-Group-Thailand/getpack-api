@@ -6,6 +6,7 @@
  */
 import { ADVISORY_RULE_SET_SCHEMA } from '../../../src/modules/advisory/rule-set';
 import { HERO_PRESETS } from './hero-presets';
+import { INTAKE_TERMS_V1 } from './intake-terms';
 import { STUDIO_PRINT_RULES } from './studio';
 
 export type Confirmation = 'confirmed' | 'proposed' | 'pending_cpa' | 'pending_business';
@@ -34,6 +35,11 @@ export interface SettingSeed {
    * seeded because no decision gives one; readers treat it as "not set".
    */
   unset?: true;
+  /**
+   * Also give a setting that already exists without any version its seeded value as version 1 (a value decided
+   * after the setting was first defined with `unset`). Never touches a setting that has a version.
+   */
+  fillIfUnset?: true;
 }
 
 export const SETTINGS: readonly SettingSeed[] = [
@@ -963,12 +969,13 @@ export const SETTINGS: readonly SettingSeed[] = [
     ownerRole: 'superadmin',
   },
 
-  // --- Partner dieline intake (U3.B6, D-272): definition only — no intake until Legal / the Partner Manager sets it.
+  // --- Partner dieline intake (U3.B6, D-272): the standard terms v1 (D-404), Legal may publish a new version.
   {
     key: 'styles.intake_terms',
     valueType: 'json',
-    value: null,
-    unset: true,
+    value: INTAKE_TERMS_V1,
+    confirmation: 'pending_business',
+    fillIfUnset: true,
     valueSchema: {
       type: 'object',
       additionalProperties: false,
@@ -979,8 +986,8 @@ export const SETTINGS: readonly SettingSeed[] = [
       },
     },
     description:
-      'D-272 terms a factory accepts when it offers a dieline to the style library (permission to use, adapt and publish the structure); not seeded — factories cannot submit until it is set',
-    decisions: ['D-272'],
+      'D-272 terms a factory accepts when it offers a dieline to the style library (permission to use, adapt and publish the structure); standard version 1 from D-404 — Legal / the Partner Manager may publish a new version',
+    decisions: ['D-272', 'D-404'],
     ownerRole: 'partner_manager',
   },
 

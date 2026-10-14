@@ -3,6 +3,12 @@
 Contract-facing changes per release. The contract itself is `contract/openapi.json`; mappings for `packio-web` are in
 `docs/contract-requests-triage.md`.
 
+## v0.53.1 — Owner decisions: intake terms, UAT opening balance
+
+Decisions D-404, D-405; D-397 / D-401 tax point confirmed. No contract change. `partner.styleIntakes.getTerms` now
+returns the standard terms v1 once the reference seed has run (it filled `styles.intake_terms`, which had no
+version); intakes open. `uat:populate` posts the opening stock as the opening journal.
+
 ## v0.53.0 — UX round 8: insight
 
 Decisions D-402, D-403. `ErpDashboardDto` gains `packio` (`ErpDashPackioDto`: `confirmedNet`, `confirmedStatements`,

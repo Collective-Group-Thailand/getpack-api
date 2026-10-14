@@ -69,6 +69,8 @@ describe('seed data (B1.2 step 3)', () => {
       'artwork.preflight_rules': 'proposed',
       // U4.B3: the studio rule catalogue reuses the spec and ADR-0009 values; severities not stated are proposed (D-278).
       'studio.print_rules': 'proposed',
+      // D-404 standard intake terms v1, Legal may publish a revision.
+      'styles.intake_terms': 'pending_business',
       'artwork.prepress_sla_business_hours': 'pending_business',
       // D-305 vendor list prices of the ADR-0012 options (proposed until the ADR is accepted).
       'assistant.model_prices': 'proposed',
