@@ -23,6 +23,16 @@ describe('validateEnv', () => {
     expect(env.LOG_PRETTY).toBe(false);
   });
 
+  it('accepts OBJECT_STORAGE_MODE as an optional fake|real override', () => {
+    expect(validateEnv(valid).OBJECT_STORAGE_MODE).toBeUndefined();
+    expect(validateEnv({ ...valid, OBJECT_STORAGE_MODE: 'real' }).OBJECT_STORAGE_MODE).toBe(
+      IntegrationsMode.Real,
+    );
+    expect(() => validateEnv({ ...valid, OBJECT_STORAGE_MODE: 'localstack' })).toThrow(
+      InvalidEnvironmentError,
+    );
+  });
+
   it('treats "false" as false (no implicit Boolean("false") === true)', () => {
     expect(validateEnv({ ...valid, S3_FORCE_PATH_STYLE: 'false' }).S3_FORCE_PATH_STYLE).toBe(false);
   });

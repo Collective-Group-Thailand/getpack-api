@@ -80,6 +80,11 @@ export class EnvironmentVariables {
   @IsEnum(IntegrationsMode)
   INTEGRATIONS_MODE: IntegrationsMode = IntegrationsMode.Fake;
 
+  /** Per-provider override for object storage; defaults to `INTEGRATIONS_MODE` when unset. */
+  @IsOptional()
+  @IsEnum(IntegrationsMode)
+  OBJECT_STORAGE_MODE?: IntegrationsMode;
+
   @IsString()
   @Matches(/^postgres(ql)?:\/\//, { message: 'DATABASE_URL must be a postgres:// URL' })
   DATABASE_URL!: string;
