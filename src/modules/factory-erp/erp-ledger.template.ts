@@ -14,7 +14,7 @@ import {
  */
 
 export const CHART_TEMPLATE_VERSION = 1;
-export const RULES_TEMPLATE_VERSION = 1;
+export const RULES_TEMPLATE_VERSION = 2;
 
 /** The factory ledger's dimensions (payload keys → journal-line columns), D-388. */
 export const ERP_GL_DIMENSIONS = ['item', 'partner', 'warehouse', 'productionOrder', 'machine', 'bankAccount'] as const;
@@ -590,10 +590,44 @@ export const RULES_TEMPLATE: readonly RuleTemplate[] = [
       ],
     },
   },
+  {
+    key: 'F14',
+    eventType: 'billing_statement.confirmed',
+    name: 'Packio วางบิล (รายได้รับจ้างผลิต)',
+    description: 'A Packio billing statement the factory confirmed: receivable from Packio for the gross against Packio job revenue and output VAT (D-397).',
+    template: {
+      description: 'Packio วางบิล {documentNo}',
+      documentDate: 'documentDate',
+      source: { type: 'billing_statement', id: 'documentId', number: 'documentNo' },
+      lines: [
+        { account: { path: 'accounts.receivablesPackio' }, side: 'debit', amount: 'gross' },
+        { account: { path: 'accounts.salesPackio' }, side: 'credit', amount: 'net' },
+        { account: { path: 'accounts.outputVat' }, side: 'credit', amount: 'vat', taxCode: 'output_vat', taxBase: 'net' },
+      ],
+    },
+  },
+  {
+    key: 'F15',
+    eventType: 'payout_item.paid',
+    name: 'Packio โอนเงินให้โรงงาน',
+    description: 'A Packio payout paid to the factory: bank for the cash and WHT withheld by Packio (D-022) against the receivable from Packio; a retention stays receivable until it is released (D-397).',
+    template: {
+      description: 'Packio โอนเงิน {documentNo}',
+      documentDate: 'documentDate',
+      source: { type: 'payout_item', id: 'documentId', number: 'documentNo' },
+      dimensions: { bankAccount: 'bankAccountId' },
+      lines: [
+        { account: { path: 'cashAccount' }, side: 'debit', amount: 'cash' },
+        { account: { path: 'accounts.whtReceivable' }, side: 'debit', amount: 'wht', taxCode: 'wht_receivable', taxBase: 'whtBase' },
+        { account: { path: 'accounts.receivablesPackio' }, side: 'credit', amount: 'cash + wht' },
+      ],
+    },
+  },
 ];
 
 /** Events that reverse a document's postings instead of posting new ones (source reversals, §5 F02/F04/F11–F13). */
 export const REVERSING_EVENTS: Record<string, string> = {
+  'erp_supplier_payment.reversed': 'erp_supplier_payment',
   'erp_supplier_invoice.cancelled': 'erp_supplier_invoice',
   'erp_sales_invoice.voided': 'erp_sales_invoice',
   'erp_delivery_note.cancelled': 'erp_delivery_note',
@@ -622,3 +656,53 @@ export const CLOSE_CHECKS = [
   { key: 'open_wip', blocking: false },
 ] as const;
 export type CloseCheckKey = (typeof CLOSE_CHECKS)[number]['key'];
+
+/** A value a rule template may read (D-398): its path in the payload and what it is. */
+export interface RuleVariable {
+  path: string;
+  kind: 'amount' | 'account' | 'text' | 'flag' | 'list';
+  th: string;
+}
+
+const COMMON_VARS: RuleVariable[] = [
+  { path: 'documentNo', kind: 'text', th: 'เลขที่เอกสาร' },
+  { path: 'documentDate', kind: 'text', th: 'วันที่เอกสาร' },
+];
+const PARTNER_VARS: RuleVariable[] = [{ path: 'partnerName', kind: 'text', th: 'ชื่อคู่ค้า' }];
+const MOVEMENT_VARS: RuleVariable[] = [
+  { path: 'movements', kind: 'list', th: 'รายการเคลื่อนไหวสต็อก (ทีละบรรทัด)' },
+  { path: 'movementsValue', kind: 'amount', th: 'มูลค่าเคลื่อนไหวรวม (มีเครื่องหมาย)' },
+  { path: 'item.value', kind: 'amount', th: 'มูลค่าของบรรทัด (ใน movements)' },
+  { path: 'item.inventoryAccount', kind: 'account', th: 'บัญชีสินค้าคงเหลือตามประเภทสินค้า (ใน movements)' },
+  { path: 'item.expenseAccount', kind: 'account', th: 'บัญชีค่าใช้จ่ายของสินค้า (ใน movements)' },
+];
+const CASH_VARS: RuleVariable[] = [{ path: 'cashAccount', kind: 'account', th: 'บัญชีเงินสด/ธนาคารที่รับจ่าย' }];
+const amount = (path: string, th: string): RuleVariable => ({ path, kind: 'amount', th });
+
+/** What each rule's payload carries, for the rule editor (D-398); `accounts.*` (purpose accounts) is always there. */
+export const RULE_VARIABLES: Record<string, RuleVariable[]> = {
+  'erp_goods_receipt.posted': [...COMMON_VARS, ...PARTNER_VARS, ...MOVEMENT_VARS, amount('goodsValue', 'มูลค่าสินค้าไม่รวมค่าใช้จ่ายนำเข้า'), amount('chargesValue', 'ค่าใช้จ่ายนำเข้า ณ วันรับ')],
+  'erp_goods_receipt.charge_added': [...COMMON_VARS, ...PARTNER_VARS, ...MOVEMENT_VARS, amount('chargesValue', 'ค่าใช้จ่ายนำเข้าที่ปันเข้าสต็อก')],
+  'erp_supplier_invoice.recorded': [...COMMON_VARS, ...PARTNER_VARS, amount('subtotal', 'ยอดก่อน VAT'), amount('vatAmount', 'ภาษีซื้อ'), amount('total', 'ยอดรวม'), amount('grirValue', 'มูลค่าตามราคาสั่งซื้อ'), amount('varianceValue', 'ผลต่างราคา'), amount('expenseValue', 'รายการที่ไม่ได้สั่งซื้อ'), { path: 'taxInvoice', kind: 'flag', th: 'ได้รับใบกำกับภาษีแล้ว' }],
+  'erp_supplier_payment.recorded': [...COMMON_VARS, ...PARTNER_VARS, ...CASH_VARS, amount('amount', 'ยอดจ่าย'), amount('wht3', 'หัก ณ ที่จ่าย ภ.ง.ด.3'), amount('wht53', 'หัก ณ ที่จ่าย ภ.ง.ด.53'), amount('whtBase3', 'ฐานภาษี ภ.ง.ด.3'), amount('whtBase53', 'ฐานภาษี ภ.ง.ด.53')],
+  'erp_stock.adjusted': [...COMMON_VARS, ...MOVEMENT_VARS, { path: 'offsetAccount', kind: 'account', th: 'บัญชีคู่ (ผลต่างสต็อก หรือกำไรสะสมสำหรับยอดยกมา)' }],
+  'erp_stock.issued': [...COMMON_VARS, ...MOVEMENT_VARS],
+  'erp_maintenance.parts_issued': [...COMMON_VARS, ...MOVEMENT_VARS],
+  'erp_ncr.disposed': [...COMMON_VARS, ...MOVEMENT_VARS],
+  'erp_production_order.materials_issued': [...COMMON_VARS, ...MOVEMENT_VARS],
+  'erp_production_order.materials_returned': [...COMMON_VARS, ...MOVEMENT_VARS],
+  'erp_production_order.completed': [...COMMON_VARS, amount('receivedValue', 'มูลค่ารับเข้าสินค้าสำเร็จรูป'), amount('materialsValue', 'วัตถุดิบที่ใช้'), amount('labourValue', 'ค่าแรงที่คิดเข้างาน'), amount('overheadValue', 'ค่าเครื่องจักรและโสหุ้ยที่คิดเข้างาน')],
+  'erp_sales_invoice.issued': [...COMMON_VARS, ...PARTNER_VARS, amount('subtotal', 'ยอดก่อน VAT'), amount('vatAmount', 'ภาษีขาย'), amount('total', 'ยอดรวม'), { path: 'taxInvoice', kind: 'flag', th: 'เป็นใบกำกับภาษี' }],
+  'erp_delivery_note.issued': [...COMMON_VARS, ...PARTNER_VARS, ...MOVEMENT_VARS],
+  'erp_receipt.issued': [...COMMON_VARS, ...PARTNER_VARS, ...CASH_VARS, amount('amount', 'เงินที่ได้รับ'), amount('whtAmount', 'ภาษีที่ลูกค้าหักไว้'), amount('whtBase', 'ฐานภาษีหัก ณ ที่จ่าย')],
+  'erp_refund.issued': [...COMMON_VARS, ...PARTNER_VARS, ...CASH_VARS, amount('amount', 'เงินที่คืน (ติดลบ)'), amount('whtAmount', 'ภาษีหัก ณ ที่จ่าย (ติดลบ)'), amount('whtBase', 'ฐานภาษีหัก ณ ที่จ่าย (ติดลบ)')],
+  'erp_credit_note.issued': [...COMMON_VARS, ...PARTNER_VARS, ...MOVEMENT_VARS, amount('difference', 'ผลต่างก่อน VAT'), amount('vatAmount', 'ภาษีขาย'), amount('total', 'ยอดรวม')],
+  'erp_debit_note.issued': [...COMMON_VARS, ...PARTNER_VARS, ...MOVEMENT_VARS, amount('difference', 'ผลต่างก่อน VAT (ติดลบ)'), amount('vatAmount', 'ภาษีขาย (ติดลบ)'), amount('total', 'ยอดรวม (ติดลบ)')],
+  'erp_fixed_asset.depreciated': [...COMMON_VARS, { path: 'lines', kind: 'list', th: 'รายการค่าเสื่อมตามหมวด (ทีละบรรทัด)' }, amount('item.amount', 'ค่าเสื่อมของหมวด (ใน lines)'), { path: 'item.expenseAccount', kind: 'account', th: 'บัญชีค่าเสื่อม (ใน lines)' }, { path: 'item.accumulatedAccount', kind: 'account', th: 'บัญชีค่าเสื่อมสะสม (ใน lines)' }],
+  'erp_fixed_asset.disposed': [...COMMON_VARS, ...CASH_VARS, amount('cost', 'ราคาทุน'), amount('accumulated', 'ค่าเสื่อมสะสม'), amount('proceeds', 'เงินที่ได้รับ'), { path: 'assetAccount', kind: 'account', th: 'บัญชีสินทรัพย์' }, { path: 'accumulatedAccount', kind: 'account', th: 'บัญชีค่าเสื่อมสะสม' }, { path: 'gainLossAccount', kind: 'account', th: 'บัญชีกำไร/ขาดทุน' }],
+  'erp_bank_line.matched': [...COMMON_VARS, amount('amount', 'ยอดในสเตทเมนต์ (มีเครื่องหมาย)'), { path: 'bankGlAccount', kind: 'account', th: 'บัญชีธนาคาร' }, { path: 'contraAccount', kind: 'account', th: 'บัญชีค่าธรรมเนียม/ดอกเบี้ย' }],
+  'billing_statement.confirmed': [...COMMON_VARS, amount('net', 'ยอดก่อน VAT'), amount('vat', 'ภาษีขาย'), amount('gross', 'ยอดรวม')],
+  'payout_item.paid': [...COMMON_VARS, ...CASH_VARS, amount('cash', 'เงินที่ได้รับโอน'), amount('wht', 'ภาษีที่ Packio หักไว้'), amount('whtBase', 'ฐานภาษีหัก ณ ที่จ่าย'), amount('retention', 'เงินประกันผลงานที่ Packio กันไว้'), { path: 'kind', kind: 'text', th: 'ประเภทการจ่าย (advance / balance / retention_release)' }],
+};
+RULE_VARIABLES['erp_supplier_invoice.approved'] = RULE_VARIABLES['erp_supplier_invoice.recorded']!;
+RULE_VARIABLES['erp_supplier_payment.reversed'] = RULE_VARIABLES['erp_supplier_payment.recorded']!;

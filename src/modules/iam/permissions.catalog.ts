@@ -1129,8 +1129,8 @@ export const PERMISSIONS = [
   {
     key: 'factory_ledger.configure',
     audience: 'partner',
-    description: 'Configure the factory’s ledger: settings, chart changes, posting rules, asset categories, bank accounts',
-    decisionRefs: ['D-385', 'D-386', 'D-387', 'D-396'],
+    description: 'Configure the factory’s ledger: settings, chart change and posting-rule proposals, asset categories, bank accounts',
+    decisionRefs: ['D-385', 'D-386', 'D-387', 'D-396', 'D-398'],
   },
   {
     key: 'factory_tax.file',

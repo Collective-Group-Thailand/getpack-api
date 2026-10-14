@@ -136,6 +136,31 @@ describe('Packio Factory ERP E6 (e2e)', () => {
     expect(reopened.status).toBe('open');
   });
 
+  it('edits a posting rule as a new version under maker-checker (D-398) and has Packio rules F14 / F15 (D-397)', async () => {
+    const rules = await get('/ledger/rules');
+    expect(rules.map((r: Rec) => r.key)).toEqual(expect.arrayContaining(['F14', 'F15']));
+    const f01 = rules.find((r: Rec) => r.key === 'F01');
+    const detail = await get(`/ledger/rules/${f01.id}`);
+    expect(detail.versions[0]).toMatchObject({ versionNo: 1, status: 'approved', current: true });
+    expect(detail.variables.map((v: Rec) => v.path)).toContain('goodsValue');
+    const template = detail.versions[0].template;
+
+    const bad = await post(owner, `/ledger/rules/${f01.id}/actions/preview`, { template: { ...template, lines: [{ ...template.lines[0], accountCode: '9999', accountPath: null }] } });
+    expect(bad.problems.length).toBeGreaterThan(0);
+    await post(owner, `/ledger/rules/${f01.id}/versions`, { template: { ...template, lines: [{ ...template.lines[0], amount: 'nope' }] }, effectiveFrom: today, reason: 'ทดสอบ' }, 422);
+
+    const proposed = await post(owner, `/ledger/rules/${f01.id}/versions`, { template: { ...template, description: 'รับสินค้า {documentNo}' }, effectiveFrom: today, reason: 'ย่อคำอธิบาย' }, 201);
+    expect(proposed.versions[0]).toMatchObject({ versionNo: 2, status: 'proposed', current: false });
+    expect((await get('/ledger/rules')).find((r: Rec) => r.key === 'F01').pending).toBe(true);
+    await post(owner, `/ledger/rules/${f01.id}/versions`, { template, effectiveFrom: today, reason: 'ซ้ำ' }, 409);
+    const version = proposed.versions[0].id;
+    await post(owner, `/ledger/rules/${f01.id}/versions/${version}/actions/approve`, {}, 403); // never one's own
+    await post(auditor, `/ledger/rules/${f01.id}/versions/${version}/actions/approve`, {}, 403);
+    await post(owner, `/ledger/rules/${f01.id}/versions/${version}/actions/withdraw`);
+    const again = await post(owner, `/ledger/rules/${f01.id}/versions`, { template: { ...template, description: 'รับสินค้า {documentNo}' }, effectiveFrom: today, reason: 'ย่อคำอธิบาย' }, 201);
+    expect(again.versions[0].versionNo).toBe(3);
+  });
+
   it('keeps the books private and read-only for the auditor (D-317, D-396)', async () => {
     expect((await get('/ledger/journals', auditor)).data.length).toBeGreaterThan(0);
     await get(`/ledger/reports/trial-balance?from=${month}-01&to=${today}`, auditor);

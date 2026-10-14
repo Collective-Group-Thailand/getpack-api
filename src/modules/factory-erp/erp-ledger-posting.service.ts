@@ -90,9 +90,7 @@ export class ErpLedgerPostingService {
 
   /** Posts (or reverses) for one event; returns the entries written. */
   async postEvent(tx: Tx, event: DomainEventEnvelope): Promise<ErpGlJournalEntry[]> {
-    const factoryPublicId = (event.payload as { factoryId?: string }).factoryId;
-    if (!factoryPublicId) return [];
-    const factory = await tx.factory.findUnique({ where: { publicId: factoryPublicId } });
+    const factory = await this.factoryOf(tx, event);
     if (!factory) return [];
     const settings = await tx.erpGlSettings.findUnique({ where: { factoryId: factory.id } });
     if (!settings) return []; // the ledger has not been started (catch-up posts these later)
@@ -170,6 +168,50 @@ export class ErpLedgerPostingService {
     return out;
   }
 
+  /**
+   * The factory an event belongs to: ERP events name it (`payload.factoryId`, D-317); a Packio payout names the
+   * factory it paid; a Packio billing statement is looked up (its event carries the statement only).
+   */
+  private async factoryOf(tx: Tx, event: DomainEventEnvelope): Promise<Factory | null> {
+    const id = (event.payload as { factoryId?: string | null }).factoryId;
+    if (id) return tx.factory.findUnique({ where: { publicId: id } });
+    if (event.type === 'billing_statement.confirmed') {
+      const statement = await tx.billingStatement.findUnique({ where: { publicId: event.aggregateId }, include: { factory: true } });
+      return statement?.factory ?? null;
+    }
+    return null;
+  }
+
+  /**
+   * The payload the rules of `eventType` would see for the factory's latest such event (rule editor preview, D-398);
+   * `null` when the factory has none yet.
+   */
+  async samplePayload(factory: Factory, settings: ErpGlSettings, eventType: string): Promise<{ payload: Payload; occurredAt: string } | null> {
+    const builder = this.builders[eventType];
+    if (!builder) return null;
+    const db = this.workspace.db;
+    const rows = await db.domainEvent.findMany({
+      where: {
+        type: eventType,
+        OR: [
+          { payload: { path: ['factoryId'], equals: factory.publicId } },
+          ...(eventType === 'billing_statement.confirmed'
+            ? [{ aggregateId: { in: (await db.billingStatement.findMany({ where: { factoryId: factory.id }, select: { publicId: true } })).map((b) => b.publicId) } }]
+            : []),
+        ],
+      },
+      orderBy: { occurredAt: 'desc' },
+      take: 5,
+    });
+    const ctx: Ctx = { factory, settings, accounts: this.ledger.methodAccounts(settings) };
+    for (const row of rows) {
+      const envelope = envelopeFromRow(row);
+      const payload = await this.workspace.tx((tx) => builder(tx, ctx, envelope));
+      if (payload) return { payload, occurredAt: envelope.occurredAt };
+    }
+    return null;
+  }
+
   /** Rules that post the same document (never both): F02 and F02A. */
   private twins(key: string): string[] {
     return key === 'F02' || key === 'F02A' ? ['F02', 'F02A'] : [key];
@@ -194,7 +236,14 @@ export class ErpLedgerPostingService {
       where: {
         type: { in: [...POSTING_EVENT_TYPES] },
         occurredAt: { gte: new Date(`${dayOf(settings.ledgerStartOn)}T00:00:00+07:00`) },
-        payload: { path: ['factoryId'], equals: scope.factory.publicId },
+        OR: [
+          { payload: { path: ['factoryId'], equals: scope.factory.publicId } },
+          // Packio statements of this factory (their events name the statement only)
+          {
+            type: 'billing_statement.confirmed',
+            aggregateId: { in: (await this.workspace.db.billingStatement.findMany({ where: { factoryId: scope.factory.id }, select: { publicId: true } })).map((b) => b.publicId) },
+          },
+        ],
       },
       orderBy: { occurredAt: 'asc' },
       take: 5000,
@@ -390,6 +439,31 @@ export class ErpLedgerPostingService {
         cost: money(dec(a.cost)),
         accumulated: money(dec(a.accumulated).plus(dec(a.openingAccumulated))),
         proceeds: money(dec(a.proceeds ?? 0)),
+        ...cash,
+      };
+    },
+    'billing_statement.confirmed': async (tx, ctx, event) => {
+      const bs = await tx.billingStatement.findUnique({ where: { publicId: event.aggregateId } });
+      if (!bs || bs.factoryId !== ctx.factory.id) return null;
+      return {
+        ...this.base(ctx, bs, bs.bsNumber, new Date(`${bangkokDate(bs.confirmedAt ?? new Date(event.occurredAt))}T00:00:00Z`)),
+        net: money(dec(bs.netAmount)),
+        vat: money(dec(bs.vatAmount)),
+        gross: money(dec(bs.grossAmount)),
+      };
+    },
+    'payout_item.paid': async (tx, ctx, event) => {
+      const item = await tx.payoutItem.findUnique({ where: { publicId: event.aggregateId } });
+      if (!item) return null;
+      const p = event.payload as { pvNumber?: string | null; paidOn?: string | null };
+      const cash = await this.cashAccount(tx, ctx, 'transfer');
+      return {
+        ...this.base(ctx, item, item.pvNumber ?? p.pvNumber ?? item.publicId.slice(0, 8), item.paidOn ?? new Date(`${p.paidOn ?? bangkokDate(new Date(event.occurredAt))}T00:00:00Z`)),
+        kind: item.kind,
+        cash: money(dec(item.cashAmount)),
+        wht: money(dec(item.whtAmount)),
+        whtBase: money(dec(item.whtBase)),
+        retention: money(dec(item.retentionAmount)),
         ...cash,
       };
     },

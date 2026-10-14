@@ -76,6 +76,7 @@ export const E6_IDS = {
   user: '0192f3a0-7c1e-7d2a-9b1f-00000000f620',
   document: '0192f3a0-7c1e-7d2a-9b1f-00000000f621',
   payment: '0192f3a0-7c1e-7d2a-9b1f-00000000f622',
+  ruleVersion: '0192f3a0-7c1e-7d2a-9b1f-00000000f623',
 } as const;
 
 export const ERP_GL_ASSET_STATUSES = ['active', 'disposed', 'written_off'] as const;
@@ -885,6 +886,9 @@ export class ErpGlRuleDto {
 
   @ApiProperty({ example: 12, description: 'Entries posted by this rule' })
   entries!: number;
+
+  @ApiProperty({ example: false, description: 'A new version waits for approval' })
+  pending!: boolean;
 }
 
 export class ErpGlCatchUpDto {
@@ -1778,3 +1782,254 @@ export class ErpGlMarkFiledDto {
 
 /** For the dimension pickers of the manual-journal form. */
 export const ERP_GL_DIMENSION_KEYS = ERP_GL_DIMENSIONS;
+
+// ================================================================================== rule editor (D-398)
+
+export const ERP_GL_CONDITION_OPS = ['eq', 'ne', 'gt', 'gte', 'lt', 'lte'] as const;
+export const ERP_GL_VARIABLE_KINDS = ['amount', 'account', 'text', 'flag', 'list'] as const;
+const PATH = /^[A-Za-z_][A-Za-z0-9_]*(\.[A-Za-z0-9_]+)*$/;
+
+export class ErpGlConditionDto {
+  @ApiProperty({ example: 'taxInvoice', pattern: PATH.source, description: 'A payload path (inside `forEach`, `item.<path>`)' })
+  @Matches(PATH)
+  @MaxLength(100)
+  field!: string;
+
+  @ApiProperty({ enum: ERP_GL_CONDITION_OPS, enumName: 'ErpGlConditionOp', example: 'eq' })
+  @IsIn(ERP_GL_CONDITION_OPS)
+  op!: string;
+
+  @ApiProperty({ example: 'true', maxLength: 100, description: '`true` / `false` for a flag, a number, or text' })
+  @IsString()
+  @MaxLength(100)
+  value!: string;
+}
+
+export class ErpGlTemplateLineDto {
+  @ApiPropertyOptional({ nullable: true, example: null, pattern: PATH.source, description: 'Repeat the line for every element of this list (`movements`, `lines`); the element is `item`' })
+  @IsOptional()
+  @Transform(emptyToNull)
+  @Matches(PATH)
+  @MaxLength(100)
+  forEach?: string | null;
+
+  @ApiPropertyOptional({ type: ErpGlConditionDto, nullable: true, description: 'Post the line only when this holds' })
+  @IsOptional()
+  @ValidateNested()
+  @Type(() => ErpGlConditionDto)
+  when?: ErpGlConditionDto | null;
+
+  @ApiPropertyOptional({ nullable: true, example: '1141', pattern: ACCOUNT_CODE.source, description: 'A fixed account — or `accountPath`' })
+  @IsOptional()
+  @Transform(emptyToNull)
+  @Matches(ACCOUNT_CODE)
+  accountCode?: string | null;
+
+  @ApiPropertyOptional({ nullable: true, example: 'accounts.grir', pattern: PATH.source, description: 'An account the document gives (`accounts.<purpose>`, `cashAccount`, `item.inventoryAccount`, …)' })
+  @IsOptional()
+  @Transform(emptyToNull)
+  @Matches(PATH)
+  @MaxLength(100)
+  accountPath?: string | null;
+
+  @ApiProperty({ enum: LEDGER_SIDES, enumName: 'LedgerSide', example: 'debit' })
+  @IsIn(LEDGER_SIDES)
+  side!: string;
+
+  @ApiProperty({ example: 'goodsValue', maxLength: 200, description: 'Amount expression: payload paths, numbers, + - * / ( ), round/min/max/abs; a negative result posts on the other side' })
+  @Transform(trim)
+  @IsString()
+  @MinLength(1)
+  @MaxLength(200)
+  amount!: string;
+
+  @ApiPropertyOptional({ nullable: true, example: null, maxLength: 200, description: 'Line text; `{path}` reads the payload' })
+  @IsOptional()
+  @Transform(emptyToNull)
+  @IsString()
+  @MaxLength(200)
+  description?: string | null;
+
+  @ApiPropertyOptional({ enum: TAX_CODES, enumName: 'TaxCode', nullable: true })
+  @IsOptional()
+  @IsIn(TAX_CODES)
+  taxCode?: string | null;
+
+  @ApiPropertyOptional({ nullable: true, example: null, maxLength: 200, description: 'Tax base expression (with a tax code)' })
+  @IsOptional()
+  @Transform(emptyToNull)
+  @IsString()
+  @MaxLength(200)
+  taxBase?: string | null;
+
+  @ApiPropertyOptional({ type: 'object', additionalProperties: { type: 'string' }, example: { item: 'item.itemId' }, description: 'Dimension → payload path (kept as the rule had them)' })
+  @IsOptional()
+  @IsObject()
+  dimensions?: Record<string, string>;
+}
+
+export class ErpGlTemplateDto {
+  @ApiProperty({ example: 'รับสินค้า {documentNo} — {partnerName}', maxLength: 300, description: 'Entry text; `{path}` reads the payload' })
+  @Transform(trim)
+  @IsString()
+  @MinLength(1)
+  @MaxLength(300)
+  description!: string;
+
+  @ApiProperty({ type: [ErpGlTemplateLineDto], minItems: 1, maxItems: 30 })
+  @IsArray()
+  @ArrayMinSize(1)
+  @ArrayMaxSize(30)
+  @ValidateNested({ each: true })
+  @Type(() => ErpGlTemplateLineDto)
+  lines!: ErpGlTemplateLineDto[];
+}
+
+export class ErpGlRuleVariableDto {
+  @ApiProperty({ example: 'goodsValue' })
+  path!: string;
+
+  @ApiProperty({ enum: ERP_GL_VARIABLE_KINDS, enumName: 'ErpGlVariableKind', example: 'amount' })
+  kind!: string;
+
+  @ApiProperty({ example: 'มูลค่าสินค้าไม่รวมค่าใช้จ่ายนำเข้า' })
+  label!: string;
+}
+
+export class ErpGlRuleVersionDto {
+  @ApiProperty({ format: 'uuid', example: E6_IDS.rule })
+  id!: string;
+
+  @ApiProperty({ example: 2 })
+  versionNo!: number;
+
+  @ApiProperty({ enum: VERSION_STATUSES, enumName: 'ConfigVersionStatus', example: 'approved' })
+  status!: string;
+
+  @ApiProperty({ type: String, format: 'date-time', example: '2026-10-14T00:00:00+07:00' })
+  effectiveFrom!: string;
+
+  @ApiProperty({ example: true, description: 'The approved version in force now' })
+  current!: boolean;
+
+  @ApiProperty({ type: ErpGlTemplateDto })
+  template!: ErpGlTemplateDto;
+
+  @ApiProperty({ example: 'แยกค่าขนส่งขาเข้าไปบัญชีค่าขนส่ง' })
+  reason!: string;
+
+  @ApiProperty({ nullable: true, example: 'ฝ่ายบัญชีโรงงาน ทดสอบ' })
+  createdBy!: string | null;
+
+  @ApiProperty({ type: String, format: 'date-time', example: '2026-10-14T09:00:00+07:00' })
+  createdAt!: string;
+
+  @ApiProperty({ nullable: true, example: 'เจ้าของโรงงาน ทดสอบ' })
+  decidedBy!: string | null;
+
+  @ApiProperty({ type: String, format: 'date-time', nullable: true, example: '2026-10-14T10:00:00+07:00' })
+  decidedAt!: string | null;
+
+  @ApiProperty({ type: [NextActionDto] })
+  nextActions!: NextActionDto[];
+}
+
+export class ErpGlRuleDetailDto {
+  @ApiProperty({ format: 'uuid', example: E6_IDS.rule })
+  id!: string;
+
+  @ApiProperty({ example: 'F01' })
+  key!: string;
+
+  @ApiProperty({ example: 'erp_goods_receipt.posted' })
+  eventType!: string;
+
+  @ApiProperty({ example: 'รับสินค้าเข้าคลัง' })
+  name!: string;
+
+  @ApiProperty({ example: 'Goods receipt: inventory at cost excl. VAT against GR/IR clearing' })
+  description!: string;
+
+  @ApiProperty({ type: [ErpGlRuleVersionDto], description: 'Newest first' })
+  versions!: ErpGlRuleVersionDto[];
+
+  @ApiProperty({ type: [ErpGlRuleVariableDto], description: 'What the payload carries for this rule' })
+  variables!: ErpGlRuleVariableDto[];
+
+  @ApiProperty({ type: [String], example: ['grir', 'payables', 'inputVat'], description: 'Purpose accounts readable as `accounts.<key>`' })
+  purposes!: string[];
+
+  @ApiProperty({ type: [NextActionDto] })
+  nextActions!: NextActionDto[];
+}
+
+export class ErpGlProposeRuleVersionDto {
+  @ApiProperty({ type: ErpGlTemplateDto })
+  @ValidateNested()
+  @Type(() => ErpGlTemplateDto)
+  template!: ErpGlTemplateDto;
+
+  @ApiProperty({ type: String, format: 'date', example: '2026-11-01', pattern: DAY.source, description: 'In force from this day (Bangkok); today or later' })
+  @Matches(DAY)
+  effectiveFrom!: string;
+
+  @ApiProperty({ example: 'แยกค่าขนส่งขาเข้าไปบัญชีค่าขนส่ง', minLength: 3, maxLength: 500 })
+  @Transform(trim)
+  @IsString()
+  @MinLength(3)
+  @MaxLength(500)
+  reason!: string;
+}
+
+export class ErpGlPreviewRuleDto {
+  @ApiProperty({ type: ErpGlTemplateDto })
+  @ValidateNested()
+  @Type(() => ErpGlTemplateDto)
+  template!: ErpGlTemplateDto;
+}
+
+export class ErpGlPreviewLineDto {
+  @ApiProperty({ example: '1141' })
+  accountCode!: string;
+
+  @ApiProperty({ nullable: true, example: 'วัตถุดิบ', description: 'null when the code is not in the chart' })
+  accountName!: string | null;
+
+  @ApiProperty({ enum: LEDGER_SIDES, enumName: 'LedgerSide', example: 'debit' })
+  side!: string;
+
+  @ApiProperty({ example: '12500.00', pattern: AMOUNT.source })
+  amount!: string;
+
+  @ApiProperty({ nullable: true, example: null })
+  description!: string | null;
+
+  @ApiProperty({ enum: TAX_CODES, enumName: 'TaxCode', nullable: true, example: null })
+  taxCode!: string | null;
+}
+
+export class ErpGlPreviewDto {
+  @ApiProperty({ nullable: true, example: 'GR-2610-0003', description: 'The document the preview used (the latest of its kind); null when there is none yet' })
+  sampleNo!: string | null;
+
+  @ApiProperty({ type: String, format: 'date-time', nullable: true, example: '2026-10-13T10:00:00+07:00' })
+  sampleAt!: string | null;
+
+  @ApiProperty({ example: 'รับสินค้า GR-2610-0003 — บริษัท กระดาษ ทดสอบ จำกัด' })
+  description!: string;
+
+  @ApiProperty({ type: [ErpGlPreviewLineDto] })
+  lines!: ErpGlPreviewLineDto[];
+
+  @ApiProperty({ example: '12500.00', pattern: AMOUNT.source })
+  totalDebit!: string;
+
+  @ApiProperty({ example: '12500.00', pattern: AMOUNT.source })
+  totalCredit!: string;
+
+  @ApiProperty({ example: true })
+  balanced!: boolean;
+
+  @ApiProperty({ type: [String], example: [], description: 'What is wrong with the template (empty = fine)' })
+  problems!: string[];
+}

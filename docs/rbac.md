@@ -267,7 +267,7 @@ Legend: ● granted · ◆ granted and sensitive (cost/margin data, D-141).
 | `factory_ledger.post` — Draft and submit manual journals, keep recurring journals, match bank lines, run depreciation (D-389, D-393, D-394, D-396) | ● |  |  |  |  | ● |  |  |  |  |  |
 | `factory_ledger.approve` — Approve or reject manual journals and chart-of-accounts changes (D-386, D-389, D-396) | ● |  |  |  |  |  |  |  |  |  |  |
 | `factory_ledger.close` — Soft-close, close, lock and reopen fiscal periods; post into a soft-closed period (D-390, D-396) | ● |  |  |  |  | ● |  |  |  |  |  |
-| `factory_ledger.configure` — Configure the factory’s ledger: settings, chart changes, posting rules, asset categories, bank accounts (D-385, D-386, D-387, D-396) | ● |  |  |  |  |  |  |  |  |  |  |
+| `factory_ledger.configure` — Configure the factory’s ledger: settings, chart change and posting-rule proposals, asset categories, bank accounts (D-385, D-386, D-387, D-396, D-398) | ● |  |  |  |  | ● |  |  |  |  |  |
 | `factory_tax.file` — Mark the factory’s VAT and WHT returns as filed (D-392, D-396) | ● |  |  |  |  | ● |  |  |  |  |  |
 | `factory_erp.configure` — Configure the factory’s ERP: modules, document prefixes, stock and receiving rules (D-318, D-322, D-323) | ● |  |  |  |  |  |  |  |  |  |  |
 

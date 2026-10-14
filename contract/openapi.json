@@ -1860,6 +1860,17 @@
           "type": "https://errors.packio/erp.ledger_unbalanced"
         }
       },
+      "problem.erp.ledger_version_pending": {
+        "summary": "erp.ledger_version_pending",
+        "value": {
+          "code": "erp.ledger_version_pending",
+          "detail": "กฎ {key} มีฉบับแก้ไขที่รออนุมัติอยู่แล้ว — อนุมัติ ปฏิเสธ หรือถอนฉบับนั้นก่อน",
+          "requestId": "6f1c2d8e-2c7b-4d0e-9d1c-3f1a2b3c4d5e",
+          "status": 409,
+          "title": "มีฉบับแก้ไขรออนุมัติอยู่",
+          "type": "https://errors.packio/erp.ledger_version_pending"
+        }
+      },
       "problem.erp.lot_required": {
         "summary": "erp.lot_required",
         "value": {
@@ -41403,6 +41414,48 @@
         ],
         "type": "object"
       },
+      "ErpGlConditionDto": {
+        "properties": {
+          "field": {
+            "description": "A payload path (inside `forEach`, `item.<path>`)",
+            "example": "taxInvoice",
+            "maxLength": 100,
+            "pattern": "^[A-Za-z_][A-Za-z0-9_]*(\\.[A-Za-z0-9_]+)*$",
+            "type": "string"
+          },
+          "op": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ErpGlConditionOp"
+              }
+            ],
+            "example": "eq"
+          },
+          "value": {
+            "description": "`true` / `false` for a flag, a number, or text",
+            "example": "true",
+            "maxLength": 100,
+            "type": "string"
+          }
+        },
+        "required": [
+          "field",
+          "op",
+          "value"
+        ],
+        "type": "object"
+      },
+      "ErpGlConditionOp": {
+        "enum": [
+          "eq",
+          "ne",
+          "gt",
+          "gte",
+          "lt",
+          "lte"
+        ],
+        "type": "string"
+      },
       "ErpGlCreateAssetDto": {
         "properties": {
           "acquiredOn": {
@@ -42391,6 +42444,136 @@
         ],
         "type": "object"
       },
+      "ErpGlPreviewDto": {
+        "properties": {
+          "balanced": {
+            "example": true,
+            "type": "boolean"
+          },
+          "description": {
+            "example": "รับสินค้า GR-2610-0003 — บริษัท กระดาษ ทดสอบ จำกัด",
+            "type": "string"
+          },
+          "lines": {
+            "items": {
+              "$ref": "#/components/schemas/ErpGlPreviewLineDto"
+            },
+            "type": "array"
+          },
+          "problems": {
+            "description": "What is wrong with the template (empty = fine)",
+            "example": [],
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "sampleAt": {
+            "example": "2026-10-13T10:00:00+07:00",
+            "format": "date-time",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "sampleNo": {
+            "description": "The document the preview used (the latest of its kind); null when there is none yet",
+            "example": "GR-2610-0003",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "totalCredit": {
+            "example": "12500.00",
+            "pattern": "^\\d{1,12}(\\.\\d{1,2})?$",
+            "type": "string"
+          },
+          "totalDebit": {
+            "example": "12500.00",
+            "pattern": "^\\d{1,12}(\\.\\d{1,2})?$",
+            "type": "string"
+          }
+        },
+        "required": [
+          "sampleNo",
+          "sampleAt",
+          "description",
+          "lines",
+          "totalDebit",
+          "totalCredit",
+          "balanced",
+          "problems"
+        ],
+        "type": "object"
+      },
+      "ErpGlPreviewLineDto": {
+        "properties": {
+          "accountCode": {
+            "example": "1141",
+            "type": "string"
+          },
+          "accountName": {
+            "description": "null when the code is not in the chart",
+            "example": "วัตถุดิบ",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "amount": {
+            "example": "12500.00",
+            "pattern": "^\\d{1,12}(\\.\\d{1,2})?$",
+            "type": "string"
+          },
+          "description": {
+            "example": null,
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "side": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/LedgerSide"
+              }
+            ],
+            "example": "debit"
+          },
+          "taxCode": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/TaxCode"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "example": null
+          }
+        },
+        "required": [
+          "accountCode",
+          "accountName",
+          "side",
+          "amount",
+          "description",
+          "taxCode"
+        ],
+        "type": "object"
+      },
+      "ErpGlPreviewRuleDto": {
+        "properties": {
+          "template": {
+            "$ref": "#/components/schemas/ErpGlTemplateDto"
+          }
+        },
+        "required": [
+          "template"
+        ],
+        "type": "object"
+      },
       "ErpGlProfitAndLossDto": {
         "properties": {
           "costOfSales": {
@@ -42486,6 +42669,32 @@
         },
         "required": [
           "kind",
+          "reason"
+        ],
+        "type": "object"
+      },
+      "ErpGlProposeRuleVersionDto": {
+        "properties": {
+          "effectiveFrom": {
+            "description": "In force from this day (Bangkok); today or later",
+            "example": "2026-11-01",
+            "format": "date",
+            "pattern": "^\\d{4}-\\d{2}-\\d{2}$",
+            "type": "string"
+          },
+          "reason": {
+            "example": "แยกค่าขนส่งขาเข้าไปบัญชีค่าขนส่ง",
+            "maxLength": 500,
+            "minLength": 3,
+            "type": "string"
+          },
+          "template": {
+            "$ref": "#/components/schemas/ErpGlTemplateDto"
+          }
+        },
+        "required": [
+          "template",
+          "effectiveFrom",
           "reason"
         ],
         "type": "object"
@@ -42651,6 +42860,75 @@
         ],
         "type": "object"
       },
+      "ErpGlRuleDetailDto": {
+        "properties": {
+          "description": {
+            "example": "Goods receipt: inventory at cost excl. VAT against GR/IR clearing",
+            "type": "string"
+          },
+          "eventType": {
+            "example": "erp_goods_receipt.posted",
+            "type": "string"
+          },
+          "id": {
+            "example": "0192f3a0-7c1e-7d2a-9b1f-00000000f608",
+            "format": "uuid",
+            "type": "string"
+          },
+          "key": {
+            "example": "F01",
+            "type": "string"
+          },
+          "name": {
+            "example": "รับสินค้าเข้าคลัง",
+            "type": "string"
+          },
+          "nextActions": {
+            "items": {
+              "$ref": "#/components/schemas/NextActionDto"
+            },
+            "type": "array"
+          },
+          "purposes": {
+            "description": "Purpose accounts readable as `accounts.<key>`",
+            "example": [
+              "grir",
+              "payables",
+              "inputVat"
+            ],
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "variables": {
+            "description": "What the payload carries for this rule",
+            "items": {
+              "$ref": "#/components/schemas/ErpGlRuleVariableDto"
+            },
+            "type": "array"
+          },
+          "versions": {
+            "description": "Newest first",
+            "items": {
+              "$ref": "#/components/schemas/ErpGlRuleVersionDto"
+            },
+            "type": "array"
+          }
+        },
+        "required": [
+          "id",
+          "key",
+          "eventType",
+          "name",
+          "description",
+          "versions",
+          "variables",
+          "purposes",
+          "nextActions"
+        ],
+        "type": "object"
+      },
       "ErpGlRuleDto": {
         "properties": {
           "accountCodes": {
@@ -42690,6 +42968,11 @@
             "example": "รับสินค้าเข้าคลัง",
             "type": "string"
           },
+          "pending": {
+            "description": "A new version waits for approval",
+            "example": false,
+            "type": "boolean"
+          },
           "template": {
             "additionalProperties": true,
             "description": "The template of the version in force",
@@ -42713,7 +42996,120 @@
           "versionNo",
           "template",
           "accountCodes",
-          "entries"
+          "entries",
+          "pending"
+        ],
+        "type": "object"
+      },
+      "ErpGlRuleVariableDto": {
+        "properties": {
+          "kind": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ErpGlVariableKind"
+              }
+            ],
+            "example": "amount"
+          },
+          "label": {
+            "example": "มูลค่าสินค้าไม่รวมค่าใช้จ่ายนำเข้า",
+            "type": "string"
+          },
+          "path": {
+            "example": "goodsValue",
+            "type": "string"
+          }
+        },
+        "required": [
+          "path",
+          "kind",
+          "label"
+        ],
+        "type": "object"
+      },
+      "ErpGlRuleVersionDto": {
+        "properties": {
+          "createdAt": {
+            "example": "2026-10-14T09:00:00+07:00",
+            "format": "date-time",
+            "type": "string"
+          },
+          "createdBy": {
+            "example": "ฝ่ายบัญชีโรงงาน ทดสอบ",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "current": {
+            "description": "The approved version in force now",
+            "example": true,
+            "type": "boolean"
+          },
+          "decidedAt": {
+            "example": "2026-10-14T10:00:00+07:00",
+            "format": "date-time",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "decidedBy": {
+            "example": "เจ้าของโรงงาน ทดสอบ",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "effectiveFrom": {
+            "example": "2026-10-14T00:00:00+07:00",
+            "format": "date-time",
+            "type": "string"
+          },
+          "id": {
+            "example": "0192f3a0-7c1e-7d2a-9b1f-00000000f608",
+            "format": "uuid",
+            "type": "string"
+          },
+          "nextActions": {
+            "items": {
+              "$ref": "#/components/schemas/NextActionDto"
+            },
+            "type": "array"
+          },
+          "reason": {
+            "example": "แยกค่าขนส่งขาเข้าไปบัญชีค่าขนส่ง",
+            "type": "string"
+          },
+          "status": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ConfigVersionStatus"
+              }
+            ],
+            "example": "approved"
+          },
+          "template": {
+            "$ref": "#/components/schemas/ErpGlTemplateDto"
+          },
+          "versionNo": {
+            "example": 2,
+            "type": "number"
+          }
+        },
+        "required": [
+          "id",
+          "versionNo",
+          "status",
+          "effectiveFrom",
+          "current",
+          "template",
+          "reason",
+          "createdBy",
+          "createdAt",
+          "decidedBy",
+          "decidedAt",
+          "nextActions"
         ],
         "type": "object"
       },
@@ -43367,6 +43763,132 @@
         ],
         "type": "object"
       },
+      "ErpGlTemplateDto": {
+        "properties": {
+          "description": {
+            "description": "Entry text; `{path}` reads the payload",
+            "example": "รับสินค้า {documentNo} — {partnerName}",
+            "maxLength": 300,
+            "minLength": 1,
+            "type": "string"
+          },
+          "lines": {
+            "items": {
+              "$ref": "#/components/schemas/ErpGlTemplateLineDto"
+            },
+            "maxItems": 30,
+            "minItems": 1,
+            "type": "array"
+          }
+        },
+        "required": [
+          "description",
+          "lines"
+        ],
+        "type": "object"
+      },
+      "ErpGlTemplateLineDto": {
+        "properties": {
+          "accountCode": {
+            "description": "A fixed account — or `accountPath`",
+            "example": "1141",
+            "pattern": "^[0-9A-Z][0-9A-Z.-]*$",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "accountPath": {
+            "description": "An account the document gives (`accounts.<purpose>`, `cashAccount`, `item.inventoryAccount`, …)",
+            "example": "accounts.grir",
+            "maxLength": 100,
+            "pattern": "^[A-Za-z_][A-Za-z0-9_]*(\\.[A-Za-z0-9_]+)*$",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "amount": {
+            "description": "Amount expression: payload paths, numbers, + - * / ( ), round/min/max/abs; a negative result posts on the other side",
+            "example": "goodsValue",
+            "maxLength": 200,
+            "minLength": 1,
+            "type": "string"
+          },
+          "description": {
+            "description": "Line text; `{path}` reads the payload",
+            "example": null,
+            "maxLength": 200,
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "dimensions": {
+            "additionalProperties": {
+              "type": "string"
+            },
+            "description": "Dimension → payload path (kept as the rule had them)",
+            "example": {
+              "item": "item.itemId"
+            },
+            "type": "object"
+          },
+          "forEach": {
+            "description": "Repeat the line for every element of this list (`movements`, `lines`); the element is `item`",
+            "example": null,
+            "maxLength": 100,
+            "pattern": "^[A-Za-z_][A-Za-z0-9_]*(\\.[A-Za-z0-9_]+)*$",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "side": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/LedgerSide"
+              }
+            ],
+            "example": "debit"
+          },
+          "taxBase": {
+            "description": "Tax base expression (with a tax code)",
+            "example": null,
+            "maxLength": 200,
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "taxCode": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/TaxCode"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "when": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ErpGlConditionDto"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Post the line only when this holds"
+          }
+        },
+        "required": [
+          "side",
+          "amount"
+        ],
+        "type": "object"
+      },
       "ErpGlTrialBalanceDto": {
         "properties": {
           "balanced": {
@@ -43456,6 +43978,16 @@
           "closing"
         ],
         "type": "object"
+      },
+      "ErpGlVariableKind": {
+        "enum": [
+          "amount",
+          "account",
+          "text",
+          "flag",
+          "list"
+        ],
+        "type": "string"
       },
       "ErpGoodsReceiptDto": {
         "properties": {
@@ -108219,7 +108751,7 @@
     "contact": {},
     "description": "Packio — Your Packaging Production Partner, operated by Collective Group (Thailand).\nRules: `docs/contract/api-conventions.md` (shared with packio-web).\n\n- **Surfaces:** `/v1/auth`, `/v1/store` (customer), `/v1/admin` (staff), `/v1/partner` (factories), `/v1/b2b` (company API clients, D-291), `/webhooks`. A token is accepted only on its own audience's prefix.\n- **Money:** decimal strings with exactly 2 decimals (`\"1234.50\"`) plus `currency: \"THB\"` on the object; never JSON numbers. Clients never compute prices.\n- **Dates:** ISO 8601 with offset, rendered in `Asia/Bangkok` (`2026-09-22T14:05:00+07:00`); date-only fields `YYYY-MM-DD`.\n- **IDs:** uuid only; business keys (`orderCode`) are separate fields.\n- **Errors:** RFC 9457 `application/problem+json` with a stable `code`; `title`/`detail` localised by `Accept-Language` (`th` default, `en`).\n- **Lists:** `?page&perPage(≤100)&sort&order&q` → `{ data, meta: { page, perPage, total } }`; feeds use `?cursor&limit` → `{ data, meta: { nextCursor } }`.\n- **Idempotency:** irreversible POSTs require `Idempotency-Key` (uuid); replays within 24 h return the original response.\n- **Concurrency:** editable resources return `ETag`; updates send `If-Match` (412 `concurrency.stale`).\n- **Files:** presign → PUT to the returned URL → reference the `fileId`.",
     "title": "Packio API",
-    "version": "0.49.0",
+    "version": "0.50.0",
     "x-packio-dieline": {
       "bundleSha256": "ff9416bcbd835e409e7c889465b22193b347975c641c6c20dcd557716f02c449",
       "package": "@packio/dieline",
@@ -374810,6 +375342,7 @@
                     "id": "0192f3a0-7c1e-7d2a-9b1f-00000000f608",
                     "key": "F01",
                     "name": "รับสินค้าเข้าคลัง",
+                    "pending": false,
                     "template": {
                       "description": "รับสินค้า {documentNo}",
                       "lines": []
@@ -374959,6 +375492,2183 @@
         ],
         "x-required-permissions": [
           "factory_ledger.read"
+        ]
+      }
+    },
+    "/v1/partner/factories/{factoryId}/erp/ledger/rules/{ruleId}": {
+      "get": {
+        "description": "Every version newest first (the one in force flagged), what the document carries for the template and the purpose accounts (D-398).\n\nImplements: D-388, D-398.",
+        "operationId": "partner.erpLedger.getRule",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "factoryId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "ruleId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "description": "Goods receipt: inventory at cost excl. VAT against GR/IR clearing",
+                  "eventType": "erp_goods_receipt.posted",
+                  "id": "0192f3a0-7c1e-7d2a-9b1f-00000000f608",
+                  "key": "F01",
+                  "name": "รับสินค้าเข้าคลัง",
+                  "nextActions": [],
+                  "purposes": [
+                    "grir",
+                    "payables",
+                    "inputVat"
+                  ],
+                  "variables": [
+                    {
+                      "kind": "amount",
+                      "label": "มูลค่าสินค้าไม่รวมค่าใช้จ่ายนำเข้า",
+                      "path": "goodsValue"
+                    },
+                    {
+                      "kind": "list",
+                      "label": "รายการเคลื่อนไหวสต็อก (ทีละบรรทัด)",
+                      "path": "movements"
+                    }
+                  ],
+                  "versions": [
+                    {
+                      "createdAt": "2026-10-14T09:00:00+07:00",
+                      "createdBy": "ฝ่ายบัญชีโรงงาน ทดสอบ",
+                      "current": false,
+                      "decidedAt": null,
+                      "decidedBy": null,
+                      "effectiveFrom": "2026-11-01T00:00:00+07:00",
+                      "id": "0192f3a0-7c1e-7d2a-9b1f-00000000f623",
+                      "nextActions": [
+                        {
+                          "disabledReason": null,
+                          "irreversible": false,
+                          "key": "erp_rule_version.approve"
+                        },
+                        {
+                          "disabledReason": null,
+                          "irreversible": false,
+                          "key": "erp_rule_version.reject"
+                        }
+                      ],
+                      "reason": "แยกค่าขนส่งขาเข้าไปบัญชีค่าขนส่ง",
+                      "status": "proposed",
+                      "template": {
+                        "description": "รับสินค้า {documentNo} — {partnerName}",
+                        "lines": [
+                          {
+                            "accountCode": null,
+                            "accountPath": "item.inventoryAccount",
+                            "amount": "item.value",
+                            "description": null,
+                            "forEach": "movements",
+                            "side": "debit",
+                            "taxBase": null,
+                            "taxCode": null,
+                            "when": null
+                          },
+                          {
+                            "accountCode": null,
+                            "accountPath": "accounts.grir",
+                            "amount": "goodsValue",
+                            "description": null,
+                            "forEach": null,
+                            "side": "credit",
+                            "taxBase": null,
+                            "taxCode": null,
+                            "when": null
+                          }
+                        ]
+                      },
+                      "versionNo": 2
+                    },
+                    {
+                      "createdAt": "2026-10-14T09:00:00+07:00",
+                      "createdBy": null,
+                      "current": true,
+                      "decidedAt": "2026-10-01T09:00:00+07:00",
+                      "decidedBy": null,
+                      "effectiveFrom": "1970-01-01T07:00:00+07:00",
+                      "id": "0192f3a0-7c1e-7d2a-9b1f-00000000f608",
+                      "nextActions": [],
+                      "reason": "Template v2",
+                      "status": "approved",
+                      "template": {
+                        "description": "รับสินค้า {documentNo} — {partnerName}",
+                        "lines": [
+                          {
+                            "accountCode": null,
+                            "accountPath": "item.inventoryAccount",
+                            "amount": "item.value",
+                            "description": null,
+                            "forEach": "movements",
+                            "side": "debit",
+                            "taxBase": null,
+                            "taxCode": null,
+                            "when": null
+                          },
+                          {
+                            "accountCode": null,
+                            "accountPath": "accounts.grir",
+                            "amount": "goodsValue",
+                            "description": null,
+                            "forEach": null,
+                            "side": "credit",
+                            "taxBase": null,
+                            "taxCode": null,
+                            "when": null
+                          }
+                        ]
+                      },
+                      "versionNo": 1
+                    }
+                  ]
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ErpGlRuleDetailDto"
+                }
+              }
+            },
+            "description": "The rule",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.unauthenticated": {
+                    "$ref": "#/components/examples/problem.auth.unauthenticated"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.unauthenticated`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.forbidden": {
+                    "$ref": "#/components/examples/problem.auth.forbidden"
+                  },
+                  "auth.wrong_audience": {
+                    "$ref": "#/components/examples/problem.auth.wrong_audience"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.forbidden`, `auth.wrong_audience`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "404": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.not_found": {
+                    "$ref": "#/components/examples/problem.http.not_found"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.not_found`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "partner": []
+          }
+        ],
+        "summary": "A posting rule with its versions",
+        "tags": [
+          "partner.erpLedger"
+        ],
+        "x-required-permissions": [
+          "factory_ledger.read"
+        ]
+      }
+    },
+    "/v1/partner/factories/{factoryId}/erp/ledger/rules/{ruleId}/actions/preview": {
+      "post": {
+        "description": "Renders the template against the factory’s latest document of the rule’s kind without posting; lists what is wrong with it (D-398).\n\nImplements: D-398.",
+        "operationId": "partner.erpLedger.previewRule",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "factoryId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "ruleId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "examples": {
+                "default": {
+                  "value": {
+                    "template": {
+                      "description": "รับสินค้า {documentNo} — {partnerName}",
+                      "lines": [
+                        {
+                          "accountCode": null,
+                          "accountPath": "item.inventoryAccount",
+                          "amount": "item.value",
+                          "description": null,
+                          "forEach": "movements",
+                          "side": "debit",
+                          "taxBase": null,
+                          "taxCode": null,
+                          "when": null
+                        },
+                        {
+                          "accountCode": null,
+                          "accountPath": "accounts.grir",
+                          "amount": "goodsValue",
+                          "description": null,
+                          "forEach": null,
+                          "side": "credit",
+                          "taxBase": null,
+                          "taxCode": null,
+                          "when": null
+                        }
+                      ]
+                    }
+                  }
+                }
+              },
+              "schema": {
+                "$ref": "#/components/schemas/ErpGlPreviewRuleDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "balanced": true,
+                  "description": "รับสินค้า GR-2610-0003 — บริษัท กระดาษ ทดสอบ จำกัด",
+                  "lines": [
+                    {
+                      "accountCode": "1141",
+                      "accountName": "วัตถุดิบ",
+                      "amount": "12500.00",
+                      "description": null,
+                      "side": "debit",
+                      "taxCode": null
+                    },
+                    {
+                      "accountCode": "2115",
+                      "accountName": "สินค้ารับแล้วรอใบแจ้งหนี้",
+                      "amount": "12500.00",
+                      "description": null,
+                      "side": "credit",
+                      "taxCode": null
+                    }
+                  ],
+                  "problems": [],
+                  "sampleAt": "2026-10-13T10:00:00+07:00",
+                  "sampleNo": "GR-2610-0003",
+                  "totalCredit": "12500.00",
+                  "totalDebit": "12500.00"
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ErpGlPreviewDto"
+                }
+              }
+            },
+            "description": "The entry it would post",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "400": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.bad_request": {
+                    "$ref": "#/components/examples/problem.http.bad_request"
+                  },
+                  "http.malformed_json": {
+                    "$ref": "#/components/examples/problem.http.malformed_json"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.bad_request`, `http.malformed_json`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.unauthenticated": {
+                    "$ref": "#/components/examples/problem.auth.unauthenticated"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.unauthenticated`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.forbidden": {
+                    "$ref": "#/components/examples/problem.auth.forbidden"
+                  },
+                  "auth.wrong_audience": {
+                    "$ref": "#/components/examples/problem.auth.wrong_audience"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.forbidden`, `auth.wrong_audience`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "404": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.not_found": {
+                    "$ref": "#/components/examples/problem.http.not_found"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.not_found`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "validation.failed": {
+                    "$ref": "#/components/examples/problem.validation.failed"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `validation.failed`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "partner": []
+          }
+        ],
+        "summary": "Try a template on the latest document",
+        "tags": [
+          "partner.erpLedger"
+        ],
+        "x-required-permissions": [
+          "factory_ledger.read"
+        ]
+      }
+    },
+    "/v1/partner/factories/{factoryId}/erp/ledger/rules/{ruleId}/versions": {
+      "post": {
+        "description": "Waits for another person’s approval and is in force from its day; refused while another version waits, or when the template has problems or does not balance on the latest document (D-398).\n\nImplements: D-398.",
+        "operationId": "partner.erpLedger.proposeRuleVersion",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "factoryId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "ruleId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/IdempotencyKey"
+          },
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "examples": {
+                "default": {
+                  "value": {
+                    "effectiveFrom": "2026-11-01",
+                    "reason": "แยกค่าขนส่งขาเข้าไปบัญชีค่าขนส่ง",
+                    "template": {
+                      "description": "รับสินค้า {documentNo} — {partnerName}",
+                      "lines": [
+                        {
+                          "accountCode": null,
+                          "accountPath": "item.inventoryAccount",
+                          "amount": "item.value",
+                          "description": null,
+                          "forEach": "movements",
+                          "side": "debit",
+                          "taxBase": null,
+                          "taxCode": null,
+                          "when": null
+                        },
+                        {
+                          "accountCode": null,
+                          "accountPath": "accounts.grir",
+                          "amount": "goodsValue",
+                          "description": null,
+                          "forEach": null,
+                          "side": "credit",
+                          "taxBase": null,
+                          "taxCode": null,
+                          "when": null
+                        }
+                      ]
+                    }
+                  }
+                }
+              },
+              "schema": {
+                "$ref": "#/components/schemas/ErpGlProposeRuleVersionDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "description": "Goods receipt: inventory at cost excl. VAT against GR/IR clearing",
+                  "eventType": "erp_goods_receipt.posted",
+                  "id": "0192f3a0-7c1e-7d2a-9b1f-00000000f608",
+                  "key": "F01",
+                  "name": "รับสินค้าเข้าคลัง",
+                  "nextActions": [],
+                  "purposes": [
+                    "grir",
+                    "payables",
+                    "inputVat"
+                  ],
+                  "variables": [
+                    {
+                      "kind": "amount",
+                      "label": "มูลค่าสินค้าไม่รวมค่าใช้จ่ายนำเข้า",
+                      "path": "goodsValue"
+                    },
+                    {
+                      "kind": "list",
+                      "label": "รายการเคลื่อนไหวสต็อก (ทีละบรรทัด)",
+                      "path": "movements"
+                    }
+                  ],
+                  "versions": [
+                    {
+                      "createdAt": "2026-10-14T09:00:00+07:00",
+                      "createdBy": "ฝ่ายบัญชีโรงงาน ทดสอบ",
+                      "current": false,
+                      "decidedAt": null,
+                      "decidedBy": null,
+                      "effectiveFrom": "2026-11-01T00:00:00+07:00",
+                      "id": "0192f3a0-7c1e-7d2a-9b1f-00000000f623",
+                      "nextActions": [
+                        {
+                          "disabledReason": null,
+                          "irreversible": false,
+                          "key": "erp_rule_version.approve"
+                        },
+                        {
+                          "disabledReason": null,
+                          "irreversible": false,
+                          "key": "erp_rule_version.reject"
+                        }
+                      ],
+                      "reason": "แยกค่าขนส่งขาเข้าไปบัญชีค่าขนส่ง",
+                      "status": "proposed",
+                      "template": {
+                        "description": "รับสินค้า {documentNo} — {partnerName}",
+                        "lines": [
+                          {
+                            "accountCode": null,
+                            "accountPath": "item.inventoryAccount",
+                            "amount": "item.value",
+                            "description": null,
+                            "forEach": "movements",
+                            "side": "debit",
+                            "taxBase": null,
+                            "taxCode": null,
+                            "when": null
+                          },
+                          {
+                            "accountCode": null,
+                            "accountPath": "accounts.grir",
+                            "amount": "goodsValue",
+                            "description": null,
+                            "forEach": null,
+                            "side": "credit",
+                            "taxBase": null,
+                            "taxCode": null,
+                            "when": null
+                          }
+                        ]
+                      },
+                      "versionNo": 2
+                    },
+                    {
+                      "createdAt": "2026-10-14T09:00:00+07:00",
+                      "createdBy": null,
+                      "current": true,
+                      "decidedAt": "2026-10-01T09:00:00+07:00",
+                      "decidedBy": null,
+                      "effectiveFrom": "1970-01-01T07:00:00+07:00",
+                      "id": "0192f3a0-7c1e-7d2a-9b1f-00000000f608",
+                      "nextActions": [],
+                      "reason": "Template v2",
+                      "status": "approved",
+                      "template": {
+                        "description": "รับสินค้า {documentNo} — {partnerName}",
+                        "lines": [
+                          {
+                            "accountCode": null,
+                            "accountPath": "item.inventoryAccount",
+                            "amount": "item.value",
+                            "description": null,
+                            "forEach": "movements",
+                            "side": "debit",
+                            "taxBase": null,
+                            "taxCode": null,
+                            "when": null
+                          },
+                          {
+                            "accountCode": null,
+                            "accountPath": "accounts.grir",
+                            "amount": "goodsValue",
+                            "description": null,
+                            "forEach": null,
+                            "side": "credit",
+                            "taxBase": null,
+                            "taxCode": null,
+                            "when": null
+                          }
+                        ]
+                      },
+                      "versionNo": 1
+                    }
+                  ]
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ErpGlRuleDetailDto"
+                }
+              }
+            },
+            "description": "Proposed",
+            "headers": {
+              "Idempotent-Replayed": {
+                "$ref": "#/components/headers/IdempotentReplayed"
+              },
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "400": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.bad_request": {
+                    "$ref": "#/components/examples/problem.http.bad_request"
+                  },
+                  "http.malformed_json": {
+                    "$ref": "#/components/examples/problem.http.malformed_json"
+                  },
+                  "idempotency.key_invalid": {
+                    "$ref": "#/components/examples/problem.idempotency.key_invalid"
+                  },
+                  "idempotency.key_required": {
+                    "$ref": "#/components/examples/problem.idempotency.key_required"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.bad_request`, `http.malformed_json`, `idempotency.key_invalid`, `idempotency.key_required`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.unauthenticated": {
+                    "$ref": "#/components/examples/problem.auth.unauthenticated"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.unauthenticated`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.forbidden": {
+                    "$ref": "#/components/examples/problem.auth.forbidden"
+                  },
+                  "auth.wrong_audience": {
+                    "$ref": "#/components/examples/problem.auth.wrong_audience"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.forbidden`, `auth.wrong_audience`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "404": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.not_found": {
+                    "$ref": "#/components/examples/problem.http.not_found"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.not_found`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "409": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "erp.ledger_version_pending": {
+                    "$ref": "#/components/examples/problem.erp.ledger_version_pending"
+                  },
+                  "idempotency.in_progress": {
+                    "$ref": "#/components/examples/problem.idempotency.in_progress"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `erp.ledger_version_pending`, `idempotency.in_progress`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "idempotency.key_reused": {
+                    "$ref": "#/components/examples/problem.idempotency.key_reused"
+                  },
+                  "validation.failed": {
+                    "$ref": "#/components/examples/problem.validation.failed"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `idempotency.key_reused`, `validation.failed`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "partner": []
+          }
+        ],
+        "summary": "Propose a new rule version",
+        "tags": [
+          "partner.erpLedger"
+        ],
+        "x-required-permissions": [
+          "factory_ledger.configure"
+        ]
+      }
+    },
+    "/v1/partner/factories/{factoryId}/erp/ledger/rules/{ruleId}/versions/{versionId}/actions/approve": {
+      "post": {
+        "description": "Documents dated from its day post with it; never your own proposal (D-398).\n\nImplements: D-398.",
+        "operationId": "partner.erpLedger.approveRuleVersion",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "factoryId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "ruleId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "versionId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/IdempotencyKey"
+          },
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "examples": {
+                "default": {
+                  "value": {
+                    "note": "เห็นชอบ"
+                  }
+                }
+              },
+              "schema": {
+                "$ref": "#/components/schemas/ErpGlDecisionDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "description": "Goods receipt: inventory at cost excl. VAT against GR/IR clearing",
+                  "eventType": "erp_goods_receipt.posted",
+                  "id": "0192f3a0-7c1e-7d2a-9b1f-00000000f608",
+                  "key": "F01",
+                  "name": "รับสินค้าเข้าคลัง",
+                  "nextActions": [],
+                  "purposes": [
+                    "grir",
+                    "payables",
+                    "inputVat"
+                  ],
+                  "variables": [
+                    {
+                      "kind": "amount",
+                      "label": "มูลค่าสินค้าไม่รวมค่าใช้จ่ายนำเข้า",
+                      "path": "goodsValue"
+                    },
+                    {
+                      "kind": "list",
+                      "label": "รายการเคลื่อนไหวสต็อก (ทีละบรรทัด)",
+                      "path": "movements"
+                    }
+                  ],
+                  "versions": [
+                    {
+                      "createdAt": "2026-10-14T09:00:00+07:00",
+                      "createdBy": "ฝ่ายบัญชีโรงงาน ทดสอบ",
+                      "current": false,
+                      "decidedAt": null,
+                      "decidedBy": null,
+                      "effectiveFrom": "2026-11-01T00:00:00+07:00",
+                      "id": "0192f3a0-7c1e-7d2a-9b1f-00000000f623",
+                      "nextActions": [
+                        {
+                          "disabledReason": null,
+                          "irreversible": false,
+                          "key": "erp_rule_version.approve"
+                        },
+                        {
+                          "disabledReason": null,
+                          "irreversible": false,
+                          "key": "erp_rule_version.reject"
+                        }
+                      ],
+                      "reason": "แยกค่าขนส่งขาเข้าไปบัญชีค่าขนส่ง",
+                      "status": "proposed",
+                      "template": {
+                        "description": "รับสินค้า {documentNo} — {partnerName}",
+                        "lines": [
+                          {
+                            "accountCode": null,
+                            "accountPath": "item.inventoryAccount",
+                            "amount": "item.value",
+                            "description": null,
+                            "forEach": "movements",
+                            "side": "debit",
+                            "taxBase": null,
+                            "taxCode": null,
+                            "when": null
+                          },
+                          {
+                            "accountCode": null,
+                            "accountPath": "accounts.grir",
+                            "amount": "goodsValue",
+                            "description": null,
+                            "forEach": null,
+                            "side": "credit",
+                            "taxBase": null,
+                            "taxCode": null,
+                            "when": null
+                          }
+                        ]
+                      },
+                      "versionNo": 2
+                    },
+                    {
+                      "createdAt": "2026-10-14T09:00:00+07:00",
+                      "createdBy": null,
+                      "current": true,
+                      "decidedAt": "2026-10-01T09:00:00+07:00",
+                      "decidedBy": null,
+                      "effectiveFrom": "1970-01-01T07:00:00+07:00",
+                      "id": "0192f3a0-7c1e-7d2a-9b1f-00000000f608",
+                      "nextActions": [],
+                      "reason": "Template v2",
+                      "status": "approved",
+                      "template": {
+                        "description": "รับสินค้า {documentNo} — {partnerName}",
+                        "lines": [
+                          {
+                            "accountCode": null,
+                            "accountPath": "item.inventoryAccount",
+                            "amount": "item.value",
+                            "description": null,
+                            "forEach": "movements",
+                            "side": "debit",
+                            "taxBase": null,
+                            "taxCode": null,
+                            "when": null
+                          },
+                          {
+                            "accountCode": null,
+                            "accountPath": "accounts.grir",
+                            "amount": "goodsValue",
+                            "description": null,
+                            "forEach": null,
+                            "side": "credit",
+                            "taxBase": null,
+                            "taxCode": null,
+                            "when": null
+                          }
+                        ]
+                      },
+                      "versionNo": 1
+                    }
+                  ]
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ErpGlRuleDetailDto"
+                }
+              }
+            },
+            "description": "Approved",
+            "headers": {
+              "Idempotent-Replayed": {
+                "$ref": "#/components/headers/IdempotentReplayed"
+              },
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "400": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.bad_request": {
+                    "$ref": "#/components/examples/problem.http.bad_request"
+                  },
+                  "http.malformed_json": {
+                    "$ref": "#/components/examples/problem.http.malformed_json"
+                  },
+                  "idempotency.key_invalid": {
+                    "$ref": "#/components/examples/problem.idempotency.key_invalid"
+                  },
+                  "idempotency.key_required": {
+                    "$ref": "#/components/examples/problem.idempotency.key_required"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.bad_request`, `http.malformed_json`, `idempotency.key_invalid`, `idempotency.key_required`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.unauthenticated": {
+                    "$ref": "#/components/examples/problem.auth.unauthenticated"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.unauthenticated`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.forbidden": {
+                    "$ref": "#/components/examples/problem.auth.forbidden"
+                  },
+                  "auth.wrong_audience": {
+                    "$ref": "#/components/examples/problem.auth.wrong_audience"
+                  },
+                  "erp.ledger_self_approval": {
+                    "$ref": "#/components/examples/problem.erp.ledger_self_approval"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.forbidden`, `auth.wrong_audience`, `erp.ledger_self_approval`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "404": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.not_found": {
+                    "$ref": "#/components/examples/problem.http.not_found"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.not_found`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "409": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "erp.invalid_status": {
+                    "$ref": "#/components/examples/problem.erp.invalid_status"
+                  },
+                  "idempotency.in_progress": {
+                    "$ref": "#/components/examples/problem.idempotency.in_progress"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `erp.invalid_status`, `idempotency.in_progress`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "idempotency.key_reused": {
+                    "$ref": "#/components/examples/problem.idempotency.key_reused"
+                  },
+                  "validation.failed": {
+                    "$ref": "#/components/examples/problem.validation.failed"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `idempotency.key_reused`, `validation.failed`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "partner": []
+          }
+        ],
+        "summary": "Approve a rule version",
+        "tags": [
+          "partner.erpLedger"
+        ],
+        "x-required-permissions": [
+          "factory_ledger.approve"
+        ]
+      }
+    },
+    "/v1/partner/factories/{factoryId}/erp/ledger/rules/{ruleId}/versions/{versionId}/actions/reject": {
+      "post": {
+        "description": "The rule keeps the version in force (D-398).\n\nImplements: D-398.",
+        "operationId": "partner.erpLedger.rejectRuleVersion",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "factoryId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "ruleId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "versionId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/IdempotencyKey"
+          },
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "examples": {
+                "default": {
+                  "value": {
+                    "note": "ใช้บัญชีเดิมต่อไป"
+                  }
+                }
+              },
+              "schema": {
+                "$ref": "#/components/schemas/ErpGlDecisionDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "description": "Goods receipt: inventory at cost excl. VAT against GR/IR clearing",
+                  "eventType": "erp_goods_receipt.posted",
+                  "id": "0192f3a0-7c1e-7d2a-9b1f-00000000f608",
+                  "key": "F01",
+                  "name": "รับสินค้าเข้าคลัง",
+                  "nextActions": [],
+                  "purposes": [
+                    "grir",
+                    "payables",
+                    "inputVat"
+                  ],
+                  "variables": [
+                    {
+                      "kind": "amount",
+                      "label": "มูลค่าสินค้าไม่รวมค่าใช้จ่ายนำเข้า",
+                      "path": "goodsValue"
+                    },
+                    {
+                      "kind": "list",
+                      "label": "รายการเคลื่อนไหวสต็อก (ทีละบรรทัด)",
+                      "path": "movements"
+                    }
+                  ],
+                  "versions": [
+                    {
+                      "createdAt": "2026-10-14T09:00:00+07:00",
+                      "createdBy": "ฝ่ายบัญชีโรงงาน ทดสอบ",
+                      "current": false,
+                      "decidedAt": null,
+                      "decidedBy": null,
+                      "effectiveFrom": "2026-11-01T00:00:00+07:00",
+                      "id": "0192f3a0-7c1e-7d2a-9b1f-00000000f623",
+                      "nextActions": [
+                        {
+                          "disabledReason": null,
+                          "irreversible": false,
+                          "key": "erp_rule_version.approve"
+                        },
+                        {
+                          "disabledReason": null,
+                          "irreversible": false,
+                          "key": "erp_rule_version.reject"
+                        }
+                      ],
+                      "reason": "แยกค่าขนส่งขาเข้าไปบัญชีค่าขนส่ง",
+                      "status": "proposed",
+                      "template": {
+                        "description": "รับสินค้า {documentNo} — {partnerName}",
+                        "lines": [
+                          {
+                            "accountCode": null,
+                            "accountPath": "item.inventoryAccount",
+                            "amount": "item.value",
+                            "description": null,
+                            "forEach": "movements",
+                            "side": "debit",
+                            "taxBase": null,
+                            "taxCode": null,
+                            "when": null
+                          },
+                          {
+                            "accountCode": null,
+                            "accountPath": "accounts.grir",
+                            "amount": "goodsValue",
+                            "description": null,
+                            "forEach": null,
+                            "side": "credit",
+                            "taxBase": null,
+                            "taxCode": null,
+                            "when": null
+                          }
+                        ]
+                      },
+                      "versionNo": 2
+                    },
+                    {
+                      "createdAt": "2026-10-14T09:00:00+07:00",
+                      "createdBy": null,
+                      "current": true,
+                      "decidedAt": "2026-10-01T09:00:00+07:00",
+                      "decidedBy": null,
+                      "effectiveFrom": "1970-01-01T07:00:00+07:00",
+                      "id": "0192f3a0-7c1e-7d2a-9b1f-00000000f608",
+                      "nextActions": [],
+                      "reason": "Template v2",
+                      "status": "approved",
+                      "template": {
+                        "description": "รับสินค้า {documentNo} — {partnerName}",
+                        "lines": [
+                          {
+                            "accountCode": null,
+                            "accountPath": "item.inventoryAccount",
+                            "amount": "item.value",
+                            "description": null,
+                            "forEach": "movements",
+                            "side": "debit",
+                            "taxBase": null,
+                            "taxCode": null,
+                            "when": null
+                          },
+                          {
+                            "accountCode": null,
+                            "accountPath": "accounts.grir",
+                            "amount": "goodsValue",
+                            "description": null,
+                            "forEach": null,
+                            "side": "credit",
+                            "taxBase": null,
+                            "taxCode": null,
+                            "when": null
+                          }
+                        ]
+                      },
+                      "versionNo": 1
+                    }
+                  ]
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ErpGlRuleDetailDto"
+                }
+              }
+            },
+            "description": "Rejected",
+            "headers": {
+              "Idempotent-Replayed": {
+                "$ref": "#/components/headers/IdempotentReplayed"
+              },
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "400": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.bad_request": {
+                    "$ref": "#/components/examples/problem.http.bad_request"
+                  },
+                  "http.malformed_json": {
+                    "$ref": "#/components/examples/problem.http.malformed_json"
+                  },
+                  "idempotency.key_invalid": {
+                    "$ref": "#/components/examples/problem.idempotency.key_invalid"
+                  },
+                  "idempotency.key_required": {
+                    "$ref": "#/components/examples/problem.idempotency.key_required"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.bad_request`, `http.malformed_json`, `idempotency.key_invalid`, `idempotency.key_required`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.unauthenticated": {
+                    "$ref": "#/components/examples/problem.auth.unauthenticated"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.unauthenticated`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.forbidden": {
+                    "$ref": "#/components/examples/problem.auth.forbidden"
+                  },
+                  "auth.wrong_audience": {
+                    "$ref": "#/components/examples/problem.auth.wrong_audience"
+                  },
+                  "erp.ledger_self_approval": {
+                    "$ref": "#/components/examples/problem.erp.ledger_self_approval"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.forbidden`, `auth.wrong_audience`, `erp.ledger_self_approval`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "404": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.not_found": {
+                    "$ref": "#/components/examples/problem.http.not_found"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.not_found`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "409": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "erp.invalid_status": {
+                    "$ref": "#/components/examples/problem.erp.invalid_status"
+                  },
+                  "idempotency.in_progress": {
+                    "$ref": "#/components/examples/problem.idempotency.in_progress"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `erp.invalid_status`, `idempotency.in_progress`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "idempotency.key_reused": {
+                    "$ref": "#/components/examples/problem.idempotency.key_reused"
+                  },
+                  "validation.failed": {
+                    "$ref": "#/components/examples/problem.validation.failed"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `idempotency.key_reused`, `validation.failed`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "partner": []
+          }
+        ],
+        "summary": "Reject a rule version",
+        "tags": [
+          "partner.erpLedger"
+        ],
+        "x-required-permissions": [
+          "factory_ledger.approve"
+        ]
+      }
+    },
+    "/v1/partner/factories/{factoryId}/erp/ledger/rules/{ruleId}/versions/{versionId}/actions/withdraw": {
+      "post": {
+        "description": "Only the proposer, while it waits (D-398).\n\nImplements: D-398.",
+        "operationId": "partner.erpLedger.withdrawRuleVersion",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "factoryId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "ruleId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "versionId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/IdempotencyKey"
+          },
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "description": "Goods receipt: inventory at cost excl. VAT against GR/IR clearing",
+                  "eventType": "erp_goods_receipt.posted",
+                  "id": "0192f3a0-7c1e-7d2a-9b1f-00000000f608",
+                  "key": "F01",
+                  "name": "รับสินค้าเข้าคลัง",
+                  "nextActions": [],
+                  "purposes": [
+                    "grir",
+                    "payables",
+                    "inputVat"
+                  ],
+                  "variables": [
+                    {
+                      "kind": "amount",
+                      "label": "มูลค่าสินค้าไม่รวมค่าใช้จ่ายนำเข้า",
+                      "path": "goodsValue"
+                    },
+                    {
+                      "kind": "list",
+                      "label": "รายการเคลื่อนไหวสต็อก (ทีละบรรทัด)",
+                      "path": "movements"
+                    }
+                  ],
+                  "versions": [
+                    {
+                      "createdAt": "2026-10-14T09:00:00+07:00",
+                      "createdBy": "ฝ่ายบัญชีโรงงาน ทดสอบ",
+                      "current": false,
+                      "decidedAt": null,
+                      "decidedBy": null,
+                      "effectiveFrom": "2026-11-01T00:00:00+07:00",
+                      "id": "0192f3a0-7c1e-7d2a-9b1f-00000000f623",
+                      "nextActions": [
+                        {
+                          "disabledReason": null,
+                          "irreversible": false,
+                          "key": "erp_rule_version.approve"
+                        },
+                        {
+                          "disabledReason": null,
+                          "irreversible": false,
+                          "key": "erp_rule_version.reject"
+                        }
+                      ],
+                      "reason": "แยกค่าขนส่งขาเข้าไปบัญชีค่าขนส่ง",
+                      "status": "proposed",
+                      "template": {
+                        "description": "รับสินค้า {documentNo} — {partnerName}",
+                        "lines": [
+                          {
+                            "accountCode": null,
+                            "accountPath": "item.inventoryAccount",
+                            "amount": "item.value",
+                            "description": null,
+                            "forEach": "movements",
+                            "side": "debit",
+                            "taxBase": null,
+                            "taxCode": null,
+                            "when": null
+                          },
+                          {
+                            "accountCode": null,
+                            "accountPath": "accounts.grir",
+                            "amount": "goodsValue",
+                            "description": null,
+                            "forEach": null,
+                            "side": "credit",
+                            "taxBase": null,
+                            "taxCode": null,
+                            "when": null
+                          }
+                        ]
+                      },
+                      "versionNo": 2
+                    },
+                    {
+                      "createdAt": "2026-10-14T09:00:00+07:00",
+                      "createdBy": null,
+                      "current": true,
+                      "decidedAt": "2026-10-01T09:00:00+07:00",
+                      "decidedBy": null,
+                      "effectiveFrom": "1970-01-01T07:00:00+07:00",
+                      "id": "0192f3a0-7c1e-7d2a-9b1f-00000000f608",
+                      "nextActions": [],
+                      "reason": "Template v2",
+                      "status": "approved",
+                      "template": {
+                        "description": "รับสินค้า {documentNo} — {partnerName}",
+                        "lines": [
+                          {
+                            "accountCode": null,
+                            "accountPath": "item.inventoryAccount",
+                            "amount": "item.value",
+                            "description": null,
+                            "forEach": "movements",
+                            "side": "debit",
+                            "taxBase": null,
+                            "taxCode": null,
+                            "when": null
+                          },
+                          {
+                            "accountCode": null,
+                            "accountPath": "accounts.grir",
+                            "amount": "goodsValue",
+                            "description": null,
+                            "forEach": null,
+                            "side": "credit",
+                            "taxBase": null,
+                            "taxCode": null,
+                            "when": null
+                          }
+                        ]
+                      },
+                      "versionNo": 1
+                    }
+                  ]
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ErpGlRuleDetailDto"
+                }
+              }
+            },
+            "description": "Withdrawn",
+            "headers": {
+              "Idempotent-Replayed": {
+                "$ref": "#/components/headers/IdempotentReplayed"
+              },
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "400": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.bad_request": {
+                    "$ref": "#/components/examples/problem.http.bad_request"
+                  },
+                  "http.malformed_json": {
+                    "$ref": "#/components/examples/problem.http.malformed_json"
+                  },
+                  "idempotency.key_invalid": {
+                    "$ref": "#/components/examples/problem.idempotency.key_invalid"
+                  },
+                  "idempotency.key_required": {
+                    "$ref": "#/components/examples/problem.idempotency.key_required"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.bad_request`, `http.malformed_json`, `idempotency.key_invalid`, `idempotency.key_required`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.unauthenticated": {
+                    "$ref": "#/components/examples/problem.auth.unauthenticated"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.unauthenticated`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.forbidden": {
+                    "$ref": "#/components/examples/problem.auth.forbidden"
+                  },
+                  "auth.wrong_audience": {
+                    "$ref": "#/components/examples/problem.auth.wrong_audience"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.forbidden`, `auth.wrong_audience`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "404": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.not_found": {
+                    "$ref": "#/components/examples/problem.http.not_found"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.not_found`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "409": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "erp.invalid_status": {
+                    "$ref": "#/components/examples/problem.erp.invalid_status"
+                  },
+                  "idempotency.in_progress": {
+                    "$ref": "#/components/examples/problem.idempotency.in_progress"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `erp.invalid_status`, `idempotency.in_progress`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "idempotency.key_reused": {
+                    "$ref": "#/components/examples/problem.idempotency.key_reused"
+                  },
+                  "validation.failed": {
+                    "$ref": "#/components/examples/problem.validation.failed"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `idempotency.key_reused`, `validation.failed`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "partner": []
+          }
+        ],
+        "summary": "Withdraw your rule version",
+        "tags": [
+          "partner.erpLedger"
+        ],
+        "x-required-permissions": [
+          "factory_ledger.configure"
         ]
       }
     },
