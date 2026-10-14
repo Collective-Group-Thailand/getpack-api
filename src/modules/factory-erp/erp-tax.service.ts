@@ -1,11 +1,13 @@
 import { DomainException } from '@common/errors/domain.exception';
 import { type ActionRule, nextActions } from '@common/next-actions/next-actions';
 import { paginated, toSkipTake } from '@common/pagination/pagination';
+import { bangkokDate } from '@common/time/bangkok';
 import { type Tx } from '@database/prisma.service';
 import { type ErpWhtIncomeType, type Prisma } from '@generated/prisma/client';
 import { type ReportColumn } from '@modules/reports/report-types';
 import { writeReport } from '@modules/reports/report-writer';
 import { Injectable } from '@nestjs/common';
+import { SettingNotFoundError, SettingsService } from '@platform/settings/settings.service';
 
 import { dec, fmtMoney, money2 } from './erp.math';
 import {
@@ -77,6 +79,7 @@ export class ErpTaxService {
   constructor(
     private readonly workspace: ErpWorkspace,
     private readonly files: ErpFilesService,
+    private readonly settings: SettingsService,
   ) {}
 
   // ---------------------------------------------------------------------------- 50 ทวิ certificates
@@ -282,6 +285,7 @@ export class ErpTaxService {
           sourceId: n.publicId,
         };
       }),
+      ...(await this.packioStatements(scope, month)),
     ].sort((a, b) => a.date.localeCompare(b.date) || a.docNo.localeCompare(b.docNo));
     return {
       month,
@@ -290,6 +294,63 @@ export class ErpTaxService {
       net: fmtMoney(rows.reduce((a, x) => a.plus(dec(x.net)), dec(0))),
       vat: fmtMoney(rows.reduce((a, x) => a.plus(dec(x.vat)), dec(0))),
     };
+  }
+
+  /**
+   * Packio statements the factory confirmed in the month (D-401): the factory's own sale to Packio, on its books by
+   * F14 on the confirmation day (D-397) — numbered by the tax invoice the factory gave Packio when it is recorded, by
+   * the statement otherwise; the buyer is the Packio entity from its registered settings.
+   */
+  private async packioStatements(scope: ErpScope, month: string): Promise<ErpVatReportRowDto[]> {
+    const r = monthRange(month);
+    const statements = await this.workspace.db.billingStatement.findMany({
+      where: {
+        factoryId: scope.factory.id,
+        confirmedAt: { gte: new Date(`${month}-01T00:00:00+07:00`), lt: new Date(`${r.next}T00:00:00+07:00`) },
+        vatAmount: { gt: 0 },
+      },
+      include: {
+        vendorInvoices: {
+          where: { isTaxInvoice: true, status: { in: ['recorded', 'validated'] } },
+          orderBy: { invoiceDate: 'desc' },
+          take: 1,
+          select: { vendorInvoiceNo: true },
+        },
+      },
+      orderBy: { confirmedAt: 'asc' },
+    });
+    if (!statements.length) return [];
+    const buyers = new Map<bigint, { name: string; taxId: string | null; branch: string | null }>();
+    for (const entityId of new Set(statements.map((s) => s.entityId))) {
+      const read = async (key: string): Promise<string | null> => {
+        try {
+          return String((await this.settings.at(key as never, { at: new Date(), scope: { type: 'entity', id: entityId } })).value);
+        } catch (error) {
+          if (error instanceof SettingNotFoundError) return null;
+          throw error;
+        }
+      };
+      buyers.set(entityId, {
+        name: (await read('entity.legal_name_th')) ?? 'Packio',
+        taxId: await read('entity.tax_id'),
+        branch: await read('entity.branch_code'),
+      });
+    }
+    return statements.map((s) => {
+      const buyer = buyers.get(s.entityId)!;
+      return {
+        date: bangkokDate(s.confirmedAt!),
+        docNo: s.vendorInvoices[0]?.vendorInvoiceNo ?? s.bsNumber,
+        kind: 'packio_statement',
+        partyName: buyer.name,
+        partyTaxId: buyer.taxId,
+        partyBranch: buyer.branch,
+        net: fmtMoney(s.netAmount),
+        vat: fmtMoney(s.vatAmount),
+        voided: false,
+        sourceId: s.publicId,
+      };
+    });
   }
 
   async purchaseVat(scope: ErpScope, month: string): Promise<ErpVatReportDto> {

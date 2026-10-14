@@ -2140,8 +2140,8 @@ export class PartnerErpTaxController {
   @Op({
     id: 'partner.erpTax.salesVat',
     summary: 'Sales tax report (รายงานภาษีขาย)',
-    description: 'The month’s tax invoices and credit / debit notes in date and number order; voided ones with no value (D-367).',
-    implements: ['D-367'],
+    description: 'The month’s tax invoices and credit / debit notes in date and number order; voided ones with no value (D-367); Packio billing statements the factory confirmed in the month as `packio_statement` rows (D-401).',
+    implements: ['D-367', 'D-401'],
     can: 'factory_tax.read',
     success: { status: 200, description: 'The report', type: ErpVatReportDto, example: VAT_REPORT },
     errors: ['http.not_found', 'validation.failed'],
@@ -2168,8 +2168,8 @@ export class PartnerErpTaxController {
   @Op({
     id: 'partner.erpTax.vat30',
     summary: 'ภ.พ.30 summary',
-    description: 'Output VAT, input VAT and what is payable or carried forward for the month, with the due date (D-367).',
-    implements: ['D-367'],
+    description: 'Output VAT (including Packio statements confirmed in the month, D-401), input VAT and what is payable or carried forward for the month, with the due date (D-367).',
+    implements: ['D-367', 'D-401'],
     can: 'factory_tax.read',
     success: {
       status: 200,

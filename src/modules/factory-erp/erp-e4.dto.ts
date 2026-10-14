@@ -2632,7 +2632,8 @@ export class ErpVatReportRowDto {
   docNo!: string;
 
   @ApiProperty({
-    enum: ['tax_invoice', 'credit_note', 'debit_note', 'supplier_tax_invoice'],
+    enum: ['tax_invoice', 'credit_note', 'debit_note', 'supplier_tax_invoice', 'packio_statement'],
+    description: '`packio_statement`: a Packio billing statement the factory confirmed — its sale to Packio (D-401)',
     enumName: 'ErpVatRowKind',
     example: 'tax_invoice',
   })
