@@ -29,7 +29,7 @@ describe('PackioDielineEngine (vendored bundle, ADR-0010)', () => {
       min: expect.any(Number),
       max: expect.any(Number),
     });
-    expect(facts.variants.length).toBeGreaterThan(1);
+    expect(facts.variants!.length).toBeGreaterThan(1);
   });
 
   it('draws the designer PDF of a variant with named layers, bleed and safe areas (D-302)', async () => {

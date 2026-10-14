@@ -1,9 +1,9 @@
 import { type Tx } from '@database/prisma.service';
-import { Injectable } from '@nestjs/common';
+import { DIELINE_ENGINE, type DielineEngine } from '@integrations/dieline/dieline-engine.port';
+import { Inject, Injectable, Logger } from '@nestjs/common';
 import { DomainEvents } from '@platform/domain-events/domain-events.service';
-import { SettingsService } from '@platform/settings/settings.service';
 
-import { pricePath, publishReasons } from './publishability';
+import { drawableBy, pricePath, publishReasons } from './publishability';
 import { searchDocument } from './search-document';
 import { StyleMakeabilityService } from './style-makeability.service';
 
@@ -15,24 +15,40 @@ import { StyleMakeabilityService } from './style-makeability.service';
  */
 @Injectable()
 export class StylePublishingService {
+  private readonly logger = new Logger(StylePublishingService.name);
+
   constructor(
-    private readonly settings: SettingsService,
     private readonly makeability: StyleMakeabilityService,
     private readonly events: DomainEvents,
+    @Inject(DIELINE_ENGINE) private readonly engine: DielineEngine,
   ) {}
+
+  /**
+   * D-407: the variants an approved engine recipe draws (`axis → value`), or null when that is not known — a recipe that
+   * is not the engine's (`{ engine: [...] }`) or an engine that cannot load: the gate is then left open.
+   */
+  private async drawnVariants(recipe: unknown): Promise<Record<string, string>[] | null> {
+    const stored = recipe as { engine?: unknown };
+    if (!Array.isArray(stored?.engine)) return null;
+    try {
+      return (await this.engine.facts(stored as never)).variants;
+    } catch (error) {
+      this.logger.warn(`drawable variants unknown: ${(error as Error).message}`);
+      return null;
+    }
+  }
 
   async recompute(
     tx: Tx,
     baseIds?: bigint[],
   ): Promise<{ bases: number; variants: number; publishable: number }> {
     if (baseIds && baseIds.length === 0) return { bases: 0, variants: 0, publishable: 0 };
-    const publishedWave = Number((await this.settings.at('styles.published_wave', { tx })).value);
     const bases = await tx.styleBase.findMany({
       where: baseIds ? { id: { in: baseIds } } : {},
       include: {
         productType: { select: { status: true, calculatorKey: true, quoteMode: true } },
         recipes: {
-          select: { approvedAt: true, processes: true, version: true },
+          select: { approvedAt: true, processes: true, version: true, recipe: true },
           orderBy: { version: 'desc' },
         },
         variants: {
@@ -67,6 +83,7 @@ export class StylePublishingService {
     let publishable = 0;
     for (const base of bases) {
       const approvedRecipe = base.recipes.find((r) => r.approvedAt !== null);
+      const drawn = approvedRecipe ? await this.drawnVariants(approvedRecipe.recipe) : null;
       const makeable = await this.makeability.makeable(
         tx,
         base.variants
@@ -89,15 +106,13 @@ export class StylePublishingService {
           baseStatus: base.status,
           variantStatus: v.status,
           hidden: base.hidden,
-          wave: base.wave,
-          publishedWave,
           productTypeActive: base.productType?.status === 'active',
           recipes: base.recipes.map((r) => ({ approved: r.approvedAt !== null })),
           namesApproved: {
             marketing: base.namesApprovedMarketingAt !== null,
             prepress: base.namesApprovedPrepressAt !== null,
           },
-          makeable: makeable.get(v.id) ?? false,
+          drawable: drawn ? drawableBy(v.options as Record<string, unknown>, drawn) : null,
         });
         const ok = reasons.length === 0;
         if (ok) after++;
@@ -108,6 +123,7 @@ export class StylePublishingService {
           instantType: base.productType?.quoteMode === 'instant',
           options: v.options as Record<string, unknown>,
           rules: rules.get(calculatorKey ?? '') ?? new Set<string>(),
+          makeable: makeable.get(v.id) ?? false,
         });
         if (
           ok !== v.publishable ||

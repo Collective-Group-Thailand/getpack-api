@@ -344,8 +344,9 @@ export class StylesStoreService {
 /** Marks "not signed in" so cards answer `favourite: null`. */
 const NOT_SIGNED_IN: Set<bigint> = new Set();
 
+/** D-407: a style prices instantly when one of its variants does (a factory makes it and the calculator covers it). */
 function pricePath(r: LibraryRow): 'instant' | 'rfq' {
-  return r.productType?.calculatorKey && r.productType.quoteMode === 'instant' ? 'instant' : 'rfq';
+  return r.variants.some((v) => v.pricePath === 'instant') ? 'instant' : 'rfq';
 }
 
 function productHints(r: LibraryRow) {

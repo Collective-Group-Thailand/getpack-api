@@ -95,9 +95,13 @@ describe('style library (e2e, U3.B1)', () => {
     const v = await variants(te.id);
     expect(v.meta.total).toBe(228);
     expect(v.data[0]!.code).toMatch(/^PK-TE-01-[A-Z2-7]{4}$/);
-    expect(v.data[0]!.reasons).toEqual(['no_recipe', 'names_not_approved', 'not_makeable']);
-    const mailer = await ctx.prisma.styleBase.findFirstOrThrow({ where: { sourceProductType: 'mailer' } });
-    expect(mailer.productTypeId).toBeNull();
+    // D-407: makeability is an order path, not a publish gate.
+    expect(v.data[0]!.reasons).toEqual(['no_recipe', 'names_not_approved']);
+    const mailer = await ctx.prisma.styleBase.findFirstOrThrow({
+      where: { sourceProductType: 'mailer' },
+      include: { productType: true },
+    });
+    expect(mailer.productType?.code).toBe('flexible_pouch');
     const runs = await as(ctx, tokens['admin']!).get('/v1/admin/style-imports').expect(200);
     expect(
       (runs.body.data as { kind: string; status: string }[]).find((r) => r.kind === 'master'),
@@ -154,7 +158,7 @@ describe('style library (e2e, U3.B1)', () => {
         .post(`/v1/admin/styles/${te.id}/actions/approve-names`, { as: 'prepress' })
         .expect(200)
     ).body as { reasonCounts: { reason: string }[] };
-    expect(both.reasonCounts.map((r) => r.reason)).toEqual(['not_makeable']);
+    expect(both.reasonCounts.map((r) => r.reason)).toEqual([]);
 
     const ref = await ctx.prisma.styleBase.findFirstOrThrow({ where: { referenceCode: { not: null } } });
     const mismatch = await as(ctx, tokens['prepress']!)

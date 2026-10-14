@@ -13,7 +13,7 @@
 **Our rule for counting — only producible structures count:**
 - A **base structure** is a construction with its own generator (e.g. tuck-end carton, roll-end mailer, stand-up pouch).
 - A **structural variant** is a combination of structural options that changes the dieline or the piece set (closure pair, window, hang tab, insert, handle, joint type, tear strip, adhesive strip, partition grid, pouch features …). Material, flute, print and size do **not** create a variant.
-- A variant is counted only when it passes every quality gate in §4 **and** has a pricing path (instant or RFQ) and at least one partner mapped as capable of making it.
+- A variant is counted when it passes every quality gate in §4 and has a pricing path (instant or RFQ). Since D-407 a variant no partner can make yet still counts and is shown — as a quotation request — so customers can design it.
 
 **Targets:**
 | Milestone | Base structures | Structural variants | Categories covered |
@@ -63,4 +63,4 @@ Codes are Packio's own (`PK-<FAMILY>-<NN>`), stable and public. Reference codes 
 ## 6. What we never do
 - Import, trace or re-model another platform's templates, mockups or scene files, or reuse their model IDs or category wording.
 - Count mockup images, colourways or sizes as styles.
-- Publish a style customers can design but nobody can make.
+- ~~Publish a style customers can design but nobody can make.~~ Superseded by D-407 (2026-10-15): every drawn, checked and named style is shown and designable; one no factory can make yet is offered as a quotation request, never as an instant order — and the request is the demand signal that tells the Partner team which capability to add next.

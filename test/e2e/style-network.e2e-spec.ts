@@ -83,6 +83,10 @@ describe('style library network and store (e2e, U3.B2–B3)', () => {
     (await ctx.prisma.styleVariant.findMany({ where: { base: { code } }, select: { reasons: true } })).map(
       (v) => v.reasons,
     );
+  const priceReasons = async (code: string) =>
+    (
+      await ctx.prisma.styleVariant.findMany({ where: { base: { code } }, select: { priceReasons: true } })
+    ).map((v) => v.priceReasons);
   const visit = async (result: 'pass' | 'fail') => {
     const factory = await ctx.prisma.factory.findUniqueOrThrow({ where: { publicId: factoryId } });
     return ctx.prisma.siteVisit.create({
@@ -97,11 +101,15 @@ describe('style library network and store (e2e, U3.B2–B3)', () => {
     });
   };
 
-  it('keeps the library empty of a style nobody can make (D-243)', async () => {
-    expect((await reasons('PK-CS-01')).every((r) => r.includes('not_makeable'))).toBe(true);
+  it('shows a drawn style nobody can make yet, as a quotation request (D-407)', async () => {
+    expect(await reasons('PK-CS-01')).toEqual(Array(9).fill([]));
+    expect((await priceReasons('PK-CS-01')).every((r) => r.includes('not_makeable'))).toBe(true);
     const list = await request(ctx.server).get('/v1/store/styles?limit=100').expect(200);
-    expect(codes(list.body)).not.toContain('PK-CS-01');
-    await request(ctx.server).get('/v1/store/styles/PK-CS-01').expect(404);
+    expect(codes(list.body)).toContain('PK-CS-01');
+    const card = (list.body as { data: Card[] }).data.find((c) => c.code === 'PK-CS-01')!;
+    expect(card.pricePath).toBe('rfq');
+    const detail = await request(ctx.server).get('/v1/store/styles/PK-CS-01').expect(200);
+    expect(detail.body).toMatchObject({ leadTime: null });
   });
 
   it('lets the factory propose a capability that counts only once verified against a passing site visit (D-244)', async () => {
@@ -128,7 +136,7 @@ describe('style library network and store (e2e, U3.B2–B3)', () => {
       .expect(201);
     capabilityId = proposed.body.id as string;
     expect(proposed.body.status).toBe('proposed');
-    expect((await reasons('PK-CS-01')).every((r) => r.includes('not_makeable'))).toBe(true);
+    expect((await priceReasons('PK-CS-01')).every((r) => r.includes('not_makeable'))).toBe(true);
 
     await as(ctx, owner)
       .post(`/v1/admin/factories/${factoryId}/process-capabilities/${capabilityId}/actions/verify`, {
@@ -147,7 +155,7 @@ describe('style library network and store (e2e, U3.B2–B3)', () => {
       })
       .expect(200);
     expect(verified.body.status).toBe('verified');
-    expect(await reasons('PK-CS-01')).toEqual(Array(9).fill([]));
+    expect((await priceReasons('PK-CS-01')).some((r) => r.includes('not_makeable'))).toBe(false);
 
     const self = await as(ctx, t['partner-manager']!)
       .post(`/v1/admin/factories/${factoryId}/process-capabilities`, {
@@ -420,7 +428,7 @@ describe('style library network and store (e2e, U3.B2–B3)', () => {
     await ctx.prisma.styleBase.update({ where: { code: 'PK-CS-01' }, data: { patternId: null } });
   });
 
-  it('reports coverage and recomputes nightly; a withdrawn capability unpublishes at once (D-243, D-244)', async () => {
+  it('reports coverage and recomputes nightly; a withdrawn capability turns the style to a quotation request at once (D-244, D-407)', async () => {
     const coverage = await as(ctx, t['cs']!).get('/v1/admin/style-coverage').expect(200);
     const corrugated = (coverage.body.categories as { category: string; makeable: number }[]).find(
       (c) => c.category === 'corrugated',
@@ -441,7 +449,8 @@ describe('style library network and store (e2e, U3.B2–B3)', () => {
         note: 'e2e',
       })
       .expect(200);
-    await request(ctx.server).get('/v1/store/styles/PK-CS-01').expect(404);
-    expect((await reasons('PK-CS-01')).every((r) => r.includes('not_makeable'))).toBe(true);
+    const still = await request(ctx.server).get('/v1/store/styles/PK-CS-01').expect(200);
+    expect(still.body).toMatchObject({ leadTime: null });
+    expect((await priceReasons('PK-CS-01')).every((r) => r.includes('not_makeable'))).toBe(true);
   });
 });
