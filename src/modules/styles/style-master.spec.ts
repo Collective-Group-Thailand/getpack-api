@@ -77,18 +77,17 @@ describe('publishability gates (D-243)', () => {
     baseStatus: 'active' as const,
     variantStatus: 'active' as const,
     hidden: false,
-    wave: 1,
-    publishedWave: 1,
     productTypeActive: true,
     recipes: [{ approved: true }],
     namesApproved: { marketing: true, prepress: true },
-    makeable: true,
+    drawable: null,
   };
 
   it('publishes only when every gate passes, and names each unmet gate', () => {
     expect(publishReasons(ok)).toEqual([]);
-    expect(publishReasons({ ...ok, wave: 2 })).toEqual(['wave_not_open']);
     expect(publishReasons({ ...ok, recipes: [] })).toEqual(['no_recipe']);
+    expect(publishReasons({ ...ok, drawable: true })).toEqual([]);
+    expect(publishReasons({ ...ok, drawable: false })).toEqual(['not_drawable']);
     expect(publishReasons({ ...ok, recipes: [{ approved: false }] })).toEqual(['recipe_not_approved']);
     expect(publishReasons({ ...ok, namesApproved: { marketing: true, prepress: false } })).toEqual([
       'names_not_approved',
@@ -96,11 +95,10 @@ describe('publishability gates (D-243)', () => {
     expect(
       publishReasons({
         ...ok,
-        makeable: false,
         hidden: true,
         productTypeActive: false,
         variantStatus: 'retired',
       }),
-    ).toEqual(['retired', 'hidden', 'no_product_type', 'not_makeable']);
+    ).toEqual(['retired', 'hidden', 'no_product_type']);
   });
 });

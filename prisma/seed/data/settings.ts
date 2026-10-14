@@ -964,8 +964,8 @@ export const SETTINGS: readonly SettingSeed[] = [
     value: 1,
     valueSchema: { minimum: 1, maximum: 9 },
     description:
-      'D-212 / D-243 highest style-library wave whose variants may be published (wave 1 at launch: only variants the launch factory can make)',
-    decisions: ['D-212', 'D-243'],
+      'D-212 / D-243 launch wave of the style library — no longer a publish gate since D-407 (every drawn style is shown); kept for reporting',
+    decisions: ['D-212', 'D-243', 'D-407'],
     ownerRole: 'superadmin',
   },
 

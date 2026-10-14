@@ -95,8 +95,8 @@ export interface RecipeFacts {
   processes: string[];
   /** Valid size ranges per material class, mm. */
   sizeRanges: Record<string, Record<string, { min: number; max: number }>>;
-  /** The variants the recipes build (`axis → value`). */
-  variants: Record<string, string>[];
+  /** The variants the recipes build (`axis → value`); null when the engine cannot enumerate them (the fake). */
+  variants: Record<string, string>[] | null;
 }
 
 export interface Thumbnails {

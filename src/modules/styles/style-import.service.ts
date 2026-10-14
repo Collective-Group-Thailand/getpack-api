@@ -28,10 +28,10 @@ export const STYLE_IMPORT_SUBJECT = 'style_import_run';
 const BULK = { timeout: 120_000 };
 
 /**
- * Master product types → the Packio product type they are sold as (catalogue codes, D-100). `mailer` and
- * `shrink_sleeve` have none yet (finding S2): imported without a product type until an admin maps them.
+ * Master product types → the Packio product type they are sold as (catalogue codes, D-100). Courier and bubble
+ * mailers are flexible packaging, a shrink sleeve is a label (D-407; finding S2 closed).
  */
-const PRODUCT_TYPE_OF: Record<string, string> = {
+export const PRODUCT_TYPE_OF: Record<string, string> = {
   folding: 'folding_carton',
   corrugate: 'corrugated',
   label: 'label_sticker',
@@ -39,6 +39,8 @@ const PRODUCT_TYPE_OF: Record<string, string> = {
   pouch: 'flexible_pouch',
   rigid: 'rigid_box',
   paper_bag: 'paper_bag',
+  mailer: 'flexible_pouch',
+  shrink_sleeve: 'label_sticker',
 };
 
 /** Fields a base takes from the master file (the diff compares these). */

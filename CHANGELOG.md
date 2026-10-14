@@ -3,6 +3,14 @@
 Contract-facing changes per release. The contract itself is `contract/openapi.json`; mappings for `packio-web` are in
 `docs/contract-requests-triage.md`.
 
+## v0.55.0 — Style library open to customers
+
+Decision D-407. Value sets: `StylePublishReason` gains `not_drawable`; `StylePriceReason` gains `not_makeable`
+(clients that switch over them need a default). Every drawn, named style variant is listed and designable; one no
+factory can make yet has `pricePath: rfq` with `not_makeable`. The store card's `pricePath` is `instant` when any of
+its variants is. Master `mailer` / `shrink_sleeve` bases now map to `flexible_pouch` / `label_sticker`. `uat:populate`
+imports and publishes the library.
+
 ## v0.54.0 — Factory prices: line counts per component
 
 Decision D-406. Additive. New `GET /v1/partner/factories/{factoryId}/price-list-versions/{versionId}/component-counts`

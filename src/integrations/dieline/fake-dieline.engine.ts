@@ -118,7 +118,8 @@ export class FakeDielineEngine implements DielineEngine {
           height: { min: 20, max: 450 },
         },
       },
-      variants: recipe.engine.map((r) => (r as { variant?: Record<string, string> }).variant ?? {}),
+      // The fake cannot enumerate a recipe's variants: unknown, so the D-407 drawability gate stays open.
+      variants: null,
     });
   }
 

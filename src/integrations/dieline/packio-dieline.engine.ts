@@ -291,12 +291,17 @@ export class PackioDielineEngine implements DielineEngine {
       k,
       Array.isArray(v) ? (v as unknown[]).map(String).sort().join('+') || 'none' : String(v),
     ]);
-    for (const recipe of this.parse(pkg, request.recipe)) {
-      const variant = pkg
-        .variantsOf(recipe)
-        .find((v) => wanted.every(([axis, value]) => v.axes[axis!] === undefined || v.axes[axis!] === value));
-      if (variant) return { recipe, values: { ...variant.values, ...request.sizes } };
-    }
+    const recipes = this.parse(pkg, request.recipe);
+    // The variant with exactly these options first (D-407); an axis the recipe does not carry only as a fallback.
+    for (const strict of [true, false])
+      for (const recipe of recipes) {
+        const variant = pkg
+          .variantsOf(recipe)
+          .find((v) =>
+            wanted.every(([axis, value]) => (!strict && v.axes[axis!] === undefined) || v.axes[axis!] === value),
+          );
+        if (variant) return { recipe, values: { ...variant.values, ...request.sizes } };
+      }
     throw new DielineBuildError('variant_not_in_recipe', 'no engine recipe builds this variant');
   }
 
