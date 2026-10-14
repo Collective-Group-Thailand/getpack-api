@@ -139,6 +139,7 @@ value stops the process before it serves anything.
 |---|---|---|
 | `NODE_ENV` | `production` | `production` refuses a `devOnly` feature flag that is on (D-296) and closes `/docs` unless `DOCS_ENABLED` |
 | `INTEGRATIONS_MODE` | `real` | `fake` keeps every provider in memory (development, tests, the UAT rehearsal) |
+| `OBJECT_STORAGE_MODE` | unset | `fake` / `real` overrides `INTEGRATIONS_MODE` for object storage only (development against a real bucket with fake SMS, LINE, payments and PDF); unset follows `INTEGRATIONS_MODE` |
 | `AWS_REGION` | the deployment region (default `ap-southeast-1`) | |
 | `AWS_ENDPOINT_URL` | unset | LocalStack in development only |
 | `S3_BUCKET` | the private files bucket | |
