@@ -23,6 +23,11 @@ export class AppConfig {
     return this.env.INTEGRATIONS_MODE === IntegrationsMode.Fake;
   }
 
+  /** Object storage can be real S3 while every other provider stays fake (local dev against a real bucket). */
+  get useFakeObjectStorage(): boolean {
+    return (this.env.OBJECT_STORAGE_MODE ?? this.env.INTEGRATIONS_MODE) === IntegrationsMode.Fake;
+  }
+
   /**
    * Who may open `/docs*` (contract §5): everyone in development/test; in production nobody unless
    * `DOCS_ENABLED=true`, and then only callers inside `DOCS_ALLOWED_CIDRS` or with a staff token
