@@ -13,8 +13,8 @@
     "build": "NODE_OPTIONS=--max-old-space-size=6144 nest build",
     "start": "node dist/src/main.js",
     "start:worker": "node dist/src/worker.js",
-    "dev": "NODE_OPTIONS=--max-old-space-size=8192 nest start --watch",
-    "dev:worker": "NODE_OPTIONS=--max-old-space-size=8192 nest start --watch --entryFile src/worker",
+    "dev": "nest start --watch -b swc --path tsconfig.build.json",
+    "dev:worker": "nest start --watch -b swc --path tsconfig.build.json --entryFile src/worker",
     "lint": "eslint --cache .",
     "lint:fix": "eslint --cache --fix .",
     "format": "prettier --write .",
@@ -41,7 +41,8 @@
     "cms:home-photos": "NODE_OPTIONS=--max-old-space-size=6144 nest build && node dist/scripts/cms-home-photos.js",
     "dieline:vendor": "bash scripts/dieline-vendor.sh",
     "styles:recipes-from-engine": "NODE_OPTIONS=--max-old-space-size=6144 nest build && node dist/scripts/styles-recipes-from-engine.js",
-    "uat:styles": "NODE_OPTIONS=--max-old-space-size=6144 nest build && node dist/scripts/uat-style-fixture.js"
+    "uat:styles": "NODE_OPTIONS=--max-old-space-size=6144 nest build && node dist/scripts/uat-style-fixture.js",
+    "dev:tsc": "NODE_OPTIONS=--max-old-space-size=8192 nest start --watch"
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.1138.0",
@@ -99,6 +100,7 @@
     "@stoplight/spectral-core": "^1.23.1",
     "@stoplight/spectral-parsers": "^1.0.5",
     "@stoplight/spectral-ruleset-bundler": "^1.7.0",
+    "@swc/cli": "^0.8.1",
     "@swc/core": "^1.16.2",
     "@swc/jest": "^0.2.39",
     "@testcontainers/postgresql": "^12.1.0",
