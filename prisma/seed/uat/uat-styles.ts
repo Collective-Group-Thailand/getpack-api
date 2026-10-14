@@ -4,7 +4,8 @@
  * holds at every step):
  *
  *   0. the style master file (`docs/design-tool/style-library-master.json`), imported by Admin (`styles.import`);
- *   1. the engine's recipe bundle (`styles:recipes-from-engine`), imported by Admin;
+ *   1. the engine's recipe bundle (`styles:recipes-from-engine`), imported by Admin; a change either makes to a
+ *      published base waits for the `style_library_change` approval (D-242), given here by Prepress then Marketing;
  *   2. each of those recipes approved by Prepress;
  *   3. each base's names approved by Marketing and by Prepress, and a product type mapped where the master's was
  *      only added later (`PRODUCT_TYPE_OF`, D-407);
@@ -30,6 +31,8 @@ import { ProcessCapabilitiesService } from '../../../src/modules/styles/process-
 import { PRODUCT_TYPE_OF, StyleImportService } from '../../../src/modules/styles/style-import.service';
 import { StylePublishingService } from '../../../src/modules/styles/style-publishing.service';
 import { StylesAdminService } from '../../../src/modules/styles/styles-admin.service';
+import { ApprovalsService } from '../../../src/platform/approvals/approvals.service';
+import { envelopeFromRow } from '../../../src/platform/domain-events/domain-event';
 
 /** The UAT fixture accounts (`prisma/seed/uat`) and the UAT launch factory with its passing site visit. */
 const ACCOUNTS = {
@@ -64,12 +67,40 @@ export async function publishUatStyles(
   };
   const imports = app.get(StyleImportService);
   const importer = await actorOf(ACCOUNTS.importer);
+  /**
+   * A run whose changes to published bases are held (D-242): Prepress, then Marketing approve it, and the
+   * subscriber that applies held changes (`styles.apply-approval`) is called here — the fixture has no worker.
+   */
+  const settle = async (run: { id: bigint } | null) => {
+    if (!run) return;
+    const held = await prisma.styleImportRun.findUniqueOrThrow({ where: { id: run.id } });
+    if (held.status !== 'pending_approval' || held.approvalRequestId === null) return;
+    const request = await prisma.approvalRequest.findUniqueOrThrow({ where: { id: held.approvalRequestId } });
+    const approvals = app.get(ApprovalsService);
+    // Each step once: a run settled half-way before (an interrupted fixture) continues where it stopped.
+    for (const email of [ACCOUNTS.prepress, ACCOUNTS.marketing]) {
+      const now = await prisma.approvalRequest.findUniqueOrThrow({ where: { id: request.id } });
+      if (now.status !== 'pending') break;
+      await approvals.approve(await actorOf(email), request.publicId, 'UAT fixture (uat:styles)');
+    }
+    // The subscriber is idempotent (a run no longer held is skipped), so the worker meeting the event later is harmless.
+    for (const event of await prisma.domainEvent.findMany({
+      where: { type: 'approval.approved', aggregateId: request.publicId },
+    }))
+      await prisma.withTx((tx) => imports.onApprovalOutcome(envelopeFromRow(event), tx));
+    const after = await prisma.styleImportRun.findUniqueOrThrow({ where: { id: run.id } });
+    log.push(`${held.kind} run held for approval: ${after.status}`);
+  };
 
   // 0 — the master: every base and variant (a no-op when this file was imported before).
   const masterPath = options.masterPath ?? join(process.cwd(), 'docs/design-tool/style-library-master.json');
   const master = await imports.plan('master', 'style-library-master.json', readFileSync(masterPath, 'utf8'));
   log.push(`master: ${master.noop ? `nothing to import (${master.noopReason})` : JSON.stringify(master.summary)}`);
-  if (options.confirm && !master.noop) await imports.apply(importer, master);
+  if (options.confirm && !master.noop) await settle(await imports.apply(importer, master));
+  // A run imported before but still held (the same file, waiting for its approval) is settled too.
+  if (options.confirm)
+    for (const run of await prisma.styleImportRun.findMany({ where: { status: 'pending_approval' }, orderBy: { id: 'asc' } }))
+      await settle(run);
 
   // 1 — the engine's recipes.
   const engine = new PackioDielineEngine();
@@ -80,7 +111,7 @@ export async function publishUatStyles(
   log.push(`engine recipes for ${codes.length} bases`);
   log.push(`recipes: ${plan.noop ? `nothing to import (${plan.noopReason})` : JSON.stringify(plan.summary)}`);
   if (!options.confirm) return { bases: 0, variants: 0, publishable: 0, instant: 0, log: [...log, 'dry run'] };
-  if (!plan.noop) await imports.apply(importer, plan);
+  if (!plan.noop) await settle(await imports.apply(importer, plan));
 
   const bases = await prisma.styleBase.findMany({
     where: { code: { in: codes } },

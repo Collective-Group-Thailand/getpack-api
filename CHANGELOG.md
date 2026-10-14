@@ -3,6 +3,14 @@
 Contract-facing changes per release. The contract itself is `contract/openapi.json`; mappings for `packio-web` are in
 `docs/contract-requests-triage.md`.
 
+## v0.57.0 — Style library: 894 variants, every one drawn
+
+Decision D-408. No contract change. The master file's `excluded_combinations` (66 combinations no factory can build)
+are not generated; an import retires them — `styles.import` reads the new key and refuses a rule naming an unknown
+axis value. The vendored `@packio/dieline` draws every remaining variant (nine new base structures; the seal top
+under a hang tab). `uat:styles` / `uat:populate` approve the held import runs (Prepress, then Marketing) and publish
+894 variants.
+
 ## v0.56.0 — Style page: quote a chosen variant
 
 Decision D-407 (follow-up). Additive. `StyleDetailDto` gains `productTypeCode` (nullable): the product type the style is

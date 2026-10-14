@@ -11,12 +11,33 @@ const MASTER = JSON.parse(
 describe('style master file (U3.B1, D-241)', () => {
   const master = parseMaster(MASTER);
 
-  it('generates exactly the 105 bases and 960 variants the file declares', () => {
+  it('generates exactly the 105 bases and 894 variants the file declares', () => {
     expect(master.bases).toHaveLength(105);
     const total = master.bases.reduce((n, b) => n + variantsOf(b, master).length, 0);
-    expect(total).toBe(960);
+    expect(total).toBe(894);
     const te = master.bases.find((b) => b.code === 'PK-TE-01')!;
-    expect(variantsOf(te, master)).toHaveLength(228);
+    expect(variantsOf(te, master)).toHaveLength(183);
+  });
+
+  it('leaves out the combinations no factory can build, with the reason in the file (D-408)', () => {
+    expect(master.excluded.length).toBeGreaterThan(0);
+    expect(master.excluded.every((r) => r.reason.length > 0)).toBe(true);
+    const te = master.bases.find((b) => b.code === 'PK-TE-01')!;
+    const straightHung = variantsOf(te, master).filter(
+      (v) => v.options['tuck_top'] === 'straight_tuck' && v.options['hang'] !== 'none',
+    );
+    expect(straightHung).toEqual([]);
+    // Without the rules the same base has its full combinations: the rule removes, it never renames.
+    const all = variantsOf(te, { ...master, excluded: [] });
+    expect(all).toHaveLength(228);
+    const kept = new Set(variantsOf(te, master).map((v) => v.optionKey));
+    expect(all.filter((v) => kept.has(v.optionKey))).toHaveLength(183);
+    expect(() =>
+      parseMaster({
+        ...MASTER,
+        excluded_combinations: [{ bases: ['PK-TE-01'], when: { hang: ['hook'] }, reason: 'x' }],
+      }),
+    ).toThrow(MasterFileError);
   });
 
   it('keys options in the base axis order, multi-select values sorted and joined, the empty set as none', () => {
