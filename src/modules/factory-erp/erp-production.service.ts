@@ -17,6 +17,7 @@ import { Injectable, Logger } from '@nestjs/common';
 import { type DomainEventEnvelope } from '@platform/domain-events/domain-event';
 import { OnDomainEvent } from '@platform/domain-events/on-domain-event.decorator';
 
+import { ERP_UNITS } from './erp.dto';
 import {
   dec,
   finishedUnitCost,
@@ -1349,7 +1350,8 @@ export class ErpProductionService {
         productionJobId: job.id,
         title: `${job.jobNo} · ${spec.productTypeNameTh ?? 'งาน Packio'}`,
         quantity: fmtQty(job.quantityOrdered),
-        unit: spec.unit ?? 'pcs',
+        // Packio sells by `piece`; the ERP counts pieces as `pcs` (D-384) — other shared units carry over.
+        unit: spec.unit && spec.unit !== 'piece' && (ERP_UNITS as readonly string[]).includes(spec.unit) ? spec.unit : 'pcs',
         dueOn: job.plannedFinishOn,
         plannedStartOn: job.plannedStartOn,
         priority: Math.max(0, Math.min(9, job.priority)),

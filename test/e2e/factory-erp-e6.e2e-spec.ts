@@ -161,6 +161,14 @@ describe('Packio Factory ERP E6 (e2e)', () => {
     expect(again.versions[0].versionNo).toBe(3);
   });
 
+  it('lists what waits for each person across the ERP (D-399)', async () => {
+    const mine = await get('/inbox');
+    expect(mine).toMatchObject({ asOf: today, counts: { approve: expect.any(Number), overdue: expect.any(Number), today: expect.any(Number), soon: expect.any(Number) } });
+    for (const item of mine.items as Rec[]) expect(['approve', 'overdue', 'today', 'soon']).toContain(item.section);
+    const theirs = await get('/inbox', operator);
+    expect((theirs.items as Rec[]).every((i) => !['journal', 'period_to_close', 'receivable_overdue'].includes(i.kind))).toBe(true);
+  });
+
   it('keeps the books private and read-only for the auditor (D-317, D-396)', async () => {
     expect((await get('/ledger/journals', auditor)).data.length).toBeGreaterThan(0);
     await get(`/ledger/reports/trial-balance?from=${month}-01&to=${today}`, auditor);
