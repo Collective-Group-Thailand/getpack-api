@@ -77,6 +77,9 @@ describe('Factory ERP E5 arithmetic and documents', () => {
     expect(pct1(o.quality)).toBe('99.0');
     expect(o.oee).toBeCloseTo(0.7425, 6);
     expect(oeeOf({ plannedMinutes: 480, runMinutes: 100, idealMinutes: 300, good: dec(1), scrap: dec(0) }).performance).toBe(1);
+    // a day with no shift that still ran: availability 100%, not 0% (D-403)
+    expect(oeeOf({ plannedMinutes: 0, runMinutes: 120, idealMinutes: 60, good: dec(1), scrap: dec(0) }).availability).toBe(1);
+    expect(oeeOf({ plannedMinutes: 0, runMinutes: 0, idealMinutes: 0, good: dec(0), scrap: dec(0) }).availability).toBe(0);
     expect(oeeOf({ plannedMinutes: 0, runMinutes: 0, idealMinutes: 0, good: dec(0), scrap: dec(0) }).oee).toBe(0);
   });
 

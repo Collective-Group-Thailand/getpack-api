@@ -221,8 +221,9 @@ export class ErpInsightService {
    * D-376: what the month's issued invoices earned over the cost of what they delivered, by sales order,
    * customer or item. Revenue is each line's share of its invoice's net; cost is the delivered stock cost.
    */
-  async profit(scope: ErpScope, month: string, by: 'sales_order' | 'customer' | 'item'): Promise<ErpProfitReportDto> {
+  async profit(scope: ErpScope, month: string, by: 'sales_order' | 'customer' | 'item' | 'packio_job'): Promise<ErpProfitReportDto> {
     const r = MONTH(month);
+    if (by === 'packio_job') return this.packioProfit(scope, month);
     const key =
       by === 'customer'
         ? Prisma.sql`c.public_id::text AS id, c.code AS code, c.name AS name`
@@ -264,6 +265,52 @@ export class ErpInsightService {
     return {
       month,
       by,
+      rows: out,
+      revenue: fmtMoney(revenue),
+      cost: fmtMoney(cost),
+      grossProfit: fmtMoney(revenue.minus(cost)),
+      grossProfitPct: pct(revenue, revenue.minus(cost)),
+    };
+  }
+
+  /**
+   * D-402: Packio jobs finished in the month — what Packio's purchase order pays for the job (net of VAT, production
+   * and shipping) over the production order's cost at today's rates (D-376).
+   */
+  private async packioProfit(scope: ErpScope, month: string): Promise<ErpProfitReportDto> {
+    const r = MONTH(month);
+    const db = this.workspace.db;
+    const settings = await this.workspace.settings(db, scope.factory.id);
+    const mos = await db.erpProductionOrder.findMany({
+      where: {
+        factoryId: scope.factory.id,
+        source: 'packio_job',
+        status: { in: ['completed', 'closed'] },
+        completedAt: { gte: r.fromTs, lt: r.toTs },
+      },
+      include: { ...MO_COST_INCLUDE, productionJob: { select: { jobNo: true, purchaseOrder: { select: { netAmount: true } } } } },
+      orderBy: { completedAt: 'asc' },
+    });
+    const pct = (rev: MoneyValue, gp: MoneyValue) => (rev.gt(0) ? gp.times(100).div(rev).toFixed(1) : null);
+    const out: ErpProfitReportDto['rows'] = [];
+    for (const mo of mos) {
+      const revenue = dec(mo.productionJob?.purchaseOrder?.netAmount ?? 0);
+      const cost = (await orderCost(db, mo, settings)).cost.total;
+      const gp = revenue.minus(cost);
+      out.push({
+        key: { id: mo.publicId, code: mo.productionJob?.jobNo ?? mo.moNo, name: mo.title },
+        revenue: fmtMoney(revenue),
+        cost: fmtMoney(cost),
+        grossProfit: fmtMoney(gp),
+        grossProfitPct: pct(revenue, gp),
+      });
+    }
+    out.sort((a, b) => dec(b.revenue).comparedTo(dec(a.revenue)));
+    const revenue = out.reduce((a, x) => a.plus(dec(x.revenue)), dec(0));
+    const cost = out.reduce((a, x) => a.plus(dec(x.cost)), dec(0));
+    return {
+      month,
+      by: 'packio_job',
       rows: out,
       revenue: fmtMoney(revenue),
       cost: fmtMoney(cost),
@@ -370,8 +417,9 @@ export class ErpInsightService {
         { planned: 0, run: 0, ideal: 0, good: dec(0), scrap: dec(0) },
       );
       const o = oeeOf({ plannedMinutes: tot.planned, runMinutes: tot.run, idealMinutes: tot.ideal, good: tot.good, scrap: tot.scrap });
-      allRun += tot.planned;
-      allWeighted += o.oee * tot.planned;
+      // weighted by the time the machine was due to run, overtime included (D-403)
+      allRun += Math.max(tot.planned, tot.run);
+      allWeighted += o.oee * Math.max(tot.planned, tot.run);
       result.push({
         machine: { id: m.publicId, name: m.name },
         plannedMinutes: Math.round(tot.planned),
@@ -459,6 +507,18 @@ export class ErpInsightService {
       this.oee(scope, yesterday, yesterday).catch(() => null),
     ]);
     const lowItems = await db.erpItem.findMany({ where: { id: { in: low.slice(0, 5).map((x) => x.id) } } });
+    // Work for Packio (D-402): its revenue is the statements confirmed this month (F14, D-397).
+    const [confirmed, waiting, uninvoiced] = await Promise.all([
+      db.billingStatement.aggregate({
+        where: { factoryId: f, confirmedAt: { gte: r.fromTs, lt: r.toTs } },
+        _sum: { netAmount: true },
+        _count: { _all: true },
+      }),
+      db.billingStatement.aggregate({ where: { factoryId: f, status: 'sent' }, _sum: { grossAmount: true }, _count: { _all: true } }),
+      db.billingStatement.count({
+        where: { factoryId: f, status: 'confirmed', vendorInvoices: { none: { status: { in: ['recorded', 'validated'] } } } },
+      }),
+    ]);
     const checks = quality[2];
     const decided = checks.filter((c) => c.result !== 'pending').reduce((a, c) => a + c._count._all, 0);
     const passed = checks.filter((c) => c.result === 'pass' || c.result === 'conditional').reduce((a, c) => a + c._count._all, 0);
@@ -471,6 +531,13 @@ export class ErpInsightService {
         target: sales.targetNet,
         achievementPct: dec(sales.targetNet).gt(0) ? dec(sales.invoicedNet).times(100).div(dec(sales.targetNet)).toFixed(1) : null,
         invoices: sales.rows.reduce((a, x) => a + x.invoices, 0),
+      },
+      packio: {
+        confirmedNet: fmtMoney(confirmed._sum.netAmount ?? 0),
+        confirmedStatements: confirmed._count._all,
+        toConfirm: waiting._count._all,
+        toConfirmGross: fmtMoney(waiting._sum.grossAmount ?? 0),
+        toInvoice: uninvoiced,
       },
       receivables: { open: fmtMoney(ar[0]!.open), overdue: fmtMoney(ar[0]!.overdue), overdueInvoices: Number(ar[0]!.n) },
       payables: { dueThisWeek: fmtMoney(ap[0]!.week), dueThisWeekCount: Number(ap[0]!.n), overdueAmount: fmtMoney(ap[0]!.overdue) },

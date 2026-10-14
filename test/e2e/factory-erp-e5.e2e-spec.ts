@@ -115,8 +115,9 @@ describe('Packio Factory ERP E5 (e2e)', () => {
     const month = today.slice(0, 7);
     expect(await get(`/insight/costs?month=${month}`)).toMatchObject({ month });
     expect(await get(`/insight/profitability?month=${month}&by=item`)).toMatchObject({ month, by: 'item' });
+    expect(await get(`/insight/profitability?month=${month}&by=packio_job`)).toMatchObject({ month, by: 'packio_job', rows: expect.any(Array) }); // D-402
     const dash = await get('/dashboard', accountant);
-    expect(dash).toMatchObject({ month, quality: { openNcrs: expect.any(Number) } });
+    expect(dash).toMatchObject({ month, quality: { openNcrs: expect.any(Number) }, packio: { confirmedNet: expect.any(String), toConfirm: expect.any(Number) } });
     await get('/dashboard', qc, 403);
     await get('/dashboard', operator, 403);
   });

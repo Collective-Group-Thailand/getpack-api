@@ -3,6 +3,12 @@
 Contract-facing changes per release. The contract itself is `contract/openapi.json`; mappings for `packio-web` are in
 `docs/contract-requests-triage.md`.
 
+## v0.53.0 — UX round 8: insight
+
+Decisions D-402, D-403. `ErpDashboardDto` gains `packio` (`ErpDashPackioDto`: `confirmedNet`, `confirmedStatements`,
+`toConfirm`, `toConfirmGross`, `toInvoice`). Value set: `ErpProfitBy` gains `packio_job` (rows keyed by the production
+order, code = the Packio job number). OEE availability no longer reads 0 % for time run outside planned time.
+
 ## v0.52.0 — UX round 6: finance
 
 Decision D-401. Value set: `ErpVatRowKind` gains `packio_statement` (clients that switch over it need a default). The

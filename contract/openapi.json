@@ -39057,6 +39057,41 @@
         ],
         "type": "object"
       },
+      "ErpDashPackioDto": {
+        "properties": {
+          "confirmedNet": {
+            "description": "Net of the Packio billing statements confirmed this month — the factory’s revenue from Packio (F14, D-397)",
+            "example": "239951.41",
+            "type": "string"
+          },
+          "confirmedStatements": {
+            "example": 2,
+            "type": "number"
+          },
+          "toConfirm": {
+            "description": "Statements sent by Packio, waiting for the factory to check and confirm",
+            "example": 2,
+            "type": "number"
+          },
+          "toConfirmGross": {
+            "example": "44999.33",
+            "type": "string"
+          },
+          "toInvoice": {
+            "description": "Confirmed statements without the factory’s tax invoice (Packio pays once it is attached)",
+            "example": 1,
+            "type": "number"
+          }
+        },
+        "required": [
+          "confirmedNet",
+          "confirmedStatements",
+          "toConfirm",
+          "toConfirmGross",
+          "toInvoice"
+        ],
+        "type": "object"
+      },
       "ErpDashPayablesDto": {
         "properties": {
           "dueThisWeek": {
@@ -39238,6 +39273,14 @@
             "example": "2026-10",
             "type": "string"
           },
+          "packio": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ErpDashPackioDto"
+              }
+            ],
+            "description": "Work for Packio (D-402)"
+          },
           "payables": {
             "$ref": "#/components/schemas/ErpDashPayablesDto"
           },
@@ -39261,6 +39304,7 @@
           "asOf",
           "month",
           "sales",
+          "packio",
           "receivables",
           "payables",
           "stock",
@@ -48871,7 +48915,8 @@
         "enum": [
           "sales_order",
           "customer",
-          "item"
+          "item",
+          "packio_job"
         ],
         "type": "string"
       },
@@ -48950,7 +48995,7 @@
                 "$ref": "#/components/schemas/CodedRefDto"
               }
             ],
-            "description": "The sales order (code = number), customer or item (code = SKU)"
+            "description": "The sales order (code = number), customer, item (code = SKU) or, for `packio_job`, the production order (code = the Packio job number)"
           },
           "revenue": {
             "description": "Net invoiced (issued, not voided) in the month",
@@ -108973,7 +109018,7 @@
     "contact": {},
     "description": "Packio — Your Packaging Production Partner, operated by Collective Group (Thailand).\nRules: `docs/contract/api-conventions.md` (shared with packio-web).\n\n- **Surfaces:** `/v1/auth`, `/v1/store` (customer), `/v1/admin` (staff), `/v1/partner` (factories), `/v1/b2b` (company API clients, D-291), `/webhooks`. A token is accepted only on its own audience's prefix.\n- **Money:** decimal strings with exactly 2 decimals (`\"1234.50\"`) plus `currency: \"THB\"` on the object; never JSON numbers. Clients never compute prices.\n- **Dates:** ISO 8601 with offset, rendered in `Asia/Bangkok` (`2026-09-22T14:05:00+07:00`); date-only fields `YYYY-MM-DD`.\n- **IDs:** uuid only; business keys (`orderCode`) are separate fields.\n- **Errors:** RFC 9457 `application/problem+json` with a stable `code`; `title`/`detail` localised by `Accept-Language` (`th` default, `en`).\n- **Lists:** `?page&perPage(≤100)&sort&order&q` → `{ data, meta: { page, perPage, total } }`; feeds use `?cursor&limit` → `{ data, meta: { nextCursor } }`.\n- **Idempotency:** irreversible POSTs require `Idempotency-Key` (uuid); replays within 24 h return the original response.\n- **Concurrency:** editable resources return `ETag`; updates send `If-Match` (412 `concurrency.stale`).\n- **Files:** presign → PUT to the returned URL → reference the `fileId`.",
     "title": "Packio API",
-    "version": "0.52.0",
+    "version": "0.53.0",
     "x-packio-dieline": {
       "bundleSha256": "ff9416bcbd835e409e7c889465b22193b347975c641c6c20dcd557716f02c449",
       "package": "@packio/dieline",
@@ -221921,6 +221966,13 @@
                       "total": 6
                     },
                     "month": "2026-10",
+                    "packio": {
+                      "confirmedNet": "239951.41",
+                      "confirmedStatements": 2,
+                      "toConfirm": 2,
+                      "toConfirmGross": "44999.33",
+                      "toInvoice": 1
+                    },
                     "payables": {
                       "dueThisWeek": "56000.00",
                       "dueThisWeekCount": 4,
@@ -348638,7 +348690,7 @@
     },
     "/v1/partner/factories/{factoryId}/erp/dashboard": {
       "get": {
-        "description": "Sales against target, receivables, payables due this week, stock value and low stock, production in progress and late, machines down and yesterday’s OEE, quality, follow-ups and alerts (D-378).\n\nImplements: D-378.",
+        "description": "Sales against target, receivables, payables due this week, stock value and low stock, production in progress and late, machines down and yesterday’s OEE, quality, follow-ups and alerts (D-378); work for Packio — statements confirmed this month, to confirm and without a tax invoice (D-402).\n\nImplements: D-378, D-402.",
         "operationId": "partner.erpInsight.dashboard",
         "parameters": [
           {
@@ -348671,6 +348723,13 @@
                     "total": 6
                   },
                   "month": "2026-10",
+                  "packio": {
+                    "confirmedNet": "239951.41",
+                    "confirmedStatements": 2,
+                    "toConfirm": 2,
+                    "toConfirmGross": "44999.33",
+                    "toInvoice": 1
+                  },
                   "payables": {
                     "dueThisWeek": "56000.00",
                     "dueThisWeekCount": 4,
@@ -355292,7 +355351,7 @@
     },
     "/v1/partner/factories/{factoryId}/erp/insight/profitability": {
       "get": {
-        "description": "Net invoiced less the cost of what was delivered, by sales order, customer or item (D-376).\n\nImplements: D-376.",
+        "description": "Net invoiced less the cost of what was delivered, by sales order, customer or item (D-376); or, `by=packio_job`, Packio jobs finished in the month: the purchase order’s net less the production order’s cost (D-402).\n\nImplements: D-376, D-402.",
         "operationId": "partner.erpInsight.profitability",
         "parameters": [
           {

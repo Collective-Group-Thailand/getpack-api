@@ -296,6 +296,7 @@ const DASHBOARD: ErpDashboardDto = {
   asOf: '2026-10-13',
   month: '2026-10',
   sales: { invoicedNet: '245000.00', target: '300000.00', achievementPct: '81.7', invoices: 12 },
+  packio: { confirmedNet: '239951.41', confirmedStatements: 2, toConfirm: 2, toConfirmGross: '44999.33', toInvoice: 1 },
   receivables: { open: '182000.00', overdue: '42000.00', overdueInvoices: 3 },
   payables: { dueThisWeek: '56000.00', dueThisWeekCount: 4, overdueAmount: '0.00' },
   stock: {
@@ -755,8 +756,8 @@ export class PartnerErpInsightController {
     summary: 'The owner’s dashboard',
     description:
       'Sales against target, receivables, payables due this week, stock value and low stock, production in progress and ' +
-      'late, machines down and yesterday’s OEE, quality, follow-ups and alerts (D-378).',
-    implements: ['D-378'],
+      'late, machines down and yesterday’s OEE, quality, follow-ups and alerts (D-378); work for Packio — statements confirmed this month, to confirm and without a tax invoice (D-402).',
+    implements: ['D-378', 'D-402'],
     can: 'factory_insight.read',
     success: { status: 200, description: 'The dashboard', type: ErpDashboardDto, example: DASHBOARD },
   })
@@ -830,14 +831,16 @@ export class PartnerErpInsightController {
   @Op({
     id: 'partner.erpInsight.profitability',
     summary: 'Gross profit of the month',
-    description: 'Net invoiced less the cost of what was delivered, by sales order, customer or item (D-376).',
-    implements: ['D-376'],
+    description:
+      'Net invoiced less the cost of what was delivered, by sales order, customer or item (D-376); or, `by=packio_job`, ' +
+      'Packio jobs finished in the month: the purchase order’s net less the production order’s cost (D-402).',
+    implements: ['D-376', 'D-402'],
     can: 'factory_insight.read',
     success: { status: 200, description: 'The report', type: ErpProfitReportDto, example: PROFIT },
     errors: ['http.not_found', 'validation.failed'],
   })
   async profitability(@CurrentActor() actor: Actor, @Param('factoryId', ParseUUIDPipe) factoryId: string, @Query() q: ErpProfitQuery) {
-    return this.insight.profit(await this.workspace.open(actor, factoryId), q.month, (q.by ?? 'customer') as 'customer');
+    return this.insight.profit(await this.workspace.open(actor, factoryId), q.month, (q.by ?? 'customer') as 'customer' | 'packio_job');
   }
 
   @Get('insight/oee')
