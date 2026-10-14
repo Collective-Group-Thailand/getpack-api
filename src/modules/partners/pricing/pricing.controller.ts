@@ -30,6 +30,7 @@ import {
   PRICE_LIST_EXAMPLE,
   PRICE_LIST_VERSION_EXAMPLE,
   PRICE_ROW_EXAMPLE,
+  PriceComponentCountDto,
   PriceComponentDto,
   PriceListDto,
   PriceListVersionDto,
@@ -451,6 +452,30 @@ export class PartnerPriceListsController {
   ): Promise<Page<PriceRowDto>> {
     const { rows, total } = await this.lists.lines(actor, versionId, query, factoryId);
     return paginated(rows, total, query);
+  }
+
+  @Get('factories/:factoryId/price-list-versions/:versionId/component-counts')
+  @Can('factory_prices.read')
+  @factoryParam
+  @versionParam
+  @ApiEndpoint({
+    id: 'partner.priceLists.componentCounts',
+    summary: 'Count the lines of each component in one of my price-list versions',
+    description: 'Every registered component with its line count (0 included), for the price screens (D-406). Own factory only (D-044).',
+    implements: [...GOVERNANCE, 'D-406'],
+  })
+  @ApiSuccess(200, {
+    description: 'Line counts per component',
+    type: [PriceComponentCountDto],
+    example: [{ component: 'material_prices', lines: 12 }, { component: 'print_prices', lines: 0 }],
+  })
+  @ApiStandardErrors('http.not_found', 'validation.failed')
+  componentCounts(
+    @CurrentActor() actor: Actor,
+    @Param('factoryId', ParseUUIDPipe) factoryId: string,
+    @Param('versionId', ParseUUIDPipe) versionId: string,
+  ) {
+    return this.lists.componentCounts(actor, versionId, factoryId);
   }
 
   @Post('factories/:factoryId/price-list-versions/:versionId/actions/sign-off')

@@ -3,6 +3,11 @@
 Contract-facing changes per release. The contract itself is `contract/openapi.json`; mappings for `packio-web` are in
 `docs/contract-requests-triage.md`.
 
+## v0.54.0 — Factory prices: line counts per component
+
+Decision D-406. Additive. New `GET /v1/partner/factories/{factoryId}/price-list-versions/{versionId}/component-counts`
+(`partner.priceLists.componentCounts`): `PriceComponentCountDto[]` (`component`, `lines`).
+
 ## v0.53.1 — Owner decisions: intake terms, UAT opening balance
 
 Decisions D-404, D-405; D-397 / D-401 tax point confirmed. No contract change. `partner.styleIntakes.getTerms` now

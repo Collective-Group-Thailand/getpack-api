@@ -211,6 +211,14 @@ export class PriceRowDto {
   values!: Record<string, unknown>;
 }
 
+export class PriceComponentCountDto {
+  @ApiProperty({ enum: PRICE_COMPONENTS, enumName: 'PriceComponent', example: 'material_prices' })
+  component!: string;
+
+  @ApiProperty({ type: 'integer', example: 12, description: 'Lines of this component in the version' })
+  lines!: number;
+}
+
 export class PriceRowsQuery {
   @EnumField(PRICE_COMPONENTS, 'PriceComponent', { example: 'material_prices' })
   component!: string;

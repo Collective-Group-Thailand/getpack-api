@@ -98,6 +98,18 @@ export class PriceListBuilder {
     return { rows, total: Number(counted[0]?.count ?? 0) };
   }
 
+  /** How many lines each registered component holds in a version (one query over every component table, D-406). */
+  async counts(db: Tx, versionId: bigint): Promise<{ component: PriceComponent; lines: number }[]> {
+    const all = this.registry.all();
+    if (!all.length) return [];
+    const sql = all
+      .map((d, i) => `SELECT ${i} AS i, count(*) AS n FROM ${d.table} WHERE price_list_version_id = $1`)
+      .join(' UNION ALL ');
+    const rows = await db.$queryRawUnsafe<{ i: number; n: bigint }[]>(sql, versionId);
+    const byIndex = new Map(rows.map((r) => [Number(r.i), Number(r.n)]));
+    return all.map((d, i) => ({ component: d.component, lines: byIndex.get(i) ?? 0 }));
+  }
+
   /** One row of a version by line key, or null. */
   async row(
     db: Tx,
