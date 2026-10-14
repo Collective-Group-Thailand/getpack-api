@@ -38,7 +38,7 @@ function dto(r: DownloadResult): DielineDownloadDto {
   return {
     id: r.download.publicId,
     variantCode: r.variantCode,
-    format: r.render.format,
+    format: r.format,
     materialClass: r.render.materialClass,
     measurementBasis: r.measurementBasis,
     entered: r.entered,

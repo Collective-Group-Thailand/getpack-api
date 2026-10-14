@@ -26,6 +26,8 @@ import { DomainEvents } from '@platform/domain-events/domain-events.service';
 import { FilesService } from '@platform/files/files.service';
 import { SettingsService } from '@platform/settings/settings.service';
 
+import { type DielineDownloadFormat } from './dieline-downloads.dto';
+
 import { StyleDielinesService } from './style-dielines.service';
 
 export interface DownloadInput {
@@ -35,12 +37,14 @@ export interface DownloadInput {
   heightMm: number;
   measurementBasis?: MeasurementBasis;
   materialClass: string;
-  format: DrawingFormat;
+  format: DielineDownloadFormat;
 }
 
 export interface DownloadResult {
   download: { publicId: string; createdAt: Date };
   render: Prisma.DielineRenderGetPayload<{ include: { file: true } }>;
+  /** The format asked for — `ai` is a `pdf` render under another name, so the render row cannot say. */
+  format: DielineDownloadFormat;
   variantCode: string;
   measurementBasis: MeasurementBasis;
   entered: { lengthMm: number; widthMm: number; heightMm: number };
@@ -51,11 +55,15 @@ export interface DownloadResult {
   remainingToday: number | null;
 }
 
-const MIME: Record<DrawingFormat, string> = {
+const MIME: Record<DielineDownloadFormat, string> = {
   svg: 'image/svg+xml',
   dxf: 'application/dxf',
   pdf: 'application/pdf',
+  ai: 'application/illustrator',
 };
+
+/** The engine format behind a download format: `.ai` is the designer PDF under Illustrator's name. */
+const ENGINE_FORMAT: Record<DielineDownloadFormat, DrawingFormat> = { svg: 'svg', dxf: 'dxf', pdf: 'pdf', ai: 'pdf' };
 
 const VARIANT_INCLUDE = {
   base: {
@@ -170,6 +178,7 @@ export class DielineDownloadsService {
     return {
       download,
       render,
+      format: input.format,
       variantCode: variant.code,
       measurementBasis: basis,
       entered,
@@ -189,9 +198,10 @@ export class DielineDownloadsService {
     sizes: { length: number; width: number; height: number },
     materialClass: string,
     material: DielineMaterial,
-    format: DrawingFormat,
+    delivery: DielineDownloadFormat,
     now: Date,
   ) {
+    const format = ENGINE_FORMAT[delivery];
     const engineVersion = await this.engine.version();
     const designer = format === 'pdf' ? await this.designerPdf(variant, sizes, now) : undefined;
     const cacheKey = createHash('sha256')
@@ -204,6 +214,8 @@ export class DielineDownloadsService {
             sizes,
             material,
             format,
+            // The same drawing under another name and type is another file (and another cache row).
+            ...(delivery !== format && { delivery }),
             // D-302: the designer PDF's writer and its bleed / safe distances draw a new file when they change.
             ...(designer && {
               writer: DESIGNER_PDF_WRITER,
@@ -237,8 +249,8 @@ export class DielineDownloadsService {
     if (!body) throw new DomainException('dielines.not_drawable');
     const file: FileObject = await this.files.storeSystem({
       body,
-      fileName: `${variant.code}-${sizes.length}x${sizes.width}x${sizes.height}-${materialClass}.${format}`,
-      mimeType: MIME[format],
+      fileName: `${variant.code}-${sizes.length}x${sizes.width}x${sizes.height}-${materialClass}.${delivery}`,
+      mimeType: MIME[delivery],
       retentionClass: 'standard',
       ownerUserId: null,
     });

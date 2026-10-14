@@ -1,5 +1,15 @@
 import { EnumField } from '@modules/catalog/crud/dto-fields';
 import { DRAWING_FORMATS } from '@modules/designs/designs.dto';
+
+/**
+ * What a dieline download can come down as: the engine's three drawing formats, plus `ai` — the
+ * designer PDF delivered as an Illustrator file (`.ai`, `application/illustrator`). Illustrator
+ * opens a PDF-compatible file directly with every path editable and the spot swatches intact;
+ * the engine draws nothing new for it. Free, like the rest (D-271) — the owner's answer to a
+ * competitor that charges for the same file (2026-10-14).
+ */
+export const DIELINE_DOWNLOAD_FORMATS = [...DRAWING_FORMATS, 'ai'] as const;
+export type DielineDownloadFormat = (typeof DIELINE_DOWNLOAD_FORMATS)[number];
 import { MEASUREMENT_BASES } from '@modules/specs/dimension-conversion';
 import { applyDecorators } from '@nestjs/common';
 import { ApiProperty } from '@nestjs/swagger';
@@ -55,9 +65,14 @@ export class DownloadDielineDto {
   @Matches(/^[a-z][a-z0-9_]{1,39}$/)
   materialClass!: string;
 
-  @ApiProperty({ enum: DRAWING_FORMATS, enumName: 'DrawingFormat', example: 'pdf' })
-  @IsIn(DRAWING_FORMATS)
-  format!: (typeof DRAWING_FORMATS)[number];
+  @ApiProperty({
+    enum: DIELINE_DOWNLOAD_FORMATS,
+    enumName: 'DielineDownloadFormat',
+    example: 'pdf',
+    description: '`ai` is the designer PDF delivered as an Illustrator file (.ai) — same drawing, same layers and swatches',
+  })
+  @IsIn(DIELINE_DOWNLOAD_FORMATS)
+  format!: DielineDownloadFormat;
 }
 
 export class DielineSizesDto {
@@ -115,7 +130,7 @@ export class DielineDownloadDto {
   @ApiProperty({ example: 'PK-TE-01-K7QD' })
   variantCode!: string;
 
-  @ApiProperty({ enum: DRAWING_FORMATS, enumName: 'DrawingFormat', example: 'pdf' })
+  @ApiProperty({ enum: DIELINE_DOWNLOAD_FORMATS, enumName: 'DielineDownloadFormat', example: 'pdf' })
   format!: string;
 
   @ApiProperty({ example: 'paperboard' })
