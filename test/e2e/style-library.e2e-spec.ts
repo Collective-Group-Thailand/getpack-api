@@ -78,22 +78,22 @@ describe('style library (e2e, U3.B1)', () => {
       ],
     });
 
-  it('imports the master file: 105 bases and 960 variants, nothing written on a dry run', async () => {
+  it('imports the master file: 105 bases and 894 variants, nothing written on a dry run', async () => {
     const plan = await imports.plan('master', 'style-library-master.json', master);
     if (!plan.noop) {
-      expect(plan.summary).toMatchObject({ basesCreated: 105, variantsCreated: 960 });
+      expect(plan.summary).toMatchObject({ basesCreated: 105, variantsCreated: 894 });
       expect(await ctx.prisma.styleBase.count()).toBe(0);
       const run = await imports.apply(actors['admin']!, plan);
       expect(run?.status).toBe('applied');
     }
     expect(await ctx.prisma.styleBase.count()).toBe(105);
-    expect(await ctx.prisma.styleVariant.count()).toBe(960);
+    expect(await ctx.prisma.styleVariant.count()).toBe(894);
     const list = await as(ctx, tokens['cs']!).get('/v1/admin/styles?category=folding_carton').expect(200);
     expect(list.body.meta.total).toBe(40);
     const te = await base('PK-TE-01');
     expect(te.productTypeCode).toBe('folding_carton');
     const v = await variants(te.id);
-    expect(v.meta.total).toBe(228);
+    expect(v.meta.total).toBe(183);
     expect(v.data[0]!.code).toMatch(/^PK-TE-01-[A-Z2-7]{4}$/);
     // D-407: makeability is an order path, not a publish gate.
     expect(v.data[0]!.reasons).toEqual(['no_recipe', 'names_not_approved']);

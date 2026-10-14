@@ -1,25 +1,25 @@
 ﻿code,family,category,product_type,name_th,name_en,construction,material_class,variant_axes,distinct_variants,wave,complexity,reference,pricing_path_at_launch
-PK-TE-01,tuck_end,folding_carton,folding,กล่องฝาเสียบ (ปรับฝาบน-ล่างได้),Tuck-end carton (configurable ends),Four side panels + glue flap; top and bottom closures chosen from the tuck/lock/seal set; dust flaps on side panels.,paperboard,tuck_top;tuck_bottom;hang;window,228,1,M,,instant_after_signoff
+PK-TE-01,tuck_end,folding_carton,folding,กล่องฝาเสียบ (ปรับฝาบน-ล่างได้),Tuck-end carton (configurable ends),Four side panels + glue flap; top and bottom closures chosen from the tuck/lock/seal set; dust flaps on side panels.,paperboard,tuck_top;tuck_bottom;hang;window,183,1,M,,instant_after_signoff
 PK-TE-02,tuck_end,folding_carton,folding,กล่องฝาเสียบล็อกกันเปิด,Tuck-end with slit or friction lock,Tuck-end with lock tabs engaging slits or dust-flap friction to resist opening in transit.,paperboard,tuck_top;lock;tuck_corner,16,1,M,,instant_after_signoff
 PK-TE-03,tuck_end,folding_carton,folding,กล่องฝาเสียบผนังสองชั้น,Double-wall tuck-front carton,Side and end walls fold over for double thickness; tuck-front lid; e-commerce strength in paperboard.,paperboard,window;thumb,6,2,H,,instant_after_signoff
 PK-FT-01,flip_top,folding_carton,folding,กล่องฝาพับเปิด (ฝาติดตัว),Hinged flip-top carton,Lid hinged to the back panel with a front tuck; bottom tuck or crash-lock.,paperboard,tuck_bottom;window;insert,30,1,M,,instant_after_signoff
 PK-FT-02,flip_top,folding_carton,folding,กล่องฝาพับเปิดมีลิ้นกันฝุ่นยาว,Flip-top with extended dust flaps,Hinged lid with long dust flaps that tuck inside the body for a cleaner close.,paperboard,tuck_bottom;insert,10,2,M,,instant_after_signoff
 PK-DS-01,display,folding_carton,folding,กล่องโชว์สินค้าหน้าร้าน (มีป้ายหัว),Counter display tray with header card,Open-front tray with raised back header for branding; lock-corner or glued; optional divider.,paperboard,corner;insert,4,1,M,,instant_after_signoff
 PK-DS-02,display,folding_carton,folding,กล่องโชว์ฝาฉีกเปิด,Tear-away display carton,Closed carton with perforated front/top panel that tears off to become a display.,paperboard,tuck_bottom;hang,20,2,M,,instant_after_signoff
-PK-DS-03,display,folding_carton,folding,กล่องโชว์ก้นล็อกพนักสูง,Auto-bottom display with raised back,"Crash-lock bottom, cut-down front and sides, raised back panel.",paperboard,window,3,2,H,,instant_after_signoff
+PK-DS-03,display,folding_carton,folding,กล่องโชว์ก้นล็อกพนักสูง,Auto-bottom display with raised back,"Crash-lock bottom, cut-down front and sides, raised back panel.",paperboard,window,2,2,H,,instant_after_signoff
 PK-DS-04,display,folding_carton,folding,ขาตั้งโชว์พับได้,Easel-back display stand,Flat printed panel with a folding easel strut; optional shelf lip.,paperboard,thumb,2,3,L,,instant_after_signoff
 PK-TR-01,tray,folding_carton,folding,ถาด 4 มุมทากาว,Four-corner glued tray,Base with four walls; glue tabs at corners.,paperboard,corner;insert,4,1,L,,instant_after_signoff
 PK-TR-02,tray,folding_carton,folding,ถาด 6 มุมทากาว,Six-corner glued tray,Tray with extended side walls folding into six glued corners for stackable display.,paperboard,insert,2,1,M,,instant_after_signoff
 PK-TR-03,tray,folding_carton,folding,ถาดผนังสองชั้น,Double-wall tray,"Walls fold over into double thickness, locked by tabs into the base; no glue.",paperboard,insert,2,1,M,,instant_after_signoff
 PK-TR-04,tray,folding_carton,folding,ถาดฝาเสียบพับขอบ,Roll-end tray with tuck lid (paperboard mailer),"Roll-end side walls, integrated lid with front tuck and dust flaps.",paperboard,tuck_corner;insert;thumb,8,1,M,,instant_after_signoff
-PK-SL-01,sleeve,folding_carton,folding,ปลอกสวม,Open-end sleeve,"Four-panel tube with glue flap, open both ends.",paperboard,window;thumb,6,1,L,,instant_after_signoff
+PK-SL-01,sleeve,folding_carton,folding,ปลอกสวม,Open-end sleeve,"Four-panel tube with glue flap, open both ends.",paperboard,window;thumb,4,1,L,,instant_after_signoff
 PK-SL-02,sleeve,folding_carton,folding,กล่องลิ้นชัก (ปลอก+ถาด),Sleeve and drawer (matchbox),Two pieces: sleeve sized from drawer outer + clearance; drawer as a tray.,paperboard,thumb;window;insert,12,1,M,,instant_after_signoff
 PK-SL-03,sleeve,folding_carton,folding,ปลอกคาดกลาง,Belly band / wrap band,"Narrow band wrapping product or box, glued or tab-locked.",paperboard,lock,2,1,L,,instant_after_signoff
 PK-LB-01,lid_base,folding_carton,folding,กล่องฝาครอบสองชิ้น,Two-piece telescope (paperboard),Base tray + lid tray; lid sized from base outer + 2x caliper + clearance.,paperboard,lid_depth;corner;window;thumb,24,1,M,,instant_after_signoff
-PK-SP-01,specialty,folding_carton,folding,กล่องหมอน,Pillow box,Curved-crease ends formed by arcs; single glue flap.,paperboard,hang;window,12,1,M,,instant_after_signoff
-PK-SP-02,specialty,folding_carton,folding,กล่องหูหิ้ว (หลังคาจั่ว),Gable handle box,Gable top with interlocking handle cut-out; crash-lock or snap-lock bottom.,paperboard,tuck_bottom;window,15,1,H,,instant_after_signoff
-PK-SP-03,specialty,folding_carton,folding,กล่องหกเหลี่ยม,Hexagonal carton,"Six side panels, tuck or lid closure.",paperboard,tuck_top;window,12,2,H,,instant_after_signoff
-PK-SP-04,specialty,folding_carton,folding,กล่องแปดเหลี่ยม,Octagonal carton,"Eight side panels, tuck or lid closure.",paperboard,tuck_top,4,3,H,,instant_after_signoff
+PK-SP-01,specialty,folding_carton,folding,กล่องหมอน,Pillow box,Curved-crease ends formed by arcs; single glue flap.,paperboard,hang;window,8,1,M,,instant_after_signoff
+PK-SP-02,specialty,folding_carton,folding,กล่องหูหิ้ว (หลังคาจั่ว),Gable handle box,Gable top with interlocking handle cut-out; crash-lock or snap-lock bottom.,paperboard,tuck_bottom;window,10,1,H,,instant_after_signoff
+PK-SP-03,specialty,folding_carton,folding,กล่องหกเหลี่ยม,Hexagonal carton,"Six side panels, tuck or lid closure.",paperboard,tuck_top;window,6,2,H,,instant_after_signoff
+PK-SP-04,specialty,folding_carton,folding,กล่องแปดเหลี่ยม,Octagonal carton,"Eight side panels, tuck or lid closure.",paperboard,tuck_top,2,3,H,,instant_after_signoff
 PK-SP-05,specialty,folding_carton,folding,กล่องสามเหลี่ยม (ปริซึม),Triangular prism carton,Three side panels with tuck ends.,paperboard,hang;window,12,2,M,,instant_after_signoff
 PK-SP-06,specialty,folding_carton,folding,กล่องหูหิ้วใส่ขวด,Bottle carrier with handle,Open or closed carrier with partitions and centre handle.,paperboard,partition,6,2,H,,instant_after_signoff
 PK-SP-07,specialty,folding_carton,folding,กล่องเค้กมีหน้าต่าง,Cake box,Lock-corner tray base with hinged lid and front tuck; window option.,paperboard,window;handle,9,2,M,,instant_after_signoff
@@ -74,7 +74,7 @@ PK-PB-05,pouch,flexible,pouch,ถุงมีข้างจีบ,Side-gusset b
 PK-PB-06,mailer,flexible,mailer,ซองไปรษณีย์พลาสติก,Courier poly mailer,Co-ex film with adhesive flap and tear strip.,flexible,adhesive;tear_strip,6,1,L,,rfq_no_calculator
 PK-PB-07,mailer,flexible,mailer,ซองกันกระแทก (บับเบิ้ล),Bubble mailer,"Kraft or film outer with bubble lining, adhesive flap.",flexible,,1,2,L,,rfq_no_calculator
 PK-PG-01,paper_bag,flexible,paper_bag,ถุงกระดาษมีหูหิ้ว,Paper carrier bag,"Gusseted or flat paper bag, reinforced top, handle options.",paper,bag_handle;bag_gusset,10,1,M,,rfq_no_calculator
-PK-PG-02,paper_bag,flexible,paper_bag,ถุงกระดาษก้นตั้ง (ไม่มีหู),SOS paper bag,"Self-opening square-bottom bag, no handle.",paper,window,3,2,L,,rfq_no_calculator
+PK-PG-02,paper_bag,flexible,paper_bag,ถุงกระดาษก้นตั้ง (ไม่มีหู),SOS paper bag,"Self-opening square-bottom bag, no handle.",paper,window,2,2,L,,rfq_no_calculator
 PK-LA-01,label,label,label,ฉลากม้วน,Roll label,Die-cut labels on liner in rolls; core/wind direction specified.,label_stock,shape_flat,5,1,L,,instant_after_signoff
 PK-LA-02,label,label,label,สติกเกอร์แผ่น,Sheet sticker,Kiss-cut stickers on sheets.,label_stock,shape_flat,5,1,L,,instant_after_signoff
 PK-LA-03,label,label,label,ฉลากพันรอบขวด,Wrap-around bottle label,Rectangular label sized from container circumference + overlap.,label_stock,tuck_corner,2,1,L,,instant_after_signoff

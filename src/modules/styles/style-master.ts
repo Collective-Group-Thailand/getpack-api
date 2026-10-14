@@ -43,9 +43,17 @@ export interface MasterVariant {
   options: Record<string, string | string[]>;
 }
 
+/** A combination of option values no factory can build (D-408): the variants it matches are not generated. */
+export interface ExcludedCombination {
+  bases: string[];
+  when: Record<string, string[]>;
+  reason: string;
+}
+
 export interface ParsedMaster {
   axes: Record<string, string[]>;
   allowedTuckPairs: [string, string][];
+  excluded: ExcludedCombination[];
   bases: MasterBase[];
 }
 
@@ -60,7 +68,12 @@ const str = (v: unknown) => (typeof v === 'string' ? v.trim() : '');
 
 export function parseMaster(raw: unknown): ParsedMaster {
   const problems: string[] = [];
-  const file = (raw ?? {}) as { axes?: unknown; allowed_tuck_pairs?: unknown; styles?: unknown };
+  const file = (raw ?? {}) as {
+    axes?: unknown;
+    allowed_tuck_pairs?: unknown;
+    excluded_combinations?: unknown;
+    styles?: unknown;
+  };
   const axes: Record<string, string[]> = {};
   if (!file.axes || typeof file.axes !== 'object') problems.push('axes is missing');
   for (const [axis, values] of Object.entries((file.axes ?? {}) as Record<string, unknown>)) {
@@ -79,6 +92,25 @@ export function parseMaster(raw: unknown): ParsedMaster {
   for (const [top, bottom] of allowedTuckPairs) {
     if (!axes['tuck_top']?.includes(top) || !axes['tuck_bottom']?.includes(bottom))
       problems.push(`allowed tuck pair ${top}/${bottom} is not on the tuck axes`);
+  }
+  const excluded: ExcludedCombination[] = [];
+  for (const [i, raw] of (Array.isArray(file.excluded_combinations) ? file.excluded_combinations : []).entries()) {
+    const rule = (raw ?? {}) as { bases?: unknown; when?: unknown; reason?: unknown };
+    const bases = Array.isArray(rule.bases) ? rule.bases.map(str) : [];
+    const when = Object.fromEntries(
+      Object.entries((rule.when ?? {}) as Record<string, unknown>).map(([axis, values]) => [
+        axis,
+        Array.isArray(values) ? values.map(str) : [],
+      ]),
+    );
+    const at = `excluded_combinations[${i}]`;
+    if (bases.length === 0 || !bases.every((b) => CODE.test(b))) problems.push(`${at}: bases must be base codes`);
+    if (Object.keys(when).length === 0) problems.push(`${at}: when is empty`);
+    for (const [axis, values] of Object.entries(when))
+      if (!axes[axis] || values.length === 0 || !values.every((v) => axes[axis]!.includes(v)))
+        problems.push(`${at}: ${axis} values are not on the axis`);
+    if (!str(rule.reason)) problems.push(`${at}: reason is empty`);
+    excluded.push({ bases, when, reason: str(rule.reason) });
   }
   const styles = Array.isArray(file.styles) ? (file.styles as Record<string, unknown>[]) : [];
   if (styles.length === 0) problems.push('styles is empty');
@@ -137,7 +169,7 @@ export function parseMaster(raw: unknown): ParsedMaster {
       distinctVariants: Number(s['distinct_variants']),
     });
   }
-  const parsed = { axes, allowedTuckPairs, bases };
+  const parsed = { axes, allowedTuckPairs, excluded, bases };
   if (problems.length === 0) {
     for (const base of bases) {
       const n = variantsOf(base, parsed).length;
@@ -149,10 +181,13 @@ export function parseMaster(raw: unknown): ParsedMaster {
   return parsed;
 }
 
-/** Every variant of a base, in a deterministic order. A base without axes has one variant (its only form). */
+/**
+ * Every variant of a base, in a deterministic order. A base without axes has one variant (its only form). A
+ * combination the file excludes (D-408) is not one.
+ */
 export function variantsOf(
-  base: Pick<MasterBase, 'variantAxes'>,
-  master: Pick<ParsedMaster, 'axes' | 'allowedTuckPairs'>,
+  base: Pick<MasterBase, 'variantAxes'> & { code?: string },
+  master: Pick<ParsedMaster, 'axes' | 'allowedTuckPairs'> & { excluded?: ExcludedCombination[] },
 ): MasterVariant[] {
   type Choice = Record<string, string | string[]>;
   let combos: Choice[] = [{}];
@@ -169,7 +204,17 @@ export function variantsOf(
     else choices = master.axes[axis]!.map((value) => ({ [axis]: value }));
     combos = combos.flatMap((c) => choices.map((choice) => ({ ...c, ...choice })));
   }
-  return combos.map((options) => ({ optionKey: optionKey(axes, options), options: ordered(axes, options) }));
+  const rules = (master.excluded ?? []).filter((r) => base.code !== undefined && r.bases.includes(base.code));
+  const impossible = (options: Choice) =>
+    rules.some((r) =>
+      Object.entries(r.when).every(([axis, values]) => {
+        const v = options[axis];
+        return typeof v === 'string' && values.includes(v);
+      }),
+    );
+  return combos
+    .filter((options) => !impossible(options))
+    .map((options) => ({ optionKey: optionKey(axes, options), options: ordered(axes, options) }));
 }
 
 /** `axis=value;…` in the base's axis order; a multi-select value is its sorted members joined by `+` (`none` empty). */

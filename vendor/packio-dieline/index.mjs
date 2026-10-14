@@ -11273,7 +11273,7 @@ function windowIssues(v, d) {
   const kind = str(v, "window", "none");
   if (kind === "none") return [];
   const panelId = str(v, "windowPanel", "front");
-  const panel = panelId === "lid" ? findFace(d, "lid-top") ?? findFace(d, "flap-back-top") ?? findFace(d, "lid") : findFace(d, panelId);
+  const panel = panelId === "lid" ? findFace(d, "lid-top") ?? findFace(d, "flap-back-top") ?? findFace(d, "lid") ?? findFace(d, "flap-front-top") : findFace(d, panelId);
   const hole = panel?.holes[0];
   if (!panel || !hole)
     return [
@@ -12796,16 +12796,17 @@ function slottedFlaps(spec) {
   return ({ panels, end }) => {
     const half = spec.slot / 2;
     const last = panels.length - 1;
-    const attachments = panels.map((s, i) => {
+    const attachments = panels.flatMap((s, i) => {
+      if (spec.depths[i] <= 0) return [];
       const a = i === 0 ? s.x0 : s.x0 + half;
       const b = i === last ? s.x1 : s.x1 - half;
       const d = spec.depths[i];
       const left = spec.slot === 0 && i > 0 ? spec.depths[i - 1] : Infinity;
       const right = spec.slot === 0 && i < last ? spec.depths[i + 1] : Infinity;
       const pts = [[a, 0]];
-      if (left < d - 1e-9) pts.push([a, -left]);
+      if (left < d - 1e-9 && left > 0) pts.push([a, -left]);
       pts.push([a, -d], [b, -d]);
-      if (right < d - 1e-9) pts.push([b, -right]);
+      if (right < d - 1e-9 && right > 0) pts.push([b, -right]);
       pts.push([b, 0]);
       const roles = pts.map((_, k2) => k2 === pts.length - 1 ? "crease" : "cut");
       const label = Array.isArray(spec.labels) ? spec.labels[i] : spec.labels ?? (end === "top" ? "top_flap" : "bottom_flap");
@@ -12819,13 +12820,15 @@ function slottedFlaps(spec) {
         ],
         "glue_area"
       ) : [];
-      return {
-        face: face(idOf(end, `flap-${s.id}`), label, spec.kinds?.[i] ?? "flap", polygon(pts, roles), {
-          marks,
-          holes: spec.holes?.(i, a, b, d) ?? []
-        }),
-        span: [a, b]
-      };
+      return [
+        {
+          face: face(idOf(end, `flap-${s.id}`), label, spec.kinds?.[i] ?? "flap", polygon(pts, roles), {
+            marks,
+            holes: spec.holes?.(i, a, b, d) ?? []
+          }),
+          span: [a, b]
+        }
+      ];
     });
     return { attachments };
   };
@@ -13423,6 +13426,20 @@ var seal = flapSet(
   },
   ["die_cut", "folder_gluer_straight"]
 );
+var sealHang = flapSet(
+  "sealHang",
+  t("\u0E1B\u0E34\u0E14\u0E17\u0E32\u0E01\u0E32\u0E27 \u0E43\u0E15\u0E49\u0E2B\u0E39\u0E41\u0E02\u0E27\u0E19", "Seal end under a hang tab"),
+  {
+    depths: ["side", DUST, "0", DUST],
+    slot: "0",
+    labels: ["outer_flap", "dust_flap", "outer_flap", "dust_flap"],
+    kinds: ["lid", "dust_flap", "lid", "dust_flap"],
+    glue: [0],
+    stages: { front: 3 },
+    windowFlap: 0
+  },
+  ["die_cut", "folder_gluer_straight"]
+);
 var snapLock123 = {
   id: "snapLock123",
   slot: "closure",
@@ -13595,6 +13612,18 @@ var lidAndBase = {
       };
       if (handles !== "none" && !lid2) add(trayHandHoles(handles, f, full ? 30 : lidDepthOf(v) + 15));
       if (handles !== "none" && lid2 && full) add(trayHandHoles(handles, f, f.height - 30 - HAND_HOLE_HEIGHT_MM));
+      if (!lid2)
+        add({
+          "wall-front": windowHole(
+            v,
+            "wall-front",
+            f.height,
+            f.height + f.length,
+            f.height + f.width,
+            2 * f.height + f.width - (full ? 0 : lidDepthOf(v) + c)
+          )
+        });
+      if (lid2 && full) add({ "wall-back": windowHole(v, "wall-front", f.height, f.height + f.length, 0, f.height) });
       if (lid2) {
         holes.base = windowHole(v, "lid-base", f.height, f.height + f.length, f.height, f.height + f.width);
         if (bool(v, "fingerHole", false)) {
@@ -13664,6 +13693,14 @@ var sleeveAndDrawer = {
         )
       ]
     } : {};
+    const across = {
+      ...v,
+      windowWidth: v.windowHeight,
+      windowHeight: v.windowWidth,
+      windowOffsetX: -num(v, "windowOffsetY", 0),
+      windowOffsetY: v.windowOffsetX
+    };
+    holes["wall-back"] = windowHole(across, "sleeve-left", drawerH, drawerH + drawerL, 0, drawerH);
     const drawer = buildTray({
       length: drawerL,
       width: W + a.panel,
@@ -16754,6 +16791,132 @@ var partitionSet = {
   }
 };
 
+// packages/dieline/src/modules/body/tapered.ts
+function geometry(ctx, cfg) {
+  const L = num(ctx.v, "length", 120);
+  const W = num(ctx.v, "width", 90);
+  const H = num(ctx.v, "height", 100);
+  const taper = num(ctx.v, "taper", 15);
+  const s = Math.hypot(H, taper);
+  const g = Math.min(15, s / 4, Math.min(L, W) / 4);
+  const flaps = cfg.top === "flaps";
+  const topL = L + 2 * taper;
+  const topW = W + 2 * taper;
+  return {
+    L,
+    W,
+    H,
+    taper,
+    s,
+    g,
+    dEnd: flaps ? Math.min(topL * 0.4, topW * 0.6) : 0,
+    dLong: flaps ? topW / 2 - 1 : 0
+  };
+}
+function flapOn(p, q, inside, depth, inset = depth) {
+  const len2 = Math.hypot(q[0] - p[0], q[1] - p[1]);
+  const u = [(q[0] - p[0]) / len2, (q[1] - p[1]) / len2];
+  let n2 = [-u[1], u[0]];
+  const mid = [(p[0] + q[0]) / 2, (p[1] + q[1]) / 2];
+  if ((inside[0] - mid[0]) * n2[0] + (inside[1] - mid[1]) * n2[1] > 0) n2 = [-n2[0], -n2[1]];
+  const k2 = Math.min(inset, len2 / 2 - 1);
+  return [p, q, [q[0] + n2[0] * depth - u[0] * k2, q[1] + n2[1] * depth - u[1] * k2], [p[0] + n2[0] * depth + u[0] * k2, p[1] + n2[1] * depth + u[1] * k2]];
+}
+var taperedTray = {
+  id: "taperedTray",
+  slot: "body",
+  kind: "special",
+  status: "implemented",
+  folds: true,
+  label: t("\u0E16\u0E32\u0E14/\u0E16\u0E31\u0E07\u0E17\u0E23\u0E07\u0E2A\u0E2D\u0E1A", "Tapered tray or pail"),
+  params: ["length", "width", "height", "taper", "pailHandle"],
+  processes: ["die_cut", "folder_gluer_corner"],
+  contributes: { kinds: ["base", "wall", "glue_flap", "flap", "dust_flap"], roles: ["cut", "crease"] },
+  constraints: [
+    {
+      id: "taperedTray.taper",
+      code: "size.taper_too_steep",
+      severity: "error",
+      param: "taper",
+      require: "taper >= 0 and taper <= height / 2",
+      message: t("\u0E04\u0E27\u0E32\u0E21\u0E2A\u0E2D\u0E1A\u0E15\u0E49\u0E2D\u0E07\u0E44\u0E21\u0E48\u0E40\u0E01\u0E34\u0E19\u0E04\u0E23\u0E36\u0E48\u0E07\u0E2B\u0E19\u0E36\u0E48\u0E07\u0E02\u0E2D\u0E07\u0E04\u0E27\u0E32\u0E21\u0E2A\u0E39\u0E07", "The taper may be at most half the height")
+    }
+  ],
+  build(ctx, cfg) {
+    const { L, W, taper: k2, s, g, dEnd, dLong } = geometry(ctx, cfg);
+    const handle = str(ctx.v, "pailHandle", "none");
+    const centre = [L / 2, W / 2];
+    const back = [[L, 0], [0, 0], [-k2, -s], [L + k2, -s]];
+    const front = [[0, W], [L, W], [L + k2, W + s], [-k2, W + s]];
+    const left = [[0, 0], [0, W], [-s, W + k2], [-s, -k2]];
+    const right = [[L, W], [L, 0], [L + s, -k2], [L + s, W + k2]];
+    const top = dEnd > 0;
+    const wall = (id, label, pts, holes = []) => (
+      // Base crease, a side edge (creased where a glue flap hangs), the top edge (creased under a top flap), the other side.
+      face(id, label, "wall", polygon(pts, ["crease", label === "wall_back" || label === "wall_front" ? "crease" : "cut", top ? "crease" : "cut", label === "wall_back" || label === "wall_front" ? "crease" : "cut"]), { holes })
+    );
+    const pin = (x) => handle === "insert" ? [ellipse(x, W / 2, 2.5, 2.5)] : [];
+    const faces = [
+      face("base", "base", "base", polygon([[0, 0], [L, 0], [L, W], [0, W]], "crease")),
+      wall("wall-back", "wall_back", back),
+      wall("wall-front", "wall_front", front),
+      wall("wall-left", "wall_left", left, pin(-s + 15)),
+      wall("wall-right", "wall_right", right, pin(L + s - 15)),
+      // Glue flaps on the long walls' side edges, folded inside the end walls.
+      face("glue-back-left", "glue_flap", "glue_flap", polygon(flapOn([0, 0], [-k2, -s], [L / 2, -s / 2], g), ["crease", "cut", "cut", "cut"])),
+      face("glue-back-right", "glue_flap", "glue_flap", polygon(flapOn([L, 0], [L + k2, -s], [L / 2, -s / 2], g), ["crease", "cut", "cut", "cut"])),
+      face("glue-front-left", "glue_flap", "glue_flap", polygon(flapOn([0, W], [-k2, W + s], [L / 2, W + s / 2], g), ["crease", "cut", "cut", "cut"])),
+      face("glue-front-right", "glue_flap", "glue_flap", polygon(flapOn([L, W], [L + k2, W + s], [L / 2, W + s / 2], g), ["crease", "cut", "cut", "cut"]))
+    ];
+    if (top) {
+      const slot2 = (y) => handle === "die_cut" ? [roundedRectangle(L / 2 - 30, y - 6, 60, 12, 6)] : [];
+      const backFlap = flapOn([-k2, -s], [L + k2, -s], centre, dLong, dLong * 0.25);
+      const frontFlap = flapOn([L + k2, W + s], [-k2, W + s], centre, dLong, dLong * 0.25);
+      faces.push(
+        face("top-back", "top_flap", "flap", polygon(backFlap, ["crease", "cut", "cut", "cut"]), { holes: slot2(-s - dLong + 16) }),
+        face("top-front", "top_flap", "flap", polygon(frontFlap, ["crease", "cut", "cut", "cut"]), { holes: slot2(W + s + dLong - 16) }),
+        face("top-left", "dust_flap", "dust_flap", polygon(flapOn([-s, W + k2], [-s, -k2], centre, dEnd), ["crease", "cut", "cut", "cut"])),
+        face("top-right", "dust_flap", "dust_flap", polygon(flapOn([L + s, -k2], [L + s, W + k2], centre, dEnd), ["crease", "cut", "cut", "cut"]))
+      );
+    }
+    return assemble(ctx.styleId, [piece("blank", "blank", faces)]);
+  },
+  hinges(ctx, cfg) {
+    const { H, taper: k2, s, dEnd } = geometry(ctx, cfg);
+    const up = Math.acos(k2 / s) * 180 / Math.PI;
+    const n1 = [0, -H, -k2];
+    const n2 = [H, 0, -k2];
+    const cos = (n1[0] * n2[0] + n1[1] * n2[1] + n1[2] * n2[2]) / (Math.hypot(...n1) * Math.hypot(...n2));
+    const glue = 180 - Math.acos(cos) * 180 / Math.PI;
+    const flat = 180 - up;
+    const angles = {
+      "wall-back": up,
+      "wall-front": up,
+      "wall-left": up,
+      "wall-right": up,
+      "glue-back-left": glue,
+      "glue-back-right": glue,
+      "glue-front-left": glue,
+      "glue-front-right": glue
+    };
+    const stages = {
+      "glue-back-left": 0,
+      "glue-back-right": 0,
+      "glue-front-left": 0,
+      "glue-front-right": 0,
+      "wall-back": 1,
+      "wall-front": 1,
+      "wall-left": 2,
+      "wall-right": 2
+    };
+    if (dEnd > 0) {
+      Object.assign(angles, { "top-left": flat, "top-right": flat, "top-back": flat, "top-front": flat });
+      Object.assign(stages, { "top-left": 3, "top-right": 3, "top-back": 4, "top-front": 4 });
+    }
+    return { roots: { blank: "base" }, upright: "base", angles, stages };
+  }
+};
+
 // packages/dieline/src/modules/body/poly-mailer.ts
 var polyMailer = {
   id: "polyMailer",
@@ -18199,9 +18362,10 @@ var slitLock = {
     if (!lid) return out;
     const xs = lid.outline.flatMap((e) => [e.from[0], e.to[0]]);
     const ys = lid.outline.flatMap((e) => [e.from[1], e.to[1]]);
-    const [x0, x1, y] = [Math.min(...xs), Math.max(...xs), Math.min(...ys)];
+    const [x0, x1] = [Math.min(...xs), Math.max(...xs)];
+    const y = end === "bottom" ? Math.max(...ys) - 3 : Math.min(...ys) + 2;
     const len2 = Math.min(10, (x1 - x0) / 6);
-    const slits = [0.2, 0.8].map((k2) => rectangle(x0 + (x1 - x0) * k2 - len2 / 2, y + 2, len2, 1));
+    const slits = [0.2, 0.8].map((k2) => rectangle(x0 + (x1 - x0) * k2 - len2 / 2, y, len2, 1));
     lid.holes = [...lid.holes, ...slits];
     return out;
   }
@@ -18383,8 +18547,9 @@ var telescopeLid = {
     const h = telescopeLidDepth(v) + a.trayDepth;
     const faces = prefixFaces(
       buildTray({
-        length: num(v, "length", 300) + 2 * c + a.panel,
-        width: num(v, "width", 200) + 2 * c + a.panel,
+        // `length` / `width` (expressions): the body's inside across, when it is not a rectangle's (an octagon's).
+        length: (cfg.length ? ctx.num(cfg.length) : num(v, "length", 300)) + 2 * c + a.panel,
+        width: (cfg.width ? ctx.num(cfg.width) : num(v, "width", 200)) + 2 * c + a.panel,
         height: h,
         cornerFlap: cornerFlapOf(h)
       }),
@@ -18499,7 +18664,9 @@ var WAVE_MODULES = [
   pyramid,
   petal,
   easel,
-  floorDisplay
+  floorDisplay,
+  taperedTray,
+  sealHang
 ];
 
 // packages/dieline/src/recipes/library/data/ft-crash.json
@@ -21290,6 +21457,1781 @@ var te2_straight_default = {
   ]
 };
 
+// packages/dieline/src/recipes/library/data/te2-seal.json
+var te2_seal_default = {
+  schemaVersion: 1,
+  id: "te2-seal",
+  base: "PK-TE-02",
+  variant: {
+    tuck_top: "seal"
+  },
+  variants: {
+    lock: {
+      friction: {
+        lock: "friction"
+      },
+      slit_lock: {
+        lock: "slit"
+      }
+    },
+    tuck_corner: {
+      square: {
+        tuckCorners: "square"
+      },
+      rounded: {
+        tuckCorners: "rounded"
+      }
+    }
+  },
+  category: "folding_carton",
+  name: {
+    th: "\u0E01\u0E25\u0E48\u0E2D\u0E07\u0E1D\u0E32\u0E1B\u0E34\u0E14\u0E01\u0E32\u0E27 \u0E01\u0E49\u0E19\u0E40\u0E2A\u0E35\u0E22\u0E1A\u0E25\u0E47\u0E2D\u0E01\u0E23\u0E48\u0E2D\u0E07",
+    en: "Seal top, locking tuck bottom"
+  },
+  description: {
+    th: "\u0E1D\u0E32\u0E1A\u0E19\u0E1B\u0E34\u0E14\u0E01\u0E32\u0E27 \u0E01\u0E49\u0E19\u0E40\u0E1B\u0E47\u0E19\u0E25\u0E34\u0E49\u0E19\u0E40\u0E2A\u0E35\u0E22\u0E1A\u0E17\u0E35\u0E48\u0E25\u0E47\u0E2D\u0E01\u0E14\u0E49\u0E27\u0E22\u0E23\u0E48\u0E2D\u0E07\u0E2B\u0E23\u0E37\u0E2D\u0E41\u0E23\u0E07\u0E40\u0E2A\u0E35\u0E22\u0E14\u0E17\u0E32\u0E19\u0E01\u0E31\u0E1A\u0E1B\u0E35\u0E01\u0E01\u0E31\u0E19\u0E1D\u0E38\u0E48\u0E19",
+    en: "Glued top; the bottom tuck locks by slits or friction against the dust flaps"
+  },
+  materials: ["paperboard"],
+  params: [
+    {
+      ref: "length",
+      min: 20,
+      max: 400
+    },
+    {
+      ref: "width",
+      min: 15,
+      max: 300
+    },
+    {
+      ref: "height",
+      min: 20,
+      max: 450
+    },
+    "tuckDepth",
+    "tuckCorners",
+    "dustFlapDepth",
+    "lock",
+    "glueWidth",
+    "glueSide",
+    "grain"
+  ],
+  defaults: {
+    "@extends": "carton",
+    lock: "friction"
+  },
+  presets: "carton",
+  body: {
+    module: "tube",
+    preset: "carton"
+  },
+  closures: {
+    top: {
+      module: "seal"
+    },
+    bottom: {
+      module: "tuck",
+      with: {
+        lid: "back"
+      }
+    }
+  },
+  features: [
+    {
+      module: "slitLock",
+      with: {
+        end: "bottom"
+      }
+    }
+  ]
+};
+
+// packages/dieline/src/recipes/library/data/te3-double-wall.json
+var te3_double_wall_default = {
+  schemaVersion: 1,
+  id: "te3-double-wall",
+  base: "PK-TE-03",
+  variants: {
+    window: {
+      none: {
+        window: "none"
+      },
+      top_window: {
+        window: "rect",
+        windowPanel: "lid"
+      }
+    },
+    thumb: {
+      none: {
+        fingerHole: false
+      },
+      thumb_notch: {
+        fingerHole: true
+      }
+    }
+  },
+  category: "folding_carton",
+  name: {
+    th: "\u0E01\u0E25\u0E48\u0E2D\u0E07\u0E1D\u0E32\u0E40\u0E2A\u0E35\u0E22\u0E1A\u0E1C\u0E19\u0E31\u0E07\u0E2A\u0E2D\u0E07\u0E0A\u0E31\u0E49\u0E19",
+    en: "Double-wall tuck-front carton"
+  },
+  description: {
+    th: "\u0E1C\u0E19\u0E31\u0E07\u0E2B\u0E19\u0E49\u0E32\u0E41\u0E25\u0E30\u0E1C\u0E19\u0E31\u0E07\u0E02\u0E49\u0E32\u0E07\u0E1E\u0E31\u0E1A\u0E0B\u0E49\u0E2D\u0E19\u0E2A\u0E2D\u0E07\u0E0A\u0E31\u0E49\u0E19 \u0E1D\u0E32\u0E1E\u0E31\u0E1A\u0E15\u0E34\u0E14\u0E1C\u0E19\u0E31\u0E07\u0E2B\u0E25\u0E31\u0E07\u0E1B\u0E34\u0E14\u0E14\u0E49\u0E27\u0E22\u0E25\u0E34\u0E49\u0E19\u0E40\u0E2A\u0E35\u0E22\u0E1A\u0E14\u0E49\u0E32\u0E19\u0E2B\u0E19\u0E49\u0E32 \u0E41\u0E02\u0E47\u0E07\u0E41\u0E23\u0E07\u0E2A\u0E33\u0E2B\u0E23\u0E31\u0E1A\u0E2A\u0E48\u0E07\u0E2D\u0E2D\u0E19\u0E44\u0E25\u0E19\u0E4C",
+    en: "Front and end walls folded over double; a lid hinged on the back closes with a front tuck \u2014 e-commerce strength in paperboard"
+  },
+  materials: ["paperboard"],
+  params: [
+    {
+      ref: "length",
+      min: 80,
+      max: 600
+    },
+    {
+      ref: "width",
+      min: 60,
+      max: 450
+    },
+    {
+      ref: "height",
+      min: 20,
+      max: 250
+    },
+    {
+      ref: "tuckDepth",
+      omit: ["help"]
+    },
+    "grain",
+    "tuckCorners",
+    "fingerHole",
+    "window",
+    {
+      ref: "windowPanel",
+      options: [
+        {
+          value: "lid",
+          label: {
+            th: "\u0E1A\u0E19\u0E1D\u0E32",
+            en: "Lid top"
+          }
+        },
+        {
+          value: "wall-front",
+          label: {
+            th: "\u0E1C\u0E19\u0E31\u0E07\u0E14\u0E49\u0E32\u0E19\u0E2B\u0E19\u0E49\u0E32",
+            en: "Front wall"
+          }
+        }
+      ]
+    },
+    "windowWidth",
+    "windowHeight",
+    "windowOffsetX",
+    "windowOffsetY",
+    "windowRadius"
+  ],
+  defaults: {
+    length: 250,
+    width: 180,
+    height: 80,
+    grain: "across",
+    tuckCorners: "rounded",
+    fingerHole: false,
+    window: "none",
+    windowPanel: "lid",
+    windowWidth: 60,
+    windowHeight: 40,
+    windowOffsetX: 0,
+    windowOffsetY: 0,
+    windowRadius: 6
+  },
+  presets: [
+    {
+      id: "small",
+      label: {
+        th: "\u0E40\u0E25\u0E47\u0E01 200 \xD7 150 \xD7 50",
+        en: "Small 200 \xD7 150 \xD7 50"
+      },
+      values: {
+        length: 200,
+        width: 150,
+        height: 50
+      }
+    },
+    {
+      id: "medium",
+      label: {
+        th: "\u0E01\u0E25\u0E32\u0E07 250 \xD7 180 \xD7 80",
+        en: "Medium 250 \xD7 180 \xD7 80"
+      },
+      values: {
+        length: 250,
+        width: 180,
+        height: 80
+      }
+    },
+    {
+      id: "large",
+      label: {
+        th: "\u0E43\u0E2B\u0E0D\u0E48 350 \xD7 250 \xD7 100",
+        en: "Large 350 \xD7 250 \xD7 100"
+      },
+      values: {
+        length: 350,
+        width: 250,
+        height: 100
+      }
+    }
+  ],
+  body: {
+    module: "tray",
+    preset: "glued"
+  },
+  closures: {
+    top: {
+      module: "hingedLid",
+      with: {
+        front: "tuck"
+      }
+    }
+  },
+  features: [
+    {
+      module: "rollOverWalls",
+      with: {
+        walls: ["front", "left", "right"]
+      }
+    },
+    {
+      module: "trayWindow"
+    }
+  ],
+  outerSize: {
+    width: "width + 3 * t",
+    height: "height + t"
+  }
+};
+
+// packages/dieline/src/recipes/library/data/te3-double-wall-window.json
+var te3_double_wall_window_default = {
+  schemaVersion: 1,
+  id: "te3-double-wall-window",
+  base: "PK-TE-03",
+  variants: {
+    window: {
+      front_window: {
+        window: "rect",
+        windowPanel: "wall-front"
+      }
+    },
+    thumb: {
+      none: {
+        fingerHole: false
+      },
+      thumb_notch: {
+        fingerHole: true
+      }
+    }
+  },
+  category: "folding_carton",
+  name: {
+    th: "\u0E01\u0E25\u0E48\u0E2D\u0E07\u0E1D\u0E32\u0E40\u0E2A\u0E35\u0E22\u0E1A\u0E1C\u0E19\u0E31\u0E07\u0E2A\u0E2D\u0E07\u0E0A\u0E31\u0E49\u0E19 \u0E2B\u0E19\u0E49\u0E32\u0E15\u0E48\u0E32\u0E07\u0E14\u0E49\u0E32\u0E19\u0E2B\u0E19\u0E49\u0E32",
+    en: "Double-wall tuck-front carton, front window"
+  },
+  description: {
+    th: "\u0E1C\u0E19\u0E31\u0E07\u0E02\u0E49\u0E32\u0E07\u0E1E\u0E31\u0E1A\u0E0B\u0E49\u0E2D\u0E19\u0E2A\u0E2D\u0E07\u0E0A\u0E31\u0E49\u0E19 \u0E1C\u0E19\u0E31\u0E07\u0E2B\u0E19\u0E49\u0E32\u0E0A\u0E31\u0E49\u0E19\u0E40\u0E14\u0E35\u0E22\u0E27\u0E21\u0E35\u0E2B\u0E19\u0E49\u0E32\u0E15\u0E48\u0E32\u0E07 \u0E1D\u0E32\u0E1E\u0E31\u0E1A\u0E15\u0E34\u0E14\u0E1C\u0E19\u0E31\u0E07\u0E2B\u0E25\u0E31\u0E07\u0E1B\u0E34\u0E14\u0E14\u0E49\u0E27\u0E22\u0E25\u0E34\u0E49\u0E19\u0E40\u0E2A\u0E35\u0E22\u0E1A",
+    en: "End walls folded over double; a single front wall carries the window; a back-hinged lid with a front tuck"
+  },
+  materials: ["paperboard"],
+  params: [
+    {
+      ref: "length",
+      min: 80,
+      max: 600
+    },
+    {
+      ref: "width",
+      min: 60,
+      max: 450
+    },
+    {
+      ref: "height",
+      min: 20,
+      max: 250
+    },
+    {
+      ref: "tuckDepth",
+      omit: ["help"]
+    },
+    "grain",
+    "tuckCorners",
+    "fingerHole",
+    "window",
+    {
+      ref: "windowPanel",
+      options: [
+        {
+          value: "lid",
+          label: {
+            th: "\u0E1A\u0E19\u0E1D\u0E32",
+            en: "Lid top"
+          }
+        },
+        {
+          value: "wall-front",
+          label: {
+            th: "\u0E1C\u0E19\u0E31\u0E07\u0E14\u0E49\u0E32\u0E19\u0E2B\u0E19\u0E49\u0E32",
+            en: "Front wall"
+          }
+        }
+      ]
+    },
+    "windowWidth",
+    "windowHeight",
+    "windowOffsetX",
+    "windowOffsetY",
+    "windowRadius"
+  ],
+  defaults: {
+    length: 250,
+    width: 180,
+    height: 80,
+    grain: "across",
+    tuckCorners: "rounded",
+    fingerHole: false,
+    window: "none",
+    windowPanel: "lid",
+    windowWidth: 60,
+    windowHeight: 40,
+    windowOffsetX: 0,
+    windowOffsetY: 0,
+    windowRadius: 6
+  },
+  presets: [
+    {
+      id: "small",
+      label: {
+        th: "\u0E40\u0E25\u0E47\u0E01 200 \xD7 150 \xD7 50",
+        en: "Small 200 \xD7 150 \xD7 50"
+      },
+      values: {
+        length: 200,
+        width: 150,
+        height: 50
+      }
+    },
+    {
+      id: "medium",
+      label: {
+        th: "\u0E01\u0E25\u0E32\u0E07 250 \xD7 180 \xD7 80",
+        en: "Medium 250 \xD7 180 \xD7 80"
+      },
+      values: {
+        length: 250,
+        width: 180,
+        height: 80
+      }
+    },
+    {
+      id: "large",
+      label: {
+        th: "\u0E43\u0E2B\u0E0D\u0E48 350 \xD7 250 \xD7 100",
+        en: "Large 350 \xD7 250 \xD7 100"
+      },
+      values: {
+        length: 350,
+        width: 250,
+        height: 100
+      }
+    }
+  ],
+  body: {
+    module: "tray",
+    preset: "glued"
+  },
+  closures: {
+    top: {
+      module: "hingedLid",
+      with: {
+        front: "tuck"
+      }
+    }
+  },
+  features: [
+    {
+      module: "rollOverWalls",
+      with: {
+        walls: ["left", "right"]
+      }
+    },
+    {
+      module: "trayWindow"
+    }
+  ],
+  outerSize: {
+    width: "width + 3 * t",
+    height: "height + t"
+  }
+};
+
+// packages/dieline/src/recipes/library/data/te4-partition.json
+var te4_partition_default = {
+  schemaVersion: 1,
+  id: "te4-partition",
+  base: "PK-TE-04",
+  variant: {},
+  variants: {
+    hang: {
+      none: {
+        hangHole: "none"
+      },
+      euro_slot: {
+        hangHole: "euro"
+      },
+      round_hole: {
+        hangHole: "round"
+      },
+      sombrero_header: {
+        hangHole: "sombrero"
+      }
+    }
+  },
+  category: "folding_carton",
+  name: {
+    th: "\u0E01\u0E25\u0E48\u0E2D\u0E07\u0E1D\u0E32\u0E40\u0E2A\u0E35\u0E22\u0E1A\u0E21\u0E35\u0E0A\u0E48\u0E2D\u0E07\u0E01\u0E31\u0E49\u0E19\u0E43\u0E19\u0E15\u0E31\u0E27",
+    en: "Tuck-end carton with partition"
+  },
+  description: {
+    th: "\u0E01\u0E25\u0E48\u0E2D\u0E07\u0E1D\u0E32\u0E40\u0E2A\u0E35\u0E22\u0E1A\u0E01\u0E25\u0E31\u0E1A\u0E14\u0E49\u0E32\u0E19 \u0E21\u0E35\u0E41\u0E1C\u0E48\u0E19\u0E01\u0E31\u0E49\u0E19\u0E41\u0E1A\u0E48\u0E07\u0E0A\u0E48\u0E2D\u0E07\u0E15\u0E31\u0E14\u0E21\u0E32\u0E1E\u0E23\u0E49\u0E2D\u0E21\u0E01\u0E25\u0E48\u0E2D\u0E07 \u0E23\u0E2D\u0E07\u0E23\u0E31\u0E1A\u0E2B\u0E31\u0E27\u0E41\u0E02\u0E27\u0E19",
+    en: "Reverse tuck carton with a divider cut with the box to split it into cells; takes a hang header"
+  },
+  materials: ["paperboard", "corrugated"],
+  params: [
+    {
+      ref: "length",
+      min: 20,
+      max: 400
+    },
+    {
+      ref: "width",
+      min: 15,
+      max: 300
+    },
+    {
+      ref: "height",
+      min: 20,
+      max: 450
+    },
+    "tuckDepth",
+    "tuckCorners",
+    "dustFlapDepth",
+    "thumbNotch",
+    "hangerHeight",
+    "hangHole",
+    "glueWidth",
+    "glueSide",
+    "grain",
+    "partition"
+  ],
+  defaults: {
+    "@extends": "carton",
+    hangHole: "none",
+    partition: "1x2",
+    length: 120,
+    width: 60,
+    height: 150
+  },
+  presets: [
+    {
+      id: "twin",
+      label: {
+        th: "\u0E04\u0E39\u0E48 120 \xD7 60 \xD7 150",
+        en: "Twin 120 \xD7 60 \xD7 150"
+      },
+      values: {
+        length: 120,
+        width: 60,
+        height: 150
+      }
+    },
+    {
+      id: "four",
+      label: {
+        th: "\u0E2A\u0E35\u0E48\u0E0A\u0E48\u0E2D\u0E07 140 \xD7 140 \xD7 160",
+        en: "Four cells 140 \xD7 140 \xD7 160"
+      },
+      values: {
+        length: 140,
+        width: 140,
+        height: 160,
+        partition: "2x2"
+      }
+    }
+  ],
+  body: {
+    module: "tube",
+    preset: "carton"
+  },
+  closures: {
+    top: {
+      module: "tuck",
+      with: {
+        lid: "front"
+      }
+    },
+    bottom: {
+      module: "tuck",
+      with: {
+        lid: "back"
+      }
+    }
+  },
+  features: [
+    {
+      module: "thumbNotch",
+      with: {
+        end: "top"
+      }
+    },
+    {
+      module: "hangTab",
+      with: {
+        end: "top",
+        optional: true
+      }
+    },
+    {
+      module: "partitionInsert"
+    }
+  ]
+};
+
+// packages/dieline/src/recipes/library/data/snack-tray.json
+var snack_tray_default = {
+  schemaVersion: 1,
+  id: "snack-tray",
+  base: "PK-SP-17",
+  category: "folding_carton",
+  name: {
+    th: "\u0E16\u0E32\u0E14\u0E2E\u0E2D\u0E17\u0E14\u0E47\u0E2D\u0E01/\u0E02\u0E2D\u0E07\u0E17\u0E2D\u0E14",
+    en: "Hot dog / snack tray"
+  },
+  description: {
+    th: "\u0E16\u0E32\u0E14\u0E2A\u0E35\u0E48\u0E1C\u0E19\u0E31\u0E07\u0E02\u0E19\u0E32\u0E14\u0E40\u0E25\u0E47\u0E01\u0E21\u0E38\u0E21\u0E25\u0E47\u0E2D\u0E01 \u0E21\u0E35\u0E41\u0E1C\u0E48\u0E19\u0E23\u0E2D\u0E07\u0E40\u0E08\u0E32\u0E30\u0E23\u0E48\u0E2D\u0E07\u0E1B\u0E23\u0E30\u0E04\u0E2D\u0E07\u0E2A\u0E34\u0E19\u0E04\u0E49\u0E32 \u0E2A\u0E33\u0E2B\u0E23\u0E31\u0E1A\u0E2E\u0E2D\u0E17\u0E14\u0E47\u0E2D\u0E01\u0E41\u0E25\u0E30\u0E02\u0E2D\u0E07\u0E17\u0E2D\u0E14",
+    en: "A small four-wall lock-corner tray with a die-cut cradle that holds the product \u2014 hot dogs and fried snacks"
+  },
+  materials: ["paperboard"],
+  params: [
+    {
+      ref: "length",
+      min: 80,
+      max: 300
+    },
+    {
+      ref: "width",
+      min: 50,
+      max: 200
+    },
+    {
+      ref: "height",
+      min: 25,
+      max: 100
+    },
+    "cornerLock",
+    "grain",
+    "insert"
+  ],
+  defaults: {
+    length: 180,
+    width: 70,
+    height: 40,
+    grain: "across",
+    cornerLock: "lock",
+    insert: "die_cut"
+  },
+  presets: [
+    {
+      id: "hotdog",
+      label: {
+        th: "\u0E2E\u0E2D\u0E17\u0E14\u0E47\u0E2D\u0E01 180 \xD7 70 \xD7 40",
+        en: "Hot dog 180 \xD7 70 \xD7 40"
+      },
+      values: {
+        length: 180,
+        width: 70,
+        height: 40
+      }
+    },
+    {
+      id: "snack",
+      label: {
+        th: "\u0E02\u0E2D\u0E07\u0E17\u0E2D\u0E14 150 \xD7 100 \xD7 50",
+        en: "Snack 150 \xD7 100 \xD7 50"
+      },
+      values: {
+        length: 150,
+        width: 100,
+        height: 50
+      }
+    }
+  ],
+  body: {
+    module: "tray",
+    preset: "glued"
+  },
+  features: [
+    {
+      module: "lockCorners"
+    },
+    {
+      module: "dieCutInsert",
+      with: {
+        floor: "t"
+      }
+    }
+  ],
+  outerSize: {
+    height: "height + t"
+  },
+  variant: {}
+};
+
+// packages/dieline/src/recipes/library/data/burger-clamshell.json
+var burger_clamshell_default = {
+  schemaVersion: 1,
+  id: "burger-clamshell",
+  base: "PK-SP-09",
+  variant: {},
+  category: "specialty",
+  name: {
+    th: "\u0E01\u0E25\u0E48\u0E2D\u0E07\u0E41\u0E2E\u0E21\u0E40\u0E1A\u0E2D\u0E23\u0E4C\u0E40\u0E01\u0E2D\u0E23\u0E4C\u0E1D\u0E32\u0E2B\u0E2D\u0E22",
+    en: "Clamshell burger box"
+  },
+  description: {
+    th: "\u0E01\u0E25\u0E48\u0E2D\u0E07\u0E0A\u0E34\u0E49\u0E19\u0E40\u0E14\u0E35\u0E22\u0E27 \u0E1D\u0E32\u0E1E\u0E31\u0E1A\u0E15\u0E34\u0E14\u0E1C\u0E19\u0E31\u0E07\u0E2B\u0E25\u0E31\u0E07 \u0E1B\u0E34\u0E14\u0E14\u0E49\u0E27\u0E22\u0E25\u0E34\u0E49\u0E19\u0E25\u0E47\u0E2D\u0E01\u0E14\u0E49\u0E32\u0E19\u0E2B\u0E19\u0E49\u0E32 \u0E21\u0E38\u0E21\u0E25\u0E47\u0E2D\u0E01\u0E44\u0E21\u0E48\u0E43\u0E0A\u0E49\u0E01\u0E32\u0E27 \u0E2A\u0E33\u0E2B\u0E23\u0E31\u0E1A\u0E40\u0E1A\u0E2D\u0E23\u0E4C\u0E40\u0E01\u0E2D\u0E23\u0E4C\u0E41\u0E25\u0E30\u0E2D\u0E32\u0E2B\u0E32\u0E23\u0E1E\u0E23\u0E49\u0E2D\u0E21\u0E17\u0E32\u0E19",
+    en: "One piece: a lid hinged on the back wall closes with a front lock tab; glue-free locking corners \u2014 for burgers and ready meals"
+  },
+  materials: ["paperboard"],
+  params: [
+    {
+      ref: "length",
+      min: 80,
+      max: 350
+    },
+    {
+      ref: "width",
+      min: 60,
+      max: 300
+    },
+    {
+      ref: "height",
+      min: 30,
+      max: 120
+    },
+    "cornerLock",
+    "tuckDepth",
+    "grain"
+  ],
+  defaults: {
+    length: 110,
+    width: 110,
+    height: 80,
+    grain: "across",
+    cornerLock: "lock"
+  },
+  presets: [
+    {
+      id: "burger",
+      label: {
+        th: "\u0E40\u0E1A\u0E2D\u0E23\u0E4C\u0E40\u0E01\u0E2D\u0E23\u0E4C 110 \xD7 110 \xD7 80",
+        en: "Burger 110 \xD7 110 \xD7 80"
+      },
+      values: {
+        length: 110,
+        width: 110,
+        height: 80
+      }
+    },
+    {
+      id: "meal",
+      label: {
+        th: "\u0E2D\u0E32\u0E2B\u0E32\u0E23\u0E01\u0E25\u0E48\u0E2D\u0E07 180 \xD7 140 \xD7 70",
+        en: "Meal 180 \xD7 140 \xD7 70"
+      },
+      values: {
+        length: 180,
+        width: 140,
+        height: 70
+      }
+    }
+  ],
+  body: {
+    module: "tray",
+    preset: "glued"
+  },
+  closures: {
+    top: {
+      module: "hingedLid",
+      with: {
+        front: "tuck"
+      }
+    }
+  },
+  features: [
+    {
+      module: "lockCorners"
+    }
+  ],
+  outerSize: {
+    width: "width + 3 * t",
+    height: "height + t"
+  }
+};
+
+// packages/dieline/src/recipes/library/data/cup-carrier.json
+var cup_carrier_default = {
+  schemaVersion: 1,
+  id: "cup-carrier",
+  base: "PK-TG-03",
+  category: "specialty",
+  name: {
+    th: "\u0E01\u0E25\u0E48\u0E2D\u0E07\u0E2B\u0E34\u0E49\u0E27\u0E41\u0E01\u0E49\u0E27 2 / 4 \u0E43\u0E1A",
+    en: "Cup carrier (two or four cups)"
+  },
+  description: {
+    th: "\u0E01\u0E25\u0E48\u0E2D\u0E07\u0E2B\u0E34\u0E49\u0E27\u0E2B\u0E25\u0E31\u0E07\u0E04\u0E32\u0E08\u0E31\u0E48\u0E27\u0E21\u0E35\u0E2B\u0E39\u0E2B\u0E34\u0E49\u0E27 \u0E01\u0E49\u0E19\u0E25\u0E47\u0E2D\u0E01\u0E2D\u0E31\u0E15\u0E42\u0E19\u0E21\u0E31\u0E15\u0E34 \u0E21\u0E35\u0E0A\u0E48\u0E2D\u0E07\u0E01\u0E31\u0E49\u0E19\u0E41\u0E22\u0E01\u0E41\u0E01\u0E49\u0E27 2 \u0E2B\u0E23\u0E37\u0E2D 4 \u0E0A\u0E48\u0E2D\u0E07",
+    en: "A gabled carrier with a handle and a crash-lock bottom, with a divider for two or four cups"
+  },
+  materials: ["paperboard"],
+  params: [
+    {
+      ref: "length",
+      min: 160,
+      max: 260
+    },
+    {
+      ref: "width",
+      min: 80,
+      max: 260
+    },
+    {
+      ref: "height",
+      min: 100,
+      max: 220
+    },
+    "handleHeight",
+    "glueWidth",
+    "glueSide",
+    "grain",
+    "partition"
+  ],
+  defaults: {
+    "@extends": "carton",
+    length: 200,
+    width: 200,
+    height: 160,
+    handleHeight: 50,
+    partition: "2x2"
+  },
+  presets: [
+    {
+      id: "four",
+      label: {
+        th: "4 \u0E41\u0E01\u0E49\u0E27 200 \xD7 200 \xD7 160",
+        en: "Four cups 200 \xD7 200 \xD7 160"
+      },
+      values: {
+        length: 200,
+        width: 200,
+        height: 160,
+        partition: "2x2"
+      }
+    },
+    {
+      id: "two",
+      label: {
+        th: "2 \u0E41\u0E01\u0E49\u0E27 200 \xD7 100 \xD7 160",
+        en: "Two cups 200 \xD7 100 \xD7 160"
+      },
+      values: {
+        length: 200,
+        width: 100,
+        height: 160,
+        partition: "1x2"
+      }
+    }
+  ],
+  body: {
+    module: "tube",
+    preset: "carton"
+  },
+  closures: {
+    top: {
+      module: "gableHandle"
+    },
+    bottom: {
+      module: "crashLock"
+    }
+  },
+  features: [
+    {
+      module: "partitionInsert"
+    }
+  ],
+  closedSize: {
+    length: "length",
+    width: "width",
+    height: "height + side / 2"
+  },
+  variant: {}
+};
+
+// packages/dieline/src/recipes/library/data/octagonal-bin.json
+var octagonal_bin_default = {
+  schemaVersion: 1,
+  id: "octagonal-bin",
+  base: "PK-CB-02",
+  category: "corrugated",
+  name: {
+    th: "\u0E16\u0E31\u0E07\u0E25\u0E39\u0E01\u0E1F\u0E39\u0E01\u0E41\u0E1B\u0E14\u0E40\u0E2B\u0E25\u0E35\u0E48\u0E22\u0E21",
+    en: "Octagonal bulk bin"
+  },
+  description: {
+    th: "\u0E16\u0E31\u0E07\u0E25\u0E39\u0E01\u0E1F\u0E39\u0E01\u0E41\u0E1B\u0E14\u0E40\u0E2B\u0E25\u0E35\u0E48\u0E22\u0E21\u0E07\u0E32\u0E19\u0E2B\u0E19\u0E31\u0E01 \u0E01\u0E49\u0E19\u0E1E\u0E31\u0E1A\u0E1B\u0E34\u0E14\u0E14\u0E49\u0E27\u0E22\u0E25\u0E34\u0E49\u0E19\u0E40\u0E2A\u0E35\u0E22\u0E1A \u0E1E\u0E23\u0E49\u0E2D\u0E21\u0E1D\u0E32\u0E04\u0E23\u0E2D\u0E1A\u0E2A\u0E35\u0E48\u0E40\u0E2B\u0E25\u0E35\u0E48\u0E22\u0E21\u0E41\u0E1A\u0E1A\u0E25\u0E36\u0E01\u0E40\u0E15\u0E47\u0E21\u0E2B\u0E23\u0E37\u0E2D\u0E1A\u0E32\u0E07\u0E2A\u0E48\u0E27\u0E19",
+    en: "A heavy-duty eight-sided corrugated bin with a tucked flap bottom and a square telescope cap, full or partial depth"
+  },
+  materials: ["corrugated"],
+  params: [
+    {
+      ref: "side",
+      min: 150,
+      max: 500
+    },
+    {
+      ref: "height",
+      min: 300,
+      max: 1200
+    },
+    {
+      ref: "tuckDepth",
+      omit: ["help"]
+    },
+    "tuckCorners",
+    "glueWidth",
+    "glueSide",
+    "grain",
+    "lid",
+    "lidDepth"
+  ],
+  defaults: {
+    side: 300,
+    height: 700,
+    tuckCorners: "rounded",
+    glueSide: "left",
+    grain: "across",
+    lid: "partial"
+  },
+  presets: [
+    {
+      id: "m",
+      label: {
+        th: "\u0E14\u0E49\u0E32\u0E19 250 \u0E2A\u0E39\u0E07 600",
+        en: "Side 250, 600 high"
+      },
+      values: {
+        side: 250,
+        height: 600
+      }
+    },
+    {
+      id: "l",
+      label: {
+        th: "\u0E14\u0E49\u0E32\u0E19 350 \u0E2A\u0E39\u0E07 800",
+        en: "Side 350, 800 high"
+      },
+      values: {
+        side: 350,
+        height: 800
+      }
+    }
+  ],
+  body: {
+    module: "tube",
+    with: {
+      dims: {
+        panel: "side + t * tan(pi / 8)",
+        depth: "height + 2 * t",
+        glue: "glueWidth ?? glueWidthFor(panel)"
+      },
+      panels: [
+        {
+          id: "side-1",
+          label: "front",
+          width: "panel"
+        },
+        {
+          id: "side-2",
+          label: "side",
+          width: "panel"
+        },
+        {
+          id: "side-3",
+          label: "side",
+          width: "panel"
+        },
+        {
+          id: "side-4",
+          label: "side",
+          width: "panel"
+        },
+        {
+          id: "side-5",
+          label: "side",
+          width: "panel"
+        },
+        {
+          id: "side-6",
+          label: "side",
+          width: "panel"
+        },
+        {
+          id: "side-7",
+          label: "side",
+          width: "panel"
+        },
+        {
+          id: "side-8",
+          label: "side",
+          width: "panel"
+        }
+      ],
+      depth: "depth",
+      glue: "glue",
+      glueRight: "glueSide == 'right'",
+      grain: "side-1",
+      root: "side-1",
+      turn: 45
+    }
+  },
+  closures: {
+    bottom: {
+      module: "polygonTuckLid",
+      with: {
+        sides: 8
+      }
+    }
+  },
+  constraints: [
+    {
+      id: "octagonal.tuck_depth",
+      code: "tuck.too_deep",
+      severity: "error",
+      param: "tuckDepth",
+      require: "(tuckDepth ?? tuckDepthFor(2 * side)) < height - 5",
+      message: {
+        th: "\u0E25\u0E34\u0E49\u0E19\u0E40\u0E2A\u0E35\u0E22\u0E1A\u0E25\u0E36\u0E01\u0E40\u0E01\u0E34\u0E19\u0E04\u0E27\u0E32\u0E21\u0E2A\u0E39\u0E07\u0E01\u0E25\u0E48\u0E2D\u0E07",
+        en: "The tuck is deeper than the box is tall"
+      }
+    }
+  ],
+  closedSize: {
+    length: "(1 + sqrt(2)) * side + 2 * t + 2 * C.LID_CLEARANCE_MM",
+    width: "(1 + sqrt(2)) * side + 2 * t + 2 * C.LID_CLEARANCE_MM",
+    height: "height + t"
+  },
+  variant: {},
+  features: [
+    {
+      module: "telescopeLid",
+      with: {
+        length: "(1 + sqrt(2)) * side",
+        width: "(1 + sqrt(2)) * side"
+      }
+    }
+  ],
+  variants: {
+    lid_depth: {
+      full: {
+        lid: "full"
+      },
+      partial: {
+        lid: "partial"
+      }
+    }
+  },
+  outerSize: {
+    length: "(1 + sqrt(2)) * side + 4 * t + 2 * C.LID_CLEARANCE_MM",
+    width: "(1 + sqrt(2)) * side + 4 * t + 2 * C.LID_CLEARANCE_MM",
+    height: "height + 3 * t"
+  }
+};
+
+// packages/dieline/src/recipes/library/data/rigid-collapsible.json
+var rigid_collapsible_default = {
+  schemaVersion: 1,
+  id: "rigid-collapsible",
+  base: "PK-RG-04",
+  variants: {
+    closure_rigid: {
+      none: {
+        closureRigid: "none"
+      },
+      magnetic: {
+        closureRigid: "magnetic"
+      },
+      ribbon: {
+        closureRigid: "ribbon"
+      }
+    },
+    insert: {
+      none: {
+        insert: "none"
+      },
+      die_cut_insert: {
+        insert: "die_cut"
+      }
+    }
+  },
+  category: "tray_lid",
+  name: {
+    th: "\u0E01\u0E25\u0E48\u0E2D\u0E07\u0E41\u0E02\u0E47\u0E07\u0E1E\u0E31\u0E1A\u0E44\u0E14\u0E49 (\u0E41\u0E21\u0E48\u0E40\u0E2B\u0E25\u0E47\u0E01)",
+    en: "Collapsible rigid box"
+  },
+  description: {
+    th: "\u0E01\u0E25\u0E48\u0E2D\u0E07\u0E41\u0E02\u0E47\u0E07\u0E1D\u0E32\u0E1E\u0E31\u0E1A\u0E15\u0E34\u0E14\u0E2B\u0E25\u0E31\u0E07 \u0E2A\u0E48\u0E07\u0E41\u0E1A\u0E1A\u0E41\u0E1A\u0E19 \u0E1C\u0E19\u0E31\u0E07\u0E15\u0E31\u0E27\u0E01\u0E25\u0E48\u0E2D\u0E07\u0E1E\u0E31\u0E1A\u0E02\u0E36\u0E49\u0E19\u0E23\u0E39\u0E1B\u0E44\u0E14\u0E49\u0E40\u0E2D\u0E07 \u0E1B\u0E34\u0E14\u0E14\u0E49\u0E27\u0E22\u0E41\u0E21\u0E48\u0E40\u0E2B\u0E25\u0E47\u0E01\u0E2B\u0E23\u0E37\u0E2D\u0E23\u0E34\u0E1A\u0E1A\u0E34\u0E49\u0E19",
+    en: "A rigid box with a back-hinged lid that ships flat; the tray walls fold up on site; closes by magnet or ribbon"
+  },
+  materials: ["rigid"],
+  params: [
+    {
+      ref: "length",
+      min: 60,
+      max: 450
+    },
+    {
+      ref: "width",
+      min: 50,
+      max: 350
+    },
+    {
+      ref: "height",
+      min: 20,
+      max: 150
+    },
+    "closureRigid",
+    "insert",
+    "grain"
+  ],
+  defaults: {
+    length: 200,
+    width: 150,
+    height: 60,
+    closureRigid: "none",
+    insert: "none",
+    grain: "across"
+  },
+  presets: [
+    {
+      id: "s",
+      label: {
+        th: "S 150 \xD7 100 \xD7 50",
+        en: "S 150 \xD7 100 \xD7 50"
+      },
+      values: {
+        length: 150,
+        width: 100,
+        height: 50
+      }
+    },
+    {
+      id: "m",
+      label: {
+        th: "M 200 \xD7 150 \xD7 60",
+        en: "M 200 \xD7 150 \xD7 60"
+      },
+      values: {
+        length: 200,
+        width: 150,
+        height: 60
+      }
+    },
+    {
+      id: "l",
+      label: {
+        th: "L 300 \xD7 220 \xD7 80",
+        en: "L 300 \xD7 220 \xD7 80"
+      },
+      values: {
+        length: 300,
+        width: 220,
+        height: 80
+      }
+    }
+  ],
+  pieceSet: {
+    module: "rigidCase",
+    with: {
+      spine: "back"
+    }
+  },
+  features: [
+    {
+      module: "dieCutInsert",
+      with: {
+        target: "base",
+        floor: "t"
+      }
+    }
+  ],
+  outerSize: {
+    length: "length + 2 * t + 6",
+    width: "width + 2.5 * t + 6.15",
+    height: "height + 3.5 * t + 1.3"
+  },
+  closedSize: {
+    length: "length + 2 * t + 6",
+    width: "width + 2 * t + 6",
+    height: "height + 3 * t + 1"
+  }
+};
+
+// packages/dieline/src/recipes/library/data/popcorn-box.json
+var popcorn_box_default = {
+  schemaVersion: 1,
+  id: "popcorn-box",
+  base: "PK-SP-11",
+  variant: {},
+  category: "specialty",
+  name: {
+    th: "\u0E01\u0E25\u0E48\u0E2D\u0E07\u0E1B\u0E4A\u0E2D\u0E1B\u0E04\u0E2D\u0E23\u0E4C\u0E19\u0E17\u0E23\u0E07\u0E2A\u0E2D\u0E1A",
+    en: "Tapered popcorn box"
+  },
+  description: {
+    th: "\u0E01\u0E25\u0E48\u0E2D\u0E07\u0E17\u0E23\u0E07\u0E2A\u0E2D\u0E1A\u0E1B\u0E32\u0E01\u0E1A\u0E32\u0E19\u0E01\u0E49\u0E19\u0E40\u0E23\u0E35\u0E22\u0E1A \u0E1C\u0E19\u0E31\u0E07\u0E15\u0E34\u0E14\u0E01\u0E32\u0E27\u0E17\u0E35\u0E48\u0E21\u0E38\u0E21 \u0E2A\u0E33\u0E2B\u0E23\u0E31\u0E1A\u0E1B\u0E4A\u0E2D\u0E1B\u0E04\u0E2D\u0E23\u0E4C\u0E19\u0E41\u0E25\u0E30\u0E02\u0E19\u0E21",
+    en: "A tapered, open-top carton with a flat base and glued corners \u2014 for popcorn and snacks"
+  },
+  materials: ["paperboard"],
+  params: [
+    {
+      ref: "length",
+      min: 50,
+      max: 250
+    },
+    {
+      ref: "width",
+      min: 40,
+      max: 200
+    },
+    {
+      ref: "height",
+      min: 60,
+      max: 300
+    },
+    "taper",
+    "grain"
+  ],
+  defaults: {
+    length: 90,
+    width: 70,
+    height: 150,
+    taper: 15,
+    grain: "across"
+  },
+  presets: [
+    {
+      id: "s",
+      label: {
+        th: "\u0E40\u0E25\u0E47\u0E01 70 \xD7 55 \xD7 120",
+        en: "Small 70 \xD7 55 \xD7 120"
+      },
+      values: {
+        length: 70,
+        width: 55,
+        height: 120
+      }
+    },
+    {
+      id: "m",
+      label: {
+        th: "\u0E01\u0E25\u0E32\u0E07 90 \xD7 70 \xD7 150",
+        en: "Medium 90 \xD7 70 \xD7 150"
+      },
+      values: {
+        length: 90,
+        width: 70,
+        height: 150
+      }
+    },
+    {
+      id: "l",
+      label: {
+        th: "\u0E43\u0E2B\u0E0D\u0E48 110 \xD7 85 \xD7 180",
+        en: "Large 110 \xD7 85 \xD7 180"
+      },
+      values: {
+        length: 110,
+        width: 85,
+        height: 180
+      }
+    }
+  ],
+  body: {
+    module: "taperedTray",
+    with: {
+      top: "open"
+    }
+  },
+  closedSize: {
+    length: "length + 2 * taper",
+    width: "width + 2 * taper",
+    height: "height"
+  },
+  outerSize: {
+    length: "length + 2 * taper",
+    width: "width + 2 * taper",
+    height: "height"
+  }
+};
+
+// packages/dieline/src/recipes/library/data/food-pail.json
+var food_pail_default = {
+  schemaVersion: 1,
+  id: "food-pail",
+  base: "PK-SP-08",
+  variants: {
+    handle: {
+      none: {
+        pailHandle: "none"
+      },
+      die_cut_handle: {
+        pailHandle: "die_cut"
+      },
+      insert_handle: {
+        pailHandle: "insert"
+      }
+    }
+  },
+  category: "specialty",
+  name: {
+    th: "\u0E01\u0E25\u0E48\u0E2D\u0E07\u0E2D\u0E32\u0E2B\u0E32\u0E23\u0E17\u0E23\u0E07\u0E16\u0E31\u0E07\u0E1E\u0E31\u0E1A",
+    en: "Food pail / noodle box"
+  },
+  description: {
+    th: "\u0E16\u0E31\u0E07\u0E01\u0E23\u0E30\u0E14\u0E32\u0E29\u0E17\u0E23\u0E07\u0E2A\u0E2D\u0E1A \u0E1D\u0E32\u0E1A\u0E19\u0E1E\u0E31\u0E1A\u0E1B\u0E34\u0E14\u0E2A\u0E35\u0E48\u0E14\u0E49\u0E32\u0E19 \u0E1C\u0E19\u0E31\u0E07\u0E15\u0E34\u0E14\u0E01\u0E32\u0E27\u0E17\u0E35\u0E48\u0E21\u0E38\u0E21 \u0E43\u0E0A\u0E49\u0E01\u0E23\u0E30\u0E14\u0E32\u0E29\u0E2A\u0E31\u0E21\u0E1C\u0E31\u0E2A\u0E2D\u0E32\u0E2B\u0E32\u0E23",
+    en: "A tapered paper pail closed by four top flaps, glued at the corners; food-contact board"
+  },
+  materials: ["paperboard"],
+  params: [
+    {
+      ref: "length",
+      min: 60,
+      max: 200
+    },
+    {
+      ref: "width",
+      min: 50,
+      max: 160
+    },
+    {
+      ref: "height",
+      min: 60,
+      max: 200
+    },
+    "taper",
+    "pailHandle",
+    "grain"
+  ],
+  defaults: {
+    length: 100,
+    width: 80,
+    height: 90,
+    taper: 12,
+    pailHandle: "none",
+    grain: "across"
+  },
+  presets: [
+    {
+      id: "16oz",
+      label: {
+        th: "16 \u0E2D\u0E2D\u0E19\u0E0B\u0E4C 90 \xD7 70 \xD7 85",
+        en: "16 oz 90 \xD7 70 \xD7 85"
+      },
+      values: {
+        length: 90,
+        width: 70,
+        height: 85
+      }
+    },
+    {
+      id: "26oz",
+      label: {
+        th: "26 \u0E2D\u0E2D\u0E19\u0E0B\u0E4C 100 \xD7 80 \xD7 95",
+        en: "26 oz 100 \xD7 80 \xD7 95"
+      },
+      values: {
+        length: 100,
+        width: 80,
+        height: 95
+      }
+    },
+    {
+      id: "32oz",
+      label: {
+        th: "32 \u0E2D\u0E2D\u0E19\u0E0B\u0E4C 110 \xD7 90 \xD7 100",
+        en: "32 oz 110 \xD7 90 \xD7 100"
+      },
+      values: {
+        length: 110,
+        width: 90,
+        height: 100
+      }
+    }
+  ],
+  body: {
+    module: "taperedTray",
+    with: {
+      top: "flaps"
+    }
+  },
+  closedSize: {
+    length: "length + 2 * taper",
+    width: "width + 2 * taper",
+    height: "height"
+  },
+  outerSize: {
+    length: "length + 2 * taper",
+    width: "width + 2 * taper",
+    height: "height"
+  }
+};
+
+// packages/dieline/src/recipes/library/data/te-sealhang-tuck.json
+var te_sealhang_tuck_default = {
+  schemaVersion: 1,
+  id: "te-sealhang-tuck",
+  base: "PK-TE-01",
+  variant: {
+    tuck_top: "seal",
+    tuck_bottom: "tuck"
+  },
+  variants: {
+    hang: {
+      euro_slot: {
+        hangHole: "euro"
+      },
+      round_hole: {
+        hangHole: "round"
+      },
+      sombrero_header: {
+        hangHole: "sombrero"
+      }
+    },
+    window: {
+      none: {
+        window: "none"
+      },
+      front_window: {
+        window: "rect",
+        windowPanel: "front"
+      },
+      top_window: {
+        window: "rect",
+        windowPanel: "lid"
+      }
+    }
+  },
+  category: "folding_carton",
+  name: {
+    th: "\u0E01\u0E25\u0E48\u0E2D\u0E07\u0E1D\u0E32\u0E1B\u0E34\u0E14\u0E01\u0E32\u0E27\u0E21\u0E35\u0E2B\u0E39\u0E41\u0E02\u0E27\u0E19 \u0E01\u0E49\u0E19\u0E40\u0E2A\u0E35\u0E22\u0E1A",
+    en: "Seal top with hang tab, tuck bottom"
+  },
+  description: {
+    th: "\u0E2B\u0E39\u0E41\u0E02\u0E27\u0E19\u0E15\u0E31\u0E49\u0E07\u0E1A\u0E19\u0E02\u0E2D\u0E1A\u0E41\u0E1C\u0E07\u0E2B\u0E25\u0E31\u0E07 \u0E1D\u0E32\u0E1A\u0E19\u0E1B\u0E34\u0E14\u0E14\u0E49\u0E27\u0E22\u0E1B\u0E35\u0E01\u0E2B\u0E19\u0E49\u0E32\u0E40\u0E15\u0E47\u0E21\u0E04\u0E27\u0E32\u0E21\u0E25\u0E36\u0E01\u0E17\u0E32\u0E01\u0E32\u0E27\u0E01\u0E31\u0E1A\u0E1B\u0E35\u0E01\u0E01\u0E31\u0E19\u0E1D\u0E38\u0E48\u0E19",
+    en: "A hang tab stands on the back panel; the top closes with a full-depth front flap glued to the dust flaps"
+  },
+  materials: ["paperboard", "corrugated"],
+  params: [
+    {
+      ref: "length",
+      min: 20,
+      max: 400
+    },
+    {
+      ref: "width",
+      min: 15,
+      max: 300
+    },
+    {
+      ref: "height",
+      min: 20,
+      max: 450
+    },
+    "tuckDepth",
+    "tuckCorners",
+    "dustFlapDepth",
+    "glueWidth",
+    "glueSide",
+    "grain",
+    "window",
+    "windowPanel",
+    "windowWidth",
+    "windowHeight",
+    "windowOffsetX",
+    "windowOffsetY",
+    "windowRadius",
+    "hangerHeight",
+    "hangHole"
+  ],
+  defaults: {
+    "@extends": "carton",
+    hangHole: "euro"
+  },
+  presets: "carton",
+  body: {
+    module: "tube",
+    preset: "carton"
+  },
+  closures: {
+    top: {
+      module: "sealHang"
+    },
+    bottom: {
+      module: "tuck",
+      with: {
+        lid: "back"
+      }
+    }
+  },
+  features: [
+    {
+      module: "hangTab",
+      with: {
+        end: "top"
+      }
+    },
+    {
+      module: "window"
+    }
+  ]
+};
+
+// packages/dieline/src/recipes/library/data/te-sealhang-snap.json
+var te_sealhang_snap_default = {
+  schemaVersion: 1,
+  id: "te-sealhang-snap",
+  base: "PK-TE-01",
+  variant: {
+    tuck_top: "seal",
+    tuck_bottom: "snap_lock_123"
+  },
+  variants: {
+    hang: {
+      euro_slot: {
+        hangHole: "euro"
+      },
+      round_hole: {
+        hangHole: "round"
+      },
+      sombrero_header: {
+        hangHole: "sombrero"
+      }
+    },
+    window: {
+      none: {
+        window: "none"
+      },
+      front_window: {
+        window: "rect",
+        windowPanel: "front"
+      },
+      top_window: {
+        window: "rect",
+        windowPanel: "lid"
+      }
+    }
+  },
+  category: "folding_carton",
+  name: {
+    th: "\u0E01\u0E25\u0E48\u0E2D\u0E07\u0E1D\u0E32\u0E1B\u0E34\u0E14\u0E01\u0E32\u0E27\u0E21\u0E35\u0E2B\u0E39\u0E41\u0E02\u0E27\u0E19 \u0E01\u0E49\u0E19\u0E25\u0E47\u0E2D\u0E01 1-2-3",
+    en: "Seal top with hang tab, snap-lock bottom"
+  },
+  description: {
+    th: "\u0E2B\u0E39\u0E41\u0E02\u0E27\u0E19\u0E15\u0E31\u0E49\u0E07\u0E1A\u0E19\u0E02\u0E2D\u0E1A\u0E41\u0E1C\u0E07\u0E2B\u0E25\u0E31\u0E07 \u0E1D\u0E32\u0E1A\u0E19\u0E1B\u0E34\u0E14\u0E14\u0E49\u0E27\u0E22\u0E1B\u0E35\u0E01\u0E2B\u0E19\u0E49\u0E32\u0E40\u0E15\u0E47\u0E21\u0E04\u0E27\u0E32\u0E21\u0E25\u0E36\u0E01\u0E17\u0E32\u0E01\u0E32\u0E27\u0E01\u0E31\u0E1A\u0E1B\u0E35\u0E01\u0E01\u0E31\u0E19\u0E1D\u0E38\u0E48\u0E19",
+    en: "A hang tab stands on the back panel; the top closes with a full-depth front flap glued to the dust flaps"
+  },
+  materials: ["paperboard", "corrugated"],
+  params: [
+    {
+      ref: "length",
+      min: 20,
+      max: 400
+    },
+    {
+      ref: "width",
+      min: 15,
+      max: 300
+    },
+    {
+      ref: "height",
+      min: 20,
+      max: 450
+    },
+    "lockTongue",
+    "glueWidth",
+    "glueSide",
+    "grain",
+    "window",
+    "windowPanel",
+    "windowWidth",
+    "windowHeight",
+    "windowOffsetX",
+    "windowOffsetY",
+    "windowRadius",
+    "hangerHeight",
+    "hangHole"
+  ],
+  defaults: {
+    "@extends": "carton",
+    hangHole: "euro"
+  },
+  presets: "carton",
+  body: {
+    module: "tube",
+    preset: "carton"
+  },
+  closures: {
+    top: {
+      module: "sealHang"
+    },
+    bottom: {
+      module: "snapLock123",
+      preset: "default"
+    }
+  },
+  features: [
+    {
+      module: "hangTab",
+      with: {
+        end: "top"
+      }
+    },
+    {
+      module: "window"
+    }
+  ]
+};
+
+// packages/dieline/src/recipes/library/data/te-sealhang-crash.json
+var te_sealhang_crash_default = {
+  schemaVersion: 1,
+  id: "te-sealhang-crash",
+  base: "PK-TE-01",
+  variant: {
+    tuck_top: "seal",
+    tuck_bottom: "crash_lock"
+  },
+  variants: {
+    hang: {
+      euro_slot: {
+        hangHole: "euro"
+      },
+      round_hole: {
+        hangHole: "round"
+      },
+      sombrero_header: {
+        hangHole: "sombrero"
+      }
+    },
+    window: {
+      none: {
+        window: "none"
+      },
+      front_window: {
+        window: "rect",
+        windowPanel: "front"
+      },
+      top_window: {
+        window: "rect",
+        windowPanel: "lid"
+      }
+    }
+  },
+  category: "folding_carton",
+  name: {
+    th: "\u0E01\u0E25\u0E48\u0E2D\u0E07\u0E1D\u0E32\u0E1B\u0E34\u0E14\u0E01\u0E32\u0E27\u0E21\u0E35\u0E2B\u0E39\u0E41\u0E02\u0E27\u0E19 \u0E01\u0E49\u0E19\u0E25\u0E47\u0E2D\u0E01\u0E2D\u0E31\u0E15\u0E42\u0E19\u0E21\u0E31\u0E15\u0E34",
+    en: "Seal top with hang tab, crash-lock bottom"
+  },
+  description: {
+    th: "\u0E2B\u0E39\u0E41\u0E02\u0E27\u0E19\u0E15\u0E31\u0E49\u0E07\u0E1A\u0E19\u0E02\u0E2D\u0E1A\u0E41\u0E1C\u0E07\u0E2B\u0E25\u0E31\u0E07 \u0E1D\u0E32\u0E1A\u0E19\u0E1B\u0E34\u0E14\u0E14\u0E49\u0E27\u0E22\u0E1B\u0E35\u0E01\u0E2B\u0E19\u0E49\u0E32\u0E40\u0E15\u0E47\u0E21\u0E04\u0E27\u0E32\u0E21\u0E25\u0E36\u0E01\u0E17\u0E32\u0E01\u0E32\u0E27\u0E01\u0E31\u0E1A\u0E1B\u0E35\u0E01\u0E01\u0E31\u0E19\u0E1D\u0E38\u0E48\u0E19",
+    en: "A hang tab stands on the back panel; the top closes with a full-depth front flap glued to the dust flaps"
+  },
+  materials: ["paperboard", "corrugated"],
+  params: [
+    {
+      ref: "length",
+      min: 20,
+      max: 400
+    },
+    {
+      ref: "width",
+      min: 15,
+      max: 300
+    },
+    {
+      ref: "height",
+      min: 20,
+      max: 450
+    },
+    "glueWidth",
+    "glueSide",
+    "grain",
+    "window",
+    "windowPanel",
+    "windowWidth",
+    "windowHeight",
+    "windowOffsetX",
+    "windowOffsetY",
+    "windowRadius",
+    "hangerHeight",
+    "hangHole"
+  ],
+  defaults: {
+    "@extends": "carton",
+    hangHole: "euro"
+  },
+  presets: "carton",
+  body: {
+    module: "tube",
+    preset: "carton"
+  },
+  closures: {
+    top: {
+      module: "sealHang"
+    },
+    bottom: {
+      module: "crashLock"
+    }
+  },
+  features: [
+    {
+      module: "hangTab",
+      with: {
+        end: "top"
+      }
+    },
+    {
+      module: "window"
+    }
+  ]
+};
+
+// packages/dieline/src/recipes/library/data/te-sealhang-seal.json
+var te_sealhang_seal_default = {
+  schemaVersion: 1,
+  id: "te-sealhang-seal",
+  base: "PK-TE-01",
+  variant: {
+    tuck_top: "seal",
+    tuck_bottom: "seal"
+  },
+  variants: {
+    hang: {
+      euro_slot: {
+        hangHole: "euro"
+      },
+      round_hole: {
+        hangHole: "round"
+      },
+      sombrero_header: {
+        hangHole: "sombrero"
+      }
+    },
+    window: {
+      none: {
+        window: "none"
+      },
+      front_window: {
+        window: "rect",
+        windowPanel: "front"
+      },
+      top_window: {
+        window: "rect",
+        windowPanel: "lid"
+      }
+    }
+  },
+  category: "folding_carton",
+  name: {
+    th: "\u0E01\u0E25\u0E48\u0E2D\u0E07\u0E1D\u0E32\u0E1B\u0E34\u0E14\u0E01\u0E32\u0E27\u0E21\u0E35\u0E2B\u0E39\u0E41\u0E02\u0E27\u0E19 \u0E01\u0E49\u0E19\u0E1B\u0E34\u0E14\u0E01\u0E32\u0E27",
+    en: "Seal top with hang tab, seal bottom"
+  },
+  description: {
+    th: "\u0E2B\u0E39\u0E41\u0E02\u0E27\u0E19\u0E15\u0E31\u0E49\u0E07\u0E1A\u0E19\u0E02\u0E2D\u0E1A\u0E41\u0E1C\u0E07\u0E2B\u0E25\u0E31\u0E07 \u0E1D\u0E32\u0E1A\u0E19\u0E1B\u0E34\u0E14\u0E14\u0E49\u0E27\u0E22\u0E1B\u0E35\u0E01\u0E2B\u0E19\u0E49\u0E32\u0E40\u0E15\u0E47\u0E21\u0E04\u0E27\u0E32\u0E21\u0E25\u0E36\u0E01\u0E17\u0E32\u0E01\u0E32\u0E27\u0E01\u0E31\u0E1A\u0E1B\u0E35\u0E01\u0E01\u0E31\u0E19\u0E1D\u0E38\u0E48\u0E19",
+    en: "A hang tab stands on the back panel; the top closes with a full-depth front flap glued to the dust flaps"
+  },
+  materials: ["paperboard", "corrugated"],
+  params: [
+    {
+      ref: "length",
+      min: 20,
+      max: 400
+    },
+    {
+      ref: "width",
+      min: 15,
+      max: 300
+    },
+    {
+      ref: "height",
+      min: 20,
+      max: 450
+    },
+    "tuckDepth",
+    "tuckCorners",
+    "dustFlapDepth",
+    "glueWidth",
+    "glueSide",
+    "grain",
+    "window",
+    "windowPanel",
+    "windowWidth",
+    "windowHeight",
+    "windowOffsetX",
+    "windowOffsetY",
+    "windowRadius",
+    "hangerHeight",
+    "hangHole"
+  ],
+  defaults: {
+    "@extends": "carton",
+    hangHole: "euro"
+  },
+  presets: "carton",
+  body: {
+    module: "tube",
+    preset: "carton"
+  },
+  closures: {
+    top: {
+      module: "sealHang"
+    },
+    bottom: {
+      module: "seal"
+    }
+  },
+  features: [
+    {
+      module: "hangTab",
+      with: {
+        end: "top"
+      }
+    },
+    {
+      module: "window"
+    }
+  ]
+};
+
 // packages/dieline/src/recipes/library/data/pizza-box.json
 var pizza_box_default = {
   schemaVersion: 1,
@@ -23775,6 +25717,12 @@ var tag_custom_default = {
       },
       round_hole: {
         hangHole: "round"
+      },
+      euro_slot: {
+        hangHole: "euro"
+      },
+      sombrero_header: {
+        hangHole: "sombrero"
       }
     }
   },
@@ -25375,6 +27323,10 @@ var rigid_lid_base_default = {
       top_window: {
         window: "rect",
         windowPanel: "lid-base"
+      },
+      front_window: {
+        window: "rect",
+        windowPanel: "wall-front"
       }
     },
     insert: {
@@ -25433,6 +27385,13 @@ var rigid_lid_base_default = {
           label: {
             th: "\u0E14\u0E49\u0E32\u0E19\u0E1A\u0E19\u0E1D\u0E32",
             en: "Lid top"
+          }
+        },
+        {
+          value: "wall-front",
+          label: {
+            th: "\u0E1C\u0E19\u0E31\u0E07\u0E14\u0E49\u0E32\u0E19\u0E2B\u0E19\u0E49\u0E32",
+            en: "Front wall"
           }
         }
       ]
@@ -25523,6 +27482,10 @@ var tray_lid_lock_default = {
       top_window: {
         window: "rect",
         windowPanel: "lid"
+      },
+      front_window: {
+        window: "rect",
+        windowPanel: "wall-front"
       }
     },
     insert: {
@@ -25573,6 +27536,13 @@ var tray_lid_lock_default = {
           label: {
             th: "\u0E1A\u0E19\u0E1D\u0E32",
             en: "Lid top"
+          }
+        },
+        {
+          value: "wall-front",
+          label: {
+            th: "\u0E1C\u0E19\u0E31\u0E07\u0E14\u0E49\u0E32\u0E19\u0E2B\u0E19\u0E49\u0E32",
+            en: "Front wall"
           }
         }
       ]
@@ -25673,9 +27643,7 @@ var food_box_lock_default = {
   schemaVersion: 1,
   id: "food-box-lock",
   base: "PK-SP-16",
-  variant: {
-    handle: "none"
-  },
+  variant: {},
   category: "specialty",
   name: {
     th: "\u0E01\u0E25\u0E48\u0E2D\u0E07\u0E2D\u0E32\u0E2B\u0E32\u0E23\u0E21\u0E38\u0E21\u0E25\u0E47\u0E2D\u0E01 \u0E1D\u0E32\u0E21\u0E35\u0E2B\u0E19\u0E49\u0E32\u0E15\u0E48\u0E32\u0E07",
@@ -25722,7 +27690,8 @@ var food_box_lock_default = {
     "windowHeight",
     "windowOffsetX",
     "windowOffsetY",
-    "windowRadius"
+    "windowRadius",
+    "handles"
   ],
   defaults: {
     length: 180,
@@ -25736,7 +27705,8 @@ var food_box_lock_default = {
     windowHeight: 60,
     windowOffsetX: 0,
     windowOffsetY: 0,
-    windowRadius: 6
+    windowRadius: 6,
+    handles: "none"
   },
   presets: [
     {
@@ -25774,6 +27744,18 @@ var food_box_lock_default = {
         width: 180,
         height: 70
       }
+    },
+    {
+      id: "carry",
+      label: {
+        th: "\u0E2B\u0E34\u0E49\u0E27\u0E44\u0E14\u0E49 220 \xD7 160 \xD7 90",
+        en: "Carry 220 \xD7 160 \xD7 90"
+      },
+      values: {
+        length: 220,
+        width: 160,
+        height: 90
+      }
     }
   ],
   body: {
@@ -25794,11 +27776,27 @@ var food_box_lock_default = {
     },
     {
       module: "trayWindow"
+    },
+    {
+      module: "handHoles"
     }
   ],
   outerSize: {
     width: "width + 3 * t",
     height: "height + t"
+  },
+  variants: {
+    handle: {
+      none: {
+        handles: "none"
+      },
+      die_cut_handle: {
+        handles: "side"
+      },
+      insert_handle: {
+        handles: "insert"
+      }
+    }
   }
 };
 
@@ -25807,17 +27805,34 @@ var cake_box_default = {
   schemaVersion: 1,
   id: "cake-box",
   base: "PK-SP-07",
-  variant: {
-    handle: "none"
-  },
+  variant: {},
   variants: {
+    handle: {
+      none: {
+        handles: "none"
+      },
+      die_cut_handle: {
+        handles: "side"
+      },
+      insert_handle: {
+        handles: "insert"
+      }
+    },
     window: {
       none: {
         window: "none"
       },
       top_window: {
         window: "rect",
-        windowPanel: "lid"
+        windowPanel: "lid",
+        windowWidth: 120,
+        windowHeight: 120
+      },
+      front_window: {
+        window: "rect",
+        windowPanel: "wall-front",
+        windowWidth: 120,
+        windowHeight: 50
       }
     }
   },
@@ -25858,6 +27873,13 @@ var cake_box_default = {
             th: "\u0E1A\u0E19\u0E1D\u0E32",
             en: "Lid top"
           }
+        },
+        {
+          value: "wall-front",
+          label: {
+            th: "\u0E1C\u0E19\u0E31\u0E07\u0E14\u0E49\u0E32\u0E19\u0E2B\u0E19\u0E49\u0E32",
+            en: "Front wall"
+          }
         }
       ]
     },
@@ -25865,7 +27887,8 @@ var cake_box_default = {
     "windowHeight",
     "windowOffsetX",
     "windowOffsetY",
-    "windowRadius"
+    "windowRadius",
+    "handles"
   ],
   defaults: {
     length: 220,
@@ -25878,7 +27901,8 @@ var cake_box_default = {
     windowHeight: 120,
     windowOffsetX: 0,
     windowOffsetY: 0,
-    windowRadius: 6
+    windowRadius: 6,
+    handles: "none"
   },
   presets: [
     {
@@ -25933,6 +27957,9 @@ var cake_box_default = {
   features: [
     {
       module: "trayWindow"
+    },
+    {
+      module: "handHoles"
     }
   ],
   outerSize: {
@@ -33274,6 +35301,21 @@ var WAVE_RECIPES = [
   te2_airplane_default,
   te2_reverse_default,
   te2_straight_default,
+  te2_seal_default,
+  te3_double_wall_default,
+  te3_double_wall_window_default,
+  te4_partition_default,
+  snack_tray_default,
+  burger_clamshell_default,
+  cup_carrier_default,
+  octagonal_bin_default,
+  rigid_collapsible_default,
+  popcorn_box_default,
+  food_pail_default,
+  te_sealhang_tuck_default,
+  te_sealhang_snap_default,
+  te_sealhang_crash_default,
+  te_sealhang_seal_default,
   pizza_box_default,
   lock_corner_tray_default,
   archive_box_default,
@@ -34221,6 +36263,12 @@ var sleeve_drawer_default2 = {
       top_window: {
         window: "rect",
         windowPanel: "sleeve-top"
+      },
+      front_window: {
+        window: "rect",
+        windowPanel: "sleeve-left",
+        windowWidth: 20,
+        windowHeight: 60
       }
     },
     insert: {
@@ -34270,6 +36318,13 @@ var sleeve_drawer_default2 = {
           label: {
             th: "\u0E14\u0E49\u0E32\u0E19\u0E1A\u0E19\u0E1B\u0E25\u0E2D\u0E01",
             en: "Sleeve top"
+          }
+        },
+        {
+          value: "sleeve-left",
+          label: {
+            th: "\u0E14\u0E49\u0E32\u0E19\u0E02\u0E49\u0E32\u0E07\u0E1B\u0E25\u0E2D\u0E01",
+            en: "Sleeve side"
           }
         }
       ]
@@ -35422,6 +37477,10 @@ var telescope_default2 = {
       top_window: {
         window: "rect",
         windowPanel: "lid-base"
+      },
+      front_window: {
+        window: "rect",
+        windowPanel: "wall-front"
       }
     },
     thumb: {
@@ -35473,6 +37532,13 @@ var telescope_default2 = {
           label: {
             th: "\u0E14\u0E49\u0E32\u0E19\u0E1A\u0E19\u0E1D\u0E32",
             en: "Lid top"
+          }
+        },
+        {
+          value: "wall-front",
+          label: {
+            th: "\u0E1C\u0E19\u0E31\u0E07\u0E14\u0E49\u0E32\u0E19\u0E2B\u0E19\u0E49\u0E32",
+            en: "Front wall"
           }
         }
       ]
@@ -36347,6 +38413,13 @@ var params_default2 = {
     },
     options: [
       {
+        value: "1x2",
+        label: {
+          th: "1 \xD7 2",
+          en: "1 \xD7 2"
+        }
+      },
+      {
         value: "2x2",
         label: {
           th: "2 \xD7 2",
@@ -36782,6 +38855,54 @@ var params_default2 = {
         label: {
           th: "\u0E21\u0E35\u0E1B\u0E49\u0E32\u0E22\u0E2B\u0E31\u0E27",
           en: "Header card"
+        }
+      }
+    ]
+  },
+  taper: {
+    key: "taper",
+    kind: "length",
+    group: "size",
+    label: {
+      th: "\u0E04\u0E27\u0E32\u0E21\u0E2A\u0E2D\u0E1A\u0E15\u0E48\u0E2D\u0E14\u0E49\u0E32\u0E19",
+      en: "Taper per side"
+    },
+    help: {
+      th: "\u0E02\u0E2D\u0E1A\u0E1A\u0E19\u0E01\u0E27\u0E49\u0E32\u0E07\u0E01\u0E27\u0E48\u0E32\u0E01\u0E49\u0E19\u0E14\u0E49\u0E32\u0E19\u0E25\u0E30\u0E40\u0E17\u0E48\u0E32\u0E19\u0E35\u0E49",
+      en: "How much wider the rim is than the base on each side"
+    },
+    min: 0,
+    max: 80,
+    step: 0.5
+  },
+  pailHandle: {
+    key: "pailHandle",
+    kind: "enum",
+    group: "options",
+    label: {
+      th: "\u0E2B\u0E39\u0E2B\u0E34\u0E49\u0E27",
+      en: "Handle"
+    },
+    options: [
+      {
+        value: "none",
+        label: {
+          th: "\u0E44\u0E21\u0E48\u0E21\u0E35",
+          en: "None"
+        }
+      },
+      {
+        value: "die_cut",
+        label: {
+          th: "\u0E0A\u0E48\u0E2D\u0E07\u0E2B\u0E34\u0E49\u0E27\u0E44\u0E14\u0E04\u0E31\u0E17\u0E1A\u0E19\u0E1D\u0E32",
+          en: "Die-cut slot in the top flaps"
+        }
+      },
+      {
+        value: "insert",
+        label: {
+          th: "\u0E23\u0E39\u0E2A\u0E33\u0E2B\u0E23\u0E31\u0E1A\u0E2B\u0E39\u0E2B\u0E34\u0E49\u0E27\u0E25\u0E27\u0E14",
+          en: "Holes for a wire handle"
         }
       }
     ]
