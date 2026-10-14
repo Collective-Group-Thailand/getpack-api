@@ -67,7 +67,7 @@ import { WEBHOOK_SENDER } from './webhooks-out/webhook-sender.port';
       provide: OBJECT_STORAGE,
       inject: [AppConfig],
       useFactory: (config: AppConfig): ObjectStorage =>
-        config.useFakes
+        config.useFakeObjectStorage
           ? new FakeObjectStorage()
           : new S3ObjectStorage({
               region: config.get('AWS_REGION'),
