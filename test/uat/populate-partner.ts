@@ -2,8 +2,9 @@ import { addCalendarDays, bangkokDate, bangkokDayOfWeek, startOfBangkokDay } fro
 import request from 'supertest';
 
 import { UAT_FACTORY_CODE } from '../../prisma/seed/uat/uat-catalog';
+import { UAT_OPENING_STOCK_ID } from '../../prisma/seed/uat/uat-erp';
 import { type FulfilmentApp, makePdf, uploadPdf } from '../support/fulfilment-e2e';
-import { as, ok, UAT_PASSWORD } from './uat-support';
+import { as, ok, partnerSignIn, UAT_PASSWORD } from './uat-support';
 
 /** The part of a populate-run customer the partner-zone steps use. */
 export interface UatCustomer {
@@ -142,6 +143,44 @@ export async function populatePartnerZone<Cust extends UatCustomer>(d: PartnerZo
   const corrugated = await productType('corrugated');
   // Three weeks ahead: on the 4-week capacity calendar, clear of the orders the rehearsal places today.
   const weekStart = nextDow(addCalendarDays(today(), 14), 1);
+  await step('P1b the books open with the stock on hand as the opening balance (D-389, maker-checker)', async () => {
+    // The seed's opening stock predates the books: the accountant enters it as the opening journal (inventory
+    // accounts by item kind against retained earnings), the owner approves, then the documents already there are
+    // caught up — so the close checks (stock value, VAT) hold from the first month (D-405).
+    const accountant = await partnerSignIn(ctx, 'factory_accountant');
+    const settings = await ok<{ ledgerStartOn: string; itemKindAccounts: Record<string, string> }>(
+      owner().get(`${partner}/erp/ledger/settings`),
+      200,
+    );
+    const opening = await ctx.prisma.erpStockMovement.findMany({
+      where: { factoryId: factory.id, kind: 'opening', sourcePublicId: UAT_OPENING_STOCK_ID },
+      include: { item: { select: { kind: true } } },
+    });
+    const byAccount = new Map<string, number>();
+    for (const m of opening) {
+      const code = settings.itemKindAccounts[m.item.kind]!;
+      byAccount.set(code, (byAccount.get(code) ?? 0) + Math.round(Number(m.value) * 100));
+    }
+    const total = [...byAccount.values()].reduce((a, n) => a + n, 0);
+    const baht = (satang: number) => (satang / 100).toFixed(2);
+    const draft = await ok<{ id: string }>(
+      as(ctx, accountant).post(`${partner}/erp/ledger/journals`, {
+        documentDate: settings.ledgerStartOn,
+        description: 'ยอดยกมา สินค้าคงเหลือ ณ วันเริ่มสมุดบัญชี (ข้อมูลทดสอบ)',
+        lines: [
+          ...[...byAccount.entries()].map(([accountCode, satang]) => ({ accountCode, side: 'debit', amount: baht(satang) })),
+          { accountCode: '3200', side: 'credit', amount: baht(total) },
+        ],
+        submit: true,
+      }),
+      201,
+    );
+    await ok(owner().post(`${partner}/erp/ledger/journals/${draft.id}/actions/approve`, {}));
+    // Documents from before the books existed (the Packio statement confirmed above) are posted by catch-up (D-388).
+    const caught = await ok<{ posted: number }>(as(ctx, accountant).post(`${partner}/erp/ledger/actions/catch-up`, {}));
+    return `opening journal ${baht(total)} on ${byAccount.size} inventory accounts, approved by the owner; catch-up posted ${caught.posted}`;
+  });
+
   await step('P2 factory hours from tomorrow, a closure and a capacity override (D-292, D-209)', async () => {
     await ok(
       owner().put(`${partner}/business-hours`, { effectiveFrom: addCalendarDays(today(), 1), hours: WEEK }),

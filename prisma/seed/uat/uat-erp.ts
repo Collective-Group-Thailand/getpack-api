@@ -1,6 +1,9 @@
 import { Prisma, type PrismaClient } from '../../../src/generated/prisma/client';
 import { UAT_FACTORY_CODE } from './uat-catalog';
 
+/** The opening-stock adjustment of the UAT factory: the books take it as their opening balance (uat:populate). */
+export const UAT_OPENING_STOCK_ID = '0192f3a0-7c1e-7d2a-9b1f-0000000ee001';
+
 /**
  * Packio Factory ERP rehearsal data (E1; D-316 – D-327) for the UAT factory: suppliers and a customer, two
  * warehouses, everyday items with opening balances (written the way the stock service writes them: one movement
@@ -187,7 +190,7 @@ export async function seedUatErp(prisma: PrismaClient): Promise<number> {
       await tx.erpDocumentSeries.create({
         data: { factoryId: factory.id, docType: 'adj', period: day, nextNo: 2 },
       });
-      const openingId = '0192f3a0-7c1e-7d2a-9b1f-0000000ee001';
+      const openingId = UAT_OPENING_STOCK_ID;
       for (const s of items) {
         const item = await tx.erpItem.create({
           data: {

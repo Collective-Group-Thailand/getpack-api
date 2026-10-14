@@ -156,7 +156,27 @@ async function ensureSetting(
 ): Promise<void> {
   if (!seed.unset) assertSettingValue(seed);
   const existing = await tx.setting.findFirst({ where: { key: seed.key, scopeType, scopeId } });
-  if (existing) return;
+  if (existing) {
+    if (seed.fillIfUnset && !seed.unset && (await tx.settingVersion.count({ where: { settingId: existing.id } })) === 0) {
+      await tx.settingVersion.create({
+        data: {
+          settingId: existing.id,
+          versionNo: 1,
+          effectiveFrom: new Date(),
+          status: 'approved',
+          value: seed.value as Prisma.InputJsonValue,
+          reason: `Seed default from ${seed.decisions.join(', ')}`,
+          decidedAt: new Date(),
+        },
+      });
+      await tx.setting.update({
+        where: { id: existing.id },
+        data: { description: seed.description, decisionRefs: seed.decisions, confirmationStatus: seed.confirmation ?? 'confirmed' },
+      });
+      count('settings_filled');
+    }
+    return;
+  }
   await tx.setting.create({
     data: {
       key: seed.key,
