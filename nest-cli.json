@@ -7,7 +7,17 @@
     "builder": "tsc",
     "tsConfigPath": "tsconfig.build.json",
     "deleteOutDir": true,
-    "assets": [{ "include": "i18n/**/*", "outDir": "dist", "watchAssets": true }],
+    "assets": [
+      {
+        "include": "i18n/**/*",
+        "outDir": "dist",
+        "watchAssets": true
+      },
+      {
+        "include": "../package.json",
+        "outDir": "dist"
+      }
+    ],
     "watchAssets": true,
     "plugins": [
       {
