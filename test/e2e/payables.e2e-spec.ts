@@ -518,6 +518,17 @@ describe('payables, payouts & banking (e2e, B5.3)', () => {
     expect(
       (await post(owner, `/v1/partner/billing-statements/${bs.id}/actions/confirm`).expect(200)).body.status,
     ).toBe('confirmed');
+    // The confirmed statement is the factory's sale to Packio: in its sales VAT register for the month (D-401).
+    const vatMonth = new Date(Date.now() + 7 * 3_600_000).toISOString().slice(0, 7);
+    const register = (
+      await as(ctx, owner)
+        .get(`/v1/partner/factories/${fixture.factoryPublicId}/erp/tax/sales-vat?month=${vatMonth}`)
+        .expect(200)
+    ).body as { rows: { kind: string; sourceId: string; vat: string }[] };
+    expect(register.rows.find((r) => r.sourceId === bs.id)).toMatchObject({
+      kind: 'packio_statement',
+      vat: bs.vatAmount,
+    });
 
     // A tax invoice from the wrong seller is refused, then rejected; the right one is validated.
     const factory = await ctx.prisma.factory.findUniqueOrThrow({

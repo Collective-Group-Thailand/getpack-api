@@ -123,7 +123,8 @@ describe('Packio Factory ERP E4 (e2e)', () => {
     expect(so.lines.map((l: Rec) => l.fulfilment)).toEqual(['stock', 'service']);
     const confirmed = await post(sales, `/sales-orders/${so.id}/actions/confirm`, {}, 200, etag(so.id, so.version));
     expect(confirmed.status).toBe('confirmed');
-    expect(confirmed.lines[0].reservedQty).toBe('100.000');
+    // Only free stock is reserved — none here (no opening balance); delivery still issues it (negative stock allowed).
+    expect(confirmed.lines[0].reservedQty).toBe('0.000');
 
     // D-362: the delivery note issues the stock and is delivered.
     const dn = await post(storekeeper, '/delivery-notes', { salesOrderId: so.id }, 201);

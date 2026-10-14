@@ -3,6 +3,12 @@
 Contract-facing changes per release. The contract itself is `contract/openapi.json`; mappings for `packio-web` are in
 `docs/contract-requests-triage.md`.
 
+## v0.52.0 — UX round 6: finance
+
+Decision D-401. Value set: `ErpVatRowKind` gains `packio_statement` (clients that switch over it need a default). The
+sales VAT report, ภ.พ.30 summary and tax export include Packio billing statements confirmed in the month; `sourceId` of
+such a row is the billing statement's id.
+
 ## v0.51.0 — UX round 1: the day's work
 
 Decisions D-399, D-400. Additive. New `GET /v1/partner/factories/{factoryId}/erp/inbox` (`partner.erpInsight.inbox`,
