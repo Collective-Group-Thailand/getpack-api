@@ -33,7 +33,7 @@ const CLOSURE_AXES: ReadonlySet<string> = new Set([
 const POPULAR_WINDOW_DAYS = 90;
 
 const LIBRARY_INCLUDE = {
-  productType: { select: { calculatorKey: true, quoteMode: true, status: true } },
+  productType: { select: { code: true, calculatorKey: true, quoteMode: true, status: true } },
   variants: {
     where: { publishable: true, status: 'active' },
     select: { code: true, options: true, pricePath: true, priceReasons: true },
@@ -260,6 +260,7 @@ export class StylesStoreService {
     return {
       ...card(row, favourites),
       construction: row.construction,
+      productTypeCode: row.productType?.code ?? null,
       descriptionTh: row.descriptionTh,
       descriptionEn: row.descriptionEn,
       axes: axesOf(row),

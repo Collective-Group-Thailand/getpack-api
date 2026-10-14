@@ -3,6 +3,11 @@
 Contract-facing changes per release. The contract itself is `contract/openapi.json`; mappings for `packio-web` are in
 `docs/contract-requests-triage.md`.
 
+## v0.56.0 — Style page: quote a chosen variant
+
+Decision D-407 (follow-up). Additive. `StyleDetailDto` gains `productTypeCode` (nullable): the product type the style is
+priced and quoted as, so a style page can open the right RFQ form with the chosen `styleVariantCode`.
+
 ## v0.55.0 — Style library open to customers
 
 Decision D-407. Value sets: `StylePublishReason` gains `not_drawable`; `StylePriceReason` gains `not_makeable`

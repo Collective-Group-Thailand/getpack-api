@@ -109,7 +109,8 @@ describe('style library network and store (e2e, U3.B2–B3)', () => {
     const card = (list.body as { data: Card[] }).data.find((c) => c.code === 'PK-CS-01')!;
     expect(card.pricePath).toBe('rfq');
     const detail = await request(ctx.server).get('/v1/store/styles/PK-CS-01').expect(200);
-    expect(detail.body).toMatchObject({ leadTime: null });
+    // D-407: the product type it is quoted as, for the style page's quotation request.
+    expect(detail.body).toMatchObject({ leadTime: null, productTypeCode: 'corrugated' });
   });
 
   it('lets the factory propose a capability that counts only once verified against a passing site visit (D-244)', async () => {
