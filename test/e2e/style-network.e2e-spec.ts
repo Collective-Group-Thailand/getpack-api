@@ -240,6 +240,14 @@ describe('style library network and store (e2e, U3.B2–B3)', () => {
     expect(all.meta.libraryStyles).toBeGreaterThanOrEqual(2);
     expect(JSON.stringify(all)).not.toMatch(/factory|F9001/i);
 
+    const one = await get('limit=100&style=PK-CS-01');
+    expect(one.meta.total).toBe(9);
+    expect(one.data.every((c) => c.baseCode === 'PK-CS-01')).toBe(true);
+    // A variant without an axis counts, and filters, as `none`.
+    const plain = await get('limit=100&style=PK-CS-01&option=window:none');
+    expect(plain.meta.total).toBe(9);
+    expect(count(plain, 'window:none')).toBe(9);
+
     const end = await get('limit=100&option=hand_holes:end_panels');
     expect(end.data.every((c) => c.options['hand_holes'] === 'end_panels')).toBe(true);
     expect(end.data.filter((c) => c.baseCode === 'PK-CS-01')).toHaveLength(3);
