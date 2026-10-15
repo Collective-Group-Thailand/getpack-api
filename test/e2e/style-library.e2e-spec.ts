@@ -198,6 +198,17 @@ describe('style library (e2e, U3.B1)', () => {
     expect(await menu('dpo')).toContain('privacy');
   });
 
+  it('lists the shipping set-up desk for those who may open it (D-413)', async () => {
+    const menu = async (role: string) =>
+      ((await as(ctx, tokens[role]!).get('/v1/admin/me').expect(200)).body.menu as { key: string }[]).map(
+        (e) => e.key,
+      );
+    expect(await menu('admin')).toContain('shipping_setup');
+    tokens['logistics'] ??= await staffToken(ctx, 'logistics');
+    expect(await menu('logistics')).toContain('shipping_setup');
+    expect(await menu('prepress')).not.toContain('shipping_setup');
+  });
+
   it('takes recipes from a bundle; Prepress approves one, never the person who imported it (D-243)', async () => {
     await imports.apply(actors['admin']!, await imports.plan('recipes', 'r1.json', bundle('PK-TE-01', 'v1')));
     let te = await base('PK-TE-01');
