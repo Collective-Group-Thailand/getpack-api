@@ -3,6 +3,12 @@
 Contract-facing changes per release. The contract itself is `contract/openapi.json`; mappings for `packio-web` are in
 `docs/contract-requests-triage.md`.
 
+## v0.64.0 — File purpose `image`
+
+Decisions D-414, D-415. Additive (value set): `FilePurpose` gains `image` — PNG, JPEG or WebP up to 20 MB, standard
+retention — for images Packio publishes (catalogue and stock product photos, CMS covers and photos, studio template
+thumbnails). `AddImageDto.fileId` names it. Clients that switch over the purpose need a default.
+
 ## v0.63.0 — Admin menu: shipping set-up
 
 Decision D-413. Additive. `GET /v1/admin/me` `menu[]` gains `shipping_setup` (`/admin/shipping`; any of

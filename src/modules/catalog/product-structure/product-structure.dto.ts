@@ -600,7 +600,7 @@ export class ReplaceOptionsDto {
 }
 
 export class AddImageDto {
-  @RefField({ example: EXAMPLE_IDS.file, description: 'Uploaded file (purpose `evidence` or `document`)' })
+  @RefField({ example: EXAMPLE_IDS.file, description: 'Uploaded file (purpose `image`, `evidence` or `document`)' })
   fileId!: string;
 
   @ApiPropertyOptional({
