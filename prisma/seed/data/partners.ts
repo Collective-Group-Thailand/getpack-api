@@ -4,10 +4,22 @@
  * counsel publishes as versions through the admin API, like consent texts (B1.2).
  */
 export const AGREEMENT_TEMPLATES = [
-  { key: 'partner_agreement', name: 'Partner agreement', description: 'D-011 partner agreement' },
+  {
+    key: 'partner_agreement',
+    party: 'factory',
+    name: 'Partner agreement',
+    description: 'D-011 partner agreement',
+  },
   {
     key: 'price_data_confidentiality',
+    party: 'factory',
     name: 'Price-data confidentiality',
     description: 'D-044 confidentiality of price data, both directions',
+  },
+  {
+    key: 'sales_agent_agreement',
+    party: 'sales_agent',
+    name: 'Sales agent agreement',
+    description: 'D-416 terms a freelance sales agent accepts when applying',
   },
 ] as const;

@@ -3,6 +3,32 @@
 Contract-facing changes per release. The contract itself is `contract/openapi.json`; mappings for `packio-web` are in
 `docs/contract-requests-triage.md`.
 
+## v0.65.0 — Sales agent programme
+
+Decisions D-416 – D-423. Additive.
+
+- **Store (`store.agent`)**: `programme`, `getApplication`, `apply`, `withdrawApplication`, `claimLink`
+  (`POST /v1/store/agent/claims`, body as `AttributeReferralDto`), and for agents (`agent.self`): `me`, `customers`,
+  `leads`, `registerLead`, `withdrawLead`, `commissions`, `statements`, `statement`, `whtCertificate`.
+- **Admin (`admin.agents`, `admin.agentPlans`)**: applications (list, get, approve, reject); agents (list, get,
+  createEmployee, update with `If-Match`, suspend, reactivate, end); links (listLinks, assignLink, endLink); leads
+  (listLeads, releaseLead); factory links (listFactoryLinks, linkFactory — `partners.manage` — endFactoryLink);
+  commission (listCommissions, adjustCommission with `Idempotency-Key`, decideHeldCommission); statements
+  (listStatements, getStatement, generateStatements, approveStatement with `If-Match` and `Idempotency-Key`,
+  voidStatement, exportPayroll, markStatementPaid); plans (list, get, create, draftVersion, approveVersion,
+  rejectVersion, retire).
+- **Value sets**: `VendorKind` + `sales_agent`; `WhtCategory` + `commission`; `TaxReportKind` + `pnd1`; `TaxCode` +
+  `wht_pnd1`. Payout responses name their withholding form `PayoutWhtForm` (`pnd3`, `pnd53`, `pnd1`) — the factory
+  ERP keeps `WhtForm` (`pnd3`, `pnd53`). Clients switching over these need a default.
+- **Problems**: `agents.*` (31 codes, `src/i18n/*/errors.json`).
+- **Menu / roles**: `GET /v1/admin/me` `menu[]` gains `agents` (`agents.read`); new staff role `sales_manager`,
+  customer role `sales_agent`; permissions `agents.read`, `agents.manage`, `agent_commissions.adjust`,
+  `agent_statements.approve`, `agent_plans.manage`, `agent_plans.approve`, `agent.self`.
+- **Data**: chart accounts 2233 (WHT payable ภ.ง.ด.1) and 6160 (sales commission); tax rate `wht_commission` 3 % ⚖;
+  posting rule AG01; setting `agents.rules`; agreement template `sales_agent_agreement` (version 1 seeded); plans
+  `freelance_standard`, `employee_standard`; team `sales`. Migration `20261208000001_sales_agents` also adds
+  ภ.ง.ด.1 (→ 2233) to existing environments' `tax.gl_accounts` and withholding posting rules as new approved versions.
+
 ## v0.64.0 — File purpose `image`
 
 Decisions D-414, D-415. Additive (value set): `FilePurpose` gains `image` — PNG, JPEG or WebP up to 20 MB, standard

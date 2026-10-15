@@ -199,6 +199,10 @@ export const CHART_OF_ACCOUNTS: readonly AccountSeed[] = [
   a('2232', 'ภาษีหัก ณ ที่จ่ายค้างจ่าย — ภ.ง.ด.3', 'WHT payable — PND3', 'liability', 'credit', 'operating', {
     parent: '2000',
   }),
+  // D-421: commission to individuals (s.40(2)).
+  a('2233', 'ภาษีหัก ณ ที่จ่ายค้างจ่าย — ภ.ง.ด.1', 'WHT payable — PND1', 'liability', 'credit', 'operating', {
+    parent: '2000',
+  }),
   a(
     '2310',
     'เงินรับล่วงหน้าจากลูกค้า',
@@ -338,6 +342,10 @@ export const CHART_OF_ACCOUNTS: readonly AccountSeed[] = [
   a('6130', 'หนี้สงสัยจะสูญ', 'Bad debts', 'expense', 'debit', 'operating', { parent: '6000' }),
   a('6140', 'ค่าธรรมเนียมธนาคาร', 'Bank charges', 'expense', 'debit', 'operating', { parent: '6000' }),
   a('6150', 'ค่าเสื่อมราคา', 'Depreciation', 'expense', 'debit', 'operating', { parent: '6000' }),
+  // D-420: commission to sales agents (freelance through their bills, employees accrued for payroll).
+  a('6160', 'ค่านายหน้าการขาย', 'Sales agent commission', 'expense', 'debit', 'operating', {
+    parent: '6000',
+  }),
   a('6900', 'ค่าใช้จ่ายอื่น', 'Other expenses', 'expense', 'debit', 'operating', { parent: '6000' }),
   a(
     '6910',
@@ -377,6 +385,15 @@ export const VENDOR_WHT_RATES = [
     description:
       'Withheld from design freelancers (ภ.ง.ด.3) and other services (accounting-design §2 ⚖ default 3 %)',
     decisions: ['D-071', 'D-033'],
+    ratePct: '3',
+  },
+  {
+    code: 'wht_commission',
+    nameTh: 'ภาษีหัก ณ ที่จ่าย ค่านายหน้า 40(2) (บุคคลธรรมดา)',
+    nameEn: 'Withholding tax, commission to individuals (s.40(2))',
+    description:
+      'Withheld from sales agent commission paid to individuals, filed on ภ.ง.ด.1 (D-421 ⚖ flat default 3 % pending the CPA; s.50(1) asks for the progressive computation)',
+    decisions: ['D-421'],
     ratePct: '3',
   },
 ] as const;

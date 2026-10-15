@@ -1046,6 +1046,32 @@ const CHECKS = [
   'ck_erp_gl_bank_statement_lines__ignored',
   'ck_erp_gl_bank_matches__amount',
   'ck_erp_gl_tax_filings__month',
+  // D-416 – D-421 sales agents
+  'ck_sales_agent_plan_versions__pcts',
+  'ck_sales_agent_plan_versions__numbers',
+  'ck_sales_agent_plan_versions__decided',
+  'ck_sales_agent_applications__tax_id',
+  'ck_sales_agent_applications__postcode',
+  'ck_sales_agent_applications__evidence',
+  'ck_sales_agent_applications__decided',
+  'ck_sales_agents__code',
+  'ck_sales_agents__kind',
+  'ck_sales_agents__status',
+  'ck_sales_agent_links__owner',
+  'ck_sales_agent_links__ended',
+  'ck_sales_agent_links__window',
+  'ck_sales_agent_leads__contact',
+  'ck_sales_agent_leads__tax_id',
+  'ck_sales_agent_leads__converted',
+  'ck_sales_agent_factory_links__qualified',
+  'ck_sales_agent_commissions__source',
+  'ck_sales_agent_commissions__amounts',
+  'ck_sales_agent_commissions__statemented',
+  'ck_sales_agent_commissions__earned',
+  'ck_sales_agent_statements__period',
+  'ck_sales_agent_statements__total',
+  'ck_sales_agent_statements__voided',
+  'ck_sales_agent_statements__approved',
 ];
 
 const TRIGGERS = [
@@ -1430,6 +1456,16 @@ const INDEXES = [
   'ix_erp_gl_journal_lines__warehouse_id',
   'ix_erp_gl_posting_rule_versions__resolution',
   'ux_erp_gl_journal_entries__domain_event_id__posting_rule_id',
+  // D-416 – D-421 sales agents
+  'ux_sales_agent_applications__user_id__submitted',
+  'ux_sales_agent_links__customer_user_id__active',
+  'ux_sales_agent_links__company_id__active',
+  'ix_sales_agent_leads__phone__registered',
+  'ix_sales_agent_leads__email__registered',
+  'ix_sales_agent_leads__tax_id__registered',
+  'ux_sales_agent_commissions__factory_link_id__bounty',
+  'ux_sales_agent_commissions__order_id__order',
+  'ux_sales_agent_statements__agent_id__period_start__live',
 ];
 
 const EXPRESSION_INDEXES = [

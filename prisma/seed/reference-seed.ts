@@ -1,7 +1,10 @@
+import { createHash } from 'node:crypto';
+
 import { type Prisma, type PrismaClient } from '../../src/generated/prisma/client';
 import { PERMISSIONS } from '../../src/modules/iam/permissions.catalog';
 import { ROLES } from '../../src/modules/iam/roles.catalog';
 import { settingValueError } from '../../src/platform/settings/setting-value';
+import { AGENT_AGREEMENT_KEY, AGENT_AGREEMENT_V1_TH, AGENT_PLANS } from './data/agents';
 import { APPROVAL_POLICIES } from './data/approval-policies';
 import { PARTNER_KNOWLEDGE_CATEGORIES, PRODUCT_TYPES } from './data/catalog';
 import {
@@ -78,6 +81,7 @@ export async function seedReference(prisma: PrismaClient, entity: EntitySeedInpu
       await ensureNotifications(tx, count);
       await ensureProductTypes(tx, count);
       await ensureAgreementTemplates(tx, count);
+      await ensureAgentProgramme(tx, count);
       await ensureTaxRates(tx, count);
       await ensureShipping(tx, count);
       await ensureUnmetDemandReasons(tx, count);
@@ -157,7 +161,11 @@ async function ensureSetting(
   if (!seed.unset) assertSettingValue(seed);
   const existing = await tx.setting.findFirst({ where: { key: seed.key, scopeType, scopeId } });
   if (existing) {
-    if (seed.fillIfUnset && !seed.unset && (await tx.settingVersion.count({ where: { settingId: existing.id } })) === 0) {
+    if (
+      seed.fillIfUnset &&
+      !seed.unset &&
+      (await tx.settingVersion.count({ where: { settingId: existing.id } })) === 0
+    ) {
       await tx.settingVersion.create({
         data: {
           settingId: existing.id,
@@ -171,7 +179,11 @@ async function ensureSetting(
       });
       await tx.setting.update({
         where: { id: existing.id },
-        data: { description: seed.description, decisionRefs: seed.decisions, confirmationStatus: seed.confirmation ?? 'confirmed' },
+        data: {
+          description: seed.description,
+          decisionRefs: seed.decisions,
+          confirmationStatus: seed.confirmation ?? 'confirmed',
+        },
       });
       count('settings_filled');
     }
@@ -446,6 +458,49 @@ async function ensureAgreementTemplates(tx: Tx, count: (what: string) => void): 
     if (await tx.agreementTemplate.findUnique({ where: { key: template.key } })) continue;
     await tx.agreementTemplate.create({ data: { ...template } });
     count('agreement_templates');
+  }
+}
+
+/** D-416 / D-418: the agent agreement's first version and the starting commission plans. */
+async function ensureAgentProgramme(tx: Tx, count: (what: string) => void): Promise<void> {
+  const template = await tx.agreementTemplate.findUnique({ where: { key: AGENT_AGREEMENT_KEY } });
+  if (template && (await tx.agreementTemplateVersion.count({ where: { templateId: template.id } })) === 0) {
+    await tx.agreementTemplateVersion.create({
+      data: {
+        templateId: template.id,
+        versionNo: 1,
+        effectiveFrom: SEED_EFFECTIVE_FROM,
+        status: 'approved',
+        textTh: AGENT_AGREEMENT_V1_TH,
+        textSha256: createHash('sha256').update(AGENT_AGREEMENT_V1_TH).digest(),
+        reason: 'Seed: agent agreement version 1 (D-416)',
+        decidedAt: new Date(),
+      },
+    });
+    count('agreement_template_versions');
+  }
+  for (const plan of AGENT_PLANS) {
+    if (await tx.salesAgentPlan.findUnique({ where: { code: plan.code } })) continue;
+    await tx.salesAgentPlan.create({
+      data: {
+        code: plan.code,
+        nameTh: plan.nameTh,
+        nameEn: plan.nameEn,
+        description: plan.description,
+        agentKind: plan.agentKind,
+        versions: {
+          create: {
+            versionNo: 1,
+            effectiveFrom: SEED_EFFECTIVE_FROM,
+            status: 'approved',
+            ...plan.version,
+            reason: 'Seed: starting plan (D-418, proposed figures)',
+            decidedAt: new Date(),
+          },
+        },
+      },
+    });
+    count('sales_agent_plans');
   }
 }
 

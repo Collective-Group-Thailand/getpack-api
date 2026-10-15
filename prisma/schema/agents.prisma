@@ -1,0 +1,457 @@
+// Sales agent programme (D-416–D-423): Collective employees and freelancers who bring customers and
+// factories to Packio, earn commission by versioned plan and are paid monthly.
+
+enum SalesAgentKind {
+  freelance
+  employee
+
+  @@map("sales_agent_kind")
+}
+
+enum SalesAgentStatus {
+  active
+  suspended
+  ended
+
+  @@map("sales_agent_status")
+}
+
+enum SalesAgentApplicationStatus {
+  submitted
+  approved
+  rejected
+  withdrawn
+
+  @@map("sales_agent_application_status")
+}
+
+enum SalesAgentLinkSource {
+  /// The agent's link or code, claimed by the customer after sign-in.
+  link
+  /// A lead the agent registered that signed up or applied as a company.
+  lead
+  /// Assigned or transferred by staff, with a reason.
+  staff
+  /// A company inheriting the link of the user who applied for it.
+  company
+
+  @@map("sales_agent_link_source")
+}
+
+enum SalesAgentLinkStatus {
+  active
+  ended
+
+  @@map("sales_agent_link_status")
+}
+
+enum SalesAgentLeadKind {
+  customer
+  factory
+
+  @@map("sales_agent_lead_kind")
+}
+
+enum SalesAgentLeadStatus {
+  registered
+  converted
+  expired
+  rejected
+  withdrawn
+
+  @@map("sales_agent_lead_status")
+}
+
+enum SalesAgentFactoryLinkStatus {
+  /// Waiting for activation and the qualifying jobs.
+  pending
+  qualified
+  expired
+  ended
+
+  @@map("sales_agent_factory_link_status")
+}
+
+enum SalesAgentCommissionKind {
+  order
+  factory_bounty
+  adjustment
+  reversal
+
+  @@map("sales_agent_commission_kind")
+}
+
+enum SalesAgentCommissionStatus {
+  /// Accrued; waits for the claim window and full payment.
+  pending
+  /// Waiting for staff review (shared identity between agent and customer, D-417).
+  held
+  earned
+  statemented
+  paid
+  cancelled
+
+  @@map("sales_agent_commission_status")
+}
+
+enum SalesAgentStatementStatus {
+  draft
+  approved
+  exported
+  paid
+  voided
+
+  @@map("sales_agent_statement_status")
+}
+
+enum AgreementParty {
+  factory
+  sales_agent
+
+  @@map("agreement_party")
+}
+
+/// A commission plan (D-418); its terms live in dated, maker-checked versions.
+model SalesAgentPlan {
+  id          BigInt         @id(map: "pk_sales_agent_plans") @default(autoincrement())
+  publicId    String         @unique(map: "ux_sales_agent_plans__public_id") @default(dbgenerated("uuidv7()")) @map("public_id") @db.Uuid
+  code        String         @unique(map: "ux_sales_agent_plans__code")
+  nameTh      String         @map("name_th")
+  nameEn      String?        @map("name_en")
+  description String?
+  agentKind   SalesAgentKind @map("agent_kind")
+  retiredAt   DateTime?      @map("retired_at") @db.Timestamptz(6)
+  createdAt   DateTime       @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt   DateTime       @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+  rowVersion  Int            @default(1) @map("row_version")
+
+  versions  SalesAgentPlanVersion[]
+  agents    SalesAgent[]
+
+  @@map("sales_agent_plans")
+}
+
+/// Never edited once approved; the approved version with the latest `effective_from` ≤ t applies.
+model SalesAgentPlanVersion {
+  id                  BigInt              @id(map: "pk_sales_agent_plan_versions") @default(autoincrement())
+  publicId            String              @unique(map: "ux_sales_agent_plan_versions__public_id") @default(dbgenerated("uuidv7()")) @map("public_id") @db.Uuid
+  planId              BigInt              @map("plan_id")
+  versionNo           Int                 @map("version_no")
+  effectiveFrom       DateTime            @map("effective_from") @db.Timestamptz(6)
+  status              ConfigVersionStatus @default(draft)
+  firstOrderPct       Decimal             @map("first_order_pct") @db.Decimal(7, 4)
+  repeatOrderPct      Decimal             @map("repeat_order_pct") @db.Decimal(7, 4)
+  attributionMonths   Int                 @map("attribution_months") @db.SmallInt
+  /// Commission ≤ this % of the order's margin (never below 0).
+  marginCapPct        Decimal             @map("margin_cap_pct") @db.Decimal(7, 4)
+  minBaseAmount       Decimal             @default(0) @map("min_base_amount") @db.Decimal(14, 2)
+  factoryBountyAmount Decimal             @default(0) @map("factory_bounty_amount") @db.Decimal(14, 2)
+  factoryQualifyJobs  Int                 @default(0) @map("factory_qualify_jobs") @db.SmallInt
+  factoryQualifyDays  Int                 @default(0) @map("factory_qualify_days") @db.SmallInt
+  reason              String
+  createdAt           DateTime            @default(now()) @map("created_at") @db.Timestamptz(6)
+  /// User ids (no FK): the maker-checker compares them; who did what is also in the audit log.
+  createdById         BigInt?             @map("created_by")
+  decidedAt           DateTime?           @map("decided_at") @db.Timestamptz(6)
+  decidedById         BigInt?             @map("decided_by")
+  decisionNote        String?             @map("decision_note")
+
+  plan        SalesAgentPlan       @relation(fields: [planId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_sales_agent_plan_versions__plan_id")
+  commissions SalesAgentCommission[]
+
+  @@unique([planId, versionNo], map: "ux_sales_agent_plan_versions__plan_id__version_no")
+  @@index([planId, status, effectiveFrom], map: "ix_sales_agent_plan_versions__plan_id__status__effective_from")
+  @@map("sales_agent_plan_versions")
+}
+
+/// A customer's application to become a freelance agent (D-416). PII: the bank account number is
+/// stored encrypted with its last 4 digits, as vendor bank accounts are (§8).
+model SalesAgentApplication {
+  id                      BigInt                      @id(map: "pk_sales_agent_applications") @default(autoincrement())
+  publicId                String                      @unique(map: "ux_sales_agent_applications__public_id") @default(dbgenerated("uuidv7()")) @map("public_id") @db.Uuid
+  userId                  BigInt                      @map("user_id")
+  status                  SalesAgentApplicationStatus @default(submitted)
+  juristicType            JuristicType                @map("juristic_type")
+  legalName               String                      @map("legal_name")
+  taxId                   String                      @map("tax_id") @db.Char(13)
+  branchCode              String                      @default("00000") @map("branch_code") @db.Char(5)
+  isVatRegistered         Boolean                     @default(false) @map("is_vat_registered")
+  address                 String
+  postcode                String                      @db.Char(5)
+  /// How the applicant plans to sell (free text).
+  pitch                   String?
+  idDocumentFileId        BigInt                      @map("id_document_file_id")
+  bankCode                String                      @map("bank_code")
+  bankBranchName          String?                     @map("bank_branch_name")
+  bankAccountName         String                      @map("bank_account_name")
+  bankAccountNoEnc        Bytes                       @map("bank_account_no_enc")
+  bankAccountNoLast4      String                      @map("bank_account_no_last4") @db.Char(4)
+  bankBookFileId          BigInt?                     @map("bank_book_file_id")
+  agreementVersionId      BigInt                      @map("agreement_version_id")
+  agreementAcceptedAt     DateTime                    @map("agreement_accepted_at") @db.Timestamptz(6)
+  agreementEvidenceSha256 Bytes                       @map("agreement_evidence_sha256")
+  ip                      String?                     @db.Inet
+  userAgent               String?                     @map("user_agent")
+  submittedAt             DateTime                    @default(now()) @map("submitted_at") @db.Timestamptz(6)
+  decidedAt               DateTime?                   @map("decided_at") @db.Timestamptz(6)
+  decidedById             BigInt?                     @map("decided_by")
+  decisionReason          String?                     @map("decision_reason")
+  createdAt               DateTime                    @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt               DateTime                    @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+  rowVersion              Int                         @default(1) @map("row_version")
+
+  user             User                     @relation("SalesAgentApplicationUser", fields: [userId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_sales_agent_applications__user_id")
+  idDocumentFile   FileObject               @relation("SalesAgentApplicationIdDocument", fields: [idDocumentFileId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_sales_agent_applications__id_document_file_id")
+  bankBookFile     FileObject?              @relation("SalesAgentApplicationBankBook", fields: [bankBookFileId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_sales_agent_applications__bank_book_file_id")
+  agreementVersion AgreementTemplateVersion @relation("SalesAgentApplicationAgreement", fields: [agreementVersionId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_sales_agent_applications__agreement_version_id")
+  decidedBy        User?                    @relation("SalesAgentApplicationDecidedBy", fields: [decidedById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_sales_agent_applications__decided_by")
+  agent            SalesAgent?
+
+  @@index([userId], map: "ix_sales_agent_applications__user_id")
+  @@unique([userId], map: "ux_sales_agent_applications__user_id__submitted", where: raw("(status = 'submitted'::sales_agent_application_status)"))
+  @@index([status, submittedAt], map: "ix_sales_agent_applications__status__submitted_at")
+  @@index([idDocumentFileId], map: "ix_sales_agent_applications__id_document_file_id")
+  @@index([bankBookFileId], map: "ix_sales_agent_applications__bank_book_file_id")
+  @@index([agreementVersionId], map: "ix_sales_agent_applications__agreement_version_id")
+  @@index([decidedById], map: "ix_sales_agent_applications__decided_by")
+  @@map("sales_agent_applications")
+}
+
+/// An agent: a customer account with an approved agent profile (D-416).
+model SalesAgent {
+  id            BigInt           @id(map: "pk_sales_agents") @default(autoincrement())
+  publicId      String           @unique(map: "ux_sales_agents__public_id") @default(dbgenerated("uuidv7()")) @map("public_id") @db.Uuid
+  userId        BigInt           @unique(map: "ux_sales_agents__user_id") @map("user_id")
+  kind          SalesAgentKind
+  status        SalesAgentStatus @default(active)
+  /// Shared in the agent's link (`/a/{code}`).
+  code          String           @unique(map: "ux_sales_agents__code")
+  planId        BigInt           @map("plan_id")
+  legalName     String           @map("legal_name")
+  juristicType  JuristicType     @default(individual) @map("juristic_type")
+  taxId         String?          @map("tax_id") @db.Char(13)
+  /// The vendor commission is paid to (freelance only).
+  vendorId      BigInt?          @unique(map: "ux_sales_agents__vendor_id") @map("vendor_id")
+  employeeCode  String?          @map("employee_code")
+  /// The employee's back-office account, when they have one.
+  staffUserId   BigInt?          @map("staff_user_id")
+  applicationId BigInt?          @unique(map: "ux_sales_agents__application_id") @map("application_id")
+  joinedAt      DateTime         @default(now()) @map("joined_at") @db.Timestamptz(6)
+  suspendedAt   DateTime?        @map("suspended_at") @db.Timestamptz(6)
+  endedAt       DateTime?        @map("ended_at") @db.Timestamptz(6)
+  statusReason  String?          @map("status_reason")
+  note          String?
+  createdAt     DateTime         @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt     DateTime         @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+  rowVersion    Int              @default(1) @map("row_version")
+
+  user         User                    @relation("SalesAgentUser", fields: [userId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_sales_agents__user_id")
+  plan         SalesAgentPlan          @relation(fields: [planId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_sales_agents__plan_id")
+  vendor       Vendor?                 @relation("SalesAgentVendor", fields: [vendorId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_sales_agents__vendor_id")
+  staffUser    User?                   @relation("SalesAgentStaffUser", fields: [staffUserId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_sales_agents__staff_user_id")
+  application  SalesAgentApplication?  @relation(fields: [applicationId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_sales_agents__application_id")
+  links        SalesAgentLink[]
+  leads        SalesAgentLead[]
+  factoryLinks SalesAgentFactoryLink[]
+  commissions  SalesAgentCommission[]
+  statements   SalesAgentStatement[]
+
+  @@index([status, kind], map: "ix_sales_agents__status__kind")
+  @@index([planId], map: "ix_sales_agents__plan_id")
+  @@index([staffUserId], map: "ix_sales_agents__staff_user_id")
+  @@map("sales_agents")
+}
+
+/// Who a customer or company belongs to (D-417): one active link each (partial unique indexes).
+model SalesAgentLink {
+  id             BigInt               @id(map: "pk_sales_agent_links") @default(autoincrement())
+  publicId       String               @unique(map: "ux_sales_agent_links__public_id") @default(dbgenerated("uuidv7()")) @map("public_id") @db.Uuid
+  agentId        BigInt               @map("agent_id")
+  customerUserId BigInt?              @map("customer_user_id")
+  companyId      BigInt?              @map("company_id")
+  source         SalesAgentLinkSource
+  leadId         BigInt?              @map("lead_id")
+  /// The user link a company link was inherited from.
+  parentLinkId   BigInt?              @map("parent_link_id")
+  status         SalesAgentLinkStatus @default(active)
+  attributedAt   DateTime             @default(now()) @map("attributed_at") @db.Timestamptz(6)
+  /// Orders placed from this instant on earn nothing (the plan's attribution months).
+  endsAt         DateTime             @map("ends_at") @db.Timestamptz(6)
+  endedAt        DateTime?            @map("ended_at") @db.Timestamptz(6)
+  endedReason    String?              @map("ended_reason")
+  reason         String?
+  createdAt      DateTime             @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  agent        SalesAgent             @relation(fields: [agentId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_sales_agent_links__agent_id")
+  customerUser User?                  @relation("SalesAgentLinkCustomer", fields: [customerUserId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_sales_agent_links__customer_user_id")
+  company      Company?               @relation("SalesAgentLinkCompany", fields: [companyId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_sales_agent_links__company_id")
+  lead         SalesAgentLead?        @relation(fields: [leadId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_sales_agent_links__lead_id")
+  parentLink   SalesAgentLink?        @relation("SalesAgentLinkParent", fields: [parentLinkId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_sales_agent_links__parent_link_id")
+  childLinks   SalesAgentLink[]       @relation("SalesAgentLinkParent")
+  commissions  SalesAgentCommission[]
+
+  @@index([agentId, status], map: "ix_sales_agent_links__agent_id__status")
+  @@index([customerUserId], map: "ix_sales_agent_links__customer_user_id")
+  @@unique([customerUserId], map: "ux_sales_agent_links__customer_user_id__active", where: raw("(status = 'active'::sales_agent_link_status)"))
+  @@index([companyId], map: "ix_sales_agent_links__company_id")
+  @@unique([companyId], map: "ux_sales_agent_links__company_id__active", where: raw("(status = 'active'::sales_agent_link_status)"))
+  @@index([leadId], map: "ix_sales_agent_links__lead_id")
+  @@index([parentLinkId], map: "ix_sales_agent_links__parent_link_id")
+  @@map("sales_agent_links")
+}
+
+/// A prospect an agent registered (D-417, D-419), protected from other agents for a while. PII.
+model SalesAgentLead {
+  id                 BigInt               @id(map: "pk_sales_agent_leads") @default(autoincrement())
+  publicId           String               @unique(map: "ux_sales_agent_leads__public_id") @default(dbgenerated("uuidv7()")) @map("public_id") @db.Uuid
+  agentId            BigInt               @map("agent_id")
+  kind               SalesAgentLeadKind
+  status             SalesAgentLeadStatus @default(registered)
+  contactName        String               @map("contact_name")
+  organisationName   String?              @map("organisation_name")
+  /// E.164 (+66…).
+  phone              String?
+  email              String?              @db.Citext
+  taxId              String?              @map("tax_id") @db.Char(13)
+  note               String?
+  protectedUntil     DateTime             @map("protected_until") @db.Timestamptz(6)
+  convertedAt        DateTime?            @map("converted_at") @db.Timestamptz(6)
+  convertedUserId    BigInt?              @map("converted_user_id")
+  convertedCompanyId BigInt?              @map("converted_company_id")
+  convertedFactoryId BigInt?              @map("converted_factory_id")
+  closedReason       String?              @map("closed_reason")
+  createdAt          DateTime             @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt          DateTime             @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+  rowVersion         Int                  @default(1) @map("row_version")
+
+  agent            SalesAgent              @relation(fields: [agentId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_sales_agent_leads__agent_id")
+  convertedUser    User?                   @relation("SalesAgentLeadConvertedUser", fields: [convertedUserId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_sales_agent_leads__converted_user_id")
+  convertedCompany Company?                @relation("SalesAgentLeadConvertedCompany", fields: [convertedCompanyId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_sales_agent_leads__converted_company_id")
+  convertedFactory Factory?                @relation("SalesAgentLeadConvertedFactory", fields: [convertedFactoryId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_sales_agent_leads__converted_factory_id")
+  links            SalesAgentLink[]
+  factoryLinks     SalesAgentFactoryLink[]
+
+  @@index([agentId, status], map: "ix_sales_agent_leads__agent_id__status")
+  @@index([phone], map: "ix_sales_agent_leads__phone__registered", where: raw("(status = 'registered'::sales_agent_lead_status)"))
+  @@index([email], map: "ix_sales_agent_leads__email__registered", where: raw("(status = 'registered'::sales_agent_lead_status)"))
+  @@index([taxId], map: "ix_sales_agent_leads__tax_id__registered", where: raw("(status = 'registered'::sales_agent_lead_status)"))
+  @@index([convertedUserId], map: "ix_sales_agent_leads__converted_user_id")
+  @@index([convertedCompanyId], map: "ix_sales_agent_leads__converted_company_id")
+  @@index([convertedFactoryId], map: "ix_sales_agent_leads__converted_factory_id")
+  @@map("sales_agent_leads")
+}
+
+/// A factory an agent brought (D-419); one agent per factory.
+model SalesAgentFactoryLink {
+  id          BigInt                      @id(map: "pk_sales_agent_factory_links") @default(autoincrement())
+  publicId    String                      @unique(map: "ux_sales_agent_factory_links__public_id") @default(dbgenerated("uuidv7()")) @map("public_id") @db.Uuid
+  agentId     BigInt                      @map("agent_id")
+  factoryId   BigInt                      @unique(map: "ux_sales_agent_factory_links__factory_id") @map("factory_id")
+  leadId      BigInt?                     @map("lead_id")
+  status      SalesAgentFactoryLinkStatus @default(pending)
+  linkedAt    DateTime                    @default(now()) @map("linked_at") @db.Timestamptz(6)
+  qualifiedAt DateTime?                   @map("qualified_at") @db.Timestamptz(6)
+  closedAt    DateTime?                   @map("closed_at") @db.Timestamptz(6)
+  reason      String?
+
+  agent       SalesAgent             @relation(fields: [agentId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_sales_agent_factory_links__agent_id")
+  factory     Factory                @relation("SalesAgentFactoryLinkFactory", fields: [factoryId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_sales_agent_factory_links__factory_id")
+  lead        SalesAgentLead?        @relation(fields: [leadId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_sales_agent_factory_links__lead_id")
+  commissions SalesAgentCommission[]
+
+  @@index([agentId, status], map: "ix_sales_agent_factory_links__agent_id__status")
+  @@index([leadId], map: "ix_sales_agent_factory_links__lead_id")
+  @@map("sales_agent_factory_links")
+}
+
+/// The commission ledger (D-418, D-419): one entry per completed order or bounty, plus signed
+/// adjustments and refund reversals. Amounts are signed; a statement nets them.
+model SalesAgentCommission {
+  id                   BigInt                     @id(map: "pk_sales_agent_commissions") @default(autoincrement())
+  publicId             String                     @unique(map: "ux_sales_agent_commissions__public_id") @default(dbgenerated("uuidv7()")) @map("public_id") @db.Uuid
+  agentId              BigInt                     @map("agent_id")
+  kind                 SalesAgentCommissionKind
+  status               SalesAgentCommissionStatus @default(pending)
+  linkId               BigInt?                    @map("link_id")
+  factoryLinkId        BigInt?                    @map("factory_link_id")
+  orderId              BigInt?                    @map("order_id")
+  orderGroupId         BigInt?                    @map("order_group_id")
+  planVersionId        BigInt?                    @map("plan_version_id")
+  isFirstOrder         Boolean                    @default(false) @map("is_first_order")
+  baseAmount           Decimal                    @default(0) @map("base_amount") @db.Decimal(14, 2)
+  ratePct              Decimal?                   @map("rate_pct") @db.Decimal(7, 4)
+  marginAmount         Decimal?                   @map("margin_amount") @db.Decimal(14, 2)
+  capAmount            Decimal?                   @map("cap_amount") @db.Decimal(14, 2)
+  amount               Decimal                    @db.Decimal(14, 2)
+  /// When it may become earned (the order's claim window end).
+  availableAt          DateTime?                  @map("available_at") @db.Timestamptz(6)
+  earnedAt             DateTime?                  @map("earned_at") @db.Timestamptz(6)
+  statementId          BigInt?                    @map("statement_id")
+  reversesCommissionId BigInt?                    @map("reverses_commission_id")
+  holdFlags            String[]                   @default([]) @map("hold_flags")
+  note                 String?
+  createdAt            DateTime                   @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt            DateTime                   @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+  rowVersion           Int                        @default(1) @map("row_version")
+
+  agent       SalesAgent             @relation(fields: [agentId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_sales_agent_commissions__agent_id")
+  link        SalesAgentLink?        @relation(fields: [linkId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_sales_agent_commissions__link_id")
+  factoryLink SalesAgentFactoryLink? @relation(fields: [factoryLinkId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_sales_agent_commissions__factory_link_id")
+  order       Order?                 @relation("SalesAgentCommissionOrder", fields: [orderId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_sales_agent_commissions__order_id")
+  orderGroup  OrderGroup?            @relation("SalesAgentCommissionOrderGroup", fields: [orderGroupId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_sales_agent_commissions__order_group_id")
+  planVersion SalesAgentPlanVersion? @relation(fields: [planVersionId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_sales_agent_commissions__plan_version_id")
+  statement   SalesAgentStatement?   @relation(fields: [statementId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_sales_agent_commissions__statement_id")
+  reverses    SalesAgentCommission?  @relation("SalesAgentCommissionReverses", fields: [reversesCommissionId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_sales_agent_commissions__reverses_commission_id")
+  reversals   SalesAgentCommission[] @relation("SalesAgentCommissionReverses")
+
+  @@index([agentId, status], map: "ix_sales_agent_commissions__agent_id__status")
+  @@index([status, availableAt], map: "ix_sales_agent_commissions__status__available_at")
+  @@index([linkId], map: "ix_sales_agent_commissions__link_id")
+  @@index([factoryLinkId], map: "ix_sales_agent_commissions__factory_link_id")
+  @@unique([factoryLinkId], map: "ux_sales_agent_commissions__factory_link_id__bounty", where: raw("(kind = 'factory_bounty'::sales_agent_commission_kind)"))
+  @@index([orderId], map: "ix_sales_agent_commissions__order_id")
+  @@unique([orderId], map: "ux_sales_agent_commissions__order_id__order", where: raw("(kind = 'order'::sales_agent_commission_kind)"))
+  @@index([orderGroupId], map: "ix_sales_agent_commissions__order_group_id")
+  @@index([planVersionId], map: "ix_sales_agent_commissions__plan_version_id")
+  @@index([statementId], map: "ix_sales_agent_commissions__statement_id")
+  @@index([reversesCommissionId], map: "ix_sales_agent_commissions__reverses_commission_id")
+  @@map("sales_agent_commissions")
+}
+
+/// A month's commission for one agent (D-420).
+model SalesAgentStatement {
+  id              BigInt                    @id(map: "pk_sales_agent_statements") @default(autoincrement())
+  publicId        String                    @unique(map: "ux_sales_agent_statements__public_id") @default(dbgenerated("uuidv7()")) @map("public_id") @db.Uuid
+  entityId        BigInt                    @map("entity_id")
+  statementNo     String                    @unique(map: "ux_sales_agent_statements__statement_no") @map("statement_no")
+  agentId         BigInt                    @map("agent_id")
+  periodStart     DateTime                  @map("period_start") @db.Date
+  periodEnd       DateTime                  @map("period_end") @db.Date
+  status          SalesAgentStatementStatus @default(draft)
+  entryCount      Int                       @map("entry_count")
+  totalAmount     Decimal                   @map("total_amount") @db.Decimal(14, 2)
+  /// The vendor bill a freelance statement became on approval.
+  vendorInvoiceId BigInt?                   @unique(map: "ux_sales_agent_statements__vendor_invoice_id") @map("vendor_invoice_id")
+  approvedAt      DateTime?                 @map("approved_at") @db.Timestamptz(6)
+  approvedById    BigInt?                   @map("approved_by")
+  exportedAt      DateTime?                 @map("exported_at") @db.Timestamptz(6)
+  paidAt          DateTime?                 @map("paid_at") @db.Timestamptz(6)
+  voidedAt        DateTime?                 @map("voided_at") @db.Timestamptz(6)
+  voidReason      String?                   @map("void_reason")
+  createdAt       DateTime                  @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt       DateTime                  @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+  rowVersion      Int                       @default(1) @map("row_version")
+
+  entity        Entity                 @relation("SalesAgentStatementEntity", fields: [entityId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_sales_agent_statements__entity_id")
+  agent         SalesAgent             @relation(fields: [agentId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_sales_agent_statements__agent_id")
+  vendorInvoice VendorInvoice?         @relation("SalesAgentStatementVendorInvoice", fields: [vendorInvoiceId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_sales_agent_statements__vendor_invoice_id")
+  approvedBy    User?                  @relation("SalesAgentStatementApprovedBy", fields: [approvedById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_sales_agent_statements__approved_by")
+  entries       SalesAgentCommission[]
+
+  @@index([agentId, periodStart], map: "ix_sales_agent_statements__agent_id__period_start")
+  @@unique([agentId, periodStart], map: "ux_sales_agent_statements__agent_id__period_start__live", where: raw("(status <> 'voided'::sales_agent_statement_status)"))
+  @@index([status, periodStart], map: "ix_sales_agent_statements__status__period_start")
+  @@index([entityId], map: "ix_sales_agent_statements__entity_id")
+  @@index([approvedById], map: "ix_sales_agent_statements__approved_by")
+  @@map("sales_agent_statements")
+}

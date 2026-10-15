@@ -4,6 +4,7 @@ import { AppConfigModule } from '@config/app-config.module';
 import { DatabaseModule } from '@database/database.module';
 import { BULLMQ_REDIS, RedisModule } from '@database/redis.module';
 import { IntegrationsModule } from '@integrations/integrations.module';
+import { AgentsModule } from '@modules/agents/agents.module';
 import { AnalyticsModule } from '@modules/analytics/analytics.module';
 import { ArtworkModule } from '@modules/artwork/artwork.module';
 import { AssistantModule } from '@modules/assistant/assistant.module';
@@ -113,6 +114,7 @@ import { WorkerLifecycle } from './worker.lifecycle';
     PaymentSchedulesModule,
     PromotionsModule,
     LoyaltyModule,
+    AgentsModule,
     CompaniesModule,
     DiscountMemosModule,
     PaymentsModule,

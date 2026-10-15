@@ -34,6 +34,11 @@ export const API_TAGS: Record<string, string> = {
   'store.referral': 'My referral code and link; use a friend’s code before the first order (D-136).',
   'store.promotions': 'Check a promotion code before the cart, and the codes I hold (D-053).',
   'admin.referrals': 'Referrals with their fraud flags; `under_review` is Marketing’s queue (D-136).',
+  'store.agent':
+    'The sales agent programme for customers: apply, my agent profile and link, leads, customers, commission and statements (D-416 – D-422).',
+  'admin.agents':
+    'Sales agents and their applications, customer and factory links, leads, commission and statements (D-416 – D-420).',
+  'admin.agentPlans': 'Commission plans and their maker-checked versions (D-418).',
   'store.loyalty':
     'My points, tier and points history (D-130…D-134); redeem at checkout with `redeemPoints` (D-133).',
   'store.reviews': 'Review a delivered order and earn the review reward (D-135).',

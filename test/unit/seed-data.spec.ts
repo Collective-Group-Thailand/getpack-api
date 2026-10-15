@@ -61,6 +61,8 @@ describe('seed data (B1.2 step 3)', () => {
       'promotions.code_attempt_limits': 'proposed',
       // U2.3: the price-gap bands and the quantity-lever multipliers are proposed (D-248, D-252).
       'analytics.price_gap_bands_pct': 'proposed',
+      // D-417 / D-420 sales agent programme figures for the business to confirm.
+      'agents.rules': 'proposed',
       'quotes.lever_quantity_multipliers': 'proposed',
       // U2.5: the audit criteria text is the Partner Manager's (D-264).
       'trust.audit_criteria': 'pending_business',

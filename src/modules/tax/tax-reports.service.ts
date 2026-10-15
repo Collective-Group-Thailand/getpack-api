@@ -1,5 +1,6 @@
 import { type UserActor } from '@common/context/actor';
 import { DomainException } from '@common/errors/domain.exception';
+import { dateOnly, dayOf, isDay } from '@common/ledger-core/dates';
 import { formatMoney, MoneyDecimal, type MoneyValue } from '@common/money/money';
 import { PrismaService, type Tx } from '@database/prisma.service';
 import {
@@ -10,7 +11,6 @@ import {
   type TaxReportKind,
 } from '@generated/prisma/client';
 import { CompanyBankAccountsService } from '@modules/banking/company-bank-accounts.service';
-import { dateOnly, dayOf, isDay } from '@common/ledger-core/dates';
 import { PeriodsService } from '@modules/ledger/periods.service';
 import { type BuyerSnapshot } from '@modules/receivables/customer-documents.service';
 import { Injectable } from '@nestjs/common';
@@ -296,7 +296,11 @@ export class TaxReportsService {
       });
     await this.prisma.withTx(async (tx) => {
       const report = await this.lock(tx, publicId);
-      if (!['pp30', 'pnd3', 'pnd53'].includes(report.kind) || report.status === 'draft' || report.paidOn)
+      if (
+        !['pp30', 'pnd1', 'pnd3', 'pnd53'].includes(report.kind) ||
+        report.status === 'draft' ||
+        report.paidOn
+      )
         throw new DomainException('tax.report_not_payable', {
           params: { kind: report.kind, status: report.status },
         });
@@ -424,8 +428,11 @@ export class TaxReportsService {
       case 'pnd3':
       case 'pnd53':
         return this.whtIssued(tx, period, kind, kind === 'pnd3' ? gl.wht_pnd3 : gl.wht_pnd53);
+      case 'pnd1':
+        // D-421: commission to individuals (s.40(2)).
+        return this.whtIssued(tx, period, 'pnd1', gl.wht_pnd1 ?? []);
       case 'wht_issued_register':
-        return this.whtIssued(tx, period, null, [...gl.wht_pnd3, ...gl.wht_pnd53]);
+        return this.whtIssued(tx, period, null, [...gl.wht_pnd3, ...gl.wht_pnd53, ...(gl.wht_pnd1 ?? [])]);
       case 'wht_received_register':
         return this.whtReceived(tx, period, gl.wht_receivable);
     }
@@ -575,7 +582,7 @@ export class TaxReportsService {
   private async whtIssued(
     tx: Tx,
     period: FiscalPeriod,
-    form: 'pnd3' | 'pnd53' | null,
+    form: 'pnd1' | 'pnd3' | 'pnd53' | null,
     accounts: string[],
   ): Promise<Built> {
     const certs = await tx.whtCertificate.findMany({

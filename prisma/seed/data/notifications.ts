@@ -1,4 +1,9 @@
 import { MATRIX_ROUTES, MATRIX_TEMPLATES } from './notification-matrix';
+import {
+  AGENT_EMAIL_TEMPLATES,
+  AGENT_NOTIFICATION_ROUTES,
+  AGENT_NOTIFICATION_TEMPLATES,
+} from './notifications-agents';
 
 /**
  * Platform notifications seeded by `pnpm db:seed` (B1.3): approvers hear about requests routed to
@@ -229,5 +234,11 @@ const PLATFORM_ROUTES: readonly NotificationRouteSeed[] = [
 export const NOTIFICATION_TEMPLATES: readonly NotificationTemplateSeed[] = [
   ...PLATFORM_TEMPLATES,
   ...MATRIX_TEMPLATES,
+  ...AGENT_NOTIFICATION_TEMPLATES,
+  ...AGENT_EMAIL_TEMPLATES,
 ];
-export const NOTIFICATION_ROUTES: readonly NotificationRouteSeed[] = [...PLATFORM_ROUTES, ...MATRIX_ROUTES];
+export const NOTIFICATION_ROUTES: readonly NotificationRouteSeed[] = [
+  ...PLATFORM_ROUTES,
+  ...MATRIX_ROUTES,
+  ...AGENT_NOTIFICATION_ROUTES,
+];

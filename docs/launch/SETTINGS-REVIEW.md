@@ -5,13 +5,14 @@
 > (a new effective-dated version, audited — D-063) and signs item 5 of `docs/LAUNCH-CHECKLIST.md`. A *proposed* or
 > *pending* value is not a decision: it goes live only once its owner confirms it.
 
-**115 settings** — 67 confirmed · 19 proposed · 4 pending the CPA (⚖) · 2 pending the business · 23 defined without a value (not set until their owner sets them).
+**116 settings** — 67 confirmed · 20 proposed · 4 pending the CPA (⚖) · 2 pending the business · 23 defined without a value (not set until their owner sets them).
 
 ## Settings
 
 | Key | Seeded value | Status | Owner | Decisions | What it controls |
 |---|---|---|---|---|---|
 | `advisory.rule_set` | `— (not set)` | not set | superadmin | D-188, D-237, D-239 | D-237 Structure Advisor rule set: McKee constant, ± uncertainty band %, eligible corrugate formulas, thin-margin threshold % and one factor (0 < f ≤ 1) per band of humidity, storage time, pallet pattern, pallet overhang, transport mode and fragility; not seeded — no advice until a Superadmin sets it after the D-189 sign-off |
+| `agents.rules` | `{"linkCookieDays":90,"newCustomersOnly":true,"leadProtectionDays":60,"maxOpenLeads":50,"paymentTermsDays":15}` | proposed | sales_manager | D-417, D-420 | D-417 / D-420 sales agent programme: days the web keeps an agent link, attribution of new customers only, days a registered lead is protected, open leads per agent, payment terms of commission bills (proposed) |
 | `analytics.journey_alert_min_sessions` | `30` | confirmed | superadmin | D-303 | D-303 consented sessions at the first step a journey needs in both weeks before a week-over-week drop alerts (small samples swing) |
 | `analytics.journey_drop_alert_pct` | `15` | confirmed | superadmin | D-303, D-217 | D-303 a scorecard journey whose first-to-last conversion fell by more than this % against the week before raises ops signal journey_conversion_drops (docs/ux/competitive-scorecard.md §4) |
 | `analytics.price_gap_bands_pct` | `[10,25,50]` | proposed | superadmin | D-252 | D-252 upper bounds (% of the target) of the price-gap bands of unmet demand, ascending: [10, 25, 50] → 0-10, 10-25, 25-50, 50+ |
@@ -118,7 +119,7 @@
 | `support.first_response_business_days` | `1` | confirmed | cs_lead | D-221, D-175 | D-221 first-response target of a contact-form or guided-help conversation, in business days (business hours D-175, calendar D-161) |
 | `support.reply_minutes` | `— (not set)` | not set | cs_lead | D-309, D-221 | D-309 typical CS reply time in minutes within support hours, stated on the storefront; no decision gives it — null until the CS Lead sets it |
 | `tax.calendar` | `{"pp30":{"dayOfNextMonth":15},"pnd3":{"dayOfNextMonth":7},"pnd53":{"dayOfNextMonth":7},"reminderDaysBefore":3}` | proposed | finance_manager | D-033 | D-033 / accounting-design §6 tax calendar: filing due day of the following month per form (paper-filing days; e-filing extensions are a Finance choice) and the reminder lead time (proposed) |
-| `tax.gl_accounts` | `{"output_vat":["2210"],"input_vat":["1241"],"wht_pnd3":["2232"],"wht_pnd53":["2231"],"wht_receivable":["1230"]}` | proposed | finance_manager | D-033 | D-033 / accounting-design §7 step 7: GL control accounts each tax report and working paper reconciles to (difference must be 0); follows the chart of accounts (proposed) |
+| `tax.gl_accounts` | `{"output_vat":["2210"],"input_vat":["1241"],"wht_pnd3":["2232"],"wht_pnd53":["2231"],"wht_pnd1":["2233"],"wht_receivable":["1230"]}` | proposed | finance_manager | D-033 | D-033 / accounting-design §7 step 7: GL control accounts each tax report and working paper reconciles to (difference must be 0); follows the chart of accounts (proposed) |
 | `tax.nature_by_product_type` | `{"default":"hire_of_work","overrides":{"standard_product":"sale_of_goods"}}` | pending_cpa | finance_manager | D-033 | D-033 / accounting-design §2 nature of the sale per product type code (⚖): hire of work for made-to-order packaging, sale of goods for standard products; snapshotted on every order |
 | `tax.rounding_mode` | `line` | pending_cpa | finance_manager | D-033 | D-033 / accounting-design §1.5 VAT and WHT rounding per line or per document (⚖); a document-level difference is an explicit rounding amount |
 | `tooling.reuse_months` | `12` | confirmed | superadmin | D-205, D-289 | D-205 / D-289 months after its last use that a registered plate set or die block is reused (the reorder waives it) |

@@ -1,10 +1,5 @@
+import { accountCodesOf, renderJournal, ruleApplies, validateTemplate } from '@common/ledger-core/template';
 import { formatMoney, MoneyDecimal } from '@common/money/money';
-import {
-  accountCodesOf,
-  renderJournal,
-  ruleApplies,
-  validateTemplate,
-} from '@common/ledger-core/template';
 import fc from 'fast-check';
 
 import { CHART_OF_ACCOUNTS } from '../../prisma/seed/data/finance-accounts';
@@ -546,6 +541,19 @@ const FIXTURES: Record<string, Fixture> = {
       ['1140', 'cr', '500.00'],
     ],
   },
+  AG01: {
+    payload: {
+      statementId: IDS.doc,
+      statementNo: 'AG2610-K7QX2MAP',
+      agentKind: 'employee',
+      approvedOn: '2026-11-01',
+      totalAmount: '2350.00',
+    },
+    lines: [
+      ['6160', 'dr', '2350.00'],
+      ['2410', 'cr', '2350.00'],
+    ],
+  },
   P01X: {
     payload: {
       paymentId: IDS.doc,
@@ -692,6 +700,17 @@ describe('default posting rules (B5.1, accounting-design §5)', () => {
       ['P18'],
       ['P25P'],
     ]);
+  });
+
+  it('accrues employee commission only (AG01); freelance statements post through their bill (D-420)', () => {
+    expect(
+      ruleApplies(rule('AG01').conditions, { ...FIXTURES['AG01']!.payload, agentKind: 'freelance' }),
+    ).toBe(false);
+  });
+
+  it('credits ภ.ง.ด.1 withholding on agent commission to 2233 (P25P, D-421)', () => {
+    const payload = { ...FIXTURES['P25P']!.payload, whtForm: 'pnd1' };
+    expect(rendered('P25P', payload).find((l) => l[1] === 'cr' && l[3] === 'wht_pnd1')?.[0]).toBe('2233');
   });
 
   it('posts a sample credit as a sales discount (P09 → 4910, D-257)', () => {

@@ -30,7 +30,8 @@ export interface ChargeInput {
   unit: ProductUnit;
   /** Net of VAT, THB decimal string. */
   netAmount: string;
-  whtCategory: WhtCategory;
+  /** Customer charges never carry commission withholding (D-421 is agent pay). */
+  whtCategory: Exclude<WhtCategory, 'commission'>;
   revenueCategory: RevenueCategory;
   reason: string;
   instalmentLabelTh: string;

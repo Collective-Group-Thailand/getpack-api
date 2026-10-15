@@ -1872,5 +1872,131 @@
       "title": "Ledger not started",
       "detail": "Set the ledger start date and fiscal year in the ledger settings first"
     }
+  },
+  "agents": {
+    "already_agent": {
+      "title": "Already an agent",
+      "detail": "This account is already a sales agent"
+    },
+    "application_open": {
+      "title": "An application is open",
+      "detail": "Your earlier application is still waiting; withdraw it first to change it"
+    },
+    "agreement_missing": {
+      "title": "No agent agreement yet",
+      "detail": "The sales agent agreement is not published yet"
+    },
+    "agreement_outdated": {
+      "title": "A newer agreement",
+      "detail": "The agent agreement has a newer version ({versionNo}); read and accept it"
+    },
+    "application_decided": {
+      "title": "Application already decided",
+      "detail": "This application is already {status}"
+    },
+    "not_agent": {
+      "title": "Not an agent",
+      "detail": "This account is not a sales agent"
+    },
+    "invalid_status": {
+      "title": "Not allowed in this status",
+      "detail": "The agent is {status}"
+    },
+    "plan_code_taken": {
+      "title": "Plan code taken",
+      "detail": "A plan with code {code} exists"
+    },
+    "backdated": {
+      "title": "Back-dated",
+      "detail": "The effective date cannot be in the past"
+    },
+    "plan_draft_open": {
+      "title": "A draft is open",
+      "detail": "This plan already has a draft waiting for approval"
+    },
+    "plan_version_decided": {
+      "title": "Version already decided",
+      "detail": "This version is already {status}"
+    },
+    "maker_checker": {
+      "title": "Needs another approver",
+      "detail": "The drafter cannot approve their own version"
+    },
+    "plan_in_use": {
+      "title": "Plan in use",
+      "detail": "Move its agents to another plan first"
+    },
+    "plan_not_in_force": {
+      "title": "Plan not in force",
+      "detail": "The plan has no approved version in force"
+    },
+    "code_invalid": {
+      "title": "Invalid agent code",
+      "detail": "No agent has this code"
+    },
+    "agent_inactive": {
+      "title": "Agent not active",
+      "detail": "The agent is suspended or ended"
+    },
+    "too_many_leads": {
+      "title": "Too many leads",
+      "detail": "At most {max} protected leads"
+    },
+    "lead_existing_customer": {
+      "title": "Already a customer",
+      "detail": "This contact is already a Packio customer"
+    },
+    "lead_existing_factory": {
+      "title": "Already a factory",
+      "detail": "This factory is already on Packio"
+    },
+    "lead_taken": {
+      "title": "Lead taken",
+      "detail": "Another agent registered this contact"
+    },
+    "lead_duplicate": {
+      "title": "Duplicate lead",
+      "detail": "You already registered this contact"
+    },
+    "lead_closed": {
+      "title": "Lead closed",
+      "detail": "This lead is already {status}"
+    },
+    "self_link": {
+      "title": "Cannot link to oneself",
+      "detail": "An agent cannot be linked to their own account or company"
+    },
+    "already_linked": {
+      "title": "Already linked",
+      "detail": "Already linked to this agent"
+    },
+    "link_ended": {
+      "title": "Link ended",
+      "detail": "This link has ended"
+    },
+    "factory_linked": {
+      "title": "Factory already linked",
+      "detail": "This factory is linked to an agent"
+    },
+    "commission_not_held": {
+      "title": "Not held",
+      "detail": "This entry is {status}"
+    },
+    "period_open": {
+      "title": "Month not over",
+      "detail": "Statements for {period} can be made once the month is over"
+    },
+    "statement_invalid_status": {
+      "title": "Not allowed in this status",
+      "detail": "The statement is {status}"
+    },
+    "nothing_to_export": {
+      "title": "Nothing to export",
+      "detail": "No approved employee statements for {period}"
+    },
+    "statement_paid_by_payout": {
+      "title": "Paid by payout runs",
+      "detail": "Freelance statements are paid by payout runs"
+    }
   }
 }

@@ -18,6 +18,7 @@ export const TAX_CODES = [
   'wht_receivable',
   'wht_pnd3',
   'wht_pnd53',
+  'wht_pnd1',
 ] as const;
 export type TaxCodeValue = (typeof TAX_CODES)[number];
 
@@ -268,7 +269,10 @@ function checkDimensions(map: unknown, at: string, errors: string[], keys: reado
  * Structural validation of a template before a version is proposed; returns the problems found. `dimensionKeys`
  * are the dimensions the ledger knows (Packio's by default; the factory ledger passes its own, E6).
  */
-export function validateTemplate(template: unknown, dimensionKeys: readonly string[] = DIMENSION_KEYS): string[] {
+export function validateTemplate(
+  template: unknown,
+  dimensionKeys: readonly string[] = DIMENSION_KEYS,
+): string[] {
   const errors: string[] = [];
   if (!template || typeof template !== 'object') return ['template must be an object'];
   const t = template as Record<string, unknown>;

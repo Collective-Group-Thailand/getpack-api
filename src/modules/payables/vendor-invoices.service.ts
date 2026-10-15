@@ -120,7 +120,28 @@ export class VendorInvoicesService {
         errors: [{ path: 'invoiceDate', code: 'date', message: 'YYYY-MM-DD' }],
       });
     const entityId = await this.entities.defaultEntityId();
-    const id = await this.prisma.withTx(async (tx) => {
+    const id = await this.prisma.withTx((tx) =>
+      this.recordBillIn(tx, actor, vendorPublicId, input, entityId),
+    );
+    return this.get(id);
+  }
+
+  /**
+   * The bill inside the caller's transaction (a sales agent statement becomes its vendor's bill on approval,
+   * D-420). Returns the bill's public id.
+   */
+  async recordBillIn(
+    tx: Tx,
+    actor: UserActor,
+    vendorPublicId: string,
+    input: VendorBillInput,
+    entityId: bigint,
+  ): Promise<string> {
+    if (!isDay(input.invoiceDate))
+      throw new DomainException('validation.failed', {
+        errors: [{ path: 'invoiceDate', code: 'date', message: 'YYYY-MM-DD' }],
+      });
+    {
       const vendor = await tx.vendor.findUnique({ where: { publicId: vendorPublicId } });
       if (!vendor || vendor.kind === 'factory') throw new DomainException('http.not_found');
       if (
@@ -214,6 +235,7 @@ export class VendorInvoicesService {
           whtBaseHire: formatMoney(base('hire_of_work')),
           whtBaseTransport: formatMoney(base('transport')),
           whtBaseService: formatMoney(base('service')),
+          whtBaseCommission: formatMoney(base('commission')),
           eligibleAt: dateOnly(addCalendarDays(input.invoiceDate, vendor.paymentTermsDays)),
           status: 'eligible',
         },
@@ -259,8 +281,7 @@ export class VendorInvoicesService {
         actor,
       );
       return invoice.publicId;
-    });
-    return this.get(id);
+    }
   }
 
   // --- factory tax invoices (D-090) --------------------------------------------------------------------------

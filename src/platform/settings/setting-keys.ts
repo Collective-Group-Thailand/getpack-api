@@ -69,9 +69,19 @@ export interface SettingValues {
     input_vat: string[];
     wht_pnd3: string[];
     wht_pnd53: string[];
+    /** D-421: commission withholding (s.40(2)); absent before migration 20261208000001. */
+    wht_pnd1?: string[];
     wht_receivable: string[];
   };
   'orders.auto_complete_days': number;
+  /** D-417 / D-420 the sales agent programme's rules. */
+  'agents.rules': {
+    linkCookieDays: number;
+    newCustomersOnly: boolean;
+    leadProtectionDays: number;
+    maxOpenLeads: number;
+    paymentTermsDays: number;
+  };
   /** B6.3 alert threshold per operational signal (proposed). */
   'ops.alert_thresholds': Partial<Record<string, number>>;
   /** D-160 minimum contributors per prospectus figure. */

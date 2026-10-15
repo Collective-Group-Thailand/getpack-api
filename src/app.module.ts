@@ -40,6 +40,7 @@ import { IamModule } from '@modules/iam/iam.module';
 import { LaunchpadModule } from '@modules/launchpad/launchpad.module';
 import { LedgerModule } from '@modules/ledger/ledger.module';
 import { LogisticsModule } from '@modules/logistics/logistics.module';
+import { AgentsModule } from '@modules/agents/agents.module';
 import { LoyaltyModule } from '@modules/loyalty/loyalty.module';
 import { OpsModule } from '@modules/ops/ops.module';
 import { OrdersModule } from '@modules/orders/orders.module';
@@ -142,6 +143,7 @@ import { LoggerModule } from 'nestjs-pino';
     PaymentSchedulesModule,
     PromotionsModule,
     LoyaltyModule,
+    AgentsModule,
     CompaniesModule,
     DiscountMemosModule,
     PaymentsModule,

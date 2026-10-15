@@ -213,6 +213,7 @@ export class GlLineDto {
       'wht_receivable',
       'wht_pnd3',
       'wht_pnd53',
+      'wht_pnd1',
     ],
     enumName: 'TaxCode',
     nullable: true,

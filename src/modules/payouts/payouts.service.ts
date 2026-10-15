@@ -3,6 +3,7 @@ import { createHash } from 'node:crypto';
 import { systemActor, type UserActor } from '@common/context/actor';
 import { FieldEncryption } from '@common/crypto/field-encryption';
 import { DomainException } from '@common/errors/domain.exception';
+import { dateOnly, dayOf, isDay } from '@common/ledger-core/dates';
 import { formatMoney, MoneyDecimal, type MoneyValue } from '@common/money/money';
 import { bangkokDate } from '@common/time/bangkok';
 import { PrismaService, type Tx } from '@database/prisma.service';
@@ -15,7 +16,6 @@ import {
 import { PDF_RENDERER, type PdfRenderer } from '@integrations/pdf/pdf-renderer.port';
 import { OBJECT_STORAGE, type ObjectStorage } from '@integrations/s3/object-storage.port';
 import { CompanyBankAccountsService } from '@modules/banking/company-bank-accounts.service';
-import { dateOnly, dayOf, isDay } from '@common/ledger-core/dates';
 import { TaxRatesReader, WHT_RATE_CODE } from '@modules/ledger/tax-rates.reader';
 import { PurchasingService } from '@modules/payables/purchasing.service';
 import { VendorInvoicesService } from '@modules/payables/vendor-invoices.service';
@@ -197,6 +197,7 @@ export class PayoutsService {
           hire: (await this.rates.rate(WHT_RATE_CODE.hire_of_work, at, tx)).pct,
           transport: (await this.rates.rate(WHT_RATE_CODE.transport, at, tx)).pct,
           service: (await this.rates.rate(WHT_RATE_CODE.service, at, tx)).pct,
+          commission: (await this.rates.rate(WHT_RATE_CODE.commission, at, tx)).pct,
         };
         const groups = new Map<
           string,
@@ -217,7 +218,10 @@ export class PayoutsService {
           });
           const apNet = g.items.reduce((a, p) => a.add(p.openNetAmount.toString()), ZERO());
           const vat = g.items.reduce((a, p) => a.add(p.openVatAmount.toString()), ZERO());
-          const form: WhtForm = vendor.juristicType === 'individual' ? 'pnd3' : 'pnd53';
+          // D-421: commission to an individual is s.40(2) income (ภ.ง.ด.1); other individual income ภ.ง.ด.3.
+          const commissionBase = g.items.reduce((a, p) => a.add(p.whtBaseCommission.toString()), ZERO());
+          const form: WhtForm =
+            vendor.juristicType !== 'individual' ? 'pnd53' : commissionBase.gt(0) ? 'pnd1' : 'pnd3';
           const whtBase =
             g.kind === 'retention_release'
               ? ZERO()
@@ -226,7 +230,8 @@ export class PayoutsService {
                     a
                       .add(p.whtBaseHire.toString())
                       .add(p.whtBaseTransport.toString())
-                      .add(p.whtBaseService.toString()),
+                      .add(p.whtBaseService.toString())
+                      .add(p.whtBaseCommission.toString()),
                   ZERO(),
                 );
           const wht =
@@ -237,7 +242,8 @@ export class PayoutsService {
                     a
                       .add(round(D(p.whtBaseHire).mul(rates.hire).div(100)))
                       .add(round(D(p.whtBaseTransport).mul(rates.transport).div(100)))
-                      .add(round(D(p.whtBaseService).mul(rates.service).div(100))),
+                      .add(round(D(p.whtBaseService).mul(rates.service).div(100)))
+                      .add(round(D(p.whtBaseCommission).mul(rates.commission).div(100))),
                   ZERO(),
                 );
           const retention =
@@ -732,11 +738,13 @@ export class PayoutsService {
         hire: a.hire.add(x.payableItem.whtBaseHire.toString()),
         transport: a.transport.add(x.payableItem.whtBaseTransport.toString()),
         service: a.service.add(x.payableItem.whtBaseService.toString()),
+        commission: a.commission.add(x.payableItem.whtBaseCommission.toString()),
       }),
-      { hire: ZERO(), transport: ZERO(), service: ZERO() },
+      { hire: ZERO(), transport: ZERO(), service: ZERO(), commission: ZERO() },
     );
-    const main =
-      bases.hire.gte(bases.transport) && bases.hire.gte(bases.service)
+    const main = bases.commission.gt(0)
+      ? 'commission'
+      : bases.hire.gte(bases.transport) && bases.hire.gte(bases.service)
         ? 'hire_of_work'
         : bases.transport.gte(bases.service)
           ? 'transport'

@@ -511,6 +511,11 @@ model OrderGroup {
   customerDocuments CustomerDocument[] @relation("CustomerDocumentOrderGroup")
   // --- end Finance B5.2
 
+
+  // --- Sales agents D-416 (generated back-relations)
+  salesAgentCommissions SalesAgentCommission[] @relation("SalesAgentCommissionOrderGroup")
+  // --- end Sales agents
+
   @@index([companyId, createdAt(sort: Desc)], map: "ix_order_groups__company_id__created_at")
   @@index([companyBranchId], map: "ix_order_groups__company_branch_id")
   @@index([companyApprovalRequestId], map: "ix_order_groups__company_approval_request_id")
@@ -696,6 +701,11 @@ model Order {
   reorderSuggestions ReorderSuggestion[] @relation("ReorderSuggestionLastOrder")
 
   callOffRelease CallOffRelease? @relation("CallOffReleaseOrder")
+
+
+  // --- Sales agents D-416 (generated back-relations)
+  salesAgentCommissions SalesAgentCommission[] @relation("SalesAgentCommissionOrder")
+  // --- end Sales agents
 
   @@index([companyId, createdAt(sort: Desc)], map: "ix_orders__company_id__created_at")
   @@index([orderGroupId], map: "ix_orders__order_group_id")
@@ -2013,6 +2023,12 @@ model Company {
 
   apiClients           ApiClient[]           @relation("ApiClientCompany")
   webhookSubscriptions WebhookSubscription[] @relation("WebhookSubscriptionCompany")
+
+
+  // --- Sales agents D-416 (generated back-relations)
+  salesAgentLinks          SalesAgentLink[] @relation("SalesAgentLinkCompany")
+  salesAgentLeadsConverted SalesAgentLead[] @relation("SalesAgentLeadConvertedCompany")
+  // --- end Sales agents
 
   @@unique([taxId], map: "ux_companies__tax_id", where: raw("(status <> 'closed'::company_status)"))
   @@index([status], map: "ix_companies__status")
