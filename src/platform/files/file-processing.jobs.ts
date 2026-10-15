@@ -18,8 +18,8 @@ const BATCH = 10;
 const SAMPLE_BYTES = 64 * 1024 * 1024;
 /** A claimed file is retried by another worker after this long (crash safety). */
 const LEASE_MS = 10 * 60_000;
-/** An attempt that failed (storage hiccup, scanner outage) is retried this soon instead of after the full lease. */
-const RETRY_AFTER_MS = 30_000;
+/** An attempt that failed (storage hiccup, scanner outage) is retried on the next tick after this, instead of after the full lease. */
+const RETRY_AFTER_MS = 15_000;
 /** GETs right after `complete`'s HEAD occasionally miss; retried with 1 s, 2 s, 4 s backoff. */
 const READ_RETRIES = 3;
 const READ_RETRY_MS = 1000;
