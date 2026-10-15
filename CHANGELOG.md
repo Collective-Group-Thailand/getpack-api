@@ -3,6 +3,12 @@
 Contract-facing changes per release. The contract itself is `contract/openapi.json`; mappings for `packio-web` are in
 `docs/contract-requests-triage.md`.
 
+## v0.62.0 — Admin menu: studio catalogue, reviews, LINE, privacy
+
+Decision D-412. Additive. `GET /v1/admin/me` `menu[]` gains `studio_catalog` (`studio_catalog.manage` or
+`studio_catalog.approve`), `reviews` (`reviews.moderate` or `reviews.reply`), `line` (`line.manage`) and `privacy`
+(`privacy_requests.manage`, `consent_purposes.manage` or `agreements.manage`). No operation changes.
+
 ## v0.61.0 — Style library imports from the admin; menu entries
 
 Decision D-411. Additive. `admin.styleImports.preview` (`POST /v1/admin/style-imports/actions/preview`) plans an uploaded
