@@ -1017,6 +1017,12 @@ Decisions: D-050, D-141, D-060, D-021, D-080, D-081, D-082, D-010, D-125
   - SignedUrlDto{url,expiresAt} → {url,expiresAt} same
   - 409 while the PDF is not rendered yet (pdfReady on the document)
 
+#### `store.styles.card-thumbnail` — published differently
+
+Decisions: D-410
+
+- *note:* `StyleCardDto.thumbnailUrl` since `v0.60.0`: the style's rendered thumbnail (its first variant's), one signed PNG URL, no widths or AVIF; null before thumbnails are rendered.
+
 ### U-B0.1 — `store.*`: account, artwork & designs, fulfilment, support, business
 
 #### `store.loyalty` — published differently
