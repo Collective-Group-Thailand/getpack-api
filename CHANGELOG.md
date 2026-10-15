@@ -3,6 +3,13 @@
 Contract-facing changes per release. The contract itself is `contract/openapi.json`; mappings for `packio-web` are in
 `docs/contract-requests-triage.md`.
 
+## v0.58.0 — Style library wave 4: 123 bases, 987 variants
+
+Decision D-409. No contract change. The master file adds 18 bases and the axis `fold` (folded leaflets); the vendored
+`@packio/dieline` draws all 987 variants with their exact options, and adds two parameters on existing styles: inserts
+cut to the product (`cavityShape`, `cavityGrid`, `cavityLength`, `cavityWidth`) and a shaped display header
+(`headerShape`, `headerShapeHeight`, `headerPath`). `uat:styles` imports and publishes them.
+
 ## v0.57.0 — Style library: 894 variants, every one drawn
 
 Decision D-408. No contract change. The master file's `excluded_combinations` (66 combinations no factory can build)

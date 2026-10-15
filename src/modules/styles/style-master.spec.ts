@@ -11,10 +11,10 @@ const MASTER = JSON.parse(
 describe('style master file (U3.B1, D-241)', () => {
   const master = parseMaster(MASTER);
 
-  it('generates exactly the 105 bases and 894 variants the file declares', () => {
-    expect(master.bases).toHaveLength(105);
+  it('generates exactly the 123 bases and 987 variants the file declares', () => {
+    expect(master.bases).toHaveLength(123);
     const total = master.bases.reduce((n, b) => n + variantsOf(b, master).length, 0);
-    expect(total).toBe(894);
+    expect(total).toBe(987);
     const te = master.bases.find((b) => b.code === 'PK-TE-01')!;
     expect(variantsOf(te, master)).toHaveLength(183);
   });
