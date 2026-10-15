@@ -40,6 +40,14 @@ export const ADMIN_MENU: readonly MenuEntry[] = [
   { key: 'inbox', path: '/admin/inbox', permission: 'conversations.read' },
   { key: 'marketing', path: '/admin/marketing', permission: 'promotions.read' },
   { key: 'cms', path: '/admin/cms', permission: 'cms.manage' },
+  // D-412: studio templates and elements, review moderation, LINE menus, privacy and agreements.
+  {
+    key: 'studio_catalog',
+    path: '/admin/studio-catalog',
+    permission: ['studio_catalog.manage', 'studio_catalog.approve'],
+  },
+  { key: 'reviews', path: '/admin/reviews', permission: ['reviews.moderate', 'reviews.reply'] },
+  { key: 'line', path: '/admin/line', permission: 'line.manage' },
   { key: 'customers', path: '/admin/customers', permission: 'customers.read' },
   { key: 'companies', path: '/admin/companies', permission: 'companies.read' },
   { key: 'discount_memos', path: '/admin/discount-memos', permission: 'discount_memos.read' },
@@ -68,6 +76,11 @@ export const ADMIN_MENU: readonly MenuEntry[] = [
     key: 'notification_routes',
     path: '/admin/notifications/routes',
     permission: 'notification_routes.manage',
+  },
+  {
+    key: 'privacy',
+    path: '/admin/privacy',
+    permission: ['privacy_requests.manage', 'consent_purposes.manage', 'agreements.manage'],
   },
   { key: 'audit_logs', path: '/admin/audit-logs', permission: 'audit_logs.read' },
   { key: 'outbox', path: '/admin/outbox', permission: 'outbox.manage' },
