@@ -160,6 +160,14 @@ export class StyleCardDto {
 
   @ApiProperty({ type: Boolean, nullable: true, example: null, description: 'Null when not signed in' })
   favourite!: boolean | null;
+
+  @ApiProperty({
+    type: [String],
+    example: ['tuck_bottom:crash_lock', 'window:front_window', 'hang:euro_slot'],
+    description:
+      'The options its shown variants offer, `axis:value` (never `none`): closures first, then features — the chips on a card',
+  })
+  options!: string[];
 }
 
 export class StyleFacetValueDto {
@@ -395,7 +403,7 @@ export const CARD_EXAMPLE: StyleCardDto = {
   family: 'tuck_end',
   materialClass: 'paperboard',
   pricePath: 'instant',
-  variantCount: 228,
+  variantCount: 183,
   featured: false,
   startingPrice: {
     unitPrice: '4.85',
@@ -406,6 +414,7 @@ export const CARD_EXAMPLE: StyleCardDto = {
   },
   referenceCode: null,
   favourite: null,
+  options: ['tuck_bottom:crash_lock', 'window:front_window'],
 };
 
 export const LIST_EXAMPLE: StyleListDto = {
@@ -454,4 +463,170 @@ export const DETAIL_EXAMPLE: StyleDetailDto = {
   partnersCount: null,
   useCases: [],
   assets: [],
+};
+
+export const VARIANT_SORTS = ['popular', 'instant_first', 'name'] as const;
+
+/** The variants grid (D-410): every shown variant, filtered and paged — a grid, not one page per variant. */
+export class StyleVariantListQuery extends CursorQuery {
+  @ApiPropertyOptional({
+    example: 'ฝาเสียบ',
+    description: 'Search over the styles (as `store.styles.list`) and variant codes',
+  })
+  @IsOptional()
+  @IsString()
+  @MaxLength(100)
+  q?: string;
+
+  @ApiPropertyOptional({ example: 'folding_carton' })
+  @IsOptional()
+  @Matches(FACET_VALUE)
+  category?: string;
+
+  @ApiPropertyOptional({ example: 'tuck_end' })
+  @IsOptional()
+  @Matches(FACET_VALUE)
+  family?: string;
+
+  @ApiPropertyOptional({ example: 'cosmetics' })
+  @IsOptional()
+  @Matches(FACET_VALUE)
+  useCase?: string;
+
+  @ApiPropertyOptional({ example: 'paperboard' })
+  @IsOptional()
+  @Matches(FACET_VALUE)
+  materialClass?: string;
+
+  @ApiPropertyOptional({ enum: PRICE_PATHS, enumName: 'QuoteMode', example: 'instant' })
+  @IsOptional()
+  @IsIn(PRICE_PATHS)
+  pricePath?: (typeof PRICE_PATHS)[number];
+
+  @ApiPropertyOptional({
+    type: [String],
+    example: ['window:front_window', 'tuck_bottom:crash_lock'],
+    description:
+      'Options `axis:value`, repeated or comma-separated: values of one axis are alternatives, different axes all apply',
+  })
+  @IsOptional()
+  @Transform(({ value }: { value: unknown }) =>
+    (Array.isArray(value) ? value : [value])
+      .flatMap((v) => String(v).split(','))
+      .map((v) => v.trim())
+      .filter(Boolean),
+  )
+  @IsArray()
+  @ArrayMaxSize(20)
+  @Matches(/^[a-z0-9_]+:[a-z0-9_+]+$/, { each: true })
+  option?: string[];
+
+  @ApiPropertyOptional({ enum: VARIANT_SORTS, enumName: 'StyleVariantSort', example: 'popular' })
+  @IsOptional()
+  @IsIn(VARIANT_SORTS)
+  sort?: (typeof VARIANT_SORTS)[number];
+}
+
+export class StyleVariantCardDto {
+  @ApiProperty({ example: 'PK-TE-01-K7QD' })
+  code!: string;
+
+  @ApiProperty({ example: 'PK-TE-01' })
+  baseCode!: string;
+
+  @ApiProperty({ example: 'กล่องฝาเสียบ (ปรับฝาบน-ล่างได้)' })
+  nameTh!: string;
+
+  @ApiProperty({ example: 'Tuck-end carton (configurable ends)' })
+  nameEn!: string;
+
+  @ApiProperty({ example: 'folding_carton' })
+  category!: string;
+
+  @ApiProperty({ example: 'tuck_end' })
+  family!: string;
+
+  @ApiProperty({ example: 'paperboard' })
+  materialClass!: string;
+
+  @ApiProperty({
+    type: 'object',
+    additionalProperties: true,
+    example: { tuck_top: 'reverse_tuck', tuck_bottom: 'crash_lock', hang: 'none', window: 'front_window' },
+  })
+  options!: Record<string, unknown>;
+
+  @ApiProperty({ enum: PRICE_PATHS, enumName: 'QuoteMode', example: 'rfq' })
+  pricePath!: (typeof PRICE_PATHS)[number];
+
+  @ApiProperty({
+    type: String,
+    nullable: true,
+    example: null,
+    description: "The variant's rendered thumbnail, else its style's; null before thumbnails are rendered",
+  })
+  thumbnailUrl!: string | null;
+}
+
+export class StyleVariantFacetsDto {
+  @ApiProperty({
+    type: [StyleFacetValueDto],
+    description:
+      "Option values `axis:value` (`none` included) with counts under every other filter — an axis's own filter is left out of its counts",
+  })
+  option!: StyleFacetValueDto[];
+
+  @ApiProperty({ type: [StyleFacetValueDto] })
+  category!: StyleFacetValueDto[];
+
+  @ApiProperty({ type: [StyleFacetValueDto] })
+  materialClass!: StyleFacetValueDto[];
+}
+
+export class StyleVariantListMeta extends CursorMeta {
+  @ApiProperty({ type: 'integer', example: 986, description: 'Variants matching the query and filters' })
+  total!: number;
+
+  @ApiProperty({ type: 'integer', example: 986, description: 'Every shown variant of the library' })
+  libraryTotal!: number;
+
+  @ApiProperty({ type: 'integer', example: 122, description: 'Every shown style of the library' })
+  libraryStyles!: number;
+}
+
+export class StyleVariantListDto {
+  @ApiProperty({ type: [StyleVariantCardDto] })
+  data!: StyleVariantCardDto[];
+
+  @ApiProperty({ type: StyleVariantFacetsDto })
+  facets!: StyleVariantFacetsDto;
+
+  @ApiProperty({ type: StyleVariantListMeta })
+  meta!: StyleVariantListMeta;
+}
+
+export const VARIANT_LIST_EXAMPLE: StyleVariantListDto = {
+  data: [
+    {
+      code: 'PK-TE-01-K7QD',
+      baseCode: 'PK-TE-01',
+      nameTh: 'กล่องฝาเสียบ (ปรับฝาบน-ล่างได้)',
+      nameEn: 'Tuck-end carton (configurable ends)',
+      category: 'folding_carton',
+      family: 'tuck_end',
+      materialClass: 'paperboard',
+      options: { tuck_top: 'reverse_tuck', tuck_bottom: 'crash_lock', hang: 'none', window: 'front_window' },
+      pricePath: 'rfq',
+      thumbnailUrl: null,
+    },
+  ],
+  facets: {
+    option: [
+      { value: 'window:front_window', count: 61 },
+      { value: 'window:none', count: 61 },
+    ],
+    category: [{ value: 'folding_carton', count: 183 }],
+    materialClass: [{ value: 'paperboard', count: 183 }],
+  },
+  meta: { nextCursor: null, total: 183, libraryTotal: 986, libraryStyles: 122 },
 };

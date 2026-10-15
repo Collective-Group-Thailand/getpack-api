@@ -295,6 +295,16 @@
       "complexity": "M",
       "reference": "",
       "distinct_variants": 183,
+      "use_cases": [
+        "cosmetics",
+        "soap",
+        "supplements",
+        "retail",
+        "snack",
+        "tea_coffee",
+        "electronics",
+        "candle_fragrance"
+      ],
       "pricing_path_at_launch": "instant_after_signoff"
     },
     {
@@ -311,6 +321,14 @@
       "complexity": "M",
       "reference": "",
       "distinct_variants": 16,
+      "use_cases": [
+        "cosmetics",
+        "soap",
+        "supplements",
+        "retail",
+        "snack",
+        "tea_coffee"
+      ],
       "pricing_path_at_launch": "instant_after_signoff"
     },
     {
@@ -327,6 +345,13 @@
       "complexity": "H",
       "reference": "",
       "distinct_variants": 6,
+      "use_cases": [
+        "cosmetics",
+        "luxury",
+        "gift",
+        "candle_fragrance",
+        "jewelry"
+      ],
       "pricing_path_at_launch": "instant_after_signoff"
     },
     {
@@ -343,6 +368,13 @@
       "complexity": "M",
       "reference": "",
       "distinct_variants": 30,
+      "use_cases": [
+        "cosmetics",
+        "snack",
+        "tea_coffee",
+        "supplements",
+        "retail"
+      ],
       "pricing_path_at_launch": "instant_after_signoff"
     },
     {
@@ -359,6 +391,11 @@
       "complexity": "M",
       "reference": "",
       "distinct_variants": 10,
+      "use_cases": [
+        "snack",
+        "tea_coffee",
+        "retail"
+      ],
       "pricing_path_at_launch": "instant_after_signoff"
     },
     {
@@ -375,6 +412,12 @@
       "complexity": "M",
       "reference": "",
       "distinct_variants": 4,
+      "use_cases": [
+        "retail",
+        "snack",
+        "cosmetics",
+        "branding"
+      ],
       "pricing_path_at_launch": "instant_after_signoff"
     },
     {
@@ -391,6 +434,11 @@
       "complexity": "M",
       "reference": "",
       "distinct_variants": 20,
+      "use_cases": [
+        "retail",
+        "snack",
+        "supplements"
+      ],
       "pricing_path_at_launch": "instant_after_signoff"
     },
     {
@@ -407,6 +455,11 @@
       "complexity": "H",
       "reference": "",
       "distinct_variants": 2,
+      "use_cases": [
+        "retail",
+        "snack",
+        "cosmetics"
+      ],
       "pricing_path_at_launch": "instant_after_signoff"
     },
     {
@@ -423,6 +476,10 @@
       "complexity": "L",
       "reference": "",
       "distinct_variants": 2,
+      "use_cases": [
+        "retail",
+        "branding"
+      ],
       "pricing_path_at_launch": "instant_after_signoff"
     },
     {
@@ -439,6 +496,12 @@
       "complexity": "L",
       "reference": "",
       "distinct_variants": 4,
+      "use_cases": [
+        "food",
+        "bakery",
+        "produce",
+        "gift"
+      ],
       "pricing_path_at_launch": "instant_after_signoff"
     },
     {
@@ -455,6 +518,11 @@
       "complexity": "M",
       "reference": "",
       "distinct_variants": 2,
+      "use_cases": [
+        "food",
+        "bakery",
+        "gift"
+      ],
       "pricing_path_at_launch": "instant_after_signoff"
     },
     {
@@ -471,6 +539,11 @@
       "complexity": "M",
       "reference": "",
       "distinct_variants": 2,
+      "use_cases": [
+        "gift",
+        "bakery",
+        "apparel"
+      ],
       "pricing_path_at_launch": "instant_after_signoff"
     },
     {
@@ -487,6 +560,13 @@
       "complexity": "M",
       "reference": "",
       "distinct_variants": 8,
+      "use_cases": [
+        "ecommerce",
+        "gift",
+        "cosmetics",
+        "apparel",
+        "jewelry"
+      ],
       "pricing_path_at_launch": "instant_after_signoff"
     },
     {
@@ -503,6 +583,12 @@
       "complexity": "L",
       "reference": "",
       "distinct_variants": 4,
+      "use_cases": [
+        "gift",
+        "food",
+        "soap",
+        "branding"
+      ],
       "pricing_path_at_launch": "instant_after_signoff"
     },
     {
@@ -519,6 +605,13 @@
       "complexity": "M",
       "reference": "",
       "distinct_variants": 12,
+      "use_cases": [
+        "gift",
+        "jewelry",
+        "cosmetics",
+        "tea_coffee",
+        "luxury"
+      ],
       "pricing_path_at_launch": "instant_after_signoff"
     },
     {
@@ -535,6 +628,12 @@
       "complexity": "L",
       "reference": "",
       "distinct_variants": 2,
+      "use_cases": [
+        "branding",
+        "food",
+        "soap",
+        "gift"
+      ],
       "pricing_path_at_launch": "instant_after_signoff"
     },
     {
@@ -551,6 +650,13 @@
       "complexity": "M",
       "reference": "",
       "distinct_variants": 24,
+      "use_cases": [
+        "gift",
+        "apparel",
+        "jewelry",
+        "bakery",
+        "luxury"
+      ],
       "pricing_path_at_launch": "instant_after_signoff"
     },
     {
@@ -567,6 +673,12 @@
       "complexity": "M",
       "reference": "",
       "distinct_variants": 8,
+      "use_cases": [
+        "gift",
+        "jewelry",
+        "cosmetics",
+        "snack"
+      ],
       "pricing_path_at_launch": "instant_after_signoff"
     },
     {
@@ -583,6 +695,12 @@
       "complexity": "H",
       "reference": "",
       "distinct_variants": 10,
+      "use_cases": [
+        "gift",
+        "bakery",
+        "snack",
+        "food"
+      ],
       "pricing_path_at_launch": "instant_after_signoff"
     },
     {
@@ -599,6 +717,12 @@
       "complexity": "H",
       "reference": "",
       "distinct_variants": 6,
+      "use_cases": [
+        "gift",
+        "tea_coffee",
+        "candle_fragrance",
+        "snack"
+      ],
       "pricing_path_at_launch": "instant_after_signoff"
     },
     {
@@ -615,6 +739,11 @@
       "complexity": "H",
       "reference": "",
       "distinct_variants": 2,
+      "use_cases": [
+        "gift",
+        "tea_coffee",
+        "candle_fragrance"
+      ],
       "pricing_path_at_launch": "instant_after_signoff"
     },
     {
@@ -631,6 +760,12 @@
       "complexity": "M",
       "reference": "",
       "distinct_variants": 12,
+      "use_cases": [
+        "gift",
+        "snack",
+        "food",
+        "cosmetics"
+      ],
       "pricing_path_at_launch": "instant_after_signoff"
     },
     {
@@ -647,6 +782,10 @@
       "complexity": "H",
       "reference": "",
       "distinct_variants": 6,
+      "use_cases": [
+        "beverage",
+        "gift"
+      ],
       "pricing_path_at_launch": "instant_after_signoff"
     },
     {
@@ -663,6 +802,11 @@
       "complexity": "M",
       "reference": "",
       "distinct_variants": 9,
+      "use_cases": [
+        "bakery",
+        "food",
+        "gift"
+      ],
       "pricing_path_at_launch": "instant_after_signoff"
     },
     {
@@ -679,6 +823,10 @@
       "complexity": "H",
       "reference": "",
       "distinct_variants": 3,
+      "use_cases": [
+        "food",
+        "snack"
+      ],
       "pricing_path_at_launch": "instant_after_signoff"
     },
     {
@@ -695,6 +843,9 @@
       "complexity": "M",
       "reference": "",
       "distinct_variants": 1,
+      "use_cases": [
+        "food"
+      ],
       "pricing_path_at_launch": "instant_after_signoff"
     },
     {
@@ -711,6 +862,10 @@
       "complexity": "L",
       "reference": "",
       "distinct_variants": 1,
+      "use_cases": [
+        "food",
+        "snack"
+      ],
       "pricing_path_at_launch": "instant_after_signoff"
     },
     {
@@ -727,6 +882,10 @@
       "complexity": "M",
       "reference": "",
       "distinct_variants": 1,
+      "use_cases": [
+        "snack",
+        "food"
+      ],
       "pricing_path_at_launch": "instant_after_signoff"
     },
     {
@@ -743,6 +902,9 @@
       "complexity": "M",
       "reference": "",
       "distinct_variants": 2,
+      "use_cases": [
+        "branding"
+      ],
       "pricing_path_at_launch": "instant_after_signoff"
     },
     {
@@ -759,6 +921,10 @@
       "complexity": "L",
       "reference": "",
       "distinct_variants": 2,
+      "use_cases": [
+        "branding",
+        "gift"
+      ],
       "pricing_path_at_launch": "instant_after_signoff"
     },
     {
@@ -775,6 +941,12 @@
       "complexity": "M",
       "reference": "",
       "distinct_variants": 2,
+      "use_cases": [
+        "protection",
+        "cosmetics",
+        "beverage",
+        "electronics"
+      ],
       "pricing_path_at_launch": "instant_after_signoff"
     },
     {
@@ -791,6 +963,10 @@
       "complexity": "M",
       "reference": "",
       "distinct_variants": 1,
+      "use_cases": [
+        "protection",
+        "beverage"
+      ],
       "pricing_path_at_launch": "instant_after_signoff"
     },
     {
@@ -807,6 +983,10 @@
       "complexity": "M",
       "reference": "",
       "distinct_variants": 1,
+      "use_cases": [
+        "protection",
+        "gift"
+      ],
       "pricing_path_at_launch": "instant_after_signoff"
     },
     {
@@ -823,6 +1003,10 @@
       "complexity": "L",
       "reference": "FEFCO 0201",
       "distinct_variants": 9,
+      "use_cases": [
+        "shipping",
+        "ecommerce"
+      ],
       "pricing_path_at_launch": "instant_after_signoff"
     },
     {
@@ -839,6 +1023,10 @@
       "complexity": "L",
       "reference": "FEFCO 0200",
       "distinct_variants": 9,
+      "use_cases": [
+        "shipping",
+        "produce"
+      ],
       "pricing_path_at_launch": "instant_after_signoff"
     },
     {
@@ -855,6 +1043,10 @@
       "complexity": "L",
       "reference": "FEFCO 0203",
       "distinct_variants": 9,
+      "use_cases": [
+        "shipping",
+        "protection"
+      ],
       "pricing_path_at_launch": "instant_after_signoff"
     },
     {
@@ -871,6 +1063,9 @@
       "complexity": "L",
       "reference": "FEFCO 0204",
       "distinct_variants": 3,
+      "use_cases": [
+        "shipping"
+      ],
       "pricing_path_at_launch": "instant_after_signoff"
     },
     {
@@ -887,6 +1082,9 @@
       "complexity": "L",
       "reference": "FEFCO 02xx (verify)",
       "distinct_variants": 3,
+      "use_cases": [
+        "shipping"
+      ],
       "pricing_path_at_launch": "instant_after_signoff"
     },
     {
@@ -903,6 +1101,10 @@
       "complexity": "M",
       "reference": "FEFCO 0201 + hand holes",
       "distinct_variants": 3,
+      "use_cases": [
+        "shipping",
+        "produce"
+      ],
       "pricing_path_at_launch": "instant_after_signoff"
     },
     {
@@ -919,6 +1121,11 @@
       "complexity": "M",
       "reference": "FEFCO 03xx (verify)",
       "distinct_variants": 6,
+      "use_cases": [
+        "shipping",
+        "gift",
+        "apparel"
+      ],
       "pricing_path_at_launch": "instant_after_signoff"
     },
     {
@@ -935,6 +1142,10 @@
       "complexity": "M",
       "reference": "FEFCO 03xx (verify)",
       "distinct_variants": 9,
+      "use_cases": [
+        "produce",
+        "shipping"
+      ],
       "pricing_path_at_launch": "instant_after_signoff"
     },
     {
@@ -951,6 +1162,11 @@
       "complexity": "M",
       "reference": "FEFCO 03xx (verify)",
       "distinct_variants": 3,
+      "use_cases": [
+        "gift",
+        "apparel",
+        "shipping"
+      ],
       "pricing_path_at_launch": "instant_after_signoff"
     },
     {
@@ -967,6 +1183,13 @@
       "complexity": "M",
       "reference": "FEFCO 0427",
       "distinct_variants": 48,
+      "use_cases": [
+        "ecommerce",
+        "apparel",
+        "cosmetics",
+        "gift",
+        "shipping"
+      ],
       "pricing_path_at_launch": "instant_after_signoff"
     },
     {
@@ -983,6 +1206,9 @@
       "complexity": "M",
       "reference": "FEFCO 04xx (verify)",
       "distinct_variants": 2,
+      "use_cases": [
+        "food"
+      ],
       "pricing_path_at_launch": "instant_after_signoff"
     },
     {
@@ -999,6 +1225,10 @@
       "complexity": "M",
       "reference": "FEFCO 04xx (verify)",
       "distinct_variants": 3,
+      "use_cases": [
+        "shipping",
+        "ecommerce"
+      ],
       "pricing_path_at_launch": "instant_after_signoff"
     },
     {
@@ -1015,6 +1245,10 @@
       "complexity": "M",
       "reference": "FEFCO 04xx (verify)",
       "distinct_variants": 2,
+      "use_cases": [
+        "ecommerce",
+        "shipping"
+      ],
       "pricing_path_at_launch": "instant_after_signoff"
     },
     {
@@ -1031,6 +1265,10 @@
       "complexity": "M",
       "reference": "FEFCO 04xx (verify)",
       "distinct_variants": 3,
+      "use_cases": [
+        "produce",
+        "shipping"
+      ],
       "pricing_path_at_launch": "instant_after_signoff"
     },
     {
@@ -1047,6 +1285,9 @@
       "complexity": "M",
       "reference": "FEFCO 04xx (verify)",
       "distinct_variants": 3,
+      "use_cases": [
+        "shipping"
+      ],
       "pricing_path_at_launch": "instant_after_signoff"
     },
     {
@@ -1063,6 +1304,10 @@
       "complexity": "M",
       "reference": "",
       "distinct_variants": 2,
+      "use_cases": [
+        "apparel",
+        "ecommerce"
+      ],
       "pricing_path_at_launch": "instant_after_signoff"
     },
     {
@@ -1079,6 +1324,9 @@
       "complexity": "M",
       "reference": "",
       "distinct_variants": 9,
+      "use_cases": [
+        "produce"
+      ],
       "pricing_path_at_launch": "instant_after_signoff"
     },
     {
@@ -1095,6 +1343,10 @@
       "complexity": "M",
       "reference": "FEFCO 05xx (verify)",
       "distinct_variants": 2,
+      "use_cases": [
+        "ecommerce",
+        "gift"
+      ],
       "pricing_path_at_launch": "instant_after_signoff"
     },
     {
@@ -1111,6 +1363,10 @@
       "complexity": "H",
       "reference": "FEFCO 07xx (verify)",
       "distinct_variants": 9,
+      "use_cases": [
+        "shipping",
+        "ecommerce"
+      ],
       "pricing_path_at_launch": "instant_after_signoff"
     },
     {
@@ -1127,6 +1383,11 @@
       "complexity": "H",
       "reference": "FEFCO 07xx (verify)",
       "distinct_variants": 1,
+      "use_cases": [
+        "produce",
+        "beverage",
+        "gift"
+      ],
       "pricing_path_at_launch": "instant_after_signoff"
     },
     {
@@ -1143,6 +1404,10 @@
       "complexity": "H",
       "reference": "",
       "distinct_variants": 6,
+      "use_cases": [
+        "retail",
+        "snack"
+      ],
       "pricing_path_at_launch": "instant_after_signoff"
     },
     {
@@ -1159,6 +1424,10 @@
       "complexity": "H",
       "reference": "",
       "distinct_variants": 8,
+      "use_cases": [
+        "retail",
+        "branding"
+      ],
       "pricing_path_at_launch": "instant_after_signoff"
     },
     {
@@ -1175,6 +1444,11 @@
       "complexity": "M",
       "reference": "FEFCO 09xx (verify)",
       "distinct_variants": 6,
+      "use_cases": [
+        "beverage",
+        "protection",
+        "shipping"
+      ],
       "pricing_path_at_launch": "instant_after_signoff"
     },
     {
@@ -1191,6 +1465,10 @@
       "complexity": "L",
       "reference": "FEFCO 09xx (verify)",
       "distinct_variants": 2,
+      "use_cases": [
+        "protection",
+        "shipping"
+      ],
       "pricing_path_at_launch": "instant_after_signoff"
     },
     {
@@ -1207,6 +1485,10 @@
       "complexity": "M",
       "reference": "FEFCO 09xx (verify)",
       "distinct_variants": 1,
+      "use_cases": [
+        "protection",
+        "shipping"
+      ],
       "pricing_path_at_launch": "instant_after_signoff"
     },
     {
@@ -1223,6 +1505,11 @@
       "complexity": "M",
       "reference": "",
       "distinct_variants": 6,
+      "use_cases": [
+        "beverage",
+        "shipping",
+        "protection"
+      ],
       "pricing_path_at_launch": "instant_after_signoff"
     },
     {
@@ -1239,6 +1526,9 @@
       "complexity": "H",
       "reference": "",
       "distinct_variants": 2,
+      "use_cases": [
+        "shipping"
+      ],
       "pricing_path_at_launch": "instant_after_signoff"
     },
     {
@@ -1255,6 +1545,13 @@
       "complexity": "M",
       "reference": "",
       "distinct_variants": 24,
+      "use_cases": [
+        "luxury",
+        "gift",
+        "jewelry",
+        "cosmetics",
+        "apparel"
+      ],
       "pricing_path_at_launch": "rfq_no_calculator"
     },
     {
@@ -1271,6 +1568,12 @@
       "complexity": "H",
       "reference": "",
       "distinct_variants": 2,
+      "use_cases": [
+        "luxury",
+        "candle_fragrance",
+        "cosmetics",
+        "jewelry"
+      ],
       "pricing_path_at_launch": "rfq_no_calculator"
     },
     {
@@ -1287,6 +1590,12 @@
       "complexity": "M",
       "reference": "",
       "distinct_variants": 18,
+      "use_cases": [
+        "luxury",
+        "gift",
+        "electronics",
+        "cosmetics"
+      ],
       "pricing_path_at_launch": "rfq_no_calculator"
     },
     {
@@ -1303,6 +1612,12 @@
       "complexity": "H",
       "reference": "",
       "distinct_variants": 6,
+      "use_cases": [
+        "luxury",
+        "gift",
+        "apparel",
+        "ecommerce"
+      ],
       "pricing_path_at_launch": "rfq_no_calculator"
     },
     {
@@ -1319,6 +1634,12 @@
       "complexity": "M",
       "reference": "",
       "distinct_variants": 4,
+      "use_cases": [
+        "luxury",
+        "jewelry",
+        "gift",
+        "cosmetics"
+      ],
       "pricing_path_at_launch": "rfq_no_calculator"
     },
     {
@@ -1335,6 +1656,11 @@
       "complexity": "M",
       "reference": "",
       "distinct_variants": 18,
+      "use_cases": [
+        "luxury",
+        "jewelry",
+        "gift"
+      ],
       "pricing_path_at_launch": "rfq_no_calculator"
     },
     {
@@ -1351,6 +1677,12 @@
       "complexity": "H",
       "reference": "",
       "distinct_variants": 2,
+      "use_cases": [
+        "tea_coffee",
+        "candle_fragrance",
+        "beverage",
+        "luxury"
+      ],
       "pricing_path_at_launch": "rfq_no_calculator"
     },
     {
@@ -1367,6 +1699,12 @@
       "complexity": "M",
       "reference": "",
       "distinct_variants": 16,
+      "use_cases": [
+        "snack",
+        "tea_coffee",
+        "food",
+        "supplements"
+      ],
       "pricing_path_at_launch": "instant_after_signoff"
     },
     {
@@ -1383,6 +1721,11 @@
       "complexity": "L",
       "reference": "",
       "distinct_variants": 16,
+      "use_cases": [
+        "snack",
+        "cosmetics",
+        "supplements"
+      ],
       "pricing_path_at_launch": "instant_after_signoff"
     },
     {
@@ -1399,6 +1742,10 @@
       "complexity": "L",
       "reference": "",
       "distinct_variants": 16,
+      "use_cases": [
+        "snack",
+        "food"
+      ],
       "pricing_path_at_launch": "instant_after_signoff"
     },
     {
@@ -1415,6 +1762,11 @@
       "complexity": "H",
       "reference": "",
       "distinct_variants": 16,
+      "use_cases": [
+        "tea_coffee",
+        "snack",
+        "food"
+      ],
       "pricing_path_at_launch": "instant_after_signoff"
     },
     {
@@ -1431,6 +1783,10 @@
       "complexity": "M",
       "reference": "",
       "distinct_variants": 16,
+      "use_cases": [
+        "tea_coffee",
+        "food"
+      ],
       "pricing_path_at_launch": "instant_after_signoff"
     },
     {
@@ -1447,6 +1803,11 @@
       "complexity": "L",
       "reference": "",
       "distinct_variants": 6,
+      "use_cases": [
+        "ecommerce",
+        "apparel",
+        "shipping"
+      ],
       "pricing_path_at_launch": "rfq_no_calculator"
     },
     {
@@ -1463,6 +1824,11 @@
       "complexity": "L",
       "reference": "",
       "distinct_variants": 1,
+      "use_cases": [
+        "ecommerce",
+        "protection",
+        "shipping"
+      ],
       "pricing_path_at_launch": "rfq_no_calculator"
     },
     {
@@ -1479,6 +1845,12 @@
       "complexity": "M",
       "reference": "",
       "distinct_variants": 10,
+      "use_cases": [
+        "retail",
+        "apparel",
+        "gift",
+        "branding"
+      ],
       "pricing_path_at_launch": "rfq_no_calculator"
     },
     {
@@ -1495,6 +1867,11 @@
       "complexity": "L",
       "reference": "",
       "distinct_variants": 2,
+      "use_cases": [
+        "food",
+        "bakery",
+        "retail"
+      ],
       "pricing_path_at_launch": "rfq_no_calculator"
     },
     {
@@ -1511,6 +1888,12 @@
       "complexity": "L",
       "reference": "",
       "distinct_variants": 5,
+      "use_cases": [
+        "branding",
+        "food",
+        "beverage",
+        "cosmetics"
+      ],
       "pricing_path_at_launch": "instant_after_signoff"
     },
     {
@@ -1527,6 +1910,10 @@
       "complexity": "L",
       "reference": "",
       "distinct_variants": 5,
+      "use_cases": [
+        "branding",
+        "ecommerce"
+      ],
       "pricing_path_at_launch": "instant_after_signoff"
     },
     {
@@ -1543,6 +1930,11 @@
       "complexity": "L",
       "reference": "",
       "distinct_variants": 2,
+      "use_cases": [
+        "beverage",
+        "cosmetics",
+        "branding"
+      ],
       "pricing_path_at_launch": "instant_after_signoff"
     },
     {
@@ -1559,6 +1951,11 @@
       "complexity": "L",
       "reference": "",
       "distinct_variants": 5,
+      "use_cases": [
+        "ecommerce",
+        "food",
+        "branding"
+      ],
       "pricing_path_at_launch": "instant_after_signoff"
     },
     {
@@ -1575,6 +1972,12 @@
       "complexity": "L",
       "reference": "",
       "distinct_variants": 20,
+      "use_cases": [
+        "apparel",
+        "branding",
+        "retail",
+        "gift"
+      ],
       "pricing_path_at_launch": "instant_after_signoff"
     },
     {
@@ -1591,6 +1994,11 @@
       "complexity": "M",
       "reference": "",
       "distinct_variants": 1,
+      "use_cases": [
+        "tea_coffee",
+        "beverage",
+        "branding"
+      ],
       "pricing_path_at_launch": "instant_after_signoff"
     },
     {
@@ -1607,6 +2015,11 @@
       "complexity": "M",
       "reference": "",
       "distinct_variants": 1,
+      "use_cases": [
+        "tea_coffee",
+        "beverage",
+        "food"
+      ],
       "pricing_path_at_launch": "instant_after_signoff"
     },
     {
@@ -1623,6 +2036,12 @@
       "complexity": "H",
       "reference": "",
       "distinct_variants": 4,
+      "use_cases": [
+        "cosmetics",
+        "supplements",
+        "beverage",
+        "candle_fragrance"
+      ],
       "pricing_path_at_launch": "instant_after_signoff"
     },
     {
@@ -1639,6 +2058,13 @@
       "complexity": "M",
       "reference": "",
       "distinct_variants": 20,
+      "use_cases": [
+        "supplements",
+        "food",
+        "snack",
+        "cosmetics",
+        "ecommerce"
+      ],
       "pricing_path_at_launch": "instant_after_signoff"
     },
     {
@@ -1655,6 +2081,11 @@
       "complexity": "M",
       "reference": "",
       "distinct_variants": 6,
+      "use_cases": [
+        "food",
+        "bakery",
+        "snack"
+      ],
       "pricing_path_at_launch": "instant_after_signoff"
     },
     {
@@ -1671,6 +2102,11 @@
       "complexity": "M",
       "reference": "",
       "distinct_variants": 6,
+      "use_cases": [
+        "gift",
+        "cosmetics",
+        "tea_coffee"
+      ],
       "pricing_path_at_launch": "instant_after_signoff"
     },
     {
@@ -1687,6 +2123,11 @@
       "complexity": "H",
       "reference": "",
       "distinct_variants": 5,
+      "use_cases": [
+        "gift",
+        "candle_fragrance",
+        "snack"
+      ],
       "pricing_path_at_launch": "instant_after_signoff"
     },
     {
@@ -1703,6 +2144,11 @@
       "complexity": "M",
       "reference": "",
       "distinct_variants": 4,
+      "use_cases": [
+        "gift",
+        "snack",
+        "candle_fragrance"
+      ],
       "pricing_path_at_launch": "instant_after_signoff"
     },
     {
@@ -1719,6 +2165,10 @@
       "complexity": "M",
       "reference": "",
       "distinct_variants": 3,
+      "use_cases": [
+        "food",
+        "bakery"
+      ],
       "pricing_path_at_launch": "instant_after_signoff"
     },
     {
@@ -1735,6 +2185,10 @@
       "complexity": "L",
       "reference": "",
       "distinct_variants": 1,
+      "use_cases": [
+        "food",
+        "snack"
+      ],
       "pricing_path_at_launch": "instant_after_signoff"
     },
     {
@@ -1751,6 +2205,11 @@
       "complexity": "H",
       "reference": "",
       "distinct_variants": 12,
+      "use_cases": [
+        "beverage",
+        "gift",
+        "luxury"
+      ],
       "pricing_path_at_launch": "instant_after_signoff"
     },
     {
@@ -1767,6 +2226,10 @@
       "complexity": "M",
       "reference": "",
       "distinct_variants": 5,
+      "use_cases": [
+        "retail",
+        "food"
+      ],
       "pricing_path_at_launch": "instant_after_signoff"
     },
     {
@@ -1783,6 +2246,10 @@
       "complexity": "M",
       "reference": "FEFCO 04xx (verify)",
       "distinct_variants": 3,
+      "use_cases": [
+        "ecommerce",
+        "shipping"
+      ],
       "pricing_path_at_launch": "instant_after_signoff"
     },
     {
@@ -1799,6 +2266,11 @@
       "complexity": "M",
       "reference": "",
       "distinct_variants": 12,
+      "use_cases": [
+        "ecommerce",
+        "apparel",
+        "shipping"
+      ],
       "pricing_path_at_launch": "instant_after_signoff"
     },
     {
@@ -1815,6 +2287,10 @@
       "complexity": "H",
       "reference": "FEFCO 07xx (verify)",
       "distinct_variants": 6,
+      "use_cases": [
+        "ecommerce",
+        "shipping"
+      ],
       "pricing_path_at_launch": "instant_after_signoff"
     },
     {
@@ -1831,6 +2307,10 @@
       "complexity": "H",
       "reference": "",
       "distinct_variants": 2,
+      "use_cases": [
+        "shipping",
+        "produce"
+      ],
       "pricing_path_at_launch": "instant_after_signoff"
     },
     {
@@ -1847,6 +2327,9 @@
       "complexity": "M",
       "reference": "",
       "distinct_variants": 3,
+      "use_cases": [
+        "shipping"
+      ],
       "pricing_path_at_launch": "instant_after_signoff"
     },
     {
@@ -1863,6 +2346,11 @@
       "complexity": "H",
       "reference": "",
       "distinct_variants": 6,
+      "use_cases": [
+        "luxury",
+        "beverage",
+        "gift"
+      ],
       "pricing_path_at_launch": "rfq_no_calculator"
     },
     {
@@ -1879,6 +2367,11 @@
       "complexity": "H",
       "reference": "",
       "distinct_variants": 1,
+      "use_cases": [
+        "beverage",
+        "food",
+        "cosmetics"
+      ],
       "pricing_path_at_launch": "instant_after_signoff"
     },
     {
@@ -1895,6 +2388,10 @@
       "complexity": "M",
       "reference": "",
       "distinct_variants": 1,
+      "use_cases": [
+        "beverage",
+        "branding"
+      ],
       "pricing_path_at_launch": "instant_after_signoff"
     },
     {
@@ -1911,6 +2408,11 @@
       "complexity": "M",
       "reference": "",
       "distinct_variants": 5,
+      "use_cases": [
+        "supplements",
+        "cosmetics",
+        "branding"
+      ],
       "pricing_path_at_launch": "instant_after_signoff"
     },
     {
@@ -1927,6 +2429,11 @@
       "complexity": "M",
       "reference": "",
       "distinct_variants": 1,
+      "use_cases": [
+        "beverage",
+        "cosmetics",
+        "branding"
+      ],
       "pricing_path_at_launch": "rfq_no_calculator"
     },
     {
@@ -1943,6 +2450,11 @@
       "complexity": "L",
       "reference": "",
       "distinct_variants": 4,
+      "use_cases": [
+        "snack",
+        "retail",
+        "branding"
+      ],
       "pricing_path_at_launch": "instant_after_signoff"
     },
     {
@@ -1959,6 +2471,11 @@
       "complexity": "L",
       "reference": "",
       "distinct_variants": 5,
+      "use_cases": [
+        "ecommerce",
+        "branding",
+        "gift"
+      ],
       "pricing_path_at_launch": "instant_after_signoff"
     },
     {
@@ -1975,6 +2492,10 @@
       "complexity": "L",
       "reference": "FEFCO 0215 family (verify)",
       "distinct_variants": 3,
+      "use_cases": [
+        "shipping",
+        "ecommerce"
+      ],
       "pricing_path_at_launch": "instant_after_signoff"
     },
     {
@@ -1991,6 +2512,10 @@
       "complexity": "L",
       "reference": "FEFCO 0211 family (verify)",
       "distinct_variants": 3,
+      "use_cases": [
+        "shipping",
+        "ecommerce"
+      ],
       "pricing_path_at_launch": "instant_after_signoff"
     },
     {
@@ -2007,6 +2532,10 @@
       "complexity": "L",
       "reference": "",
       "distinct_variants": 3,
+      "use_cases": [
+        "shipping",
+        "ecommerce"
+      ],
       "pricing_path_at_launch": "instant_after_signoff"
     },
     {
@@ -2023,6 +2552,11 @@
       "complexity": "L",
       "reference": "",
       "distinct_variants": 4,
+      "use_cases": [
+        "gift",
+        "electronics",
+        "cosmetics"
+      ],
       "pricing_path_at_launch": "instant_after_signoff"
     },
     {
@@ -2039,6 +2573,12 @@
       "complexity": "M",
       "reference": "",
       "distinct_variants": 60,
+      "use_cases": [
+        "retail",
+        "electronics",
+        "cosmetics",
+        "snack"
+      ],
       "pricing_path_at_launch": "instant_after_signoff"
     },
     {
@@ -2055,6 +2595,11 @@
       "complexity": "L",
       "reference": "",
       "distinct_variants": 1,
+      "use_cases": [
+        "branding",
+        "retail",
+        "food"
+      ],
       "pricing_path_at_launch": "instant_after_signoff"
     },
     {
@@ -2071,6 +2616,11 @@
       "complexity": "M",
       "reference": "",
       "distinct_variants": 2,
+      "use_cases": [
+        "retail",
+        "snack",
+        "branding"
+      ],
       "pricing_path_at_launch": "instant_after_signoff"
     },
     {
@@ -2087,6 +2637,11 @@
       "complexity": "L",
       "reference": "",
       "distinct_variants": 4,
+      "use_cases": [
+        "supplements",
+        "cosmetics",
+        "branding"
+      ],
       "pricing_path_at_launch": "instant_after_signoff"
     },
     {
@@ -2103,6 +2658,11 @@
       "complexity": "L",
       "reference": "",
       "distinct_variants": 4,
+      "use_cases": [
+        "retail",
+        "electronics",
+        "cosmetics"
+      ],
       "pricing_path_at_launch": "instant_after_signoff"
     },
     {
@@ -2119,6 +2679,10 @@
       "complexity": "L",
       "reference": "",
       "distinct_variants": 1,
+      "use_cases": [
+        "beverage",
+        "branding"
+      ],
       "pricing_path_at_launch": "instant_after_signoff"
     },
     {
@@ -2135,6 +2699,10 @@
       "complexity": "L",
       "reference": "",
       "distinct_variants": 1,
+      "use_cases": [
+        "food",
+        "snack"
+      ],
       "pricing_path_at_launch": "instant_after_signoff"
     },
     {
@@ -2151,6 +2719,11 @@
       "complexity": "M",
       "reference": "",
       "distinct_variants": 1,
+      "use_cases": [
+        "gift",
+        "candle_fragrance",
+        "cosmetics"
+      ],
       "pricing_path_at_launch": "instant_after_signoff"
     },
     {
@@ -2167,6 +2740,11 @@
       "complexity": "L",
       "reference": "",
       "distinct_variants": 1,
+      "use_cases": [
+        "food",
+        "snack",
+        "produce"
+      ],
       "pricing_path_at_launch": "instant_after_signoff"
     },
     {
@@ -2183,6 +2761,10 @@
       "complexity": "M",
       "reference": "",
       "distinct_variants": 1,
+      "use_cases": [
+        "beverage",
+        "tea_coffee"
+      ],
       "pricing_path_at_launch": "instant_after_signoff"
     },
     {
@@ -2199,22 +2781,9 @@
       "complexity": "M",
       "reference": "",
       "distinct_variants": 1,
-      "pricing_path_at_launch": "instant_after_signoff"
-    },
-    {
-      "code": "PK-SP-25",
-      "family": "specialty",
-      "category": "folding_carton",
-      "product_type": "folding",
-      "name_th": "กล่องสามเหลี่ยม",
-      "name_en": "Triangular carton",
-      "construction": "Three equal side panels, triangular tuck lids top and bottom.",
-      "material_class": "paperboard",
-      "variant_axes": "",
-      "wave": 4,
-      "complexity": "M",
-      "reference": "",
-      "distinct_variants": 1,
+      "use_cases": [
+        "food"
+      ],
       "pricing_path_at_launch": "instant_after_signoff"
     },
     {
@@ -2231,6 +2800,11 @@
       "complexity": "M",
       "reference": "",
       "distinct_variants": 1,
+      "use_cases": [
+        "gift",
+        "tea_coffee",
+        "candle_fragrance"
+      ],
       "pricing_path_at_launch": "instant_after_signoff"
     },
     {
@@ -2247,6 +2821,10 @@
       "complexity": "L",
       "reference": "FEFCO 09xx family (verify)",
       "distinct_variants": 1,
+      "use_cases": [
+        "protection",
+        "shipping"
+      ],
       "pricing_path_at_launch": "instant_after_signoff"
     }
   ]
