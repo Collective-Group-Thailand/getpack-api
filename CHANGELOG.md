@@ -3,6 +3,12 @@
 Contract-facing changes per release. The contract itself is `contract/openapi.json`; mappings for `packio-web` are in
 `docs/contract-requests-triage.md`.
 
+## v0.59.0 — Dieline download as .ai
+
+Value set: the dieline download's `format` is now `DielineDownloadFormat` (`svg`, `dxf`, `pdf`, `ai`); `ai` is the
+designer PDF delivered under Illustrator's name and type (Superball's change, merged from the Mac). Clients that
+switch over the format need a default.
+
 ## v0.58.0 — Style library wave 4: 123 bases, 987 variants
 
 Decision D-409. No contract change. The master file adds 18 bases and the axis `fold` (folded leaflets); the vendored
