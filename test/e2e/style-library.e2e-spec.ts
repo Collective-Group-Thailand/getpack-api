@@ -78,18 +78,18 @@ describe('style library (e2e, U3.B1)', () => {
       ],
     });
 
-  it('imports the master file: 105 bases and 894 variants, nothing written on a dry run', async () => {
+  it('imports the master file: 123 bases and 987 variants, nothing written on a dry run', async () => {
     const plan = await imports.plan('master', 'style-library-master.json', master);
     if (!plan.noop) {
-      expect(plan.summary).toMatchObject({ basesCreated: 105, variantsCreated: 894 });
+      expect(plan.summary).toMatchObject({ basesCreated: 123, variantsCreated: 987 });
       expect(await ctx.prisma.styleBase.count()).toBe(0);
       const run = await imports.apply(actors['admin']!, plan);
       expect(run?.status).toBe('applied');
     }
-    expect(await ctx.prisma.styleBase.count()).toBe(105);
-    expect(await ctx.prisma.styleVariant.count()).toBe(894);
+    expect(await ctx.prisma.styleBase.count()).toBe(123);
+    expect(await ctx.prisma.styleVariant.count()).toBe(987);
     const list = await as(ctx, tokens['cs']!).get('/v1/admin/styles?category=folding_carton').expect(200);
-    expect(list.body.meta.total).toBe(40);
+    expect(list.body.meta.total).toBe(50);
     const te = await base('PK-TE-01');
     expect(te.productTypeCode).toBe('folding_carton');
     const v = await variants(te.id);

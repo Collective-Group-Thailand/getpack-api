@@ -1,10 +1,10 @@
 {
   "package": "@packio/dieline",
   "version": "0.1.0",
-  "packioWebCommit": "8df5972986b963fd60a664a46f556ce0c0cb272e",
-  "sourceTree": "24ce44618e5579714d3f184fe6620631746dd28f",
+  "packioWebCommit": "486d1c12645580628138405a03b1fbab1321dcc7",
+  "sourceTree": "2c245e6fffe3fce014b0dc76d9d48b27c418a8b0",
   "uncommittedChanges": 0,
-  "bundleSha256": "afe08f2beb64ab763abf18947700420640851665ce52b0863590f73896be9bb6",
-  "bundledAt": "2026-10-14T22:09:00Z",
+  "bundleSha256": "cee8ef1371f6f8f40dfa4fa5b3eaa4fdaa61d1b7be0363569b2543a5feb2e407",
+  "bundledAt": "2026-10-15T03:10:23Z",
   "bundler": "esbuild@0.28.2"
 }
