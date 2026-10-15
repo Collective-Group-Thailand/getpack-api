@@ -183,6 +183,7 @@ export class StylesStoreService {
     const byBase = all.filter(
       ({ base, variant }) =>
         (!scores || scores.has(base.id) || variant.code.includes(code)) &&
+        (!query.style || base.code === query.style) &&
         (!query.category || base.category === query.category) &&
         (!query.family || base.family === query.family) &&
         (!query.useCase || base.useCases.some((u) => u.code === query.useCase)) &&
@@ -206,11 +207,16 @@ export class StylesStoreService {
     const matched = byBase.filter(({ variant }) => passes(variant.options));
     if (q && !query.cursor) await this.logSearch(q, matched.length, userId);
 
-    // Option facets: each axis counted under every filter but its own.
+    // Option facets: each axis counted under every filter but its own; a variant without the axis counts as `none`,
+    // as the filter reads it.
     const optionCounts = new Map<string, number>();
+    const axes = new Set([
+      ...byBase.flatMap(({ variant }) => Object.keys(variant.options as object)),
+      ...wanted.keys(),
+    ]);
     for (const { variant } of byBase) {
       const options = variant.options as Record<string, string | string[]>;
-      for (const axis of new Set([...Object.keys(options), ...wanted.keys()])) {
+      for (const axis of axes) {
         if (!passes(options, axis)) continue;
         for (const v of new Set(valuesOf(options, axis)))
           optionCounts.set(`${axis}:${v}`, (optionCounts.get(`${axis}:${v}`) ?? 0) + 1);

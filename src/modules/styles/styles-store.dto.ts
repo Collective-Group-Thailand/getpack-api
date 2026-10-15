@@ -478,6 +478,11 @@ export class StyleVariantListQuery extends CursorQuery {
   @MaxLength(100)
   q?: string;
 
+  @ApiPropertyOptional({ example: 'PK-TE-01', description: "One style's variants only (its public code)" })
+  @IsOptional()
+  @Matches(/^[A-Z0-9-]{3,40}$/)
+  style?: string;
+
   @ApiPropertyOptional({ example: 'folding_carton' })
   @IsOptional()
   @Matches(FACET_VALUE)
@@ -572,7 +577,7 @@ export class StyleVariantFacetsDto {
   @ApiProperty({
     type: [StyleFacetValueDto],
     description:
-      "Option values `axis:value` (`none` included) with counts under every other filter — an axis's own filter is left out of its counts",
+      "Option values `axis:value` (`none` included: a variant without the axis counts, and filters, as `none`) with counts under every other filter — an axis's own filter is left out of its counts",
   })
   option!: StyleFacetValueDto[];
 

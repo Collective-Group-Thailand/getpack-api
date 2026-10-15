@@ -82,7 +82,7 @@ export class StoreStylesController {
     summary: 'Browse every variant of the library',
     description:
       'Every shown variant of the published styles as a card (D-410) — the grid behind "every variant": the style\'s ' +
-      "filters (search, category, family, use case, material class) with the variant's price path and its options " +
+      "filters (search, category, family, use case, material class) or one style (`style`), with the variant's price path and its options " +
       "(`option=axis:value`, repeated or comma-separated: one axis's values are alternatives, different axes all " +
       "apply). Option facets with counts are disjunctive (an axis's own filter is left out of its counts, `none` " +
       'included); `meta.total` counts the matches, `libraryTotal` / `libraryStyles` the whole shown library (the ' +
