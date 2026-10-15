@@ -21,6 +21,12 @@ export const ADMIN_MENU: readonly MenuEntry[] = [
   { key: 'prepress', path: '/admin/prepress', permission: 'artwork.read' },
   { key: 'production', path: '/admin/production', permission: 'production.read' },
   { key: 'shipments', path: '/admin/shipments', permission: 'shipments.read' },
+  // D-413: shipping set-up — customer rates, zones, carriers, the business calendar.
+  {
+    key: 'shipping_setup',
+    path: '/admin/shipping',
+    permission: ['shipping_rates.read', 'zones.manage', 'carriers.read', 'business_calendar.manage'],
+  },
   { key: 'claims', path: '/admin/claims', permission: 'claims.read' },
   { key: 'partners', path: '/admin/partners', permission: 'partners.read' },
   { key: 'catalogue', path: '/admin/catalogue', permission: 'catalog.read' },

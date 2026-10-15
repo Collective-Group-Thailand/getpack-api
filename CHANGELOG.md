@@ -3,6 +3,11 @@
 Contract-facing changes per release. The contract itself is `contract/openapi.json`; mappings for `packio-web` are in
 `docs/contract-requests-triage.md`.
 
+## v0.63.0 — Admin menu: shipping set-up
+
+Decision D-413. Additive. `GET /v1/admin/me` `menu[]` gains `shipping_setup` (`/admin/shipping`; any of
+`shipping_rates.read`, `zones.manage`, `carriers.read`, `business_calendar.manage`). No operation changes.
+
 ## v0.62.0 — Admin menu: studio catalogue, reviews, LINE, privacy
 
 Decision D-412. Additive. `GET /v1/admin/me` `menu[]` gains `studio_catalog` (`studio_catalog.manage` or
