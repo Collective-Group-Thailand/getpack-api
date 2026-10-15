@@ -107,6 +107,15 @@ export class EnvironmentVariables {
   @IsBoolean()
   S3_FORCE_PATH_STYLE = false;
 
+  /**
+   * Prepended to every object key, for a bucket shared with another system (e.g. `packio/`). Empty: keys
+   * at the bucket root. Keep the endpoint empty for real AWS rather than putting a path in it.
+   */
+  @IsOptional()
+  @IsString()
+  @Matches(/^([A-Za-z0-9._-]+\/)*$/, { message: 'S3_KEY_PREFIX: path segments ending in /, e.g. packio/' })
+  S3_KEY_PREFIX?: string;
+
   @IsOptional()
   @IsString()
   AWS_SECRETS_ID?: string;

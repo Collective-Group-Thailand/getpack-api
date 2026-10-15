@@ -24,6 +24,11 @@ export interface S3Options {
   bucket: string;
   endpoint?: string;
   forcePathStyle: boolean;
+  /**
+   * Prepended to every object key (`S3_KEY_PREFIX`, e.g. `packio/`): lets Packio share a bucket with
+   * another system without a custom endpoint. Stored keys (`file_objects.storage_key`) never carry it.
+   */
+  keyPrefix?: string;
 }
 
 /** Objects are private (no public ACLs); server-side encryption is enforced by the bucket policy. */
@@ -43,6 +48,11 @@ export class S3ObjectStorage implements ObjectStorage {
     return this.options.bucket;
   }
 
+  /** The object's key in the bucket: the configured prefix + Packio's key. */
+  private k(key: string): string {
+    return `${this.options.keyPrefix ?? ''}${key}`;
+  }
+
   async ping(signal?: AbortSignal): Promise<void> {
     await this.client.send(new HeadBucketCommand({ Bucket: this.bucket }), { abortSignal: signal });
   }
@@ -53,7 +63,7 @@ export class S3ObjectStorage implements ObjectStorage {
   ): Promise<PresignedUpload> {
     const command = new PutObjectCommand({
       Bucket: this.bucket,
-      Key: key,
+      Key: this.k(key),
       ContentType: options.contentType,
       ContentLength: options.contentLength,
     });
@@ -66,7 +76,7 @@ export class S3ObjectStorage implements ObjectStorage {
 
   async createMultipart(key: string, contentType: string): Promise<string> {
     const result = await this.client.send(
-      new CreateMultipartUploadCommand({ Bucket: this.bucket, Key: key, ContentType: contentType }),
+      new CreateMultipartUploadCommand({ Bucket: this.bucket, Key: this.k(key), ContentType: contentType }),
     );
     if (!result.UploadId) throw new Error('S3 returned no UploadId');
     return result.UploadId;
@@ -75,7 +85,12 @@ export class S3ObjectStorage implements ObjectStorage {
   presignPart(key: string, uploadId: string, partNumber: number, expiresInSeconds: number): Promise<string> {
     return getSignedUrl(
       this.client,
-      new UploadPartCommand({ Bucket: this.bucket, Key: key, UploadId: uploadId, PartNumber: partNumber }),
+      new UploadPartCommand({
+        Bucket: this.bucket,
+        Key: this.k(key),
+        UploadId: uploadId,
+        PartNumber: partNumber,
+      }),
       {
         expiresIn: expiresInSeconds,
       },
@@ -90,7 +105,7 @@ export class S3ObjectStorage implements ObjectStorage {
     await this.client.send(
       new CompleteMultipartUploadCommand({
         Bucket: this.bucket,
-        Key: key,
+        Key: this.k(key),
         UploadId: uploadId,
         MultipartUpload: { Parts: parts.map((p) => ({ PartNumber: p.partNumber, ETag: p.etag })) },
       }),
@@ -105,7 +120,12 @@ export class S3ObjectStorage implements ObjectStorage {
     let marker: string | undefined;
     do {
       const page = await this.client.send(
-        new ListPartsCommand({ Bucket: this.bucket, Key: key, UploadId: uploadId, PartNumberMarker: marker }),
+        new ListPartsCommand({
+          Bucket: this.bucket,
+          Key: this.k(key),
+          UploadId: uploadId,
+          PartNumberMarker: marker,
+        }),
       );
       for (const p of page.Parts ?? [])
         if (p.PartNumber !== undefined && p.ETag)
@@ -117,13 +137,13 @@ export class S3ObjectStorage implements ObjectStorage {
 
   async abortMultipart(key: string, uploadId: string): Promise<void> {
     await this.client.send(
-      new AbortMultipartUploadCommand({ Bucket: this.bucket, Key: key, UploadId: uploadId }),
+      new AbortMultipartUploadCommand({ Bucket: this.bucket, Key: this.k(key), UploadId: uploadId }),
     );
   }
 
   async head(key: string): Promise<StoredObjectInfo | null> {
     try {
-      const result = await this.client.send(new HeadObjectCommand({ Bucket: this.bucket, Key: key }));
+      const result = await this.client.send(new HeadObjectCommand({ Bucket: this.bucket, Key: this.k(key) }));
       return { sizeBytes: result.ContentLength ?? 0, contentType: result.ContentType ?? null };
     } catch (error) {
       if (error instanceof NotFound || (error as { name?: string }).name === 'NotFound') return null;
@@ -132,13 +152,13 @@ export class S3ObjectStorage implements ObjectStorage {
   }
 
   async getStream(key: string): Promise<Readable> {
-    const result = await this.client.send(new GetObjectCommand({ Bucket: this.bucket, Key: key }));
+    const result = await this.client.send(new GetObjectCommand({ Bucket: this.bucket, Key: this.k(key) }));
     return result.Body as Readable;
   }
 
   async put(key: string, body: Buffer, contentType: string): Promise<void> {
     await this.client.send(
-      new PutObjectCommand({ Bucket: this.bucket, Key: key, Body: body, ContentType: contentType }),
+      new PutObjectCommand({ Bucket: this.bucket, Key: this.k(key), Body: body, ContentType: contentType }),
     );
   }
 
@@ -146,14 +166,14 @@ export class S3ObjectStorage implements ObjectStorage {
     await this.client.send(
       new CopyObjectCommand({
         Bucket: this.bucket,
-        Key: targetKey,
-        CopySource: `${this.bucket}/${sourceKey.split('/').map(encodeURIComponent).join('/')}`,
+        Key: this.k(targetKey),
+        CopySource: `${this.bucket}/${this.k(sourceKey).split('/').map(encodeURIComponent).join('/')}`,
       }),
     );
   }
 
   async delete(key: string): Promise<void> {
-    await this.client.send(new DeleteObjectCommand({ Bucket: this.bucket, Key: key }));
+    await this.client.send(new DeleteObjectCommand({ Bucket: this.bucket, Key: this.k(key) }));
   }
 
   presignGet(
@@ -164,7 +184,7 @@ export class S3ObjectStorage implements ObjectStorage {
       this.client,
       new GetObjectCommand({
         Bucket: this.bucket,
-        Key: key,
+        Key: this.k(key),
         ResponseContentType: options.contentType,
         ResponseContentDisposition: `attachment; filename*=UTF-8''${encodeURIComponent(options.fileName)}`,
       }),

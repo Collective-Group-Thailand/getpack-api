@@ -74,6 +74,7 @@ import { WEBHOOK_SENDER } from './webhooks-out/webhook-sender.port';
               bucket: config.get('S3_BUCKET'),
               endpoint: config.get('AWS_ENDPOINT_URL'),
               forcePathStyle: config.get('S3_FORCE_PATH_STYLE'),
+              keyPrefix: config.get('S3_KEY_PREFIX') ?? '',
             }),
     },
     {
