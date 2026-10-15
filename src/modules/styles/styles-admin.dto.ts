@@ -34,6 +34,7 @@ export const STYLE_IDS = {
 const TS = '2026-10-03T10:00:00+07:00';
 export const STYLE_STATUSES = ['active', 'retired'] as const;
 export const IMPORT_KINDS = ['master', 'recipes'] as const;
+export const NOOP_REASONS = ['same_checksum', 'no_changes'] as const;
 export const IMPORT_STATUSES = ['applied', 'pending_approval', 'rejected'] as const;
 export const NAME_APPROVER_ROLES = ['marketing', 'prepress'] as const;
 
@@ -527,7 +528,7 @@ export class StyleImportFileDto {
 
 export class ConfirmStyleImportDto extends StyleImportFileDto {
   @ApiProperty({
-    example: 'b1946ac92492d2347c6235b4d2611184',
+    example: 'b1946ac92492d2347c6235b4d26111840a4c8e12f0e3a1d6c5b2e9f7a8d4c3b2',
     description:
       'The `checksum` of the preview being confirmed: a file or library that changed since is refused',
   })
@@ -548,7 +549,12 @@ export class StyleImportPreviewDto {
   @ApiProperty({ example: false, description: 'Nothing would change (the same file, or no differences)' })
   noop!: boolean;
 
-  @ApiProperty({ type: String, nullable: true, enum: ['same_checksum', 'no_changes'], example: null })
+  @ApiProperty({
+    enum: NOOP_REASONS,
+    enumName: 'StyleImportNoopReason',
+    nullable: true,
+    example: null,
+  })
   noopReason!: 'same_checksum' | 'no_changes' | null;
 
   @ApiProperty({
@@ -580,7 +586,12 @@ export class StyleImportResultDto {
   @ApiProperty({ type: StyleImportRunDto, nullable: true, description: 'The run; null when nothing changed' })
   run!: StyleImportRunDto | null;
 
-  @ApiProperty({ type: String, nullable: true, enum: ['same_checksum', 'no_changes'], example: null })
+  @ApiProperty({
+    enum: NOOP_REASONS,
+    enumName: 'StyleImportNoopReason',
+    nullable: true,
+    example: null,
+  })
   noopReason!: 'same_checksum' | 'no_changes' | null;
 }
 

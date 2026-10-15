@@ -147,7 +147,7 @@ describe('style library (e2e, U3.B1)', () => {
 
     const same = await upload(JSON.stringify(JSON.parse(master), null, 1));
     expect((await preview(same).expect(200)).body).toMatchObject({ noop: true, noopReason: 'no_changes' });
-    await preview(same, tokens['cs']!).expect(403);
+    await preview(same, tokens['cs']).expect(403);
 
     const renamed = JSON.parse(master) as { styles: { code: string; name_en: string }[] };
     renamed.styles.find((s) => s.code === 'PK-SP-26')!.name_en = 'Pentagonal carton (admin import)';

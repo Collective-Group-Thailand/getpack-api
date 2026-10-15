@@ -27,7 +27,6 @@ import { FilesService } from '@platform/files/files.service';
 import { SettingsService } from '@platform/settings/settings.service';
 
 import { type DielineDownloadFormat } from './dieline-downloads.dto';
-
 import { StyleDielinesService } from './style-dielines.service';
 
 export interface DownloadInput {

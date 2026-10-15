@@ -11,6 +11,7 @@ import { ApiSurface } from '@modules/surfaces/surfaces';
 import { Body, Controller, Get, HttpCode, Param, ParseUUIDPipe, Patch, Post, Query } from '@nestjs/common';
 import { ApiBody, ApiParam } from '@nestjs/swagger';
 
+import { StyleImportUploadsService } from './style-import-uploads.service';
 import {
   ADMIN_STYLE_DETAIL_EXAMPLE,
   ADMIN_STYLE_EXAMPLE,
@@ -31,7 +32,6 @@ import {
   UpdateStyleDto,
   VerifyReferenceDto,
 } from './styles-admin.dto';
-import { StyleImportUploadsService } from './style-import-uploads.service';
 import { StylesAdminService } from './styles-admin.service';
 
 const DECISIONS = ['D-241', 'D-242', 'D-243'];
@@ -245,8 +245,14 @@ export class AdminStyleImportsController {
       'Nothing is written. `noop` when the same file was imported or nothing would change (D-411).',
     implements: ['D-411', 'D-242'],
   })
+  @ApiBody({
+    type: StyleImportFileDto,
+    examples: { default: { value: { kind: 'master', fileId: '0192f3a0-7c1e-7d2a-9b3c-4d5e6f708192' } } },
+  })
   @ApiSuccess(200, { description: 'The plan', type: StyleImportPreviewDto, example: IMPORT_PREVIEW_EXAMPLE })
   @ApiStandardErrors(
+    'http.bad_request',
+    'http.malformed_json',
     'validation.failed',
     'http.not_found',
     'file.not_ready',
@@ -271,12 +277,26 @@ export class AdminStyleImportsController {
       'published rows for Prepress, then Marketing (D-242). `run` is null when nothing changed.',
     implements: ['D-411', 'D-242'],
   })
+  @ApiBody({
+    type: ConfirmStyleImportDto,
+    examples: {
+      default: {
+        value: {
+          kind: 'master',
+          fileId: '0192f3a0-7c1e-7d2a-9b3c-4d5e6f708192',
+          checksum: IMPORT_PREVIEW_EXAMPLE.checksum,
+        },
+      },
+    },
+  })
   @ApiSuccess(201, {
     description: 'The run',
     type: StyleImportResultDto,
     example: { run: IMPORT_RUN_EXAMPLE, noopReason: null },
   })
   @ApiStandardErrors(
+    'http.bad_request',
+    'http.malformed_json',
     'validation.failed',
     'http.not_found',
     'file.not_ready',
