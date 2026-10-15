@@ -15,6 +15,9 @@ import {
   StyleFavouriteDto,
   StyleListDto,
   StyleListQuery,
+  StyleVariantListDto,
+  StyleVariantListQuery,
+  VARIANT_LIST_EXAMPLE,
 } from './styles-store.dto';
 import { StylesStoreService } from './styles-store.service';
 
@@ -70,6 +73,34 @@ export class StoreStylesController {
     @Query() query: CompareQuery,
   ): Promise<StyleDetailDto[]> {
     return this.styles.compare(query.codes, customerOf(actor));
+  }
+
+  @Get('variants')
+  @Public()
+  @ApiEndpoint({
+    id: 'store.styles.listVariants',
+    summary: 'Browse every variant of the library',
+    description:
+      'Every shown variant of the published styles as a card (D-410) — the grid behind "every variant": the style\'s ' +
+      "filters (search, category, family, use case, material class) with the variant's price path and its options " +
+      "(`option=axis:value`, repeated or comma-separated: one axis's values are alternatives, different axes all " +
+      "apply). Option facets with counts are disjunctive (an axis's own filter is left out of its counts, `none` " +
+      'included); `meta.total` counts the matches, `libraryTotal` / `libraryStyles` the whole shown library (the ' +
+      "storefront's headline count). Sorts `popular` (search relevance first with `q`), `instant_first`, `name`; " +
+      'cursor pages. A variant is a card, never its own page: it opens its style with the variant chosen.',
+    implements: ['D-410', 'D-245', 'D-243', 'D-050'],
+  })
+  @ApiSuccess(200, {
+    description: 'A page of variants with facets',
+    type: StyleVariantListDto,
+    example: VARIANT_LIST_EXAMPLE,
+  })
+  @ApiStandardErrors('validation.failed')
+  async listVariants(
+    @OptionalActor() actor: Actor | undefined,
+    @Query() query: StyleVariantListQuery,
+  ): Promise<StyleVariantListDto> {
+    return this.styles.listVariants(query, customerOf(actor));
   }
 
   @Get(':code')

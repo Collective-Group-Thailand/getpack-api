@@ -219,6 +219,59 @@ describe('style library network and store (e2e, U3.B2–B3)', () => {
     }
   });
 
+  it('lists every shown variant as a card, options filtered with disjunctive facets (D-410)', async () => {
+    type VariantCard = { code: string; baseCode: string; options: Record<string, string> };
+    type Page = {
+      data: VariantCard[];
+      facets: { option: Facet[] };
+      meta: { nextCursor: string | null; total: number; libraryTotal: number; libraryStyles: number };
+    };
+    const get = async (qs: string) =>
+      (await request(ctx.server).get(`/v1/store/styles/variants?family=slotted&${qs}`).expect(200))
+        .body as Page;
+    const count = (page: Page, value: string) =>
+      page.facets.option.find((f) => f.value === value)?.count ?? 0;
+
+    const all = await get('limit=100');
+    const cs01 = all.data.filter((c) => c.baseCode === 'PK-CS-01');
+    expect(cs01).toHaveLength(9);
+    expect(cs01[0]!.code).toMatch(/^PK-CS-01-[A-Z2-7]{4}$/);
+    expect(all.meta.libraryTotal).toBeGreaterThanOrEqual(18);
+    expect(all.meta.libraryStyles).toBeGreaterThanOrEqual(2);
+    expect(JSON.stringify(all)).not.toMatch(/factory|F9001/i);
+
+    const end = await get('limit=100&option=hand_holes:end_panels');
+    expect(end.data.every((c) => c.options['hand_holes'] === 'end_panels')).toBe(true);
+    expect(end.data.filter((c) => c.baseCode === 'PK-CS-01')).toHaveLength(3);
+    // Disjunctive: a chosen value keeps its siblings' counts; other axes count the matches.
+    expect(count(end, 'hand_holes:side_panels')).toBe(count(all, 'hand_holes:side_panels'));
+    expect(count(end, 'joint:tape_joint')).toBe(
+      end.data.filter((c) => c.options['joint'] === 'tape_joint').length,
+    );
+    const either = await get('limit=100&option=hand_holes:end_panels,hand_holes:side_panels');
+    expect(either.meta.total).toBe(end.meta.total + count(end, 'hand_holes:side_panels'));
+    const both = await get('limit=100&option=hand_holes:end_panels&option=joint:tape_joint');
+    expect(both.meta.total).toBeGreaterThan(0);
+    expect(
+      both.data.every((c) => c.options['hand_holes'] === 'end_panels' && c.options['joint'] === 'tape_joint'),
+    ).toBe(true);
+
+    const first = await get('limit=4&sort=name');
+    expect(first.data).toHaveLength(4);
+    expect(first.meta.total).toBe(all.meta.total);
+    const second = await get(`limit=4&sort=name&cursor=${first.meta.nextCursor}`);
+    expect(second.data.map((c) => c.code)).not.toContain(first.data[0]!.code);
+    await request(ctx.server).get('/v1/store/styles/variants?option=window').expect(422);
+
+    // The style card's option chips.
+    const list = await request(ctx.server).get('/v1/store/styles?limit=100&category=corrugated').expect(200);
+    const card = (list.body as { data: (Card & { options: string[] })[] }).data.find(
+      (c) => c.code === 'PK-CS-01',
+    )!;
+    expect(card.options).toEqual(expect.arrayContaining(['hand_holes:end_panels', 'joint:tape_joint']));
+    expect(card.options).not.toContain('hand_holes:none');
+  });
+
   it('details a style: combinations, size ranges, lead time, no partners count below three factories (D-201)', async () => {
     const res = await request(ctx.server).get('/v1/store/styles/PK-CS-01').expect(200);
     expect(res.body).toMatchObject({
@@ -279,7 +332,7 @@ describe('style library network and store (e2e, U3.B2–B3)', () => {
       .set('If-Match', etag)
       .expect(403);
     const hidden = await as(ctx, t['marketing']!)
-      .patch(`/v1/admin/styles/${base.publicId}`, { hidden: true, useCases: ['shipping'] })
+      .patch(`/v1/admin/styles/${base.publicId}`, { hidden: true, useCases: ['produce', 'shipping'] })
       .set('If-Match', etag)
       .expect(200);
     await as(ctx, t['marketing']!)
@@ -293,7 +346,7 @@ describe('style library network and store (e2e, U3.B2–B3)', () => {
       .patch(`/v1/admin/styles/${base.publicId}`, { hidden: false })
       .set('If-Match', hidden.headers['etag'] as string)
       .expect(200);
-    const back = await request(ctx.server).get('/v1/store/styles?useCase=shipping').expect(200);
+    const back = await request(ctx.server).get('/v1/store/styles?useCase=produce').expect(200);
     expect(codes(back.body)).toContain('PK-CS-02');
   });
 

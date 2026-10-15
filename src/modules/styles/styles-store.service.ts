@@ -19,6 +19,9 @@ import {
   type StyleListDto,
   type StyleListQuery,
   type StyleSizeRangeDto,
+  type StyleVariantCardDto,
+  type StyleVariantListDto,
+  type StyleVariantListQuery,
 } from './styles-store.dto';
 
 /** Option axes shown as the closure facet; every other axis is a feature (`none` values are never facets). */
@@ -157,6 +160,129 @@ export class StylesStoreService {
       meta: {
         nextCursor:
           offset + query.limit < matched.length ? encodeCursor({ o: offset + query.limit, s: sort }) : null,
+      },
+    };
+  }
+
+  /**
+   * D-410: every shown variant as a card — the grid behind "every variant", filtered by the style's facets and by
+   * options (`axis:value`; one axis's values are alternatives, different axes all apply), paged by offset. Option
+   * facets are disjunctive: an axis's counts leave its own filter out, so a chosen value never hides its siblings.
+   */
+  async listVariants(query: StyleVariantListQuery, userId: bigint | null): Promise<StyleVariantListDto> {
+    const rows = await this.prisma.styleBase.findMany({ where: PUBLISHED, include: LIBRARY_INCLUDE });
+    const all = rows.flatMap((r) => r.variants.map((v) => ({ base: r, variant: v })));
+    const q = query.q?.trim().toLowerCase() ?? '';
+    const scores = q
+      ? await this.search(
+          q,
+          rows.map((r) => r.id),
+        )
+      : null;
+    const code = q.toUpperCase();
+    const byBase = all.filter(
+      ({ base, variant }) =>
+        (!scores || scores.has(base.id) || variant.code.includes(code)) &&
+        (!query.category || base.category === query.category) &&
+        (!query.family || base.family === query.family) &&
+        (!query.useCase || base.useCases.some((u) => u.code === query.useCase)) &&
+        (!query.materialClass || base.materialClass === query.materialClass) &&
+        (!query.pricePath || variant.pricePath === query.pricePath),
+    );
+    const wanted = new Map<string, Set<string>>();
+    for (const option of query.option ?? []) {
+      const [axis, value] = option.split(':') as [string, string];
+      wanted.set(axis, (wanted.get(axis) ?? new Set()).add(value));
+    }
+    const valuesOf = (options: unknown, axis: string): string[] => {
+      const value = (options as Record<string, string | string[]>)[axis];
+      const list = Array.isArray(value) ? value : value ? [value] : [];
+      return list.length > 0 ? list : ['none'];
+    };
+    const passes = (options: unknown, except?: string) =>
+      [...wanted].every(
+        ([axis, values]) => axis === except || valuesOf(options, axis).some((v) => values.has(v)),
+      );
+    const matched = byBase.filter(({ variant }) => passes(variant.options));
+    if (q && !query.cursor) await this.logSearch(q, matched.length, userId);
+
+    // Option facets: each axis counted under every filter but its own.
+    const optionCounts = new Map<string, number>();
+    for (const { variant } of byBase) {
+      const options = variant.options as Record<string, string | string[]>;
+      for (const axis of new Set([...Object.keys(options), ...wanted.keys()])) {
+        if (!passes(options, axis)) continue;
+        for (const v of new Set(valuesOf(options, axis)))
+          optionCounts.set(`${axis}:${v}`, (optionCounts.get(`${axis}:${v}`) ?? 0) + 1);
+      }
+    }
+    const counted = (values: string[]) => {
+      const counts = new Map<string, number>();
+      for (const v of values) counts.set(v, (counts.get(v) ?? 0) + 1);
+      return [...counts]
+        .sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0]))
+        .map(([value, count]) => ({ value, count }));
+    };
+
+    const sort = query.sort ?? 'popular';
+    const popularity = sort === 'popular' ? await this.popularity(rows) : new Map<bigint, number>();
+    type Entry = (typeof all)[number];
+    const byName = (a: Entry, b: Entry) =>
+      a.base.nameTh.localeCompare(b.base.nameTh, 'th') || a.variant.code.localeCompare(b.variant.code);
+    const featuredFirst = (a: Entry, b: Entry) =>
+      Number(b.base.featured) - Number(a.base.featured) || a.base.sort - b.base.sort;
+    const comparators: Record<string, (a: Entry, b: Entry) => number> = {
+      popular: (a, b) =>
+        (scores ? (scores.get(b.base.id) ?? 0) - (scores.get(a.base.id) ?? 0) : 0) ||
+        (popularity.get(b.base.id) ?? 0) - (popularity.get(a.base.id) ?? 0) ||
+        featuredFirst(a, b) ||
+        byName(a, b),
+      instant_first: (a, b) =>
+        Number(a.variant.pricePath === 'rfq') - Number(b.variant.pricePath === 'rfq') ||
+        featuredFirst(a, b) ||
+        byName(a, b),
+      name: byName,
+    };
+    matched.sort(comparators[sort]);
+
+    const offset = query.cursor ? cursorOffset(query.cursor, sort) : 0;
+    const page = matched.slice(offset, offset + query.limit);
+    const data: StyleVariantCardDto[] = await Promise.all(
+      page.map(async ({ base, variant }) => {
+        const thumb =
+          thumbnailOf(base, variant.code, 'thumbnail_3d') ??
+          thumbnailOf(base, variant.code, 'thumbnail_2d') ??
+          thumbnailOf(base, null, 'thumbnail_3d') ??
+          thumbnailOf(base, null, 'thumbnail_2d');
+        return {
+          code: variant.code,
+          baseCode: base.code,
+          nameTh: base.nameTh,
+          nameEn: base.nameEn,
+          category: base.category,
+          family: base.family,
+          materialClass: base.materialClass,
+          options: variant.options as Record<string, unknown>,
+          pricePath: variant.pricePath,
+          thumbnailUrl: thumb ? await this.assets.url(thumb) : null,
+        };
+      }),
+    );
+    return {
+      data,
+      facets: {
+        option: [...optionCounts]
+          .sort((a, b) => a[0].localeCompare(b[0]))
+          .map(([value, count]) => ({ value, count })),
+        category: counted(matched.map((e) => e.base.category)),
+        materialClass: counted(matched.map((e) => e.base.materialClass)),
+      },
+      meta: {
+        nextCursor:
+          offset + query.limit < matched.length ? encodeCursor({ o: offset + query.limit, s: sort }) : null,
+        total: matched.length,
+        libraryTotal: all.length,
+        libraryStyles: rows.length,
       },
     };
   }
@@ -381,7 +507,16 @@ function card(r: LibraryRow, favourites: Set<bigint>): StyleCardDto {
       : null,
     referenceCode: r.referenceVerifiedAt ? r.referenceCode : null,
     favourite: favourites === NOT_SIGNED_IN ? null : favourites.has(r.id),
+    options: (() => {
+      const { closure, feature } = optionValues(r);
+      return [...[...closure].sort(), ...[...feature].sort()];
+    })(),
   };
+}
+
+/** A stored thumbnail of a variant (or, with `null`, of the style itself). */
+function thumbnailOf(r: LibraryRow, variantCode: string | null, kind: 'thumbnail_2d' | 'thumbnail_3d') {
+  return r.assets.find((a) => a.kind === kind && (a.variant?.code ?? null) === variantCode) ?? null;
 }
 
 /** The closure / feature option values of a base's publishable variants (`axis:value`, never `none`). */

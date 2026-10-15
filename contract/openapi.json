@@ -99704,6 +99704,18 @@
             "example": "กล่องฝาเสียบ (ปรับฝาบน-ล่างได้)",
             "type": "string"
           },
+          "options": {
+            "description": "The options its shown variants offer, `axis:value` (never `none`): closures first, then features — the chips on a card",
+            "example": [
+              "tuck_bottom:crash_lock",
+              "window:front_window",
+              "hang:euro_slot"
+            ],
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
           "pricePath": {
             "allOf": [
               {
@@ -99749,7 +99761,8 @@
           "featured",
           "startingPrice",
           "referenceCode",
-          "favourite"
+          "favourite",
+          "options"
         ],
         "type": "object"
       },
@@ -99859,6 +99872,18 @@
             "example": "กล่องฝาเสียบ (ปรับฝาบน-ล่างได้)",
             "type": "string"
           },
+          "options": {
+            "description": "The options its shown variants offer, `axis:value` (never `none`): closures first, then features — the chips on a card",
+            "example": [
+              "tuck_bottom:crash_lock",
+              "window:front_window",
+              "hang:euro_slot"
+            ],
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
           "partnersCount": {
             "description": "Partners able to make it — only with ≥ 3 active factories (D-201); never who they are",
             "example": null,
@@ -99943,6 +99968,7 @@
           "startingPrice",
           "referenceCode",
           "favourite",
+          "options",
           "construction",
           "productTypeCode",
           "descriptionTh",
@@ -100825,6 +100851,77 @@
         ],
         "type": "object"
       },
+      "StyleVariantCardDto": {
+        "properties": {
+          "baseCode": {
+            "example": "PK-TE-01",
+            "type": "string"
+          },
+          "category": {
+            "example": "folding_carton",
+            "type": "string"
+          },
+          "code": {
+            "example": "PK-TE-01-K7QD",
+            "type": "string"
+          },
+          "family": {
+            "example": "tuck_end",
+            "type": "string"
+          },
+          "materialClass": {
+            "example": "paperboard",
+            "type": "string"
+          },
+          "nameEn": {
+            "example": "Tuck-end carton (configurable ends)",
+            "type": "string"
+          },
+          "nameTh": {
+            "example": "กล่องฝาเสียบ (ปรับฝาบน-ล่างได้)",
+            "type": "string"
+          },
+          "options": {
+            "additionalProperties": true,
+            "example": {
+              "hang": "none",
+              "tuck_bottom": "crash_lock",
+              "tuck_top": "reverse_tuck",
+              "window": "front_window"
+            },
+            "type": "object"
+          },
+          "pricePath": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/QuoteMode"
+              }
+            ],
+            "example": "rfq"
+          },
+          "thumbnailUrl": {
+            "description": "The variant's rendered thumbnail, else its style's; null before thumbnails are rendered",
+            "example": null,
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "code",
+          "baseCode",
+          "nameTh",
+          "nameEn",
+          "category",
+          "family",
+          "materialClass",
+          "options",
+          "pricePath",
+          "thumbnailUrl"
+        ],
+        "type": "object"
+      },
       "StyleVariantCountsDto": {
         "properties": {
           "active": {
@@ -100844,6 +100941,90 @@
           "total",
           "active",
           "publishable"
+        ],
+        "type": "object"
+      },
+      "StyleVariantFacetsDto": {
+        "properties": {
+          "category": {
+            "items": {
+              "$ref": "#/components/schemas/StyleFacetValueDto"
+            },
+            "type": "array"
+          },
+          "materialClass": {
+            "items": {
+              "$ref": "#/components/schemas/StyleFacetValueDto"
+            },
+            "type": "array"
+          },
+          "option": {
+            "description": "Option values `axis:value` (`none` included) with counts under every other filter — an axis's own filter is left out of its counts",
+            "items": {
+              "$ref": "#/components/schemas/StyleFacetValueDto"
+            },
+            "type": "array"
+          }
+        },
+        "required": [
+          "option",
+          "category",
+          "materialClass"
+        ],
+        "type": "object"
+      },
+      "StyleVariantListDto": {
+        "properties": {
+          "data": {
+            "items": {
+              "$ref": "#/components/schemas/StyleVariantCardDto"
+            },
+            "type": "array"
+          },
+          "facets": {
+            "$ref": "#/components/schemas/StyleVariantFacetsDto"
+          },
+          "meta": {
+            "$ref": "#/components/schemas/StyleVariantListMeta"
+          }
+        },
+        "required": [
+          "data",
+          "facets",
+          "meta"
+        ],
+        "type": "object"
+      },
+      "StyleVariantListMeta": {
+        "properties": {
+          "libraryStyles": {
+            "description": "Every shown style of the library",
+            "example": 122,
+            "type": "integer"
+          },
+          "libraryTotal": {
+            "description": "Every shown variant of the library",
+            "example": 986,
+            "type": "integer"
+          },
+          "nextCursor": {
+            "example": "eyJpZCI6IjEyMyJ9",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "total": {
+            "description": "Variants matching the query and filters",
+            "example": 986,
+            "type": "integer"
+          }
+        },
+        "required": [
+          "nextCursor",
+          "total",
+          "libraryTotal",
+          "libraryStyles"
         ],
         "type": "object"
       },
@@ -100897,6 +101078,14 @@
           "configurationPatches"
         ],
         "type": "object"
+      },
+      "StyleVariantSort": {
+        "enum": [
+          "popular",
+          "instant_first",
+          "name"
+        ],
+        "type": "string"
       },
       "SubPatternDto": {
         "properties": {
@@ -109061,12 +109250,12 @@
     "contact": {},
     "description": "Packio — Your Packaging Production Partner, operated by Collective Group (Thailand).\nRules: `docs/contract/api-conventions.md` (shared with packio-web).\n\n- **Surfaces:** `/v1/auth`, `/v1/store` (customer), `/v1/admin` (staff), `/v1/partner` (factories), `/v1/b2b` (company API clients, D-291), `/webhooks`. A token is accepted only on its own audience's prefix.\n- **Money:** decimal strings with exactly 2 decimals (`\"1234.50\"`) plus `currency: \"THB\"` on the object; never JSON numbers. Clients never compute prices.\n- **Dates:** ISO 8601 with offset, rendered in `Asia/Bangkok` (`2026-09-22T14:05:00+07:00`); date-only fields `YYYY-MM-DD`.\n- **IDs:** uuid only; business keys (`orderCode`) are separate fields.\n- **Errors:** RFC 9457 `application/problem+json` with a stable `code`; `title`/`detail` localised by `Accept-Language` (`th` default, `en`).\n- **Lists:** `?page&perPage(≤100)&sort&order&q` → `{ data, meta: { page, perPage, total } }`; feeds use `?cursor&limit` → `{ data, meta: { nextCursor } }`.\n- **Idempotency:** irreversible POSTs require `Idempotency-Key` (uuid); replays within 24 h return the original response.\n- **Concurrency:** editable resources return `ETag`; updates send `If-Match` (412 `concurrency.stale`).\n- **Files:** presign → PUT to the returned URL → reference the `fileId`.",
     "title": "Packio API",
-    "version": "0.59.0",
+    "version": "0.60.0",
     "x-packio-dieline": {
-      "bundleSha256": "cee8ef1371f6f8f40dfa4fa5b3eaa4fdaa61d1b7be0363569b2543a5feb2e407",
+      "bundleSha256": "f565899b3b1915ef0d0467f8afa903c126dc8e80995319e944973fbb17ce0521",
       "package": "@packio/dieline",
-      "packioWebCommit": "486d1c12645580628138405a03b1fbab1321dcc7",
-      "sourceTree": "2c245e6fffe3fce014b0dc76d9d48b27c418a8b0",
+      "packioWebCommit": "169afab28d696d4b12a44f70c471cb22d576ac09",
+      "sourceTree": "6626947202605e5f1ab8feb63f79ea37650fbede",
       "version": "0.1.0"
     }
   },
@@ -535170,6 +535359,10 @@
                       "materialClass": "paperboard",
                       "nameEn": "Tuck-end carton (configurable ends)",
                       "nameTh": "กล่องฝาเสียบ (ปรับฝาบน-ล่างได้)",
+                      "options": [
+                        "tuck_bottom:crash_lock",
+                        "window:front_window"
+                      ],
                       "pricePath": "instant",
                       "referenceCode": null,
                       "startingPrice": {
@@ -535179,7 +535372,7 @@
                         "quantity": 1000,
                         "unitPrice": "4.85"
                       },
-                      "variantCount": 228
+                      "variantCount": 183
                     }
                   }
                 ],
@@ -535761,6 +535954,10 @@
                       "materialClass": "paperboard",
                       "nameEn": "Tuck-end carton (configurable ends)",
                       "nameTh": "กล่องฝาเสียบ (ปรับฝาบน-ล่างได้)",
+                      "options": [
+                        "tuck_bottom:crash_lock",
+                        "window:front_window"
+                      ],
                       "pricePath": "instant",
                       "referenceCode": null,
                       "startingPrice": {
@@ -535770,7 +535967,7 @@
                         "quantity": 1000,
                         "unitPrice": "4.85"
                       },
-                      "variantCount": 228
+                      "variantCount": 183
                     }
                   ],
                   "facets": {
@@ -536001,6 +536198,10 @@
                     "materialClass": "paperboard",
                     "nameEn": "Tuck-end carton (configurable ends)",
                     "nameTh": "กล่องฝาเสียบ (ปรับฝาบน-ล่างได้)",
+                    "options": [
+                      "tuck_bottom:crash_lock",
+                      "window:front_window"
+                    ],
                     "partnersCount": null,
                     "pricePath": "instant",
                     "productTypeCode": "folding_carton",
@@ -536025,7 +536226,7 @@
                       "unitPrice": "4.85"
                     },
                     "useCases": [],
-                    "variantCount": 228,
+                    "variantCount": 183,
                     "variants": [
                       {
                         "code": "PK-TE-01-K7QD",
@@ -536202,6 +536403,306 @@
         ]
       }
     },
+    "/v1/store/styles/variants": {
+      "get": {
+        "description": "Every shown variant of the published styles as a card (D-410) — the grid behind \"every variant\": the style's filters (search, category, family, use case, material class) with the variant's price path and its options (`option=axis:value`, repeated or comma-separated: one axis's values are alternatives, different axes all apply). Option facets with counts are disjunctive (an axis's own filter is left out of its counts, `none` included); `meta.total` counts the matches, `libraryTotal` / `libraryStyles` the whole shown library (the storefront's headline count). Sorts `popular` (search relevance first with `q`), `instant_first`, `name`; cursor pages. A variant is a card, never its own page: it opens its style with the variant chosen.\n\nImplements: D-410, D-245, D-243, D-050.",
+        "operationId": "store.styles.listVariants",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "cursor",
+            "required": false,
+            "schema": {
+              "maxLength": 512,
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "default": 50,
+              "maximum": 100,
+              "minimum": 1,
+              "type": "integer"
+            }
+          },
+          {
+            "description": "Search over the styles (as `store.styles.list`) and variant codes",
+            "in": "query",
+            "name": "q",
+            "required": false,
+            "schema": {
+              "example": "ฝาเสียบ",
+              "maxLength": 100,
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "category",
+            "required": false,
+            "schema": {
+              "example": "folding_carton",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "family",
+            "required": false,
+            "schema": {
+              "example": "tuck_end",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "useCase",
+            "required": false,
+            "schema": {
+              "example": "cosmetics",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "materialClass",
+            "required": false,
+            "schema": {
+              "example": "paperboard",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "pricePath",
+            "required": false,
+            "schema": {
+              "$ref": "#/components/schemas/QuoteMode"
+            }
+          },
+          {
+            "description": "Options `axis:value`, repeated or comma-separated: values of one axis are alternatives, different axes all apply",
+            "in": "query",
+            "name": "option",
+            "required": false,
+            "schema": {
+              "example": [
+                "window:front_window",
+                "tuck_bottom:crash_lock"
+              ],
+              "items": {
+                "pattern": "^[a-z0-9_]+:[a-z0-9_+]+$",
+                "type": "string"
+              },
+              "maxItems": 20,
+              "type": "array"
+            }
+          },
+          {
+            "in": "query",
+            "name": "sort",
+            "required": false,
+            "schema": {
+              "$ref": "#/components/schemas/StyleVariantSort"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "data": [
+                    {
+                      "baseCode": "PK-TE-01",
+                      "category": "folding_carton",
+                      "code": "PK-TE-01-K7QD",
+                      "family": "tuck_end",
+                      "materialClass": "paperboard",
+                      "nameEn": "Tuck-end carton (configurable ends)",
+                      "nameTh": "กล่องฝาเสียบ (ปรับฝาบน-ล่างได้)",
+                      "options": {
+                        "hang": "none",
+                        "tuck_bottom": "crash_lock",
+                        "tuck_top": "reverse_tuck",
+                        "window": "front_window"
+                      },
+                      "pricePath": "rfq",
+                      "thumbnailUrl": null
+                    }
+                  ],
+                  "facets": {
+                    "category": [
+                      {
+                        "count": 183,
+                        "value": "folding_carton"
+                      }
+                    ],
+                    "materialClass": [
+                      {
+                        "count": 183,
+                        "value": "paperboard"
+                      }
+                    ],
+                    "option": [
+                      {
+                        "count": 61,
+                        "value": "window:front_window"
+                      },
+                      {
+                        "count": 61,
+                        "value": "window:none"
+                      }
+                    ]
+                  },
+                  "meta": {
+                    "libraryStyles": 122,
+                    "libraryTotal": 986,
+                    "nextCursor": null,
+                    "total": 183
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/StyleVariantListDto"
+                }
+              }
+            },
+            "description": "A page of variants with facets",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.unauthenticated": {
+                    "$ref": "#/components/examples/problem.auth.unauthenticated"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.unauthenticated`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.forbidden": {
+                    "$ref": "#/components/examples/problem.auth.forbidden"
+                  },
+                  "auth.wrong_audience": {
+                    "$ref": "#/components/examples/problem.auth.wrong_audience"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.forbidden`, `auth.wrong_audience`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "validation.failed": {
+                    "$ref": "#/components/examples/problem.validation.failed"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `validation.failed`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [],
+        "summary": "Browse every variant of the library",
+        "tags": [
+          "store.styles"
+        ]
+      }
+    },
     "/v1/store/styles/{code}": {
       "get": {
         "description": "A published style by its public code (D-184, D-245): construction, the publishable variants and their option combinations, size ranges per material class (the recipe’s solver, else the linked pattern’s rules — `source`), the starting price and the quantity it assumes (D-220, none without a hint), the lead-time band, the number of partners able to make it only with ≥ 3 active factories (D-201), use cases and assets. A verified reference code only (D-211).\n\nImplements: D-245, D-246, D-243, D-050, D-201, D-220, D-211.",
@@ -536249,6 +536750,10 @@
                   "materialClass": "paperboard",
                   "nameEn": "Tuck-end carton (configurable ends)",
                   "nameTh": "กล่องฝาเสียบ (ปรับฝาบน-ล่างได้)",
+                  "options": [
+                    "tuck_bottom:crash_lock",
+                    "window:front_window"
+                  ],
                   "partnersCount": null,
                   "pricePath": "instant",
                   "productTypeCode": "folding_carton",
@@ -536273,7 +536778,7 @@
                     "unitPrice": "4.85"
                   },
                   "useCases": [],
-                  "variantCount": 228,
+                  "variantCount": 183,
                   "variants": [
                     {
                       "code": "PK-TE-01-K7QD",
