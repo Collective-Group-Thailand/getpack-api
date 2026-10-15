@@ -2,7 +2,7 @@
  * The storefront's `home-photos` home section (a `custom` section whose `config` packio-web reads,
  * `features/customer/home/content.server.ts`): every photo on the home page, each `{ url, alt, caption }`
  * with Thai / English text. Shape: `{ hero, mosaic: [5], process: { sample, packing }, quality,
- * templates: { <style code>: photo } }`.
+ * templates: { <style code>: photo }, categories: { <product category code>: photo } }`.
  *
  * A media manifest names each photo's place on the page by `position`; this maps those positions
  * onto the config and merges them over what is there, so a manifest that names a few positions
@@ -13,6 +13,9 @@ export const HOME_PHOTOS_SLUG = 'home-photos';
 
 /** The style-library code a template photo is keyed by (`ck_style_bases__code`). */
 export const STYLE_CODE = /^PK-[A-Z0-9]{2,8}-[0-9]{2,3}$/;
+
+/** A product category code (`product_categories.code`, e.g. `folding_carton`): the "what we make" row's photos. */
+export const CATEGORY_CODE = /^[a-z0-9]+(?:[_-][a-z0-9]+)*$/;
 
 export interface HomePhotoEntry {
   url: string;
@@ -39,14 +42,16 @@ export type HomePhotoSlot =
   | { kind: 'quality' }
   | { kind: 'mosaic'; index: number }
   | { kind: 'process'; step: 'sample' | 'packing' }
-  | { kind: 'template'; code: string };
+  | { kind: 'template'; code: string }
+  | { kind: 'category'; code: string };
 
 const MOSAIC_SIZE = 5;
 
 /**
  * `hero`, `mosaic-1…5`, `sage` (the quality band), `frame-4` / `frame-9` (the screen-to-factory
- * frames for day 4, the sample, and day 9, packed and delivered) and `template-<x>`, where `<x>` is
- * a style code or a name `templates` maps to one. Anything else is `null`.
+ * frames for day 4, the sample, and day 9, packed and delivered), `template-<x>`, where `<x>` is
+ * a style code or a name `templates` maps to one, and `category-<code>` (a product category's photo in
+ * the "what we make" row). Anything else is `null`.
  */
 export function slotOf(position: string, templates: Record<string, string> = {}): HomePhotoSlot | null {
   if (position === 'hero') return { kind: 'hero' };
@@ -57,6 +62,10 @@ export function slotOf(position: string, templates: Record<string, string> = {})
   if (mosaic) {
     const index = Number(mosaic[1]) - 1;
     return index < MOSAIC_SIZE ? { kind: 'mosaic', index } : null;
+  }
+  if (position.startsWith('category-')) {
+    const code = position.slice('category-'.length);
+    return CATEGORY_CODE.test(code) ? { kind: 'category', code } : null;
   }
   if (position.startsWith('template-')) {
     const name = position.slice('template-'.length);
@@ -112,6 +121,9 @@ export function mergeHomePhotos(
         break;
       case 'template':
         next.templates = { ...record(next.templates), [slot.code]: photo };
+        break;
+      case 'category':
+        next.categories = { ...record(next.categories), [slot.code]: photo };
         break;
     }
   }

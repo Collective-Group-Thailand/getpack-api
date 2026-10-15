@@ -57,7 +57,9 @@ const label = (slot: HomePhotoSlot): string =>
       ? `process.${slot.step}`
       : slot.kind === 'template'
         ? `templates.${slot.code}`
-        : slot.kind;
+        : slot.kind === 'category'
+          ? `categories.${slot.code}`
+          : slot.kind;
 
 function options(args: string[]) {
   const value = (flag: string) => {
@@ -109,6 +111,13 @@ async function main(): Promise<void> {
             ? `${asset.position}: no style code (add --template ${asset.position.slice(9)}=PK-…)`
             : `${asset.position}: not a place on the home page`,
         );
+        continue;
+      }
+      if (
+        slot.kind === 'category' &&
+        !(await prisma.productCategory.findUnique({ where: { code: slot.code } }))
+      ) {
+        skipped.push(`${asset.position}: category ${slot.code} is not in the catalogue`);
         continue;
       }
       if (slot.kind === 'template' && !(await prisma.styleBase.findUnique({ where: { code: slot.code } }))) {

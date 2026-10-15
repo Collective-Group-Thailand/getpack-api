@@ -11,6 +11,8 @@ describe('home-photos manifest positions', () => {
     expect(slotOf('mosaic-1')).toEqual({ kind: 'mosaic', index: 0 });
     expect(slotOf('mosaic-5')).toEqual({ kind: 'mosaic', index: 4 });
     expect(slotOf('template-PK-CF-01')).toEqual({ kind: 'template', code: 'PK-CF-01' });
+    expect(slotOf('category-folding_carton')).toEqual({ kind: 'category', code: 'folding_carton' });
+    expect(slotOf('category-Folding Carton')).toBeNull();
     expect(slotOf('template-mailer', { mailer: 'PK-CF-01' })).toEqual({ kind: 'template', code: 'PK-CF-01' });
   });
 
@@ -47,12 +49,14 @@ describe('home-photos manifest positions', () => {
       { slot: { kind: 'process', step: 'packing' }, photo: photo('/p') },
       { slot: { kind: 'template', code: 'PK-CF-01' }, photo: photo('/cf') },
       { slot: { kind: 'quality' }, photo: photo('/q') },
+      { slot: { kind: 'category', code: 'paper_bag' }, photo: photo('/bag') },
     ]);
     expect(next).toMatchObject({
       hero: { url: '/old-hero' },
       quality: { url: '/q' },
       process: { sample: { url: '/s' }, packing: { url: '/p' } },
       templates: { 'PK-TE-01': { url: '/t' }, 'PK-CF-01': { url: '/cf' } },
+      categories: { paper_bag: { url: '/bag' } },
       other: true,
     });
     expect((next.mosaic as { url: string }[]).map((m) => m?.url ?? null)).toEqual([
