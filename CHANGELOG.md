@@ -3,6 +3,15 @@
 Contract-facing changes per release. The contract itself is `contract/openapi.json`; mappings for `packio-web` are in
 `docs/contract-requests-triage.md`.
 
+## v0.60.0 — Every variant as a card; use cases per style
+
+Decision D-410. Additive. New `store.styles.listVariants` (`GET /v1/store/styles/variants`, public): every shown variant
+as a `StyleVariantCardDto` (code, style, options, price path, thumbnail), filtered by the style filters and by options
+(`option=axis:value`, repeated or comma-separated), with disjunctive option facets and `meta.total`,
+`meta.libraryTotal`, `meta.libraryStyles`. `StyleCardDto.options` lists a style's option chips (`axis:value`, closures
+first). The master file carries `use_cases` per base (an import replaces curated ones) and drops PK-SP-25, the same
+structure as PK-SP-05: 122 bases, 986 variants; the vendored `@packio/dieline` drops its recipe.
+
 ## v0.59.0 — Dieline download as .ai
 
 Value set: the dieline download's `format` is now `DielineDownloadFormat` (`svg`, `dxf`, `pdf`, `ai`); `ai` is the
