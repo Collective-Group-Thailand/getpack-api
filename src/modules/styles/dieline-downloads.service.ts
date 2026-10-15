@@ -63,7 +63,12 @@ const MIME: Record<DielineDownloadFormat, string> = {
 };
 
 /** The engine format behind a download format: `.ai` is the designer PDF under Illustrator's name. */
-const ENGINE_FORMAT: Record<DielineDownloadFormat, DrawingFormat> = { svg: 'svg', dxf: 'dxf', pdf: 'pdf', ai: 'pdf' };
+const ENGINE_FORMAT: Record<DielineDownloadFormat, DrawingFormat> = {
+  svg: 'svg',
+  dxf: 'dxf',
+  pdf: 'pdf',
+  ai: 'pdf',
+};
 
 const VARIANT_INCLUDE = {
   base: {

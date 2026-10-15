@@ -578,7 +578,8 @@ function fieldsOf(base: MasterBase): BaseFields {
 }
 
 /** The summary of a change kept in the run's diff and the approval payload (no recipe bodies). */
-function brief(change: StyleChange): Record<string, unknown> {
+/** A change as a run records it in its diff. */
+export function brief(change: StyleChange): Record<string, unknown> {
   switch (change.op) {
     case 'base.create':
       return { op: change.op, code: change.code, variants: change.variants.length };

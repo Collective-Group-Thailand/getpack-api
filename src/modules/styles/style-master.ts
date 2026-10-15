@@ -94,7 +94,10 @@ export function parseMaster(raw: unknown): ParsedMaster {
       problems.push(`allowed tuck pair ${top}/${bottom} is not on the tuck axes`);
   }
   const excluded: ExcludedCombination[] = [];
-  for (const [i, raw] of (Array.isArray(file.excluded_combinations) ? file.excluded_combinations : []).entries()) {
+  for (const [i, raw] of (Array.isArray(file.excluded_combinations)
+    ? file.excluded_combinations
+    : []
+  ).entries()) {
     const rule = (raw ?? {}) as { bases?: unknown; when?: unknown; reason?: unknown };
     const bases = Array.isArray(rule.bases) ? rule.bases.map(str) : [];
     const when = Object.fromEntries(
@@ -104,7 +107,8 @@ export function parseMaster(raw: unknown): ParsedMaster {
       ]),
     );
     const at = `excluded_combinations[${i}]`;
-    if (bases.length === 0 || !bases.every((b) => CODE.test(b))) problems.push(`${at}: bases must be base codes`);
+    if (bases.length === 0 || !bases.every((b) => CODE.test(b)))
+      problems.push(`${at}: bases must be base codes`);
     if (Object.keys(when).length === 0) problems.push(`${at}: when is empty`);
     for (const [axis, values] of Object.entries(when))
       if (!axes[axis] || values.length === 0 || !values.every((v) => axes[axis]!.includes(v)))

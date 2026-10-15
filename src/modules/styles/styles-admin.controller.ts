@@ -21,11 +21,17 @@ import {
   AdminStyleVariantDto,
   AdminStyleVariantQuery,
   ApproveNamesDto,
+  ConfirmStyleImportDto,
+  IMPORT_PREVIEW_EXAMPLE,
   IMPORT_RUN_EXAMPLE,
+  StyleImportFileDto,
+  StyleImportPreviewDto,
+  StyleImportResultDto,
   StyleImportRunDto,
   UpdateStyleDto,
   VerifyReferenceDto,
 } from './styles-admin.dto';
+import { StyleImportUploadsService } from './style-import-uploads.service';
 import { StylesAdminService } from './styles-admin.service';
 
 const DECISIONS = ['D-241', 'D-242', 'D-243'];
@@ -222,7 +228,68 @@ export class AdminStylesController {
 @ApiSurface('admin', 'styleImports')
 @Controller('style-imports')
 export class AdminStyleImportsController {
-  constructor(private readonly styles: StylesAdminService) {}
+  constructor(
+    private readonly styles: StylesAdminService,
+    private readonly uploads: StyleImportUploadsService,
+  ) {}
+
+  @Post('actions/preview')
+  @HttpCode(200)
+  @Can('styles.import')
+  @ApiEndpoint({
+    id: 'admin.styleImports.preview',
+    summary: 'Preview a style library import',
+    description:
+      'A dry run of `styles:import` (D-242) on an uploaded JSON file (purpose `import`): the master file or a recipe ' +
+      'bundle, planned into the changes applied at once and those held for the `style_library_change` approval. ' +
+      'Nothing is written. `noop` when the same file was imported or nothing would change (D-411).',
+    implements: ['D-411', 'D-242'],
+  })
+  @ApiSuccess(200, { description: 'The plan', type: StyleImportPreviewDto, example: IMPORT_PREVIEW_EXAMPLE })
+  @ApiStandardErrors(
+    'validation.failed',
+    'http.not_found',
+    'file.not_ready',
+    'file.infected',
+    'styles.import_unreadable',
+  )
+  async preview(
+    @CurrentActor() actor: Actor,
+    @Body() body: StyleImportFileDto,
+  ): Promise<StyleImportPreviewDto> {
+    return this.uploads.preview(staffOrPartner(actor), body.kind, body.fileId);
+  }
+
+  @Post()
+  @Can('styles.import')
+  @ApiEndpoint({
+    id: 'admin.styleImports.create',
+    summary: 'Import a style library file',
+    description:
+      'Confirms a previewed import (D-411): the file is planned again and refused with `styles.import_stale` when its ' +
+      'checksum is not the previewed one; then one run applies the changes to unpublished rows and holds those to ' +
+      'published rows for Prepress, then Marketing (D-242). `run` is null when nothing changed.',
+    implements: ['D-411', 'D-242'],
+  })
+  @ApiSuccess(201, {
+    description: 'The run',
+    type: StyleImportResultDto,
+    example: { run: IMPORT_RUN_EXAMPLE, noopReason: null },
+  })
+  @ApiStandardErrors(
+    'validation.failed',
+    'http.not_found',
+    'file.not_ready',
+    'file.infected',
+    'styles.import_unreadable',
+    'styles.import_stale',
+  )
+  async create(
+    @CurrentActor() actor: Actor,
+    @Body() body: ConfirmStyleImportDto,
+  ): Promise<StyleImportResultDto> {
+    return this.uploads.confirm(staffOrPartner(actor), body.kind, body.fileId, body.checksum);
+  }
 
   @Get()
   @Can('styles.read')

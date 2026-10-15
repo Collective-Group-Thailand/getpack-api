@@ -10,7 +10,9 @@ describe('pricePath (D-266, D-268)', () => {
 
   it('is instant only with a calculator, an instant type and every option priced', () => {
     const rules = new Set(['tuck_top:reverse_tuck', 'pouch_feat:zip', 'pouch_feat:notch']);
-    expect(pricePath({ calculatorKey: 'folding', instantType: true, options, rules, makeable: true })).toEqual({
+    expect(
+      pricePath({ calculatorKey: 'folding', instantType: true, options, rules, makeable: true }),
+    ).toEqual({
       path: 'instant',
       reasons: [],
     });
@@ -23,7 +25,9 @@ describe('pricePath (D-266, D-268)', () => {
         makeable: true,
       }),
     ).toEqual({ path: 'rfq', reasons: ['option_not_priced'] });
-    expect(pricePath({ calculatorKey: 'folding', instantType: false, options, rules, makeable: true })).toEqual({
+    expect(
+      pricePath({ calculatorKey: 'folding', instantType: false, options, rules, makeable: true }),
+    ).toEqual({
       path: 'rfq',
       reasons: ['calculator_not_signed'],
     });
@@ -35,7 +39,9 @@ describe('pricePath (D-266, D-268)', () => {
 
   it('asks for a quotation when no factory can make it yet (D-407)', () => {
     const rules = new Set(['tuck_top:reverse_tuck', 'pouch_feat:zip', 'pouch_feat:notch']);
-    expect(pricePath({ calculatorKey: 'folding', instantType: true, options, rules, makeable: false })).toEqual({
+    expect(
+      pricePath({ calculatorKey: 'folding', instantType: true, options, rules, makeable: false }),
+    ).toEqual({
       path: 'rfq',
       reasons: ['not_makeable'],
     });

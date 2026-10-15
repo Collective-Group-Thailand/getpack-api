@@ -24,7 +24,22 @@ export const ADMIN_MENU: readonly MenuEntry[] = [
   { key: 'claims', path: '/admin/claims', permission: 'claims.read' },
   { key: 'partners', path: '/admin/partners', permission: 'partners.read' },
   { key: 'catalogue', path: '/admin/catalogue', permission: 'catalog.read' },
+  // D-411: the style library desk and the screens the web reached only through other pages.
+  { key: 'style_library', path: '/admin/style-library', permission: 'styles.read' },
+  {
+    key: 'structural_requests',
+    path: '/admin/structural-requests',
+    permission: ['structural_requests.manage', 'structural_requests.design'],
+  },
+  {
+    key: 'style_intakes',
+    path: '/admin/style-intakes',
+    permission: ['styles.import', 'styles.approve_recipe'],
+  },
+  { key: 'samples', path: '/admin/samples', permission: 'samples.read' },
+  { key: 'inbox', path: '/admin/inbox', permission: 'conversations.read' },
   { key: 'marketing', path: '/admin/marketing', permission: 'promotions.read' },
+  { key: 'cms', path: '/admin/cms', permission: 'cms.manage' },
   { key: 'customers', path: '/admin/customers', permission: 'customers.read' },
   { key: 'companies', path: '/admin/companies', permission: 'companies.read' },
   { key: 'discount_memos', path: '/admin/discount-memos', permission: 'discount_memos.read' },
@@ -57,6 +72,7 @@ export const ADMIN_MENU: readonly MenuEntry[] = [
   { key: 'audit_logs', path: '/admin/audit-logs', permission: 'audit_logs.read' },
   { key: 'outbox', path: '/admin/outbox', permission: 'outbox.manage' },
   { key: 'analytics', path: '/admin/analytics', permission: 'analytics.read' },
+  { key: 'assistant', path: '/admin/assistant', permission: 'assistant.manage' },
   { key: 'reports', path: '/admin/reports' },
   { key: 'ops', path: '/admin/ops', permission: 'ops.read' },
 ];

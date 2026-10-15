@@ -1429,6 +1429,14 @@
     "intake_decided": {
       "title": "Intake already decided",
       "detail": "This dieline intake has already been approved or rejected."
+    },
+    "import_unreadable": {
+      "title": "The import file is invalid",
+      "detail": "The file must be the style library's master file or a recipe bundle, as JSON."
+    },
+    "import_stale": {
+      "title": "The import changed since its preview",
+      "detail": "The import no longer matches its preview (the file or the library changed). Preview it again."
     }
   },
   "samples": {
