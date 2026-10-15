@@ -347,6 +347,24 @@ export const VENDOR_POSTING_RULES: readonly PostingRuleSeed[] = [
     },
   },
   {
+    key: 'AG01',
+    eventType: 'sales_agent_statement.approved',
+    name: 'Employee agent commission accrued',
+    description:
+      'An employee sales agent’s approved monthly statement: sales commission accrued for payroll to pay (D-420; a freelance statement posts through its vendor bill, P25 / P25P)',
+    decisions: ['D-420'],
+    conditions: eq('agentKind', 'employee'),
+    template: {
+      description: 'ค่านายหน้าพนักงานขาย {statementNo}',
+      documentDate: 'approvedOn',
+      source: { type: 'sales_agent_statement', id: 'statementId', number: 'statementNo' },
+      lines: [
+        { account: '6160', side: 'debit', amount: 'totalAmount' },
+        { account: '2410', side: 'credit', amount: 'totalAmount' },
+      ],
+    },
+  },
+  {
     key: 'P27',
     eventType: 'vat_return.closed',
     name: 'Month-end VAT close (ภ.พ.30)',

@@ -58,10 +58,10 @@ export const VAT_INPUT_CODE = {
   switch: 'vatClaimable',
   cases: { true: 'input_vat', false: 'input_vat_pending' },
 } as const;
-export const WHT_PAYABLE = { switch: 'whtForm', cases: { pnd53: '2231', pnd3: '2232' } };
+export const WHT_PAYABLE = { switch: 'whtForm', cases: { pnd53: '2231', pnd3: '2232', pnd1: '2233' } };
 export const WHT_PAYABLE_CODE = {
   switch: 'whtForm',
-  cases: { pnd53: 'wht_pnd53', pnd3: 'wht_pnd3' },
+  cases: { pnd53: 'wht_pnd53', pnd3: 'wht_pnd3', pnd1: 'wht_pnd1' },
 } as const;
 /** The GL account of the company bank account the event names (112x, D-093). */
 export const BANK = { path: 'bankAccountCode' };

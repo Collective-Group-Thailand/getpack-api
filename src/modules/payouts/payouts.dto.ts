@@ -33,7 +33,8 @@ export const RUN_STATUSES = [
 ] as const;
 export const PAYOUT_KINDS = ['advance', 'balance', 'retention_release', 'vendor_bill'] as const;
 export const ITEM_STATUSES = ['included', 'paid', 'failed', 'excluded'] as const;
-export const WHT_FORMS = ['pnd3', 'pnd53'] as const;
+/** D-421 adds ภ.ง.ด.1 (commission to individuals); the factory ERP's own `WhtForm` stays pnd3 / pnd53. */
+export const WHT_FORMS = ['pnd3', 'pnd53', 'pnd1'] as const;
 /** What a factory sees of its payout items (U-B0.3): an excluded item never reaches it. */
 export const PARTNER_ITEM_STATUSES = ['included', 'paid', 'failed'] as const;
 
@@ -90,7 +91,7 @@ export class PayoutItemDto {
   @ApiProperty({ example: '5560.00' })
   whtBase!: string;
 
-  @ApiProperty({ enum: WHT_FORMS, enumName: 'WhtForm', nullable: true, example: 'pnd53' })
+  @ApiProperty({ enum: WHT_FORMS, enumName: 'PayoutWhtForm', nullable: true, example: 'pnd53' })
   whtForm!: string | null;
 
   @ApiProperty({ example: '278.00', description: 'Retention held back (D-164)' })
@@ -360,7 +361,7 @@ export class IssuedWhtCertificateDto {
   @ApiProperty({ example: 'DEVWT-26-00001' })
   wtNumber!: string;
 
-  @ApiProperty({ enum: WHT_FORMS, enumName: 'WhtForm', example: 'pnd53' })
+  @ApiProperty({ enum: WHT_FORMS, enumName: 'PayoutWhtForm', example: 'pnd53' })
   form!: string;
 
   @ApiProperty({ format: 'date', example: '2026-10-27' })

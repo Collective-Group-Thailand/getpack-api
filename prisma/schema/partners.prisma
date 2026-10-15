@@ -481,6 +481,12 @@ model Factory {
   erpGlBankStatementLines ErpGlBankStatementLine[] @relation("ErpGlBankStatementLineFactory")
   erpGlTaxFilings         ErpGlTaxFiling[]         @relation("ErpGlTaxFilingFactory")
 
+
+  // --- Sales agents D-416 (generated back-relations)
+  salesAgentLink           SalesAgentFactoryLink? @relation("SalesAgentFactoryLinkFactory")
+  salesAgentLeadsConverted SalesAgentLead[]       @relation("SalesAgentLeadConvertedFactory")
+  // --- end Sales agents
+
   @@unique([taxId, branchCode], map: "ux_factories__tax_id__branch_code")
   @@index([status], map: "ix_factories__status")
   @@index([calendarId], map: "ix_factories__calendar_id")
@@ -659,6 +665,8 @@ model AgreementTemplate {
   publicId    String   @unique(map: "ux_agreement_templates__public_id") @default(dbgenerated("uuidv7()")) @map("public_id") @db.Uuid
   /// e.g. `partner_agreement`, `price_data_confidentiality`.
   key         String   @unique(map: "ux_agreement_templates__key")
+  /// D-416: who accepts it — factories (onboarding step) or sales agents (application).
+  party       AgreementParty @default(factory)
   name        String
   description String?
   createdAt   DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
@@ -699,6 +707,11 @@ model AgreementTemplateVersion {
   acceptances     AgreementAcceptance[]
   createdBy       User?                 @relation("AgreementTemplateVersionCreatedBy", fields: [createdById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_agreement_template_versions__created_by")
   decidedBy       User?                 @relation("AgreementTemplateVersionDecidedBy", fields: [decidedById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_agreement_template_versions__decided_by")
+
+
+  // --- Sales agents D-416 (generated back-relations)
+  salesAgentApplications SalesAgentApplication[] @relation("SalesAgentApplicationAgreement")
+  // --- end Sales agents
 
   @@unique([templateId, versionNo], map: "ux_agreement_template_versions__template_id__version_no")
   @@index([templateId, effectiveFrom(sort: Desc), versionNo(sort: Desc)], map: "ix_agreement_template_versions__resolution", where: raw("(status = 'approved'::config_version_status)"))

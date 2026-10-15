@@ -1,4 +1,5 @@
 import { ADVISORY_ADMIN_CONTROLLERS } from '@modules/advisory/advisory.registry';
+import { AGENTS_ADMIN_CONTROLLERS } from '@modules/agents/agents.registry';
 import { ANALYTICS_ADMIN_CONTROLLERS } from '@modules/analytics/analytics.registry';
 import { ARTWORK_ADMIN_CONTROLLERS } from '@modules/artwork/artwork.registry';
 import { AdminAssistantController } from '@modules/assistant/assistant.controller';
@@ -127,6 +128,7 @@ import { SettingsAdminModule } from '@platform/settings/settings-admin.module';
     ...PAYMENT_SCHEDULES_ADMIN_CONTROLLERS,
     ...PROMOTIONS_ADMIN_CONTROLLERS,
     ...LOYALTY_ADMIN_CONTROLLERS,
+    ...AGENTS_ADMIN_CONTROLLERS,
     ...COMPANIES_ADMIN_CONTROLLERS,
     ...DISCOUNT_MEMOS_ADMIN_CONTROLLERS,
     ...PAYMENTS_ADMIN_CONTROLLERS,

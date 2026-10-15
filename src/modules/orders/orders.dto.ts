@@ -63,7 +63,7 @@ export const ORDER_LINE_TYPES = [
   'service',
   'extra_revision',
 ] as const;
-export const WHT_CATEGORIES = ['hire_of_work', 'transport', 'service', 'none'] as const;
+export const WHT_CATEGORIES = ['hire_of_work', 'transport', 'service', 'none', 'commission'] as const;
 
 export const ORDER_IDS = {
   group: '0192f3a0-7c1e-7d2a-9b1f-0000000d0001',

@@ -44,6 +44,10 @@ export const ROLES: readonly RoleDefinition[] = [
     nameTh: 'ผู้บริหารระดับสูง',
     nameEn: 'C-Level',
     permissions: [
+      'agents.read',
+      'agents.manage',
+      'agent_plans.manage',
+      'agent_plans.approve',
       'guarantee_policies.read',
       'reports.export',
       'reports.schedule',
@@ -89,6 +93,8 @@ export const ROLES: readonly RoleDefinition[] = [
     nameTh: 'รองประธาน',
     nameEn: 'VP',
     permissions: [
+      'agents.read',
+      'agent_plans.approve',
       'reports.export',
       'reports.schedule',
       'analytics.read',
@@ -113,6 +119,7 @@ export const ROLES: readonly RoleDefinition[] = [
     nameTh: 'ผู้อำนวยการ',
     nameEn: 'Director',
     permissions: [
+      'agents.read',
       ...APPROVER,
       'reports.export',
       'reports.schedule',
@@ -133,6 +140,8 @@ export const ROLES: readonly RoleDefinition[] = [
     nameTh: 'ผู้ดูแลระบบ',
     nameEn: 'Admin',
     permissions: [
+      'agents.read',
+      'agents.manage',
       'studio_catalog.manage',
       'guarantee_policies.read',
       'ops.read',
@@ -372,6 +381,7 @@ export const ROLES: readonly RoleDefinition[] = [
     nameTh: 'ฝ่ายการเงิน',
     nameEn: 'Finance',
     permissions: [
+      'agents.read',
       'reports.export',
       'reports.schedule',
       'receivables.read',
@@ -429,6 +439,9 @@ export const ROLES: readonly RoleDefinition[] = [
     nameTh: 'ผู้จัดการฝ่ายการเงิน',
     nameEn: 'Finance Manager',
     permissions: [
+      'agents.read',
+      'agent_commissions.adjust',
+      'agent_statements.approve',
       'reports.export',
       'reports.schedule',
       'receivables.read',
@@ -545,12 +558,34 @@ export const ROLES: readonly RoleDefinition[] = [
     ],
   },
   {
+    key: 'sales_manager',
+    audience: 'staff',
+    scopeType: 'platform',
+    nameTh: 'ผู้จัดการฝ่ายขาย',
+    nameEn: 'Sales Manager',
+    // D-423: runs the agent programme — applications, agents, links, leads and the plans it drafts.
+    permissions: [
+      ...EVERY_STAFF_MEMBER,
+      'settings.read',
+      'reports.export',
+      'analytics.read',
+      'customers.read',
+      'companies.read',
+      'partners.read',
+      'orders.read',
+      'agents.read',
+      'agents.manage',
+      'agent_plans.manage',
+    ],
+  },
+  {
     key: 'partner_manager',
     audience: 'staff',
     scopeType: 'platform',
     nameTh: 'ผู้จัดการพันธมิตร',
     nameEn: 'Partner Manager',
     permissions: [
+      'agents.read',
       'reports.export',
       'reports.schedule',
       'analytics.read',
@@ -999,5 +1034,15 @@ export const ROLES: readonly RoleDefinition[] = [
     nameTh: 'ฝ่ายบัญชีบริษัท',
     nameEn: 'Accountant',
     permissions: ['company_profile.read', 'company_documents.read'],
+  },
+
+  // --- Sales agent (D-416): a customer account with an approved agent profile
+  {
+    key: 'sales_agent',
+    audience: 'customer',
+    scopeType: 'platform',
+    nameTh: 'ตัวแทนขาย',
+    nameEn: 'Sales agent',
+    permissions: ['agent.self'],
   },
 ];

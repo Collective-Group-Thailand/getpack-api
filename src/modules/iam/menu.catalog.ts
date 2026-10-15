@@ -57,6 +57,8 @@ export const ADMIN_MENU: readonly MenuEntry[] = [
   { key: 'customers', path: '/admin/customers', permission: 'customers.read' },
   { key: 'companies', path: '/admin/companies', permission: 'companies.read' },
   { key: 'discount_memos', path: '/admin/discount-memos', permission: 'discount_memos.read' },
+  // D-423: the sales agent programme — applications, agents, leads, commission, statements, plans.
+  { key: 'agents', path: '/admin/agents', permission: 'agents.read' },
   {
     key: 'finance',
     path: '/admin/finance',

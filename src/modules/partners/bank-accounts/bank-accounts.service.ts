@@ -113,6 +113,20 @@ export class BankAccountsService {
     });
   }
 
+  /**
+   * The same proposal inside the caller's transaction, for a vendor the caller has just created (a sales
+   * agent approved with its bank account, D-416). Same dual approval, verification call and SoD.
+   */
+  async proposeForVendorIn(tx: Tx, actor: UserActor, vendorId: bigint, input: ProposeBankAccountDto) {
+    const vendor = await tx.vendor.findUnique({ where: { id: vendorId } });
+    if (!vendor || vendor.kind === 'factory') throw new DomainException('http.not_found');
+    return this.proposeIn(tx, actor, vendor.id, input, {
+      factory: null,
+      factoryId: null,
+      factoryPublicId: null,
+    });
+  }
+
   async listForVendor(vendorPublicId: string): Promise<BankAccountDto[]> {
     const vendor = await this.prisma.vendor.findUnique({ where: { publicId: vendorPublicId } });
     if (!vendor) throw new DomainException('http.not_found');

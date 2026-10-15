@@ -1,4 +1,5 @@
 import { ADVISORY_STORE_CONTROLLERS } from '@modules/advisory/advisory.registry';
+import { AGENTS_STORE_CONTROLLERS } from '@modules/agents/agents.registry';
 import { ANALYTICS_STORE_CONTROLLERS } from '@modules/analytics/analytics.registry';
 import { ARTWORK_STORE_CONTROLLERS } from '@modules/artwork/artwork.registry';
 import { StoreAssistantController } from '@modules/assistant/assistant.controller';
@@ -95,6 +96,7 @@ import { RealtimeModule } from '@platform/realtime/realtime.module';
     ...PAYMENT_SCHEDULES_STORE_CONTROLLERS,
     ...PROMOTIONS_STORE_CONTROLLERS,
     ...LOYALTY_STORE_CONTROLLERS,
+    ...AGENTS_STORE_CONTROLLERS,
     ...COMPANIES_STORE_CONTROLLERS,
     ...PAYMENTS_STORE_CONTROLLERS,
     ...RECEIVABLES_STORE_CONTROLLERS,

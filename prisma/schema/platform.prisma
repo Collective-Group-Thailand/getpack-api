@@ -437,6 +437,11 @@ model Entity {
 
   samples Sample[] @relation("SampleEntity")
 
+
+  // --- Sales agents D-416 (generated back-relations)
+  salesAgentStatements SalesAgentStatement[] @relation("SalesAgentStatementEntity")
+  // --- end Sales agents
+
   @@unique([isDefault], map: "ux_entities__is_default", where: raw("is_default"))
   @@map("entities")
 }
@@ -936,6 +941,12 @@ model FileObject {
   erpSettingsLogos          ErpFactorySettings[]  @relation("ErpFactorySettingsLogo")
 
   erpQualityCheckPdf ErpQualityCheck[] @relation("ErpQualityCheckPdf")
+
+
+  // --- Sales agents D-416 (generated back-relations)
+  salesAgentApplicationIdDocuments SalesAgentApplication[] @relation("SalesAgentApplicationIdDocument")
+  salesAgentApplicationBankBooks   SalesAgentApplication[] @relation("SalesAgentApplicationBankBook")
+  // --- end Sales agents
 
   @@index([sha256], map: "ix_file_objects__sha256")
   @@index([uploadStatus, expiresAt], map: "ix_file_objects__upload_status__expires_at")

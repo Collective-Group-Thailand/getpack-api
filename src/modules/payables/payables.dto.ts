@@ -31,14 +31,14 @@ const BRANCH = /^\d{5}$/;
 export const PO_KINDS = ['production', 'mockup', 'reproduction'] as const;
 export const PO_STATUSES = ['issued', 'accepted', 'cancelled', 'received', 'closed'] as const;
 export const PO_LINE_TYPES = ['production', 'shipping', 'mockup', 'design', 'reproduction'] as const;
-export const WHT_CATEGORIES = ['hire_of_work', 'transport', 'service', 'none'] as const;
+export const WHT_CATEGORIES = ['hire_of_work', 'transport', 'service', 'none', 'commission'] as const;
 export const BS_STATUSES = ['generated', 'sent', 'confirmed', 'disputed', 'superseded'] as const;
 export const VI_STATUSES = ['recorded', 'validated', 'rejected', 'void'] as const;
 export const INPUT_VAT_STATUSES = ['claimable', 'pending_document', 'not_claimable'] as const;
 export const VI_SOURCES = ['e_tax', 'pdf_upload', 'manual'] as const;
 export const PAYABLE_SOURCES = ['advance', 'goods_receipt', 'vendor_invoice', 'retention'] as const;
 export const PAYABLE_STATUSES = ['open', 'eligible', 'in_run', 'paid', 'cancelled'] as const;
-export const VENDOR_KINDS = ['factory', 'carrier', 'freelancer', 'service', 'other'] as const;
+export const VENDOR_KINDS = ['factory', 'carrier', 'freelancer', 'service', 'other', 'sales_agent'] as const;
 export const JURISTIC_TYPES = ['company', 'partnership', 'individual'] as const;
 
 export const AP_IDS = {

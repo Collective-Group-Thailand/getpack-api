@@ -61,6 +61,7 @@ export const TAX_CODES = [
   'wht_receivable',
   'wht_pnd3',
   'wht_pnd53',
+  'wht_pnd1',
 ] as const;
 export const PERIOD_STATUSES = ['open', 'soft_closed', 'closed', 'locked'] as const;
 export const ACCOUNT_CHANGE_KINDS = ['create', 'update', 'deactivate', 'reactivate'] as const;

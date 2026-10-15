@@ -306,6 +306,22 @@ export const SETTINGS: readonly SettingSeed[] = [
     description: 'D-136 referral rewards and monthly cap',
     decisions: ['D-136'],
   },
+  {
+    key: 'agents.rules',
+    valueType: 'json',
+    value: {
+      linkCookieDays: 90,
+      newCustomersOnly: true,
+      leadProtectionDays: 60,
+      maxOpenLeads: 50,
+      paymentTermsDays: 15,
+    },
+    description:
+      'D-417 / D-420 sales agent programme: days the web keeps an agent link, attribution of new customers only, days a registered lead is protected, open leads per agent, payment terms of commission bills (proposed)',
+    decisions: ['D-417', 'D-420'],
+    confirmation: 'proposed',
+    ownerRole: 'sales_manager',
+  },
 
   // --- B2B (D-121, D-122)
   {
@@ -447,6 +463,7 @@ export const SETTINGS: readonly SettingSeed[] = [
       input_vat: ['1241'],
       wht_pnd3: ['2232'],
       wht_pnd53: ['2231'],
+      wht_pnd1: ['2233'],
       wht_receivable: ['1230'],
     },
     description:

@@ -8,6 +8,8 @@ enum VendorKind {
   freelancer
   service
   other
+  /// D-416: a freelance sales agent paid commission.
+  sales_agent
 
   @@map("vendor_kind")
 }
@@ -25,6 +27,8 @@ enum WhtCategory {
   transport
   service
   none
+  /// D-421: commission paid to an individual (s.40(2), ภ.ง.ด.1).
+  commission
 
   @@map("wht_category")
 }
@@ -85,6 +89,11 @@ model Vendor {
   payoutItems       PayoutItem[]       @relation("PayoutItemVendor")
   whtCertificates   WhtCertificate[]   @relation("WhtCertificateVendor")
   // --- end Finance B5.3
+
+
+  // --- Sales agents D-416 (generated back-relations)
+  salesAgent SalesAgent? @relation("SalesAgentVendor")
+  // --- end Sales agents
 
   @@index([taxId, branchCode], map: "ix_vendors__tax_id__branch_code")
   @@index([subdistrictId], map: "ix_vendors__subdistrict_id")
@@ -273,6 +282,8 @@ enum TaxCode {
   wht_receivable
   wht_pnd3
   wht_pnd53
+  /// D-421
+  wht_pnd1
 
   @@map("tax_code")
 }
@@ -1413,6 +1424,8 @@ enum PayoutItemStatus {
 enum WhtForm {
   pnd3
   pnd53
+  /// D-421: s.40(2) commission to individuals.
+  pnd1
 
   @@map("wht_form")
 }
@@ -1732,6 +1745,11 @@ model VendorInvoice {
   payableItems     PayableItem[]
   fixedAssets      FixedAsset[]
 
+
+  // --- Sales agents D-416 (generated back-relations)
+  salesAgentStatement SalesAgentStatement? @relation("SalesAgentStatementVendorInvoice")
+  // --- end Sales agents
+
   @@unique([vendorId, vendorInvoiceNo], map: "ux_vendor_invoices__vendor_id__vendor_invoice_no")
   @@index([billingStatementId], map: "ix_vendor_invoices__billing_statement_id")
   @@index([entityId, invoiceDate], map: "ix_vendor_invoices__entity_id__invoice_date")
@@ -1781,6 +1799,8 @@ model PayableItem {
   whtBaseHire      Decimal       @default(0) @map("wht_base_hire") @db.Decimal(14, 2)
   whtBaseTransport Decimal       @default(0) @map("wht_base_transport") @db.Decimal(14, 2)
   whtBaseService   Decimal       @default(0) @map("wht_base_service") @db.Decimal(14, 2)
+  /// D-421: commission to an individual (s.40(2)).
+  whtBaseCommission Decimal      @default(0) @map("wht_base_commission") @db.Decimal(14, 2)
   retentionPct     Decimal       @default(0) @map("retention_pct") @db.Decimal(7, 4)
   eligibleAt       DateTime?     @map("eligible_at") @db.Timestamptz(6)
   status           PayableStatus @default(open)
@@ -2134,6 +2154,8 @@ enum TaxReportKind {
   pnd3
   pnd53
   wht_issued_register
+  /// D-421
+  pnd1
   wht_received_register
 
   @@map("tax_report_kind")

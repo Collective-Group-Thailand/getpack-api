@@ -25,6 +25,7 @@ const TEAM_OF: Record<string, string> = {
   logistics: 'logistics',
   partner_manager: 'partner',
   marketing: 'marketing',
+  sales_manager: 'sales',
   superadmin: 'management',
   c_level: 'management',
   vp: 'management',

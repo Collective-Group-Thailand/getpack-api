@@ -7,6 +7,8 @@ export const WHT_RATE_CODE = {
   hire_of_work: 'wht_hire_of_work',
   transport: 'wht_transport',
   service: 'wht_service',
+  /** D-421: commission to individuals, s.40(2). */
+  commission: 'wht_commission',
 } as const;
 
 /**

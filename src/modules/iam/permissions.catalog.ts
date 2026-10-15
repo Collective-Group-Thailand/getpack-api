@@ -1027,13 +1027,15 @@ export const PERMISSIONS = [
   {
     key: 'factory_sales.manage',
     audience: 'partner',
-    description: 'Work leads, opportunities and activities; draft, send and revise quotations; enter and confirm sales orders',
+    description:
+      'Work leads, opportunities and activities; draft, send and revise quotations; enter and confirm sales orders',
     decisionRefs: ['D-359', 'D-360', 'D-361', 'D-370'],
   },
   {
     key: 'factory_sales.approve',
     audience: 'partner',
-    description: 'Confirm a sales order over the customer’s credit limit; set sales targets and commission rates',
+    description:
+      'Confirm a sales order over the customer’s credit limit; set sales targets and commission rates',
     decisionRefs: ['D-361', 'D-369', 'D-370'],
   },
   {
@@ -1045,13 +1047,15 @@ export const PERMISSIONS = [
   {
     key: 'factory_receivables.read',
     audience: 'partner',
-    description: 'Read the factory’s invoices, tax invoices, credit / debit notes, receipts, billing notes and receivables aging',
+    description:
+      'Read the factory’s invoices, tax invoices, credit / debit notes, receipts, billing notes and receivables aging',
     decisionRefs: ['D-363', 'D-364', 'D-365', 'D-370'],
   },
   {
     key: 'factory_receivables.manage',
     audience: 'partner',
-    description: 'Issue and void the factory’s invoices / tax invoices and credit / debit notes; record and cancel receipts and refunds; issue billing notes',
+    description:
+      'Issue and void the factory’s invoices / tax invoices and credit / debit notes; record and cancel receipts and refunds; issue billing notes',
     decisionRefs: ['D-363', 'D-364', 'D-365', 'D-370'],
   },
   {
@@ -1105,13 +1109,15 @@ export const PERMISSIONS = [
   {
     key: 'factory_ledger.read',
     audience: 'partner',
-    description: 'Read the factory’s general ledger: chart of accounts, periods, journals, reports, fixed assets, bank',
+    description:
+      'Read the factory’s general ledger: chart of accounts, periods, journals, reports, fixed assets, bank',
     decisionRefs: ['D-385', 'D-396'],
   },
   {
     key: 'factory_ledger.post',
     audience: 'partner',
-    description: 'Draft and submit manual journals, keep recurring journals, match bank lines, run depreciation',
+    description:
+      'Draft and submit manual journals, keep recurring journals, match bank lines, run depreciation',
     decisionRefs: ['D-389', 'D-393', 'D-394', 'D-396'],
   },
   {
@@ -1129,7 +1135,8 @@ export const PERMISSIONS = [
   {
     key: 'factory_ledger.configure',
     audience: 'partner',
-    description: 'Configure the factory’s ledger: settings, chart change and posting-rule proposals, asset categories, bank accounts',
+    description:
+      'Configure the factory’s ledger: settings, chart change and posting-rule proposals, asset categories, bank accounts',
     decisionRefs: ['D-385', 'D-386', 'D-387', 'D-396', 'D-398'],
   },
   {
@@ -1458,6 +1465,54 @@ export const PERMISSIONS = [
     description:
       'Schedule operational reports for staff recipients and see every run of the reports the user may read',
     decisionRefs: ['D-111'],
+  },
+  // --- Sales agent programme (D-416 – D-423)
+  {
+    key: 'agents.read',
+    audience: 'staff',
+    description:
+      'Read sales agents, applications, leads, customer and factory links, commissions and statements',
+    decisionRefs: ['D-416', 'D-423'],
+  },
+  {
+    key: 'agents.manage',
+    audience: 'staff',
+    description:
+      'Approve or reject agent applications, create employee agents, change plans, suspend, reactivate or end agents, assign, transfer or end customer links, release leads and decide held commission',
+    decisionRefs: ['D-416', 'D-417', 'D-423'],
+  },
+  {
+    key: 'agent_commissions.adjust',
+    audience: 'staff',
+    description: 'Add a signed manual commission adjustment with a reason',
+    decisionRefs: ['D-418'],
+  },
+  {
+    key: 'agent_statements.approve',
+    audience: 'staff',
+    description:
+      'Generate, approve or void agent statements; export the payroll file and mark employee statements paid',
+    sensitive: true,
+    decisionRefs: ['D-420'],
+  },
+  {
+    key: 'agent_plans.manage',
+    audience: 'staff',
+    description: 'Create commission plans and draft their versions',
+    decisionRefs: ['D-418'],
+  },
+  {
+    key: 'agent_plans.approve',
+    audience: 'staff',
+    description: 'Approve or reject a commission plan version drafted by someone else',
+    sensitive: true,
+    decisionRefs: ['D-418'],
+  },
+  {
+    key: 'agent.self',
+    audience: 'customer',
+    description: 'Use the agent pages: own link, leads, customers, commission and statements',
+    decisionRefs: ['D-416', 'D-422'],
   },
   // --- B6.3 launch readiness (D-113)
   {

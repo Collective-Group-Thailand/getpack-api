@@ -40,13 +40,20 @@ describe('IAM catalogues (D-140, D-141)', () => {
         'company_buyer',
         'company_approver',
         'company_accountant',
+        // D-423 / D-416: the sales agent programme.
+        'sales_manager',
+        'sales_agent',
       ].sort(),
     );
   });
 
   it('scopes staff to the platform, factory roles to a factory and company roles to a company', () => {
     for (const role of ROLES) {
-      const expected = { staff: 'platform', partner: 'factory', customer: 'company' }[role.audience];
+      // D-416: an agent is a customer account working on its own rows, not a company's.
+      const expected =
+        role.key === 'sales_agent'
+          ? 'platform'
+          : { staff: 'platform', partner: 'factory', customer: 'company' }[role.audience];
       expect([role.key, role.scopeType]).toEqual([role.key, expected]);
     }
   });

@@ -12,6 +12,8 @@ export const REPORT_KINDS = [
   'pnd53',
   'wht_issued_register',
   'wht_received_register',
+  // D-421: withholding on agent commission (s.40(2)).
+  'pnd1',
 ] as const;
 export const REPORT_STATUSES = ['draft', 'final', 'filed'] as const;
 const MONTH = /^\d{4}-(0[1-9]|1[0-2])$/;

@@ -121,6 +121,10 @@ export class AgreementsService {
   ): Promise<AgreementStatusDto[]> {
     const factory = await this.access.factory(actor, factoryPublicId);
     return this.prisma.withTx(async (tx) => {
+      // A factory accepts its own agreements only (D-416: the agent agreement is accepted by agents).
+      const template = await tx.agreementTemplate.findUnique({ where: { key } });
+      if (!template || template.party !== 'factory')
+        throw new DomainException('partners.agreement_not_published');
       const version = await this.inForce(tx, key);
       if (!version) throw new DomainException('partners.agreement_not_published');
       const acceptedAt = new Date();
@@ -180,7 +184,10 @@ export class AgreementsService {
   }
 
   private async statusOf(db: Tx, factoryId: bigint, at: Date): Promise<AgreementStatusDto[]> {
-    const templates = await db.agreementTemplate.findMany({ orderBy: { key: 'asc' } });
+    const templates = await db.agreementTemplate.findMany({
+      where: { party: 'factory' },
+      orderBy: { key: 'asc' },
+    });
     const out: AgreementStatusDto[] = [];
     for (const template of templates) {
       const version = await this.inForce(db, template.key, at);

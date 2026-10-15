@@ -95,6 +95,8 @@ export const TEAMS = [
   { code: 'partner', nameTh: 'ฝ่ายพันธมิตร', nameEn: 'Partner team' },
   { code: 'marketing', nameTh: 'ฝ่ายการตลาด', nameEn: 'Marketing' },
   { code: 'management', nameTh: 'ฝ่ายบริหาร', nameEn: 'Management' },
+  // D-423: runs the sales agent programme.
+  { code: 'sales', nameTh: 'ฝ่ายขาย', nameEn: 'Sales' },
 ] as const;
 
 /**
