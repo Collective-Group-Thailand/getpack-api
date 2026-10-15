@@ -1,4 +1,5 @@
 import { createHash } from 'node:crypto';
+import { type Readable } from 'node:stream';
 
 import { systemActor } from '@common/context/actor';
 import { bytes } from '@common/crypto/hashing';
@@ -19,6 +20,9 @@ const SAMPLE_BYTES = 64 * 1024 * 1024;
 const LEASE_MS = 10 * 60_000;
 /** An attempt that failed (storage hiccup, scanner outage) is retried this soon instead of after the full lease. */
 const RETRY_AFTER_MS = 30_000;
+/** GETs right after `complete`'s HEAD occasionally miss; retried with 1 s, 2 s, 4 s backoff. */
+const READ_RETRIES = 3;
+const READ_RETRY_MS = 1000;
 const THUMBNAIL_WIDTH = 400;
 const IMAGE_TYPES = new Set(['image/png', 'image/jpeg', 'image/webp', 'image/tiff']);
 
@@ -54,7 +58,7 @@ export class FileProcessingJobs {
       const file = await this.prisma.fileObject.findUniqueOrThrow({ where: { id } });
       await this.processOne(file).catch(async (error: unknown) => {
         this.logger.warn(
-          `file ${file.publicId} processing failed: ${error instanceof Error ? error.message : 'error'}`,
+          `file ${file.publicId} (${file.storageKey}) processing failed: ${error instanceof Error ? error.message : 'error'}`,
         );
         // Shorten the lease so the next tick after RETRY_AFTER_MS picks the file up again.
         await this.prisma.fileObject
@@ -138,7 +142,7 @@ export class FileProcessingJobs {
     const hash = createHash('sha256');
     const chunks: Buffer[] = [];
     let kept = 0;
-    for await (const chunk of await this.storage.getStream(key)) {
+    for await (const chunk of await this.open(key)) {
       const buffer = Buffer.isBuffer(chunk) ? chunk : Buffer.from(chunk as Uint8Array);
       hash.update(buffer);
       if (kept < SAMPLE_BYTES) {
@@ -147,6 +151,22 @@ export class FileProcessingJobs {
       }
     }
     return { sha256: bytes(hash.digest()), sample: Buffer.concat(chunks) };
+  }
+
+  /**
+   * Opens the object, retrying a `NoSuchKey` a few times: `complete` has already seen the object
+   * with HEAD, so a miss right after is the store catching up, not a lost upload.
+   */
+  private async open(key: string): Promise<Readable> {
+    for (let attempt = 0; ; attempt++) {
+      try {
+        return await this.storage.getStream(key);
+      } catch (error) {
+        const name = (error as { name?: string }).name;
+        if (name !== 'NoSuchKey' || attempt >= READ_RETRIES) throw error;
+        await new Promise((resolve) => setTimeout(resolve, READ_RETRY_MS * 2 ** attempt));
+      }
+    }
   }
 
   private async metadata(
