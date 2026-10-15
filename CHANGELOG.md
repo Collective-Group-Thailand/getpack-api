@@ -3,6 +3,15 @@
 Contract-facing changes per release. The contract itself is `contract/openapi.json`; mappings for `packio-web` are in
 `docs/contract-requests-triage.md`.
 
+## v0.61.0 — Style library imports from the admin; menu entries
+
+Decision D-411. Additive. `admin.styleImports.preview` (`POST /v1/admin/style-imports/actions/preview`) plans an uploaded
+JSON master file or recipe bundle (file purpose `import` now accepts `application/json`); `admin.styleImports.create`
+(`POST /v1/admin/style-imports`) confirms it with the previewed `checksum` (`409 styles.import_stale` otherwise,
+`422 styles.import_unreadable` for a file that is not one). `GET /v1/admin/me` `menu[]` gains `style_library`,
+`structural_requests`, `style_intakes`, `samples`, `inbox`, `cms` and `assistant`, each behind the permission that
+opens the screen.
+
 ## v0.60.0 — Every variant as a card; use cases per style
 
 Decision D-410. Additive. New `store.styles.listVariants` (`GET /v1/store/styles/variants`, public): every shown variant
