@@ -143,6 +143,7 @@ value stops the process before it serves anything.
 | `AWS_REGION` | the deployment region (default `ap-southeast-1`) | |
 | `AWS_ENDPOINT_URL` | unset | LocalStack in development only |
 | `S3_BUCKET` | the private files bucket | |
+| `S3_KEY_PREFIX` | unset | A folder inside a bucket shared with other apps, path segments ending in `/` (e.g. `packio/`); every object key starts with it. Unset writes at the bucket root |
 | `S3_FORCE_PATH_STYLE` | `false` | `true` for LocalStack only |
 | `THROTTLE_TTL_SECONDS` / `THROTTLE_LIMIT` | `60` / `300` | per-IP request budget; sign-in endpoints have their own `AUTH_LOGIN_THROTTLE_LIMIT` |
 | `LOG_LEVEL` | `info` | `debug` only for a time-boxed investigation (personal data stays redacted) |
