@@ -168,6 +168,15 @@ export class StyleCardDto {
       'The options its shown variants offer, `axis:value` (never `none`): closures first, then features — the chips on a card',
   })
   options!: string[];
+
+  @ApiProperty({
+    type: String,
+    nullable: true,
+    example: null,
+    description:
+      "A rendered thumbnail of the style (its first variant's); null before thumbnails are rendered",
+  })
+  thumbnailUrl!: string | null;
 }
 
 export class StyleFacetValueDto {
@@ -415,6 +424,7 @@ export const CARD_EXAMPLE: StyleCardDto = {
   referenceCode: null,
   favourite: null,
   options: ['tuck_bottom:crash_lock', 'window:front_window'],
+  thumbnailUrl: null,
 };
 
 export const LIST_EXAMPLE: StyleListDto = {

@@ -155,7 +155,7 @@ export class StylesStoreService {
       page.map((r) => r.id),
     );
     return {
-      data: page.map((r) => card(r, favourites)),
+      data: await Promise.all(page.map((r) => this.card(r, favourites))),
       facets: facetsOf(matched),
       meta: {
         nextCursor:
@@ -331,7 +331,9 @@ export class StylesStoreService {
       orderBy: { createdAt: 'desc' },
     });
     const ids = new Set(rows.map((r) => r.baseId));
-    return rows.map((r) => ({ style: card(r.base, ids), addedAt: toBangkokIso(r.createdAt) }));
+    return Promise.all(
+      rows.map(async (r) => ({ style: await this.card(r.base, ids), addedAt: toBangkokIso(r.createdAt) })),
+    );
   }
 
   async addFavourite(userId: bigint, code: string): Promise<void> {
@@ -390,7 +392,7 @@ export class StylesStoreService {
           ? { minDays: Math.min(...hintDays), maxDays: Math.max(...hintDays) }
           : null;
     return {
-      ...card(row, favourites),
+      ...(await this.card(row, favourites)),
       construction: row.construction,
       productTypeCode: row.productType?.code ?? null,
       descriptionTh: row.descriptionTh,
@@ -415,6 +417,17 @@ export class StylesStoreService {
         })),
       ),
     };
+  }
+
+  /** A style's card with its thumbnail (signed URL): its own, else its first variant's that has one. */
+  private async card(r: LibraryRow, favourites: Set<bigint>): Promise<StyleCardDto> {
+    const thumb =
+      thumbnailOf(r, null, 'thumbnail_3d') ??
+      thumbnailOf(r, null, 'thumbnail_2d') ??
+      r.assets.find((a) => a.kind === 'thumbnail_3d') ??
+      r.assets.find((a) => a.kind === 'thumbnail_2d') ??
+      null;
+    return { ...card(r, favourites), thumbnailUrl: thumb ? await this.assets.url(thumb) : null };
   }
 
   /** Never fails the search (analytics, D-274). */
@@ -490,7 +503,7 @@ function productHints(r: LibraryRow) {
     .sort((a, b) => a.unitPrice.comparedTo(b.unitPrice) || a.slug.localeCompare(b.slug));
 }
 
-function card(r: LibraryRow, favourites: Set<bigint>): StyleCardDto {
+function card(r: LibraryRow, favourites: Set<bigint>): Omit<StyleCardDto, 'thumbnailUrl'> {
   const hint = productHints(r)[0];
   return {
     code: r.code,

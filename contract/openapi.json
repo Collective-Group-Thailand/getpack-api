@@ -99743,6 +99743,14 @@
             ],
             "description": "Null without a price hint (D-220)"
           },
+          "thumbnailUrl": {
+            "description": "A rendered thumbnail of the style (its first variant's); null before thumbnails are rendered",
+            "example": null,
+            "type": [
+              "string",
+              "null"
+            ]
+          },
           "variantCount": {
             "description": "Publishable variants",
             "example": 228,
@@ -99762,7 +99770,8 @@
           "startingPrice",
           "referenceCode",
           "favourite",
-          "options"
+          "options",
+          "thumbnailUrl"
         ],
         "type": "object"
       },
@@ -99933,6 +99942,14 @@
             ],
             "description": "Null without a price hint (D-220)"
           },
+          "thumbnailUrl": {
+            "description": "A rendered thumbnail of the style (its first variant's); null before thumbnails are rendered",
+            "example": null,
+            "type": [
+              "string",
+              "null"
+            ]
+          },
           "useCases": {
             "example": [
               "cosmetics"
@@ -99969,6 +99986,7 @@
           "referenceCode",
           "favourite",
           "options",
+          "thumbnailUrl",
           "construction",
           "productTypeCode",
           "descriptionTh",
@@ -535372,6 +535390,7 @@
                         "quantity": 1000,
                         "unitPrice": "4.85"
                       },
+                      "thumbnailUrl": null,
                       "variantCount": 183
                     }
                   }
@@ -535967,6 +535986,7 @@
                         "quantity": 1000,
                         "unitPrice": "4.85"
                       },
+                      "thumbnailUrl": null,
                       "variantCount": 183
                     }
                   ],
@@ -536225,6 +536245,7 @@
                       "quantity": 1000,
                       "unitPrice": "4.85"
                     },
+                    "thumbnailUrl": null,
                     "useCases": [],
                     "variantCount": 183,
                     "variants": [
@@ -536788,6 +536809,7 @@
                     "quantity": 1000,
                     "unitPrice": "4.85"
                   },
+                  "thumbnailUrl": null,
                   "useCases": [],
                   "variantCount": 183,
                   "variants": [
