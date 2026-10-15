@@ -1,7 +1,10 @@
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 
+import { type FakeObjectStorage } from '@integrations/s3/fake-object-storage';
+import { OBJECT_STORAGE } from '@integrations/s3/object-storage.port';
 import { envelopeFromRow } from '@platform/domain-events/domain-event';
+import { FileProcessingJobs } from '@platform/files/file-processing.jobs';
 import request from 'supertest';
 
 import { type UserActor } from '../../src/common/context/actor';
@@ -116,6 +119,72 @@ describe('style library (e2e, U3.B1)', () => {
     const plan = await imports.plan('master', 'm.json', reformatted);
     expect(plan).toMatchObject({ noop: true, noopReason: 'no_changes' });
     expect(await imports.apply(actors['admin']!, plan)).toBeNull();
+  });
+
+  it('imports from the admin: an uploaded file is previewed, then confirmed only as previewed (D-411)', async () => {
+    const upload = async (content: string) => {
+      const body = Buffer.from(content, 'utf8');
+      const presigned = await as(ctx, tokens['admin']!)
+        .post('/v1/admin/files/presign', {
+          purpose: 'import',
+          fileName: 'style-library-master.json',
+          mimeType: 'application/json',
+          sizeBytes: body.length,
+        })
+        .expect(201);
+      const row = await ctx.prisma.fileObject.findUniqueOrThrow({
+        where: { publicId: presigned.body.fileId as string },
+      });
+      ctx.app.get<FakeObjectStorage>(OBJECT_STORAGE).putDirect(row.storageKey, body, 'application/json');
+      await as(ctx, tokens['admin']!)
+        .post(`/v1/admin/files/${presigned.body.fileId}/actions/complete`, {})
+        .expect(200);
+      await ctx.app.get(FileProcessingJobs).processUploaded();
+      return presigned.body.fileId as string;
+    };
+    const preview = (fileId: string, token = tokens['admin']!) =>
+      as(ctx, token).post('/v1/admin/style-imports/actions/preview', { kind: 'master', fileId });
+
+    const same = await upload(JSON.stringify(JSON.parse(master), null, 1));
+    expect((await preview(same).expect(200)).body).toMatchObject({ noop: true, noopReason: 'no_changes' });
+    await preview(same, tokens['cs']).expect(403);
+
+    const renamed = JSON.parse(master) as { styles: { code: string; name_en: string }[] };
+    renamed.styles.find((s) => s.code === 'PK-SP-26')!.name_en = 'Pentagonal carton (admin import)';
+    const fileId = await upload(JSON.stringify(renamed));
+    const plan = (await preview(fileId).expect(200)).body as { checksum: string; direct: { code: string }[] };
+    expect(plan.direct.map((c) => c.code)).toEqual(['PK-SP-26']);
+    expect(await ctx.prisma.styleBase.findUniqueOrThrow({ where: { code: 'PK-SP-26' } })).toMatchObject({
+      nameEn: 'Pentagonal carton',
+    });
+    const stale = await as(ctx, tokens['admin']!)
+      .post('/v1/admin/style-imports', { kind: 'master', fileId, checksum: '0'.repeat(64) })
+      .expect(409);
+    expect(stale.body.code).toBe('styles.import_stale');
+    const done = await as(ctx, tokens['admin']!)
+      .post('/v1/admin/style-imports', { kind: 'master', fileId, checksum: plan.checksum })
+      .expect(201);
+    expect(done.body.run).toMatchObject({ status: 'applied', fileName: 'style-library-master.json' });
+    expect((await base('PK-SP-26')).nameEn).toBe('Pentagonal carton (admin import)');
+
+    // The library's own file again puts the name back; JSON that is not a master file is refused.
+    const back = await upload(JSON.stringify(JSON.parse(master), null, 3));
+    const again = (await preview(back).expect(200)).body as { checksum: string };
+    await as(ctx, tokens['admin']!)
+      .post('/v1/admin/style-imports', { kind: 'master', fileId: back, checksum: again.checksum })
+      .expect(201);
+    expect((await base('PK-SP-26')).nameEn).toBe('Pentagonal carton');
+    const junk = await preview(await upload('{"styles": 3}')).expect(422);
+    expect(junk.body.code).toBe('styles.import_unreadable');
+  });
+
+  it('lists the style library and its neighbours in the admin menu of those who may open them (D-411)', async () => {
+    const menu = async (role: string) =>
+      ((await as(ctx, tokens[role]!).get('/v1/admin/me').expect(200)).body.menu as { key: string }[]).map(
+        (e) => e.key,
+      );
+    expect(await menu('prepress')).toEqual(expect.arrayContaining(['style_library', 'style_intakes']));
+    expect(await menu('marketing')).toEqual(expect.arrayContaining(['style_library', 'cms']));
   });
 
   it('takes recipes from a bundle; Prepress approves one, never the person who imported it (D-243)', async () => {

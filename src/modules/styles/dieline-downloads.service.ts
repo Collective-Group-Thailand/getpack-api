@@ -27,7 +27,6 @@ import { FilesService } from '@platform/files/files.service';
 import { SettingsService } from '@platform/settings/settings.service';
 
 import { type DielineDownloadFormat } from './dieline-downloads.dto';
-
 import { StyleDielinesService } from './style-dielines.service';
 
 export interface DownloadInput {
@@ -63,7 +62,12 @@ const MIME: Record<DielineDownloadFormat, string> = {
 };
 
 /** The engine format behind a download format: `.ai` is the designer PDF under Illustrator's name. */
-const ENGINE_FORMAT: Record<DielineDownloadFormat, DrawingFormat> = { svg: 'svg', dxf: 'dxf', pdf: 'pdf', ai: 'pdf' };
+const ENGINE_FORMAT: Record<DielineDownloadFormat, DrawingFormat> = {
+  svg: 'svg',
+  dxf: 'dxf',
+  pdf: 'pdf',
+  ai: 'pdf',
+};
 
 const VARIANT_INCLUDE = {
   base: {

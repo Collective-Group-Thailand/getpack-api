@@ -45,7 +45,12 @@ export function publishReasons(g: GateInput): PublishReason[] {
   return reasons;
 }
 
-export const PRICE_REASONS = ['no_calculator', 'calculator_not_signed', 'option_not_priced', 'not_makeable'] as const;
+export const PRICE_REASONS = [
+  'no_calculator',
+  'calculator_not_signed',
+  'option_not_priced',
+  'not_makeable',
+] as const;
 export type PriceReason = (typeof PRICE_REASONS)[number];
 
 export interface PriceInput {
@@ -98,7 +103,10 @@ export function optionKeyMap(options: Record<string, unknown>): Record<string, s
  * D-407: whether one of the engine variants is exactly this variant — every option the same value (an axis the engine
  * variant does not carry never matches), as the storefront's 3D view and the drawing service pick it.
  */
-export function drawableBy(options: Record<string, unknown>, engineVariants: Record<string, string>[]): boolean {
+export function drawableBy(
+  options: Record<string, unknown>,
+  engineVariants: Record<string, string>[],
+): boolean {
   const wanted = Object.entries(optionKeyMap(options));
   return engineVariants.some((axes) => wanted.every(([axis, value]) => axes[axis] === value));
 }

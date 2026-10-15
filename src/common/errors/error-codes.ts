@@ -123,6 +123,8 @@ export const ERROR_CODES = {
   'styles.price_rule_exists': HttpStatus.CONFLICT,
   'styles.price_rule_retired': HttpStatus.CONFLICT,
   'styles.intake_closed': HttpStatus.CONFLICT,
+  'styles.import_unreadable': HttpStatus.UNPROCESSABLE_ENTITY,
+  'styles.import_stale': HttpStatus.CONFLICT,
   'styles.intake_terms_outdated': HttpStatus.CONFLICT,
   'styles.intake_decided': HttpStatus.CONFLICT,
   'specs.unit_not_accepted': HttpStatus.UNPROCESSABLE_ENTITY,

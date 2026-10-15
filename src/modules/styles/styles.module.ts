@@ -7,6 +7,7 @@ import { StyleAssetsService } from './style-assets.service';
 import { StyleCoverageService } from './style-coverage.service';
 import { StyleDielinesService } from './style-dielines.service';
 import { StyleImportService } from './style-import.service';
+import { StyleImportUploadsService } from './style-import-uploads.service';
 import { StyleIntakesService } from './style-intakes.service';
 import { StyleMakeabilityService } from './style-makeability.service';
 import { StylePriceRulesService } from './style-price-rules';
@@ -25,6 +26,7 @@ const SERVICES = [
   StyleMakeabilityService,
   StylePublishingService,
   StyleImportService,
+  StyleImportUploadsService,
   StylesAdminService,
   StylesStoreService,
   ProcessCapabilitiesService,

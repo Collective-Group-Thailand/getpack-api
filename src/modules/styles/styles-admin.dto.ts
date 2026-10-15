@@ -10,6 +10,7 @@ import {
   IsInt,
   IsOptional,
   IsString,
+  IsUUID,
   Matches,
   Max,
   MaxLength,
@@ -33,6 +34,7 @@ export const STYLE_IDS = {
 const TS = '2026-10-03T10:00:00+07:00';
 export const STYLE_STATUSES = ['active', 'retired'] as const;
 export const IMPORT_KINDS = ['master', 'recipes'] as const;
+export const NOOP_REASONS = ['same_checksum', 'no_changes'] as const;
 export const IMPORT_STATUSES = ['applied', 'pending_approval', 'rejected'] as const;
 export const NAME_APPROVER_ROLES = ['marketing', 'prepress'] as const;
 
@@ -508,3 +510,98 @@ export class UpdateStyleDto {
   @Matches(/^[a-z][a-z0-9_]*$/, { each: true })
   useCases?: string[];
 }
+
+/** D-411: a style library file uploaded through the admin (purpose `import`, JSON), previewed or confirmed. */
+export class StyleImportFileDto {
+  @ApiProperty({ enum: IMPORT_KINDS, enumName: 'StyleImportKind', example: 'master' })
+  @IsIn(IMPORT_KINDS)
+  kind!: (typeof IMPORT_KINDS)[number];
+
+  @ApiProperty({
+    format: 'uuid',
+    example: STYLE_IDS.run,
+    description: 'An uploaded file (`purpose: import`, JSON)',
+  })
+  @IsUUID()
+  fileId!: string;
+}
+
+export class ConfirmStyleImportDto extends StyleImportFileDto {
+  @ApiProperty({
+    example: 'b1946ac92492d2347c6235b4d26111840a4c8e12f0e3a1d6c5b2e9f7a8d4c3b2',
+    description:
+      'The `checksum` of the preview being confirmed: a file or library that changed since is refused',
+  })
+  @Matches(/^[0-9a-f]{64}$/)
+  checksum!: string;
+}
+
+export class StyleImportPreviewDto {
+  @ApiProperty({ enum: IMPORT_KINDS, enumName: 'StyleImportKind', example: 'master' })
+  kind!: (typeof IMPORT_KINDS)[number];
+
+  @ApiProperty({ example: 'style-library-master.json' })
+  fileName!: string;
+
+  @ApiProperty({ example: 'b1946ac9…', description: 'sha256 of the file (hex) — confirm with it' })
+  checksum!: string;
+
+  @ApiProperty({ example: false, description: 'Nothing would change (the same file, or no differences)' })
+  noop!: boolean;
+
+  @ApiProperty({
+    enum: NOOP_REASONS,
+    enumName: 'StyleImportNoopReason',
+    nullable: true,
+    example: null,
+  })
+  noopReason!: 'same_checksum' | 'no_changes' | null;
+
+  @ApiProperty({
+    type: 'object',
+    additionalProperties: { type: 'integer' },
+    example: { basesCreated: 0, basesUpdated: 122, basesRetired: 1, variantsCreated: 0 },
+  })
+  summary!: Record<string, number>;
+
+  @ApiProperty({
+    type: 'array',
+    items: { type: 'object', additionalProperties: true },
+    description: 'Changes applied at once (unpublished rows)',
+    example: [{ op: 'base.create', code: 'PK-SP-26', variants: 1 }],
+  })
+  direct!: Record<string, unknown>[];
+
+  @ApiProperty({
+    type: 'array',
+    items: { type: 'object', additionalProperties: true },
+    description:
+      'Changes to published rows, held for the `style_library_change` approval (Prepress, then Marketing)',
+    example: [{ op: 'base.retire', code: 'PK-SP-25' }],
+  })
+  pending!: Record<string, unknown>[];
+}
+
+export class StyleImportResultDto {
+  @ApiProperty({ type: StyleImportRunDto, nullable: true, description: 'The run; null when nothing changed' })
+  run!: StyleImportRunDto | null;
+
+  @ApiProperty({
+    enum: NOOP_REASONS,
+    enumName: 'StyleImportNoopReason',
+    nullable: true,
+    example: null,
+  })
+  noopReason!: 'same_checksum' | 'no_changes' | null;
+}
+
+export const IMPORT_PREVIEW_EXAMPLE: StyleImportPreviewDto = {
+  kind: 'master',
+  fileName: 'style-library-master.json',
+  checksum: 'b1946ac92492d2347c6235b4d26111840a4c8e12f0e3a1d6c5b2e9f7a8d4c3b2',
+  noop: false,
+  noopReason: null,
+  summary: { basesCreated: 0, basesUpdated: 122, basesRetired: 1, variantsCreated: 0 },
+  direct: [],
+  pending: [{ op: 'base.retire', code: 'PK-SP-25' }],
+};

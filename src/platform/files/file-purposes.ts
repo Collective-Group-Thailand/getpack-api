@@ -43,11 +43,15 @@ export const FILE_PURPOSES = {
   },
   /** Accounting and legal documents (tax invoices from factories, agreements). */
   document: { retentionClass: 'financial_record', maxBytes: 50 * MiB, mimeTypes: [...PDF, ...IMAGES] },
-  /** Spreadsheet imports (catalogue, geography — D-005 Excel import tools). */
+  /** Spreadsheet imports (catalogue, geography — D-005 Excel import tools) and style library JSON (D-411). */
   import: {
     retentionClass: 'transient',
     maxBytes: 20 * MiB,
-    mimeTypes: ['application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', 'text/csv'],
+    mimeTypes: [
+      'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+      'text/csv',
+      'application/json',
+    ],
   },
   avatar: { retentionClass: 'standard', maxBytes: 5 * MiB, mimeTypes: IMAGES },
   /** Images, logos, SVGs and fonts placed in an online design (B4.1, U-B0.1). */

@@ -4401,6 +4401,28 @@
           "type": "https://errors.packio/styles.capability_decided"
         }
       },
+      "problem.styles.import_stale": {
+        "summary": "styles.import_stale",
+        "value": {
+          "code": "styles.import_stale",
+          "detail": "ผลการนำเข้าไม่ตรงกับที่ดูตัวอย่างไว้ (ไฟล์หรือคลังเปลี่ยนไป) กรุณาดูตัวอย่างอีกครั้ง",
+          "requestId": "6f1c2d8e-2c7b-4d0e-9d1c-3f1a2b3c4d5e",
+          "status": 409,
+          "title": "ไฟล์เปลี่ยนไปจากที่ดูตัวอย่าง",
+          "type": "https://errors.packio/styles.import_stale"
+        }
+      },
+      "problem.styles.import_unreadable": {
+        "summary": "styles.import_unreadable",
+        "value": {
+          "code": "styles.import_unreadable",
+          "detail": "ไฟล์ต้องเป็น JSON ของ master file หรือ recipe bundle ตามรูปแบบของคลังแบบกล่อง",
+          "requestId": "6f1c2d8e-2c7b-4d0e-9d1c-3f1a2b3c4d5e",
+          "status": 422,
+          "title": "ไฟล์นำเข้าไม่ถูกต้อง",
+          "type": "https://errors.packio/styles.import_unreadable"
+        }
+      },
       "problem.styles.intake_closed": {
         "summary": "styles.intake_closed",
         "value": {
@@ -23700,6 +23722,36 @@
             "type": "string"
           }
         },
+        "type": "object"
+      },
+      "ConfirmStyleImportDto": {
+        "properties": {
+          "checksum": {
+            "description": "The `checksum` of the preview being confirmed: a file or library that changed since is refused",
+            "example": "b1946ac92492d2347c6235b4d26111840a4c8e12f0e3a1d6c5b2e9f7a8d4c3b2",
+            "pattern": "^[0-9a-f]{64}$",
+            "type": "string"
+          },
+          "fileId": {
+            "description": "An uploaded file (`purpose: import`, JSON)",
+            "example": "0192f3a0-7c1e-7d2a-9b1f-0000000ae004",
+            "format": "uuid",
+            "type": "string"
+          },
+          "kind": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/StyleImportKind"
+              }
+            ],
+            "example": "master"
+          }
+        },
+        "required": [
+          "kind",
+          "fileId",
+          "checksum"
+        ],
         "type": "object"
       },
       "ConfirmationLineDto": {
@@ -100093,12 +100145,162 @@
         ],
         "type": "object"
       },
+      "StyleImportFileDto": {
+        "properties": {
+          "fileId": {
+            "description": "An uploaded file (`purpose: import`, JSON)",
+            "example": "0192f3a0-7c1e-7d2a-9b1f-0000000ae004",
+            "format": "uuid",
+            "type": "string"
+          },
+          "kind": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/StyleImportKind"
+              }
+            ],
+            "example": "master"
+          }
+        },
+        "required": [
+          "kind",
+          "fileId"
+        ],
+        "type": "object"
+      },
       "StyleImportKind": {
         "enum": [
           "master",
           "recipes"
         ],
         "type": "string"
+      },
+      "StyleImportNoopReason": {
+        "enum": [
+          "same_checksum",
+          "no_changes"
+        ],
+        "type": "string"
+      },
+      "StyleImportPreviewDto": {
+        "properties": {
+          "checksum": {
+            "description": "sha256 of the file (hex) — confirm with it",
+            "example": "b1946ac9…",
+            "type": "string"
+          },
+          "direct": {
+            "description": "Changes applied at once (unpublished rows)",
+            "example": [
+              {
+                "code": "PK-SP-26",
+                "op": "base.create",
+                "variants": 1
+              }
+            ],
+            "items": {
+              "additionalProperties": true,
+              "type": "object"
+            },
+            "type": "array"
+          },
+          "fileName": {
+            "example": "style-library-master.json",
+            "type": "string"
+          },
+          "kind": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/StyleImportKind"
+              }
+            ],
+            "example": "master"
+          },
+          "noop": {
+            "description": "Nothing would change (the same file, or no differences)",
+            "example": false,
+            "type": "boolean"
+          },
+          "noopReason": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/StyleImportNoopReason"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "example": null
+          },
+          "pending": {
+            "description": "Changes to published rows, held for the `style_library_change` approval (Prepress, then Marketing)",
+            "example": [
+              {
+                "code": "PK-SP-25",
+                "op": "base.retire"
+              }
+            ],
+            "items": {
+              "additionalProperties": true,
+              "type": "object"
+            },
+            "type": "array"
+          },
+          "summary": {
+            "additionalProperties": {
+              "type": "integer"
+            },
+            "example": {
+              "basesCreated": 0,
+              "basesRetired": 1,
+              "basesUpdated": 122,
+              "variantsCreated": 0
+            },
+            "type": "object"
+          }
+        },
+        "required": [
+          "kind",
+          "fileName",
+          "checksum",
+          "noop",
+          "noopReason",
+          "summary",
+          "direct",
+          "pending"
+        ],
+        "type": "object"
+      },
+      "StyleImportResultDto": {
+        "properties": {
+          "noopReason": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/StyleImportNoopReason"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "example": null
+          },
+          "run": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/StyleImportRunDto"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "The run; null when nothing changed"
+          }
+        },
+        "required": [
+          "run",
+          "noopReason"
+        ],
+        "type": "object"
       },
       "StyleImportRunDto": {
         "properties": {
@@ -109268,7 +109470,7 @@
     "contact": {},
     "description": "Packio — Your Packaging Production Partner, operated by Collective Group (Thailand).\nRules: `docs/contract/api-conventions.md` (shared with packio-web).\n\n- **Surfaces:** `/v1/auth`, `/v1/store` (customer), `/v1/admin` (staff), `/v1/partner` (factories), `/v1/b2b` (company API clients, D-291), `/webhooks`. A token is accepted only on its own audience's prefix.\n- **Money:** decimal strings with exactly 2 decimals (`\"1234.50\"`) plus `currency: \"THB\"` on the object; never JSON numbers. Clients never compute prices.\n- **Dates:** ISO 8601 with offset, rendered in `Asia/Bangkok` (`2026-09-22T14:05:00+07:00`); date-only fields `YYYY-MM-DD`.\n- **IDs:** uuid only; business keys (`orderCode`) are separate fields.\n- **Errors:** RFC 9457 `application/problem+json` with a stable `code`; `title`/`detail` localised by `Accept-Language` (`th` default, `en`).\n- **Lists:** `?page&perPage(≤100)&sort&order&q` → `{ data, meta: { page, perPage, total } }`; feeds use `?cursor&limit` → `{ data, meta: { nextCursor } }`.\n- **Idempotency:** irreversible POSTs require `Idempotency-Key` (uuid); replays within 24 h return the original response.\n- **Concurrency:** editable resources return `ETag`; updates send `If-Match` (412 `concurrency.stale`).\n- **Files:** presign → PUT to the returned URL → reference the `fileId`.",
     "title": "Packio API",
-    "version": "0.60.0",
+    "version": "0.61.0",
     "x-packio-dieline": {
       "bundleSha256": "f565899b3b1915ef0d0467f8afa903c126dc8e80995319e944973fbb17ce0521",
       "package": "@packio/dieline",
@@ -317488,6 +317690,532 @@
         ],
         "x-required-permissions": [
           "styles.read"
+        ]
+      },
+      "post": {
+        "description": "Confirms a previewed import (D-411): the file is planned again and refused with `styles.import_stale` when its checksum is not the previewed one; then one run applies the changes to unpublished rows and holds those to published rows for Prepress, then Marketing (D-242). `run` is null when nothing changed.\n\nImplements: D-411, D-242.\n\n**Files:** upload first — `admin.files.presign` → PUT the bytes to the returned URL → `…/actions/complete` — then send the `fileId` (contract §3).",
+        "operationId": "admin.styleImports.create",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "examples": {
+                "default": {
+                  "value": {
+                    "checksum": "b1946ac92492d2347c6235b4d26111840a4c8e12f0e3a1d6c5b2e9f7a8d4c3b2",
+                    "fileId": "0192f3a0-7c1e-7d2a-9b3c-4d5e6f708192",
+                    "kind": "master"
+                  }
+                }
+              },
+              "schema": {
+                "$ref": "#/components/schemas/ConfirmStyleImportDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "noopReason": null,
+                  "run": {
+                    "approvalRequestId": null,
+                    "checksum": "b1946ac92492d2347c6235b4d2611184",
+                    "createdAt": "2026-10-03T10:00:00+07:00",
+                    "createdById": "0192f3a0-7c1e-7d2a-9b1f-0000000ae005",
+                    "decidedAt": "2026-10-03T10:00:00+07:00",
+                    "diff": {
+                      "summary": {
+                        "basesCreated": 105,
+                        "variantsCreated": 960
+                      }
+                    },
+                    "fileName": "style-library-master.json",
+                    "id": "0192f3a0-7c1e-7d2a-9b1f-0000000ae004",
+                    "kind": "master",
+                    "status": "applied"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/StyleImportResultDto"
+                }
+              }
+            },
+            "description": "The run",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "400": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.bad_request": {
+                    "$ref": "#/components/examples/problem.http.bad_request"
+                  },
+                  "http.malformed_json": {
+                    "$ref": "#/components/examples/problem.http.malformed_json"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.bad_request`, `http.malformed_json`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.unauthenticated": {
+                    "$ref": "#/components/examples/problem.auth.unauthenticated"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.unauthenticated`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.forbidden": {
+                    "$ref": "#/components/examples/problem.auth.forbidden"
+                  },
+                  "auth.wrong_audience": {
+                    "$ref": "#/components/examples/problem.auth.wrong_audience"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.forbidden`, `auth.wrong_audience`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "404": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.not_found": {
+                    "$ref": "#/components/examples/problem.http.not_found"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.not_found`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "409": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "file.infected": {
+                    "$ref": "#/components/examples/problem.file.infected"
+                  },
+                  "file.not_ready": {
+                    "$ref": "#/components/examples/problem.file.not_ready"
+                  },
+                  "styles.import_stale": {
+                    "$ref": "#/components/examples/problem.styles.import_stale"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `file.infected`, `file.not_ready`, `styles.import_stale`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "styles.import_unreadable": {
+                    "$ref": "#/components/examples/problem.styles.import_unreadable"
+                  },
+                  "validation.failed": {
+                    "$ref": "#/components/examples/problem.validation.failed"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `styles.import_unreadable`, `validation.failed`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "staff": []
+          }
+        ],
+        "summary": "Import a style library file",
+        "tags": [
+          "admin.styleImports"
+        ],
+        "x-required-permissions": [
+          "styles.import"
+        ]
+      }
+    },
+    "/v1/admin/style-imports/actions/preview": {
+      "post": {
+        "description": "A dry run of `styles:import` (D-242) on an uploaded JSON file (purpose `import`): the master file or a recipe bundle, planned into the changes applied at once and those held for the `style_library_change` approval. Nothing is written. `noop` when the same file was imported or nothing would change (D-411).\n\nImplements: D-411, D-242.\n\n**Files:** upload first — `admin.files.presign` → PUT the bytes to the returned URL → `…/actions/complete` — then send the `fileId` (contract §3).",
+        "operationId": "admin.styleImports.preview",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "examples": {
+                "default": {
+                  "value": {
+                    "fileId": "0192f3a0-7c1e-7d2a-9b3c-4d5e6f708192",
+                    "kind": "master"
+                  }
+                }
+              },
+              "schema": {
+                "$ref": "#/components/schemas/StyleImportFileDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "checksum": "b1946ac92492d2347c6235b4d26111840a4c8e12f0e3a1d6c5b2e9f7a8d4c3b2",
+                  "direct": [],
+                  "fileName": "style-library-master.json",
+                  "kind": "master",
+                  "noop": false,
+                  "noopReason": null,
+                  "pending": [
+                    {
+                      "code": "PK-SP-25",
+                      "op": "base.retire"
+                    }
+                  ],
+                  "summary": {
+                    "basesCreated": 0,
+                    "basesRetired": 1,
+                    "basesUpdated": 122,
+                    "variantsCreated": 0
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/StyleImportPreviewDto"
+                }
+              }
+            },
+            "description": "The plan",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "400": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.bad_request": {
+                    "$ref": "#/components/examples/problem.http.bad_request"
+                  },
+                  "http.malformed_json": {
+                    "$ref": "#/components/examples/problem.http.malformed_json"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.bad_request`, `http.malformed_json`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.unauthenticated": {
+                    "$ref": "#/components/examples/problem.auth.unauthenticated"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.unauthenticated`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.forbidden": {
+                    "$ref": "#/components/examples/problem.auth.forbidden"
+                  },
+                  "auth.wrong_audience": {
+                    "$ref": "#/components/examples/problem.auth.wrong_audience"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.forbidden`, `auth.wrong_audience`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "404": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.not_found": {
+                    "$ref": "#/components/examples/problem.http.not_found"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.not_found`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "409": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "file.infected": {
+                    "$ref": "#/components/examples/problem.file.infected"
+                  },
+                  "file.not_ready": {
+                    "$ref": "#/components/examples/problem.file.not_ready"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `file.infected`, `file.not_ready`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "styles.import_unreadable": {
+                    "$ref": "#/components/examples/problem.styles.import_unreadable"
+                  },
+                  "validation.failed": {
+                    "$ref": "#/components/examples/problem.validation.failed"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `styles.import_unreadable`, `validation.failed`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "staff": []
+          }
+        ],
+        "summary": "Preview a style library import",
+        "tags": [
+          "admin.styleImports"
+        ],
+        "x-required-permissions": [
+          "styles.import"
         ]
       }
     },

@@ -69,7 +69,8 @@ export class DownloadDielineDto {
     enum: DIELINE_DOWNLOAD_FORMATS,
     enumName: 'DielineDownloadFormat',
     example: 'pdf',
-    description: '`ai` is the designer PDF delivered as an Illustrator file (.ai) — same drawing, same layers and swatches',
+    description:
+      '`ai` is the designer PDF delivered as an Illustrator file (.ai) — same drawing, same layers and swatches',
   })
   @IsIn(DIELINE_DOWNLOAD_FORMATS)
   format!: DielineDownloadFormat;

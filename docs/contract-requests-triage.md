@@ -2655,6 +2655,36 @@ Decisions: D-140, D-141
   - **gap (U-B0.3):** `finance` entry needs an any-of gate (payments.verify_slip | receivables.manage | ledger.read | payables.read | banking.read | tax.read): MenuEntry.permission is a single key today, so extend it to `permission: PermissionKey | PermissionKey[]` (any-of) in menuFor()
   - *note:* Table-only id. Paths are the frontend's; the backend just echoes them. Keys proposed by the frontend are fine; the permission gates must be the backend catalogue's keys (see admin.permissions).
 
+#### `admin.menu-cms` — published
+
+Decisions: D-411
+
+- *note:* `admin.me.get` `menu[]` lists `cms` `/admin/cms` (cms.manage) since `v0.61.0`.
+
+#### `admin.menu-inbox` — published
+
+Decisions: D-411
+
+- *note:* `admin.me.get` `menu[]` lists `inbox` `/admin/inbox` (conversations.read) since `v0.61.0`.
+
+#### `admin.menu-samples` — published
+
+Decisions: D-411
+
+- *note:* `admin.me.get` `menu[]` lists `samples` `/admin/samples` (samples.read) since `v0.61.0`.
+
+#### `admin.menu-styles` — published
+
+Decisions: D-411
+
+- *note:* `admin.me.get` `menu[]` lists `structural_requests` (structural_requests.manage \| structural_requests.design), `style_intakes` (styles.import \| styles.approve_recipe), and `style_library` `/admin/style-library` (styles.read) since `v0.61.0`.
+
+#### `admin.menu-assistant` — published
+
+Decisions: D-411
+
+- *note:* `admin.me.get` `menu[]` lists `assistant` `/admin/assistant` (assistant.manage) since `v0.61.0`.
+
 #### `admin.permissions` — published differently
 
 Decisions: D-140, D-141
