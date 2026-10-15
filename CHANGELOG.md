@@ -9,7 +9,8 @@ Decision D-410. Additive. New `store.styles.listVariants` (`GET /v1/store/styles
 as a `StyleVariantCardDto` (code, style, options, price path, thumbnail), filtered by the style filters and by options
 (`option=axis:value`, repeated or comma-separated), with disjunctive option facets and `meta.total`,
 `meta.libraryTotal`, `meta.libraryStyles`. `StyleCardDto.options` lists a style's option chips (`axis:value`, closures
-first). The master file carries `use_cases` per base (an import replaces curated ones) and drops PK-SP-25, the same
+first) and `StyleCardDto.thumbnailUrl` its rendered thumbnail (the first variant's; null before rendering). `listVariants`
+takes `style` for one style's variants. The master file carries `use_cases` per base (an import replaces curated ones) and drops PK-SP-25, the same
 structure as PK-SP-05: 122 bases, 986 variants; the vendored `@packio/dieline` drops its recipe.
 
 ## v0.59.0 — Dieline download as .ai
