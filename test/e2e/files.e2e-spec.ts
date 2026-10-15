@@ -278,6 +278,21 @@ describe('files (e2e, contract §3 Files)', () => {
       .expect(201);
   });
 
+  it('keeps published images (purpose image) at standard retention, images only (D-415)', async () => {
+    const presign = (body: object) =>
+      request(server).post('/v1/store/files/presign').auth(tokens['customer-1']!, { type: 'bearer' }).send(body);
+    const started = await presign({ purpose: 'image', fileName: 'cover.png', mimeType: 'image/png', sizeBytes: 999 }).expect(
+      201,
+    );
+    const row = await prisma.fileObject.findUniqueOrThrow({ where: { publicId: started.body.fileId as string } });
+    expect(row.retentionClass).toBe('standard');
+    expect(row.storageKey).toMatch(/^standard\//);
+    expect(
+      (await presign({ purpose: 'image', fileName: 'a.pdf', mimeType: 'application/pdf', sizeBytes: 10 }).expect(422)).body
+        .code,
+    ).toBe('file.type_not_allowed');
+  });
+
   it('never serves an infected file and removes it from storage', async () => {
     const file = await upload('customer-1', Buffer.from(`%PDF-1.4 ${EICAR_TEST_STRING}`), {
       purpose: 'artwork',
