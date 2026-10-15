@@ -17,6 +17,8 @@ const BATCH = 10;
 const SAMPLE_BYTES = 64 * 1024 * 1024;
 /** A claimed file is retried by another worker after this long (crash safety). */
 const LEASE_MS = 10 * 60_000;
+/** An attempt that failed (storage hiccup, scanner outage) is retried this soon instead of after the full lease. */
+const RETRY_AFTER_MS = 30_000;
 const THUMBNAIL_WIDTH = 400;
 const IMAGE_TYPES = new Set(['image/png', 'image/jpeg', 'image/webp', 'image/tiff']);
 
@@ -50,10 +52,17 @@ export class FileProcessingJobs {
       RETURNING id`;
     for (const { id } of claimed) {
       const file = await this.prisma.fileObject.findUniqueOrThrow({ where: { id } });
-      await this.processOne(file).catch((error: unknown) => {
+      await this.processOne(file).catch(async (error: unknown) => {
         this.logger.warn(
           `file ${file.publicId} processing failed: ${error instanceof Error ? error.message : 'error'}`,
         );
+        // Shorten the lease so the next tick after RETRY_AFTER_MS picks the file up again.
+        await this.prisma.fileObject
+          .updateMany({
+            where: { id: file.id, scanStatus: 'pending' },
+            data: { scannedAt: new Date(now.getTime() - LEASE_MS + RETRY_AFTER_MS) },
+          })
+          .catch(() => undefined);
       });
     }
     return claimed.length;
