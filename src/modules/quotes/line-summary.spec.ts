@@ -24,7 +24,29 @@ describe('line summary', () => {
       },
       { key: 'style', labelTh: 'รูปทรง', labelEn: 'Shape', valueTh: 'ถุงกระดาษ', valueEn: 'ถุงกระดาษ' },
       { key: 'handles', labelTh: 'หูหิ้ว', labelEn: 'หูหิ้ว', valueTh: '✓', valueEn: '✓' },
-      { key: 'extra', labelTh: 'extra', labelEn: 'extra', valueTh: 'a, b', valueEn: 'a, b' },
+      { key: 'extra', labelTh: 'Extra', labelEn: 'Extra', valueTh: 'a, b', valueEn: 'a, b' },
+    ]);
+  });
+
+  it('labels a spec key the schema does not title: a known word in both languages, else the key as words', () => {
+    const lines = rfqSpecLines(
+      null,
+      { material: 'แก้วกระดาษ 16 ออนซ์', printColours: 2 },
+      {
+        lengthMm: null,
+        widthMm: null,
+        heightMm: null,
+      },
+    );
+    expect(lines).toEqual([
+      {
+        key: 'material',
+        labelTh: 'วัสดุ',
+        labelEn: 'Material',
+        valueTh: 'แก้วกระดาษ 16 ออนซ์',
+        valueEn: 'แก้วกระดาษ 16 ออนซ์',
+      },
+      { key: 'printColours', labelTh: 'Print colours', labelEn: 'Print colours', valueTh: '2', valueEn: '2' },
     ]);
   });
 
