@@ -31,7 +31,7 @@ describe('line summary', () => {
   it('labels a spec key the schema does not title: a known word in both languages, else the key as words', () => {
     const lines = rfqSpecLines(
       null,
-      { material: 'แก้วกระดาษ 16 ออนซ์', printColours: 2 },
+      { material: 'แก้วกระดาษ 16 ออนซ์', pattern: 'กล่องฝาเสียบ', printColours: 2 },
       {
         lengthMm: null,
         widthMm: null,
@@ -45,6 +45,14 @@ describe('line summary', () => {
         labelEn: 'Material',
         valueTh: 'แก้วกระดาษ 16 ออนซ์',
         valueEn: 'แก้วกระดาษ 16 ออนซ์',
+      },
+      // The storefront's product-derived RFQ fields (pattern, option-group kinds) carry Thai labels.
+      {
+        key: 'pattern',
+        labelTh: 'รูปแบบกล่อง',
+        labelEn: 'Box style',
+        valueTh: 'กล่องฝาเสียบ',
+        valueEn: 'กล่องฝาเสียบ',
       },
       { key: 'printColours', labelTh: 'Print colours', labelEn: 'Print colours', valueTh: '2', valueEn: '2' },
     ]);
