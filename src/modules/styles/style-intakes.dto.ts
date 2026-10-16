@@ -37,10 +37,10 @@ export class IntakeTermsDto {
   @ApiProperty({ type: 'integer', example: 1, description: 'The version a submission must accept' })
   version!: number;
 
-  @ApiProperty({ example: 'โรงงานอนุญาตให้ Packio ใช้ ดัดแปลง และเผยแพร่โครงสร้างนี้ …' })
+  @ApiProperty({ example: 'โรงงานอนุญาตให้ getpack ใช้ ดัดแปลง และเผยแพร่โครงสร้างนี้ …' })
   textTh!: string;
 
-  @ApiProperty({ example: 'The factory allows Packio to use, adapt and publish this structure …' })
+  @ApiProperty({ example: 'The factory allows getpack to use, adapt and publish this structure …' })
   textEn!: string;
 
   @ApiProperty({ format: 'date-time', example: '2026-10-01T00:00:00+07:00' })
@@ -225,7 +225,7 @@ export const INTAKE_EXAMPLE: StyleIntakeDto = {
 
 export const TERMS_EXAMPLE: IntakeTermsDto = {
   version: 1,
-  textTh: 'โรงงานอนุญาตให้ Packio ใช้ ดัดแปลง และเผยแพร่โครงสร้างนี้ …',
-  textEn: 'The factory allows Packio to use, adapt and publish this structure …',
+  textTh: 'โรงงานอนุญาตให้ getpack ใช้ ดัดแปลง และเผยแพร่โครงสร้างนี้ …',
+  textEn: 'The factory allows getpack to use, adapt and publish this structure …',
   effectiveFrom: '2026-10-01T00:00:00+07:00',
 };

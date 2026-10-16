@@ -668,7 +668,7 @@ export class CampaignPerformanceDto {
   @ApiProperty({ example: 'LAUNCH26' })
   code!: string;
 
-  @ApiProperty({ example: 'เปิดตัว Packio (fake)' })
+  @ApiProperty({ example: 'เปิดตัว getpack (fake)' })
   name!: string;
 
   @ApiProperty({ example: 'active' })

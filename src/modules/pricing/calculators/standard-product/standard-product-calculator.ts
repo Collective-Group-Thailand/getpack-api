@@ -101,7 +101,7 @@ function salePrice(
 }
 
 /**
- * Packio's margin for the quantity: the first `standard_product` margin line whose quantity band holds it (price bounds
+ * getpack's margin for the quantity: the first `standard_product` margin line whose quantity band holds it (price bounds
  * do not apply — legacy reads one flat `locopack_margin` per factory, quirk S2), else the table's fallback.
  */
 export function quantityMargin(sell: SellSnapshot, qty: number): number {

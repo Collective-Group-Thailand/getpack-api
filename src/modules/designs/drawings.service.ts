@@ -47,7 +47,7 @@ interface BoxInput {
 }
 
 /**
- * Dieline drawings through `@packio/dieline` (B4.1): requests are logged as drawing jobs and drawn by the
+ * Dieline drawings through `@getpack/dieline` (B4.1): requests are logged as drawing jobs and drawn by the
  * worker; the output is stored as a file of the requester (or the order's customer). Behind the
  * `drawing.engine` flag and the engine's presence: until the package is published the request answers
  * `501 drawing.engine_unavailable` (the attempt is still logged). After the production payment of an

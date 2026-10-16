@@ -50,7 +50,7 @@ const KIND_PREFIX: Record<ToolingKind, string> = { plates: 'plates', die_block: 
  * them — registers them at the factory that made the order (plates bound to the specification and the approved
  * artwork, a die block to the specification); a reorder of the same specification priced within
  * `tooling.reuse_months` of the last use gets them as credits, and the engine waives them at that factory. The factory
- * may report a reused tool unusable before accepting the job: Packio absorbs the remake (its buy price is paid
+ * may report a reused tool unusable before accepting the job: getpack absorbs the remake (its buy price is paid
  * with the job's goods receipt; the customer price is unchanged, D-012).
  */
 @Injectable()

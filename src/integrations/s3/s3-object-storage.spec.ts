@@ -9,13 +9,13 @@ describe('S3ObjectStorage key prefix', () => {
   });
 
   it('puts the prefix in front of every key it signs', async () => {
-    const storage = new S3ObjectStorage({ ...options, keyPrefix: 'packio/' });
+    const storage = new S3ObjectStorage({ ...options, keyPrefix: 'getpack/' });
     const { url } = await storage.presignPut('customer_content/2026/10/a', {
       contentType: 'image/png',
       contentLength: 10,
       expiresInSeconds: 60,
     });
-    expect(new URL(url).pathname).toBe('/packio/customer_content/2026/10/a');
+    expect(new URL(url).pathname).toBe('/getpack/customer_content/2026/10/a');
   });
 
   it('keeps keys at the bucket root without a prefix', async () => {

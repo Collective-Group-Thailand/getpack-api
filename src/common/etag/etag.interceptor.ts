@@ -13,7 +13,7 @@ import { map, type Observable } from 'rxjs';
 
 import { ApiEtag } from '../openapi/decorators';
 
-const ETAG_METADATA = 'packio:etag';
+const ETAG_METADATA = 'getpack:etag';
 
 type EtagExtractor = (body: unknown) => string | undefined;
 

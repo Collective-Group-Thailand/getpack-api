@@ -2,10 +2,10 @@ import { convertTo2Decimal } from '../../engine/php';
 import { PricingError } from './pricing-error';
 
 /**
- * Packio's sell side on top of a factory buy price (legacy `Calculator::SaleMargin`,
+ * getpack's sell side on top of a factory buy price (legacy `Calculator::SaleMargin`,
  * `app/Models/Calculator.php:223-449`, called from `FoldingCalculator::calculate:1400-1455` and
  * `CorrugateCalculator::calculate_cs:877-932`), shared by every calculator. The
- * margin tiers, fix cost and design fees are Packio's `sell_margin_tables` (D-063), VAT the dated
+ * margin tiers, fix cost and design fees are getpack's `sell_margin_tables` (D-063), VAT the dated
  * `vat_standard` rate. Customer prices include VAT, as legacy; shipping is its own quote line
  * (B2.4, D-013: `ShippingQuoteService`), so `shippingCost` stays 0 on this path.
  */

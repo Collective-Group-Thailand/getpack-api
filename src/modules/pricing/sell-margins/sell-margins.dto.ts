@@ -11,7 +11,7 @@ import {
   ValidateNested,
 } from 'class-validator';
 
-/** Packio's sell margins, fix costs and design fees (D-063, schema-design §3.5, A-23). */
+/** getpack's sell margins, fix costs and design fees (D-063, schema-design §3.5, A-23). */
 
 export const SELL_MARGIN_KINDS = [
   'margin',

@@ -198,7 +198,7 @@ describe('order timeline, public tracking and realtime (e2e, B4.4)', () => {
     )!;
     expect(printing.photoFileIds).toEqual([shared]);
     const delivered = mine.find((e) => e.type === 'shipment.delivered')!;
-    expect(delivered).toMatchObject({ photoFileIds: [podPhoto], shipment: { carrier: 'packio' } });
+    expect(delivered).toMatchObject({ photoFileIds: [podPhoto], shipment: { carrier: 'getpack' } });
     const factory = await ctx.prisma.factory.findUniqueOrThrow({
       where: { publicId: fixture.factoryPublicId },
     });
@@ -207,7 +207,7 @@ describe('order timeline, public tracking and realtime (e2e, B4.4)', () => {
       expect(text).not.toContain(secret);
     await as(ctx, token).get(`/v1/store/orders/${orderId}/timeline?cursor=not-a-cursor`).expect(422);
 
-    // Shared photos are readable by that customer only; unshared ones by nobody outside Packio and the factory.
+    // Shared photos are readable by that customer only; unshared ones by nobody outside getpack and the factory.
     await as(ctx, token).get(`/v1/store/files/${shared}/download`).expect(200);
     await as(ctx, token).get(`/v1/store/files/${internal}/download`).expect(404);
     const { token: stranger } = await customerToken(ctx, 2);
@@ -263,7 +263,7 @@ describe('order timeline, public tracking and realtime (e2e, B4.4)', () => {
     expect(link.body.url).toContain(`/track/${tokenValue}`);
     const tracked = await request(ctx.server).get(`/v1/store/track/${tokenValue}`).expect(200);
     expect(tracked.body).toMatchObject({ status: 'shipping' });
-    expect(tracked.body.shipments[0]).toMatchObject({ carrier: 'packio', status: 'delivered' });
+    expect(tracked.body.shipments[0]).toMatchObject({ carrier: 'getpack', status: 'delivered' });
     const publicText = JSON.stringify(tracked.body);
     for (const pii of ['ผู้รับ ทดสอบ', '+6681', 'ถนนทดสอบ', 'บางนา', podPhoto, factory.code])
       expect(publicText).not.toContain(pii);

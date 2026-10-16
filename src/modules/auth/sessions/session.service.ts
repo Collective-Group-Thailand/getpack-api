@@ -12,7 +12,7 @@ import { type Redis } from 'ioredis';
 
 /** Longer than the longest access token (15 min), so a revoked family's tokens die with the marker. */
 const REVOKED_MARKER_TTL_SECONDS = 16 * 60;
-const revokedKey = (familyId: string) => `packio:auth:revoked:${familyId}`;
+const revokedKey = (familyId: string) => `getpack:auth:revoked:${familyId}`;
 
 export const hashRefreshToken = (token: string): Uint8Array<ArrayBuffer> => sha256(token);
 

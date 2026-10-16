@@ -19,7 +19,7 @@ export const CUSTOMER_SHIPPING_RATE_CARDS = [
 ] as const;
 
 /**
- * Carriers are seeded disabled: Packio's own accounts are opened and their sandbox credentials
+ * Carriers are seeded disabled: getpack's own accounts are opened and their sandbox credentials
  * registered before a Superadmin (`carriers.manage`) enables one (D-005, D-114 carrier choice Proposed).
  */
 export const CARRIERS = [

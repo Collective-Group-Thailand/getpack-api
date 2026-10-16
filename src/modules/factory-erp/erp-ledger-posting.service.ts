@@ -169,8 +169,8 @@ export class ErpLedgerPostingService {
   }
 
   /**
-   * The factory an event belongs to: ERP events name it (`payload.factoryId`, D-317); a Packio payout names the
-   * factory it paid; a Packio billing statement is looked up (its event carries the statement only).
+   * The factory an event belongs to: ERP events name it (`payload.factoryId`, D-317); a getpack payout names the
+   * factory it paid; a getpack billing statement is looked up (its event carries the statement only).
    */
   private async factoryOf(tx: Tx, event: DomainEventEnvelope): Promise<Factory | null> {
     const id = (event.payload as { factoryId?: string | null }).factoryId;
@@ -238,7 +238,7 @@ export class ErpLedgerPostingService {
         occurredAt: { gte: new Date(`${dayOf(settings.ledgerStartOn)}T00:00:00+07:00`) },
         OR: [
           { payload: { path: ['factoryId'], equals: scope.factory.publicId } },
-          // Packio statements of this factory (their events name the statement only)
+          // getpack statements of this factory (their events name the statement only)
           {
             type: 'billing_statement.confirmed',
             aggregateId: { in: (await this.workspace.db.billingStatement.findMany({ where: { factoryId: scope.factory.id }, select: { publicId: true } })).map((b) => b.publicId) },
@@ -370,7 +370,7 @@ export class ErpLedgerPostingService {
       const labourValue = dec(cost.labour);
       const overheadValue = dec(cost.machine).plus(dec(cost.overhead));
       const receivedValue = received.length > 0 ? sum(received) : materialsValue.plus(labourValue).plus(overheadValue);
-      // a Packio job's product leaves with the job: its cost goes straight to cost of goods sold (§5 F08)
+      // a getpack job's product leaves with the job: its cost goes straight to cost of goods sold (§5 F08)
       const accounts = received.length > 0 ? ctx.accounts : { ...ctx.accounts, finishedGoods: ctx.accounts['cogs']! };
       return {
         ...this.base(ctx, mo, mo.moNo, mo.completedAt ?? new Date(event.occurredAt)),

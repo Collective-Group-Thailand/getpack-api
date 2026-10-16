@@ -10,7 +10,7 @@ import { PipelineTestController } from '../fixtures/pipeline-test.controller';
 @Module({ controllers: [PipelineTestController] })
 class E2eFixturesModule {}
 
-describe('packio-api (e2e: AppModule + PostgreSQL 18 + Redis, fake integrations)', () => {
+describe('getpack-api (e2e: AppModule + PostgreSQL 18 + Redis, fake integrations)', () => {
   let app: INestApplication;
   let server: ReturnType<INestApplication['getHttpServer']>;
   const buildDocument = (a: INestApplication) => buildOpenApiDocument(a, APP_VERSION);

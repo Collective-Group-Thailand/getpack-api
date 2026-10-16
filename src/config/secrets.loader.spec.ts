@@ -4,7 +4,7 @@ import { loadSecretsIntoEnv } from './secrets.loader';
 
 describe('loadSecretsIntoEnv', () => {
   const provider = new FakeSecretsProvider({
-    'packio/api': { DATABASE_URL: 'postgresql://from-secret/db', SENTRY_DSN: 'https://k@sentry.example/1' },
+    'getpack/api': { DATABASE_URL: 'postgresql://from-secret/db', SENTRY_DSN: 'https://k@sentry.example/1' },
   });
 
   it('does nothing without AWS_SECRETS_ID', async () => {
@@ -14,7 +14,10 @@ describe('loadSecretsIntoEnv', () => {
   });
 
   it('fills unset variables and keeps explicit ones', async () => {
-    const env: NodeJS.ProcessEnv = { AWS_SECRETS_ID: 'packio/api', DATABASE_URL: 'postgresql://explicit/db' };
+    const env: NodeJS.ProcessEnv = {
+      AWS_SECRETS_ID: 'getpack/api',
+      DATABASE_URL: 'postgresql://explicit/db',
+    };
     const result = await loadSecretsIntoEnv(env, provider);
     expect(env.DATABASE_URL).toBe('postgresql://explicit/db');
     expect(env.SENTRY_DSN).toBe('https://k@sentry.example/1');

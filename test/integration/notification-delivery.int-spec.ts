@@ -43,7 +43,7 @@ describe('notification delivery per channel (PostgreSQL 18, fake providers)', ()
         Promise.resolve(void published.push({ channel, type: signal.type })),
     };
     deepLinks = new DeepLinksService(prisma, new SettingsService(prisma), {
-      get: () => 'https://web.packio.invalid',
+      get: () => 'https://web.getpack.invalid',
     } as unknown as AppConfig);
     delivery = new NotificationDelivery(
       prisma,
@@ -86,7 +86,7 @@ describe('notification delivery per channel (PostgreSQL 18, fake providers)', ()
     });
     await prisma.team.update({
       where: { code: 'finance' },
-      data: { teamsWebhookSecretRef: 'packio/teams/finance' },
+      data: { teamsWebhookSecretRef: 'getpack/teams/finance' },
     });
     customerPublicId = customer.publicId;
   });
@@ -200,7 +200,7 @@ describe('notification delivery per channel (PostgreSQL 18, fake providers)', ()
       expect.objectContaining({ type: 'notification.created', channel: expect.stringMatching(/^user:/) }),
     ]);
     expect((await statusOf(team.id)).status).toBe('sent');
-    expect(teams.posted[0]).toEqual({ secretRef: 'packio/teams/finance', text: 'ข้อความ PK-0001' });
+    expect(teams.posted[0]).toEqual({ secretRef: 'getpack/teams/finance', text: 'ข้อความ PK-0001' });
   });
 
   it('gives a message about a page a deep link bound to its recipient (D-299)', async () => {
@@ -218,7 +218,7 @@ describe('notification delivery per channel (PostgreSQL 18, fake providers)', ()
     await delivery.deliverDue();
     expect((await statusOf(chat.id)).status).toBe('sent');
     const text = line.sent[before]!.text;
-    const token = /https:\/\/web\.packio\.invalid\/l\/(s[A-Za-z0-9_-]{32})$/.exec(text)?.[1];
+    const token = /https:\/\/web\.getpack\.invalid\/l\/(s[A-Za-z0-9_-]{32})$/.exec(text)?.[1];
     expect(token).toBeDefined();
     const row = await prisma.deepLinkToken.findUniqueOrThrow({ where: { notificationId: chat.id } });
     expect(row).toMatchObject({ userId: customerId, surface: 'store', path: `/account/orders/${orderId}` });

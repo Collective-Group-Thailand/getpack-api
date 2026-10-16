@@ -28,7 +28,7 @@ export interface DevFolding {
 
 /**
  * An obviously fake folding factory for `pnpm dev` and the tests (D-005): `[DEV]` names, `dev` codes,
- * made-up prices. One active factory with a tier-A offset price list, capacity and Packio sell margins,
+ * made-up prices. One active factory with a tier-A offset price list, capacity and getpack sell margins,
  * so a flat blank on art card with CMYK, matt lamination and die-cut can be priced end to end.
  * Idempotent: returns the existing fixture when present. Needs the dev catalogue (`dev-art-350`,
  * `dev-matt`) and the reference seed (product types, `vat_standard`).
@@ -350,7 +350,7 @@ export async function seedDevFolding(tx: Tx): Promise<{ created: boolean; fixtur
     data: { lineCount, contentSha256, status: 'approved', decidedAt: new Date() },
   });
 
-  // Packio's sell side for folding (fake values; D-063 admins set the real ones).
+  // getpack's sell side for folding (fake values; D-063 admins set the real ones).
   const sellTable = async (
     kind: 'margin' | 'fix_cost' | 'design_fee' | 'structure_design_fee',
     version: Prisma.SellMarginTableVersionCreateWithoutTableInput,
@@ -395,7 +395,7 @@ export async function seedDevFolding(tx: Tx): Promise<{ created: boolean; fixtur
 /**
  * An active dev factory has passed onboarding (D-011): every step approved, as the API leaves a factory it creates
  * and activates. Without the rows, admin edits that record a step (e.g. `admin.factories.replaceDeliveryZones`)
- * found nothing to update and answered 500 (packio-web contract request `api.dev-seed-launch-path` (a)).
+ * found nothing to update and answered 500 (getpack-web contract request `api.dev-seed-launch-path` (a)).
  */
 export async function seedDevOnboardingSteps(tx: Tx, factoryId: bigint): Promise<void> {
   const now = new Date();

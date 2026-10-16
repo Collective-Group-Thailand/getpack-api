@@ -197,7 +197,7 @@ export class StoreRfqBasketsController {
     id: 'store.rfqBaskets.get',
     summary: 'One of my RFQ baskets',
     description:
-      'With each item’s RFQ, Packio’s quotations per quantity and its acceptance; others’ → 404 (D-301).',
+      'With each item’s RFQ, getpack’s quotations per quantity and its acceptance; others’ → 404 (D-301).',
     implements: DECISIONS,
   })
   @ApiSuccess(200, { description: 'Basket', type: RfqBasketDto, example: BASKET_EXAMPLE })

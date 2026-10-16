@@ -79,7 +79,7 @@ export class MyReferralDto {
   @ApiProperty({ example: 'PK7QX2MA', pattern: '^[A-Z0-9]{6,12}$' })
   code!: string;
 
-  @ApiProperty({ example: 'https://www.packio.invalid/r/PK7QX2MA' })
+  @ApiProperty({ example: 'https://www.getpack.invalid/r/PK7QX2MA' })
   link!: string;
 
   @ApiProperty({ type: ReferralCountsDto, description: 'People who used my code, by status' })
@@ -101,7 +101,7 @@ export class MyReferralDto {
 
 export const MY_REFERRAL_EXAMPLE: MyReferralDto = {
   code: 'PK7QX2MA',
-  link: 'https://www.packio.invalid/r/PK7QX2MA',
+  link: 'https://www.getpack.invalid/r/PK7QX2MA',
   referrals: { pending: 2, underReview: 0, qualified: 1, rewarded: 3, rejected: 0 },
   rules: {
     refereeDiscountPct: '5',

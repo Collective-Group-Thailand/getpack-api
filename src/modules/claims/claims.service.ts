@@ -131,7 +131,7 @@ export const CLAIM_INCLUDE = {
 } satisfies Prisma.ClaimInclude;
 export type ClaimRow = Prisma.ClaimGetPayload<{ include: typeof CLAIM_INCLUDE }>;
 
-/** Claims a factory sees: its own, once Packio sent them for its review or held it liable. */
+/** Claims a factory sees: its own, once getpack sent them for its review or held it liable. */
 const FACTORY_VISIBLE: Prisma.ClaimWhereInput = {
   OR: [
     { status: 'factory_review' },
@@ -533,7 +533,7 @@ export class ClaimsService implements OnModuleInit {
       actor,
       publicId,
       'need_info',
-      // D-263: the decision clock stops while Packio waits for the customer.
+      // D-263: the decision clock stops while getpack waits for the customer.
       { infoRequest: note, decisionDueAt: null },
       'claim.info_requested',
       ['internal', 'customer'],
@@ -591,7 +591,7 @@ export class ClaimsService implements OnModuleInit {
     return this.move(actor, publicId, 'factory_review', {}, 'claim.sent_to_factory', ['internal', 'partner']);
   }
 
-  /** The factory accepts or disputes (D-083); the claim goes back to Packio's review. */
+  /** The factory accepts or disputes (D-083); the claim goes back to getpack's review. */
   async factoryRespond(
     actor: Actor,
     publicId: string,
@@ -858,7 +858,7 @@ export class ClaimsService implements OnModuleInit {
   ) {
     if (!(CLAIM_TRANSITIONS[claim.status] ?? []).includes(to))
       throw new DomainException('claims.invalid_status', { params: { status: claim.status } });
-    // D-263: Packio's first move on the claim is its response.
+    // D-263: getpack's first move on the claim is its response.
     const staff = _actor.type === 'user' && _actor.audience === 'staff';
     await tx.claim.update({
       where: { id: claim.id },

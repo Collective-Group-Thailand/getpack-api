@@ -12,7 +12,7 @@ import {
 /**
  * Pattern formulas of `PatternArea::calPatternArea` (legacy `app/Libraries/Folding/PatternArea.php`,
  * lines cited per case). Expressions keep the PHP operand order so floating-point results match.
- * Where legacy reads a missing condition it silently computes with 0 (a PHP notice); Packio refuses
+ * Where legacy reads a missing condition it silently computes with 0 (a PHP notice); getpack refuses
  * to price that configuration instead (quirk Q14).
  */
 

@@ -50,7 +50,7 @@ export class ContactDto {
   @ApiProperty({ type: String, nullable: true, example: '0800000000' })
   phone!: string | null;
 
-  @ApiProperty({ type: String, nullable: true, example: '@packio-test' })
+  @ApiProperty({ type: String, nullable: true, example: '@getpack-test' })
   lineOaId!: string | null;
 
   @ApiProperty({ type: String, nullable: true, example: 'support@example.invalid' })
@@ -131,7 +131,7 @@ export const PUBLIC_CONFIG_EXAMPLE: PublicConfigDto = {
   supportReplyMinutes: null,
   templateCount: 42,
   factoryCount: null,
-  contact: { phone: '0800000000', lineOaId: '@packio-test', email: 'support@example.invalid' },
+  contact: { phone: '0800000000', lineOaId: '@getpack-test', email: 'support@example.invalid' },
 };
 
 @Injectable()

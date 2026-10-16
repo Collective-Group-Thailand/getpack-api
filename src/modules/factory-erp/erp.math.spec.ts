@@ -17,7 +17,7 @@ const s = (b: BalanceState) => ({
   value: b.value.toFixed(2),
 });
 
-describe('Packio Factory ERP arithmetic (D-321 moving average)', () => {
+describe('getpack Factory ERP arithmetic (D-321 moving average)', () => {
   it('takes the first receipt at its cost', () => {
     const r = applyMovement(empty, dec(1000), { unitCost: dec('28.5') });
     expect(s(r.after)).toEqual({ onHand: '1000.000', avgCost: '28.500000', value: '28500.00' });

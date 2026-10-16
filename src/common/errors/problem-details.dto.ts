@@ -24,7 +24,7 @@ export interface ProblemExtensions {
 
 /** RFC 9457 problem details, served as `application/problem+json` (contract §3). */
 export class ProblemDetails {
-  @ApiProperty({ example: 'https://errors.packio/order.invalid_transition' })
+  @ApiProperty({ example: 'https://errors.getpack/order.invalid_transition' })
   type!: string;
 
   @ApiProperty({ example: 'Invalid order transition' })

@@ -1,4 +1,4 @@
-# Monitoring & alerts — packio-api (B6.3 item 6)
+# Monitoring & alerts — getpack-api (B6.3 item 6)
 
 > **Audience:** the on-call engineer and the tech lead. Two sources feed the alerts: the **APM** (OpenTelemetry traces
 > and metrics, Sentry errors, CloudWatch for AWS resources) for request-level health, and the **operational signals**

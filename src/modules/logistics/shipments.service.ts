@@ -78,7 +78,7 @@ export const hashToken = (token: string): Uint8Array<ArrayBuffer> =>
  * shipment is one trip to one address, split across trips and destinations as needed, never more than the
  * job made. Ready = packed: carton labels (100 × 150 mm, QR → public tracking) and a packing list are
  * generated and the factory's shipping payout is frozen from its rate card. Pickup is the shipping gate:
- * instalments due before shipping paid (B3.2) and a required Packio inspection passed (D-076); it records
+ * instalments due before shipping paid (B3.2) and a required getpack inspection passed (D-076); it records
  * the order's `shipped` fact. Where the factory cannot serve an area, staff book a fallback carrier whose
  * callbacks move the shipment. Every change: one transaction, activity + domain event.
  */
@@ -779,7 +779,7 @@ export class ShipmentsService {
   }
 
   /**
-   * The factory asks Packio for a fallback carrier for a packed trip its own fleet cannot serve (D-013, D-114;
+   * The factory asks getpack for a fallback carrier for a packed trip its own fleet cannot serve (D-013, D-114;
    * U-B0.3): recorded with the reason and raised to Logistics (`shipment.carrier_requested`), who books through
    * `admin.shipments.bookCarrier`. The factory never books a carrier itself.
    */
@@ -808,7 +808,7 @@ export class ShipmentsService {
   /**
    * What the factory can ship (U-B0.3): its completed production jobs whose orders are not delivered, per
    * destination the pieces already on live shipments and what remains, and whether pickup would be refused today
-   * (the shipping gate: payment before shipping, Packio inspection).
+   * (the shipping gate: payment before shipping, getpack inspection).
    */
   async shipPlan(factoryId: bigint) {
     const jobs = await this.prisma.productionJob.findMany({
@@ -963,11 +963,11 @@ export class ShipmentsService {
   }
 
   trackingUrl(token: string): string {
-    const web = this.config.get('STOREFRONT_BASE_URL') ?? 'https://www.packio.invalid';
+    const web = this.config.get('STOREFRONT_BASE_URL') ?? 'https://www.getpack.invalid';
     return `${web.replace(/\/$/, '')}/track/${token}`;
   }
 
-  /** Sender on labels: the legal entity from settings under the Packio brand; never the factory (D-050). */
+  /** Sender on labels: the legal entity from settings under the getpack brand; never the factory (D-050). */
   private async sender(entityId: bigint, at: Date): Promise<ShipmentDocument['sender']> {
     const read = async (key: string): Promise<string | null> => {
       try {
@@ -980,7 +980,7 @@ export class ShipmentsService {
       }
     };
     const name = await read('entity.legal_name_th');
-    return { name: name ? `Packio · ${name}` : 'Packio', phone: await read('entity.phone') };
+    return { name: name ? `getpack · ${name}` : 'getpack', phone: await read('entity.phone') };
   }
 }
 

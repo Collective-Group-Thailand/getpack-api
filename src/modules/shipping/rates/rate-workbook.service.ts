@@ -57,7 +57,7 @@ export class RateWorkbookService {
   ): Promise<{ fileId: string; url: string; rows: number; expiresAt: Date }> {
     const stored = await this.files.storeGenerated(actor, {
       body: await writeWorkbook([{ name: input.sheet, headers: input.headers, rows: input.rows }]),
-      fileName: `packio-${input.name}-${bangkokDate(new Date())}.xlsx`,
+      fileName: `getpack-${input.name}-${bangkokDate(new Date())}.xlsx`,
       mimeType: XLSX,
       retentionClass: 'transient',
     });

@@ -228,7 +228,7 @@ export class ErpMaintenanceService {
     return out;
   }
 
-  /** Adds or edits one of the factory's machines (the same record Packio's capability profile shows). */
+  /** Adds or edits one of the factory's machines (the same record getpack's capability profile shows). */
   async saveMachine(scope: ErpScope, input: CreateMachineDto | UpdateMachineDto, machineId?: string) {
     const saved = await this.capability.saveMachine(scope.actor, scope.factory.publicId, input, machineId);
     return (await this.machines(scope, saved.id))[0]!;

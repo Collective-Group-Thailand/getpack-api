@@ -5,7 +5,7 @@ import { UAT_FACTORY_CODE } from './uat-catalog';
 export const UAT_OPENING_STOCK_ID = '0192f3a0-7c1e-7d2a-9b1f-0000000ee001';
 
 /**
- * Packio Factory ERP rehearsal data (E1; D-316 – D-327) for the UAT factory: suppliers and a customer, two
+ * getpack Factory ERP rehearsal data (E1; D-316 – D-327) for the UAT factory: suppliers and a customer, two
  * warehouses, everyday items with opening balances (written the way the stock service writes them: one movement
  * per balance, average cost = the opening cost), one issued purchase order waiting for goods and one draft.
  * Obviously fake names; idempotent — a factory that already has ERP items is left alone.

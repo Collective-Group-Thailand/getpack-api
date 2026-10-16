@@ -6,14 +6,14 @@
 ## How these were derived and how to sign them off
 - Legacy has **no service calculator**: the only service maths is the CS service page (`cs/service`,
   `service-orders/cs.vue:381-429`), where CS types the cost (or, for design, the VAT-inclusive price) and the browser
-  applies the 6.5 % service margin and 7 % VAT, and the PHP designer payable (`calculateServiceCost`). Packio ports
+  applies the 6.5 % service margin and 7 % VAT, and the PHP designer payable (`calculateServiceCost`). getpack ports
   exactly that (port map `docs/legacy/05-service-port-map.md` §9, D-194). The expected values come from an independent
   transcription of the JavaScript and PHP (`test/golden/service/reference/service_reference.py`); the port agrees within
   1e-6 (`test/unit/service-golden.spec.ts`).
 - Cases 01–20 are amounts CS enters; cases 21–24 a factory service price line (made-up, D-005). To sign off, the
   business team enters the same amounts on the Locopack staging `cs/service` page (margin 6.5 %, or the one stated) and
   compares the net, VAT, gross and cost; and checks the designer payable (`orders.design_cost`) of a hired design.
-- Known, intended differences from Locopack: the margin is Packio's `service` sell table and VAT the dated rate (legacy
+- Known, intended differences from Locopack: the margin is getpack's `service` sell table and VAT the dated rate (legacy
   config and a 1.07 literal); the server computes the amounts (legacy trusted the browser and let CS edit the result,
   V2, V3); a factory line makes a service instant and multiplies by the quantity (legacy quantity 1); a service quote
   has no shipping line; the browser (half-up) and PHP (ceiling) roundings are both kept where legacy used them (V4).

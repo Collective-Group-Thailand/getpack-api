@@ -3,8 +3,8 @@ import { type CalculatorKey, type CorrugateFormula, type GeometryFormula } from 
 /**
  * Measurement bases (D-182, schema-design A-80): one pure conversion between the inside size (`internal`), the outside
  * size (`external`), the score-to-score size of the blank (`over_crease`) and, for flat products, the finished size
- * (`product`). The API and the web read the same numbers: the caliper factors are packio-web's
- * `@packio/dieline` rules (`packages/dieline/src/constants.ts:11-30` — a crease sits at mid-thickness, so a panel is
+ * (`product`). The API and the web read the same numbers: the caliper factors are getpack-web's
+ * `@getpack/dieline` rules (`packages/dieline/src/constants.ts:11-30` — a crease sits at mid-thickness, so a panel is
  * scored at inside + 1·t and a depth closed at both ends at inside + 2·t, an open tray's at + 1·t), applied per
  * construction family. **Prepress confirms these factors** before they are relied on for production (D-182, still
  * open); the version below is frozen with every quote that used it.

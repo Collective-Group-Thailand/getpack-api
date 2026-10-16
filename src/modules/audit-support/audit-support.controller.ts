@@ -3,10 +3,10 @@ import { Can } from '@common/auth/can.decorator';
 import { type Actor, type UserActor } from '@common/context/actor';
 import { DomainException } from '@common/errors/domain.exception';
 import { Idempotent } from '@common/idempotency/idempotent.decorator';
+import { dayOf } from '@common/ledger-core/dates';
 import { ApiEndpoint, ApiStandardErrors, ApiSuccess } from '@common/openapi/decorators';
 import { toBangkokIso } from '@common/time/bangkok';
 import { MonthDto } from '@modules/financial-reports/financial-reports.dto';
-import { dayOf } from '@common/ledger-core/dates';
 import { DocumentFilesService } from '@modules/receivables/document-files.service';
 import { ApiSurface } from '@modules/surfaces/surfaces';
 import { Body, Controller, Get, Param, ParseUUIDPipe, Post, Query } from '@nestjs/common';
@@ -171,7 +171,7 @@ export class AdminAuditSupportController {
     description: 'Signed URL',
     type: DownloadUrlDto,
     example: {
-      url: 'https://packio-files.s3.example.com/…&X-Amz-Expires=300',
+      url: 'https://getpack-files.s3.example.com/…&X-Amz-Expires=300',
       expiresAt: '2026-11-10T10:05:00+07:00',
     },
   })

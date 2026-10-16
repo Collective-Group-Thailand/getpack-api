@@ -1,11 +1,11 @@
-# B5 — Finance & accounting (Packio Accounting)
+# B5 — Finance & accounting (getpack Accounting)
 
 > อ่าน `CLAUDE.md`, `00-master-plan.md`, **`docs/accounting-design.md` ทั้งไฟล์**, `docs/decisions.md` (D-010, D-020, D-022, D-030…D-033, D-090…D-093, D-131, D-150) ก่อน · 5.1 เริ่มได้หลัง B1 · 5.2–5.6 ต้องมี event จาก B3/B4
 > ทำทีละ Deliverable (5.1 → 5.6) · ทุกข้อที่ติด ⚖ ใน accounting-design คือ **config** ที่นักบัญชีเปลี่ยนได้ ห้าม hard-code
 
 ---
 
-You are a senior backend engineer with accounting-systems expertise on **`packio-api`**. Implement `accounting-design.md` exactly. The ledger is the single financial truth; sub-ledgers post to it only through the posting engine; nothing else writes journal lines.
+You are a senior backend engineer with accounting-systems expertise on **`getpack-api`**. Implement `accounting-design.md` exactly. The ledger is the single financial truth; sub-ledgers post to it only through the posting engine; nothing else writes journal lines.
 
 ## Deliverable 5.1 — Ledger core & posting engine (ADR-0007)
 - Entities, fiscal years & periods (`open → soft_closed → closed → locked`), chart of accounts (seed §3, editable by Finance with approval; `is_control`, allowed dimensions), dimensions (entity, order/group, customer, factory, product type, channel, campaign/promotion, cost centre).
@@ -15,7 +15,7 @@ You are a senior backend engineer with accounting-systems expertise on **`packio
 - Tax configuration: VAT rate table with effective dates, WHT rates per line type, nature per product type (default hire of work for made-to-order, sale of goods for stock products), rounding mode (line vs document).
 
 ## Deliverable 5.2 — Receivables & customer documents
-- Document engine with **gapless series** per (entity, type, period) (§4): QT, IV, TR (instalment or full; full-form for juristic), RC, CN, DN; void keeps number + reason; PDFs (Puppeteer, Thai fonts, Buddhist-era dates, baht text) issued by **Collective Group (Thailand)** with Packio branding from settings.
+- Document engine with **gapless series** per (entity, type, period) (§4): QT, IV, TR (instalment or full; full-form for juristic), RC, CN, DN; void keeps number + reason; PDFs (Puppeteer, Thai fonts, Buddhist-era dates, baht text) issued by **Collective Group (Thailand)** with getpack branding from settings.
 - Instalment tax invoices at payment (deposit tax point) and final tax invoice deducting taxed instalments; **output VAT not yet due** for credit-term invoices under hire-of-work nature, moved on collection (P07–P08).
 - Customer WHT: receipt with gross / WHT / net, **50 ทวิ collection tracking** and missing-certificate report.
 - Credit notes with controlled statutory reason list (cancellation, price reduction, shortage/defect, returns, post-sale discount), store-credit wallet (P19, P23), refunds (P22), forfeited deposit policy (setting).

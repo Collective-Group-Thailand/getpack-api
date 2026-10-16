@@ -6,7 +6,7 @@
 ## How these were derived and how to sign them off
 - Legacy prices a tag or sleeve on the **folding** engine: `TagAndSleeveCalculator::fromCS` maps it to a flat folding
   blank (patterns 33–36, `dw = w`, `dl = l`, d = 0) and calls `FoldingCalculator::calculate` (port map
-  `docs/legacy/05-tag-sleeve-port-map.md` §0). Packio does the same over the folding port, whose formulas are checked
+  `docs/legacy/05-tag-sleeve-port-map.md` §0). getpack does the same over the folding port, whose formulas are checked
   piece by piece by hand-derived unit vectors and by `docs/pricing-validation-folding.md`. The expected values below
   are the port's results; the cases exercise what the tag port adds.
 - The 20 cases price complete, **made-up** price lists (the folding cases' lists; no real supplier data, D-005). To

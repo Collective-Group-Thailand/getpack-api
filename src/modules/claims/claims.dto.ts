@@ -50,8 +50,8 @@ export const CLAIM_STATUSES = [
 export const RESOLUTION_KINDS = ['reprint', 'partial_refund', 'full_refund', 'credit', 'goodwill'] as const;
 export const CLAIM_SEVERITIES = ['minor', 'major', 'critical'] as const;
 export const GUARANTEE_REMEDIES = ['reprint', 'refund', 'partial_credit', 'goodwill'] as const;
-export const CLAIM_OWNERS = ['packio', 'customer', 'factory', 'none'] as const;
-export const LIABILITIES = ['factory', 'customer', 'carrier', 'packio', 'undetermined'] as const;
+export const CLAIM_OWNERS = ['getpack', 'customer', 'factory', 'none'] as const;
+export const LIABILITIES = ['factory', 'customer', 'carrier', 'getpack', 'undetermined'] as const;
 export const CLAIM_ACTIONS = [
   'reproduction_job',
   'refund',
@@ -271,7 +271,7 @@ export class DecideClaimDto {
     enum: CLAIM_SEVERITIES,
     enumName: 'ClaimSeverity',
     example: 'major',
-    description: 'Required to approve a claim on Packio’s side (D-261)',
+    description: 'Required to approve a claim on getpack’s side (D-261)',
   })
   @IsOptional()
   @IsIn(CLAIM_SEVERITIES)
@@ -315,7 +315,7 @@ export class ClaimSlaDto {
     nullable: true,
     example: '2026-10-27T09:00:00+07:00',
     description:
-      'Null while Packio waits for the customer’s information (the clock stops, D-263) or once decided',
+      'Null while getpack waits for the customer’s information (the clock stops, D-263) or once decided',
   })
   decisionDueAt!: string | null;
 
@@ -325,9 +325,9 @@ export class ClaimSlaDto {
   @ApiProperty({
     enum: CLAIM_OWNERS,
     enumName: 'ClaimOwner',
-    example: 'packio',
+    example: 'getpack',
     description:
-      'Who must act now: Packio, the customer (information), the factory (its review), nobody (D-263)',
+      'Who must act now: getpack, the customer (information), the factory (its review), nobody (D-263)',
   })
   currentOwner!: (typeof CLAIM_OWNERS)[number];
 
@@ -371,7 +371,7 @@ export class ClaimTimelineDto {
 
   @ApiProperty({
     type: [ClaimTimelineEventDto],
-    description: 'Oldest first; Packio’s internal steps are not shown',
+    description: 'Oldest first; getpack’s internal steps are not shown',
   })
   events!: ClaimTimelineEventDto[];
 }
@@ -622,7 +622,7 @@ export class StoreClaimDto {
   @ApiProperty({ format: 'date-time', example: '2026-10-22T09:00:00+07:00' })
   submittedAt!: string;
 
-  @ApiProperty({ nullable: true, example: null, description: 'What Packio asked for (status need_info)' })
+  @ApiProperty({ nullable: true, example: null, description: 'What getpack asked for (status need_info)' })
   infoRequest!: string | null;
 
   @ApiProperty({ nullable: true, example: null })
@@ -671,7 +671,7 @@ export class StoreClaimDto {
   nextActions!: NextActionDto[];
 }
 
-/** What Packio recovers from the factory for a claim (D-083): against its payables, else as a receivable. */
+/** What getpack recovers from the factory for a claim (D-083): against its payables, else as a receivable. */
 export class ClaimDeductionDto {
   @ApiProperty({ format: 'uuid', example: '0192f3a0-7c1e-7d2a-9b1f-0000000f3007' })
   id!: string;
@@ -841,7 +841,7 @@ const BASE = {
     responseOverdue: false,
     decisionDueAt: '2026-10-27T09:00:00+07:00',
     decisionOverdue: false,
-    currentOwner: 'packio',
+    currentOwner: 'getpack',
     guaranteeVersionNo: 1,
   },
   sampleId: null,

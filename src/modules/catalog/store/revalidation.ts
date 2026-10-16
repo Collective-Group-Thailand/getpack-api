@@ -134,7 +134,7 @@ export class StorefrontRevalidation {
       .digest('hex');
     const status = await this.sender.post(
       url,
-      { 'content-type': 'application/json', 'x-packio-signature': `sha256=${signature}` },
+      { 'content-type': 'application/json', 'x-getpack-signature': `sha256=${signature}` },
       body,
     );
     if (status >= 300) throw new Error(`storefront revalidation answered ${status}`);

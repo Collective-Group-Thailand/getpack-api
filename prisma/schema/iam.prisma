@@ -723,7 +723,7 @@ model User {
 
   factoryBusinessHoursSet FactoryBusinessHours[] @relation("FactoryBusinessHoursCreatedBy")
 
-  // --- Packio Factory ERP E1 (back-relations)
+  // --- getpack Factory ERP E1 (back-relations)
   erpSettingsUpdated          ErpFactorySettings[]  @relation("ErpFactorySettingsUpdatedBy")
   erpPartnersCreated          ErpTradingPartner[]   @relation("ErpTradingPartnerCreatedBy")
   erpPartnersUpdated          ErpTradingPartner[]   @relation("ErpTradingPartnerUpdatedBy")
@@ -749,7 +749,7 @@ model User {
   erpRecipesUpdated           ErpRecipe[]           @relation("ErpRecipeUpdatedBy")
   erpProductionOrdersCreated  ErpProductionOrder[]  @relation("ErpProductionOrderCreatedBy")
   erpProductionOrdersUpdated  ErpProductionOrder[]  @relation("ErpProductionOrderUpdatedBy")
-  // --- end Packio Factory ERP E1
+  // --- end getpack Factory ERP E1
   erpItemSuppliersApproved    ErpItemSupplier[]     @relation("ErpItemSupplierApprovedBy")
   erpPriceBreaksCreated       ErpPriceBreak[]       @relation("ErpPriceBreakCreatedBy")
   erpAlertsAcknowledged       ErpAlert[]            @relation("ErpAlertAcknowledgedBy")

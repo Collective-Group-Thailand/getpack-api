@@ -13,7 +13,7 @@ import { type DigitalTables, type OffsetTables } from './tables';
 /**
  * The folding calculator (B2.3): legacy `FoldingCalculator::calculate_cs` (`app/Models/FoldingCalculator.php:874-1240`)
  * as a pure function. Each option is one factory × print type: every part is priced by its engine, the
- * cheapest layout per quantity is kept, Packio's sell side is applied per part and the design fees once
+ * cheapest layout per quantity is kept, getpack's sell side is applied per part and the design fees once
  * per quote (quirk Q2). An option is complete for a quantity only when every part is (quirk Q1 fixed:
  * legacy mixed print types across parts). Selection follows D-043/D-101: lowest buy price, then lead time.
  */
@@ -53,7 +53,7 @@ export interface FoldingOption {
   refusal?: string;
   /**
    * Legacy parity only: carrier cost before VAT per part and quantity folded into the per-piece price
-   * (`Calculator.php:335-359`). Packio prices delivery as its own quote line instead (B2.4, D-013), so the
+   * (`Calculator.php:335-359`). getpack prices delivery as its own quote line instead (B2.4, D-013), so the
    * quote engine leaves this unset. Absent = no delivery in the per-piece price.
    */
   shippingCosts?: Readonly<Record<string, readonly number[]>>;
@@ -86,7 +86,7 @@ export interface OptionStep {
   /** Customer price, VAT included (legacy `summary.total`). */
   total: number;
   leadTimeDays: number;
-  /** Packio's margin on the quote net of VAT: (net − buy price) ÷ net (D-012 floor check). */
+  /** getpack's margin on the quote net of VAT: (net − buy price) ÷ net (D-012 floor check). */
   marginPct: number;
   shippingPriced: boolean;
 }

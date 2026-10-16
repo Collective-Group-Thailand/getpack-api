@@ -1,7 +1,7 @@
 import { type DielineEngine } from '@integrations/dieline/dieline-engine.port';
 
 /**
- * ADR-0010 / D-270: a recipe bundle (U3.B1 format) from the vendored `@packio/dieline` engine — one entry per style base
+ * ADR-0010 / D-270: a recipe bundle (U3.B1 format) from the vendored `@getpack/dieline` engine — one entry per style base
  * the engine's recipes name, the recipe being the set of those engine recipes (`{ engine: [...] }`), with the processes
  * they need (in the D-244 taxonomy) and the size ranges per material class. Imported like any bundle: recipes wait for
  * Prepress approval (D-243).

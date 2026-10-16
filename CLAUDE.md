@@ -1,19 +1,19 @@
-# CLAUDE.md — packio-api
+# CLAUDE.md — getpack-api
 
-**Packio — Your Packaging Production Partner** · operated by **Collective Group (Thailand)**
-NestJS backend of Packio: a new, one-stop, self-service, fully traceable packaging platform (configure & design → instant quote or RFQ → cart & checkout with instalments → artwork & proof → production at partner factories → delivery with POD → claims, reorder → full accounting). The frontend is the separate repo `packio-web` (one Next.js app with customer, admin and partner zones).
+**getpack — Your Packaging Production Partner** · operated by **Collective Group (Thailand)**
+NestJS backend of getpack: a new, one-stop, self-service, fully traceable packaging platform (configure & design → instant quote or RFQ → cart & checkout with instalments → artwork & proof → production at partner factories → delivery with POD → claims, reorder → full accounting). The frontend is the separate repo `getpack-web` (one Next.js app with customer, admin and partner zones).
 
 ## Read before every task
 1. `docs/prompts/00-master-plan.md` — architecture, conventions, run order, Definition of Done.
 2. `docs/decisions.md` — **business decisions (D-###). They override everything else, including legacy behaviour.**
-3. `docs/contract/api-conventions.md` — API contract rules shared with `packio-web`.
+3. `docs/contract/api-conventions.md` — API contract rules shared with `getpack-web`.
 4. `docs/accounting-design.md` — for anything that touches money, documents, tax or the ledger.
 5. The prompt you were asked to execute (`docs/prompts/B*.md`) — **only the deliverable you were given**.
 6. `docs/legacy/00-domain-context.md` + legacy code in `legacy/locopack-web/` (read-only) when porting logic.
 7. `docs/PROGRESS.md` (latest entries).
 
 ## Hard rules
-- Packio is a new system: **no data migration, no ETL, no legacy compatibility** (D-005). Legacy is a logic reference only; never run it.
+- getpack is a new system: **no data migration, no ETL, no legacy compatibility** (D-005). Legacy is a logic reference only; never run it.
 - Port pricing formulas exactly with golden tests; never invent formulas, prices, supplier or customer data. Seed/dev data is obviously fake.
 - Every business value that a decision marks as configurable is a **setting with effective dates, audited, editable by the role named in the decision** — never a constant in code.
 - Money: `numeric(14,2)` in DB, `decimal.js` in code, decimal **strings** in JSON. Time: `timestamptz` (UTC), business rules in `Asia/Bangkok`.

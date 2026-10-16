@@ -227,10 +227,10 @@ export class PromotionCodes {
     const hour = Math.floor(now / 3_600_000);
     const checks: [string, number][] = [];
     if (customerUserId !== null)
-      checks.push([`packio:coupon:user:${customerUserId}:${hour}`, limits.perCustomerPerHour]);
-    if (!byCs && source.ip) checks.push([`packio:coupon:ip:${source.ip}:${hour}`, limits.perIpPerHour]);
+      checks.push([`getpack:coupon:user:${customerUserId}:${hour}`, limits.perCustomerPerHour]);
+    if (!byCs && source.ip) checks.push([`getpack:coupon:ip:${source.ip}:${hour}`, limits.perIpPerHour]);
     if (source.deviceId)
-      checks.push([`packio:coupon:device:${source.deviceId}:${hour}`, limits.perDevicePerHour]);
+      checks.push([`getpack:coupon:device:${source.deviceId}:${hour}`, limits.perDevicePerHour]);
     for (const [key, limit] of checks) {
       const [[, count]] = (await this.redis.multi().incr(key).expire(key, 3_600).exec()) as [
         [Error | null, number],

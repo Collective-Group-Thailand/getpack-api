@@ -37,7 +37,7 @@ export interface DevCorrugate {
 /**
  * An obviously fake corrugate setup for `pnpm dev` and the tests (D-005, U-B6): `[DEV]` names, made-up
  * flute factors and prices. It extends the dev folding factory F9001 (one launch factory serves every type,
- * D-101) with a tier-A corrugate price list for a flexo and a digital print type, capacity and Packio sell
+ * D-101) with a tier-A corrugate price list for a flexo and a digital print type, capacity and getpack sell
  * margins, so an RSC, a Tele (body + lid) and an open-top box on a fake B-flute board can be priced end to
  * end. Idempotent. Needs `seedDevFolding` (factory, `dev-cmyk`, `dev-normal`) and the dev catalogue
  * (`dev-matt`).
@@ -470,7 +470,7 @@ export async function seedDevCorrugate(tx: Tx): Promise<{ created: boolean; fixt
     data: { lineCount, contentSha256, status: 'approved', decidedAt: new Date() },
   });
 
-  // Packio's sell side for corrugate (fake values; D-063 admins set the real ones).
+  // getpack's sell side for corrugate (fake values; D-063 admins set the real ones).
   const sellVersion = { versionNo: 1, effectiveFrom: DEV_EFFECTIVE_FROM, reason: 'dev seed (fake)' };
   const margin = await tx.sellMarginTable.create({
     data: {

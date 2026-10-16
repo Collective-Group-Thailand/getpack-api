@@ -142,7 +142,7 @@ describe('dieline downloads and style assets (e2e, U3.B5)', () => {
     expect(pdf.swatches).toEqual(pdf.layers);
     expect(pdf).toMatchObject({ styleCode: published, subject: published });
     expect(pdf.title).toContain(published);
-    expect(pdf.xmp).toContain(`<packio:styleCode>${published}</packio:styleCode>`);
+    expect(pdf.xmp).toContain(`<getpack:styleCode>${published}</getpack:styleCode>`);
     // Same request by someone else: same file, from the cache.
     const again = await as(ctx, other).post('/v1/store/dielines/downloads', body()).expect(201);
     expect(again.body).toMatchObject({

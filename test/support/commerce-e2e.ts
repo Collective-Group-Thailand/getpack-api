@@ -69,7 +69,7 @@ export async function customerToken(ctx: CommerceApp, n: number): Promise<{ toke
   // suites create many customers (auth.otp_policy.maxPerIpPerHour stays enforced for real clients).
   const redis = ctx.app.get<Redis>(REDIS);
   const hour = Math.floor(Date.now() / 3_600_000);
-  for (const key of await redis.keys(`packio:otp:ip:*:${hour}`)) await redis.decr(key);
+  for (const key of await redis.keys(`getpack:otp:ip:*:${hour}`)) await redis.decr(key);
   return { token: verified.body.accessToken as string, phone: `+66${phone.slice(1)}` };
 }
 

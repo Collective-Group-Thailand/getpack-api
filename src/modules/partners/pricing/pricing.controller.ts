@@ -233,7 +233,7 @@ export class AdminPriceProposalsController {
     id: 'admin.priceProposals.create',
     summary: 'Draft a rate card or an assisted price entry',
     description:
-      'In `platform_rate_card` mode Packio drafts the rate card the factory will accept (D-042 a); in `factory_price_list` ' +
+      'In `platform_rate_card` mode getpack drafts the rate card the factory will accept (D-042 a); in `factory_price_list` ' +
       'mode staff enter prices on the factory’s behalf, which it signs off before they apply (assisted entry, D-100 note). ' +
       'The type needs tier A or B (D-043); one open proposal per price list.',
     implements: [...GOVERNANCE, 'D-100'],
@@ -242,7 +242,7 @@ export class AdminPriceProposalsController {
   @ApiSuccess(201, {
     description: 'Draft',
     type: PriceProposalDto,
-    example: { ...DRAFT, direction: 'packio_to_factory', origin: 'platform_rate_card', lines: [] },
+    example: { ...DRAFT, direction: 'getpack_to_factory', origin: 'platform_rate_card', lines: [] },
   })
   @ApiStandardErrors(
     ...WRITE,
@@ -267,7 +267,7 @@ export class AdminPriceProposalsController {
     summary: 'Replace the lines of a staff draft',
     description:
       'Each line is `add`, `change` or `remove` of one component row, validated against the component columns and the ' +
-      'base version (D-040). Only drafts Packio created (rate cards, assisted entry).',
+      'base version (D-040). Only drafts getpack created (rate cards, assisted entry).',
     implements: GOVERNANCE,
   })
   @LINES_BODY
@@ -439,7 +439,7 @@ export class PartnerPriceListsController {
   @ApiEndpoint({
     id: 'partner.priceLists.listLines',
     summary: 'Read the lines of one of my price-list versions',
-    description: 'Rows of one component. Own factory only (D-044); Packio drafts are not visible.',
+    description: 'Rows of one component. Own factory only (D-044); getpack drafts are not visible.',
     implements: GOVERNANCE,
   })
   @ApiPaginated(PriceRowDto, { example: PRICE_ROW_EXAMPLE })
@@ -486,7 +486,7 @@ export class PartnerPriceListsController {
   @versionParam
   @ApiEndpoint({
     id: 'partner.priceLists.signOff',
-    summary: 'Sign off prices Packio entered for my factory',
+    summary: 'Sign off prices getpack entered for my factory',
     description:
       'Assisted entry (D-100 note): the version applies only once the factory signs it off, from the later of its planned ' +
       'date and now.',
@@ -591,7 +591,7 @@ export class PartnerPriceProposalsController {
     id: 'partner.priceProposals.list',
     summary: 'List my factory’s price proposals and rate cards',
     description:
-      'Own proposals and the rate cards Packio sent (D-042). Never suggestions or benchmarks (D-044).',
+      'Own proposals and the rate cards getpack sent (D-042). Never suggestions or benchmarks (D-044).',
     implements: GOVERNANCE,
   })
   @ApiPaginated(PriceProposalSummaryDto, { example: PROPOSAL_SUMMARY_EXAMPLE })
@@ -686,7 +686,7 @@ export class PartnerPriceProposalsController {
   @proposalParam
   @ApiEndpoint({
     id: 'partner.priceProposals.submit',
-    summary: 'Submit my proposal to Packio',
+    summary: 'Submit my proposal to getpack',
     description: 'Opens the `price_proposal` review by the Partner team (D-040).',
     implements: GOVERNANCE,
   })
@@ -752,7 +752,7 @@ export class PartnerPriceProposalsController {
   @proposalParam
   @ApiEndpoint({
     id: 'partner.priceProposals.answerCounters',
-    summary: 'Accept or withdraw the lines Packio countered',
+    summary: 'Accept or withdraw the lines getpack countered',
     description: 'An accepted counter becomes the line’s value; a withdrawn line does not apply (D-040).',
     implements: GOVERNANCE,
   })
@@ -783,7 +783,7 @@ export class PartnerPriceProposalsController {
   @proposalParam
   @ApiEndpoint({
     id: 'partner.priceProposals.respondToRateCard',
-    summary: 'Accept or negotiate a Packio rate card',
+    summary: 'Accept or negotiate a getpack rate card',
     description:
       'Without `lines` the whole card is accepted; otherwise each listed line is accepted or countered (negotiated ' +
       'exception). The card applies to new orders once every line is settled (D-042 a).',
@@ -812,7 +812,7 @@ export class PartnerPriceProposalsController {
     type: PriceProposalDto,
     example: {
       ...PROPOSAL_EXAMPLE,
-      direction: 'packio_to_factory',
+      direction: 'getpack_to_factory',
       origin: 'platform_rate_card',
       status: 'accepted_by_factory',
     },

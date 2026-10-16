@@ -6,7 +6,7 @@ import { type Request } from 'express';
 import { RealtimeTokens } from './realtime-tokens';
 
 /** Channels a verified stream may read, set by `RealtimeStreamGuard`. */
-export const STREAM_CHANNELS = Symbol('packio:stream-channels');
+export const STREAM_CHANNELS = Symbol('getpack:stream-channels');
 const SURFACE_OF_PATH = /^\/v\d+\/(store|admin|partner)\//;
 
 /**

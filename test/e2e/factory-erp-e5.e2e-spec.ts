@@ -6,12 +6,12 @@ import { as, foldingBackToRfq, foldingReady, staffToken } from '../support/comme
 import { bootFulfilmentApp, factoryToken, type FulfilmentApp } from '../support/fulfilment-e2e';
 
 /**
- * Packio Factory ERP E5 (docs/prompts/E1-factory-erp.md §12, D-372 – D-383): an inspection template, a final
+ * getpack Factory ERP E5 (docs/prompts/E1-factory-erp.md §12, D-372 – D-383): an inspection template, a final
  * check that fails and opens an NCR worked to close, one that passes with its certificate of analysis, machine
- * rates and the job cost, OEE, the owner's dashboard, shifts and skills, Packio support's grant and read, and
+ * rates and the job cost, OEE, the owner's dashboard, shifts and skills, getpack support's grant and read, and
  * who may do what (D-382).
  */
-describe('Packio Factory ERP E5 (e2e)', () => {
+describe('getpack Factory ERP E5 (e2e)', () => {
   let ctx: FulfilmentApp;
   let fixture: DevFolding;
   let owner: string;
@@ -115,9 +115,9 @@ describe('Packio Factory ERP E5 (e2e)', () => {
     const month = today.slice(0, 7);
     expect(await get(`/insight/costs?month=${month}`)).toMatchObject({ month });
     expect(await get(`/insight/profitability?month=${month}&by=item`)).toMatchObject({ month, by: 'item' });
-    expect(await get(`/insight/profitability?month=${month}&by=packio_job`)).toMatchObject({ month, by: 'packio_job', rows: expect.any(Array) }); // D-402
+    expect(await get(`/insight/profitability?month=${month}&by=getpack_job`)).toMatchObject({ month, by: 'getpack_job', rows: expect.any(Array) }); // D-402
     const dash = await get('/dashboard', accountant);
-    expect(dash).toMatchObject({ month, quality: { openNcrs: expect.any(Number) }, packio: { confirmedNet: expect.any(String), toConfirm: expect.any(Number) } });
+    expect(dash).toMatchObject({ month, quality: { openNcrs: expect.any(Number) }, getpack: { confirmedNet: expect.any(String), toConfirm: expect.any(Number) } });
     await get('/dashboard', qc, 403);
     await get('/dashboard', operator, 403);
   });

@@ -135,7 +135,7 @@ function renderDoc(results: { c: GoldenCase; s: Summary }[]): string {
     '- Known, intended differences from Locopack (port map `docs/legacy/05-pouch-port-map.md` §9): a quantity below the',
     "  factory's minimum is refused (legacy raised it and charged the raised run); a missing price row (option, zipper,",
     '  lamination / making band, minimum band) refuses that factory instead of failing the whole request; one option per',
-    "  factory × print type; Packio's sell table (quantity tiers, fix cost, design fee) and the dated VAT rate instead of",
+    "  factory × print type; getpack's sell table (quantity tiers, fix cost, design fee) and the dated VAT rate instead of",
     '  `locopack_margins` and the 1.07 literal; an unprinted pouch has no print line; delivery is its own quote line (D-013).',
     '  The lamination (4 THB/m² × 0.8 m) and pouch-making (more than 10 000 → 0.2 THB) constants legacy hard-coded are',
     '  print-type terms with those values.',

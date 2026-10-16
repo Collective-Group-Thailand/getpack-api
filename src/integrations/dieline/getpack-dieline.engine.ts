@@ -52,13 +52,13 @@ interface Image {
   data: Uint8ClampedArray;
 }
 
-/** What the API uses from `@packio/dieline` (README "Recipes and modules", "Solver", "Exports"). */
+/** What the API uses from `@getpack/dieline` (README "Recipes and modules", "Solver", "Exports"). */
 /** Every recipe the vendored engine draws: the whole library when the bundle carries it, the core recipes otherwise. */
 const recipesOf = (pkg: DielinePackage): EngineRecipe[] => pkg.ALL_RECIPES ?? pkg.RECIPES;
 
 interface DielinePackage {
   RECIPES: EngineRecipe[];
-  /** The whole style library (`@packio/dieline/library`): core recipes as the library extends them + the waves. */
+  /** The whole style library (`@getpack/dieline/library`): core recipes as the library extends them + the waves. */
   ALL_RECIPES?: EngineRecipe[];
   /** Adds the library's styles to the engine's registry (once). */
   registerLibrary?(): void;
@@ -116,7 +116,7 @@ interface DielinePackage {
   ): Image;
 }
 
-const PACKAGE = '@packio/dieline';
+const PACKAGE = '@getpack/dieline';
 const MIME: Record<DielineFormat, string> = {
   svg: 'image/svg+xml',
   dxf: 'application/dxf',
@@ -137,10 +137,10 @@ function area(points: Pt[]): number {
 const round = (n: number, d = 2) => Math.round(n * 10 ** d) / 10 ** d;
 
 /**
- * Adapter over the vendored `@packio/dieline` bundle (`vendor/packio-dieline/index.mjs`, ADR-0010), loaded on first
+ * Adapter over the vendored `@getpack/dieline` bundle (`vendor/getpack-dieline/index.mjs`, ADR-0010), loaded on first
  * use with a dynamic `import()`. Without the bundle the engine reports itself unavailable (callers answer 501).
  */
-export class PackioDielineEngine implements DielineEngine {
+export class GetpackDielineEngine implements DielineEngine {
   private loaded: Promise<{ pkg: DielinePackage; version: string } | null> | null = null;
 
   constructor(private readonly root = process.cwd()) {}
@@ -358,7 +358,7 @@ export class PackioDielineEngine implements DielineEngine {
       title: o.title,
       styleCode: o.styleCode,
       keywords: o.keywords,
-      producer: `Packio designer PDF (${version})`,
+      producer: `getpack designer PDF (${version})`,
       bleedMm: o.bleedMm,
       safeMm: o.safeMm,
     });
@@ -406,7 +406,7 @@ export class PackioDielineEngine implements DielineEngine {
   private load(): Promise<{ pkg: DielinePackage; version: string } | null> {
     this.loaded ??= (async () => {
       try {
-        const dir = join(this.root, 'vendor', 'packio-dieline');
+        const dir = join(this.root, 'vendor', 'getpack-dieline');
         const meta = JSON.parse(await readFile(join(dir, 'VERSION.json'), 'utf8')) as {
           version: string;
           bundleSha256: string;
@@ -415,7 +415,7 @@ export class PackioDielineEngine implements DielineEngine {
         // The bundle must be the one recorded (ADR-0010): a hand-edited bundle never loads.
         if (createHash('sha256').update(bundle).digest('hex') !== meta.bundleSha256) return null;
         const pkg = (await import(pathToFileURL(join(dir, 'index.mjs')).href)) as DielinePackage;
-        // The library's styles drawn like the core ones (the bundle carries `@packio/dieline/library`).
+        // The library's styles drawn like the core ones (the bundle carries `@getpack/dieline/library`).
         pkg.registerLibrary?.();
         return { pkg, version: `${PACKAGE}@${meta.version}+${meta.bundleSha256.slice(0, 8)}` };
       } catch {

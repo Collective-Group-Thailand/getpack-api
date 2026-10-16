@@ -8,13 +8,13 @@ import { as, foldingBackToRfq, foldingReady } from '../support/commerce-e2e';
 import { bootFulfilmentApp, factoryToken, type FulfilmentApp } from '../support/fulfilment-e2e';
 
 /**
- * Packio Factory ERP E4 (docs/prompts/E1-factory-erp.md §11, D-359 – D-371): a lead and its opportunity, a
+ * getpack Factory ERP E4 (docs/prompts/E1-factory-erp.md §11, D-359 – D-371): a lead and its opportunity, a
  * quotation sent with a customer link and accepted there, the sales order with its credit check and stock
  * reservation, a delivery note that issues the stock, the tax invoice in the factory's own numbering, a credit
  * note, a billing note, the receipt with the customer's withholding, a 50 ทวิ for a supplier payment, the VAT
  * and withholding reports, exports, and who may do what (D-371).
  */
-describe('Packio Factory ERP E4 (e2e)', () => {
+describe('getpack Factory ERP E4 (e2e)', () => {
   let ctx: FulfilmentApp;
   let fixture: DevFolding;
   let owner: string;

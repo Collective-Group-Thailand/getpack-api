@@ -6,7 +6,7 @@ import { quantityMargin } from '../standard-product/standard-product-calculator'
 
 /**
  * The service calculator (U-B6 service). Legacy has no service formula beyond the CS service page
- * (`resources/js/components/service-orders/cs.vue:381-429`): from a net cost, Packio's gross margin then VAT; from a
+ * (`resources/js/components/service-orders/cs.vue:381-429`): from a net cost, getpack's gross margin then VAT; from a
  * VAT-inclusive sell price (design), back to the net and the cost — each rounded half-up in the browser — and the
  * freelancer's payable of a hired design rounded up in PHP (`calculateServiceCost`, `helpers.php:3724-3736`). Ported
  * exactly, nothing new (D-194, port map `docs/legacy/05-service-port-map.md` §9). Pure.

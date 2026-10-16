@@ -12,7 +12,7 @@ export default tseslint.config(
       'node_modules/**',
       'src/generated/**',
       'legacy/**',
-      // ADR-0010: the vendored @packio/dieline bundle is generated, never edited.
+      // ADR-0010: the vendored @getpack/dieline bundle is generated, never edited.
       'vendor/**',
       'docs/**',
       // k6 load scripts run in the k6 runtime (remote jslib imports), not in Node.

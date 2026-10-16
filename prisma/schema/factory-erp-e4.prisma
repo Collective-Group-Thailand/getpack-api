@@ -1,4 +1,4 @@
-// Packio Factory ERP E4 (D-359 – D-371): CRM, quotations, sales orders, delivery notes, the factory’s own
+// getpack Factory ERP E4 (D-359 – D-371): CRM, quotations, sales orders, delivery notes, the factory’s own
 // invoices / tax invoices, credit and debit notes, receipts, billing notes, 50 ทวิ certificates and sales targets.
 
 enum ErpLeadSource {
@@ -9,7 +9,7 @@ enum ErpLeadSource {
   website
   referral
   exhibition
-  packio
+  getpack
   other
 
   @@map("erp_lead_source")

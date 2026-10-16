@@ -2,7 +2,7 @@ import { type StoreConfiguratorDto } from '@modules/catalog/store/store-configur
 
 /**
  * The homepage Studio hero → the body `store.quotes.calculate` takes (UX round 2 Phase 4 §A2, D-310). A thin
- * mapping only: the configuration is the one `/configure` sends for the same choices (packio-web
+ * mapping only: the configuration is the one `/configure` sends for the same choices (getpack-web
  * `configurator/build.ts`: first pattern and its first part, the board as `materialId`, front inks at full coverage
  * — a process ink four times on folding — no back print, no finish), so the price is the calculator's (D-043).
  */

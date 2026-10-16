@@ -104,7 +104,7 @@ export class CatalogExportDto {
   @ApiProperty({ format: 'uuid', example: '0192f3a0-7c1e-7d2a-9b1f-00000000f002' })
   fileId!: string;
 
-  @ApiProperty({ example: 'https://packio-files.s3.example.com/…&X-Amz-Expires=300' })
+  @ApiProperty({ example: 'https://getpack-files.s3.example.com/…&X-Amz-Expires=300' })
   url!: string;
 
   @ApiProperty({ type: 'integer', example: 7_408 })

@@ -1,9 +1,9 @@
 import { systemActor } from '@common/context/actor';
+import { dateOnly } from '@common/ledger-core/dates';
 import { formatMoney, MoneyDecimal, type MoneyValue } from '@common/money/money';
 import { bangkokDate } from '@common/time/bangkok';
 import { type Tx } from '@database/prisma.service';
 import { type Prisma, type PurchaseOrder } from '@generated/prisma/client';
-import { dateOnly } from '@common/ledger-core/dates';
 import { TaxRatesReader } from '@modules/ledger/tax-rates.reader';
 import { Injectable, Logger } from '@nestjs/common';
 import { type DomainEventEnvelope } from '@platform/domain-events/domain-event';
@@ -255,7 +255,7 @@ export class PurchasingService {
         shipmentId: s.id,
       });
     });
-    // D-205: a reused tool the factory found unusable was remade at Packio's cost (the PO keeps its snapshot): it is
+    // D-205: a reused tool the factory found unusable was remade at getpack's cost (the PO keeps its snapshot): it is
     // received in full with the goods; the customer price is unchanged (D-012).
     let toolingNet = ZERO();
     const remakes = await tx.toolingRemake.findMany({

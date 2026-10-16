@@ -220,7 +220,7 @@ export class FinancePeriodDto {
   @ApiProperty({ format: 'date', example: '2026-10-31' })
   to!: string;
 
-  @ApiProperty({ example: '0.00', description: 'What Packio owed the factory before `from` (net of VAT)' })
+  @ApiProperty({ example: '0.00', description: 'What getpack owed the factory before `from` (net of VAT)' })
   opening!: string;
 
   @ApiProperty({ example: '14000.00', description: 'Goods received (P15)' })
@@ -277,7 +277,7 @@ export class FinancePurchaseOrderDto {
   @ApiProperty({ example: '0.00' })
   deducted!: string;
 
-  @ApiProperty({ example: '700.00', description: 'earned − paid − deducted: what Packio still owes on it' })
+  @ApiProperty({ example: '700.00', description: 'earned − paid − deducted: what getpack still owes on it' })
   owed!: string;
 }
 

@@ -10,7 +10,7 @@ import {
 } from './dimension-conversion';
 
 describe('measurement-basis conversion (D-182)', () => {
-  it('adds packio-web’s caliper allowances per construction family', () => {
+  it('adds getpack-web’s caliper allowances per construction family', () => {
     const box = convertSize({ w: 100, l: 150, d: 50 }, 'internal', 'box', 0.5);
     expect(box.sizes).toEqual({
       internal: { w: 100, l: 150, d: 50 },

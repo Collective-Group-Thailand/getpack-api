@@ -147,8 +147,8 @@ export class OpsSignalsService implements OnModuleInit {
     try {
       let depth = 0;
       for (const queue of Object.values(QUEUES)) {
-        depth += await this.redis.llen(`packio:${queue}:wait`);
-        depth += await this.redis.zcard(`packio:${queue}:prioritized`);
+        depth += await this.redis.llen(`getpack:${queue}:wait`);
+        depth += await this.redis.zcard(`getpack:${queue}:prioritized`);
       }
       return depth;
     } catch {

@@ -1,7 +1,7 @@
-# Packio 3D Studio — product specification
+# getpack 3D Studio — product specification
 
 > Concept: **ออกแบบเสร็จ → สั่งผลิตได้ทันที** — one continuous place where a first-time customer picks a box, designs it in 3D, sees that it is print-ready, sees the real price, and orders. No separate "save and quit", no RFQ wait for instant types, no file hand-off.
-> Builds on: `@packio/dieline` (U3 recipes), designer v2 (F4), Structure Advisor & spec model v2 (U2), quote engine (B2), artwork/proof pipeline (B4).
+> Builds on: `@getpack/dieline` (U3 recipes), designer v2 (F4), Structure Advisor & spec model v2 (U2), quote engine (B2), artwork/proof pipeline (B4).
 > Benchmark addendum: §9. Original design only — no layouts, assets, patterns, icons or copy from any other product.
 
 ---

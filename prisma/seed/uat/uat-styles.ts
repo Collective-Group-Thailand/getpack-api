@@ -1,5 +1,5 @@
 /**
- * UAT only — publishes the style library on a rehearsal database (packio-web close-out, 2026-10-09; D-407), through the
+ * UAT only — publishes the style library on a rehearsal database (getpack-web close-out, 2026-10-09; D-407), through the
  * same services the back office calls, each gate passed by the UAT fixture account that owns it (maker ≠ checker
  * holds at every step):
  *
@@ -25,7 +25,7 @@ import { type INestApplicationContext } from '@nestjs/common';
 import { type UserActor } from '../../../src/common/context/actor';
 import { etagOf } from '../../../src/common/etag/etag';
 import { PrismaService } from '../../../src/database/prisma.service';
-import { PackioDielineEngine } from '../../../src/integrations/dieline/packio-dieline.engine';
+import { GetpackDielineEngine } from '../../../src/integrations/dieline/getpack-dieline.engine';
 import { engineBundle } from '../../../src/modules/styles/engine-recipes';
 import { ProcessCapabilitiesService } from '../../../src/modules/styles/process-capabilities.service';
 import { PRODUCT_TYPE_OF, StyleImportService } from '../../../src/modules/styles/style-import.service';
@@ -103,8 +103,8 @@ export async function publishUatStyles(
       await settle(run);
 
   // 1 — the engine's recipes.
-  const engine = new PackioDielineEngine();
-  if (!(await engine.available())) throw new Error('the vendored @packio/dieline bundle is missing (ADR-0010)');
+  const engine = new GetpackDielineEngine();
+  if (!(await engine.available())) throw new Error('the vendored @getpack/dieline bundle is missing (ADR-0010)');
   const bundle = await engineBundle(engine);
   const codes = bundle.recipes.map((r) => r.baseCode);
   const plan = await imports.plan('recipes', 'uat-engine-recipes.json', JSON.stringify(bundle));

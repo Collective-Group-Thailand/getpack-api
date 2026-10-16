@@ -3,7 +3,7 @@ import { createHash } from 'node:crypto';
 import { canonical } from '@modules/catalog/imports/import-engine';
 
 /**
- * A recipe bundle from `@packio/dieline` (U3.B1, gap §U3 assumption 3): `{ schemaVersion, recipes: [{ baseCode,
+ * A recipe bundle from `@getpack/dieline` (U3.B1, gap §U3 assumption 3): `{ schemaVersion, recipes: [{ baseCode,
  * recipe, processes?, sizeRanges? }] }`. Checked structurally here; the package validates the recipe itself once it
  * is installed (finding S1). The checksum is over the canonical JSON, so key order does not matter.
  */

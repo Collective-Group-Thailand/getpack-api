@@ -529,7 +529,7 @@ function dto(r: AgreementRow, view: View): CallOffAgreementDto {
       nameTh: r.productType.nameTh,
       nameEn: r.productType.nameEn,
     },
-    // D-050: customers never see the factory; D-044: the factory sees its own price, never Packio's sell side.
+    // D-050: customers never see the factory; D-044: the factory sees its own price, never getpack's sell side.
     factory:
       view === 'customer'
         ? null

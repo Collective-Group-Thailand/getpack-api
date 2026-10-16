@@ -6,13 +6,13 @@ import { as, foldingBackToRfq, foldingReady, staffToken } from '../support/comme
 import { bootFulfilmentApp, factoryToken, type FulfilmentApp } from '../support/fulfilment-e2e';
 
 /**
- * Packio Factory ERP E6 (docs/prompts/E6-factory-general-ledger.md, D-385 – D-396): the book starts from the
+ * getpack Factory ERP E6 (docs/prompts/E6-factory-general-ledger.md, D-385 – D-396): the book starts from the
  * templates, a chart change under maker-checker, a manual journal drafted by the accountant and posted by the owner,
  * reversed; stock posted from the ERP and caught up into the books (stock valuation = inventory accounts); bank
  * import with a fee; a fixed asset depreciated; the close checklist; reports that balance; who may do what (D-396)
  * and privacy (staff 403).
  */
-describe('Packio Factory ERP E6 (e2e)', () => {
+describe('getpack Factory ERP E6 (e2e)', () => {
   let ctx: FulfilmentApp;
   let fixture: DevFolding;
   let owner: string;
@@ -136,7 +136,7 @@ describe('Packio Factory ERP E6 (e2e)', () => {
     expect(reopened.status).toBe('open');
   });
 
-  it('edits a posting rule as a new version under maker-checker (D-398) and has Packio rules F14 / F15 (D-397)', async () => {
+  it('edits a posting rule as a new version under maker-checker (D-398) and has getpack rules F14 / F15 (D-397)', async () => {
     const rules = await get('/ledger/rules');
     expect(rules.map((r: Rec) => r.key)).toEqual(expect.arrayContaining(['F14', 'F15']));
     const f01 = rules.find((r: Rec) => r.key === 'F01');

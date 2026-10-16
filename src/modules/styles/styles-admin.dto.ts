@@ -484,7 +484,7 @@ export class UpdateStyleDto {
     type: String,
     nullable: true,
     example: 'other',
-    description: 'The Packio product type it is sold as (null: none — not publishable)',
+    description: 'The getpack product type it is sold as (null: none — not publishable)',
   })
   @IsOptional()
   @IsString()

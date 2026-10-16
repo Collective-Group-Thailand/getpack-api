@@ -7,9 +7,9 @@
 #   calPrice:926, calPrintArea:937, calFinishingArea:944, calTotalWaste:951, calTotalWastePaperSize,
 #   calPricePaperSizeBahtPerSheet, calCostPaperSize, sumArrayByKey, convertNumberFloat:2687),
 #   app/Http/Controllers/Api/CodeMarginController.php:13-39.
-# The legacy request is built from a Packio part request as D-233 says (colour amount = number of colours, no semi-tone
+# The legacy request is built from a getpack part request as D-233 says (colour amount = number of colours, no semi-tone
 # artwork, automatic foil axis, no sorting / packing / distance, margin compute type 2 at the factory margin %, one foil
-# location at x = y = 0). Packio's documented treatments of legacy quirks (port map docs/legacy/05-folding-b-port-map.md
+# location at x = y = 0). getpack's documented treatments of legacy quirks (port map docs/legacy/05-folding-b-port-map.md
 # §7) are applied where legacy would price 0, abort or read an unordered first row: a missing price line raises
 # PriceLineMissing, finish-2 waste is kept by position (QB12), every foil must fit (QB15), per-layout totals (QB24),
 # unequal location sizes are summed (D-233). Everything else follows the PHP line by line.

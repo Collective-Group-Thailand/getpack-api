@@ -1,7 +1,7 @@
 import { type PermissionKey } from './permissions.catalog';
 
 /**
- * Admin-zone menu entitlements returned by `GET /v1/admin/me` (B1.3). `packio-web` renders the
+ * Admin-zone menu entitlements returned by `GET /v1/admin/me` (B1.3). `getpack-web` renders the
  * entries it knows and localises their labels; each business module adds its own entries.
  * An entry without `permission` is visible to every staff member; a list means any one of them (U-B0.3).
  */

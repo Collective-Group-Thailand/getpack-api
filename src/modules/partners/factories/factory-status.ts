@@ -20,5 +20,5 @@ export const canTransition = (from: FactoryStatus, to: FactoryStatus): boolean =
 /** Statuses in which a factory may take production work (D-011: onboarding precedes any work). */
 export const WORKING_STATUSES: readonly FactoryStatus[] = ['trial', 'active'];
 
-/** The factory may still edit its own legal data before Packio starts the trial. */
+/** The factory may still edit its own legal data before getpack starts the trial. */
 export const SELF_EDITABLE_STATUSES: readonly FactoryStatus[] = ['applied', 'under_review'];

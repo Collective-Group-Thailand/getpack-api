@@ -24,10 +24,10 @@ export class KnowledgeArticleCardDto {
   @ApiProperty({ type: String, nullable: true, example: 'QC photo standard' })
   titleEn!: string | null;
 
-  @ApiProperty({ type: String, nullable: true, example: 'ถ่ายภาพงานก่อนส่งอย่างไรให้ Packio ตรวจได้' })
+  @ApiProperty({ type: String, nullable: true, example: 'ถ่ายภาพงานก่อนส่งอย่างไรให้ getpack ตรวจได้' })
   excerptTh!: string | null;
 
-  @ApiProperty({ type: String, nullable: true, example: 'How to photograph a job so Packio can check it' })
+  @ApiProperty({ type: String, nullable: true, example: 'How to photograph a job so getpack can check it' })
   excerptEn!: string | null;
 
   @ApiProperty({ format: 'date-time', example: '2026-10-03T09:00:00+07:00' })
@@ -54,8 +54,8 @@ const CARD: KnowledgeArticleCardDto = {
   slug: 'qc-photo-standard',
   titleTh: 'มาตรฐานภาพถ่าย QC',
   titleEn: 'QC photo standard',
-  excerptTh: 'ถ่ายภาพงานก่อนส่งอย่างไรให้ Packio ตรวจได้',
-  excerptEn: 'How to photograph a job so Packio can check it',
+  excerptTh: 'ถ่ายภาพงานก่อนส่งอย่างไรให้ getpack ตรวจได้',
+  excerptEn: 'How to photograph a job so getpack can check it',
   publishedAt: '2026-10-03T09:00:00+07:00',
   categorySlugs: ['qc-photo-standard'],
 };

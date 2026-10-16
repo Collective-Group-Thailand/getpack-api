@@ -38,7 +38,7 @@ function user(actor: Actor, audience: 'customer' | 'staff'): UserActor {
   return actor;
 }
 
-/** The customer's threads with Packio CS (D-300): the support chat and one per order, design or RFQ of theirs. */
+/** The customer's threads with getpack CS (D-300): the support chat and one per order, design or RFQ of theirs. */
 @ApiSurface('store', 'conversations')
 @Controller('conversations')
 export class StoreThreadsController {
@@ -58,10 +58,10 @@ export class StoreThreadsController {
   @Get()
   @ApiEndpoint({
     id: 'store.conversations.list',
-    summary: 'My threads with Packio',
+    summary: 'My threads with getpack',
     description:
       'Latest activity first (up to 100): the support chat and the threads about my orders, designs, RFQs and RFQ ' +
-      'baskets, each with its unread count, where replies go and when Packio last read it (D-300).',
+      'baskets, each with its unread count, where replies go and when getpack last read it (D-300).',
     implements: DECISIONS,
   })
   @ApiSuccess(200, { description: 'Threads', type: [StoreThreadDto], example: [STORE_THREAD_EXAMPLE] })
@@ -79,7 +79,7 @@ export class StoreThreadsController {
   @Idempotent()
   @ApiEndpoint({
     id: 'store.conversations.open',
-    summary: 'Write to Packio about something',
+    summary: 'Write to getpack about something',
     description:
       'Opens (or continues) my live thread about the support chat or one of my orders, designs or RFQs, with my first ' +
       'message: text, my uploaded and scanned files (one message each) and / or a card to one of my records. Someone ' +
@@ -135,7 +135,7 @@ export class StoreThreadsController {
     id: 'store.conversations.listThreadMessages',
     summary: 'Messages of one of my threads',
     description:
-      'Newest first, cursor-paged; never Packio’s internal notes. Reading moves my read position (D-300) — Packio ' +
+      'Newest first, cursor-paged; never getpack’s internal notes. Reading moves my read position (D-300) — getpack ' +
       'sees it as a read receipt.',
     implements: DECISIONS,
   })
@@ -179,9 +179,9 @@ export class StoreThreadsController {
   @threadParam
   @ApiEndpoint({
     id: 'store.conversations.setReplyChannel',
-    summary: 'Choose where Packio replies',
+    summary: 'Choose where getpack replies',
     description:
-      'On the web / LIFF thread, or on my LINE (D-300) — LINE needs a linked LINE account that follows Packio ' +
+      'On the web / LIFF thread, or on my LINE (D-300) — LINE needs a linked LINE account that follows getpack ' +
       '(`conversations.unreachable` otherwise). Without a choice replies follow the channel of my last message.',
     implements: DECISIONS,
   })

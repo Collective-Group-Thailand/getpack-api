@@ -59,7 +59,7 @@ export class CreateCampaignDto {
   @Matches(/^[a-z0-9][a-z0-9_-]{1,39}$/)
   code!: string;
 
-  @ApiProperty({ example: 'เปิดตัว Packio' })
+  @ApiProperty({ example: 'เปิดตัว getpack' })
   @IsString()
   @MaxLength(120)
   name!: string;
@@ -100,7 +100,7 @@ export class CreateCampaignDto {
 }
 
 export class UpdateCampaignDto {
-  @ApiPropertyOptional({ example: 'เปิดตัว Packio' })
+  @ApiPropertyOptional({ example: 'เปิดตัว getpack' })
   @IsOptional()
   @IsString()
   @MaxLength(120)
@@ -135,7 +135,7 @@ export class CampaignDto {
   @ApiProperty({ example: 'launch-2026' })
   code!: string;
 
-  @ApiProperty({ example: 'เปิดตัว Packio' })
+  @ApiProperty({ example: 'เปิดตัว getpack' })
   name!: string;
 
   @ApiProperty({ enum: CAMPAIGN_STATUSES, enumName: 'CampaignStatus', example: 'active' })
@@ -189,7 +189,7 @@ export class CampaignDto {
 export const CAMPAIGN_EXAMPLE: CampaignDto = {
   id: IDS.campaign,
   code: 'launch-2026',
-  name: 'เปิดตัว Packio',
+  name: 'เปิดตัว getpack',
   status: 'active',
   startsAt: '2026-11-01T00:00:00+07:00',
   endsAt: null,
@@ -590,7 +590,7 @@ export const PROMOTION_EXAMPLE: PromotionDto = {
   benefitSummaryTh: 'ลด 10% สูงสุด 500.00 บาท',
   benefitSummaryEn: '10% off, up to THB 500.00',
   usage: { redemptions: 0, discountAmount: '0.00', cappedAmount: '0.00' },
-  campaign: { id: IDS.campaign, code: 'launch-2026', name: 'เปิดตัว Packio' },
+  campaign: { id: IDS.campaign, code: 'launch-2026', name: 'เปิดตัว getpack' },
   updatedAt: '2026-10-20T10:00:00+07:00',
 };
 
@@ -826,7 +826,7 @@ export class CouponExportDto {
   fileId!: string;
 
   @ApiProperty({
-    example: 'https://packio-files.s3.example.com/…&X-Amz-Expires=300',
+    example: 'https://getpack-files.s3.example.com/…&X-Amz-Expires=300',
     description: 'Signed for 5 minutes',
   })
   url!: string;

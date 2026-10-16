@@ -103,7 +103,7 @@ export class RfqBasketItemDto {
   @ApiProperty({
     type: RfqDto,
     nullable: true,
-    description: 'Its RFQ once submitted — status, Packio’s quotations per quantity, acceptance',
+    description: 'Its RFQ once submitted — status, getpack’s quotations per quantity, acceptance',
   })
   rfq!: RfqDto | null;
 }
@@ -137,7 +137,7 @@ export class RfqBasketDto {
     format: 'uuid',
     nullable: true,
     example: null,
-    description: 'The basket’s thread with Packio (`store.conversations.*`), from submission',
+    description: 'The basket’s thread with getpack (`store.conversations.*`), from submission',
   })
   conversationId!: string | null;
 

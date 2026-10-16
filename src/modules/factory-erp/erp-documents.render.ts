@@ -3,7 +3,7 @@ import { bahtText, thaiDate } from '@modules/receivables/thai-text';
 /**
  * A4 HTML of the factory's own documents (D-368), rendered to PDF by the host's Chromium with the Thai fonts:
  * quotations, order confirmations, delivery notes, invoices / tax invoices (original and copy), receipts,
- * credit / debit notes, billing notes and the 50 ทวิ certificate — under the factory's name, never Packio's.
+ * credit / debit notes, billing notes and the 50 ทวิ certificate — under the factory's name, never getpack's.
  */
 
 export interface DocParty {
@@ -184,7 +184,7 @@ ${d.bankDetails ? `<div class="notes"><b>การชำระเงิน</b> $
     .join('')}</div>
 ${d.stamp ? `<div class="stamp">${esc(d.stamp)}</div>` : ''}
 ${d.draft ? '<div class="draft">ร่าง</div>' : ''}
-<div class="foot"><span>${esc(d.footer)}</span><span>สร้างด้วย Packio Factory</span></div>
+<div class="foot"><span>${esc(d.footer)}</span><span>สร้างด้วย getpack Factory</span></div>
 </div>`;
 }
 
@@ -263,7 +263,7 @@ export function renderWhtCertificateHtml(c: WhtCertView): string {
 <div style="margin-top:8px">ผู้จ่ายเงิน ${box(true, '(1) หัก ณ ที่จ่าย')}${box(false, '(2) ออกให้ตลอดไป')}${box(false, '(3) ออกให้ครั้งเดียว')}${box(false, '(4) อื่น ๆ')}</div>
 <div class="sigs"><div class="sig" style="width:60%">ขอรับรองว่าข้อความและตัวเลขดังกล่าวข้างต้นถูกต้องตรงกับความจริงทุกประการ<div class="line"></div>ลงชื่อ ${esc(c.signatory ?? '')} ผู้จ่ายเงิน<br>วันที่ ${thaiDate(c.paidOn)}</div></div>
 ${c.voided ? '<div class="stamp">ยกเลิก</div>' : ''}
-<div class="foot"><span>ฉบับที่ 1 (สำหรับผู้ถูกหักภาษี ณ ที่จ่าย ใช้แนบพร้อมกับแบบแสดงรายการภาษี) · ฉบับที่ 2 (สำหรับผู้ถูกหักภาษี ณ ที่จ่าย เก็บไว้เป็นหลักฐาน)</span><span>สร้างด้วย Packio Factory</span></div>
+<div class="foot"><span>ฉบับที่ 1 (สำหรับผู้ถูกหักภาษี ณ ที่จ่าย ใช้แนบพร้อมกับแบบแสดงรายการภาษี) · ฉบับที่ 2 (สำหรับผู้ถูกหักภาษี ณ ที่จ่าย เก็บไว้เป็นหลักฐาน)</span><span>สร้างด้วย getpack Factory</span></div>
 </div>`;
   return `<!doctype html><html lang="th"><head><meta charset="utf-8"><title>${esc(c.certNo)}</title><style>${STYLE}</style></head><body>${one('ฉบับที่ 1')}${one('ฉบับที่ 2')}</body></html>`;
 }
@@ -329,6 +329,6 @@ export function renderCoaHtml(c: CoaView): string {
 <table class="lines"><thead><tr><th style="width:6%">ลำดับ</th><th>หัวข้อตรวจ</th><th style="width:26%">เกณฑ์</th><th class="n" style="width:14%">ค่าที่วัดได้</th><th style="width:12%">ผล</th></tr></thead><tbody>${rows}</tbody></table>
 ${c.remarks ? `<div class="notes"><b>หมายเหตุ</b> ${esc(c.remarks)}</div>` : ''}
 <div class="sigs"><div class="sig"><div class="line"></div>ผู้ตรวจสอบ<br>วันที่ ........./........./.........</div><div class="sig"><div class="line"></div>ผู้อนุมัติ<br>วันที่ ........./........./.........</div></div>
-<div class="foot"><span>${esc(c.footer)}</span><span>สร้างด้วย Packio Factory</span></div>
+<div class="foot"><span>${esc(c.footer)}</span><span>สร้างด้วย getpack Factory</span></div>
 </div></body></html>`;
 }

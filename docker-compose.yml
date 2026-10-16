@@ -1,21 +1,21 @@
-# Local infrastructure for packio-api. `docker compose up -d`, then `pnpm dev` / `pnpm dev:worker`.
+# Local infrastructure for getpack-api. `docker compose up -d`, then `pnpm dev` / `pnpm dev:worker`.
 # Images match Testcontainers and production (ADR-0001). Data is dev-only and obviously fake.
-name: packio-api
+name: getpack-api
 
 services:
   postgres:
     image: pgvector/pgvector:pg18
     environment:
-      POSTGRES_USER: packio
-      POSTGRES_PASSWORD: packio
-      POSTGRES_DB: packio
+      POSTGRES_USER: getpack
+      POSTGRES_PASSWORD: getpack
+      POSTGRES_DB: getpack
     ports:
       - '5432:5432'
     volumes:
       - postgres-data:/var/lib/postgresql
       - ./docker/postgres/init-shadow-db.sql:/docker-entrypoint-initdb.d/10-shadow-db.sql:ro
     healthcheck:
-      test: ['CMD-SHELL', 'pg_isready -U packio -d packio']
+      test: ['CMD-SHELL', 'pg_isready -U getpack -d getpack']
       interval: 5s
       timeout: 3s
       retries: 20
@@ -40,7 +40,7 @@ services:
     volumes:
       - ./docker/localstack/init-aws.sh:/etc/localstack/init/ready.d/init-aws.sh:ro
     healthcheck:
-      test: ['CMD-SHELL', 'awslocal s3api head-bucket --bucket packio-dev']
+      test: ['CMD-SHELL', 'awslocal s3api head-bucket --bucket getpack-dev']
       interval: 5s
       timeout: 5s
       retries: 30

@@ -4,7 +4,7 @@ describe('remittance advice (U-B0.3)', () => {
   const html = renderRemittanceAdviceHtml({
     pvNumber: 'PV-2610-0001',
     paidOn: '2026-10-15',
-    payer: { name: 'Packio (fake)', taxId: '0000000000019' },
+    payer: { name: 'getpack (fake)', taxId: '0000000000019' },
     payee: { name: 'โรงงาน <ทดสอบ>', taxId: '0000000000027', branchCode: '00000' },
     bankAccountLast4: '1234',
     bankRef: 'BR-1',

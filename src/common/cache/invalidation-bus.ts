@@ -8,7 +8,7 @@ import {
 } from '@nestjs/common';
 import { type Redis } from 'ioredis';
 
-const CHANNEL = 'packio:cache-invalidation';
+const CHANNEL = 'getpack:cache-invalidation';
 
 type Handler = (key: string) => void;
 

@@ -1,0 +1,10 @@
+{
+  "package": "@getpack/dieline",
+  "version": "0.1.0",
+  "getpackWebCommit": "fa265f3153a577041379ab031cc083e10cd2f9e5",
+  "sourceTree": "ff377198832e2fa33d3ca6372cd7326cd679a1d5",
+  "uncommittedChanges": 0,
+  "bundleSha256": "ccc03fe8ee1fee2f8cc4f90c6eb15731949ec59916aad738478812243c46e9f1",
+  "bundledAt": "2026-10-16T04:13:27Z",
+  "bundler": "esbuild@0.28.2"
+}

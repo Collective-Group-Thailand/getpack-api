@@ -23,7 +23,7 @@ const SCRUBBED = { text: '—', phone: '+66000000000', taxId: '0000000000000', n
 /**
  * PDPA data-subject requests (D-222): a customer asks for an export of their data or its deletion; the Data
  * Protection Officer (`privacy_requests.manage`) answers within `privacy.response_days`. An export is a JSON file of
- * the customer's own data (never Packio's costs or margins), downloadable by the customer for
+ * the customer's own data (never getpack's costs or margins), downloadable by the customer for
  * `privacy.export_link_days`. A deletion anonymises the customer — refused while orders, claims or receivables are
  * open — and keeps tax and accounting documents for `documents.retention_years` (they carry their own snapshots).
  */
@@ -110,7 +110,7 @@ export class PrivacyService {
       const body = Buffer.from(JSON.stringify(await this.exportOf(request.userId, now), null, 2));
       const stored = await this.files.storeGenerated(owner, {
         body,
-        fileName: `packio-data-${toBangkokIso(now).slice(0, 10)}.json`,
+        fileName: `getpack-data-${toBangkokIso(now).slice(0, 10)}.json`,
         mimeType: 'application/json',
         retentionClass: 'standard',
       });
@@ -324,7 +324,7 @@ export class PrivacyService {
       ]);
     return {
       exportedAt: toBangkokIso(at),
-      seller: 'Collective Group (Thailand) — Packio',
+      seller: 'Collective Group (Thailand) — getpack',
       user: { ...user, createdAt: toBangkokIso(user.createdAt) },
       profile,
       signIns: identities.map((i) => ({ ...i, linkedAt: toBangkokIso(i.linkedAt) })),

@@ -20,7 +20,7 @@ const CALCULATION_SOURCES: Record<string, UnmetDemandSource> = {
 };
 
 /**
- * Demand Packio could not serve (D-102): declined and expired RFQs, and calculations without an
+ * Demand getpack could not serve (D-102): declined and expired RFQs, and calculations without an
  * instant price. Banded (quantities, 50 mm dimensions, province), no customer identity or price; one
  * record per event (`domain_event_id` unique), so redelivery is harmless.
  */
@@ -30,7 +30,7 @@ export class UnmetDemandSubscriber {
 
   /**
    * D-252: a quotation with a target that ended lost, expired or sent to CS above its target is demand at a price
-   * Packio could not meet — banded by gap, with a distinct-customer key so target-price figures can be suppressed
+   * getpack could not meet — banded by gap, with a distinct-customer key so target-price figures can be suppressed
    * below `analytics.target_price_min_group_size` (D-190). Never the target or the price itself.
    */
   @OnDomainEvent('quote.outcome_recorded', { consumer: 'rfq.unmet-demand-price-gap' })

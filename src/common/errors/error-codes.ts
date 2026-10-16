@@ -291,7 +291,7 @@ export const ERROR_CODES = {
   'production.evidence_missing': HttpStatus.CONFLICT,
   'production.quantity_invalid': HttpStatus.UNPROCESSABLE_ENTITY,
   'factory_users.role_not_allowed': HttpStatus.UNPROCESSABLE_ENTITY,
-  // Packio Factory ERP (D-320 – D-326)
+  // getpack Factory ERP (D-320 – D-326)
   'erp.stock_insufficient': HttpStatus.CONFLICT,
   'erp.sku_taken': HttpStatus.CONFLICT,
   'erp.code_taken': HttpStatus.CONFLICT,
@@ -473,7 +473,7 @@ export const ERROR_CODES = {
 
 export type ErrorCode = keyof typeof ERROR_CODES;
 
-export const PROBLEM_TYPE_BASE = 'https://errors.packio/';
+export const PROBLEM_TYPE_BASE = 'https://errors.getpack/';
 
 /** Maps a bare HTTP status (framework exceptions) to a problem code. */
 export function codeForStatus(status: number): ErrorCode {

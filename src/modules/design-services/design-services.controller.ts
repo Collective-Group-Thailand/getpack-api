@@ -204,7 +204,7 @@ export class AdminDesignServicesController {
   @ApiEndpoint({
     id: 'admin.designServices.assign',
     summary: 'Assign a designer',
-    description: 'A Packio designer or a freelancer vendor (D-071).',
+    description: 'A getpack designer or a freelancer vendor (D-071).',
     implements: DECISIONS,
   })
   @ApiBody({ type: AssignDesignerDto, examples: { default: { value: { assigneeUserId: DS_IDS.user } } } })

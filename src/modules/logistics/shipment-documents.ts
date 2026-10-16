@@ -3,7 +3,7 @@ import QRCode from 'qrcode';
 
 /**
  * Carton labels (100 × 150 mm, one page per carton) and the packing list (A4) of a shipment. Under the
- * Packio brand only — the producing factory is never named on what reaches the customer (D-050). The QR
+ * getpack brand only — the producing factory is never named on what reaches the customer (D-050). The QR
  * code opens public tracking (B4.4). Pure apart from the QR encoding; fonts come from the host.
  */
 export interface ShipmentDocument {
@@ -40,7 +40,7 @@ const LABELS = Handlebars.compile(
 </style></head><body>
 {{#each cartons}}
 <section class="label">
-  <div class="top"><span class="brand">Packio</span><span class="no">{{../shipmentNo}}</span></div>
+  <div class="top"><span class="brand">getpack</span><span class="no">{{../shipmentNo}}</span></div>
   <div class="block"><div class="caption">ผู้ส่ง / From</div>{{../sender.name}}{{#if ../sender.phone}} · {{../sender.phone}}{{/if}}</div>
   <div class="block to"><div class="caption">ผู้รับ / To</div>
     <strong>{{../recipient.name}}</strong><br>{{../recipient.phone}}<br>{{../recipient.line1}}<br>
@@ -69,7 +69,7 @@ const PACKING_LIST = Handlebars.compile(
   td.n, th.n { text-align: right; } .sign { margin-top: 28px; display: flex; gap: 40px; font-size: 10pt; }
   .sign div { flex: 1; border-top: 1px solid #1b1f24; padding-top: 4px; }
 </style></head><body>
-<header><div class="brand">Packio</div><div>{{shipmentNo}}</div></header>
+<header><div class="brand">getpack</div><div>{{shipmentNo}}</div></header>
 <h1>ใบกำกับสินค้า / Packing list</h1>
 <div class="meta">
   <div><strong>ผู้รับ:</strong> {{recipient.name}} · {{recipient.phone}}</div>

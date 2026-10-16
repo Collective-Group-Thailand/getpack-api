@@ -99,7 +99,7 @@ export class StoreTimelineController {
     description: 'Created',
     type: TrackingLinkDto,
     example: {
-      url: 'https://www.packio.example/track/q3J9f0T1xYk8Zb2mR4sW6uE7vN0aLcDh',
+      url: 'https://www.getpack.example/track/q3J9f0T1xYk8Zb2mR4sW6uE7vN0aLcDh',
       token: 'q3J9f0T1xYk8Zb2mR4sW6uE7vN0aLcDh',
     },
   })

@@ -42,7 +42,7 @@ CASES = [
     ('08-legacy-g1', 'Buy 2.50 + fix 0.50, margin 30 %: 4.29, VAT 4.60 (the trace example)', config((10,)),
      [option(rows=[row(1, 999, 2.5)])]),
     ('09-no-vat', 'The same with VAT 0 %: 4.29', config((10,)), [option(rows=[row(1, 999, 2.5)], sell=dict(SELL, vatPct=0))]),
-    ('10-margin-by-quantity', 'Packio margin lines by quantity: 35 % below 1,000, 28 % from 1,000', config((500, 1000)),
+    ('10-margin-by-quantity', 'getpack margin lines by quantity: 35 % below 1,000, 28 % from 1,000', config((500, 1000)),
      [option(sell=dict(SELL, marginLines=[dict(qtyMin=1, qtyMax=999, priceMin=None, priceMax=None, valuePct=35),
                                           dict(qtyMin=1000, qtyMax=None, priceMin=None, priceMax=None, valuePct=28)]))]),
     ('11-no-margin', 'No margin line and no fallback: no price', config((500,)),

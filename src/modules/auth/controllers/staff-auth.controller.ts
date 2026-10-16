@@ -18,7 +18,7 @@ export class StaffAuthController {
   @Throttle(LOGIN_THROTTLE)
   @ApiEndpoint({
     id: 'auth.staff.login',
-    summary: 'Sign in a Packio staff member',
+    summary: 'Sign in a getpack staff member',
     description:
       'E-mail + password (argon2id). Returns a staff-audience token pair (contract §4). Repeated failures lock ' +
       'the account for a while (`auth.password_lockout`); unknown e-mails and wrong passwords return the same problem.',

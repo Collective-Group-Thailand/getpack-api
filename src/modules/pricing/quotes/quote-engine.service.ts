@@ -183,13 +183,13 @@ export interface FactoryQuoteView {
   }[];
 }
 
-/** One destination of a checkout (B3.1): customer price and Packio's cost of delivering it. */
+/** One destination of a checkout (B3.1): customer price and getpack's cost of delivering it. */
 export type DestinationShipping =
   | {
       available: true;
       /** Customer shipping, VAT-exclusive (D-013). */
       net: MoneyValue;
-      /** Packio's cost for the selected factory (fleet payout or carrier quote). */
+      /** getpack's cost for the selected factory (fleet payout or carrier quote). */
       cost: MoneyValue;
       method: 'factory_fleet' | 'flash_express' | 'deliveree';
       customerRateVersionId: string | null;
@@ -489,7 +489,7 @@ export class QuoteEngineService {
 
   /**
    * The buy side of a configuration at one factory, on its own price list in force (D-044: a factory
-   * sees only its own prices, never Packio's sell side or another factory).
+   * sees only its own prices, never getpack's sell side or another factory).
    */
   async priceForFactory(
     key: CalculatorKey,

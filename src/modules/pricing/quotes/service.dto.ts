@@ -110,7 +110,7 @@ export class ServiceAmountsDto {
     type: String,
     nullable: true,
     example: '69.52',
-    description: 'Packio margin; null without `margin.read`',
+    description: 'getpack margin; null without `margin.read`',
   })
   marginAmount!: string | null;
 }

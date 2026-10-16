@@ -17,7 +17,7 @@ describe('barcodes (D-283)', () => {
     ['upca', '036000291452', true, []],
     ['code128', 'PK-2610-0001', true, []],
     ['code128', 'กล่อง', false, ['not_ascii']],
-    ['qr', 'https://packio.example.invalid/p/1', true, []],
+    ['qr', 'https://getpack.example.invalid/p/1', true, []],
     ['qr', '', false, ['empty']],
   ] as const)('%s %s → valid %s', (symbology, value, valid, problems) => {
     const r = validateBarcode(symbology, value);

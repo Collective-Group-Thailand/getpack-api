@@ -1,9 +1,9 @@
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 
-import { lintWithPackioRuleset } from '../support/spectral';
+import { lintWithGetpackRuleset } from '../support/spectral';
 
-/** One operation that breaks every Packio rule at least once. */
+/** One operation that breaks every getpack rule at least once. */
 const badDocument = {
   openapi: '3.1.0',
   info: { title: 'bad', version: '1', description: 'bad', contact: {} },
@@ -63,32 +63,32 @@ const badDocument = {
   },
 };
 
-describe('Packio Spectral ruleset (contract/spectral)', () => {
+describe('getpack Spectral ruleset (contract/spectral)', () => {
   it('passes the committed contract', () => {
     const contract: unknown = JSON.parse(
       readFileSync(join(__dirname, '..', '..', 'contract', 'openapi.json'), 'utf8'),
     );
-    expect(lintWithPackioRuleset(contract).map((r) => `${r.code}: ${r.message}`)).toEqual([]);
+    expect(lintWithGetpackRuleset(contract).map((r) => `${r.code}: ${r.message}`)).toEqual([]);
   });
 
-  it('fires every Packio rule on a document that breaks them', () => {
-    const results = lintWithPackioRuleset(badDocument);
+  it('fires every getpack rule on a document that breaks them', () => {
+    const results = lintWithGetpackRuleset(badDocument);
     const codes = new Set(results.map((r) => r.code));
-    expect([...codes].filter((code) => code.startsWith('packio-')).sort()).toEqual([
-      'packio-field-formats',
-      'packio-no-duplicate-schemas',
-      'packio-no-inline-enum',
-      'packio-no-real-personal-data',
-      'packio-object-shape',
-      'packio-operation-id',
-      'packio-operation-implements',
-      'packio-operation-summary',
-      'packio-operation-surface-tag',
-      'packio-request-example',
-      'packio-response-example',
-      'packio-response-set',
-      'packio-status-by-kind',
-      'packio-surface-security',
+    expect([...codes].filter((code) => code.startsWith('getpack-')).sort()).toEqual([
+      'getpack-field-formats',
+      'getpack-no-duplicate-schemas',
+      'getpack-no-inline-enum',
+      'getpack-no-real-personal-data',
+      'getpack-object-shape',
+      'getpack-operation-id',
+      'getpack-operation-implements',
+      'getpack-operation-summary',
+      'getpack-operation-surface-tag',
+      'getpack-request-example',
+      'getpack-response-example',
+      'getpack-response-set',
+      'getpack-status-by-kind',
+      'getpack-surface-security',
     ]);
   });
 
@@ -100,8 +100,8 @@ describe('Packio Spectral ruleset (contract/spectral)', () => {
       { name: 'If-Match', in: 'header', schema: { type: 'string' } },
       { name: 'Idempotency-Key', in: 'header', schema: { type: 'string' } },
     );
-    const messages = lintWithPackioRuleset(doc)
-      .filter((r) => r.code === 'packio-status-by-kind')
+    const messages = lintWithGetpackRuleset(doc)
+      .filter((r) => r.code === 'getpack-status-by-kind')
       .map((r) => r.message)
       .sort();
     expect(messages).toEqual([
@@ -112,8 +112,8 @@ describe('Packio Spectral ruleset (contract/spectral)', () => {
   });
 
   it('asks money as decimal strings and dates with their format', () => {
-    const messages = lintWithPackioRuleset(badDocument)
-      .filter((r) => r.code === 'packio-field-formats')
+    const messages = lintWithGetpackRuleset(badDocument)
+      .filter((r) => r.code === 'getpack-field-formats')
       .map((r) => r.message)
       .sort();
     expect(messages).toEqual([
@@ -124,8 +124,8 @@ describe('Packio Spectral ruleset (contract/spectral)', () => {
   });
 
   it('flags each kind of real-looking personal data', () => {
-    const messages = lintWithPackioRuleset(badDocument)
-      .filter((r) => r.code === 'packio-no-real-personal-data')
+    const messages = lintWithGetpackRuleset(badDocument)
+      .filter((r) => r.code === 'getpack-no-real-personal-data')
       .map((r) => r.message)
       .join('\n');
     expect(messages).toMatch(/email "somchai@gmail.com"/);
@@ -135,8 +135,8 @@ describe('Packio Spectral ruleset (contract/spectral)', () => {
   });
 
   it('reports the missing responses and non-problem errors', () => {
-    const messages = lintWithPackioRuleset(badDocument)
-      .filter((r) => r.code === 'packio-response-set')
+    const messages = lintWithGetpackRuleset(badDocument)
+      .filter((r) => r.code === 'getpack-response-set')
       .map((r) => r.message);
     expect(messages).toEqual(
       expect.arrayContaining([
@@ -154,7 +154,7 @@ describe('Packio Spectral ruleset (contract/spectral)', () => {
         paths: Record<string, { post: { security: unknown } }>;
       };
       doc.paths['/v1/store/things']!.post.security = security;
-      return lintWithPackioRuleset(doc).filter((r) => r.code === 'packio-surface-security');
+      return lintWithGetpackRuleset(doc).filter((r) => r.code === 'getpack-surface-security');
     };
     expect(surface([])).toEqual([]);
     expect(surface([{}, { customer: [] }])).toEqual([]);
@@ -171,6 +171,8 @@ describe('Packio Spectral ruleset (contract/spectral)', () => {
       taxId: '0000000000001',
       card: 'n/a',
     };
-    expect(lintWithPackioRuleset(fake).filter((r) => r.code === 'packio-no-real-personal-data')).toEqual([]);
+    expect(lintWithGetpackRuleset(fake).filter((r) => r.code === 'getpack-no-real-personal-data')).toEqual(
+      [],
+    );
   });
 });

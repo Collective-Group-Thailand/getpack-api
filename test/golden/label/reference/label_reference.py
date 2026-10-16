@@ -7,7 +7,7 @@
 #     calculateCost digital :1081-1274 and factory margin :1275-1300, calculate CS branch :451-639 (short rolls
 #     :456-458, first layout :639, lead time :555-556);
 #   app/Models/Calculator.php  SaleMargin:223-449 (no delivery: shipping is its own quote line, D-013).
-# Packio deviations applied (port map docs/legacy/05-label-port-map.md §5): offset not priced (L2); each quantity on
+# getpack deviations applied (port map docs/legacy/05-label-port-map.md §5): offset not priced (L2); each quantity on
 # its own material (L1); minimum order per quantity (L3); missing finish / die-cut / material / die-block rows
 # refuse (L15); the explicit lay-out order cost → layout desc → rotated first, stable on the sheet order (L12);
 # NULL band bounds open (as folding Q20); a missing base tier reads as 0 (shared sell side); the short-roll minimum

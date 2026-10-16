@@ -12,9 +12,9 @@ export interface SpectralResult {
 
 const ROOT = join(__dirname, '..', '..');
 
-/** Runs `spectral lint` with the Packio ruleset on a document, exactly like `pnpm contract:lint`. */
-export function lintWithPackioRuleset(document: unknown): SpectralResult[] {
-  const dir = mkdtempSync(join(tmpdir(), 'packio-spectral-'));
+/** Runs `spectral lint` with the getpack ruleset on a document, exactly like `pnpm contract:lint`. */
+export function lintWithGetpackRuleset(document: unknown): SpectralResult[] {
+  const dir = mkdtempSync(join(tmpdir(), 'getpack-spectral-'));
   try {
     const file = join(dir, 'openapi.json');
     writeFileSync(file, JSON.stringify(document));

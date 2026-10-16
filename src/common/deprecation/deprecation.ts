@@ -9,7 +9,7 @@ import { Reflector } from '@nestjs/core';
 import { type Response } from 'express';
 import { type Observable } from 'rxjs';
 
-export const DEPRECATION_METADATA = 'packio:deprecation';
+export const DEPRECATION_METADATA = 'getpack:deprecation';
 
 /** When an operation (or a field) was deprecated and, once U-B5 sets it, when it goes away. */
 export interface DeprecationInfo {

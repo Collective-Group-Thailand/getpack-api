@@ -1,6 +1,6 @@
 import { SetMetadata } from '@nestjs/common';
 
-export const ON_DOMAIN_EVENT = 'packio:on-domain-event';
+export const ON_DOMAIN_EVENT = 'getpack:on-domain-event';
 
 export interface DomainEventSubscription {
   /** Event types, or `*` for every event (notification routing). */

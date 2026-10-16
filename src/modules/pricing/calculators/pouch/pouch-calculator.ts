@@ -9,7 +9,7 @@ import { inQtyBand, type PouchTables } from './tables';
  * The pouch calculator (U-B6 pouch): legacy `PouchCalculator::fromCS:259-376` and `calculate:468-555` as a pure
  * function over options (factory × print type). Per quantity: the film per pouch on the roll (minimum run or repeat +
  * setup length), material on the web width, print on the film width, lamination, pouch making and the chosen options,
- * the cost per piece rounded up to the satang, the factory margin rounded up to 0.1 THB, Packio's margin and VAT per
+ * the cost per piece rounded up to the satang, the factory margin rounded up to 0.1 THB, getpack's margin and VAT per
  * piece (`calculateMargin:673-688`). Port map `docs/legacy/05-pouch-port-map.md` §9: a quantity below the factory's
  * minimum is refused (legacy raised it), a missing row refuses the factory instead of failing the request. Pure.
  */
@@ -169,7 +169,7 @@ function priceStep(
   const factoryPricePerPcs = roundUp(costPerPcs * (1 + factoryMarginPct / 100), 1);
   const buyPrice = factoryPricePerPcs * amount;
 
-  // Packio's margin and VAT per piece (`calculate:507-518`, `calculateMargin:673-688`).
+  // getpack's margin and VAT per piece (`calculate:507-518`, `calculateMargin:673-688`).
   const { target } = sellMargins(option.sell, amount, buyPrice);
   const fixCostPerPcs = option.sell.fixCost / amount;
   const perPcsWithFixCost = factoryPricePerPcs + fixCostPerPcs;

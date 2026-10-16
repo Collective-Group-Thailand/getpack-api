@@ -58,7 +58,7 @@ describe('storefront cards (e2e, U-B4)', () => {
   };
 
   beforeAll(async () => {
-    process.env['STOREFRONT_REVALIDATE_URL'] = 'https://web.packio.invalid/api/revalidate';
+    process.env['STOREFRONT_REVALIDATE_URL'] = 'https://web.getpack.invalid/api/revalidate';
     process.env['STOREFRONT_REVALIDATE_SECRET'] = 'fake-revalidate-secret';
     ctx = await bootFulfilmentApp();
     const type = await ctx.prisma.productType.findUniqueOrThrow({ where: { code: 'other' } });
@@ -195,7 +195,7 @@ describe('storefront cards (e2e, U-B4)', () => {
     const sent = ctx.app
       .get<FakeWebhookSender>(WEBHOOK_SENDER)
       .sent.find((s) => s.body.includes(promo.publicId));
-    expect(sent).toMatchObject({ url: 'https://web.packio.invalid/api/revalidate' });
-    expect(sent!.headers['x-packio-signature']).toMatch(/^sha256=[0-9a-f]{64}$/);
+    expect(sent).toMatchObject({ url: 'https://web.getpack.invalid/api/revalidate' });
+    expect(sent!.headers['x-getpack-signature']).toMatch(/^sha256=[0-9a-f]{64}$/);
   });
 });

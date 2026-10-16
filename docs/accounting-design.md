@@ -1,6 +1,6 @@
-# Packio Accounting — Functional & Control Design (v1)
+# getpack Accounting — Functional & Control Design (v1)
 
-> Bounded context `ledger` in `packio-api`, finance area in the admin zone of `packio-web`. Implements decisions D-010 (Packio is principal), D-020 (payment schedules), D-021 (quantity tolerance), D-022 (factory payout), D-030 (no SAP), D-031 (full GL in Packio).
+> Bounded context `ledger` in `getpack-api`, finance area in the admin zone of `getpack-web`. Implements decisions D-010 (getpack is principal), D-020 (payment schedules), D-021 (quantity tolerance), D-022 (factory payout), D-030 (no SAP), D-031 (full GL in getpack).
 > Written from the perspective of an accounting-systems and audit design. **Tax positions marked ⚖ are design assumptions that a Thai CPA / tax advisor must confirm before go-live** — statutory financial statements must be audited by a licensed auditor, so their sign-off is a legal requirement, not an optional review. The system is built so that every ⚖ item is a configuration, not code.
 
 ---
@@ -17,7 +17,7 @@
 ## 2. Tax model (configurable) ⚖
 | Topic | Design default | Why / what the auditor confirms |
 |---|---|---|
-| Nature of Packio's sale | Configurable per product type: `sale_of_goods` or `hire_of_work` (จ้างทำของ). **Default `hire_of_work` for made-to-order printed packaging, `sale_of_goods` for standard (stock) products.** | Legacy customers already withhold tax on orders (tax profile withholding flag, `calculateWithholdingTax`), which is consistent with hire-of-work treatment. |
+| Nature of getpack's sale | Configurable per product type: `sale_of_goods` or `hire_of_work` (จ้างทำของ). **Default `hire_of_work` for made-to-order printed packaging, `sale_of_goods` for standard (stock) products.** | Legacy customers already withhold tax on orders (tax profile withholding flag, `calculateWithholdingTax`), which is consistent with hire-of-work treatment. |
 | VAT rate | Table with effective dates (currently 7 %). | Rate changes are dated, never edited in place. |
 | Tax point — goods | Delivery, or earlier payment / invoice issuance. | Revenue Code tax-point rules for goods. |
 | Tax point — hire of work | Payment receipt. Invoice issued before payment → VAT recorded in **output VAT not yet due** (ภาษีขายยังไม่ถึงกำหนด) and moved to output VAT when paid. | Revenue Code tax-point rules for services/hire of work. |
@@ -25,7 +25,7 @@
 | Customer WHT | Juristic customers may withhold (default 3 % for hire of work); government customers per their rule (legacy tax type 3). Receipt records gross, WHT receivable (ภาษีถูกหัก ณ ที่จ่าย) and net cash; the 50 ทวิ certificate is tracked until received. | Missing-certificate report drives collection; WHT receivable offsets corporate income tax. |
 | WHT on factory payments | Per line type: production (hire of work, default 3 %), transport line (default 1 %), design freelancers (individual → ภ.ง.ด.3). WHT applies at each payment, including the 30 % advance. | Factory bills separate production and shipping lines so the correct rate applies. |
 | Input VAT | Claimed only when a valid tax invoice from the factory/vendor is recorded (number, date, seller tax id, branch). Non-VAT-registered factories → no input VAT. | Input VAT without a valid document stays in *input VAT pending document*. |
-| Two separate sales | **Sale 1:** Collective Group (Thailand) → customer, full amount (e.g. 100 + VAT), documents in Collective Group's name under the Packio brand. **Sale 2:** factory → Collective Group (e.g. 80 + VAT). For sale 2, Packio **generates the billing statement** (ใบวางบิล) from PO + delivery confirmation and the factory confirms it; the **factory's own tax invoice** to Collective Group (its number, its name) is recorded (e-Tax or uploaded PDF + fields). Packio never issues documents in a factory's name, and never to customers on a factory's behalf. | Without the factory's tax invoice Collective Group cannot claim input VAT on sale 2 and would bear VAT on the full 100 (see §11 example). |
+| Two separate sales | **Sale 1:** Collective Group (Thailand) → customer, full amount (e.g. 100 + VAT), documents in Collective Group's name under the getpack brand. **Sale 2:** factory → Collective Group (e.g. 80 + VAT). For sale 2, getpack **generates the billing statement** (ใบวางบิล) from PO + delivery confirmation and the factory confirms it; the **factory's own tax invoice** to Collective Group (its number, its name) is recorded (e-Tax or uploaded PDF + fields). getpack never issues documents in a factory's name, and never to customers on a factory's behalf. | Without the factory's tax invoice Collective Group cannot claim input VAT on sale 2 and would bear VAT on the full 100 (see §11 example). |
 | Credit notes (ใบลดหนี้) / debit notes (ใบเพิ่มหนี้) | Always reference the original tax invoice; reason from a controlled list mapped to statutory reasons (price reduction, defective/short goods, returns, cancellation, discount after sale). | Legacy reasons (`reason_of_cancel_order`) migrate to this list (SAP codes dropped, D-030). |
 | e-Tax invoice & e-Receipt | Data model and XML/PDF-A output ready in R1, enabled in R2 (D-041). | Registration with the Revenue Department is a business action. |
 | Record retention | Documents and ledgers retained ≥ 10 years (config), exceeding the statutory minimum; legal hold flag. | Statutory minimum is 5 years and can be extended by authorities. |
@@ -44,18 +44,18 @@ Each account: type, normal side, `is_control` (only sub-ledgers post to control 
 ## 4. Documents & numbering
 | Code | Document (TH) | Issued by | Numbering |
 |---|---|---|---|
-| QT | ใบเสนอราคา | Packio | per entity / year |
-| IV | ใบแจ้งหนี้ (per instalment or credit-term invoice) | Packio | per entity / year |
-| TR | ใบกำกับภาษี/ใบเสร็จรับเงิน (instalment or full, full-form for juristic customers) | Packio | per entity / month, **gapless** |
-| RC | ใบเสร็จรับเงิน (credit-term collection) | Packio | per entity / month, gapless |
-| CN / DN | ใบลดหนี้ / ใบเพิ่มหนี้ | Packio | per entity / month, gapless |
-| PO | ใบสั่งผลิต/ใบสั่งซื้อถึงโรงงาน | Packio | per entity / year |
+| QT | ใบเสนอราคา | getpack | per entity / year |
+| IV | ใบแจ้งหนี้ (per instalment or credit-term invoice) | getpack | per entity / year |
+| TR | ใบกำกับภาษี/ใบเสร็จรับเงิน (instalment or full, full-form for juristic customers) | getpack | per entity / month, **gapless** |
+| RC | ใบเสร็จรับเงิน (credit-term collection) | getpack | per entity / month, gapless |
+| CN / DN | ใบลดหนี้ / ใบเพิ่มหนี้ | getpack | per entity / month, gapless |
+| PO | ใบสั่งผลิต/ใบสั่งซื้อถึงโรงงาน | getpack | per entity / year |
 | GR | ใบรับมอบงาน (from POD + reported quantity) | system | per entity / year |
 | BS | ใบวางบิล (generated, factory confirms) | system for factory | per factory |
 | VI | Vendor tax invoice (factory's own number recorded) | factory | factory's series |
-| PV | ใบสำคัญจ่าย (payout / vendor payment) | Packio | per entity / month |
-| WT | หนังสือรับรองการหักภาษี ณ ที่จ่าย (50 ทวิ) issued to factories/vendors | Packio | per entity / year |
-| JV | ใบสำคัญทั่วไป (manual journal) | Packio | per entity / month |
+| PV | ใบสำคัญจ่าย (payout / vendor payment) | getpack | per entity / month |
+| WT | หนังสือรับรองการหักภาษี ณ ที่จ่าย (50 ทวิ) issued to factories/vendors | getpack | per entity / year |
+| JV | ใบสำคัญทั่วไป (manual journal) | getpack | per entity / month |
 Gapless series use a locked sequence row per (entity, type, period) inside the posting transaction; voided documents keep their number with status `void` and a reason. Collective Group (Thailand) starts new series at go-live (D-092).
 
 ## 5. Posting rules (default set, versioned)
@@ -122,8 +122,8 @@ Each rule is data (`posting_rules` + versions) with unit tests: every event fixt
 - Exception reports: gaps in gapless series, entries posted outside business hours, reversals, manual journals by user, back-dated documents, duplicate vendor bank accounts, duplicate slip references, credit notes after period end, payouts to vendors without valid tax invoice.
 
 ## 9. Implementation placement
-- `packio-api`: `modules/ledger` (accounts, periods, journals, posting engine, rules), `modules/receivables`, `modules/payables` (PO, GR, billing statements, vendor invoices), `modules/payouts`, `modules/banking` (statements, matching, bulk-transfer adapters), `modules/tax` (reports, certificates, e-Tax), integration adapters (slip verification, bank formats). Postings are triggered by domain events through the outbox — never inline in controllers.
-- `packio-web` admin zone: Finance workspace (queues: slips, unmatched bank lines, payout proposals, approvals, missing tax invoices, missing 50 ทวิ), documents, AR/AP, payout runs, bank reconciliation, tax reports, GL & reports, period close, settings (CoA, rules, tax, series, policies), auditor view.
+- `getpack-api`: `modules/ledger` (accounts, periods, journals, posting engine, rules), `modules/receivables`, `modules/payables` (PO, GR, billing statements, vendor invoices), `modules/payouts`, `modules/banking` (statements, matching, bulk-transfer adapters), `modules/tax` (reports, certificates, e-Tax), integration adapters (slip verification, bank formats). Postings are triggered by domain events through the outbox — never inline in controllers.
+- `getpack-web` admin zone: Finance workspace (queues: slips, unmatched bank lines, payout proposals, approvals, missing tax invoices, missing 50 ทวิ), documents, AR/AP, payout runs, bank reconciliation, tax reports, GL & reports, period close, settings (CoA, rules, tax, series, policies), auditor view.
 - Release: R1 includes §2–§8 except fixed assets, cash-flow statement and e-Tax enablement (R2).
 
 ## 10. Items that need the company's accountant / auditor (⚖)
@@ -133,9 +133,9 @@ Nature per product type (§2) · deposit and instalment tax invoices · customer
 **VAT flow (principal model, hire of work, VAT 7 %)**
 | Leg | Net | VAT | Gross | Document |
 |---|---|---|---|---|
-| Customer → Collective Group | 100.00 | 7.00 (output VAT) | 107.00 | TR by Collective Group, Packio brand |
+| Customer → Collective Group | 100.00 | 7.00 (output VAT) | 107.00 | TR by Collective Group, getpack brand |
 | Collective Group → factory | 80.00 | 5.60 (input VAT) | 85.60 | Factory's tax invoice to Collective Group |
 | VAT remitted by Collective Group (ภ.พ.30) | | **1.40** | | = 7.00 − 5.60 |
 If the customer is a juristic person withholding 3 %: customer pays 107.00 − 3.00 = 104.00 cash + 50 ทวิ for 3.00 (WHT receivable). Collective Group withholding 3 % on the factory: pays 85.60 − 2.40 = 83.20 cash + issues 50 ทวิ for 2.40 (filed in ภ.ง.ด.53). Gross margin = 100.00 − 80.00 = 20.00 (before gateway fees, shipping margin and promotions). If the factory is **not VAT-registered**, the 80.00 has no input VAT and Collective Group still remits 7.00 — the price table of a non-VAT factory must therefore be compared on a VAT-inclusive basis in factory selection (the calculator's factory comparison must use *effective cost to Collective Group*).
 
-**No cut-over.** Packio is a new business under Collective Group (Thailand) with no orders in flight (D-092); all document series start at go-live.
+**No cut-over.** getpack is a new business under Collective Group (Thailand) with no orders in flight (D-092); all document series start at go-live.

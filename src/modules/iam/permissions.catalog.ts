@@ -178,7 +178,7 @@ export const PERMISSIONS = [
     key: 'styles.verify_reference',
     audience: 'staff',
     description:
-      'Verify an industry reference code (FEFCO / ECMA) against the edition Packio holds (Prepress)',
+      'Verify an industry reference code (FEFCO / ECMA) against the edition getpack holds (Prepress)',
     decisionRefs: ['D-211'],
   },
 
@@ -191,7 +191,7 @@ export const PERMISSIONS = [
   {
     key: 'studio_catalog.manage',
     audience: 'staff',
-    description: 'Maintain Packio’s studio templates and elements (D-216, D-282)',
+    description: 'Maintain getpack’s studio templates and elements (D-216, D-282)',
     decisionRefs: ['D-216', 'D-282'],
   },
   {
@@ -384,18 +384,18 @@ export const PERMISSIONS = [
   {
     key: 'carriers.read',
     audience: 'staff',
-    description: 'Read fallback carriers and Packio’s carrier accounts',
+    description: 'Read fallback carriers and getpack’s carrier accounts',
   },
   {
     key: 'carriers.manage',
     audience: 'staff',
-    description: 'Enable or disable fallback carriers and register Packio’s carrier accounts',
+    description: 'Enable or disable fallback carriers and register getpack’s carrier accounts',
     decisionRefs: ['D-114', 'D-005'],
   },
   {
     key: 'sell_margins.manage',
     audience: 'staff',
-    description: "Maintain Packio's sell margins, fix costs and design fees (effective-dated)",
+    description: "Maintain getpack's sell margins, fix costs and design fees (effective-dated)",
     sensitive: true,
     decisionRefs: ['D-063'],
   },
@@ -677,7 +677,7 @@ export const PERMISSIONS = [
   {
     key: 'inspections.perform',
     audience: 'staff',
-    description: 'Carry out Packio inspections and record their results',
+    description: 'Carry out getpack inspections and record their results',
     decisionRefs: ['D-076'],
   },
   {
@@ -760,7 +760,7 @@ export const PERMISSIONS = [
   {
     key: 'factory_onboarding.sign_off',
     audience: 'partner',
-    description: 'Sign off data Packio entered on the factory’s behalf',
+    description: 'Sign off data getpack entered on the factory’s behalf',
     decisionRefs: ['D-100'],
   },
   {
@@ -790,7 +790,7 @@ export const PERMISSIONS = [
   {
     key: 'factory_bank_account.propose',
     audience: 'partner',
-    description: 'Propose a new bank account for payouts (dual approval by Packio Finance)',
+    description: 'Propose a new bank account for payouts (dual approval by getpack Finance)',
     decisionRefs: ['D-033'],
   },
   {
@@ -803,7 +803,7 @@ export const PERMISSIONS = [
   {
     key: 'factory_rfq.read',
     audience: 'partner',
-    description: 'Read the requests for a buy price Packio sent the factory (never the sell price)',
+    description: 'Read the requests for a buy price getpack sent the factory (never the sell price)',
     decisionRefs: ['D-100', 'D-044'],
   },
   {
@@ -874,7 +874,7 @@ export const PERMISSIONS = [
   {
     key: 'factory_claims.respond',
     audience: 'partner',
-    description: 'Accept or dispute a claim Packio sent for review',
+    description: 'Accept or dispute a claim getpack sent for review',
     decisionRefs: ['D-083'],
   },
   {
@@ -896,11 +896,11 @@ export const PERMISSIONS = [
     decisionRefs: ['D-013'],
   },
 
-  // --- Packio Factory ERP (factory-scoped, factory-private data, D-316 – D-319)
+  // --- getpack Factory ERP (factory-scoped, factory-private data, D-316 – D-319)
   {
     key: 'factory_trading_partners.read',
     audience: 'partner',
-    description: 'Read the factory’s own suppliers and customers (Packio Factory ERP)',
+    description: 'Read the factory’s own suppliers and customers (getpack Factory ERP)',
     decisionRefs: ['D-317', 'D-319'],
   },
   {
@@ -1103,7 +1103,7 @@ export const PERMISSIONS = [
   {
     key: 'factory_support.grant',
     audience: 'partner',
-    description: 'Grant and revoke Packio support time-boxed read access to the factory’s ERP',
+    description: 'Grant and revoke getpack support time-boxed read access to the factory’s ERP',
     decisionRefs: ['D-381', 'D-382'],
   },
   {

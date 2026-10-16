@@ -2,13 +2,13 @@ import { createHash, randomInt } from 'node:crypto';
 
 import { type UserActor } from '@common/context/actor';
 import { DomainException } from '@common/errors/domain.exception';
+import { addMonths, dateOnly, dayOf } from '@common/ledger-core/dates';
 import { formatMoney, MoneyDecimal } from '@common/money/money';
 import { bangkokDate } from '@common/time/bangkok';
 import { PrismaService } from '@database/prisma.service';
 import { type FiscalPeriod, type Prisma, type SampleMethod } from '@generated/prisma/client';
 import { FinancialReportsService } from '@modules/financial-reports/financial-reports.service';
 import { FixedAssetsService } from '@modules/fixed-assets/fixed-assets.service';
-import { addMonths, dateOnly, dayOf } from '@common/ledger-core/dates';
 import { PeriodsService } from '@modules/ledger/periods.service';
 import { Injectable } from '@nestjs/common';
 import { AuditService } from '@platform/audit/audit.service';
@@ -521,7 +521,7 @@ export class AuditSupportService {
   async pbcExport(actor: UserActor, month: string) {
     const p = await this.period(month);
     const wb = new ExcelJS.Workbook();
-    wb.creator = 'Packio';
+    wb.creator = 'getpack';
     wb.created = new Date();
     const sheet = (name: string, rows: Record<string, unknown>[]) => {
       const ws = wb.addWorksheet(name);
@@ -545,7 +545,7 @@ export class AuditSupportService {
         period: month,
         generatedAt: new Date().toISOString(),
         generatedBy: actor.publicId,
-        note: 'Prepared by client — Packio ledger export',
+        note: 'Prepared by client — getpack ledger export',
       },
     ]);
     const tb = await this.reports.trialBalance(month, month, false);

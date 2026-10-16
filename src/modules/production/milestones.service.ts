@@ -401,7 +401,7 @@ export class MilestonesService {
         tx,
         issue.jobId,
         'production_job.issue_resolved',
-        { issueId: issue.publicId, by: actor.audience === 'partner' ? 'factory' : 'packio' },
+        { issueId: issue.publicId, by: actor.audience === 'partner' ? 'factory' : 'getpack' },
         actor,
       );
       return (await this.withIssueRefs(tx, [resolved.id]))[0]!;

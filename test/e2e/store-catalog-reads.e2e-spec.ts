@@ -159,14 +159,14 @@ describe('store catalogue reads (e2e, U-B0.1)', () => {
       .get('/v1/store/support-channels')
       .expect(200, { lineOaId: null, phone: null, email: null, hours: null });
     await setSetting(ctx, 'storefront.support_channels', {
-      lineOaId: '@packio-test',
+      lineOaId: '@getpack-test',
       phone: '0800000000',
       email: 'support@example.com',
       hours: '',
     });
     const res = await request(ctx.server).get('/v1/store/support-channels').expect(200);
     expect(res.body).toEqual({
-      lineOaId: '@packio-test',
+      lineOaId: '@getpack-test',
       phone: '0800000000',
       email: 'support@example.com',
       hours: null,

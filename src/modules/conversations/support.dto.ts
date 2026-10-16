@@ -137,7 +137,7 @@ export class SupportTicketDto {
   @ApiProperty({
     type: String,
     nullable: true,
-    example: 'https://line.me/R/oaMessage/%40packio-fake/?CS-2610-00001',
+    example: 'https://line.me/R/oaMessage/%40getpack-fake/?CS-2610-00001',
     description:
       'Opens a LINE chat with the official account carrying only the ticket number; null until set',
   })
@@ -204,7 +204,7 @@ export const SUPPORT_TICKET_EXAMPLE: SupportTicketDto = {
   ticketNo: 'CS-2610-00001',
   source: 'contact_form',
   respondBy: '2026-10-21T10:00:00+07:00',
-  lineUrl: 'https://line.me/R/oaMessage/%40packio-fake/?CS-2610-00001',
+  lineUrl: 'https://line.me/R/oaMessage/%40getpack-fake/?CS-2610-00001',
   conversationId: null,
   createdAt: '2026-10-20T10:00:00+07:00',
 };

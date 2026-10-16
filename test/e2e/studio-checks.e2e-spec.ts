@@ -4,7 +4,7 @@ import request from 'supertest';
 
 import { as, bootCommerceApp, type CommerceApp, customerToken } from '../support/commerce-e2e';
 
-/** A studio document (packio-web designer v2): elements in sheet millimetres. */
+/** A studio document (getpack-web designer v2): elements in sheet millimetres. */
 const doc = (imagePx: number) => ({
   spec: { styleId: 'tuck-end' },
   content: {
@@ -205,7 +205,7 @@ describe('studio print checks (e2e, U4.B3)', () => {
   });
 
   it('answers two concurrent checks of one version with the same stored run (create-or-return)', async () => {
-    // packio-web integration.md (U4.5): the second of two parallel runs broke the unique key and answered 500.
+    // getpack-web integration.md (U4.5): the second of two parallel runs broke the unique key and answered 500.
     const created = await as(ctx, token)
       .post('/v1/store/designs', { catalogProductId: productId, title: 'คู่ขนาน (fake)', document: doc(300) })
       .expect(201);

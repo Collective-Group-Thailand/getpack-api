@@ -99,8 +99,8 @@ export class PartnerBoardStrengthSheetsController {
     id: 'partner.boardStrengthSheets.list',
     summary: 'List my factory’s board strength sheets',
     description:
-      'The signed board data sheets Packio keeps for the factory’s boards (D-236), own factory only (D-044); ' +
-      '`current` marks the version in force. To change one, send Packio a new signed sheet.',
+      'The signed board data sheets getpack keeps for the factory’s boards (D-236), own factory only (D-044); ' +
+      '`current` marks the version in force. To change one, send getpack a new signed sheet.',
     implements: [...DECISIONS, 'D-044'],
   })
   @ApiPaginated(BoardStrengthSheetDto, { example: BOARD_SHEET_EXAMPLE })

@@ -79,7 +79,7 @@ const CARD: StoreProductCardDto = {
   templateAvailability: 'drawing',
 };
 const SEO: StoreSeoDto = {
-  title: 'กล่องฝาเสียบพิมพ์ลาย | Packio',
+  title: 'กล่องฝาเสียบพิมพ์ลาย | getpack',
   description: 'สั่งผลิตกล่องฝาเสียบออนไลน์',
   keywords: 'กล่องฝาเสียบ',
   h1: 'กล่องฝาเสียบ',
@@ -783,7 +783,7 @@ export class StoreCatalogController {
     summary: 'Google Merchant feed',
     description:
       'RSS 2.0 with the `g:` namespace: active stock products with a nationwide price summary and a photo; ' +
-      'brand Packio (D-001), no factory data (D-050). Items appear once the standard-product calculator fills the price summaries (B2.3).',
+      'brand getpack (D-001), no factory data (D-050). Items appear once the standard-product calculator fills the price summaries (B2.3).',
     implements: ['D-001', 'D-050'],
   })
   @ApiProduces('application/xml')
@@ -794,7 +794,7 @@ export class StoreCatalogController {
       'application/xml': {
         schema: { type: 'string' },
         example:
-          '<?xml version="1.0" encoding="UTF-8"?>\n<rss version="2.0" xmlns:g="http://base.google.com/ns/1.0"><channel><title>Packio</title>' +
+          '<?xml version="1.0" encoding="UTF-8"?>\n<rss version="2.0" xmlns:g="http://base.google.com/ns/1.0"><channel><title>getpack</title>' +
           '<item><g:id>PKO-BTL-0250</g:id><g:price>3.50 THB</g:price></item></channel></rss>',
       },
     },

@@ -46,7 +46,7 @@ export class FakeScbGateway implements ScbGateway {
       transactionId,
       amount,
       billPaymentRef1: reference,
-      billPaymentRef2: 'PACKIO',
+      billPaymentRef2: 'GETPACK',
       billPaymentRef3: `FAKE${reference}`.slice(0, 20),
       transactionDateandTime: paidAt.toISOString(),
       payerAccountNumber: 'xxxxxx1234',

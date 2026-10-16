@@ -3,7 +3,7 @@
 > **Audience:** the QA lead and the UAT team (staff of every role, the launch factory's users, Finance and the CPA
 > observer), and the engineer who prepares the UAT stack.
 > This data set lets the team **rehearse** every scenario of `docs/launch/UAT.md` before the launch factory's real
-> onboarding data exists, with a catalogue and customers that look like the market Packio sells to. It is not the
+> onboarding data exists, with a catalogue and customers that look like the market getpack sells to. It is not the
 > UAT itself: the real UAT (D-113) runs on the launch factory's own data (UAT-01 step 3) and is signed by people.
 
 ## 1. What is in it
@@ -25,19 +25,19 @@ order has its events, documents, journal entries and audit trail.
 
 ## 2. Building it
 
-Needs packio-api's `docker compose up -d` infrastructure. Never point these commands at production data: both
+Needs getpack-api's `docker compose up -d` infrastructure. Never point these commands at production data: both
 refuse to run without an explicit confirmation variable.
 
 ```sh
 # 1. An empty database for the rehearsal, migrated
-docker exec -i packio-api-postgres-1 psql -U packio -d postgres -c "CREATE DATABASE packio_uat OWNER packio"
-DATABASE_URL=postgresql://…/packio_uat npx prisma migrate deploy
+docker exec -i getpack-api-postgres-1 psql -U getpack -d postgres -c "CREATE DATABASE getpack_uat OWNER getpack"
+DATABASE_URL=postgresql://…/getpack_uat npx prisma migrate deploy
 
 # 2. Master data (catalogue, prices, geography, people)
-DATABASE_URL=postgresql://…/packio_uat UAT_SEED_CONFIRM=uat-only UAT_SEED_PASSWORD=<choose one> pnpm db:seed:uat
+DATABASE_URL=postgresql://…/getpack_uat UAT_SEED_CONFIRM=uat-only UAT_SEED_PASSWORD=<choose one> pnpm db:seed:uat
 
 # 3. Activity through the API (fake integrations; runs once on a fresh seed)
-UAT_DATABASE_URL=postgresql://…/packio_uat UAT_POPULATE_CONFIRM=uat-only UAT_SEED_PASSWORD=<same> pnpm uat:populate
+UAT_DATABASE_URL=postgresql://…/getpack_uat UAT_POPULATE_CONFIRM=uat-only UAT_SEED_PASSWORD=<same> pnpm uat:populate
 ```
 
 | Variable | Meaning |
@@ -47,8 +47,8 @@ UAT_DATABASE_URL=postgresql://…/packio_uat UAT_POPULATE_CONFIRM=uat-only UAT_S
 | `UAT_INSTANT_TYPES` | `all` switches every type with a calculator to instant for a **pricing rehearsal**, or a list such as `corrugated,standard_product` (ready-to-ship items priced online); default: only types whose validation document is signed (A-16) — today **corrugated** only |
 
 `pnpm uat:populate` prints one line per step (`✓` / `✗`) and writes `.uat-populate-report.json`. A failed step does
-not stop the others. Run the API on the same database afterwards (`DATABASE_URL=…/packio_uat pnpm dev` and
-`pnpm dev:worker`) and point packio-web at it.
+not stop the others. Run the API on the same database afterwards (`DATABASE_URL=…/getpack_uat pnpm dev` and
+`pnpm dev:worker`) and point getpack-web at it.
 
 Document numbers carry the prefix **`UAT`** (`UATOG-2610-00001`, `UATOR-…`, `UATRFQ-…`, `UATJOB-…`, `UATIV-…`):
 real in form and numbering rules, never mistaken for production ones (UAT.md §0, D-210).
@@ -201,7 +201,7 @@ otherwise.
 | Scorecard | current month recomputed (month to date) | Owner reads it (D-075) | UAT-13 |
 | **N1** new factory (self-service) | `applied`, nothing filled | `applicant-owner@…`: fill the company data, addresses, contacts, KYC, accept the agreements, propose the bank account, submit | UAT-01 |
 | **N2** new factory (self-service) | `under_review`: profile, 2 addresses, a contact, 3 KYC documents, agreements accepted, a bank account **waiting for Finance's two approvals and the call-back** | Partner Manager: review KYC, start the trial; Finance: approve the bank account | UAT-01 |
-| **N3** new factory (assisted) | `trial`, data entered by the Partner team | Partner Manager: capabilities, site visit, activation request (D-041); `trial-owner@…`: sign off the data Packio entered | UAT-01 |
+| **N3** new factory (assisted) | `trial`, data entered by the Partner team | Partner Manager: capabilities, site visit, activation request (D-041); `trial-owner@…`: sign off the data getpack entered | UAT-01 |
 
 Rehearsal inputs, not business values: the capacity override (half the agreed capacity), the sample's buy amount
 (THB 600, typed by CS as for any sample), the agreement texts (placeholders until counsel's text, UAT-01) and the
@@ -228,5 +228,5 @@ the current lines with their values unchanged.
   beyond the attached sample, assistant.
 
 ## 8. Starting over
-Drop and recreate `packio_uat`, then repeat §2. Both commands refuse to touch a database that already holds their
+Drop and recreate `getpack_uat`, then repeat §2. Both commands refuse to touch a database that already holds their
 data (`db:seed:uat` is idempotent; `uat:populate` stops when orders exist).

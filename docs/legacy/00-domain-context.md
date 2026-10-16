@@ -1,8 +1,8 @@
-# Locopack (legacy) — Logic reference for Packio
+# Locopack (legacy) — Logic reference for getpack
 
-> **Packio — Your Packaging Production Partner** (Collective Group (Thailand)) is a **new business and a new system** (decision D-005). Nothing is migrated from Locopack. This document and the legacy code in `legacy/locopack-web/` are a **reference for logic and workflows only**: pricing formulas and calculators, order/artwork/payment workflows, document layouts, reports.
+> **getpack — Your Packaging Production Partner** (Collective Group (Thailand)) is a **new business and a new system** (decision D-005). Nothing is migrated from Locopack. This document and the legacy code in `legacy/locopack-web/` are a **reference for logic and workflows only**: pricing formulas and calculators, order/artwork/payment workflows, document layouts, reports.
 > Collective Group (Thailand) has confirmed the right to reuse Locopack code and pricing formulas (D-005).
-> **Where Packio differs from Locopack, `docs/decisions.md` wins.** In particular: no SAP (D-030), no SCGP PDPA API, no LINE Notify, no legacy merchant/LINE/SMS accounts, no ETL, no URL redirects, no compatibility endpoints. Table/column names below describe legacy concepts, not the Packio schema.
+> **Where getpack differs from Locopack, `docs/decisions.md` wins.** In particular: no SAP (D-030), no SCGP PDPA API, no LINE Notify, no legacy merchant/LINE/SMS accounts, no ETL, no URL redirects, no compatibility endpoints. Table/column names below describe legacy concepts, not the getpack schema.
 
 ## 1. What the system is
 
@@ -16,7 +16,7 @@ The legacy repo contains **three things in one codebase**:
 | **Public REST API** (`routes/api.php`, `/api/*`) | Laravel controllers + Passport | Customer-facing SME website (separate Nuxt/Vue app at `LOCOPACK_SME_WEB_URL`), LINE LIFF, online design tool (`UR_DESIGN_URL`), drawing generator (`DRAWING_URL`), and the back-office itself | **NestJS** API |
 | **Background** — cron, queue workers, webhooks | artisan schedule, SQS, SES | — | NestJS (schedule module + Bull/SQS) |
 
-Packio mapping: all user interfaces → one Next.js app (`packio-web`); all server-side logic → NestJS (`packio-api`). Legacy JSON contracts, URLs and data are not carried over.
+getpack mapping: all user interfaces → one Next.js app (`getpack-web`); all server-side logic → NestJS (`getpack-api`). Legacy JSON contracts, URLs and data are not carried over.
 
 ---
 
@@ -188,7 +188,7 @@ Every calculation is logged to `calculate_logs` (input JSON, output, user, ip) a
 
 ---
 
-## 6. SAP / product hierarchy (material codes) — NOT USED in Packio (D-030)
+## 6. SAP / product hierarchy (material codes) — NOT USED in getpack (D-030)
 
 Each priced line gets a **PH code** built from 6 levels: `hierarchy_ph1` (default `09` Invenique) / `ph2` (`LC` Locopack) / `ph3` (by print type or service: 401 std product, 900 designer design, 909 locopack design, 901 delivery, 902 plate, 903 diecut, 904 mold) / `ph4` (from products) / `ph5` (paper / paper grade / material) / `ph6` (packaging type + sqm band `min_sqm..max_sqm`, or std product). Stored in `order_hierarchies {order_id, type_id, ph_code, ph1_id..ph6_id}`; `hierarchies` holds the imported SAP material master (`heirarchy, material_code, material_description, uom, material_type, commodity, material_group`) managed via **Master Data** screen (import/export Excel, template). Tools: `tools/decode-hierarchy`, `tools/incoming-gr-list`.
 
@@ -204,7 +204,7 @@ SAP itself is reached through an **external AWS service** (`PROCESS_SAP_URL`, AP
 ## 8. Promotions
 `promotions {code, promotion_type_id 1 fixed baht | 2 percent | 3 step (3000–4999→20…), value, limit, limit_per_user, min_price, max_price, start_date, end_date, sorting (priority), show, link_more}`; `user_promotions` (saved codes per user), `promotion_logs`. Endpoints: `get-promo-codes`, `get-last-promocode-active`, `promotions/calculate`, `save-promo-code`, `check-use-promo-code/{code}`, `get-user-promo-codes`; admin: CRUD, priority ordering, usage report, logs. Also `articles_promotion`.
 
-## 9. Integrations (reference only — Packio opens its own accounts; see §13)
+## 9. Integrations (reference only — getpack opens its own accounts; see §13)
 
 | Integration | Purpose | Legacy lib |
 |---|---|---|
@@ -265,8 +265,8 @@ DESIGN_COST_FOR_POUCH DESIGN_COST_FOR_POP SALE_MARGIN_GRAPHIC_DESIGN_FEE_FOLDING
 SENTRY_LARAVEL_DSN INSPECTOR_INGESTION_KEY
 ```
 
-## 13. How Packio uses this reference
+## 13. How getpack uses this reference
 - **Port exactly** (with golden tests): pricing calculators and their shared maths (layout/pattern area, waste, margin, delivery, design fee, VAT, rounding helpers `convertTo2Decimal`, `roundUp`, `calculateVat`, `calculateWithholdingTax`), shipping rate engines, business-day helpers (`addDateWithOutWeekend`), lead-time rules, order/graphic/template status semantics, unpaid-order expiry rule (D-060).
-- **Use as functional inspiration** (Packio may improve): admin screens and filters, reports, notifications, promotions and points mechanics (Packio rules in D-053, D-130…D-136 win), document layouts (issuer is Collective Group (Thailand), D-092).
+- **Use as functional inspiration** (getpack may improve): admin screens and filters, reports, notifications, promotions and points mechanics (getpack rules in D-053, D-130…D-136 win), document layouts (issuer is Collective Group (Thailand), D-092).
 - **Do not use**: SAP (§6, D-030), SCGP PDPA API, LINE Notify, legacy credentials/accounts, test/dev routes, legacy URLs.
 - Money: decimal-safe arithmetic everywhere; Time: `Asia/Bangkok` for business rules.

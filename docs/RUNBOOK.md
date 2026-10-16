@@ -1,4 +1,4 @@
-# RUNBOOK — packio-api
+# RUNBOOK — getpack-api
 
 > **Audience:** the on-call engineer and the tech lead. How to deploy, roll back the application release, respond to
 > incidents and alerts, recover from disasters and run the routine operations. Alerts and dashboards:
@@ -22,7 +22,7 @@
 
 1. **Before:** CI green on the release commit (lint, typecheck, unit, integration, e2e, contract drift and breaking
    check, Prisma drift, image scan). Tag `vX.Y.Z` = `package.json` version; the release workflow publishes
-   `contract/openapi.json`; packio-web pins the same version in `contract.lock.json`.
+   `contract/openapi.json`; getpack-web pins the same version in `contract.lock.json`.
 2. **Migrations first**, as a one-off job from the build stage (the runtime image has no Prisma CLI):
    `pnpm db:migrate` (= `prisma migrate deploy`) with the migrator database role. Migrations are **forward-only and
    expand-first**: a release's migrations must work with the previous image still running (add columns / tables /
@@ -31,7 +31,7 @@
    permissions, notification templates and routes of the release.
 4. **Roll out** the worker, then the API (ECS rolling update, minimum healthy 100 %). Watch `/health`, the 5xx rate and
    `outbox_backlog_minutes` for 15 minutes.
-5. **After:** check the release notes' feature flags (switch nothing on during the deploy itself); tell packio-web to
+5. **After:** check the release notes' feature flags (switch nothing on during the deploy itself); tell getpack-web to
    deploy the matching version.
 
 ## 3. Roll back the application release
@@ -143,11 +143,11 @@ value stops the process before it serves anything.
 | `AWS_REGION` | the deployment region (default `ap-southeast-1`) | |
 | `AWS_ENDPOINT_URL` | unset | LocalStack in development only |
 | `S3_BUCKET` | the private files bucket | |
-| `S3_KEY_PREFIX` | unset | A folder inside a bucket shared with other apps, path segments ending in `/` (e.g. `packio/`); every object key starts with it. Unset writes at the bucket root |
+| `S3_KEY_PREFIX` | unset | A folder inside a bucket shared with other apps, path segments ending in `/` (e.g. `getpack/`); every object key starts with it. Unset writes at the bucket root |
 | `S3_FORCE_PATH_STYLE` | `false` | `true` for LocalStack only |
 | `THROTTLE_TTL_SECONDS` / `THROTTLE_LIMIT` | `60` / `300` | per-IP request budget; sign-in endpoints have their own `AUTH_LOGIN_THROTTLE_LIMIT` |
 | `LOG_LEVEL` | `info` | `debug` only for a time-boxed investigation (personal data stays redacted) |
 | `LOG_PRETTY` | `false` | JSON logs for CloudWatch |
 | `SENTRY_TRACES_SAMPLE_RATE` | `0`–`0.1` | performance tracing sample; errors are always sent when `SENTRY_DSN` is set |
-| `OTEL_SERVICE_NAME` | `packio-api` (default) | trace and metric service name |
+| `OTEL_SERVICE_NAME` | `getpack-api` (default) | trace and metric service name |
 | `PDF_CHROMIUM_PATH` | the image's Chromium | set in the Dockerfile (Thai fonts embedded) |

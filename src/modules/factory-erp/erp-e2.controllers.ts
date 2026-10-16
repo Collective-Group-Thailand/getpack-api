@@ -69,7 +69,7 @@ import { ErpRequestsService } from './erp-requests.service';
 import { ErpWorkspace } from './erp-workspace.service';
 
 /**
- * Packio Factory ERP E1.1 + E2 (docs/prompts/E1-factory-erp.md): supplier prices, purchase requests, payables,
+ * getpack Factory ERP E1.1 + E2 (docs/prompts/E1-factory-erp.md): supplier prices, purchase requests, payables,
  * recipes, production orders and planning under `/v1/partner/factories/{factoryId}/erp/*` — factory-private
  * (D-317), the factory from the path within the caller's scopes (D-044).
  */
@@ -1358,7 +1358,7 @@ export class PartnerErpProductionOrdersController {
     summary: 'Plan a production order',
     description:
       'For stock or a sales order; numbered `MO-YYMM-NNNN`; materials and operations from the product’s recipe ' +
-      'scaled to the quantity, unless given (D-339, D-340). Packio jobs become orders on their own when accepted.',
+      'scaled to the quantity, unless given (D-339, D-340). getpack jobs become orders on their own when accepted.',
     implements: ['D-339', 'D-340'],
   })
   @ApiBody({ type: ErpCreateProductionOrderDto, examples: { default: { value: CREATE_MO } } })

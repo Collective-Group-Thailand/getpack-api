@@ -9,7 +9,7 @@ import { type StandardProductOption } from './standard-product-calculator';
 /**
  * Loads what the standard-product calculator reads (U-B6 standard product): the stock product of the configuration and,
  * per factory price-list version, one option per print type that has price lines for it (`pl_stock_product_prices`,
- * line order) with Packio's `standard_product` sell side. Every version id used is returned.
+ * line order) with getpack's `standard_product` sell side. Every version id used is returned.
  */
 
 /** A standard-product configuration as the API receives it: a stock product's public id and quantities. */

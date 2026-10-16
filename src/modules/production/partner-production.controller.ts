@@ -69,7 +69,7 @@ export class PartnerProductionController {
     description:
       'Newest first; `awaiting_acceptance` = released jobs to accept within 1 business day (D-074); `view` picks a ' +
       'shop-floor view; `factoryId` narrows to one of my factories. Each job carries its product type, risk, ' +
-      'tolerance, approved proof, Packio inspection and pieces already shipped per destination. No selling prices (D-142).',
+      'tolerance, approved proof, getpack inspection and pieces already shipped per destination. No selling prices (D-142).',
     implements: ['D-074', 'D-142'],
   })
   @ApiPaginated(PartnerJobDto, { example: PARTNER_JOB_EXAMPLE })
@@ -160,7 +160,7 @@ export class PartnerProductionController {
     id: 'partner.production.reject',
     summary: 'Reject a job with a reason',
     description:
-      'Packio moves the job to another factory when one keeps the margin floor (D-012, D-101) or escalates it; ' +
+      'getpack moves the job to another factory when one keeps the margin floor (D-012, D-101) or escalates it; ' +
       'the customer price never changes. Counts in the scorecard.',
     implements: ['D-012', 'D-074'],
   })
@@ -325,7 +325,7 @@ export class PartnerProductionController {
     id: 'partner.production.raiseIssue',
     summary: 'Raise an issue on my job',
     description:
-      'Material shortage, machine down, a question about the artwork… (named kinds, D-232) with photos. Packio staff ' +
+      'Material shortage, machine down, a question about the artwork… (named kinds, D-232) with photos. getpack staff ' +
       'answer it; the factory may close an issue it raised itself (`partner.production.resolveIssue`).',
     implements: ['D-074', 'D-232'],
   })
@@ -377,7 +377,7 @@ export class PartnerProductionController {
     summary: 'Close an issue my factory raised',
     description:
       'With a note (e.g. the machine is fixed). Only issues raised by the factory’s own people (403 for an issue ' +
-      'Packio opened); never moves the job’s dates or SLA (D-232). Audited with an event.',
+      'getpack opened); never moves the job’s dates or SLA (D-232). Audited with an event.',
     implements: ['D-232'],
   })
   @ApiBody({
@@ -438,7 +438,7 @@ export class PartnerShopFloorController {
     summary: 'My factory’s day',
     description:
       'Jobs to accept and how many are past the 1-business-day deadline (D-074), steps due today (Asia/Bangkok), ' +
-      'jobs at risk or on hold, Packio inspections planned (D-076); alerts; and a work queue of at most 20 jobs — ' +
+      'jobs at risk or on hold, getpack inspections planned (D-076); alerts; and a work queue of at most 20 jobs — ' +
       'acceptance by deadline, then at-risk jobs, then steps due today.',
     implements: ['D-074', 'D-076', 'D-101'],
   })

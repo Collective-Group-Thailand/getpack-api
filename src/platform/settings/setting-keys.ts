@@ -140,7 +140,7 @@ export interface SettingValues {
   'production.factory_acceptance_sla_business_days': number;
   /** D-101 active factories a product type needs before auto-selection / auto-reassignment. */
   'partners.auto_selection_min_factories': number;
-  /** D-076 Packio risk-based inspection sampling. */
+  /** D-076 getpack risk-based inspection sampling. */
   'qc.inspection_sampling': {
     fullInspectionFromValue: string;
     sampledBandFromValue: string;
@@ -172,7 +172,7 @@ export interface SettingValues {
   'design.extra_revision_fee': { minimumAmount: string; pctOfDesignFee: string };
   /** Not seeded: no slip passes automatically until set (D-061). */
   'payments.slip_receiver_accounts': { accountType: string; accountNumber: string; accountNameTH?: string }[];
-  /** D-221 Packio's support contacts on the storefront; not seeded (Packio's own accounts, D-005). */
+  /** D-221 getpack's support contacts on the storefront; not seeded (getpack's own accounts, D-005). */
   'storefront.support_channels': {
     lineOaId?: string | null;
     phone?: string | null;

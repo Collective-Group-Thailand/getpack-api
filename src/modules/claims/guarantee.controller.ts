@@ -106,7 +106,7 @@ export class PublicGuaranteeDto {
   })
   claimWindowDays!: number;
 
-  @ApiProperty({ type: [GuaranteeRuleDto], description: 'Remedies for a claim on Packio’s side (D-083)' })
+  @ApiProperty({ type: [GuaranteeRuleDto], description: 'Remedies for a claim on getpack’s side (D-083)' })
   rules!: GuaranteeRuleDto[];
 }
 
@@ -191,9 +191,9 @@ export class StoreGuaranteeController {
   @Header('Cache-Control', 'public, max-age=300')
   @ApiEndpoint({
     id: 'store.guarantee.get',
-    summary: 'Packio’s guarantee',
+    summary: 'getpack’s guarantee',
     description:
-      'The guarantee in force — the same version the claim engine applies: what a claim on Packio’s side gets per ' +
+      'The guarantee in force — the same version the claim engine applies: what a claim on getpack’s side gets per ' +
       'claim type and severity (reprint, refund, partial credit), the response and decision times in business days ' +
       'and the claim window. A claim whose cause is the customer’s (e.g. artwork the customer approved) gets no ' +
       'remedy; there is no late-delivery guarantee at launch (D-198, D-199, D-260, D-083).',

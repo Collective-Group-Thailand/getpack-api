@@ -120,7 +120,7 @@ describe('PDF facts with pdf-lib (ADR-0009)', () => {
     p.setTrimBox(mm(3), mm(3), mm(97), mm(100));
     p.setBleedBox(mm(1), mm(1), mm(104), mm(104));
     const font = await doc.embedFont(StandardFonts.Helvetica);
-    p.drawText('Packio', { x: mm(50), y: mm(50), size: 10, font, color: cmyk(0, 0, 0, 1) });
+    p.drawText('getpack', { x: mm(50), y: mm(50), size: 10, font, color: cmyk(0, 0, 0, 1) });
     p.drawRectangle({ x: mm(10), y: mm(10), width: 20, height: 20, color: rgb(1, 0, 0) });
     p.drawLine({ start: { x: 0, y: 0 }, end: { x: 50, y: 50 }, thickness: 0.1, color: cmyk(0, 1, 0, 0) });
     const png = await sharp({ create: { width: 30, height: 30, channels: 3, background: '#ff0000' } })

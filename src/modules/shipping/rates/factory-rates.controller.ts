@@ -54,7 +54,7 @@ const COUNTER_EXAMPLE = {
   })),
 };
 
-/** Packio's side of a factory's shipping payout card: buy prices, D-141 roles only, reads audited. */
+/** getpack's side of a factory's shipping payout card: buy prices, D-141 roles only, reads audited. */
 @ApiSurface('admin', 'factoryShippingRates')
 @Controller('factories/:factoryId/shipping-rate-card')
 export class AdminFactoryShippingRatesController {
@@ -248,7 +248,7 @@ export class AdminFactoryShippingRatesController {
     id: 'admin.factoryShippingRates.answerCounters',
     summary: 'Answer the factory’s counters',
     description:
-      '`accept_counter` takes the factory’s values for the line; `keep` returns Packio’s value to the factory ' +
+      '`accept_counter` takes the factory’s values for the line; `keep` returns getpack’s value to the factory ' +
       'for a new answer. The version applies once every line is accepted (D-042, D-013).',
     implements: DECISIONS,
   })
@@ -337,7 +337,7 @@ export class AdminFactoryShippingRatesController {
   }
 }
 
-/** The factory's side: its own card only, never Packio's drafts (D-044, D-042). */
+/** The factory's side: its own card only, never getpack's drafts (D-044, D-042). */
 @ApiSurface('partner', 'shippingRates')
 @Controller('factories/:factoryId/shipping-rate-card')
 export class PartnerShippingRatesController {
@@ -350,7 +350,7 @@ export class PartnerShippingRatesController {
     id: 'partner.shippingRates.get',
     summary: 'Get the own shipping payout card',
     description:
-      'What Packio pays the factory for delivering with its own fleet: in force, scheduled, awaiting an answer (D-013).',
+      'What getpack pays the factory for delivering with its own fleet: in force, scheduled, awaiting an answer (D-013).',
     implements: DECISIONS,
   })
   @ApiSuccess(200, { description: 'Card', type: FactoryRateCardDto, example: FACTORY_CARD_EXAMPLE })
@@ -387,7 +387,7 @@ export class PartnerShippingRatesController {
   @ApiEndpoint({
     id: 'partner.shippingRates.getVersion',
     summary: 'Get an own payout-card version',
-    description: 'Lines and the factory’s answers; drafts are not visible before Packio sends them (D-042).',
+    description: 'Lines and the factory’s answers; drafts are not visible before getpack sends them (D-042).',
     implements: DECISIONS,
   })
   @ApiSuccess(200, { description: 'Version', type: FactoryRateVersionDto, example: FACTORY_PENDING_EXAMPLE })

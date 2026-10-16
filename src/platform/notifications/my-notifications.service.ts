@@ -20,7 +20,7 @@ const partnerLocked = (channel: string, category: string) =>
 
 /**
  * A user's own notification settings (D-143 channel choice, D-144 opt-out of marketing only), PDPA
- * consents (Packio's own consent management, D-005) and the in-app inbox.
+ * consents (getpack's own consent management, D-005) and the in-app inbox.
  */
 @Injectable()
 export class MyNotificationsService {

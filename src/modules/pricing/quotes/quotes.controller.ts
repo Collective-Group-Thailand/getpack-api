@@ -402,7 +402,7 @@ export class PartnerFoldingPricingController {
     summary: 'Price a folding configuration on my own price list',
     description:
       'The buy side only, on the factory’s own price list in force: cost, buy price per part, layouts, sheets, lead ' +
-      'time, per print type. Never Packio’s sell price or another factory (D-044, D-042); another factory is 404. ' +
+      'time, per print type. Never getpack’s sell price or another factory (D-044, D-042); another factory is 404. ' +
       'Engine B print types are priced here before they are released to quotes, for checking (D-233).',
     implements: ['D-044', 'D-042', 'D-040', 'D-233'],
   })
@@ -523,7 +523,7 @@ export class PartnerCorrugatePricingController {
     summary: 'Price a corrugate configuration on my own price list',
     description:
       'The buy side only, on the factory’s own price list in force: cost, buy price per part (plates and die blocks ' +
-      'included), layouts, sheets, lead time, per print type. Never Packio’s sell price or another factory (D-044, ' +
+      'included), layouts, sheets, lead time, per print type. Never getpack’s sell price or another factory (D-044, ' +
       'D-042); another factory is 404.',
     implements: ['D-044', 'D-042', 'D-040'],
   })
@@ -637,7 +637,7 @@ export class PartnerLabelPricingController {
     summary: 'Price a label configuration on my own price list',
     description:
       'The buy side only, on the factory’s own price list in force: cost, buy price, lay-out, sheets (or metres of ' +
-      'roll), lead time, per print type (legacy factory tool `POST /api/calculate/label`). Never Packio’s sell price or ' +
+      'roll), lead time, per print type (legacy factory tool `POST /api/calculate/label`). Never getpack’s sell price or ' +
       'another factory (D-044, D-042); another factory is 404.',
     implements: ['D-044', 'D-042', 'D-040'],
   })
@@ -757,7 +757,7 @@ export class PartnerTagSleevePricingController {
     summary: 'Price a tag & sleeve configuration on my own price list',
     description:
       'The buy side only, on the factory’s own tag & sleeve price list in force: cost, buy price, lay-out, sheets, lead ' +
-      'time, per print type. Never Packio’s sell price or another factory (D-044, D-042); another factory is 404.',
+      'time, per print type. Never getpack’s sell price or another factory (D-044, D-042); another factory is 404.',
     implements: ['D-044', 'D-042', 'D-040'],
   })
   @ApiBody({
@@ -871,7 +871,7 @@ export class PartnerPouchPricingController {
     summary: 'Price a pouch configuration on my own price list',
     description:
       'The buy side only, on the factory’s own pouch price list in force: cost, buy price, metres of film, lead time, ' +
-      'per print type. Never Packio’s sell price or another factory (D-044, D-042); another factory is 404.',
+      'per print type. Never getpack’s sell price or another factory (D-044, D-042); another factory is 404.',
     implements: ['D-044', 'D-042', 'D-040'],
   })
   @ApiBody({ type: PouchConfigurationDto, examples: { default: { value: POUCH_CONFIGURATION_EXAMPLE } } })
@@ -929,7 +929,7 @@ export class AdminCsStandardProductController {
     description:
       'The store calculation plus the staff view (selected factory and print type, price-list version, margin-floor ' +
       'flag, each option’s reason when it has no price). A standard product is priced from the factory’s buy-price ' +
-      'tiers with Packio’s margin and VAT (legacy `CalculatePrice`); delivery is its own line (D-013). Buy prices need ' +
+      'tiers with getpack’s margin and VAT (legacy `CalculatePrice`); delivery is its own line (D-013). Buy prices need ' +
       '`factory_buy_prices.read`, the margin `margin.read` (D-141). Works before the type is switched to instant, for checks.',
     implements: [...CALCULATION, 'D-012', 'D-141'],
   })
@@ -986,7 +986,7 @@ export class PartnerStandardProductPricingController {
     summary: 'Price a standard product on my own price list',
     description:
       'The buy side only, on the factory’s own standard-product price list in force: buy price per quantity, lead ' +
-      'time, per print type. Never Packio’s sell price or another factory (D-044, D-042); another factory is 404.',
+      'time, per print type. Never getpack’s sell price or another factory (D-044, D-042); another factory is 404.',
     implements: ['D-044', 'D-042', 'D-040'],
   })
   @ApiBody({
@@ -1047,7 +1047,7 @@ export class AdminCsServiceController {
     summary: 'Price a service item from the factories’ service price lines (CS)',
     description:
       'The store calculation plus the staff view, from the factories’ `service` price lines (net cost per unit, ' +
-      'Packio’s margin, VAT). A service ships nothing, so there is no shipping line. Without a line the item has no ' +
+      'getpack’s margin, VAT). A service ships nothing, so there is no shipping line. Without a line the item has no ' +
       'instant price: CS prices it from an amount (`admin.csService.price`). Buy prices need `factory_buy_prices.read`, the ' +
       'margin `margin.read` (D-141).',
     implements: [...CALCULATION, 'D-012', 'D-141'],
@@ -1084,7 +1084,7 @@ export class AdminCsServiceController {
     summary: 'Price a service from the amount CS enters',
     description:
       'Legacy `cs/service` maths, computed on the server (D-194: the price is entered by CS, no new formula): from a ' +
-      'net buy price, Packio’s `service` margin and the dated VAT give the net and gross sell price; from a ' +
+      'net buy price, getpack’s `service` margin and the dated VAT give the net and gross sell price; from a ' +
       'VAT-inclusive sell price (design), the net and the buy price — each rounded as legacy’s page did — and, for a ' +
       'hired freelancer, the payable (legacy `design_cost`). Nothing is saved. A buy price CS did not enter needs ' +
       '`factory_buy_prices.read`, the margin `margin.read` (D-141). The amount is `unitAmount` (money string); the numeric ' +
@@ -1137,7 +1137,7 @@ export class PartnerServicePricingController {
     summary: 'Price a service item on my own price list',
     description:
       'The buy side only, on the factory’s own service price lines in force: buy price per quantity, lead time, per ' +
-      'print type. Never Packio’s sell price or another factory (D-044, D-042); another factory is 404.',
+      'print type. Never getpack’s sell price or another factory (D-044, D-042); another factory is 404.',
     implements: ['D-044', 'D-042', 'D-040'],
   })
   @ApiBody({ type: ServiceConfigurationDto, examples: { default: { value: SERVICE_CONFIGURATION_EXAMPLE } } })

@@ -38,7 +38,7 @@ export function bankAccountsController(
 ): Type<unknown> {
   const note =
     surface === 'partner'
-      ? ' Own factory only; the verification details stay with Packio Finance.'
+      ? ' Own factory only; the verification details stay with getpack Finance.'
       : ' Includes the verification call and the duplicate-account flag (§8).';
 
   @ApiSurface(surface, 'factories')

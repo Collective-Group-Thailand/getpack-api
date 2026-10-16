@@ -1,7 +1,7 @@
 # Folding calculator — legacy port map (B2.3)
 
 > Reference for porting the legacy folding calculator. **Legacy is read-only and never run** (D-005).
-> Source: `/Users/superball/Abbon/Loco_Pack/locopack-web`, whose `app/` is identical to `Packio-Web/legacy/locopack-web/app`. It is *not* at `legacy/locopack-web/` in this repo, despite CLAUDE.md.
+> Source: `/Users/superball/Abbon/Loco_Pack/locopack-web`, whose `app/` is identical to `Getpack-Web/legacy/locopack-web/app`. It is *not* at `legacy/locopack-web/` in this repo, despite CLAUDE.md.
 > Paths below are relative to the legacy root. Traced 2026-09-26.
 
 ## 1. Entry points
@@ -41,7 +41,7 @@
 
 Live helpers (`app/Helpers/helpers.php`): `convertUnderScoreToUpperCase:192`, `inch2toM2:224`, `convertToMm:231`, `calLayoutAmount:598`, `calWastePrice:903`, `calPrice:926`, `calPrintArea:937`, `calFinishingArea:944`, `calTotalWaste:951` (B), `calTotalWastePaperSize:1076`, `calPricePaperSizeBahtPerSheet:1100`, `swipePaperSheetSize:1141`, `calCostPaperSize:1175`, `groupArrayByKey:1245`, `calSortingCost:1294`, `arrayMultipleSort:1305`, `testArrayMultipleSort:1320`, `calPacking:1338`, `sumArrayByKey:1352`, `convertTo2Decimal:1692`, `convertTo2Decimal3Digit:1699`, `getCustomLeadTime:1981`, `convertNumberFloat:2687`. The PHP numerics are ported in `src/modules/pricing/engine/php.ts`.
 
-## 4. Data read (→ Packio source)
+## 4. Data read (→ getpack source)
 Every legacy per-factory table becomes a `pl_*` component of the factory's folding price list (schema-design §3.4). Catalogue ids become platform catalogue rows (§3.3). B's HTTP reads (`/api/<resource>`, which add `*_status = 1`) become reads of the same component from the snapshot.
 
 | Step | Legacy tables / columns |
@@ -62,7 +62,7 @@ Not used by folding: `percent_reduces`, `difficult_match_margin`, `factory_fix_c
 **Port exactly** (numbers): every formula; float arithmetic; PHP `round`/`ceil` placement; `convertNumberFloat` string round-trips; production quantity vs requested quantity in the margin step (`FoldingCalculator.php:1389,1442`); the digital per-component `convertTo2Decimal` rounding.
 
 **Fixed, listed as deviations in `docs/pricing-validation-folding.md`** (user decision 2026-09-26):
-| # | Legacy behaviour | Packio |
+| # | Legacy behaviour | getpack |
 |---|---|---|
 | Q1 | `summary` taken from the first print type that completes; per-part rows from the cheapest one; a failure on the last print type drops the factory (`FoldingCalculator.php:1065-1070,1186,1217-1222`) | cheapest **complete** configuration per factory |
 | Q2 | structure design fee charged on every sub-pattern (`:1025-1035`) | once per quote |

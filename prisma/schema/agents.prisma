@@ -1,5 +1,5 @@
 // Sales agent programme (D-416–D-423): Collective employees and freelancers who bring customers and
-// factories to Packio, earn commission by versioned plan and are paid monthly.
+// factories to getpack, earn commission by versioned plan and are paid monthly.
 
 enum SalesAgentKind {
   freelance

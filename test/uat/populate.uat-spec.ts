@@ -407,7 +407,7 @@ describe('UAT populate (rehearsal data through the API)', () => {
     return { job, destinationId: detail.destinations[0]!.id };
   };
 
-  /** Packs one shipment, records a Packio inspection when the risk rules planned one (D-076), marks it ready. */
+  /** Packs one shipment, records a getpack inspection when the risk rules planned one (D-076), marks it ready. */
   const ship = async (jobPublicId: string, destinationId: string, quantity: number, weightG: number) => {
     const owner = tokens['factory_owner']!;
     const shipment = await ok<{ id: string }>(
@@ -467,7 +467,7 @@ describe('UAT populate (rehearsal data through the API)', () => {
         const campaign = await ok<{ id: string }>(
           as(ctx, m).post('/v1/admin/campaigns', {
             code: 'uat-launch',
-            name: 'เปิดตัว Packio (UAT)',
+            name: 'เปิดตัว getpack (UAT)',
             startsAt: new Date(Date.now() - 86_400_000).toISOString(),
             budgetAmount: '50000.00',
           }),

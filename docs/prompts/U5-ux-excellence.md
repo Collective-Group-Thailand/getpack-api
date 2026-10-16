@@ -1,6 +1,6 @@
 # U5 — UX excellence layer (backend support)
 
-> อ่าน `CLAUDE.md`, `00-master-plan.md`, `docs/decisions.md`, `docs/contract/api-conventions.md`, และ `packio-web/docs/ux/*.md` (สำเนาไว้ที่ `docs/ux/`) ก่อนทุก session
+> อ่าน `CLAUDE.md`, `00-master-plan.md`, `docs/decisions.md`, `docs/contract/api-conventions.md`, และ `getpack-web/docs/ux/*.md` (สำเนาไว้ที่ `docs/ux/`) ก่อนทุก session
 > ทำก่อน frontend U5 ที่เกี่ยวข้องหนึ่งก้าว · **ทุก session เริ่มด้วย gap analysis** · แก้ contract ต้อง bump + tag
 
 ## U5.B1 — Context & personalisation endpoints

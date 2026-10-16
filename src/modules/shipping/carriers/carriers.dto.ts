@@ -18,7 +18,7 @@ import {
 
 import { POSTCODE } from '../rates/customer-rates.dto';
 
-/** Fallback carriers and Packio's carrier accounts (D-013, D-114, D-005). */
+/** Fallback carriers and getpack's carrier accounts (D-013, D-114, D-005). */
 
 export const CARRIER_CODES = ['factory_fleet', 'flash_express', 'deliveree'] as const;
 export const CARRIER_CAPABILITIES = ['quote', 'book', 'label', 'track', 'cancel', 'webhook'] as const;
@@ -32,7 +32,7 @@ export class CarrierAccountDto {
   @ApiProperty({ format: 'uuid', example: IDS.account })
   id!: string;
 
-  @ApiProperty({ example: 'Packio Flash sandbox (fake)' })
+  @ApiProperty({ example: 'getpack Flash sandbox (fake)' })
   label!: string;
 
   @ApiProperty({ example: true, description: 'Provider test environment' })
@@ -77,11 +77,11 @@ export class CarrierDto {
 }
 
 export class AddCarrierAccountDto {
-  @TextField({ example: 'Packio Flash sandbox (fake)', max: 200 })
+  @TextField({ example: 'getpack Flash sandbox (fake)', max: 200 })
   label!: string;
 
   @TextField({
-    example: 'packio/sandbox/carriers/flash-express',
+    example: 'getpack/sandbox/carriers/flash-express',
     max: 500,
     description: 'Secrets Manager id of a JSON secret with the carrier credentials (never the credentials)',
   })
@@ -201,7 +201,7 @@ export class WebhookReceivedDto {
 
 export const ACCOUNT_EXAMPLE: CarrierAccountDto = {
   id: IDS.account,
-  label: 'Packio Flash sandbox (fake)',
+  label: 'getpack Flash sandbox (fake)',
   sandbox: true,
   active: true,
   entityCode: 'CGT',

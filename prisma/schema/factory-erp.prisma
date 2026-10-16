@@ -1,4 +1,4 @@
-// Packio Factory ERP (E1, docs/prompts/E1-factory-erp.md; D-316 – D-332).
+// getpack Factory ERP (E1, docs/prompts/E1-factory-erp.md; D-316 – D-332).
 // Factory-private data (D-317): every table carries `factory_id` and is read only through
 // `/v1/partner/factories/{factoryId}/erp/*`. Ledgers are append-only (triggers in the migration).
 
@@ -299,7 +299,7 @@ model ErpItem {
   sku               String
   name              String
   kind              ErpItemKind
-  /// Optional link to the platform material so Packio job specs map to stock.
+  /// Optional link to the platform material so getpack job specs map to stock.
   materialId        BigInt?         @map("material_id")
   baseUnit          ErpUnit         @map("base_unit")
   purchaseUnit      ErpUnit?        @map("purchase_unit")
@@ -619,7 +619,7 @@ enum ErpPaymentMethod {
 }
 
 enum ErpProductionSource {
-  packio_job
+  getpack_job
   stock
   sales_order
 
@@ -991,7 +991,7 @@ model ErpRecipeOperation {
   @@map("erp_recipe_operations")
 }
 
-/// D-340: a production order — a Packio job, or the factory's own (for stock or a sales order).
+/// D-340: a production order — a getpack job, or the factory's own (for stock or a sales order).
 model ErpProductionOrder {
   id              BigInt              @id(map: "pk_erp_production_orders") @default(autoincrement())
   publicId        String              @unique(map: "ux_erp_production_orders__public_id") @default(dbgenerated("uuidv7()")) @map("public_id") @db.Uuid
@@ -1057,7 +1057,7 @@ model ErpProductionMaterial {
   requiredQty       Decimal @map("required_qty") @db.Decimal(14, 3)
   reservedQty       Decimal @default(0) @map("reserved_qty") @db.Decimal(14, 3)
   issuedQty         Decimal @default(0) @map("issued_qty") @db.Decimal(14, 3)
-  /// `recipe`, `packio_spec` or `manual`.
+  /// `recipe`, `getpack_spec` or `manual`.
   origin            String
   note              String?
 
@@ -1092,7 +1092,7 @@ model ErpProductionOperation {
   finishedAt         DateTime?           @map("finished_at") @db.Timestamptz(6)
   pausedAt           DateTime?           @map("paused_at") @db.Timestamptz(6)
   pausedMinutes      Int                 @default(0) @map("paused_minutes")
-  /// D-354: the Packio job milestone it stands for.
+  /// D-354: the getpack job milestone it stands for.
   jobMilestoneId     BigInt?             @unique(map: "ux_erp_production_operations__job_milestone_id") @map("job_milestone_id")
   milestoneSync      ErpMilestoneSync    @default(none) @map("milestone_sync")
   milestoneSyncError String?             @map("milestone_sync_error")

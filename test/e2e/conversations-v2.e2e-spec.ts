@@ -189,14 +189,14 @@ describe('conversations v2 (e2e, U5.B2)', () => {
         0,
     ).toBe(true);
 
-    // Read receipts: my unread count, and when Packio read the thread.
+    // Read receipts: my unread count, and when getpack read the thread.
     let mine = (await as(ctx, a.token).get(`/v1/store/conversations/${thread}`).expect(200)).body;
     expect(mine.unread).toBe(1);
     await as(ctx, a.token).get(`/v1/store/conversations/${thread}/messages`).expect(200);
     await post(a.token, `/v1/store/conversations/${thread}/messages`, { body: 'ขอบคุณค่ะ' }).expect(201);
     await as(ctx, cs).post(`/v1/admin/conversations/${thread}/actions/mark-read`).expect(200);
     mine = (await as(ctx, a.token).get(`/v1/store/conversations/${thread}`).expect(200)).body;
-    expect(mine).toMatchObject({ unread: 0, readByPackioAt: expect.any(String) });
+    expect(mine).toMatchObject({ unread: 0, readByGetpackAt: expect.any(String) });
 
     // An archived canned response is no longer offered nor accepted.
     await as(ctx, lead).post(`/v1/admin/canned-responses/${canned.id}/actions/archive`).expect(200);

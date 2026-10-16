@@ -42,7 +42,7 @@ import {
 export { ERP_CHARGE_ALLOCATIONS, ERP_CHARGE_KINDS, ErpChargeInput, ErpLandedChargeDto } from './erp.dto';
 
 /**
- * Packio Factory ERP E2.1 + E3 (docs/prompts/E1-factory-erp.md §10, D-346 – D-358): quantity breaks, alerts,
+ * getpack Factory ERP E2.1 + E3 (docs/prompts/E1-factory-erp.md §10, D-346 – D-358): quantity breaks, alerts,
  * requests for quotation, receiving inspection, landed cost, approved suppliers; machine schedule, shop-floor
  * kiosk, maintenance and documents.
  */
@@ -909,7 +909,7 @@ export class ErpFinishOperationDto {
   @ApiPropertyOptional({
     type: [String],
     format: 'uuid',
-    description: 'Photos for a Packio job step that needs them (D-354)',
+    description: 'Photos for a getpack job step that needs them (D-354)',
   })
   @IsOptional()
   @IsArray()

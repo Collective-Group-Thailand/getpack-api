@@ -7,7 +7,7 @@ import { FakeCarrierAdapter } from './carriers/fake-carrier.adapter';
 import { FlashExpressAdapter } from './carriers/flash-express.adapter';
 import { DIELINE_ENGINE } from './dieline/dieline-engine.port';
 import { FakeDielineEngine } from './dieline/fake-dieline.engine';
-import { PackioDielineEngine } from './dieline/packio-dieline.engine';
+import { GetpackDielineEngine } from './dieline/getpack-dieline.engine';
 import { EMAIL_SENDER } from './email/email-sender.port';
 import { FakeEmailSender } from './email/fake-email-sender';
 import { SesEmailSender } from './email/ses-email-sender';
@@ -227,11 +227,11 @@ import { WEBHOOK_SENDER } from './webhooks-out/webhook-sender.port';
         ),
     },
     {
-      // @packio/dieline (B4.1): unavailable until packio-web publishes it; the `drawing.engine` flag gates use.
+      // @getpack/dieline (B4.1): unavailable until getpack-web publishes it; the `drawing.engine` flag gates use.
       provide: DIELINE_ENGINE,
       inject: [AppConfig],
       useFactory: (config: AppConfig) =>
-        config.useFakes ? new FakeDielineEngine() : new PackioDielineEngine(),
+        config.useFakes ? new FakeDielineEngine() : new GetpackDielineEngine(),
     },
     {
       provide: VIRUS_SCANNER,

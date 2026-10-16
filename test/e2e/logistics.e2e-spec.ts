@@ -48,7 +48,7 @@ const DAY = 86_400_000;
 
 /**
  * Logistics (B4.3, D-013, D-021, D-080, D-081, D-114, D-142, D-165): shipments from completed jobs split over
- * trips and destinations, labels and packing lists, the shipping gate (instalments before shipping, Packio
+ * trips and destinations, labels and packing lists, the shipping gate (instalments before shipping, getpack
  * inspection), POD, tolerance reconciliation, completion 7 days after delivery or on the customer's
  * confirmation, fallback carriers with their callbacks, and factory scoping (IDOR).
  */
@@ -180,7 +180,7 @@ describe('logistics: shipments, POD, tolerance and completion (e2e, B4.3)', () =
     }).expect(status);
   }
 
-  /** Packio's inspection, when the risk rules asked for one (a new factory's first jobs, D-076), passes. */
+  /** getpack's inspection, when the risk rules asked for one (a new factory's first jobs, D-076), passes. */
   async function passInspection(jobRowId: bigint) {
     const job = await ctx.prisma.productionJob.findUniqueOrThrow({
       where: { id: jobRowId },
@@ -238,7 +238,7 @@ describe('logistics: shipments, POD, tolerance and completion (e2e, B4.3)', () =
       ).some((s) => s.id === s1.id),
     ).toBe(false);
 
-    // Packed: labels (100 × 150 mm, QR, Packio brand only) and a packing list; payout frozen.
+    // Packed: labels (100 × 150 mm, QR, getpack brand only) and a packing list; payout frozen.
     const pdf = ctx.app.get<FakePdfRenderer>(PDF_RENDERER);
     const before = pdf.rendered.length;
     const ready = (await post(shipper, `/v1/partner/shipments/${s1.id}/actions/ready`).expect(200))
@@ -347,7 +347,7 @@ describe('logistics: shipments, POD, tolerance and completion (e2e, B4.3)', () =
     const mine = (await as(ctx, o.token).get(`/v1/store/orders/${o.orderId}/shipments`).expect(200))
       .body as (Shipment & Record<string, unknown>)[];
     expect(mine).toHaveLength(2);
-    expect(mine.every((s) => s.carrier === 'packio' && !('factoryId' in s) && !('payoutAmount' in s))).toBe(
+    expect(mine.every((s) => s.carrier === 'getpack' && !('factoryId' in s) && !('payoutAmount' in s))).toBe(
       true,
     );
     const shared = mine[0]!.proofOfDelivery!.photoFileIds[0]!;
@@ -372,7 +372,7 @@ describe('logistics: shipments, POD, tolerance and completion (e2e, B4.3)', () =
     });
   });
 
-  it('blocks pickup until the balance before shipping is paid and the Packio inspection passed', async () => {
+  it('blocks pickup until the balance before shipping is paid and the getpack inspection passed', async () => {
     await setSetting(ctx, 'payments.schedule_split_threshold', '1.00');
     await setSetting(ctx, 'qc.inspection_sampling', { ...SAMPLING, fullInspectionFromValue: '1.00' });
     const o = await acceptedOrder(3);
@@ -452,7 +452,7 @@ describe('logistics: shipments, POD, tolerance and completion (e2e, B4.3)', () =
     const s = (await createShipment(owner, o.jobId, [[d1.id, 600]], 1).expect(201)).body as Shipment;
     await post(owner, `/v1/partner/shipments/${s.id}/actions/ready`).expect(200);
 
-    // U-B0.3: the factory asks Packio for a carrier (once); its view shows the cartons and the request.
+    // U-B0.3: the factory asks getpack for a carrier (once); its view shows the cartons and the request.
     const asked = await post(owner, `/v1/partner/shipments/${s.id}/actions/request-carrier`, {
       reason: 'รถโรงงานไม่วิ่งพื้นที่นี้',
     }).expect(200);
@@ -683,7 +683,7 @@ describe('logistics: shipments, POD, tolerance and completion (e2e, B4.3)', () =
           entityId: entity.id,
           carrierId: carrier.id,
           label: 'fake',
-          credentialsSecretRef: 'packio/fake/carrier',
+          credentialsSecretRef: 'getpack/fake/carrier',
           sandbox: true,
         },
       });

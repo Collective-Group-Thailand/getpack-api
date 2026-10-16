@@ -6,7 +6,7 @@ export const FULFILMENT_FEATURE_FLAGS = [
   {
     key: 'drawing.engine',
     description:
-      'Dieline drawing engine @packio/dieline (B4.1) — off until the package is published; drawings answer 501',
+      'Dieline drawing engine @getpack/dieline (B4.1) — off until the package is published; drawings answer 501',
   },
   {
     key: 'assistant.enabled',

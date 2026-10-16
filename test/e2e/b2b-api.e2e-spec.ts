@@ -145,9 +145,9 @@ describe('B2B API and webhooks (e2e, U2.7)', () => {
     const fake = ctx.app.get<FakeWebhookSender>(WEBHOOK_SENDER);
     const before = fake.sent.length;
     await ctx.app.get(WebhooksService).deliverDue();
-    const sent = fake.sent.slice(before).find((s) => s.headers['Packio-Event'] === 'order.placed')!;
+    const sent = fake.sent.slice(before).find((s) => s.headers['Getpack-Event'] === 'order.placed')!;
     expect(sent.url).toBe('https://erp.example.com/hooks');
-    const [t, v1] = sent.headers['Packio-Signature']!.split(',').map((x) => x.split('=')[1]!);
+    const [t, v1] = sent.headers['Getpack-Signature']!.split(',').map((x) => x.split('=')[1]!);
     expect(v1).toBe(createHmac('sha256', secret).update(`${t}.${sent.body}`).digest('hex'));
     const body = JSON.parse(sent.body) as { event: { type: string }; data: { orderGroupId: string } };
     expect(body).toMatchObject({ event: { type: 'order.placed' }, data: { orderGroupId: group.publicId } });

@@ -2,9 +2,9 @@
 
 > Reference for porting legacy service pricing ("บริการ"). **Legacy is read-only and never run** (D-005). Treatment follows
 > the calculator rule (user decision 2026-09-26): **maths ported exactly, orchestration and state bugs fixed and listed as
-> deviations** in `docs/pricing-validation-service.md`. §9 records how Packio ports it.
+> deviations** in `docs/pricing-validation-service.md`. §9 records how getpack ports it.
 
-Legacy root: `/Users/superball/Collective/Packio/Packio-API/legacy/locopack-web/`. Every `app/…`, `config/…`, `routes/…`, `resources/…`, `database/…` path below is under that root. Packio docs are under `/Users/superball/Collective/Packio/Packio-API/docs/`.
+Legacy root: `/Users/superball/Collective/getpack/Getpack-API/legacy/locopack-web/`. Every `app/…`, `config/…`, `routes/…`, `resources/…`, `database/…` path below is under that root. getpack docs are under `/Users/superball/Collective/getpack/Getpack-API/docs/`.
 
 PHP 7.1 with `error_reporting(-1)`. "Throws" means a notice or warning that fails the request. One PHP 7.1 detail matters here: reading an index of `null` returns `null` silently (the notice only starts in 7.4), so it does **not** throw.
 
@@ -12,7 +12,7 @@ PHP 7.1 with `error_reporting(-1)`. "Throws" means a notice or warning that fail
 
 ## 0. Main finding
 
-**Legacy has no standalone service product priced by a factory price list, a table or a quantity formula.** The only standalone "service" sale is a **CS back-office page** (`/cs/service`, print type **11**). On that page CS picks a service kind (a SAP PH3 code 900–911) and **types one amount**. The browser then applies a single Packio margin, `config('locopack.service_locopack_margin') = 6.5` %, and VAT 7 % to get the other amount:
+**Legacy has no standalone service product priced by a factory price list, a table or a quantity formula.** The only standalone "service" sale is a **CS back-office page** (`/cs/service`, print type **11**). On that page CS picks a service kind (a SAP PH3 code 900–911) and **types one amount**. The browser then applies a single getpack margin, `config('locopack.service_locopack_margin') = 6.5` %, and VAT 7 % to get the other amount:
 
 - **Design kinds** (PH3 900 / 909, hierarchy type 4): CS types the **VAT-inclusive sell price**. The browser works back to the net price and then the cost.
 - **Every other kind** (plate, die block, molds, seal mold, mockup, delivery: hierarchy types 2, 3, 5, 6, 7): CS types the **cost**. The browser works forward to the net and gross sell price.
@@ -22,7 +22,7 @@ Every other "service" in legacy is a **fee attached to a product order**:
 
 | Service-like charge | How it is priced | Where | Who is paid |
 |---|---|---|---|
-| Standalone CS service order: design (900 by designer / 909 by Locopack admin) | CS types gross sell T. net = round2(round3(T/1.07)), cost = round2(net × 93.5 %). Server also stores `design_cost = calculateServiceCost(T)` (ceil-based rounding) | `resources/js/components/service-orders/cs.vue:405-418`, `app/Http/Controllers/OrderController.php:327`, `app/Helpers/helpers.php:3724-3736` | External designer (`designers.designer_type` 1, design PO via SAP) or in-house (type 2, no PO). Packio keeps 6.5 % of net |
+| Standalone CS service order: design (900 by designer / 909 by Locopack admin) | CS types gross sell T. net = round2(round3(T/1.07)), cost = round2(net × 93.5 %). Server also stores `design_cost = calculateServiceCost(T)` (ceil-based rounding) | `resources/js/components/service-orders/cs.vue:405-418`, `app/Http/Controllers/OrderController.php:327`, `app/Helpers/helpers.php:3724-3736` | External designer (`designers.designer_type` 1, design PO via SAP) or in-house (type 2, no PO). getpack keeps 6.5 % of net |
 | Standalone CS service order: plate 902, mold print 904 (type 2); die block 903, mold die-cut 905 (type 3); mold seal 906 (type 6); delivery 901 (type 5); mockup 907/908 external, 910/911 internal (type 7) | CS types cost C. net = round2(C / 0.935), gross = round2(net × 1.07) | `cs.vue:419-429` | The factory CS picked (`products.factory_id`), cost stored in `total_cost` plus the matching `*_cost` column |
 | Graphic design fee on a calculator quote | **Fixed setting** per packaging type (env, else AWS secret): `SALE_MARGIN_GRAPHIC_DESIGN_FEE_{FOLDING,LABEL,CORRUGATE,TAG}`; pouch and rigid/std use `DESIGN_COST_FOR_POUCH` / `DESIGN_COST_FOR_POP`. CS may type another amount. Added **once, VAT-inclusive, untouched** to the total. Free design (status 3) adds it, then subtracts it | `app/Models/Calculator.php:241-288,424-426`; per calculator, §2.4 | Designer gets `design_cost` = 93.5 % of net (`OrderController.php:327`, `Api/OrderAPIController.php:1040,1520`), only when `is_brief_design = 1` (hire) |
 | Structure design fee | Fixed setting `SALE_MARGIN_STRUCTURE_DESIGN_FEE` when `fix_margin.structure_status`. Legacy charges it on every sub-pattern (folding Q2, corrugate C14) | `Calculator.php:251-255` | No cost or payee recorded (`products.structure_design_price` is never written) |
@@ -515,7 +515,7 @@ There is **no table holding a service, mockup or design price** in the schema. P
 
 | # | Quirk (file:line) | Port treatment |
 |---|---|---|
-| V1 | `cs/service` registered twice (`web.php:696-698` admin group, `:844-846` factory group). The later one wins, so `WebFactory` applies (factory or admin, `Middleware/WebFactory.php`). The menu shows it to CS-type users (`menu.blade.php:77,93`), who get 403. Order creation is admin only (`OrderController.php:144`) | Not ported. Packio RBAC permission for CS quoting of services |
+| V1 | `cs/service` registered twice (`web.php:696-698` admin group, `:844-846` factory group). The later one wins, so `WebFactory` applies (factory or admin, `Middleware/WebFactory.php`). The menu shows it to CS-type users (`menu.blade.php:77,93`), who get 403. Order creation is admin only (`OrderController.php:144`) | Not ported. getpack RBAC permission for CS quoting of services |
 | V2 | Margin maths runs only in the browser; the server stores the client's totals (`OrderController.php:152-153,328`) | **Fix**: server-side calculator, client never trusted |
 | V3 | Two input directions (design: gross → cost; others: cost → gross), and the derived field is editable (`cs.vue:65,85`), so the margin is not enforced | **Fix**: one priced direction per item, overrides only through discount memos (B3.5) |
 | V4 | Rounding mismatch: browser `Math.round` (`cs.vue:381-384`) vs PHP `calculateServiceCost` ceil-based (`helpers.php:1692-1702,3724-3736`). `design_cost` can be 0.01–0.02 above `total_cost` (sell 1000 → 873.83 vs 873.84; sell 10000 → 8738.31 vs 8738.33) | **Keep both explicitly**: sell / net / VAT with half-up (what customers were quoted); designer payable with `calculateServiceCost` (what was paid). Golden cases cover both |
@@ -527,13 +527,13 @@ There is **no table holding a service, mockup or design price** in the schema. P
 | V10 | Government customers: 1 % of the ex-VAT total (`OrderController.php:390-392`, `QuotationController.php:160-162`) | Keep (D-174 note: government uses the same rates until Finance decides) |
 | V11 | Preview looks up the designer by `selected_ph3.designer_type` as an id (`cs.vue:114`), so it shows the wrong name | Not ported (display bug) |
 | V12 | Factories list unfiltered (`ServiceOrderController.php:21`) | **Fix**: only active factories serving the item |
-| V13 | Edit / reorder of service orders broken (`cs.vue:351,353`; `helpers.php:2074` → `cs/other-products` has no route) | Not ported (Packio edits through order revisions) |
+| V13 | Edit / reorder of service orders broken (`cs.vue:351,353`; `helpers.php:2074` → `cs/other-products` has no route) | Not ported (getpack edits through order revisions) |
 | V14 | `GetOHFromPH3` on an unknown code: `$check_ph3->is_service` on null throws (`GenerateService.php:16-17`) | Not ported (PH hierarchy dropped, D-030); validate the item code |
 | V15 | PH3 `000` Other (type null) excluded by SQL NULL semantics (`HierarchyPh3.php:67`), so there is no free-form "other service" | Keep (no invented catalogue rows); an `other` item only if the business asks |
 | V16 | Service lead time hard-coded to 7 days (`cs.vue:515`); the quotation prints it for packaging 7 (`QuotationController.php:99`) | Setting / attribute per service item (legacy value 7) |
 | V17 | In-order mockup at 500/pc: shown and quoted by the CS calculators, but new orders lose `mockup_type_id` (`create-order.vue:1235-1236`). `products[0].amount` is set to the mockup amount (`:1250-1252`) while `order.total` stays the bulk calculator total | **Not ported**: D-192 single `sample` entity; D-194 CS-entered price; 500 kept only as a documented legacy value |
 | V18 | `CreateOrderRequest.php:31` dotted `has()` never matches, so `mockup_amount` is never validated; `OrderController.php:273` reads it unguarded | Fix (validated DTO) |
-| V19 | Mockup card fee 3 % for payment types 2/3/4, stored as `mockup_fee`, not added to the stored total (`OrderController.php:276-280`); UI adds it for 2/3 only (`MockupSummaryDetail.vue:60`) | Not ported (no payment surcharge in Packio) |
+| V19 | Mockup card fee 3 % for payment types 2/3/4, stored as `mockup_fee`, not added to the stored total (`OrderController.php:276-280`); UI adds it for 2/3 only (`MockupSummaryDetail.vue:60`) | Not ported (no payment surcharge in getpack) |
 | V20 | Mockup credit on reorder = full `mockup_total` (VAT included), overwrites any other discount, no time window (`OrderController.php:309-317,511-514`) | **Changed** per D-197: 100 % of the sample product price, freight excluded, same spec, 30 days, as its own discount line |
 | V21 | Service mockup price = CS amount (`OrderController.php:270`, commit `6795b8945` "edit mockup price condition"); fixed 500 only for non-service | Keep the CS-entered price (D-194) through the `service` calculator |
 | V22 | `design_status == true` is a loose comparison: CS "ออกแบบออนไลน์" (type 1) still sends the default fee (`cs-v2.vue:1695-1697`, default `FoldingBoxController.php:110`), so the fee is charged (`Calculator.php:257-265`) and the order becomes hire (`cs-v2.vue:1890-1895`) | **Fix**: the fee only for hired design. To verify against `calculate_logs`; cross-check with the folding / label / tag port maps |
@@ -545,7 +545,7 @@ There is **no table holding a service, mockup or design price** in the schema. P
 | V28 | Design fallback 2500 when no price: pouch (`PouchCalculator.php:444`), customer display for unknown packaging (`MappingInputAPIController.php:335`) | Not ported as a constant; a missing sell-table `design_fee` refuses the hired-design option |
 | V29 | Production setting values live only in AWS secrets (`.env.production:57-66` empty); dev `.env:67-75` holds 3000 / 2500 / 2500 / 1500 / 1500 / 1500, TAG absent | Seed **no values**: the business enters the sell tables (D-063) |
 | V30 | `exportFromCS` uses `$pattern_name` undefined when `detail_text` is empty and a factory is set on save (`QuotationController.php:76-78,185-194`), which throws | Fix: description required |
-| V31 | No discount / promotion on service orders (`cs.vue:469-470`) | Packio: discount memos / promotions apply as on other lines |
+| V31 | No discount / promotion on service orders (`cs.vue:469-470`) | getpack: discount memos / promotions apply as on other lines |
 
 ---
 
@@ -601,7 +601,7 @@ Legacy has **no service calculator beyond "amount typed by CS ± 6.5 % margin + 
 | `mold_diecut` | 905 | ค่า Mold Diecut | `die_block` | `other_service` | hire_of_work | factory | cost |
 | `mold_seal` | 906 | ค่า Mold Seal | `service` | `other_service` | hire_of_work | factory | cost |
 | `mockup_printed` / `mockup_unprinted` | 907, 910 / 908, 911 | ค่า Mockup พร้อมพิมพ์ / ไม่พิมพ์ | `mockup` (D-192 `sample`) | `mockup` | hire_of_work | factory (external) / in-house (internal) | cost |
-| `delivery` | 901 | ค่าขนส่ง | `shipping` | `shipping` | transport | factory / carrier | cost (Packio: prefer `ShippingQuoteService`, D-013) |
+| `delivery` | 901 | ค่าขนส่ง | `shipping` | `shipping` | transport | factory / carrier | cost (getpack: prefer `ShippingQuoteService`, D-013) |
 
 The structure design fee has no standalone legacy service (only a calculator add-on). Keep it in the calculators' `structure_design_fee` sell tables; do not add a catalogue item unless asked.
 
@@ -685,49 +685,49 @@ m = 6.5 % unless noted; VAT 7 %. "UI" = browser rounding; "payable" = `calculate
 ### 8.7 Files
 
 Legacy:
-- `/Users/superball/Collective/Packio/Packio-API/legacy/locopack-web/app/Http/Controllers/ServiceOrderController.php`
-- `/Users/superball/Collective/Packio/Packio-API/legacy/locopack-web/resources/js/components/service-orders/cs.vue`
-- `/Users/superball/Collective/Packio/Packio-API/legacy/locopack-web/app/Libraries/Hierarchy/GenerateService.php`
-- `/Users/superball/Collective/Packio/Packio-API/legacy/locopack-web/app/Libraries/Hierarchy/GenerateFromProduct.php`
-- `/Users/superball/Collective/Packio/Packio-API/legacy/locopack-web/app/Models/HierarchyPh3.php`
-- `/Users/superball/Collective/Packio/Packio-API/legacy/locopack-web/app/Models/HierarchyType.php`
-- `/Users/superball/Collective/Packio/Packio-API/legacy/locopack-web/database/json/hierarchies/ph3.json`
-- `/Users/superball/Collective/Packio/Packio-API/legacy/locopack-web/database/seeds/importHierarchy.php`
-- `/Users/superball/Collective/Packio/Packio-API/legacy/locopack-web/app/Http/Controllers/OrderController.php`
-- `/Users/superball/Collective/Packio/Packio-API/legacy/locopack-web/app/Http/Controllers/QuotationController.php`
-- `/Users/superball/Collective/Packio/Packio-API/legacy/locopack-web/app/Http/Requests/CreateOrderRequest.php`
-- `/Users/superball/Collective/Packio/Packio-API/legacy/locopack-web/app/Helpers/helpers.php`
-- `/Users/superball/Collective/Packio/Packio-API/legacy/locopack-web/app/Models/Calculator.php`
-- `/Users/superball/Collective/Packio/Packio-API/legacy/locopack-web/app/Models/Order.php`
-- `/Users/superball/Collective/Packio/Packio-API/legacy/locopack-web/app/Http/Controllers/Api/DocumentController.php`
-- `/Users/superball/Collective/Packio/Packio-API/legacy/locopack-web/resources/js/components/plugin-boxes/create-order.vue`
-- `/Users/superball/Collective/Packio/Packio-API/legacy/locopack-web/resources/js/components/plugin-boxes/export-quotation.vue`
-- `/Users/superball/Collective/Packio/Packio-API/legacy/locopack-web/resources/js/components/Mockup/SelectMockup.vue`
-- `/Users/superball/Collective/Packio/Packio-API/legacy/locopack-web/resources/js/components/Mockup/MockupSummaryDetail.vue`
-- `/Users/superball/Collective/Packio/Packio-API/legacy/locopack-web/config/locopack.php`
-- `/Users/superball/Collective/Packio/Packio-API/legacy/locopack-web/routes/web.php`
-- `/Users/superball/Collective/Packio/Packio-API/legacy/locopack-web/app/Models/PouchCalculator.php`
-- `/Users/superball/Collective/Packio/Packio-API/legacy/locopack-web/app/Models/FoldingCalculator.php`
-- `/Users/superball/Collective/Packio/Packio-API/legacy/locopack-web/app/Models/CorrugateCalculator.php`
-- `/Users/superball/Collective/Packio/Packio-API/legacy/locopack-web/app/Models/LabelCalculator.php`
-- `/Users/superball/Collective/Packio/Packio-API/legacy/locopack-web/app/Models/TagAndSleeveCalculator.php`
-- `/Users/superball/Collective/Packio/Packio-API/legacy/locopack-web/app/Http/Controllers/RigidController.php`
-- `/Users/superball/Collective/Packio/Packio-API/legacy/locopack-web/.gitlab-ci.yml`
+- `/Users/superball/Collective/getpack/Getpack-API/legacy/locopack-web/app/Http/Controllers/ServiceOrderController.php`
+- `/Users/superball/Collective/getpack/Getpack-API/legacy/locopack-web/resources/js/components/service-orders/cs.vue`
+- `/Users/superball/Collective/getpack/Getpack-API/legacy/locopack-web/app/Libraries/Hierarchy/GenerateService.php`
+- `/Users/superball/Collective/getpack/Getpack-API/legacy/locopack-web/app/Libraries/Hierarchy/GenerateFromProduct.php`
+- `/Users/superball/Collective/getpack/Getpack-API/legacy/locopack-web/app/Models/HierarchyPh3.php`
+- `/Users/superball/Collective/getpack/Getpack-API/legacy/locopack-web/app/Models/HierarchyType.php`
+- `/Users/superball/Collective/getpack/Getpack-API/legacy/locopack-web/database/json/hierarchies/ph3.json`
+- `/Users/superball/Collective/getpack/Getpack-API/legacy/locopack-web/database/seeds/importHierarchy.php`
+- `/Users/superball/Collective/getpack/Getpack-API/legacy/locopack-web/app/Http/Controllers/OrderController.php`
+- `/Users/superball/Collective/getpack/Getpack-API/legacy/locopack-web/app/Http/Controllers/QuotationController.php`
+- `/Users/superball/Collective/getpack/Getpack-API/legacy/locopack-web/app/Http/Requests/CreateOrderRequest.php`
+- `/Users/superball/Collective/getpack/Getpack-API/legacy/locopack-web/app/Helpers/helpers.php`
+- `/Users/superball/Collective/getpack/Getpack-API/legacy/locopack-web/app/Models/Calculator.php`
+- `/Users/superball/Collective/getpack/Getpack-API/legacy/locopack-web/app/Models/Order.php`
+- `/Users/superball/Collective/getpack/Getpack-API/legacy/locopack-web/app/Http/Controllers/Api/DocumentController.php`
+- `/Users/superball/Collective/getpack/Getpack-API/legacy/locopack-web/resources/js/components/plugin-boxes/create-order.vue`
+- `/Users/superball/Collective/getpack/Getpack-API/legacy/locopack-web/resources/js/components/plugin-boxes/export-quotation.vue`
+- `/Users/superball/Collective/getpack/Getpack-API/legacy/locopack-web/resources/js/components/Mockup/SelectMockup.vue`
+- `/Users/superball/Collective/getpack/Getpack-API/legacy/locopack-web/resources/js/components/Mockup/MockupSummaryDetail.vue`
+- `/Users/superball/Collective/getpack/Getpack-API/legacy/locopack-web/config/locopack.php`
+- `/Users/superball/Collective/getpack/Getpack-API/legacy/locopack-web/routes/web.php`
+- `/Users/superball/Collective/getpack/Getpack-API/legacy/locopack-web/app/Models/PouchCalculator.php`
+- `/Users/superball/Collective/getpack/Getpack-API/legacy/locopack-web/app/Models/FoldingCalculator.php`
+- `/Users/superball/Collective/getpack/Getpack-API/legacy/locopack-web/app/Models/CorrugateCalculator.php`
+- `/Users/superball/Collective/getpack/Getpack-API/legacy/locopack-web/app/Models/LabelCalculator.php`
+- `/Users/superball/Collective/getpack/Getpack-API/legacy/locopack-web/app/Models/TagAndSleeveCalculator.php`
+- `/Users/superball/Collective/getpack/Getpack-API/legacy/locopack-web/app/Http/Controllers/RigidController.php`
+- `/Users/superball/Collective/getpack/Getpack-API/legacy/locopack-web/.gitlab-ci.yml`
 
-Packio:
-- `/Users/superball/Collective/Packio/Packio-API/docs/decisions.md` (D-030, D-071, D-072, D-100 note line 131, D-174, D-181, D-192–D-197)
-- `/Users/superball/Collective/Packio/Packio-API/docs/legacy/00-domain-context.md` (lines 69, 71, 166, 170, 193, 264)
-- `/Users/superball/Collective/Packio/Packio-API/docs/legacy/03-legacy-schema.txt` (lines 75, 105, 111, 115, 175, 178, 182, 183, 186, 187)
-- `/Users/superball/Collective/Packio/Packio-API/docs/schema-design.md` (lines 378, 596, 678, 787, 1110, 1179-1181)
-- `/Users/superball/Collective/Packio/Packio-API/src/modules/artwork/mockups.service.ts`
-- `/Users/superball/Collective/Packio/Packio-API/src/modules/checkout/order-pricing.ts`
-- `/Users/superball/Collective/Packio/Packio-API/prisma/schema/pricing.prisma`
+getpack:
+- `/Users/superball/Collective/getpack/Getpack-API/docs/decisions.md` (D-030, D-071, D-072, D-100 note line 131, D-174, D-181, D-192–D-197)
+- `/Users/superball/Collective/getpack/Getpack-API/docs/legacy/00-domain-context.md` (lines 69, 71, 166, 170, 193, 264)
+- `/Users/superball/Collective/getpack/Getpack-API/docs/legacy/03-legacy-schema.txt` (lines 75, 105, 111, 115, 175, 178, 182, 183, 186, 187)
+- `/Users/superball/Collective/getpack/Getpack-API/docs/schema-design.md` (lines 378, 596, 678, 787, 1110, 1179-1181)
+- `/Users/superball/Collective/getpack/Getpack-API/src/modules/artwork/mockups.service.ts`
+- `/Users/superball/Collective/getpack/Getpack-API/src/modules/checkout/order-pricing.ts`
+- `/Users/superball/Collective/getpack/Getpack-API/prisma/schema/pricing.prisma`
 
-Cross-references to existing port maps for the in-calculator design fees: folding Q2, corrugate C14, tag T18, pouch P31 / P33, standard product S20 / S21 (`/Users/superball/Collective/Packio/Packio-API/docs/legacy/05-*-port-map.md`).
+Cross-references to existing port maps for the in-calculator design fees: folding Q2, corrugate C14, tag T18, pouch P31 / P33, standard product S20 / S21 (`/Users/superball/Collective/getpack/Getpack-API/docs/legacy/05-*-port-map.md`).
 
 ---
 
-## 9. Packio port (decisions, U-B6 service, 2026-10-01)
+## 9. getpack port (decisions, U-B6 service, 2026-10-01)
 
 Accepted under the user's standing instruction (2026-10-01); recorded in `docs/update-2026-09-29-gap.md` §U-B6 service.
 
@@ -742,10 +742,10 @@ Accepted under the user's standing instruction (2026-10-01); recorded in `docs/u
    cost per unit, lead time); with a line the quote engine prices it like any calculator (cost basis). No line = RFQ /
    CS. **No price lines are seeded** outside the dev fixture.
 4. **CS path** (D-194): `admin.csService.price` applies the same maths to the amount CS enters (cost or, for design,
-   the sell price) with Packio's margin and the dated VAT; nothing is trusted from the browser (V2, V3).
-5. **Margin**: Packio's `service` sell table on the quantity (legacy `service_locopack_margin` 6.5 % — a business
+   the sell price) with getpack's margin and the dated VAT; nothing is trusted from the browser (V2, V3).
+5. **Margin**: getpack's `service` sell table on the quantity (legacy `service_locopack_margin` 6.5 % — a business
    value entered in the table, not a constant; V5); VAT the dated `vat_standard` rate.
-6. **Quantity**: legacy always 1; Packio prices a quantity as quantity × the unit amounts.
+6. **Quantity**: legacy always 1; getpack prices a quantity as quantity × the unit amounts.
 7. **Shipping**: a service ships nothing — the quote carries no shipping line (legacy delivery service 901 is its own
    item priced by cost).
 8. **Not ported**: the fixed 500 THB in-order mockup and its card fee (V17, V19 — samples follow D-192–D-197), PH

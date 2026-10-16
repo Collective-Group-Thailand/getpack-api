@@ -31,7 +31,7 @@ import {
 /**
  * The corrugate calculator (U-B6): legacy `CorrugateCalculator::calculate_cs:310-1097` as a pure function over
  * options (factory × print type). Every part of a combination product (Tele body + lid, slide tray + sleeve)
- * is priced by its engine, the first layout kept (`:768`), Packio's sell side applied per part with the plates
+ * is priced by its engine, the first layout kept (`:768`), getpack's sell side applied per part with the plates
  * and die block added at the factory's price × VAT (`:835-837, :937`), the design fees once per quote (quirk
  * C14). An option is complete for a quantity only when every part is (C17). Pure: no database or clock.
  */

@@ -2,7 +2,7 @@ import { type PermissionKey } from '@modules/iam/permissions.catalog';
 import { applyDecorators, SetMetadata } from '@nestjs/common';
 import { ApiExtension } from '@nestjs/swagger';
 
-export const REQUIRED_PERMISSIONS = 'packio:required-permissions';
+export const REQUIRED_PERMISSIONS = 'getpack:required-permissions';
 
 /**
  * Requires every listed permission (`resource.action`, D-140). Checked by `PermissionGuard` after

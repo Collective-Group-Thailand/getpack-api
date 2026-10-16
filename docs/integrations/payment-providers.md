@@ -13,9 +13,9 @@ until Collective Group (Thailand) holds its own merchant account (D-005); each h
     (`[A-Z0-9]` ≤ 20; `ref3` = the Ref3 prefix of the merchant profile + value).
   - QR CS (`qrType: "CS"`): `merchantId`, `terminalId`, `invoice` (unique, `[A-Z0-9]`), `csExtExpiryTime` (minutes).
   - Response `qrRawData` (EMVCo string) and `qrImage` (base64).
-  - Packio sends the payment `reference_code` as `ref1` (QR 30) or `invoice` (QR CS).
+  - getpack sends the payment `reference_code` as `ref1` (QR 30) or `invoice` (QR CS).
 - **Payment confirmation callback:** SCB → the URL registered per Biller ID + Ref3 prefix (QR 30) or Merchant ID
-  (QR CS), only on success. Up to 3 retries 12 s apart. Packio answers
+  (QR CS), only on success. Up to 3 retries 12 s apart. getpack answers
   `{"resCode":"00","resDesc":"success","transactionId":"<echo>"}`.
   - **The callback carries no signature.** The adapter therefore **confirms every callback by inquiry**
     (`GET /v1/payment/billpayment/inquiry?eventCode=00300100&transactionDate=…&billerId=…&reference1=…`, or
@@ -32,7 +32,7 @@ until Collective Group (Thailand) holds its own merchant account (D-005); each h
 - **Signing:** JWT **HS256** with the merchant secret key for payment token, inquiry and backend notification. Bodies
   are `{"payload":"<JWT>"}` in both directions, and every response JWT is verified.
 - **Payment token:** `POST https://{sandbox-}pgw.2c2p.com/payment/4.5/paymentToken` with `merchantID`, `invoiceNo`
-  (Packio `reference_code`), `description`, `amount` (number), `currencyCode: "THB"`, `paymentChannel` (`["CC"]` card,
+  (getpack `reference_code`), `description`, `amount` (number), `currencyCode: "THB"`, `paymentChannel` (`["CC"]` card,
   `["IMBANK"]`-style channels for online banking — **to confirm per contract**), `idempotencyID`, `paymentExpiry`,
   `frontendReturnUrl`, `backendReturnUrl` → `webPaymentUrl`, `paymentToken` (30 min), `respCode "0000"`.
 - **Backend notification:** `{"payload":"<JWT>"}` to `/webhooks/2c2p/payment`. The JWT signature is the
@@ -49,7 +49,7 @@ until Collective Group (Thailand) holds its own merchant account (D-005); each h
 - **Verify:** `POST {apiUrl}/api/verify-slip/qr-image/info` (multipart `file` + `payload` JSON) or
   `/api/verify-slip/qr-code/info` (`{payload:{qrCode, checkCondition}}`), with
   `checkCondition = {checkDuplicate: true, checkReceiver: [{accountType, accountNumber}], checkAmount: {type:"eq",
-  amount}, checkDate: {type:"gte", date}}`. The receiver accounts are Packio's collection accounts (settings).
+  amount}, checkDate: {type:"gte", date}}`. The receiver accounts are getpack's collection accounts (settings).
 - **Result codes:**
   - `200200` valid → payment accepted automatically.
   - `200401` receiver, `200402` amount or `200403` date mismatch → Finance queue.

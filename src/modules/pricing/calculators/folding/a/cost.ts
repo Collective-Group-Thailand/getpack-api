@@ -29,7 +29,7 @@ import { type WasteResult } from './waste';
  * Cost of engine A offset (legacy `app/Libraries/Folding/A/CalculateCost.php`). For every layout that
  * survived the waste step: the cheapest print plate, then the cheapest die block, finishing, assembly,
  * and the factory margin; layouts are then ordered like legacy (`calculate:298-336`). A price row the
- * factory lacks makes legacy price that process at 0; Packio refuses instead (quirk Q16).
+ * factory lacks makes legacy price that process at 0; getpack refuses instead (quirk Q16).
  */
 
 export interface PrintCost {
@@ -201,7 +201,7 @@ interface PrintChoice {
 
 /**
  * The cheapest plate that fits the sheet (`:374-676`). Legacy prices a missing colour row at 0, which
- * made that plate look cheapest; Packio skips an incomplete plate and refuses when none is complete.
+ * made that plate look cheapest; getpack skips an incomplete plate and refuses when none is complete.
  */
 function choosePrint(
   request: PartRequest,

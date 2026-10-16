@@ -10,19 +10,19 @@ import { type ErrorCode } from '../errors/error-codes';
 import { type HeaderName, type ParameterName } from './components';
 
 /**
- * Documentation decorators every module uses (contract §5). They record intent in `x-packio-*`
+ * Documentation decorators every module uses (contract §5). They record intent in `x-getpack-*`
  * extensions; `enrichDocument()` (openapi.document.ts) turns those into responses, headers and
  * parameters that reference the shared components, merging what several decorators contribute
  * (e.g. 422 from validation and from idempotency) instead of overwriting it.
  */
 export const EXT = {
-  errors: 'x-packio-errors',
-  parameters: 'x-packio-parameters',
-  successHeaders: 'x-packio-success-headers',
-  public: 'x-packio-public',
-  optionalAuth: 'x-packio-optional-auth',
-  unthrottled: 'x-packio-unthrottled',
-  async: 'x-packio-async',
+  errors: 'x-getpack-errors',
+  parameters: 'x-getpack-parameters',
+  successHeaders: 'x-getpack-success-headers',
+  public: 'x-getpack-public',
+  optionalAuth: 'x-getpack-optional-auth',
+  unthrottled: 'x-getpack-unthrottled',
+  async: 'x-getpack-async',
 } as const;
 
 /** Each contributing decorator writes its own extension key, so contributions never overwrite each other. */

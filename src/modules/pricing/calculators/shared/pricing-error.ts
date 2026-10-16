@@ -1,6 +1,6 @@
 /**
  * Why a factory option cannot price a configuration (B2.3). Legacy computes with 0 or drops the
- * factory silently (folding quirks Q14, Q16; corrugate port map §5); Packio refuses the option and
+ * factory silently (folding quirks Q14, Q16; corrugate port map §5); getpack refuses the option and
  * reports the code in the staff view, never pricing on silently wrong data.
  */
 export class PricingError extends Error {

@@ -84,7 +84,7 @@ import { WorkerLifecycle } from './worker.lifecycle';
     RedisModule,
     BullModule.forRootAsync({
       inject: [BULLMQ_REDIS],
-      useFactory: (connection: Redis) => ({ prefix: 'packio', connection }),
+      useFactory: (connection: Redis) => ({ prefix: 'getpack', connection }),
     }),
     DatabaseModule,
     IntegrationsModule,

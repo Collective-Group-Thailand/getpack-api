@@ -84,13 +84,13 @@ export const API_TAGS: Record<string, string> = {
     'Call-off requests for my factory (D-290, D-044): accept to hold my buy price for the committed quantity, or decline with a reason.',
   'admin.callOffs': 'Call-off agreements of every customer (D-290): status, releases, what lapsed.',
   'store.reorderSuggestions':
-    'When to reorder what (D-288): per SKU (specification × approved artwork), from my order history — the date and quantity Packio suggests, reordered from the last order.',
+    'When to reorder what (D-288): per SKU (specification × approved artwork), from my order history — the date and quantity getpack suggests, reordered from the last order.',
   'admin.reorderSuggestions':
     'The reorder suggestion queue for CS (D-288): due suggestions per customer or company, marked contacted or dismissed.',
   'admin.tooling':
-    'The tooling register (D-205, D-289): plates and die blocks kept at the factory that made them, their last use, reuse window and the remakes Packio absorbed.',
+    'The tooling register (D-205, D-289): plates and die blocks kept at the factory that made them, their last use, reuse window and the remakes getpack absorbed.',
   'partner.tooling':
-    'My factory’s tooling register (D-205, D-289, D-044): the plates and die blocks Packio’s reorders reuse at no new charge.',
+    'My factory’s tooling register (D-205, D-289, D-044): the plates and die blocks getpack’s reorders reuse at no new charge.',
   'admin.processTypes': 'The manufacturing process taxonomy (D-244).',
   'partner.processTypes': 'The manufacturing process taxonomy (D-244).',
   'partner.styleIntakes':
@@ -109,25 +109,25 @@ export const API_TAGS: Record<string, string> = {
   'admin.boardStrengthSheets':
     'Partners’ signed board data sheets (ECT, caliper, grammage) per factory × corrugated board — the only board strength the advisor reads (D-188, D-236).',
   'partner.boardStrengthSheets':
-    'The signed board data sheets Packio keeps for the factory’s boards (D-236, D-044).',
+    'The signed board data sheets getpack keeps for the factory’s boards (D-236, D-044).',
   'store.publicReviews':
-    'Verified customer reviews (D-202, D-265): published reviews with the product type and Packio’s reply, and the rating summary — never fabricated.',
+    'Verified customer reviews (D-202, D-265): published reviews with the product type and getpack’s reply, and the rating summary — never fabricated.',
   'admin.styleIntakes':
     'Dielines offered by factories under the intake terms (D-272): match with a deviation report, approve as a recipe or a fixed template, or reject.',
   'admin.structuralRequests':
     'Structural design requests of customers (D-273): assign, quote through a service RFQ, deliver, approve, link to the published style, decline.',
   'admin.studioTemplates':
-    'Packio’s own studio templates: drafts, submission, Marketing approval (never the author), retirement (D-216, D-282).',
+    'getpack’s own studio templates: drafts, submission, Marketing approval (never the author), retirement (D-216, D-282).',
   'admin.studioElements':
-    'Packio’s own studio shapes, icons and packaging marks; marks with legal meaning need a declared right (D-282).',
+    'getpack’s own studio shapes, icons and packaging marks; marks with legal meaning need a declared right (D-282).',
   'admin.dielines':
     'Dieline downloads of any style variant with an approved recipe, for staff (D-271, D-270).',
   'admin.stylePriceRules':
     'Option price rules of styles (D-266, D-268): which option values a calculator prices and how; a variant prices instantly only when all its options are covered.',
   'store.network':
-    'Packio’s partner network in numbers (D-201, D-264): audit criteria, coverage by product type, and the partner count and rates above the published minimums — aggregates only.',
+    'getpack’s partner network in numbers (D-201, D-264): audit criteria, coverage by product type, and the partner count and rates above the published minimums — aggregates only.',
   'store.guarantee':
-    'Packio’s published guarantee (D-198, D-199, D-260): remedies per claim type and severity, response and decision times, the claim window — the version the claim engine applies.',
+    'getpack’s published guarantee (D-198, D-199, D-260): remedies per claim type and severity, response and decision times, the claim window — the version the claim engine applies.',
   'admin.guaranteePolicies':
     'Guarantee policy versions (D-260): the CS Lead proposes SLAs and the remedy matrix, C-Level approves (D-200).',
   'store.samples':
@@ -144,13 +144,13 @@ export const API_TAGS: Record<string, string> = {
     'Instant price calculation per quantity (D-043, D-100); save it as a quotation with `store.savedQuotes` (D-051).',
   'store.savedQuotes':
     'Saved quotations: 15-day price lock, share links, PDF in the name of the issuing entity, re-pricing after expiry (D-051).',
-  'store.rfqs': 'Requests for quote: submit, talk to Packio, accept or decline a quotation (D-100, D-043).',
+  'store.rfqs': 'Requests for quote: submit, talk to getpack, accept or decline a quotation (D-100, D-043).',
   'admin.rfqs': 'Work requests for quote: assign, ask, consult factories, quote, decline (D-100, D-102).',
   'partner.rfqConsultations': 'Requests for the factory’s buy price on an RFQ; never the sell price (D-044).',
   'admin.quotes': 'Saved quotations with the staff view; CS saves, shares and exports them (D-051, D-141).',
   'admin.csFolding':
     'The CS folding calculator: catalogue choices and pricing with the staff view (D-100, D-141).',
-  'admin.sellMarginTables': "Packio's sell margins, fix costs and design fees, effective-dated (D-063).",
+  'admin.sellMarginTables': "getpack's sell margins, fix costs and design fees, effective-dated (D-063).",
   'partner.pricingFolding': 'A factory prices a folding configuration on its own price list (D-044).',
   'admin.csCorrugate':
     'The CS corrugate calculator: catalogue choices and pricing with the staff view (D-100, D-141).',
@@ -171,7 +171,7 @@ export const API_TAGS: Record<string, string> = {
   'partner.pricingService': 'A factory prices a service item on its own price list (D-044).',
   'partner.pricingTagSleeve': 'A factory prices a tag & sleeve configuration on its own price list (D-044).',
   'ops.health': 'Liveness and readiness of the API and its dependencies (database, Redis, object storage).',
-  'auth.staff': 'Sign-in for Packio staff (e-mail + password). ADR-0004.',
+  'auth.staff': 'Sign-in for getpack staff (e-mail + password). ADR-0004.',
   'auth.partner': 'Sign-in for partner-factory users (password or device PIN). ADR-0004.',
   'auth.customer':
     'Customer sign-in: phone OTP, Google/Apple (Firebase) and LINE with account linking. ADR-0004.',
@@ -204,80 +204,80 @@ export const API_TAGS: Record<string, string> = {
   'admin.milestoneRoutes': 'Milestone routes per product type and variant, versioned (D-075).',
   'partner.factoryUsers': 'The users of my factory and their factory roles (factory owner, D-140).',
   'partner.erpSettings':
-    'Packio Factory ERP: modules, document prefixes and stock rules of my factory (D-318, D-322, D-323). Factory-private (D-317).',
-  'partner.erpPartners': 'Packio Factory ERP: my factory’s own suppliers and customers (D-317, D-319).',
-  'partner.erpWarehouses': 'Packio Factory ERP: my factory’s warehouses (D-320).',
+    'getpack Factory ERP: modules, document prefixes and stock rules of my factory (D-318, D-322, D-323). Factory-private (D-317).',
+  'partner.erpPartners': 'getpack Factory ERP: my factory’s own suppliers and customers (D-317, D-319).',
+  'partner.erpWarehouses': 'getpack Factory ERP: my factory’s warehouses (D-320).',
   'partner.erpItems':
-    'Packio Factory ERP: my factory’s item master — materials, consumables, spare parts, goods (D-320).',
+    'getpack Factory ERP: my factory’s item master — materials, consumables, spare parts, goods (D-320).',
   'partner.erpStock':
-    'Packio Factory ERP: stock balances, the append-only stock ledger, adjustments, counts, issues, transfers and the reorder list (D-321 – D-327).',
+    'getpack Factory ERP: stock balances, the append-only stock ledger, adjustments, counts, issues, transfers and the reorder list (D-321 – D-327).',
   'partner.erpPurchaseOrders':
-    'Packio Factory ERP: my factory’s purchase orders — draft, issue, receive, close, cancel (D-325, D-326).',
+    'getpack Factory ERP: my factory’s purchase orders — draft, issue, receive, close, cancel (D-325, D-326).',
   'partner.erpGoodsReceipts':
-    'Packio Factory ERP: goods received from my suppliers into stock at cost (D-321, D-325).',
+    'getpack Factory ERP: goods received from my suppliers into stock at cost (D-321, D-325).',
   'partner.erpItemSuppliers':
-    'Packio Factory ERP: who sells each item at what price — supplier links, latest prices and price history (D-333 – D-335).',
+    'getpack Factory ERP: who sells each item at what price — supplier links, latest prices and price history (D-333 – D-335).',
   'partner.erpPurchaseRequests':
-    'Packio Factory ERP: purchase requests, approval and conversion to purchase orders (D-336).',
+    'getpack Factory ERP: purchase requests, approval and conversion to purchase orders (D-336).',
   'partner.erpSupplierInvoices':
-    'Packio Factory ERP: supplier invoices matched 3-way, withholding tax and aging (D-337).',
+    'getpack Factory ERP: supplier invoices matched 3-way, withholding tax and aging (D-337).',
   'partner.erpSupplierPayments':
-    'Packio Factory ERP: payments to suppliers allocated to invoices; reversals (D-338).',
+    'getpack Factory ERP: payments to suppliers allocated to invoices; reversals (D-338).',
   'partner.erpRecipes':
-    'Packio Factory ERP: how each product is made — materials per batch and operations (D-339).',
+    'getpack Factory ERP: how each product is made — materials per batch and operations (D-339).',
   'partner.erpProductionOrders':
-    'Packio Factory ERP: production orders from Packio jobs or the factory’s own — reservations, issues, floor operations, completion (D-340, D-341).',
+    'getpack Factory ERP: production orders from getpack jobs or the factory’s own — reservations, issues, floor operations, completion (D-340, D-341).',
   'partner.erpPlanning':
-    'Packio Factory ERP: the planning board, machine load, the floor queue and MRP (D-342).',
+    'getpack Factory ERP: the planning board, machine load, the floor queue and MRP (D-342).',
   'partner.erpAlerts':
-    'Packio Factory ERP: alerts — price rises, quotations and reviews ending, maintenance due, breakdowns, documents expiring (D-347, D-358).',
+    'getpack Factory ERP: alerts — price rises, quotations and reviews ending, maintenance due, breakdowns, documents expiring (D-347, D-358).',
   'partner.erpRfqs':
-    'Packio Factory ERP: requests for quotation to several suppliers, the comparison and the award (D-348).',
+    'getpack Factory ERP: requests for quotation to several suppliers, the comparison and the award (D-348).',
   'partner.erpMachines':
-    'Packio Factory ERP: my factory’s machines, their state and the kiosk’s dispatch list (D-352, D-353, D-355).',
+    'getpack Factory ERP: my factory’s machines, their state and the kiosk’s dispatch list (D-352, D-353, D-355).',
   'partner.erpSchedule':
-    'Packio Factory ERP: the machine schedule — auto-plan, move and lock — and pausing / resuming on the floor (D-352, D-353).',
+    'getpack Factory ERP: the machine schedule — auto-plan, move and lock — and pausing / resuming on the floor (D-352, D-353).',
   'partner.erpMaintenance':
-    'Packio Factory ERP: breakdowns, preventive plans, maintenance windows and spare parts (D-355).',
+    'getpack Factory ERP: breakdowns, preventive plans, maintenance windows and spare parts (D-355).',
   'partner.erpDocuments':
-    'Packio Factory ERP: folders and versioned documents linked to ERP records, with expiry reminders (D-356).',
+    'getpack Factory ERP: folders and versioned documents linked to ERP records, with expiry reminders (D-356).',
   'partner.erpCrm':
-    'Packio Factory ERP: leads, opportunities, the sales pipeline and follow-up activities (D-359).',
+    'getpack Factory ERP: leads, opportunities, the sales pipeline and follow-up activities (D-359).',
   'partner.erpQuotations':
-    'Packio Factory ERP: quotations to the factory’s own customers — revisions, the online acceptance link, PDF (D-360).',
+    'getpack Factory ERP: quotations to the factory’s own customers — revisions, the online acceptance link, PDF (D-360).',
   'partner.erpSalesOrders':
-    'Packio Factory ERP: sales orders with the credit check, stock reservation and production orders (D-361).',
+    'getpack Factory ERP: sales orders with the credit check, stock reservation and production orders (D-361).',
   'partner.erpDeliveryNotes':
-    'Packio Factory ERP: delivery notes that issue stock to customers, with proof of delivery (D-362).',
+    'getpack Factory ERP: delivery notes that issue stock to customers, with proof of delivery (D-362).',
   'partner.erpSalesInvoices':
-    'Packio Factory ERP: invoices and tax invoices in the factory’s name, credit and debit notes (D-363, D-364).',
+    'getpack Factory ERP: invoices and tax invoices in the factory’s name, credit and debit notes (D-363, D-364).',
   'partner.erpReceivables':
-    'Packio Factory ERP: receipts and refunds, billing notes and the customers’ aging (D-365).',
+    'getpack Factory ERP: receipts and refunds, billing notes and the customers’ aging (D-365).',
   'partner.erpTax':
-    'Packio Factory ERP: 50 ทวิ certificates, VAT and withholding reports, exports, sales targets and the sales report (D-366, D-367, D-370).',
+    'getpack Factory ERP: 50 ทวิ certificates, VAT and withholding reports, exports, sales targets and the sales report (D-366, D-367, D-370).',
   'partner.erpQuality':
-    'Packio Factory ERP: inspection templates, quality checks, NCRs and certificates of analysis (D-372 – D-375).',
+    'getpack Factory ERP: inspection templates, quality checks, NCRs and certificates of analysis (D-372 – D-375).',
   'partner.erpInsight':
-    'Packio Factory ERP: the owner’s dashboard, machine rates, job costs, profitability and OEE (D-376 – D-378).',
+    'getpack Factory ERP: the owner’s dashboard, machine rates, job costs, profitability and OEE (D-376 – D-378).',
   'partner.erpPeople':
-    'Packio Factory ERP: shifts, operator skills, the work log and Packio support access (D-380, D-381).',
+    'getpack Factory ERP: shifts, operator skills, the work log and getpack support access (D-380, D-381).',
   'partner.erpLedger':
-    'Packio Factory ERP: the factory’s general ledger — settings, chart of accounts, posting rules, periods and the close, tax returns (D-385 – D-392).',
+    'getpack Factory ERP: the factory’s general ledger — settings, chart of accounts, posting rules, periods and the close, tax returns (D-385 – D-392).',
   'partner.erpJournals':
-    'Packio Factory ERP: journal entries, manual journals under maker-checker, reversals, recurring journals and the CSV export (D-389, D-396).',
+    'getpack Factory ERP: journal entries, manual journals under maker-checker, reversals, recurring journals and the CSV export (D-389, D-396).',
   'partner.erpLedgerReports':
-    'Packio Factory ERP: trial balance, general ledger, profit and loss, balance sheet, cash flow and stock valuation (D-391).',
+    'getpack Factory ERP: trial balance, general ledger, profit and loss, balance sheet, cash flow and stock valuation (D-391).',
   'partner.erpFixedAssets':
-    'Packio Factory ERP: asset categories, the fixed-asset register, monthly depreciation and disposals (D-393).',
+    'getpack Factory ERP: asset categories, the fixed-asset register, monthly depreciation and disposals (D-393).',
   'partner.erpBank':
-    'Packio Factory ERP: bank accounts, statement import, reconciliation and the cash position (D-394).',
+    'getpack Factory ERP: bank accounts, statement import, reconciliation and the cash position (D-394).',
   'admin.erpSupport':
-    'Packio support’s read of a factory’s ERP dashboard and settings under the owner’s time-boxed grant (D-381).',
+    'getpack support’s read of a factory’s ERP dashboard and settings under the owner’s time-boxed grant (D-381).',
   'partner.changeRequests':
     'Requests to the Partner team for changes only staff make, or a site visit; with the team’s answer (U-B0.3).',
   'admin.factoryChangeRequests':
     'The Partner team’s queue of factory change requests and their answers (U-B0.3).',
-  'admin.inspections': 'Packio risk-based inspections (D-076, ISO 2859-1) and factory scorecards (D-155).',
+  'admin.inspections': 'getpack risk-based inspections (D-076, ISO 2859-1) and factory scorecards (D-155).',
   'partner.logistics':
     'My factory’s shipments: create from completed jobs, labels and packing lists, dispatch behind the shipping gate, delivery steps and proof of delivery (D-013, D-142).',
   'admin.logistics':
@@ -289,8 +289,8 @@ export const API_TAGS: Record<string, string> = {
   'partner.claims': 'Claims about my factory’s jobs: accept or dispute (D-083).',
   'admin.claims':
     'Claims: review, information requests, factory review, liability rules and overrides (D-083), decisions and resolutions through existing mechanisms.',
-  'store.conversations': 'My chat with Packio CS from the web or LINE LIFF (D-151).',
-  'store.support': 'How to reach Packio CS: support channels and the contact form (D-221, D-005).',
+  'store.conversations': 'My chat with getpack CS from the web or LINE LIFF (D-151).',
+  'store.support': 'How to reach getpack CS: support channels and the contact form (D-221, D-005).',
   'admin.conversations':
     'The CS inbox: LINE and web conversations, replies pushed to LINE, assignment (D-151, D-143).',
   'admin.line': 'The LINE official account: rich menus for guests and members (D-151).',
@@ -334,11 +334,12 @@ export const API_TAGS: Record<string, string> = {
   'admin.shippingZoneSchemes': 'Zone schemes: customer zones and one per carrier (D-013, D-114).',
   'admin.shippingZones': 'Zones and their postcodes (D-013, D-114).',
   'admin.factoryShippingRates':
-    'Factory shipping payout cards: Packio drafts, the factory accepts per line; buy prices (D-013, D-042, D-141).',
+    'Factory shipping payout cards: getpack drafts, the factory accepts per line; buy prices (D-013, D-042, D-141).',
   'partner.shippingRates': 'The own shipping payout card: read and accept or counter (D-013, D-042).',
   'admin.documentSeries':
     'Document numbering series per entity and document type (accounting-design §4, D-169).',
-  'admin.carriers': 'Delivery methods: the factory fleet and Packio-booked fallback carriers (D-013, D-114).',
+  'admin.carriers':
+    'Delivery methods: the factory fleet and getpack-booked fallback carriers (D-013, D-114).',
   'webhooks.carriers': 'Carrier status callbacks, signature-verified and stored once (D-114).',
   'admin.customerShippingRates':
     'The customer shipping rate card: effective-dated versions approved by C-Level (D-013).',
@@ -354,7 +355,7 @@ export const API_TAGS: Record<string, string> = {
   'partner.priceLists':
     'My price lists: versions, lines and sign-off of assisted entry (own factory only, D-044).',
   'partner.priceProposals':
-    'My price proposals (factory price-list mode) and Packio rate cards to accept or negotiate (D-042).',
+    'My price proposals (factory price-list mode) and getpack rate cards to accept or negotiate (D-042).',
   'admin.vendorBankAccounts':
     'Verification calls of vendor bank-account changes (accounting-design.md §8, D-169).',
 
@@ -382,7 +383,7 @@ export const API_TAGS: Record<string, string> = {
     'Subdistricts with postcodes — admin-maintained reference data (D-161, D-170).',
   'admin.catalogImports':
     'Excel import (preview → confirm) and export of the large catalogue tables and geography (D-005, D-170).',
-  'admin.catalogProductCategories': 'Packio reporting product categories (replace legacy PH1–PH6, D-030).',
+  'admin.catalogProductCategories': 'getpack reporting product categories (replace legacy PH1–PH6, D-030).',
   'admin.catalogProductTypes':
     'Product types: the 7 instant types and the RFQ categories, quote mode per type (D-100, D-043).',
   'admin.catalogPrintTypes': 'Print types per product type (platform definitions, D-100).',
@@ -431,7 +432,7 @@ export const API_TAGS: Record<string, string> = {
     'VAT and withholding rates with dated versions (accounting-design §2 ⚖, D-174); changes approved (`tax_setting_change`).',
   // --- B5.2 receivables
   'admin.customerDocuments':
-    'Tax invoices, invoices, receipts, credit and debit notes issued by the entity under the Packio brand (D-010, D-092): PDFs, voids, credit notes under maker-checker (D-169).',
+    'Tax invoices, invoices, receipts, credit and debit notes issued by the entity under the getpack brand (D-010, D-092): PDFs, voids, credit notes under maker-checker (D-169).',
   'admin.receivables':
     'Customer AR: open items, aging, write-offs (maker-checker), allowance for doubtful accounts, 50 ทวิ collection, credit balances, company statements (D-121, D-125).',
   'store.documents':

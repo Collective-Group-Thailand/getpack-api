@@ -30,7 +30,7 @@ const THUMB_MAX_BYTES = 512 * 1024;
 
 /**
  * D-287 the packaging spec sheet of an order: generated from the order's frozen data (quotation input and spec lines,
- * the approved proof, its shipments' cartons, the Packio packing settings) once the artwork is approved — or the
+ * the approved proof, its shipments' cartons, the getpack packing settings) once the artwork is approved — or the
  * sample approved — rendered by the PDF pipeline, kept per language and content hash, read by the customer, staff and
  * the factory that makes it.
  */
@@ -203,7 +203,7 @@ export class SpecSheetService {
     const packingNote = cartons.length > 0 ? null : await this.packingNote(lang);
     const proof = order.proofs[0];
     const approved = proof?.approvedFile ?? null;
-    const web = (this.config.get('STOREFRONT_BASE_URL') ?? 'https://www.packio.invalid').replace(/\/$/, '');
+    const web = (this.config.get('STOREFRONT_BASE_URL') ?? 'https://www.getpack.invalid').replace(/\/$/, '');
     const qrUrl = `${web}/account/orders/${order.publicId}`;
     return {
       lang,
@@ -247,7 +247,7 @@ export class SpecSheetService {
     };
   }
 
-  /** The Packio carton / pallet settings when no carton was recorded; nothing when they are not set. */
+  /** The getpack carton / pallet settings when no carton was recorded; nothing when they are not set. */
   private async packingNote(lang: Lang): Promise<string | null> {
     try {
       const carton = (await this.settings.at('shipping.carton_spec')).value as {
@@ -255,8 +255,8 @@ export class SpecSheetService {
         maxWeightKg?: number;
       };
       return lang === 'th'
-        ? `บรรจุตามมาตรฐานกล่องของ Packio (น้ำหนักต่อกล่องไม่เกิน ${carton.maxWeightKg ?? '—'} กก., ซ้อนสูงไม่เกิน ${carton.maxStackHeightCm ?? '—'} ซม.)`
-        : `Packed to the Packio carton standard (≤ ${carton.maxWeightKg ?? '—'} kg a carton, stacked ≤ ${carton.maxStackHeightCm ?? '—'} cm)`;
+        ? `บรรจุตามมาตรฐานกล่องของ getpack (น้ำหนักต่อกล่องไม่เกิน ${carton.maxWeightKg ?? '—'} กก., ซ้อนสูงไม่เกิน ${carton.maxStackHeightCm ?? '—'} ซม.)`
+        : `Packed to the getpack carton standard (≤ ${carton.maxWeightKg ?? '—'} kg a carton, stacked ≤ ${carton.maxStackHeightCm ?? '—'} cm)`;
     } catch (error) {
       if (error instanceof SettingNotFoundError) return null;
       throw error;

@@ -1,6 +1,6 @@
 /**
  * D-260 guarantee policy version 1 — the remedy matrix of D-198 and the SLAs of D-199 (accepted 2026-09-30).
- * Claim type × severity → remedies allowed for a claim whose liability is on Packio's side (factory, carrier, Packio);
+ * Claim type × severity → remedies allowed for a claim whose liability is on getpack's side (factory, carrier, getpack);
  * a customer-liable claim gets none (D-083). Late delivery has no guarantee at launch (D-199); `other` claims only
  * goodwill through a discount memo (D-262).
  */

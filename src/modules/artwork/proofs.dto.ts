@@ -186,7 +186,7 @@ export class AnnotationAuthorDto {
 
   @ApiProperty({
     example: 'ลูกค้า ทดสอบ',
-    description: 'Customer name, or "Packio" on the store surface for staff',
+    description: 'Customer name, or "getpack" on the store surface for staff',
   })
   displayName!: string;
 }
@@ -317,7 +317,7 @@ export class ProofDto {
     type: String,
     nullable: true,
     example: null,
-    description: 'Who decided: the customer’s name, or “Packio” for a staff decision on their behalf',
+    description: 'Who decided: the customer’s name, or “getpack” for a staff decision on their behalf',
   })
   decidedByName!: string | null;
 

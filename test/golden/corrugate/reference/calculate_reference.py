@@ -10,11 +10,11 @@
 #     (plates and die block as 2-decimal strings);
 #   app/Models/Calculator.php  SaleMargin:223-449 (no delivery: shipping is its own quote line, D-013);
 #   app/Helpers/helpers.php  convertTo2Decimal:1692, getCustomLeadTime:1981.
-# Packio deviations applied (port map §5): an option is priced only when every part is (C17); design fees once
+# getpack deviations applied (port map §5): an option is priced only when every part is (C17); design fees once
 # (C14) from the sell snapshot; coating on flexo refused (C5); the automatic packing assembly added to every part
 # (C8); factory branches as terms (C6: factory-9 lead time → bulk lead time, factory-4/9 packing); missing rows
 # refuse (C3); NULL tier bounds open (C19); the corrugate tier's price bound inclusive (`max_price >= price`);
-# digital keeps the cheapest sheet (C2). Packio additions (D-042): the step buy price includes plates and die
+# digital keeps the cheapest sheet (C2). getpack additions (D-042): the step buy price includes plates and die
 # block, the step VAT includes the VAT inside the plates and die block charged.
 import math
 from phpnum import php_round, number_format_plain
@@ -22,7 +22,7 @@ import geometry_reference as geo
 import flexo_reference as flexo
 import digital_reference as digital
 
-# Packio formula → legacy pattern id and sub id (port map §6.1).
+# getpack formula → legacy pattern id and sub id (port map §6.1).
 LEGACY = {
     'rsc': (19, None), 'single_tuck': (20, None), 'double_tuck': (21, None), 'double_tuck_top_wall': (22, None),
     'double_tuck_side_wall': (23, None), 'flat_sheet': (24, None), 'seafood': (25, None), 'open_top': (26, None),

@@ -2,7 +2,7 @@ import { REDIS } from '@database/redis.module';
 import { Inject, Injectable } from '@nestjs/common';
 import { type Redis } from 'ioredis';
 
-export const REALTIME_CHANNEL_PREFIX = 'packio:rt:';
+export const REALTIME_CHANNEL_PREFIX = 'getpack:rt:';
 
 /** Realtime signal (contract §6): ids and type only — clients refetch through the API. */
 export interface RealtimeSignal {

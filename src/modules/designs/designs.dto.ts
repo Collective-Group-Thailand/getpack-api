@@ -101,7 +101,7 @@ export const DESIGN_IDS = {
   order: '0192f3a0-7c1e-7d2a-9b1f-0000000e5009',
 };
 const DOCUMENT_EXAMPLE = {
-  pages: [{ side: 'front', objects: [{ type: 'text', text: 'Packio', x: 10, y: 20 }] }],
+  pages: [{ side: 'front', objects: [{ type: 'text', text: 'getpack', x: 10, y: 20 }] }],
 };
 
 function Dimension(description: string, optional = false) {

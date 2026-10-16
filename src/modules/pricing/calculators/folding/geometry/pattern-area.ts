@@ -52,7 +52,7 @@ export function patternArea(input: GeometryInput, snapshot: GeometrySnapshot): P
 /**
  * `swipePaperSheetSize` (legacy `helpers.php:1140-1172`): each sheet plus its rotated copy, marked as
  * against the grain. Legacy casts Eloquent models with `(array)` here, which loses every attribute,
- * so flip-paper factories never got a layout; Packio implements the intended rotation (quirk Q13).
+ * so flip-paper factories never got a layout; getpack implements the intended rotation (quirk Q13).
  */
 export function withFlippedSheets(sheets: readonly PaperSheet[]): PaperSheet[] {
   return sheets.flatMap((sheet) => [

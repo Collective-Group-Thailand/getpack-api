@@ -82,7 +82,7 @@ export class ToolingItemDto {
   })
   artworkSha256!: string | null;
 
-  @ApiProperty({ type: [ToolingRemakeDto], description: 'Remakes Packio absorbed (D-205), newest first' })
+  @ApiProperty({ type: [ToolingRemakeDto], description: 'Remakes getpack absorbed (D-205), newest first' })
   remakes!: ToolingRemakeDto[];
 
   @ApiProperty({ format: 'date-time', example: '2026-10-01T15:00:00+07:00' })

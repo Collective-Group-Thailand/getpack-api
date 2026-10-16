@@ -2,9 +2,9 @@ import { IntegrationsMode, NodeEnv } from './env.schema';
 import { InvalidEnvironmentError, validateEnv } from './validate-env';
 
 const valid = {
-  DATABASE_URL: 'postgresql://packio:packio@localhost:5432/packio',
+  DATABASE_URL: 'postgresql://getpack:getpack@localhost:5432/getpack',
   REDIS_URL: 'redis://localhost:6379',
-  S3_BUCKET: 'packio-dev',
+  S3_BUCKET: 'getpack-dev',
 };
 
 describe('validateEnv', () => {
@@ -106,7 +106,7 @@ const productionSecrets = {
   JWT_SIGNING_KEYS: '[]',
   OTP_HMAC_SECRET: 'x'.repeat(32),
   FIELD_ENCRYPTION_KEY: Buffer.alloc(32, 7).toString('base64'),
-  PUBLIC_API_BASE_URL: 'https://api.packio.example',
-  MERCHANT_FEED_LINK_TEMPLATE: 'https://www.packio.example/th/products/{sku}',
+  PUBLIC_API_BASE_URL: 'https://api.getpack.example',
+  MERCHANT_FEED_LINK_TEMPLATE: 'https://www.getpack.example/th/products/{sku}',
   LOOKUP_HMAC_SECRET: 'l'.repeat(32),
 };

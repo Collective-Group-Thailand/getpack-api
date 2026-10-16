@@ -163,7 +163,7 @@ export interface OffsetTables {
   diecutBlocks: readonly DiecutBlockRow[];
   assemblyPrices: readonly AssemblyPriceRow[];
   assemblySheets: readonly AssemblySheetRow[];
-  /** Legacy `pattern.pattern_type` (Packio `patterns.pattern_kind`); 1 prices assemblies by width. */
+  /** Legacy `pattern.pattern_type` (getpack `patterns.pattern_kind`); 1 prices assemblies by width. */
   patternKind: number | null;
 }
 

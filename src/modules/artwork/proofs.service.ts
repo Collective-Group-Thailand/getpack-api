@@ -497,7 +497,7 @@ export class ProofsService {
   }
 }
 
-/** Store and admin projection; `forCustomer` hides staff identities (names are "Packio"). */
+/** Store and admin projection; `forCustomer` hides staff identities (names are "getpack"). */
 export function proofDto(row: ProofRow, forCustomer: boolean): ProofDto {
   const annotation = (a: ProofRow['annotations'][number]): AnnotationDto => ({
     id: a.publicId,
@@ -508,13 +508,13 @@ export function proofDto(row: ProofRow, forCustomer: boolean): ProofDto {
     comment: a.comment,
     author: {
       kind: a.author.kind === 'customer' ? 'customer' : 'staff',
-      displayName: a.author.kind !== 'customer' && forCustomer ? 'Packio' : a.author.displayName,
+      displayName: a.author.kind !== 'customer' && forCustomer ? 'getpack' : a.author.displayName,
     },
     resolvedAt: a.resolvedAt ? toBangkokIso(a.resolvedAt) : null,
     resolvedBy: a.resolvedBy
       ? {
           kind: a.resolvedBy.kind === 'customer' ? 'customer' : 'staff',
-          displayName: a.resolvedBy.kind !== 'customer' && forCustomer ? 'Packio' : a.resolvedBy.displayName,
+          displayName: a.resolvedBy.kind !== 'customer' && forCustomer ? 'getpack' : a.resolvedBy.displayName,
         }
       : null,
     createdAt: toBangkokIso(a.createdAt),
@@ -542,7 +542,7 @@ export function proofDto(row: ProofRow, forCustomer: boolean): ProofDto {
     decisionComment: row.decisionComment,
     decidedByName: row.decidedBy
       ? row.decidedBy.kind === 'staff'
-        ? 'Packio'
+        ? 'getpack'
         : row.decidedBy.displayName
       : null,
     decisionChecklist: row.decisionChecklist,

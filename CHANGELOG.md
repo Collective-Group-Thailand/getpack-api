@@ -1,7 +1,16 @@
-# Changelog — packio-api
+# Changelog — getpack-api
 
-Contract-facing changes per release. The contract itself is `contract/openapi.json`; mappings for `packio-web` are in
+Contract-facing changes per release. The contract itself is `contract/openapi.json`; mappings for `getpack-web` are in
 `docs/contract-requests-triage.md`.
+
+## v0.67.0 — Rebrand: getpack
+
+Decision D-425. **Breaking** (renamed values and names; no operation added or removed).
+
+- **Enum values**: `ProposalDirection` `factory_to_packio` → `factory_to_getpack`, `packio_to_factory` → `getpack_to_factory`; `ClaimLiability` and `ErpLeadSource` `packio` → `getpack`; `ErpProductionSource` `packio_job` → `getpack_job`; production material origin `packio_spec` → `getpack_spec`; VAT register row kind `packio_statement` → `getpack_statement`.
+- **Fields** with the old name in camelCase are renamed the same way (e.g. `readByPackioAt` → `readByGetpackAt`, `ErpDashPackioDto` → `ErpDashGetpackDto`).
+- **Headers and cookies**: webhooks sign with `Getpack-Signature` and carry `Getpack-Event` / `Getpack-Delivery`; storefront revalidation sends `X-Getpack-Signature`.
+- **Contract**: title `getpack API`, extensions `x-getpack-*` (the engine pin is `x-getpack-dieline`, package `@getpack/dieline`), problem type URIs under `https://errors.getpack/`.
 
 ## v0.66.0 — Admin round 6: sales and finance remainder
 
@@ -39,7 +48,7 @@ Decisions D-416 – D-423. Additive.
 ## v0.64.0 — File purpose `image`
 
 Decisions D-414, D-415. Additive (value set): `FilePurpose` gains `image` — PNG, JPEG or WebP up to 20 MB, standard
-retention — for images Packio publishes (catalogue and stock product photos, CMS covers and photos, studio template
+retention — for images getpack publishes (catalogue and stock product photos, CMS covers and photos, studio template
 thumbnails). `AddImageDto.fileId` names it. Clients that switch over the purpose need a default.
 
 ## v0.63.0 — Admin menu: shipping set-up
@@ -70,7 +79,7 @@ as a `StyleVariantCardDto` (code, style, options, price path, thumbnail), filter
 `meta.libraryTotal`, `meta.libraryStyles`. `StyleCardDto.options` lists a style's option chips (`axis:value`, closures
 first) and `StyleCardDto.thumbnailUrl` its rendered thumbnail (the first variant's; null before rendering). `listVariants`
 takes `style` for one style's variants. The master file carries `use_cases` per base (an import replaces curated ones) and drops PK-SP-25, the same
-structure as PK-SP-05: 122 bases, 986 variants; the vendored `@packio/dieline` drops its recipe.
+structure as PK-SP-05: 122 bases, 986 variants; the vendored `@getpack/dieline` drops its recipe.
 
 ## v0.59.0 — Dieline download as .ai
 
@@ -81,7 +90,7 @@ switch over the format need a default.
 ## v0.58.0 — Style library wave 4: 123 bases, 987 variants
 
 Decision D-409. No contract change. The master file adds 18 bases and the axis `fold` (folded leaflets); the vendored
-`@packio/dieline` draws all 987 variants with their exact options, and adds two parameters on existing styles: inserts
+`@getpack/dieline` draws all 987 variants with their exact options, and adds two parameters on existing styles: inserts
 cut to the product (`cavityShape`, `cavityGrid`, `cavityLength`, `cavityWidth`) and a shaped display header
 (`headerShape`, `headerShapeHeight`, `headerPath`). `uat:styles` imports and publishes them.
 
@@ -89,7 +98,7 @@ cut to the product (`cavityShape`, `cavityGrid`, `cavityLength`, `cavityWidth`) 
 
 Decision D-408. No contract change. The master file's `excluded_combinations` (66 combinations no factory can build)
 are not generated; an import retires them — `styles.import` reads the new key and refuses a rule naming an unknown
-axis value. The vendored `@packio/dieline` draws every remaining variant (nine new base structures; the seal top
+axis value. The vendored `@getpack/dieline` draws every remaining variant (nine new base structures; the seal top
 under a hang tab). `uat:styles` / `uat:populate` approve the held import runs (Prepress, then Marketing) and publish
 894 variants.
 
@@ -119,24 +128,24 @@ version); intakes open. `uat:populate` posts the opening stock as the opening jo
 
 ## v0.53.0 — UX round 8: insight
 
-Decisions D-402, D-403. `ErpDashboardDto` gains `packio` (`ErpDashPackioDto`: `confirmedNet`, `confirmedStatements`,
-`toConfirm`, `toConfirmGross`, `toInvoice`). Value set: `ErpProfitBy` gains `packio_job` (rows keyed by the production
-order, code = the Packio job number). OEE availability no longer reads 0 % for time run outside planned time.
+Decisions D-402, D-403. `ErpDashboardDto` gains `getpack` (`ErpDashGetpackDto`: `confirmedNet`, `confirmedStatements`,
+`toConfirm`, `toConfirmGross`, `toInvoice`). Value set: `ErpProfitBy` gains `getpack_job` (rows keyed by the production
+order, code = the getpack job number). OEE availability no longer reads 0 % for time run outside planned time.
 
 ## v0.52.0 — UX round 6: finance
 
-Decision D-401. Value set: `ErpVatRowKind` gains `packio_statement` (clients that switch over it need a default). The
-sales VAT report, ภ.พ.30 summary and tax export include Packio billing statements confirmed in the month; `sourceId` of
+Decision D-401. Value set: `ErpVatRowKind` gains `getpack_statement` (clients that switch over it need a default). The
+sales VAT report, ภ.พ.30 summary and tax export include getpack billing statements confirmed in the month; `sourceId` of
 such a row is the billing statement's id.
 
 ## v0.51.0 — UX round 1: the day's work
 
 Decisions D-399, D-400. Additive. New `GET /v1/partner/factories/{factoryId}/erp/inbox` (`partner.erpInsight.inbox`,
 `factory_profile.read`): `ErpInboxDto` with `items[]` (`section` approve / overdue / today / soon, `kind`, `tone`, `count`,
-`document` {type, id, number} or null, `party`, `amount`, `date`) and `counts`. Production orders from Packio jobs use the
+`document` {type, id, number} or null, `party`, `amount`, `date`) and `counts`. Production orders from getpack jobs use the
 ERP unit `pcs` (existing rows migrated).
 
-## v0.50.0 — Ledger: Packio revenue (F14 / F15) and the rule editor
+## v0.50.0 — Ledger: getpack revenue (F14 / F15) and the rule editor
 
 Decisions D-397, D-398. Additive. `ErpGlRuleDto` gains `pending`; `GET …/ledger/rules` now shows the version in force
 today (a future-dated approved version is not shown until its day). New error `erp.ledger_version_pending` (409). Role Accountant (`factory_accountant`) gains
@@ -145,10 +154,10 @@ today (a future-dated approved version is not shown until its day). New error `e
 - **Rules** (`partner.erpLedger`): `rules/{ruleId}` (versions, payload variables, purpose accounts),
   `rules/{ruleId}/actions/preview`, `rules/{ruleId}/versions` (propose), `rules/{ruleId}/versions/{versionId}/actions/
   approve|reject|withdraw`. Next-action keys `erp_rule.propose`, `erp_rule_version.approve|reject|withdraw`.
-- **Posting**: rules F14 (Packio billing statement confirmed → 1132 / 4120 + 2121) and F15 (Packio payout paid → bank +
-  1153 / 1132); the VAT close check and ภ.พ.30 include Packio statements.
+- **Posting**: rules F14 (getpack billing statement confirmed → 1132 / 4120 + 2121) and F15 (getpack payout paid → bank +
+  1153 / 1132); the VAT close check and ภ.พ.30 include getpack statements.
 
-## v0.49.0 — Packio Factory ERP E6: the factory's general ledger
+## v0.49.0 — getpack Factory ERP E6: the factory's general ledger
 
 Decisions D-385 – D-396. Additive except value sets: `ErpDocumentType` gains `jv`, `fa`; `FactoryRole` gains
 `factory_auditor` (clients that switch over them need a default). New permissions `factory_ledger.read/post/approve/
@@ -173,7 +182,7 @@ ERP events `erp_production_order.materials_issued/materials_returned/completed`,
 Decision D-384. Value set: `ErpUnit` gains `pouch`, `tube`, `job`, `round`, `trip` (clients that switch over it need a
 default). Factory documents print them in Thai (ซอง, หลอด, งาน, รอบ, เที่ยว).
 
-## v0.48.0 — Packio Factory ERP E5: quality, costing, OEE, the owner's dashboard, people-lite, support access
+## v0.48.0 — getpack Factory ERP E5: quality, costing, OEE, the owner's dashboard, people-lite, support access
 
 Decisions D-372 – D-383. Additive except value sets: `ErpAlertKind` gains `ncr_overdue`, `oee_low`; `ErpModule`
 gains `quality`, `insight`, `people`; `ErpMovementSource` gains `ncr` (clients that switch over them need a
@@ -197,7 +206,7 @@ machine + labour + overhead), so `ErpProductionOrder.unitCost` is that figure.
   `factory_insight.read`; the factory audience honours a `recipientRoles` payload).
 - Errors: `erp.check_not_passed`, `erp.ncr_action_required`, `erp.support_grant_active`, `erp.support_not_granted`.
 
-## v0.47.0 — Packio Factory ERP E4: CRM, quotations, sales orders, delivery notes, invoices, receipts, tax
+## v0.47.0 — getpack Factory ERP E4: CRM, quotations, sales orders, delivery notes, invoices, receipts, tax
 
 Decisions D-359 – D-371. Additive except value sets: `ErpMovementKind` gains `sales_issue` and `sales_return`,
 `ErpMovementSource` gains `delivery_note` and `sales_note`, `ErpAlertKind` gains `quote_follow_up`,
@@ -224,7 +233,7 @@ Decisions D-359 – D-371. Additive except value sets: `ErpMovementKind` gains `
   `erp.nothing_to_invoice`, `erp.no_withholding`, `erp.recipe_required`, `erp.customer_required`,
   `erp.seller_incomplete`.
 
-## v0.46.0 — Packio Factory ERP E2.1 + E3: sourcing, machine schedule, kiosk, maintenance, documents
+## v0.46.0 — getpack Factory ERP E2.1 + E3: sourcing, machine schedule, kiosk, maintenance, documents
 
 Decisions D-346 – D-358 (D-344, the E6 plan, is now accepted). Additive except value sets: `ErpMovementKind` gains
 `landed_cost` and `maintenance_issue`, `ErpMovementSource` gains `maintenance_order`, `ErpOperationStatus` gains
@@ -248,7 +257,7 @@ Decisions D-346 – D-358 (D-344, the E6 plan, is now accepted). Additive except
   `…/actions/lock`, `…/actions/pause`, `…/actions/resume`, `…/events`. `ErpProductionOperationDto` gains
   `scheduledStart`, `scheduledEnd`, `locked`, `startedAt`, `finishedAt`, `pausedMinutes`, `actualMinutes`,
   `pauseReason`, `milestone`, `milestoneSync`, `milestoneSyncError`. Finishing takes `note` and `photoFileIds`;
-  starting / resuming on a machine with an open breakdown answers `erp.machine_down`. Production orders of Packio
+  starting / resuming on a machine with an open breakdown answers `erp.machine_down`. Production orders of getpack
   jobs now carry one operation per job milestone.
 - **Maintenance**: `maintenance/orders` (list), `maintenance/orders/breakdowns`, `maintenance/orders/{mtId}`
   (+ `actions/schedule|start|parts|finish|cancel`, `nextActions` `erp_mt.*`), `maintenance/plans` (list, create,
@@ -269,7 +278,7 @@ Decisions D-346 – D-358 (D-344, the E6 plan, is now accepted). Additive except
   posts (`production_issue`, `production_return`, `production_receipt`, D-341) name it; v0.45.0 returned the value
   without listing it. Clients that switch over the source need a default.
 
-## v0.45.0 — Packio Factory ERP E1.1 + E2: supplier prices, purchase requests, payables, production, MRP
+## v0.45.0 — getpack Factory ERP E1.1 + E2: supplier prices, purchase requests, payables, production, MRP
 
 All changes are additive except one value set: `ErpMovementKind` gains `production_issue`, `production_return`,
 `production_receipt` (clients that switch over movement kinds need a default). Decisions D-333 – D-345; the plan
@@ -287,7 +296,7 @@ for a factory general ledger is `docs/prompts/E6-factory-general-ledger.md` (D-3
   `actions/approve|cancel`, `erp_ap.*`), `supplier-payments` (allocations, `actions/reverse`, `erp_pay.reverse`).
 - **Production**: `recipes`, `production-orders` (+ `actions/release|issue|return|complete|cancel`,
   `operations/{id}/actions/start|finish|skip`, `erp_mo.*`), `planning/overview`, `planning/queue`, `planning/mrp`
-  (+ `actions/request`). An accepted Packio job becomes a production order automatically (worker consumer
+  (+ `actions/request`). An accepted getpack job becomes a production order automatically (worker consumer
   `factory_erp.job_to_production_order`).
 - `ErpSettingsDto` / `UpdateErpSettingsDto`: `priceTolerancePct`, `requireRequestApproval`; prefixes include
   `pr`, `ap`, `pv`, `mo`.
@@ -298,7 +307,7 @@ for a factory general ledger is `docs/prompts/E6-factory-general-ledger.md` (D-3
 - Migration `20261201000001_factory_erp_e2` (14 tables, 3 append-only triggers, 30 checks). `db:seed:uat` adds supplier
   links with price history, a second paper supplier, a product recipe and a planned production order.
 
-## v0.44.0 — Packio Factory ERP, phase E1: trading partners, inventory, purchasing
+## v0.44.0 — getpack Factory ERP, phase E1: trading partners, inventory, purchasing
 
 All changes are additive. Blueprint `docs/prompts/E1-factory-erp.md`; decisions D-316 – D-332.
 
@@ -320,7 +329,7 @@ All changes are additive. Blueprint `docs/prompts/E1-factory-erp.md`; decisions 
 All changes are additive.
 
 - `PriceComponentDto.productTypeCodes` (new, `string[]`): the product types whose calculator reads the component.
-  A factory's price list for one of them offers it, others do not — packio-web drops its own copy of the mapping
+  A factory's price list for one of them offers it, others do not — getpack-web drops its own copy of the mapping
   (`components-by-type.ts`, CONTRACT-GAP `partner.price-components-by-type`).
 - `FactoryRateDto.zoneNameTh` / `zoneNameEn` (new): the zone as the factory reads it, beside `zoneCode`.
 - Behaviour: accepting a production job completes its `job_received` step (no start-and-finish by hand).
@@ -329,10 +338,10 @@ All changes are additive.
 
 All changes are additive.
 
-- `info.x-packio-dieline` (new): the `@packio/dieline` engine the drawing service runs — `package`, `version`,
-  `sourceTree` (git tree of packio-web `packages/dieline`), `packioWebCommit`, `bundleSha256`. packio-web's
+- `info.x-getpack-dieline` (new): the `@getpack/dieline` engine the drawing service runs — `package`, `version`,
+  `sourceTree` (git tree of getpack-web `packages/dieline`), `getpackWebCommit`, `bundleSha256`. getpack-web's
   `pnpm dieline:check` compares its own engine with it in CI.
-- The vendored engine now carries the whole style library (`@packio/dieline/library`): 96 bases instead of 20, so
+- The vendored engine now carries the whole style library (`@getpack/dieline/library`): 96 bases instead of 20, so
   style recipes, dieline downloads and drawings cover every base the web draws (PK-CT-02, PK-PG-02 included).
 - `docs/decisions.md` D-309: note — the homepage hero states the lowest quantity of `catalog.hero_presets`, not
   `minOrderQty.custom`; both intentional.
@@ -341,7 +350,7 @@ All changes are additive.
 
 ### Breaking
 - `HeroPresetsDto.defaultAdjusted` removed (`oasdiff`: response-required-property-removed). `default` is now the
-  product owner's selection when the catalogue offers it and `null` otherwise — there is no adjusted state. packio-web
+  product owner's selection when the catalogue offers it and `null` otherwise — there is no adjusted state. getpack-web
   reads the field only in generated types (pinned `v0.43.1`); re-run `pnpm gen:api` when adopting. The CI check needs
   the `contract:breaking` label on this change.
 

@@ -191,7 +191,7 @@ export class FactoriesService {
     return this.edit(actor, publicId, ifMatch, input, 'staff');
   }
 
-  /** The factory's own edit, only before Packio starts the trial. */
+  /** The factory's own edit, only before getpack starts the trial. */
   async updateOwn(
     actor: UserActor,
     publicId: string,
@@ -386,7 +386,7 @@ export class FactoriesService {
     });
   }
 
-  /** The factory confirms data Packio entered on its behalf (D-100 note). */
+  /** The factory confirms data getpack entered on its behalf (D-100 note). */
   async signOffStep(actor: UserActor, publicId: string, step: OnboardingStep) {
     const factory = await this.access.factory(actor, publicId);
     return this.prisma.withTx(async (tx) => {

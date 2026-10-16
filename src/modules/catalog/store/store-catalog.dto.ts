@@ -169,7 +169,7 @@ export class StorePatternDto {
   })
   constraints!: Record<string, unknown>;
 
-  @ApiProperty({ type: String, nullable: true, example: 'rte', description: 'Key for `@packio/dieline`' })
+  @ApiProperty({ type: String, nullable: true, example: 'rte', description: 'Key for `@getpack/dieline`' })
   dielineKey!: string | null;
 
   @ApiProperty({
@@ -281,7 +281,7 @@ export class StoreVideoDto {
 }
 
 export class StoreSeoDto {
-  @ApiProperty({ example: 'กล่องไปรษณีย์พิมพ์ลาย สั่งผลิตออนไลน์ | Packio' })
+  @ApiProperty({ example: 'กล่องไปรษณีย์พิมพ์ลาย สั่งผลิตออนไลน์ | getpack' })
   title!: string;
 
   @ApiProperty({ type: String, nullable: true, example: 'ออกแบบและสั่งผลิตกล่องไปรษณีย์ได้ในไม่กี่คลิก' })
@@ -784,12 +784,12 @@ export class StoreSitemapEntryDto {
   lastModified!: string;
 }
 
-/** Packio's own support contacts (D-005), from the setting `storefront.support_channels` (D-221). */
+/** getpack's own support contacts (D-005), from the setting `storefront.support_channels` (D-221). */
 export class StoreSupportChannelsDto {
   @ApiProperty({
     type: String,
     nullable: true,
-    example: '@packio-test',
+    example: '@getpack-test',
     description: 'LINE Official Account id',
   })
   lineOaId!: string | null;

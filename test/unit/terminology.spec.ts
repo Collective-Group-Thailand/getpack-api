@@ -2,7 +2,7 @@ import { readdirSync, readFileSync, statSync } from 'node:fs';
 import { join, relative } from 'node:path';
 
 /**
- * D-313 Proof terminology (UX round 2 Phase 4 §A3, packio-web `docs/ui/glossary.md`): customers read
+ * D-313 Proof terminology (UX round 2 Phase 4 §A3, getpack-web `docs/ui/glossary.md`): customers read
  * "ตรวจแบบก่อนพิมพ์" (the step) and "แบบตัวอย่าง" (the file), staff and factories "Proof". The Thai
  * transliterations and the older terms never appear in text this repo emits, seeds, tests or publishes in
  * the contract. Applied migrations are history and are not scanned; this file, which lists the words, is skipped.

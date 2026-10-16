@@ -198,12 +198,12 @@ describe('partner self-service (e2e, U-B0.3)', () => {
         where: { priceListId: list.id, status: { in: ['draft', 'submitted', 'under_review', 'countered'] } },
       })) ??
       (await ctx.prisma.priceProposal.create({
-        data: { priceListId: list.id, direction: 'factory_to_packio', proposedEffectiveFrom: new Date() },
+        data: { priceListId: list.id, direction: 'factory_to_getpack', proposedEffectiveFrom: new Date() },
       }));
     const closed = await ctx.prisma.priceProposal.create({
       data: {
         priceListId: list.id,
-        direction: 'factory_to_packio',
+        direction: 'factory_to_getpack',
         status: 'withdrawn',
         proposedEffectiveFrom: new Date(),
       },

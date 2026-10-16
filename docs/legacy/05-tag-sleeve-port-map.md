@@ -2,7 +2,7 @@
 
 > Reference for porting the legacy tag & sleeve calculator. **Legacy is read-only and never run** (D-005).
 > Source: `legacy/locopack-web` (paths below are relative to it). Traced 2026-10-01. Packaging type **5** = `tag_and_sleeve`
-> ("ป้ายลาเบล และปลอกแก้ว", `config/locopack.php:10`); Packio product type `tag_sleeve` (calculator key `tag_sleeve`).
+> ("ป้ายลาเบล และปลอกแก้ว", `config/locopack.php:10`); getpack product type `tag_sleeve` (calculator key `tag_sleeve`).
 > Treatment follows the folding / corrugate / label rule (user decision 2026-09-26): **maths ported exactly, orchestration and
 > state bugs fixed and listed as deviations** in `docs/pricing-validation-tag-sleeve.md`.
 
@@ -21,7 +21,7 @@ It runs on **folding data**: folding print types (`print_type.packaging_type_id 
 `locopack_margins`. The only tag-specific data is factory enablement (`factory_match_packaging.packaging_type_id = 5`,
 `getFactories:787-801`) and the CS graphic design fee setting `SALE_MARGIN_GRAPHIC_DESIGN_FEE_TAG`.
 
-Patterns 33–36 (`Libraries/Folding/PatternArea.php:637-656`), all `dw = w, dl = l, c = 0` (Packio geometry `flat`,
+Patterns 33–36 (`Libraries/Folding/PatternArea.php:637-656`), all `dw = w, dl = l, c = 0` (getpack geometry `flat`,
 already mapped in `folding/geometry/types.ts`):
 
 | pattern | name |
@@ -44,7 +44,7 @@ Holes, strings, eyelets and corner cuts are folding **assemblies** chosen by gro
 | `POST /api/orders`, `cs/change-factory/{order}` | re-price at order creation / factory change | `fromSME` / `fromCS` | B3 order operations (quote engine) |
 | `GET /api/cs/tagAndSleeve`, `cs/tagAndSleeve` | old v1 UI | `fromCS` | not in the menu; not ported |
 | `POST /api/orders-v2`, `POST /api/order/{id}/re-production` | `storev2:1482-1487`, `fromOrder:39-118` | throw (T22) | broken; not ported |
-| Factory tool | none | — | Packio adds `partner.pricingTagSleeve.calculate` (as every calculator) |
+| Factory tool | none | — | getpack adds `partner.pricingTagSleeve.calculate` (as every calculator) |
 
 ## 2. Pipeline
 
@@ -82,7 +82,7 @@ throw (T8).
 
 ### 2.4 Shipping
 `ShippingUtils::calShippingCostFolding` with `Dmm = 0`, patterns 33–36 flat (thickness 0.5 mm, 60 cm carton stacks) —
-already ported as `shipping/packing/folding-packing.ts` `flat`. Packio prices delivery as its own line (D-013).
+already ported as `shipping/packing/folding-packing.ts` `flat`. getpack prices delivery as its own line (D-013).
 
 ## 3. Live / dead code
 **Live:** `fromSME`, `fromCS`, `CStoFactoryFolding`, `setMasterData`, `getFactories`, `getPrintTypes`;
@@ -93,8 +93,8 @@ already ported as `shipping/packing/folding-packing.ts` `flat`. Packio prices de
 `findPrintPrice`, `fromOrder`. Engine A paths never reached for tags: overlap / combine lay-outs, grain, cut-to-size, foil,
 sorting, packing, engine B.
 
-## 4. Data read (→ Packio source)
-| Legacy | Packio |
+## 4. Data read (→ getpack source)
+| Legacy | getpack |
 |---|---|
 | `factory_match_packaging` (packaging 5) | the factory's approved price list for product type `tag_sleeve` (price lists are per factory × product type) |
 | `factory_match_print_type` (folding print types), `paper`, `paper_sizes` / `paper_sheets`, `paper_trim`, `paper_cannot_do_process`, `factory_rel_pattern_conditions`, colours, the four waste tables, plates, print / finish / die-cut / block / assembly prices, `assembly_sheets`, `paper_prices`, digital terms | the **folding price components** (`pl_print_type_terms` … `pl_assembly_sheets`) entered in the factory's `tag_sleeve` price list |
@@ -122,7 +122,7 @@ sorting, packing, engine B.
 | T15 | SME lead time 0 except factories 9 / 16; CS `ceil(lead_time)` | `⌈lead time⌉` term, bulk lead time as a term (folding) |
 | T16 | `min_order_amount` ignored; `min_order_for_production` raises the production run | Kept as folding: the production minimum term raises the run; no refusal |
 | T17 | Tier: price half-open, amount inclusive on the production run; tier without a base row throws | Shared `sell.ts` (folding) |
-| T18 | Customer web charges the **folding** design fee, CS the tag fee; charged for design status 1–3, subtracted for 3 | Fixed: the `tag_sleeve` design fee once per quote when Packio designs; no structure fee (legacy charges none) |
+| T18 | Customer web charges the **folding** design fee, CS the tag fee; charged for design status 1–3, subtracted for 3 | Fixed: the `tag_sleeve` design fee once per quote when getpack designs; no structure fee (legacy charges none) |
 | T19 | Offset sale price unrounded; digital rounded on the production run | Kept (folding `margin.ts`) |
 | T20 | `selectedFactory` / custom cost filters with mixed `!==` | Not ported (CS selects in the result) |
 | T21 | A quantity with no priced factory throws (`usort(null)`) | Fixed: no instant price for that quantity |

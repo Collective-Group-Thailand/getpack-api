@@ -14,7 +14,7 @@ export interface LoadedSell {
 }
 
 /**
- * Packio's sell side at `at` for a product type and print type (D-063, schema-design A-23): per kind
+ * getpack's sell side at `at` for a product type and print type (D-063, schema-design A-23): per kind
  * (`margin`, `fix_cost`, `design_fee`, `structure_design_fee`) the print type's own approved table
  * version, else the product type's; VAT the dated `vat_standard` rate. Every version id used is
  * returned for the quote snapshot (§2.2).

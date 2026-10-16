@@ -83,7 +83,7 @@ export function rfqDto(r: RfqRow, files: RfqFiles = NO_FILES): RfqDto {
       .filter((m) => m.visibility === 'customer')
       .map((m) => ({
         id: m.publicId,
-        author: m.authorUserId === r.customerUserId ? 'customer' : 'packio',
+        author: m.authorUserId === r.customerUserId ? 'customer' : 'getpack',
         body: m.body,
         files: files.messages.get(m.id) ?? [],
         createdAt: toBangkokIso(m.createdAt),
@@ -120,7 +120,7 @@ export function staffRfqDto(
     overdue: open && !r.firstResponseAt && r.slaDueAt !== null && r.slaDueAt < now,
     messages: r.messages.map((m) => ({
       id: m.publicId,
-      author: m.authorUserId === r.customerUserId ? 'customer' : 'packio',
+      author: m.authorUserId === r.customerUserId ? 'customer' : 'getpack',
       body: m.body,
       files: files.messages.get(m.id) ?? [],
       createdAt: toBangkokIso(m.createdAt),

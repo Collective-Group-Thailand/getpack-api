@@ -1,11 +1,11 @@
 import { type Actor, type UserActor } from '@common/context/actor';
 import { DomainException } from '@common/errors/domain.exception';
+import { dateOnly, isDay } from '@common/ledger-core/dates';
 import { formatMoney, MoneyDecimal } from '@common/money/money';
 import { addCalendarDays, bangkokDate } from '@common/time/bangkok';
 import { PrismaService, type Tx } from '@database/prisma.service';
 import { type JuristicType, type Prisma, type VendorKind, type WhtCategory } from '@generated/prisma/client';
 import { sodPartyKey, SodService } from '@modules/iam/sod.service';
-import { dateOnly, isDay } from '@common/ledger-core/dates';
 import { Injectable } from '@nestjs/common';
 import { AuditService } from '@platform/audit/audit.service';
 import { DomainEvents } from '@platform/domain-events/domain-events.service';
@@ -62,7 +62,7 @@ export interface VendorInput {
 
 /**
  * Supplier documents (accounting-design §2, §6, D-090): a factory's own tax invoice captured against the
- * billing statement Packio generated (e-Tax or uploaded PDF + number, date, seller tax id and branch) and
+ * billing statement getpack generated (e-Tax or uploaded PDF + number, date, seller tax id and branch) and
  * validated by Finance — input VAT only with a valid document; VAT paid before it stayed pending and moves
  * now (P17V) — and the bills of other vendors (fallback carriers, freelance designers, services: P25, P26),
  * recorded under the SoD rule that the recorder cannot change that vendor's bank account (§8).
@@ -286,7 +286,7 @@ export class VendorInvoicesService {
 
   // --- factory tax invoices (D-090) --------------------------------------------------------------------------
 
-  /** The factory confirms or disputes the billing statement Packio generated. */
+  /** The factory confirms or disputes the billing statement getpack generated. */
   async decideStatement(
     actor: UserActor,
     statementPublicId: string,
@@ -352,7 +352,7 @@ export class VendorInvoicesService {
     });
   }
 
-  /** The factory's own tax invoice for a statement (its number, its name — Packio never issues it, §2). */
+  /** The factory's own tax invoice for a statement (its number, its name — getpack never issues it, §2). */
   async captureFactoryInvoice(
     actor: UserActor,
     statementPublicId: string,

@@ -1,5 +1,5 @@
 {
-  "license": "Unsplash License / Pexels License — free commercial use; interim set, replace with originals via API. Per-asset source unverified (no credit recorded): every asset is `interim-unverified`, which fails packio-web production builds.",
+  "license": "Unsplash License / Pexels License — free commercial use; interim set, replace with originals via API. Per-asset source unverified (no credit recorded): every asset is `interim-unverified`, which fails getpack-web production builds.",
   "assets": [
     {"file": "wrap.jpg", "position": "hero", "source": "interim-unverified", "altTh": "ห่อสินค้าด้วยกระดาษคราฟท์", "captionTh": "กระดาษห่อคราฟท์ พิมพ์ลาย 1 สี"},
     {"file": "packing.jpg", "position": "mosaic-1", "source": "interim-unverified", "altTh": "แพ็กสินค้าลงกล่องลูกฟูก", "captionTh": "กล่องลูกฟูก E-flute สำหรับส่งพัสดุ"},

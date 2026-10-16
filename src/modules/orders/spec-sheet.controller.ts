@@ -19,7 +19,7 @@ export class SpecSheetQuery {
 
 export class SpecSheetDto {
   @ApiProperty({
-    example: 'https://packio-files.s3.example.com/…&X-Amz-Expires=300',
+    example: 'https://getpack-files.s3.example.com/…&X-Amz-Expires=300',
     description: 'Signed URL',
   })
   url!: string;
@@ -32,7 +32,7 @@ export class SpecSheetDto {
 }
 
 const EXAMPLE: SpecSheetDto = {
-  url: 'https://packio-files.s3.example.com/…&X-Amz-Expires=300',
+  url: 'https://getpack-files.s3.example.com/…&X-Amz-Expires=300',
   expiresAt: '2026-10-03T14:10:00+07:00',
   fileName: 'spec-sheet-PK-2610-0001-01-th.pdf',
 };

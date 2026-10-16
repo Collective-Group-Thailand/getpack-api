@@ -148,7 +148,7 @@ export class NotificationDelivery {
         if (!user.email) throw new NoAddressError('no e-mail address');
         await this.email.send({
           to: user.email,
-          subject: `[TEST] ${rendered.subject ?? 'Packio'}`,
+          subject: `[TEST] ${rendered.subject ?? 'getpack'}`,
           html: rendered.body,
           text: rendered.text,
         });
@@ -181,7 +181,7 @@ export class NotificationDelivery {
         if (!user?.email) throw new NoAddressError('no e-mail address');
         const sent = await this.email.send({
           to: user.email,
-          subject: rendered.subject ?? 'Packio',
+          subject: rendered.subject ?? 'getpack',
           html: rendered.body,
           text: rendered.text,
         });
@@ -218,7 +218,7 @@ export class NotificationDelivery {
         });
         if (subscriptions.length === 0) throw new NoAddressError('no push subscription');
         const payload = JSON.stringify({
-          title: rendered.subject ?? 'Packio',
+          title: rendered.subject ?? 'getpack',
           body: rendered.text,
           type: row.event.type,
           eventId: row.eventId,

@@ -90,7 +90,7 @@ export class AdminStylesController {
     summary: 'Curate a style-library base',
     description:
       'Marketing / Admin curation (D-246): featured, hidden (never published, D-243), order, Thai / English names and ' +
-      'descriptions, the Packio product type, search synonyms and use cases. Changing a name clears both name ' +
+      'descriptions, the getpack product type, search synonyms and use cases. Changing a name clears both name ' +
       'approvals (D-212). Needs `If-Match` from `admin.styles.get`. Audited; publishability recomputed.',
     implements: [...DECISIONS, 'D-246', 'D-212'],
   })
@@ -199,7 +199,7 @@ export class AdminStylesController {
     id: 'admin.styles.verifyReference',
     summary: 'Verify the industry reference code of a base',
     description:
-      'Prepress confirms the FEFCO / ECMA reference against the edition Packio holds (D-211); unverified codes are ' +
+      'Prepress confirms the FEFCO / ECMA reference against the edition getpack holds (D-211); unverified codes are ' +
       'never shown to customers. The body repeats the current code, so a stale screen cannot verify a changed one.',
     implements: [...DECISIONS, 'D-211'],
   })

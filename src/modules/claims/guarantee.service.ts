@@ -30,8 +30,8 @@ export type GuaranteeVersionRow = Prisma.GuaranteePolicyVersionGetPayload<{
   include: typeof GUARANTEE_INCLUDE;
 }>;
 
-/** D-083 / D-260: liabilities on Packio's side get the matrix; the customer's get no remedy. */
-const PACKIO_SIDE: ClaimLiability[] = ['factory', 'carrier', 'packio'];
+/** D-083 / D-260: liabilities on getpack's side get the matrix; the customer's get no remedy. */
+const GETPACK_SIDE: ClaimLiability[] = ['factory', 'carrier', 'getpack'];
 
 /**
  * The published guarantee (U2.5, D-198–D-200, D-260–D-263): effective-dated policy versions with the remedy matrix and
@@ -83,7 +83,7 @@ export class GuaranteeService {
     severity: ClaimSeverity,
     liability: ClaimLiability,
   ): GuaranteeRemedy[] {
-    if (!version || !PACKIO_SIDE.includes(liability)) return [];
+    if (!version || !GETPACK_SIDE.includes(liability)) return [];
     return version.rules.find((r) => r.claimType === claimType && r.severity === severity)?.remedies ?? [];
   }
 

@@ -10,12 +10,12 @@ export interface ClaimFacts {
 const REVIEWABLE = ['submitted', 'need_info', 'factory_review'];
 const OVERRIDABLE = ['submitted', 'under_review', 'need_info', 'factory_review'];
 
-/** What the customer may do on their claim (U-B0.3): answer Packio's question. */
+/** What the customer may do on their claim (U-B0.3): answer getpack's question. */
 export const STORE_CLAIM_ACTIONS: ActionRule<ClaimFacts>[] = [
   { key: 'claim.answer_info', when: (c) => c.status === 'need_info' },
 ];
 
-/** What the factory may do (D-083): accept or dispute while Packio asks for its review. */
+/** What the factory may do (D-083): accept or dispute while getpack asks for its review. */
 export const PARTNER_CLAIM_ACTIONS: ActionRule<ClaimFacts>[] = [
   {
     key: 'claim.respond',

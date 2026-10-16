@@ -6,7 +6,7 @@ describe('Scalar options (U-B1)', () => {
       { url: 'http://localhost:3000', description: 'Local development (docker compose + pnpm dev)' },
     ]);
     expect(scalarOptions(false).servers).toEqual([
-      { url: 'https://sandbox.packio.invalid', description: 'Sandbox' },
+      { url: 'https://sandbox.getpack.invalid', description: 'Sandbox' },
     ]);
   });
 

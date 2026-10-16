@@ -12,7 +12,7 @@ import {
   withholding,
 } from './erp.math';
 
-describe('Packio Factory ERP E1.1 supplier prices (D-334, D-335)', () => {
+describe('getpack Factory ERP E1.1 supplier prices (D-334, D-335)', () => {
   it('compares suppliers per base unit', () => {
     expect(basePrice(dec('1425'), dec('500')).toFixed(6)).toBe('2.850000');
     expect(basePrice(dec('3'), dec('1')).toFixed(6)).toBe('3.000000');
@@ -47,7 +47,7 @@ describe('Packio Factory ERP E1.1 supplier prices (D-334, D-335)', () => {
   });
 });
 
-describe('Packio Factory ERP E2 supplier invoices (D-337)', () => {
+describe('getpack Factory ERP E2 supplier invoices (D-337)', () => {
   const base = {
     invoicedQty: dec('10'),
     previouslyInvoiced: dec('0'),
@@ -79,7 +79,7 @@ describe('Packio Factory ERP E2 supplier invoices (D-337)', () => {
   });
 });
 
-describe('Packio Factory ERP E2 production (D-339, D-341)', () => {
+describe('getpack Factory ERP E2 production (D-339, D-341)', () => {
   it('scales a recipe to the order and grosses up for scrap', () => {
     expect(materialRequirement(dec('1'), dec('1'), dec('1000'), dec('0')).toFixed(3)).toBe('1000.000');
     expect(materialRequirement(dec('0.125'), dec('1'), dec('1000'), dec('5')).toFixed(3)).toBe('131.579');

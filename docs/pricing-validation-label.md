@@ -12,7 +12,7 @@
 - The 20 cases price complete, **made-up** price lists (no real supplier data, D-005). To sign off, the business team
   enters the same rows for a test factory in a Locopack staging copy, runs the CS label calculator (`/api/cs/label`)
   with the same configuration, and compares the factory price per piece, the per-piece price and the total. Expect
-  sub-satang differences where Locopack stores prices as `FLOAT` (float32) and Packio as exact decimals.
+  sub-satang differences where Locopack stores prices as `FLOAT` (float32) and getpack as exact decimals.
 - Known, intended differences from Locopack (port map `docs/legacy/05-label-port-map.md` §5): L1 every quantity on its
   own material; L2 **offset label printing is not priced** (legacy never produced an offset label price — the business
   decides at sign-off whether offset is offered); L3 the minimum order per quantity; L7 the no-die-cut factories and

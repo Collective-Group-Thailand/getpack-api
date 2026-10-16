@@ -3,6 +3,7 @@ import { Can } from '@common/auth/can.decorator';
 import { type Actor, type UserActor } from '@common/context/actor';
 import { DomainException } from '@common/errors/domain.exception';
 import { Idempotent } from '@common/idempotency/idempotent.decorator';
+import { dateOnly } from '@common/ledger-core/dates';
 import { ApiAsync, ApiEndpoint, ApiStandardErrors, ApiSuccess } from '@common/openapi/decorators';
 import { ApiPaginated } from '@common/pagination/api-paginated.decorator';
 import { bangkokDate, toBangkokIso } from '@common/time/bangkok';
@@ -12,7 +13,6 @@ import { CompaniesService } from '@modules/companies/companies.service';
 import { CustomersService } from '@modules/customers/customers.service';
 import { permissionsOf } from '@modules/iam/actor-permissions';
 import { PermissionResolver } from '@modules/iam/permission-resolver.service';
-import { dateOnly } from '@common/ledger-core/dates';
 import { ApiSurface } from '@modules/surfaces/surfaces';
 import { Body, Controller, Get, HttpCode, Param, ParseUUIDPipe, Post, Query } from '@nestjs/common';
 import { ApiBody, ApiParam } from '@nestjs/swagger';
@@ -72,7 +72,7 @@ import { WhtCertificatesService } from './wht-certificates.service';
 const DOCS = ['D-010', 'D-092', 'D-033'];
 const WRITE = ['http.bad_request', 'http.malformed_json', 'http.not_found', 'validation.failed'] as const;
 const DOWNLOAD_EXAMPLE = {
-  url: 'https://packio-files.s3.example.com/…&X-Amz-Expires=300',
+  url: 'https://getpack-files.s3.example.com/…&X-Amz-Expires=300',
   expiresAt: '2026-10-05T10:05:00+07:00',
 };
 
@@ -112,7 +112,7 @@ export class AdminCustomerDocumentsController {
     id: 'admin.customerDocuments.list',
     summary: 'List customer documents',
     description:
-      'IV, TR, RC, CN and DN issued by the entity under the Packio brand (D-010, D-092), newest first; filter by type, status, order, customer, company, payment and date.',
+      'IV, TR, RC, CN and DN issued by the entity under the getpack brand (D-010, D-092), newest first; filter by type, status, order, customer, company, payment and date.',
     implements: DOCS,
   })
   @ApiPaginated(CustomerDocumentDto, { example: DOCUMENT_EXAMPLE })
@@ -723,7 +723,7 @@ export class StoreDocumentsController {
     id: 'store.documents.list',
     summary: 'My tax invoices, receipts and notes',
     description:
-      'Documents issued to me by the entity under the Packio brand (D-010), or with `companyId` those of a company I may read documents of (`company_documents.read`, D-125); `orderId` narrows them to one order.',
+      'Documents issued to me by the entity under the getpack brand (D-010), or with `companyId` those of a company I may read documents of (`company_documents.read`, D-125); `orderId` narrows them to one order.',
     implements: ['D-010', 'D-125'],
   })
   @ApiPaginated(CustomerDocumentDto, { example: DOCUMENT_EXAMPLE })

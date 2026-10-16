@@ -10,7 +10,7 @@ import { type LabelTables } from './tables';
  * The label calculator (U-B6 label): legacy `LabelCalculator::CSCalculate:374-434` and `calculate:436-643` as a
  * pure function over options (factory × print type). Per quantity: lay-outs on every sheet and roll of the
  * material, waste, the digital cost, the factory margin (`calculateCost:1275-1300`), the cheapest lay-out kept
- * (`:639`), Packio's sell side (`SaleMargin`). Offset label printing is not priced: legacy never produced an
+ * (`:639`), getpack's sell side (`SaleMargin`). Offset label printing is not priced: legacy never produced an
  * offset label price (quirk L2). Pure: no database or clock.
  */
 

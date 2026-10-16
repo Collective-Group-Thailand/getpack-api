@@ -3,10 +3,10 @@ import { Can } from '@common/auth/can.decorator';
 import { type Actor, type UserActor } from '@common/context/actor';
 import { DomainException } from '@common/errors/domain.exception';
 import { Idempotent } from '@common/idempotency/idempotent.decorator';
+import { dateOnly } from '@common/ledger-core/dates';
 import { ApiEndpoint, ApiStandardErrors, ApiSuccess } from '@common/openapi/decorators';
 import { toBangkokIso } from '@common/time/bangkok';
 import { type Prisma } from '@generated/prisma/client';
-import { dateOnly } from '@common/ledger-core/dates';
 import { DocumentFilesService } from '@modules/receivables/document-files.service';
 import { ApiSurface } from '@modules/surfaces/surfaces';
 import { Body, Controller, Get, HttpCode, Param, ParseUUIDPipe, Post, Query } from '@nestjs/common';
@@ -227,7 +227,7 @@ export class AdminTaxController {
     description: 'Signed URL',
     type: DownloadUrlDto,
     example: {
-      url: 'https://packio-files.s3.example.com/…&X-Amz-Expires=300',
+      url: 'https://getpack-files.s3.example.com/…&X-Amz-Expires=300',
       expiresAt: '2026-11-05T10:10:00+07:00',
     },
   })

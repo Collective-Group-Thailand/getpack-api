@@ -178,7 +178,7 @@ describe('tooling register and reorder waiver (e2e, U2.7)', () => {
     expect(items[0]!.lastOrderId).toBe(reorder!.id);
   });
 
-  it('lets the factory report a reused tool unusable before accepting; Packio absorbs the remake (D-205)', async () => {
+  it('lets the factory report a reused tool unusable before accepting; getpack absorbs the remake (D-205)', async () => {
     const reused = await as(ctx, token).get(`/v1/store/orders/${orderId}/reorder`).expect(200);
     await post(token, `/v1/store/orders/${orderId}/actions/reorder`, {
       previewToken: reused.body.previewToken,

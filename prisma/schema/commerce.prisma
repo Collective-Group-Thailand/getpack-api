@@ -1959,7 +1959,7 @@ model Company {
   tradeName              String?        @map("trade_name")
   taxId                  String         @map("tax_id") @db.Char(13)
   isVatRegistered        Boolean        @default(true) @map("is_vat_registered")
-  /// The company withholds tax on payments to Packio (accounting-design §2, P03).
+  /// The company withholds tax on payments to getpack (accounting-design §2, P03).
   withholdsTax           Boolean        @default(false) @map("withholds_tax")
   documentEmail          String?        @map("document_email") @db.Citext
   /// The authorised signatory (D-120): needed before the KYC review.

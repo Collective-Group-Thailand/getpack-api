@@ -1,5 +1,7 @@
 import { type Actor, actorColumns } from '@common/context/actor';
 import { DomainException } from '@common/errors/domain.exception';
+import { dateOnly } from '@common/ledger-core/dates';
+import { type DimensionKey } from '@common/ledger-core/template';
 import { formatMoney, MoneyDecimal, type MoneyValue } from '@common/money/money';
 import { type Tx } from '@database/prisma.service';
 import {
@@ -13,9 +15,7 @@ import {
 } from '@generated/prisma/client';
 import { Injectable } from '@nestjs/common';
 
-import { dateOnly } from '@common/ledger-core/dates';
 import { PeriodsService } from './periods.service';
-import { type DimensionKey } from '@common/ledger-core/template';
 
 const SALES_CHANNELS: readonly string[] = ['web', 'cs', 'line', 'b2b'];
 
@@ -203,7 +203,7 @@ export class JournalPostingService {
       DO UPDATE SET next_value = journal_entry_counters.next_value + 1, updated_at = now()
       RETURNING next_value - 1 AS value`;
     const entryNo = `JE${key.replace('-', '')}-${row!.value.toString().padStart(6, '0')}`;
-    if (allowSoftClosed) await tx.$executeRaw`SELECT set_config('packio.post_soft_closed', 'on', true)`;
+    if (allowSoftClosed) await tx.$executeRaw`SELECT set_config('getpack.post_soft_closed', 'on', true)`;
     try {
       return await tx.journalEntry.update({
         where: { id: entry.id },
@@ -223,7 +223,7 @@ export class JournalPostingService {
         });
       throw error;
     } finally {
-      if (allowSoftClosed) await tx.$executeRaw`SELECT set_config('packio.post_soft_closed', 'off', true)`;
+      if (allowSoftClosed) await tx.$executeRaw`SELECT set_config('getpack.post_soft_closed', 'off', true)`;
     }
   }
 

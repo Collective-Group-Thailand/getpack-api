@@ -31,7 +31,7 @@ export const VERSION_ORIGINS = [
   'assisted_entry',
   'import',
 ] as const;
-export const PROPOSAL_DIRECTIONS = ['factory_to_packio', 'packio_to_factory'] as const;
+export const PROPOSAL_DIRECTIONS = ['factory_to_getpack', 'getpack_to_factory'] as const;
 export const PROPOSAL_STATUSES = [
   'draft',
   'submitted',
@@ -445,9 +445,9 @@ export class PriceProposalSummaryDto {
   @ApiProperty({
     enum: PROPOSAL_DIRECTIONS,
     enumName: 'ProposalDirection',
-    example: 'factory_to_packio',
+    example: 'factory_to_getpack',
     description:
-      '`factory_to_packio` = factory price list (mode b); `packio_to_factory` = rate card (mode a), D-042',
+      '`factory_to_getpack` = factory price list (mode b); `getpack_to_factory` = rate card (mode a), D-042',
   })
   direction!: (typeof PROPOSAL_DIRECTIONS)[number];
 
@@ -455,7 +455,7 @@ export class PriceProposalSummaryDto {
     enum: VERSION_ORIGINS,
     enumName: 'PriceVersionOrigin',
     example: 'factory_proposal',
-    description: '`assisted_entry` = entered by Packio staff for the factory, signed off by it (D-100 note)',
+    description: '`assisted_entry` = entered by getpack staff for the factory, signed off by it (D-100 note)',
   })
   origin!: (typeof VERSION_ORIGINS)[number];
 
@@ -496,7 +496,7 @@ export class PriceProposalListQuery extends PageQuery {
   @EnumField(PROPOSAL_STATUSES, 'ProposalStatus', { example: 'submitted', optional: true })
   status?: (typeof PROPOSAL_STATUSES)[number];
 
-  @EnumField(PROPOSAL_DIRECTIONS, 'ProposalDirection', { example: 'factory_to_packio', optional: true })
+  @EnumField(PROPOSAL_DIRECTIONS, 'ProposalDirection', { example: 'factory_to_getpack', optional: true })
   direction?: (typeof PROPOSAL_DIRECTIONS)[number];
 
   @ApiPropertyOptional({ format: 'uuid', example: IDS.factory })
@@ -557,7 +557,7 @@ export const PROPOSAL_SUMMARY_EXAMPLE: PriceProposalSummaryDto = {
   priceListId: IDS.priceList,
   productTypeId: IDS.productType,
   productTypeCode: 'folding_carton',
-  direction: 'factory_to_packio',
+  direction: 'factory_to_getpack',
   origin: 'factory_proposal',
   status: 'submitted',
   proposedEffectiveFrom: '2026-10-01T00:00:00+07:00',
@@ -684,7 +684,7 @@ export class PriceSimulationResultDto {
     type: String,
     nullable: true,
     example: null,
-    description: 'Change of Packio’s average margin, percentage points; null without quotes',
+    description: 'Change of getpack’s average margin, percentage points; null without quotes',
   })
   marginChangePct!: string | null;
 

@@ -22,9 +22,9 @@ export class TimelineShipmentRefDto {
   shipmentNo!: string;
 
   @ApiProperty({
-    enum: ['packio', 'flash_express', 'deliveree'],
+    enum: ['getpack', 'flash_express', 'deliveree'],
     enumName: 'StoreCarrier',
-    example: 'packio',
+    example: 'getpack',
   })
   carrier!: string;
 
@@ -258,9 +258,9 @@ export class TrackingShipmentDto {
   statusLabelTh!: string;
 
   @ApiProperty({
-    enum: ['packio', 'flash_express', 'deliveree'],
+    enum: ['getpack', 'flash_express', 'deliveree'],
     enumName: 'StoreCarrier',
-    example: 'packio',
+    example: 'getpack',
   })
   carrier!: string;
 
@@ -309,7 +309,7 @@ export class PublicTrackingDto {
 
 export class TrackingLinkDto {
   @ApiProperty({
-    example: 'https://www.packio.example/track/q3J9f0T1xYk8Zb2mR4sW6uE7vN0aLcDh',
+    example: 'https://www.getpack.example/track/q3J9f0T1xYk8Zb2mR4sW6uE7vN0aLcDh',
     description: 'Shown once; only its hash is kept',
   })
   url!: string;
@@ -375,7 +375,7 @@ export const TRACKING_EXAMPLE = {
       shipmentNo: 'SH-2610-0001',
       status: 'in_transit',
       statusLabelTh: 'กำลังส่ง',
-      carrier: 'packio',
+      carrier: 'getpack',
       trackingNo: null,
       trackingUrl: null,
       cartonsCount: 3,

@@ -42,7 +42,7 @@ export class StoreSitemapController {
   }
 }
 
-/** `/v1/store/support-channels`: how a customer reaches Packio CS (D-221). */
+/** `/v1/store/support-channels`: how a customer reaches getpack CS (D-221). */
 @ApiTags('store.support')
 @Controller('support-channels')
 export class StoreSupportChannelsController {
@@ -53,9 +53,9 @@ export class StoreSupportChannelsController {
   @Header('Cache-Control', CACHE)
   @ApiEndpoint({
     id: 'store.support.getChannels',
-    summary: 'Get the ways to reach Packio CS',
+    summary: 'Get the ways to reach getpack CS',
     description:
-      'Packio’s own LINE Official Account, phone, e-mail and opening hours (D-005), from the setting ' +
+      'getpack’s own LINE Official Account, phone, e-mail and opening hours (D-005), from the setting ' +
       '`storefront.support_channels` kept by the CS Lead (D-221). A field is null until it is set.',
     implements: ['D-221', 'D-005'],
   })
@@ -63,7 +63,7 @@ export class StoreSupportChannelsController {
     description: 'Support channels',
     type: StoreSupportChannelsDto,
     example: {
-      lineOaId: '@packio-test',
+      lineOaId: '@getpack-test',
       phone: '0800000000',
       email: 'support@example.com',
       hours: 'จันทร์–ศุกร์ 09:00–18:00',

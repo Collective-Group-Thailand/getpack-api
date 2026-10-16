@@ -38,7 +38,7 @@ model HelpEmbedding {
   model         String
   modelVersion  String                      @map("model_version")
   contentSha256 Bytes                       @map("content_sha256")
-  /// The chunk's text (Packio's own published content), returned as the search snippet.
+  /// The chunk's text (getpack's own published content), returned as the search snippet.
   content       String
   embedding     Unsupported("vector(1536)")
   createdAt     DateTime                    @default(now()) @map("created_at") @db.Timestamptz(6)

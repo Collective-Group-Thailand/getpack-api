@@ -9,7 +9,7 @@ import {
   type StoredResponse,
 } from './idempotency.store';
 
-const PREFIX = 'packio:idem:';
+const PREFIX = 'getpack:idem:';
 
 @Injectable()
 export class RedisIdempotencyStore implements IdempotencyStore {

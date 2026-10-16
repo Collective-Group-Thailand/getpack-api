@@ -40,7 +40,7 @@ export interface ShippingLeg {
   provinceId: bigint;
   subdistrictId: bigint | null;
   quantity: number;
-  /** Customer shipping (VAT-exclusive) and Packio's cost of this leg; zero for RFQ quotations. */
+  /** Customer shipping (VAT-exclusive) and getpack's cost of this leg; zero for RFQ quotations. */
   net: MoneyValue;
   cost: MoneyValue | null;
   method: string | null;

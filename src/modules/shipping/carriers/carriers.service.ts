@@ -26,7 +26,7 @@ import { EntitiesService } from '@platform/entities/entities.service';
 export interface CarrierEstimate {
   carrier: FallbackCarrierCode;
   accountId: bigint;
-  /** Packio's cost of the fallback delivery, THB, as the carrier quotes it. */
+  /** getpack's cost of the fallback delivery, THB, as the carrier quotes it. */
   amount: MoneyValue;
   transitDays: number | null;
 }
@@ -42,9 +42,9 @@ const withTimeout = <T>(promise: Promise<T>, ms: number): Promise<T> =>
   ]);
 
 /**
- * Fallback carriers (D-013, D-114): the factory's own fleet delivers by default; a Packio-booked
+ * Fallback carriers (D-013, D-114): the factory's own fleet delivers by default; a getpack-booked
  * carrier is used only where the factory cannot serve the zone. Carriers are enabled by a Superadmin
- * once Packio's own account (D-005) is registered; credentials stay in Secrets Manager.
+ * once getpack's own account (D-005) is registered; credentials stay in Secrets Manager.
  */
 @Injectable()
 export class CarriersService {
@@ -84,7 +84,7 @@ export class CarriersService {
     });
   }
 
-  /** Registers Packio's account with a carrier; the previous active one of the same environment is closed. */
+  /** Registers getpack's account with a carrier; the previous active one of the same environment is closed. */
   async addAccount(
     actor: UserActor,
     code: CarrierCode,
@@ -317,8 +317,8 @@ export class CarriersService {
   }
 
   /**
-   * Books a fallback delivery for a shipment (B4.3): Packio's active account, the carrier's quote first
-   * (Packio's cost, P25), then the booking. Anything the carrier cannot or will not do →
+   * Books a fallback delivery for a shipment (B4.3): getpack's active account, the carrier's quote first
+   * (getpack's cost, P25), then the booking. Anything the carrier cannot or will not do →
    * `shipments.carrier_unavailable` (staff pick another carrier or split the shipment).
    */
   async book(

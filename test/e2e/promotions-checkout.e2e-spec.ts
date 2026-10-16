@@ -356,7 +356,7 @@ describe('promotions at checkout (e2e, B3.3)', () => {
     } finally {
       // Give the shared 127.0.0.1 budget back (every e2e suite comes from it).
       const redis = ctx.app.get<Redis>(REDIS);
-      for (const key of await redis.keys('packio:coupon:ip:*')) await redis.del(key);
+      for (const key of await redis.keys('getpack:coupon:ip:*')) await redis.del(key);
     }
   });
 

@@ -139,7 +139,7 @@ export class ErpWorkspace {
     );
   }
 
-  /** A domain event the ERP records on its own (a Packio job turned into a production order, D-340). */
+  /** A domain event the ERP records on its own (a getpack job turned into a production order, D-340). */
   async recordSystem(
     tx: Tx,
     factoryPublicId: string,

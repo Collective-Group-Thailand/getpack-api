@@ -165,10 +165,10 @@ export class FoldingPartDto {
 }
 
 export class DesignOptionsDto {
-  @BoolField({ example: false, description: 'Packio designs the artwork (graphic design fee)' })
+  @BoolField({ example: false, description: 'getpack designs the artwork (graphic design fee)' })
   graphic!: boolean;
 
-  @BoolField({ example: false, description: 'Packio designs the structure (structure design fee)' })
+  @BoolField({ example: false, description: 'getpack designs the structure (structure design fee)' })
   structure!: boolean;
 }
 
@@ -564,7 +564,7 @@ export class QuoteShippingInternalDto {
     type: String,
     nullable: true,
     example: '95.00',
-    description: 'Packio’s delivery cost (fleet payout or carrier); needs `factory_buy_prices.read` (D-141)',
+    description: 'getpack’s delivery cost (fleet payout or carrier); needs `factory_buy_prices.read` (D-141)',
   })
   costAmount!: string | null;
 

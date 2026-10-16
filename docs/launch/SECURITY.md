@@ -1,6 +1,6 @@
-# Security readiness — packio-api (B6.3)
+# Security readiness — getpack-api (B6.3)
 
-> **Audience:** the tech lead, the security reviewer / pen-test vendor and whoever operates AWS for Packio. Status as of
+> **Audience:** the tech lead, the security reviewer / pen-test vendor and whoever operates AWS for getpack. Status as of
 > the B6.3 commit; update the Status column as items close. "Evidence" points at code or tests a reviewer can check.
 
 ## 1. OWASP ASVS 4.0 Level 2 — checklist
@@ -15,9 +15,9 @@ Status: ✅ in place · 🟡 partly / needs an ops step · ❌ open before go-li
 | V2.1 – 2.2 | Password security, brute force | ✅ | Argon2 (`@node-rs/argon2`), lockout setting `auth.password_lockout`, sign-in throttle `AUTH_LOGIN_THROTTLE_LIMIT` per IP. |
 | V2.7 | Out-of-band verifiers (OTP) | ✅ | OTP HMAC-stored, expiry / attempts / resend limits (`auth.otp_policy`), per-phone and per-IP hourly caps. |
 | V2.10 | Service authentication | ✅ | Partner machine clients: OAuth2 client credentials (`api_clients`), secrets hashed. |
-| V3 | Session management | ✅ | Access token 10 – 15 min, rotating single-use refresh tokens stored hashed, reuse revokes the family (contract §4), logout revokes; BFF keeps tokens in httpOnly cookies (packio-web). |
+| V3 | Session management | ✅ | Access token 10 – 15 min, rotating single-use refresh tokens stored hashed, reuse revokes the family (contract §4), logout revokes; BFF keeps tokens in httpOnly cookies (getpack-web). |
 | V4.1 – 4.2 | Access control, IDOR | ✅ | Public UUIDs only (contract §3); ownership / scope checks in services; IDOR cases in e2e (`fulfilment-flow`, `commerce-acceptance`). |
-| V4.3 | Admin interfaces | 🟡 | `/v1/admin` requires the `staff` audience. **Ops step:** restrict the admin zone of packio-web by network or SSO policy if the business wants it (not a decision yet). API docs are off in production unless `DOCS_ENABLED` and `DOCS_ALLOWED_CIDRS` (`docs-gating.e2e-spec.ts`). |
+| V4.3 | Admin interfaces | 🟡 | `/v1/admin` requires the `staff` audience. **Ops step:** restrict the admin zone of getpack-web by network or SSO policy if the business wants it (not a decision yet). API docs are off in production unless `DOCS_ENABLED` and `DOCS_ALLOWED_CIDRS` (`docs-gating.e2e-spec.ts`). |
 | V5.1 – 5.3 | Input validation, output encoding | ✅ | Global validation pipe (whitelist, typed DTOs), JSON Schema for configurable specs (ajv), HTML escaped in every PDF template, CSV / XLSX formula injection neutralised (`report-writer.ts`, `audit-query.service.ts`). |
 | V5.3.4 | SQL injection | ✅ | Prisma and tagged-template raw SQL (parameterised); the only literal interpolation (rollup dates) is regex-validated (`rollups.sql.ts#bind`, unit-tested). |
 | V6.2 | Algorithms | ✅ | AES-GCM, HMAC-SHA-256, Argon2id, SHA-256 file hashes. |
@@ -46,13 +46,13 @@ while their flags are off; the pen test covers what is reachable in production.
 | Notification deep links `/l/<token>` (D-299) | SHA-256-stored token bound to one recipient and one page, 72 h; never signs anyone in; another signed-in user gets 404, an expired token 410 | `launchpad.e2e-spec.ts` |
 | Free dieline downloads (D-271) | signed-in customers only, 20 a day and 5 a minute per user, every download logged | `dieline-downloads.e2e-spec.ts` |
 | B2B API clients and outbound webhooks (D-291, post-launch) | client credentials issued by the Company Admin (max 5), secret shown once and stored hashed, scoped, revocable; deliveries signed HMAC-SHA256 per subscription, logged, retried | `b2b-api.e2e-spec.ts` |
-| Storefront revalidation call (D-308) | outbound POST signed HMAC-SHA256 (`X-Packio-Signature`) with `STOREFRONT_REVALIDATE_SECRET` | `storefront-cards.e2e-spec.ts` |
+| Storefront revalidation call (D-308) | outbound POST signed HMAC-SHA256 (`X-Getpack-Signature`) with `STOREFRONT_REVALIDATE_SECRET` | `storefront-cards.e2e-spec.ts` |
 | Customer assistant (D-218, D-304 – D-306, post-launch) | flag `assistant.enabled` off; outside local it can only be switched on after ADR-0012 and a passing evaluation (409 otherwise); per-customer rate limits; logs purged after 30 days | `assistant.e2e-spec.ts` |
 | UAT rehearsal tooling (U-B5) | `pnpm db:seed:uat` and `pnpm uat:populate` refuse to run without `UAT_SEED_CONFIRM` / `UAT_POPULATE_CONFIRM=uat-only`; fake people and accounts only; never run on production data | `test/integration/uat-seed.int-spec.ts`, `docs/launch/UAT-DATA.md` |
 
 ## 2. Penetration test
 
-- **Scope:** `/v1/auth`, `/v1/store`, `/v1/partner`, `/v1/admin`, `/webhooks` of the UAT stack with test data; packio-web (customer, partner, admin zones, BFF).
+- **Scope:** `/v1/auth`, `/v1/store`, `/v1/partner`, `/v1/admin`, `/webhooks` of the UAT stack with test data; getpack-web (customer, partner, admin zones, BFF).
 - **Priorities:** auth and token handling (refresh reuse, audience confusion), IDOR on orders / documents / files across customers, companies and factories, payment and webhook forgery, payout / bank-account change controls, file upload, CSV / XLSX injection in exports, rate limits on OTP and coupon codes.
 - **Rules:** the vendor gets one account per role and one per factory / company role; no production data; findings in the table below; fix SLA — critical 48 h, high 7 days, medium before go-live or a C-Level waiver.
 
@@ -78,8 +78,8 @@ while their flags are off; the pen test covers what is reachable in production.
 
 - **API task role:** `s3:PutObject`, `s3:GetObject`, `s3:HeadObject`, `s3:AbortMultipartUpload`, `s3:ListMultipartUploadParts` on `arn:aws:s3:::<bucket>/*` only; `secretsmanager:GetSecretValue` on the one secret; `ses:SendEmail` from the verified domain identity; no `iam:*`, no wildcard resources.
 - **Worker task role:** the same S3 and Secrets Manager scope, plus `s3:CopyObject` (locked proof copies) and `s3:DeleteObject` limited to the `transient/` prefix.
-- **CI deploy role:** ECR push and ECS service update for the Packio services only; assumed through GitHub OIDC, no long-lived keys.
-- **Database roles:** `packio_migrator` (DDL, used only by `prisma migrate deploy` in the release job) and `packio_app` (DML on `public`, `analytics`, `partitions`; no DDL except the partition function it calls). Today both processes use one role — **create the two roles before go-live**.
+- **CI deploy role:** ECR push and ECS service update for the getpack services only; assumed through GitHub OIDC, no long-lived keys.
+- **Database roles:** `getpack_migrator` (DDL, used only by `prisma migrate deploy` in the release job) and `getpack_app` (DML on `public`, `analytics`, `partitions`; no DDL except the partition function it calls). Today both processes use one role — **create the two roles before go-live**.
 - **Humans:** SSO with MFA; production database access through a bastion / Session Manager, read-only role by default, write access break-glass and audited.
 
 ## 5. Backups and point-in-time recovery
@@ -106,8 +106,8 @@ while their flags are off; the pen test covers what is reachable in production.
 
 | # | Finding | Action | Owner |
 |---|---|---|---|
-| 1 | Every store call comes through the BFF: unless packio-web forwards the client IP (`X-Forwarded-For`) and `TRUST_PROXY` counts that hop, the per-IP throttles (general, OTP, sign-in, coupon codes) see the BFF's address and would throttle all visitors together. | packio-web forwards the client IP; set `TRUST_PROXY`; verify in the k6 run (`docs/launch/PERFORMANCE.md`). | Tech lead (both repos) |
+| 1 | Every store call comes through the BFF: unless getpack-web forwards the client IP (`X-Forwarded-For`) and `TRUST_PROXY` counts that hop, the per-IP throttles (general, OTP, sign-in, coupon codes) see the BFF's address and would throttle all visitors together. | getpack-web forwards the client IP; set `TRUST_PROXY`; verify in the k6 run (`docs/launch/PERFORMANCE.md`). | Tech lead (both repos) |
 | 2 | `FIELD_ENCRYPTION_KEY` / `LOOKUP_HMAC_SECRET` cannot be rotated without a job (§3). | Build the re-key job (R2) or accept rotation only on compromise with a planned window. | Tech lead |
-| 3 | One database role for migrations and runtime (§4). | Create `packio_migrator` / `packio_app`. | Ops |
+| 3 | One database role for migrations and runtime (§4). | Create `getpack_migrator` / `getpack_app`. | Ops |
 | 4 | No retention decision for `analytics.raw_events`, `audit_logs`, `activity_logs`, `calculate_logs`, `search_logs` (PDPA). | Business / DPO decides periods; then partition drop jobs. | DPO / C-Level |
 | 5 | The analytics consent text (`analytics_cookies`) has no approved version until legal enters it — until then no visitor is tracked with an id (safe default). | Legal enters the text before launch. | Legal / Admin |

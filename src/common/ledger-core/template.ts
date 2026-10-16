@@ -267,7 +267,7 @@ function checkDimensions(map: unknown, at: string, errors: string[], keys: reado
 
 /**
  * Structural validation of a template before a version is proposed; returns the problems found. `dimensionKeys`
- * are the dimensions the ledger knows (Packio's by default; the factory ledger passes its own, E6).
+ * are the dimensions the ledger knows (getpack's by default; the factory ledger passes its own, E6).
  */
 export function validateTemplate(
   template: unknown,

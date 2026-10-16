@@ -34,7 +34,7 @@ export interface TwoC2PConfig {
   /** PEM: merchant private key (PKCS#8) signing refunds, 2C2P public key (SPKI or X.509) encrypting them. */
   merchantPrivateKeyPem?: string;
   twoc2pPublicKeyPem?: string;
-  /** Channel codes of the contract per Packio method (to confirm with 2C2P). */
+  /** Channel codes of the contract per getpack method (to confirm with 2C2P). */
   cardChannels?: string[];
   onlineBankingChannels?: string[];
 }

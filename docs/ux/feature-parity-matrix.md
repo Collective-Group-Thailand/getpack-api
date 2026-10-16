@@ -1,9 +1,9 @@
-# Feature parity matrix — every Kumopack feature observed on 2026-09-29 → where Packio covers it
+# Feature parity matrix — every Kumopack feature observed on 2026-09-29 → where getpack covers it
 
 > Rule: a competitor feature is "covered" only when a named deliverable builds it **and** its acceptance test exists. Anything marked **GAP** is assigned in `U5-ux-excellence.md`.
 > Verdicts: Beat = we build a clearly stronger version · Match = equivalent · Adapt = same job, different mechanism for our model · Skip = deliberately not built (reason given).
 
-| # | Competitor feature | Packio deliverable | Verdict | Status before U5 |
+| # | Competitor feature | getpack deliverable | Verdict | Status before U5 |
 |---|---|---|---|---|
 | 1 | Buyer dashboard with period-over-period KPIs and status counts | U2.F5 account dashboard | Beat (money + boxes + reorder suggestions) | covered |
 | 2 | Multi-product request basket | B3 cart (instant) + B2 RFQ | Beat for instant types | **GAP: multi-item RFQ basket for RFQ-only types** → U5.4 |
@@ -19,7 +19,7 @@
 | 12 | Quantity tiers + target price | U2.3 / U2.F1 | Beat (levers) | covered |
 | 13 | Status tabs incl. sample production and dispute | U2.4 samples, B4 claims | Match | covered |
 | 14 | Card / table views and filters on lists | design-system DataTable | Match | covered |
-| 15 | Direct chat with the counterparty | LINE deep links only | Adapt (chat with Packio, not the factory) | **GAP: in-app messaging per order/design** → U5.3 |
+| 15 | Direct chat with the counterparty | LINE deep links only | Adapt (chat with getpack, not the factory) | **GAP: in-app messaging per order/design** → U5.3 |
 | 16 | Coins, coupons, coupon wallet | B3 loyalty & promotions | Match | covered |
 | 17 | Affiliate programme with payouts | B3 referral | Match (verify payouts) | covered (verify in U5 gap analysis) |
 | 18 | Profile: business type, group, logistics, invoices | B3 companies / account | Beat (B2B) | covered |

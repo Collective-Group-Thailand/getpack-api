@@ -45,7 +45,7 @@ const versionDto = (v: VersionRow): SellMarginVersionDto => ({
 });
 
 /**
- * Packio's sell side (D-063): margin tiers, fix costs and design fees per product type and print type,
+ * getpack's sell side (D-063): margin tiers, fix costs and design fees per product type and print type,
  * effective-dated and audited; approved by Superadmin / C-Level (`sell_margins.manage`). Versions are
  * copy-on-write: lines are written with the draft and frozen at approval (A-23).
  */

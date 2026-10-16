@@ -6,7 +6,7 @@
 
 Runtime: Laravel 5.7 with `error_reporting(-1)` — every notice ("undefined index", "property of non-object", division by zero) **aborts the request** (`HandleExceptions.php:32,59-62`); reading an index on `null`/`false` is silent (production PHP ≤ 7.3). Below, "throws" means the legacy request failed.
 
-Legacy label print types (`database/seeds/updateLocopackMargin.php:19-92`, `LabelCalculator.php:1013,1081`): **3** offset (factory IDP), **4** digital (PFF, STF), **7** digital (UCI, PTS), **8** digital (PTS). In Packio the engine (`offset` | `digital`) is a print-type term, never an id (as corrugate C7).
+Legacy label print types (`database/seeds/updateLocopackMargin.php:19-92`, `LabelCalculator.php:1013,1081`): **3** offset (factory IDP), **4** digital (PFF, STF), **7** digital (UCI, PTS), **8** digital (PTS). In getpack the engine (`offset` | `digital`) is a print-type term, never an id (as corrugate C7).
 
 ## 1. Entry points
 | Route | Controller | Reaches | Status |
@@ -64,13 +64,13 @@ Standard if `w >= dw && l >= dl || roll`; rotated if `w >= dl && l >= dw || roll
 **Order** (`:1304-1316`): by `cost.total`, then layout desc, standard first (offset adds grain, plate and block sizes).
 
 ### 2.6 Sell side — `calculate:451-643` (CS)
-Drop rolls (not roll-to-sheet) shorter than **300 m** (`areaL · 0.001 < 300`, `:456-458`). Packio margin tier `locopack_margins` by quantity and sale price (half-open `max_price >`), base tier at (1, 1); manual `target_margin`; `fix_cost` from input or `fmpt.locopack_fix_cost` → shared `Calculator::SaleMargin:223-450` with packaging 2 (graphic fee `SALE_MARGIN_GRAPHIC_DESIGN_FEE_LABEL`, label shipping). Lead time `getCustomLeadTime` (factory 16: 10 days from 500 pieces) else `ceil(lead_time)` (`:555-556`). Option = the first surviving layout (`:639`).
+Drop rolls (not roll-to-sheet) shorter than **300 m** (`areaL · 0.001 < 300`, `:456-458`). getpack margin tier `locopack_margins` by quantity and sale price (half-open `max_price >`), base tier at (1, 1); manual `target_margin`; `fix_cost` from input or `fmpt.locopack_fix_cost` → shared `Calculator::SaleMargin:223-450` with packaging 2 (graphic fee `SALE_MARGIN_GRAPHIC_DESIGN_FEE_LABEL`, label shipping). Lead time `getCustomLeadTime` (factory 16: 10 days from 500 pieces) else `ceil(lead_time)` (`:555-556`). Option = the first surviving layout (`:639`).
 
 ## 3. Live / dead code
 Dead or unreachable: `setData` in the API controller; `diecutCost` / `printCost` else branches (Collections are never empty); `calculateCost` margin id 3 overwrite (`:1285`); unused trims (`:666-677`); overlap / combine lay-outs (`c = 0`); `finish2`, `assembly`, grain, `print_*.percent`, margin ids 0 / 3 (factory tool only); digital assembly (`AssemblyPrice` model does not exist); `diecut.blockPrice` never written (L14); `calculatePercentReduce` not used; `custom_cost`, promotions, order hierarchies (not pricing maths).
 
-## 4. Data read (→ Packio source)
-| Legacy | Packio |
+## 4. Data read (→ getpack source)
+| Legacy | getpack |
 |---|---|
 | `paper` (`paper_type_id`, gsm, `cost_per_kg`, `cost_per_m2`) | catalogue `materials` (label paper, gsm) + `material_prices` (`costPerKg`, `costPerM2`) |
 | `paper_sizes` ⨝ `paper_sheets` (`in_w`, `in_l` 0 = roll, `paper_sheet_cut`, `sheet_cut_length_inch`) | `paper_sizes` + **`label_paper_sheets`** (adds the roll-to-sheet cut length) |

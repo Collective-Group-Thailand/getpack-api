@@ -115,7 +115,7 @@ export class AssignDesignerDto {
   @ApiPropertyOptional({
     format: 'uuid',
     example: DS_IDS.user,
-    description: 'A Packio designer (staff user)',
+    description: 'A getpack designer (staff user)',
   })
   @IsOptional()
   @IsUUID()

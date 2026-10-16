@@ -5,7 +5,7 @@ import { DesignsService } from './designs.service';
 import { DesignsCheckout } from './designs-checkout.extension';
 import { DrawingsService } from './drawings.service';
 
-/** Online designs (versions, ETag, assets, templates) and dieline drawings (`@packio/dieline`, B4.1). */
+/** Online designs (versions, ETag, assets, templates) and dieline drawings (`@getpack/dieline`, B4.1). */
 @Global()
 @Module({
   providers: [DesignsService, DrawingsService, DesignerCatalogService, DesignsCheckout],

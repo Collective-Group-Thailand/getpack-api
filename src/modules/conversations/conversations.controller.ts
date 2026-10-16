@@ -148,7 +148,7 @@ export class StoreConversationController {
   @Get()
   @ApiEndpoint({
     id: 'store.conversations.get',
-    summary: 'My chat with Packio',
+    summary: 'My chat with getpack',
     description: 'The latest web / LIFF conversation, or 404 before the first message (D-151).',
     implements: ['D-151'],
   })
@@ -168,7 +168,7 @@ export class StoreConversationController {
   @ApiEndpoint({
     id: 'store.conversations.messages',
     summary: 'Messages of my chat',
-    description: 'Newest first; reading marks Packio’s replies as read.',
+    description: 'Newest first; reading marks getpack’s replies as read.',
     implements: ['D-151'],
   })
   @ApiCursorPaginated(MessageDto, { example: MESSAGE_EXAMPLE })
@@ -185,7 +185,7 @@ export class StoreConversationController {
   @Idempotent()
   @ApiEndpoint({
     id: 'store.conversations.send',
-    summary: 'Write to Packio CS',
+    summary: 'Write to getpack CS',
     description: 'Opens a conversation when none is live; CS answers from the inbox (D-151).',
     implements: ['D-151'],
   })
@@ -401,7 +401,7 @@ export class AdminConversationsController {
     id: 'admin.conversations.markRead',
     summary: 'Mark a thread read',
     description:
-      'Moves my read position to its latest message — the customer sees when Packio read it (D-300).',
+      'Moves my read position to its latest message — the customer sees when getpack read it (D-300).',
     implements: ['D-300'],
   })
   @ApiSuccess(200, { description: 'Read', type: ConversationDto, example: CONVERSATION_EXAMPLE })

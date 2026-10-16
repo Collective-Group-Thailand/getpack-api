@@ -31,7 +31,7 @@ export function ensureDockerHost(): void {
 export async function startTestInfra(): Promise<TestInfra> {
   ensureDockerHost();
   const [postgres, redis] = await Promise.all([
-    new PostgreSqlContainer(POSTGRES_IMAGE).withDatabase('packio_test').start(),
+    new PostgreSqlContainer(POSTGRES_IMAGE).withDatabase('getpack_test').start(),
     new RedisContainer(REDIS_IMAGE).start(),
   ]);
   return {
@@ -43,7 +43,7 @@ export async function startTestInfra(): Promise<TestInfra> {
       LOG_LEVEL: 'silent',
       DATABASE_URL: postgres.getConnectionUri(),
       REDIS_URL: redis.getConnectionUrl(),
-      S3_BUCKET: 'packio-test',
+      S3_BUCKET: 'getpack-test',
       // Every test request comes from one IP.
       AUTH_LOGIN_THROTTLE_LIMIT: '10000',
     },

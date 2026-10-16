@@ -1,7 +1,7 @@
 /**
- * Packio-booked carriers, used only as fallback where a factory's own fleet cannot serve a zone
+ * getpack-booked carriers, used only as fallback where a factory's own fleet cannot serve a zone
  * (D-013, D-114). One adapter per carrier behind one interface, so carriers are added without changes
- * elsewhere. Credentials come from Packio's carrier account (Secrets Manager reference, D-005); each
+ * elsewhere. Credentials come from getpack's carrier account (Secrets Manager reference, D-005); each
  * call receives them, adapters hold no state.
  */
 export const CARRIER_ADAPTERS = Symbol('CARRIER_ADAPTERS');
@@ -12,7 +12,7 @@ export type CarrierCredentials = Record<string, string>;
 
 export interface CarrierCall {
   credentials: CarrierCredentials;
-  /** Packio's sandbox account (provider test environment) or production. */
+  /** getpack's sandbox account (provider test environment) or production. */
   sandbox: boolean;
 }
 
@@ -45,13 +45,13 @@ export interface CarrierQuoteRequest {
 }
 
 export interface CarrierQuote {
-  /** THB, 2 decimals, as the carrier quotes it (Packio's cost of the fallback delivery). */
+  /** THB, 2 decimals, as the carrier quotes it (getpack's cost of the fallback delivery). */
   amount: string;
   transitDays: number | null;
 }
 
 export interface CarrierBookingRequest {
-  /** Packio's reference (shipment number), sent as the carrier's merchant order number. */
+  /** getpack's reference (shipment number), sent as the carrier's merchant order number. */
   reference: string;
   from: CarrierContact;
   to: CarrierContact;

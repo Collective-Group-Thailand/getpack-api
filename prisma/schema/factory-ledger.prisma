@@ -1,7 +1,7 @@
-// Packio Factory ERP E6 (D-385 – D-396): the factory's own general ledger — chart of accounts, periods,
+// getpack Factory ERP E6 (D-385 – D-396): the factory's own general ledger — chart of accounts, periods,
 // journals posted from ERP documents by versioned rules, manual and recurring journals, fixed assets,
 // bank reconciliation and the month-end close. Factory-private (D-317): `erp_gl_*` tables keyed by factory,
-// never read by a staff endpoint; Packio's own books stay in `accounts` / `journal_entries`.
+// never read by a staff endpoint; getpack's own books stay in `accounts` / `journal_entries`.
 
 enum ErpGlDimension {
   item

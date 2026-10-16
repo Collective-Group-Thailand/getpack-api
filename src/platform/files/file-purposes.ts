@@ -55,7 +55,7 @@ export const FILE_PURPOSES = {
   },
   avatar: { retentionClass: 'standard', maxBytes: 5 * MiB, mimeTypes: IMAGES },
   /**
-   * Images Packio publishes (D-415): catalogue and stock product photos, CMS covers and photos,
+   * Images getpack publishes (D-415): catalogue and stock product photos, CMS covers and photos,
    * studio template thumbnails. Standard retention — not the financial-record years of `document`.
    */
   image: { retentionClass: 'standard', maxBytes: 20 * MiB, mimeTypes: IMAGES },

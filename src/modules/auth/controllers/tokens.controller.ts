@@ -152,7 +152,7 @@ export class TokensController {
           kty: 'OKP',
           crv: 'Ed25519',
           x: '11qYAYKxCrfVS_7TyWQHOg7hcvPapiMlrwIaaPcHURo',
-          kid: 'packio-2026-09',
+          kid: 'getpack-2026-09',
           alg: 'EdDSA',
           use: 'sig',
         },

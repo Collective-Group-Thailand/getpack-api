@@ -5,10 +5,10 @@ import { as, foldingBackToRfq, foldingReady, staffToken } from '../support/comme
 import { bootFulfilmentApp, factoryToken, type FulfilmentApp } from '../support/fulfilment-e2e';
 
 /**
- * Packio Factory ERP, phase E1 (docs/prompts/E1-factory-erp.md): trading partners, items, warehouses, the
+ * getpack Factory ERP, phase E1 (docs/prompts/E1-factory-erp.md): trading partners, items, warehouses, the
  * stock ledger at moving average cost, purchase orders and goods receipts — factory-private (D-316 – D-327).
  */
-describe('Packio Factory ERP E1 (e2e)', () => {
+describe('getpack Factory ERP E1 (e2e)', () => {
   let ctx: FulfilmentApp;
   let fixture: DevFolding;
   let owner: string;

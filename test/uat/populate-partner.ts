@@ -176,7 +176,7 @@ export async function populatePartnerZone<Cust extends UatCustomer>(d: PartnerZo
       201,
     );
     await ok(owner().post(`${partner}/erp/ledger/journals/${draft.id}/actions/approve`, {}));
-    // Documents from before the books existed (the Packio statement confirmed above) are posted by catch-up (D-388).
+    // Documents from before the books existed (the getpack statement confirmed above) are posted by catch-up (D-388).
     const caught = await ok<{ posted: number }>(as(ctx, accountant).post(`${partner}/erp/ledger/actions/catch-up`, {}));
     return `opening journal ${baht(total)} on ${byAccount.size} inventory accounts, approved by the owner; catch-up posted ${caught.posted}`;
   });
@@ -501,7 +501,7 @@ export async function populatePartnerZone<Cust extends UatCustomer>(d: PartnerZo
           category: 'kb-print-spec',
           slug: 'uat-kb-accept-jobs',
           titleTh: 'รับงานภายใน 1 วันทำการ',
-          excerptTh: 'งานที่ Packio ส่งให้ต้องกดรับหรือปฏิเสธภายใน 1 วันทำการ',
+          excerptTh: 'งานที่ getpack ส่งให้ต้องกดรับหรือปฏิเสธภายใน 1 วันทำการ',
           body: doc(
             'งานใหม่ต้องกดรับหรือปฏิเสธพร้อมเหตุผลภายใน 1 วันทำการ หากเกินกำหนด ระบบจะแจ้งเตือนและเสนอย้ายงาน (D-074)',
             'อ่านใบสเปกงาน (spec sheet) ของคำสั่งซื้อก่อนรับงานทุกครั้ง',
@@ -521,9 +521,9 @@ export async function populatePartnerZone<Cust extends UatCustomer>(d: PartnerZo
           category: 'kb-qc-photo-standard',
           slug: 'uat-kb-qc-photos',
           titleTh: 'มาตรฐานภาพถ่าย QC',
-          excerptTh: 'ถ่ายภาพงานก่อนส่งอย่างไรให้ Packio ตรวจได้',
+          excerptTh: 'ถ่ายภาพงานก่อนส่งอย่างไรให้ getpack ตรวจได้',
           body: doc(
-            'โรงงานตรวจคุณภาพเองพร้อมภาพถ่ายเป็นหลักฐาน Packio สุ่มตรวจตามความเสี่ยงของงาน (D-076)',
+            'โรงงานตรวจคุณภาพเองพร้อมภาพถ่ายเป็นหลักฐาน getpack สุ่มตรวจตามความเสี่ยงของงาน (D-076)',
             'ถ่ายให้เห็นงานพิมพ์ทั้งด้าน ขอบตัด และฉลากกล่อง ในที่แสงพอ',
           ),
         },
@@ -534,7 +534,7 @@ export async function populatePartnerZone<Cust extends UatCustomer>(d: PartnerZo
           excerptTh: 'พิมพ์ฉลากจากระบบ และเก็บลายเซ็นกับรูปถ่ายเมื่อส่งมอบ',
           body: doc(
             'กด “พร้อมส่ง” เพื่อพิมพ์ฉลากกล่อง เมื่อส่งมอบต้องบันทึกชื่อผู้รับ ลายเซ็น และรูปถ่าย (POD)',
-            'ส่งได้ไม่เกินจำนวนที่ผลิต ยอดส่งต่างจากสั่งเกิน ± 5 % ต้องแจ้ง Packio ก่อน',
+            'ส่งได้ไม่เกินจำนวนที่ผลิต ยอดส่งต่างจากสั่งเกิน ± 5 % ต้องแจ้ง getpack ก่อน',
           ),
         },
         {

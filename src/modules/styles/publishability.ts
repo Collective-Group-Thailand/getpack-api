@@ -25,7 +25,7 @@ export interface GateInput {
   baseStatus: 'active' | 'retired';
   variantStatus: 'active' | 'retired';
   hidden: boolean;
-  /** An active Packio product type: instant calculator or RFQ, both a pricing path (D-100). */
+  /** An active getpack product type: instant calculator or RFQ, both a pricing path (D-100). */
   productTypeActive: boolean;
   recipes: { approved: boolean }[];
   namesApproved: { marketing: boolean; prepress: boolean };
@@ -54,7 +54,7 @@ export const PRICE_REASONS = [
 export type PriceReason = (typeof PRICE_REASONS)[number];
 
 export interface PriceInput {
-  /** The Packio product type's calculator (null: an RFQ-only type, D-100). */
+  /** The getpack product type's calculator (null: an RFQ-only type, D-100). */
   calculatorKey: string | null;
   /** The type is switched to instant — the Pricing owner's sign-off switch (A-16). */
   instantType: boolean;

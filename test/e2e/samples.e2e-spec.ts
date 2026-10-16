@@ -241,7 +241,7 @@ describe('samples (e2e, U2.4)', () => {
     await post(other.token, `/v1/store/samples/${sample.id}/actions/approve`).expect(404);
     const approved = (
       await post(token, `/v1/store/samples/${sample.id}/actions/approve`)
-        .set('User-Agent', 'packio-e2e (fake)')
+        .set('User-Agent', 'getpack-e2e (fake)')
         .expect(200)
     ).body as Sample;
     expect(approved.status).toBe('approved');

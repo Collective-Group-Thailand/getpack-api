@@ -1,7 +1,7 @@
 # Folding engine B — legacy port map (U-B6 tail)
 
 > Reference for porting legacy folding **engine B** (type-2 factories). **Legacy is read-only and never run** (D-005).
-> Source: `/Users/superball/Abbon/Loco_Pack/locopack-web` (same `app/` as `Packio-Web/legacy/locopack-web/app`); paths are relative to it. Traced 2026-10-02; every formula is re-read in the PHP when it is ported (slice 3).
+> Source: `/Users/superball/Abbon/Loco_Pack/locopack-web` (same `app/` as `Getpack-Web/legacy/locopack-web/app`); paths are relative to it. Traced 2026-10-02; every formula is re-read in the PHP when it is ported (slice 3).
 > Engine A (offset, digital), the geometry and the sell side are in `docs/legacy/05-folding-port-map.md`; this document covers only what B does differently. Decision: **D-233**.
 
 ## 1. Reachability and dispatch
@@ -15,7 +15,7 @@ No live legacy screen reaches B. The B Vue form (`resources/js/components/foldin
 
 Dispatch (identical at `FoldingCalculator.php:1304-1355`, `FoldingBoxController.php:179-219`, `Api/Folding/FoldingBoxController.php:77-118`): `factory_type_id == 1` → A waste + A cost (offset or digital by print type) with `useMaxMinPaperTrim`; `== 2` → `B\CalculateWaste` + `B\CalculateCost` with the plain paper trim. B never reads `calculate_waste_type` or `finish2_step_down_waste` (only `A/CalculateWaste.php:780,822,840` do). The production minimum (`min_order_for_production`) raises the run as for A (`:1308-1318`).
 
-Packio: `pl_print_type_terms.engine_variant = 'b'` (A-26) is the dispatch; `useMaxMinPaperTrim: engine !== 'b'` is already in `folding-snapshot.loader.ts`.
+getpack: `pl_print_type_terms.engine_variant = 'b'` (A-26) is the dispatch; `useMaxMinPaperTrim: engine !== 'b'` is already in `folding-snapshot.loader.ts`.
 
 ## 2. Live / dead files
 | Status | Files |
@@ -54,7 +54,7 @@ Units per layout: `areaMM2 = areaW·areaL/1e6` (m² of the print area, `calPrint
 4. **F2 non-foil** (`:755-796`): `area = areaF1`, or `(w/25.4)(l/25.4)` when the finish requires width and length and `required_location == 0`; `amount = 1`, or the F2 amount when it requires an amount and `required_location == 0`; `total = tooling + material_thb_in2 + block_per_in2 + max(area × by_area × sheets_F2 × amount, min_price)` (material and block **flat**, QB17); `sheets_F2 = |sheets_F2_entry − Σ earlier F2 waste|`.
 5. **F2 foil** (`:797-989`): block fit `min/max_block_w/l_inch` against the sheet; `wage = by_area × areaInch2`; `foilPerM2 = baht_per_roll / (roll_w_in·0.0254 · roll_l_in·0.0254)`; per axis `ax ∈ {md, cd}`: `max((wage + foilPerM2 × area_ax) × sheets_F2, baht_per_roll + wage × sheets_F2) + tooling`; axis = `foilAxis`, else fewer total lines, tie → cheaper, full tie → `cd` (`:838-873`); `totalCostFoil = Σ` chosen-axis totals (`:995-1057`).
 6. **Assembly** (`calCostAssembly:1085-1245`, rows by quantity band `range_amount_min/max`): `amount` = run (or the assembly amount when required); type 1 `amount × price_per_depth_m × dw·0.001`, total `+ block + material_price_per_in2 × (dw/25.4)²`; type 2 `amount × min_price_per_area_in2 × (w/25.4)(l/25.4)` + block; types 3 = 4 `amount × price_per_pcs` + block; each `max(price, min_price)`.
-7. Packing (`:505-535`), delivery (`:537-557`), sorting (`:559-582`) — not reached by Packio (§7).
+7. Packing (`:505-535`), delivery (`:537-557`), sorting (`:559-582`) — not reached by getpack (§7).
 8. **Total** (`:234-256`): paper + print F/B + F1 F/B + ΣF2 + Σassembly + die-cut (+ sort + packing + delivery).
 9. **Margin** (`calMargin:1780-1836` → `Object/Margin::calculate:65-110`): type 2 looks up the smallest `code_margin.max_range_cont > percentContribution` (`initMargin:1258-1282`); `contribution = total/(1 − pct/100) − total`; `salePrice = total + max(min_cont_baht_per_lot, contribution)`; `suggestPrice = convertNumberFloat(salePrice / qty)`. Types 1 (code chosen by the user) and 3 (from a suggested price) are factory-tool features.
 10. **Sort** (`:271-298`): A's keys (`A/CalculateCost.php:313-329`).
@@ -62,9 +62,9 @@ Units per layout: `areaMM2 = areaW·areaL/1e6` (m² of the print area, `calPrint
 ## 6. Foil geometry (`Object/Foil`, `Point`, `Rectangle`)
 A rect `{x, y, width, length}` (mm on the blank, x from the left, y from the top) grows by `trim_foil_mm` (`Point:34-86`). `calWidthFoilAll:72-158` merges strictly overlapping rects along x and along y into strips (`Rectangle::checkRectangleOverlapX/Y:5-79`); `calAreaFoilAll:160-380` turns strips into m² per sheet per axis (standard / rotated layout, `c` subtracted on dw runs only); line counts per axis (`B/CalculateCost.php:689-700`). With **one** rect each axis gets one strip of spans `length + 2t` and `width + 2t`, so x and y do not change the cost; with two or more, x and y decide the merging.
 
-## 7. Packio treatment (D-233)
+## 7. getpack treatment (D-233)
 **Inputs** (`FoldingConfiguration` → B request):
-| Legacy input | Packio |
+| Legacy input | getpack |
 |---|---|
 | `printColorAmount` | number of colours of the side |
 | `amountAW` (semi-tones) | none (legacy default when unticked) → no extra plates, no semi waste; no `pl_semi_plate_wastes` |
@@ -76,7 +76,7 @@ A rect `{x, y, width, length}` (mm on the blank, x from the left, y from the top
 | `required_location` | `pl_finish_prices.required_location` (per factory finish line) |
 
 **Quirks**:
-| # | Legacy | Packio |
+| # | Legacy | getpack |
 |---|---|---|
 | QB1 | colour count ≠ colour ids → print waste silently 0 (`Printing.php:48`) | cannot happen (count derived) |
 | QB2 | print waste keyed by the last distinct colour + total count (`Printing.php:84-98`) | **ported** (one lookup per side, last distinct colour in input order) |
@@ -90,7 +90,7 @@ A rect `{x, y, width, length}` (mm on the blank, x from the left, y from the top
 | QB15 | the last foil's block fit decides for all | every foil must fit, else the layout is dropped |
 | QB16, QB17 | F1 back block flat; F2 material and block flat | **ported**, flagged in the validation doc |
 | QB18 | `@` hides INF / NAN for zero roll sizes | roll sizes > 0 enforced by the price-line validator |
-| QB19 | forced axis shows the opposite label | no forced axis in Packio |
+| QB19 | forced axis shows the opposite label | no forced axis in getpack |
 | QB20 | foil geometry failure `dd()` | `GeometryError` refusal |
 | QB22, QB23 | y-sort secondary key; strict overlap | ported (numerically harmless / exact) |
 | QB24 | per-layout totals not reset | computed per layout (Q18) |
@@ -100,10 +100,10 @@ A rect `{x, y, width, length}` (mm on the blank, x from the left, y from the top
 | QB31 | assembly types 3 and 4 identical; `totalCost` unfloored | ported (sum uses the floored total) |
 | QB34 | 30-min caches | none: pure function of the snapshot (Q9) |
 | QB35 | — | no hard-coded factory ids in B |
-| QB41 | unauthenticated E1 with any factory | n/a: Packio prices only the configuration's candidate factories |
+| QB41 | unauthenticated E1 with any factory | n/a: getpack prices only the configuration's candidate factories |
 
 **Data** (migration `20261107000001_folding_engine_b_components`, schema-design A-76) — B's own tables, so engine A's tables, line keys and version digests stay as they are:
-| Legacy | Packio |
+| Legacy | getpack |
 |---|---|
 | `print_wastes` by colour id + total count | `pl_b_print_wastes` |
 | `print_prices` by colour + count of that colour, `price_ink_thb_per_m2`, `price_color_combine_special_color` | `pl_b_print_prices` |

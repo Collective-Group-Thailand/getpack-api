@@ -125,7 +125,7 @@ export class AdminCampaignsController {
       default: {
         value: {
           code: 'launch-2026',
-          name: 'เปิดตัว Packio',
+          name: 'เปิดตัว getpack',
           startsAt: '2026-11-01T00:00:00+07:00',
           budgetAmount: '50000.00',
         },
@@ -514,7 +514,7 @@ export class AdminPromotionsController {
     type: CouponExportDto,
     example: {
       fileId: '0192f3a0-7c1e-7d2a-9b1f-00000000f11f',
-      url: 'https://packio-files.s3.example.com/…&X-Amz-Expires=300',
+      url: 'https://getpack-files.s3.example.com/…&X-Amz-Expires=300',
       codes: 500,
       expiresAt: '2026-11-01T10:05:00+07:00',
     },

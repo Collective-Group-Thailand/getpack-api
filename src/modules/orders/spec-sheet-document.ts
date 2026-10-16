@@ -3,7 +3,7 @@ import Handlebars from 'handlebars';
 /**
  * D-287 the packaging spec sheet: what the box is, measured on every basis, made of what, printed and finished how,
  * to which tolerances, packed how, from which approved artwork. Pure: the caller passes every value; anything not
- * known is left out, never invented. Thai or English; fonts come from the host (as every Packio PDF).
+ * known is left out, never invented. Thai or English; fonts come from the host (as every getpack PDF).
  */
 export interface SpecSheetDocument {
   lang: 'th' | 'en';
@@ -84,7 +84,7 @@ const TEMPLATE = Handlebars.compile(
 </style></head>
 <body>
 <header>
-  <div><div class="brand">Packio</div><h1>{{l.title}}</h1></div>
+  <div><div class="brand">getpack</div><h1>{{l.title}}</h1></div>
   <div class="meta">{{l.order}} {{orderCode}}<br>{{l.generated}} {{generatedOn}}</div>
 </header>
 <div class="grid">

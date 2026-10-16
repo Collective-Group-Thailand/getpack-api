@@ -733,7 +733,7 @@ export const PAYOUT_SCHEDULE_EXAMPLE: PayoutScheduleJobDto = {
   ],
 };
 
-/** What moves the factory's balance with Packio (U-B0.3): the journal source of each entry. */
+/** What moves the factory's balance with getpack (U-B0.3): the journal source of each entry. */
 export const ACCOUNT_ENTRY_KINDS = [
   'goods_receipt',
   'advance_offset',
@@ -757,10 +757,13 @@ export class StatementOfAccountEntryDto {
   })
   reference!: string | null;
 
-  @ApiProperty({ example: '0.00', description: 'Lowers what Packio owes the factory (payments, deductions)' })
+  @ApiProperty({
+    example: '0.00',
+    description: 'Lowers what getpack owes the factory (payments, deductions)',
+  })
   debit!: string;
 
-  @ApiProperty({ example: '7960.00', description: 'Raises what Packio owes the factory (goods received)' })
+  @ApiProperty({ example: '7960.00', description: 'Raises what getpack owes the factory (goods received)' })
   credit!: string;
 
   @ApiProperty({ example: '5404.84', description: 'Running balance after the entry' })
@@ -768,9 +771,9 @@ export class StatementOfAccountEntryDto {
 }
 
 /**
- * The factory's account with Packio (U-B0.3): Packio's posted ledger lines for the factory — factory payables, retention
- * held, advances and claim receivables (accounting-design §5) — excluding VAT, which Packio books at payment (§2).
- * A positive balance is what Packio owes the factory.
+ * The factory's account with getpack (U-B0.3): getpack's posted ledger lines for the factory — factory payables, retention
+ * held, advances and claim receivables (accounting-design §5) — excluding VAT, which getpack books at payment (§2).
+ * A positive balance is what getpack owes the factory.
  */
 export class StatementOfAccountDto {
   @ApiProperty({ format: 'uuid', example: '0192f3a0-7c1e-7d2a-9b1f-000000000f01' })

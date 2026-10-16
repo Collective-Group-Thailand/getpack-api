@@ -74,7 +74,7 @@ import { poDto, tradingPartnerDto } from './erp-views';
 import { ErpWorkspace } from './erp-workspace.service';
 
 /**
- * Packio Factory ERP, phase E1 (docs/prompts/E1-factory-erp.md): `/v1/partner/factories/{factoryId}/erp/*`.
+ * getpack Factory ERP, phase E1 (docs/prompts/E1-factory-erp.md): `/v1/partner/factories/{factoryId}/erp/*`.
  * The factory comes from the path and must be one of the caller's (another factory's id → 404, D-044);
  * only the factory's own people read or write it (D-317).
  */

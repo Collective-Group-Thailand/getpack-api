@@ -196,7 +196,7 @@ export function storeShipmentDto(
     shipmentNo: row.shipmentNo,
     status: row.status,
     ...statusLabels('ShipmentStatus', row.status),
-    carrier: row.carrier.code === 'factory_fleet' ? 'packio' : row.carrier.code,
+    carrier: row.carrier.code === 'factory_fleet' ? 'getpack' : row.carrier.code,
     trackingNo: row.trackingNo,
     trackingUrl: row.trackingUrl,
     destination: {

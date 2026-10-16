@@ -6,7 +6,7 @@ import { type BoardPrice, type DifficultyTerms, within } from './tables';
 /**
  * The corrugate digital engine (U-B6, port map §7): legacy `CalculatorCorrugate::CalDigital:1337-1545` with
  * the digital setup of `calculate:587-602, :640-653, :701-831`. One layout per board sheet size; legacy keeps
- * the first size in query order (quirk C2), Packio the cheapest. Pure (quirk C1). Every price the digital
+ * the first size in query order (quirk C2), getpack the cheapest. Pure (quirk C1). Every price the digital
  * branch reads and legacy silently skips when missing (a colour, a coating, the die-cut, the die block) refuses
  * the option instead (quirk C3).
  */

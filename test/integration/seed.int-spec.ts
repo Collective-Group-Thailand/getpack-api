@@ -144,7 +144,7 @@ describe('seeds (PostgreSQL 18)', () => {
     ]);
   });
 
-  it('seeds the drawing engine flag off until @packio/dieline is published (B4.1)', async () => {
+  it('seeds the drawing engine flag off until @getpack/dieline is published (B4.1)', async () => {
     expect(await count("feature_flags WHERE key = 'drawing.engine' AND NOT enabled")).toBe(1);
   });
 

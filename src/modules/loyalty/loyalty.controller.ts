@@ -303,7 +303,7 @@ export class AdminReviewsController {
   })
   @ApiBody({
     type: ReplyReviewDto,
-    examples: { default: { value: { body: 'ขอบคุณที่ไว้วางใจ Packio ครับ' } } },
+    examples: { default: { value: { body: 'ขอบคุณที่ไว้วางใจ getpack ครับ' } } },
   })
   @ApiSuccess(200, {
     description: 'Review',
@@ -332,7 +332,7 @@ export class StorePublicReviewsController {
     id: 'store.reviews.listPublic',
     summary: 'Customer reviews',
     description:
-      'Published reviews of delivered orders, newest first, with the product type, Packio’s reply and an abbreviated ' +
+      'Published reviews of delivered orders, newest first, with the product type, getpack’s reply and an abbreviated ' +
       'name — never fabricated, never an order or a contact (D-202, D-265, D-181).',
     implements: ['D-202', 'D-265', 'D-181'],
   })

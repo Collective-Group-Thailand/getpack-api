@@ -25,7 +25,7 @@ describe('HTTP pipeline', () => {
       expect(res.headers['content-type']).toMatch(/^application\/problem\+json/);
       expect(res.headers['content-language']).toBe('th');
       expect(res.body).toEqual({
-        type: 'https://errors.packio/http.not_found',
+        type: 'https://errors.getpack/http.not_found',
         title: 'ไม่พบข้อมูล',
         status: 404,
         code: 'http.not_found',

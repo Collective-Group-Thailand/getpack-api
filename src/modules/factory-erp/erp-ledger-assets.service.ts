@@ -43,7 +43,7 @@ import { type ErpScope, ErpWorkspace } from './erp-workspace.service';
 /**
  * E6 fixed assets, bank and tax filings (D-392 – D-394): asset categories and the register, the monthly
  * straight-line depreciation run that catches up missed months (posted with F16 in the same transaction),
- * disposals (F16D); bank accounts as sub-accounts of 1120, statement import (rows, or a CSV through Packio's
+ * disposals (F16D); bank accounts as sub-accounts of 1120, statement import (rows, or a CSV through getpack's
  * bank-file adapters) with auto-matching against supplier payments and customer receipts, manual matches, fees
  * and interest (F18), the cash position; the monthly VAT / WHT returns reconciled ledger ↔ documents and marked filed.
  */
@@ -718,7 +718,7 @@ export class ErpLedgerAssetsService {
       return a ? this.ledger.natural(a, balances.get(a.id)) : new MoneyDecimal(0);
     };
     if (form === 'pp30') {
-      // the sales register carries the Packio statements the factory confirmed (F14, D-397 / D-401)
+      // the sales register carries the getpack statements the factory confirmed (F14, D-397 / D-401)
       const [sales, purchases] = await Promise.all([this.tax.salesVat(scope, month), this.tax.purchaseVat(scope, month)]);
       return { ledgerAmount: move('outputVat', '2121').minus(move('inputVat', '1151')), documentsAmount: dec(sales.vat).minus(dec(purchases.vat)) };
     }

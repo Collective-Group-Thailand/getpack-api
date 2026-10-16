@@ -1,7 +1,7 @@
 /**
  * What still needs checking on a design (UX round 2 Phase 4 §A4, D-278): the current version's latest stored print
  * check — blocks, plus warnings the customer has not acknowledged — counted and summarised per rule, in the studio's
- * own words (packio-web `designer.json` `checks.rule`, without the per-element figures).
+ * own words (getpack-web `designer.json` `checks.rule`, without the per-element figures).
  */
 const RULE_WORDS: Record<string, { th: string; en: string }> = {
   image_resolution: { th: 'รูปความละเอียดต่ำ อาจพิมพ์ไม่คม', en: 'Low-resolution image: it may print soft' },

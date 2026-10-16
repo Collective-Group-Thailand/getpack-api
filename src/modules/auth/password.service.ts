@@ -18,7 +18,7 @@ export class PasswordService {
 
   async verify(storedHash: string | null | undefined, secret: string): Promise<boolean> {
     if (!storedHash) {
-      this.dummy ??= hash('packio-dummy-secret', OPTIONS);
+      this.dummy ??= hash('getpack-dummy-secret', OPTIONS);
       await verify(await this.dummy, secret).catch(() => false);
       return false;
     }

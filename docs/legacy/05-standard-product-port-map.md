@@ -2,10 +2,10 @@
 
 > Reference for porting legacy standard-product pricing ("สินค้ามาตรฐาน"). **Legacy is read-only and never run** (D-005).
 > Treatment follows the folding / corrugate / label rule (user decision 2026-09-26): **maths ported exactly, orchestration
-> and state bugs fixed and listed as deviations** in `docs/pricing-validation-standard-product.md`. §9 records how Packio
+> and state bugs fixed and listed as deviations** in `docs/pricing-validation-standard-product.md`. §9 records how getpack
 > ports it.
 
-Source root: `/Users/superball/Collective/Packio/Packio-API/legacy/locopack-web` (written as `LW/` below). Every reference is file:line. "Throws" means a PHP notice or warning that the error handler turns into an exception (error_reporting(-1)).
+Source root: `/Users/superball/Collective/getpack/Getpack-API/legacy/locopack-web` (written as `LW/` below). Every reference is file:line. "Throws" means a PHP notice or warning that the error handler turns into an exception (error_reporting(-1)).
 
 ---
 
@@ -512,18 +512,18 @@ The cached price is the price of the last (cheapest) tier.
 | S3 | `calculateMargin` / `calculateVat` return `[]` for price ≤ 0 → buy + fix = 0 throws (`Utils.php:21-22`) | Fix: reject a 0 buy price at import / `PricingError` |
 | S4 | Missing `factory_match_print_type` (factory, 9) row → throws (`Utils.php:16`, `StandardProduct.php:253`) | Fix: `price_line_missing` error |
 | S5 | Last tier `min` = previous tier `max` → the boundary qty is in two tiers; the first wins (`CalculatePrice.php:25`, `:87-93`) | Keep the inclusive bounds; at a shared bound take the lower-quantity tier (document) |
-| S6 | Delivery per piece per tier is computed at the tier **min** (or 10000 for the last tier), not the ordered qty; the ordered-qty result only fills `real_*` (`CalculatePrice.php:28,36`, `:82-101`) | Keep for parity in "catalogue mode"; Packio target: delivery as its own quote line (D-013) on the real qty |
+| S6 | Delivery per piece per tier is computed at the tier **min** (or 10000 for the last tier), not the ordered qty; the ordered-qty result only fills `real_*` (`CalculatePrice.php:28,36`, `:82-101`) | Keep for parity in "catalogue mode"; getpack target: delivery as its own quote line (D-013) on the real qty |
 | S7 | Fixed last-tier delivery 0.88 / 1.67 / 0.15 / 0.15 (ex-VAT) by product type, VAT 7 % hard-coded; `delivery_cost` not overridden (`Utils.php:56-65`, `CalculatePrice.php:41-49`) | Keep as data (per-product-type "flat delivery per piece" setting), VAT from `vat_standard` |
 | S8 | `sortPrices` merges a later tier whose price ≥ an earlier tier: the earlier range takes the **higher** price; non-adjacent absorption; `isset($data[$key-1])` skips after an unset (`CalculatePrice.php:133-149`) | Keep (golden C, B); flag to business — fix candidate is to keep the cheaper price |
 | S9 | No tier matches → `findPrice` returns `[]` with status true → checkout throws (`StandardProductAPIController.php:74,88`); createOrder → 500 "Server error" | Fix: `qty_out_of_range` error with min / max |
 | S10 | ByBoxAndZone: **double VAT** (`SALE_MARGIN_VAT` on the box sum, then 7 % again) (`CalculateDelivery.php:48-49,72-73`) | Not ported in that form (carrier rate cards); if kept for parity, flag |
 | S11 | ByBoxAndZone: destination flash zone only, no `type` filter, origin ignored; unknown zone (e.g. `island`, `Flash.php:178`) → null price → `calculateVat(0)` → throws (`:31-49`) | Fix: proper zone / rate card |
 | S12 | ByBoxAndZone: `h` null → item size 0 → division by zero throws; item > 60 % of the 30×44×22 box → `item_amount_per_box = 0` → throws (`:33,41-42`) | Fix: skip cartons that don't fit; error if none |
-| S13 | ByBoxAndZone: `delivery_cost = ceil(ceil2(sum/amount) × amount)` over-states cost (14850 → 14900 at 10000 pcs) (`:70-71`) | Keep for parity in cost fields; Packio uses the real carrier cost |
+| S13 | ByBoxAndZone: `delivery_cost = ceil(ceil2(sum/amount) × amount)` over-states cost (14850 → 14900 at 10000 pcs) (`:70-71`) | Keep for parity in cost fields; getpack uses the real carrier cost |
 | S14 | ByWLH: `amount_per_box = dppp × packsize`; null → division by zero throws; one pack only, cost spread over its pieces (`:146-167`) | Fix: validate pack data; real packing in the shipping module |
 | S15 | ByWLH carrier loop: `$aCostShipping` uninitialised, `$totalDeliveryCost` leaks to the next carrier, no carrier → throws (`ShippingUtils.php:671-707`) | Fix |
 | S16 | ByPouch: quantities in 1–99 / 401–499 gaps get no carton; alone → throws; from/to swapped in `findMaximizeBoxFromWeight` (`ShippingUtils.php:727,730-775`) | As pouch P32 (`pouch-packing.ts`) |
-| S17 | ByPack: `ceil(pack/pack)` always 1 → delivery per piece independent of qty, partial packs not charged; `delivery_cost_per_pcs` unrounded (`:225-228`) | Keep the per-piece formula if parity is needed; Packio: packs = ceil(qty / pack_pcs) in the shipping module |
+| S17 | ByPack: `ceil(pack/pack)` always 1 → delivery per piece independent of qty, partial packs not charged; `delivery_cost_per_pcs` unrounded (`:225-228`) | Keep the per-piece formula if parity is needed; getpack: packs = ceil(qty / pack_pcs) in the shipping module |
 | S18 | Delivery VAT uses `calculateVat` default 7 %, product VAT uses `SALE_MARGIN_VAT` (`CalculateDelivery.php:72,121,165,199,229`) | Fix: one dated `vat_standard` |
 | S19 | `shipping_cal_method = 0` (seeder maps null → 0, `MigrateDataFromRigidsToStandardProductsSeeder.php:83`) → "Cannot found shipping_cal_method" (`CalculatePrice.php:126-127`) | Data-migration check: such SKUs are unpriceable |
 | S20 | Design fee recorded but **not added** to the API order total (`StandardProductAPIController.php:149,171,199`); CS adds it (`cs.vue:497`); `design_cost` not set | Fix: add the design fee once per quote (as pouch P31) |
@@ -610,7 +610,7 @@ The cached price is the price of the last (cheapest) tier.
 - `standard-calculator.ts` — `tierTable()` reproduces `getSteps`, using the last-tier min = previous max and the `sortPrices` merge (S8, keep), and `priceFor(qty)` reproduces `findPrice`. Out of range → `PricingError('qty_out_of_range')`.
 - Delivery has two modes:
   - **(a) parity mode**: legacy per-piece delivery folded into the displayed tier price — needed for the catalogue "from" price and to match legacy quotes. The five methods are ported as packers: `box-zone` (hard-coded cartons and zone prices, double VAT behind a flag), `corrugate` (reuse `corrugate-packing.ts`), `wlh` (one pack), `pouch` (reuse `pouch-packing.ts`), `pack` (price per pack). The fixed last-tier delivery per product type comes from settings.
-  - **(b) Packio mode (target)**: goods price without delivery plus a separate `ShippingQuoteService` line on the real quantity (D-013).
+  - **(b) getpack mode (target)**: goods price without delivery plus a separate `ShippingQuoteService` line on the real quantity (D-013).
 - `standard.adapter.ts` — quote engine. Design fee added once when hired, 0 when free. Discount after the total.
 - The cached "from" price (`min_price_per_pcs_with_delivery`) is computed on price-list publish (S26).
 
@@ -653,32 +653,32 @@ Key files:
 
 ---
 
-## 9. Packio port (decisions, U-B6 standard product, 2026-10-01)
+## 9. getpack port (decisions, U-B6 standard product, 2026-10-01)
 
 Accepted under the user's standing instruction (2026-10-01); recorded in `docs/update-2026-09-29-gap.md` §U-B6 standard
 product.
 
-1. **A standard product is a Packio stock product** (`stock_products`, product type `standard_product`, schema-design
+1. **A standard product is a getpack stock product** (`stock_products`, product type `standard_product`, schema-design
    §3.3): one SKU, its unit, dimensions, weight, attributes, stock per factory. Legacy attributes never change the price
    (§2.6), so a variant is its own stock product, as legacy.
 2. **Buy prices** are the factory's price-list lines `pl_stock_product_prices` (schema-design §3.4): stock product ×
    print type × quantity band (inclusive) → buy price per piece, lead time. The print type is legacy's `std_product`
-   (9); legacy keyed one factory per SKU, Packio allows several and selects by buy price then lead time (D-043, D-101).
+   (9); legacy keyed one factory per SKU, getpack allows several and selects by buy price then lead time (D-043, D-101).
 3. **Sell price per piece** keeps legacy's two roundings (`Utils::costToSalePrice`, S1):
-   `⌈⌈(buy + fix) ÷ (1 − m)⌉₀.₀₁ × (1 + VAT)⌉₀.₀₁`. The margin is Packio's `standard_product` sell table (legacy's flat
+   `⌈⌈(buy + fix) ÷ (1 − m)⌉₀.₀₁ × (1 + VAT)⌉₀.₀₁`. The margin is getpack's `standard_product` sell table (legacy's flat
    `locopack_margin` per factory = a fallback line; quantity tiers allowed), the fix cost its `fix_cost` **per piece**
    (legacy adds `locopack_fix_cost` to the buy price per piece), VAT the dated `vat_standard` rate (S18). A buy price of
    0 is refused (S3).
 4. **Tiers** as legacy (§2.2–2.4): ordered by the minimum, the last tier starts at the previous tier's maximum (S5, the
    lower tier wins at the shared bound), and a later tier whose price is not lower absorbs the earlier ranges at its own
-   price (`sortPrices`, S8 — kept, flagged for the business). Packio applies them to the **goods price**: delivery is
+   price (`sortPrices`, S8 — kept, flagged for the business). getpack applies them to the **goods price**: delivery is
    its own quote line (D-013), so legacy's per-tier delivery (at the tier minimum or 10 000, S6, S7) is not part of the
    price. A quantity outside every tier is refused (S9).
 5. **Delivery** (D-013): the five legacy methods (box-and-zone, corrugate, W × L × H, pouch, pack) are replaced by the
    B2.4 rate cards on the shipment's weight: the stock product's `weight_g` × quantity; a stock product sold by the pouch
    uses the pouch packer (legacy `ByPouch`). A stock product without a weight has no instant price (the shipping line
    could not be priced).
-6. **Design fee**: Packio's `standard_product` `design_fee` once per quote when Packio designs (S20, S21).
+6. **Design fee**: getpack's `standard_product` `design_fee` once per quote when getpack designs (S20, S21).
 7. **Stock** is not read by pricing (legacy); the order step reserves it (S24, the stock module).
-8. **Not ported**: promotions / redeem inside the price (Packio promotions, D-130+), the cached listing price (the price
+8. **Not ported**: promotions / redeem inside the price (getpack promotions, D-130+), the cached listing price (the price
    hints compute the "starting from" price, S26), Rigid v1, CS edit / change-factory paths (S28).

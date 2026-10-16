@@ -21,12 +21,12 @@ import {
 } from '../support/fulfilment-e2e';
 
 /**
- * Packio Factory ERP E1.1 + E2 (docs/prompts/E1-factory-erp.md, D-333 – D-342): supplier links and price
+ * getpack Factory ERP E1.1 + E2 (docs/prompts/E1-factory-erp.md, D-333 – D-342): supplier links and price
  * history, MRP → purchase request → purchase order → receipt, production orders with reservations, issues
- * and completion at cost, supplier invoices matched 3-way, payments and reversals, and a Packio job that
+ * and completion at cost, supplier invoices matched 3-way, payments and reversals, and a getpack job that
  * becomes a production order when the factory accepts it.
  */
-describe('Packio Factory ERP E2 (e2e)', () => {
+describe('getpack Factory ERP E2 (e2e)', () => {
   let ctx: FulfilmentApp;
   let fixture: DevFolding;
   let owner: string;
@@ -397,7 +397,7 @@ describe('Packio Factory ERP E2 (e2e)', () => {
     ).rejects.toThrow();
   });
 
-  it('turns an accepted Packio job into a production order with its board material (D-340)', async () => {
+  it('turns an accepted getpack job into a production order with its board material (D-340)', async () => {
     const [code] = postcodes(ctx, 1) as [string];
     await seedShipping(ctx, fixture.factoryPublicId, [code]);
     await setFlag(ctx, 'payments.scb', true);
@@ -431,20 +431,20 @@ describe('Packio Factory ERP E2 (e2e)', () => {
         .expect(200);
       await ctx.pump();
       const list = await get<{ data: { id: string }[] }>(
-        `/production-orders?source=packio_job&q=${job.jobNo}`,
+        `/production-orders?source=getpack_job&q=${job.jobNo}`,
       );
       expect(list.data).toHaveLength(1);
       const mo = await get<{ materials: { requiredQty: string }[] }>(
         `/production-orders/${list.data[0]!.id}`,
       );
       expect(mo).toMatchObject({
-        source: 'packio_job',
+        source: 'getpack_job',
         status: 'planned',
         job: { id: job.publicId, code: job.jobNo },
         quantity: `${job.quantityOrdered}.000`,
       });
       expect(mo.materials).toEqual([
-        expect.objectContaining({ item: expect.objectContaining({ id: board.id }), origin: 'packio_spec' }),
+        expect.objectContaining({ item: expect.objectContaining({ id: board.id }), origin: 'getpack_spec' }),
       ]);
       expect(Number(mo.materials[0]!.requiredQty)).toBeGreaterThan(0);
     } finally {

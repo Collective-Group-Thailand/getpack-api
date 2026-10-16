@@ -1,5 +1,5 @@
 /**
- * The storefront's `home-photos` home section (a `custom` section whose `config` packio-web reads,
+ * The storefront's `home-photos` home section (a `custom` section whose `config` getpack-web reads,
  * `features/customer/home/content.server.ts`): every photo on the home page, each `{ url, alt, caption }`
  * with Thai / English text. Shape: `{ hero, mosaic: [5], process: { sample, packing }, quality,
  * templates: { <style code>: photo }, categories: { <product category code>: photo } }`.
@@ -32,7 +32,7 @@ export interface ManifestAsset {
   captionEn?: string;
   /** For `template-<name>` positions: the style code the photo shows. */
   styleCode?: string;
-  /** Where the photo comes from (`pexels`, `unsplash`, `packio`; `interim-unverified` until checked). */
+  /** Where the photo comes from (`pexels`, `unsplash`, `getpack`; `interim-unverified` until checked). */
   source?: string;
 }
 

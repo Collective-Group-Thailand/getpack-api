@@ -1,6 +1,6 @@
 /**
  * `pnpm styles:import <file> [--recipes] [--confirm] [--as <staff e-mail>]` (U3.B1, D-242) — imports the style master
- * file (`docs/design-tool/style-library-master.json`) or, with `--recipes`, a `@packio/dieline` recipe bundle. Prints
+ * file (`docs/design-tool/style-library-master.json`) or, with `--recipes`, a `@getpack/dieline` recipe bundle. Prints
  * the diff and writes nothing unless `--confirm`; the same file twice is a no-op. Changes to published bases or
  * variants are held for the `style_library_change` approval (Prepress, then Marketing). `--as` names the staff
  * member recorded as the requester; they need `styles.import`.

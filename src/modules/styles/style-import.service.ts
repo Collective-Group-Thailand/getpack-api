@@ -28,7 +28,7 @@ export const STYLE_IMPORT_SUBJECT = 'style_import_run';
 const BULK = { timeout: 120_000 };
 
 /**
- * Master product types → the Packio product type they are sold as (catalogue codes, D-100). Courier and bubble
+ * Master product types → the getpack product type they are sold as (catalogue codes, D-100). Courier and bubble
  * mailers are flexible packaging, a shrink sleeve is a label (D-407; finding S2 closed).
  */
 export const PRODUCT_TYPE_OF: Record<string, string> = {

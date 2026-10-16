@@ -1,7 +1,7 @@
 import { convertNumberFloat, phpFloatval } from '../../engine/php';
 
 /**
- * The factory's margin on its cost — part of the buy price Packio pays (D-042), never Packio's markup.
+ * The factory's margin on its cost — part of the buy price getpack pays (D-042), never getpack's markup.
  * Port of `A/CalculateCost::calMargin` (legacy `A/CalculateCost.php:2178-2225`, compute id 2) followed
  * by `Object/Margin::calculate` (`Object/Margin.php:65-110`), which recomputes the sale price.
  */

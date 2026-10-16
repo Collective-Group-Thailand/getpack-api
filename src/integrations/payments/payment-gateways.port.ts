@@ -10,7 +10,7 @@ export const SCB_GATEWAY = Symbol('SCB_GATEWAY');
 
 export interface QrPaymentRequest {
   kind: 'qr30' | 'qr_cs';
-  /** Packio's payment reference: SCB `ref1` (QR 30) or `invoice` (QR CS); `[A-Z0-9]`, ≤ 20. */
+  /** getpack's payment reference: SCB `ref1` (QR 30) or `invoice` (QR CS); `[A-Z0-9]`, ≤ 20. */
   reference: string;
   amount: string;
   expiresAt: Date;
@@ -106,7 +106,7 @@ export interface SlipCheckRequest {
   fileName: string;
   amount: string;
   transferredAfter: Date;
-  /** Packio's collection accounts; empty = the receiver cannot be checked (never auto-accepted). */
+  /** getpack's collection accounts; empty = the receiver cannot be checked (never auto-accepted). */
   receivers: SlipReceiver[];
 }
 

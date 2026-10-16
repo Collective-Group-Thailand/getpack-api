@@ -11,7 +11,7 @@ import { type LabelSheet, type LabelTables } from './tables';
  * Loads what the label calculator reads (U-B6 label): the configuration resolved against the platform catalogue
  * (label stock, difficulty, ink colours, coatings, die-cut type, the product type through the catalogue product) and
  * per factory price-list version one option per label print type with its rows in line order (quirk L16) and
- * Packio's sell side (half-open tier bound, `LabelCalculator.php:497,506`). Every version id used is returned.
+ * getpack's sell side (half-open tier bound, `LabelCalculator.php:497,506`). Every version id used is returned.
  */
 
 /** A label configuration as the API receives it: catalogue public ids, millimetres. */

@@ -39,7 +39,7 @@ export class StoreSupportController {
   @Throttle(SUPPORT_THROTTLE)
   @ApiEndpoint({
     id: 'store.support.contact',
-    summary: 'Contact Packio CS',
+    summary: 'Contact getpack CS',
     description:
       'The contact form, for guests and customers: opens a CS ticket on a CS conversation (D-221) — a signed-in ' +
       'customer’s own chat, a new one for a guest, who leaves a name and a phone or e-mail. Answers the ticket ' +

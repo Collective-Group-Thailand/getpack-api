@@ -10,7 +10,7 @@
   two agree on every number below within 1e-6 (`test/unit/folding-b-golden.spec.ts`).
 - Each case prices the layout candidates of one quantity step (the folding geometry is engine A's, validated in
   `docs/pricing-validation-folding.md`) on a complete, **made-up** B price list (no real supplier data, D-005). The
-  figures are the factory side: the cost build-up and the factory price (buy price) of the lot. Packio's sell side is
+  figures are the factory side: the cost build-up and the factory price (buy price) of the lot. getpack's sell side is
   engine A's, unchanged. To sign off, the Pricing owner enters the same rows for a type-B test factory on a Locopack
   staging copy and posts the same request to `POST /api/folding/calculate` (the only route that reaches B), with
   `marginComputeId` 2 at the factory margin, then compares the total cost and the suggested price per piece.

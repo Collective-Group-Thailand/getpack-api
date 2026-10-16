@@ -293,7 +293,7 @@ export class AdminReportRunsController {
     description: 'Signed URL',
     type: DownloadUrlDto,
     example: {
-      url: 'https://packio-files.s3.example.com/…&X-Amz-Expires=300',
+      url: 'https://getpack-files.s3.example.com/…&X-Amz-Expires=300',
       expiresAt: '2026-11-01T07:05:12+07:00',
     },
   })
@@ -333,7 +333,7 @@ export class AdminReportSchedulesController {
     id: 'admin.reports.createSchedule',
     summary: 'Schedule a report',
     description:
-      'Daily, weekly or monthly at a time of day (Asia/Bangkok) with a relative `period` (previous day / week / month, month or year to date). Recipients must be active staff who may read and export the report; they are told through the notification matrix (in-app + e-mail) and download the file in Packio — the data is never attached. Schedules are not edited: deactivate and create a new one.',
+      'Daily, weekly or monthly at a time of day (Asia/Bangkok) with a relative `period` (previous day / week / month, month or year to date). Recipients must be active staff who may read and export the report; they are told through the notification matrix (in-app + e-mail) and download the file in getpack — the data is never attached. Schedules are not edited: deactivate and create a new one.',
     implements: DOCS,
   })
   @ApiBody({

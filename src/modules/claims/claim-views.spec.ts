@@ -66,7 +66,7 @@ const claim = {
 } as unknown as ClaimRow;
 
 describe('claim views', () => {
-  it('never shows the customer what Packio recovers from the factory or the carrier (D-083, D-044)', () => {
+  it('never shows the customer what getpack recovers from the factory or the carrier (D-083, D-044)', () => {
     const view = storeClaimDto(claim);
     expect(view.resolutions.map((r) => r.action)).toEqual(['reproduction_job', 'store_credit']);
     expect(JSON.stringify(view)).not.toContain('1250.00');

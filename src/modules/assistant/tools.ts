@@ -25,7 +25,7 @@ export const TOOL_SPECS: readonly ToolSpec[] = [
   {
     name: 'search_styles',
     description:
-      'Search Packio’s published box styles by words (Thai or English); returns codes, names and starting prices.',
+      'Search getpack’s published box styles by words (Thai or English); returns codes, names and starting prices.',
     inputSchema: obj({ query: { type: 'string', minLength: 1, maxLength: 100 } }, ['query']),
   },
   {
@@ -63,18 +63,18 @@ export const TOOL_SPECS: readonly ToolSpec[] = [
   },
   {
     name: 'lookup_glossary',
-    description: 'Packio’s glossary: the meaning of a packaging term (Thai or English).',
+    description: 'getpack’s glossary: the meaning of a packaging term (Thai or English).',
     inputSchema: obj({ term: { type: 'string', minLength: 1, maxLength: 80 } }, ['term']),
   },
   {
     name: 'search_help',
-    description: 'Search Packio’s own help articles and FAQs (policies, how-to); returns the best passages.',
+    description: 'Search getpack’s own help articles and FAQs (policies, how-to); returns the best passages.',
     inputSchema: obj({ query: { type: 'string', minLength: 1, maxLength: 200 } }, ['query']),
   },
   {
     name: 'create_handoff',
     description:
-      'Hand the conversation to Packio customer service (opens a ticket answered within the D-221 target).',
+      'Hand the conversation to getpack customer service (opens a ticket answered within the D-221 target).',
     inputSchema: obj({ note: { type: 'string', maxLength: 1000 } }, []),
   },
 ];

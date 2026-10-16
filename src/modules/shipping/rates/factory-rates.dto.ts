@@ -18,8 +18,8 @@ import {
 import { MAX_RATES, MONEY, POSTCODE, RATE, SHIPPING_IDS, VERSION_STATUSES } from './customer-rates.dto';
 
 /**
- * Factory shipping payout cards (D-013): what Packio pays a factory for delivering with its own
- * fleet. Packio drafts, the factory accepts or counters per line (D-042 rate-card flow, chosen at
+ * Factory shipping payout cards (D-013): what getpack pays a factory for delivering with its own
+ * fleet. getpack drafts, the factory accepts or counters per line (D-042 rate-card flow, chosen at
  * B2.4 planning). Buy prices: staff need `factory_buy_prices.read` (D-141); a factory sees only its own.
  */
 
@@ -226,7 +226,7 @@ export class FactoryRateCardDto {
   @ApiProperty({
     type: FactoryRateVersionSummaryDto,
     nullable: true,
-    description: 'The draft or the version awaiting the factory (a factory never sees Packio’s drafts)',
+    description: 'The draft or the version awaiting the factory (a factory never sees getpack’s drafts)',
   })
   open!: FactoryRateVersionSummaryDto | null;
 }
@@ -280,7 +280,7 @@ export class ShippingCounterAnswerDto {
     enumName: 'ShippingCounterAnswer',
     example: 'accept_counter',
     description:
-      '`accept_counter` takes the factory’s values; `keep` sends Packio’s value back for an answer',
+      '`accept_counter` takes the factory’s values; `keep` sends getpack’s value back for an answer',
   })
   @IsIn(COUNTER_ANSWERS)
   decision!: (typeof COUNTER_ANSWERS)[number];
