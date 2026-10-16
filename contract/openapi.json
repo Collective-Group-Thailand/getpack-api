@@ -113033,7 +113033,7 @@
     "contact": {},
     "description": "Packio — Your Packaging Production Partner, operated by Collective Group (Thailand).\nRules: `docs/contract/api-conventions.md` (shared with packio-web).\n\n- **Surfaces:** `/v1/auth`, `/v1/store` (customer), `/v1/admin` (staff), `/v1/partner` (factories), `/v1/b2b` (company API clients, D-291), `/webhooks`. A token is accepted only on its own audience's prefix.\n- **Money:** decimal strings with exactly 2 decimals (`\"1234.50\"`) plus `currency: \"THB\"` on the object; never JSON numbers. Clients never compute prices.\n- **Dates:** ISO 8601 with offset, rendered in `Asia/Bangkok` (`2026-09-22T14:05:00+07:00`); date-only fields `YYYY-MM-DD`.\n- **IDs:** uuid only; business keys (`orderCode`) are separate fields.\n- **Errors:** RFC 9457 `application/problem+json` with a stable `code`; `title`/`detail` localised by `Accept-Language` (`th` default, `en`).\n- **Lists:** `?page&perPage(≤100)&sort&order&q` → `{ data, meta: { page, perPage, total } }`; feeds use `?cursor&limit` → `{ data, meta: { nextCursor } }`.\n- **Idempotency:** irreversible POSTs require `Idempotency-Key` (uuid); replays within 24 h return the original response.\n- **Concurrency:** editable resources return `ETag`; updates send `If-Match` (412 `concurrency.stale`).\n- **Files:** presign → PUT to the returned URL → reference the `fileId`.",
     "title": "Packio API",
-    "version": "0.65.0",
+    "version": "0.66.0",
     "x-packio-dieline": {
       "bundleSha256": "f565899b3b1915ef0d0467f8afa903c126dc8e80995319e944973fbb17ce0521",
       "package": "@packio/dieline",
@@ -215791,6 +215791,224 @@
       }
     },
     "/v1/admin/customers/{customerId}/addresses/{addressId}": {
+      "get": {
+        "description": "With its `ETag`, which `admin.customers.updateAddress` needs as `If-Match` (D-142, D-424).\n\nImplements: D-142, D-174, D-092.",
+        "operationId": "admin.customers.getAddress",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "customerId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "addressId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "id": "0192f3a0-7c1e-7d2a-9b1f-0000000c0002",
+                  "isDefault": true,
+                  "kind": "delivery",
+                  "label": "สำนักงาน",
+                  "lat": 13.7563,
+                  "line1": "99/9 ถนนตัวอย่าง",
+                  "line2": "อาคารทดสอบ ชั้น 9",
+                  "lng": 100.5018,
+                  "phone": "+66810001234",
+                  "postcode": "10110",
+                  "province": {
+                    "id": "0192f3a0-7c1e-7d2a-9b1f-0000000c0004",
+                    "nameEn": "Bangkok",
+                    "nameTh": "กรุงเทพมหานคร"
+                  },
+                  "recipientName": "สมชาย ทดสอบ",
+                  "subdistrict": {
+                    "id": "0192f3a0-7c1e-7d2a-9b1f-0000000c0005",
+                    "nameEn": "Sample",
+                    "nameTh": "แขวงตัวอย่าง"
+                  },
+                  "updatedAt": "2026-10-01T10:00:00+07:00"
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/AddressDto"
+                }
+              }
+            },
+            "description": "Address",
+            "headers": {
+              "ETag": {
+                "$ref": "#/components/headers/ETag"
+              },
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.unauthenticated": {
+                    "$ref": "#/components/examples/problem.auth.unauthenticated"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.unauthenticated`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.forbidden": {
+                    "$ref": "#/components/examples/problem.auth.forbidden"
+                  },
+                  "auth.wrong_audience": {
+                    "$ref": "#/components/examples/problem.auth.wrong_audience"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.forbidden`, `auth.wrong_audience`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "404": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.not_found": {
+                    "$ref": "#/components/examples/problem.http.not_found"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.not_found`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "validation.failed": {
+                    "$ref": "#/components/examples/problem.validation.failed"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `validation.failed`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "staff": []
+          }
+        ],
+        "summary": "Get one of a customer's addresses",
+        "tags": [
+          "admin.customers"
+        ],
+        "x-required-permissions": [
+          "customers.read"
+        ]
+      },
       "patch": {
         "description": "Guarded by `If-Match`; orders keep their snapshot (D-142).\n\nImplements: D-142, D-174, D-092.",
         "operationId": "admin.customers.updateAddress",

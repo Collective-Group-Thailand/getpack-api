@@ -15,6 +15,14 @@ describe('admin menu (B1.3, U-B0.3)', () => {
     expect(keys(['orders.read'])).not.toContain('finance');
   });
 
+  it('shows pricing and policies to holders of any one of its permissions (D-424)', () => {
+    expect(keys(['margin.read'])).toContain('pricing');
+    expect(keys(['guarantee_policies.read'])).toContain('pricing');
+    expect(keys(['payment_schedule_templates.manage'])).toContain('pricing');
+    expect(keys(['orders.read'])).not.toContain('pricing');
+    expect(keys(['advisory.read'])).toContain('advisor');
+  });
+
   it('gates every entry on a permission of the catalogue, with unique keys and paths', () => {
     const known = new Set(PERMISSIONS.map((p) => p.key));
     for (const entry of ADMIN_MENU) {

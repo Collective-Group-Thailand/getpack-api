@@ -118,9 +118,24 @@ describe('customers (e2e, B3.1)', () => {
     expect(again.body).toMatchObject({ created: false, customer: { id: created.body.customer.id } });
 
     const id = created.body.customer.id as string;
-    await as(ctx, cs).post(`/v1/admin/customers/${id}/addresses`, address()).expect(201);
+    const added = await as(ctx, cs).post(`/v1/admin/customers/${id}/addresses`, address()).expect(201);
     const listed = await as(ctx, cs).get(`/v1/admin/customers/${id}/addresses`).expect(200);
     expect(listed.body.meta.total).toBe(1);
+    // D-424: CS reads one address for its ETag, then corrects it under If-Match.
+    const one = await as(ctx, cs).get(`/v1/admin/customers/${id}/addresses/${added.body.id}`).expect(200);
+    expect(one.headers.etag).toBe(added.headers.etag);
+    await as(ctx, cs)
+      .patch(`/v1/admin/customers/${id}/addresses/${added.body.id}`, { label: 'โกดังใหม่' })
+      .expect(428);
+    const patched = await as(ctx, cs)
+      .patch(`/v1/admin/customers/${id}/addresses/${added.body.id}`, { label: 'โกดังใหม่' })
+      .set('If-Match', one.headers.etag as string)
+      .expect(200);
+    expect(patched.body.label).toBe('โกดังใหม่');
+    await as(ctx, cs)
+      .patch(`/v1/admin/customers/${id}/addresses/${added.body.id}`, { label: 'อีกครั้ง' })
+      .set('If-Match', one.headers.etag as string)
+      .expect(412);
     const found = await as(ctx, cs).get(
       `/v1/admin/customers?q=${encodeURIComponent(created.body.customer.phone)}`,
     );

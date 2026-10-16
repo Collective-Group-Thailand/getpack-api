@@ -3,6 +3,13 @@
 Contract-facing changes per release. The contract itself is `contract/openapi.json`; mappings for `packio-web` are in
 `docs/contract-requests-triage.md`.
 
+## v0.66.0 — Admin round 6: sales and finance remainder
+
+Decision D-424. Additive. `GET /v1/admin/me` `menu[]` gains `pricing` (`/admin/pricing`; any of `margin.read`,
+`payment_schedule_templates.manage`, `guarantee_policies.read`) and `advisor` (`/admin/advisor`; `advisory.read`).
+New read `admin.customers.getAddress` (`GET /v1/admin/customers/{customerId}/addresses/{addressId}`, `customers.read`)
+returns the address with its `ETag` for `admin.customers.updateAddress`.
+
 ## v0.65.0 — Sales agent programme
 
 Decisions D-416 – D-423. Additive.
