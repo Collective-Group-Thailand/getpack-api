@@ -1,15 +1,15 @@
 # U3 — Style Library at scale (backend)
 
-> อ่าน `CLAUDE.md`, `docs/prompts/00-master-plan.md`, `docs/decisions.md`, `docs/contract/api-conventions.md`, `docs/benchmark/kumopack-2026-09-29.md` และ `packio-web/docs/design-tool/style-library-program.md` (คัดลอกไว้ที่ `docs/design-tool/` ของ repo นี้ด้วย) ก่อนทุก session
-> ลำดับ: หลัง U-B0 · ทำขนานกับ packio-web U3 ได้ โดย contract นำหน้า · **ทุก session เริ่มด้วย gap analysis** · ทุก session ที่แก้ contract ต้อง bump + tag
+> อ่าน `CLAUDE.md`, `docs/prompts/00-master-plan.md`, `docs/decisions.md`, `docs/contract/api-conventions.md`, `docs/benchmark/kumopack-2026-09-29.md` และ `getpack-web/docs/design-tool/style-library-program.md` (คัดลอกไว้ที่ `docs/design-tool/` ของ repo นี้ด้วย) ก่อนทุก session
+> ลำดับ: หลัง U-B0 · ทำขนานกับ getpack-web U3 ได้ โดย contract นำหน้า · **ทุก session เริ่มด้วย gap analysis** · ทุก session ที่แก้ contract ต้อง bump + tag
 
 ---
 
 ## Goal
-Serve a library of **105 base structures / 960 structural variants** (`style-library-master.json`) where each published variant is (1) buildable by `@packio/dieline`, (2) priced by an instant calculator or routed to RFQ, and (3) makeable by at least one active partner. The API is the authority on what is published.
+Serve a library of **105 base structures / 960 structural variants** (`style-library-master.json`) where each published variant is (1) buildable by `@getpack/dieline`, (2) priced by an instant calculator or routed to RFQ, and (3) makeable by at least one active partner. The API is the authority on what is published.
 
 ## U3.B1 — Catalogue model for recipes and variants
-1. Tables (additive): `style_bases` (code `PK-…`, family, category, product type, names th/en, construction text, reference code + `reference_verified` bool, wave, status), `style_recipes` (versioned JSON recipe from `@packio/dieline`, schema version, checksum, approved_by/at), `style_variants` (base, option values as a normalised key e.g. `top=reverse_tuck;bottom=crash_lock;hang=euro_slot;window=none`, generated code suffix, publishable flag, reasons when not publishable), `style_assets` (thumbnail 2D/3D, dieline SVG, manifest; S3 keys + hashes), `style_synonyms` (th/en search terms), `style_use_cases`.
+1. Tables (additive): `style_bases` (code `PK-…`, family, category, product type, names th/en, construction text, reference code + `reference_verified` bool, wave, status), `style_recipes` (versioned JSON recipe from `@getpack/dieline`, schema version, checksum, approved_by/at), `style_variants` (base, option values as a normalised key e.g. `top=reverse_tuck;bottom=crash_lock;hang=euro_slot;window=none`, generated code suffix, publishable flag, reasons when not publishable), `style_assets` (thumbnail 2D/3D, dieline SVG, manifest; S3 keys + hashes), `style_synonyms` (th/en search terms), `style_use_cases`.
 2. Import command `pnpm styles:import <path-to-master.json | recipes bundle>` — idempotent, versioned, dry-run diff, approval required for changes to published variants (approval matrix engine).
 3. Store options as data; never create a column per option.
 
@@ -30,7 +30,7 @@ Serve a library of **105 base structures / 960 structural variants** (`style-lib
 3. Variants whose calculator is not signed yet return `rfq_required` with the reason; the RFQ is pre-filled with the style code and options.
 
 ## U3.B5 — Drawing & asset service
-1. Extend the drawing service to build any recipe via `@packio/dieline` (pinned version), produce SVG / PDF / DXF, the dieline-derived quantities (U3.B4), and 2D/3D thumbnails through a worker job (headless GL or pre-rendered by the web package pipeline — choose in an ADR).
+1. Extend the drawing service to build any recipe via `@getpack/dieline` (pinned version), produce SVG / PDF / DXF, the dieline-derived quantities (U3.B4), and 2D/3D thumbnails through a worker job (headless GL or pre-rendered by the web package pipeline — choose in an ADR).
 2. Cache by (recipe version, dims, material) hash; invalidate on recipe version change.
 3. Free, rate-limited dieline download (per U2.6) for any publishable variant.
 

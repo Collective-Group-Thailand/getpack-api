@@ -29,7 +29,7 @@ export interface DevPouch {
  * An obviously fake pouch setup for `pnpm dev` and the tests (D-005, U-B6 pouch): `[DEV]` names, made-up prices. It
  * extends the dev folding factory F9001 (one launch factory serves every type, D-101) with a tier-A `flexible_pouch`
  * price list for one roll-fed digital print type, a stand-up and a 3-side-seal pattern, a laminated film, a CMYK print
- * set, a zipper and a tear notch, capacity and Packio sell margins, so a stand-up pouch can be priced end to end.
+ * set, a zipper and a tear notch, capacity and getpack sell margins, so a stand-up pouch can be priced end to end.
  * Idempotent. Needs `seedDevFolding` (factory F9001, ink group `dev-process`).
  */
 export async function seedDevPouch(tx: Tx): Promise<{ created: boolean; fixture: DevPouch }> {
@@ -232,7 +232,7 @@ export async function seedDevPouch(tx: Tx): Promise<{ created: boolean; fixture:
     data: { lineCount, contentSha256, status: 'approved', decidedAt: new Date() },
   });
 
-  // Packio's sell side for pouches (fake values; D-063 admins set the real ones). No structure fee.
+  // getpack's sell side for pouches (fake values; D-063 admins set the real ones). No structure fee.
   const sellVersion = { versionNo: 1, effectiveFrom: DEV_EFFECTIVE_FROM, reason: 'dev seed (fake)' };
   const margin = await tx.sellMarginTable.create({
     data: {

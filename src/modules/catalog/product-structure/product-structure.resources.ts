@@ -56,7 +56,7 @@ export const productCategories = defineResource({
   label: 'product category',
   labelPlural: 'product categories',
   implements: ['D-030', 'D-100'],
-  note: 'Packio reporting categories (they replace the legacy PH1–PH6 hierarchy, D-030).',
+  note: 'getpack reporting categories (they replace the legacy PH1–PH6 hierarchy, D-030).',
   read: 'catalog.read',
   manage: 'catalog.manage',
   delegate: (tx) => tx.productCategory,

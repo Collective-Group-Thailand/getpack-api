@@ -26,7 +26,7 @@ export class FactoryCountersDto {
   @ApiProperty({ type: 'integer', example: 0 })
   onHold!: number;
 
-  @ApiProperty({ type: 'integer', example: 0, description: 'Packio inspections planned (D-076)' })
+  @ApiProperty({ type: 'integer', example: 0, description: 'getpack inspections planned (D-076)' })
   inspectionsPlanned!: number;
 
   @ApiProperty({ type: 'integer', example: 1, description: 'Sample (mock-up) jobs to accept (D-294)' })

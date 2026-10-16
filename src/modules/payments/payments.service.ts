@@ -255,12 +255,12 @@ export class PaymentsService implements OnModuleInit {
         providerPayload: { providerQrId: qr.providerQrId } as Prisma.InputJsonValue,
       };
     }
-    const api = this.config.get('PUBLIC_API_BASE_URL') ?? 'https://api.packio.invalid';
-    const web = this.config.get('STOREFRONT_BASE_URL') ?? 'https://www.packio.invalid';
+    const api = this.config.get('PUBLIC_API_BASE_URL') ?? 'https://api.getpack.invalid';
+    const web = this.config.get('STOREFRONT_BASE_URL') ?? 'https://www.getpack.invalid';
     const session = await this.twoc2p.paymentToken({
       reference: payment.referenceCode,
       amount,
-      description: `Packio ${payment.referenceCode}`,
+      description: `getpack ${payment.referenceCode}`,
       channel: method === 'card_2c2p' ? 'card' : 'online_banking',
       expiresAt,
       frontendReturnUrl: `${web}/payments/${payment.publicId}/return`,
@@ -537,7 +537,7 @@ export class PaymentsService implements OnModuleInit {
 
   /**
    * A bank-transfer slip for a slip payment: verified automatically when `payments.slip_verify` is on and
-   * Packio's collection accounts are set (`payments.slip_receiver_accounts`); a pass is accepted at once, a
+   * getpack's collection accounts are set (`payments.slip_receiver_accounts`); a pass is accepted at once, a
    * duplicate is rejected, anything else goes to the Finance queue with a 4-business-hour SLA.
    */
   async uploadSlip(
@@ -918,7 +918,7 @@ export class PaymentsService implements OnModuleInit {
     return out;
   }
 
-  /** Packio's collection accounts a bank-transfer slip must pay into (D-061); empty until Finance sets them. */
+  /** getpack's collection accounts a bank-transfer slip must pay into (D-061); empty until Finance sets them. */
   async slipReceiverAccounts(at = new Date()) {
     return this.receivers(at);
   }

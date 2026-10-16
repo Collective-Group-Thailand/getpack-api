@@ -122,7 +122,7 @@ export class StoreThreadDto {
   @ApiProperty({ type: String, nullable: true, example: 'คำสั่งซื้อของคุณกำลังผลิตค่ะ' })
   lastMessage!: string | null;
 
-  @ApiProperty({ type: 'integer', example: 1, description: 'Packio’s messages I have not read' })
+  @ApiProperty({ type: 'integer', example: 1, description: 'getpack’s messages I have not read' })
   unread!: number;
 
   @ApiProperty({
@@ -141,9 +141,9 @@ export class StoreThreadDto {
     format: 'date-time',
     nullable: true,
     example: '2026-10-20T10:06:00+07:00',
-    description: 'When Packio last read the thread (read receipt)',
+    description: 'When getpack last read the thread (read receipt)',
   })
-  readByPackioAt!: string | null;
+  readByGetpackAt!: string | null;
 }
 
 export const STORE_THREAD_EXAMPLE: StoreThreadDto = {
@@ -156,7 +156,7 @@ export const STORE_THREAD_EXAMPLE: StoreThreadDto = {
   unread: 1,
   replyChannel: 'web',
   replyChannelChosen: false,
-  readByPackioAt: '2026-10-20T10:06:00+07:00',
+  readByGetpackAt: '2026-10-20T10:06:00+07:00',
 };
 
 export class SentDto {

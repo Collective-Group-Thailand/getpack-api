@@ -52,7 +52,7 @@ const anonymousQuery = ApiQuery({
 });
 const PDF_EXAMPLE = {
   status: 'ready',
-  url: 'https://packio-files.s3.example.com/…&X-Amz-Expires=300',
+  url: 'https://getpack-files.s3.example.com/…&X-Amz-Expires=300',
   expiresAt: '2026-10-01T10:05:00+07:00',
 };
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
@@ -441,7 +441,7 @@ export class StoreSavedQuotesController {
     id: 'store.quotes.requestPdf',
     summary: 'Request the quotation PDF',
     description:
-      'Issues the QT number and renders the PDF in the name of the issuing entity under the Packio brand ' +
+      'Issues the QT number and renders the PDF in the name of the issuing entity under the getpack brand ' +
       '(D-010, D-092) in the background; poll `GET /v1/store/quotes/{quoteId}/pdf`. Signed-in owners only.',
     implements: [...DECISIONS, 'D-092'],
   })

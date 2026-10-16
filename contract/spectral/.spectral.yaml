@@ -1,4 +1,4 @@
-# Packio contract ruleset — `pnpm contract:lint` (docs/contract/api-conventions.md §5).
+# getpack contract ruleset — `pnpm contract:lint` (docs/contract/api-conventions.md §5).
 # Runs on the generated contract/openapi.json; any warning fails CI (--fail-severity warn).
 extends: [[spectral:oas, recommended]]
 functionsDir: ./functions
@@ -23,7 +23,7 @@ rules:
   oas3-valid-schema-example: error
 
   # --- operations ----------------------------------------------------------------------------
-  packio-operation-id:
+  getpack-operation-id:
     description: operationId is `<surface>.<resource>.<action>` (e.g. admin.orders.approveSlip).
     severity: error
     given: $.paths[*][get,put,post,delete,patch]
@@ -33,7 +33,7 @@ rules:
       functionOptions:
         match: '^(auth|store|admin|partner|b2b|webhooks|ops)\.[a-z][A-Za-z0-9]*\.[a-z][A-Za-z0-9]*$'
 
-  packio-operation-summary:
+  getpack-operation-summary:
     description: Every operation has a one-line summary.
     severity: error
     given: $.paths[*][get,put,post,delete,patch]
@@ -41,7 +41,7 @@ rules:
       field: summary
       function: truthy
 
-  packio-operation-implements:
+  getpack-operation-implements:
     description: The description cites the decision (D-###) or ADR (ADR-####) the operation implements.
     severity: error
     given: $.paths[*][get,put,post,delete,patch]
@@ -51,7 +51,7 @@ rules:
       functionOptions:
         match: '(D-\d{3}|ADR-\d{4})'
 
-  packio-operation-surface-tag:
+  getpack-operation-surface-tag:
     description: Exactly one tag, prefixed by the surface (store., admin., partner., auth., webhooks., ops.).
     severity: error
     given: $.paths[*][get,put,post,delete,patch]
@@ -67,7 +67,7 @@ rules:
             type: string
             pattern: '^(auth|store|admin|partner|b2b|webhooks|ops)\.[a-z][A-Za-z0-9]*$'
 
-  packio-operation-security-declared:
+  getpack-operation-security-declared:
     description: Every operation declares `security` (an empty list means public, on purpose).
     severity: error
     given: $.paths[*][get,put,post,delete,patch]
@@ -75,7 +75,7 @@ rules:
       field: security
       function: defined
 
-  packio-surface-security:
+  getpack-surface-security:
     description: /v1/store, /v1/admin and /v1/partner operations use their audience's bearer scheme.
     message: '{{error}}'
     resolved: false
@@ -84,7 +84,7 @@ rules:
     then:
       function: surfaceSecurity
 
-  packio-response-set:
+  getpack-response-set:
     description: 2xx + 500, a 4xx set (401/403 when secured, 400/422 with a body), all errors as problem+json.
     message: '{{error}}'
     resolved: false
@@ -93,7 +93,7 @@ rules:
     then:
       function: responseSet
 
-  packio-status-by-kind:
+  getpack-status-by-kind:
     description: If-Match ⇒ 412, Idempotency-Key ⇒ 409, 202 ⇒ the polling operation is named (@ApiAsync).
     message: '{{error}}'
     resolved: false
@@ -103,7 +103,7 @@ rules:
       function: statusByKind
 
   # --- examples ------------------------------------------------------------------------------
-  packio-response-example:
+  getpack-response-example:
     description: Every response body has an example.
     message: '{{error}}'
     resolved: false
@@ -112,7 +112,7 @@ rules:
     then:
       function: hasExample
 
-  packio-request-example:
+  getpack-request-example:
     description: Every request body has an example.
     message: '{{error}}'
     resolved: false
@@ -121,7 +121,7 @@ rules:
     then:
       function: hasExample
 
-  packio-no-real-personal-data:
+  getpack-no-real-personal-data:
     description: Examples must use obviously fake data (see contract/spectral/README.md).
     message: '{{error}}'
     resolved: false
@@ -131,7 +131,7 @@ rules:
       function: noRealPersonalData
 
   # --- schemas -------------------------------------------------------------------------------
-  packio-no-inline-enum:
+  getpack-no-inline-enum:
     description: Enums are named components (enumName), never inline.
     message: '{{error}}'
     resolved: false
@@ -140,7 +140,7 @@ rules:
     then:
       function: noInlineEnum
 
-  packio-object-shape:
+  getpack-object-shape:
     description: '`type: object` must declare properties, additionalProperties or composition.'
     message: '{{error}}'
     resolved: false
@@ -149,7 +149,7 @@ rules:
     then:
       function: objectShape
 
-  packio-field-formats:
+  getpack-field-formats:
     description: Money fields are decimal strings (never numbers); …At → date-time; …On / …Date → date.
     message: '{{error}}'
     resolved: false
@@ -158,7 +158,7 @@ rules:
     then:
       function: fieldFormats
 
-  packio-no-duplicate-schemas:
+  getpack-no-duplicate-schemas:
     description: Two component schemas must not have the same shape.
     message: '{{error}}'
     resolved: false

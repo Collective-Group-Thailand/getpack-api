@@ -17,8 +17,8 @@ export interface PublicImage {
   etag: string;
 }
 
-/** Brand of every feed item (D-001: Packio is the brand; the seller is Collective Group (Thailand)). */
-const BRAND = 'Packio';
+/** Brand of every feed item (D-001: getpack is the brand; the seller is Collective Group (Thailand)). */
+const BRAND = 'getpack';
 
 const xml = (value: string) =>
   value.replace(

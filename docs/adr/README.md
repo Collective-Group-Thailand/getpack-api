@@ -1,4 +1,4 @@
-# ADRs — packio-api
+# ADRs — getpack-api
 | # | Title | Status |
 |---|---|---|
 | 0001 | PostgreSQL 18 + pgvector | Accepted |
@@ -10,6 +10,6 @@
 | 0007 | [Posting-rule engine](0007-posting-rule-engine.md) | Accepted (B5.1) |
 | 0008 | [Payment schedules: instalment amounts and allocation](0008-payment-schedule-allocation.md) | Accepted (B3.2) |
 | 0009 | [Artwork preflight tooling](0009-artwork-preflight.md) | Accepted (B4.1) |
-| 0010 | [Consuming `@packio/dieline` in the API](0010-dieline-engine-vendoring.md) | Accepted (U3.B4 / U3.B5) |
+| 0010 | [Consuming `@getpack/dieline` in the API](0010-dieline-engine-vendoring.md) | Accepted (U3.B4 / U3.B5) |
 | 0011 | [Studio print file assembled on the server](0011-studio-print-pdf-on-the-server.md) | Accepted (U4.B4) |
 | 0012 | [Assistant model, vendor and data terms](0012-assistant-model-and-data-terms.md) | **Proposed** (U5.B5) — not accepted |

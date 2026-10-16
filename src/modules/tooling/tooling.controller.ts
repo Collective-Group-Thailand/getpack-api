@@ -62,7 +62,7 @@ export class PartnerToolingController {
     id: 'partner.tooling.list',
     summary: 'List my factory’s tooling register',
     description:
-      'The plates and die blocks my factory keeps for Packio orders (D-205, own factory only, D-044), with the last ' +
+      'The plates and die blocks my factory keeps for getpack orders (D-205, own factory only, D-044), with the last ' +
       'use and until when a reorder reuses them without a new charge (D-289).',
     implements: [...DECISIONS, 'D-044'],
   })
@@ -105,7 +105,7 @@ export class PartnerToolingController {
     summary: 'Report a reused tool unusable',
     description:
       'Before accepting a job (status `released`), the factory reports that a plate set or die block the order reuses ' +
-      'cannot be used. Packio absorbs the remake: its buy price as waived in the quotation is paid with the job’s ' +
+      'cannot be used. getpack absorbs the remake: its buy price as waived in the quotation is paid with the job’s ' +
       'goods receipt (the purchase order keeps its snapshot); the customer price does not change (D-205, D-012). The tool is unusable until the remade one ' +
       'is delivered. Once per tool and job.',
     implements: [...DECISIONS, 'D-012'],

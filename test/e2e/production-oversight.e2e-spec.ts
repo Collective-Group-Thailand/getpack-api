@@ -116,7 +116,7 @@ describe('production oversight (e2e, B4.2)', () => {
     expect(failed.body).toMatchObject({ status: 'failed', found: { major: 6 } });
     expect(
       (await as(ctx, partnerManager).get(`/v1/admin/production-jobs/${job.publicId}`).expect(200)).body,
-    ).toMatchObject({ status: 'on_hold', holdReason: 'Packio inspection failed (D-076)' });
+    ).toMatchObject({ status: 'on_hold', holdReason: 'getpack inspection failed (D-076)' });
     await as(ctx, partnerManager)
       .post(`/v1/admin/inspections/${inspection.id}/actions/record`, {
         foundCritical: 0,

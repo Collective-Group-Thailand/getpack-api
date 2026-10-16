@@ -62,7 +62,7 @@ import {
 const DOCS = ['D-022', 'D-093', 'D-164', 'D-166'];
 const WRITE = ['http.bad_request', 'http.malformed_json', 'http.not_found', 'validation.failed'] as const;
 const DOWNLOAD_EXAMPLE = {
-  url: 'https://packio-files.s3.example.com/…&X-Amz-Expires=300',
+  url: 'https://getpack-files.s3.example.com/…&X-Amz-Expires=300',
   expiresAt: '2026-10-27T10:05:00+07:00',
 };
 const runParam = ApiParam({ name: 'runId', format: 'uuid' });
@@ -451,7 +451,7 @@ export class PartnerPayoutsController {
     id: 'partner.payables.payoutStatement',
     summary: 'My payout statement',
     description:
-      'What Packio paid the factory: PV number, net, VAT, withholding (with its 50 ทวิ), retention held and the transfer (D-022, D-164).',
+      'What getpack paid the factory: PV number, net, VAT, withholding (with its 50 ทวิ), retention held and the transfer (D-022, D-164).',
     implements: DOCS,
   })
   @ApiSuccess(200, { description: 'Payouts', type: [PartnerPayoutDto], example: [PARTNER_PAYOUT_EXAMPLE] })
@@ -559,10 +559,10 @@ export class PartnerPayoutsController {
     id: 'partner.payables.statementOfAccount',
     summary: 'My statement of account',
     description:
-      'The factory’s account with Packio between two days (default: this month to today, at most 366 days): the ' +
+      'The factory’s account with getpack between two days (default: this month to today, at most 366 days): the ' +
       'opening balance, every posted entry — goods received, advances applied, payouts, claim deductions, ' +
       'adjustments — with a running balance, and the closing balance. Excluding VAT (booked at payment, §2); a ' +
-      'positive balance is what Packio owes the factory (U-B0.3, D-022, D-083, D-164).',
+      'positive balance is what getpack owes the factory (U-B0.3, D-022, D-083, D-164).',
     implements: DOCS,
   })
   @ApiSuccess(200, {
@@ -594,7 +594,7 @@ export class PartnerPayoutsController {
   @ApiEndpoint({
     id: 'partner.payables.whtCertificatePdf',
     summary: 'Download my 50 ทวิ',
-    description: 'The withholding certificate Packio issued with a payout (§6).',
+    description: 'The withholding certificate getpack issued with a payout (§6).',
     implements: DOCS,
   })
   @ApiSuccess(200, { description: 'Signed URL', type: DownloadUrlDto, example: DOWNLOAD_EXAMPLE })

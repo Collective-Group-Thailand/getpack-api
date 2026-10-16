@@ -1,7 +1,7 @@
-# UAT package — Packio launch (B6.3, D-113)
+# UAT package — getpack launch (B6.3, D-113)
 
-> **Audience:** the UAT team — Packio staff of every role, the launch factory, Finance and the CPA observer.
-> Packio launches publicly once R1 is complete, with no closed beta (D-113). This UAT is the safety net: real people
+> **Audience:** the UAT team — getpack staff of every role, the launch factory, Finance and the CPA observer.
+> getpack launches publicly once R1 is complete, with no closed beta (D-113). This UAT is the safety net: real people
 > run real test orders from end to end (sandbox payments, real documents in a UAT series, payouts to test accounts, a
 > simulated month closed in the GL) before the go / no-go (`docs/LAUNCH-CHECKLIST.md`).
 >
@@ -59,7 +59,7 @@ through `admin.calendar.putHoliday` or the Excel import, each holiday marked wit
 1. The factory proposes a price change (mode b) in the partner zone.
 2. Partner Manager reviews suggestion, basis, deviation and the 90-day impact simulation; counter-proposes, then approves.
 3. A quote saved before the change keeps its snapshot price; a new quote uses the new version.
-4. For a Packio rate card (mode a) the factory accepts the new version (evidence: who, when, IP, user agent — A-114);
+4. For a getpack rate card (mode a) the factory accepts the new version (evidence: who, when, IP, user agent — A-114);
    it applies to new quotes only after acceptance.
 5. A Partner Manager reads the factory's price lines: the read is in the audit log with its purpose (D-044, D-141);
    a CS user cannot read them.
@@ -205,10 +205,10 @@ until a band is set (D-172).
 | Partner Manager | | | | |
 
 ## UAT-13 Milestones, QC, inspection and scorecard
-**Decisions:** D-075, D-076, D-155 · **Actors:** factory operator / QC, Packio inspector · **Automated:** `production-milestones.e2e-spec.ts`, `production-oversight.e2e-spec.ts`
+**Decisions:** D-075, D-076, D-155 · **Actors:** factory operator / QC, getpack inspector · **Automated:** `production-milestones.e2e-spec.ts`, `production-oversight.e2e-spec.ts`
 
 1. Operators post each milestone with quantities and photos (also from a phone with poor connectivity).
-2. QC records pass with photos; an order ≥ THB 300,000 requires a Packio inspection (100 %), the first 3 jobs of the factory too (D-076).
+2. QC records pass with photos; an order ≥ THB 300,000 requires a getpack inspection (100 %), the first 3 jobs of the factory too (D-076).
 3. The monthly scorecard shows on-time acceptance, shipping, QC first pass, claim rate and updates (D-155).
 
 | Role | Name | Result | Date | Evidence / notes |
@@ -371,7 +371,7 @@ until a band is set (D-172).
    production releases. "Changes requested" leads to a new, re-quoted sample.
 3. A reorder of the same spec and artwork at the same factory within 12 months: the plates / die block are waived,
    the quotation shows the waived amount and the tooling reference, the factory's buy price excludes it; the factory
-   reports a tool unusable → Packio absorbs the remake (D-205, D-289, F1).
+   reports a tool unusable → getpack absorbs the remake (D-205, D-289, F1).
 4. **Store credit at checkout (D-196, F3): not implemented** — see `docs/launch/UAT-RUN-2026-10-06.md` D-1. This step
    stays failed until it is built and Finance confirms the posting (D-196 Still open): a customer with store credit
    from a claim pays part of a new order with it, up to the order total.

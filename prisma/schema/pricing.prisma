@@ -94,7 +94,7 @@ enum SalesChannel {
   @@map("sales_channel")
 }
 
-/// Packio's own sell-side pricing (legacy `locopack_margins`, `factory_match_print_type.locopack_*`,
+/// getpack's own sell-side pricing (legacy `locopack_margins`, `factory_match_print_type.locopack_*`,
 /// `SALE_MARGIN_*`), never a factory buy price. Editable by Superadmin / C-Level (D-063).
 /// ux `(product_type_id, coalesce(print_type_id, 0), kind)` is an expression index (migration SQL).
 model SellMarginTable {
@@ -274,7 +274,7 @@ enum CarrierAccountStatus {
   @@map("carrier_account_status")
 }
 
-/// Factory answer to one line of a factory shipping payout card drafted by Packio (D-013, D-042).
+/// Factory answer to one line of a factory shipping payout card drafted by getpack (D-013, D-042).
 enum RateLineAcceptance {
   pending
   accepted
@@ -283,7 +283,7 @@ enum RateLineAcceptance {
   @@map("rate_line_acceptance")
 }
 
-/// What Packio charges the customer for delivery (D-013), normally one card (`default`).
+/// What getpack charges the customer for delivery (D-013), normally one card (`default`).
 model CustomerShippingRateCard {
   id           BigInt   @id(map: "pk_customer_shipping_rate_cards") @default(autoincrement())
   publicId     String   @unique(map: "ux_customer_shipping_rate_cards__public_id") @default(dbgenerated("uuidv7()")) @map("public_id") @db.Uuid
@@ -364,7 +364,7 @@ model CustomerShippingRate {
   @@map("customer_shipping_rates")
 }
 
-/// What Packio pays a factory for delivering with its own fleet (D-013); one card per factory.
+/// What getpack pays a factory for delivering with its own fleet (D-013); one card per factory.
 model FactoryShippingRateCard {
   id          BigInt   @id(map: "pk_factory_shipping_rate_cards") @default(autoincrement())
   publicId    String   @unique(map: "ux_factory_shipping_rate_cards__public_id") @default(dbgenerated("uuidv7()")) @map("public_id") @db.Uuid
@@ -379,7 +379,7 @@ model FactoryShippingRateCard {
   @@map("factory_shipping_rate_cards")
 }
 
-/// Packio drafts (`draft`), sends it to the factory (`pending_acceptance`), the factory accepts or
+/// getpack drafts (`draft`), sends it to the factory (`pending_acceptance`), the factory accepts or
 /// counters per line, and the version is `approved` once every line is accepted (D-013, D-042).
 model FactoryShippingRateCardVersion {
   id                  BigInt              @id(map: "pk_factory_shipping_rate_card_versions") @default(autoincrement())
@@ -451,7 +451,7 @@ model FactoryShippingRate {
   @@map("factory_shipping_rates")
 }
 
-/// Delivery methods: the factory's own fleet (default, D-013) and Packio-booked carriers used only
+/// Delivery methods: the factory's own fleet (default, D-013) and getpack-booked carriers used only
 /// as fallback where a factory cannot serve a zone (D-114). Carriers are added as adapters.
 model Carrier {
   id          BigInt              @id(map: "pk_carriers") @default(autoincrement())
@@ -476,7 +476,7 @@ model Carrier {
   @@map("carriers")
 }
 
-/// Packio's own account with a carrier, per entity (D-005); credentials live in Secrets Manager and
+/// getpack's own account with a carrier, per entity (D-005); credentials live in Secrets Manager and
 /// only their reference is stored.
 model CarrierAccount {
   id                   BigInt               @id(map: "pk_carrier_accounts") @default(autoincrement())
@@ -943,7 +943,7 @@ model RfqMessage {
 }
 
 /**
- * Packio asks a factory for its buy price per tier; the factory never sees the sell price (D-044).
+ * getpack asks a factory for its buy price per tier; the factory never sees the sell price (D-044).
  */
 model RfqFactoryConsultation {
   id            BigInt             @id(map: "pk_rfq_factory_consultations") @default(autoincrement())
@@ -1046,7 +1046,7 @@ model UnmetDemandReason {
 }
 
 /**
- * Demand Packio could not serve (D-102): banded, no PII; source of the partner prospectus (B6).
+ * Demand getpack could not serve (D-102): banded, no PII; source of the partner prospectus (B6).
  */
 model UnmetDemandRecord {
   id             BigInt            @id(map: "pk_unmet_demand_records") @default(autoincrement())

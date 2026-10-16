@@ -16,7 +16,7 @@
   compares the price per piece **before delivery** (`per_pcs`) of each tier.
 - Known, intended differences from Locopack (port map `docs/legacy/05-standard-product-port-map.md` §9): the tier price
   is the goods price — delivery is its own quote line (D-013), so legacy's delivery per piece (at the tier minimum or
-  10 000) is not in it and the tier merging (`sortPrices`) compares goods prices; Packio's `standard_product` sell table
+  10 000) is not in it and the tier merging (`sortPrices`) compares goods prices; getpack's `standard_product` sell table
   (margin by quantity, fix cost per piece, design fee) and the dated VAT rate instead of `locopack_margin` /
   `locopack_fix_cost` and `SALE_MARGIN_VAT`; a quantity outside every tier, a missing margin or a missing price line
   refuses the factory instead of failing the request; several factories may price one SKU.
@@ -543,7 +543,7 @@ Tiers of F1:std: 1–999 → 4.29
 
 </details>
 
-## 10-margin-by-quantity — Packio margin lines by quantity: 35 % below 1,000, 28 % from 1,000
+## 10-margin-by-quantity — getpack margin lines by quantity: 35 % below 1,000, 28 % from 1,000
 
 Tiers of F1:std: 100–499 → 4.95 · 500–999 → 4.46 · 999–99999 → 4.12
 

@@ -302,7 +302,7 @@ describe('shipping rate cards (e2e, B2.4)', () => {
     await as('logistics').delete(`${base}/versions/${draft.body.id}`).expect(204);
   });
 
-  it('runs a factory payout card: Packio drafts, the factory counters, Packio settles (D-013, D-042)', async () => {
+  it('runs a factory payout card: getpack drafts, the factory counters, getpack settles (D-013, D-042)', async () => {
     const created = await as('partner-manager')
       .post('/v1/admin/factories', {
         legalName: `บริษัท โรงงานขนส่ง ${run} จำกัด`,
@@ -356,7 +356,7 @@ describe('shipping rate cards (e2e, B2.4)', () => {
     await as('partner-manager')
       .post(`${admin}/versions`, { effectiveFrom: new Date().toISOString(), reason: 'second', rates: [] })
       .expect(409);
-    // A factory never sees Packio's drafts.
+    // A factory never sees getpack's drafts.
     await as('owner').get(`${partner}/versions/${draft.body.id}`).expect(404);
 
     const sent = await as('partner-manager')
@@ -398,7 +398,7 @@ describe('shipping rate cards (e2e, B2.4)', () => {
       .get(`/v1/admin/factories/${factoryId}/shipping-rate-card/versions/${draft.body.id}/suggestions`)
       .expect(403);
 
-    // Packio keeps its value: the line goes back to the factory, which then accepts the rest.
+    // getpack keeps its value: the line goes back to the factory, which then accepts the rest.
     await as('partner-manager')
       .post(`${admin}/versions/${draft.body.id}/actions/answer-counters`, {
         lines: [{ rateId: byZone(zoneB.code).id, decision: 'keep' }],
@@ -434,7 +434,7 @@ describe('shipping rate cards (e2e, B2.4)', () => {
     expect(audits).toBeGreaterThan(0);
   });
 
-  it('enables a fallback carrier only with a Packio account and stores its callbacks once (D-114)', async () => {
+  it('enables a fallback carrier only with a getpack account and stores its callbacks once (D-114)', async () => {
     const base = '/v1/admin/shipping/carriers';
     const list = await as('logistics').get(base).expect(200);
     expect(
@@ -450,13 +450,13 @@ describe('shipping rate cards (e2e, B2.4)', () => {
       });
     const account = await as('superadmin')
       .post(`${base}/flash_express/accounts`, {
-        label: 'Packio Flash sandbox (fake)',
-        credentialsSecretRef: 'packio/test/flash',
+        label: 'getpack Flash sandbox (fake)',
+        credentialsSecretRef: 'getpack/test/flash',
         sandbox: true,
       })
       .expect(201);
     expect(account.body).toMatchObject({ active: true, sandbox: true });
-    expect(JSON.stringify(account.body)).not.toContain('packio/test/flash');
+    expect(JSON.stringify(account.body)).not.toContain('getpack/test/flash');
     const enabled = await as('superadmin').post(`${base}/flash_express/actions/enable`, {}).expect(200);
     expect(enabled.body.enabled).toBe(true);
     const quote = await as('superadmin')

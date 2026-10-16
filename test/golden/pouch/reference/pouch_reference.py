@@ -1,10 +1,10 @@
 # Independent transcription of legacy PouchCalculator (legacy/locopack-web/app/Models/PouchCalculator.php) for the
 # U-B6 pouch golden cases. Written from the PHP, statement by statement and in its order of operations, NOT from the
-# TypeScript port. Python floats are IEEE doubles like PHP's. Packio deviations from legacy (port map
-# docs/legacy/05-pouch-port-map.md §9) are applied where the port applies them and marked "PACKIO":
+# TypeScript port. Python floats are IEEE doubles like PHP's. getpack deviations from legacy (port map
+# docs/legacy/05-pouch-port-map.md §9) are applied where the port applies them and marked "GETPACK":
 #   - a quantity below the factory's minimum is refused (legacy raised it, recheckMinAmount:583-594);
 #   - a missing row refuses that option or quantity instead of failing the request;
-#   - Packio's sell table and the dated VAT rate replace locopack_margins / the 1.07 literal;
+#   - getpack's sell table and the dated VAT rate replace locopack_margins / the 1.07 literal;
 #   - delivery is a separate quote line (calculateDeliveryPrice is not part of the per-piece price).
 import math
 from phpnum import php_round
@@ -58,7 +58,7 @@ def calculate_dimension(formula, size, t, min_dl):  # :557-581
     return dict(dl=dl, dw=dw, sqcm=sqcm, calDl=cal_dl, calSqcm=cal_sqcm)
 
 
-def sell_target(sell, qty, price):  # shared sell.ts tier (Packio sell table), fallback
+def sell_target(sell, qty, price):  # shared sell.ts tier (getpack sell table), fallback
     for l in sell['marginLines']:
         if ((l['qtyMin'] is None or l['qtyMin'] <= qty) and (l['qtyMax'] is None or l['qtyMax'] >= qty)
                 and (l['priceMin'] is None or l['priceMin'] <= price) and (l['priceMax'] is None or l['priceMax'] > price)):
@@ -70,7 +70,7 @@ def sell_target(sell, qty, price):  # shared sell.ts tier (Packio sell table), f
 
 def price_step(cfg, option, prices, dim, qty):
     tb = option['tables']; terms = tb['terms']
-    # recheckMinAmount:583-594 (PACKIO: refused instead of raised; no band = no price)
+    # recheckMinAmount:583-594 (GETPACK: refused instead of raised; no band = no price)
     check = next((r for r in tb['minQuantities'] if band(r, dim['calSqcm'], 'minSqcm', 'maxSqcm')), None)
     if check is None:
         raise Refused('price_line_missing', 'pouch_min_quantities')
@@ -87,7 +87,7 @@ def price_step(cfg, option, prices, dim, qty):
     # calculatePaperPrice:596-605
     paper_price = ((pol * pow_) / 100) * prices['material']
     paper = max(paper_price, min_material_cost)
-    # calculatePrinting:607-614 (PACKIO: an unprinted pouch has no print line)
+    # calculatePrinting:607-614 (GETPACK: an unprinted pouch has no print line)
     printing = 0 if prices['print'] is None else ((dim['calDl'] * pow_) / 100) * prices['print']
     # calculateAssembly:616-661 — drye (36) and making (37) first, then the options asked
     def process_min(name):
@@ -122,7 +122,7 @@ def price_step(cfg, option, prices, dim, qty):
     per_pcs = convert_to_2_decimal(paper + printing + total_per_pcs)
     per_pcs_with_margin = round_up(per_pcs * (1 + (factory_margin / 100)), 1)
     cost_total = per_pcs_with_margin * amount
-    # calculateMargin:673-688 (PACKIO: sell table tiers, dated VAT)
+    # calculateMargin:673-688 (GETPACK: sell table tiers, dated VAT)
     sell = option['sell']
     locopack_margin = sell_target(sell, amount, cost_total)
     fix_cost_per_pcs = sell['fixCost'] / amount

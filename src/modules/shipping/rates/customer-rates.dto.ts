@@ -15,7 +15,7 @@ import {
   ValidateNested,
 } from 'class-validator';
 
-/** Customer shipping rate card (D-013, schema-design §3.5): what Packio charges for delivery. */
+/** Customer shipping rate card (D-013, schema-design §3.5): what getpack charges for delivery. */
 
 export const VERSION_STATUSES = [
   'draft',

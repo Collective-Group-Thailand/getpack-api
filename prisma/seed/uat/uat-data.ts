@@ -5,7 +5,7 @@ import { HERO_PRESETS, type HeroPresetsSeed } from '../data/hero-presets';
  *
  * Products, materials and sizes are modelled on packaging commonly sold in the Thai market (cosmetic and supplement
  * cartons, postal boxes in the usual Thai sizes, doypacks, labels, stock bottles and cups) so the UAT team walks
- * realistic journeys. They are **rehearsal data, not Packio's catalogue** (D-005: admins create the real one):
+ * realistic journeys. They are **rehearsal data, not getpack's catalogue** (D-005: admins create the real one):
  * every code starts with `uat`, and the launch factory's own price lists replace the rehearsal prices in UAT-01.
  * Nothing here is a price — prices are cloned from the dev seed's fake price lines (`uat-prices.ts`).
  * Geography uses real province / district / postcode names so addresses look right; production geography is

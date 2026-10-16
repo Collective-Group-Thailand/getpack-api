@@ -11,7 +11,7 @@ Payout runs write a bulk-transfer file with the adapter the run names (`payout_r
 
 UTF-8, RFC 4180 (quoted fields, doubled quotes, CRLF or LF), header row required, column order free, a BOM is ignored.
 
-**Transfer file** (written by Packio): `reference, vendor_name, bank_code, account_no, account_name, amount, pay_on`. `reference` is the payout item id the bank must echo back. The file holds full account numbers: it is stored as a financial record, its generation is audited as an export, and it is only downloadable with `payouts.execute` through a short-lived signed URL.
+**Transfer file** (written by getpack): `reference, vendor_name, bank_code, account_no, account_name, amount, pay_on`. `reference` is the payout item id the bank must echo back. The file holds full account numbers: it is stored as a financial record, its generation is audited as an export, and it is only downloadable with `payouts.execute` through a short-lived signed URL.
 
 **Confirmation** (from the bank): `reference, status` required; `bank_ref, reason` optional. `status` is `paid` or `failed`. Every item of the run needs exactly one result; unknown references are refused.
 

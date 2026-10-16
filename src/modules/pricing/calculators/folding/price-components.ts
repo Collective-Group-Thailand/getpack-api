@@ -8,7 +8,7 @@ import { materialFamily } from '../shared/material-family';
 /**
  * Registry descriptors of the folding price components (B2.3, schema-design §3.4, A-24…A-27), generated
  * from the migrated `pl_*` columns: dimensions identify a line (its `line_key`), values are what a
- * proposal changes. No cost-driver series is attached yet: until Packio names one per component, the
+ * proposal changes. No cost-driver series is attached yet: until getpack names one per component, the
  * own-history suggestion reports `driver_not_configured` (D-040, no invented value).
  */
 

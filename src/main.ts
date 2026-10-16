@@ -29,7 +29,7 @@ async function bootstrap(): Promise<void> {
 
   const port = config.get('PORT');
   await app.listen(port);
-  logger.log(`packio-api listening on :${port}`);
+  logger.log(`getpack-api listening on :${port}`);
 }
 
 bootstrap().catch((error: unknown) => {

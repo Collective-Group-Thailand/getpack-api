@@ -260,9 +260,9 @@ export class BillingStatementLineDto {
 }
 
 /**
- * The money of a statement (U-B0.3, D-022). Net amounts by line kind; `advanceOffset` is the advance Packio already
- * paid and applied to this job (P16); `alreadyPaid` what Packio paid on the statement's jobs (advance, balance and
- * released retention, tax withheld included — the factory holds the 50 ทวิ); `remaining` what Packio still owes
+ * The money of a statement (U-B0.3, D-022). Net amounts by line kind; `advanceOffset` is the advance getpack already
+ * paid and applied to this job (P16); `alreadyPaid` what getpack paid on the statement's jobs (advance, balance and
+ * released retention, tax withheld included — the factory holds the 50 ทวิ); `remaining` what getpack still owes
  * on them (open, eligible and in-run payables, retention held included), VAT included.
  */
 export class BillingStatementTotalsDto {

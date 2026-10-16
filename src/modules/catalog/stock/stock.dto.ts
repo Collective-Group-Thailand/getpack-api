@@ -192,7 +192,7 @@ export class CreateStockProductDto {
   @RefField({ example: STOCK_IDS.productType, description: 'Normally the `standard_product` type' })
   productTypeId!: string;
 
-  @CodeField({ example: 'PKO-BTL-0250', description: 'Packio SKU (natural key for Excel import)' })
+  @CodeField({ example: 'PKO-BTL-0250', description: 'getpack SKU (natural key for Excel import)' })
   sku!: string;
 
   @TextField({ example: 'ขวด PET 250 มล.' })

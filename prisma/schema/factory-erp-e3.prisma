@@ -1,4 +1,4 @@
-// Packio Factory ERP E2.1 + E3 (docs/prompts/E1-factory-erp.md §10; D-346 – D-358): quantity-break prices,
+// getpack Factory ERP E2.1 + E3 (docs/prompts/E1-factory-erp.md §10; D-346 – D-358): quantity-break prices,
 // purchasing alerts, requests for quotation, receiving inspection and landed cost, approved suppliers; the
 // machine schedule, the shop-floor kiosk, maintenance and documents.
 

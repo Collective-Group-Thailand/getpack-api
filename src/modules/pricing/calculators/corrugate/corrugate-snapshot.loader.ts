@@ -18,7 +18,7 @@ import { type ConditionBands, type FluteFactors, type PrintArea } from './geomet
  * Loads what the corrugate calculator reads (U-B6): the configuration resolved against the platform
  * catalogue — pattern and parts with their corrugate formulas, the board and its flute, the condition bands,
  * the standard size (legacy `recheckStandardSize`, calculation size `calculate_cs:661-699`) — and per factory
- * price-list version one option per corrugate print type with its rows in line order (quirk C18) and Packio's
+ * price-list version one option per corrugate print type with its rows in line order (quirk C18) and getpack's
  * sell side (`priceMaxInclusive`, `CorrugateCalculator.php:883,894`). Every version id used is returned.
  */
 

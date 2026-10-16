@@ -4,8 +4,8 @@ import { DomainException } from '@common/errors/domain.exception';
 import { ApiOptionalAuth, ApiPublic } from '@common/openapi/decorators';
 import { applyDecorators, createParamDecorator, SetMetadata } from '@nestjs/common';
 
-export const IS_PUBLIC = 'packio:public';
-export const OPTIONAL_AUTH = 'packio:optional-auth';
+export const IS_PUBLIC = 'getpack:public';
+export const OPTIONAL_AUTH = 'getpack:optional-auth';
 
 /** No token required on a protected surface (documented as `security: []`). */
 export const Public = () => applyDecorators(SetMetadata(IS_PUBLIC, true), ApiPublic());

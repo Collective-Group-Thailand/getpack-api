@@ -502,7 +502,7 @@ export class RfqMessageDto {
   @ApiProperty({ format: 'uuid', example: IDS.message })
   id!: string;
 
-  @ApiProperty({ enum: ['customer', 'packio'], enumName: 'RfqMessageAuthor', example: 'packio' })
+  @ApiProperty({ enum: ['customer', 'getpack'], enumName: 'RfqMessageAuthor', example: 'getpack' })
   author!: string;
 
   @ApiProperty({ example: 'Can the handles be flat? (fake)' })

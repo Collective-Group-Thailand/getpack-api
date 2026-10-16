@@ -112,7 +112,7 @@ export class CatalogImportsService {
     }
     const stored = await this.files.storeGenerated(actor, {
       body: await writeWorkbook(sheets),
-      fileName: `packio-${kind.key}-${bangkokDate(new Date())}.xlsx`,
+      fileName: `getpack-${kind.key}-${bangkokDate(new Date())}.xlsx`,
       mimeType: XLSX,
       retentionClass: 'transient',
     });

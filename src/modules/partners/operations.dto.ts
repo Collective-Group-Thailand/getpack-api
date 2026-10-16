@@ -179,7 +179,7 @@ export class RecordSiteVisitDto {
   @TextField({ example: 'สายการผลิตพร้อม', nullable: true, max: 5000 })
   notes?: string | null;
 
-  @ApiProperty({ type: [String], format: 'uuid', example: [USER], description: 'Packio staff who visited' })
+  @ApiProperty({ type: [String], format: 'uuid', example: [USER], description: 'getpack staff who visited' })
   @IsUUID('all', { each: true })
   inspectorIds!: string[];
 

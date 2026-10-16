@@ -82,7 +82,7 @@ CASES = [
     ('16-option-not-offered', 'A valve is not offered on a 3-side seal', config('P40', (3000,), 120, 200, options=('valve',)), [option()]),
     ('17-fallback-margins', 'No factory-margin band and no sell tier: both fallbacks', config(b=60),
      [option(factoryMargins=[], sell=dict(SELL, marginLines=[]))]),
-    ('18-fix-cost-design', 'A Packio fix cost per job and graphic design', config(b=60, graphic=True), [option(sell=dict(SELL, fixCost=900))]),
+    ('18-fix-cost-design', 'A getpack fix cost per job and graphic design', config(b=60, graphic=True), [option(sell=dict(SELL, fixCost=900))]),
     ('19-spout-bands', 'A spout priced by quantity band: 4,000 and 6,000', config(b=60, quantities=(4000, 6000), options=('spout',)), [option()]),
     ('20-two-factories', 'Two factories; the second does not print matt OPV', config(b=60, quantities=(2000, 8000), colour='cmyk_opv'),
      [option(), option(key='F2:digital', terms=dict(factoryMarginPct=12, webWidthMm=600),

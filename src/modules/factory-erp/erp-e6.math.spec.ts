@@ -123,10 +123,10 @@ describe('E6 posting rules (D-388)', () => {
   });
 });
 
-describe('E6 Packio revenue F14 / F15 (D-397)', () => {
+describe('E6 getpack revenue F14 / F15 (D-397)', () => {
   const base = { documentId: 'bs', documentNo: 'BS-2610-0001', documentDate: '2026-10-20', accounts };
 
-  it('F14 a confirmed statement: receivable from Packio = job revenue + output VAT', () => {
+  it('F14 a confirmed statement: receivable from getpack = job revenue + output VAT', () => {
     const j = renderJournal(rule('F14'), { ...base, net: '100000.00', vat: '7000.00', gross: '107000.00' });
     expect(j.totalDebit.toFixed(2)).toBe('107000.00');
     expect(j.totalDebit.eq(j.totalCredit)).toBe(true);

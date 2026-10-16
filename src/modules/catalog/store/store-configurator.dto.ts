@@ -95,7 +95,7 @@ export class StoreConfiguratorPatternDto {
   @ApiProperty({ example: 'กล่องฝาชน' })
   name!: string;
 
-  @ApiProperty({ type: String, nullable: true, example: 'rsc', description: 'Key for `@packio/dieline`' })
+  @ApiProperty({ type: String, nullable: true, example: 'rsc', description: 'Key for `@getpack/dieline`' })
   dielineKey!: string | null;
 
   @ApiProperty({

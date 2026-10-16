@@ -171,7 +171,7 @@ export class AdminAuditSupportController {
     description: 'Signed URL',
     type: DownloadUrlDto,
     example: {
-      url: 'https://packio-files.s3.example.com/…&X-Amz-Expires=300',
+      url: 'https://getpack-files.s3.example.com/…&X-Amz-Expires=300',
       expiresAt: '2026-11-10T10:05:00+07:00',
     },
   })

@@ -36,7 +36,7 @@ const base = (over: Partial<DesignerPdfInput> = {}): DesignerPdfInput => ({
   ],
   title: 'PK-TE-01-A กล่องฝาเสียบ 60×40×120 mm (inside)',
   styleCode: 'PK-TE-01-A',
-  producer: 'Packio designer PDF (test)',
+  producer: 'getpack designer PDF (test)',
   bleedMm: 3,
   safeMm: 3,
   ...over,
@@ -71,11 +71,11 @@ describe('designer dieline PDF (D-302)', () => {
     expect(pdf.subject).toBe('PK-TE-01-A');
     expect(pdf.styleCode).toBe('PK-TE-01-A');
     expect(pdf.keywords).toContain('CutContour');
-    expect(pdf.xmp).toContain('<packio:styleCode>PK-TE-01-A</packio:styleCode>');
+    expect(pdf.xmp).toContain('<getpack:styleCode>PK-TE-01-A</getpack:styleCode>');
     expect(pdf.xmp).toContain(
       '<rdf:li xml:lang="x-default">PK-TE-01-A กล่องฝาเสียบ 60×40×120 mm (inside)</rdf:li>',
     );
-    expect(pdf.xmp).toContain('<packio:layers>Safe,Bleed,Glue,Perf,Crease,CutContour</packio:layers>');
+    expect(pdf.xmp).toContain('<getpack:layers>Safe,Bleed,Glue,Perf,Crease,CutContour</getpack:layers>');
   });
 
   it('sets the trim box to the dieline and the bleed box to the bleed, and is deterministic', async () => {

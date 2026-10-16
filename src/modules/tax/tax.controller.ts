@@ -227,7 +227,7 @@ export class AdminTaxController {
     description: 'Signed URL',
     type: DownloadUrlDto,
     example: {
-      url: 'https://packio-files.s3.example.com/…&X-Amz-Expires=300',
+      url: 'https://getpack-files.s3.example.com/…&X-Amz-Expires=300',
       expiresAt: '2026-11-05T10:10:00+07:00',
     },
   })

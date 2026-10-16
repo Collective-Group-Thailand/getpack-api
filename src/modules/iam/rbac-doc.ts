@@ -3,7 +3,7 @@ import { PERMISSIONS } from './permissions.catalog';
 import { ROLES } from './roles.catalog';
 
 const AUDIENCES = [
-  { key: 'staff', title: 'Packio staff (platform scope)' },
+  { key: 'staff', title: 'getpack staff (platform scope)' },
   { key: 'partner', title: 'Partner factory (factory scope)' },
   { key: 'customer', title: 'B2B company members (company scope)' },
 ] as const;
@@ -14,7 +14,7 @@ const AUDIENCES = [
  */
 export function renderRbacDoc(): string {
   const lines: string[] = [
-    '# RBAC matrix — packio-api',
+    '# RBAC matrix — getpack-api',
     '',
     '> **Generated** by `pnpm rbac:build` from `src/modules/iam/roles.catalog.ts`, `permissions.catalog.ts` and',
     '> `prisma/seed/data/reference.ts`. Do not edit by hand. Roles per D-140; cost and margin visibility per D-141;',

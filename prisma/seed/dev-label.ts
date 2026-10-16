@@ -30,7 +30,7 @@ export interface DevLabel {
  * An obviously fake label setup for `pnpm dev` and the tests (D-005, U-B6 label): `[DEV]` names, made-up prices.
  * It extends the dev folding factory F9001 (one launch factory serves every type, D-101) with a tier-A label price
  * list for a digital print type (sheets 13 × 19″ and a 13″ roll) and an offset print type that is not priced
- * (quirk L2), capacity and Packio sell margins, so a sticker on a fake PP label stock can be priced end to end.
+ * (quirk L2), capacity and getpack sell margins, so a sticker on a fake PP label stock can be priced end to end.
  * Idempotent. Needs `seedDevFolding` (factory, `dev-cmyk`, `dev-normal`, `dev-diecut`) and the dev catalogue
  * (`dev-matt`).
  */
@@ -290,7 +290,7 @@ export async function seedDevLabel(tx: Tx): Promise<{ created: boolean; fixture:
     data: { lineCount, contentSha256, status: 'approved', decidedAt: new Date() },
   });
 
-  // Packio's sell side for labels (fake values; D-063 admins set the real ones).
+  // getpack's sell side for labels (fake values; D-063 admins set the real ones).
   const sellVersion = { versionNo: 1, effectiveFrom: DEV_EFFECTIVE_FROM, reason: 'dev seed (fake)' };
   const margin = await tx.sellMarginTable.create({
     data: {

@@ -3,7 +3,7 @@
 **Status:** Accepted (2026-09-22)
 
 ## Context
-Packio is a new system (ADR-0002) with a heavy transactional core (orders, instalments, ledger, payouts), rich configuration (effective-dated tables, `jsonb` calculator snapshots) and a stated product direction towards semantic search and recommendation over products, box designs and CS knowledge (RAG), which needs vector similarity search close to the business data.
+getpack is a new system (ADR-0002) with a heavy transactional core (orders, instalments, ledger, payouts), rich configuration (effective-dated tables, `jsonb` calculator snapshots) and a stated product direction towards semantic search and recommendation over products, box designs and CS knowledge (RAG), which needs vector similarity search close to the business data.
 
 ## Decision
 - **PostgreSQL 18** as the single system of record, with extensions `vector` (pgvector), `pgcrypto`, `pg_trgm`, `citext`.

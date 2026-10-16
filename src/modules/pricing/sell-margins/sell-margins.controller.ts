@@ -28,7 +28,7 @@ export class SellMarginTablesController {
   @Can('margin.read')
   @ApiEndpoint({
     id: 'admin.sellMarginTables.list',
-    summary: 'List Packio’s sell-margin tables',
+    summary: 'List getpack’s sell-margin tables',
     description:
       'Margin tiers, fix costs and design fees per product type / print type, with the version in force (D-063).',
     implements: DECISIONS,

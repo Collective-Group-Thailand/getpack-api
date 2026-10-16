@@ -29,7 +29,7 @@ interface Mapped {
   data: Record<string, unknown>;
 }
 
-/** `Packio-Signature: t=<unix>,v1=<hex HMAC-SHA256(secret, "<t>.<body>")>`. */
+/** `Getpack-Signature: t=<unix>,v1=<hex HMAC-SHA256(secret, "<t>.<body>")>`. */
 export function signature(secret: string, timestamp: number, body: string): string {
   const v1 = createHmac('sha256', secret).update(`${timestamp}.${body}`).digest('hex');
   return `t=${timestamp},v1=${v1}`;
@@ -311,9 +311,9 @@ export class WebhooksService {
       status = await this.sender.post(
         d.subscription.url,
         {
-          'Packio-Signature': signature(secret, Math.floor(now.getTime() / 1000), body),
-          'Packio-Event': d.eventType,
-          'Packio-Delivery': d.publicId,
+          'Getpack-Signature': signature(secret, Math.floor(now.getTime() / 1000), body),
+          'Getpack-Event': d.eventType,
+          'Getpack-Delivery': d.publicId,
         },
         body,
       );

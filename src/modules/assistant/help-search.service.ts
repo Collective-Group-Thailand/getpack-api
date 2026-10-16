@@ -45,7 +45,7 @@ export function chunks(text: string): string[] {
 const literal = (v: number[]) => `[${v.map((x) => x.toFixed(6)).join(',')}]`;
 
 /**
- * D-304 help search over Packio's own published `public` articles and FAQs (partner articles never, D-295): chunks are
+ * D-304 help search over getpack's own published `public` articles and FAQs (partner articles never, D-295): chunks are
  * embedded per model and re-embedded only when their text changes; search is exact cosine distance (pgvector; the
  * corpus is small — no HNSW index, see migration `20261127000001_assistant`).
  */

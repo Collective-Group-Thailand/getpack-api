@@ -10,7 +10,7 @@
 - The 20 cases below price complete, **made-up** price lists (no real supplier data, D-005). To sign off, the business team
   enters the same price rows for a test factory in a Locopack staging copy, runs the CS folding calculator with the same
   configuration, and compares the per-piece price and total. Expect sub-satang differences where Locopack stores prices as
-  `FLOAT` (float32) and Packio as exact decimals.
+  `FLOAT` (float32) and getpack as exact decimals.
 - Known, intended differences from Locopack (port map `docs/legacy/05-folding-port-map.md` §5): Q1 an option is complete only
   when every part is; Q2 design fees once per quote; Q3 VAT from the dated rate; Q6 process exclusions enforced; Q9/Q10 no
   caches, deterministic first match; Q11 legacy factory ids replaced by terms; Q12 no thousands-comma truncation; Q13 flip

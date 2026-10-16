@@ -359,7 +359,7 @@ describe('artwork submissions and preflight (e2e, B4.1)', () => {
       .expect(200);
     expect(
       (storeView.body.annotations as { author: { kind: string; displayName: string } }[])[1]!.author,
-    ).toEqual({ kind: 'staff', displayName: 'Packio' });
+    ).toEqual({ kind: 'staff', displayName: 'getpack' });
     await as(ctx, token)
       .post(`/v1/store/proofs/${p1.body.id as string}/actions/request-changes`, {
         comment: 'สีพื้นหลังเข้มเกินไป',
@@ -427,7 +427,7 @@ describe('artwork submissions and preflight (e2e, B4.1)', () => {
     await setSetting(ctx, 'artwork.approval_checklist', []);
     expect(approved.body.decisionChecklist).toEqual(['spelling_checked']);
     expect(approved.body.decidedByName).toEqual(expect.any(String));
-    expect(approved.body.decidedByName).not.toBe('Packio');
+    expect(approved.body.decidedByName).not.toBe('getpack');
     const source = await ctx.prisma.fileObject.findUniqueOrThrow({ where: { publicId: proof2File } });
     expect(approved.body).toMatchObject({
       status: 'approved',

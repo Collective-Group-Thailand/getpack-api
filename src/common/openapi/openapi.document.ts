@@ -39,8 +39,8 @@ const AUDIENCE_DESCRIPTIONS: Record<(typeof AUDIENCES)[number], string> = {
   b2b: 'Access token with `aud=b2b` — `/v1/b2b/*` (company API clients, client-credentials, D-291)',
 };
 
-const INFO_DESCRIPTION = `Packio — Your Packaging Production Partner, operated by Collective Group (Thailand).
-Rules: \`docs/contract/api-conventions.md\` (shared with packio-web).
+const INFO_DESCRIPTION = `getpack — Your Packaging Production Partner, operated by Collective Group (Thailand).
+Rules: \`docs/contract/api-conventions.md\` (shared with getpack-web).
 
 - **Surfaces:** \`/v1/auth\`, \`/v1/store\` (customer), \`/v1/admin\` (staff), \`/v1/partner\` (factories), \`/v1/b2b\` (company API clients, D-291), \`/webhooks\`. A token is accepted only on its own audience's prefix.
 - **Money:** decimal strings with exactly 2 decimals (\`"1234.50"\`) plus \`currency: "THB"\` on the object; never JSON numbers. Clients never compute prices.
@@ -55,16 +55,16 @@ Rules: \`docs/contract/api-conventions.md\` (shared with packio-web).
 /** Environments; real hosts are an open question (docs/PROGRESS.md) — `.invalid` is a reserved TLD. */
 export const SERVERS: { url: string; description: string; host?: string }[] = [
   { url: 'http://localhost:3000', description: 'Local development (docker compose + pnpm dev)' },
-  { url: 'https://{host}', description: 'Integration', host: 'integration.packio.invalid' },
-  { url: 'https://{host}', description: 'Sandbox', host: 'sandbox.packio.invalid' },
-  { url: 'https://{host}', description: 'Production', host: 'api.packio.invalid' },
+  { url: 'https://{host}', description: 'Integration', host: 'integration.getpack.invalid' },
+  { url: 'https://{host}', description: 'Sandbox', host: 'sandbox.getpack.invalid' },
+  { url: 'https://{host}', description: 'Production', host: 'api.getpack.invalid' },
 ];
 
 /** Builds the OpenAPI document served at `/docs*` and written to `contract/openapi.json`. */
 export function buildOpenApiDocument(app: INestApplication, version: string): OpenAPIObject {
   const builder = new DocumentBuilder()
     .setOpenAPIVersion(OPENAPI_VERSION)
-    .setTitle('Packio API')
+    .setTitle('getpack API')
     .setDescription(INFO_DESCRIPTION)
     .setVersion(version);
   for (const server of SERVERS) {
@@ -92,22 +92,22 @@ export function buildOpenApiDocument(app: INestApplication, version: string): Op
   enriched.tags = usedTags(enriched);
   addWebhooks(enriched);
   const engine = dielineEngineInfo();
-  if (engine) (enriched.info as unknown as Record<string, unknown>)['x-packio-dieline'] = engine;
+  if (engine) (enriched.info as unknown as Record<string, unknown>)['x-getpack-dieline'] = engine;
   return normaliseDocument(enriched);
 }
 
 /**
- * The vendored `@packio/dieline` engine (ADR-0010) the drawing service runs, from `vendor/packio-dieline/VERSION.json`:
- * packio-web's CI compares its own `packages/dieline` git tree with `sourceTree`, so the two engines cannot drift
+ * The vendored `@getpack/dieline` engine (ADR-0010) the drawing service runs, from `vendor/getpack-dieline/VERSION.json`:
+ * getpack-web's CI compares its own `packages/dieline` git tree with `sourceTree`, so the two engines cannot drift
  * silently. Null when no bundle is vendored.
  */
 export function dielineEngineInfo(
-  file = join(process.cwd(), 'vendor/packio-dieline/VERSION.json'),
+  file = join(process.cwd(), 'vendor/getpack-dieline/VERSION.json'),
 ): {
   package: string;
   version: string;
   sourceTree: string;
-  packioWebCommit: string;
+  getpackWebCommit: string;
   bundleSha256: string;
 } | null {
   if (!existsSync(file)) return null;
@@ -117,7 +117,7 @@ export function dielineEngineInfo(
     package: meta['package']!,
     version: meta['version']!,
     sourceTree: meta['sourceTree'],
-    packioWebCommit: meta['packioWebCommit']!,
+    getpackWebCommit: meta['getpackWebCommit']!,
     bundleSha256: meta['bundleSha256']!,
   };
 }
@@ -126,7 +126,7 @@ const ref = (kind: 'parameters' | 'headers' | 'examples', name: string): Referen
   $ref: `#/components/${kind}/${name}`,
 });
 
-/** Collects the values of every `x-packio-<base>-*` extension on an operation. */
+/** Collects the values of every `x-getpack-<base>-*` extension on an operation. */
 function collect<T>(operation: Record<string, unknown>, base: string): { source: string; values: T[] }[] {
   return Object.keys(operation)
     .filter((key) => key.startsWith(`${base}-`))
@@ -134,7 +134,7 @@ function collect<T>(operation: Record<string, unknown>, base: string): { source:
 }
 
 /**
- * Turns the `x-packio-*` intents recorded by the documentation decorators into shared-component
+ * Turns the `x-getpack-*` intents recorded by the documentation decorators into shared-component
  * references: problem responses per status with per-code examples, parameters, response headers,
  * explicit `security: []` for public operations, and rate-limit documentation.
  */
@@ -158,7 +158,7 @@ export function enrichDocument(document: OpenAPIObject): OpenAPIObject {
       const optionalAudience = operation[EXT.optionalAuth] as string | undefined;
       const throttled = operation[EXT.unthrottled] !== true;
       const poll = operation[EXT.async] as string | false | undefined;
-      for (const key of Object.keys(operation)) if (key.startsWith('x-packio-')) delete operation[key];
+      for (const key of Object.keys(operation)) if (key.startsWith('x-getpack-')) delete operation[key];
 
       if (isPublic) operation.security = [];
       if (optionalAudience) operation.security = [{}, { [optionalAudience]: [] }];

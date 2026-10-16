@@ -200,7 +200,7 @@ export class CreateFactoryDto {
   @EnumField(ONBOARDING_MODES, 'OnboardingMode', {
     example: 'assisted',
     description:
-      '`assisted` = Packio staff enter data on the factory’s behalf, the factory signs off (D-100 note)',
+      '`assisted` = getpack staff enter data on the factory’s behalf, the factory signs off (D-100 note)',
   })
   onboardingMode!: (typeof ONBOARDING_MODES)[number];
 
@@ -309,7 +309,7 @@ export class OnboardingStepDto {
 
   @ApiProperty({
     example: true,
-    description: 'Packio staff entered the data (assisted onboarding, D-100 note)',
+    description: 'getpack staff entered the data (assisted onboarding, D-100 note)',
   })
   enteredByStaff!: boolean;
 

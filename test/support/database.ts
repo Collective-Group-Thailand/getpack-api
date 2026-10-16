@@ -27,7 +27,7 @@ export function migrateDeploy(url: string): void {
 /** A PostgreSQL 18 + pgvector container with every migration applied and a connected client. */
 export async function startMigratedDatabase(): Promise<MigratedDatabase> {
   ensureDockerHost();
-  const container = await new PostgreSqlContainer(POSTGRES_IMAGE).withDatabase('packio_test').start();
+  const container = await new PostgreSqlContainer(POSTGRES_IMAGE).withDatabase('getpack_test').start();
   const url = container.getConnectionUri();
   migrateDeploy(url);
   const client = new Client({ connectionString: url });

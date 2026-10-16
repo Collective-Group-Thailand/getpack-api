@@ -161,7 +161,7 @@ export class PriceListsService {
     return this.builder.counts(this.prisma, version.id);
   }
 
-  /** A version the caller may read: on the partner path its own factory's, never a Packio draft (D-042, D-044). */
+  /** A version the caller may read: on the partner path its own factory's, never a getpack draft (D-042, D-044). */
   private async readableVersion(actor: Actor, versionPublicId: string, factoryPublicId?: string) {
     const version = await this.prisma.priceListVersion.findUnique({
       where: { publicId: versionPublicId },
@@ -172,14 +172,14 @@ export class PriceListsService {
     if (factoryPublicId !== undefined) {
       if (factory.publicId !== factoryPublicId) throw new DomainException('http.not_found');
       await this.access.factory(actor, factoryPublicId);
-      // A factory never sees Packio's drafts of its own rate card before they are sent (D-042).
+      // A factory never sees getpack's drafts of its own rate card before they are sent (D-042).
       if (version.status === 'draft') throw new DomainException('http.not_found');
     }
     return { version, factory };
   }
 
   /**
-   * Assisted entry (D-100 note): the factory signs off the version Packio staff entered for it; only
+   * Assisted entry (D-100 note): the factory signs off the version getpack staff entered for it; only
    * then does it apply (DB check `ck_price_list_versions__assisted_signed_off`).
    */
   async signOff(actor: UserActor, factoryPublicId: string, versionPublicId: string) {

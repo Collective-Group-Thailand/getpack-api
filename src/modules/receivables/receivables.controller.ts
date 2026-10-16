@@ -72,7 +72,7 @@ import { WhtCertificatesService } from './wht-certificates.service';
 const DOCS = ['D-010', 'D-092', 'D-033'];
 const WRITE = ['http.bad_request', 'http.malformed_json', 'http.not_found', 'validation.failed'] as const;
 const DOWNLOAD_EXAMPLE = {
-  url: 'https://packio-files.s3.example.com/…&X-Amz-Expires=300',
+  url: 'https://getpack-files.s3.example.com/…&X-Amz-Expires=300',
   expiresAt: '2026-10-05T10:05:00+07:00',
 };
 
@@ -112,7 +112,7 @@ export class AdminCustomerDocumentsController {
     id: 'admin.customerDocuments.list',
     summary: 'List customer documents',
     description:
-      'IV, TR, RC, CN and DN issued by the entity under the Packio brand (D-010, D-092), newest first; filter by type, status, order, customer, company, payment and date.',
+      'IV, TR, RC, CN and DN issued by the entity under the getpack brand (D-010, D-092), newest first; filter by type, status, order, customer, company, payment and date.',
     implements: DOCS,
   })
   @ApiPaginated(CustomerDocumentDto, { example: DOCUMENT_EXAMPLE })
@@ -723,7 +723,7 @@ export class StoreDocumentsController {
     id: 'store.documents.list',
     summary: 'My tax invoices, receipts and notes',
     description:
-      'Documents issued to me by the entity under the Packio brand (D-010), or with `companyId` those of a company I may read documents of (`company_documents.read`, D-125); `orderId` narrows them to one order.',
+      'Documents issued to me by the entity under the getpack brand (D-010), or with `companyId` those of a company I may read documents of (`company_documents.read`, D-125); `orderId` narrows them to one order.',
     implements: ['D-010', 'D-125'],
   })
   @ApiPaginated(CustomerDocumentDto, { example: DOCUMENT_EXAMPLE })

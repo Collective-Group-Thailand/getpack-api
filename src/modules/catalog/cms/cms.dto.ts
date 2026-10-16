@@ -572,10 +572,10 @@ export class SeoPageDto {
   @ApiProperty({ example: '/th/products/mailer-box', description: 'Route or slug the meta applies to' })
   pageKey!: string;
 
-  @ApiProperty({ example: 'กล่องไปรษณีย์พิมพ์ลาย สั่งผลิตออนไลน์ | Packio' })
+  @ApiProperty({ example: 'กล่องไปรษณีย์พิมพ์ลาย สั่งผลิตออนไลน์ | getpack' })
   titleTh!: string;
 
-  @ApiProperty({ type: String, nullable: true, example: 'Printed mailer boxes online | Packio' })
+  @ApiProperty({ type: String, nullable: true, example: 'Printed mailer boxes online | getpack' })
   titleEn!: string | null;
 
   @ApiProperty({ type: String, nullable: true, example: 'ออกแบบและสั่งผลิตกล่องไปรษณีย์ได้ในไม่กี่คลิก' })
@@ -610,10 +610,10 @@ export class CreateSeoPageDto {
   @TextField({ example: '/th/products/mailer-box', max: 300 })
   pageKey!: string;
 
-  @TextField({ example: 'กล่องไปรษณีย์พิมพ์ลาย สั่งผลิตออนไลน์ | Packio', max: 300 })
+  @TextField({ example: 'กล่องไปรษณีย์พิมพ์ลาย สั่งผลิตออนไลน์ | getpack', max: 300 })
   titleTh!: string;
 
-  @TextField({ example: 'Printed mailer boxes online | Packio', nullable: true, max: 300 })
+  @TextField({ example: 'Printed mailer boxes online | getpack', nullable: true, max: 300 })
   titleEn?: string | null;
 
   @TextField({ example: 'ออกแบบและสั่งผลิตกล่องไปรษณีย์ได้ในไม่กี่คลิก', nullable: true, max: 1000 })

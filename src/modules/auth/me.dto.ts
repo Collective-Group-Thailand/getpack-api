@@ -75,7 +75,7 @@ export class AdminMeDto extends MeBaseDto {
   featureFlags!: string[];
 }
 
-/** The factory-scoped roles (D-140, D-171): the owner is invited by Packio, the others by the owner. */
+/** The factory-scoped roles (D-140, D-171): the owner is invited by getpack, the others by the owner. */
 export const FACTORY_ROLES = [
   'factory_owner',
   'factory_planner',

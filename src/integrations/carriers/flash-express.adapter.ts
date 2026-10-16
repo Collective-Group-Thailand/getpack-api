@@ -20,7 +20,7 @@ import {
  * Flash Express Open API (https://open-docs.flashexpress.com, read 2026-09-26 for B2.4): HTTPS POST,
  * `application/x-www-form-urlencoded`, JSON answers `{ code, message, data }` with `code = 1` on
  * success; every request carries `mchId`, `nonceStr` and `sign`. Credentials: `mchId`, `secretKey`,
- * optional `articleCategory` (default 99 = other). Disabled until Packio's own account exists (D-005).
+ * optional `articleCategory` (default 99 = other). Disabled until getpack's own account exists (D-005).
  */
 export const FLASH_BASE_URL = {
   sandbox: 'https://open-api-tra.flashexpress.com',

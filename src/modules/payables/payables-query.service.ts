@@ -74,7 +74,7 @@ export interface StatementMoney {
 const D = (v: { toString(): string } | null | undefined) => new MoneyDecimal(v ? v.toString() : 0);
 
 /**
- * The factory's accounts in Packio's ledger (accounting-design §5, the default posting rules): factory payables,
+ * The factory's accounts in getpack's ledger (accounting-design §5, the default posting rules): factory payables,
  * retention held, advances paid and claim receivables. A factory's statement of account reads these lines.
  */
 export const FACTORY_ACCOUNTS = ['2110', '2130', '1250', '1260'] as const;

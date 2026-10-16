@@ -57,7 +57,7 @@ export class ScbAdapter implements ScbGateway {
             ppId: c.billerId,
             amount: request.amount,
             ref1: request.reference,
-            ref2: 'PACKIO',
+            ref2: 'GETPACK',
             ref3: `${c.ref3Prefix}${request.reference}`.slice(0, 20),
           }
         : {

@@ -6,7 +6,7 @@
 
 /**
  * The legacy `switch ($this->patternId)` cases of `PatternArea::calPatternArea` (`:185-723`), named.
- * Packio keeps no legacy ids (D-005): a pattern (or, for multi-part patterns, a sub-pattern) carries
+ * getpack keeps no legacy ids (D-005): a pattern (or, for multi-part patterns, a sub-pattern) carries
  * the formula it uses. Legacy case numbers are listed in `docs/legacy/05-folding-port-map.md`.
  */
 export const GEOMETRY_FORMULAS = [

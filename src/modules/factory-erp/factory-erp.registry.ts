@@ -94,5 +94,5 @@ export const FACTORY_ERP_PARTNER_CONTROLLERS: Type<unknown>[] = [
 /** `/v1/store/quote-links/{token}` — the customer's quotation link (D-360). */
 export const FACTORY_ERP_STORE_CONTROLLERS: Type<unknown>[] = [PublicQuotationLinksController];
 
-/** `/v1/admin/factories/{factoryId}/erp/*` — Packio support's read under the owner's grant (D-381). */
+/** `/v1/admin/factories/{factoryId}/erp/*` — getpack support's read under the owner's grant (D-381). */
 export const FACTORY_ERP_ADMIN_CONTROLLERS: Type<unknown>[] = [AdminErpSupportController];

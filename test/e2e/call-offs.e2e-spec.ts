@@ -83,7 +83,7 @@ describe('call-off agreements (e2e, U2.7)', () => {
       .get(`/v1/partner/factories/${fixture.factoryPublicId}/call-off-agreements`)
       .expect(200);
     const seen = (listed.body as Agreement[]).find((a) => a.id === agreementId)!;
-    expect(seen.unitPrice).toBeNull(); // D-044: never Packio's sell side
+    expect(seen.unitPrice).toBeNull(); // D-044: never getpack's sell side
     expect(Number(seen.buyUnitPrice)).toBeGreaterThan(0);
 
     const accepted = await post(

@@ -64,7 +64,7 @@ const SERVICES = [
   ErpLedgerAssetsService,
 ];
 
-/** Packio Factory ERP (D-316 – D-332): E1 trading partners, inventory, purchasing; E1.1
+/** getpack Factory ERP (D-316 – D-332): E1 trading partners, inventory, purchasing; E1.1
  * supplier prices; E2 purchase requests, payables, recipes, production orders and MRP; E2.1 sourcing
  * (breaks, alerts, RFQs, inspection, landed cost, approved suppliers); E3 schedule, kiosk, maintenance and documents; E4 sales, CRM, receivables and tax documents; E5 quality, insight and people; E6 the factory's general ledger. */
 @Global()

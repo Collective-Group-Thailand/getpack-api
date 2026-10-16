@@ -15,7 +15,7 @@ import {
 } from '../support/commerce-e2e';
 import { bootFulfilmentApp, type FulfilmentApp } from '../support/fulfilment-e2e';
 
-const DOC = { version: 1, faces: { front: { objects: [{ type: 'text', text: 'Packio' }] } } };
+const DOC = { version: 1, faces: { front: { objects: [{ type: 'text', text: 'getpack' }] } } };
 
 type FakeStorage = { putPart(uploadId: string, partNumber: number, body: Buffer): string };
 

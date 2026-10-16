@@ -24,7 +24,7 @@ import {
 } from 'class-validator';
 
 /**
- * Packio Factory ERP, phase E1 (docs/prompts/E1-factory-erp.md): trading partners, items, warehouses, stock,
+ * getpack Factory ERP, phase E1 (docs/prompts/E1-factory-erp.md): trading partners, items, warehouses, stock,
  * purchase orders and goods receipts. Factory-private (D-317). Quantities are decimal strings with 3 places,
  * unit prices and costs 6, money 2 (`currency` THB).
  */
@@ -763,7 +763,7 @@ export class ErpItemDto {
   @ApiProperty({
     type: ErpRefDto,
     nullable: true,
-    description: 'The platform material it stocks (Packio jobs map to it)',
+    description: 'The platform material it stocks (getpack jobs map to it)',
   })
   material!: ErpRefDto | null;
 

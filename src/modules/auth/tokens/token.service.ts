@@ -4,7 +4,7 @@ import { decodeProtectedHeader, errors, importJWK, jwtVerify, SignJWT } from 'jo
 
 import { JWT_ALG, SigningKeys } from './signing-keys';
 
-export const TOKEN_ISSUER = 'packio-api';
+export const TOKEN_ISSUER = 'getpack-api';
 
 /** Principal kind inside the token: a person (`users`) or a machine client (`api_clients`). */
 export type PrincipalType = 'user' | 'client';

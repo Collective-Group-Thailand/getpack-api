@@ -260,7 +260,7 @@ export class ParticipantDto {
     enum: ['customer', 'staff'],
     enumName: 'AnnotationAuthorKind',
     example: 'staff',
-    description: 'The participant is the customer or Packio staff (shared customer / staff enum)',
+    description: 'The participant is the customer or getpack staff (shared customer / staff enum)',
   })
   role!: string;
 

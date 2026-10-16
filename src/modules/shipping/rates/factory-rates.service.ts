@@ -65,12 +65,12 @@ const rateDto = (r: RateRow): FactoryRateDto => ({
 type Side = { side: 'admin' } | { side: 'partner' };
 
 /**
- * Factory shipping payout cards (D-013): what Packio pays a factory for delivering with its own fleet.
- * Packio drafts a complete version (Partner Manager, `factory_shipping_rates.manage`), sends it, and
- * the factory accepts the whole card or answers per line (accept / counter); Packio accepts a counter or
+ * Factory shipping payout cards (D-013): what getpack pays a factory for delivering with its own fleet.
+ * getpack drafts a complete version (Partner Manager, `factory_shipping_rates.manage`), sends it, and
+ * the factory accepts the whole card or answers per line (accept / counter); getpack accepts a counter or
  * keeps its value, and the version applies once every line is accepted (D-042 rate-card flow, chosen
  * at B2.4 planning). Buy prices: staff reads need `factory_buy_prices.read` and are audited (D-141, D-044);
- * a factory sees only its own card and never Packio's drafts.
+ * a factory sees only its own card and never getpack's drafts.
  */
 @Injectable()
 export class FactoryRatesService {
@@ -150,7 +150,7 @@ export class FactoryRatesService {
   ): Promise<FactoryRateVersionDto> {
     const factory = await this.access.factory(actor, factoryPublicId);
     const dto = await this.load(factory.id, versionPublicId);
-    // A factory never sees Packio's drafts of its card before they are sent (D-042).
+    // A factory never sees getpack's drafts of its card before they are sent (D-042).
     if (side.side === 'partner' && dto.status === 'draft') throw new DomainException('http.not_found');
     if (side.side === 'admin')
       await this.auditRead(factory, 'factory_shipping_rate_card_version', versionPublicId);
@@ -301,7 +301,7 @@ export class FactoryRatesService {
     });
   }
 
-  /** Packio withdraws a draft or a version the factory has not settled yet. */
+  /** getpack withdraws a draft or a version the factory has not settled yet. */
   async withdraw(
     actor: UserActor,
     factoryPublicId: string,
@@ -414,7 +414,7 @@ export class FactoryRatesService {
     });
   }
 
-  /** Packio answers counters: take the factory's values, or keep its own and ask again. */
+  /** getpack answers counters: take the factory's values, or keep its own and ask again. */
   async answerCounters(
     actor: UserActor,
     factoryPublicId: string,
@@ -725,7 +725,7 @@ export class FactoryRatesService {
     });
   }
 
-  /** Audit + event + factory activity (hidden from the factory while the version is a Packio draft). */
+  /** Audit + event + factory activity (hidden from the factory while the version is a getpack draft). */
   private async record(
     tx: Tx,
     factory: Factory,

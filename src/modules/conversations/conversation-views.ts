@@ -101,6 +101,6 @@ export async function storeThreadView(
     unread,
     replyChannel,
     replyChannelChosen: c.replyChannel !== null,
-    readByPackioAt: iso(staffRead),
+    readByGetpackAt: iso(staffRead),
   };
 }

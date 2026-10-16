@@ -1,7 +1,7 @@
 import { MoneyDecimal, type MoneyValue } from '@common/money/money';
 
 /**
- * Packio Factory ERP arithmetic (D-320, D-321, D-325, D-326) — pure, so the ledger rules are unit tested
+ * getpack Factory ERP arithmetic (D-320, D-321, D-325, D-326) — pure, so the ledger rules are unit tested
  * without a database. Quantities have 3 decimals, unit costs 6, money 2; every rounding is half-up.
  */
 

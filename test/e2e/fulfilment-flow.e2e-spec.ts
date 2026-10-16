@@ -41,7 +41,7 @@ interface Milestone {
 
 /**
  * B4 quality flow (prompt "Quality"): a paid and approved order releases its job automatically → the factory
- * accepts → milestones with photos (idempotent updates) → QC passes and the sampled Packio inspection passes →
+ * accepts → milestones with photos (idempotent updates) → QC passes and the sampled getpack inspection passes →
  * two shipments to two addresses with POD → a shortage within tolerance raises the credit event → the order
  * completes 7 days later (time travel) → a claim with photos → the factory is liable → a re-production job.
  * Plus: a missed acceptance with a single capable factory escalates (never reassigns), and another factory
@@ -58,7 +58,7 @@ describe('fulfilment from payment to re-production (e2e, B4 quality)', () => {
     codes = postcodes(ctx, 2) as [string, string];
     await seedShipping(ctx, fixture.factoryPublicId, codes);
     await setFlag(ctx, 'payments.scb', true);
-    // Every order value is sampled for a Packio inspection in this suite.
+    // Every order value is sampled for a getpack inspection in this suite.
     await setSetting(ctx, 'qc.inspection_sampling', { ...SAMPLING, fullInspectionFromValue: '1.00' });
   });
 
@@ -151,7 +151,7 @@ describe('fulfilment from payment to re-production (e2e, B4 quality)', () => {
     const job = await ctx.prisma.productionJob.findUniqueOrThrow({ where: { id: released.id } });
     expect(job).toMatchObject({ status: 'completed', quantityGood: 1000 });
 
-    // The shipping gate needs the Packio inspection: it passes.
+    // The shipping gate needs the getpack inspection: it passes.
     const destinations = detail.body.destinations as { id: string; quantity: number }[];
     const [d1, d2] = [
       destinations.find((d) => d.quantity === 600)!,

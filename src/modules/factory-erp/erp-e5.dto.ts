@@ -26,9 +26,9 @@ import { AMOUNT, DAY, ERP_RECORD_STATUSES, ERP_UNITS, ErpItemRefDto, ErpRefDto, 
 import { ERP_PAUSE_REASONS, ErpMaintenancePhotoDto } from './erp-e3.dto';
 
 /**
- * Packio Factory ERP E5 (docs/prompts/E1-factory-erp.md §12, D-372 – D-383): quality checks and templates,
+ * getpack Factory ERP E5 (docs/prompts/E1-factory-erp.md §12, D-372 – D-383): quality checks and templates,
  * NCRs and certificates of analysis; machine rates, job costing and profitability; OEE; the owner's dashboard;
- * shifts, operator skills and the work log; Packio support's time-boxed access.
+ * shifts, operator skills and the work log; getpack support's time-boxed access.
  */
 
 const trim = ({ value }: { value: unknown }) => (typeof value === 'string' ? value.trim() : value);
@@ -74,7 +74,7 @@ export const ERP_NCR_SEVERITIES = ['minor', 'major', 'critical'] as const;
 export const ERP_NCR_DISPOSITIONS = ['rework', 'scrap', 'return_to_supplier', 'use_as_is', 'hold'] as const;
 export const ERP_NCR_STATUSES = ['open', 'in_progress', 'verified', 'closed', 'cancelled'] as const;
 export const ERP_SKILL_LEVELS = ['learner', 'competent', 'expert'] as const;
-export const ERP_PROFIT_BY = ['sales_order', 'customer', 'item', 'packio_job'] as const;
+export const ERP_PROFIT_BY = ['sales_order', 'customer', 'item', 'getpack_job'] as const;
 
 /** A machine by id and name (the same shape as a person reference, so one schema). */
 export const ErpMachineRefDto = PersonRefDto;
@@ -1054,7 +1054,7 @@ export class ErpProfitQuery {
 export class ErpProfitRowDto {
   @ApiProperty({
     type: ErpRefDto,
-    description: 'The sales order (code = number), customer, item (code = SKU) or, for `packio_job`, the production order (code = the Packio job number)',
+    description: 'The sales order (code = number), customer, item (code = SKU) or, for `getpack_job`, the production order (code = the getpack job number)',
   })
   key!: ErpRefDto;
 
@@ -1310,20 +1310,20 @@ export class ErpDashFollowUpsDto {
   alerts!: number;
 }
 
-export class ErpDashPackioDto {
-  @ApiProperty({ example: '239951.41', description: 'Net of the Packio billing statements confirmed this month — the factory’s revenue from Packio (F14, D-397)' })
+export class ErpDashGetpackDto {
+  @ApiProperty({ example: '239951.41', description: 'Net of the getpack billing statements confirmed this month — the factory’s revenue from getpack (F14, D-397)' })
   confirmedNet!: string;
 
   @ApiProperty({ example: 2 })
   confirmedStatements!: number;
 
-  @ApiProperty({ example: 2, description: 'Statements sent by Packio, waiting for the factory to check and confirm' })
+  @ApiProperty({ example: 2, description: 'Statements sent by getpack, waiting for the factory to check and confirm' })
   toConfirm!: number;
 
   @ApiProperty({ example: '44999.33' })
   toConfirmGross!: string;
 
-  @ApiProperty({ example: 1, description: 'Confirmed statements without the factory’s tax invoice (Packio pays once it is attached)' })
+  @ApiProperty({ example: 1, description: 'Confirmed statements without the factory’s tax invoice (getpack pays once it is attached)' })
   toInvoice!: number;
 }
 
@@ -1337,8 +1337,8 @@ export class ErpDashboardDto {
   @ApiProperty({ type: ErpDashSalesDto })
   sales!: ErpDashSalesDto;
 
-  @ApiProperty({ type: ErpDashPackioDto, description: 'Work for Packio (D-402)' })
-  packio!: ErpDashPackioDto;
+  @ApiProperty({ type: ErpDashGetpackDto, description: 'Work for getpack (D-402)' })
+  getpack!: ErpDashGetpackDto;
 
   @ApiProperty({ type: ErpDashReceivablesDto })
   receivables!: ErpDashReceivablesDto;
@@ -1545,7 +1545,7 @@ export class ErpWorkLogDto {
 // ======================================================================================= support
 
 export class ErpGrantSupportDto {
-  @ApiProperty({ example: 'ให้ทีม Packio ช่วยตรวจตัวเลขต้นทุน', maxLength: 300 })
+  @ApiProperty({ example: 'ให้ทีม getpack ช่วยตรวจตัวเลขต้นทุน', maxLength: 300 })
   @Transform(trim)
   @IsString()
   @MinLength(3)
@@ -1564,7 +1564,7 @@ export class ErpSupportViewLogDto {
   @ApiProperty({ format: 'date-time', example: '2026-10-13T10:12:00+07:00' })
   at!: string;
 
-  @ApiProperty({ example: 'ทีมพาร์ทเนอร์ Packio (ทดสอบ)' })
+  @ApiProperty({ example: 'ทีมพาร์ทเนอร์ getpack (ทดสอบ)' })
   staff!: string;
 
   @ApiProperty({ example: 'dashboard', description: 'What was read' })
@@ -1575,7 +1575,7 @@ export class ErpSupportGrantDto {
   @ApiProperty({ format: 'uuid', example: E5_IDS.grant })
   id!: string;
 
-  @ApiProperty({ example: 'ให้ทีม Packio ช่วยตรวจตัวเลขต้นทุน' })
+  @ApiProperty({ example: 'ให้ทีม getpack ช่วยตรวจตัวเลขต้นทุน' })
   reason!: string;
 
   @ApiProperty({ format: 'date-time', example: '2026-10-16T10:00:00+07:00' })
@@ -1616,7 +1616,7 @@ export class ErpSupportViewDto {
   @ApiProperty({ format: 'date-time', example: '2026-10-16T10:00:00+07:00', description: 'Access ends' })
   expiresAt!: string;
 
-  @ApiProperty({ example: 'ให้ทีม Packio ช่วยตรวจตัวเลขต้นทุน' })
+  @ApiProperty({ example: 'ให้ทีม getpack ช่วยตรวจตัวเลขต้นทุน' })
   reason!: string;
 
   @ApiProperty({ type: ErpDashboardDto })

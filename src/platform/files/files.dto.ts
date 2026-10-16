@@ -72,7 +72,7 @@ export class UploadPartDto {
   @ApiProperty({ type: 'integer', example: 1 })
   partNumber!: number;
 
-  @ApiProperty({ example: 'https://packio-files.s3.example.com/…&partNumber=1' })
+  @ApiProperty({ example: 'https://getpack-files.s3.example.com/…&partNumber=1' })
   url!: string;
 }
 
@@ -94,7 +94,7 @@ export class PresignedUploadDto {
   @ApiProperty({
     type: String,
     nullable: true,
-    example: 'https://packio-files.s3.example.com/…',
+    example: 'https://getpack-files.s3.example.com/…',
     description: 'Single PUT; null for multipart',
   })
   uploadUrl!: string | null;
@@ -226,7 +226,7 @@ export class FileDto {
 }
 
 export class DownloadUrlDto {
-  @ApiProperty({ example: 'https://packio-files.s3.example.com/…&X-Amz-Expires=300' })
+  @ApiProperty({ example: 'https://getpack-files.s3.example.com/…&X-Amz-Expires=300' })
   url!: string;
 
   @ApiProperty({ format: 'date-time', example: '2026-09-23T14:10:00+07:00' })

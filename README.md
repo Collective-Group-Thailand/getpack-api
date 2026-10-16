@@ -1,8 +1,8 @@
-# packio-api
+# getpack-api
 
-Backend of **Packio — Your Packaging Production Partner**, operated by Collective Group (Thailand).
+Backend of **getpack — Your Packaging Production Partner**, operated by Collective Group (Thailand).
 NestJS 12 · Node 24 · TypeScript 6 · PostgreSQL 18 + pgvector · Redis/BullMQ · Prisma 7.
-Frontend: `packio-web`. The only shared artefact is [`contract/openapi.json`](contract/openapi.json).
+Frontend: `getpack-web`. The only shared artefact is [`contract/openapi.json`](contract/openapi.json).
 
 Start with [`CLAUDE.md`](CLAUDE.md), [`docs/prompts/00-master-plan.md`](docs/prompts/00-master-plan.md),
 [`docs/decisions.md`](docs/decisions.md) and [`docs/contract/api-conventions.md`](docs/contract/api-conventions.md).
@@ -18,7 +18,19 @@ pnpm dev                     # HTTP API on :3000 with fake integrations — /hea
 pnpm dev:worker              # worker process (BullMQ); idles until queues exist
 ```
 API docs: http://localhost:3000/docs (Scalar) · `/docs/swagger` · `/docs-json` · `/docs.yaml`.
-Mailpit UI: http://localhost:8025 · LocalStack: http://localhost:4566 (bucket `packio-dev`).
+Mailpit UI: http://localhost:8025 · LocalStack: http://localhost:4566 (bucket `getpack-dev`).
+
+**Before the rename (D-425)** the Compose project was `packio-api`, so an existing local database lives in the volume
+`packio-api_postgres-data` (user, password and database `packio`). Keep it by copying it once into the new project's
+volume before the first `docker compose up` — the `DATABASE_URL` in your `.env` keeps working — and point `S3_BUCKET` at
+`getpack-dev`:
+
+```bash
+docker compose -p packio-api down
+docker volume create getpack-api_postgres-data
+docker run --rm -v packio-api_postgres-data:/from -v getpack-api_postgres-data:/to alpine cp -a /from/. /to/
+docker compose up -d && pnpm db:migrate
+```
 
 ## Documenting an endpoint
 Use the decorators in `src/common/openapi/decorators.ts` (`@ApiEndpoint`, `@ApiSuccess`, `@ApiStandardErrors`,
@@ -34,7 +46,7 @@ Then run `pnpm contract:build && pnpm contract:lint` and commit `contract/openap
 | `pnpm test:int` | integration tests with Testcontainers (`pgvector/pgvector:pg18`, `redis:7`) |
 | `pnpm test:e2e` | full app against containers, fake third-party integrations |
 | `pnpm contract:build` | regenerates `contract/openapi.json` — commit it with every endpoint change |
-| `pnpm contract:lint` | Spectral with the Packio ruleset (`contract/spectral/`): operationId, summary, decision id, security, full status-code set, examples, fake data only |
+| `pnpm contract:lint` | Spectral with the getpack ruleset (`contract/spectral/`): operationId, summary, decision id, security, full status-code set, examples, fake data only |
 | `pnpm build` · `pnpm start` · `pnpm start:worker` | compile and run the API / worker from `dist/` |
 | `pnpm build:fast` | SWC compile of `src`, `scripts` and `prisma/seed` into `dist/` without type-checking (~20 s); the seed and script commands below use it — `build` and `contract:build` keep `tsc` (the contract needs the Swagger plugin) |
 | `pnpm db:migrate` · `pnpm db:seed` · `pnpm db:seed:dev` | apply migrations; reference data from decisions; fake dev users (`<role>@example.invalid`, password `DEV_SEED_PASSWORD`) |
@@ -64,7 +76,7 @@ test/                  unit (HTTP pipeline), integration, e2e, fixtures
 ## Docker
 One image, two processes:
 ```bash
-docker build -t packio-api .
-docker run packio-api                          # API (default CMD)
-docker run packio-api node dist/src/worker.js  # worker
+docker build -t getpack-api .
+docker run getpack-api                          # API (default CMD)
+docker run getpack-api node dist/src/worker.js  # worker
 ```

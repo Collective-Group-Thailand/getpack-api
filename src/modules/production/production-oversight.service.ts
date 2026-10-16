@@ -20,8 +20,8 @@ const SPECIAL_FINISHES: readonly string[] = ['foil', 'emboss', 'deboss', 'window
 const pct = (num: number, den: number) => (den === 0 ? null : ((num * 100) / den).toFixed(4));
 
 /**
- * Oversight of production (D-076, D-155, B4.2): the Packio inspection plan decided at release from the
- * risk-based sampling setting and ISO 2859-1 (tasks for Packio staff, results pass / fail on the acceptance
+ * Oversight of production (D-076, D-155, B4.2): the getpack inspection plan decided at release from the
+ * risk-based sampling setting and ISO 2859-1 (tasks for getpack staff, results pass / fail on the acceptance
  * numbers); the SLA engine (predicted finish vs the promised date, at-risk alerts, a daily digest per
  * factory); the monthly factory scorecard (on-time acceptance, on-time shipping, QC first pass, claim rate,
  * on-time updates), visible to the factory.
@@ -163,7 +163,7 @@ export class ProductionOversightService {
     return finishes.some((f) => SPECIAL_FINISHES.includes(f.finishKind));
   }
 
-  // --- inspections (Packio staff) ----------------------------------------------------------------------
+  // --- inspections (getpack staff) ----------------------------------------------------------------------
 
   async listInspections(where: Prisma.InspectionWhereInput, page: number, perPage: number) {
     const include = {
@@ -289,7 +289,7 @@ export class ProductionOversightService {
             data: {
               status: 'on_hold',
               statusChangedAt: new Date(),
-              holdReason: 'Packio inspection failed (D-076)',
+              holdReason: 'getpack inspection failed (D-076)',
               rowVersion: { increment: 1 },
             },
           });

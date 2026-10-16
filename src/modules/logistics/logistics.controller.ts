@@ -205,7 +205,7 @@ export class PartnerShipmentsController {
     id: 'partner.shipments.markReady',
     summary: 'Mark a shipment packed and print its labels',
     description:
-      'Generates one 100 × 150 mm label per carton (QR → public tracking, Packio brand only, D-050) and the ' +
+      'Generates one 100 × 150 mm label per carton (QR → public tracking, getpack brand only, D-050) and the ' +
       'packing list; the shipping payout is fixed from the factory’s rate card (D-013).',
     implements: ['D-013', 'D-050'],
   })
@@ -232,7 +232,7 @@ export class PartnerShipmentsController {
     summary: 'Hand a shipment to the factory’s fleet',
     description:
       'Blocked while instalments due before shipping are unpaid (`shipments.payment_pending`, B3.2) or a ' +
-      'required Packio inspection has not passed (`shipments.inspection_pending`, D-076). Records the order’s ' +
+      'required getpack inspection has not passed (`shipments.inspection_pending`, D-076). Records the order’s ' +
       '`shipped` fact.',
     implements: ['D-013', 'D-020', 'D-076'],
   })
@@ -375,10 +375,10 @@ export class PartnerShipmentsController {
   @shipmentParam
   @ApiEndpoint({
     id: 'partner.shipments.requestCarrier',
-    summary: 'Ask Packio for a carrier',
+    summary: 'Ask getpack for a carrier',
     description:
       'For a packed trip our own fleet cannot serve (D-013 fallback, D-114): recorded with the reason and raised to ' +
-      'Packio Logistics, who book the carrier. We never book a carrier ourselves. Once per trip (409 otherwise).',
+      'getpack Logistics, who book the carrier. We never book a carrier ourselves. Once per trip (409 otherwise).',
     implements: ['D-013', 'D-114'],
   })
   @ApiBody({
@@ -435,7 +435,7 @@ export class PartnerShipPlanController {
     summary: 'What my factory can ship',
     description:
       'Completed jobs whose orders are not delivered yet: per destination the pieces already on live trips and what ' +
-      'remains, and whether pickup would be refused today (instalments before shipping, Packio inspection — the ' +
+      'remains, and whether pickup would be refused today (instalments before shipping, getpack inspection — the ' +
       'checks of dispatch, B3.2 / D-076). Destination contacts only (D-142).',
     implements: ['D-013', 'D-076', 'D-142'],
   })
@@ -558,8 +558,8 @@ export class AdminShipmentsController {
     id: 'admin.shipments.bookCarrier',
     summary: 'Book a fallback carrier',
     description:
-      'Where the factory’s fleet cannot serve the area (D-013, D-114): Packio’s carrier account books the ' +
-      'pickup at the factory for a packed shipment; the carrier’s quote is kept as Packio’s cost (P25). The ' +
+      'Where the factory’s fleet cannot serve the area (D-013, D-114): getpack’s carrier account books the ' +
+      'pickup at the factory for a packed shipment; the carrier’s quote is kept as getpack’s cost (P25). The ' +
       'shipping gate applies. Carrier callbacks then move the shipment; delivery by carrier POD. An optional ' +
       '`reason` is kept on the event and the audit trail.',
     implements: ['D-013', 'D-114'],
@@ -615,7 +615,7 @@ export class AdminShipmentsController {
     description:
       'Every fallback carrier’s quote for this trip — pickup at the factory, the destination, one parcel per ' +
       'carton (D-114) — before booking; a carrier that is not enabled, has no account or cannot quote comes back ' +
-      'unavailable with the reason. Amounts are Packio’s cost, shown only with `factory_buy_prices.read` (D-141). ' +
+      'unavailable with the reason. Amounts are getpack’s cost, shown only with `factory_buy_prices.read` (D-141). ' +
       'Nothing is booked or stored.',
     implements: ['D-013', 'D-114', 'D-141'],
   })

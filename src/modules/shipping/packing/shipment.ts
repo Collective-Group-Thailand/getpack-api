@@ -2,7 +2,7 @@ import { type Carton } from './folding-packing';
 
 /**
  * A quote's shipment: every part of a configuration travels together to one address, so the customer
- * rate is looked up once on the summed weight and volume (Packio's rate card is per shipment, D-013;
+ * rate is looked up once on the summed weight and volume (getpack's rate card is per shipment, D-013;
  * legacy priced each part's cartons with a carrier, `Calculator.php:335-359`).
  */
 export interface PalletSpec {

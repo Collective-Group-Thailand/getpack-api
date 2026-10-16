@@ -661,7 +661,7 @@ export class RfqsService implements OnModuleInit {
     });
   }
 
-  /** Packio asks an active factory for its buy price per tier (D-044: spec and tiers only). */
+  /** getpack asks an active factory for its buy price per tier (D-044: spec and tiers only). */
   async requestConsultation(
     actor: UserActor,
     publicId: string,

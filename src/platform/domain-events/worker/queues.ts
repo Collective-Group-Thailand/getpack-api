@@ -1,4 +1,4 @@
-/** BullMQ queues of the worker process (prefix `packio`). */
+/** BullMQ queues of the worker process (prefix `getpack`). */
 export const QUEUES = {
   outboxRelay: 'outbox-relay',
   domainEvents: 'domain-events',

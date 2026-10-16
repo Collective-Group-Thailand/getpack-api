@@ -113,7 +113,7 @@ export class StoreAnalyticsController {
     id: 'store.analytics.recordConsent',
     summary: 'Record the visitor’s analytics-cookie consent',
     description:
-      'Packio’s own consent management (D-005, PDPA): appends a consent record for the anonymous visitor (and for the ' +
+      'getpack’s own consent management (D-005, PDPA): appends a consent record for the anonymous visitor (and for the ' +
       'signed-in customer, when a token is sent) against the text in force; the latest record wins. ' +
       '`consent.purpose_unavailable` until the consent text has an approved version.',
     implements: [...DOCS, 'D-005'],
@@ -426,7 +426,7 @@ export class AdminAnalyticsController {
       {
         id: EXAMPLES.ids.campaign,
         code: 'LAUNCH26',
-        name: 'เปิดตัว Packio (fake)',
+        name: 'เปิดตัว getpack (fake)',
         status: 'active',
         budget: '50000.00',
         spent: '12500.00',
@@ -578,7 +578,7 @@ export class AdminAnalyticsController {
     description: 'Signed URL',
     type: DownloadUrlDto,
     example: {
-      url: 'https://packio-files.s3.example.com/…&X-Amz-Expires=300',
+      url: 'https://getpack-files.s3.example.com/…&X-Amz-Expires=300',
       expiresAt: '2027-01-05T09:06:10+07:00',
     },
   })

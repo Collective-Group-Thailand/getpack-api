@@ -75,9 +75,9 @@ import { ErpQualityService } from './erp-quality.service';
 import { ErpWorkspace } from './erp-workspace.service';
 
 /**
- * Packio Factory ERP E5 (docs/prompts/E1-factory-erp.md §12, D-372 – D-383): quality, insight (dashboard,
+ * getpack Factory ERP E5 (docs/prompts/E1-factory-erp.md §12, D-372 – D-383): quality, insight (dashboard,
  * costing, profitability, OEE) and people under `/v1/partner/factories/{factoryId}/erp/*`, factory-private
- * (D-317); and Packio support's read under the owner's grant at `/v1/admin/factories/{factoryId}/erp/support-view`.
+ * (D-317); and getpack support's read under the owner's grant at `/v1/admin/factories/{factoryId}/erp/support-view`.
  */
 
 const factoryParam = ApiParam({ name: 'factoryId', format: 'uuid' });
@@ -216,7 +216,7 @@ const NCR: ErpNcrDto = {
   version: 3,
 };
 const PDF_LINK: ErpPdfLinkDto = {
-  url: 'https://files.packio.example/erp/COA-QC-2610-0004.pdf?sig=example',
+  url: 'https://files.getpack.example/erp/COA-QC-2610-0004.pdf?sig=example',
   fileName: 'COA-QC-2610-0004.pdf',
   expiresAt: '2026-10-13T15:05:00+07:00',
 };
@@ -296,7 +296,7 @@ const DASHBOARD: ErpDashboardDto = {
   asOf: '2026-10-13',
   month: '2026-10',
   sales: { invoicedNet: '245000.00', target: '300000.00', achievementPct: '81.7', invoices: 12 },
-  packio: { confirmedNet: '239951.41', confirmedStatements: 2, toConfirm: 2, toConfirmGross: '44999.33', toInvoice: 1 },
+  getpack: { confirmedNet: '239951.41', confirmedStatements: 2, toConfirm: 2, toConfirmGross: '44999.33', toInvoice: 1 },
   receivables: { open: '182000.00', overdue: '42000.00', overdueInvoices: 3 },
   payables: { dueThisWeek: '56000.00', dueThisWeekCount: 4, overdueAmount: '0.00' },
   stock: {
@@ -351,7 +351,7 @@ const WORK_LOG: ErpWorkLogDto = {
 };
 const GRANT: ErpSupportGrantDto = {
   id: E5_IDS.grant,
-  reason: 'ให้ทีม Packio ช่วยตรวจตัวเลขต้นทุน',
+  reason: 'ให้ทีม getpack ช่วยตรวจตัวเลขต้นทุน',
   expiresAt: '2026-10-16T10:00:00+07:00',
   active: true,
   revokedAt: null,
@@ -360,7 +360,7 @@ const GRANT: ErpSupportGrantDto = {
   viewCount: 1,
   grantedBy: 'เจ้าของโรงงาน ทดสอบ',
   createdAt: '2026-10-13T10:00:00+07:00',
-  views: [{ at: '2026-10-13T10:12:00+07:00', staff: 'ทีมพาร์ทเนอร์ Packio (ทดสอบ)', what: 'dashboard,settings' }],
+  views: [{ at: '2026-10-13T10:12:00+07:00', staff: 'ทีมพาร์ทเนอร์ getpack (ทดสอบ)', what: 'dashboard,settings' }],
   nextActions: [ACTION('erp_support.revoke')],
 };
 
@@ -756,7 +756,7 @@ export class PartnerErpInsightController {
     summary: 'The owner’s dashboard',
     description:
       'Sales against target, receivables, payables due this week, stock value and low stock, production in progress and ' +
-      'late, machines down and yesterday’s OEE, quality, follow-ups and alerts (D-378); work for Packio — statements confirmed this month, to confirm and without a tax invoice (D-402).',
+      'late, machines down and yesterday’s OEE, quality, follow-ups and alerts (D-378); work for getpack — statements confirmed this month, to confirm and without a tax invoice (D-402).',
     implements: ['D-378', 'D-402'],
     can: 'factory_insight.read',
     success: { status: 200, description: 'The dashboard', type: ErpDashboardDto, example: DASHBOARD },
@@ -832,15 +832,15 @@ export class PartnerErpInsightController {
     id: 'partner.erpInsight.profitability',
     summary: 'Gross profit of the month',
     description:
-      'Net invoiced less the cost of what was delivered, by sales order, customer or item (D-376); or, `by=packio_job`, ' +
-      'Packio jobs finished in the month: the purchase order’s net less the production order’s cost (D-402).',
+      'Net invoiced less the cost of what was delivered, by sales order, customer or item (D-376); or, `by=getpack_job`, ' +
+      'getpack jobs finished in the month: the purchase order’s net less the production order’s cost (D-402).',
     implements: ['D-376', 'D-402'],
     can: 'factory_insight.read',
     success: { status: 200, description: 'The report', type: ErpProfitReportDto, example: PROFIT },
     errors: ['http.not_found', 'validation.failed'],
   })
   async profitability(@CurrentActor() actor: Actor, @Param('factoryId', ParseUUIDPipe) factoryId: string, @Query() q: ErpProfitQuery) {
-    return this.insight.profit(await this.workspace.open(actor, factoryId), q.month, (q.by ?? 'customer') as 'customer' | 'packio_job');
+    return this.insight.profit(await this.workspace.open(actor, factoryId), q.month, (q.by ?? 'customer') as 'customer' | 'getpack_job');
   }
 
   @Get('insight/oee')
@@ -985,7 +985,7 @@ export class PartnerErpPeopleController {
   @Get('support-grants')
   @Op({
     id: 'partner.erpPeople.supportGrants',
-    summary: 'Packio support access',
+    summary: 'getpack support access',
     description: 'The latest 20 grants, each with who read what (D-381).',
     implements: ['D-381'],
     can: 'factory_support.grant',
@@ -998,12 +998,12 @@ export class PartnerErpPeopleController {
   @Post('support-grants')
   @Op({
     id: 'partner.erpPeople.grantSupport',
-    summary: 'Let Packio support read the ERP',
+    summary: 'Let getpack support read the ERP',
     description: 'Read-only, the dashboard and settings, for 1–7 days; one at a time; revocable (D-381).',
     implements: ['D-381'],
     can: 'factory_support.grant',
     idempotent: true,
-    body: { type: ErpGrantSupportDto, example: { reason: 'ให้ทีม Packio ช่วยตรวจตัวเลขต้นทุน', days: 3 } },
+    body: { type: ErpGrantSupportDto, example: { reason: 'ให้ทีม getpack ช่วยตรวจตัวเลขต้นทุน', days: 3 } },
     success: { status: 201, description: 'Granted', type: ErpSupportGrantDto, example: { ...GRANT, viewCount: 0, views: [] } },
     errors: [...WRITE, 'erp.support_grant_active'],
   })
@@ -1014,7 +1014,7 @@ export class PartnerErpPeopleController {
   @Post('support-grants/:grantId/actions/revoke')
   @Op({
     id: 'partner.erpPeople.revokeSupport',
-    summary: 'Revoke Packio support access',
+    summary: 'Revoke getpack support access',
     description: 'Ends the grant now (D-381).',
     implements: ['D-381'],
     can: 'factory_support.grant',

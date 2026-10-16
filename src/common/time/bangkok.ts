@@ -1,7 +1,7 @@
 /**
  * Time is stored in UTC (`timestamptz`); business rules are evaluated in Asia/Bangkok
  * (CLAUDE.md hard rules). Thailand has used UTC+07:00 without daylight saving since 1920, so a
- * fixed offset is exact for every date Packio handles.
+ * fixed offset is exact for every date getpack handles.
  */
 export const BANGKOK_TZ = 'Asia/Bangkok';
 const OFFSET_MS = 7 * 60 * 60 * 1000;

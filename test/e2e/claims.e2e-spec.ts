@@ -152,7 +152,7 @@ describe('claims and reorder (e2e, B4.5)', () => {
     await delivery.autoComplete(new Date(order.deliveredAt!.getTime() + 8 * DAY));
     expect((await ctx.prisma.order.findUniqueOrThrow({ where: { id: order.id } })).completedAt).toBeNull();
 
-    // The factory sees the claim only once Packio sends it.
+    // The factory sees the claim only once getpack sends it.
     await as(ctx, owner).get(`/v1/partner/claims/${submitted.id}`).expect(404);
     const cs = await staffToken(ctx, 'cs');
     const adminRes = await as(ctx, cs).get(`/v1/admin/claims/${submitted.id}`).expect(200);
@@ -398,11 +398,11 @@ describe('claims and reorder (e2e, B4.5)', () => {
     ).toBe('claims.liability_undetermined');
     const lead = await staffToken(ctx, 'cs_lead');
     const overridden = await post(lead, `/v1/admin/claims/${opened.id}/actions/override-liability`, {
-      liability: 'packio',
-      reason: 'Packio นัดส่งผิดวัน (ทดสอบ)',
+      liability: 'getpack',
+      reason: 'getpack นัดส่งผิดวัน (ทดสอบ)',
     }).expect(200);
     expect(overridden.body).toMatchObject({
-      liability: 'packio',
+      liability: 'getpack',
       liabilityByRule: 'undetermined',
       liabilityRule: 'staff_decides',
       liabilityOverriddenBy: { id: expect.any(String) },
@@ -531,7 +531,7 @@ describe('claims and reorder (e2e, B4.5)', () => {
     expect(submitted.sla).toMatchObject({
       respondedAt: null,
       responseOverdue: false,
-      currentOwner: 'packio',
+      currentOwner: 'getpack',
       guaranteeVersionNo: 1,
     });
     expect(submitted.sla['responseDueAt']).toEqual(expect.any(String));
@@ -545,12 +545,12 @@ describe('claims and reorder (e2e, B4.5)', () => {
     let mine = (await as(ctx, o.token).get(`/v1/store/claims/${submitted.id}`).expect(200)).body as {
       sla: Record<string, unknown>;
     };
-    // Responded; the decision clock stops while Packio waits for the customer (D-263).
+    // Responded; the decision clock stops while getpack waits for the customer (D-263).
     expect(mine.sla).toMatchObject({ currentOwner: 'customer', decisionDueAt: null });
     expect(mine.sla['respondedAt']).toEqual(expect.any(String));
     await post(o.token, `/v1/store/claims/${submitted.id}/info`, { response: 'แนบแล้ว (fake)' }).expect(200);
     mine = (await as(ctx, o.token).get(`/v1/store/claims/${submitted.id}`).expect(200)).body;
-    expect(mine.sla).toMatchObject({ currentOwner: 'packio' });
+    expect(mine.sla).toMatchObject({ currentOwner: 'getpack' });
     expect(mine.sla['decisionDueAt']).toEqual(expect.any(String));
     const timeline = (await as(ctx, o.token).get(`/v1/store/claims/${submitted.id}/timeline`).expect(200))
       .body as {

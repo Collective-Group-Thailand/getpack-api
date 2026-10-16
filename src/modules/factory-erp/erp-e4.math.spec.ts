@@ -81,7 +81,7 @@ describe('Factory ERP E4 arithmetic and documents', () => {
     expect(html).toContain('ต้นฉบับ');
     expect(html).toContain('สำเนา');
     expect(html).toContain('ลูกค้า &lt;ทดสอบ&gt;');
-    expect(html).toContain('สร้างด้วย Packio Factory');
+    expect(html).toContain('สร้างด้วย getpack Factory');
   });
 
   it('prints the 50 ทวิ with the right form ticked and rows summed', () => {

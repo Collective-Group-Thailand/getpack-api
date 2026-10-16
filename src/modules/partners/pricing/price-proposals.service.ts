@@ -62,14 +62,14 @@ const PROPOSAL_INCLUDE = {
 type ProposalRow = Prisma.PriceProposalGetPayload<{ include: typeof PROPOSAL_INCLUDE }>;
 type LineRow = ProposalRow['lines'][number];
 
-/** Who is acting: a factory user on its own factory, or Packio staff. */
+/** Who is acting: a factory user on its own factory, or getpack staff. */
 export type ProposalSide = { side: 'partner'; factoryPublicId: string } | { side: 'staff' };
 
 const originOf = (p: {
   direction: ProposalDirection;
   createdBy: { kind: string } | null;
 }): PriceVersionOrigin =>
-  p.direction === 'packio_to_factory'
+  p.direction === 'getpack_to_factory'
     ? 'platform_rate_card'
     : p.createdBy?.kind === 'staff'
       ? 'assisted_entry'
@@ -88,11 +88,11 @@ const finalLine = (l: LineRow): FinalLine => ({
 /**
  * Price proposals (D-040, D-042): every change to a factory price list, in either ownership mode.
  *
- * - `factory_price_list` (mode b, `factory_to_packio`): the factory — or Packio staff on its behalf
+ * - `factory_price_list` (mode b, `factory_to_getpack`): the factory — or getpack staff on its behalf
  *   (assisted entry, D-100 note) — drafts lines and submits; the `price_proposal` approval opens; staff
  *   accept, reject or counter each line and the factory accepts or withdraws counters; on approval
  *   the accepted lines become a new version (assisted entry waits for the factory's sign-off).
- * - `platform_rate_card` (mode a, `packio_to_factory`): staff draft the card and submit; on approval
+ * - `platform_rate_card` (mode a, `getpack_to_factory`): staff draft the card and submit; on approval
  *   (maker ≠ checker) it becomes a `pending_acceptance` version; the factory accepts it whole or per
  *   line, or counters; staff other than the drafter decide counters; once every line is settled the
  *   version applies to new orders.
@@ -129,8 +129,8 @@ export class PriceProposalsService {
       priceList: { factory: factoryWhere },
       ...(query.status && { status: query.status }),
       ...(query.direction && { direction: query.direction }),
-      // A factory never sees rate cards Packio is still drafting.
-      ...(factoryPublicId && { NOT: { direction: 'packio_to_factory', resultingVersionId: null } }),
+      // A factory never sees rate cards getpack is still drafting.
+      ...(factoryPublicId && { NOT: { direction: 'getpack_to_factory', resultingVersionId: null } }),
     };
     const [rows, total] = await Promise.all([
       this.prisma.priceProposal.findMany({
@@ -180,7 +180,7 @@ export class PriceProposalsService {
     if (side === 'partner' && mode !== 'factory_price_list')
       throw new DomainException('partners.wrong_pricing_mode');
     const direction: ProposalDirection =
-      mode === 'platform_rate_card' ? 'packio_to_factory' : 'factory_to_packio';
+      mode === 'platform_rate_card' ? 'getpack_to_factory' : 'factory_to_getpack';
     // D-043: tier A holds a full table, tier B the lines it covers, tier C none.
     const tier = await this.configuration.tierAt(factory.id, productType.id, now);
     if (tier !== 'A' && tier !== 'B') throw new DomainException('partners.no_price_list_tier');
@@ -224,7 +224,7 @@ export class PriceProposalsService {
           productType: productType.code,
           baseVersionNo: base?.versionNo ?? null,
         },
-        direction === 'packio_to_factory',
+        direction === 'getpack_to_factory',
       );
       return proposal.publicId;
     });
@@ -313,7 +313,7 @@ export class PriceProposalsService {
       const proposal = await this.load(tx, actor, proposalPublicId, side, true);
       this.assertOwnSide(proposal, side);
       const awaitingFactory =
-        proposal.direction === 'packio_to_factory' &&
+        proposal.direction === 'getpack_to_factory' &&
         proposal.resultingVersion?.status === 'pending_acceptance';
       if (!OPEN.includes(proposal.status) && !awaitingFactory)
         throw new DomainException('partners.proposal_closed');
@@ -347,7 +347,7 @@ export class PriceProposalsService {
     const side: ProposalSide = { side: 'staff' };
     return this.prisma.withTx(async (tx) => {
       const proposal = await this.load(tx, actor, proposalPublicId, side, true);
-      const rateCard = proposal.direction === 'packio_to_factory';
+      const rateCard = proposal.direction === 'getpack_to_factory';
       if (rateCard) {
         if (proposal.status !== 'countered') throw new DomainException('partners.proposal_closed');
         if (proposal.createdById === actor.userId) throw new DomainException('partners.maker_checker');
@@ -399,7 +399,7 @@ export class PriceProposalsService {
     });
   }
 
-  /** Mode b: the factory accepts or withdraws the lines Packio countered. */
+  /** Mode b: the factory accepts or withdraws the lines getpack countered. */
   async answerCounters(
     actor: UserActor,
     factoryPublicId: string,
@@ -409,7 +409,7 @@ export class PriceProposalsService {
     const side: ProposalSide = { side: 'partner', factoryPublicId };
     return this.prisma.withTx(async (tx) => {
       const proposal = await this.load(tx, actor, proposalPublicId, side, true);
-      if (proposal.direction !== 'factory_to_packio' || proposal.status !== 'countered') {
+      if (proposal.direction !== 'factory_to_getpack' || proposal.status !== 'countered') {
         throw new DomainException('partners.proposal_closed');
       }
       const now = new Date();
@@ -451,7 +451,7 @@ export class PriceProposalsService {
     return this.prisma.withTx(async (tx) => {
       const proposal = await this.load(tx, actor, proposalPublicId, side, true);
       if (
-        proposal.direction !== 'packio_to_factory' ||
+        proposal.direction !== 'getpack_to_factory' ||
         !['approved', 'countered'].includes(proposal.status) ||
         proposal.resultingVersion?.status !== 'pending_acceptance'
       ) {
@@ -532,7 +532,7 @@ export class PriceProposalsService {
       return;
     }
 
-    if (proposal.direction === 'packio_to_factory') {
+    if (proposal.direction === 'getpack_to_factory') {
       // Approved rate card → awaiting the factory; every line is still open for its answer.
       const version = await this.createVersion(
         tx,
@@ -809,7 +809,7 @@ export class PriceProposalsService {
       if (proposal.priceList.factory.publicId !== side.factoryPublicId)
         throw new DomainException('http.not_found');
       await this.access.factory(actor, side.factoryPublicId);
-      if (proposal.direction === 'packio_to_factory' && proposal.resultingVersionId === null) {
+      if (proposal.direction === 'getpack_to_factory' && proposal.resultingVersionId === null) {
         throw new DomainException('http.not_found');
       }
     }
@@ -867,21 +867,21 @@ export class PriceProposalsService {
       resourcePublicId: proposal.publicId,
       data: {
         factory: proposal.priceList.factory.code,
-        // D-044: why another factory's prices were read — reviewing its proposal or Packio's rate card for it.
-        purpose: proposal.direction === 'packio_to_factory' ? 'rate_card_review' : 'proposal_review',
+        // D-044: why another factory's prices were read — reviewing its proposal or getpack's rate card for it.
+        purpose: proposal.direction === 'getpack_to_factory' ? 'rate_card_review' : 'proposal_review',
         lines: proposal.lines.length,
       },
     });
   }
 
-  /** Activity is shown to the factory, except for a rate card Packio has not sent yet. */
+  /** Activity is shown to the factory, except for a rate card getpack has not sent yet. */
   private record(
     tx: Tx,
     proposal: ProposalRow & { resultingVersionId: bigint | null },
     type: string,
     data: Record<string, unknown>,
   ) {
-    const internal = proposal.direction === 'packio_to_factory' && proposal.resultingVersionId === null;
+    const internal = proposal.direction === 'getpack_to_factory' && proposal.resultingVersionId === null;
     return this.recorder.proposal(tx, proposal.priceList.factory, proposal, type, data, internal);
   }
 

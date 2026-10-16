@@ -213,7 +213,7 @@ export class StoreClaimsController extends ClaimViews {
   @ApiEndpoint({
     id: 'store.claims.get',
     summary: 'One of my claims',
-    description: 'Status, what Packio asked for, the decision and what was done (no factory, D-050).',
+    description: 'Status, what getpack asked for, the decision and what was done (no factory, D-050).',
     implements: ['D-082', 'D-050'],
   })
   @ApiSuccess(200, { description: 'Claim', type: StoreClaimDto, example: STORE_CLAIM_EXAMPLE })
@@ -230,7 +230,7 @@ export class StoreClaimsController extends ClaimViews {
     summary: 'The progress of one of my claims',
     description:
       'Its visible steps and the SLA countdowns of the guarantee it follows: first response within its business days, ' +
-      'decision within its business days of complete evidence (the clock stops while Packio waits for my answer), and ' +
+      'decision within its business days of complete evidence (the clock stops while getpack waits for my answer), and ' +
       'who must act now (D-263, D-199).',
     implements: ['D-263', 'D-199', 'D-082'],
   })
@@ -271,7 +271,7 @@ export class StoreClaimsController extends ClaimViews {
   @claimParam
   @ApiEndpoint({
     id: 'store.claims.respondInfo',
-    summary: 'Answer Packio’s question about my claim',
+    summary: 'Answer getpack’s question about my claim',
     description: 'Only while the claim needs information; more photos may be attached. The review continues.',
     implements: ['D-082'],
   })
@@ -452,7 +452,7 @@ export class StoreBulkReorderController {
 }
 
 // =====================================================================================================
-// Partner (factory-scoped: claims about its jobs once Packio sent them)
+// Partner (factory-scoped: claims about its jobs once getpack sent them)
 // =====================================================================================================
 
 @ApiSurface('partner', 'claims')
@@ -467,7 +467,7 @@ export class PartnerClaimsController extends ClaimViews {
   @ApiEndpoint({
     id: 'partner.claims.list',
     summary: 'Claims about my factory’s jobs',
-    description: 'Those Packio sent for review or decided against the factory (D-083).',
+    description: 'Those getpack sent for review or decided against the factory (D-083).',
     implements: ['D-083'],
   })
   @ApiPaginated(PartnerClaimDto, { example: PARTNER_CLAIM_EXAMPLE })
@@ -504,8 +504,8 @@ export class PartnerClaimsController extends ClaimViews {
     id: 'partner.claims.respond',
     summary: 'Accept or dispute a claim',
     description:
-      'While Packio asks for the factory’s review, with the factory’s own evidence files when it has them ' +
-      '(U-B0.3); Packio decides afterwards (D-083).',
+      'While getpack asks for the factory’s review, with the factory’s own evidence files when it has them ' +
+      '(U-B0.3); getpack decides afterwards (D-083).',
     implements: ['D-083'],
   })
   @ApiBody({

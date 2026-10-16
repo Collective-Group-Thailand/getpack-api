@@ -296,7 +296,7 @@ export class StoreStudioCatalogController {
     id: 'store.studio.listTemplates',
     summary: 'Studio templates',
     description:
-      'Packio’s own published templates (D-216), by use case and style family; each layout re-flows to any size ' +
+      'getpack’s own published templates (D-216), by use case and style family; each layout re-flows to any size ' +
       'of its families (D-282).',
     implements: ['D-216', 'D-282'],
   })
@@ -327,7 +327,7 @@ export class StoreStudioCatalogController {
     id: 'store.studio.listElements',
     summary: 'Studio elements',
     description:
-      'Packio’s own shapes, icons and packaging marks; `usable` is false for a mark with legal meaning until I or a ' +
+      'getpack’s own shapes, icons and packaging marks; `usable` is false for a mark with legal meaning until I or a ' +
       'company of mine declared the right to use it (D-282).',
     implements: ['D-282'],
   })
@@ -460,7 +460,7 @@ export class AdminStudioTemplatesController {
   @ApiEndpoint({
     id: 'admin.studioTemplates.create',
     summary: 'Create a studio template',
-    description: 'A draft by the in-house / design-service team — Packio’s own, never third-party (D-216).',
+    description: 'A draft by the in-house / design-service team — getpack’s own, never third-party (D-216).',
     implements: ['D-216', 'D-282'],
   })
   @ApiBody({ type: StudioTemplateInputDto, examples: { default: { value: TEMPLATE_BODY } } })
@@ -596,7 +596,7 @@ export class AdminStudioElementsController {
   @ApiEndpoint({
     id: 'admin.studioElements.create',
     summary: 'Create a studio element',
-    description: 'Packio’s own drawing (a draft); `requiresRight` for marks with legal meaning (D-282).',
+    description: 'getpack’s own drawing (a draft); `requiresRight` for marks with legal meaning (D-282).',
     implements: ['D-282'],
   })
   @ApiBody({ type: StudioElementInputDto, examples: { default: { value: ELEMENT_BODY } } })

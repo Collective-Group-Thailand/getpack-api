@@ -32,7 +32,7 @@ export interface DevTagSleeve {
  * An obviously fake tag & sleeve setup for `pnpm dev` and the tests (D-005, U-B6 tag & sleeve): `[DEV]` names, made-up
  * prices. It extends the dev folding factory F9001 (one launch factory serves every type, D-101) with a tier-A
  * `tag_sleeve` price list holding the folding components — an offset and a digital print type —, a flat tag pattern,
- * a hole assembly, a foil finish (offset only, port map T9), capacity and Packio sell margins, so a hang tag on art
+ * a hole assembly, a foil finish (offset only, port map T9), capacity and getpack sell margins, so a hang tag on art
  * card can be priced end to end. Idempotent. Needs `seedDevFolding` (factory, `dev-cmyk`, `dev-normal`, `dev-diecut`)
  * and the dev catalogue (`dev-art-350`, `dev-matt`, `dev-coatings`).
  */
@@ -450,7 +450,7 @@ export async function seedDevTagSleeve(tx: Tx): Promise<{ created: boolean; fixt
     data: { lineCount, contentSha256, status: 'approved', decidedAt: new Date() },
   });
 
-  // Packio's sell side for tags & sleeves (fake values; D-063 admins set the real ones). No structure fee (T18).
+  // getpack's sell side for tags & sleeves (fake values; D-063 admins set the real ones). No structure fee (T18).
   const sellVersion = { versionNo: 1, effectiveFrom: DEV_EFFECTIVE_FROM, reason: 'dev seed (fake)' };
   const margin = await tx.sellMarginTable.create({
     data: {

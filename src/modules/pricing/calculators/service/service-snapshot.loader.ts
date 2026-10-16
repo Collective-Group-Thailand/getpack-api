@@ -8,7 +8,7 @@ import { type ServiceOption } from './service-calculator';
 /**
  * Loads what the service calculator reads (U-B6 service): the service item (a catalogue product of product type
  * `service`) and, per factory price-list version, one option per print type that has a line for it
- * (`pl_service_prices`) with Packio's `service` sell side. Every version id used is returned.
+ * (`pl_service_prices`) with getpack's `service` sell side. Every version id used is returned.
  */
 
 /** A service configuration as the API receives it: the service item and the quantities. */

@@ -138,7 +138,7 @@ export const MO_ACTIONS: ActionRule<MoFacts>[] = [
 
 export const moEtag = (m: { publicId: string; rowVersion: number }) => etagOf(m.publicId, m.rowVersion);
 
-/** The shapes a Packio job's frozen spec carries that planning reads (D-340). */
+/** The shapes a getpack job's frozen spec carries that planning reads (D-340). */
 interface JobSpec {
   configuration?: { materialId?: unknown } | null;
   productTypeNameTh?: string;
@@ -150,7 +150,7 @@ interface JobBuy {
 
 /**
  * Production (E2; D-339 – D-342): recipes of the factory's products, production orders — from an accepted
- * Packio job (automatically), for stock or for a sales order — that reserve their materials on release, take
+ * getpack job (automatically), for stock or for a sales order — that reserve their materials on release, take
  * them out of stock as they are issued, record each operation on the floor and put the finished goods into
  * stock at the cost of what was consumed; and MRP, which turns what the open orders still miss into purchase
  * requests.
@@ -897,7 +897,7 @@ export class ErpProductionService {
   /**
    * An operator works an operation (D-341, D-353): start, pause with a reason, resume, finish with good and
    * scrap, or skip — each an append-only event with who and when; the order is in progress from the first.
-   * A machine with an open breakdown cannot start or resume (D-355). An operation standing for a Packio job
+   * A machine with an open breakdown cannot start or resume (D-355). An operation standing for a getpack job
    * milestone then starts / completes that milestone as the same person (D-354).
    */
   async operate(
@@ -1031,7 +1031,7 @@ export class ErpProductionService {
   }
 
   /**
-   * D-354: the same press on the Packio job — start or complete its milestone with the same quantities, as
+   * D-354: the same press on the getpack job — start or complete its milestone with the same quantities, as
    * the operator. What the job refuses (a QC form, out of order, no permission) is kept on the operation for
    * someone to finish on the job page.
    */
@@ -1281,11 +1281,11 @@ export class ErpProductionService {
     );
   }
 
-  // -------------------------------------------------------------------- Packio jobs (D-340)
+  // -------------------------------------------------------------------- getpack jobs (D-340)
 
   /**
-   * An accepted Packio job becomes a production order of the factory, so its planning, materials and floor
-   * work live in one place: the board material the job was quoted on (the item linked to that Packio
+   * An accepted getpack job becomes a production order of the factory, so its planning, materials and floor
+   * work live in one place: the board material the job was quoted on (the item linked to that getpack
    * material) at the sheets the quote counted. Skipped when the factory switched planning off.
    */
   @OnDomainEvent('production_job.accepted', { consumer: 'factory_erp.job_to_production_order' })
@@ -1318,7 +1318,7 @@ export class ErpProductionService {
           lineNo: 1,
           itemId: item.id,
           requiredQty: fmtQty(sheets),
-          origin: 'packio_spec',
+          origin: 'getpack_spec',
           note: 'ตามจำนวนแผ่นที่ใช้คำนวณราคางาน',
         });
     }
@@ -1346,11 +1346,11 @@ export class ErpProductionService {
       data: {
         factoryId: job.factoryId,
         moNo,
-        source: 'packio_job',
+        source: 'getpack_job',
         productionJobId: job.id,
-        title: `${job.jobNo} · ${spec.productTypeNameTh ?? 'งาน Packio'}`,
+        title: `${job.jobNo} · ${spec.productTypeNameTh ?? 'งาน getpack'}`,
         quantity: fmtQty(job.quantityOrdered),
-        // Packio sells by `piece`; the ERP counts pieces as `pcs` (D-384) — other shared units carry over.
+        // getpack sells by `piece`; the ERP counts pieces as `pcs` (D-384) — other shared units carry over.
         unit: spec.unit && spec.unit !== 'piece' && (ERP_UNITS as readonly string[]).includes(spec.unit) ? spec.unit : 'pcs',
         dueOn: job.plannedFinishOn,
         plannedStartOn: job.plannedStartOn,
@@ -1368,7 +1368,7 @@ export class ErpProductionService {
       mo.publicId,
       {
         moNo,
-        source: 'packio_job',
+        source: 'getpack_job',
         jobId: job.publicId,
       },
     );
@@ -1426,7 +1426,7 @@ export class ErpProductionService {
       where: { id: mo.id },
       data: {
         status: 'cancelled',
-        cancelReason: `งาน Packio ${event.type === 'production_job.rejected' ? 'ถูกปฏิเสธ' : 'ย้ายไปโรงงานอื่น'}`,
+        cancelReason: `งาน getpack ${event.type === 'production_job.rejected' ? 'ถูกปฏิเสธ' : 'ย้ายไปโรงงานอื่น'}`,
         rowVersion: { increment: 1 },
       },
     });
@@ -1442,7 +1442,7 @@ export class ErpProductionService {
     );
   }
 
-  /** A completed Packio job completes its production order (good and scrap quantities from the job). */
+  /** A completed getpack job completes its production order (good and scrap quantities from the job). */
   @OnDomainEvent('production_job.completed', { consumer: 'factory_erp.job_completed' })
   async onJobCompleted(event: DomainEventEnvelope, tx: Tx): Promise<void> {
     const mo = await tx.erpProductionOrder.findFirst({

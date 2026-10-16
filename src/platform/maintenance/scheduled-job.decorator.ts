@@ -1,6 +1,6 @@
 import { SetMetadata } from '@nestjs/common';
 
-export const SCHEDULED_JOB = 'packio:scheduled-job';
+export const SCHEDULED_JOB = 'getpack:scheduled-job';
 
 export interface ScheduledJobOptions {
   /** Unique, stable job name (also the BullMQ job-scheduler id). */

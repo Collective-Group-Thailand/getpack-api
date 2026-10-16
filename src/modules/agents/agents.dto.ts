@@ -301,7 +301,7 @@ export class AgentAgreementTextDto {
   @TimestampField('2026-01-01T00:00:00+07:00')
   effectiveFrom!: string;
 
-  @ApiProperty({ example: 'ข้อตกลงตัวแทนขาย Packio (ฉบับที่ 1) …' })
+  @ApiProperty({ example: 'ข้อตกลงตัวแทนขาย getpack (ฉบับที่ 1) …' })
   textTh!: string;
 
   @ApiProperty({ type: String, nullable: true, example: null })
@@ -355,7 +355,7 @@ export const AGENT_PROGRAMME_EXAMPLE: AgentProgrammeDto = {
     key: 'sales_agent_agreement',
     versionNo: 1,
     effectiveFrom: '2026-01-01T00:00:00+07:00',
-    textTh: 'ข้อตกลงตัวแทนขาย Packio (ฉบับที่ 1) …',
+    textTh: 'ข้อตกลงตัวแทนขาย getpack (ฉบับที่ 1) …',
     textEn: null,
   },
   plan: TERMS_EXAMPLE,
@@ -663,7 +663,7 @@ export class AgentDto {
   @ApiProperty({ example: 'K7QX2MAP', description: 'Shared in the agent link' })
   code!: string;
 
-  @ApiProperty({ example: 'https://www.packio.invalid/a/K7QX2MAP' })
+  @ApiProperty({ example: 'https://www.getpack.invalid/a/K7QX2MAP' })
   link!: string;
 
   @ApiProperty({ example: 'สมชาย ขายเก่ง' })
@@ -741,7 +741,7 @@ export const AGENT_EXAMPLE: AgentDto = {
   kind: 'freelance',
   status: 'active',
   code: 'K7QX2MAP',
-  link: 'https://www.packio.invalid/a/K7QX2MAP',
+  link: 'https://www.getpack.invalid/a/K7QX2MAP',
   legalName: 'สมชาย ขายเก่ง',
   plan: { id: AGENT_IDS.plan, code: 'freelance_standard', nameTh: 'ตัวแทนอิสระ — มาตรฐาน' },
   terms: TERMS_EXAMPLE,
@@ -1035,7 +1035,7 @@ export class RegisterAgentLeadDto {
 
   @ApiProperty({
     example: true,
-    description: 'The lead agreed to be contacted by Packio (PDPA); required',
+    description: 'The lead agreed to be contacted by getpack (PDPA); required',
   })
   @IsBoolean()
   consentConfirmed!: boolean;
@@ -1542,7 +1542,7 @@ export class AgentPayrollExportDto {
   @IdField(AGENT_IDS.file)
   fileId!: string;
 
-  @ApiProperty({ example: 'https://packio-files.s3.example.com/…' })
+  @ApiProperty({ example: 'https://getpack-files.s3.example.com/…' })
   url!: string;
 
   @TimestampField('2026-11-02T10:05:00+07:00')

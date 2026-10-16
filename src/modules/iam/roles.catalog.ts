@@ -28,7 +28,7 @@ const APPROVER: PermissionKey[] = [...EVERY_STAFF_MEMBER, 'approvals.act', 'sett
 const COST_AND_MARGIN: PermissionKey[] = ['factory_buy_prices.read', 'margin.read'];
 
 export const ROLES: readonly RoleDefinition[] = [
-  // --- Packio staff (platform scope)
+  // --- getpack staff (platform scope)
   {
     key: 'superadmin',
     audience: 'staff',

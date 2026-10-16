@@ -118,7 +118,7 @@ export const RFQ_EXAMPLE: RfqDto = {
   messages: [
     {
       id: RFQ_IDS.message,
-      author: 'packio',
+      author: 'getpack',
       body: 'Quotation sent (fake)',
       files: [],
       createdAt: '2026-10-01T09:00:00+07:00',
@@ -310,7 +310,7 @@ export class StoreRfqsController {
     id: 'store.rfqs.get',
     summary: 'Get one of my requests for quote',
     description:
-      'The conversation with Packio and the quotations sent (never drafts or internal notes, D-100).',
+      'The conversation with getpack and the quotations sent (never drafts or internal notes, D-100).',
     implements: DECISIONS,
   })
   @ApiSuccess(200, { description: 'Request', type: RfqDto, example: RFQ_EXAMPLE })
@@ -323,7 +323,7 @@ export class StoreRfqsController {
   @rfqParam
   @ApiEndpoint({
     id: 'store.rfqs.postMessage',
-    summary: 'Answer Packio on a request for quote',
+    summary: 'Answer getpack on a request for quote',
     description: 'A request waiting for information goes back to review (D-100).',
     implements: DECISIONS,
   })

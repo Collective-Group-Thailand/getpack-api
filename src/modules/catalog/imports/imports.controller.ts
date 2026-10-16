@@ -190,7 +190,7 @@ export class CatalogImportsController {
     type: CatalogExportDto,
     example: {
       fileId: '0192f3a0-7c1e-7d2a-9b1f-00000000f002',
-      url: 'https://packio-files.s3.example.com/…&X-Amz-Expires=300',
+      url: 'https://getpack-files.s3.example.com/…&X-Amz-Expires=300',
       rows: 7_408,
       expiresAt: '2026-09-25T10:05:00+07:00',
     },

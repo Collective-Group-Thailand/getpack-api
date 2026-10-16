@@ -45,7 +45,7 @@ describe('analytics event schemas (B6.1, PDPA)', () => {
     expect(sanitisePagePath('/configure/folding_carton?utm_source=x&phone=0812345678#top')).toBe(
       '/configure/folding_carton',
     );
-    expect(sanitisePagePath('https://packio.example/orders/0192f3a0-7c1e-7d2a-9b1f-000000310001')).toBe(
+    expect(sanitisePagePath('https://getpack.example/orders/0192f3a0-7c1e-7d2a-9b1f-000000310001')).toBe(
       '/orders/:id',
     );
     expect(sanitisePagePath('/track/ORD2610000123')).toBe('/track/:id');

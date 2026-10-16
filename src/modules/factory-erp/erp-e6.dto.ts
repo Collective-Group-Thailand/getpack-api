@@ -40,7 +40,7 @@ import { AMOUNT, DAY, ERP_ITEM_KINDS, ErpItemRefDto, ErpRefDto } from './erp.dto
 import { ERP_GL_DIMENSIONS, STATEMENT_LINES } from './erp-ledger.template';
 
 /**
- * Packio Factory ERP E6 (docs/prompts/E6-factory-general-ledger.md, D-385 – D-396): the factory's general
+ * getpack Factory ERP E6 (docs/prompts/E6-factory-general-ledger.md, D-385 – D-396): the factory's general
  * ledger — settings, chart of accounts with maker-checker changes, fiscal periods and the close checklist,
  * journals (posted from documents, manual, recurring, reversals), reports, fixed assets, bank reconciliation
  * and tax filings.
@@ -537,7 +537,7 @@ export class ErpGlJournalLineDto {
   taxBaseAmount!: string | null;
 }
 
-/** `{ type, id, number }` — the document a journal entry came from (shared with Packio's ledger). */
+/** `{ type, id, number }` — the document a journal entry came from (shared with getpack's ledger). */
 export const ErpGlSourceDocDto = JournalSourceDto;
 export type ErpGlSourceDocDto = JournalSourceDto;
 

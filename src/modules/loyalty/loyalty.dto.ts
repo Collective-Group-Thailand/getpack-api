@@ -219,7 +219,7 @@ export class ReviewDto {
   @ApiProperty({ example: 'folding_carton', description: 'The product type reviewed (D-202)' })
   productTypeCode!: string;
 
-  @ApiProperty({ type: () => ReviewReplyDto, nullable: true, description: 'Packio’s reply (D-265)' })
+  @ApiProperty({ type: () => ReviewReplyDto, nullable: true, description: 'getpack’s reply (D-265)' })
   reply!: ReviewReplyDto | null;
 
   @ApiProperty({ format: 'date-time', example: '2026-10-25T10:00:00+07:00' })
@@ -227,7 +227,7 @@ export class ReviewDto {
 }
 
 export class ReviewReplyDto {
-  @ApiProperty({ example: 'ขอบคุณที่ไว้วางใจ Packio ครับ' })
+  @ApiProperty({ example: 'ขอบคุณที่ไว้วางใจ getpack ครับ' })
   body!: string;
 
   @ApiProperty({ format: 'date-time', example: '2026-10-26T10:00:00+07:00' })
@@ -235,7 +235,7 @@ export class ReviewReplyDto {
 }
 
 export class ReplyReviewDto {
-  @ApiProperty({ example: 'ขอบคุณที่ไว้วางใจ Packio ครับ', minLength: 2, maxLength: 2000 })
+  @ApiProperty({ example: 'ขอบคุณที่ไว้วางใจ getpack ครับ', minLength: 2, maxLength: 2000 })
   @IsString()
   @MinLength(2)
   @MaxLength(2000)
@@ -339,7 +339,7 @@ export const PUBLIC_REVIEW_EXAMPLE: PublicReviewDto = {
   productTypeCode: 'folding_carton',
   productTypeNameTh: 'กล่องกระดาษพับ',
   productTypeNameEn: 'Folding carton',
-  reply: { body: 'ขอบคุณที่ไว้วางใจ Packio ครับ', repliedAt: '2026-10-26T10:00:00+07:00' },
+  reply: { body: 'ขอบคุณที่ไว้วางใจ getpack ครับ', repliedAt: '2026-10-26T10:00:00+07:00' },
   createdAt: '2026-10-25T10:00:00+07:00',
 };
 

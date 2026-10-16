@@ -57,7 +57,7 @@ export function setupDocs(app: INestApplication, version: string): void {
   SwaggerModule.setup(DOCS_PATHS.swagger, app, document, {
     jsonDocumentUrl: DOCS_PATHS.json.slice(1),
     yamlDocumentUrl: DOCS_PATHS.yaml.slice(1),
-    customSiteTitle: 'Packio API — Swagger UI',
+    customSiteTitle: 'getpack API — Swagger UI',
   });
 
   const http = app.getHttpAdapter();
@@ -74,7 +74,7 @@ export function setupDocs(app: INestApplication, version: string): void {
       ...(scalar as object),
       url: DOCS_PATHS.json,
       cdn: DOCS_PATHS.scalarBundle,
-      pageTitle: 'Packio API reference',
+      pageTitle: 'getpack API reference',
       nonce: String(res.locals.cspNonce),
     });
     render(req, res);

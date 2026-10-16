@@ -163,7 +163,7 @@ enum DrawingStatus {
 
 // --- Artwork, preflight, proofs (D-070, B4.1) --------------------------------------------------------
 
-/// One version of the files a customer (or Packio on their behalf) submits for an order.
+/// One version of the files a customer (or getpack on their behalf) submits for an order.
 model ArtworkSubmission {
   id                      BigInt           @id(map: "pk_artwork_submissions") @default(autoincrement())
   publicId                String           @unique(map: "ux_artwork_submissions__public_id") @default(dbgenerated("uuidv7()")) @map("public_id") @db.Uuid
@@ -607,7 +607,7 @@ model DesignAsset {
   @@map("design_assets")
 }
 
-/// Drawing log: one request to the dieline engine (`@packio/dieline`).
+/// Drawing log: one request to the dieline engine (`@getpack/dieline`).
 model DrawingJob {
   id               BigInt           @id(map: "pk_drawing_jobs") @default(autoincrement())
   publicId         String           @unique(map: "ux_drawing_jobs__public_id") @default(dbgenerated("uuidv7()")) @map("public_id") @db.Uuid
@@ -1033,7 +1033,7 @@ model QcCheck {
   @@map("qc_checks")
 }
 
-/// Packio risk-based inspection (D-076).
+/// getpack risk-based inspection (D-076).
 model Inspection {
   id              BigInt             @id(map: "pk_inspections") @default(autoincrement())
   publicId        String             @unique(map: "ux_inspections__public_id") @default(dbgenerated("uuidv7()")) @map("public_id") @db.Uuid
@@ -1194,7 +1194,7 @@ model Shipment {
   shipmentNo             String                       @unique(map: "ux_shipments__shipment_no") @map("shipment_no")
   entityId               BigInt                       @map("entity_id")
   factoryId              BigInt                       @map("factory_id")
-  /// `factory_fleet` by default (D-013); a Packio-booked carrier as fallback (D-114).
+  /// `factory_fleet` by default (D-013); a getpack-booked carrier as fallback (D-114).
   carrierId              BigInt                       @map("carrier_id")
   carrierBookingRef      String?                      @map("carrier_booking_ref")
   trackingNo             String?                      @map("tracking_no")
@@ -1224,10 +1224,10 @@ model Shipment {
   /// Staff-only (P15): the factory's shipping payout for this trip, frozen when it is ready.
   factoryPayoutVersionId BigInt?                      @map("factory_payout_version_id")
   payoutAmount           Decimal?                     @map("payout_amount") @db.Decimal(14, 2)
-  /// Staff-only (P25): what the fallback carrier charges Packio.
+  /// Staff-only (P25): what the fallback carrier charges getpack.
   carrierCostAmount      Decimal?                     @map("carrier_cost_amount") @db.Decimal(14, 2)
   note                   String?
-  /// The factory asked Packio for a fallback carrier (D-013, D-114; U-B0.3): Logistics books it.
+  /// The factory asked getpack for a fallback carrier (D-013, D-114; U-B0.3): Logistics books it.
   carrierRequestedAt     DateTime?                    @map("carrier_requested_at") @db.Timestamptz(6)
   carrierRequestReason   String?                      @map("carrier_request_reason")
   carrierRequestedById   BigInt?                      @map("carrier_requested_by")
@@ -1508,7 +1508,7 @@ enum ClaimLiability {
   factory
   customer
   carrier
-  packio
+  getpack
   undetermined
 
   @@map("claim_liability")
@@ -1753,7 +1753,7 @@ enum MessageKind {
   @@map("message_kind")
 }
 
-/// A LINE user of Packio's official account (friend status from follow / unfollow), linked to a customer
+/// A LINE user of getpack's official account (friend status from follow / unfollow), linked to a customer
 /// once they sign in with LINE Login / LIFF (D-151). PII: the LINE user id, name and picture.
 model LineAccount {
   id           BigInt           @id(map: "pk_line_accounts") @default(autoincrement())
@@ -2250,7 +2250,7 @@ model ToolingItem {
   @@map("tooling_items")
 }
 
-/// D-205 a waived tool the factory reported unusable when accepting a job: Packio absorbs the remake (its buy price is
+/// D-205 a waived tool the factory reported unusable when accepting a job: getpack absorbs the remake (its buy price is
 /// paid with the job's goods receipt — the purchase order keeps its snapshot; the customer price is unchanged, D-012).
 /// Write-once.
 model ToolingRemake {

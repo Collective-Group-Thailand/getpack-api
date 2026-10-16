@@ -1,10 +1,10 @@
 # Independent transcription of legacy standard-product pricing (legacy/locopack-web/app/Libraries/StandardProduct/
 # CalculatePrice.php getSteps / sortPrices / findPrice, Utils.php costToSalePrice, app/Helpers/helpers.php
 # calculateMargin / calculateVat) for the U-B6 standard-product golden cases. Written from the PHP, statement by
-# statement, NOT from the TypeScript port. Python floats are IEEE doubles like PHP's. Packio deviations (port map
-# docs/legacy/05-standard-product-port-map.md §9) are marked "PACKIO":
+# statement, NOT from the TypeScript port. Python floats are IEEE doubles like PHP's. getpack deviations (port map
+# docs/legacy/05-standard-product-port-map.md §9) are marked "GETPACK":
 #   - delivery is a separate quote line: the tier price is the goods price only (legacy added delivery per piece);
-#   - the margin is Packio's sell table read on the quantity (legacy one flat locopack_margin), the fix cost its
+#   - the margin is getpack's sell table read on the quantity (legacy one flat locopack_margin), the fix cost its
 #     fix_cost per piece, VAT the dated rate;
 #   - a quantity outside every tier is refused (legacy failed the request); a 0 price refuses the option.
 import math
@@ -37,7 +37,7 @@ class Refused(Exception):
         self.code, self.detail = code, detail
 
 
-def margin_for(sell, qty):  # PACKIO: the sell table on the quantity
+def margin_for(sell, qty):  # GETPACK: the sell table on the quantity
     for l in sell['marginLines']:
         if (l['qtyMin'] is None or l['qtyMin'] <= qty) and (l['qtyMax'] is None or l['qtyMax'] >= qty):
             return l['valuePct']
@@ -62,7 +62,7 @@ def key_min(v):
     return (-math.inf if v is None else v)
 
 
-def get_steps(rows, sell, margin_percent):  # CalculatePrice.php:12-73 (PACKIO: no delivery)
+def get_steps(rows, sell, margin_percent):  # CalculatePrice.php:12-73 (GETPACK: no delivery)
     steps = [r for _, r in sorted(enumerate(rows), key=lambda x: (key_min(x[1]['minQty']), x[0]))]  # orderBy('min')
     result = []
     for s, step in enumerate(steps):

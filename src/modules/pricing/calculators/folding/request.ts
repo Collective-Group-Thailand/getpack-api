@@ -1,6 +1,6 @@
 /**
  * One folding part as the engines see it (B2.3, legacy `app/Libraries/Folding/PrepareRequest.php` fed
- * by `FoldingCalculator::CSCombinetoFactory:618-872`). Catalogue references are Packio ids (strings);
+ * by `FoldingCalculator::CSCombinetoFactory:618-872`). Catalogue references are getpack ids (strings);
  * the loader has already checked that the factory offers each of them (legacy group → factory-row
  * mapping, whose misses were the "ไม่รองรับ…" errors).
  */

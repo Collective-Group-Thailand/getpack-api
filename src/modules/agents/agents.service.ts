@@ -72,7 +72,7 @@ export class AgentsService {
   ) {}
 
   linkFor(code: string): string {
-    const web = this.config.get('STOREFRONT_BASE_URL') ?? 'https://www.packio.invalid';
+    const web = this.config.get('STOREFRONT_BASE_URL') ?? 'https://www.getpack.invalid';
     return `${web.replace(/\/$/, '')}/a/${code}`;
   }
 

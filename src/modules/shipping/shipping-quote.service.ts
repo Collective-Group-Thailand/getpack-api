@@ -33,7 +33,7 @@ export type Delivery =
   | {
       available: true;
       method: 'factory_fleet' | 'flash_express' | 'deliveree';
-      /** Packio's cost of the delivery (payout or carrier quote), THB. */
+      /** getpack's cost of the delivery (payout or carrier quote), THB. */
       cost: MoneyValue;
       factoryPayoutVersionId: bigint | null;
       factoryPayoutVersionPublicId: string | null;
@@ -85,7 +85,7 @@ export class ShippingQuoteService {
     return { postcode, pack, parcels, customer, settingVersionIds };
   }
 
-  /** How `factoryId` delivers the prepared shipment and what it costs Packio. */
+  /** How `factoryId` delivers the prepared shipment and what it costs getpack. */
   async delivery(
     factoryId: bigint,
     prepared: PreparedShipment,

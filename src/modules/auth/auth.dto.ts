@@ -323,7 +323,7 @@ export class JwkDto {
   @ApiProperty({ example: '11qYAYKxCrfVS_7TyWQHOg7hcvPapiMlrwIaaPcHURo' })
   x!: string;
 
-  @ApiProperty({ example: 'packio-2026-09' })
+  @ApiProperty({ example: 'getpack-2026-09' })
   kid!: string;
 
   @ApiProperty({ example: 'EdDSA' })

@@ -1,6 +1,6 @@
 import { bahtText, thaiDate } from '@modules/receivables/thai-text';
 
-/** 50 ทวิ (หนังสือรับรองการหักภาษี ณ ที่จ่าย) issued by Packio's entity to a factory / vendor (§4 WT). */
+/** 50 ทวิ (หนังสือรับรองการหักภาษี ณ ที่จ่าย) issued by getpack's entity to a factory / vendor (§4 WT). */
 export interface WhtCertificateView {
   wtNumber: string;
   paidOn: string;

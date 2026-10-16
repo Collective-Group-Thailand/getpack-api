@@ -2,7 +2,7 @@ import Handlebars from 'handlebars';
 
 /**
  * The quotation document (ใบเสนอราคา, accounting-design §4 QT): issued by the legal entity (D-010,
- * D-092) under the Packio brand, Thai first. Pure: the caller passes every value; issuer fields that
+ * D-092) under the getpack brand, Thai first. Pure: the caller passes every value; issuer fields that
  * are not configured are left out, never invented. Fonts come from the host (Thai fonts in the image).
  */
 export interface QuoteDocument {
@@ -60,7 +60,7 @@ const TEMPLATE = Handlebars.compile(
   .notes { margin-top: 14px; font-size: 9pt; color: #3d444d; line-height: 1.5; }
 </style></head><body>
 <header>
-  <div><div class="brand">Packio</div><div class="tag">Your Packaging Production Partner</div></div>
+  <div><div class="brand">getpack</div><div class="tag">Your Packaging Production Partner</div></div>
   <div class="issuer">
     {{#if issuer.legalNameTh}}<strong>{{issuer.legalNameTh}}</strong><br>{{/if}}
     {{#if issuer.legalNameEn}}{{issuer.legalNameEn}}<br>{{/if}}

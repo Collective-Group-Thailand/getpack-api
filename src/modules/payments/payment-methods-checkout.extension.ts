@@ -10,7 +10,7 @@ import { PaymentsService } from './payments.service';
 /**
  * Checkout extension `payment_methods` (order 995; U-B0.1): the preview lists the methods the instalments can
  * be paid with and whether each is offered now (D-176 provider flags). The method is chosen when paying; the
- * gateway fee is Packio's cost, never a surcharge, so no fee is shown. Reads only.
+ * gateway fee is getpack's cost, never a surcharge, so no fee is shown. Reads only.
  */
 @Injectable()
 export class PaymentMethodsCheckout implements CheckoutExtension, OnModuleInit {

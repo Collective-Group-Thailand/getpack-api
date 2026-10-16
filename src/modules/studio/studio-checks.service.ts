@@ -165,7 +165,7 @@ export class StudioChecksService {
       })
       .catch(async (error: unknown) => {
         // Two runs of the same version and rules at once: the second returns the run the first stored instead of
-        // failing on the unique key (create-or-return; packio-web integration.md, U4.5).
+        // failing on the unique key (create-or-return; getpack-web integration.md, U4.5).
         if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2002') {
           const stored = await this.prisma.designCheckRun.findUnique({ where: runKey, include: RUN_INCLUDE });
           if (stored) return stored;

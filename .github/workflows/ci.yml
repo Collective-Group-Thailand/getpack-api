@@ -93,7 +93,7 @@ jobs:
           status=$?
           set -e
           if [ "$status" -ne 0 ] && [ "$ALLOW_BREAKING" != "true" ]; then
-            echo "::error::Breaking contract change. Use a new version prefix or coordinate with a packio-web PR and add the 'contract:breaking' label (api-conventions §1)."
+            echo "::error::Breaking contract change. Use a new version prefix or coordinate with a getpack-web PR and add the 'contract:breaking' label (api-conventions §1)."
             exit 1
           fi
 
@@ -104,14 +104,14 @@ jobs:
       postgres:
         image: pgvector/pgvector:pg18
         env:
-          POSTGRES_USER: packio
-          POSTGRES_PASSWORD: packio
-          POSTGRES_DB: packio_shadow
+          POSTGRES_USER: getpack
+          POSTGRES_PASSWORD: getpack
+          POSTGRES_DB: getpack_shadow
         ports: ['5432:5432']
         options: >-
-          --health-cmd "pg_isready -U packio" --health-interval 5s --health-timeout 3s --health-retries 20
+          --health-cmd "pg_isready -U getpack" --health-interval 5s --health-timeout 3s --health-retries 20
     env:
-      SHADOW_DATABASE_URL: postgresql://packio:packio@localhost:5432/packio_shadow
+      SHADOW_DATABASE_URL: postgresql://getpack:getpack@localhost:5432/getpack_shadow
     steps:
       - uses: actions/checkout@v4
       - uses: ./.github/actions/setup
@@ -138,13 +138,13 @@ jobs:
         with:
           context: .
           load: true
-          tags: packio-api:ci
+          tags: getpack-api:ci
           cache-from: type=gha
           cache-to: type=gha,mode=max
       - name: Image scan (HIGH/CRITICAL)
         uses: aquasecurity/trivy-action@0.33.1
         with:
-          image-ref: packio-api:ci
+          image-ref: getpack-api:ci
           severity: HIGH,CRITICAL
           ignore-unfixed: true
           exit-code: '1'

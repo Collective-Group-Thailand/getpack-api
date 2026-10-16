@@ -172,7 +172,7 @@ export const SETTINGS: readonly SettingSeed[] = [
       isoInspectionLevel: 'II',
       aql: { critical: '0', major: '2.5', minor: '4.0' },
     },
-    description: 'D-076 Packio risk-based inspection sampling (ISO 2859-1)',
+    description: 'D-076 getpack risk-based inspection sampling (ISO 2859-1)',
     decisions: ['D-076'],
   },
 
@@ -540,7 +540,7 @@ export const SETTINGS: readonly SettingSeed[] = [
     unset: true,
     valueSchema: { type: 'object', additionalProperties: { type: 'object' } },
     description:
-      'D-176 fee Packio expects per payment method ({method: {pct, fixedAmount}}), recorded on each payment for P04; not seeded — fee 0 until Finance sets it',
+      'D-176 fee getpack expects per payment method ({method: {pct, fixedAmount}}), recorded on each payment for P04; not seeded — fee 0 until Finance sets it',
     decisions: ['D-176'],
     confirmation: 'pending_business',
     ownerRole: 'finance_manager',
@@ -1245,7 +1245,7 @@ export const SETTINGS: readonly SettingSeed[] = [
       },
     },
     description:
-      'D-221 Packio support contacts on the storefront (LINE OA id, phone, e-mail, opening hours); Packio’s own accounts (D-005) — not seeded, every field null until the CS Lead sets it',
+      'D-221 getpack support contacts on the storefront (LINE OA id, phone, e-mail, opening hours); getpack’s own accounts (D-005) — not seeded, every field null until the CS Lead sets it',
     decisions: ['D-221', 'D-005'],
     ownerRole: 'cs_lead',
   },

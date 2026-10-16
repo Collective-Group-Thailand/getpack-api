@@ -52,11 +52,11 @@ const PLATFORM_TEMPLATES: readonly NotificationTemplateSeed[] = [
     versions: {
       th: {
         subject: 'มีคำขออนุมัติรอคุณ ({{payload.policyKey}})',
-        body: '<mjml><mj-body><mj-section><mj-column><mj-text>เรียน {{recipient.displayName}}</mj-text><mj-text>คำขออนุมัติ {{payload.policyKey}} รอการตัดสินใจของคุณในระบบ Packio</mj-text></mj-column></mj-section></mj-body></mjml>',
+        body: '<mjml><mj-body><mj-section><mj-column><mj-text>เรียน {{recipient.displayName}}</mj-text><mj-text>คำขออนุมัติ {{payload.policyKey}} รอการตัดสินใจของคุณในระบบ getpack</mj-text></mj-column></mj-section></mj-body></mjml>',
       },
       en: {
         subject: 'An approval waits for you ({{payload.policyKey}})',
-        body: '<mjml><mj-body><mj-section><mj-column><mj-text>Dear {{recipient.displayName}}</mj-text><mj-text>A {{payload.policyKey}} request waits for your decision in Packio.</mj-text></mj-column></mj-section></mj-body></mjml>',
+        body: '<mjml><mj-body><mj-section><mj-column><mj-text>Dear {{recipient.displayName}}</mj-text><mj-text>A {{payload.policyKey}} request waits for your decision in getpack.</mj-text></mj-column></mj-section></mj-body></mjml>',
       },
     },
   },
@@ -96,7 +96,7 @@ const PLATFORM_TEMPLATES: readonly NotificationTemplateSeed[] = [
     key: 'report_run.completed:assignee',
     channel: 'in_app',
     category: 'transactional',
-    description: 'Recipients of a report: the file is ready to download in Packio (B6.2)',
+    description: 'Recipients of a report: the file is ready to download in getpack (B6.2)',
     versions: {
       th: {
         subject: 'รายงานพร้อมแล้ว',
@@ -112,15 +112,15 @@ const PLATFORM_TEMPLATES: readonly NotificationTemplateSeed[] = [
     key: 'report_run.completed:assignee',
     channel: 'email',
     category: 'transactional',
-    description: 'Recipients of a report: the file is ready to download in Packio — never attached (B6.2)',
+    description: 'Recipients of a report: the file is ready to download in getpack — never attached (B6.2)',
     versions: {
       th: {
         subject: 'รายงาน {{payload.reportNameTh}} พร้อมแล้ว',
-        body: '<mjml><mj-body><mj-section><mj-column><mj-text>เรียน {{recipient.displayName}}</mj-text><mj-text>รายงาน {{payload.reportNameTh}} ({{payload.rowCount}} แถว) พร้อมดาวน์โหลดในเมนูรายงานของระบบ Packio</mj-text></mj-column></mj-section></mj-body></mjml>',
+        body: '<mjml><mj-body><mj-section><mj-column><mj-text>เรียน {{recipient.displayName}}</mj-text><mj-text>รายงาน {{payload.reportNameTh}} ({{payload.rowCount}} แถว) พร้อมดาวน์โหลดในเมนูรายงานของระบบ getpack</mj-text></mj-column></mj-section></mj-body></mjml>',
       },
       en: {
         subject: 'The {{payload.reportNameEn}} report is ready',
-        body: '<mjml><mj-body><mj-section><mj-column><mj-text>Dear {{recipient.displayName}}</mj-text><mj-text>The {{payload.reportNameEn}} report ({{payload.rowCount}} rows) is ready to download from Reports in Packio.</mj-text></mj-column></mj-section></mj-body></mjml>',
+        body: '<mjml><mj-body><mj-section><mj-column><mj-text>Dear {{recipient.displayName}}</mj-text><mj-text>The {{payload.reportNameEn}} report ({{payload.rowCount}} rows) is ready to download from Reports in getpack.</mj-text></mj-column></mj-section></mj-body></mjml>',
       },
     },
   },
@@ -163,11 +163,11 @@ const PLATFORM_TEMPLATES: readonly NotificationTemplateSeed[] = [
     description: 'Superadmins and admins: an operational signal passed its threshold (B6.3)',
     versions: {
       th: {
-        subject: '[Packio] แจ้งเตือนระบบ: {{payload.signal}}',
+        subject: '[getpack] แจ้งเตือนระบบ: {{payload.signal}}',
         body: '<mjml><mj-body><mj-section><mj-column><mj-text>เรียน {{recipient.displayName}}</mj-text><mj-text>{{payload.description}} — ค่า {{payload.value}} (เกณฑ์ {{payload.threshold}}) ดูรายละเอียดและขั้นตอนใน docs/RUNBOOK.md</mj-text></mj-column></mj-section></mj-body></mjml>',
       },
       en: {
-        subject: '[Packio] Ops alert: {{payload.signal}}',
+        subject: '[getpack] Ops alert: {{payload.signal}}',
         body: '<mjml><mj-body><mj-section><mj-column><mj-text>Dear {{recipient.displayName}}</mj-text><mj-text>{{payload.description}} — value {{payload.value}} (threshold {{payload.threshold}}). See docs/RUNBOOK.md for the response.</mj-text></mj-column></mj-section></mj-body></mjml>',
       },
     },

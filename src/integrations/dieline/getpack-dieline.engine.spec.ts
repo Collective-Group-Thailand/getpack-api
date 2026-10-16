@@ -6,17 +6,17 @@ import sharp from 'sharp';
 
 import { inspectDesignerPdf } from '../../../test/support/designer-pdf-inspect';
 import { DielineBuildError } from './dieline-engine.port';
-import { PackioDielineEngine } from './packio-dieline.engine';
+import { GetpackDielineEngine } from './getpack-dieline.engine';
 
 const BOARD = { kind: 'paperboard', caliperMm: 0.45 };
 
-/** The vendored `@packio/dieline` bundle (ADR-0010) through the adapter — the real engine, no fake. */
-describe('PackioDielineEngine (vendored bundle, ADR-0010)', () => {
-  const engine = new PackioDielineEngine();
+/** The vendored `@getpack/dieline` bundle (ADR-0010) through the adapter — the real engine, no fake. */
+describe('GetpackDielineEngine (vendored bundle, ADR-0010)', () => {
+  const engine = new GetpackDielineEngine();
 
   it('loads the pinned bundle and names its version', async () => {
     expect(await engine.available()).toBe(true);
-    expect(await engine.version()).toMatch(/^@packio\/dieline@\d+\.\d+\.\d+\+[0-9a-f]{8}$/);
+    expect(await engine.version()).toMatch(/^@getpack\/dieline@\d+\.\d+\.\d+\+[0-9a-f]{8}$/);
   });
 
   it('groups the engine recipes by style base and gives their facts (processes, size ranges, variants)', async () => {
@@ -149,7 +149,7 @@ describe('PackioDielineEngine (vendored bundle, ADR-0010)', () => {
       format: 'svg',
     });
     expect(drawing.body.toString()).toContain('<svg');
-    expect(drawing.engineVersion).toMatch(/^@packio\/dieline@/);
+    expect(drawing.engineVersion).toMatch(/^@getpack\/dieline@/);
   });
 
   it('writes the print PDF with the artwork tiles under the die (ADR-0011)', async () => {
@@ -183,12 +183,12 @@ describe('PackioDielineEngine (vendored bundle, ADR-0010)', () => {
 
   it('never loads a bundle whose checksum differs from VERSION.json', async () => {
     const root = await mkdtemp(join(tmpdir(), 'dieline-'));
-    await mkdir(join(root, 'vendor', 'packio-dieline'), { recursive: true });
+    await mkdir(join(root, 'vendor', 'getpack-dieline'), { recursive: true });
     await copyFile(
-      join(process.cwd(), 'vendor/packio-dieline/VERSION.json'),
-      join(root, 'vendor/packio-dieline/VERSION.json'),
+      join(process.cwd(), 'vendor/getpack-dieline/VERSION.json'),
+      join(root, 'vendor/getpack-dieline/VERSION.json'),
     );
-    await writeFile(join(root, 'vendor/packio-dieline/index.mjs'), 'export const RECIPES = [];');
-    expect(await new PackioDielineEngine(root).available()).toBe(false);
+    await writeFile(join(root, 'vendor/getpack-dieline/index.mjs'), 'export const RECIPES = [];');
+    expect(await new GetpackDielineEngine(root).available()).toBe(false);
   });
 });

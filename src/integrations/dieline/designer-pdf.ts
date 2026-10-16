@@ -3,7 +3,7 @@
  * one spot swatch (Separation colour space) per role, both named exactly — `CutContour`, `Crease`, `Perf`, `Glue`,
  * `Bleed`, `Safe` (and `HalfCut` only when the structure has half-cuts) — overprinting, on a page with TrimBox = the
  * dieline and BleedBox = + bleed. The document title names the style code, the style code is also in the Info
- * dictionary (`Subject`, `Keywords`, `PackioStyleCode`) and in XMP. Written here (not by the vendored engine, whose
+ * dictionary (`Subject`, `Keywords`, `GetpackStyleCode`) and in XMP. Written here (not by the vendored engine, whose
  * bundle is pinned, ADR-0010) from the engine's geometry; deterministic (no dates) so a render is cached by content.
  */
 export type Pt = [number, number];
@@ -52,7 +52,7 @@ export const DESIGNER_LAYERS: readonly (LayerStyle & { role: StrokeRole | 'bleed
   { name: 'Crease', role: 'crease', cmyk: [1, 0.5, 0, 0], dash: '3 2' },
   { name: 'CutContour', role: 'cut', cmyk: [0, 1, 0, 0] },
 ];
-export const DESIGNER_PDF_WRITER = 'packio-designer-pdf/1';
+export const DESIGNER_PDF_WRITER = 'getpack-designer-pdf/1';
 
 const PT_PER_MM = 72 / 25.4;
 const STROKE_MM = 0.25;
@@ -100,17 +100,17 @@ function xmp(input: DesignerPdfInput, layers: string[], keywords: string): strin
     '<?xpacket begin="﻿" id="W5M0MpCehiHzreSzNTczkc9d"?>',
     '<x:xmpmeta xmlns:x="adobe:ns:meta/"><rdf:RDF xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#">',
     '<rdf:Description rdf:about="" xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:pdf="http://ns.adobe.com/pdf/1.3/"' +
-      ' xmlns:xmp="http://ns.adobe.com/xap/1.0/" xmlns:packio="https://ns.packio.invalid/dieline/1.0/">',
+      ' xmlns:xmp="http://ns.adobe.com/xap/1.0/" xmlns:getpack="https://ns.getpack.invalid/dieline/1.0/">',
     '<dc:format>application/pdf</dc:format>',
     `<dc:title><rdf:Alt><rdf:li xml:lang="x-default">${xml(input.title)}</rdf:li></rdf:Alt></dc:title>`,
     `<dc:subject><rdf:Bag><rdf:li>${xml(input.styleCode)}</rdf:li></rdf:Bag></dc:subject>`,
     `<pdf:Keywords>${xml(keywords)}</pdf:Keywords>`,
     `<pdf:Producer>${xml(input.producer)}</pdf:Producer>`,
-    '<xmp:CreatorTool>Packio</xmp:CreatorTool>',
-    `<packio:styleCode>${xml(input.styleCode)}</packio:styleCode>`,
-    `<packio:layers>${xml(layers.join(','))}</packio:layers>`,
-    `<packio:bleedMm>${n(input.bleedMm)}</packio:bleedMm>`,
-    `<packio:safeMm>${n(input.safeMm)}</packio:safeMm>`,
+    '<xmp:CreatorTool>getpack</xmp:CreatorTool>',
+    `<getpack:styleCode>${xml(input.styleCode)}</getpack:styleCode>`,
+    `<getpack:layers>${xml(layers.join(','))}</getpack:layers>`,
+    `<getpack:bleedMm>${n(input.bleedMm)}</getpack:bleedMm>`,
+    `<getpack:safeMm>${n(input.safeMm)}</getpack:safeMm>`,
     '</rdf:Description></rdf:RDF></x:xmpmeta>',
     '<?xpacket end="w"?>',
   ].join('\n');
@@ -149,7 +149,7 @@ export function writeDesignerPdf(input: DesignerPdfInput): Buffer {
   );
   const ocgs = new Map(layers.map((l) => [l.name, add(`<< /Type /OCG /Name ${pdfText(l.name)} >>`)]));
   const keywords = [
-    'Packio dieline',
+    'getpack dieline',
     input.styleCode,
     ...layers.map((l) => l.name),
     ...(input.keywords ?? []),
@@ -171,7 +171,7 @@ export function writeDesignerPdf(input: DesignerPdfInput): Buffer {
   );
   const info = add(
     `<< /Title ${pdfText(input.title)} /Subject ${pdfText(input.styleCode)} /Keywords ${pdfText(keywords)}` +
-      ` /Creator (Packio) /Producer ${pdfText(input.producer)} /PackioStyleCode ${pdfText(input.styleCode)} >>`,
+      ` /Creator (getpack) /Producer ${pdfText(input.producer)} /GetpackStyleCode ${pdfText(input.styleCode)} >>`,
   );
 
   const ops = [`${n(k)} 0 0 ${n(-k)} ${n(margin * k)} ${n(pageH - margin * k)} cm`];

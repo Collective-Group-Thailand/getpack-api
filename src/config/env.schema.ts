@@ -108,12 +108,12 @@ export class EnvironmentVariables {
   S3_FORCE_PATH_STYLE = false;
 
   /**
-   * Prepended to every object key, for a bucket shared with another system (e.g. `packio/`). Empty: keys
+   * Prepended to every object key, for a bucket shared with another system (e.g. `getpack/`). Empty: keys
    * at the bucket root. Keep the endpoint empty for real AWS rather than putting a path in it.
    */
   @IsOptional()
   @IsString()
-  @Matches(/^([A-Za-z0-9._-]+\/)*$/, { message: 'S3_KEY_PREFIX: path segments ending in /, e.g. packio/' })
+  @Matches(/^([A-Za-z0-9._-]+\/)*$/, { message: 'S3_KEY_PREFIX: path segments ending in /, e.g. getpack/' })
   S3_KEY_PREFIX?: string;
 
   @IsOptional()
@@ -171,7 +171,7 @@ export class EnvironmentVariables {
   OTEL_EXPORTER_OTLP_ENDPOINT?: string;
 
   @IsString()
-  OTEL_SERVICE_NAME = 'packio-api';
+  OTEL_SERVICE_NAME = 'getpack-api';
 
   // --- Auth (ADR-0004). Secrets: from Secrets Manager in real environments, never committed.
 
@@ -291,14 +291,14 @@ export class EnvironmentVariables {
   @IsString()
   STOREFRONT_REVALIDATE_URL?: string;
 
-  /** D-308: HMAC-SHA256 key of the revalidation POST (`X-Packio-Signature`). */
+  /** D-308: HMAC-SHA256 key of the revalidation POST (`X-Getpack-Signature`). */
   @IsOptional()
   @IsString()
   STOREFRONT_REVALIDATE_SECRET?: string;
 
   // --- Notifications (D-143)
 
-  /** Verified SES sender, e.g. `Packio <no-reply@packio.example>`. */
+  /** Verified SES sender, e.g. `getpack <no-reply@getpack.example>`. */
   @IsOptional()
   @IsString()
   SES_FROM_ADDRESS?: string;
@@ -365,12 +365,12 @@ export class EnvironmentVariables {
   @Matches(/^https?:\/\/[^/]+$/, {
     message: 'PUBLIC_API_BASE_URL must be an origin without a trailing slash',
   })
-  PUBLIC_API_BASE_URL = 'https://api.packio.invalid';
+  PUBLIC_API_BASE_URL = 'https://api.getpack.invalid';
 
   /**
    * Storefront URL of a stock product for the Google Merchant feed; `{sku}` is replaced. The route
-   * belongs to packio-web, so it is configuration, not code.
+   * belongs to getpack-web, so it is configuration, not code.
    */
   @Matches(/^https?:\/\/.+\{sku\}/, { message: 'MERCHANT_FEED_LINK_TEMPLATE must be a URL containing {sku}' })
-  MERCHANT_FEED_LINK_TEMPLATE = 'https://www.packio.invalid/th/products/{sku}';
+  MERCHANT_FEED_LINK_TEMPLATE = 'https://www.getpack.invalid/th/products/{sku}';
 }

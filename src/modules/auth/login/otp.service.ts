@@ -66,14 +66,14 @@ export class OtpService {
     const hour = Math.floor(Date.now() / 3_600_000);
 
     // Cool-down per purpose (sign in, then link LINE right away); the hourly cap spans all purposes.
-    const cooldownKey = `packio:otp:cooldown:${purpose}:${phoneKey}`;
+    const cooldownKey = `getpack:otp:cooldown:${purpose}:${phoneKey}`;
     const placed = await this.redis.set(cooldownKey, '1', 'EX', policy.resendCooldownSeconds, 'NX');
     if (placed !== 'OK') {
       const ttl = Math.max(await this.redis.ttl(cooldownKey), 1);
       throw rateLimited(ttl);
     }
-    const phoneCount = await this.bump(`packio:otp:phone:${phoneKey}:${hour}`);
-    const ipCount = ip ? await this.bump(`packio:otp:ip:${ip}:${hour}`) : 0;
+    const phoneCount = await this.bump(`getpack:otp:phone:${phoneKey}:${hour}`);
+    const ipCount = ip ? await this.bump(`getpack:otp:ip:${ip}:${hour}`) : 0;
     if (phoneCount > policy.maxPerPhonePerHour || ipCount > policy.maxPerIpPerHour) {
       throw rateLimited(3_600 - (Math.floor(Date.now() / 1000) % 3_600));
     }
@@ -100,7 +100,7 @@ export class OtpService {
     const minutes = Math.ceil(policy.expirySeconds / 60);
     const { providerMessageId } = await this.sms.send({
       to: phone,
-      text: `รหัส OTP Packio ของคุณคือ ${code} (หมดอายุใน ${minutes} นาที) ห้ามแจ้งรหัสนี้กับผู้อื่น`,
+      text: `รหัส OTP getpack ของคุณคือ ${code} (หมดอายุใน ${minutes} นาที) ห้ามแจ้งรหัสนี้กับผู้อื่น`,
     });
     await this.prisma.otpChallenge.update({ where: { id: created.id }, data: { providerMessageId } });
     return {

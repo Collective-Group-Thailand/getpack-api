@@ -18,7 +18,7 @@ export function renderSettingsReview(): string {
   const count = (status: string) =>
     SETTINGS.filter((s) => !s.unset && (s.confirmation ?? 'confirmed') === status).length;
   const lines = [
-    '# Production settings review — packio-api',
+    '# Production settings review — getpack-api',
     '',
     '> **Generated** by `pnpm launch:settings` from `prisma/seed/data/settings.ts`, `approval-policies.ts`, `commerce.ts`,',
     '> `fulfilment.ts` and `receivables.ts`. Do not edit by hand. Each owner confirms or changes every value **in production**',

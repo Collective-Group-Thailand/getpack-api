@@ -887,7 +887,7 @@ export class CreatePatternDto {
     nullable: true,
     max: 64,
     description:
-      'International name (RSC, FOL …) — only after Prepress verified it against an edition Packio holds (D-211); ' +
+      'International name (RSC, FOL …) — only after Prepress verified it against an edition getpack holds (D-211); ' +
       'the time of verification is recorded and the audit log names who',
   })
   internationalName?: string | null;

@@ -2,7 +2,7 @@ import { applyDecorators, SetMetadata } from '@nestjs/common';
 
 import { ApiIdempotent } from '../openapi/decorators';
 
-export const IDEMPOTENT_METADATA = 'packio:idempotent';
+export const IDEMPOTENT_METADATA = 'getpack:idempotent';
 export type IdempotentMode = 'required' | 'optional';
 export const IDEMPOTENCY_KEY_HEADER = 'idempotency-key';
 

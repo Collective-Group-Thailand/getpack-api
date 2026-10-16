@@ -235,7 +235,7 @@ function finish1(
 
 /**
  * Area (in²) and count of a non-foil finish 2 (`:765-771`): the whole sheet once, or the location size × amount when
- * the finish requires them. Packio carries a size per location (D-233): equal sizes give legacy's size × amount;
+ * the finish requires them. getpack carries a size per location (D-233): equal sizes give legacy's size × amount;
  * unequal sizes are summed once each (legacy took one size).
  */
 function finish2Area(f: Finish2Request, ctx: SheetContext): { area: number; amount: number } {
@@ -362,7 +362,7 @@ function assemblyCosts(request: PartRequest, layout: LayoutCandidate, tables: BT
         break;
       }
       case 2: {
-        // Legacy reads one window size (`:1155`); Packio sums each window's area.
+        // Legacy reads one window size (`:1155`); getpack sums each window's area.
         if (!a.w?.length || !a.l?.length) throw refused(`assembly ${a.assemblyId} needs the window size`);
         const area = a.w.reduce((s, w, k) => s + (w / 25.4) * (a.l![k]! / 25.4), 0);
         price = amount * row.minPricePerAreaIn2 * area;

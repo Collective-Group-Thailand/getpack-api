@@ -40,7 +40,7 @@ export async function inspectDesignerPdf(bytes: Uint8Array): Promise<InspectedPd
     title: text(info.get(PDFName.of('Title'))),
     subject: text(info.get(PDFName.of('Subject'))),
     keywords: text(info.get(PDFName.of('Keywords'))),
-    styleCode: text(info.get(PDFName.of('PackioStyleCode'))),
+    styleCode: text(info.get(PDFName.of('GetpackStyleCode'))),
     xmp: Buffer.from(metadata.getContents()).toString('utf8'),
     trimBox: box(page.getTrimBox()),
     bleedBox: box(page.getBleedBox()),

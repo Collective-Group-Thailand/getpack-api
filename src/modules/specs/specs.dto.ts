@@ -135,7 +135,7 @@ export const CONVERTED_EXAMPLE: ConvertedDimensionsDto = {
 
 /**
  * The measurement basis of a configuration's sizes (D-182). Optional for one release: absent, a box, tray or sleeve is
- * read as `internal` and a flat product as `product` (`dimensions.basisAssumed`); it becomes required once packio-web
+ * read as `internal` and a flat product as `product` (`dimensions.basisAssumed`); it becomes required once getpack-web
  * pins the release that sends it (U2.1 contract plan, removal of the fallback in U-B5).
  */
 export function BasisField(kind: 'box' | 'flat') {

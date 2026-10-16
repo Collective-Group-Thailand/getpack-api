@@ -1,6 +1,6 @@
-# U4 — Packio 3D Studio (backend)
+# U4 — getpack 3D Studio (backend)
 
-> อ่าน `CLAUDE.md`, `docs/prompts/00-master-plan.md`, `docs/decisions.md`, `docs/contract/api-conventions.md`, และ `docs/design-tool/studio-spec.md` (สำเนาจาก packio-web) ก่อนทุก session
+> อ่าน `CLAUDE.md`, `docs/prompts/00-master-plan.md`, `docs/decisions.md`, `docs/contract/api-conventions.md`, และ `docs/design-tool/studio-spec.md` (สำเนาจาก getpack-web) ก่อนทุก session
 > ลำดับ: contract นำหน้า frontend U4 ทีละ session · **ทุก session เริ่มด้วย gap analysis** เทียบกับ designs/artwork/proof/quote modules ที่มีอยู่ (B2, B4) · ทุก session ที่แก้ contract ต้อง bump + tag
 
 ---
@@ -25,7 +25,7 @@ Provide every behaviour the studio needs so that **a design becomes a production
 3. Substrate soft-proof profiles (ICC or simplified transforms) per material served to the web.
 
 ## U4.B4 — Print PDF, preflight, digital proof, order hand-off
-0. `packio-web` ADR-0009 generates the print PDF **in the browser** (F4). The studio moves generation to the server so preflight and the digital proof run on exactly what is printed: packio-web writes ADR-0012 superseding ADR-0009 in U4.6; keep the browser export for customer downloads only.
+0. `getpack-web` ADR-0009 generates the print PDF **in the browser** (F4). The studio moves generation to the server so preflight and the digital proof run on exactly what is printed: getpack-web writes ADR-0012 superseding ADR-0009 in U4.6; keep the browser export for customer downloads only.
 1. Worker job on "order this version": render print-ready PDF (vector dieline on spot layers `CutContour`/`Crease`/`Perf`, artwork with bleed, finishes as named spot separations, fonts outlined/embedded, images embedded at placed resolution), run preflight, generate the digital proof (PDF + 3D snapshot), attach to the order line, emit events.
 2. `POST /v1/store/studio/{id}/order` (Idempotency-Key): lock version → create cart line or direct order (same checkout rules) → start the job → return job status link (202 + polling/SSE).
 3. For studio orders, the proof approval screen confirms the same rendering; approval evidence per B4.
@@ -45,6 +45,6 @@ Provide every behaviour the studio needs so that **a design becomes a production
 3. Design-service hand-off: create a design-service order from a studio document with the brief pre-filled; designer assignment gives edit access to that document only.
 
 ## Definition of Done (each session)
-- Contract rebuilt, linted, tagged, and the tag written in PROGRESS for packio-web.
+- Contract rebuilt, linted, tagged, and the tag written in PROGRESS for getpack-web.
 - Unit, integration (Testcontainers), e2e green; property test for quote parity; rule-id parity test with the web fixtures.
 - Events for every state change; idempotent order hand-off; no public access to private assets (tests).

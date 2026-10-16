@@ -1,6 +1,6 @@
 # Independent transcription of the packing half of legacy ShippingUtils::calCostCorrugate_WithShipping
 # (app/Libraries/Shipping/ShippingUtils.php:305-403) for src/modules/shipping/packing/corrugate-packing.spec.ts
-# (U-B6 slice 6). Packio: the 60 cm grid / stack and the carrier weight limit come from `shipping.carton_spec`
+# (U-B6 slice 6). getpack: the 60 cm grid / stack and the carrier weight limit come from `shipping.carton_spec`
 # (gridCm, maxStackHeightCm, maxWeightKg); `getAmountOfShippingBoxByWeight` with limit = threshold = maxWeightKg
 # as folding's packer. Regenerate: python3 packing_reference.py > packing.vectors.json && pnpm prettier --write packing.vectors.json
 import json, math

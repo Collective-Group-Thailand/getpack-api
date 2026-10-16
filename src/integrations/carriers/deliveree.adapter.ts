@@ -22,7 +22,7 @@ import {
  * trucks for bulky cartons and pallets (D-114). JSON over HTTPS with the API key in `Authorization`.
  * Pricing needs coordinates for every stop, so it cannot quote from postcodes alone (quotes at
  * configure time skip it; bookings in B4.3 carry the geocoded addresses). Credentials: `apiKey`,
- * `webhookKey` (the key Packio gives Deliveree for callbacks), optional `vehicleTypeId`.
+ * `webhookKey` (the key getpack gives Deliveree for callbacks), optional `vehicleTypeId`.
  */
 export const DELIVEREE_BASE_URL = {
   sandbox: 'https://api.sandbox.deliveree.com/public_api/v10',
@@ -133,7 +133,7 @@ export class DelivereeAdapter implements CarrierAdapter {
     await this.request(call, 'POST', `/deliveries/${encodeURIComponent(bookingRef)}/cancel`, {});
   }
 
-  /** Callbacks carry Packio's webhook key in `Authorization`; Deliveree expects 200, or 401 when refused. */
+  /** Callbacks carry getpack's webhook key in `Authorization`; Deliveree expects 200, or 401 when refused. */
   webhook(credentials: CarrierCredentials, headers: Record<string, string>, body: unknown): CarrierWebhook {
     const key = credentials['webhookKey'] ?? '';
     const given = headers['authorization'] ?? '';

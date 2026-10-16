@@ -336,7 +336,7 @@ export class JobInspectionDto {
   @ApiProperty({ type: String, format: 'date-time', nullable: true, example: null })
   scheduledAt!: string | null;
 
-  @ApiProperty({ type: 'integer', example: 80, description: 'Pieces Packio samples (D-076)' })
+  @ApiProperty({ type: 'integer', example: 80, description: 'Pieces getpack samples (D-076)' })
   sampleSize!: number;
 
   @ApiProperty({ type: String, format: 'date-time', nullable: true, example: null })
@@ -446,7 +446,7 @@ export class PartnerJobDto {
   @ApiProperty({
     type: Boolean,
     example: false,
-    description: 'Packio inspects this job before shipping (D-076)',
+    description: 'getpack inspects this job before shipping (D-076)',
   })
   inspectionRequired!: boolean;
 
@@ -505,7 +505,7 @@ export class PartnerJobDto {
   @ApiProperty({
     type: JobInspectionDto,
     nullable: true,
-    description: 'Packio’s inspection when one is planned (D-076)',
+    description: 'getpack’s inspection when one is planned (D-076)',
   })
   inspection!: JobInspectionDto | null;
 
@@ -553,7 +553,7 @@ export class AdminJobDto extends PartnerJobDto {
   @ApiProperty({ format: 'date', type: String, nullable: true, example: null })
   predictedFinishOn!: string | null;
 
-  @ApiProperty({ type: [String], example: [], description: 'Why Packio inspects (D-076)' })
+  @ApiProperty({ type: [String], example: [], description: 'Why getpack inspects (D-076)' })
   inspectionReasons!: string[];
 
   @ApiProperty({
@@ -1656,7 +1656,7 @@ export class FactoryTodayCountersDto {
   @ApiProperty({
     type: 'integer',
     example: 1,
-    description: 'Packio inspections planned or in progress (D-076)',
+    description: 'getpack inspections planned or in progress (D-076)',
   })
   inspectionsPlanned!: number;
 }

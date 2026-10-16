@@ -149,7 +149,7 @@ export class SlipDto {
 
 export const PAYMENT_FAILURE_CODES = ['provider_error', 'declined'] as const;
 
-/** A Packio account a bank-transfer slip pays into (setting `payments.slip_receiver_accounts`, D-061). */
+/** A getpack account a bank-transfer slip pays into (setting `payments.slip_receiver_accounts`, D-061). */
 export class SlipReceiverAccountDto {
   @ApiProperty({ example: 'scb_savings', description: 'Account type code of the slip-verification provider' })
   accountType!: string;

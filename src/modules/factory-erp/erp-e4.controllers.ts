@@ -108,7 +108,7 @@ import { ErpTaxService } from './erp-tax.service';
 import { ErpWorkspace } from './erp-workspace.service';
 
 /**
- * Packio Factory ERP E4 (docs/prompts/E1-factory-erp.md §11, D-359 – D-371): CRM, quotations, sales orders,
+ * getpack Factory ERP E4 (docs/prompts/E1-factory-erp.md §11, D-359 – D-371): CRM, quotations, sales orders,
  * delivery notes, the factory's own invoices / tax invoices, credit and debit notes, receipts, billing notes,
  * receivables, 50 ทวิ certificates and tax reports — under `/v1/partner/factories/{factoryId}/erp/*`,
  * factory-private (D-317); and the customer's quotation link under `/v1/store/quote-links/{token}`.
@@ -566,7 +566,7 @@ const CERT: ErpWhtCertificateDto = {
   nextActions: [ACTION('erp_wht.void', true), ACTION('erp_wht.pdf')],
 };
 const PDF_LINK: ErpPdfLinkDto = {
-  url: 'https://files.packio.example/erp/IV-2610-0005.pdf?sig=example',
+  url: 'https://files.getpack.example/erp/IV-2610-0005.pdf?sig=example',
   fileName: 'IV-2610-0005.pdf',
   expiresAt: '2026-10-20T15:05:00+07:00',
 };
@@ -1039,7 +1039,7 @@ export class PartnerErpQuotationsController {
       status: 200,
       description: 'Sent',
       type: ErpQuotationLinkDto,
-      example: { quotation: QUOTE, url: 'https://www.packio.example/q/q3J9f0T1xYk8Zb2mR4sW6uE7vN0aLcDh', expiresAt: '2026-11-11T23:59:59+07:00' },
+      example: { quotation: QUOTE, url: 'https://www.getpack.example/q/q3J9f0T1xYk8Zb2mR4sW6uE7vN0aLcDh', expiresAt: '2026-11-11T23:59:59+07:00' },
     },
     errors: ['http.not_found', 'erp.invalid_status', 'erp.quotation_expired'],
   })
@@ -2140,7 +2140,7 @@ export class PartnerErpTaxController {
   @Op({
     id: 'partner.erpTax.salesVat',
     summary: 'Sales tax report (รายงานภาษีขาย)',
-    description: 'The month’s tax invoices and credit / debit notes in date and number order; voided ones with no value (D-367); Packio billing statements the factory confirmed in the month as `packio_statement` rows (D-401).',
+    description: 'The month’s tax invoices and credit / debit notes in date and number order; voided ones with no value (D-367); getpack billing statements the factory confirmed in the month as `getpack_statement` rows (D-401).',
     implements: ['D-367', 'D-401'],
     can: 'factory_tax.read',
     success: { status: 200, description: 'The report', type: ErpVatReportDto, example: VAT_REPORT },
@@ -2168,7 +2168,7 @@ export class PartnerErpTaxController {
   @Op({
     id: 'partner.erpTax.vat30',
     summary: 'ภ.พ.30 summary',
-    description: 'Output VAT (including Packio statements confirmed in the month, D-401), input VAT and what is payable or carried forward for the month, with the due date (D-367).',
+    description: 'Output VAT (including getpack statements confirmed in the month, D-401), input VAT and what is payable or carried forward for the month, with the due date (D-367).',
     implements: ['D-367', 'D-401'],
     can: 'factory_tax.read',
     success: {

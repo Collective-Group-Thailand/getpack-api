@@ -891,7 +891,7 @@ export class AdminAgentsController {
     type: AgentPayrollExportDto,
     example: {
       fileId: AGENT_IDS.file,
-      url: 'https://packio-files.s3.example.com/…',
+      url: 'https://getpack-files.s3.example.com/…',
       expiresAt: '2026-11-02T10:05:00+07:00',
       statements: 3,
     },

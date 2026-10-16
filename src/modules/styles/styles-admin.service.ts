@@ -220,7 +220,7 @@ export class StylesAdminService {
     return this.get(publicId);
   }
 
-  /** D-211: Prepress verifies the reference code against the edition Packio holds; only then is it shown. */
+  /** D-211: Prepress verifies the reference code against the edition getpack holds; only then is it shown. */
   async verifyReference(
     actor: UserActor,
     publicId: string,

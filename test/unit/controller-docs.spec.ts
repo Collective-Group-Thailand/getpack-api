@@ -77,7 +77,7 @@ describe('every route handler is documented (U-B2, contract §5)', () => {
           unknown
         >;
         if (!operation?.operationId) missing.push(`${where}: no @ApiEndpoint`);
-        if (!('x-packio-errors-standard' in extensions)) missing.push(`${where}: no @ApiStandardErrors`);
+        if (!('x-getpack-errors-standard' in extensions)) missing.push(`${where}: no @ApiStandardErrors`);
         if (!Object.keys(responses).some((status) => /^2\d\d$/.test(status)))
           missing.push(`${where}: no success response (@ApiSuccess / @ApiPaginated)`);
       }

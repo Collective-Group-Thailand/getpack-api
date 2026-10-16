@@ -7,7 +7,7 @@ import {
 } from '@generated/prisma/client';
 
 /**
- * Packio Factory ERP E6 (docs/prompts/E6-factory-general-ledger.md §4, §5; D-385 – D-388): the chart of accounts
+ * getpack Factory ERP E6 (docs/prompts/E6-factory-general-ledger.md §4, §5; D-385 – D-388): the chart of accounts
  * template (TFRS for NPAEs, DBD statement lines) and the posting-rule template v1 (F01 – F18) every factory's
  * ledger starts from. Both are data: a factory may change its chart through a maker-checker change and its
  * rules through a new approved version. ⚖ CPA review before a factory goes live (§15).
@@ -88,7 +88,7 @@ export const CHART_TEMPLATE: readonly ChartAccount[] = [
   A('1110', 'เงินสด', 'Cash on hand', 'asset', 'cash', 'cash', { parent: '1100' }),
   A('1120', 'เงินฝากธนาคาร', 'Bank deposits', 'asset', 'cash', 'cash', { parent: '1100', postable: false }),
   A('1131', 'ลูกหนี้การค้า', 'Trade receivables', 'asset', 'operating', 'trade_receivables', { parent: '1100', control: true }),
-  A('1132', 'ลูกหนี้ Packio', 'Receivable from Packio', 'asset', 'operating', 'trade_receivables', { parent: '1100', control: true }),
+  A('1132', 'ลูกหนี้ getpack', 'Receivable from getpack', 'asset', 'operating', 'trade_receivables', { parent: '1100', control: true }),
   A('1135', 'ค่าเผื่อหนี้สงสัยจะสูญ', 'Allowance for doubtful accounts', 'asset', 'non_cash', 'trade_receivables', { parent: '1100', side: 'credit' }),
   A('1141', 'วัตถุดิบ', 'Raw materials', 'asset', 'operating', 'inventory', { parent: '1100' }),
   A('1142', 'งานระหว่างทำ', 'Work in process', 'asset', 'operating', 'inventory', { parent: '1100' }),
@@ -137,7 +137,7 @@ export const CHART_TEMPLATE: readonly ChartAccount[] = [
   // --- revenue
   A('4100', 'รายได้จากการขาย', 'Sales revenue', 'revenue', 'non_cash', 'revenue', { postable: false }),
   A('4110', 'รายได้ขาย', 'Sales', 'revenue', 'operating', 'revenue', { parent: '4100' }),
-  A('4120', 'รายได้รับจ้างผลิต Packio', 'Packio job revenue', 'revenue', 'operating', 'revenue', { parent: '4100' }),
+  A('4120', 'รายได้รับจ้างผลิต getpack', 'getpack job revenue', 'revenue', 'operating', 'revenue', { parent: '4100' }),
   A('4190', 'รับคืน / ส่วนลดจ่าย', 'Returns and discounts', 'revenue', 'operating', 'revenue', { parent: '4100', side: 'debit' }),
   A('4900', 'รายได้อื่น', 'Other income', 'revenue', 'non_cash', 'other_income', { postable: false }),
   A('4910', 'ดอกเบี้ยรับ', 'Interest income', 'revenue', 'operating', 'other_income', { parent: '4900' }),
@@ -188,7 +188,7 @@ export const METHOD_ACCOUNTS = {
   cash: '1110',
   bank: '1120',
   receivables: '1131',
-  receivablesPackio: '1132',
+  receivablesGetpack: '1132',
   wip: '1142',
   finishedGoods: '1143',
   inputVat: '1151',
@@ -202,7 +202,7 @@ export const METHOD_ACCOUNTS = {
   accruedExpenses: '2140',
   retainedEarnings: '3200',
   sales: '4110',
-  salesPackio: '4120',
+  salesGetpack: '4120',
   salesReturns: '4190',
   interestIncome: '4910',
   disposalGainLoss: '4920',
@@ -593,15 +593,15 @@ export const RULES_TEMPLATE: readonly RuleTemplate[] = [
   {
     key: 'F14',
     eventType: 'billing_statement.confirmed',
-    name: 'Packio วางบิล (รายได้รับจ้างผลิต)',
-    description: 'A Packio billing statement the factory confirmed: receivable from Packio for the gross against Packio job revenue and output VAT (D-397).',
+    name: 'getpack วางบิล (รายได้รับจ้างผลิต)',
+    description: 'A getpack billing statement the factory confirmed: receivable from getpack for the gross against getpack job revenue and output VAT (D-397).',
     template: {
-      description: 'Packio วางบิล {documentNo}',
+      description: 'getpack วางบิล {documentNo}',
       documentDate: 'documentDate',
       source: { type: 'billing_statement', id: 'documentId', number: 'documentNo' },
       lines: [
-        { account: { path: 'accounts.receivablesPackio' }, side: 'debit', amount: 'gross' },
-        { account: { path: 'accounts.salesPackio' }, side: 'credit', amount: 'net' },
+        { account: { path: 'accounts.receivablesGetpack' }, side: 'debit', amount: 'gross' },
+        { account: { path: 'accounts.salesGetpack' }, side: 'credit', amount: 'net' },
         { account: { path: 'accounts.outputVat' }, side: 'credit', amount: 'vat', taxCode: 'output_vat', taxBase: 'net' },
       ],
     },
@@ -609,17 +609,17 @@ export const RULES_TEMPLATE: readonly RuleTemplate[] = [
   {
     key: 'F15',
     eventType: 'payout_item.paid',
-    name: 'Packio โอนเงินให้โรงงาน',
-    description: 'A Packio payout paid to the factory: bank for the cash and WHT withheld by Packio (D-022) against the receivable from Packio; a retention stays receivable until it is released (D-397).',
+    name: 'getpack โอนเงินให้โรงงาน',
+    description: 'A getpack payout paid to the factory: bank for the cash and WHT withheld by getpack (D-022) against the receivable from getpack; a retention stays receivable until it is released (D-397).',
     template: {
-      description: 'Packio โอนเงิน {documentNo}',
+      description: 'getpack โอนเงิน {documentNo}',
       documentDate: 'documentDate',
       source: { type: 'payout_item', id: 'documentId', number: 'documentNo' },
       dimensions: { bankAccount: 'bankAccountId' },
       lines: [
         { account: { path: 'cashAccount' }, side: 'debit', amount: 'cash' },
         { account: { path: 'accounts.whtReceivable' }, side: 'debit', amount: 'wht', taxCode: 'wht_receivable', taxBase: 'whtBase' },
-        { account: { path: 'accounts.receivablesPackio' }, side: 'credit', amount: 'cash + wht' },
+        { account: { path: 'accounts.receivablesGetpack' }, side: 'credit', amount: 'cash + wht' },
       ],
     },
   },
@@ -702,7 +702,7 @@ export const RULE_VARIABLES: Record<string, RuleVariable[]> = {
   'erp_fixed_asset.disposed': [...COMMON_VARS, ...CASH_VARS, amount('cost', 'ราคาทุน'), amount('accumulated', 'ค่าเสื่อมสะสม'), amount('proceeds', 'เงินที่ได้รับ'), { path: 'assetAccount', kind: 'account', th: 'บัญชีสินทรัพย์' }, { path: 'accumulatedAccount', kind: 'account', th: 'บัญชีค่าเสื่อมสะสม' }, { path: 'gainLossAccount', kind: 'account', th: 'บัญชีกำไร/ขาดทุน' }],
   'erp_bank_line.matched': [...COMMON_VARS, amount('amount', 'ยอดในสเตทเมนต์ (มีเครื่องหมาย)'), { path: 'bankGlAccount', kind: 'account', th: 'บัญชีธนาคาร' }, { path: 'contraAccount', kind: 'account', th: 'บัญชีค่าธรรมเนียม/ดอกเบี้ย' }],
   'billing_statement.confirmed': [...COMMON_VARS, amount('net', 'ยอดก่อน VAT'), amount('vat', 'ภาษีขาย'), amount('gross', 'ยอดรวม')],
-  'payout_item.paid': [...COMMON_VARS, ...CASH_VARS, amount('cash', 'เงินที่ได้รับโอน'), amount('wht', 'ภาษีที่ Packio หักไว้'), amount('whtBase', 'ฐานภาษีหัก ณ ที่จ่าย'), amount('retention', 'เงินประกันผลงานที่ Packio กันไว้'), { path: 'kind', kind: 'text', th: 'ประเภทการจ่าย (advance / balance / retention_release)' }],
+  'payout_item.paid': [...COMMON_VARS, ...CASH_VARS, amount('cash', 'เงินที่ได้รับโอน'), amount('wht', 'ภาษีที่ getpack หักไว้'), amount('whtBase', 'ฐานภาษีหัก ณ ที่จ่าย'), amount('retention', 'เงินประกันผลงานที่ getpack กันไว้'), { path: 'kind', kind: 'text', th: 'ประเภทการจ่าย (advance / balance / retention_release)' }],
 };
 RULE_VARIABLES['erp_supplier_invoice.approved'] = RULE_VARIABLES['erp_supplier_invoice.recorded']!;
 RULE_VARIABLES['erp_supplier_payment.reversed'] = RULE_VARIABLES['erp_supplier_payment.recorded']!;

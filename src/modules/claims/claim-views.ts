@@ -39,7 +39,7 @@ export function storeClaimDto(c: ClaimRow, photos: Photos = { product: [], carto
       dimensionalMm: c.order.toleranceDimensionalMm?.toFixed(2) ?? null,
       colourDeltaE: c.order.toleranceColourDeltaE?.toFixed(2) ?? null,
     },
-    // The customer sees what was done for them, not which job made it (D-050) nor what Packio
+    // The customer sees what was done for them, not which job made it (D-050) nor what getpack
     // recovers from the factory or the carrier (D-083, D-044).
     resolutions: c.resolutions.filter((r) => !INTERNAL_ACTIONS.has(r.action)).map(resolutionView),
     severity: c.severity,
@@ -53,10 +53,10 @@ export function storeClaimDto(c: ClaimRow, photos: Photos = { product: [], carto
 const OPEN: ReadonlySet<string> = new Set(['submitted', 'under_review', 'need_info', 'factory_review']);
 
 /** D-263: who must act now on a claim. */
-export function claimOwner(status: string): 'packio' | 'customer' | 'factory' | 'none' {
+export function claimOwner(status: string): 'getpack' | 'customer' | 'factory' | 'none' {
   if (status === 'need_info') return 'customer';
   if (status === 'factory_review') return 'factory';
-  if (['submitted', 'under_review', 'approved'].includes(status)) return 'packio';
+  if (['submitted', 'under_review', 'approved'].includes(status)) return 'getpack';
   return 'none';
 }
 
@@ -74,7 +74,7 @@ export function claimSla(c: ClaimRow, now = new Date()) {
   };
 }
 
-/** Recoveries between Packio and its suppliers: never on the customer's claim. */
+/** Recoveries between getpack and its suppliers: never on the customer's claim. */
 const INTERNAL_ACTIONS: ReadonlySet<string> = new Set(['factory_deduction', 'carrier_recovery']);
 
 type Resolution = ClaimRow['resolutions'][number];

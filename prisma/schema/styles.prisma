@@ -40,7 +40,7 @@ model StyleBase {
   category                 String
   /// The master file's product type (folding, corrugate, rigid, mailer …), kept as imported.
   sourceProductType        String      @map("source_product_type")
-  /// The Packio product type it is sold as; null until mapped (no pricing path, D-243).
+  /// The getpack product type it is sold as; null until mapped (no pricing path, D-243).
   productTypeId            BigInt?     @map("product_type_id")
   /// The configurator / pricing style with the same code (D-184); null when none exists yet.
   patternId                BigInt?     @unique(map: "ux_style_bases__pattern_id") @map("pattern_id")
@@ -141,7 +141,7 @@ model StyleVariant {
   @@map("style_variants")
 }
 
-/// D-241: a versioned `@packio/dieline` recipe of a base; current = the latest version approved by Prepress.
+/// D-241: a versioned `@getpack/dieline` recipe of a base; current = the latest version approved by Prepress.
 model StyleRecipe {
   id            BigInt    @id(map: "pk_style_recipes") @default(autoincrement())
   publicId      String    @unique(map: "ux_style_recipes__public_id") @default(dbgenerated("uuidv7()")) @map("public_id") @db.Uuid

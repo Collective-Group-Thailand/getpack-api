@@ -1,4 +1,4 @@
-# RUN ORDER — U1 → U5 (packio-api)
+# RUN ORDER — U1 → U5 (getpack-api)
 
 > Pack รวม U1 (v3) + U2–U5 · decision ใหม่ต่อจาก D-181 (เริ่ม D-182) · `decisions.md`, `accounting-design.md`, `api-conventions.md` ต้องเหมือนกันทั้งสอง repo
 > ไฟล์นี้คือลำดับเดียวที่ต้องใช้ · อ่านก่อนเริ่มทุก session · ถ้ามีหัวข้อซ้ำกันระหว่าง prompt ให้ยึดตาราง "Precedence" ด้านล่าง
@@ -50,4 +50,4 @@ U2.0 must ask the user for **all** of these at once and write them into `docs/de
 `Read CLAUDE.md, docs/prompts/00-master-plan.md, docs/decisions.md, docs/prompts/RUN-ORDER-U1-U5.md and <prompt file>. Do <session> only, starting with the gap analysis. Plan first.`
 
 ## 5. Done means
-All sessions in §1 have PROGRESS entries; every contract change is tagged and the latest tag is pinned by packio-web; `docs/LAUNCH-CHECKLIST.md` blocking lines signed.
+All sessions in §1 have PROGRESS entries; every contract change is tagged and the latest tag is pinned by getpack-web; `docs/LAUNCH-CHECKLIST.md` blocking lines signed.

@@ -1,9 +1,9 @@
 # Contract requests — triage (U1 U-B0 step 2)
 
-Every contract request `packio-web` has open against this repo, classified per U1 §U-B0 step 2. This repo owns the contract (api-conventions §1): where the requested shape and the domain model disagree, the published shape wins and the mapping is written here; business rules are never weakened to fit a mock.
+Every contract request `getpack-web` has open against this repo, classified per U1 §U-B0 step 2. This repo owns the contract (api-conventions §1): where the requested shape and the domain model disagree, the published shape wins and the mapping is written here; business rules are never weakened to fit a mock.
 
-- **Sources** (sibling checkout, read-only): `packio-web@f225d30` — `docs/contract-requests.md` (open table, 134 ids), `src/lib/api/requests/` (the zod registry; `awaiting-triage.ts` listed one new request, `awaiting-migration.ts` 86 operations). Compared with `contract/openapi.json` at **`v0.3.0`**. The frontend's `pnpm gen:triage` reads this file (`scripts/gen-triage.ts`): keep the group headings (``### U-B0.x``), request headings (``#### `id` — verdict``), operation lines (``- **METHOD path** — verdict → `operationId` (`METHOD path`)``) and gap bullets (``  - **gap (U-B0.x):**``) in *Details* exactly in this form.
-- **Triaged** 2026-09-29 against `packio-web@9cbd99a` and `v0.2.0` (133 ids); **re-triaged** 2026-09-30 against `packio-web@f225d30` and `v0.3.0` (the delta below). Verdict per frontend operation, rolled up per id.
+- **Sources** (sibling checkout, read-only): `getpack-web@f225d30` — `docs/contract-requests.md` (open table, 134 ids), `src/lib/api/requests/` (the zod registry; `awaiting-triage.ts` listed one new request, `awaiting-migration.ts` 86 operations). Compared with `contract/openapi.json` at **`v0.3.0`**. The frontend's `pnpm gen:triage` reads this file (`scripts/gen-triage.ts`): keep the group headings (``### U-B0.x``), request headings (``#### `id` — verdict``), operation lines (``- **METHOD path** — verdict → `operationId` (`METHOD path`)``) and gap bullets (``  - **gap (U-B0.x):**``) in *Details* exactly in this form.
+- **Triaged** 2026-09-29 against `getpack-web@9cbd99a` and `v0.2.0` (133 ids); **re-triaged** 2026-09-30 against `getpack-web@f225d30` and `v0.3.0` (the delta below). Verdict per frontend operation, rolled up per id.
 - **Legend:** `published as <operationId>` — shape identical for the frontend (extra backend response fields allowed; path-parameter names may differ) · `published differently` — the operation exists; the frontend applies the mapping in *Details* · `implement here` — build it in the named group and module · `reject` — conflicts with a decision; **proposed only, needs the user's OK** · `mixed` — per-operation verdicts differ (see *Details*).
 - **Additive gaps**: under `published differently`, something the screen needs that the published operation lacks. It is added here (additive, never breaking) in the named group; the rest of the mapping stays on the frontend.
 - When a group ships, its rows move to `published`; after U-B0.3 every row is `published` or `rejected` (U1 §U-B0 step 4).
@@ -15,7 +15,7 @@ What changed: contract `v0.3.0` (U-B6 corrugate: +16 operations, quote configura
 | Id | Was | Now | Why |
 |---|---|---|---|
 | `store.configurator` | implement here (U-B0.1) | **published differently** → `store.catalog.getConfigurator`, 4 additive gaps | Published at the requested path in `v0.3.0` |
-| `admin.analytics-journeys` | — (awaiting triage) | **implement here** (U-B0.3 row), **built in U5.B6** | New request (packio-web U5.0); U5 owns the journey analytics, and D-219 makes it post-launch |
+| `admin.analytics-journeys` | — (awaiting triage) | **implement here** (U-B0.3 row), **built in U5.B6** | New request (getpack-web U5.0); U5 owns the journey analytics, and D-219 makes it post-launch |
 | `store.quote-configurations` | implement here | implement here (5 calculators left) | Corrugate configuration published; one typed DTO per calculator (backend wins) |
 | `admin.cs-calculators` | published differently (folding) | published differently (folding + corrugate) | `admin.csCorrugate.*` published; gaps now name 5 calculators |
 | `store.quotes`, `admin.quotations` | 10 / 7 gaps | 12 / 9 gaps | + `options[].toolingAmount` on the saved option (calculate has it since `v0.3.0`, the saved view drops it) |
@@ -308,10 +308,10 @@ Every U-B0.3 row below is now **published** (`v0.6.0`), except `admin.analytics-
 | `admin.menu-entries` | `GET /v1/admin/me` → `menu[]` | published differently | `admin.me.get` | U-B0.3: 2 additive gap(s) | GET /v1/admin/me already returns menu[{key,path}] from iam/menu.catalog.ts, but the catalogue only has platform entries (dashboard, approvals, users, settings, feature_flags, notification_templates, notification_routes, audit_logs, outbox, analytics, reports, ops); the business-module entries and `finance` are additive work. |
 | `admin.permissions` | `permission keys in `/v1/admin/me` → `permissions[]` | published differently | `admin.me.get` | — (frontend migrates) | Permissions are published in GET /v1/admin/me permissions[] and the catalogue already defines the business modules' keys, but many names differ from the frontend's proposal; backend names win and the frontend must re-map its mock. |
 | `admin.analytics` | `GET /v1/admin/analytics/campaigns`<br>`GET /v1/admin/analytics/demand`<br>`GET /v1/admin/analytics/factories`<br>`GET /v1/admin/analytics/overview`<br>`GET /v1/admin/analytics/unmet-demand` | published differently | `admin.analytics.campaigns`, `admin.analytics.demand`, `admin.analytics.factories`, `admin.analytics.sales`, `admin.analytics.unmetDemand` | U-B0.3: 1 additive gap(s) | B6.1 analytics is published but shaped differently: explicit from/to dates (no range preset), bare arrays instead of {period, rows} envelopes, different metric sets; the overview KPI endpoint does not exist and is composed from sales + funnel + traffic. |
-| `admin.analytics-journeys` | `GET /v1/admin/analytics/journeys` | implement here (U-B0.3) | — | U-B0.3: implement in `analytics` — **built in U5.B6** (post-launch, D-219) | **New 2026-09-30** (packio-web U5.0). One UX journey's funnel with week-over-week drop alerts. B6.1 publishes only the D-102 visit → paid funnel and five event names. U5.B6 owns journey dashboards and drop alerts (RUN-ORDER §1–2); the threshold becomes a setting (scorecard proposes 15 %). |
+| `admin.analytics-journeys` | `GET /v1/admin/analytics/journeys` | implement here (U-B0.3) | — | U-B0.3: implement in `analytics` — **built in U5.B6** (post-launch, D-219) | **New 2026-09-30** (getpack-web U5.0). One UX journey's funnel with week-over-week drop alerts. B6.1 publishes only the D-102 visit → paid funnel and five event names. U5.B6 owns journey dashboards and drop alerts (RUN-ORDER §1–2); the threshold becomes a setting (scorecard proposes 15 %). |
 | `admin.prospectus` | `POST /v1/admin/analytics/prospectus` | published differently | `admin.analytics.requestProspectus` | — (frontend migrates) | Published as an asynchronous export resource: POST /v1/admin/analytics/prospectus-exports (202, Idempotency-Key) → poll → GET …/{exportId}/file?format=pdf\|xlsx. k is the setting analytics.prospectus_min_group_size = 3 (D-160 supersedes B6.1's k≥5, as in D-044) and is returned as kThreshold. |
 | `admin.reports` | `GET /v1/admin/reports`<br>`GET /v1/admin/reports/{reportKey}` | published differently | `admin.reports.catalogue`, `admin.reports.preview` | U-B0.3: 4 additive gap(s) | The report catalogue and a report preview are published (B6.2) but with different keys, filter model and column types; the preview has no pagination, no totals row and caps at 200 rows (export for all rows). |
-| `admin.saved-views` | `GET /v1/admin/saved-views`<br>`POST /v1/admin/saved-views`<br>`DELETE /v1/admin/saved-views/{viewId}` | implement here (U-B0.3) | — | U-B0.3: implement in `iam` | No saved-views resource exists in packio-api; new per-user staff resource. |
+| `admin.saved-views` | `GET /v1/admin/saved-views`<br>`POST /v1/admin/saved-views`<br>`DELETE /v1/admin/saved-views/{viewId}` | implement here (U-B0.3) | — | U-B0.3: implement in `iam` | No saved-views resource exists in getpack-api; new per-user staff resource. |
 | `admin.search` | `GET /v1/admin/search` | implement here (U-B0.3) | — | U-B0.3: implement in `iam` | No admin global search exists (only store.catalog.search); new scoped, server-side search. |
 | `admin.dashboard` | `GET /v1/admin/dashboard` | implement here (U-B0.3) | — | U-B0.3: implement in `ops` | No dashboard/work-queue count endpoint exists; individual queues exist (admin.orderOperations.queue, admin.payments.slipQueue, admin.artwork.queue, admin.payouts.exceptions, …) but no aggregated counts with SLA state. |
 | `admin.staff-directory` | `GET /v1/admin/staff-directory` | implement here (U-B0.3) | — | U-B0.3: implement in `iam` | No least-privilege staff picker exists: GET /v1/admin/users (admin.users.list) needs users.read and returns e-mail/phone. New directory endpoint for every staff member. |
@@ -352,7 +352,7 @@ Every U-B0.3 row below is now **published** (`v0.6.0`), except `admin.analytics-
 | `partner.payouts` | `GET /v1/partner/factories/{factoryId}/payout-schedule`<br>`GET /v1/partner/factories/{factoryId}/payouts`<br>`GET /v1/partner/factories/{factoryId}/payouts/{payoutId}`<br>`GET /v1/partner/factories/{factoryId}/statement-of-account` | mixed: 3 implement here · 1 published differently | `partner.payables.payoutStatement` | U-B0.3: implement in `payables`, `payouts`; 3 additive gap(s) | Only the payout statement list (partner.payables.payoutStatement, same path, different query/shape) and the 50 ทวิ PDF exist; payout schedule, payout detail and statement of account must be implemented. |
 | `partner.claims` | `GET /v1/partner/factories/{factoryId}/claims`<br>`GET /v1/partner/factories/{factoryId}/claims/{claimId}`<br>`POST /v1/partner/factories/{factoryId}/claims/{claimId}/actions/respond` | published differently | `partner.claims.list`, `partner.claims.get`, `partner.claims.respond` | U-B0.3: 8 additive gap(s) | Published under /v1/partner/claims (token-scoped) with PartnerClaimDto; job is flat, evidence is photo ids, factory evidence on respond and the deduction figures are missing. |
 | `partner.scorecard` | `GET /v1/partner/factories/{factoryId}/scorecards` | published differently | `partner.production.scorecards` | U-B0.3: 1 additive gap(s) | Published at the same path (partner.production.scorecards → ScorecardDto[]); no `months` query and month is the first day of the month. |
-| `partner.users` | `GET /v1/partner/factories/{factoryId}/users`<br>`POST /v1/partner/factories/{factoryId}/users`<br>`PATCH /v1/partner/factories/{factoryId}/users/{userId}` | published differently | `partner.factoryUsers.list`, `partner.factoryUsers.create`, `partner.factoryUsers.deactivate` | U-B0.3: 4 additive gap(s) | List and create are published at the same paths with a leaner FactoryUserDto and an initial-password (not invite) flow; owners are Packio-managed (D-171); role change is missing, deactivate is an action. |
+| `partner.users` | `GET /v1/partner/factories/{factoryId}/users`<br>`POST /v1/partner/factories/{factoryId}/users`<br>`PATCH /v1/partner/factories/{factoryId}/users/{userId}` | published differently | `partner.factoryUsers.list`, `partner.factoryUsers.create`, `partner.factoryUsers.deactivate` | U-B0.3: 4 additive gap(s) | List and create are published at the same paths with a leaner FactoryUserDto and an initial-password (not invite) flow; owners are getpack-managed (D-171); role change is missing, deactivate is an action. |
 | `partner.notification-preferences` | `GET /v1/partner/me/notification-preferences`<br>`PUT /v1/partner/me/notification-preferences` | implement here (U-B0.3) | — | U-B0.3: implement in `platform/notifications (src/platform/notifications — not under src/modules)` | Preferences exist only on the store surface (store.me.notificationPreferences, category = transactional\|marketing\|security). Implement the partner equivalent. |
 | `status.enums` | `components on /v1/{store,admin,partner}/* responses` | published differently | — | U-B0.3: 1 additive gap(s) | Resolved differently: every status vocabulary is already a named enum component (≈80 *Status enums, no inline status enums in the contract). Three FE names map to other backend names; five FE-only vocabularies wait on their endpoints. |
 | `entity.next-actions` | `responses for orders, jobs, RFQs, claims, payouts, documents` | implement here (U-B0.3) | — | U-B0.3: implement in `orders, production, logistics, rfq, claims, payables, payouts, receivables (shared DTO in src/common)` | No entity response carries a nextActions list today. Implement a shared NextActionDto and add it to the entity responses the FE names. |
@@ -364,7 +364,7 @@ Every U-B0.3 row below is now **published** (`v0.6.0`), except `admin.analytics-
 
 ## UX round 2 Phase 4 (`v0.43.0`, 2026-10-07)
 
-Brief: "packio-api — Phase 4 companion" (A1–A7) and packio-web `docs/contract-requests.md` §Phase 4. Every change is additive; the backend owns the contract (§1), so where the brief and the conventions or decisions disagree, the published shape below wins.
+Brief: "getpack-api — Phase 4 companion" (A1–A7) and getpack-web `docs/contract-requests.md` §Phase 4. Every change is additive; the backend owns the contract (§1), so where the brief and the conventions or decisions disagree, the published shape below wins.
 
 | Request | Published as | Mapping the web applies |
 |---|---|---|
@@ -372,16 +372,16 @@ Brief: "packio-api — Phase 4 companion" (A1–A7) and packio-web `docs/contrac
 | A2 `POST /bff/v1/quotes/preview` | `store.quotes.preview` — `POST /v1/store/quotes/actions/preview` (30/min per client) | Body sizes are `lengthMm`, `widthMm`, `heightMm` (inside mm, conventions §3, D-182), not cm. `total` = the calculation's `grossAmount`; `leadTimeBusinessDays.min = max` (the calculator gives one figure); `priceLockUntil` is a date-time; `calculation` is the `store.quotes.calculate` body priced. 409 `quotes.preview_unavailable` until `catalog.hero_presets` offers the choice. (D-310) |
 | A2 `GET /bff/v1/catalog/hero-presets` | `store.catalog.getHeroPresets` — `GET /v1/store/catalog/hero-presets` | `qtys` as asked; boards and prints carry the option ids per shape (`options[]`); size ids are `<shape>:<code>`. Empty until Admin sets `catalog.hero_presets`. |
 | A3 proof wording + labels | `statusLabelTh` / `statusLabelAdminTh` next to every status of 20 enums; `store.statusLabels.list` — `GET /v1/store/status-labels` | Field names are prefixed by the status field (`statusLabelTh`, `artworkStatusLabelTh`, `preflightStatusLabelTh`, `previousStatusLabelTh`) because a DTO can carry several enums. Enum values unchanged and stay snake_case (conventions §3; the brief's `PROOF_PENDING` style is not used). (D-313) |
-| A4 design issues | `issueCount`, `hasIssues`, `issueSummary[]` on `DesignDocumentDto` (list, get and every design response) | `issueCount` / `hasIssues` are **null** until the worker has checked the current version (never checked ≠ no issues); `issueSummary[]` items carry `count` and `messageEn` too. Counts blocks + unacknowledged warnings. packio-web's `openIssues` request → `issueCount`. (D-278) |
-| A5 `GET /bff/v1/cms/home` | `store.cms.getHome` — `GET /v1/store/cms/home` (anonymous, 5 min, ETag/304) | `{ photos[], cases[] }` — the brief's `captions` is per photo (`captionTh`). Photos are read from the `home-photos` section in the shape packio-web already reads (and `pnpm cms:home-photos` writes), flattened with positions `hero`, `mosaic-1..5`, `frame-4`, `frame-9`, `sage`, `template-<style code>`. Cases come from the new admin resource `admin.cmsHomeCases.*` with `actions/approve` (`cms.cases.approve`, written permission required) and `actions/withdraw`; fewer than 3 approved → `cases: []`. No stories are seeded (a seeded "permission" would be fabricated evidence). (D-311) |
+| A4 design issues | `issueCount`, `hasIssues`, `issueSummary[]` on `DesignDocumentDto` (list, get and every design response) | `issueCount` / `hasIssues` are **null** until the worker has checked the current version (never checked ≠ no issues); `issueSummary[]` items carry `count` and `messageEn` too. Counts blocks + unacknowledged warnings. getpack-web's `openIssues` request → `issueCount`. (D-278) |
+| A5 `GET /bff/v1/cms/home` | `store.cms.getHome` — `GET /v1/store/cms/home` (anonymous, 5 min, ETag/304) | `{ photos[], cases[] }` — the brief's `captions` is per photo (`captionTh`). Photos are read from the `home-photos` section in the shape getpack-web already reads (and `pnpm cms:home-photos` writes), flattened with positions `hero`, `mosaic-1..5`, `frame-4`, `frame-9`, `sage`, `template-<style code>`. Cases come from the new admin resource `admin.cmsHomeCases.*` with `actions/approve` (`cms.cases.approve`, written permission required) and `actions/withdraw`; fewer than 3 approved → `cases: []`. No stories are seeded (a seeded "permission" would be fabricated evidence). (D-311) |
 | A6 B1 Idempotency-Key | Behaviour only | Any textual uuid is accepted; the Thai detail tells the customer to refresh and retry; nothing is created on a validation failure (e2e). |
 | A6 B2 company-order notifications | `eventTypeLabelTh` / `eventTypeLabelEn` on `InboxItemDto` | The policy name in words shipped in `v0.42.0`; seeded template text has no raw key (unit). |
 | A6 B8 consent labels | `labelTh` / `labelEn` on `ConsentDto`, `AdminConsentDto`, `ConsentPurposeDto` | — |
 | A6 B12 QR expiry | `PaymentDto.expiresAt` (already ISO +07:00) | `payments.qr_validity_minutes` = 15 (D-312). |
 | A6 B13 timeline | `messageTh`, `messageEn`, `count` on `TimelineEntryDto` | Render `messageTh`; `messageKey` stays for compatibility. Consecutive repeats of one event collapse in the customer timeline (`count`). |
 | A6 B14 shipment chips | `statusLabelTh` on shipments, shipment events and public tracking steps | — |
-| packio-web `store.settings.proof-turnaround`, `store.support-channels.reply-minutes` | `store.publicConfig.get` `proofSlaBusinessDays`, `supportReplyMinutes` | Not on `StoreSupportChannelsDto`; one read for all storefront figures. |
-| packio-web "Proof wording in the contract" | Shipped (D-313) | Guard: `test/unit/terminology.spec.ts`. |
+| getpack-web `store.settings.proof-turnaround`, `store.support-channels.reply-minutes` | `store.publicConfig.get` `proofSlaBusinessDays`, `supportReplyMinutes` | Not on `StoreSupportChannelsDto`; one read for all storefront figures. |
+| getpack-web "Proof wording in the contract" | Shipped (D-313) | Guard: `test/unit/terminology.spec.ts`. |
 
 ## Known contract defects
 
@@ -435,14 +435,14 @@ No request id is rejected. One requested **field** is not being added:
 - **Concurrency:** cart mutations need `If-Match`, which the frontend does not send. Claim actions take `Idempotency-Key` where the frontend sends `If-Match`. Campaign, promotion and company actions declare no concurrency header, and shipment and claim detail return no `ETag`. `store.cart.removeItem` documents a 412 but takes no `If-Match`.
 - **`nextActions`:** no entity (orders, prepress, RFQ, shipments, claims, jobs) publishes `nextActions`. It is delivered once, in U-B0.3 (`entity.next-actions`), and applied to each entity DTO.
 - **Enum names:** every status is already a named component. The frontend must adopt the backend names (`ProductionJobStatus`, not `JobStatus`, which means background jobs; `PayoutRunStatus`; `CustomerDocumentStatus`) and the backend action names (campaign `resume` → `activate`, company `reinstate` → `reactivate`, `return-kyc` → `reject-kyc`, and so on; see *Details*).
-- **Carrier enum inconsistency (backend):** the timeline's shipment reference uses carrier `packio`, while `ShipmentDto` uses `factory_fleet`. U-B0.2 aligns them to `factory_fleet` without breaking clients (both values accepted, then `packio` deprecated).
+- **Carrier enum inconsistency (backend):** the timeline's shipment reference uses carrier `getpack`, while `ShipmentDto` uses `factory_fleet`. U-B0.2 aligns them to `factory_fleet` without breaking clients (both values accepted, then `getpack` deprecated).
 - **Admin CS calculators:** folding, (since `v0.3.0`) corrugate, (since `v0.7.0`) label, (since `v0.8.0`) tag & sleeve, (since `v0.9.0`) pouch, (since `v0.10.0`) standard product and (since `v0.11.0`) service are published (`admin.csFolding.*`, `admin.csCorrugate.*`, `admin.csLabel.*`, `admin.csTagSleeve.*`, `admin.csPouch.*`, `admin.csStandardProduct.*`, `admin.csService.*`, factory side `partner.pricingLabel.calculate`, `partner.pricingTagSleeve.calculate`, `partner.pricingPouch.calculate`, `partner.pricingStandardProduct.calculate`, `partner.pricingService.calculate`). Every calculator is published; folding engine B follows in U-B6. U-B0.2 only adds the D-052 direct-discount limit (`discounts.cs_limit_pct`) and the quantity presets to the input data of each published calculator. It never adds illustrative figures.
 - **`unit` means two different things (2026-09-30):** the `unit` gaps in this triage (`store.quotes`, `store.configurator`, orders) are the **sales unit** of a response (piece, sheet, roll — `ProductUnit`, already stored on quote options). D-183 (U2.1) refuses a **measurement** unit in any request, because dimensions are mm only. U2.1 must name the refused request field precisely, so the refusal never catches the sales-unit response field.
 - **Pre-launch fixes outside U-B0 (D-219):** some requests are completed by U2.1 (share-link expiry, D-185) or U2.F (store credit at checkout D-196, tooling waiver D-205, mockup → `sample` D-192/D-193), not by a U-B0 group. Their rows carry a note, and U-B0 builds nothing that those sessions replace.
 
 ## Cross-check with `awaiting-migration.ts`
 
-packio-web lists **86** operations as "published, not yet migrated" (unchanged at `f225d30`). Every one is in this triage: **1** is `published` (`DELETE /v1/store/designs/{designId}` → `store.designs.delete`) and **85** are `published differently`, each with its mapping in *Details*. None is `implement here`. The published shape nearly always differs somewhere (path, field name, envelope, nullability or headers), so migrating each screen means applying its mapping, not just swapping the client.
+getpack-web lists **86** operations as "published, not yet migrated" (unchanged at `f225d30`). Every one is in this triage: **1** is `published` (`DELETE /v1/store/designs/{designId}` → `store.designs.delete`) and **85** are `published differently`, each with its mapping in *Details*. None is `implement here`. The published shape nearly always differs somewhere (path, field name, envelope, nullability or headers), so migrating each screen means applying its mapping, not just swapping the client.
 
 ## Not re-triaged
 
@@ -478,7 +478,7 @@ Decisions: D-005
 
 - **GET /v1/store/sitemap** — implement here
   - **scope (U-B0.1, `catalog`):** Public GET returning {data:[{path,lastModified,changeFrequency?,priority?}]} from active product types, catalogue products, stock products, showcase products, published articles/FAQs, excluding pages whose SEO meta has noindex (store.catalog.getSeo). Locale-agnostic paths; ETag/Cache-Control like the other catalogue reads. D-005 (no legacy URLs).
-  - *note:* Related existing ops: store.catalog.getSeo (per page meta), store.catalog.merchantFeed (Google feed). The path-to-route mapping must match packio-web routes — agree it in the contract.
+  - *note:* Related existing ops: store.catalog.getSeo (per page meta), store.catalog.merchantFeed (Google feed). The path-to-route mapping must match getpack-web routes — agree it in the contract.
 
 #### `store.price-hints` — implement here (U-B0.1)
 
@@ -654,7 +654,7 @@ Decisions: D-051, D-010, D-050, D-092, D-053, D-072
 - **POST /v1/store/quotes/{quoteId}/actions/export-pdf** — published differently → `store.quotes.requestPdf` (`POST /v1/store/quotes/{quoteId}/actions/request-pdf`)
   - export-pdf (sync SignedUrlDto) → request-pdf returns 202 SavedQuoteDto (pdfStatus=pending), then poll GET /v1/store/quotes/{quoteId}/pdf (store.quotes.getPdf) → QuotePdfDto {status: none|pending|ready, url|null, expiresAt|null}
   - url/expiresAt: non-null → nullable until status=ready
-  - *note:* Issued by Collective Group (Thailand) under Packio (D-010, D-092); signed-in owners only; 409 when the quote is not live.
+  - *note:* Issued by Collective Group (Thailand) under getpack (D-010, D-092); signed-in owners only; 409 when the quote is not live.
 - **POST /v1/store/quotes/{quoteId}/actions/share** — published differently → `store.quotes.share` (`POST /v1/store/quotes/{quoteId}/actions/share`)
   - QuoteShareDto.token → shareToken (rename)
   - expiresAt → missing-on-backend today (the link lives with the quote's validity; sharing again revokes the previous link). **D-185 (finding F5):** U2.1 (pre-launch, D-219) adds `expiresAt` (15 days, setting `configurations.share_link_days`) and explicit revocation, and `store.quotes.getShared` refuses an expired link (410). So this field is delivered by U2.1, not by U-B0.1
@@ -684,7 +684,7 @@ Decisions: D-053
 Decisions: D-005
 
 - **GET /v1/store/support-channels** — implement here
-  - **scope (U-B0.1, `catalog`):** New effective-dated, audited setting (e.g. `storefront.support_channels`: lineOaId, phone, email, hours) editable by the role the decision names, and a public cacheable GET returning it (nulls when unset). Packio's own accounts (D-005).
+  - **scope (U-B0.1, `catalog`):** New effective-dated, audited setting (e.g. `storefront.support_channels`: lineOaId, phone, email, hours) editable by the role the decision names, and a public cacheable GET returning it (nulls when unset). getpack's own accounts (D-005).
   - *note:* uncertain: owning module — catalog (public storefront reads, cms) or conversations (LINE OA integration). No such key in src/platform/settings/setting-keys.ts today. Needs a decision on who edits it.
 
 #### `store.rfq-forms` — implement here (U-B0.1)
@@ -715,7 +715,7 @@ Decisions: D-100, D-043, D-051, D-050, D-102
   - targetDate: date string|null → same (format date)
   - files[] (FileRef) → missing-on-backend
   - nextActions → missing-on-backend
-  - extra-on-backend: messages[] {id, author: customer|packio, body, createdAt}, closedAt
+  - extra-on-backend: messages[] {id, author: customer|getpack, body, createdAt}, closedAt
   - **gap (U-B0.1):** files[] (FileRef) on RfqDto so the status page can show what was uploaded
   - **gap (U-B0.1):** nextActions (or document that the UI keys off status)
 - **POST /v1/store/rfqs** — published differently → `store.rfqs.submit` (`POST /v1/store/rfqs`)
@@ -740,7 +740,7 @@ Decisions: D-100, D-043, D-051, D-050, D-102
   - targetDate: date string|null → same (format date)
   - files[] (FileRef) → missing-on-backend
   - nextActions → missing-on-backend
-  - extra-on-backend: messages[] {id, author: customer|packio, body, createdAt}, closedAt
+  - extra-on-backend: messages[] {id, author: customer|getpack, body, createdAt}, closedAt
   - **gap (U-B0.1):** routedFrom (catalogue product + reason + configuration) when the configurator routes to RFQ — feeds D-102 unmet-demand analytics
   - **gap (U-B0.1):** files[] (FileRef) on RfqDto so the status page can show what was uploaded
   - **gap (U-B0.1):** nextActions (or document that the UI keys off status)
@@ -759,12 +759,12 @@ Decisions: D-100, D-043, D-051, D-050, D-102
   - targetDate: date string|null → same (format date)
   - files[] (FileRef) → missing-on-backend
   - nextActions → missing-on-backend
-  - extra-on-backend: messages[] {id, author: customer|packio, body, createdAt}, closedAt
+  - extra-on-backend: messages[] {id, author: customer|getpack, body, createdAt}, closedAt
   - **gap (U-B0.1):** files[] (FileRef) on RfqDto so the status page can show what was uploaded
   - **gap (U-B0.1):** nextActions (or document that the UI keys off status)
 - **GET /v1/store/rfqs/{rfqId}/messages** — published differently → `store.rfqs.get` (`GET /v1/store/rfqs/{rfqId}`)
   - separate list → RfqDto.messages[] embedded in store.rfqs.get (no own endpoint, no paging)
-  - StoreRfqMessageDto.authorKind (customer|staff) → author (customer|packio) (enum values)
+  - StoreRfqMessageDto.authorKind (customer|staff) → author (customer|getpack) (enum values)
   - authorName → missing-on-backend (staff appear as the team — matches D-050 intent)
   - files[] → missing-on-backend
   - body, createdAt → same; extra id
@@ -1000,7 +1000,7 @@ Decisions: D-050, D-141, D-060, D-021, D-080, D-081, D-082, D-010, D-125
   - instalments[] → store.paymentSchedules.get on the group (allocations per order)
   - documents[] → store.documents.list (filter client-side by orderId — no orderId query param), docType iv|tr|rc|cn|dn (no qt; the quotation PDF is store.quotes.getPdf), docNumber, status, issuedAt, grossAmount, docKind (instalment|final|…)
   - artwork{status,latestSubmission,latestProof,designService} → artworkStatus + store.artwork.list / store.artwork.listProofs / store.designServices.get
-  - shipments[] → store.shipments.list: carrier enum packio|flash_express|deliveree (not factory_fleet), cartonsCount, events[].occurredAt, proofOfDelivery{capturedAt,receiverName,photoFileIds[]}, items[].deliveredQuantity
+  - shipments[] → store.shipments.list: carrier enum getpack|flash_express|deliveree (not factory_fleet), cartonsCount, events[].occurredAt, proofOfDelivery{capturedAt,receiverName,photoFileIds[]}, items[].deliveredQuantity
   - timeline[] → store.timeline.get {id,type,messageKey,params,occurredAt,photoFileIds,shipment} (cursor paged; title/detail rendered from messageKey)
   - stages[] → store.timeline.progress steps[{key,labelTh,labelEn,status pending|in_progress|completed|skipped,completedAt}]
   - claims[] → store.claims.list?orderId=
@@ -1334,7 +1334,7 @@ Decisions: D-143, D-142, D-075, D-081
   - estimatedDeliveryDate → promisedShipDate (date; ship, not delivery) plus shippedAt / deliveredAt
   - shipments[].shipmentNo / trackingNo / trackingUrl → same
   - shipments[].status: ShipmentStatus → TrackingStatus {ready|picked_up|in_transit|out_for_delivery|delivered|failed|returned} (subset)
-  - shipments[].carrier: CarrierCode {factory_fleet|flash_express|deliveree} → StoreCarrier {packio|flash_express|deliveree} (factory_fleet → packio)
+  - shipments[].carrier: CarrierCode {factory_fleet|flash_express|deliveree} → StoreCarrier {getpack|flash_express|deliveree} (factory_fleet → getpack)
   - shipments[].cartons → cartonsCount
   - shipments[].province → missing-on-backend (backend excludes all locations — backend wins)
   - shipments[].quantity / shippedAt / deliveredAt → missing-on-backend
@@ -1380,7 +1380,7 @@ Decisions: D-081, D-082, D-083
   - response mapping as for store.claims.submit
   - list of my claims also exists: store.claims.list (GET /v1/store/claims)
 - **POST /v1/store/orders/{orderId}/claims/{claimId}/messages** — published differently → `store.claims.respondInfo` (`POST /v1/store/claims/{claimId}/info`)
-  - free thread reply → answer to Packio's question only while status = need_info (409 claims.invalid_status otherwise)
+  - free thread reply → answer to getpack's question only while status = need_info (409 claims.invalid_status otherwise)
   - path …/orders/{orderId}/claims/{claimId}/messages → /v1/store/claims/{claimId}/info
   - body → response (rename); fileIds → photoFileIds (rename)
   - Idempotency-Key → required on backend
@@ -1963,7 +1963,7 @@ Decisions: D-100
 - **GET /v1/admin/rfqs/{rfqId}/messages** — published differently → `admin.rfqs.get` (`GET /v1/admin/rfqs/{rfqId}`)
   - {data: RfqMessageDto[]} → AdminRfqDto.messages[] (inline)
   - id, body, visibility (customer|internal), createdAt same
-  - authorKind customer|staff → author customer|packio (enum values)
+  - authorKind customer|staff → author customer|getpack (enum values)
   - author{id,displayName}|null → authorUser{id,displayName}
   - files[] → missing-on-backend
   - **gap (U-B0.2):** message attachments (files)
@@ -2564,7 +2564,7 @@ Decisions: D-013, D-021, D-022, D-080, D-114, D-141, D-165
 - **POST /v1/admin/shipments/{shipmentId}/actions/book-carrier** — published differently → `admin.shipments.bookCarrier` (`POST /v1/admin/shipments/{shipmentId}/actions/book-carrier`)
   - Idempotency-Key same
   - If-Match (FE required) → not declared on backend
-  - body.quoteId → carrier (deliveree|flash_express) + optional pickupAt — the carrier quote is taken at booking and kept as Packio's cost
+  - body.quoteId → carrier (deliveree|flash_express) + optional pickupAt — the carrier quote is taken at booking and kept as getpack's cost
   - body.reason → missing-on-backend
   - 200 ShipmentDetailDto → ShipmentDto
   - **gap (U-B0.2):** reason for the fallback booking if it must be audited
@@ -2574,7 +2574,7 @@ Decisions: D-013, D-021, D-022, D-080, D-114, D-141, D-165
 - **POST /v1/admin/shipments/{shipmentId}/actions/split** — implement here
   - **scope (U-B0.2, `logistics`):** Split a not-yet-shipped shipment by quantity into a new shipment (Idempotency-Key + If-Match, reason) → {shipment, created}; one transaction, audit, outbox event.
 - **POST /v1/admin/shipments/{shipmentId}/carrier-quotes** — implement here
-  - **scope (U-B0.2, `logistics`):** Quote the enabled fallback carriers for this shipment (weight, volume, pickup at factory, destination) → CarrierQuoteDto[] via the carrier adapters (D-114); admin.carriers.testQuote only checks an account. Staff with logistics rights; costs are Packio's (D-141).
+  - **scope (U-B0.2, `logistics`):** Quote the enabled fallback carriers for this shipment (weight, volume, pickup at factory, destination) → CarrierQuoteDto[] via the carrier adapters (D-114); admin.carriers.testQuote only checks an account. Staff with logistics rights; costs are getpack's (D-141).
   - *note:* Alternatively the web books without a quote (bookCarrier prices at booking).
 - **POST /v1/admin/shipments/{shipmentId}/documents** — published differently → `admin.files.download` (`GET /v1/admin/files/{fileId}/download`)
   - POST …/documents {kind: labels|packing_list} → read ShipmentDto.labelFileId / packingListFileId (generated when the shipment is packed) then GET /v1/admin/files/{fileId}/download
@@ -2776,7 +2776,7 @@ Decisions: D-102, D-044, D-101, D-053, D-154
 
 Decisions: D-102, D-144, D-217, D-219
 
-*Triaged 2026-09-30:* new since the 2026-09-29 triage (packio-web U5.0, `awaiting-triage.ts`).
+*Triaged 2026-09-30:* new since the 2026-09-29 triage (getpack-web U5.0, `awaiting-triage.ts`).
 
 - **GET /v1/admin/analytics/journeys** — implement here
   - **scope (U-B0.3, `analytics`), built in U5.B6:** one journey's funnel (`configurator | checkout | studio | claims | reorder`, from the UX scorecard) over a period (`range` 7d | 30d | 90d | custom, resolved in Asia/Bangkok as the frontend asks): sessions and conversion per step, the same figures for the previous period of equal length, week-over-week change of each step's conversion, and a per-step `alert` when the weekly drop exceeds the threshold. Reuse the B6.1 pieces: `src/modules/analytics/event-schemas.ts` (validated event names — `AnalyticsEventName` has only `page_view | configurator_step | quote_shown | add_to_cart | checkout_step`, so the journey step events of the studio, claims and reorder journeys must be added there first), the daily funnel rollups (`admin.analytics.funnel`), and `src/modules/ops/ops-signals.service.ts` to raise the drop as an ops signal (`ops.alert_raised`, at most once an hour per signal). Permission `analytics.read`; consent-gated events only (D-144).
@@ -3175,7 +3175,7 @@ Decisions: D-074
   - **gap (U-B0.3):** photos + raisedBy on JobIssueDto
 - **POST /v1/partner/factories/{factoryId}/jobs/{jobId}/issues/{issueId}/actions/resolve** — implement here
   - **scope (U-B0.3, `production`):** production: let the factory close its own issue (note, clientRef, Idempotency-Key) with audit + outbox; permission factory_issues.raise.
-  - *note:* uncertain: backend currently treats resolution as a Packio staff answer (admin.production.resolveIssue, "Packio staff answer it"); confirm with the business whether a factory may self-resolve (e.g. machine fixed) or only staff — if staff only, drop this op instead of implementing.
+  - *note:* uncertain: backend currently treats resolution as a getpack staff answer (admin.production.resolveIssue, "getpack staff answer it"); confirm with the business whether a factory may self-resolve (e.g. machine fixed) or only staff — if staff only, drop this op instead of implementing.
 
 #### `partner.capacity-calendar` — implement here (U-B0.3)
 
@@ -3243,7 +3243,7 @@ Decisions: D-013, D-114, D-110, D-021, D-080, D-165, D-142
   - 409 shipments.payment_pending → same; also 409 shipments.inspection_pending
   - response → PartnerShipmentDto
 - **POST /v1/partner/factories/{factoryId}/shipments/{shipmentId}/actions/request-carrier** — implement here
-  - **scope (U-B0.3, `logistics`):** logistics: factory asks Packio for the fallback carrier (D-013 fallback, D-114) with a reason; creates a task/event for Logistics, who books via admin.shipments.bookCarrier; permission factory_shipments.manage; Idempotency-Key.
+  - **scope (U-B0.3, `logistics`):** logistics: factory asks getpack for the fallback carrier (D-013 fallback, D-114) with a reason; creates a task/event for Logistics, who books via admin.shipments.bookCarrier; permission factory_shipments.manage; Idempotency-Key.
   - *note:* The factory must not book a carrier itself — booking stays admin.shipments.bookCarrier.
 - **POST /v1/partner/factories/{factoryId}/shipments/{shipmentId}/pod** — published differently → `partner.shipments.recordPod` (`POST /v1/partner/shipments/{shipmentId}/proof-of-delivery`)
   - path: FE /v1/partner/factories/{factoryId}/... → BE token-scoped path without factoryId (other factories are 404, D-044)
@@ -3430,7 +3430,7 @@ Decisions: D-140, D-171
   - **gap (U-B0.3):** roles typed as FactoryRole
 - **POST /v1/partner/factories/{factoryId}/users** — published differently → `partner.factoryUsers.create` (`POST /v1/partner/factories/{factoryId}/users`)
   - email, displayName → same
-  - roles FactoryRole[] → FactoryStaffRole[] — factory_owner not allowed (D-171: owners are invited by Packio)
+  - roles FactoryRole[] → FactoryStaffRole[] — factory_owner not allowed (D-171: owners are invited by getpack)
   - initialPassword (min 12, handed over out of band) → required on backend, missing in FE — backend wins (no e-mail invitation flow exists)
   - response PartnerFactoryUserDto → FactoryUserDto
   - *note:* Status `invited` has no backend equivalent — users are created active with a password to change at first sign-in.
@@ -3438,7 +3438,7 @@ Decisions: D-140, D-171
   - status: deactivated → POST …/users/{userId}/actions/deactivate (204, no body)
   - status: active (reactivate) → missing-on-backend
   - roles change → missing-on-backend
-  - 409 users.last_owner → not applicable: owners are managed by Packio (D-171)
+  - 409 users.last_owner → not applicable: owners are managed by getpack (D-171)
   - **gap (U-B0.3):** Endpoint to change a staff user's factory roles (FactoryStaffRole[], audited, SoD) — e.g. PUT …/users/{userId}/roles
   - *note:* Permission factory_users.manage (owner).
 

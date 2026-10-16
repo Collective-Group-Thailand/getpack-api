@@ -305,7 +305,7 @@ export class ConsentDto {
 
   @ApiProperty({
     example: false,
-    description: 'Required purposes (terms, privacy notice) are needed to use Packio',
+    description: 'Required purposes (terms, privacy notice) are needed to use getpack',
   })
   required!: boolean;
 

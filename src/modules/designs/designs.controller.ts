@@ -645,7 +645,7 @@ export class StoreDesignsController {
     id: 'store.designs.requestDrawing',
     summary: 'Request a dieline drawing',
     description:
-      'Drawn by `@packio/dieline` in the background; poll `GET /v1/store/drawings/{drawingId}` and download ' +
+      'Drawn by `@getpack/dieline` in the background; poll `GET /v1/store/drawings/{drawingId}` and download ' +
       '`outputFileId` via `store.files.download`. Answers `501 drawing.engine_unavailable` until the engine is ' +
       'published and switched on (flag `drawing.engine`); the attempt is logged.',
     implements: ['D-152'],

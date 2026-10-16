@@ -59,7 +59,7 @@ import { isoTs, userRef } from './erp-sales.shared';
 import { type ErpScope, ErpWorkspace } from './erp-workspace.service';
 
 /**
- * Packio Factory ERP E6 core (D-385 – D-390): the factory's book — settings, the chart of accounts created from
+ * getpack Factory ERP E6 core (D-385 – D-390): the factory's book — settings, the chart of accounts created from
  * the template with maker-checker changes, fiscal years and periods with the close checklist, and the posting
  * core every journal (automatic, manual, recurring, reversal, closing) goes through. Factory-private (D-317).
  */
@@ -1035,7 +1035,7 @@ export class ErpLedgerService {
 
   private async finalise(tx: Tx, entry: ErpGlJournalEntry, allowSoftClosed: boolean, actor: Actor): Promise<ErpGlJournalEntry> {
     const entryNo = await this.workspace.nextNumber(tx, entry.factoryId, 'jv', new Date(`${dayOf(entry.entryDate)}T12:00:00+07:00`));
-    if (allowSoftClosed) await tx.$executeRaw`SELECT set_config('packio.erp_post_soft_closed', 'on', true)`;
+    if (allowSoftClosed) await tx.$executeRaw`SELECT set_config('getpack.erp_post_soft_closed', 'on', true)`;
     try {
       return await tx.erpGlJournalEntry.update({
         where: { id: entry.id },
@@ -1052,7 +1052,7 @@ export class ErpLedgerService {
         throw new DomainException('erp.ledger_period_closed', { params: { date: dayOf(entry.entryDate), status: 'closed' } });
       throw error;
     } finally {
-      if (allowSoftClosed) await tx.$executeRaw`SELECT set_config('packio.erp_post_soft_closed', 'off', true)`;
+      if (allowSoftClosed) await tx.$executeRaw`SELECT set_config('getpack.erp_post_soft_closed', 'off', true)`;
     }
   }
 

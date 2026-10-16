@@ -410,7 +410,7 @@ export class StoreAgentController {
   @ApiSuccess(200, {
     description: 'Download link',
     type: DownloadUrlDto,
-    example: { url: 'https://packio-files.s3.example.com/…', expiresAt: '2026-11-26T10:05:00+07:00' },
+    example: { url: 'https://getpack-files.s3.example.com/…', expiresAt: '2026-11-26T10:05:00+07:00' },
   })
   @ApiStandardErrors('http.not_found', 'validation.failed', 'agents.not_agent')
   async certificate(

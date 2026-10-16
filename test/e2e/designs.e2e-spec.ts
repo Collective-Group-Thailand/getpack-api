@@ -20,7 +20,7 @@ import {
 } from '../support/commerce-e2e';
 import { bootFulfilmentApp, type FulfilmentApp, makePdf, payDue, uploadPdf } from '../support/fulfilment-e2e';
 
-const DOC = { pages: [{ side: 'front', objects: [{ type: 'text', text: 'Packio', x: 10, y: 20 }] }] };
+const DOC = { pages: [{ side: 'front', objects: [{ type: 'text', text: 'getpack', x: 10, y: 20 }] }] };
 
 /**
  * Online designs and dieline drawings (B4.1): versions with ETag, assets, semi-design templates, the online

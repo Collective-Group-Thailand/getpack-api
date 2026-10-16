@@ -26,13 +26,13 @@ import {
 } from '../support/fulfilment-e2e';
 
 /**
- * Packio Factory ERP E2.1 + E3 (docs/prompts/E1-factory-erp.md §10, D-346 – D-358): quantity breaks, the
+ * getpack Factory ERP E2.1 + E3 (docs/prompts/E1-factory-erp.md §10, D-346 – D-358): quantity breaks, the
  * approved supplier list, receiving inspection and landed cost, price-rise alerts, requests for quotation;
  * machines, auto-planning and moving on the schedule, the kiosk (pause / resume), breakdowns that stop a
- * machine, preventive plans and spare parts, documents with versions and expiry, Packio job steps on the floor,
+ * machine, preventive plans and spare parts, documents with versions and expiry, getpack job steps on the floor,
  * and the new roles.
  */
-describe('Packio Factory ERP E2.1 + E3 (e2e)', () => {
+describe('getpack Factory ERP E2.1 + E3 (e2e)', () => {
   let ctx: FulfilmentApp;
   let fixture: DevFolding;
   let owner: string;
@@ -592,7 +592,7 @@ describe('Packio Factory ERP E2.1 + E3 (e2e)', () => {
     expect(refused.body.code).toBe('erp.file_not_usable');
   });
 
-  it('works a Packio job’s steps on the floor and completes its milestones (D-354)', async () => {
+  it('works a getpack job’s steps on the floor and completes its milestones (D-354)', async () => {
     const [code] = postcodes(ctx, 1) as [string];
     await seedShipping(ctx, fixture.factoryPublicId, [code]);
     await setFlag(ctx, 'payments.scb', true);
@@ -615,7 +615,7 @@ describe('Packio Factory ERP E2.1 + E3 (e2e)', () => {
         .set('Idempotency-Key', randomUUID())
         .expect(200);
       await ctx.pump();
-      const list = await get<{ data: Rec[] }>(`/production-orders?source=packio_job&q=${job.jobNo}`);
+      const list = await get<{ data: Rec[] }>(`/production-orders?source=getpack_job&q=${job.jobNo}`);
       const mo = await get(`/production-orders/${list.data[0]!.id}`);
       const milestones = await ctx.prisma.jobMilestone.findMany({
         where: { jobId: job.id },
@@ -644,7 +644,7 @@ describe('Packio Factory ERP E2.1 + E3 (e2e)', () => {
           milestone: { status: 'completed' },
         });
       } else expect(after.operations[index].milestoneSync).toBe('failed');
-      // A Packio step cannot be skipped from the ERP.
+      // A getpack step cannot be skipped from the ERP.
       await post(
         owner,
         `/production-orders/${mo.id}/operations/${mo.operations[index + 1].id}/actions/skip`,

@@ -5,11 +5,11 @@
 
 ---
 
-You are a senior backend engineer building **`packio-api`**, the NestJS 12 backend of **Packio — Your Packaging Production Partner** (Collective Group (Thailand)). This prompt builds everything later modules depend on. No business modules yet.
+You are a senior backend engineer building **`getpack-api`**, the NestJS 12 backend of **getpack — Your Packaging Production Partner** (Collective Group (Thailand)). This prompt builds everything later modules depend on. No business modules yet.
 
 ## Repository layout (target)
 ```
-packio-api/
+getpack-api/
 ├─ src/
 │  ├─ main.ts  worker.ts  app.module.ts  worker.module.ts
 │  ├─ common/        guards (audience, permission, scope, SoD), decorators (@CurrentActor, @Can, @Public, @Scope), problem-details filter,
@@ -31,7 +31,7 @@ packio-api/
 ## Deliverable 1.1 — Scaffold, CI, contract pipeline, ADRs
 1. NestJS 12 project (pnpm, Node 24, TS 6 strict), ESLint flat + Prettier, path aliases, validated env (fail fast), Secrets Manager loader, pino with a redaction list (`authorization`, `password`, `otp`, `token`, `refreshToken`, `cardNumber`, `idToken`, `bankAccount`, `taxId` when not needed), OpenTelemetry + Sentry, request id, Terminus `/health` (DB, Redis, S3).
 2. URI versioning `/v1`; surface modules `AuthApi`, `StoreApi`, `AdminApi`, `PartnerApi`, `Webhooks`; global problem-details filter (RFC 9457, localised th/en); validation pipe; pagination helpers; `Idempotency-Key` interceptor (Redis + `idempotency_keys`); ETag/If-Match helper.
-3. **Contract & documentation pipeline** (`docs/contract/api-conventions.md` §5): `pnpm contract:build` boots an app context with fake integrations and writes a deterministic `contract/openapi.json` (OpenAPI 3.1, surface tags, named enum components, security scheme per audience, `servers`, shared problem-details components, webhook definitions). Serve **Scalar** at `/docs` (`@scalar/nestjs-api-reference`), Swagger UI at `/docs/swagger`, raw at `/docs-json` and `/docs.yaml`, all gated by `DOCS_ENABLED` + staff auth outside local/dev. Add `pnpm contract:lint` (Spectral with the Packio ruleset from §5: operationId, summary, tag, security, documented 4xx/5xx set, examples on every body, no inline enums, no real-looking personal data in examples). Build the reusable documentation decorators now — `@ApiStandardErrors(...codes)`, `@ApiPaginated(Dto)`, `@ApiIdempotent()`, `@ApiConcurrency()` — so every later module documents itself consistently. CI: `contract:lint` + drift check + `oasdiff breaking` vs `main` (fail unless label `contract:breaking`); release workflow attaches `openapi.json` to tag `vX.Y.Z`.
+3. **Contract & documentation pipeline** (`docs/contract/api-conventions.md` §5): `pnpm contract:build` boots an app context with fake integrations and writes a deterministic `contract/openapi.json` (OpenAPI 3.1, surface tags, named enum components, security scheme per audience, `servers`, shared problem-details components, webhook definitions). Serve **Scalar** at `/docs` (`@scalar/nestjs-api-reference`), Swagger UI at `/docs/swagger`, raw at `/docs-json` and `/docs.yaml`, all gated by `DOCS_ENABLED` + staff auth outside local/dev. Add `pnpm contract:lint` (Spectral with the getpack ruleset from §5: operationId, summary, tag, security, documented 4xx/5xx set, examples on every body, no inline enums, no real-looking personal data in examples). Build the reusable documentation decorators now — `@ApiStandardErrors(...codes)`, `@ApiPaginated(Dto)`, `@ApiIdempotent()`, `@ApiConcurrency()` — so every later module documents itself consistently. CI: `contract:lint` + drift check + `oasdiff breaking` vs `main` (fail unless label `contract:breaking`); release workflow attaches `openapi.json` to tag `vX.Y.Z`.
 4. `docker-compose.yml`, `.env.example` (every variable documented), Dockerfile, CI, `pnpm dev` runs HTTP with fakes, `pnpm dev:worker` runs the worker.
 5. ADRs 0003 (contract & repo split), 0004 (auth audiences & tokens), 0005 (effective-dated configuration), 0006 (approval-matrix engine) from `00-master-plan.md` and `decisions.md`.
 6. Acceptance: `docker compose up -d && pnpm i && pnpm lint && pnpm typecheck && pnpm test && pnpm test:e2e && pnpm contract:build` green; `/health` works, `/docs` renders the Scalar reference and `/docs/swagger` Swagger UI, `pnpm contract:lint` passes; worker starts and idles; CI green.

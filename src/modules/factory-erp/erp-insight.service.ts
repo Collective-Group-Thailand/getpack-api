@@ -221,9 +221,9 @@ export class ErpInsightService {
    * D-376: what the month's issued invoices earned over the cost of what they delivered, by sales order,
    * customer or item. Revenue is each line's share of its invoice's net; cost is the delivered stock cost.
    */
-  async profit(scope: ErpScope, month: string, by: 'sales_order' | 'customer' | 'item' | 'packio_job'): Promise<ErpProfitReportDto> {
+  async profit(scope: ErpScope, month: string, by: 'sales_order' | 'customer' | 'item' | 'getpack_job'): Promise<ErpProfitReportDto> {
     const r = MONTH(month);
-    if (by === 'packio_job') return this.packioProfit(scope, month);
+    if (by === 'getpack_job') return this.getpackProfit(scope, month);
     const key =
       by === 'customer'
         ? Prisma.sql`c.public_id::text AS id, c.code AS code, c.name AS name`
@@ -274,17 +274,17 @@ export class ErpInsightService {
   }
 
   /**
-   * D-402: Packio jobs finished in the month — what Packio's purchase order pays for the job (net of VAT, production
+   * D-402: getpack jobs finished in the month — what getpack's purchase order pays for the job (net of VAT, production
    * and shipping) over the production order's cost at today's rates (D-376).
    */
-  private async packioProfit(scope: ErpScope, month: string): Promise<ErpProfitReportDto> {
+  private async getpackProfit(scope: ErpScope, month: string): Promise<ErpProfitReportDto> {
     const r = MONTH(month);
     const db = this.workspace.db;
     const settings = await this.workspace.settings(db, scope.factory.id);
     const mos = await db.erpProductionOrder.findMany({
       where: {
         factoryId: scope.factory.id,
-        source: 'packio_job',
+        source: 'getpack_job',
         status: { in: ['completed', 'closed'] },
         completedAt: { gte: r.fromTs, lt: r.toTs },
       },
@@ -310,7 +310,7 @@ export class ErpInsightService {
     const cost = out.reduce((a, x) => a.plus(dec(x.cost)), dec(0));
     return {
       month,
-      by: 'packio_job',
+      by: 'getpack_job',
       rows: out,
       revenue: fmtMoney(revenue),
       cost: fmtMoney(cost),
@@ -507,7 +507,7 @@ export class ErpInsightService {
       this.oee(scope, yesterday, yesterday).catch(() => null),
     ]);
     const lowItems = await db.erpItem.findMany({ where: { id: { in: low.slice(0, 5).map((x) => x.id) } } });
-    // Work for Packio (D-402): its revenue is the statements confirmed this month (F14, D-397).
+    // Work for getpack (D-402): its revenue is the statements confirmed this month (F14, D-397).
     const [confirmed, waiting, uninvoiced] = await Promise.all([
       db.billingStatement.aggregate({
         where: { factoryId: f, confirmedAt: { gte: r.fromTs, lt: r.toTs } },
@@ -532,7 +532,7 @@ export class ErpInsightService {
         achievementPct: dec(sales.targetNet).gt(0) ? dec(sales.invoicedNet).times(100).div(dec(sales.targetNet)).toFixed(1) : null,
         invoices: sales.rows.reduce((a, x) => a + x.invoices, 0),
       },
-      packio: {
+      getpack: {
         confirmedNet: fmtMoney(confirmed._sum.netAmount ?? 0),
         confirmedStatements: confirmed._count._all,
         toConfirm: waiting._count._all,

@@ -1,6 +1,6 @@
 # Competitive UX scorecard — proving "better", not claiming it
 
-> "Better than the competitor" is a release gate measured with real users, not an opinion. The same tasks are run on the competitor (baseline, now) and on Packio (before launch and every quarter). Results live in `docs/ux/scorecard-results/<date>.md`.
+> "Better than the competitor" is a release gate measured with real users, not an opinion. The same tasks are run on the competitor (baseline, now) and on getpack (before launch and every quarter). Results live in `docs/ux/scorecard-results/<date>.md`.
 
 ## 1. Participants and method
 - 8–10 participants per round from the target segments: Thai SME owners (food, cosmetics, e-commerce), a procurement officer at a mid-size company, a freelance graphic designer. At least 3 of them on a mid-range Android phone.
@@ -9,7 +9,7 @@
 - Metrics per task: completion (yes/partial/no), time on task, number of steps (screens + decisions), errors, Single Ease Question (1–7). Per session: SUS (System Usability Scale). Qualitative: top 3 frustrations.
 
 ## 2. Benchmark tasks
-| # | Task (instruction given to the participant) | Journey | Packio step budget |
+| # | Task (instruction given to the participant) | Journey | getpack step budget |
 |---|---|---|---|
 | T1 | "หากล่องไปรษณีย์สำหรับสินค้าขนาด 20×15×8 ซม. หนัก 500 กรัม แล้วดูว่า 500 ใบราคาเท่าไร" | discovery → price | ≤ 4 steps to a real price |
 | T2 | "ใส่โลโก้ของคุณบนกล่องนี้ที่ด้านบนและด้านหน้า แล้วดูภาพ 3D" | studio | ≤ 6 steps |
@@ -26,10 +26,10 @@
 
 Tasks the competitor cannot perform (e.g. T1 real price, T4 instant order) are recorded as "not possible" — that is a win only if our completion on them is ≥ 90 %.
 
-## 3. Release gate (Packio vs competitor baseline)
+## 3. Release gate (getpack vs competitor baseline)
 | Measure | Gate |
 |---|---|
-| Completion rate, all tasks | ≥ 90 % on Packio |
+| Completion rate, all tasks | ≥ 90 % on getpack |
 | Median time on comparable tasks (T2, T5, T7, T9) | ≥ 30 % faster than baseline |
 | Steps | within the step budget for every task |
 | SEQ | ≥ 6.0 median on every task |

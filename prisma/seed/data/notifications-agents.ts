@@ -28,11 +28,11 @@ export const AGENT_NOTIFICATION_TEMPLATES: readonly NotificationTemplateSeed[] =
     'sales_agent_application.approved:customer',
     'Applicant: the agent application was approved (D-416)',
     {
-      subject: 'คุณเป็นตัวแทนขาย Packio แล้ว',
+      subject: 'คุณเป็นตัวแทนขาย getpack แล้ว',
       body: 'ใบสมัครได้รับอนุมัติ รหัสตัวแทนของคุณคือ {{payload.code}}',
     },
     {
-      subject: 'You are now a Packio sales agent',
+      subject: 'You are now a getpack sales agent',
       body: 'Your application was approved. Your agent code is {{payload.code}}',
     },
   ),
@@ -43,13 +43,13 @@ export const AGENT_NOTIFICATION_TEMPLATES: readonly NotificationTemplateSeed[] =
     description: 'Applicant: the agent application was approved (D-416)',
     versions: {
       th: {
-        subject: 'คุณเป็นตัวแทนขาย Packio แล้ว',
+        subject: 'คุณเป็นตัวแทนขาย getpack แล้ว',
         body: mjml(
           'ใบสมัครตัวแทนขายของคุณได้รับอนุมัติ รหัสตัวแทนคือ {{payload.code}} เข้าสู่ระบบเพื่อรับลิงก์ของคุณ',
         ),
       },
       en: {
-        subject: 'You are now a Packio sales agent',
+        subject: 'You are now a getpack sales agent',
         body: mjml(
           'Your sales agent application was approved. Your agent code is {{payload.code}}; sign in for your link.',
         ),
@@ -67,9 +67,9 @@ export const AGENT_NOTIFICATION_TEMPLATES: readonly NotificationTemplateSeed[] =
     'Agent: a lead became a customer or factory (D-417, D-419)',
     {
       subject: 'ผู้มุ่งหวังของคุณสมัครแล้ว',
-      body: '{{payload.contactName}} สมัครใช้งาน Packio แล้ว และผูกกับคุณ',
+      body: '{{payload.contactName}} สมัครใช้งาน getpack แล้ว และผูกกับคุณ',
     },
-    { subject: 'Your lead signed up', body: '{{payload.contactName}} joined Packio and is linked to you' },
+    { subject: 'Your lead signed up', body: '{{payload.contactName}} joined getpack and is linked to you' },
   ),
   inApp(
     'sales_agent_statement.approved:customer',
@@ -102,9 +102,9 @@ const EMAILS: readonly [string, string, string, string, string][] = [
   [
     'sales_agent_lead.converted',
     'ผู้มุ่งหวังของคุณสมัครแล้ว',
-    '{{payload.contactName}} สมัครใช้งาน Packio แล้ว และผูกกับคุณ',
+    '{{payload.contactName}} สมัครใช้งาน getpack แล้ว และผูกกับคุณ',
     'Your lead signed up',
-    '{{payload.contactName}} joined Packio and is linked to you.',
+    '{{payload.contactName}} joined getpack and is linked to you.',
   ],
   [
     'sales_agent_statement.approved',

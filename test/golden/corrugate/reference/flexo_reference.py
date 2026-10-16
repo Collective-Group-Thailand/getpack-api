@@ -5,7 +5,7 @@
 #   app/Models/CalculatorCorrugate.php  calculate:234-286, :487-586, :606-611, :695-697 (print setup, paper cut),
 #   CalRSCFlexo:867-1082, CalDCFlexo:1084-1335, sort_data:1556, limit_10:1547, width_layout:1574,
 #   calculate_factory_margin:1956, calculateAssembly:1961-2037;  app/Models/Calculator.php calculatePercentReduce:452.
-# Packio deviations applied (port map §5): fresh state per call (C1), plates / die block always charged apart
+# getpack deviations applied (port map §5): fresh state per call (C1), plates / die block always charged apart
 # (both "separate" flags are true on every live path), NULL bounds open (C19), the factory branches as terms (C6).
 # Regenerate: python3 flexo_reference.py > flexo.vectors.json && pnpm prettier --write flexo.vectors.json
 import json, math

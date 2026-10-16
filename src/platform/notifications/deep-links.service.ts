@@ -69,7 +69,7 @@ export class DeepLinksService {
       },
       update: { tokenHash: sha256(token), path, expiresAt, openCount: 0, lastOpenedAt: null },
     });
-    const web = this.config.get('STOREFRONT_BASE_URL') ?? 'https://www.packio.invalid';
+    const web = this.config.get('STOREFRONT_BASE_URL') ?? 'https://www.getpack.invalid';
     return `${web.replace(/\/$/, '')}/l/${token}`;
   }
 

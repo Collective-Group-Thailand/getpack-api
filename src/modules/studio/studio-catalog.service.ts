@@ -80,7 +80,7 @@ async function codeTaken<T>(run: () => Promise<T>): Promise<T> {
 }
 
 /**
- * D-282 the studio's catalogue: company brand kits (Company Admin manages, every member uses — D-227), Packio's own
+ * D-282 the studio's catalogue: company brand kits (Company Admin manages, every member uses — D-227), getpack's own
  * templates (Marketing / Prepress author, Marketing approves — never the author — before publication, D-216) and
  * elements (a mark with legal meaning needs a declared right before it can be placed). D-284: brand kits name only
  * fonts the studio serves.

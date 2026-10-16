@@ -324,7 +324,7 @@ describe('partners schema behaviour (PostgreSQL 18)', () => {
         sqlState(
           db.client,
           `INSERT INTO price_proposals (price_list_id, direction, status, proposed_effective_from)
-           VALUES ($1, 'factory_to_packio', $2::proposal_status, now())`,
+           VALUES ($1, 'factory_to_getpack', $2::proposal_status, now())`,
           [list, status],
         );
       expect(await proposal('draft')).toBeNull();

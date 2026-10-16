@@ -132,7 +132,7 @@ describe('partner configuration (e2e, B2.2)', () => {
   });
 
   it('records the zones of a seeded active factory too (dev F9001: every onboarding step approved)', async () => {
-    // packio-web `api.dev-seed-launch-path` (a): this answered 500 while the dev factory had no step rows.
+    // getpack-web `api.dev-seed-launch-path` (a): this answered 500 while the dev factory had no step rows.
     const { fixture } = await prisma.$transaction((tx) => seedDevFolding(tx), { timeout: 60_000 });
     const scheme = await pm()
       .post('/v1/admin/shipping/zone-schemes', { code: `e2e_dev_${run}`, name: 'E2E dev zones' })

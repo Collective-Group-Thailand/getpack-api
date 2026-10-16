@@ -69,7 +69,7 @@ export async function writeWorkbook(
   sheets: { name: string; headers: string[]; rows: Record<string, CellValue>[] }[],
 ): Promise<Buffer> {
   const workbook = new ExcelJS.Workbook();
-  workbook.creator = 'Packio';
+  workbook.creator = 'getpack';
   for (const sheet of sheets) {
     const worksheet = workbook.addWorksheet(sheet.name);
     worksheet.columns = sheet.headers.map((header) => ({

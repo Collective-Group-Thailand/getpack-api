@@ -15,7 +15,7 @@ import {
   uploadFile,
 } from '../support/commerce-e2e';
 
-const DOC = { pages: [{ side: 'front', objects: [{ type: 'text', text: 'Packio', x: 10, y: 20 }] }] };
+const DOC = { pages: [{ side: 'front', objects: [{ type: 'text', text: 'getpack', x: 10, y: 20 }] }] };
 const DOC2 = { pages: [{ side: 'front', objects: [] }] };
 const DAY_MS = 86_400_000;
 

@@ -8013,7 +8013,9 @@ stream
       new TextEncoder().encode("\nendstream")
     ])
   );
-  const info = add(`<< /Producer (Packio @packio/dieline) /Title ${pdfText(opts.title ?? `Dieline ${d.styleId}`)} >>`);
+  const info = add(
+    `<< /Producer (getpack @getpack/dieline) /Title ${pdfText(opts.title ?? `Dieline ${d.styleId}`)} >>`
+  );
   const finishes = (opts.finishes ?? []).map((f) => {
     const name = f.name.replace(/[^A-Za-z0-9_]/g, "");
     const separation = add(`[/Separation /${name} /DeviceCMYK ${tint(f.cmyk)}]`);

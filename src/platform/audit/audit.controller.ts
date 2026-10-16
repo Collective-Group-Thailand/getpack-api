@@ -182,7 +182,7 @@ export class AuditExportDto {
   @ApiProperty({ format: 'uuid', example: '0192f3a0-7c1e-7d2a-9b1f-00000000f11e' })
   fileId!: string;
 
-  @ApiProperty({ example: 'https://packio-files.s3.example.com/…&X-Amz-Expires=300' })
+  @ApiProperty({ example: 'https://getpack-files.s3.example.com/…&X-Amz-Expires=300' })
   url!: string;
 
   @ApiProperty({ type: 'integer', example: 1250 })
@@ -287,7 +287,7 @@ export class AuditLogsController {
     type: AuditExportDto,
     example: {
       fileId: '0192f3a0-7c1e-7d2a-9b1f-00000000f11e',
-      url: 'https://packio-files.s3.example.com/…&X-Amz-Expires=300',
+      url: 'https://getpack-files.s3.example.com/…&X-Amz-Expires=300',
       rows: 1250,
       truncated: false,
       expiresAt: '2026-09-23T14:10:00+07:00',

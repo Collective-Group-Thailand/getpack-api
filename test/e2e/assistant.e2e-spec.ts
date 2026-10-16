@@ -71,7 +71,7 @@ describe('assistant (e2e, U5.B5)', () => {
     await ctx.prisma.faq.create({
       data: {
         questionTh: 'คืนเงินได้ไหม (ทดสอบ)',
-        answerTh: 'ติดต่อทีมบริการลูกค้าเพื่อขอคืนเงินตามเงื่อนไขของ Packio (ทดสอบ)',
+        answerTh: 'ติดต่อทีมบริการลูกค้าเพื่อขอคืนเงินตามเงื่อนไขของ getpack (ทดสอบ)',
         status: 'published',
       },
     });

@@ -4,7 +4,7 @@ import { Injectable } from '@nestjs/common';
 import { hmacSha256 } from './hashing';
 
 /** Fixed development key: lookup hashes must be stable across restarts to find duplicates. */
-const DEVELOPMENT_KEY = 'packio-development-lookup-key-not-for-production';
+const DEVELOPMENT_KEY = 'getpack-development-lookup-key-not-for-production';
 
 /**
  * Keyed lookup hash (HMAC-SHA256) of a sensitive number, e.g. a bank account number, so duplicates

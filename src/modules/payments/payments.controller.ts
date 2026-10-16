@@ -97,7 +97,7 @@ export class StorePaymentsController {
     description:
       'Starts a payment of the instalments due now (or those chosen): SCB QR returns the QR payload to render, ' +
       '2C2P a redirect URL, a bank transfer waits for its slip. Methods are enabled by feature flag once ' +
-      'Packio’s merchant accounts exist (D-176). The amount is the cash after the expected withholding. ' +
+      'getpack’s merchant accounts exist (D-176). The amount is the cash after the expected withholding. ' +
       '`bank_transfer_slip` returns the accounts to pay into (`receiverAccounts`). After a 2C2P page the provider ' +
       'sends the customer back to the fixed storefront route `/payments/{paymentId}/return` (no client-supplied ' +
       'return URL); poll `store.payments.get` there. Requires `Idempotency-Key`.',
@@ -441,7 +441,7 @@ export class PaymentWebhooksController {
     id: 'webhooks.payments.twoc2p',
     summary: '2C2P backend notification',
     description:
-      '`{"payload":"<JWT HS256>"}` signed with Packio’s merchant secret; an invalid signature is 401. A ' +
+      '`{"payload":"<JWT HS256>"}` signed with getpack’s merchant secret; an invalid signature is 401. A ' +
       'success (`respCode 0000`) is confirmed by the 2C2P inquiry before the payment is accepted; replays ' +
       'are no-ops (D-061, D-176).',
     implements: ['D-061', 'D-176'],

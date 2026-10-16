@@ -120,7 +120,7 @@ export class CustomerLoginService {
       : false;
     const displayName =
       ('displayName' in identity && identity.displayName) ||
-      (phone ? `ลูกค้า ${maskPhone(phone)}` : 'ลูกค้า Packio');
+      (phone ? `ลูกค้า ${maskPhone(phone)}` : 'ลูกค้า getpack');
     const user = await tx.user.create({
       data: {
         kind: 'customer',

@@ -48,11 +48,11 @@ describe('TokenService (ADR-0004)', () => {
     await expect(tokens.verify(foreign)).rejects.toEqual(new AccessTokenInvalidError('invalid'));
   });
 
-  it('rejects tokens without the Packio shape (wrong audience value, no scp)', async () => {
+  it('rejects tokens without the getpack shape (wrong audience value, no scp)', async () => {
     const active = await keys.active();
     const token = await new SignJWT({ pty: 'user' })
       .setProtectedHeader({ alg: 'EdDSA', kid: active.kid, typ: 'at+jwt' })
-      .setIssuer('packio-api')
+      .setIssuer('getpack-api')
       .setSubject('u-1')
       .setAudience('somebody-else')
       .setExpirationTime('5m')

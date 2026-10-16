@@ -1,4 +1,4 @@
-# Performance readiness — packio-api (B6.3)
+# Performance readiness — getpack-api (B6.3)
 
 > **Audience:** the tech lead and whoever runs the load tests on the UAT / load stack. Targets are **proposed** — no
 > decision gives traffic or latency figures — and are confirmed by the business at the go / no-go
@@ -28,7 +28,7 @@ adapter); partner updates the factories' mobile write path (B4.2).
 ## 2. Running them
 
 1. Deploy the release candidate to the load stack with `INTEGRATIONS_MODE=real` against **sandbox** providers only, or
-   `fake` to measure Packio alone. Never against production.
+   `fake` to measure getpack alone. Never against production.
 2. Prepare data with the UAT rehearsal seed (`docs/launch/UAT-DATA.md`: `pnpm db:seed:uat`, then
    `pnpm uat:populate` for orders already in production): an instant configuration of the environment in
    `perf/k6/payloads/folding-quote.json` — corrugated is the only signed type by default, so take a postal box's

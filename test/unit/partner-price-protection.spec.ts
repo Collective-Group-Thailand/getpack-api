@@ -3,7 +3,7 @@ import { join } from 'node:path';
 
 /**
  * Price-data protection (D-044, D-190, D-142; U1 §U-B3 item 5): nothing a factory can read — any
- * `partner.*` response, at any depth — carries price suggestions, peer benchmarks or percentiles, Packio's
+ * `partner.*` response, at any depth — carries price suggestions, peer benchmarks or percentiles, getpack's
  * margin or sell prices, or a customer's target price. A factory sees only its own prices (IDOR is
  * covered by the e2e suites).
  */

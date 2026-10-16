@@ -2,7 +2,7 @@ import { bahtText, thaiDate, thaiMonth } from './thai-text';
 
 /**
  * HTML of customer documents and company statements (B5.2), rendered to PDF by the host's Chromium with the
- * installed Thai fonts. Seller data comes from the entity's settings snapshot (D-092); Packio is the brand.
+ * installed Thai fonts. Seller data comes from the entity's settings snapshot (D-092); getpack is the brand.
  */
 
 const esc = (v: string | number | null | undefined) =>
@@ -113,7 +113,7 @@ export function renderDocumentHtml(d: RenderableDocument): string {
   const taxable = (Number(d.net) - Number(d.discount)).toFixed(2);
   return `<!doctype html><html lang="th"><head><meta charset="utf-8"><title>${esc(d.docNumber)}</title><style>${STYLE}</style></head><body>
 <div class="row">
-  <div><div class="brand">Packio</div>
+  <div><div class="brand">getpack</div>
     <div><b>${esc(sellerName)}</b>${d.seller.legalNameEn ? `<br>${esc(d.seller.legalNameEn)}` : ''}</div>
     <div>${esc(d.seller.addressTh)}</div>
     <div>เลขประจำตัวผู้เสียภาษี ${esc(d.seller.taxId)} ${branch(d.seller.branchCode)}</div>
@@ -167,7 +167,7 @@ export function renderStatementHtml(s: RenderableStatement): string {
     )
     .join('');
   return `<!doctype html><html lang="th"><head><meta charset="utf-8"><title>Statement ${esc(s.month)}</title><style>${STYLE}</style></head><body>
-<div class="row"><div><div class="brand">Packio</div><b>${esc(s.seller.legalNameTh ?? '')}</b><br>${esc(s.seller.addressTh)}</div>
+<div class="row"><div><div class="brand">getpack</div><b>${esc(s.seller.legalNameTh ?? '')}</b><br>${esc(s.seller.addressTh)}</div>
 <div><h1>ใบแจ้งยอด<br><small>Statement of account</small></h1><div class="box">ประจำเดือน ${thaiMonth(s.month)}</div></div></div>
 <div class="box" style="margin-top:10px"><b>บริษัท</b> ${esc(s.companyName)} ${s.companyCode ? `(${esc(s.companyCode)})` : ''}</div>
 <table><thead><tr><th>วันที่</th><th>เอกสาร</th><th>รายการ</th><th>เพิ่ม</th><th>ลด</th></tr></thead><tbody>${rows}</tbody></table>

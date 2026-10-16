@@ -867,7 +867,7 @@ enum StoreCreditSource {
   @@map("store_credit_source")
 }
 
-/// IV, TR, RC, CN, DN issued by the entity under the Packio brand (D-010, D-092). Numbers are gapless per
+/// IV, TR, RC, CN, DN issued by the entity under the getpack brand (D-010, D-092). Numbers are gapless per
 /// (entity, type, period) and taken in the issuing transaction; a void keeps its number with a reason. Money
 /// columns never change after issue (trigger).
 model CustomerDocument {
@@ -1315,7 +1315,7 @@ enum PoLineType {
   mockup
   design
   reproduction
-  /// D-289: a waived tool the factory found unusable, remade at Packio's cost.
+  /// D-289: a waived tool the factory found unusable, remade at getpack's cost.
   tooling
 
   @@map("po_line_type")

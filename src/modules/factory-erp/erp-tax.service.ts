@@ -285,7 +285,7 @@ export class ErpTaxService {
           sourceId: n.publicId,
         };
       }),
-      ...(await this.packioStatements(scope, month)),
+      ...(await this.getpackStatements(scope, month)),
     ].sort((a, b) => a.date.localeCompare(b.date) || a.docNo.localeCompare(b.docNo));
     return {
       month,
@@ -297,11 +297,11 @@ export class ErpTaxService {
   }
 
   /**
-   * Packio statements the factory confirmed in the month (D-401): the factory's own sale to Packio, on its books by
-   * F14 on the confirmation day (D-397) — numbered by the tax invoice the factory gave Packio when it is recorded, by
-   * the statement otherwise; the buyer is the Packio entity from its registered settings.
+   * getpack statements the factory confirmed in the month (D-401): the factory's own sale to getpack, on its books by
+   * F14 on the confirmation day (D-397) — numbered by the tax invoice the factory gave getpack when it is recorded, by
+   * the statement otherwise; the buyer is the getpack entity from its registered settings.
    */
-  private async packioStatements(scope: ErpScope, month: string): Promise<ErpVatReportRowDto[]> {
+  private async getpackStatements(scope: ErpScope, month: string): Promise<ErpVatReportRowDto[]> {
     const r = monthRange(month);
     const statements = await this.workspace.db.billingStatement.findMany({
       where: {
@@ -331,7 +331,7 @@ export class ErpTaxService {
         }
       };
       buyers.set(entityId, {
-        name: (await read('entity.legal_name_th')) ?? 'Packio',
+        name: (await read('entity.legal_name_th')) ?? 'getpack',
         taxId: await read('entity.tax_id'),
         branch: await read('entity.branch_code'),
       });
@@ -341,7 +341,7 @@ export class ErpTaxService {
       return {
         date: bangkokDate(s.confirmedAt!),
         docNo: s.vendorInvoices[0]?.vendorInvoiceNo ?? s.bsNumber,
-        kind: 'packio_statement',
+        kind: 'getpack_statement',
         partyName: buyer.name,
         partyTaxId: buyer.taxId,
         partyBranch: buyer.branch,

@@ -209,7 +209,7 @@ export class StoreNetworkController {
   @Header('Cache-Control', 'public, max-age=300')
   @ApiEndpoint({
     id: 'store.network.getStats',
-    summary: 'Packio’s partner network in numbers',
+    summary: 'getpack’s partner network in numbers',
     description:
       'How partners are audited, which product types the network can make, and — only with at least ' +
       '`trust.network_min_factories` (3) active factories and `trust.network_min_jobs` (30) jobs completed in the last ' +

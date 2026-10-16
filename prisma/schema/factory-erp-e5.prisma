@@ -1,4 +1,4 @@
-// Packio Factory ERP E5 (D-372 – D-383): quality checks and templates, NCRs, machine rates, shifts, operator skills,
+// getpack Factory ERP E5 (D-372 – D-383): quality checks and templates, NCRs, machine rates, shifts, operator skills,
 // support grants.
 
 enum ErpCheckKind {
@@ -367,7 +367,7 @@ model ErpOperatorSkill {
   @@map("erp_operator_skills")
 }
 
-/// D-381: the owner’s time-boxed permission for Packio support to read the dashboard and settings.
+/// D-381: the owner’s time-boxed permission for getpack support to read the dashboard and settings.
 model ErpSupportGrant {
   id           BigInt    @id(map: "pk_erp_support_grants") @default(autoincrement())
   publicId     String    @unique(map: "ux_erp_support_grants__public_id") @default(dbgenerated("uuidv7()")) @map("public_id") @db.Uuid

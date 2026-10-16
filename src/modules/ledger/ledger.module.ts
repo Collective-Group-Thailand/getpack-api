@@ -24,7 +24,7 @@ const SERVICES = [
 ];
 
 /**
- * Packio Accounting ledger core (B5.1, D-031, ADR-0007): periods, chart of accounts, journals, the posting
+ * getpack Accounting ledger core (B5.1, D-031, ADR-0007): periods, chart of accounts, journals, the posting
  * engine and its rules, manual / recurring / reversing journals under maker-checker.
  */
 @Global()

@@ -3,7 +3,7 @@
 # (legacy root /Users/superball/Abbon/Loco_Pack/locopack-web):
 #   app/Models/CalculatorCorrugate.php  calculate:587-602 (type-2 coverage), :640-653 (sheet sizes, fit),
 #   :701-831 (print prices, fix cost, trims, coating, die-cut price), CalDigital:1337-1545.
-# Packio deviations applied (port map §5): cheapest sheet size instead of the first (C2), missing price rows
+# getpack deviations applied (port map §5): cheapest sheet size instead of the first (C2), missing price rows
 # refuse (C3), factory branches as terms (C6: 9 back rate, 16 two-sided add-on, flags), NULL bounds open (C19).
 # The C20 quirk (fix cost chosen on front colours only, legacy tests `selectBackcolor`) is kept.
 # Regenerate: python3 digital_reference.py > digital.vectors.json && pnpm prettier --write digital.vectors.json

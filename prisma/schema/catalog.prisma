@@ -180,7 +180,7 @@ enum VideoSubject {
 // Product structure
 // ------------------------------------------------------------------------------------------------
 
-/// Packio reporting categories (replace legacy PH1–PH6, D-030).
+/// getpack reporting categories (replace legacy PH1–PH6, D-030).
 model ProductCategory {
   id          BigInt        @id(map: "pk_product_categories") @default(autoincrement())
   publicId    String        @unique(map: "ux_product_categories__public_id") @default(dbgenerated("uuidv7()")) @map("public_id") @db.Uuid
@@ -564,7 +564,7 @@ model Pattern {
   patternKind                 Int?              @map("pattern_kind") @db.SmallInt
   /// min/max w/l/h/b/s/cs/dl/dw, required_x/c (legacy `pattern` size constraints).
   constraints                 Json              @default("{}")
-  /// Key understood by `@packio/dieline`.
+  /// Key understood by `@getpack/dieline`.
   dielineKey                  String?           @map("dieline_key")
   /// Blank formula of the folding calculator (B2.3, schema-design A-25); null = not priceable.
   geometryFormula             GeometryFormula?  @map("geometry_formula")
@@ -1211,7 +1211,7 @@ model StockProduct {
   id            BigInt        @id(map: "pk_stock_products") @default(autoincrement())
   publicId      String        @unique(map: "ux_stock_products__public_id") @default(dbgenerated("uuidv7()")) @map("public_id") @db.Uuid
   productTypeId BigInt        @map("product_type_id")
-  /// Packio code.
+  /// getpack code.
   sku           String        @unique(map: "ux_stock_products__sku")
   nameTh        String        @map("name_th")
   nameEn        String        @map("name_en")
@@ -2233,7 +2233,7 @@ enum StudioCatalogStatus {
   @@map("studio_catalog_status")
 }
 
-/// D-216 / D-282 Packio's own studio templates: a constraint layout that re-flows to any size of its style families,
+/// D-216 / D-282 getpack's own studio templates: a constraint layout that re-flows to any size of its style families,
 /// tagged by use case; published only after Marketing approves it (not its author).
 model StudioTemplate {
   id                  BigInt              @id(map: "pk_studio_templates") @default(autoincrement())
@@ -2273,7 +2273,7 @@ enum StudioElementKind {
   @@map("studio_element_kind")
 }
 
-/// D-282 Packio's own studio elements; a mark with legal meaning (`requires_right`) is placed only after the company
+/// D-282 getpack's own studio elements; a mark with legal meaning (`requires_right`) is placed only after the company
 /// (or the customer) declares the right to use it.
 model StudioElement {
   id            BigInt              @id(map: "pk_studio_elements") @default(autoincrement())

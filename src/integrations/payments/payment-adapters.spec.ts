@@ -147,7 +147,7 @@ describe('2C2P adapter', () => {
     const session = await twoc2p(impl).paymentToken({
       reference: 'PKO2610000002',
       amount: '1070.00',
-      description: 'Packio order',
+      description: 'getpack order',
       channel: 'card',
       expiresAt: new Date('2026-10-01T03:00:00Z'),
       frontendReturnUrl: 'https://shop.example.invalid/return',

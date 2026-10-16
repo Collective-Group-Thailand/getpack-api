@@ -168,7 +168,7 @@ describe('price governance (e2e, B2.2)', () => {
     const proposalId = draft.body.id as string;
     expect(draft.body).toMatchObject({
       status: 'draft',
-      direction: 'factory_to_packio',
+      direction: 'factory_to_getpack',
       origin: 'factory_proposal',
     });
     await owner.post(`${partner(own.a)}/price-proposals`, { productTypeId }).expect(409);
@@ -338,7 +338,7 @@ describe('price governance (e2e, B2.2)', () => {
     expect(latest.data).toMatchObject({ purpose: 'price_list_review' });
   });
 
-  it('sends a Packio rate card the factory negotiates per line; counters are decided by a checker (D-042 a)', async () => {
+  it('sends a getpack rate card the factory negotiates per line; counters are decided by a checker (D-042 a)', async () => {
     const owner = as(own.b.token);
     const refused = await owner.post(`${partner(own.b)}/price-proposals`, { productTypeId }).expect(409);
     expect(refused.body.code).toBe('partners.wrong_pricing_mode');
@@ -346,12 +346,12 @@ describe('price governance (e2e, B2.2)', () => {
     const card = await sa()
       .post(`/v1/admin/factories/${own.b.id}/price-proposals`, { productTypeId })
       .expect(201);
-    expect(card.body).toMatchObject({ direction: 'packio_to_factory', origin: 'platform_rate_card' });
+    expect(card.body).toMatchObject({ direction: 'getpack_to_factory', origin: 'platform_rate_card' });
     await sa()
       .put(`/v1/admin/price-proposals/${card.body.id}/lines`, { lines: [line(100, '11'), line(1000, '9')] })
       .expect(200);
     const submitted = await sa().post(`/v1/admin/price-proposals/${card.body.id}/actions/submit`).expect(200);
-    // The factory does not see a card Packio has not sent.
+    // The factory does not see a card getpack has not sent.
     await owner.get(`${partner(own.b)}/price-proposals/${card.body.id}`).expect(404);
 
     await approve(submitted.body.approvalRequestId as string);
@@ -372,7 +372,7 @@ describe('price governance (e2e, B2.2)', () => {
           },
         ],
       })
-      .set('User-Agent', 'packio-e2e/1.0')
+      .set('User-Agent', 'getpack-e2e/1.0')
       .expect(200);
     expect(answered.body.status).toBe('countered');
 
@@ -399,7 +399,7 @@ describe('price governance (e2e, B2.2)', () => {
     });
     expect(accepted.factoryAcceptedById).not.toBeNull();
     expect(accepted.factoryAcceptedIp).toMatch(/127\.0\.0\.1|::1/);
-    expect(accepted.factoryAcceptedUa).toBe('packio-e2e/1.0');
+    expect(accepted.factoryAcceptedUa).toBe('getpack-e2e/1.0');
     const rows = await owner
       .get(
         `${partner(own.b)}/price-list-versions/${lists.body[0].current.id}/lines?component=material_prices`,
@@ -411,7 +411,7 @@ describe('price governance (e2e, B2.2)', () => {
     ]);
   });
 
-  it('applies prices Packio entered for a factory only after the factory signs them off (D-100 note)', async () => {
+  it('applies prices getpack entered for a factory only after the factory signs them off (D-100 note)', async () => {
     const assisted = await sa()
       .post(`/v1/admin/factories/${own.a.id}/price-proposals`, { productTypeId })
       .expect(201);
@@ -419,7 +419,7 @@ describe('price governance (e2e, B2.2)', () => {
     await sa()
       .put(`/v1/admin/price-proposals/${assisted.body.id}/lines`, { lines: [line(5000, '8')] })
       .expect(200);
-    // The factory cannot edit what Packio drafted for it.
+    // The factory cannot edit what getpack drafted for it.
     await as(own.a.token)
       .put(`${partner(own.a)}/price-proposals/${assisted.body.id}/lines`, { lines: [] })
       .expect(403);
@@ -448,13 +448,13 @@ describe('price governance (e2e, B2.2)', () => {
 
     const signed = await as(own.a.token)
       .post(`${partner(own.a)}/price-list-versions/${pending.resultingVersion!.id}/actions/sign-off`)
-      .set('User-Agent', 'packio-e2e/1.0')
+      .set('User-Agent', 'getpack-e2e/1.0')
       .expect(200);
     const signedRow = await prisma.priceListVersion.findFirstOrThrow({
       where: { publicId: pending.resultingVersion!.id },
     });
     expect(signedRow.factorySignedOffIp).toMatch(/127\.0\.0\.1|::1/);
-    expect(signedRow.factorySignedOffUa).toBe('packio-e2e/1.0');
+    expect(signedRow.factorySignedOffUa).toBe('getpack-e2e/1.0');
     expect(signed.body).toMatchObject({ status: 'approved', origin: 'assisted_entry', lineCount: 2 });
     await as(own.a.token)
       .post(`${partner(own.a)}/price-list-versions/${pending.resultingVersion!.id}/actions/sign-off`)

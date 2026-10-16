@@ -18,7 +18,7 @@ The Claude API has no embedding endpoint: help search needs a separate provider 
 ## Proposed decision (for acceptance by the business, Legal and the data protection officer)
 - Chat: **option A**, model per `assistant.model` (proposed `claude-sonnet-5` at `low` effort for cost, re-evaluated against `claude-opus-5` with the harness), API terms without training on customer data, a PDPA cross-border transfer assessment and a data processing agreement signed **before** `assistant.provider` is set.
 - Embeddings: decided with the chat vendor; same data terms.
-- Logs stay in Packio's database only (`assistant_turns`, `assistant.log_retention_days`, opt-out D-305).
+- Logs stay in getpack's database only (`assistant_turns`, `assistant.log_retention_days`, opt-out D-305).
 
 ## Consequences
 - Enabling needs, in order: this ADR accepted → DPA and transfer assessment on file → `assistant.provider` / `assistant.model` / `assistant.session_cost_ceiling_usd` / `assistant.eval_min_pass_rate_pct` set → an evaluation run of that provider passing the gate (D-306) → the flag.

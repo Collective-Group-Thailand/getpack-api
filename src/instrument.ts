@@ -14,7 +14,7 @@ const sentryDsn = process.env.SENTRY_DSN;
 
 if (otlpEndpoint) {
   const sdk = new NodeSDK({
-    serviceName: process.env.OTEL_SERVICE_NAME ?? 'packio-api',
+    serviceName: process.env.OTEL_SERVICE_NAME ?? 'getpack-api',
     traceExporter: new OTLPTraceExporter({ url: `${otlpEndpoint.replace(/\/$/, '')}/v1/traces` }),
     instrumentations: [
       getNodeAutoInstrumentations({

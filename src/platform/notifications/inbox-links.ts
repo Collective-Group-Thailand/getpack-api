@@ -1,5 +1,5 @@
 /**
- * Where an in-app notification takes its reader (U-B0.3): a path relative to the zone of `packio-web`
+ * Where an in-app notification takes its reader (U-B0.3): a path relative to the zone of `getpack-web`
  * (`/orders/{id}` in the admin zone is `/admin/orders/{id}`), derived from the event's aggregate. Null when the
  * zone has no page for it; the item then only marks itself read.
  */
@@ -39,7 +39,7 @@ const LINKS: Record<InboxSurface, Record<string, Link>> = {
     billing_statement: (id) => `/billing/${id}`,
     price_proposal: (id) => `/prices/proposals/${id}`,
     factory_change_request: () => '/requests',
-    // Packio Factory ERP alerts open what they are about (D-358).
+    // getpack Factory ERP alerts open what they are about (D-358).
     erp_alert: (_id, p) => {
       const id = typeof p['subjectId'] === 'string' ? p['subjectId'] : null;
       switch (p['subjectType']) {

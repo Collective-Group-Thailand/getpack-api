@@ -123,7 +123,7 @@ const text = (v: unknown) => (typeof v === 'string' && v.trim() !== '' ? v.trim(
 function photo(position: string, entry: Entry): HomePhotoDto[] {
   const url = entry?.url;
   const altTh = text(entry?.alt?.th);
-  // Only Packio's own scanned catalogue images, each saying what it shows — never placeholder content.
+  // Only getpack's own scanned catalogue images, each saying what it shows — never placeholder content.
   if (typeof url !== 'string' || !IMAGE_URL.test(url) || !altTh) return [];
   return [{ url, altTh, captionTh: text(entry?.caption?.th), position }];
 }
@@ -132,7 +132,7 @@ const obj = (v: unknown): Record<string, unknown> =>
   v && typeof v === 'object' && !Array.isArray(v) ? (v as Record<string, unknown>) : {};
 
 /**
- * The `home-photos` section's config (the shape packio-web reads and `pnpm cms:home-photos` writes:
+ * The `home-photos` section's config (the shape getpack-web reads and `pnpm cms:home-photos` writes:
  * `{ hero, mosaic: [5], process: { sample, packing }, quality, templates: { <style code>: photo } }`, each photo
  * `{ url, alt: { th, en }, caption }`) as a flat list with the manifest's positions: `hero`, `mosaic-1..5`,
  * `frame-4` / `frame-9` (process sample / packing), `sage` (quality) and `template-<style code>`.

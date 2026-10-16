@@ -24,7 +24,7 @@ export interface DevService {
 /**
  * An obviously fake service setup for `pnpm dev` and the tests (D-005, U-B6 service): `[DEV]` names, a made-up price. It
  * extends the dev folding factory F9001 with a tier-A `service` price list holding one line (a print plate at 1,000 net)
- * and no line for graphic design (priced by CS from an amount, D-194), capacity and Packio's `service` sell table (a dev
+ * and no line for graphic design (priced by CS from an amount, D-194), capacity and getpack's `service` sell table (a dev
  * fallback margin of 6.5 %, legacy's `service_locopack_margin`). Idempotent. Needs `seedDevFolding` (factory F9001).
  */
 export async function seedDevService(tx: Tx): Promise<{ created: boolean; fixture: DevService }> {

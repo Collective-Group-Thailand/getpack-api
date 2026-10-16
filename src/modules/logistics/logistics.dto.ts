@@ -599,7 +599,7 @@ export class PartnerShipmentDto {
   @ApiProperty({
     type: CarrierRequestDto,
     nullable: true,
-    description: 'The factory asked Packio for a fallback carrier (D-013, D-114)',
+    description: 'The factory asked getpack for a fallback carrier (D-013, D-114)',
   })
   carrierRequest!: CarrierRequestDto | null;
 
@@ -733,7 +733,7 @@ export class ShipmentCarrierQuoteDto {
     type: String,
     nullable: true,
     example: '85.00',
-    description: 'Packio’s cost (P25), THB; only with `factory_buy_prices.read` (D-141)',
+    description: 'getpack’s cost (P25), THB; only with `factory_buy_prices.read` (D-141)',
   })
   amount!: string | null;
 
@@ -926,7 +926,7 @@ export class StorePodDto {
   photoFileIds!: string[];
 }
 
-/** The customer's view: no factory, no costs (D-050); the carrier only when Packio booked one. */
+/** The customer's view: no factory, no costs (D-050); the carrier only when getpack booked one. */
 export class StoreShipmentDto {
   @ApiProperty({ format: 'uuid', example: SHIPMENT_IDS.shipment })
   id!: string;
@@ -944,9 +944,9 @@ export class StoreShipmentDto {
   statusLabelAdminTh!: string;
 
   @ApiProperty({
-    enum: ['packio', 'flash_express', 'deliveree'],
+    enum: ['getpack', 'flash_express', 'deliveree'],
     enumName: 'StoreCarrier',
-    example: 'packio',
+    example: 'getpack',
   })
   carrier!: string;
 
@@ -983,7 +983,7 @@ export const STORE_SHIPMENT_EXAMPLE = {
   shipmentNo: 'SH-2610-0001',
   status: 'delivered',
   ...statusLabels('ShipmentStatus', 'delivered'),
-  carrier: 'packio',
+  carrier: 'getpack',
   trackingNo: null,
   trackingUrl: null,
   destination: SHIPMENT_BASE.destination,

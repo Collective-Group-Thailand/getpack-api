@@ -490,8 +490,8 @@ export const seoPageDto = (row: SeoRow): SeoPageDto => ({
 export const SEO_PAGE_EXAMPLE: SeoPageDto = {
   id: CMS_IDS.seoPage,
   pageKey: '/th/products/mailer-box',
-  titleTh: 'กล่องไปรษณีย์พิมพ์ลาย สั่งผลิตออนไลน์ | Packio',
-  titleEn: 'Printed mailer boxes online | Packio',
+  titleTh: 'กล่องไปรษณีย์พิมพ์ลาย สั่งผลิตออนไลน์ | getpack',
+  titleEn: 'Printed mailer boxes online | getpack',
   descriptionTh: 'ออกแบบและสั่งผลิตกล่องไปรษณีย์ได้ในไม่กี่คลิก',
   descriptionEn: null,
   keywords: 'กล่องไปรษณีย์, กล่องพิมพ์ลาย',
@@ -523,7 +523,7 @@ export const seoPages = defineResource({
   example: SEO_PAGE_EXAMPLE,
   createExample: {
     pageKey: '/th/products/mailer-box',
-    titleTh: 'กล่องไปรษณีย์พิมพ์ลาย สั่งผลิตออนไลน์ | Packio',
+    titleTh: 'กล่องไปรษณีย์พิมพ์ลาย สั่งผลิตออนไลน์ | getpack',
   },
   updateExample: { noindex: false },
   toDto: seoPageDto,

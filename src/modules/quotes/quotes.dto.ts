@@ -231,7 +231,7 @@ export class QuotePdfDto {
   @ApiProperty({
     type: String,
     nullable: true,
-    example: 'https://packio-files.s3.example.com/…&X-Amz-Expires=300',
+    example: 'https://getpack-files.s3.example.com/…&X-Amz-Expires=300',
   })
   url!: string | null;
 

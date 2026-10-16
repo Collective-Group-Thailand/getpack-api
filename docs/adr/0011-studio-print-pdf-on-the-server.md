@@ -1,11 +1,11 @@
 # ADR-0011 — The studio's print file is assembled on the server from the studio's own rendering
 
 **Status:** Accepted (2026-10-03) — U4.B4
-**Decision ids:** D-280 · D-070 · D-278 · packio-web ADR-0009 (to be superseded by its next ADR in U4.6 — its ADR-0012 is already the style asset pipeline)
+**Decision ids:** D-280 · D-070 · D-278 · getpack-web ADR-0009 (to be superseded by its next ADR in U4.6 — its ADR-0012 is already the style asset pipeline)
 
 ## Context
 The U4 prompt moves print-file generation to the server "so preflight and the digital proof run on exactly what is
-printed". packio-web's ADR-0009 made the file in the browser because the API has no renderer for the designer's
+printed". getpack-web's ADR-0009 made the file in the browser because the API has no renderer for the designer's
 scene (Konva shapes, Thai text shaping, patterns, images): a server renderer would be a second implementation of the
 canvas that has to match the editor pixel for pixel. That reason still holds — and "exactly what is printed" is best
 served by one renderer, not two.
@@ -30,4 +30,4 @@ served by one renderer, not two.
 - The server never needs fonts or a canvas; a missing tile set is a refused order ("render the version first"),
   never a silent re-render.
 - Colour stays RGB JPEG (as ADR-0009); a CMYK conversion needs ICC profiles (D-215 / D-279) — recorded follow-up.
-- packio-web writes its next ADR (0012 is taken by its style asset pipeline) superseding ADR-0009's "submit" path in U4.6; customer downloads unchanged.
+- getpack-web writes its next ADR (0012 is taken by its style asset pipeline) superseding ADR-0009's "submit" path in U4.6; customer downloads unchanged.

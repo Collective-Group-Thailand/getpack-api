@@ -25,7 +25,7 @@ export interface S3Options {
   endpoint?: string;
   forcePathStyle: boolean;
   /**
-   * Prepended to every object key (`S3_KEY_PREFIX`, e.g. `packio/`): lets Packio share a bucket with
+   * Prepended to every object key (`S3_KEY_PREFIX`, e.g. `getpack/`): lets getpack share a bucket with
    * another system without a custom endpoint. Stored keys (`file_objects.storage_key`) never carry it.
    */
   keyPrefix?: string;
@@ -48,7 +48,7 @@ export class S3ObjectStorage implements ObjectStorage {
     return this.options.bucket;
   }
 
-  /** The object's key in the bucket: the configured prefix + Packio's key. */
+  /** The object's key in the bucket: the configured prefix + getpack's key. */
   private k(key: string): string {
     return `${this.options.keyPrefix ?? ''}${key}`;
   }

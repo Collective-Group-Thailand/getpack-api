@@ -115,7 +115,7 @@ export async function customerSignIn(ctx: FulfilmentApp, phone: string): Promise
   // Give the per-IP hourly OTP budget back: every persona signs in from 127.0.0.1.
   const redis = ctx.app.get<Redis>(REDIS);
   const hour = Math.floor(Date.now() / 3_600_000);
-  for (const key of await redis.keys(`packio:otp:ip:*:${hour}`)) await redis.decr(key);
+  for (const key of await redis.keys(`getpack:otp:ip:*:${hour}`)) await redis.decr(key);
   return verified.body.accessToken as string;
 }
 

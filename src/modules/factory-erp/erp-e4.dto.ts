@@ -34,7 +34,7 @@ export {
 } from '@common/dto/reason.dto';
 
 /**
- * Packio Factory ERP E4 (docs/prompts/E1-factory-erp.md §11, D-359 – D-371): CRM, quotations with a customer
+ * getpack Factory ERP E4 (docs/prompts/E1-factory-erp.md §11, D-359 – D-371): CRM, quotations with a customer
  * link, sales orders, delivery notes, the factory's own invoices / tax invoices, credit and debit notes,
  * receipts, billing notes, receivables aging, 50 ทวิ certificates, VAT / WHT reports and sales targets.
  */
@@ -76,7 +76,7 @@ export const ERP_LEAD_SOURCES = [
   'website',
   'referral',
   'exhibition',
-  'packio',
+  'getpack',
   'other',
 ] as const;
 export const ERP_LEAD_STAGES = ['new', 'contacted', 'qualified', 'converted', 'lost'] as const;
@@ -238,7 +238,7 @@ export class ErpDocPartyDto {
 }
 
 export class ErpPdfLinkDto {
-  @ApiProperty({ example: 'https://files.packio.example/erp/IV-2610-0001.pdf?sig=...' })
+  @ApiProperty({ example: 'https://files.getpack.example/erp/IV-2610-0001.pdf?sig=...' })
   url!: string;
 
   @ApiProperty({ example: 'IV-2610-0001.pdf' })
@@ -1059,7 +1059,7 @@ export class ErpQuotationLinkDto {
   quotation!: ErpQuotationDto;
 
   @ApiProperty({
-    example: 'https://www.packio.example/q/q3J9f0T1xYk8Zb2mR4sW6uE7vN0aLcDh',
+    example: 'https://www.getpack.example/q/q3J9f0T1xYk8Zb2mR4sW6uE7vN0aLcDh',
     description: 'For the customer; shown once — sending again makes a new one',
   })
   url!: string;
@@ -2632,8 +2632,8 @@ export class ErpVatReportRowDto {
   docNo!: string;
 
   @ApiProperty({
-    enum: ['tax_invoice', 'credit_note', 'debit_note', 'supplier_tax_invoice', 'packio_statement'],
-    description: '`packio_statement`: a Packio billing statement the factory confirmed — its sale to Packio (D-401)',
+    enum: ['tax_invoice', 'credit_note', 'debit_note', 'supplier_tax_invoice', 'getpack_statement'],
+    description: '`getpack_statement`: a getpack billing statement the factory confirmed — its sale to getpack (D-401)',
     enumName: 'ErpVatRowKind',
     example: 'tax_invoice',
   })

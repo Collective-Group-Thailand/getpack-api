@@ -86,8 +86,8 @@ const ROWS: Row[] = [
         en: 'Time to reorder your {{payload.productTypeNameEn}}',
       },
       {
-        th: 'จากประวัติการสั่งซื้อ Packio แนะนำให้สั่งซ้ำจำนวน {{payload.suggestedQuantity}} (คำสั่งซื้อล่าสุด {{payload.orderCode}}) สั่งซ้ำได้ในไม่กี่คลิกที่ Packio',
-        en: 'From your order history Packio suggests reordering a quantity of {{payload.suggestedQuantity}} (last order {{payload.orderCode}}); reorder in a few clicks on Packio',
+        th: 'จากประวัติการสั่งซื้อ getpack แนะนำให้สั่งซ้ำจำนวน {{payload.suggestedQuantity}} (คำสั่งซื้อล่าสุด {{payload.orderCode}}) สั่งซ้ำได้ในไม่กี่คลิกที่ getpack',
+        en: 'From your order history getpack suggests reordering a quantity of {{payload.suggestedQuantity}} (last order {{payload.orderCode}}); reorder in a few clicks on getpack',
       },
       'Customer: reorder suggestion due — marketing, consent and quiet hours apply (D-288, D-144)',
     ),
@@ -98,8 +98,8 @@ const ROWS: Row[] = [
     ['email', 'line', 'in_app'],
     { th: 'สัญญาสั่งผลิตแบบทยอยเริ่มแล้ว', en: 'Your call-off agreement is active' },
     {
-      th: 'ราคาถูกล็อกไว้จนถึง {{payload.expiresAt}} เรียกสินค้าเป็นงวดได้ที่ Packio',
-      en: 'Your price is locked until {{payload.expiresAt}}; release quantities on Packio',
+      th: 'ราคาถูกล็อกไว้จนถึง {{payload.expiresAt}} เรียกสินค้าเป็นงวดได้ที่ getpack',
+      en: 'Your price is locked until {{payload.expiresAt}}; release quantities on getpack',
     },
     'Customer: call-off agreement accepted by the factory (D-290)',
   ),
@@ -138,8 +138,8 @@ const ROWS: Row[] = [
     ['email', 'line', 'web_push', 'sms'],
     { th: 'ถึงกำหนดชำระงวดที่ {{payload.seq}}', en: 'Instalment {{payload.seq}} is due' },
     {
-      th: 'งวดที่ {{payload.seq}} จำนวน {{payload.cashAmount}} บาท ถึงกำหนดชำระแล้ว ชำระได้ที่ Packio',
-      en: 'Instalment {{payload.seq}} of THB {{payload.cashAmount}} is due; pay on Packio',
+      th: 'งวดที่ {{payload.seq}} จำนวน {{payload.cashAmount}} บาท ถึงกำหนดชำระแล้ว ชำระได้ที่ getpack',
+      en: 'Instalment {{payload.seq}} of THB {{payload.cashAmount}} is due; pay on getpack',
     },
     'Customer: an instalment is due (D-020; SMS critical, D-143)',
     ['sms'],
@@ -159,18 +159,18 @@ const ROWS: Row[] = [
     ['email', 'line'],
     { th: 'แจ้งเตือนชำระงวดที่ {{payload.seq}}', en: 'Reminder: instalment {{payload.seq}}' },
     {
-      th: 'คำสั่งซื้อ {{payload.groupCode}} งวดที่ {{payload.seq}} จำนวน {{payload.cashAmount}} บาท รอการชำระ ชำระได้ที่ Packio',
-      en: 'Order {{payload.groupCode}}: instalment {{payload.seq}} of THB {{payload.cashAmount}} is waiting; pay on Packio',
+      th: 'คำสั่งซื้อ {{payload.groupCode}} งวดที่ {{payload.seq}} จำนวน {{payload.cashAmount}} บาท รอการชำระ ชำระได้ที่ getpack',
+      en: 'Order {{payload.groupCode}}: instalment {{payload.seq}} of THB {{payload.cashAmount}} is waiting; pay on getpack',
     },
     'Customer: CS reminds of an instalment due (U-B0.2, D-143)',
   ),
   C(
     'customer_document.sent',
     ['email', 'line'],
-    { th: 'เอกสาร {{payload.docNumber}} จาก Packio', en: 'Document {{payload.docNumber}} from Packio' },
+    { th: 'เอกสาร {{payload.docNumber}} จาก getpack', en: 'Document {{payload.docNumber}} from getpack' },
     {
-      th: 'เอกสาร {{payload.docNumber}} ของคุณพร้อมแล้ว ดาวน์โหลดได้ที่บัญชี Packio ของคุณ',
-      en: 'Your document {{payload.docNumber}} is ready; download it from your Packio account',
+      th: 'เอกสาร {{payload.docNumber}} ของคุณพร้อมแล้ว ดาวน์โหลดได้ที่บัญชี getpack ของคุณ',
+      en: 'Your document {{payload.docNumber}} is ready; download it from your getpack account',
     },
     'Customer: staff send (again) a tax invoice, receipt or note (U-B0.3, D-143)',
   ),
@@ -243,8 +243,8 @@ const ROWS: Row[] = [
     ['email', 'line', 'web_push', 'sms'],
     { th: 'สินค้าออกจัดส่งแล้ว', en: 'Your order has shipped' },
     {
-      th: 'สินค้าของคุณออกจัดส่งแล้ว (เลขที่ {{payload.shipmentNo}}) ติดตามได้ที่ Packio',
-      en: 'Your order has shipped (no. {{payload.shipmentNo}}); track it on Packio',
+      th: 'สินค้าของคุณออกจัดส่งแล้ว (เลขที่ {{payload.shipmentNo}}) ติดตามได้ที่ getpack',
+      en: 'Your order has shipped (no. {{payload.shipmentNo}}); track it on getpack',
     },
     'Customer: shipped (SMS critical, D-143)',
     ['sms'],
@@ -277,7 +277,7 @@ const ROWS: Row[] = [
       en: 'More information needed for claim {{payload.claimNo}}',
     },
     { th: 'โปรดส่งข้อมูลเพิ่มเติม: {{payload.note}}', en: 'Please send more information: {{payload.note}}' },
-    'Customer: Packio asks for information (D-082)',
+    'Customer: getpack asks for information (D-082)',
   ),
   C(
     'claim.approved',
@@ -295,8 +295,8 @@ const ROWS: Row[] = [
     ['email', 'line', 'sms'],
     { th: 'ผลการพิจารณาเคลม {{payload.claimNo}}', en: 'Decision on claim {{payload.claimNo}}' },
     {
-      th: 'เคลม {{payload.claimNo}} ไม่ได้รับการอนุมัติ ดูรายละเอียดได้ที่ Packio',
-      en: 'Claim {{payload.claimNo}} was not approved; see the details on Packio',
+      th: 'เคลม {{payload.claimNo}} ไม่ได้รับการอนุมัติ ดูรายละเอียดได้ที่ getpack',
+      en: 'Claim {{payload.claimNo}} was not approved; see the details on getpack',
     },
     'Customer: claim decision (SMS critical, D-143)',
     ['sms'],
@@ -323,8 +323,8 @@ const ROWS: Row[] = [
     ['email', 'line'],
     { th: 'ใบเสนอราคาพร้อมแล้ว', en: 'Your quotation is ready' },
     {
-      th: 'ใบเสนอราคาตามคำขอของคุณพร้อมแล้ว ดูและสั่งซื้อได้ที่ Packio',
-      en: 'The quotation you asked for is ready; view and order it on Packio',
+      th: 'ใบเสนอราคาตามคำขอของคุณพร้อมแล้ว ดูและสั่งซื้อได้ที่ getpack',
+      en: 'The quotation you asked for is ready; view and order it on getpack',
     },
     'Customer: RFQ quoted (D-062)',
   ),
@@ -333,8 +333,8 @@ const ROWS: Row[] = [
     ['email', 'line'],
     { th: 'ขอข้อมูลเพิ่มเติมสำหรับคำขอใบเสนอราคา', en: 'More information needed for your request' },
     {
-      th: 'ทีมงานต้องการข้อมูลเพิ่มเติมเพื่อเสนอราคา โปรดตอบกลับที่ Packio',
-      en: 'Our team needs more information to quote; please reply on Packio',
+      th: 'ทีมงานต้องการข้อมูลเพิ่มเติมเพื่อเสนอราคา โปรดตอบกลับที่ getpack',
+      en: 'Our team needs more information to quote; please reply on getpack',
     },
     'Customer: RFQ information request (D-062)',
   ),
@@ -353,8 +353,8 @@ const ROWS: Row[] = [
     ['email'],
     { th: 'คะแนนสะสมใกล้หมดอายุ', en: 'Points about to expire' },
     {
-      th: 'คะแนนสะสมบางส่วนของคุณจะหมดอายุเร็ว ๆ นี้ ใช้เป็นส่วนลดได้ที่ Packio',
-      en: 'Some of your points expire soon; use them as a discount on Packio',
+      th: 'คะแนนสะสมบางส่วนของคุณจะหมดอายุเร็ว ๆ นี้ ใช้เป็นส่วนลดได้ที่ getpack',
+      en: 'Some of your points expire soon; use them as a discount on getpack',
     },
     'Customer: points expiring (D-130)',
   ),
@@ -500,8 +500,8 @@ const ROWS: Row[] = [
     ['in_app'],
     { th: 'มีงานต้องตรวจคุณภาพ', en: 'Inspection to plan' },
     {
-      th: 'งาน {{payload.jobNo}} ต้องตรวจคุณภาพโดย Packio',
-      en: 'Job {{payload.jobNo}} needs a Packio inspection',
+      th: 'งาน {{payload.jobNo}} ต้องตรวจคุณภาพโดย getpack',
+      en: 'Job {{payload.jobNo}} needs a getpack inspection',
     },
     'Partner team: inspection planned (D-076)',
   ),
@@ -552,8 +552,8 @@ const ROWS: Row[] = [
     ['in_app', 'line'],
     { th: 'โรงงานขอให้จองขนส่ง', en: 'A factory asks for a carrier' },
     {
-      th: 'โรงงานขอให้ Packio จองขนส่งสำหรับ {{payload.shipmentNo}} ({{payload.reason}})',
-      en: 'A factory asks Packio to book a carrier for {{payload.shipmentNo}} ({{payload.reason}})',
+      th: 'โรงงานขอให้ getpack จองขนส่งสำหรับ {{payload.shipmentNo}} ({{payload.reason}})',
+      en: 'A factory asks getpack to book a carrier for {{payload.shipmentNo}} ({{payload.reason}})',
     },
     'Logistics: a factory asks for a fallback carrier (D-013, D-114; U-B0.3)',
   ),
@@ -595,10 +595,10 @@ const ROWS: Row[] = [
     ...C(
       'conversation.replied',
       ['in_app', 'web_push', 'email'],
-      { th: 'Packio ตอบข้อความของคุณแล้ว', en: 'Packio replied to your message' },
+      { th: 'getpack ตอบข้อความของคุณแล้ว', en: 'getpack replied to your message' },
       {
-        th: 'ทีมบริการลูกค้าตอบข้อความของคุณแล้ว เปิดอ่านได้ในแชท Packio',
-        en: 'Customer service replied to your message; read it in your Packio chat',
+        th: 'ทีมบริการลูกค้าตอบข้อความของคุณแล้ว เปิดอ่านได้ในแชท getpack',
+        en: 'Customer service replied to your message; read it in your getpack chat',
       },
       'Customer: CS replied on the web thread — a reply sent to LINE is the LINE message itself (D-300, D-143)',
     ),
@@ -617,7 +617,7 @@ const ROWS: Row[] = [
   ),
 
   // --- factories -------------------------------------------------------------------------------------------
-  // --- Packio Factory ERP alerts (D-347, D-355, D-356, D-358): the factory's own users only -------------
+  // --- getpack Factory ERP alerts (D-347, D-355, D-356, D-358): the factory's own users only -------------
   F(
     'erp_alert.price_rise',
     ['in_app'],
@@ -759,18 +759,18 @@ const ROWS: Row[] = [
     ['in_app', 'email', 'line'],
     { th: 'ขอราคา {{payload.rfqCode}}', en: 'Price request {{payload.rfqCode}}' },
     {
-      th: 'Packio ขอราคางาน {{payload.rfqCode}} ตอบได้ในพื้นที่พาร์ทเนอร์',
-      en: 'Packio asks your price for {{payload.rfqCode}}; answer in the partner zone',
+      th: 'getpack ขอราคางาน {{payload.rfqCode}} ตอบได้ในพื้นที่พาร์ทเนอร์',
+      en: 'getpack asks your price for {{payload.rfqCode}}; answer in the partner zone',
     },
-    'Factory: Packio asks for a buy price (D-043, D-143)',
+    'Factory: getpack asks for a buy price (D-043, D-143)',
   ),
   F(
     'rfq.consultation_reminded',
     ['in_app', 'email', 'line'],
     { th: 'เตือนขอราคา {{payload.rfqCode}}', en: 'Reminder: price request {{payload.rfqCode}}' },
     {
-      th: 'Packio รอราคางาน {{payload.rfqCode}} ของคุณ ตอบได้ในพื้นที่พาร์ทเนอร์',
-      en: 'Packio is waiting for your price for {{payload.rfqCode}}; answer in the partner zone',
+      th: 'getpack รอราคางาน {{payload.rfqCode}} ของคุณ ตอบได้ในพื้นที่พาร์ทเนอร์',
+      en: 'getpack is waiting for your price for {{payload.rfqCode}}; answer in the partner zone',
     },
     'Factory: CS reminds of an open price request (U-B0.2, D-143)',
   ),
@@ -799,8 +799,8 @@ const ROWS: Row[] = [
     ['in_app', 'email'],
     { th: 'งาน {{payload.jobNo}} ถูกพัก', en: 'Job {{payload.jobNo}} on hold' },
     {
-      th: 'Packio พักงาน {{payload.jobNo}} ไว้ ({{payload.reason}})',
-      en: 'Packio put job {{payload.jobNo}} on hold ({{payload.reason}})',
+      th: 'getpack พักงาน {{payload.jobNo}} ไว้ ({{payload.reason}})',
+      en: 'getpack put job {{payload.jobNo}} on hold ({{payload.reason}})',
     },
     'Factory: job on hold',
   ),
@@ -816,8 +816,8 @@ const ROWS: Row[] = [
     ['in_app', 'email'],
     { th: 'นัดตรวจคุณภาพงาน {{payload.jobNo}}', en: 'Inspection scheduled for {{payload.jobNo}}' },
     {
-      th: 'Packio นัดตรวจคุณภาพงาน {{payload.jobNo}} ({{payload.scheduledAt}})',
-      en: 'Packio scheduled an inspection of {{payload.jobNo}} ({{payload.scheduledAt}})',
+      th: 'getpack นัดตรวจคุณภาพงาน {{payload.jobNo}} ({{payload.scheduledAt}})',
+      en: 'getpack scheduled an inspection of {{payload.jobNo}} ({{payload.scheduledAt}})',
     },
     'Factory: inspection scheduled (D-076)',
   ),
@@ -826,8 +826,8 @@ const ROWS: Row[] = [
     ['in_app', 'email'],
     { th: 'จองขนส่งให้ {{payload.shipmentNo}}', en: 'Carrier booked for {{payload.shipmentNo}}' },
     {
-      th: 'Packio จองขนส่ง {{payload.carrier}} มารับ {{payload.shipmentNo}} ที่โรงงาน',
-      en: 'Packio booked {{payload.carrier}} to collect {{payload.shipmentNo}} at the factory',
+      th: 'getpack จองขนส่ง {{payload.carrier}} มารับ {{payload.shipmentNo}} ที่โรงงาน',
+      en: 'getpack booked {{payload.carrier}} to collect {{payload.shipmentNo}} at the factory',
     },
     'Factory: fallback carrier booked (D-114)',
   ),
@@ -836,8 +836,8 @@ const ROWS: Row[] = [
     ['in_app', 'email', 'line'],
     { th: 'เคลม {{payload.claimNo}} รอโรงงานตอบ', en: 'Claim {{payload.claimNo}} for your review' },
     {
-      th: 'Packio ส่งเคลม {{payload.claimNo}} ให้โรงงานพิจารณา โปรดตอบรับหรือโต้แย้ง',
-      en: 'Packio sent claim {{payload.claimNo}} for your review: accept or dispute',
+      th: 'getpack ส่งเคลม {{payload.claimNo}} ให้โรงงานพิจารณา โปรดตอบรับหรือโต้แย้ง',
+      en: 'getpack sent claim {{payload.claimNo}} for your review: accept or dispute',
     },
     'Factory: claim review (D-083)',
   ),
@@ -866,8 +866,8 @@ const ROWS: Row[] = [
     ['email', 'in_app'],
     { th: 'มีผู้ออกแบบรับคำขอของคุณแล้ว', en: 'A designer took your request' },
     {
-      th: 'ผู้ออกแบบโครงสร้างของ Packio รับคำขอของคุณแล้ว',
-      en: 'A Packio structural designer is now working on your request',
+      th: 'ผู้ออกแบบโครงสร้างของ getpack รับคำขอของคุณแล้ว',
+      en: 'A getpack structural designer is now working on your request',
     },
     'Customer: structural design request assigned (D-273)',
   ),
@@ -896,8 +896,8 @@ const ROWS: Row[] = [
     ['email', 'in_app'],
     { th: 'แบบโครงสร้างพร้อมแล้ว', en: 'Your structure is ready' },
     {
-      th: 'แบบโครงสร้างได้รับการอนุมัติแล้ว ดาวน์โหลดไดคัทได้ที่ Packio',
-      en: 'Your structure was approved; download the dieline on Packio',
+      th: 'แบบโครงสร้างได้รับการอนุมัติแล้ว ดาวน์โหลดไดคัทได้ที่ getpack',
+      en: 'Your structure was approved; download the dieline on getpack',
     },
     'Customer: structural design request approved (D-273)',
   ),
@@ -916,8 +916,8 @@ const ROWS: Row[] = [
     ['email', 'in_app'],
     { th: 'คำขอออกแบบโครงสร้างไม่ได้รับการดำเนินการ', en: 'Structure request declined' },
     {
-      th: 'ขออภัย เราไม่สามารถดำเนินการคำขอออกแบบโครงสร้างนี้ได้ ดูเหตุผลได้ที่ Packio',
-      en: 'Sorry, we cannot take this structure request; see the reason on Packio',
+      th: 'ขออภัย เราไม่สามารถดำเนินการคำขอออกแบบโครงสร้างนี้ได้ ดูเหตุผลได้ที่ getpack',
+      en: 'Sorry, we cannot take this structure request; see the reason on getpack',
     },
     'Customer: structural design request declined (D-273)',
   ),
@@ -926,8 +926,8 @@ const ROWS: Row[] = [
     ['email', 'in_app'],
     { th: 'มีความคิดเห็นใหม่ในแบบ {{payload.title}}', en: 'New comment on {{payload.title}}' },
     {
-      th: 'มีผู้แสดงความคิดเห็นในแบบ {{payload.title}} ดูได้ที่สตูดิโอ Packio',
-      en: 'Someone commented on {{payload.title}}; see it in the Packio studio',
+      th: 'มีผู้แสดงความคิดเห็นในแบบ {{payload.title}} ดูได้ที่สตูดิโอ getpack',
+      en: 'Someone commented on {{payload.title}}; see it in the getpack studio',
     },
     'Customer: a comment on my studio design (D-285)',
   ),
@@ -936,8 +936,8 @@ const ROWS: Row[] = [
     ['email', 'in_app'],
     { th: 'มีผู้กล่าวถึงคุณในแบบ {{payload.title}}', en: 'You were mentioned on {{payload.title}}' },
     {
-      th: 'มีผู้กล่าวถึงคุณในความคิดเห็นของแบบ {{payload.title}} ในสตูดิโอ Packio',
-      en: 'You were mentioned in a comment on {{payload.title}} in the Packio studio',
+      th: 'มีผู้กล่าวถึงคุณในความคิดเห็นของแบบ {{payload.title}} ในสตูดิโอ getpack',
+      en: 'You were mentioned in a comment on {{payload.title}} in the getpack studio',
     },
     'Customer: mentioned in a studio comment (D-285)',
   ),
@@ -979,8 +979,8 @@ const ROWS: Row[] = [
     ['in_app', 'email'],
     { th: 'ไดคัทของคุณตรงกับสไตล์ที่มีอยู่', en: 'Your dieline matches a library style' },
     {
-      th: 'Prepress เทียบไดคัทของคุณกับสไตล์ในคลังแล้ว ดูรายงานความต่างได้ที่ Packio',
-      en: 'Prepress matched your dieline to a library style; see the deviation report on Packio',
+      th: 'Prepress เทียบไดคัทของคุณกับสไตล์ในคลังแล้ว ดูรายงานความต่างได้ที่ getpack',
+      en: 'Prepress matched your dieline to a library style; see the deviation report on getpack',
     },
     'Factory: dieline intake matched (D-272)',
   ),
@@ -999,8 +999,8 @@ const ROWS: Row[] = [
     ['in_app', 'email'],
     { th: 'ไดคัทของคุณไม่ได้รับการอนุมัติ', en: 'Your dieline was not approved' },
     {
-      th: 'ไดคัทที่ส่งมาไม่ได้รับการอนุมัติ ดูเหตุผลได้ที่ Packio',
-      en: 'Your dieline was not approved; see the reason on Packio',
+      th: 'ไดคัทที่ส่งมาไม่ได้รับการอนุมัติ ดูเหตุผลได้ที่ getpack',
+      en: 'Your dieline was not approved; see the reason on getpack',
     },
     'Factory: dieline intake rejected (D-272)',
   ),
@@ -1019,8 +1019,8 @@ const ROWS: Row[] = [
     ['in_app', 'email', 'line'],
     { th: 'คำขอสัญญาสั่งผลิตแบบทยอยใหม่', en: 'New call-off request' },
     {
-      th: 'ลูกค้าขอให้คงราคาสำหรับ {{payload.committedQuantity}} หน่วย {{payload.months}} เดือน กรุณาตอบรับหรือปฏิเสธที่ Packio',
-      en: 'A customer asks you to hold the price for {{payload.committedQuantity}} units for {{payload.months}} months; accept or decline on Packio',
+      th: 'ลูกค้าขอให้คงราคาสำหรับ {{payload.committedQuantity}} หน่วย {{payload.months}} เดือน กรุณาตอบรับหรือปฏิเสธที่ getpack',
+      en: 'A customer asks you to hold the price for {{payload.committedQuantity}} units for {{payload.months}} months; accept or decline on getpack',
     },
     'Factory: call-off agreement requested (D-290)',
   ),
@@ -1028,8 +1028,8 @@ const ROWS: Row[] = [
 
 const GREETING = { th: 'เรียน', en: 'Dear' };
 const FOOTER = {
-  th: 'ข้อความนี้ส่งจาก Packio โดยอัตโนมัติ',
-  en: 'This message was sent automatically by Packio',
+  th: 'ข้อความนี้ส่งจาก getpack โดยอัตโนมัติ',
+  en: 'This message was sent automatically by getpack',
 };
 
 const keyOf = (r: Row) => `${r.event}:${r.audience}${r.team ? `:${r.team}` : ''}`;
@@ -1037,11 +1037,11 @@ const keyOf = (r: Row) => `${r.event}:${r.audience}${r.team ? `:${r.team}` : ''}
 /** D-299: a message to one person (customer, factory user) ends with its deep link when the event has a page. */
 const LINK = {
   th: {
-    email: '{{#if link}}<a href="{{link}}">เปิดใน Packio</a>{{/if}}',
+    email: '{{#if link}}<a href="{{link}}">เปิดใน getpack</a>{{/if}}',
     text: '{{#if link}}\n{{link}}{{/if}}',
   },
   en: {
-    email: '{{#if link}}<a href="{{link}}">Open in Packio</a>{{/if}}',
+    email: '{{#if link}}<a href="{{link}}">Open in getpack</a>{{/if}}',
     text: '{{#if link}}\n{{link}}{{/if}}',
   },
 };

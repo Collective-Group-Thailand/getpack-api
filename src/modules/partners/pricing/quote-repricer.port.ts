@@ -16,7 +16,7 @@ export interface RepriceResult {
   quotesInWindow: number;
   /** Change of the average quoted price, percent; null without quotes. */
   priceChangePct: string | null;
-  /** Change of Packio's average margin, percentage points; null without quotes. */
+  /** Change of getpack's average margin, percentage points; null without quotes. */
   marginChangePct: string | null;
   /** Change in how often this factory would have been selected, percentage points. */
   selectionShareChangePct: string | null;

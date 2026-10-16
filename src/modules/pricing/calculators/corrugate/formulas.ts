@@ -2,7 +2,7 @@ import { type CorrugateFormula, type GeometryDeterminant } from '@generated/pris
 
 /**
  * Corrugate blank formulas (U-B6, port map §6.1): legacy `CalculatorCorrugate::calculate:314-463` by pattern
- * id (and sub-pattern for Tele 29 and slide 30), named for Packio.
+ * id (and sub-pattern for Tele 29 and slide 30), named for getpack.
  */
 export const CORRUGATE_FORMULAS = [
   'rsc',

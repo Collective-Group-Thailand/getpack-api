@@ -255,7 +255,7 @@ export class PurchasingService {
         shipmentId: s.id,
       });
     });
-    // D-205: a reused tool the factory found unusable was remade at Packio's cost (the PO keeps its snapshot): it is
+    // D-205: a reused tool the factory found unusable was remade at getpack's cost (the PO keeps its snapshot): it is
     // received in full with the goods; the customer price is unchanged (D-012).
     let toolingNet = ZERO();
     const remakes = await tx.toolingRemake.findMany({

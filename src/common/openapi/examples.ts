@@ -1,6 +1,6 @@
 /**
  * Obviously fake personal data for OpenAPI examples (contract §5, PDPA): the forms
- * `packio-no-real-personal-data` accepts (`contract/spectral/README.md`). Use these in new examples
+ * `getpack-no-real-personal-data` accepts (`contract/spectral/README.md`). Use these in new examples
  * instead of inventing values.
  */
 export const FAKE = {

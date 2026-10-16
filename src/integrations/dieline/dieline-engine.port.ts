@@ -1,5 +1,5 @@
 /**
- * The dieline engine (`@packio/dieline`, published by `packio-web`, D-002; consumed as a vendored, pinned bundle —
+ * The dieline engine (`@getpack/dieline`, published by `getpack-web`, D-002; consumed as a vendored, pinned bundle —
  * ADR-0010). It builds a style from its recipe for a size and a material into a flat dieline: drawings (SVG / DXF /
  * PDF), the dieline-derived quantities (D-267), thumbnails (D-270) and the recipe facts the library needs
  * (processes, size ranges, variants). The `drawing.engine` flag gates its use; without the bundle the engine is

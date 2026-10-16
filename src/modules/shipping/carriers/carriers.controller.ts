@@ -65,7 +65,7 @@ export class AdminCarriersController {
     id: 'admin.carriers.list',
     summary: 'List delivery methods and fallback carriers',
     description:
-      'The factory fleet (default, D-013) and the Packio-booked fallback carriers with Packio’s accounts; ' +
+      'The factory fleet (default, D-013) and the getpack-booked fallback carriers with getpack’s accounts; ' +
       'credentials are never returned (D-114, D-005).',
     implements: DECISIONS,
   })
@@ -91,7 +91,7 @@ export class AdminCarriersController {
     id: 'admin.carriers.enable',
     summary: 'Enable a fallback carrier',
     description:
-      'Needs an active Packio account for the carrier. Enabled carriers are asked for estimates where a ' +
+      'Needs an active getpack account for the carrier. Enabled carriers are asked for estimates where a ' +
       'factory cannot serve a zone (D-114, D-013). Audited, event `carrier.enabled`.',
     implements: DECISIONS,
   })
@@ -131,7 +131,7 @@ export class AdminCarriersController {
   @codeParam
   @ApiEndpoint({
     id: 'admin.carriers.addAccount',
-    summary: 'Register Packio’s account with a carrier',
+    summary: 'Register getpack’s account with a carrier',
     description:
       'Stores the Secrets Manager reference of the credentials (never the credentials, D-005); the ' +
       'previous active account of the same environment is closed. Audited.',
@@ -143,7 +143,7 @@ export class AdminCarriersController {
       default: {
         value: {
           label: ACCOUNT_EXAMPLE.label,
-          credentialsSecretRef: 'packio/sandbox/carriers/flash-express',
+          credentialsSecretRef: 'getpack/sandbox/carriers/flash-express',
           sandbox: true,
         },
       },
@@ -201,7 +201,7 @@ export class AdminCarriersController {
   @codeParam
   @ApiEndpoint({
     id: 'admin.carriers.testQuote',
-    summary: 'Ask a carrier for a quote with Packio’s account',
+    summary: 'Ask a carrier for a quote with getpack’s account',
     description:
       'Checks an account against the carrier (sandbox or production); Deliveree needs coordinates for both ' +
       'places (D-114). Provider errors are returned as problems.',
@@ -268,7 +268,7 @@ export class CarrierWebhooksController {
     id: 'webhooks.carriers.flashExpress',
     summary: 'Flash Express status callback',
     description:
-      'Signed with SHA-256 over `mchId` and `nonceStr` plus Packio’s secret key; stored in the webhook inbox ' +
+      'Signed with SHA-256 over `mchId` and `nonceStr` plus getpack’s secret key; stored in the webhook inbox ' +
       '(replays are no-ops) and published as `carrier.webhook_received` (D-114). Answers `{"errorCode":"1"}` ' +
       'when accepted; 401 when the signature is invalid.',
     implements: DECISIONS,
@@ -311,7 +311,7 @@ export class CarrierWebhooksController {
     id: 'webhooks.carriers.deliveree',
     summary: 'Deliveree delivery status callback',
     description:
-      'Authenticated by Packio’s webhook key in `Authorization`; stored in the webhook inbox (replays are ' +
+      'Authenticated by getpack’s webhook key in `Authorization`; stored in the webhook inbox (replays are ' +
       'no-ops) and published as `carrier.webhook_received` (D-114). 200 when accepted, 401 otherwise.',
     implements: DECISIONS,
   })

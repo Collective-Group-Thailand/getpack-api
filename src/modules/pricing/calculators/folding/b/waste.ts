@@ -43,7 +43,7 @@ export interface BWasteResult {
   totalPaperSize: number;
   paperSizePrice: number;
   costPaperSize: number;
-  /** Waste lookups that found no row: legacy then adds no waste or fails; Packio adds none (Q16, QB3). */
+  /** Waste lookups that found no row: legacy then adds no waste or fails; getpack adds none (Q16, QB3). */
   missingBands: string[];
 }
 

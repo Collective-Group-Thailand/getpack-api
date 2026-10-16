@@ -138,7 +138,7 @@ export class PartnerChangeRequestsController {
     id: 'partner.changeRequests.create',
     summary: 'Ask the Partner team for a change',
     description:
-      'For what only Packio staff change — capability, capacity, delivery zones, tolerance, participation tier, ' +
+      'For what only getpack staff change — capability, capacity, delivery zones, tolerance, participation tier, ' +
       'pricing arrangement, payout policy — or a site visit (at least one preferred day after today). A tier ask ' +
       '(`participation_tier`) may name the product type, the tier and, for tier B, the envelope (D-234), checked like ' +
       'the participation write. The request changes nothing by itself; the Partner team is notified and answers ' +

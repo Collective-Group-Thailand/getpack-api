@@ -144,7 +144,7 @@ export class PartnerFactoryUsersController {
   @ApiEndpoint({
     id: 'partner.factoryUsers.deactivate',
     summary: 'Remove a user from my factory',
-    description: 'Revokes the user’s roles in the factory; owners are managed by Packio (D-171). Audited.',
+    description: 'Revokes the user’s roles in the factory; owners are managed by getpack (D-171). Audited.',
     implements: ['D-140'],
   })
   @ApiSuccess(204, { description: 'Deactivated' })

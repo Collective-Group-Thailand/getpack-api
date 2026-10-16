@@ -421,7 +421,7 @@ export class ConversationsService implements OnModuleInit {
 
   // --- customer reads --------------------------------------------------------------------------------------------
 
-  /** My threads, latest activity first, with how many of Packio's messages I have not read. */
+  /** My threads, latest activity first, with how many of getpack's messages I have not read. */
   async customerThreads(customerUserId: bigint) {
     const rows = await this.prisma.conversation.findMany({
       where: { customerUserId, mergedIntoId: null, channel: { not: 'contact' } },
@@ -449,7 +449,7 @@ export class ConversationsService implements OnModuleInit {
     return row;
   }
 
-  /** Packio's messages after my read position. */
+  /** getpack's messages after my read position. */
   async unreadFor(row: ConversationRow, userId: bigint): Promise<number> {
     const me = row.participants.find((p) => p.userId === userId);
     return this.prisma.conversationMessage.count({
@@ -462,7 +462,7 @@ export class ConversationsService implements OnModuleInit {
     });
   }
 
-  /** D-300: the customer chooses where Packio's replies go; LINE needs a linked account that still follows the OA. */
+  /** D-300: the customer chooses where getpack's replies go; LINE needs a linked account that still follows the OA. */
   async setReplyChannel(actor: UserActor, publicId: string, channel: ReplyChannel): Promise<void> {
     await this.prisma.withTx(async (tx) => {
       const conversation = await this.ownThread(tx, actor.userId, publicId);
@@ -470,7 +470,7 @@ export class ConversationsService implements OnModuleInit {
         const account = await this.lineAccountOf(tx, conversation);
         if (!account || account.friendStatus === 'blocked')
           throw new DomainException('conversations.unreachable', {
-            params: { reason: 'no linked LINE account follows Packio' },
+            params: { reason: 'no linked LINE account follows getpack' },
           });
       }
       await tx.conversation.update({
@@ -539,7 +539,7 @@ export class ConversationsService implements OnModuleInit {
           params: { reason: 'the user blocked the account' },
         });
       // LINE gets the text; files and cards stay in the thread (the customer opens them from LIFF).
-      const text = [body, files.length || card ? 'ดูไฟล์และรายละเอียดเพิ่มเติมได้ในแชท Packio' : null]
+      const text = [body, files.length || card ? 'ดูไฟล์และรายละเอียดเพิ่มเติมได้ในแชท getpack' : null]
         .filter(Boolean)
         .join('\n');
       const sent = await this.line.push({
@@ -745,7 +745,7 @@ export class ConversationsService implements OnModuleInit {
     });
   }
 
-  /** The customer read Packio's replies. */
+  /** The customer read getpack's replies. */
   async markReadByCustomer(conversationId: bigint, userId?: bigint): Promise<void> {
     await this.prisma.withTx(async (tx) => {
       await tx.conversationMessage.updateMany({

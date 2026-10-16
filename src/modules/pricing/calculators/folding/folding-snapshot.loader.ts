@@ -28,7 +28,7 @@ import { type DigitalTables, type OffsetTables } from './tables';
 /**
  * Loads what the folding calculator reads (B2.3): the configuration resolved against the platform
  * catalogue, and per factory price-list version one option per print type with its price rows, paper
- * sheets, geometry and Packio's sell side at the pricing instant. Rows keep the line order (`id`), the
+ * sheets, geometry and getpack's sell side at the pricing instant. Rows keep the line order (`id`), the
  * tie-break legacy left to the database (quirk Q10). Every version id used is returned for the snapshot.
  */
 
@@ -772,7 +772,7 @@ export class FoldingSnapshotLoader {
 
   // --- sell side -------------------------------------------------------------------------------
 
-  /** Packio's sell side at `at` (shared with every calculator, `shared/sell-snapshot.ts`). */
+  /** getpack's sell side at `at` (shared with every calculator, `shared/sell-snapshot.ts`). */
   sell(productTypeId: bigint, printTypeId: bigint, at: Date, db: Tx = this.prisma): Promise<LoadedSell> {
     return loadSellSnapshot(db, productTypeId, printTypeId, at);
   }

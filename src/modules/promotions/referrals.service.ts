@@ -109,7 +109,7 @@ export class ReferralsService {
         take: 50,
       }),
     ]);
-    const web = this.config.get('STOREFRONT_BASE_URL') ?? 'https://www.packio.invalid';
+    const web = this.config.get('STOREFRONT_BASE_URL') ?? 'https://www.getpack.invalid';
     const byStatus = Object.fromEntries(counts.map((c) => [c.status, c._count._all])) as Partial<
       Record<ReferralStatus, number>
     >;

@@ -7,7 +7,7 @@ import { Test } from '@nestjs/testing';
 
 import { configureApp } from '../../src/bootstrap';
 import { DocsExampleController } from '../fixtures/docs-example.controller';
-import { lintWithPackioRuleset } from '../support/spectral';
+import { lintWithGetpackRuleset } from '../support/spectral';
 
 @Module({ controllers: [DocsExampleController] })
 class DocsExampleModule {}
@@ -44,9 +44,9 @@ describe('OpenAPI documentation decorators', () => {
 
   it('produces a document with no contract violations and no Spectral findings', () => {
     expect(contractViolations(document)).toEqual([]);
-    expect(lintWithPackioRuleset(document).map((r) => `${r.code} ${r.path.join('.')}: ${r.message}`)).toEqual(
-      [],
-    );
+    expect(
+      lintWithGetpackRuleset(document).map((r) => `${r.code} ${r.path.join('.')}: ${r.message}`),
+    ).toEqual([]);
   });
 
   it('merges problem codes from several decorators per status', () => {

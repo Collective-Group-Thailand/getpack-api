@@ -2,9 +2,9 @@
 
 > Reference for porting the legacy pouch calculator. **Legacy is read-only and never run** (D-005). Treatment follows the
 > folding / corrugate / label rule (user decision 2026-09-26): **maths ported exactly, orchestration and state bugs fixed
-> and listed as deviations** in `docs/pricing-validation-pouch.md`. §9 records how Packio ports it.
+> and listed as deviations** in `docs/pricing-validation-pouch.md`. §9 records how getpack ports it.
 
-> Source: `/Users/superball/Collective/Packio/Packio-API/legacy/locopack-web`. All paths below are relative to it unless they start with `docs/` or `test/` (those are relative to `Packio-API`). Traced read-only on 2026-10-01.
+> Source: `/Users/superball/Collective/getpack/Getpack-API/legacy/locopack-web`. All paths below are relative to it unless they start with `docs/` or `test/` (those are relative to `Getpack-API`). Traced read-only on 2026-10-01.
 > Packaging type **6** = `pouch` ("ซอง", `config/locopack.php:11`). Main class `app/Models/PouchCalculator.php` (724 lines).
 > Runtime: Laravel 5.7, PHP 7.1, `error_reporting(-1)`. Any notice ("Undefined index/variable/offset", "property of non-object", "Division by zero", "non well formed numeric") **throws**.
 
@@ -20,7 +20,7 @@
 - printing: `calculatePrinting:607-614`
 - options and processes: `calculateAssembly:616-661`
 - factory margin: `calculateCost:663-671`
-- Packio margin and VAT: `calculateMargin:673-688`
+- getpack margin and VAT: `calculateMargin:673-688`
 - delivery: `calculateDeliveryPrice:690-723` → `ShippingUtils::calShippingCostPouch` (`app/Libraries/Shipping/ShippingUtils.php:710-788`)
 
 **One engine, one print type.**
@@ -64,7 +64,7 @@ Details in §4.
 | `POST /api/validate-input` (`api.php:273`) | `Calculator::validateInput:471-517` | — | always rejects pouch (P26) |
 | `POST orders` (web, CS create order) / `POST orders/{id}/edit` | consume `products` + `order_hierarchies` built by `fromCS` (`plugin-boxes/create-order.vue:1263`, `pouch/cs.vue:946`); **no re-pricing** | CS | live (order ops, not pricing) |
 | CalFlex (`ShowCalFlexController`, `calflexresult.blade.php:977-995`, "Pouch MC" costing via external `GetFlexCal` API) | routes commented out (`web.php:942-949`) | — | **dead**, external, not ported |
-| Factory tool | none. Note: the CS routes sit in the `web.factory` group (`web.php:760-900`, `WebFactory.php:20`: factory **or admin** user; CS-type users (`Users::CS_TYPE = 0`) get 403 although the menu shows them the link) | — | Packio adds a partner price check as for the other calculators |
+| Factory tool | none. Note: the CS routes sit in the `web.factory` group (`web.php:760-900`, `WebFactory.php:20`: factory **or admin** user; CS-type users (`Users::CS_TYPE = 0`) get 403 although the menu shows them the link) | — | getpack adds a partner price check as for the other calculators |
 
 Cross-check: `docs/legacy/04-legacy-routes.txt:237-241,280,413-415` list the same routes.
 
@@ -593,7 +593,7 @@ Every column above exists in `docs/legacy/03-legacy-schema.txt`.
 | P20 | VAT hard-coded 1.07 in the price and the delivery (`:685, :707`) | Fix: dated `vat_standard` rate (7 % today) |
 | P21 | Delivery folded into the per-piece price (each component ceiled to 0.01, then re-multiplied by qty) (`:524`) | Changed: delivery is its own quote line (D-013 as in the other maps); keep the per-piece maths only if the legacy compare needs it |
 | P22 | Fix delivery with cost 0 refuses the option ("free shipping" impossible) (`:704-706`); the auto path never returns 0, it **throws** when no carrier prices (`ShippingUtils.php:786-787`) | Fix: 0 allowed for manual; no carrier → no delivery line / shipping refusal, not a crash |
-| P23 | `Api/PouchController@calculate` computes twice; reward-point discount discarded (`:85-99`) but applied at `storev2:1490-1499`; `firebase_uid` key required (`:86`) | Fix: single computation; points per Packio loyalty rules (D-130+) |
+| P23 | `Api/PouchController@calculate` computes twice; reward-point discount discarded (`:85-99`) but applied at `storev2:1490-1499`; `firebase_uid` key required (`:86`) | Fix: single computation; points per getpack loyalty rules (D-130+) |
 | P24 | `custom_cost` filter uses strict `!==` between JSON int and DB value (`:272`); works only if both are ints | Not ported (CS chooses in the result / admin override) |
 | P25 | `fromOrder`: no `color_id` → Undefined index at `fromCS:352`; no `b` → throws for pattern 44 (`:393`); saved assemblies include 36/37 → "ไม่รองรับ option เสริม" for every factory → `reProduction:3550` `$calculated[0]` throws. **Always fails** | Not ported (re-order = new quote from the stored configuration) |
 | P26 | `Calculator::FromSME` / `validateInput` have no pouch branch: always rejected / undefined `$calculated` (`Calculator.php:54-66, :480, :503`); admin pouch sample products (`product/pouch.vue`) can never be saved | Not ported (store size rules come from the pouch pattern: w, l, b, s, cs; no h) |
@@ -603,11 +603,11 @@ Every column above exists in `docs/legacy/03-legacy-schema.txt`.
 | P30 | SME always adds special technic 93 (duplicate if sent); print always group 12; centre seal fixed 10 mm; design only "hire" | Keep defaults as the customer-web configuration; de-duplicate options |
 | P31 | Free design (type 3) shows `design_price` but does not add it; hire adds it once per quote; fallback 2500 when empty (`:444, :528`) | Keep semantics; fee from the `pouch` sell table (`DESIGN_COST_FOR_POUCH`) |
 | P32 | Shipping: 10 g per piece whatever size or micron; cartons of 3000 (always 31 kg), ≤1950/2000, or 100 pcs; remainders <100 or 401–499 pieces **not charged**; a quantity alone in those gaps → no cost → throws; box count over-counted by the empty last loop; carriers ordered by `$a[0]-$b[0]` (int-cast, <1 THB ties); factory carrier not in `ENABLE_SHIPPING_LIST` (e.g. `kob`) → Undefined index throws (`ShippingUtils.php:58`) | Port the packer exactly (shared with standard products `ByPouch`) **except**: charge remainders (or document), correct box count, min-cost with explicit tie-break, unknown carrier skipped |
-| P33 | Mockup override replaces the quantity after the minimum check, so delivery and margins are computed on the mockup qty (`:478-480`); UI hidden; `cs.vue:907` `setMockup` on a null ref | Not ported (Packio samples/mockups are a service) |
+| P33 | Mockup override replaces the quantity after the minimum check, so delivery and margins are computed on the mockup qty (`:478-480`); UI hidden; `cs.vue:907` `setMockup` on a null ref | Not ported (getpack samples/mockups are a service) |
 | P34 | Lead time raw `fmpt.lead_time`; receiving date in calendar days; fractional days break `strtotime` | `⌈lead time⌉` term, business-day rules as other calculators |
 | P35 | CS copy text: `text +=` before `let text` (`cs.vue:1067-1070`), so the withholding / payable lines are lost; says "ค่าส่ง : ฟรี" (shipping folded in) | Not ported (UI) |
 | — | `!empty($pattern->required_b) == 1` (`:392`): harmless | Keep semantics (`required_b` truthy) |
-| — | Promotion `limit` / per-user limit not checked; discount can drive the total negative (`:537`) | Packio promotion rules |
+| — | Promotion `limit` / per-user limit not checked; discount can drive the total negative (`:537`) | getpack promotion rules |
 | — | Results built per request: `new ShippingUtils` (all carriers) per factory × print type | Performance only |
 
 ---
@@ -658,7 +658,7 @@ Evidence: the KPON factory was seeded and re-tuned (2023-08 `import_kpon_factory
 - Add `roundUp` to `src/modules/pricing/engine/php.ts`.
 - **Not ported:** SAP hierarchies, `fromOrder`, `getActiveAssemblies` hard-codes, mockup override, the `custom_cost` `!==` filter (an admin override can replace it), CalFlex.
 
-**Golden cases.** Data = KPON seed values: `t 30`, `min_dl 400`, `max_dl 800`, `min_material_length 300`, `length_plus 150`, `width_roll 800`, `min_material_cost 3500`, `bridge 4`; factory tiers 20 / 15 / 10; Packio tiers 1000–4999: 15, 5000+: 22; fix cost 0; MPET80 0.0014, ALU80 0.0024; colour 12 0.005, colour 13 0.0055; drye / making min 3000; zipper 0.3 / cm; V-Cut 0; minimum 1000.
+**Golden cases.** Data = KPON seed values: `t 30`, `min_dl 400`, `max_dl 800`, `min_material_length 300`, `length_plus 150`, `width_roll 800`, `min_material_cost 3500`, `bridge 4`; factory tiers 20 / 15 / 10; getpack tiers 1000–4999: 15, 5000+: 22; fix cost 0; MPET80 0.0014, ALU80 0.0024; colour 12 0.005, colour 13 0.0055; drye / making min 3000; zipper 0.3 / cm; V-Cut 0; minimum 1000.
 - G1–G3 were computed with IEEE doubles (`node -e`, same order of operations). Re-verify them with `php.ts`.
 - Delivery is fixed (CS `fix_delivery`) in G1–G3 to isolate pricing.
 - **These are seed values, not production data.**
@@ -675,7 +675,7 @@ Evidence: the KPON factory was seeded and re-tuned (2023-08 `import_kpon_factory
 3. **G3 3-side seal (40)**, w120 l200, qty 12000, MPET80, colour 13, zipper [29], fix delivery 900 →
    - dl 430, pow 136.5 (setup branch), paper 1.5288, print 3.228225
    - drye 0.4368 (formula > min), making 0.2 (> 10000), zipper 3.6, per_pcs 9.00
-   - factory tier 10 → 9.9, Packio tier 22 → sale 13.59, delivery 963 → 0.09, ppwd 13.68, total 164 160
+   - factory tier 10 → 9.9, getpack tier 22 → sale 13.59, delivery 963 → 0.09, ppwd 13.68, total 164 160
 4. Centre-seal gusset (42): dl = 2w + 2s + 2cs + t.
 5. Quad seal (43): dl = 2w + 2s + t.
 6. `cal_dl > max_dl` (e.g. 44 with l 400, b 60 → 890) → refusal for that factory.
@@ -688,7 +688,7 @@ Evidence: the KPON factory was seeded and re-tuned (2023-08 `import_kpon_factory
 13. White base (28): price_per_sqcm × cal_sqcm.
 14. Zipper priced per piece vs per cm of width; zipper with both prices 0 → `price_line_missing` (P8 fix).
 15. Option not allowed for pattern × material → "unsupported option" for that factory; unsupported micron → "unsupported material".
-16. Factory-margin fallback (no tier) and Packio-margin fallback; `fix_margin` (margin + fix cost) override.
+16. Factory-margin fallback (no tier) and getpack-margin fallback; `fix_margin` (margin + fix cost) override.
 17. Custom cost (admin override of the buy price).
 18. Design: hire adds the fee once; free shows it but does not add it; template adds 0.
 19. Promotions: fixed, percent (`round`), step tiers, `min_price` gate, `max_price` cap; manual discount.
@@ -698,7 +698,7 @@ Evidence: the KPON factory was seeded and re-tuned (2023-08 `import_kpon_factory
 
 ---
 
-## 9. Packio port (decisions, U-B6 pouch, 2026-10-01)
+## 9. getpack port (decisions, U-B6 pouch, 2026-10-01)
 
 Accepted under the user's standing instruction (2026-10-01); recorded in `docs/update-2026-09-29-gap.md` §U-B6 pouch.
 
@@ -723,7 +723,7 @@ Accepted under the user's standing instruction (2026-10-01); recorded in `docs/u
    price (`price_line_missing`), not a crash.
 5. **Missing rows** (P8, P9): an option, process or zipper price that is missing refuses that factory only.
 6. **One option per factory × print type** (P14, P15), selection by buy price then lead time (D-043, D-101).
-7. **Sell side**: Packio's `flexible_pouch` sell tables — margin tiers on the quantity (inclusive, no price bounds, P18),
+7. **Sell side**: getpack's `flexible_pouch` sell tables — margin tiers on the quantity (inclusive, no price bounds, P18),
    fix cost, design fee (legacy `DESIGN_COST_FOR_POUCH`, P31); VAT the dated `vat_standard` rate (P20). The per-piece
    price keeps legacy's order of operations: `⌈((buy per piece + fix ÷ qty) ÷ (1 − m)) × VAT⌉₀.₀₁` (`calculateMargin`).
 8. **Rounding** kept exactly (P16, P17): cost per piece `convertTo2Decimal`, factory price per piece `roundUp(…, 1)`.
@@ -731,4 +731,4 @@ Accepted under the user's standing instruction (2026-10-01); recorded in `docs/u
    legacy's three carton sizes; the remainders legacy left uncharged (P32) go into the smallest carton that holds them, the
    box count is not over-counted, and the carrier weight limit is the `shipping.carton_spec` setting.
 10. **Not ported**: custom cost, fix margin / fix delivery (CS overrides), mockup quantities (P33), promotions inside the
-    calculator (Packio promotions, D-130+), `fromOrder` (P25), `getActiveAssemblies` (dead), SAP hierarchies, CalFlex.
+    calculator (getpack promotions, D-130+), `fromOrder` (P25), `getActiveAssemblies` (dead), SAP hierarchies, CalFlex.

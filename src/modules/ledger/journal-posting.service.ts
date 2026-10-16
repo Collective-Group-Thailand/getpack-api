@@ -203,7 +203,7 @@ export class JournalPostingService {
       DO UPDATE SET next_value = journal_entry_counters.next_value + 1, updated_at = now()
       RETURNING next_value - 1 AS value`;
     const entryNo = `JE${key.replace('-', '')}-${row!.value.toString().padStart(6, '0')}`;
-    if (allowSoftClosed) await tx.$executeRaw`SELECT set_config('packio.post_soft_closed', 'on', true)`;
+    if (allowSoftClosed) await tx.$executeRaw`SELECT set_config('getpack.post_soft_closed', 'on', true)`;
     try {
       return await tx.journalEntry.update({
         where: { id: entry.id },
@@ -223,7 +223,7 @@ export class JournalPostingService {
         });
       throw error;
     } finally {
-      if (allowSoftClosed) await tx.$executeRaw`SELECT set_config('packio.post_soft_closed', 'off', true)`;
+      if (allowSoftClosed) await tx.$executeRaw`SELECT set_config('getpack.post_soft_closed', 'off', true)`;
     }
   }
 

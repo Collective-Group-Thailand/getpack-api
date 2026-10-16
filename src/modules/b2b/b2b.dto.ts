@@ -208,7 +208,7 @@ export class WebhookSubscriptionDto {
   @ApiProperty({ format: 'uuid', example: B2B_IDS.subscription })
   id!: string;
 
-  @ApiProperty({ example: 'https://erp.example.com/packio/webhooks' })
+  @ApiProperty({ example: 'https://erp.example.com/getpack/webhooks' })
   url!: string;
 
   @ApiProperty({ enum: WEBHOOK_EVENT_TYPES, enumName: 'WebhookEventType', isArray: true })
@@ -225,21 +225,21 @@ export class CreatedWebhookSubscriptionDto extends WebhookSubscriptionDto {
   @ApiProperty({
     example: 'whsec_example',
     description:
-      'Shown once. Every delivery carries `Packio-Signature: t=<unix seconds>,v1=<hex HMAC-SHA256 of "<t>.<body>">`',
+      'Shown once. Every delivery carries `Getpack-Signature: t=<unix seconds>,v1=<hex HMAC-SHA256 of "<t>.<body>">`',
   })
   secret!: string;
 }
 
 export const SUBSCRIPTION_EXAMPLE: WebhookSubscriptionDto = {
   id: B2B_IDS.subscription,
-  url: 'https://erp.example.com/packio/webhooks',
+  url: 'https://erp.example.com/getpack/webhooks',
   eventTypes: ['order.placed', 'shipment.delivered'],
   status: 'active',
   createdAt: '2026-10-03T15:00:00+07:00',
 };
 
 export class CreateWebhookSubscriptionDto {
-  @ApiProperty({ example: 'https://erp.example.com/packio/webhooks', description: 'HTTPS only' })
+  @ApiProperty({ example: 'https://erp.example.com/getpack/webhooks', description: 'HTTPS only' })
   @IsString()
   @MaxLength(2000)
   @Matches(/^https:\/\/[^\s/$.?#][^\s]*$/)
@@ -254,7 +254,7 @@ export class CreateWebhookSubscriptionDto {
 }
 
 export class WebhookDeliveryDto {
-  @ApiProperty({ format: 'uuid', example: B2B_IDS.delivery, description: 'Sent as `Packio-Delivery`' })
+  @ApiProperty({ format: 'uuid', example: B2B_IDS.delivery, description: 'Sent as `Getpack-Delivery`' })
   id!: string;
 
   @ApiProperty({ enum: WEBHOOK_EVENT_TYPES, enumName: 'WebhookEventType', example: 'order.placed' })

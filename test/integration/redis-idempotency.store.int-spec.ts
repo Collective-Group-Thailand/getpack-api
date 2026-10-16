@@ -43,7 +43,7 @@ describe('RedisIdempotencyStore (Redis container)', () => {
         response: { status: 201, body: { id: 'x' }, headers: { location: '/x' } },
       },
     });
-    const ttl = await redis.ttl('packio:idem:k1');
+    const ttl = await redis.ttl('getpack:idem:k1');
     expect(ttl).toBeGreaterThan(86_000);
   });
 

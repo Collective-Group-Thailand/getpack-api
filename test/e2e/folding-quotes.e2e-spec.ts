@@ -9,7 +9,7 @@ import { AppModule } from '../../src/app.module';
 import { configureApp } from '../../src/bootstrap';
 import { E2E_DEV_PASSWORD } from '../support/e2e';
 
-/** Folding quotes on every surface and Packio's sell margins (B2.3), on the fake dev factory F9001. */
+/** Folding quotes on every surface and getpack's sell margins (B2.3), on the fake dev factory F9001. */
 describe('folding quotes (e2e, B2.3)', () => {
   let app: INestApplication;
   let server: ReturnType<INestApplication['getHttpServer']>;

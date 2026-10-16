@@ -42,7 +42,7 @@ export const GRANT_ACTIONS: ActionRule<{ active: boolean }>[] = [
 
 /**
  * People-lite (D-380) — shifts, operator skills per machine and the work log the floor's events make — and
- * Packio support's access (D-381): the owner grants a few days of read-only access, may revoke it, and sees
+ * getpack support's access (D-381): the owner grants a few days of read-only access, may revoke it, and sees
  * every read; staff with partners.read read the dashboard and settings only while a grant is active.
  */
 @Injectable()

@@ -85,7 +85,7 @@ import { ErpSourcingService } from './erp-sourcing.service';
 import { ErpWorkspace } from './erp-workspace.service';
 
 /**
- * Packio Factory ERP E2.1 + E3 (docs/prompts/E1-factory-erp.md §10): quantity breaks, supplier approval and
+ * getpack Factory ERP E2.1 + E3 (docs/prompts/E1-factory-erp.md §10): quantity breaks, supplier approval and
  * scores, landed charges, alerts, requests for quotation; machines, the schedule, the shop-floor kiosk,
  * maintenance and documents — under `/v1/partner/factories/{factoryId}/erp/*`, factory-private (D-317).
  */

@@ -816,7 +816,7 @@ export class PartnerFactoryOperationsController extends FactoryReads {
     id: 'partner.factories.getConfiguration',
     summary: 'Get my factory’s configuration',
     description:
-      'Pricing mode, tiers, capacity, tolerance and payout policy agreed with Packio (own factory only, D-044).',
+      'Pricing mode, tiers, capacity, tolerance and payout policy agreed with getpack (own factory only, D-044).',
     implements: ['D-042', 'D-043', 'D-101', 'D-021', 'D-022'],
   })
   @ApiSuccess(200, {
@@ -835,7 +835,7 @@ export class PartnerFactoryOperationsController extends FactoryReads {
   @ApiEndpoint({
     id: 'partner.factories.listCapabilities',
     summary: 'List my factory’s capabilities',
-    description: 'As recorded by the Packio Partner team (D-011).',
+    description: 'As recorded by the getpack Partner team (D-011).',
     implements: ['D-011'],
   })
   @ApiSuccess(200, { description: 'Capabilities', type: [CapabilityDto], example: [CAPABILITY] })

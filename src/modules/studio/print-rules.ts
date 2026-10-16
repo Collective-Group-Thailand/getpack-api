@@ -2,7 +2,7 @@ import { type QrLevel, validateBarcode } from './barcodes';
 
 /**
  * D-278 the studio's print-check rule catalogue (setting `studio.print_rules`, Prepress) and the server's fast
- * evaluator over a studio document (packio-web designer document v2: `{ spec, content: { elements, pattern } }`,
+ * evaluator over a studio document (getpack-web designer document v2: `{ spec, content: { elements, pattern } }`,
  * millimetres on the flat sheet). The web runs every rule live; the server re-runs the ones it can see in the document
  * (`evaluatedOn` contains `document`), the print PDF the ones of ADR-0009 (B4). A rule whose thresholds are null is
  * off until Prepress sets them.

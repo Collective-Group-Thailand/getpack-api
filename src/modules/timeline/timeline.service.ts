@@ -32,8 +32,8 @@ const sortKey = (at: Date, kind: number, id: bigint) =>
   `${at.toISOString()}|${kind}|${id.toString().padStart(20, '0')}`;
 
 const iso = (d: Date | null) => (d ? toBangkokIso(d) : null);
-const storeCarrier = (code: string) => (code === 'factory_fleet' ? 'packio' : code);
-/** Shipment steps shown outside Packio (drafts and cancelled trips are not part of the story). */
+const storeCarrier = (code: string) => (code === 'factory_fleet' ? 'getpack' : code);
+/** Shipment steps shown outside getpack (drafts and cancelled trips are not part of the story). */
 const SHOWN = ['ready', 'picked_up', 'in_transit', 'out_for_delivery', 'delivered', 'failed', 'returned'];
 
 const SHIPMENTS_OF = (orderId: bigint) =>
@@ -491,7 +491,7 @@ export function collapseRepeats<T extends { _key: string; type: string; messageT
   return out;
 }
 
-/** Consecutive repeats of one status (a carrier resending it) are one step outside Packio. */
+/** Consecutive repeats of one status (a carrier resending it) are one step outside getpack. */
 function dedupe<T extends { status: string }>(events: T[]): T[] {
   return events.filter((e, i) => i === 0 || events[i - 1]!.status !== e.status);
 }

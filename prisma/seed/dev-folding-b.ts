@@ -25,7 +25,7 @@ export interface DevFoldingB {
  * components, schema-design A-76, plus the folding lines engine B reads), so the dev folding configuration (flat blank on
  * art card, CMYK, matt lamination, die-cut) is priced by engine B once `pricing.folding_engine_b` is on. A separate
  * factory keeps the tier-A launch factory F9001 untouched. Idempotent. Needs `seedDevFolding` (pattern `DEV-FLAT`,
- * `dev-cmyk`, `dev-normal`, `dev-diecut`) and the dev catalogue (`dev-art-350`, `dev-matt`); Packio's folding sell
+ * `dev-cmyk`, `dev-normal`, `dev-diecut`) and the dev catalogue (`dev-art-350`, `dev-matt`); getpack's folding sell
  * margins come from `seedDevFolding`.
  */
 export async function seedDevFoldingB(tx: Tx): Promise<{ created: boolean; fixture: DevFoldingB }> {

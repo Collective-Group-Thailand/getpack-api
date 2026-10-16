@@ -1,4 +1,4 @@
-# RBAC matrix — packio-api
+# RBAC matrix — getpack-api
 
 > **Generated** by `pnpm rbac:build` from `src/modules/iam/roles.catalog.ts`, `permissions.catalog.ts` and
 > `prisma/seed/data/reference.ts`. Do not edit by hand. Roles per D-140; cost and margin visibility per D-141;
@@ -7,7 +7,7 @@
 
 Legend: ● granted · ◆ granted and sensitive (cost/margin data, D-141).
 
-## Packio staff (platform scope)
+## getpack staff (platform scope)
 
 | Permission | `superadmin` | `c_level` | `vp` | `director` | `admin` | `cs` | `cs_lead` | `prepress` | `finance` | `finance_manager` | `logistics` | `marketing` | `sales_manager` | `partner_manager` | `auditor` | `dpo` |
 |---|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|
@@ -51,9 +51,9 @@ Legend: ● granted · ◆ granted and sensitive (cost/margin data, D-141).
 | `styles.curate` — Curate the style library: featured, hidden, order, copy, product type (D-246) | ● |  |  |  | ● |  |  |  |  |  |  | ● |  |  |  |  |
 | `styles.approve_recipe` — Approve a style recipe version (Prepress) (D-243) | ● |  |  |  |  |  |  | ● |  |  |  |  |  |  |  |  |
 | `styles.approve_names` — Approve the Thai / English names of a style (Marketing: wording, Prepress: technical terms) (D-212) | ● |  |  |  |  |  |  | ● |  |  |  | ● |  |  |  |  |
-| `styles.verify_reference` — Verify an industry reference code (FEFCO / ECMA) against the edition Packio holds (Prepress) (D-211) | ● |  |  |  |  |  |  | ● |  |  |  |  |  |  |  |  |
+| `styles.verify_reference` — Verify an industry reference code (FEFCO / ECMA) against the edition getpack holds (Prepress) (D-211) | ● |  |  |  |  |  |  | ● |  |  |  |  |  |  |  |  |
 | `styles.price_rules` — Maintain the option price rules of styles (Prepress with the Pricing owner, D-268) (D-268, D-266) | ● |  |  |  |  |  |  | ● |  |  |  |  |  |  |  |  |
-| `studio_catalog.manage` — Maintain Packio’s studio templates and elements (D-216, D-282) (D-216, D-282) | ● |  |  |  | ● |  |  | ● |  |  |  | ● |  |  |  |  |
+| `studio_catalog.manage` — Maintain getpack’s studio templates and elements (D-216, D-282) (D-216, D-282) | ● |  |  |  | ● |  |  | ● |  |  |  | ● |  |  |  |  |
 | `studio_catalog.approve` — Approve a studio template for publication — Marketing, never its author (D-216, D-282) (D-216, D-282) | ● |  |  |  |  |  |  |  |  |  |  | ● |  |  |  |  |
 | `structural_requests.manage` — Assign structural design requests, link their service RFQ, decline them (CS, D-273) (D-273) | ● |  |  |  | ● | ● | ● |  |  |  |  |  |  |  |  |  |
 | `structural_requests.design` — Deliver, approve and publish structural designs (structural designers in Prepress, D-273) (D-273) | ● |  |  |  |  |  |  | ● |  |  |  |  |  |  |  |  |
@@ -81,9 +81,9 @@ Legend: ● granted · ◆ granted and sensitive (cost/margin data, D-141).
 | `shipping_rates.read` — Read the customer shipping rate card and its versions (D-013) | ● | ● |  |  | ● | ● | ● |  | ● | ● | ● |  |  | ● | ● |  |
 | `shipping_rates.manage` — Draft customer shipping rate-card versions and submit them for C-Level approval (D-013) | ● |  |  |  | ● |  |  |  |  |  | ● |  |  |  |  |  |
 | `factory_shipping_rates.manage` — Draft factory shipping payout cards, send them to the factory and answer counters (D-013, D-042, D-141) | ◆ |  |  |  |  |  |  |  |  |  |  |  |  | ◆ |  |  |
-| `carriers.read` — Read fallback carriers and Packio’s carrier accounts | ● | ● |  |  | ● |  |  |  |  |  | ● |  |  | ● | ● |  |
-| `carriers.manage` — Enable or disable fallback carriers and register Packio’s carrier accounts (D-114, D-005) | ● |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |
-| `sell_margins.manage` — Maintain Packio's sell margins, fix costs and design fees (effective-dated) (D-063) | ◆ | ◆ |  |  |  |  |  |  |  |  |  |  |  |  |  |  |
+| `carriers.read` — Read fallback carriers and getpack’s carrier accounts | ● | ● |  |  | ● |  |  |  |  |  | ● |  |  | ● | ● |  |
+| `carriers.manage` — Enable or disable fallback carriers and register getpack’s carrier accounts (D-114, D-005) | ● |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |
+| `sell_margins.manage` — Maintain getpack's sell margins, fix costs and design fees (effective-dated) (D-063) | ◆ | ◆ |  |  |  |  |  |  |  |  |  |  |  |  |  |  |
 | `customers.read` — Find customers and read their profile, addresses and tax profiles (D-092) | ● |  |  |  | ● | ● | ● |  | ● | ● |  |  | ● |  | ● | ● |
 | `privacy_requests.manage` — Answer customers' PDPA requests: export their data or anonymise them (D-222) | ● |  |  |  |  |  |  |  |  |  |  |  |  |  |  | ● |
 | `customers.manage` — Create customer accounts and keep their addresses and tax profiles (CS) (D-092) | ● |  |  |  | ● | ● | ● |  |  |  |  |  |  |  |  |  |
@@ -127,7 +127,7 @@ Legend: ● granted · ◆ granted and sensitive (cost/margin data, D-141).
 | `production.start_manual` — Start production as an exception, with a reason (audited) (D-073) | ● |  |  |  | ● | ● | ● |  |  |  |  |  |  |  |  |  |
 | `production.manage` — Reassign jobs to another factory, hold and resume jobs, resolve escalations (D-012, D-074, D-101) | ● |  |  |  | ● |  | ● |  |  |  |  |  |  | ● |  |  |
 | `milestone_routes.manage` — Edit milestone routes per product type as new versions (D-075) | ● |  |  |  | ● |  |  |  |  |  |  |  |  | ● |  |  |
-| `inspections.perform` — Carry out Packio inspections and record their results (D-076) | ● |  |  |  | ● |  |  |  |  |  |  |  |  | ● |  |  |
+| `inspections.perform` — Carry out getpack inspections and record their results (D-076) | ● |  |  |  | ● |  |  |  |  |  |  |  |  | ● |  |  |
 | `shipments.read` — Read shipments, carrier events, proofs of delivery and delivery reconciliations (D-013, D-080) | ● | ● | ● | ● | ● | ● | ● |  | ● | ● | ● |  |  | ● | ● |  |
 | `conversations.read` — Read the CS inbox: LINE and web conversations (D-151) | ● |  |  |  | ● | ● | ● |  |  |  |  |  |  |  |  |  |
 | `conversations.reply` — Reply to customers, assign and close conversations (D-151) | ● |  |  |  | ● | ● | ● |  |  |  |  |  |  |  |  |  |
@@ -213,14 +213,14 @@ Legend: ● granted · ◆ granted and sensitive (cost/margin data, D-141).
 | `factory_profile.read` — Read the own factory profile | ● | ● | ● | ● | ● | ● | ● | ● | ● | ● | ● |
 | `factory_users.manage` — Manage users of the own factory | ● |  |  |  |  |  |  |  |  |  |  |
 | `factory_profile.manage` — Edit the own factory profile, addresses, contacts and KYC documents | ● |  |  |  |  |  |  |  |  |  |  |
-| `factory_onboarding.sign_off` — Sign off data Packio entered on the factory’s behalf (D-100) | ● |  |  |  |  |  |  |  |  |  |  |
+| `factory_onboarding.sign_off` — Sign off data getpack entered on the factory’s behalf (D-100) | ● |  |  |  |  |  |  |  |  |  |  |
 | `factory_prices.read` — Read the own factory price lists (D-044) | ● |  |  |  |  | ● |  |  |  |  |  |
 | `factory_prices.propose` — Propose price-list changes (factory price list mode) (D-040, D-042) | ● |  |  |  |  |  |  |  |  |  |  |
 | `factory_rate_card.accept` — Accept, counter or refuse a platform rate card (D-042) | ● |  |  |  |  |  |  |  |  |  |  |
 | `factory_agreements.accept` — Accept the partner agreement on behalf of the factory (D-011) | ● |  |  |  |  |  |  |  |  |  |  |
-| `factory_bank_account.propose` — Propose a new bank account for payouts (dual approval by Packio Finance) (D-033) | ● |  |  |  |  | ● |  |  |  |  |  |
+| `factory_bank_account.propose` — Propose a new bank account for payouts (dual approval by getpack Finance) (D-033) | ● |  |  |  |  | ● |  |  |  |  |  |
 | `factory_capacity.read` — Read the own capacity and bookings (D-101) | ● | ● |  |  |  |  |  |  |  |  |  |
-| `factory_rfq.read` — Read the requests for a buy price Packio sent the factory (never the sell price) (D-100, D-044) | ● | ● |  |  |  |  |  |  |  |  |  |
+| `factory_rfq.read` — Read the requests for a buy price getpack sent the factory (never the sell price) (D-100, D-044) | ● | ● |  |  |  |  |  |  |  |  |  |
 | `factory_rfq.respond` — Answer a request for a buy price per quantity tier, or decline it (D-100) | ● | ● |  |  |  |  |  |  |  |  |  |
 | `factory_jobs.read` — Read the own factory’s production jobs: spec, approved artwork, delivery contacts (D-142) | ● | ● | ● | ● | ● | ● | ● |  | ● | ● |  |
 | `factory_jobs.respond` — Accept or reject released jobs within the acceptance time (D-074) | ● | ● |  |  |  |  |  |  |  |  |  |
@@ -232,11 +232,11 @@ Legend: ● granted · ◆ granted and sensitive (cost/margin data, D-141).
 | `factory_scorecard.read` — Read the own factory’s monthly scorecard (D-155) | ● | ● |  | ● |  |  |  |  |  |  |  |
 | `factory_shipments.read` — Read the own factory’s shipments, labels and packing lists (D-013, D-142) | ● | ● |  |  | ● |  |  |  |  |  |  |
 | `factory_claims.read` — Read the claims about the own factory’s jobs (D-083) | ● | ● |  | ● |  |  |  |  |  |  |  |
-| `factory_claims.respond` — Accept or dispute a claim Packio sent for review (D-083) | ● |  |  | ● |  |  |  |  |  |  |  |
+| `factory_claims.respond` — Accept or dispute a claim getpack sent for review (D-083) | ● |  |  | ● |  |  |  |  |  |  |  |
 | `factory_payables.read` — Read the own factory’s POs, goods receipts, billing statements, payouts and 50 ทวิ (D-090, D-022) | ● |  |  |  |  | ● |  |  |  |  |  |
 | `factory_payables.manage` — Confirm or dispute billing statements and submit the factory’s tax invoices (D-090) | ● |  |  |  |  | ● |  |  |  |  |  |
 | `factory_shipments.manage` — Create, pack, dispatch and deliver shipments with proof of delivery (D-013) | ● |  |  |  | ● |  |  |  |  |  |  |
-| `factory_trading_partners.read` — Read the factory’s own suppliers and customers (Packio Factory ERP) (D-317, D-319) | ● | ● |  | ● |  | ● | ● | ● |  | ● |  |
+| `factory_trading_partners.read` — Read the factory’s own suppliers and customers (getpack Factory ERP) (D-317, D-319) | ● | ● |  | ● |  | ● | ● | ● |  | ● |  |
 | `factory_trading_partners.manage` — Add and edit the factory’s own suppliers and customers (D-317, D-319) | ● |  |  |  |  | ● |  | ● |  | ● |  |
 | `factory_inventory.read` — Read the factory’s items, warehouses, stock balances and stock ledger (D-319, D-324) | ● | ● | ● | ● |  | ● | ● | ● | ● | ● | ● |
 | `factory_inventory.manage` — Manage items and warehouses, issue, return and transfer stock, post goods receipts (D-319, D-324, D-325) | ● |  |  |  |  |  | ● |  |  |  |  |
@@ -269,7 +269,7 @@ Legend: ● granted · ◆ granted and sensitive (cost/margin data, D-141).
 | `factory_insight.read` — Read the owner’s dashboard, job costs and margins, OEE; receive the daily LINE summary (D-376, D-377, D-378, D-379, D-382) | ● | ● |  |  |  | ● |  |  |  |  |  |
 | `factory_people.read` — Read the factory’s shifts, operator skills and work log (D-380, D-382) | ● | ● | ● |  |  |  |  |  | ● |  |  |
 | `factory_people.manage` — Keep shifts and operator skills (D-380, D-382) | ● | ● |  |  |  |  |  |  |  |  |  |
-| `factory_support.grant` — Grant and revoke Packio support time-boxed read access to the factory’s ERP (D-381, D-382) | ● |  |  |  |  |  |  |  |  |  |  |
+| `factory_support.grant` — Grant and revoke getpack support time-boxed read access to the factory’s ERP (D-381, D-382) | ● |  |  |  |  |  |  |  |  |  |  |
 | `factory_ledger.read` — Read the factory’s general ledger: chart of accounts, periods, journals, reports, fixed assets, bank (D-385, D-396) | ● |  |  |  |  | ● |  |  |  |  | ● |
 | `factory_ledger.post` — Draft and submit manual journals, keep recurring journals, match bank lines, run depreciation (D-389, D-393, D-394, D-396) | ● |  |  |  |  | ● |  |  |  |  |  |
 | `factory_ledger.approve` — Approve or reject manual journals and chart-of-accounts changes (D-386, D-389, D-396) | ● |  |  |  |  |  |  |  |  |  |  |

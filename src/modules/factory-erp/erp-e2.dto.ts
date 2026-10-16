@@ -36,7 +36,7 @@ import {
 } from './erp.dto';
 
 /**
- * Packio Factory ERP E1.1 + E2 (docs/prompts/E1-factory-erp.md, D-333 – D-345): supplier price lists and price
+ * getpack Factory ERP E1.1 + E2 (docs/prompts/E1-factory-erp.md, D-333 – D-345): supplier price lists and price
  * history, purchase requests, supplier invoices and payments (AP), recipes, production orders and MRP.
  */
 
@@ -59,7 +59,7 @@ export const ERP_AP_STATUSES = [
   'cancelled',
 ] as const;
 export const ERP_PAYMENT_METHODS = ['transfer', 'cash', 'cheque', 'other'] as const;
-export const ERP_MO_SOURCES = ['packio_job', 'stock', 'sales_order'] as const;
+export const ERP_MO_SOURCES = ['getpack_job', 'stock', 'sales_order'] as const;
 export const ERP_MO_STATUSES = [
   'planned',
   'released',
@@ -73,7 +73,7 @@ export const ERP_SUPPLIER_APPROVALS = ['pending', 'approved', 'suspended'] as co
 export const ERP_GRADES = ['A', 'B', 'C', 'D'] as const;
 export const ERP_MILESTONE_SYNCS = ['none', 'synced', 'failed'] as const;
 export const ERP_LINE_VARIANCES = ['price', 'quantity', 'price_quantity', 'unordered'] as const;
-export const ERP_MATERIAL_ORIGINS = ['recipe', 'packio_spec', 'manual'] as const;
+export const ERP_MATERIAL_ORIGINS = ['recipe', 'getpack_spec', 'manual'] as const;
 
 export const E2_IDS = {
   link: '0192f3a0-7c1e-7d2a-9b1f-00000000e601',
@@ -1472,7 +1472,7 @@ export class ErpProductionOperationDto {
   @ApiProperty({
     type: ErpJobMilestoneRefDto,
     nullable: true,
-    description: 'The Packio job step it stands for (D-354)',
+    description: 'The getpack job step it stands for (D-354)',
   })
   milestone!: ErpJobMilestoneRefDto | null;
 
@@ -1490,7 +1490,7 @@ export class ErpProductionOrderSummaryDto {
   @ApiProperty({ example: 'MO-2610-0005' })
   moNo!: string;
 
-  @ApiProperty({ enum: ERP_MO_SOURCES, enumName: 'ErpProductionSource', example: 'packio_job' })
+  @ApiProperty({ enum: ERP_MO_SOURCES, enumName: 'ErpProductionSource', example: 'getpack_job' })
   source!: string;
 
   @ApiProperty({ example: 'JOB-2610-0012 · กล่องพับ' })
@@ -1525,7 +1525,7 @@ export class ErpProductionOrderSummaryDto {
 }
 
 export class ErpProductionOrderDto extends ErpProductionOrderSummaryDto {
-  @ApiProperty({ type: ErpRefDto, nullable: true, description: 'The Packio job (`code` = job number)' })
+  @ApiProperty({ type: ErpRefDto, nullable: true, description: 'The getpack job (`code` = job number)' })
   job!: ErpRefDto | null;
 
   @ApiProperty({ type: ErpRefDto, nullable: true, description: '`code` = the product SKU' })

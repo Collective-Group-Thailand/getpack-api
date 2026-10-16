@@ -94,7 +94,7 @@ function filesController(surface: ZoneSurface): Type<unknown> {
       type: PresignedUploadDto,
       example: {
         fileId: FILE_EXAMPLE.id,
-        uploadUrl: 'https://packio-files.s3.example.com/…',
+        uploadUrl: 'https://getpack-files.s3.example.com/…',
         headers: { 'Content-Type': 'application/pdf' },
         multipart: null,
         expiresAt: '2026-09-23T14:20:00+07:00',
@@ -174,8 +174,8 @@ function filesController(surface: ZoneSurface): Type<unknown> {
         partSize: 8_388_608,
         uploaded: [{ partNumber: 1, etag: '"etag-1"', sizeBytes: 8_388_608 }],
         parts: [
-          { partNumber: 1, url: 'https://packio-files.s3.example.com/…&partNumber=1' },
-          { partNumber: 2, url: 'https://packio-files.s3.example.com/…&partNumber=2' },
+          { partNumber: 1, url: 'https://getpack-files.s3.example.com/…&partNumber=1' },
+          { partNumber: 2, url: 'https://getpack-files.s3.example.com/…&partNumber=2' },
         ],
         expiresAt: '2026-09-23T14:20:00+07:00',
       },
@@ -235,7 +235,7 @@ function filesController(surface: ZoneSurface): Type<unknown> {
       description: 'Signed URL',
       type: DownloadUrlDto,
       example: {
-        url: 'https://packio-files.s3.example.com/…&X-Amz-Expires=300',
+        url: 'https://getpack-files.s3.example.com/…&X-Amz-Expires=300',
         expiresAt: '2026-09-23T14:10:00+07:00',
       },
     })

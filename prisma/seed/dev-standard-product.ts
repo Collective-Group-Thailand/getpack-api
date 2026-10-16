@@ -24,7 +24,7 @@ export interface DevStandardProduct {
  * An obviously fake standard-product setup for `pnpm dev` and the tests (D-005, U-B6 standard product): `[DEV]` names,
  * made-up prices. It extends the dev folding factory F9001 (one launch factory serves every type, D-101) with a tier-A
  * `standard_product` price list: buy-price tiers for a bottle (sold by the piece, 18 g) and a stock pouch (sold by the
- * pouch), capacity and Packio sell margins (a flat 30 % fallback, fix cost 0.50 per piece, as legacy's single
+ * pouch), capacity and getpack sell margins (a flat 30 % fallback, fix cost 0.50 per piece, as legacy's single
  * `locopack_margin`). Idempotent. Needs `seedDevFolding` (factory F9001).
  */
 export async function seedDevStandardProduct(
@@ -137,7 +137,7 @@ export async function seedDevStandardProduct(
     data: { lineCount, contentSha256, status: 'approved', decidedAt: new Date() },
   });
 
-  // Packio's sell side for standard products (fake values; D-063 admins set the real ones).
+  // getpack's sell side for standard products (fake values; D-063 admins set the real ones).
   const sellVersion = { versionNo: 1, effectiveFrom: DEV_EFFECTIVE_FROM, reason: 'dev seed (fake)' };
   await tx.sellMarginTable.create({
     data: {

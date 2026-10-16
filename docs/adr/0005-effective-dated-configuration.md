@@ -4,7 +4,7 @@
 **Decision ids:** D-012, D-020, D-021, D-022, D-040, D-042, D-052, D-063, D-071, D-076, D-131 … (every value a decision marks as configurable) · `00-master-plan.md` §5 · CLAUDE.md hard rules
 
 ## Context
-Almost every commercial and financial rule in Packio is a number the business will change: margin floor (D-012), instalment threshold (D-020), tolerance (D-021), payout split and retention (D-022), buy-price tables (D-040/D-042), discount limits and approval tiers (D-052), revision fees (D-071), QC sampling (D-076), point value (D-131), VAT rate (`accounting-design.md` §2)… Orders, quotes and ledger postings must be explainable years later with the values that applied at the time, and auditors must see who changed what, when and why.
+Almost every commercial and financial rule in getpack is a number the business will change: margin floor (D-012), instalment threshold (D-020), tolerance (D-021), payout split and retention (D-022), buy-price tables (D-040/D-042), discount limits and approval tiers (D-052), revision fees (D-071), QC sampling (D-076), point value (D-131), VAT rate (`accounting-design.md` §2)… Orders, quotes and ledger postings must be explainable years later with the values that applied at the time, and auditors must see who changed what, when and why.
 
 ## Decision
 - **Never a constant in code.** A value that a decision marks as configurable is a setting (or a row of a configuration table) with effective dates, audited, and editable only by the role the decision names (platform thresholds: Superadmin, D-063). The code comment cites the decision id.

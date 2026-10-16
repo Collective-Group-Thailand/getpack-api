@@ -11,7 +11,7 @@ import { type PouchTables } from './tables';
 /**
  * Loads what the pouch calculator reads (U-B6 pouch): the configuration resolved against the platform catalogue
  * (pouch pattern and its shape, film, print colour set, options) and per factory price-list version one option per
- * print type with its `pl_pouch_*` rows in line order and Packio's sell side. Every version id used is returned.
+ * print type with its `pl_pouch_*` rows in line order and getpack's sell side. Every version id used is returned.
  */
 
 /** A pouch configuration as the API receives it: catalogue public ids, millimetres. */

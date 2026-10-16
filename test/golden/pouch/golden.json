@@ -7029,7 +7029,7 @@
   },
   {
     "key": "18-fix-cost-design",
-    "title": "A Packio fix cost per job and graphic design",
+    "title": "A getpack fix cost per job and graphic design",
     "input": {
       "quantities": [3000],
       "patternId": "P44",

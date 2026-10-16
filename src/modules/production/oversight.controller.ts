@@ -112,7 +112,7 @@ export class AdminOversightController {
   @Can('production.read')
   @ApiEndpoint({
     id: 'admin.inspections.list',
-    summary: 'List Packio inspections',
+    summary: 'List getpack inspections',
     description:
       'Planned at release from the risk rules (D-076: value ≥ THB 300,000 → 100 %, 100,000–299,999 → 20 %, the ' +
       'first 3 jobs of a factory → 100 %, a factory above 3 % defects over 90 days → 50 %, special finishes or ' +

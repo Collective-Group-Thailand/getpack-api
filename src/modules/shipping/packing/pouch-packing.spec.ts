@@ -17,7 +17,7 @@ describe('packPouch (legacy calShippingCostPouch:710-788)', () => {
     expect(packPouch({ qty: 2450 }, HEAVY).cartons).toEqual([
       { count: 1, wCm: 33, lCm: 52, hCm: 23, weightKg: 31 },
     ]);
-    // On a light carrier legacy left 2 001+ uncharged; Packio packs 2 000 + 450 (quirk P32).
+    // On a light carrier legacy left 2 001+ uncharged; getpack packs 2 000 + 450 (quirk P32).
     expect(packPouch({ qty: 2450 }, LIGHT).cartons).toEqual([{ count: 2, ...MEDIUM, weightKg: 21 }]);
   });
 

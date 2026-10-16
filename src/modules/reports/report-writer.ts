@@ -79,7 +79,7 @@ export async function writeReport(
     stream.on('error', reject);
   });
   const wb = new ExcelJS.stream.xlsx.WorkbookWriter({ stream, useStyles: true, useSharedStrings: false });
-  wb.creator = 'Packio';
+  wb.creator = 'getpack';
   wb.created = meta.generatedAt;
   const ws = wb.addWorksheet('Report', { views: [{ state: 'frozen', ySplit: 1 }] });
   ws.columns = def.columns.map((c, i) => ({

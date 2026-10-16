@@ -521,7 +521,7 @@ export class AuditSupportService {
   async pbcExport(actor: UserActor, month: string) {
     const p = await this.period(month);
     const wb = new ExcelJS.Workbook();
-    wb.creator = 'Packio';
+    wb.creator = 'getpack';
     wb.created = new Date();
     const sheet = (name: string, rows: Record<string, unknown>[]) => {
       const ws = wb.addWorksheet(name);
@@ -545,7 +545,7 @@ export class AuditSupportService {
         period: month,
         generatedAt: new Date().toISOString(),
         generatedBy: actor.publicId,
-        note: 'Prepared by client — Packio ledger export',
+        note: 'Prepared by client — getpack ledger export',
       },
     ]);
     const tb = await this.reports.trialBalance(month, month, false);

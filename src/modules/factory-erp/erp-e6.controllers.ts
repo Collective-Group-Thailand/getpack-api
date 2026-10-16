@@ -81,7 +81,7 @@ import { ErpLedgerRulesService } from './erp-ledger-rules.service';
 import { ErpWorkspace } from './erp-workspace.service';
 
 /**
- * Packio Factory ERP E6 (docs/prompts/E6-factory-general-ledger.md §12, D-385 – D-396): the factory's general
+ * getpack Factory ERP E6 (docs/prompts/E6-factory-general-ledger.md §12, D-385 – D-396): the factory's general
  * ledger under `/v1/partner/factories/{factoryId}/erp/ledger/*`, factory-private (D-317): another factory's id is
  * 404 and no staff endpoint reads `erp_gl_*`.
  */
@@ -982,7 +982,7 @@ export class PartnerErpJournalsController {
     idempotent: true,
     status: 200,
     body: { type: ErpGlMonthQuery, example: { month: '2026-10' } },
-    success: { status: 200, description: 'The file', type: ErpTaxExportResultDto, example: { url: 'https://files.packio.example/erp/journals-2026-10.csv?sig=example', fileName: 'journals-2026-10.csv', expiresAt: '2026-10-14T10:05:00+07:00', rows: 184 } },
+    success: { status: 200, description: 'The file', type: ErpTaxExportResultDto, example: { url: 'https://files.getpack.example/erp/journals-2026-10.csv?sig=example', fileName: 'journals-2026-10.csv', expiresAt: '2026-10-14T10:05:00+07:00', rows: 184 } },
     errors: WRITE,
   })
   async export(@CurrentActor() actor: Actor, @Param('factoryId', ParseUUIDPipe) factoryId: string, @Body() body: ErpGlMonthQuery) {

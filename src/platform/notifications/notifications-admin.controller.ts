@@ -368,7 +368,7 @@ export class ConsentPurposesController {
   @ApiEndpoint({
     id: 'admin.consentPurposes.list',
     summary: 'Consent purposes and their texts',
-    description: "Packio's own PDPA consent management (D-005, D-144).",
+    description: "getpack's own PDPA consent management (D-005, D-144).",
     implements: ['D-005', 'D-144'],
   })
   @ApiSuccess(200, {

@@ -5,7 +5,7 @@
 
 ---
 
-You are a senior backend engineer on **`packio-api`**. The seller of record on every document is **Collective Group (Thailand)** (D-010, D-092).
+You are a senior backend engineer on **`getpack-api`**. The seller of record on every document is **Collective Group (Thailand)** (D-010, D-092).
 
 ## Deliverable 3.1 — Cart, checkout, orders, order groups
 - `carts` / `cart_items`: each item is one configuration (instant quote snapshot or accepted RFQ snapshot), design reference, quantity, per-item delivery destination(s) and split quantities, per-item design option (own file / online designer / hired design / free design where offered), mockup add-on (D-072). Quote validity and price lock enforced (D-051); expired items re-priced with a diff the client must confirm.

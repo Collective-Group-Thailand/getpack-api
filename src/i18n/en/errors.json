@@ -330,7 +330,7 @@
     },
     "profile_locked": {
       "title": "Profile locked",
-      "detail": "Once the trial has started, legal data is changed only by the Packio Partner team."
+      "detail": "Once the trial has started, legal data is changed only by the getpack Partner team."
     },
     "invalid_transition": {
       "title": "Invalid status change",
@@ -346,7 +346,7 @@
     },
     "nothing_to_sign_off": {
       "title": "Nothing to sign off",
-      "detail": "This step was not entered by Packio staff on the factory's behalf."
+      "detail": "This step was not entered by getpack staff on the factory's behalf."
     },
     "bank_account_pending": {
       "title": "Bank account change pending",
@@ -382,7 +382,7 @@
     },
     "wrong_pricing_mode": {
       "title": "Not possible in this pricing mode",
-      "detail": "This factory works on a Packio rate card: it accepts or negotiates the card instead of proposing its own list (D-042)."
+      "detail": "This factory works on a getpack rate card: it accepts or negotiates the card instead of proposing its own list (D-042)."
     },
     "no_price_list_tier": {
       "title": "Tier holds no price list",
@@ -472,7 +472,7 @@
     },
     "carrier_account_missing": {
       "title": "No carrier account",
-      "detail": "Register Packio's own account with the carrier first."
+      "detail": "Register getpack's own account with the carrier first."
     },
     "carrier_refused": {
       "title": "Carrier refused",
@@ -1024,7 +1024,7 @@
     },
     "inspection_pending": {
       "title": "Inspection pending",
-      "detail": "The Packio inspection of this job has not passed"
+      "detail": "The getpack inspection of this job has not passed"
     },
     "carrier_unavailable": {
       "title": "Carrier unavailable",
@@ -1798,11 +1798,11 @@
     },
     "support_grant_active": {
       "title": "Support access already granted",
-      "detail": "Packio support already has access to this factory — revoke it before granting again"
+      "detail": "getpack support already has access to this factory — revoke it before granting again"
     },
     "support_not_granted": {
       "title": "No support access",
-      "detail": "The factory owner has not granted Packio support access, or it has expired"
+      "detail": "The factory owner has not granted getpack support access, or it has expired"
     },
     "ledger_period_closed": {
       "title": "Period closed",
@@ -1944,11 +1944,11 @@
     },
     "lead_existing_customer": {
       "title": "Already a customer",
-      "detail": "This contact is already a Packio customer"
+      "detail": "This contact is already a getpack customer"
     },
     "lead_existing_factory": {
       "title": "Already a factory",
-      "detail": "This factory is already on Packio"
+      "detail": "This factory is already on getpack"
     },
     "lead_taken": {
       "title": "Lead taken",

@@ -57,7 +57,7 @@ export interface PricedStep {
   /** The run the factory produces (minimum production run applied). */
   productionRun: number;
   buyPrice: number;
-  /** Packio's margin on the quote net of VAT (D-012 floor check). */
+  /** getpack's margin on the quote net of VAT (D-012 floor check). */
   marginPct: number;
   leadTimeDays: number;
   unitPrice: number;

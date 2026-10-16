@@ -1305,7 +1305,7 @@ model DeepLinkToken {
   tokenHash      Bytes     @unique(map: "ux_deep_link_tokens__token_hash") @map("token_hash")
   notificationId BigInt    @unique(map: "ux_deep_link_tokens__notification_id") @map("notification_id")
   userId         BigInt    @map("user_id")
-  /// The zone of packio-web: `store`, `admin` or `partner`.
+  /// The zone of getpack-web: `store`, `admin` or `partner`.
   surface        String
   /// The page, relative to the zone (`/account/orders/{id}`).
   path           String

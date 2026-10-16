@@ -42,7 +42,7 @@ function fakeDesignerPdf(w: number, h: number, l: number, o: DesignerPdfOptions)
     title: o.title,
     styleCode: o.styleCode,
     keywords: o.keywords,
-    producer: 'Packio designer PDF (fake-dieline@0)',
+    producer: 'getpack designer PDF (fake-dieline@0)',
     bleedMm: o.bleedMm,
     safeMm: o.safeMm,
   });

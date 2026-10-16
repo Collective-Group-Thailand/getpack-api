@@ -45,7 +45,7 @@ const companyParam = ApiParam({ name: 'companyId', format: 'uuid' });
 const clientParam = ApiParam({ name: 'clientId', format: 'uuid' });
 const subscriptionParam = ApiParam({ name: 'subscriptionId', format: 'uuid' });
 const DOWNLOAD_EXAMPLE = {
-  url: 'https://packio-files.s3.example.com/…&X-Amz-Expires=300',
+  url: 'https://getpack-files.s3.example.com/…&X-Amz-Expires=300',
   expiresAt: '2026-10-05T10:05:00+07:00',
 };
 const SCOPED =
@@ -343,7 +343,7 @@ export class B2bWebhooksController {
     examples: {
       default: {
         value: {
-          url: 'https://erp.example.com/packio/webhooks',
+          url: 'https://erp.example.com/getpack/webhooks',
           eventTypes: ['order.placed', 'shipment.delivered'],
         },
       },
@@ -354,8 +354,8 @@ export class B2bWebhooksController {
     summary: 'Subscribe to my company’s events',
     description:
       'Order (`order.placed`, `order.updated`), shipment (`shipment.shipped`, `shipment.delivered`) and document ' +
-      '(`document.issued`) events of the company are POSTed to the HTTPS `url` with `Packio-Event`, ' +
-      '`Packio-Delivery` and `Packio-Signature: t=<unix>,v1=<hex HMAC-SHA256 of "<t>.<body>">` (the secret is shown ' +
+      '(`document.issued`) events of the company are POSTed to the HTTPS `url` with `Getpack-Event`, ' +
+      '`Getpack-Delivery` and `Getpack-Signature: t=<unix>,v1=<hex HMAC-SHA256 of "<t>.<body>">` (the secret is shown ' +
       'once); a body holds ids, codes and statuses only. Non-2xx answers are retried after 1, 5, 30 min, 2 h and ' +
       `12 h, then the delivery fails (D-291). ${SCOPED}`,
     implements: DECISIONS,

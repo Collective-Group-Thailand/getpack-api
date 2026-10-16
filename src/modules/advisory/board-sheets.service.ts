@@ -59,7 +59,7 @@ export class BoardSheetsService implements OnModuleInit {
   ) {}
 
   onModuleInit(): void {
-    // A factory reads the signed sheets Packio keeps for it (D-044); staff read them with `files.read`.
+    // A factory reads the signed sheets getpack keeps for it (D-044); staff read them with `files.read`.
     this.files.registerFileReader('board_strength_sheets', async (actor, file) => {
       if (!(actor.type === 'api_client' || (actor.type === 'user' && actor.audience === 'partner')))
         return false;

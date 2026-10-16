@@ -1,7 +1,7 @@
 # Independent transcription of legacy service pricing for the U-B6 service golden cases: the CS service page
 # (legacy/locopack-web/resources/js/components/service-orders/cs.vue:381-429, JavaScript) and the PHP designer payable
 # (app/Helpers/helpers.php:1692-1702, 3724-3736). Written from the sources, NOT from the TypeScript port. Python floats
-# are IEEE doubles like JavaScript's and PHP's. PACKIO: the margin is the `service` sell table (legacy
+# are IEEE doubles like JavaScript's and PHP's. GETPACK: the margin is the `service` sell table (legacy
 # config('locopack.service_locopack_margin')), VAT the dated rate (legacy literal 1.07); a price line's quantity
 # multiplies the unit amounts (legacy quantity 1).
 import math
@@ -71,7 +71,7 @@ def manual(case):
         return dict(error=f'{e.code}: {e.detail}', amounts=None, freelancerPayable=None)
 
 
-def margin_for(sell, qty):  # PACKIO: the sell table on the quantity
+def margin_for(sell, qty):  # GETPACK: the sell table on the quantity
     for l in sell['marginLines']:
         if (l['qtyMin'] is None or l['qtyMin'] <= qty) and (l['qtyMax'] is None or l['qtyMax'] >= qty):
             return l['valuePct']

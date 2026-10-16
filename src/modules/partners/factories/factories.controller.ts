@@ -342,7 +342,7 @@ export class AdminFactoriesController {
     summary: 'Record the state of an onboarding step',
     description:
       'Staff mark a step submitted, approved, rejected or waived. With assisted onboarding the step is flagged as entered by ' +
-      'Packio and the factory signs it off (D-100 note).',
+      'getpack and the factory signs it off (D-100 note).',
     implements: ['D-011', 'D-100'],
   })
   @ApiBody({
@@ -508,9 +508,9 @@ export class PartnerFactoriesController {
   @stepParam
   @ApiEndpoint({
     id: 'partner.factories.signOffOnboardingStep',
-    summary: 'Sign off data Packio entered for my factory',
+    summary: 'Sign off data getpack entered for my factory',
     description:
-      'Assisted onboarding: the factory confirms the data Packio staff entered for this step (D-100 note).',
+      'Assisted onboarding: the factory confirms the data getpack staff entered for this step (D-100 note).',
     implements: ['D-100', 'D-011'],
   })
   @ApiSuccess(200, {

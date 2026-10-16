@@ -419,7 +419,7 @@ export class ErpQuotationsService {
   // ----------------------------------------------------------------------------------- helpers
 
   linkUrl(token: string): string {
-    const web = this.config.get('STOREFRONT_BASE_URL') ?? 'https://www.packio.invalid';
+    const web = this.config.get('STOREFRONT_BASE_URL') ?? 'https://www.getpack.invalid';
     return `${web.replace(/\/$/, '')}/q/${token}`;
   }
 

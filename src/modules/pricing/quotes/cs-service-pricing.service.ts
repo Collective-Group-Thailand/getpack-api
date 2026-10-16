@@ -31,7 +31,7 @@ const money = (n: number) => formatMoney(n);
 
 /**
  * A service priced from the amount CS enters (U-B6 service, D-194): legacy `cs/service` (`cs.vue:381-429`) computed in
- * the browser and trusted it; Packio computes it server-side with the `service` sell table's margin and the dated VAT.
+ * the browser and trusted it; getpack computes it server-side with the `service` sell table's margin and the dated VAT.
  */
 @Injectable()
 export class CsServicePricingService {

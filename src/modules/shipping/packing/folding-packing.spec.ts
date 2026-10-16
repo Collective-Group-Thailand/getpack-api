@@ -5,7 +5,7 @@ import { cartonsPerPallet, shipment } from './shipment';
  * Vectors derived by hand from legacy `app/Libraries/Shipping/FoldingUtil.php` and
  * `ShippingUtils::calShippingCostFolding` (`ShippingUtils.php:463-600`). The carton spec uses legacy's
  * 60 cm grid and stack height and Ninjavan's 20 kg limit (`Ninjavan.php:41-49`) as a test fixture
- * only — Packio's values are the unset setting `shipping.carton_spec`.
+ * only — getpack's values are the unset setting `shipping.carton_spec`.
  */
 const LEGACY_LIKE = { gridCm: 60, maxStackHeightCm: 60, maxWeightKg: 20 };
 
