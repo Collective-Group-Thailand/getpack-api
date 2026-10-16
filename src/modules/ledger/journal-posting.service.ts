@@ -1,5 +1,7 @@
 import { type Actor, actorColumns } from '@common/context/actor';
 import { DomainException } from '@common/errors/domain.exception';
+import { dateOnly } from '@common/ledger-core/dates';
+import { type DimensionKey } from '@common/ledger-core/template';
 import { formatMoney, MoneyDecimal, type MoneyValue } from '@common/money/money';
 import { type Tx } from '@database/prisma.service';
 import {
@@ -13,9 +15,7 @@ import {
 } from '@generated/prisma/client';
 import { Injectable } from '@nestjs/common';
 
-import { dateOnly } from '@common/ledger-core/dates';
 import { PeriodsService } from './periods.service';
-import { type DimensionKey } from '@common/ledger-core/template';
 
 const SALES_CHANNELS: readonly string[] = ['web', 'cs', 'line', 'b2b'];
 
