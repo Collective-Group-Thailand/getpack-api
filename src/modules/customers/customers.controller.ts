@@ -487,6 +487,30 @@ export class AdminCustomersController {
     return addressDto(row);
   }
 
+  @Get(':customerId/addresses/:addressId')
+  @Can('customers.read')
+  @customerParam
+  @addressParam
+  @ApiEndpoint({
+    id: 'admin.customers.getAddress',
+    summary: "Get one of a customer's addresses",
+    description: 'With its `ETag`, which `admin.customers.updateAddress` needs as `If-Match` (D-142, D-424).',
+    implements: DECISIONS,
+  })
+  @ApiEtag()
+  @ApiSuccess(200, { description: 'Address', type: AddressDto, example: ADDRESS_EXAMPLE })
+  @ApiStandardErrors('http.not_found', 'validation.failed')
+  async getAddress(
+    @Param('customerId', ParseUUIDPipe) customerId: string,
+    @Param('addressId', ParseUUIDPipe) addressId: string,
+    @Res({ passthrough: true }) res: Response,
+  ) {
+    const id = await this.customers.customerIdOf(customerId);
+    const row = await this.customers.address(id, addressId);
+    res.setHeader('ETag', addressEtag(row));
+    return addressDto(row);
+  }
+
   @Patch(':customerId/addresses/:addressId')
   @Can('customers.manage')
   @customerParam

@@ -30,6 +30,8 @@ export const ADMIN_MENU: readonly MenuEntry[] = [
   { key: 'claims', path: '/admin/claims', permission: 'claims.read' },
   { key: 'partners', path: '/admin/partners', permission: 'partners.read' },
   { key: 'catalogue', path: '/admin/catalogue', permission: 'catalog.read' },
+  // D-424: the Structure Advisor's log, replays and staff runs.
+  { key: 'advisor', path: '/admin/advisor', permission: 'advisory.read' },
   // D-411: the style library desk and the screens the web reached only through other pages.
   { key: 'style_library', path: '/admin/style-library', permission: 'styles.read' },
   {
@@ -57,6 +59,12 @@ export const ADMIN_MENU: readonly MenuEntry[] = [
   { key: 'customers', path: '/admin/customers', permission: 'customers.read' },
   { key: 'companies', path: '/admin/companies', permission: 'companies.read' },
   { key: 'discount_memos', path: '/admin/discount-memos', permission: 'discount_memos.read' },
+  // D-424: pricing and policies — sell margins, payment schedule templates, the guarantee policy.
+  {
+    key: 'pricing',
+    path: '/admin/pricing',
+    permission: ['margin.read', 'payment_schedule_templates.manage', 'guarantee_policies.read'],
+  },
   // D-423: the sales agent programme — applications, agents, leads, commission, statements, plans.
   { key: 'agents', path: '/admin/agents', permission: 'agents.read' },
   {
