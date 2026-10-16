@@ -414,6 +414,51 @@ function text(value: unknown): string {
  * Spec lines of an RFQ quote: the dimensions, then each spec field in the admin schema's order, labelled by
  * its JSON Schema `title` (Thai) and `x-title-en` (English), falling back to the field name.
  */
+/** Labels for the spec keys RFQ forms and clients commonly send when the type's schema does not title them. */
+const RFQ_SPEC_LABELS: Record<string, [string, string]> = {
+  material: ['วัสดุ', 'Material'],
+  materials: ['วัสดุ', 'Material'],
+  paper: ['กระดาษ', 'Paper'],
+  board: ['กระดาษ', 'Board'],
+  flute: ['ลอน', 'Flute'],
+  thickness: ['ความหนา', 'Thickness'],
+  printing: ['การพิมพ์', 'Printing'],
+  print: ['การพิมพ์', 'Printing'],
+  colors: ['จำนวนสี', 'Colours'],
+  colours: ['จำนวนสี', 'Colours'],
+  finishing: ['งานตกแต่ง', 'Finishing'],
+  finish: ['งานตกแต่ง', 'Finishing'],
+  coating: ['การเคลือบ', 'Coating'],
+  lamination: ['การเคลือบลามิเนต', 'Lamination'],
+  structure: ['โครงสร้าง', 'Structure'],
+  style: ['แบบกล่อง', 'Style'],
+  shape: ['รูปทรง', 'Shape'],
+  closure: ['การปิด', 'Closure'],
+  window: ['หน้าต่าง', 'Window'],
+  insert: ['ไส้ใน', 'Insert'],
+  handle: ['หูหิ้ว', 'Handle'],
+  usage: ['การใช้งาน', 'Use'],
+  use: ['การใช้งาน', 'Use'],
+  product: ['สินค้าที่บรรจุ', 'Product inside'],
+  weight: ['น้ำหนัก', 'Weight'],
+  capacity: ['ความจุ', 'Capacity'],
+  volume: ['ปริมาตร', 'Volume'],
+  quantity: ['จำนวน', 'Quantity'],
+  notes: ['หมายเหตุ', 'Notes'],
+  note: ['หมายเหตุ', 'Notes'],
+  remark: ['หมายเหตุ', 'Notes'],
+  reference: ['ตัวอย่างอ้างอิง', 'Reference'],
+};
+
+/** `printColours` / `print_colours` → `Print colours`. */
+function wordsOf(key: string): string {
+  const spaced = key
+    .replace(/[_-]+/g, ' ')
+    .replace(/([a-z0-9])([A-Z])/g, '$1 $2')
+    .trim();
+  return spaced ? spaced.charAt(0).toUpperCase() + spaced.slice(1).toLowerCase() : key;
+}
+
 export function rfqSpecLines(
   schema: unknown,
   spec: Record<string, unknown>,
@@ -439,8 +484,14 @@ export function rfqSpecLines(
   ];
   for (const key of keys) {
     const prop = properties[key] ?? {};
-    const th = typeof prop.title === 'string' ? prop.title : key;
-    const en = typeof prop['x-title-en'] === 'string' ? prop['x-title-en'] : th;
+    const known = RFQ_SPEC_LABELS[key.toLowerCase()];
+    const title = typeof prop.title === 'string' ? prop.title : null;
+    // A key the schema does not title (a type with no schema, a client's own key): a known
+    // label, else the key as words — never a raw `material` on a customer's quotation. A titled
+    // key without an English title reads the Thai title in both languages, as the form does.
+    const th = title ?? known?.[0] ?? wordsOf(key);
+    const en =
+      typeof prop['x-title-en'] === 'string' ? prop['x-title-en'] : (title ?? known?.[1] ?? wordsOf(key));
     const value = text(spec[key]);
     lines.push({ key, labelTh: th, labelEn: en, valueTh: value, valueEn: value });
   }
