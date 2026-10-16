@@ -36,6 +36,7 @@ Then run `pnpm contract:build && pnpm contract:lint` and commit `contract/openap
 | `pnpm contract:build` | regenerates `contract/openapi.json` — commit it with every endpoint change |
 | `pnpm contract:lint` | Spectral with the Packio ruleset (`contract/spectral/`): operationId, summary, decision id, security, full status-code set, examples, fake data only |
 | `pnpm build` · `pnpm start` · `pnpm start:worker` | compile and run the API / worker from `dist/` |
+| `pnpm build:fast` | SWC compile of `src`, `scripts` and `prisma/seed` into `dist/` without type-checking (~20 s); the seed and script commands below use it — `build` and `contract:build` keep `tsc` (the contract needs the Swagger plugin) |
 | `pnpm db:migrate` · `pnpm db:seed` · `pnpm db:seed:dev` | apply migrations; reference data from decisions; fake dev users (`<role>@example.invalid`, password `DEV_SEED_PASSWORD`) |
 | `pnpm rbac:build` | regenerates `docs/rbac.md` from the IAM catalogues (a unit test fails on drift) |
 
