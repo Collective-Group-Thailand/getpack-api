@@ -4,14 +4,19 @@
  * runs the same step. Refuses a database whose name does not contain `uat`, and writes nothing without `--confirm`.
  */
 import { NestFactory } from '@nestjs/core';
+import { config } from 'dotenv';
 
 import { publishUatStyles } from '../prisma/seed/uat/uat-styles';
 import { AppModule } from '../src/app.module';
 import { databaseName, isUatDatabase } from './uat-guard';
 
+config({ quiet: true });
+
 async function main(): Promise<void> {
   if (!isUatDatabase(process.env.DATABASE_URL)) {
-    console.error(`uat:styles: refused — not a UAT database (${databaseName(process.env.DATABASE_URL) ?? 'none'})`);
+    console.error(
+      `uat:styles: refused — not a UAT database (${databaseName(process.env.DATABASE_URL) ?? 'none'})`,
+    );
     process.exit(2);
   }
   const app = await NestFactory.createApplicationContext(AppModule, { logger: ['error'] });

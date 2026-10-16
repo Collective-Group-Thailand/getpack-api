@@ -11,6 +11,7 @@
   "scripts": {
     "postinstall": "prisma generate",
     "build": "NODE_OPTIONS=--max-old-space-size=6144 nest build",
+    "build:fast": "node -e \"require('node:fs').rmSync('dist',{recursive:true,force:true})\" && swc src scripts prisma/seed -d dist --config-file .swcrc --copy-files --ignore \"**/*.spec.ts\" --quiet && node -e \"require('node:fs').copyFileSync('package.json','dist/package.json')\"",
     "start": "node dist/src/main.js",
     "start:worker": "node dist/src/worker.js",
     "dev": "nest start --watch -b swc --path tsconfig.build.json",
@@ -29,19 +30,19 @@
     "prisma:generate": "prisma generate",
     "db:migrate": "prisma migrate deploy",
     "db:migrate:dev": "prisma migrate dev",
-    "db:seed": "NODE_OPTIONS=--max-old-space-size=6144 nest build && node dist/prisma/seed/run.js reference",
-    "db:seed:dev": "NODE_OPTIONS=--max-old-space-size=6144 nest build && node dist/prisma/seed/run.js dev",
-    "db:seed:uat": "NODE_OPTIONS=--max-old-space-size=6144 nest build && node dist/prisma/seed/run.js uat",
+    "db:seed": "pnpm build:fast && node dist/prisma/seed/run.js reference",
+    "db:seed:dev": "pnpm build:fast && node dist/prisma/seed/run.js dev",
+    "db:seed:uat": "pnpm build:fast && node dist/prisma/seed/run.js uat",
     "contract:observed-errors": "node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON scripts/contract-observed-errors.ts",
     "contract:lint": "spectral lint contract/openapi.json --ruleset contract/spectral/.spectral.yaml --fail-severity warn",
-    "rbac:build": "NODE_OPTIONS=--max-old-space-size=6144 nest build && node dist/scripts/rbac-build.js",
-    "launch:settings": "NODE_OPTIONS=--max-old-space-size=6144 nest build && node dist/scripts/launch-settings-build.js",
-    "release:check": "NODE_OPTIONS=--max-old-space-size=6144 nest build && node dist/scripts/release-hygiene.js",
-    "styles:import": "NODE_OPTIONS=--max-old-space-size=6144 nest build && node dist/scripts/styles-import.js",
-    "cms:home-photos": "NODE_OPTIONS=--max-old-space-size=6144 nest build && node dist/scripts/cms-home-photos.js",
+    "rbac:build": "pnpm build:fast && node dist/scripts/rbac-build.js",
+    "launch:settings": "pnpm build:fast && node dist/scripts/launch-settings-build.js",
+    "release:check": "pnpm build:fast && node dist/scripts/release-hygiene.js",
+    "styles:import": "pnpm build:fast && node dist/scripts/styles-import.js",
+    "cms:home-photos": "pnpm build:fast && node dist/scripts/cms-home-photos.js",
     "dieline:vendor": "bash scripts/dieline-vendor.sh",
-    "styles:recipes-from-engine": "NODE_OPTIONS=--max-old-space-size=6144 nest build && node dist/scripts/styles-recipes-from-engine.js",
-    "uat:styles": "NODE_OPTIONS=--max-old-space-size=6144 nest build && node dist/scripts/uat-style-fixture.js",
+    "styles:recipes-from-engine": "pnpm build:fast && node dist/scripts/styles-recipes-from-engine.js",
+    "uat:styles": "pnpm build:fast && node dist/scripts/uat-style-fixture.js",
     "dev:tsc": "NODE_OPTIONS=--max-old-space-size=8192 nest start --watch"
   },
   "dependencies": {
@@ -138,6 +139,9 @@
       "cpu-features",
       "ssh2",
       "unrs-resolver"
-    ]
+    ],
+    "patchedDependencies": {
+      "prisma@7.10.0": "patches/prisma@7.10.0.patch"
+    }
   }
 }
