@@ -3,6 +3,12 @@
 Contract-facing changes per release. The contract itself is `contract/openapi.json`; mappings for `getpack-web` are in
 `docs/contract-requests-triage.md`.
 
+## v0.73.0 — Image thumbnails
+
+Additive. `store.catalog.getImage` takes `?size=thumb`: the 400 px WebP thumbnail the file worker makes of every
+image (about a tenth of the original), the original when the file has none. Cards and lists use it; galleries keep
+the original.
+
 ## v0.72.0 — Styles in storefront search
 
 Additive. `store.catalog.search` gains the kind `style` (key = base code): published style-library bases, matched on
