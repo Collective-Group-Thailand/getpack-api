@@ -3,6 +3,12 @@
 Contract-facing changes per release. The contract itself is `contract/openapi.json`; mappings for `getpack-web` are in
 `docs/contract-requests-triage.md`.
 
+## v0.72.0 — Styles in storefront search
+
+Additive. `store.catalog.search` gains the kind `style` (key = base code): published style-library bases, matched on
+their names, code and search synonyms, with the card photo as `imageUrl`. Results are now the best 8 of each kind,
+40 in all (was 20 overall), so one kind cannot crowd the others out.
+
 ## v0.71.0 — Unlabelled reference photos; catalogue readiness
 
 Decision D-426 amended (product owner, 2026-10-17: the storefront says nothing about where a photo came from).
