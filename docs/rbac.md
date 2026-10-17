@@ -11,9 +11,9 @@ Legend: ● granted · ◆ granted and sensitive (cost/margin data, D-141).
 
 | Permission | `superadmin` | `c_level` | `vp` | `director` | `admin` | `cs` | `cs_lead` | `prepress` | `finance` | `finance_manager` | `logistics` | `marketing` | `sales_manager` | `partner_manager` | `auditor` | `dpo` |
 |---|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|
-| `settings.read` — Read platform settings and their history | ● | ● | ● | ● | ● |  |  |  | ● | ● |  |  | ● | ● | ● |  |
+| `settings.read` — Read platform settings and their history | ● | ● | ● | ● | ● |  | ● | ● | ● | ● |  | ● | ● | ● | ● |  |
 | `settings.read_sensitive` — Read settings flagged sensitive | ◆ | ◆ |  |  |  |  |  |  |  | ◆ |  |  |  |  |  |  |
-| `settings.change` — Create a new effective-dated setting version (D-063) | ● |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |
+| `settings.change` — Create a new effective-dated setting version (D-063) | ● |  |  |  | ● |  | ● | ● |  | ● |  | ● | ● | ● |  |  |
 | `feature_flags.read` — Read feature flags | ● |  |  |  | ● |  |  |  |  |  |  |  |  |  |  |  |
 | `feature_flags.manage` — Change feature flags | ● |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |
 | `entities.manage` — Manage legal entities (D-092) | ● |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |
