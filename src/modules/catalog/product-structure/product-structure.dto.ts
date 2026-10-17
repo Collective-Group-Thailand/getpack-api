@@ -367,8 +367,10 @@ export class CatalogProductImageDto {
     type: 'object',
     additionalProperties: true,
     nullable: true,
-    example: { material: 'art-card-350' },
-    description: 'Which material / colour / combination the image shows (legacy imagesets)',
+    example: { kind: 'photo', source: 'getpack', material: 'art-card-350' },
+    description:
+      'What the image is: `kind: photo` with `source` (`getpack`: a photograph uploaded here; `ai-render`: an ' +
+      'AI-rendered reference, D-426) and `alt {th,en}`; plus which material / colour / combination it shows (legacy imagesets)',
   })
   variant!: Record<string, unknown> | null;
 
@@ -571,6 +573,15 @@ export class PatternLinkInput {
   sort?: number;
 }
 
+/** The product's images in their new order — every current image once, the first leads (D-426). */
+export class ReorderImagesDto {
+  @ApiProperty({ type: [String], format: 'uuid', example: [EXAMPLE_IDS.image] })
+  @IsArray()
+  @ArrayMaxSize(100)
+  @IsUUID('all', { each: true })
+  imageIds!: string[];
+}
+
 export class ReplacePatternsDto {
   @ApiProperty({ type: [PatternLinkInput] })
   @ValidateNested({ each: true })
@@ -600,9 +611,16 @@ export class ReplaceOptionsDto {
 }
 
 export class AddImageDto {
-  @RefField({ example: EXAMPLE_IDS.file, description: 'Uploaded file (purpose `image`, `evidence` or `document`)' })
+  @RefField({
+    example: EXAMPLE_IDS.file,
+    description: 'Uploaded file (purpose `image`, `evidence` or `document`)',
+  })
   fileId!: string;
 
+  /*
+   * Without `sort` the photo leads (D-426: a photograph uploaded here replaces an AI render as the cover) and is
+   * tagged `{ kind: photo, source: getpack }` under whatever `variant` says; with `sort` it goes where asked.
+   */
   @ApiPropertyOptional({
     type: 'object',
     additionalProperties: true,

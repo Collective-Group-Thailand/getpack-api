@@ -101,7 +101,12 @@ export const stockProductDto = (row: StockProductRow): StockProductDto => ({
     valueId: a.value.publicId,
     valueCode: a.value.code,
   })),
-  images: row.images.map((i) => ({ id: i.publicId, fileId: i.fileObject.publicId, sort: i.sort })),
+  images: row.images.map((i) => ({
+    id: i.publicId,
+    fileId: i.fileObject.publicId,
+    sort: i.sort,
+    variant: (i.variant as Record<string, unknown> | null) ?? null,
+  })),
   updatedAt: toBangkokIso(row.updatedAt),
 });
 
@@ -123,7 +128,9 @@ export const STOCK_PRODUCT_EXAMPLE: StockProductDto = {
   seoPageId: null,
   status: 'active',
   attributes: [{ attribute: 'colour', valueId: STOCK_IDS.value, valueCode: 'clear' }],
-  images: [{ id: STOCK_IDS.image, fileId: STOCK_IDS.file, sort: 0 }],
+  images: [
+    { id: STOCK_IDS.image, fileId: STOCK_IDS.file, sort: 0, variant: { kind: 'photo', source: 'getpack' } },
+  ],
   updatedAt: TS,
 };
 

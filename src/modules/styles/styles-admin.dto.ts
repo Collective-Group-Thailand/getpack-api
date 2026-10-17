@@ -1,4 +1,5 @@
 import { PageQuery } from '@common/pagination/pagination.dto';
+import { LocalisedLabelDto } from '@modules/studio/studio.dto';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { Transform } from 'class-transformer';
 import { Type } from 'class-transformer';
@@ -47,6 +48,46 @@ export class StyleVariantCountsDto {
 
   @ApiProperty({ type: 'integer', example: 0 })
   publishable!: number;
+}
+
+/** The base's photo as curation sees it (D-426): the file, where it came from, its alt text. */
+export class AdminStylePhotoDto {
+  @ApiProperty({ format: 'uuid', example: STYLE_IDS.base })
+  fileId!: string;
+
+  @ApiProperty({
+    example: 'getpack',
+    description: '`getpack`: a photograph uploaded here; `ai-render`: an AI-rendered reference',
+  })
+  source!: string;
+
+  @ApiProperty({ type: LocalisedLabelDto })
+  alt!: LocalisedLabelDto;
+}
+
+export class SetStylePhotoDto {
+  @ApiProperty({
+    format: 'uuid',
+    example: STYLE_IDS.base,
+    description: 'Uploaded image file (purpose `image`)',
+  })
+  @IsUUID()
+  fileId!: string;
+
+  @ApiPropertyOptional({
+    example: 'กล่องฝาเสียบ ตัวอย่างจริง',
+    description: "Alt text; the base's Thai name without it",
+  })
+  @IsOptional()
+  @IsString()
+  @MaxLength(300)
+  altTh?: string;
+
+  @ApiPropertyOptional({ example: 'Tuck-end carton, photographed sample' })
+  @IsOptional()
+  @IsString()
+  @MaxLength(300)
+  altEn?: string;
 }
 
 export class StyleNamesApprovalDto {
@@ -113,6 +154,13 @@ export class AdminStyleBaseDto {
 
   @ApiProperty({ type: StyleNamesApprovalDto })
   namesApproval!: StyleNamesApprovalDto;
+
+  @ApiProperty({
+    type: AdminStylePhotoDto,
+    nullable: true,
+    description: "The photo customers see on the style's card (D-426); null: the rendered thumbnail",
+  })
+  photo!: AdminStylePhotoDto | null;
 
   @ApiProperty({
     type: String,
@@ -370,6 +418,7 @@ export const ADMIN_STYLE_EXAMPLE: AdminStyleBaseDto = {
   variants: { total: 228, active: 228, publishable: 0 },
   publishedAt: null,
   namesApproval: { marketingAt: null, prepressAt: null },
+  photo: null,
   referenceCode: null,
   referenceVerifiedAt: null,
   recipeVersion: null,

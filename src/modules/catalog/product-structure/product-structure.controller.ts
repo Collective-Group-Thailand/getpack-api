@@ -20,6 +20,7 @@ import {
   PatternDto,
   ProductTypeDto,
   ReferenceConfigurationDto,
+  ReorderImagesDto,
   ReplaceFluteTypesDto,
   ReplaceOptionsDto,
   ReplacePatternsDto,
@@ -280,6 +281,34 @@ export class CatalogProductRelationsController {
     @Res({ passthrough: true }) res: Response,
   ): Promise<object> {
     return this.respond(await this.service.addImage(staffActor(actor), id, ifMatch, body), res);
+  }
+
+  @Put(':id/images/order')
+  @Can('catalog.manage')
+  @ApiEndpoint({
+    id: 'admin.catalogProducts.reorderImages',
+    summary: "Reorder a catalogue product's images",
+    description:
+      'Every current image once, in the order the storefront shows them; the first is the cover (D-426). ' +
+      'Guarded by the product ETag.',
+    implements: ['D-005', 'D-426'],
+  })
+  @ApiConcurrency()
+  @ApiBody({ type: ReorderImagesDto, examples: { default: { value: { imageIds: [EXAMPLE_IDS.image] } } } })
+  @ApiSuccess(200, {
+    description: 'The catalogue product',
+    type: CatalogProductDto,
+    example: CATALOG_PRODUCT_EXAMPLE,
+  })
+  @ApiStandardErrors('http.bad_request', 'http.malformed_json', 'http.not_found', 'validation.failed')
+  async reorderImages(
+    @CurrentActor() actor: Actor,
+    @Param('id', ParseUUIDPipe) id: string,
+    @IfMatch() ifMatch: string | undefined,
+    @Body() body: ReorderImagesDto,
+    @Res({ passthrough: true }) res: Response,
+  ): Promise<object> {
+    return this.respond(await this.service.reorderImages(staffActor(actor), id, ifMatch, body), res);
   }
 
   @Delete(':id/images/:imageId')
