@@ -127,6 +127,17 @@ export class StockProductImageDto {
 
   @ApiProperty({ type: 'integer', example: 0 })
   sort!: number;
+
+  @ApiProperty({
+    type: 'object',
+    additionalProperties: true,
+    nullable: true,
+    example: { kind: 'photo', source: 'getpack' },
+    description:
+      'What the image is (D-426): `source` `getpack` for a photograph uploaded here, `ai-render` for an AI-rendered ' +
+      'reference; `alt {th,en}`. Null for an older upload.',
+  })
+  variant!: Record<string, unknown> | null;
 }
 
 export class StockProductDto {
@@ -267,6 +278,9 @@ export class AddStockImageDto {
   @RefField({ example: STOCK_IDS.file, description: 'Uploaded file' })
   fileId!: string;
 
+  /** Without it the photo leads and is tagged `{ kind: photo, source: getpack }` (D-426). */
   @SortField()
   sort?: number;
 }
+
+export { ReorderImagesDto } from '../product-structure/product-structure.dto';

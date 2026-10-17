@@ -11,7 +11,13 @@ import { type Response } from 'express';
 import { staffActor } from '../crud/catalog-crud.controller';
 import { CatalogCrudService, rowEtag } from '../crud/catalog-crud.service';
 import { type CrudRow } from '../crud/catalog-resource';
-import { AddStockImageDto, ReplaceStockAttributesDto, STOCK_IDS, StockProductDto } from './stock.dto';
+import {
+  AddStockImageDto,
+  ReorderImagesDto,
+  ReplaceStockAttributesDto,
+  STOCK_IDS,
+  StockProductDto,
+} from './stock.dto';
 import { STOCK_PRODUCT_EXAMPLE, stockProducts } from './stock.resources';
 import { StockProductsService } from './stock.service';
 
@@ -81,6 +87,34 @@ export class StockProductRelationsController {
     @Res({ passthrough: true }) res: Response,
   ): Promise<object> {
     return this.respond(await this.service.addImage(staffActor(actor), id, ifMatch, body), res);
+  }
+
+  @Put(':id/images/order')
+  @Can('catalog.manage')
+  @ApiEndpoint({
+    id: 'admin.catalogStockProducts.reorderImages',
+    summary: "Reorder a stock product's photos",
+    description:
+      'Every current photo once, in the order the storefront shows them; the first is the cover (D-426). ' +
+      'Guarded by the product ETag.',
+    implements: ['D-005', 'D-426'],
+  })
+  @ApiConcurrency()
+  @ApiBody({ type: ReorderImagesDto, examples: { default: { value: { imageIds: [STOCK_IDS.image] } } } })
+  @ApiSuccess(200, {
+    description: 'The stock product',
+    type: StockProductDto,
+    example: STOCK_PRODUCT_EXAMPLE,
+  })
+  @ApiStandardErrors('http.bad_request', 'http.malformed_json', 'http.not_found', 'validation.failed')
+  async reorderImages(
+    @CurrentActor() actor: Actor,
+    @Param('id', ParseUUIDPipe) id: string,
+    @IfMatch() ifMatch: string | undefined,
+    @Body() body: ReorderImagesDto,
+    @Res({ passthrough: true }) res: Response,
+  ): Promise<object> {
+    return this.respond(await this.service.reorderImages(staffActor(actor), id, ifMatch, body), res);
   }
 
   @Delete(':id/images/:imageId')

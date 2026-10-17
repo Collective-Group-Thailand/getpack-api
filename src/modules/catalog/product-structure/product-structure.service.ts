@@ -10,9 +10,15 @@ import { DomainEvents } from '@platform/domain-events/domain-events.service';
 
 import { CatalogCrudService, rowEtag } from '../crud/catalog-crud.service';
 import { jsonField } from '../crud/compact';
+import { orderedImages, uploadedPhotoVariant } from '../crud/image-order';
 import { RefResolver } from '../crud/ref-resolver';
 import { resolveOptionIds } from './option-refs';
-import { type AddImageDto, type ReplaceOptionsDto, type ReplacePatternsDto } from './product-structure.dto';
+import {
+  type AddImageDto,
+  type ReorderImagesDto,
+  type ReplaceOptionsDto,
+  type ReplacePatternsDto,
+} from './product-structure.dto';
 import {
   type CatalogProductRow,
   catalogProducts,
@@ -188,15 +194,33 @@ export class ProductStructureService {
   async addImage(actor: UserActor, publicId: string, ifMatch: string | undefined, input: AddImageDto) {
     return this.onCatalogProduct(actor, publicId, ifMatch, 'images', async (tx, product) => {
       const fileObjectId = await new RefResolver(tx).file(input.fileId, 'fileId');
+      if (input.sort === undefined)
+        await tx.catalogProductImage.updateMany({
+          where: { catalogProductId: product.id },
+          data: { sort: { increment: 1 } },
+        });
       await tx.catalogProductImage.create({
         data: {
           catalogProductId: product.id,
           fileObjectId,
-          variant: jsonField(input.variant),
-          sort: input.sort ?? product.images.length,
+          variant: jsonField(uploadedPhotoVariant(input.variant)),
+          sort: input.sort ?? 0,
           createdById: actor.userId,
         },
       });
+    });
+  }
+
+  async reorderImages(
+    actor: UserActor,
+    publicId: string,
+    ifMatch: string | undefined,
+    input: ReorderImagesDto,
+  ) {
+    return this.onCatalogProduct(actor, publicId, ifMatch, 'images', async (tx, product) => {
+      const ordered = orderedImages(product.images, input.imageIds);
+      for (const [sort, image] of ordered.entries())
+        await tx.catalogProductImage.update({ where: { id: image.id }, data: { sort } });
     });
   }
 

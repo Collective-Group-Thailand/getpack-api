@@ -8,7 +8,19 @@ import { ApiPaginated } from '@common/pagination/api-paginated.decorator';
 import { PageQuery } from '@common/pagination/pagination.dto';
 import { staffOrPartner } from '@modules/partners/partner-actor';
 import { ApiSurface } from '@modules/surfaces/surfaces';
-import { Body, Controller, Get, HttpCode, Param, ParseUUIDPipe, Patch, Post, Query } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Delete,
+  Get,
+  HttpCode,
+  Param,
+  ParseUUIDPipe,
+  Patch,
+  Post,
+  Put,
+  Query,
+} from '@nestjs/common';
 import { ApiBody, ApiParam } from '@nestjs/swagger';
 
 import { StyleImportUploadsService } from './style-import-uploads.service';
@@ -25,6 +37,8 @@ import {
   ConfirmStyleImportDto,
   IMPORT_PREVIEW_EXAMPLE,
   IMPORT_RUN_EXAMPLE,
+  SetStylePhotoDto,
+  STYLE_IDS,
   StyleImportFileDto,
   StyleImportPreviewDto,
   StyleImportResultDto,
@@ -112,6 +126,62 @@ export class AdminStylesController {
     @Body() body: UpdateStyleDto,
   ) {
     return this.styles.update(staffOrPartner(actor), id, ifMatch, body);
+  }
+
+  @Put(':styleId/photo')
+  @Can('styles.curate')
+  @styleParam
+  @ApiConcurrency()
+  @ApiEndpoint({
+    id: 'admin.styles.setPhoto',
+    summary: "Set the photo on a style's card",
+    description:
+      "A photograph uploaded here (`source: getpack`) replaces the AI-rendered reference (D-426) on the style's " +
+      "card, its variants and the configurator preview; served to customers once the file's scan is clean. " +
+      'Needs `If-Match` from `admin.styles.get`. Audited.',
+    implements: [...DECISIONS, 'D-426'],
+  })
+  @ApiBody({ type: SetStylePhotoDto, examples: { default: { value: { fileId: STYLE_IDS.base } } } })
+  @UseEtag((b: AdminStyleBaseDetailDto) => etagOf(b.id, b.version))
+  @ApiSuccess(200, {
+    description: 'The base',
+    type: AdminStyleBaseDetailDto,
+    example: ADMIN_STYLE_DETAIL_EXAMPLE,
+  })
+  @ApiStandardErrors('http.bad_request', 'http.malformed_json', 'http.not_found', 'validation.failed')
+  async setPhoto(
+    @CurrentActor() actor: Actor,
+    @Param('styleId', ParseUUIDPipe) id: string,
+    @IfMatch() ifMatch: string | undefined,
+    @Body() body: SetStylePhotoDto,
+  ) {
+    return this.styles.setPhoto(staffOrPartner(actor), id, ifMatch, body);
+  }
+
+  @Delete(':styleId/photo')
+  @Can('styles.curate')
+  @styleParam
+  @ApiConcurrency()
+  @ApiEndpoint({
+    id: 'admin.styles.clearPhoto',
+    summary: "Remove the photo from a style's card",
+    description:
+      'The card goes back to the rendered thumbnail; the stored file is kept (retention policy). Audited.',
+    implements: [...DECISIONS, 'D-426'],
+  })
+  @UseEtag((b: AdminStyleBaseDetailDto) => etagOf(b.id, b.version))
+  @ApiSuccess(200, {
+    description: 'The base',
+    type: AdminStyleBaseDetailDto,
+    example: ADMIN_STYLE_DETAIL_EXAMPLE,
+  })
+  @ApiStandardErrors('http.not_found', 'validation.failed')
+  async clearPhoto(
+    @CurrentActor() actor: Actor,
+    @Param('styleId', ParseUUIDPipe) id: string,
+    @IfMatch() ifMatch: string | undefined,
+  ) {
+    return this.styles.clearPhoto(staffOrPartner(actor), id, ifMatch);
   }
 
   @Get(':styleId/variants')

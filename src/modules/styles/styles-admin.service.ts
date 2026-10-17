@@ -3,7 +3,7 @@ import { DomainException } from '@common/errors/domain.exception';
 import { assertIfMatch, etagOf } from '@common/etag/etag';
 import { toBangkokIso } from '@common/time/bangkok';
 import { PrismaService, type Tx } from '@database/prisma.service';
-import { type Prisma } from '@generated/prisma/client';
+import { Prisma } from '@generated/prisma/client';
 import { PermissionResolver } from '@modules/iam/permission-resolver.service';
 import { Injectable } from '@nestjs/common';
 import { AuditService } from '@platform/audit/audit.service';
@@ -14,7 +14,9 @@ import { StylePublishingService } from './style-publishing.service';
 import {
   type AdminStyleBaseDetailDto,
   type AdminStyleBaseDto,
+  type AdminStylePhotoDto,
   type AdminStyleVariantDto,
+  type SetStylePhotoDto,
   type StyleImportRunDto,
   type UpdateStyleDto,
 } from './styles-admin.dto';
@@ -22,6 +24,7 @@ import {
 export const BASE_INCLUDE = {
   productType: { select: { code: true, status: true } },
   pattern: { select: { publicId: true } },
+  photoFile: { select: { publicId: true } },
   recipes: {
     orderBy: { version: 'desc' },
     include: { approvedBy: { select: { publicId: true } } },
@@ -32,6 +35,20 @@ export const BASE_INCLUDE = {
 export type BaseRow = Prisma.StyleBaseGetPayload<{ include: typeof BASE_INCLUDE }>;
 
 const iso = (d: Date | null) => (d ? toBangkokIso(d) : null);
+
+/** `style_bases.photo_file_id` + `photo_meta` as curation sees them. */
+function photoDto(row: BaseRow): AdminStylePhotoDto | null {
+  if (!row.photoFile) return null;
+  const meta = (row.photoMeta ?? {}) as { source?: unknown; alt?: { th?: unknown; en?: unknown } };
+  return {
+    fileId: row.photoFile.publicId,
+    source: typeof meta.source === 'string' ? meta.source : 'getpack',
+    alt: {
+      th: typeof meta.alt?.th === 'string' ? meta.alt.th : row.nameTh,
+      en: typeof meta.alt?.en === 'string' ? meta.alt.en : row.nameEn,
+    },
+  };
+}
 
 /**
  * Staff reads and Prepress / Marketing sign-offs of the style library (U3.B1): bases with their variant counts and
@@ -309,6 +326,62 @@ export class StylesAdminService {
     return this.get(publicId);
   }
 
+  /**
+   * The photo on the style's card (D-426): a photograph uploaded by curation (`source: getpack`) replaces an
+   * AI render; the file must be an uploaded image that is not infected (served once the scan is clean).
+   */
+  async setPhoto(actor: UserActor, publicId: string, ifMatch: string | undefined, input: SetStylePhotoDto) {
+    await this.prisma.withTx(async (tx) => {
+      const base = await this.row(tx, publicId);
+      assertIfMatch(ifMatch, etagOf(base.publicId, base.rowVersion));
+      const file = await tx.fileObject.findFirst({
+        where: { publicId: input.fileId },
+        select: { id: true, uploadStatus: true, scanStatus: true, mimeType: true },
+      });
+      if (
+        !file ||
+        file.uploadStatus !== 'uploaded' ||
+        file.scanStatus === 'infected' ||
+        !file.mimeType.startsWith('image/')
+      )
+        throw new DomainException('validation.failed', {
+          errors: [{ path: 'fileId', code: 'fileReady', message: 'fileId is not an uploaded image' }],
+        });
+      await tx.styleBase.update({
+        where: { id: base.id },
+        data: {
+          photoFileId: file.id,
+          photoMeta: {
+            source: 'getpack',
+            alt: { th: input.altTh?.trim() || base.nameTh, en: input.altEn?.trim() || base.nameEn },
+          },
+          updatedById: actor.userId,
+          rowVersion: { increment: 1 },
+        },
+      });
+      await this.record(tx, base, 'style_base.photo_set', { fileId: input.fileId, source: 'getpack' });
+    });
+    return this.get(publicId);
+  }
+
+  async clearPhoto(actor: UserActor, publicId: string, ifMatch: string | undefined) {
+    await this.prisma.withTx(async (tx) => {
+      const base = await this.row(tx, publicId);
+      assertIfMatch(ifMatch, etagOf(base.publicId, base.rowVersion));
+      await tx.styleBase.update({
+        where: { id: base.id },
+        data: {
+          photoFileId: null,
+          photoMeta: Prisma.DbNull,
+          updatedById: actor.userId,
+          rowVersion: { increment: 1 },
+        },
+      });
+      await this.record(tx, base, 'style_base.photo_cleared', {});
+    });
+    return this.get(publicId);
+  }
+
   async runs(query: {
     page: number;
     perPage: number;
@@ -378,6 +451,7 @@ export class StylesAdminService {
         marketingAt: iso(row.namesApprovedMarketingAt),
         prepressAt: iso(row.namesApprovedPrepressAt),
       },
+      photo: photoDto(row),
       referenceCode: row.referenceCode,
       referenceVerifiedAt: iso(row.referenceVerifiedAt),
       recipeVersion: latest?.version ?? null,

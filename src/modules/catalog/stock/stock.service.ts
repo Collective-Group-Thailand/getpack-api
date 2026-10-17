@@ -7,8 +7,10 @@ import { AuditService } from '@platform/audit/audit.service';
 import { DomainEvents } from '@platform/domain-events/domain-events.service';
 
 import { CatalogCrudService, rowEtag } from '../crud/catalog-crud.service';
+import { jsonField } from '../crud/compact';
+import { orderedImages, uploadedPhotoVariant } from '../crud/image-order';
 import { RefResolver } from '../crud/ref-resolver';
-import { type AddStockImageDto, type ReplaceStockAttributesDto } from './stock.dto';
+import { type AddStockImageDto, type ReorderImagesDto, type ReplaceStockAttributesDto } from './stock.dto';
 import { type StockProductRow, stockProducts } from './stock.resources';
 
 /** Attributes and images of a stock product; each change bumps the product's ETag (one transaction). */
@@ -65,14 +67,29 @@ export class StockProductsService {
 
   addImage(actor: UserActor, publicId: string, ifMatch: string | undefined, input: AddStockImageDto) {
     return this.onProduct(actor, publicId, ifMatch, 'images', async (tx, product) => {
+      const fileObjectId = await new RefResolver(tx).file(input.fileId, 'fileId');
+      if (input.sort === undefined)
+        await tx.stockProductImage.updateMany({
+          where: { stockProductId: product.id },
+          data: { sort: { increment: 1 } },
+        });
       await tx.stockProductImage.create({
         data: {
           stockProductId: product.id,
-          fileObjectId: await new RefResolver(tx).file(input.fileId, 'fileId'),
-          sort: input.sort ?? product.images.length,
+          fileObjectId,
+          variant: jsonField(uploadedPhotoVariant(null)),
+          sort: input.sort ?? 0,
           createdById: actor.userId,
         },
       });
+    });
+  }
+
+  reorderImages(actor: UserActor, publicId: string, ifMatch: string | undefined, input: ReorderImagesDto) {
+    return this.onProduct(actor, publicId, ifMatch, 'images', async (tx, product) => {
+      const ordered = orderedImages(product.images, input.imageIds);
+      for (const [sort, image] of ordered.entries())
+        await tx.stockProductImage.update({ where: { id: image.id }, data: { sort } });
     });
   }
 

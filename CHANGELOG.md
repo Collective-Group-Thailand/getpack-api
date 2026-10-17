@@ -3,6 +3,20 @@
 Contract-facing changes per release. The contract itself is `contract/openapi.json`; mappings for `getpack-web` are in
 `docs/contract-requests-triage.md`.
 
+## v0.70.0 — Photo curation in the admin
+
+Decision D-426. Additive.
+
+- `admin.catalogProducts.addImage` / `admin.catalogStockProducts.addImage`: without `sort` the upload now **leads**
+  (sort 0, the rest shift) and is tagged `variant { kind: photo, source: getpack }` (merged under the caller's
+  `variant` for catalogue products) — a photograph replaces an AI render as the cover. With `sort` it goes where asked.
+- New `admin.catalogProducts.reorderImages` / `admin.catalogStockProducts.reorderImages`
+  (`PUT …/{id}/images/order { imageIds }`): every current image once, first is the cover; guarded by the ETag.
+- `StockProductImageDto` gains `variant`.
+- `admin.styles.setPhoto` (`PUT /v1/admin/styles/{styleId}/photo { fileId, altTh?, altEn? }`, `styles.curate`) and
+  `admin.styles.clearPhoto` (`DELETE`): the photo on the style's card; `AdminStyleBaseDto` gains
+  `photo: AdminStylePhotoDto | null { fileId, source, alt }`. Audited as `style_base.photo_set` / `photo_cleared`.
+
 ## v0.69.0 — Stock product photos
 
 Decision D-426. Additive. `StoreStockProductDto` gains `images` (`StoreImageDto[] { url, variant }`, the same images as
