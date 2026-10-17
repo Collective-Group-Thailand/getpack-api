@@ -547,15 +547,17 @@ function card(r: LibraryRow, favourites: Set<bigint>): Omit<StyleCardDto, 'thumb
 }
 
 /** A stored thumbnail of a variant (or, with `null`, of the style itself). */
-/** The style's photo (D-426) once its file is uploaded and clean: served by the public catalogue images route. */
+/**
+ * The style's photo (D-426) once its file is uploaded and clean: served by the public catalogue images route.
+ * Where it came from (`photo_meta.source`, `prompt`) stays in the admin — the storefront says nothing about it.
+ */
 function photoOf(r: LibraryRow): StylePhotoDto | null {
   const file = r.photoFile;
   if (!file || file.uploadStatus !== 'uploaded' || file.scanStatus !== 'clean' || file.purgedAt) return null;
-  const meta = (r.photoMeta ?? {}) as { source?: unknown; alt?: { th?: unknown; en?: unknown } };
+  const meta = (r.photoMeta ?? {}) as { alt?: { th?: unknown; en?: unknown } };
   const altTh = typeof meta.alt?.th === 'string' ? meta.alt.th : r.nameTh;
   return {
     url: imageUrl(file.publicId)!,
-    source: typeof meta.source === 'string' ? meta.source : 'getpack',
     alt: { th: altTh, en: typeof meta.alt?.en === 'string' ? meta.alt.en : r.nameEn },
   };
 }

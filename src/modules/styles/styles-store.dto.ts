@@ -120,17 +120,10 @@ export class StylePriceDto {
   computedAt!: string;
 }
 
-/** The style's photo (D-426): a photograph of the type, or an AI render of it, which the storefront says so. */
+/** The style's photo (D-426): what the card shows, with its alt text. */
 export class StylePhotoDto {
   @ApiProperty({ example: '/v1/store/catalog/images/0192f3a0-7c1e-7d2a-9b1f-00000000c009' })
   url!: string;
-
-  @ApiProperty({
-    example: 'ai-render',
-    description:
-      '`getpack` for a photograph of a made box; `ai-render` for an AI-rendered reference image of the type',
-  })
-  source!: string;
 
   @ApiProperty({ type: LocalisedLabelDto })
   alt!: LocalisedLabelDto;

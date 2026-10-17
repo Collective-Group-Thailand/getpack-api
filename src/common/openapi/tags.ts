@@ -417,6 +417,8 @@ export const API_TAGS: Record<string, string> = {
   'admin.catalogStockProducts':
     'Ready-made stock products with attributes and photos; no prices here (D-100, D-044).',
   'admin.catalogSpecTitles': 'Titles of factory spec lines shown to customers (D-005).',
+  'admin.catalogReadiness':
+    'What the catalogue still needs — photos (D-426), instant pricing (A-16), publishable styles (D-243) — as lists to work through.',
   // --- B5.1 ledger
   'admin.ledgerAccounts':
     'Chart of accounts (accounting-design §3, codes are defaults ⚖) and cost centres; changes are proposals approved by a Finance Manager (`coa_change`, D-169).',

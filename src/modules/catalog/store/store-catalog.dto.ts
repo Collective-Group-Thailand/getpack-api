@@ -458,7 +458,7 @@ export class StoreStockProductDto {
   @ApiProperty({
     type: [StoreImageDto],
     description:
-      'The same images in order, each with what it is (an AI-rendered reference photo says so, D-426)',
+      'The same images in order, each with what it shows (its alt text, legacy material / colour keys)',
   })
   images!: StoreImageDto[];
 }

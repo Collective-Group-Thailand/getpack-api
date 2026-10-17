@@ -5,6 +5,7 @@ import { GeometryService } from './geometry/geometry.service';
 import { CatalogImportsService } from './imports/imports.service';
 import { KnowledgeBaseService } from './knowledge-base/knowledge-base';
 import { ProductStructureService } from './product-structure/product-structure.service';
+import { CatalogReadinessService } from './readiness/readiness.service';
 import { StockProductsService } from './stock/stock.service';
 import { CardFactsService } from './store/card-facts.service';
 import { HomeContentService } from './store/home-content';
@@ -19,6 +20,7 @@ import { StoreMediaService } from './store/store-media.service';
   providers: [
     CatalogCrudService,
     ProductStructureService,
+    CatalogReadinessService,
     GeometryService,
     StockProductsService,
     CatalogImportsService,
@@ -33,6 +35,7 @@ import { StoreMediaService } from './store/store-media.service';
   exports: [
     CatalogCrudService,
     ProductStructureService,
+    CatalogReadinessService,
     GeometryService,
     StockProductsService,
     CatalogImportsService,
