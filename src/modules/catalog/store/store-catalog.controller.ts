@@ -104,6 +104,7 @@ const STOCK: StoreStockProductDto = {
   inStock: true,
   attributes: [{ attribute: 'colour', code: 'clear', nameTh: 'ใส', nameEn: 'Clear' }],
   imageUrls: [IMAGE_URL_EXAMPLE],
+  images: [{ url: IMAGE_URL_EXAMPLE, variant: null }],
   campaignBadge: null,
   cacheTags: [`catalog:type:${TYPE_ID}`],
 };

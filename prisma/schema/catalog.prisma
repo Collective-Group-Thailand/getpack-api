@@ -1283,6 +1283,8 @@ model StockProductImage {
   stockProductId BigInt   @map("stock_product_id")
   fileObjectId   BigInt   @map("file_object_id")
   sort           Int      @default(0)
+  /// What the image is (D-426): `{kind: 'photo', source: 'ai-render' | 'getpack', alt: {th, en}, prompt?}`; null for an upload with no note.
+  variant        Json?    @db.JsonB
   createdAt      DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
   createdById    BigInt?  @map("created_by")
 

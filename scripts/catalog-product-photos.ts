@@ -1,13 +1,14 @@
 /**
  * `pnpm catalog:product-photos <manifest.json> [--replace] [--confirm --as <staff e-mail>]` — places the photos of a
- * product media manifest (`public/media/products/manifest.json`) on the catalogue's products: uploads each file as the
- * staff member (scanned like any upload; the same bytes twice reuse the clean file) and adds it as the product's first
- * image (`catalog_product_images`, D-426). A product that already has an image is skipped unless `--replace`, which
+ * media manifest (`public/media/products/manifest.json`, `public/media/stock/manifest.json`) on the catalogue: uploads
+ * each file as the staff member (scanned like any upload; the same bytes twice reuse the clean file) and adds it as the
+ * first image of the product it names (`slug` → `catalog_product_images`) or of each stock product it names (`skus` →
+ * `stock_product_images`; sizes of one look share a photo), D-426. One that already has an image is skipped unless `--replace`, which
  * drops the images the manifest's `source` matches (`ai-render`, say) and leaves photos of other sources alone — a
  * real photograph uploaded by the catalogue owner is never replaced by a render. Prints the plan and writes nothing
  * unless `--confirm`. `--as` needs `catalog.manage`.
  *
- * Manifest entry: `{ "slug", "file", "altTh", "altEn"?, "source", "prompt"? }` — `source` is `ai-render` for an
+ * Manifest entry: `{ "slug" | "skus", "file", "altTh", "altEn"?, "source", "prompt"? }` — `source` is `ai-render` for an
  * AI-rendered reference photo (the storefront says so), `getpack` for getpack's own photograph; `prompt` keeps the
  * render prompt with the image so the same look can be regenerated. Idempotent: run again after adding a product.
  */
@@ -23,6 +24,8 @@ import { bytes } from '../src/common/crypto/hashing';
 import { PrismaService } from '../src/database/prisma.service';
 import { jsonField } from '../src/modules/catalog/crud/compact';
 import { PermissionResolver } from '../src/modules/iam/permission-resolver.service';
+import { AuditService } from '../src/platform/audit/audit.service';
+import { DomainEvents } from '../src/platform/domain-events/domain-events.service';
 import { FileProcessingJobs } from '../src/platform/files/file-processing.jobs';
 import { FilesService } from '../src/platform/files/files.service';
 
@@ -42,7 +45,10 @@ export interface ProductPhotoVariant {
 }
 
 export interface ProductPhotoAsset {
-  slug: string;
+  /** A catalogue product's slug… */
+  slug?: string;
+  /** …or the stock products (SKUs) the photo shows. */
+  skus?: string[];
   file: string;
   altTh: string;
   altEn?: string;
@@ -52,6 +58,9 @@ export interface ProductPhotoAsset {
 
 interface Planned {
   asset: ProductPhotoAsset;
+  /** What gets the photo: `slug` or `SKU`. */
+  label: string;
+  kind: 'product' | 'stock';
   productId: bigint;
   path: string;
   mimeType: string;
@@ -94,45 +103,64 @@ async function main(): Promise<void> {
     const planned: Planned[] = [];
     const skipped: string[] = [];
     for (const asset of manifest.assets ?? []) {
-      if (!asset.slug || !asset.file || !asset.altTh || !asset.source)
-        throw new Error(`${asset.slug ?? asset.file}: slug, file, altTh and source are required`);
-      const product = await prisma.catalogProduct.findUnique({
-        where: { slug: asset.slug },
-        include: { images: { orderBy: { sort: 'asc' } } },
-      });
-      if (!product) {
-        skipped.push(`${asset.slug}: not in the catalogue`);
-        continue;
-      }
-      const sameSource = product.images.filter(
-        (image) => (image.variant as Partial<ProductPhotoVariant> | null)?.source === asset.source,
-      );
-      if (product.images.length > 0 && !opts.replace) {
-        skipped.push(`${asset.slug}: already has ${product.images.length} image(s) (add --replace)`);
-        continue;
-      }
-      if (product.images.length > 0 && sameSource.length === 0) {
-        skipped.push(`${asset.slug}: its images are not ${asset.source} — left alone`);
-        continue;
-      }
+      const name = asset.slug ?? asset.skus?.join(',') ?? asset.file;
+      if ((!asset.slug && !asset.skus?.length) || !asset.file || !asset.altTh || !asset.source)
+        throw new Error(`${name}: slug or skus, file, altTh and source are required`);
       const path = resolve(dirname(manifestPath), asset.file);
       const mimeType = MIME[extname(path).toLowerCase()];
       if (!existsSync(path) || !mimeType)
-        throw new Error(`${asset.slug}: ${asset.file} is missing or not an image`);
+        throw new Error(`${name}: ${asset.file} is missing or not an image`);
       const body = readFileSync(path);
-      planned.push({
-        asset,
-        productId: product.id,
-        path,
-        mimeType,
-        body,
-        sha256: createHash('sha256').update(body).digest('hex'),
-        replacing: sameSource.map((image) => ({ id: image.id })),
-      });
+      const sha256 = createHash('sha256').update(body).digest('hex');
+
+      const targets: {
+        label: string;
+        kind: Planned['kind'];
+        id: bigint;
+        images: { id: bigint; variant: unknown }[];
+      }[] = [];
+      if (asset.slug) {
+        const product = await prisma.catalogProduct.findUnique({
+          where: { slug: asset.slug },
+          include: { images: true },
+        });
+        if (product)
+          targets.push({ label: asset.slug, kind: 'product', id: product.id, images: product.images });
+        else skipped.push(`${asset.slug}: not in the catalogue`);
+      }
+      for (const sku of asset.skus ?? []) {
+        const stock = await prisma.stockProduct.findUnique({ where: { sku }, include: { images: true } });
+        if (stock) targets.push({ label: sku, kind: 'stock', id: stock.id, images: stock.images });
+        else skipped.push(`${sku}: no such stock product`);
+      }
+      for (const target of targets) {
+        const sameSource = target.images.filter(
+          (image) => (image.variant as Partial<ProductPhotoVariant> | null)?.source === asset.source,
+        );
+        if (target.images.length > 0 && !opts.replace) {
+          skipped.push(`${target.label}: already has ${target.images.length} image(s) (add --replace)`);
+          continue;
+        }
+        if (target.images.length > 0 && sameSource.length === 0) {
+          skipped.push(`${target.label}: its images are not ${asset.source} — left alone`);
+          continue;
+        }
+        planned.push({
+          asset,
+          label: target.label,
+          kind: target.kind,
+          productId: target.id,
+          path,
+          mimeType,
+          body,
+          sha256,
+          replacing: sameSource.map((image) => ({ id: image.id })),
+        });
+      }
     }
     for (const p of planned)
       console.log(
-        `${p.asset.slug.padEnd(30)} ← ${p.asset.file}${p.replacing.length ? ` (replaces ${p.replacing.length})` : ''}`,
+        `${p.label.padEnd(30)} ← ${p.asset.file}${p.replacing.length ? ` (replaces ${p.replacing.length})` : ''}`,
       );
     for (const s of skipped) console.log(`skipped: ${s}`);
     if (!opts.confirm) {
@@ -185,29 +213,56 @@ async function main(): Promise<void> {
       fileIds.set(p.sha256, stored.id);
     }
 
+    const audit = app.get(AuditService);
+    const events = app.get(DomainEvents);
     let placed = 0;
     for (const p of planned) {
+      const image = {
+        fileObjectId: fileIds.get(p.sha256)!,
+        variant: jsonField(variantOf(p.asset) as unknown as Record<string, unknown>),
+        sort: 0,
+        createdById: actor.userId,
+      };
+      const replacing = { id: { in: p.replacing.map((r) => r.id) } };
+      // The photo leads; whatever else the product shows follows it.
       await prisma.withTx(async (tx) => {
-        if (p.replacing.length)
-          await tx.catalogProductImage.deleteMany({ where: { id: { in: p.replacing.map((r) => r.id) } } });
-        // The photo leads; whatever else the product shows follows it.
-        await tx.catalogProductImage.updateMany({
-          where: { catalogProductId: p.productId },
-          data: { sort: { increment: 1 } },
-        });
-        await tx.catalogProductImage.create({
-          data: {
-            catalogProductId: p.productId,
-            fileObjectId: fileIds.get(p.sha256)!,
-            variant: jsonField(variantOf(p.asset) as unknown as Record<string, unknown>),
-            sort: 0,
-            createdById: actor.userId,
-          },
-        });
+        if (p.kind === 'product') {
+          if (p.replacing.length) await tx.catalogProductImage.deleteMany({ where: replacing });
+          await tx.catalogProductImage.updateMany({
+            where: { catalogProductId: p.productId },
+            data: { sort: { increment: 1 } },
+          });
+          await tx.catalogProductImage.create({ data: { ...image, catalogProductId: p.productId } });
+        } else {
+          if (p.replacing.length) await tx.stockProductImage.deleteMany({ where: replacing });
+          await tx.stockProductImage.updateMany({
+            where: { stockProductId: p.productId },
+            data: { sort: { increment: 1 } },
+          });
+          await tx.stockProductImage.create({ data: { ...image, stockProductId: p.productId } });
+          // As an admin upload does: the ETag moves, the change is audited and announced (store caches drop it).
+          const stock = await tx.stockProduct.update({
+            where: { id: p.productId },
+            data: { updatedById: actor.userId, rowVersion: { increment: 1 } },
+          });
+          await audit.record(tx, {
+            category: 'config',
+            action: 'catalog.stock_product_updated',
+            resourceType: 'stock_product',
+            resourcePublicId: stock.publicId,
+            data: { fields: ['images'] },
+          });
+          await events.record(tx, {
+            type: 'catalog.stock_product.updated',
+            aggregateType: 'stock_product',
+            aggregateId: stock.publicId,
+            payload: { id: stock.publicId, fields: ['images'] },
+          });
+        }
       });
       placed += 1;
     }
-    console.log(`placed ${placed} photo(s) on ${placed} product(s), ${fileIds.size} file(s)`);
+    console.log(`placed ${placed} photo(s), ${fileIds.size} file(s)`);
   } finally {
     await app.close();
   }

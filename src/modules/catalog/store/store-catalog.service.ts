@@ -487,6 +487,10 @@ export class StoreCatalogService {
           nameEn: a.value.nameEn,
         })),
       imageUrls: s.images.map((i) => imageUrl(i.fileObject.publicId)!),
+      images: s.images.map((i) => ({
+        url: imageUrl(i.fileObject.publicId)!,
+        variant: (i.variant as Record<string, unknown> | null) ?? null,
+      })),
     };
   }
 
