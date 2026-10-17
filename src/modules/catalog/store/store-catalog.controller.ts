@@ -5,7 +5,7 @@ import { ApiPaginated } from '@common/pagination/api-paginated.decorator';
 import { paginated } from '@common/pagination/pagination';
 import { type Page } from '@common/pagination/pagination.dto';
 import { Controller, Get, Header, Param, ParseUUIDPipe, Query, Res } from '@nestjs/common';
-import { ApiParam, ApiProduces, ApiResponse, ApiTags } from '@nestjs/swagger';
+import { ApiParam, ApiProduces, ApiQuery, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { type Response } from 'express';
 
 import {
@@ -133,6 +133,9 @@ const AREA: StoreGeoAreaDto = {
   nameTh: 'กรุงเทพมหานคร',
   nameEn: 'Bangkok',
 };
+
+/** Sizes `store.catalog.getImage` serves: the original, or the worker's 400 px WebP thumbnail. */
+export const IMAGE_SIZES = ['full', 'thumb'] as const;
 
 @ApiTags('store.catalog')
 @Controller('catalog')
@@ -753,8 +756,16 @@ export class StoreCatalogController {
     summary: 'Get a catalogue image',
     description:
       'Served only while an active catalogue row or published CMS content references the file and its malware ' +
-      'scan is clean (contract §3 "Files"); anything else is 404. Cacheable for a day.',
+      'scan is clean (contract §3 "Files"); anything else is 404. `size=thumb` serves the 400 px WebP thumbnail ' +
+      '(the original when there is none) — for cards and lists. Cacheable for a day.',
     implements: ['D-005'],
+  })
+  @ApiQuery({
+    name: 'size',
+    required: false,
+    enum: IMAGE_SIZES,
+    enumName: 'StoreImageSize',
+    description: '`thumb`: the 400 px WebP thumbnail for cards; default the original',
   })
   @ApiProduces('image/png', 'image/jpeg', 'image/webp')
   @ApiResponse({
@@ -767,8 +778,12 @@ export class StoreCatalogController {
     },
   })
   @ApiStandardErrors('http.not_found', 'validation.failed')
-  async image(@Param('fileId', ParseUUIDPipe) fileId: string, @Res() res: Response): Promise<void> {
-    const image = await this.media.image(fileId);
+  async image(
+    @Param('fileId', ParseUUIDPipe) fileId: string,
+    @Query('size') size: string | undefined,
+    @Res() res: Response,
+  ): Promise<void> {
+    const image = await this.media.image(fileId, size === 'thumb' ? 'thumb' : 'full');
     res.setHeader('Content-Type', image.mimeType);
     res.setHeader('Content-Length', image.sizeBytes.toString());
     res.setHeader('Cache-Control', 'public, max-age=86400');

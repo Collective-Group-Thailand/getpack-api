@@ -42,7 +42,12 @@ export class StoreMediaService {
     @Inject(OBJECT_STORAGE) private readonly storage: ObjectStorage,
   ) {}
 
-  async image(filePublicId: string): Promise<PublicImage> {
+  /**
+   * `size: 'thumb'` serves the 400 px WebP the file worker made of the image (a card never needs
+   * the 1024 px original); an image without one — too large to sample, or not yet processed —
+   * falls back to the original, so a card is never empty.
+   */
+  async image(filePublicId: string, size: 'full' | 'thumb' = 'full'): Promise<PublicImage> {
     const [visible] = await this.prisma.$queryRaw<{ id: bigint }[]>`
       SELECT fo.id FROM file_objects fo
        WHERE fo.public_id = ${filePublicId}::uuid
@@ -78,7 +83,18 @@ export class StoreMediaService {
                       AND c.consent_file_id IS NOT NULL AND c.deleted_at IS NULL)
          )`;
     if (!visible) throw new DomainException('http.not_found');
-    const file = await this.prisma.fileObject.findUniqueOrThrow({ where: { id: visible.id } });
+    const thumbnail =
+      size === 'thumb'
+        ? await this.prisma.fileObject.findFirst({
+            where: {
+              thumbnailOfFileId: visible.id,
+              uploadStatus: 'uploaded',
+              scanStatus: 'clean',
+              purgedAt: null,
+            },
+          })
+        : null;
+    const file = thumbnail ?? (await this.prisma.fileObject.findUniqueOrThrow({ where: { id: visible.id } }));
     return {
       stream: await this.storage.getStream(file.storageKey),
       mimeType: file.mimeType,
