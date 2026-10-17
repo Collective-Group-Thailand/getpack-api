@@ -3,6 +3,13 @@
 Contract-facing changes per release. The contract itself is `contract/openapi.json`; mappings for `getpack-web` are in
 `docs/contract-requests-triage.md`.
 
+## v0.68.0 — Style and product photos
+
+Decision D-426. Additive. `StyleCardDto` and `StyleVariantCardDto` gain `photo` (`StylePhotoDto { url, source, alt }`,
+null without one): the style's photo — a photograph, or an AI render of the type (`source: ai-render`) — served by
+`store.catalog.image`; `thumbnailUrl` is that photo's URL when the style has one, else the rendered thumbnail as before.
+Catalogue product images placed by `catalog:product-photos` carry `variant { kind: photo, source, alt, prompt }`.
+
 ## v0.67.0 — Rebrand: getpack
 
 Decision D-425. **Breaking** (renamed values and names; no operation added or removed).

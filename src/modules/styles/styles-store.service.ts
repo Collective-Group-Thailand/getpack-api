@@ -4,6 +4,7 @@ import { toBangkokIso } from '@common/time/bangkok';
 import { PrismaService } from '@database/prisma.service';
 import { type Prisma } from '@generated/prisma/client';
 import { sizeRulesOf } from '@modules/catalog/store/size-rules';
+import { imageUrl } from '@modules/catalog/store/store-catalog.service';
 import { Injectable } from '@nestjs/common';
 import { SettingsService } from '@platform/settings/settings.service';
 
@@ -18,6 +19,7 @@ import {
   type StyleFavouriteDto,
   type StyleListDto,
   type StyleListQuery,
+  type StylePhotoDto,
   type StyleSizeRangeDto,
   type StyleVariantCardDto,
   type StyleVariantListDto,
@@ -67,6 +69,7 @@ const LIBRARY_INCLUDE = {
     take: 1,
     select: { sizeRanges: true },
   },
+  photoFile: { select: { publicId: true, scanStatus: true, uploadStatus: true, purgedAt: true } },
   assets: {
     where: { OR: [{ variantId: null }, { variant: { publishable: true, status: 'active' } }] },
     select: {
@@ -260,6 +263,7 @@ export class StylesStoreService {
           thumbnailOf(base, variant.code, 'thumbnail_2d') ??
           thumbnailOf(base, null, 'thumbnail_3d') ??
           thumbnailOf(base, null, 'thumbnail_2d');
+        const photo = photoOf(base);
         return {
           code: variant.code,
           baseCode: base.code,
@@ -270,7 +274,8 @@ export class StylesStoreService {
           materialClass: base.materialClass,
           options: variant.options as Record<string, unknown>,
           pricePath: variant.pricePath,
-          thumbnailUrl: thumb ? await this.assets.url(thumb) : null,
+          thumbnailUrl: photo?.url ?? (thumb ? await this.assets.url(thumb) : null),
+          photo,
         };
       }),
     );
@@ -419,15 +424,23 @@ export class StylesStoreService {
     };
   }
 
-  /** A style's card with its thumbnail (signed URL): its own, else its first variant's that has one. */
+  /**
+   * A style's card with its picture: its photo (D-426, a public image URL) first, else a rendered
+   * thumbnail (signed URL) — its own, else its first variant's that has one.
+   */
   private async card(r: LibraryRow, favourites: Set<bigint>): Promise<StyleCardDto> {
+    const photo = photoOf(r);
     const thumb =
       thumbnailOf(r, null, 'thumbnail_3d') ??
       thumbnailOf(r, null, 'thumbnail_2d') ??
       r.assets.find((a) => a.kind === 'thumbnail_3d') ??
       r.assets.find((a) => a.kind === 'thumbnail_2d') ??
       null;
-    return { ...card(r, favourites), thumbnailUrl: thumb ? await this.assets.url(thumb) : null };
+    return {
+      ...card(r, favourites),
+      thumbnailUrl: photo?.url ?? (thumb ? await this.assets.url(thumb) : null),
+      photo,
+    };
   }
 
   /** Never fails the search (analytics, D-274). */
@@ -503,7 +516,7 @@ function productHints(r: LibraryRow) {
     .sort((a, b) => a.unitPrice.comparedTo(b.unitPrice) || a.slug.localeCompare(b.slug));
 }
 
-function card(r: LibraryRow, favourites: Set<bigint>): Omit<StyleCardDto, 'thumbnailUrl'> {
+function card(r: LibraryRow, favourites: Set<bigint>): Omit<StyleCardDto, 'thumbnailUrl' | 'photo'> {
   const hint = productHints(r)[0];
   return {
     code: r.code,
@@ -534,6 +547,19 @@ function card(r: LibraryRow, favourites: Set<bigint>): Omit<StyleCardDto, 'thumb
 }
 
 /** A stored thumbnail of a variant (or, with `null`, of the style itself). */
+/** The style's photo (D-426) once its file is uploaded and clean: served by the public catalogue images route. */
+function photoOf(r: LibraryRow): StylePhotoDto | null {
+  const file = r.photoFile;
+  if (!file || file.uploadStatus !== 'uploaded' || file.scanStatus !== 'clean' || file.purgedAt) return null;
+  const meta = (r.photoMeta ?? {}) as { source?: unknown; alt?: { th?: unknown; en?: unknown } };
+  const altTh = typeof meta.alt?.th === 'string' ? meta.alt.th : r.nameTh;
+  return {
+    url: imageUrl(file.publicId)!,
+    source: typeof meta.source === 'string' ? meta.source : 'getpack',
+    alt: { th: altTh, en: typeof meta.alt?.en === 'string' ? meta.alt.en : r.nameEn },
+  };
+}
+
 function thumbnailOf(r: LibraryRow, variantCode: string | null, kind: 'thumbnail_2d' | 'thumbnail_3d') {
   return r.assets.find((a) => a.kind === kind && (a.variant?.code ?? null) === variantCode) ?? null;
 }

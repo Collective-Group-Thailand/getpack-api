@@ -67,6 +67,7 @@ export class StoreMediaService {
         OR EXISTS (SELECT 1 FROM diecut_types o WHERE o.image_file_id = fo.id AND o.status = 'active')
         OR EXISTS (SELECT 1 FROM assemblies o WHERE o.image_file_id = fo.id AND o.status = 'active')
         OR EXISTS (SELECT 1 FROM patterns o WHERE o.image_file_id = fo.id AND o.status = 'active')
+        OR EXISTS (SELECT 1 FROM style_bases s WHERE s.photo_file_id = fo.id AND s.status = 'active')
         OR EXISTS (SELECT 1 FROM home_sections h
                     WHERE h.slug = ${HOME_PHOTOS_SLUG} AND h.kind = 'custom'
                       AND h.status = 'published' AND h.deleted_at IS NULL

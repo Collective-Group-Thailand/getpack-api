@@ -67,6 +67,10 @@ model StyleBase {
   hidden                   Boolean     @default(false)
   sort                     Int         @default(0)
   status                   StyleStatus @default(active)
+  /// D-426: the style's photo (a photograph or an AI render of the type), shown on its cards before the
+  /// engine's thumbnails; `{ source, alt }` of it lives in `photoMeta`.
+  photoFileId              BigInt?     @map("photo_file_id")
+  photoMeta                Json?       @map("photo_meta")
   /// First time a variant became publishable (D-184: the code is frozen from then).
   publishedAt              DateTime?   @map("published_at") @db.Timestamptz(6)
   /// sha256 of the imported fields, so a re-import of the same data changes nothing.
@@ -87,6 +91,7 @@ model StyleBase {
   prepressApprover    User?                     @relation("StyleBaseNamesPrepress", fields: [namesApprovedPrepressBy], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_style_bases__names_approved_prepress_by")
   updatedBy           User?                     @relation("StyleBaseUpdatedBy", fields: [updatedById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_style_bases__updated_by")
   lastImportRun       StyleImportRun?           @relation("StyleBaseLastImportRun", fields: [lastImportRunId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_style_bases__last_import_run_id")
+  photoFile           FileObject?               @relation("StyleBasePhotoFile", fields: [photoFileId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_style_bases__photo_file_id")
   variants            StyleVariant[]
   recipes             StyleRecipe[]
   assets              StyleAsset[]
@@ -106,6 +111,7 @@ model StyleBase {
   @@index([namesApprovedPrepressBy], map: "ix_style_bases__names_approved_prepress_by")
   @@index([updatedById], map: "ix_style_bases__updated_by")
   @@index([lastImportRunId], map: "ix_style_bases__last_import_run_id")
+  @@index([photoFileId], map: "ix_style_bases__photo_file_id")
   @@map("style_bases")
 }
 

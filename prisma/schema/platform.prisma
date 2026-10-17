@@ -905,6 +905,7 @@ model FileObject {
   diecutTypeImages DiecutType[] @relation("DiecutTypeImageFile")
   assemblyImages   Assembly[]   @relation("AssemblyImageFile")
   patternImages    Pattern[]    @relation("PatternImageFile")
+  stylePhotos      StyleBase[]  @relation("StyleBasePhotoFile")
 
   privacyExports PrivacyRequest[] @relation("PrivacyRequestExportFile")
 
