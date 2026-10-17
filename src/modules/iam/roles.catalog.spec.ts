@@ -113,3 +113,21 @@ describe('IAM catalogues (D-140, D-141)', () => {
     );
   });
 });
+
+describe('setting owners (D-063, ADR-0005)', () => {
+  const permission = new Map<string, (typeof PERMISSIONS)[number]>(PERMISSIONS.map((p) => [p.key, p]));
+  it('every role that owns a setting may read and change it — the owner check alone decides which ones', async () => {
+    const { SETTINGS } = (await import('../../../prisma/seed/data/settings')) as {
+      SETTINGS: readonly { ownerRole?: string }[];
+    };
+    const byKey = new Map(ROLES.map((role) => [role.key, role]));
+    const owners = [...new Set(SETTINGS.map((setting) => setting.ownerRole ?? 'superadmin'))];
+    for (const owner of owners) {
+      const role = byKey.get(owner);
+      expect(role).toBeDefined();
+      expect([owner, role!.permissions.includes('settings.change')]).toEqual([owner, true]);
+      expect([owner, role!.permissions.includes('settings.read')]).toEqual([owner, true]);
+      expect([owner, permission.get('settings.change')?.audience]).toEqual([owner, role!.audience]);
+    }
+  });
+});

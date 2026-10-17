@@ -140,6 +140,7 @@ export const ROLES: readonly RoleDefinition[] = [
     nameTh: 'ผู้ดูแลระบบ',
     nameEn: 'Admin',
     permissions: [
+      'settings.change',
       'agents.read',
       'agents.manage',
       'studio_catalog.manage',
@@ -282,6 +283,8 @@ export const ROLES: readonly RoleDefinition[] = [
     nameTh: 'หัวหน้าฝ่ายบริการลูกค้า',
     nameEn: 'CS Lead',
     permissions: [
+      'settings.read',
+      'settings.change',
       'reports.export',
       'reports.schedule',
       'receivables.read',
@@ -350,6 +353,8 @@ export const ROLES: readonly RoleDefinition[] = [
     nameTh: 'ฝ่ายเตรียมพิมพ์',
     nameEn: 'Prepress',
     permissions: [
+      'settings.read',
+      'settings.change',
       'studio_catalog.manage',
       ...EVERY_STAFF_MEMBER,
       'catalog.read',
@@ -439,6 +444,7 @@ export const ROLES: readonly RoleDefinition[] = [
     nameTh: 'ผู้จัดการฝ่ายการเงิน',
     nameEn: 'Finance Manager',
     permissions: [
+      'settings.change',
       'agents.read',
       'agent_commissions.adjust',
       'agent_statements.approve',
@@ -533,6 +539,8 @@ export const ROLES: readonly RoleDefinition[] = [
     nameEn: 'Marketing',
     // CMS and SEO go to Marketing (no SEO role in D-140, schema-design §7 C-6).
     permissions: [
+      'settings.read',
+      'settings.change',
       'studio_catalog.manage',
       'studio_catalog.approve',
       'guarantee_policies.read',
@@ -565,6 +573,7 @@ export const ROLES: readonly RoleDefinition[] = [
     nameEn: 'Sales Manager',
     // D-423: runs the agent programme — applications, agents, links, leads and the plans it drafts.
     permissions: [
+      'settings.change',
       ...EVERY_STAFF_MEMBER,
       'settings.read',
       'reports.export',
@@ -585,6 +594,7 @@ export const ROLES: readonly RoleDefinition[] = [
     nameTh: 'ผู้จัดการพันธมิตร',
     nameEn: 'Partner Manager',
     permissions: [
+      'settings.change',
       'agents.read',
       'reports.export',
       'reports.schedule',
