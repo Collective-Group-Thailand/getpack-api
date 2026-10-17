@@ -1,0 +1,343 @@
+{
+  "$comment": "AI-rendered reference photos of the catalogue's products (D-426): one per product, generated from the product's spec with Google Stitch (Gemini image), blank packaging on white. Placed with `pnpm catalog:product-photos public/media/products/manifest.json --confirm --as <staff>`. A real photograph of the product replaces its render through the admin (source `getpack`); the script never replaces a photo of another source.",
+  "generatedAt": "2026-10-17",
+  "generator": "google-stitch",
+  "assets": [
+    {
+      "slug": "uat-postal-box-b",
+      "file": "uat-postal-box-b.jpg",
+      "altTh": "กล่องไปรษณีย์ลูกฟูกสีน้ำตาล ฝาชน",
+      "altEn": "A small plain brown kraft corrugated postal box (regular slotted carton, 3-ply)",
+      "source": "ai-render",
+      "prompt": "Professional studio product photography of a small plain brown kraft corrugated postal box (regular slotted carton, 3-ply), closed with its top flaps meeting, 3/4 view. Pure white seamless background, soft natural daylight from the side, a subtle soft contact shadow. Completely blank: no text, no logos, no branding, no people. Ultra-photorealistic packaging catalogue photograph."
+    },
+    {
+      "slug": "uat-white-mailer-box",
+      "file": "uat-white-mailer-box.jpg",
+      "altTh": "กล่องลูกฟูกสีขาว ฝาชน",
+      "altEn": "A plain white corrugated shipping carton (regular slotted carton)",
+      "source": "ai-render",
+      "prompt": "Professional studio product photography of a plain white corrugated shipping carton (regular slotted carton), closed, 3/4 view. Pure white seamless background, soft natural daylight from the side, a subtle soft contact shadow. Completely blank: no text, no logos, no branding, no people. Ultra-photorealistic packaging catalogue photograph."
+    },
+    {
+      "slug": "uat-moving-carton-bc",
+      "file": "uat-moving-carton-bc.jpg",
+      "altTh": "กล่องลูกฟูก 5 ชั้นสำหรับขนย้าย",
+      "altEn": "A large heavy-duty brown corrugated moving carton (5-ply double wall)",
+      "source": "ai-render",
+      "prompt": "Professional studio product photography of a large heavy-duty brown corrugated moving carton (5-ply double wall), closed, 3/4 view, visibly thick walls at the flap edges. Pure white seamless background, soft natural daylight from the side, a subtle soft contact shadow. Completely blank: no text, no logos, no branding, no people. Ultra-photorealistic packaging catalogue photograph."
+    },
+    {
+      "slug": "uat-fruit-box-tele",
+      "file": "uat-fruit-box-tele.jpg",
+      "altTh": "กล่องผลไม้แบบฝาครอบ",
+      "altEn": "A brown corrugated telescope fruit box: a tray body with a separate full-depth lid lifted slightly off it",
+      "source": "ai-render",
+      "prompt": "Professional studio product photography of a brown corrugated telescope fruit box: a tray body with a separate full-depth lid lifted slightly off it, 3/4 view. Pure white seamless background, soft natural daylight from the side, a subtle soft contact shadow. Completely blank: no text, no logos, no branding, no people. Ultra-photorealistic packaging catalogue photograph."
+    },
+    {
+      "slug": "uat-produce-tray",
+      "file": "uat-produce-tray.jpg",
+      "altTh": "ถาดลูกฟูกแบบเปิดด้านบน",
+      "altEn": "An open-top brown corrugated produce tray with low walls and hand holes, empty",
+      "source": "ai-render",
+      "prompt": "Professional studio product photography of an open-top brown corrugated produce tray with low walls and hand holes, empty, 3/4 view from slightly above. Pure white seamless background, soft natural daylight from the side, a subtle soft contact shadow. Completely blank: no text, no logos, no branding, no people. Ultra-photorealistic packaging catalogue photograph."
+    },
+    {
+      "slug": "uat-printed-opp-tape",
+      "file": "uat-printed-opp-tape.jpg",
+      "altTh": "เทปกาว OPP",
+      "altEn": "A single roll of clear OPP packing tape on a white core",
+      "source": "ai-render",
+      "prompt": "Professional studio product photography of a single roll of clear OPP packing tape on a white core, standing on its edge, 3/4 view. Pure white seamless background, soft natural daylight from the side, a subtle soft contact shadow. Completely blank: no text, no logos, no branding, no people. Ultra-photorealistic packaging catalogue photograph."
+    },
+    {
+      "slug": "uat-standup-zip-pouch",
+      "file": "uat-standup-zip-pouch.jpg",
+      "altTh": "ถุงซิปตั้งได้",
+      "altEn": "A plain matte white stand-up zip pouch (doypack) with a top zipper and tear notch",
+      "source": "ai-render",
+      "prompt": "Professional studio product photography of a plain matte white stand-up zip pouch (doypack) with a top zipper and tear notch, standing upright, 3/4 view. Pure white seamless background, soft natural daylight from the side, a subtle soft contact shadow. Completely blank: no text, no logos, no branding, no people. Ultra-photorealistic packaging catalogue photograph."
+    },
+    {
+      "slug": "uat-coffee-foil-pouch",
+      "file": "uat-coffee-foil-pouch.jpg",
+      "altTh": "ถุงกาแฟฟอยล์ตั้งได้",
+      "altEn": "A plain matte silver metallised foil stand-up coffee pouch with a one-way degassing valve and top zipper",
+      "source": "ai-render",
+      "prompt": "Professional studio product photography of a plain matte silver metallised foil stand-up coffee pouch with a one-way degassing valve and top zipper, standing upright, 3/4 view. Pure white seamless background, soft natural daylight from the side, a subtle soft contact shadow. Completely blank: no text, no logos, no branding, no people. Ultra-photorealistic packaging catalogue photograph."
+    },
+    {
+      "slug": "uat-snack-3side-pouch",
+      "file": "uat-snack-3side-pouch.jpg",
+      "altTh": "ถุงซีลสามด้าน",
+      "altEn": "A plain matte white three-side-seal flat snack sachet",
+      "source": "ai-render",
+      "prompt": "Professional studio product photography of a plain matte white three-side-seal flat snack sachet, lying at a slight angle, 3/4 view. Pure white seamless background, soft natural daylight from the side, a subtle soft contact shadow. Completely blank: no text, no logos, no branding, no people. Ultra-photorealistic packaging catalogue photograph."
+    },
+    {
+      "slug": "uat-serum-box",
+      "file": "uat-serum-box.jpg",
+      "altTh": "กล่องเซรั่ม ฝาเสียบหัวท้าย",
+      "altEn": "A tall slim plain white paperboard folding carton (straight tuck end) for a 30 ml serum bottle",
+      "source": "ai-render",
+      "prompt": "Professional studio product photography of a tall slim plain white paperboard folding carton (straight tuck end) for a 30 ml serum bottle, standing, 3/4 view. Pure white seamless background, soft natural daylight from the side, a subtle soft contact shadow. Completely blank: no text, no logos, no branding, no people. Ultra-photorealistic packaging catalogue photograph."
+    },
+    {
+      "slug": "uat-soap-box",
+      "file": "uat-soap-box.jpg",
+      "altTh": "กล่องสบู่",
+      "altEn": "A small flat plain white paperboard folding carton for a bar of soap (reverse tuck end)",
+      "source": "ai-render",
+      "prompt": "Professional studio product photography of a small flat plain white paperboard folding carton for a bar of soap (reverse tuck end), lying on its largest face, 3/4 view. Pure white seamless background, soft natural daylight from the side, a subtle soft contact shadow. Completely blank: no text, no logos, no branding, no people. Ultra-photorealistic packaging catalogue photograph."
+    },
+    {
+      "slug": "uat-supplement-box",
+      "file": "uat-supplement-box.jpg",
+      "altTh": "กล่องอาหารเสริม",
+      "altEn": "A plain white paperboard folding carton for a supplement bottle, square footprint and tall",
+      "source": "ai-render",
+      "prompt": "Professional studio product photography of a plain white paperboard folding carton for a supplement bottle, square footprint and tall, standing, 3/4 view. Pure white seamless background, soft natural daylight from the side, a subtle soft contact shadow. Completely blank: no text, no logos, no branding, no people. Ultra-photorealistic packaging catalogue photograph."
+    },
+    {
+      "slug": "uat-lipstick-box",
+      "file": "uat-lipstick-box.jpg",
+      "altTh": "กล่องลิปสติก",
+      "altEn": "A very slim small plain white paperboard folding carton for a lipstick",
+      "source": "ai-render",
+      "prompt": "Professional studio product photography of a very slim small plain white paperboard folding carton for a lipstick, standing, 3/4 view. Pure white seamless background, soft natural daylight from the side, a subtle soft contact shadow. Completely blank: no text, no logos, no branding, no people. Ultra-photorealistic packaging catalogue photograph."
+    },
+    {
+      "slug": "uat-drip-coffee-box",
+      "file": "uat-drip-coffee-box.jpg",
+      "altTh": "กล่องกาแฟดริป",
+      "altEn": "A plain kraft paperboard folding carton (straight tuck end) the size of a box of ten drip coffee bags",
+      "source": "ai-render",
+      "prompt": "Professional studio product photography of a plain kraft paperboard folding carton (straight tuck end) the size of a box of ten drip coffee bags, lying on its back face, 3/4 view. Pure white seamless background, soft natural daylight from the side, a subtle soft contact shadow. Completely blank: no text, no logos, no branding, no people. Ultra-photorealistic packaging catalogue photograph."
+    },
+    {
+      "slug": "uat-candle-box",
+      "file": "uat-candle-box.jpg",
+      "altTh": "กล่องเทียน ก้นล็อก",
+      "altEn": "A plain white cube-shaped paperboard folding carton for a candle jar with a crash-lock bottom",
+      "source": "ai-render",
+      "prompt": "Professional studio product photography of a plain white cube-shaped paperboard folding carton for a candle jar with a crash-lock bottom, standing, 3/4 view. Pure white seamless background, soft natural daylight from the side, a subtle soft contact shadow. Completely blank: no text, no logos, no branding, no people. Ultra-photorealistic packaging catalogue photograph."
+    },
+    {
+      "slug": "uat-sauce-bottle-box",
+      "file": "uat-sauce-bottle-box.jpg",
+      "altTh": "กล่องขวดซอส",
+      "altEn": "A tall plain white paperboard folding carton for a sauce bottle, square footprint",
+      "source": "ai-render",
+      "prompt": "Professional studio product photography of a tall plain white paperboard folding carton for a sauce bottle, square footprint, standing, 3/4 view. Pure white seamless background, soft natural daylight from the side, a subtle soft contact shadow. Completely blank: no text, no logos, no branding, no people. Ultra-photorealistic packaging catalogue photograph."
+    },
+    {
+      "slug": "uat-bakery-box",
+      "file": "uat-bakery-box.jpg",
+      "altTh": "กล่องเบเกอรี่",
+      "altEn": "A plain kraft paperboard bakery box, square and shallow, with a clear window on the lid",
+      "source": "ai-render",
+      "prompt": "Professional studio product photography of a plain kraft paperboard bakery box, square and shallow, with a clear window on the lid, closed, 3/4 view from slightly above. Pure white seamless background, soft natural daylight from the side, a subtle soft contact shadow. Completely blank: no text, no logos, no branding, no people. Ultra-photorealistic packaging catalogue photograph."
+    },
+    {
+      "slug": "uat-tea-box",
+      "file": "uat-tea-box.jpg",
+      "altTh": "กล่องชา",
+      "altEn": "A plain white paperboard folding carton the size of a box of twenty tea bags (straight tuck end)",
+      "source": "ai-render",
+      "prompt": "Professional studio product photography of a plain white paperboard folding carton the size of a box of twenty tea bags (straight tuck end), lying on its back face, 3/4 view. Pure white seamless background, soft natural daylight from the side, a subtle soft contact shadow. Completely blank: no text, no logos, no branding, no people. Ultra-photorealistic packaging catalogue photograph."
+    },
+    {
+      "slug": "uat-thank-you-card",
+      "file": "uat-thank-you-card.jpg",
+      "altTh": "การ์ดขอบคุณ",
+      "altEn": "A small stack of plain thick white paper cards the size of a business card, fanned slightly",
+      "source": "ai-render",
+      "prompt": "Professional studio product photography of a small stack of plain thick white paper cards the size of a business card, fanned slightly, 3/4 view from above. Pure white seamless background, soft natural daylight from the side, a subtle soft contact shadow. Completely blank: no text, no logos, no branding, no people. Ultra-photorealistic packaging catalogue photograph."
+    },
+    {
+      "slug": "uat-printed-paper-cup",
+      "file": "uat-printed-paper-cup.jpg",
+      "altTh": "แก้วกระดาษ",
+      "altEn": "A plain white double-wall paper coffee cup with a white lid",
+      "source": "ai-render",
+      "prompt": "Professional studio product photography of a plain white double-wall paper coffee cup with a white lid, standing, 3/4 view. Pure white seamless background, soft natural daylight from the side, a subtle soft contact shadow. Completely blank: no text, no logos, no branding, no people. Ultra-photorealistic packaging catalogue photograph."
+    },
+    {
+      "slug": "uat-printed-food-box",
+      "file": "uat-printed-food-box.jpg",
+      "altTh": "กล่องอาหารกระดาษ",
+      "altEn": "A plain kraft paperboard take-away food box with fold-over lid",
+      "source": "ai-render",
+      "prompt": "Professional studio product photography of a plain kraft paperboard take-away food box with fold-over lid, closed, 3/4 view. Pure white seamless background, soft natural daylight from the side, a subtle soft contact shadow. Completely blank: no text, no logos, no branding, no people. Ultra-photorealistic packaging catalogue photograph."
+    },
+    {
+      "slug": "uat-round-logo-sticker",
+      "file": "uat-round-logo-sticker.jpg",
+      "altTh": "สติกเกอร์กลม",
+      "altEn": "A short roll of plain blank white round stickers on a kraft backing liner, partly unrolled",
+      "source": "ai-render",
+      "prompt": "Professional studio product photography of a short roll of plain blank white round stickers on a kraft backing liner, partly unrolled, 3/4 view. Pure white seamless background, soft natural daylight from the side, a subtle soft contact shadow. Completely blank: no text, no logos, no branding, no people. Ultra-photorealistic packaging catalogue photograph."
+    },
+    {
+      "slug": "uat-product-label-rect",
+      "file": "uat-product-label-rect.jpg",
+      "altTh": "ฉลากสินค้าสี่เหลี่ยมมุมมน",
+      "altEn": "A sheet of plain blank white rounded-rectangle labels on a backing liner, one label peeled up at a corner",
+      "source": "ai-render",
+      "prompt": "Professional studio product photography of a sheet of plain blank white rounded-rectangle labels on a backing liner, one label peeled up at a corner, 3/4 view. Pure white seamless background, soft natural daylight from the side, a subtle soft contact shadow. Completely blank: no text, no logos, no branding, no people. Ultra-photorealistic packaging catalogue photograph."
+    },
+    {
+      "slug": "uat-bottle-wrap-label",
+      "file": "uat-bottle-wrap-label.jpg",
+      "altTh": "ฉลากพันรอบขวด",
+      "altEn": "A plain white wrap-around paper label on an unbranded clear glass bottle",
+      "source": "ai-render",
+      "prompt": "Professional studio product photography of a plain white wrap-around paper label on an unbranded clear glass bottle, standing, 3/4 view. Pure white seamless background, soft natural daylight from the side, a subtle soft contact shadow. Completely blank: no text, no logos, no branding, no people. Ultra-photorealistic packaging catalogue photograph."
+    },
+    {
+      "slug": "uat-clear-cosmetic-label",
+      "file": "uat-clear-cosmetic-label.jpg",
+      "altTh": "ฉลากใสสำหรับเครื่องสำอาง",
+      "altEn": "A clear transparent label applied to an unbranded frosted glass cosmetic jar",
+      "source": "ai-render",
+      "prompt": "Professional studio product photography of a clear transparent label applied to an unbranded frosted glass cosmetic jar, standing, 3/4 view. Pure white seamless background, soft natural daylight from the side, a subtle soft contact shadow. Completely blank: no text, no logos, no branding, no people. Ultra-photorealistic packaging catalogue photograph."
+    },
+    {
+      "slug": "uat-seal-sticker",
+      "file": "uat-seal-sticker.jpg",
+      "altTh": "สติกเกอร์ซีลกล่อง",
+      "altEn": "A plain white circular seal sticker closing the flap of a small kraft box, close 3/4 view",
+      "source": "ai-render",
+      "prompt": "Professional studio product photography of a plain white circular seal sticker closing the flap of a small kraft box, close 3/4 view. Pure white seamless background, soft natural daylight from the side, a subtle soft contact shadow. Completely blank: no text, no logos, no branding, no people. Ultra-photorealistic packaging catalogue photograph."
+    },
+    {
+      "slug": "uat-printed-tissue-paper",
+      "file": "uat-printed-tissue-paper.jpg",
+      "altTh": "กระดาษห่อสินค้า (tissue)",
+      "altEn": "Folded sheets of plain white tissue wrapping paper, one sheet loosely draped",
+      "source": "ai-render",
+      "prompt": "Professional studio product photography of folded sheets of plain white tissue wrapping paper, one sheet loosely draped, from above. Pure white seamless background, soft natural daylight from the side, a subtle soft contact shadow. Completely blank: no text, no logos, no branding, no people. Ultra-photorealistic packaging catalogue photograph."
+    },
+    {
+      "slug": "uat-rope-handle-paper-bag",
+      "file": "uat-rope-handle-paper-bag.jpg",
+      "altTh": "ถุงกระดาษหูเชือก",
+      "altEn": "A plain white art-paper shopping bag with white rope handles",
+      "source": "ai-render",
+      "prompt": "Professional studio product photography of a plain white art-paper shopping bag with white rope handles, standing, 3/4 view. Pure white seamless background, soft natural daylight from the side, a subtle soft contact shadow. Completely blank: no text, no logos, no branding, no people. Ultra-photorealistic packaging catalogue photograph."
+    },
+    {
+      "slug": "uat-kraft-twisted-handle-bag",
+      "file": "uat-kraft-twisted-handle-bag.jpg",
+      "altTh": "ถุงกระดาษคราฟท์หูเกลียว",
+      "altEn": "A plain brown kraft paper shopping bag with twisted paper handles",
+      "source": "ai-render",
+      "prompt": "Professional studio product photography of a plain brown kraft paper shopping bag with twisted paper handles, standing, 3/4 view. Pure white seamless background, soft natural daylight from the side, a subtle soft contact shadow. Completely blank: no text, no logos, no branding, no people. Ultra-photorealistic packaging catalogue photograph."
+    },
+    {
+      "slug": "uat-counter-display",
+      "file": "uat-counter-display.jpg",
+      "altTh": "ชั้นวางสินค้าตั้งโต๊ะ ลูกฟูก",
+      "altEn": "A plain white corrugated counter-top display unit with a header card and two shelves, empty",
+      "source": "ai-render",
+      "prompt": "Professional studio product photography of a plain white corrugated counter-top display unit with a header card and two shelves, empty, 3/4 view. Pure white seamless background, soft natural daylight from the side, a subtle soft contact shadow. Completely blank: no text, no logos, no branding, no people. Ultra-photorealistic packaging catalogue photograph."
+    },
+    {
+      "slug": "uat-floor-display-stand",
+      "file": "uat-floor-display-stand.jpg",
+      "altTh": "ชั้นวางสินค้าตั้งพื้น ลูกฟูก",
+      "altEn": "A plain white corrugated floor-standing display stand with four shelves and a header, empty",
+      "source": "ai-render",
+      "prompt": "Professional studio product photography of a plain white corrugated floor-standing display stand with four shelves and a header, empty, 3/4 view. Pure white seamless background, soft natural daylight from the side, a subtle soft contact shadow. Completely blank: no text, no logos, no branding, no people. Ultra-photorealistic packaging catalogue photograph."
+    },
+    {
+      "slug": "uat-rigid-lid-base-box",
+      "file": "uat-rigid-lid-base-box.jpg",
+      "altTh": "กล่องจั่วปัง ฝาครอบ",
+      "altEn": "A plain matte white rigid lid-and-base gift box with the lid lifted slightly",
+      "source": "ai-render",
+      "prompt": "Professional studio product photography of a plain matte white rigid lid-and-base gift box with the lid lifted slightly, 3/4 view. Pure white seamless background, soft natural daylight from the side, a subtle soft contact shadow. Completely blank: no text, no logos, no branding, no people. Ultra-photorealistic packaging catalogue photograph."
+    },
+    {
+      "slug": "uat-rigid-magnetic-box",
+      "file": "uat-rigid-magnetic-box.jpg",
+      "altTh": "กล่องจั่วปัง ฝาแม่เหล็ก",
+      "altEn": "A plain matte black rigid book-style box with a magnetic flap closure, flap slightly open",
+      "source": "ai-render",
+      "prompt": "Professional studio product photography of a plain matte black rigid book-style box with a magnetic flap closure, flap slightly open, 3/4 view. Pure white seamless background, soft natural daylight from the side, a subtle soft contact shadow. Completely blank: no text, no logos, no branding, no people. Ultra-photorealistic packaging catalogue photograph."
+    },
+    {
+      "slug": "uat-rigid-drawer-box",
+      "file": "uat-rigid-drawer-box.jpg",
+      "altTh": "กล่องจั่วปัง แบบลิ้นชัก",
+      "altEn": "A plain kraft rigid drawer box with the drawer pulled halfway out and a ribbon pull",
+      "source": "ai-render",
+      "prompt": "Professional studio product photography of a plain kraft rigid drawer box with the drawer pulled halfway out and a ribbon pull, 3/4 view. Pure white seamless background, soft natural daylight from the side, a subtle soft contact shadow. Completely blank: no text, no logos, no branding, no people. Ultra-photorealistic packaging catalogue photograph."
+    },
+    {
+      "slug": "dev-graphic-design",
+      "file": "dev-graphic-design.jpg",
+      "altTh": "บริการออกแบบกราฟิก",
+      "altEn": "A designer's white desk with a printed box dieline, paper colour swatch fan and a pencil",
+      "source": "ai-render",
+      "prompt": "Professional studio product photography of a designer's white desk with a printed box dieline, paper colour swatch fan and a pencil, from above, no screens. Pure white seamless background, soft natural daylight from the side, a subtle soft contact shadow. Completely blank: no text, no logos, no branding, no people. Ultra-photorealistic packaging catalogue photograph."
+    },
+    {
+      "slug": "dev-mockup",
+      "file": "dev-mockup.jpg",
+      "altTh": "ตัวอย่างงานจริง (mockup)",
+      "altEn": "A white unprinted folding carton sample with faint pencil fold marks beside a steel ruler",
+      "source": "ai-render",
+      "prompt": "Professional studio product photography of a white unprinted folding carton sample with faint pencil fold marks beside a steel ruler, 3/4 view. Pure white seamless background, soft natural daylight from the side, a subtle soft contact shadow. Completely blank: no text, no logos, no branding, no people. Ultra-photorealistic packaging catalogue photograph."
+    },
+    {
+      "slug": "dev-print-plate",
+      "file": "dev-print-plate.jpg",
+      "altTh": "เพลทพิมพ์ออฟเซ็ต",
+      "altEn": "A thin aluminium offset printing plate leaning at an angle",
+      "source": "ai-render",
+      "prompt": "Professional studio product photography of a thin aluminium offset printing plate leaning at an angle, 3/4 view. Pure white seamless background, soft natural daylight from the side, a subtle soft contact shadow. Completely blank: no text, no logos, no branding, no people. Ultra-photorealistic packaging catalogue photograph."
+    },
+    {
+      "slug": "uat-structure-design",
+      "file": "uat-structure-design.jpg",
+      "altTh": "บริการออกแบบโครงสร้างและไดคัท",
+      "altEn": "A white paper box dieline being cut by hand with a craft knife on a green cutting mat",
+      "source": "ai-render",
+      "prompt": "Professional studio product photography of a white paper box dieline being cut by hand with a craft knife on a green cutting mat, from above. Pure white seamless background, soft natural daylight from the side, a subtle soft contact shadow. Completely blank: no text, no logos, no branding, no people. Ultra-photorealistic packaging catalogue photograph."
+    },
+    {
+      "slug": "uat-diecut-block",
+      "file": "uat-diecut-block.jpg",
+      "altTh": "บล็อกไดคัท",
+      "altEn": "A plywood die-cutting board with steel cutting and creasing rules and red ejection rubber",
+      "source": "ai-render",
+      "prompt": "Professional studio product photography of a plywood die-cutting board with steel cutting and creasing rules and red ejection rubber, 3/4 view. Pure white seamless background, soft natural daylight from the side, a subtle soft contact shadow. Completely blank: no text, no logos, no branding, no people. Ultra-photorealistic packaging catalogue photograph."
+    },
+    {
+      "slug": "uat-clothing-hang-tag",
+      "file": "uat-clothing-hang-tag.jpg",
+      "altTh": "ป้ายแท็กเสื้อผ้า",
+      "altEn": "A plain kraft paper clothing hang tag with a cotton string loop",
+      "source": "ai-render",
+      "prompt": "Professional studio product photography of a plain kraft paper clothing hang tag with a cotton string loop, lying at an angle, from above. Pure white seamless background, soft natural daylight from the side, a subtle soft contact shadow. Completely blank: no text, no logos, no branding, no people. Ultra-photorealistic packaging catalogue photograph."
+    },
+    {
+      "slug": "uat-food-tray-sleeve",
+      "file": "uat-food-tray-sleeve.jpg",
+      "altTh": "ปลอกสวมกล่องอาหาร",
+      "altEn": "A plain kraft paper sleeve wrapped around a plain white food tray",
+      "source": "ai-render",
+      "prompt": "Professional studio product photography of a plain kraft paper sleeve wrapped around a plain white food tray, 3/4 view. Pure white seamless background, soft natural daylight from the side, a subtle soft contact shadow. Completely blank: no text, no logos, no branding, no people. Ultra-photorealistic packaging catalogue photograph."
+    },
+    {
+      "slug": "uat-paper-tube",
+      "file": "uat-paper-tube.jpg",
+      "altTh": "กระบอกกระดาษ",
+      "altEn": "A plain kraft spiral-wound paper tube with a paper lid",
+      "source": "ai-render",
+      "prompt": "Professional studio product photography of a plain kraft spiral-wound paper tube with a paper lid, standing, lid slightly lifted, 3/4 view. Pure white seamless background, soft natural daylight from the side, a subtle soft contact shadow. Completely blank: no text, no logos, no branding, no people. Ultra-photorealistic packaging catalogue photograph."
+    }
+  ]
+}

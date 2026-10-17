@@ -1,4 +1,5 @@
 import { CursorMeta, CursorQuery } from '@common/pagination/pagination.dto';
+import { LocalisedLabelDto } from '@modules/studio/studio.dto';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { Transform } from 'class-transformer';
 import {
@@ -119,6 +120,22 @@ export class StylePriceDto {
   computedAt!: string;
 }
 
+/** The style's photo (D-426): a photograph of the type, or an AI render of it, which the storefront says so. */
+export class StylePhotoDto {
+  @ApiProperty({ example: '/v1/store/catalog/images/0192f3a0-7c1e-7d2a-9b1f-00000000c009' })
+  url!: string;
+
+  @ApiProperty({
+    example: 'ai-render',
+    description:
+      '`getpack` for a photograph of a made box; `ai-render` for an AI-rendered reference image of the type',
+  })
+  source!: string;
+
+  @ApiProperty({ type: LocalisedLabelDto })
+  alt!: LocalisedLabelDto;
+}
+
 export class StyleCardDto {
   @ApiProperty({ example: 'PK-TE-01' })
   code!: string;
@@ -174,9 +191,12 @@ export class StyleCardDto {
     nullable: true,
     example: null,
     description:
-      "A rendered thumbnail of the style (its first variant's); null before thumbnails are rendered",
+      "The style's picture: its photo when it has one, else a rendered thumbnail (its first variant's); null before either exists",
   })
   thumbnailUrl!: string | null;
+
+  @ApiProperty({ type: StylePhotoDto, nullable: true, example: null })
+  photo!: StylePhotoDto | null;
 }
 
 export class StyleFacetValueDto {
@@ -425,6 +445,7 @@ export const CARD_EXAMPLE: StyleCardDto = {
   favourite: null,
   options: ['tuck_bottom:crash_lock', 'window:front_window'],
   thumbnailUrl: null,
+  photo: null,
 };
 
 export const LIST_EXAMPLE: StyleListDto = {
@@ -578,9 +599,13 @@ export class StyleVariantCardDto {
     type: String,
     nullable: true,
     example: null,
-    description: "The variant's rendered thumbnail, else its style's; null before thumbnails are rendered",
+    description:
+      "The variant's picture: its style's photo when it has one, else the variant's rendered thumbnail, else its style's; null before any exists",
   })
   thumbnailUrl!: string | null;
+
+  @ApiProperty({ type: StylePhotoDto, nullable: true, example: null })
+  photo!: StylePhotoDto | null;
 }
 
 export class StyleVariantFacetsDto {
@@ -633,6 +658,7 @@ export const VARIANT_LIST_EXAMPLE: StyleVariantListDto = {
       options: { tuck_top: 'reverse_tuck', tuck_bottom: 'crash_lock', hang: 'none', window: 'front_window' },
       pricePath: 'rfq',
       thumbnailUrl: null,
+      photo: null,
     },
   ],
   facets: {

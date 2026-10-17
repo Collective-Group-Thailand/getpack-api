@@ -1,4 +1,6 @@
 import { randomUUID } from 'node:crypto';
+import { existsSync, mkdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
+import { join } from 'node:path';
 import { Readable } from 'node:stream';
 
 import { type ObjectStorage, type PresignedUpload, type StoredObjectInfo } from './object-storage.port';
@@ -7,11 +9,49 @@ const BASE = 'https://fake-s3.invalid';
 
 /**
  * In-memory stand-in used by tests, `pnpm dev` and the contract build. Presigned URLs are not
- * reachable; tests "upload" with `putDirect`, which is what the client's PUT would do.
+ * reachable; tests "upload" with `putDirect`, which is what the client's PUT would do. With a
+ * directory (`FAKE_OBJECT_STORAGE_DIR`) every object is also kept on disk, so a file a script
+ * stored (`cms:home-photos`, `catalog:product-photos`) is served by the dev API after it, and
+ * uploads survive a restart; tests give no directory and stay in memory.
  */
 export class FakeObjectStorage implements ObjectStorage {
   available = true;
   readonly objects = new Map<string, { body: Buffer; contentType: string }>();
+  private readonly dir: string | undefined;
+
+  constructor(dir?: string) {
+    this.dir = dir;
+    if (dir) mkdirSync(dir, { recursive: true });
+  }
+
+  /** On-disk copy: the bytes and a sidecar with the content type, under a filesystem-safe name. */
+  private paths(key: string): { body: string; meta: string } | null {
+    if (!this.dir) return null;
+    const name = encodeURIComponent(key);
+    return { body: join(this.dir, name), meta: join(this.dir, `${name}.type`) };
+  }
+
+  private remember(key: string, body: Buffer, contentType: string): void {
+    this.objects.set(key, { body, contentType });
+    const paths = this.paths(key);
+    if (paths) {
+      writeFileSync(paths.body, body);
+      writeFileSync(paths.meta, contentType);
+    }
+  }
+
+  private recall(key: string): { body: Buffer; contentType: string } | undefined {
+    const inMemory = this.objects.get(key);
+    if (inMemory) return inMemory;
+    const paths = this.paths(key);
+    if (!paths || !existsSync(paths.body)) return undefined;
+    const object = {
+      body: readFileSync(paths.body),
+      contentType: existsSync(paths.meta) ? readFileSync(paths.meta, 'utf8') : 'application/octet-stream',
+    };
+    this.objects.set(key, object);
+    return object;
+  }
   private readonly multiparts = new Map<
     string,
     { key: string; parts: Map<number, Buffer>; contentType: string }
@@ -57,7 +97,7 @@ export class FakeObjectStorage implements ObjectStorage {
         .sort((a, b) => a.partNumber - b.partNumber)
         .map((p) => upload.parts.get(p.partNumber) ?? Buffer.alloc(0)),
     );
-    this.objects.set(upload.key, { body, contentType: upload.contentType });
+    this.remember(upload.key, body, upload.contentType);
     this.multiparts.delete(uploadId);
     return Promise.resolve();
   }
@@ -82,35 +122,40 @@ export class FakeObjectStorage implements ObjectStorage {
 
   /** Test helper: what a client's presigned PUT does. */
   putDirect(key: string, body: Buffer, contentType: string): void {
-    this.objects.set(key, { body, contentType });
+    this.remember(key, body, contentType);
   }
 
   head(key: string): Promise<StoredObjectInfo | null> {
-    const object = this.objects.get(key);
+    const object = this.recall(key);
     return Promise.resolve(
       object ? { sizeBytes: object.body.length, contentType: object.contentType } : null,
     );
   }
 
   getStream(key: string): Promise<Readable> {
-    const object = this.objects.get(key);
+    const object = this.recall(key);
     return object ? Promise.resolve(Readable.from([object.body])) : Promise.reject(new Error('NoSuchKey'));
   }
 
   put(key: string, body: Buffer, contentType: string): Promise<void> {
-    this.objects.set(key, { body, contentType });
+    this.remember(key, body, contentType);
     return Promise.resolve();
   }
 
   copy(sourceKey: string, targetKey: string): Promise<void> {
-    const object = this.objects.get(sourceKey);
+    const object = this.recall(sourceKey);
     if (!object) return Promise.reject(new Error(`no object ${sourceKey}`));
-    this.objects.set(targetKey, { body: Buffer.from(object.body), contentType: object.contentType });
+    this.remember(targetKey, Buffer.from(object.body), object.contentType);
     return Promise.resolve();
   }
 
   delete(key: string): Promise<void> {
     this.objects.delete(key);
+    const paths = this.paths(key);
+    if (paths) {
+      rmSync(paths.body, { force: true });
+      rmSync(paths.meta, { force: true });
+    }
     return Promise.resolve();
   }
 

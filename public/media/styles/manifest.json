@@ -1,0 +1,983 @@
+{
+  "$comment": "AI-rendered reference photos of the style library's bases (D-426): one per base, generated from the base's name and material class with Google Stitch (Gemini image), blank packaging on white. Placed with `pnpm styles:photos public/media/styles/manifest.json --confirm --as <staff>`; shown on the style's cards and every variant's before the engine's thumbnails. A photograph of a made box replaces the render (source `getpack`); the script never replaces a photo of another source.",
+  "generatedAt": "2026-10-17",
+  "generator": "google-stitch",
+  "assets": [
+    {
+      "code": "PK-CB-01",
+      "file": "PK-CB-01.jpg",
+      "altTh": "กล่องบรรจุภัณฑ์ขนาดใหญ่ (พาเลท)",
+      "altEn": "Bulk bin / pallet box",
+      "source": "ai-render",
+      "prompt": "Professional studio product photography of a plain brown kraft corrugated bulk bin / pallet box, empty, large, 3/4 view. Pure white seamless background, soft natural daylight from the side, a subtle soft contact shadow. No text, no logos, no branding, no people. Ultra-photorealistic packaging catalogue photograph."
+    },
+    {
+      "code": "PK-CB-02",
+      "file": "PK-CB-02.jpg",
+      "altTh": "ถังลูกฟูกแปดเหลี่ยม",
+      "altEn": "Octagonal bulk bin",
+      "source": "ai-render",
+      "prompt": "Professional studio product photography of a plain brown kraft corrugated octagonal bulk bin, empty, 3/4 view. Pure white seamless background, soft natural daylight from the side, a subtle soft contact shadow. No text, no logos, no branding, no people. Ultra-photorealistic packaging catalogue photograph."
+    },
+    {
+      "code": "PK-CB-03",
+      "file": "PK-CB-03.jpg",
+      "altTh": "ปลอกพาเลทพร้อมฝา",
+      "altEn": "Pallet sleeve with cap and base tray",
+      "source": "ai-render",
+      "prompt": "Professional studio product photography of a plain brown kraft corrugated pallet sleeve with cap and base tray, on a wooden pallet, empty, 3/4 view. Pure white seamless background, soft natural daylight from the side, a subtle soft contact shadow. No text, no logos, no branding, no people. Ultra-photorealistic packaging catalogue photograph."
+    },
+    {
+      "code": "PK-CD-01",
+      "file": "PK-CD-01.jpg",
+      "altTh": "กล่องพร้อมวางชั้น (SRP) ฉีกเปิด",
+      "altEn": "Shelf-ready tray with tear-off top",
+      "source": "ai-render",
+      "prompt": "Professional studio product photography of a plain brown kraft corrugated shelf-ready tray with tear-off top, top torn off, empty, 3/4 view. Pure white seamless background, soft natural daylight from the side, a subtle soft contact shadow. No text, no logos, no branding, no people. Ultra-photorealistic packaging catalogue photograph."
+    },
+    {
+      "code": "PK-CD-02",
+      "file": "PK-CD-02.jpg",
+      "altTh": "ชั้นวางโชว์ลูกฟูก (ขาตั้งพื้น)",
+      "altEn": "Floor display unit",
+      "source": "ai-render",
+      "prompt": "Professional studio product photography of a plain brown kraft corrugated floor display unit, empty, 3/4 view. Pure white seamless background, soft natural daylight from the side, a subtle soft contact shadow. No text, no logos, no branding, no people. Ultra-photorealistic packaging catalogue photograph."
+    },
+    {
+      "code": "PK-CF-01",
+      "file": "PK-CF-01.jpg",
+      "altTh": "กล่องไดคัทหูช้าง (เมลเลอร์)",
+      "altEn": "Roll-end tuck-front mailer",
+      "source": "ai-render",
+      "prompt": "Professional studio product photography of a plain brown kraft corrugated roll-end tuck-front mailer, closed, 3/4 view. Pure white seamless background, soft natural daylight from the side, a subtle soft contact shadow. No text, no logos, no branding, no people. Ultra-photorealistic packaging catalogue photograph."
+    },
+    {
+      "code": "PK-CF-02",
+      "file": "PK-CF-02.jpg",
+      "altTh": "กล่องพิซซ่า",
+      "altEn": "Pizza box",
+      "source": "ai-render",
+      "prompt": "Professional studio product photography of a plain brown kraft corrugated pizza box, closed, 3/4 view. Pure white seamless background, soft natural daylight from the side, a subtle soft contact shadow. No text, no logos, no branding, no people. Ultra-photorealistic packaging catalogue photograph."
+    },
+    {
+      "code": "PK-CF-03",
+      "file": "PK-CF-03.jpg",
+      "altTh": "กล่องห่อรอบสินค้า",
+      "altEn": "Wrap-around blank",
+      "source": "ai-render",
+      "prompt": "Professional studio product photography of a plain brown kraft corrugated wrap-around blank, closed, 3/4 view. Pure white seamless background, soft natural daylight from the side, a subtle soft contact shadow. No text, no logos, no branding, no people. Ultra-photorealistic packaging catalogue photograph."
+    },
+    {
+      "code": "PK-CF-04",
+      "file": "PK-CF-04.jpg",
+      "altTh": "ซองกระดาษลูกฟูกห่อหนังสือ",
+      "altEn": "Book wrap folder",
+      "source": "ai-render",
+      "prompt": "Professional studio product photography of a plain brown kraft corrugated book wrap folder, wrapped around a plain book, 3/4 view. Pure white seamless background, soft natural daylight from the side, a subtle soft contact shadow. No text, no logos, no branding, no people. Ultra-photorealistic packaging catalogue photograph."
+    },
+    {
+      "code": "PK-CF-05",
+      "file": "PK-CF-05.jpg",
+      "altTh": "ถาดลูกฟูกล็อกมุม",
+      "altEn": "Corrugated lock-corner tray",
+      "source": "ai-render",
+      "prompt": "Professional studio product photography of a plain brown kraft corrugated corrugated lock-corner tray, empty, 3/4 view. Pure white seamless background, soft natural daylight from the side, a subtle soft contact shadow. No text, no logos, no branding, no people. Ultra-photorealistic packaging catalogue photograph."
+    },
+    {
+      "code": "PK-CF-06",
+      "file": "PK-CF-06.jpg",
+      "altTh": "กล่องเอกสาร/แฟ้ม",
+      "altEn": "Archive / document box",
+      "source": "ai-render",
+      "prompt": "Professional studio product photography of a plain brown kraft corrugated archive / document box, closed, 3/4 view. Pure white seamless background, soft natural daylight from the side, a subtle soft contact shadow. No text, no logos, no branding, no people. Ultra-photorealistic packaging catalogue photograph."
+    },
+    {
+      "code": "PK-CF-07",
+      "file": "PK-CF-07.jpg",
+      "altTh": "กล่องรองเท้า",
+      "altEn": "Shoe box",
+      "source": "ai-render",
+      "prompt": "Professional studio product photography of a plain brown kraft corrugated shoe box, lid half open, 3/4 view. Pure white seamless background, soft natural daylight from the side, a subtle soft contact shadow. No text, no logos, no branding, no people. Ultra-photorealistic packaging catalogue photograph."
+    },
+    {
+      "code": "PK-CF-08",
+      "file": "PK-CF-08.jpg",
+      "altTh": "กล่องผลไม้ไดคัท",
+      "altEn": "Produce tray / die-cut fruit box",
+      "source": "ai-render",
+      "prompt": "Professional studio product photography of a plain brown kraft corrugated produce tray / die-cut fruit box, empty, 3/4 view. Pure white seamless background, soft natural daylight from the side, a subtle soft contact shadow. No text, no logos, no branding, no people. Ultra-photorealistic packaging catalogue photograph."
+    },
+    {
+      "code": "PK-CF-09",
+      "file": "PK-CF-09.jpg",
+      "altTh": "กล่องห้าแผงพับ",
+      "altEn": "Five-panel folder",
+      "source": "ai-render",
+      "prompt": "Professional studio product photography of a plain brown kraft corrugated five-panel folder, closed, 3/4 view. Pure white seamless background, soft natural daylight from the side, a subtle soft contact shadow. No text, no logos, no branding, no people. Ultra-photorealistic packaging catalogue photograph."
+    },
+    {
+      "code": "PK-CF-10",
+      "file": "PK-CF-10.jpg",
+      "altTh": "กล่องเมลเลอร์ปิดด้วยเทปกาวในตัว",
+      "altEn": "Self-seal e-commerce mailer",
+      "source": "ai-render",
+      "prompt": "Professional studio product photography of a plain brown kraft corrugated self-seal e-commerce mailer, closed, 3/4 view. Pure white seamless background, soft natural daylight from the side, a subtle soft contact shadow. No text, no logos, no branding, no people. Ultra-photorealistic packaging catalogue photograph."
+    },
+    {
+      "code": "PK-CG-01",
+      "file": "PK-CG-01.jpg",
+      "altTh": "กล่องลูกฟูกก้นล็อกอัตโนมัติ",
+      "altEn": "Corrugated crash-lock bottom box",
+      "source": "ai-render",
+      "prompt": "Professional studio product photography of a plain brown kraft corrugated corrugated crash-lock bottom box, closed, 3/4 view. Pure white seamless background, soft natural daylight from the side, a subtle soft contact shadow. No text, no logos, no branding, no people. Ultra-photorealistic packaging catalogue photograph."
+    },
+    {
+      "code": "PK-CG-02",
+      "file": "PK-CG-02.jpg",
+      "altTh": "กล่องหิ้วลูกฟูก",
+      "altEn": "Corrugated carry box with handle",
+      "source": "ai-render",
+      "prompt": "Professional studio product photography of a plain brown kraft corrugated corrugated carry box with handle, closed, handle up, 3/4 view. Pure white seamless background, soft natural daylight from the side, a subtle soft contact shadow. No text, no logos, no branding, no people. Ultra-photorealistic packaging catalogue photograph."
+    },
+    {
+      "code": "PK-CG-03",
+      "file": "PK-CG-03.jpg",
+      "altTh": "กล่องส่งของไม่ต้องใช้เทป",
+      "altEn": "Tape-free shipping box",
+      "source": "ai-render",
+      "prompt": "Professional studio product photography of a plain brown kraft corrugated tape-free shipping box, closed, 3/4 view. Pure white seamless background, soft natural daylight from the side, a subtle soft contact shadow. No text, no logos, no branding, no people. Ultra-photorealistic packaging catalogue photograph."
+    },
+    {
+      "code": "PK-CI-01",
+      "file": "PK-CI-01.jpg",
+      "altTh": "ช่องกั้นกากบาท",
+      "altEn": "Cross partition set",
+      "source": "ai-render",
+      "prompt": "Professional studio product photography of a plain brown kraft corrugated cross partition set, standing, assembled, 3/4 view. Pure white seamless background, soft natural daylight from the side, a subtle soft contact shadow. No text, no logos, no branding, no people. Ultra-photorealistic packaging catalogue photograph."
+    },
+    {
+      "code": "PK-CI-02",
+      "file": "PK-CI-02.jpg",
+      "altTh": "แผ่นรอง/แผ่นกั้น",
+      "altEn": "Pad and divider sheet",
+      "source": "ai-render",
+      "prompt": "Professional studio product photography of a plain brown kraft corrugated pad and divider sheet, a few sheets stacked, 3/4 view. Pure white seamless background, soft natural daylight from the side, a subtle soft contact shadow. No text, no logos, no branding, no people. Ultra-photorealistic packaging catalogue photograph."
+    },
+    {
+      "code": "PK-CI-03",
+      "file": "PK-CI-03.jpg",
+      "altTh": "ตัวกันกระแทกมุม/ขอบ",
+      "altEn": "Corner and edge protector",
+      "source": "ai-render",
+      "prompt": "Professional studio product photography of a plain brown kraft corrugated corner and edge protector, two pieces, 3/4 view. Pure white seamless background, soft natural daylight from the side, a subtle soft contact shadow. No text, no logos, no branding, no people. Ultra-photorealistic packaging catalogue photograph."
+    },
+    {
+      "code": "PK-CI-04",
+      "file": "PK-CI-04.jpg",
+      "altTh": "กล่องส่งขวดมีช่องกั้น",
+      "altEn": "Bottle shipper with cells",
+      "source": "ai-render",
+      "prompt": "Professional studio product photography of a plain brown kraft corrugated bottle shipper with cells, open, cells visible, 3/4 view. Pure white seamless background, soft natural daylight from the side, a subtle soft contact shadow. No text, no logos, no branding, no people. Ultra-photorealistic packaging catalogue photograph."
+    },
+    {
+      "code": "PK-CS-01",
+      "file": "PK-CS-01.jpg",
+      "altTh": "กล่องฝาชน",
+      "altEn": "Regular slotted container",
+      "source": "ai-render",
+      "prompt": "Professional studio product photography of a plain brown kraft corrugated regular slotted container, closed, flaps meeting, 3/4 view. Pure white seamless background, soft natural daylight from the side, a subtle soft contact shadow. No text, no logos, no branding, no people. Ultra-photorealistic packaging catalogue photograph."
+    },
+    {
+      "code": "PK-CS-02",
+      "file": "PK-CS-02.jpg",
+      "altTh": "กล่องฝาเปิดครึ่ง (ไม่มีฝาบน)",
+      "altEn": "Half slotted container",
+      "source": "ai-render",
+      "prompt": "Professional studio product photography of a plain brown kraft corrugated half slotted container, open top, no top flaps, 3/4 view. Pure white seamless background, soft natural daylight from the side, a subtle soft contact shadow. No text, no logos, no branding, no people. Ultra-photorealistic packaging catalogue photograph."
+    },
+    {
+      "code": "PK-CS-03",
+      "file": "PK-CS-03.jpg",
+      "altTh": "กล่องฝาเกยเต็ม",
+      "altEn": "Full overlap slotted container",
+      "source": "ai-render",
+      "prompt": "Professional studio product photography of a plain brown kraft corrugated full overlap slotted container, closed, 3/4 view. Pure white seamless background, soft natural daylight from the side, a subtle soft contact shadow. No text, no logos, no branding, no people. Ultra-photorealistic packaging catalogue photograph."
+    },
+    {
+      "code": "PK-CS-04",
+      "file": "PK-CS-04.jpg",
+      "altTh": "กล่องฝาชนพิเศษ (ฝาในชนกัน)",
+      "altEn": "Centre special slotted container",
+      "source": "ai-render",
+      "prompt": "Professional studio product photography of a plain brown kraft corrugated centre special slotted container, closed, 3/4 view. Pure white seamless background, soft natural daylight from the side, a subtle soft contact shadow. No text, no logos, no branding, no people. Ultra-photorealistic packaging catalogue photograph."
+    },
+    {
+      "code": "PK-CS-05",
+      "file": "PK-CS-05.jpg",
+      "altTh": "กล่องฝาเกยบางส่วน",
+      "altEn": "Overlap slotted container",
+      "source": "ai-render",
+      "prompt": "Professional studio product photography of a plain brown kraft corrugated overlap slotted container, closed, 3/4 view. Pure white seamless background, soft natural daylight from the side, a subtle soft contact shadow. No text, no logos, no branding, no people. Ultra-photorealistic packaging catalogue photograph."
+    },
+    {
+      "code": "PK-CS-06",
+      "file": "PK-CS-06.jpg",
+      "altTh": "กล่องฝาชนมีหูหิ้วเจาะ",
+      "altEn": "Slotted container with hand holes",
+      "source": "ai-render",
+      "prompt": "Professional studio product photography of a plain brown kraft corrugated slotted container with hand holes, closed, with hand holes on the ends, 3/4 view. Pure white seamless background, soft natural daylight from the side, a subtle soft contact shadow. No text, no logos, no branding, no people. Ultra-photorealistic packaging catalogue photograph."
+    },
+    {
+      "code": "PK-CS-07",
+      "file": "PK-CS-07.jpg",
+      "altTh": "กล่องลูกฟูกฝาชน ก้นล็อก 1-2-3",
+      "altEn": "Slotted box with snap-lock (1-2-3) bottom",
+      "source": "ai-render",
+      "prompt": "Professional studio product photography of a plain brown kraft corrugated slotted box with snap-lock (1-2-3) bottom, closed, 3/4 view. Pure white seamless background, soft natural daylight from the side, a subtle soft contact shadow. No text, no logos, no branding, no people. Ultra-photorealistic packaging catalogue photograph."
+    },
+    {
+      "code": "PK-CS-08",
+      "file": "PK-CS-08.jpg",
+      "altTh": "กล่องลูกฟูกฝาเสียบ",
+      "altEn": "Slotted box with tuck-in lid",
+      "source": "ai-render",
+      "prompt": "Professional studio product photography of a plain brown kraft corrugated slotted box with tuck-in lid, closed, 3/4 view. Pure white seamless background, soft natural daylight from the side, a subtle soft contact shadow. No text, no logos, no branding, no people. Ultra-photorealistic packaging catalogue photograph."
+    },
+    {
+      "code": "PK-CS-09",
+      "file": "PK-CS-09.jpg",
+      "altTh": "กล่องลูกฟูกปรับความสูงได้",
+      "altEn": "Multi-depth shipping box",
+      "source": "ai-render",
+      "prompt": "Professional studio product photography of a plain brown kraft corrugated multi-depth shipping box, closed, 3/4 view. Pure white seamless background, soft natural daylight from the side, a subtle soft contact shadow. No text, no logos, no branding, no people. Ultra-photorealistic packaging catalogue photograph."
+    },
+    {
+      "code": "PK-CT-01",
+      "file": "PK-CT-01.jpg",
+      "altTh": "กล่องฝาครอบเต็ม (ถาด+ฝา)",
+      "altEn": "Full telescope, two trays",
+      "source": "ai-render",
+      "prompt": "Professional studio product photography of a plain brown kraft corrugated full telescope, two trays, lid lifted slightly off the base, 3/4 view. Pure white seamless background, soft natural daylight from the side, a subtle soft contact shadow. No text, no logos, no branding, no people. Ultra-photorealistic packaging catalogue photograph."
+    },
+    {
+      "code": "PK-CT-02",
+      "file": "PK-CT-02.jpg",
+      "altTh": "กล่องผลไม้ฝาครอบ (ครึ่งสลอต)",
+      "altEn": "Half-slotted body with telescope lid",
+      "source": "ai-render",
+      "prompt": "Professional studio product photography of a plain brown kraft corrugated half-slotted body with telescope lid, lid lifted slightly, 3/4 view. Pure white seamless background, soft natural daylight from the side, a subtle soft contact shadow. No text, no logos, no branding, no people. Ultra-photorealistic packaging catalogue photograph."
+    },
+    {
+      "code": "PK-CT-03",
+      "file": "PK-CT-03.jpg",
+      "altTh": "กล่องฝาครอบแบบดีไซน์",
+      "altEn": "Design-style telescope (double cover)",
+      "source": "ai-render",
+      "prompt": "Professional studio product photography of a plain brown kraft corrugated design-style telescope (double cover), closed, 3/4 view. Pure white seamless background, soft natural daylight from the side, a subtle soft contact shadow. No text, no logos, no branding, no people. Ultra-photorealistic packaging catalogue photograph."
+    },
+    {
+      "code": "PK-CZ-01",
+      "file": "PK-CZ-01.jpg",
+      "altTh": "กล่องสไลด์ลูกฟูก",
+      "altEn": "Corrugated slide box",
+      "source": "ai-render",
+      "prompt": "Professional studio product photography of a plain brown kraft corrugated corrugated slide box, half open, 3/4 view. Pure white seamless background, soft natural daylight from the side, a subtle soft contact shadow. No text, no logos, no branding, no people. Ultra-photorealistic packaging catalogue photograph."
+    },
+    {
+      "code": "PK-DS-01",
+      "file": "PK-DS-01.jpg",
+      "altTh": "กล่องโชว์สินค้าหน้าร้าน (มีป้ายหัว)",
+      "altEn": "Counter display tray with header card",
+      "source": "ai-render",
+      "prompt": "Professional studio product photography of a plain white paperboard counter display tray with header card, empty, 3/4 view. Pure white seamless background, soft natural daylight from the side, a subtle soft contact shadow. No text, no logos, no branding, no people. Ultra-photorealistic packaging catalogue photograph."
+    },
+    {
+      "code": "PK-DS-02",
+      "file": "PK-DS-02.jpg",
+      "altTh": "กล่องโชว์ฝาฉีกเปิด",
+      "altEn": "Tear-away display carton",
+      "source": "ai-render",
+      "prompt": "Professional studio product photography of a plain white paperboard tear-away display carton, top torn open, empty, 3/4 view. Pure white seamless background, soft natural daylight from the side, a subtle soft contact shadow. No text, no logos, no branding, no people. Ultra-photorealistic packaging catalogue photograph."
+    },
+    {
+      "code": "PK-DS-03",
+      "file": "PK-DS-03.jpg",
+      "altTh": "กล่องโชว์ก้นล็อกพนักสูง",
+      "altEn": "Auto-bottom display with raised back",
+      "source": "ai-render",
+      "prompt": "Professional studio product photography of a plain white paperboard auto-bottom display with raised back, empty, 3/4 view. Pure white seamless background, soft natural daylight from the side, a subtle soft contact shadow. No text, no logos, no branding, no people. Ultra-photorealistic packaging catalogue photograph."
+    },
+    {
+      "code": "PK-DS-04",
+      "file": "PK-DS-04.jpg",
+      "altTh": "ขาตั้งโชว์พับได้",
+      "altEn": "Easel-back display stand",
+      "source": "ai-render",
+      "prompt": "Professional studio product photography of a plain white paperboard easel-back display stand, standing, 3/4 view. Pure white seamless background, soft natural daylight from the side, a subtle soft contact shadow. No text, no logos, no branding, no people. Ultra-photorealistic packaging catalogue photograph."
+    },
+    {
+      "code": "PK-DS-05",
+      "file": "PK-DS-05.jpg",
+      "altTh": "ป้ายตั้งโต๊ะทรงสามเหลี่ยม",
+      "altEn": "Table tent card",
+      "source": "ai-render",
+      "prompt": "Professional studio product photography of a plain white paperboard table tent card, standing, 3/4 view. Pure white seamless background, soft natural daylight from the side, a subtle soft contact shadow. No text, no logos, no branding, no people. Ultra-photorealistic packaging catalogue photograph."
+    },
+    {
+      "code": "PK-DS-06",
+      "file": "PK-DS-06.jpg",
+      "altTh": "ถังโชว์สินค้าลูกฟูก (ดัมพ์บิน)",
+      "altEn": "Corrugated dump bin",
+      "source": "ai-render",
+      "prompt": "Professional studio product photography of a plain brown kraft corrugated corrugated dump bin, empty, 3/4 view. Pure white seamless background, soft natural daylight from the side, a subtle soft contact shadow. No text, no logos, no branding, no people. Ultra-photorealistic packaging catalogue photograph."
+    },
+    {
+      "code": "PK-FT-01",
+      "file": "PK-FT-01.jpg",
+      "altTh": "กล่องฝาพับเปิด (ฝาติดตัว)",
+      "altEn": "Hinged flip-top carton",
+      "source": "ai-render",
+      "prompt": "Professional studio product photography of a plain white paperboard hinged flip-top carton, lid half open, 3/4 view. Pure white seamless background, soft natural daylight from the side, a subtle soft contact shadow. No text, no logos, no branding, no people. Ultra-photorealistic packaging catalogue photograph."
+    },
+    {
+      "code": "PK-FT-02",
+      "file": "PK-FT-02.jpg",
+      "altTh": "กล่องฝาพับเปิดมีลิ้นกันฝุ่นยาว",
+      "altEn": "Flip-top with extended dust flaps",
+      "source": "ai-render",
+      "prompt": "Professional studio product photography of a plain white paperboard flip-top with extended dust flaps, lid half open, 3/4 view. Pure white seamless background, soft natural daylight from the side, a subtle soft contact shadow. No text, no logos, no branding, no people. Ultra-photorealistic packaging catalogue photograph."
+    },
+    {
+      "code": "PK-IN-01",
+      "file": "PK-IN-01.jpg",
+      "altTh": "แผ่นรองเจาะช่อง",
+      "altEn": "Die-cut cavity insert",
+      "source": "ai-render",
+      "prompt": "Professional studio product photography of a plain white paperboard die-cut cavity insert, with empty cavities, lying in an open box, 3/4 view. Pure white seamless background, soft natural daylight from the side, a subtle soft contact shadow. No text, no logos, no branding, no people. Ultra-photorealistic packaging catalogue photograph."
+    },
+    {
+      "code": "PK-IN-02",
+      "file": "PK-IN-02.jpg",
+      "altTh": "ตัวรองคอขวด",
+      "altEn": "Bottle-neck insert",
+      "source": "ai-render",
+      "prompt": "Professional studio product photography of a plain white paperboard bottle-neck insert, lying flat, 3/4 view. Pure white seamless background, soft natural daylight from the side, a subtle soft contact shadow. No text, no logos, no branding, no people. Ultra-photorealistic packaging catalogue photograph."
+    },
+    {
+      "code": "PK-IN-03",
+      "file": "PK-IN-03.jpg",
+      "altTh": "ถาดรองในกล่อง",
+      "altEn": "Tray insert",
+      "source": "ai-render",
+      "prompt": "Professional studio product photography of a plain white paperboard tray insert, empty, inside an open box, 3/4 view. Pure white seamless background, soft natural daylight from the side, a subtle soft contact shadow. No text, no logos, no branding, no people. Ultra-photorealistic packaging catalogue photograph."
+    },
+    {
+      "code": "PK-IN-04",
+      "file": "PK-IN-04.jpg",
+      "altTh": "แผ่นรองลูกฟูกพับตัวยู",
+      "altEn": "Corrugated U-liner",
+      "source": "ai-render",
+      "prompt": "Professional studio product photography of a plain brown kraft corrugated corrugated u-liner, folded, standing, 3/4 view. Pure white seamless background, soft natural daylight from the side, a subtle soft contact shadow. No text, no logos, no branding, no people. Ultra-photorealistic packaging catalogue photograph."
+    },
+    {
+      "code": "PK-LA-01",
+      "file": "PK-LA-01.jpg",
+      "altTh": "ฉลากม้วน",
+      "altEn": "Roll label",
+      "source": "ai-render",
+      "prompt": "Professional studio product photography of a plain white label roll label, a short roll partly unrolled, 3/4 view. Pure white seamless background, soft natural daylight from the side, a subtle soft contact shadow. No text, no logos, no branding, no people. Ultra-photorealistic packaging catalogue photograph."
+    },
+    {
+      "code": "PK-LA-02",
+      "file": "PK-LA-02.jpg",
+      "altTh": "สติกเกอร์แผ่น",
+      "altEn": "Sheet sticker",
+      "source": "ai-render",
+      "prompt": "Professional studio product photography of a plain white label sheet sticker, a sheet, one corner peeled, 3/4 view. Pure white seamless background, soft natural daylight from the side, a subtle soft contact shadow. No text, no logos, no branding, no people. Ultra-photorealistic packaging catalogue photograph."
+    },
+    {
+      "code": "PK-LA-03",
+      "file": "PK-LA-03.jpg",
+      "altTh": "ฉลากพันรอบขวด",
+      "altEn": "Wrap-around bottle label",
+      "source": "ai-render",
+      "prompt": "Professional studio product photography of a plain white label wrap-around bottle label, on an unbranded clear glass bottle, 3/4 view. Pure white seamless background, soft natural daylight from the side, a subtle soft contact shadow. No text, no logos, no branding, no people. Ultra-photorealistic packaging catalogue photograph."
+    },
+    {
+      "code": "PK-LA-04",
+      "file": "PK-LA-04.jpg",
+      "altTh": "สติกเกอร์ซีลกันแกะ",
+      "altEn": "Tamper-evident seal",
+      "source": "ai-render",
+      "prompt": "Professional studio product photography of a plain white label tamper-evident seal, sealing the flap of a small white box, 3/4 view. Pure white seamless background, soft natural daylight from the side, a subtle soft contact shadow. No text, no logos, no branding, no people. Ultra-photorealistic packaging catalogue photograph."
+    },
+    {
+      "code": "PK-LA-05",
+      "file": "PK-LA-05.jpg",
+      "altTh": "ฉลากคอขวด",
+      "altEn": "Neck collar label",
+      "source": "ai-render",
+      "prompt": "Professional studio product photography of a plain white label neck collar label, around the neck of an unbranded bottle, 3/4 view. Pure white seamless background, soft natural daylight from the side, a subtle soft contact shadow. No text, no logos, no branding, no people. Ultra-photorealistic packaging catalogue photograph."
+    },
+    {
+      "code": "PK-LA-06",
+      "file": "PK-LA-06.jpg",
+      "altTh": "ฉลากหลายชั้นเปิดอ่าน",
+      "altEn": "Peel-back booklet label",
+      "source": "ai-render",
+      "prompt": "Professional studio product photography of a plain white label peel-back booklet label, on an unbranded bottle, top layer lifted, 3/4 view. Pure white seamless background, soft natural daylight from the side, a subtle soft contact shadow. No text, no logos, no branding, no people. Ultra-photorealistic packaging catalogue photograph."
+    },
+    {
+      "code": "PK-LA-07",
+      "file": "PK-LA-07.jpg",
+      "altTh": "ฉลากหดรัดรูป",
+      "altEn": "Shrink sleeve label",
+      "source": "ai-render",
+      "prompt": "Professional studio product photography of a plain clear shrink film shrink sleeve label, on an unbranded bottle, unprinted, 3/4 view. Pure white seamless background, soft natural daylight from the side, a subtle soft contact shadow. No text, no logos, no branding, no people. Ultra-photorealistic packaging catalogue photograph."
+    },
+    {
+      "code": "PK-LB-01",
+      "file": "PK-LB-01.jpg",
+      "altTh": "กล่องฝาครอบสองชิ้น",
+      "altEn": "Two-piece telescope (paperboard)",
+      "source": "ai-render",
+      "prompt": "Professional studio product photography of a plain white paperboard two-piece telescope (paperboard), lid lifted slightly, 3/4 view. Pure white seamless background, soft natural daylight from the side, a subtle soft contact shadow. No text, no logos, no branding, no people. Ultra-photorealistic packaging catalogue photograph."
+    },
+    {
+      "code": "PK-PB-01",
+      "file": "PK-PB-01.jpg",
+      "altTh": "ถุงตั้งได้",
+      "altEn": "Stand-up pouch",
+      "source": "ai-render",
+      "prompt": "Professional studio product photography of a plain matte white flexible film stand-up pouch, standing, 3/4 view. Pure white seamless background, soft natural daylight from the side, a subtle soft contact shadow. No text, no logos, no branding, no people. Ultra-photorealistic packaging catalogue photograph."
+    },
+    {
+      "code": "PK-PB-02",
+      "file": "PK-PB-02.jpg",
+      "altTh": "ซองซีล 3 ด้าน",
+      "altEn": "Three-side-seal flat pouch",
+      "source": "ai-render",
+      "prompt": "Professional studio product photography of a plain matte white flexible film three-side-seal flat pouch, lying at an angle, 3/4 view. Pure white seamless background, soft natural daylight from the side, a subtle soft contact shadow. No text, no logos, no branding, no people. Ultra-photorealistic packaging catalogue photograph."
+    },
+    {
+      "code": "PK-PB-03",
+      "file": "PK-PB-03.jpg",
+      "altTh": "ซองกลางหลัง (ซีลหลัง)",
+      "altEn": "Centre-seal (pillow) pouch",
+      "source": "ai-render",
+      "prompt": "Professional studio product photography of a plain matte white flexible film centre-seal (pillow) pouch, lying at an angle, 3/4 view. Pure white seamless background, soft natural daylight from the side, a subtle soft contact shadow. No text, no logos, no branding, no people. Ultra-photorealistic packaging catalogue photograph."
+    },
+    {
+      "code": "PK-PB-04",
+      "file": "PK-PB-04.jpg",
+      "altTh": "ถุงก้นแบน (ทรงกล่อง)",
+      "altEn": "Flat-bottom box pouch",
+      "source": "ai-render",
+      "prompt": "Professional studio product photography of a plain matte white flexible film flat-bottom box pouch, standing, 3/4 view. Pure white seamless background, soft natural daylight from the side, a subtle soft contact shadow. No text, no logos, no branding, no people. Ultra-photorealistic packaging catalogue photograph."
+    },
+    {
+      "code": "PK-PB-05",
+      "file": "PK-PB-05.jpg",
+      "altTh": "ถุงมีข้างจีบ",
+      "altEn": "Side-gusset bag",
+      "source": "ai-render",
+      "prompt": "Professional studio product photography of a plain matte white flexible film side-gusset bag, standing, 3/4 view. Pure white seamless background, soft natural daylight from the side, a subtle soft contact shadow. No text, no logos, no branding, no people. Ultra-photorealistic packaging catalogue photograph."
+    },
+    {
+      "code": "PK-PB-06",
+      "file": "PK-PB-06.jpg",
+      "altTh": "ซองไปรษณีย์พลาสติก",
+      "altEn": "Courier poly mailer",
+      "source": "ai-render",
+      "prompt": "Professional studio product photography of a plain matte white flexible film courier poly mailer, sealed, lying flat, 3/4 view. Pure white seamless background, soft natural daylight from the side, a subtle soft contact shadow. No text, no logos, no branding, no people. Ultra-photorealistic packaging catalogue photograph."
+    },
+    {
+      "code": "PK-PB-07",
+      "file": "PK-PB-07.jpg",
+      "altTh": "ซองกันกระแทก (บับเบิ้ล)",
+      "altEn": "Bubble mailer",
+      "source": "ai-render",
+      "prompt": "Professional studio product photography of a plain matte white flexible film bubble mailer, lying flat, 3/4 view. Pure white seamless background, soft natural daylight from the side, a subtle soft contact shadow. No text, no logos, no branding, no people. Ultra-photorealistic packaging catalogue photograph."
+    },
+    {
+      "code": "PK-PB-08",
+      "file": "PK-PB-08.jpg",
+      "altTh": "ถุงมีจุกเท",
+      "altEn": "Spouted pouch",
+      "source": "ai-render",
+      "prompt": "Professional studio product photography of a plain matte white flexible film spouted pouch, standing, spout cap on, 3/4 view. Pure white seamless background, soft natural daylight from the side, a subtle soft contact shadow. No text, no logos, no branding, no people. Ultra-photorealistic packaging catalogue photograph."
+    },
+    {
+      "code": "PK-PG-01",
+      "file": "PK-PG-01.jpg",
+      "altTh": "ถุงกระดาษมีหูหิ้ว",
+      "altEn": "Paper carrier bag",
+      "source": "ai-render",
+      "prompt": "Professional studio product photography of a plain kraft paper paper carrier bag, standing, 3/4 view. Pure white seamless background, soft natural daylight from the side, a subtle soft contact shadow. No text, no logos, no branding, no people. Ultra-photorealistic packaging catalogue photograph."
+    },
+    {
+      "code": "PK-PG-02",
+      "file": "PK-PG-02.jpg",
+      "altTh": "ถุงกระดาษก้นตั้ง (ไม่มีหู)",
+      "altEn": "SOS paper bag",
+      "source": "ai-render",
+      "prompt": "Professional studio product photography of a plain kraft paper sos paper bag, standing, open, 3/4 view. Pure white seamless background, soft natural daylight from the side, a subtle soft contact shadow. No text, no logos, no branding, no people. Ultra-photorealistic packaging catalogue photograph."
+    },
+    {
+      "code": "PK-RG-01",
+      "file": "PK-RG-01.jpg",
+      "altTh": "กล่องแข็งฝาครอบ",
+      "altEn": "Rigid lid and base",
+      "source": "ai-render",
+      "prompt": "Professional studio product photography of a plain matte white rigid board rigid lid and base, lid lifted slightly, 3/4 view. Pure white seamless background, soft natural daylight from the side, a subtle soft contact shadow. No text, no logos, no branding, no people. Ultra-photorealistic packaging catalogue photograph."
+    },
+    {
+      "code": "PK-RG-02",
+      "file": "PK-RG-02.jpg",
+      "altTh": "กล่องแข็งมีคอ (ไหล่)",
+      "altEn": "Rigid shoulder-neck box",
+      "source": "ai-render",
+      "prompt": "Professional studio product photography of a plain matte white rigid board rigid shoulder-neck box, lid lifted showing the neck, 3/4 view. Pure white seamless background, soft natural daylight from the side, a subtle soft contact shadow. No text, no logos, no branding, no people. Ultra-photorealistic packaging catalogue photograph."
+    },
+    {
+      "code": "PK-RG-03",
+      "file": "PK-RG-03.jpg",
+      "altTh": "กล่องแข็งเปิดแบบหนังสือ",
+      "altEn": "Rigid book-style box",
+      "source": "ai-render",
+      "prompt": "Professional studio product photography of a plain matte white rigid board rigid book-style box, flap slightly open, 3/4 view. Pure white seamless background, soft natural daylight from the side, a subtle soft contact shadow. No text, no logos, no branding, no people. Ultra-photorealistic packaging catalogue photograph."
+    },
+    {
+      "code": "PK-RG-04",
+      "file": "PK-RG-04.jpg",
+      "altTh": "กล่องแข็งพับได้ (แม่เหล็ก)",
+      "altEn": "Collapsible rigid box",
+      "source": "ai-render",
+      "prompt": "Professional studio product photography of a plain matte white rigid board collapsible rigid box, closed, slightly open flap, 3/4 view. Pure white seamless background, soft natural daylight from the side, a subtle soft contact shadow. No text, no logos, no branding, no people. Ultra-photorealistic packaging catalogue photograph."
+    },
+    {
+      "code": "PK-RG-05",
+      "file": "PK-RG-05.jpg",
+      "altTh": "กล่องแข็งลิ้นชัก",
+      "altEn": "Rigid drawer box",
+      "source": "ai-render",
+      "prompt": "Professional studio product photography of a plain matte white rigid board rigid drawer box, drawer half out, 3/4 view. Pure white seamless background, soft natural daylight from the side, a subtle soft contact shadow. No text, no logos, no branding, no people. Ultra-photorealistic packaging catalogue photograph."
+    },
+    {
+      "code": "PK-RG-06",
+      "file": "PK-RG-06.jpg",
+      "altTh": "กล่องแข็งฝาพับ (ฝาติดตัว)",
+      "altEn": "Rigid hinged-lid box",
+      "source": "ai-render",
+      "prompt": "Professional studio product photography of a plain matte white rigid board rigid hinged-lid box, lid half open, 3/4 view. Pure white seamless background, soft natural daylight from the side, a subtle soft contact shadow. No text, no logos, no branding, no people. Ultra-photorealistic packaging catalogue photograph."
+    },
+    {
+      "code": "PK-RG-07",
+      "file": "PK-RG-07.jpg",
+      "altTh": "กระบอกกระดาษ",
+      "altEn": "Paper tube / cylinder",
+      "source": "ai-render",
+      "prompt": "Professional studio product photography of a plain matte white rigid board paper tube / cylinder, lid slightly lifted, 3/4 view. Pure white seamless background, soft natural daylight from the side, a subtle soft contact shadow. No text, no logos, no branding, no people. Ultra-photorealistic packaging catalogue photograph."
+    },
+    {
+      "code": "PK-RG-08",
+      "file": "PK-RG-08.jpg",
+      "altTh": "กล่องแข็งเปิดสองบาน",
+      "altEn": "Double-door rigid box",
+      "source": "ai-render",
+      "prompt": "Professional studio product photography of a plain matte white rigid board double-door rigid box, doors slightly open, 3/4 view. Pure white seamless background, soft natural daylight from the side, a subtle soft contact shadow. No text, no logos, no branding, no people. Ultra-photorealistic packaging catalogue photograph."
+    },
+    {
+      "code": "PK-SL-01",
+      "file": "PK-SL-01.jpg",
+      "altTh": "ปลอกสวม",
+      "altEn": "Open-end sleeve",
+      "source": "ai-render",
+      "prompt": "Professional studio product photography of a plain white paperboard open-end sleeve, around a plain white box, 3/4 view. Pure white seamless background, soft natural daylight from the side, a subtle soft contact shadow. No text, no logos, no branding, no people. Ultra-photorealistic packaging catalogue photograph."
+    },
+    {
+      "code": "PK-SL-02",
+      "file": "PK-SL-02.jpg",
+      "altTh": "กล่องลิ้นชัก (ปลอก+ถาด)",
+      "altEn": "Sleeve and drawer (matchbox)",
+      "source": "ai-render",
+      "prompt": "Professional studio product photography of a plain white paperboard sleeve and drawer (matchbox), drawer half out, 3/4 view. Pure white seamless background, soft natural daylight from the side, a subtle soft contact shadow. No text, no logos, no branding, no people. Ultra-photorealistic packaging catalogue photograph."
+    },
+    {
+      "code": "PK-SL-03",
+      "file": "PK-SL-03.jpg",
+      "altTh": "ปลอกคาดกลาง",
+      "altEn": "Belly band / wrap band",
+      "source": "ai-render",
+      "prompt": "Professional studio product photography of a plain white paperboard belly band / wrap band, around a plain white box, 3/4 view. Pure white seamless background, soft natural daylight from the side, a subtle soft contact shadow. No text, no logos, no branding, no people. Ultra-photorealistic packaging catalogue photograph."
+    },
+    {
+      "code": "PK-SL-04",
+      "file": "PK-SL-04.jpg",
+      "altTh": "ปลอกมีฝาพับ",
+      "altEn": "Sleeve with hinged lid",
+      "source": "ai-render",
+      "prompt": "Professional studio product photography of a plain white paperboard sleeve with hinged lid, lid half open, 3/4 view. Pure white seamless background, soft natural daylight from the side, a subtle soft contact shadow. No text, no logos, no branding, no people. Ultra-photorealistic packaging catalogue photograph."
+    },
+    {
+      "code": "PK-SL-05",
+      "file": "PK-SL-05.jpg",
+      "altTh": "กล่องสวมปลายปิด (ฮอลสเตอร์)",
+      "altEn": "Holster / slipcase",
+      "source": "ai-render",
+      "prompt": "Professional studio product photography of a plain white paperboard holster / slipcase, with a plain white box half inside, 3/4 view. Pure white seamless background, soft natural daylight from the side, a subtle soft contact shadow. No text, no logos, no branding, no people. Ultra-photorealistic packaging catalogue photograph."
+    },
+    {
+      "code": "PK-SP-01",
+      "file": "PK-SP-01.jpg",
+      "altTh": "กล่องหมอน",
+      "altEn": "Pillow box",
+      "source": "ai-render",
+      "prompt": "Professional studio product photography of a plain white paperboard pillow box, closed, 3/4 view. Pure white seamless background, soft natural daylight from the side, a subtle soft contact shadow. No text, no logos, no branding, no people. Ultra-photorealistic packaging catalogue photograph."
+    },
+    {
+      "code": "PK-SP-02",
+      "file": "PK-SP-02.jpg",
+      "altTh": "กล่องหูหิ้ว (หลังคาจั่ว)",
+      "altEn": "Gable handle box",
+      "source": "ai-render",
+      "prompt": "Professional studio product photography of a plain white paperboard gable handle box, closed, handle up, 3/4 view. Pure white seamless background, soft natural daylight from the side, a subtle soft contact shadow. No text, no logos, no branding, no people. Ultra-photorealistic packaging catalogue photograph."
+    },
+    {
+      "code": "PK-SP-03",
+      "file": "PK-SP-03.jpg",
+      "altTh": "กล่องหกเหลี่ยม",
+      "altEn": "Hexagonal carton",
+      "source": "ai-render",
+      "prompt": "Professional studio product photography of a plain white paperboard hexagonal carton, closed, 3/4 view. Pure white seamless background, soft natural daylight from the side, a subtle soft contact shadow. No text, no logos, no branding, no people. Ultra-photorealistic packaging catalogue photograph."
+    },
+    {
+      "code": "PK-SP-04",
+      "file": "PK-SP-04.jpg",
+      "altTh": "กล่องแปดเหลี่ยม",
+      "altEn": "Octagonal carton",
+      "source": "ai-render",
+      "prompt": "Professional studio product photography of a plain white paperboard octagonal carton, closed, 3/4 view. Pure white seamless background, soft natural daylight from the side, a subtle soft contact shadow. No text, no logos, no branding, no people. Ultra-photorealistic packaging catalogue photograph."
+    },
+    {
+      "code": "PK-SP-05",
+      "file": "PK-SP-05.jpg",
+      "altTh": "กล่องสามเหลี่ยม (ปริซึม)",
+      "altEn": "Triangular prism carton",
+      "source": "ai-render",
+      "prompt": "Professional studio product photography of a plain white paperboard triangular prism carton, closed, 3/4 view. Pure white seamless background, soft natural daylight from the side, a subtle soft contact shadow. No text, no logos, no branding, no people. Ultra-photorealistic packaging catalogue photograph."
+    },
+    {
+      "code": "PK-SP-06",
+      "file": "PK-SP-06.jpg",
+      "altTh": "กล่องหูหิ้วใส่ขวด",
+      "altEn": "Bottle carrier with handle",
+      "source": "ai-render",
+      "prompt": "Professional studio product photography of a plain white paperboard bottle carrier with handle, empty, 3/4 view. Pure white seamless background, soft natural daylight from the side, a subtle soft contact shadow. No text, no logos, no branding, no people. Ultra-photorealistic packaging catalogue photograph."
+    },
+    {
+      "code": "PK-SP-07",
+      "file": "PK-SP-07.jpg",
+      "altTh": "กล่องเค้กมีหน้าต่าง",
+      "altEn": "Cake box",
+      "source": "ai-render",
+      "prompt": "Professional studio product photography of a plain white paperboard cake box, closed, window on the lid, 3/4 view. Pure white seamless background, soft natural daylight from the side, a subtle soft contact shadow. No text, no logos, no branding, no people. Ultra-photorealistic packaging catalogue photograph."
+    },
+    {
+      "code": "PK-SP-08",
+      "file": "PK-SP-08.jpg",
+      "altTh": "กล่องอาหารทรงถังพับ",
+      "altEn": "Food pail / noodle box",
+      "source": "ai-render",
+      "prompt": "Professional studio product photography of a plain kraft food-grade paperboard food pail / noodle box, closed, wire handle up, 3/4 view. Pure white seamless background, soft natural daylight from the side, a subtle soft contact shadow. No text, no logos, no branding, no people. Ultra-photorealistic packaging catalogue photograph."
+    },
+    {
+      "code": "PK-SP-09",
+      "file": "PK-SP-09.jpg",
+      "altTh": "กล่องแฮมเบอร์เกอร์ฝาหอย",
+      "altEn": "Clamshell burger box",
+      "source": "ai-render",
+      "prompt": "Professional studio product photography of a plain kraft food-grade paperboard clamshell burger box, half open, 3/4 view. Pure white seamless background, soft natural daylight from the side, a subtle soft contact shadow. No text, no logos, no branding, no people. Ultra-photorealistic packaging catalogue photograph."
+    },
+    {
+      "code": "PK-SP-10",
+      "file": "PK-SP-10.jpg",
+      "altTh": "ถาดอาหารทรงเรือ",
+      "altEn": "Food boat tray",
+      "source": "ai-render",
+      "prompt": "Professional studio product photography of a plain kraft food-grade paperboard food boat tray, empty, 3/4 view. Pure white seamless background, soft natural daylight from the side, a subtle soft contact shadow. No text, no logos, no branding, no people. Ultra-photorealistic packaging catalogue photograph."
+    },
+    {
+      "code": "PK-SP-11",
+      "file": "PK-SP-11.jpg",
+      "altTh": "กรวยป๊อปคอร์น/ขนม",
+      "altEn": "Cone / popcorn box",
+      "source": "ai-render",
+      "prompt": "Professional studio product photography of a plain kraft food-grade paperboard cone / popcorn box, empty, standing, 3/4 view. Pure white seamless background, soft natural daylight from the side, a subtle soft contact shadow. No text, no logos, no branding, no people. Ultra-photorealistic packaging catalogue photograph."
+    },
+    {
+      "code": "PK-SP-12",
+      "file": "PK-SP-12.jpg",
+      "altTh": "แฟ้มเอกสารพรีเซนเทชัน",
+      "altEn": "Presentation folder",
+      "source": "ai-render",
+      "prompt": "Professional studio product photography of a plain white paperboard presentation folder, closed, 3/4 view. Pure white seamless background, soft natural daylight from the side, a subtle soft contact shadow. No text, no logos, no branding, no people. Ultra-photorealistic packaging catalogue photograph."
+    },
+    {
+      "code": "PK-SP-13",
+      "file": "PK-SP-13.jpg",
+      "altTh": "ซองกระดาษแข็ง",
+      "altEn": "Paperboard envelope / wallet",
+      "source": "ai-render",
+      "prompt": "Professional studio product photography of a plain white paperboard paperboard envelope / wallet, closed, 3/4 view. Pure white seamless background, soft natural daylight from the side, a subtle soft contact shadow. No text, no logos, no branding, no people. Ultra-photorealistic packaging catalogue photograph."
+    },
+    {
+      "code": "PK-SP-14",
+      "file": "PK-SP-14.jpg",
+      "altTh": "กล่องปิดแบบกลีบดอก",
+      "altEn": "Petal-close carton",
+      "source": "ai-render",
+      "prompt": "Professional studio product photography of a plain white paperboard petal-close carton, petals closed, 3/4 view. Pure white seamless background, soft natural daylight from the side, a subtle soft contact shadow. No text, no logos, no branding, no people. Ultra-photorealistic packaging catalogue photograph."
+    },
+    {
+      "code": "PK-SP-15",
+      "file": "PK-SP-15.jpg",
+      "altTh": "กล่องทรงพีระมิด",
+      "altEn": "Pyramid carton",
+      "source": "ai-render",
+      "prompt": "Professional studio product photography of a plain white paperboard pyramid carton, closed, 3/4 view. Pure white seamless background, soft natural daylight from the side, a subtle soft contact shadow. No text, no logos, no branding, no people. Ultra-photorealistic packaging catalogue photograph."
+    },
+    {
+      "code": "PK-SP-16",
+      "file": "PK-SP-16.jpg",
+      "altTh": "กล่องอาหารมีหน้าต่าง (ล็อกมุม)",
+      "altEn": "Lock-corner food box with window lid",
+      "source": "ai-render",
+      "prompt": "Professional studio product photography of a plain kraft food-grade paperboard lock-corner food box with window lid, closed, window lid, 3/4 view. Pure white seamless background, soft natural daylight from the side, a subtle soft contact shadow. No text, no logos, no branding, no people. Ultra-photorealistic packaging catalogue photograph."
+    },
+    {
+      "code": "PK-SP-17",
+      "file": "PK-SP-17.jpg",
+      "altTh": "ถาดฮอทด็อก/ของทอด",
+      "altEn": "Hot dog / snack tray",
+      "source": "ai-render",
+      "prompt": "Professional studio product photography of a plain kraft food-grade paperboard hot dog / snack tray, empty, 3/4 view. Pure white seamless background, soft natural daylight from the side, a subtle soft contact shadow. No text, no logos, no branding, no people. Ultra-photorealistic packaging catalogue photograph."
+    },
+    {
+      "code": "PK-SP-18",
+      "file": "PK-SP-18.jpg",
+      "altTh": "กล่องไวน์ทรงสูงล็อกคอขวด",
+      "altEn": "Tall bottle carton with neck lock",
+      "source": "ai-render",
+      "prompt": "Professional studio product photography of a plain white paperboard tall bottle carton with neck lock, closed, tall, 3/4 view. Pure white seamless background, soft natural daylight from the side, a subtle soft contact shadow. No text, no logos, no branding, no people. Ultra-photorealistic packaging catalogue photograph."
+    },
+    {
+      "code": "PK-SP-19",
+      "file": "PK-SP-19.jpg",
+      "altTh": "กล่องทิชชู/กล่องดึงหยิบ",
+      "altEn": "Dispenser carton",
+      "source": "ai-render",
+      "prompt": "Professional studio product photography of a plain white paperboard dispenser carton, with the dispensing slot open, 3/4 view. Pure white seamless background, soft natural daylight from the side, a subtle soft contact shadow. No text, no logos, no branding, no people. Ultra-photorealistic packaging catalogue photograph."
+    },
+    {
+      "code": "PK-SP-20",
+      "file": "PK-SP-20.jpg",
+      "altTh": "ถาดใส่โคนไอศกรีม",
+      "altEn": "Ice-cream cone holder",
+      "source": "ai-render",
+      "prompt": "Professional studio product photography of a plain kraft food-grade paperboard ice-cream cone holder, empty, 3/4 view. Pure white seamless background, soft natural daylight from the side, a subtle soft contact shadow. No text, no logos, no branding, no people. Ultra-photorealistic packaging catalogue photograph."
+    },
+    {
+      "code": "PK-SP-22",
+      "file": "PK-SP-22.jpg",
+      "altTh": "กล่องของขวัญทรงสอบ",
+      "altEn": "Tapered gift box",
+      "source": "ai-render",
+      "prompt": "Professional studio product photography of a plain white paperboard tapered gift box, closed, 3/4 view. Pure white seamless background, soft natural daylight from the side, a subtle soft contact shadow. No text, no logos, no branding, no people. Ultra-photorealistic packaging catalogue photograph."
+    },
+    {
+      "code": "PK-SP-23",
+      "file": "PK-SP-23.jpg",
+      "altTh": "แก้วกระดาษพิมพ์ลาย",
+      "altEn": "Paper cup blank",
+      "source": "ai-render",
+      "prompt": "Professional studio product photography of a plain kraft food-grade paperboard paper cup blank, a single cup, standing, 3/4 view. Pure white seamless background, soft natural daylight from the side, a subtle soft contact shadow. No text, no logos, no branding, no people. Ultra-photorealistic packaging catalogue photograph."
+    },
+    {
+      "code": "PK-SP-24",
+      "file": "PK-SP-24.jpg",
+      "altTh": "ชามกระดาษ",
+      "altEn": "Paper bowl blank",
+      "source": "ai-render",
+      "prompt": "Professional studio product photography of a plain kraft food-grade paperboard paper bowl blank, a single bowl, 3/4 view. Pure white seamless background, soft natural daylight from the side, a subtle soft contact shadow. No text, no logos, no branding, no people. Ultra-photorealistic packaging catalogue photograph."
+    },
+    {
+      "code": "PK-SP-26",
+      "file": "PK-SP-26.jpg",
+      "altTh": "กล่องห้าเหลี่ยม",
+      "altEn": "Pentagonal carton",
+      "source": "ai-render",
+      "prompt": "Professional studio product photography of a plain white paperboard pentagonal carton, closed, 3/4 view. Pure white seamless background, soft natural daylight from the side, a subtle soft contact shadow. No text, no logos, no branding, no people. Ultra-photorealistic packaging catalogue photograph."
+    },
+    {
+      "code": "PK-TE-01",
+      "file": "PK-TE-01.jpg",
+      "altTh": "กล่องฝาเสียบ (ปรับฝาบน-ล่างได้)",
+      "altEn": "Tuck-end carton (configurable ends)",
+      "source": "ai-render",
+      "prompt": "Professional studio product photography of a plain white paperboard tuck-end carton (configurable ends), closed, standing, 3/4 view. Pure white seamless background, soft natural daylight from the side, a subtle soft contact shadow. No text, no logos, no branding, no people. Ultra-photorealistic packaging catalogue photograph."
+    },
+    {
+      "code": "PK-TE-02",
+      "file": "PK-TE-02.jpg",
+      "altTh": "กล่องฝาเสียบล็อกกันเปิด",
+      "altEn": "Tuck-end with slit or friction lock",
+      "source": "ai-render",
+      "prompt": "Professional studio product photography of a plain white paperboard tuck-end with slit or friction lock, closed, standing, 3/4 view. Pure white seamless background, soft natural daylight from the side, a subtle soft contact shadow. No text, no logos, no branding, no people. Ultra-photorealistic packaging catalogue photograph."
+    },
+    {
+      "code": "PK-TE-03",
+      "file": "PK-TE-03.jpg",
+      "altTh": "กล่องฝาเสียบผนังสองชั้น",
+      "altEn": "Double-wall tuck-front carton",
+      "source": "ai-render",
+      "prompt": "Professional studio product photography of a plain white paperboard double-wall tuck-front carton, closed, standing, 3/4 view. Pure white seamless background, soft natural daylight from the side, a subtle soft contact shadow. No text, no logos, no branding, no people. Ultra-photorealistic packaging catalogue photograph."
+    },
+    {
+      "code": "PK-TE-04",
+      "file": "PK-TE-04.jpg",
+      "altTh": "กล่องฝาเสียบมีช่องกั้นในตัว",
+      "altEn": "Tuck-end with integral partition",
+      "source": "ai-render",
+      "prompt": "Professional studio product photography of a plain white paperboard tuck-end with integral partition, open top showing the partition, 3/4 view. Pure white seamless background, soft natural daylight from the side, a subtle soft contact shadow. No text, no logos, no branding, no people. Ultra-photorealistic packaging catalogue photograph."
+    },
+    {
+      "code": "PK-TE-05",
+      "file": "PK-TE-05.jpg",
+      "altTh": "กล่องฝาเสียบแถบฉีกกันแกะ",
+      "altEn": "Tamper-evident tuck-end",
+      "source": "ai-render",
+      "prompt": "Professional studio product photography of a plain white paperboard tamper-evident tuck-end, closed, tear strip visible, 3/4 view. Pure white seamless background, soft natural daylight from the side, a subtle soft contact shadow. No text, no logos, no branding, no people. Ultra-photorealistic packaging catalogue photograph."
+    },
+    {
+      "code": "PK-TE-06",
+      "file": "PK-TE-06.jpg",
+      "altTh": "กล่องแขวน 5 แผง",
+      "altEn": "Five-panel hanger box",
+      "source": "ai-render",
+      "prompt": "Professional studio product photography of a plain white paperboard five-panel hanger box, standing, hang hole visible, 3/4 view. Pure white seamless background, soft natural daylight from the side, a subtle soft contact shadow. No text, no logos, no branding, no people. Ultra-photorealistic packaging catalogue photograph."
+    },
+    {
+      "code": "PK-TG-01",
+      "file": "PK-TG-01.jpg",
+      "altTh": "ป้ายแท็กห้อย",
+      "altEn": "Hang tag",
+      "source": "ai-render",
+      "prompt": "Professional studio product photography of a plain white paperboard hang tag, with a cotton string loop, 3/4 view. Pure white seamless background, soft natural daylight from the side, a subtle soft contact shadow. No text, no logos, no branding, no people. Ultra-photorealistic packaging catalogue photograph."
+    },
+    {
+      "code": "PK-TG-02",
+      "file": "PK-TG-02.jpg",
+      "altTh": "ปลอกแก้ว",
+      "altEn": "Cup sleeve",
+      "source": "ai-render",
+      "prompt": "Professional studio product photography of a plain white paperboard cup sleeve, around a plain white paper cup, 3/4 view. Pure white seamless background, soft natural daylight from the side, a subtle soft contact shadow. No text, no logos, no branding, no people. Ultra-photorealistic packaging catalogue photograph."
+    },
+    {
+      "code": "PK-TG-03",
+      "file": "PK-TG-03.jpg",
+      "altTh": "ที่ใส่แก้ว (ถาดหิ้ว)",
+      "altEn": "Cup carrier",
+      "source": "ai-render",
+      "prompt": "Professional studio product photography of a plain white paperboard cup carrier, holding two plain white paper cups, 3/4 view. Pure white seamless background, soft natural daylight from the side, a subtle soft contact shadow. No text, no logos, no branding, no people. Ultra-photorealistic packaging catalogue photograph."
+    },
+    {
+      "code": "PK-TG-04",
+      "file": "PK-TG-04.jpg",
+      "altTh": "หัวกระดาษปิดถุง",
+      "altEn": "Bag header card",
+      "source": "ai-render",
+      "prompt": "Professional studio product photography of a plain white paperboard bag header card, stapled over a clear bag, 3/4 view. Pure white seamless background, soft natural daylight from the side, a subtle soft contact shadow. No text, no logos, no branding, no people. Ultra-photorealistic packaging catalogue photograph."
+    },
+    {
+      "code": "PK-TG-05",
+      "file": "PK-TG-05.jpg",
+      "altTh": "การ์ดแทรก/การ์ดขอบคุณ",
+      "altEn": "Insert / thank-you card",
+      "source": "ai-render",
+      "prompt": "Professional studio product photography of a plain white paperboard insert / thank-you card, a small stack of cards, 3/4 view. Pure white seamless background, soft natural daylight from the side, a subtle soft contact shadow. No text, no logos, no branding, no people. Ultra-photorealistic packaging catalogue photograph."
+    },
+    {
+      "code": "PK-TG-06",
+      "file": "PK-TG-06.jpg",
+      "altTh": "ใบแทรก / แผ่นพับ",
+      "altEn": "Folded leaflet / package insert",
+      "source": "ai-render",
+      "prompt": "Professional studio product photography of a plain white paperboard folded leaflet / package insert, folded, one panel open, 3/4 view. Pure white seamless background, soft natural daylight from the side, a subtle soft contact shadow. No text, no logos, no branding, no people. Ultra-photorealistic packaging catalogue photograph."
+    },
+    {
+      "code": "PK-TG-07",
+      "file": "PK-TG-07.jpg",
+      "altTh": "การ์ดแพ็คแขวน (บลิสเตอร์)",
+      "altEn": "Blister / hang card",
+      "source": "ai-render",
+      "prompt": "Professional studio product photography of a plain white paperboard blister / hang card, with a clear blister dome, 3/4 view. Pure white seamless background, soft natural daylight from the side, a subtle soft contact shadow. No text, no logos, no branding, no people. Ultra-photorealistic packaging catalogue photograph."
+    },
+    {
+      "code": "PK-TG-08",
+      "file": "PK-TG-08.jpg",
+      "altTh": "ป้ายคล้องคอขวด",
+      "altEn": "Bottle necker",
+      "source": "ai-render",
+      "prompt": "Professional studio product photography of a plain white paperboard bottle necker, hung on an unbranded bottle neck, 3/4 view. Pure white seamless background, soft natural daylight from the side, a subtle soft contact shadow. No text, no logos, no branding, no people. Ultra-photorealistic packaging catalogue photograph."
+    },
+    {
+      "code": "PK-TR-01",
+      "file": "PK-TR-01.jpg",
+      "altTh": "ถาด 4 มุมทากาว",
+      "altEn": "Four-corner glued tray",
+      "source": "ai-render",
+      "prompt": "Professional studio product photography of a plain white paperboard four-corner glued tray, empty, 3/4 view. Pure white seamless background, soft natural daylight from the side, a subtle soft contact shadow. No text, no logos, no branding, no people. Ultra-photorealistic packaging catalogue photograph."
+    },
+    {
+      "code": "PK-TR-02",
+      "file": "PK-TR-02.jpg",
+      "altTh": "ถาด 6 มุมทากาว",
+      "altEn": "Six-corner glued tray",
+      "source": "ai-render",
+      "prompt": "Professional studio product photography of a plain white paperboard six-corner glued tray, empty, 3/4 view. Pure white seamless background, soft natural daylight from the side, a subtle soft contact shadow. No text, no logos, no branding, no people. Ultra-photorealistic packaging catalogue photograph."
+    },
+    {
+      "code": "PK-TR-03",
+      "file": "PK-TR-03.jpg",
+      "altTh": "ถาดผนังสองชั้น",
+      "altEn": "Double-wall tray",
+      "source": "ai-render",
+      "prompt": "Professional studio product photography of a plain white paperboard double-wall tray, empty, 3/4 view. Pure white seamless background, soft natural daylight from the side, a subtle soft contact shadow. No text, no logos, no branding, no people. Ultra-photorealistic packaging catalogue photograph."
+    },
+    {
+      "code": "PK-TR-04",
+      "file": "PK-TR-04.jpg",
+      "altTh": "ถาดฝาเสียบพับขอบ",
+      "altEn": "Roll-end tray with tuck lid (paperboard mailer)",
+      "source": "ai-render",
+      "prompt": "Professional studio product photography of a plain white paperboard roll-end tray with tuck lid (paperboard mailer), closed, 3/4 view. Pure white seamless background, soft natural daylight from the side, a subtle soft contact shadow. No text, no logos, no branding, no people. Ultra-photorealistic packaging catalogue photograph."
+    },
+    {
+      "code": "PK-TR-05",
+      "file": "PK-TR-05.jpg",
+      "altTh": "ถาดล็อกมุมมีฝาพับ",
+      "altEn": "Lock-corner tray with hinged lid",
+      "source": "ai-render",
+      "prompt": "Professional studio product photography of a plain white paperboard lock-corner tray with hinged lid, lid half open, 3/4 view. Pure white seamless background, soft natural daylight from the side, a subtle soft contact shadow. No text, no logos, no branding, no people. Ultra-photorealistic packaging catalogue photograph."
+    },
+    {
+      "code": "PK-TR-06",
+      "file": "PK-TR-06.jpg",
+      "altTh": "ถาดทรงสอบซ้อนได้",
+      "altEn": "Nestable tapered tray",
+      "source": "ai-render",
+      "prompt": "Professional studio product photography of a plain kraft food-grade paperboard nestable tapered tray, two nested, 3/4 view. Pure white seamless background, soft natural daylight from the side, a subtle soft contact shadow. No text, no logos, no branding, no people. Ultra-photorealistic packaging catalogue photograph."
+    }
+  ]
+}

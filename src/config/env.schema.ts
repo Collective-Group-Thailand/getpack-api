@@ -85,6 +85,11 @@ export class EnvironmentVariables {
   @IsEnum(IntegrationsMode)
   OBJECT_STORAGE_MODE?: IntegrationsMode;
 
+  /** Fake object storage only: a directory that keeps every object on disk across processes and restarts. */
+  @IsOptional()
+  @IsString()
+  FAKE_OBJECT_STORAGE_DIR?: string;
+
   @IsString()
   @Matches(/^postgres(ql)?:\/\//, { message: 'DATABASE_URL must be a postgres:// URL' })
   DATABASE_URL!: string;
