@@ -756,7 +756,7 @@ export class StoreCatalogController {
     summary: 'Get a catalogue image',
     description:
       'Served only while an active catalogue row or published CMS content references the file and its malware ' +
-      'scan is clean (contract §3 "Files"); anything else is 404. `size=thumb` serves the 400 px WebP thumbnail ' +
+      'scan is clean (contract §3 "Files"); anything else is 404. `size=thumb` serves the 640 px WebP thumbnail ' +
       '(the original when there is none) — for cards and lists. Cacheable for a day.',
     implements: ['D-005'],
   })
@@ -765,7 +765,7 @@ export class StoreCatalogController {
     required: false,
     enum: IMAGE_SIZES,
     enumName: 'StoreImageSize',
-    description: '`thumb`: the 400 px WebP thumbnail for cards; default the original',
+    description: '`thumb`: the WebP thumbnail (640 px wide) for cards; default the original',
   })
   @ApiProduces('image/png', 'image/jpeg', 'image/webp')
   @ApiResponse({

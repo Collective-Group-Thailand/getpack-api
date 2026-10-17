@@ -23,7 +23,11 @@ const RETRY_AFTER_MS = 15_000;
 /** GETs right after `complete`'s HEAD occasionally miss; retried with 1 s, 2 s, 4 s backoff. */
 const READ_RETRIES = 3;
 const READ_RETRY_MS = 1000;
-const THUMBNAIL_WIDTH = 400;
+/**
+ * Wide enough for a product card on a retina screen (a 270 CSS px card at 2× is 540 px) and still a tenth of a
+ * 1024 px original; `pnpm files:rethumb` re-makes existing thumbnails when this changes.
+ */
+export const THUMBNAIL_WIDTH = 640;
 const IMAGE_TYPES = new Set(['image/png', 'image/jpeg', 'image/webp', 'image/tiff']);
 
 /**
@@ -184,6 +188,17 @@ export class FileProcessingJobs {
       return pages > 0 ? { pageCount: pages } : {};
     }
     return {};
+  }
+
+  /** Re-makes the thumbnail of a clean image from its stored bytes (`files:rethumb`): the old row is replaced. */
+  async rethumbnail(file: FileObject): Promise<void> {
+    const chunks: Buffer[] = [];
+    for await (const chunk of await this.storage.getStream(file.storageKey))
+      chunks.push(Buffer.from(chunk as Uint8Array));
+    // The new thumbnail takes the old one's storage key (unique), so the old row goes first; a card asking in
+    // between gets the original (`store.catalog.getImage` falls back), never a 404.
+    await this.prisma.fileObject.deleteMany({ where: { thumbnailOfFileId: file.id } });
+    await this.thumbnail(file, Buffer.concat(chunks));
   }
 
   private async thumbnail(file: FileObject, sample: Buffer): Promise<void> {

@@ -1,6 +1,6 @@
 {
   "name": "getpack-api",
-  "version": "0.73.0",
+  "version": "0.73.1",
   "description": "getpack — Your Packaging Production Partner · backend (NestJS)",
   "private": true,
   "license": "UNLICENSED",
@@ -42,6 +42,7 @@
     "cms:home-photos": "pnpm build:fast && node dist/scripts/cms-home-photos.js",
     "catalog:product-photos": "pnpm build:fast && node dist/scripts/catalog-product-photos.js",
     "styles:photos": "pnpm build:fast && node dist/scripts/styles-photos.js",
+    "files:rethumb": "pnpm build:fast && node dist/scripts/files-rethumb.js",
     "dieline:vendor": "bash scripts/dieline-vendor.sh",
     "styles:recipes-from-engine": "pnpm build:fast && node dist/scripts/styles-recipes-from-engine.js",
     "uat:styles": "pnpm build:fast && node dist/scripts/uat-style-fixture.js",
