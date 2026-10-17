@@ -3,6 +3,17 @@
 Contract-facing changes per release. The contract itself is `contract/openapi.json`; mappings for `getpack-web` are in
 `docs/contract-requests-triage.md`.
 
+## v0.71.0 — Unlabelled reference photos; catalogue readiness
+
+Decision D-426 amended (product owner, 2026-10-17: the storefront says nothing about where a photo came from).
+
+- **Breaking** for the storefront: `StylePhotoDto` loses `source`; the `variant` of `StoreImageDto` (catalogue product
+  and stock product images) no longer carries `source` or `prompt` — only what the image shows (`alt`, legacy
+  material / colour keys). The admin DTOs keep `source`.
+- New `admin.catalogReadiness.get` (`GET /v1/admin/catalog/readiness`, `catalog.read`): per active product type its
+  quote mode and whether its calculator is shipped; catalogue products, stock products and style bases with no photo,
+  only a reference render, not active, quote-only, or no publishable variant — counts plus the first fifty of each.
+
 ## v0.70.0 — Photo curation in the admin
 
 Decision D-426. Additive.

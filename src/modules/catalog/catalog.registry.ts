@@ -68,6 +68,7 @@ import {
   showcaseCategories,
   showcaseProducts,
 } from './showcase/showcase.resources';
+import { CatalogReadinessController } from './readiness/readiness.controller';
 import { StockProductRelationsController } from './stock/stock.controller';
 import { stockAttributeValues, stockProducts } from './stock/stock.resources';
 
@@ -126,6 +127,7 @@ export const CATALOG_RESOURCES: readonly AnyCatalogResource[] = [
  */
 export const CATALOG_ADMIN_CONTROLLERS: Type<unknown>[] = [
   CatalogImportsController,
+  CatalogReadinessController,
   ProductTypeActionsController,
   CatalogProductRelationsController,
   PatternRelationsController,

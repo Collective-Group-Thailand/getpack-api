@@ -40,6 +40,16 @@ import {
 } from './store-catalog.dto';
 
 /** Public URL of a catalogue image; the file is served only while visible content references it. */
+export /**
+ * What the storefront may know about an image: what it shows (`alt`, the legacy material / colour keys) — not where
+ * it came from. `source` and `prompt` (D-426: a reference render vs a photograph) are the admin's business.
+ */
+function publicVariant(variant: unknown): Record<string, unknown> | null {
+  if (!variant || typeof variant !== 'object') return null;
+  const { source: _source, prompt: _prompt, ...shown } = variant as Record<string, unknown>;
+  return Object.keys(shown).length ? shown : null;
+}
+
 export const imageUrl = (filePublicId: string | null | undefined): string | null =>
   filePublicId ? `/v1/store/catalog/images/${filePublicId}` : null;
 
@@ -278,7 +288,7 @@ export class StoreCatalogService {
       })),
       images: p.images.map((i) => ({
         url: imageUrl(i.fileObject.publicId)!,
-        variant: (i.variant as Record<string, unknown> | null) ?? null,
+        variant: publicVariant(i.variant),
       })),
       videos: videos.map((v) => ({ provider: v.provider, url: v.url, title: v.title })),
       seo: seoDto(p.seoPage),
@@ -489,7 +499,7 @@ export class StoreCatalogService {
       imageUrls: s.images.map((i) => imageUrl(i.fileObject.publicId)!),
       images: s.images.map((i) => ({
         url: imageUrl(i.fileObject.publicId)!,
-        variant: (i.variant as Record<string, unknown> | null) ?? null,
+        variant: publicVariant(i.variant),
       })),
     };
   }
