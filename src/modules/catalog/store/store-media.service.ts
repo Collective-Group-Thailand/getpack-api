@@ -43,7 +43,7 @@ export class StoreMediaService {
   ) {}
 
   /**
-   * `size: 'thumb'` serves the 400 px WebP the file worker made of the image (a card never needs
+   * `size: 'thumb'` serves the 640 px WebP the file worker made of the image (a card never needs
    * the 1024 px original); an image without one — too large to sample, or not yet processed —
    * falls back to the original, so a card is never empty.
    */
