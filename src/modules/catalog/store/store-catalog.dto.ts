@@ -454,6 +454,13 @@ export class StoreStockProductDto {
 
   @ApiProperty({ type: [String], example: [IMAGE_URL_EXAMPLE] })
   imageUrls!: string[];
+
+  @ApiProperty({
+    type: [StoreImageDto],
+    description:
+      'The same images in order, each with what it is (an AI-rendered reference photo says so, D-426)',
+  })
+  images!: StoreImageDto[];
 }
 
 export class StoreStockProductListQuery extends PageQuery {

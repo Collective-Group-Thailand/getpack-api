@@ -3,6 +3,12 @@
 Contract-facing changes per release. The contract itself is `contract/openapi.json`; mappings for `getpack-web` are in
 `docs/contract-requests-triage.md`.
 
+## v0.69.0 — Stock product photos
+
+Decision D-426. Additive. `StoreStockProductDto` gains `images` (`StoreImageDto[] { url, variant }`, the same images as
+`imageUrls`, in order): a photo placed by `catalog:product-photos` carries `variant { kind: photo, source, alt, prompt }`,
+so the storefront can give it localised alt text and label an AI render. `imageUrls` is unchanged.
+
 ## v0.68.0 — Style and product photos
 
 Decision D-426. Additive. `StyleCardDto` and `StyleVariantCardDto` gain `photo` (`StylePhotoDto { url, source, alt }`,

@@ -1,0 +1,527 @@
+{
+  "$comment": "AI-rendered reference photos of the stock products (D-426): one per look, generated with Google Stitch (Gemini image), blank packaging on white; sizes of one look share a photo. Placed with `pnpm catalog:product-photos public/media/stock/manifest.json --confirm --as <staff>` (each SKU in `skus` gets the photo as its first image). A real photograph replaces a render through the admin (source `getpack`); the script never replaces a photo of another source.",
+  "generatedAt": "2026-10-17",
+  "generator": "google-stitch",
+  "assets": [
+    {
+      "skus": ["UAT-ACR-JAR-50G"],
+      "file": "acr-jar-50g.jpg",
+      "altTh": "กระปุกอะคริลิค 2 ชั้น 50 กรัม ฝาทอง",
+      "altEn": "Double-wall acrylic jar 50 g, gold lid",
+      "source": "ai-render",
+      "prompt": "Product photograph: a double-wall acrylic cosmetic jar with a gold lid, 3/4 view; pure white seamless background, soft natural daylight from the side, a subtle soft contact shadow. No text, no logos, no branding, no people. Ultra-photorealistic packaging catalogue photograph."
+    },
+    {
+      "skus": ["UAT-AIR-COLUMN-20"],
+      "file": "air-column-20.jpg",
+      "altTh": "ถุงลมกันกระแทกสำหรับขวด (Air column) 20 ซม.",
+      "altEn": "Air-column bottle protector 20 cm",
+      "source": "ai-render",
+      "prompt": "Product photograph: a clear inflated air-column cushioning sleeve wrapped around a plain bottle, 3/4 view; pure white seamless background, soft natural daylight from the side, a subtle soft contact shadow. No text, no logos, no branding, no people. Ultra-photorealistic packaging catalogue photograph."
+    },
+    {
+      "skus": ["UAT-AIRLESS-30"],
+      "file": "airless-30.jpg",
+      "altTh": "ขวดแอร์เลส 30 มล. สีขาว",
+      "altEn": "Airless pump bottle 30 ml, white",
+      "source": "ai-render",
+      "prompt": "Product photograph: a white airless pump cosmetic bottle, 3/4 view; pure white seamless background, soft natural daylight from the side, a subtle soft contact shadow. No text, no logos, no branding, no people. Ultra-photorealistic packaging catalogue photograph."
+    },
+    {
+      "skus": ["UAT-AMB-DROP-10", "UAT-AMB-DROP-100", "UAT-AMB-DROP-30", "UAT-AMB-DROP-50"],
+      "file": "amber-dropper.jpg",
+      "altTh": "ขวดแก้วสีชา ดรอปเปอร์",
+      "altEn": "Amber glass dropper bottle",
+      "source": "ai-render",
+      "prompt": "Product photograph: an amber glass dropper bottle with a black rubber bulb dropper, 3/4 view; pure white seamless background, soft natural daylight from the side, a subtle soft contact shadow. No text, no logos, no branding, no people. Ultra-photorealistic packaging catalogue photograph."
+    },
+    {
+      "skus": ["UAT-BAGASSE-BOX-600"],
+      "file": "bagasse-box-600.jpg",
+      "altTh": "กล่องชานอ้อย 600 มล. ฝาพับ",
+      "altEn": "Bagasse clamshell box 600 ml",
+      "source": "ai-render",
+      "prompt": "Product photograph: a white sugarcane bagasse clamshell food box, closed, 3/4 view; pure white seamless background, soft natural daylight from the side, a subtle soft contact shadow. No text, no logos, no branding, no people. Ultra-photorealistic packaging catalogue photograph."
+    },
+    {
+      "skus": ["UAT-BAGASSE-PLATE-9"],
+      "file": "bagasse-plate-9.jpg",
+      "altTh": "จานชานอ้อย 9 นิ้ว",
+      "altEn": "Bagasse plate 9 inch",
+      "source": "ai-render",
+      "prompt": "Product photograph: a round white sugarcane bagasse plate, 3/4 view; pure white seamless background, soft natural daylight from the side, a subtle soft contact shadow. No text, no logos, no branding, no people. Ultra-photorealistic packaging catalogue photograph."
+    },
+    {
+      "skus": ["UAT-BUBBLE-MAILER-13X18", "UAT-BUBBLE-MAILER-18X23", "UAT-BUBBLE-MAILER-22X27"],
+      "file": "bubble-mailer.jpg",
+      "altTh": "ซองบับเบิ้ลกันกระแทก",
+      "altEn": "Bubble mailer",
+      "source": "ai-render",
+      "prompt": "Product photograph: a white padded bubble mailer envelope lying flat, 3/4 view; pure white seamless background, soft natural daylight from the side, a subtle soft contact shadow. No text, no logos, no branding, no people. Ultra-photorealistic packaging catalogue photograph."
+    },
+    {
+      "skus": ["UAT-BUBBLE-ROLL-65"],
+      "file": "bubble-roll-65.jpg",
+      "altTh": "บับเบิ้ลกันกระแทก 65 ซม. × 100 ม.",
+      "altEn": "Bubble wrap 65 cm × 100 m",
+      "source": "ai-render",
+      "prompt": "Product photograph: a large roll of clear bubble wrap, 3/4 view; pure white seamless background, soft natural daylight from the side, a subtle soft contact shadow. No text, no logos, no branding, no people. Ultra-photorealistic packaging catalogue photograph."
+    },
+    {
+      "skus": ["UAT-CAKE-BOX-1LB"],
+      "file": "cake-box-1lb.jpg",
+      "altTh": "กล่องเค้ก 1 ปอนด์ พร้อมฐาน",
+      "altEn": "Cake box 1 lb with base",
+      "source": "ai-render",
+      "prompt": "Product photograph: a white paperboard cake box with a separate base, closed, 3/4 view; pure white seamless background, soft natural daylight from the side, a subtle soft contact shadow. No text, no logos, no branding, no people. Ultra-photorealistic packaging catalogue photograph."
+    },
+    {
+      "skus": ["UAT-CUP-12OZ", "UAT-CUP-4OZ", "UAT-CUP-8OZ"],
+      "file": "paper-cup-hot.jpg",
+      "altTh": "แก้วกระดาษ (เครื่องดื่มร้อน)",
+      "altEn": "Paper cup (hot drinks)",
+      "source": "ai-render",
+      "prompt": "Product photograph: a plain white paper hot-drink cup with a white sip lid, 3/4 view; pure white seamless background, soft natural daylight from the side, a subtle soft contact shadow. No text, no logos, no branding, no people. Ultra-photorealistic packaging catalogue photograph."
+    },
+    {
+      "skus": ["UAT-CUP-16OZ", "UAT-CUP-22OZ"],
+      "file": "paper-cup-cold.jpg",
+      "altTh": "แก้วกระดาษ (เครื่องดื่มเย็น)",
+      "altEn": "Paper cup (cold drinks)",
+      "source": "ai-render",
+      "prompt": "Product photograph: a plain white paper cold-drink cup with a clear dome lid, 3/4 view; pure white seamless background, soft natural daylight from the side, a subtle soft contact shadow. No text, no logos, no branding, no people. Ultra-photorealistic packaging catalogue photograph."
+    },
+    {
+      "skus": ["UAT-FOAM-PUMP-150"],
+      "file": "foam-pump-150.jpg",
+      "altTh": "ขวดโฟมปั๊ม 150 มล.",
+      "altEn": "Foam pump bottle 150 ml",
+      "source": "ai-render",
+      "prompt": "Product photograph: a white plastic foaming pump bottle, 3/4 view; pure white seamless background, soft natural daylight from the side, a subtle soft contact shadow. No text, no logos, no branding, no people. Ultra-photorealistic packaging catalogue photograph."
+    },
+    {
+      "skus": ["UAT-FRAGILE-TAPE"],
+      "file": "fragile-tape.jpg",
+      "altTh": "เทประวังแตก 2 นิ้ว × 45 หลา",
+      "altEn": "Fragile warning tape 2 in × 45 yd",
+      "source": "ai-render",
+      "prompt": "Product photograph: a roll of red and white patterned warning packing tape with no readable words, 3/4 view; pure white seamless background, soft natural daylight from the side, a subtle soft contact shadow. No text, no logos, no branding, no people. Ultra-photorealistic packaging catalogue photograph."
+    },
+    {
+      "skus": ["UAT-GLS-BIRDNEST-45"],
+      "file": "gls-birdnest-45.jpg",
+      "altTh": "ขวดแก้วรังนก 45 มล. ฝาเกลียว",
+      "altEn": "Glass bird’s-nest bottle 45 ml",
+      "source": "ai-render",
+      "prompt": "Product photograph: a small clear glass bottle with a gold screw cap, bird's-nest drink style, 3/4 view; pure white seamless background, soft natural daylight from the side, a subtle soft contact shadow. No text, no logos, no branding, no people. Ultra-photorealistic packaging catalogue photograph."
+    },
+    {
+      "skus": ["UAT-GLS-CANDLE-180"],
+      "file": "gls-candle-180.jpg",
+      "altTh": "แก้วเทียนหอม 180 มล. ทรงกระบอก",
+      "altEn": "Candle glass 180 ml, tumbler",
+      "source": "ai-render",
+      "prompt": "Product photograph: an empty clear glass candle tumbler, 3/4 view; pure white seamless background, soft natural daylight from the side, a subtle soft contact shadow. No text, no logos, no branding, no people. Ultra-photorealistic packaging catalogue photograph."
+    },
+    {
+      "skus": ["UAT-GLS-JAR-100", "UAT-GLS-JAR-200"],
+      "file": "glass-jar-gold.jpg",
+      "altTh": "ขวดโหลแก้ว ฝาเกลียวสีทอง",
+      "altEn": "Glass jar, gold screw lid",
+      "source": "ai-render",
+      "prompt": "Product photograph: a small clear glass jar with a gold metal screw lid, 3/4 view; pure white seamless background, soft natural daylight from the side, a subtle soft contact shadow. No text, no logos, no branding, no people. Ultra-photorealistic packaging catalogue photograph."
+    },
+    {
+      "skus": ["UAT-GLS-JAR-500"],
+      "file": "gls-jar-500.jpg",
+      "altTh": "ขวดโหลแก้ว 500 มล. ฝาเกลียว",
+      "altEn": "Glass jar 500 ml, screw lid",
+      "source": "ai-render",
+      "prompt": "Product photograph: a clear glass storage jar with a white metal screw lid, 3/4 view; pure white seamless background, soft natural daylight from the side, a subtle soft contact shadow. No text, no logos, no branding, no people. Ultra-photorealistic packaging catalogue photograph."
+    },
+    {
+      "skus": ["UAT-GLS-JUICE-250"],
+      "file": "gls-juice-250.jpg",
+      "altTh": "ขวดแก้วน้ำผลไม้ 250 มล. ฝาเกลียวล็อก",
+      "altEn": "Glass juice bottle 250 ml, lug cap",
+      "source": "ai-render",
+      "prompt": "Product photograph: a clear glass juice bottle with a white lug cap, 3/4 view; pure white seamless background, soft natural daylight from the side, a subtle soft contact shadow. No text, no logos, no branding, no people. Ultra-photorealistic packaging catalogue photograph."
+    },
+    {
+      "skus": ["UAT-HDPE-BTL-1000"],
+      "file": "hdpe-btl-1000.jpg",
+      "altTh": "ขวด HDPE ขาวขุ่น 1 ลิตร",
+      "altEn": "HDPE bottle 1 litre, natural white",
+      "source": "ai-render",
+      "prompt": "Product photograph: a natural white translucent HDPE plastic bottle with a white cap, 3/4 view; pure white seamless background, soft natural daylight from the side, a subtle soft contact shadow. No text, no logos, no branding, no people. Ultra-photorealistic packaging catalogue photograph."
+    },
+    {
+      "skus": ["UAT-HDPE-GAL-3800"],
+      "file": "hdpe-gal-3800.jpg",
+      "altTh": "แกลลอน HDPE 3.8 ลิตร มีหูจับ",
+      "altEn": "HDPE gallon 3.8 litres with handle",
+      "source": "ai-render",
+      "prompt": "Product photograph: a white HDPE plastic gallon jug with a handle, 3/4 view; pure white seamless background, soft natural daylight from the side, a subtle soft contact shadow. No text, no logos, no branding, no people. Ultra-photorealistic packaging catalogue photograph."
+    },
+    {
+      "skus": ["UAT-KRAFT-BAG-L", "UAT-KRAFT-BAG-M"],
+      "file": "kraft-bag-twisted.jpg",
+      "altTh": "ถุงกระดาษคราฟท์หูเกลียว",
+      "altEn": "Kraft bag with twisted handles",
+      "source": "ai-render",
+      "prompt": "Product photograph: a brown kraft paper shopping bag with twisted paper handles, standing, 3/4 view; pure white seamless background, soft natural daylight from the side, a subtle soft contact shadow. No text, no logos, no branding, no people. Ultra-photorealistic packaging catalogue photograph."
+    },
+    {
+      "skus": ["UAT-KRAFT-BAG-S", "UAT-KRAFT-FLAT-M"],
+      "file": "kraft-bag-flat.jpg",
+      "altTh": "ถุงกระดาษคราฟท์ก้นแบน",
+      "altEn": "Flat-bottom kraft bag",
+      "source": "ai-render",
+      "prompt": "Product photograph: a brown kraft flat-bottom paper bag without handles, standing open, 3/4 view; pure white seamless background, soft natural daylight from the side, a subtle soft contact shadow. No text, no logos, no branding, no people. Ultra-photorealistic packaging catalogue photograph."
+    },
+    {
+      "skus": ["UAT-KRAFT-BOX-1000", "UAT-KRAFT-BOX-1400", "UAT-KRAFT-BOX-500", "UAT-KRAFT-BOX-650"],
+      "file": "kraft-food-box.jpg",
+      "altTh": "กล่องอาหารกระดาษคราฟท์",
+      "altEn": "Kraft food box",
+      "source": "ai-render",
+      "prompt": "Product photograph: a brown kraft paper take-away food box with fold-over lid, closed, 3/4 view; pure white seamless background, soft natural daylight from the side, a subtle soft contact shadow. No text, no logos, no branding, no people. Ultra-photorealistic packaging catalogue photograph."
+    },
+    {
+      "skus": ["UAT-KRAFT-MAILER-A4"],
+      "file": "kraft-mailer-a4.jpg",
+      "altTh": "ซองเอกสารคราฟท์ A4 แถบกาว",
+      "altEn": "Kraft document envelope A4, self-seal",
+      "source": "ai-render",
+      "prompt": "Product photograph: a brown kraft A4 document envelope with a self-seal flap, lying flat, 3/4 view; pure white seamless background, soft natural daylight from the side, a subtle soft contact shadow. No text, no logos, no branding, no people. Ultra-photorealistic packaging catalogue photograph."
+    },
+    {
+      "skus": ["UAT-LID-DOME-95"],
+      "file": "lid-dome-95.jpg",
+      "altTh": "ฝาโดม PET ปาก 95 มม. (มีรู)",
+      "altEn": "PET dome lid 95 mm with hole",
+      "source": "ai-render",
+      "prompt": "Product photograph: a clear PET dome cup lid with a straw hole, 3/4 view; pure white seamless background, soft natural daylight from the side, a subtle soft contact shadow. No text, no logos, no branding, no people. Ultra-photorealistic packaging catalogue photograph."
+    },
+    {
+      "skus": ["UAT-LID-FLAT-95"],
+      "file": "lid-flat-95.jpg",
+      "altTh": "ฝาเรียบ PET ปาก 95 มม.",
+      "altEn": "PET flat lid 95 mm",
+      "source": "ai-render",
+      "prompt": "Product photograph: a clear flat PET cup lid, 3/4 view; pure white seamless background, soft natural daylight from the side, a subtle soft contact shadow. No text, no logos, no branding, no people. Ultra-photorealistic packaging catalogue photograph."
+    },
+    {
+      "skus": ["UAT-LID-SIP-90"],
+      "file": "lid-sip-90.jpg",
+      "altTh": "ฝายกดื่ม PS ปาก 90 มม. สีดำ",
+      "altEn": "PS sip lid 90 mm, black",
+      "source": "ai-render",
+      "prompt": "Product photograph: a black plastic sip lid for a coffee cup, 3/4 view; pure white seamless background, soft natural daylight from the side, a subtle soft contact shadow. No text, no logos, no branding, no people. Ultra-photorealistic packaging catalogue photograph."
+    },
+    {
+      "skus": ["UAT-LIPBALM-5G"],
+      "file": "lipbalm-5g.jpg",
+      "altTh": "หลอดลิปบาล์ม 5 กรัม สีขาว",
+      "altEn": "Lip-balm tube 5 g, white",
+      "source": "ai-render",
+      "prompt": "Product photograph: a white lip-balm stick tube with cap, 3/4 view; pure white seamless background, soft natural daylight from the side, a subtle soft contact shadow. No text, no logos, no branding, no people. Ultra-photorealistic packaging catalogue photograph."
+    },
+    {
+      "skus": [
+        "UAT-MAIL-BAG-17X30",
+        "UAT-MAIL-BAG-25X35",
+        "UAT-MAIL-BAG-28X42",
+        "UAT-MAIL-BAG-32X45",
+        "UAT-MAIL-BAG-38X52"
+      ],
+      "file": "mail-bag-white.jpg",
+      "altTh": "ซองไปรษณีย์พลาสติก (สีขาว)",
+      "altEn": "Plastic mailing bag (white)",
+      "source": "ai-render",
+      "prompt": "Product photograph: a white plastic courier mailing bag, sealed, lying flat, 3/4 view; pure white seamless background, soft natural daylight from the side, a subtle soft contact shadow. No text, no logos, no branding, no people. Ultra-photorealistic packaging catalogue photograph."
+    },
+    {
+      "skus": ["UAT-MAIL-BAG-BLACK-25X35"],
+      "file": "mail-bag-black.jpg",
+      "altTh": "ซองไปรษณีย์พลาสติก 25×35 ซม. (สีดำ)",
+      "altEn": "Plastic mailing bag 25×35 cm (black)",
+      "source": "ai-render",
+      "prompt": "Product photograph: a black plastic courier mailing bag, sealed, lying flat, 3/4 view; pure white seamless background, soft natural daylight from the side, a subtle soft contact shadow. No text, no logos, no branding, no people. Ultra-photorealistic packaging catalogue photograph."
+    },
+    {
+      "skus": ["UAT-OPP-ADH-10X15"],
+      "file": "opp-adh-10x15.jpg",
+      "altTh": "ซอง OPP แถบกาว 10×15 ซม.",
+      "altEn": "OPP bag with adhesive strip 10×15 cm",
+      "source": "ai-render",
+      "prompt": "Product photograph: a clear OPP plastic bag with an adhesive flap strip, empty, lying flat, 3/4 view; pure white seamless background, soft natural daylight from the side, a subtle soft contact shadow. No text, no logos, no branding, no people. Ultra-photorealistic packaging catalogue photograph."
+    },
+    {
+      "skus": ["UAT-OPP-TAPE-BROWN", "UAT-OPP-TAPE-CLEAR"],
+      "file": "opp-tape.jpg",
+      "altTh": "เทปปิดกล่อง OPP สีใสและสีน้ำตาล",
+      "altEn": "OPP packing tape, clear and brown",
+      "source": "ai-render",
+      "prompt": "Product photograph: two rolls of OPP packing tape, one clear and one brown, 3/4 view; pure white seamless background, soft natural daylight from the side, a subtle soft contact shadow. No text, no logos, no branding, no people. Ultra-photorealistic packaging catalogue photograph."
+    },
+    {
+      "skus": ["UAT-PAPER-BOWL-520", "UAT-PAPER-BOWL-750"],
+      "file": "paper-bowl.jpg",
+      "altTh": "ชามกระดาษ พร้อมฝา",
+      "altEn": "Paper bowl with lid",
+      "source": "ai-render",
+      "prompt": "Product photograph: a white paper soup bowl with a matching paper lid, 3/4 view; pure white seamless background, soft natural daylight from the side, a subtle soft contact shadow. No text, no logos, no branding, no people. Ultra-photorealistic packaging catalogue photograph."
+    },
+    {
+      "skus": ["UAT-PAPER-SHRED-1KG"],
+      "file": "paper-shred-1kg.jpg",
+      "altTh": "กระดาษฝอยกันกระแทก 1 กก. (สีน้ำตาล)",
+      "altEn": "Shredded paper filler 1 kg (brown)",
+      "source": "ai-render",
+      "prompt": "Product photograph: a pile of brown kraft crinkle-cut shredded paper filler, 3/4 view; pure white seamless background, soft natural daylight from the side, a subtle soft contact shadow. No text, no logos, no branding, no people. Ultra-photorealistic packaging catalogue photograph."
+    },
+    {
+      "skus": ["UAT-PET-BAKERY-S"],
+      "file": "pet-bakery-s.jpg",
+      "altTh": "กล่องเบเกอรี่ PET ใส ฝาล็อก (ครัวซองต์)",
+      "altEn": "Clear PET bakery box, snap lid",
+      "source": "ai-render",
+      "prompt": "Product photograph: a clear PET plastic hinged bakery clamshell box, closed, 3/4 view; pure white seamless background, soft natural daylight from the side, a subtle soft contact shadow. No text, no logos, no branding, no people. Ultra-photorealistic packaging catalogue photograph."
+    },
+    {
+      "skus": ["UAT-PET-BTL-100"],
+      "file": "pet-btl-100.jpg",
+      "altTh": "ขวด PET ใส 100 มล. ฝาเกลียว 24 มม.",
+      "altEn": "Clear PET bottle 100 ml, 24 mm screw cap",
+      "source": "ai-render",
+      "prompt": "Product photograph: a small clear PET plastic bottle with a black screw cap, 3/4 view; pure white seamless background, soft natural daylight from the side, a subtle soft contact shadow. No text, no logos, no branding, no people. Ultra-photorealistic packaging catalogue photograph."
+    },
+    {
+      "skus": ["UAT-PET-BTL-1000"],
+      "file": "pet-btl-1000.jpg",
+      "altTh": "ขวด PET ใส 1 ลิตร",
+      "altEn": "Clear PET bottle 1 litre",
+      "source": "ai-render",
+      "prompt": "Product photograph: a clear PET plastic bottle of 1 litre with a white cap, 3/4 view; pure white seamless background, soft natural daylight from the side, a subtle soft contact shadow. No text, no logos, no branding, no people. Ultra-photorealistic packaging catalogue photograph."
+    },
+    {
+      "skus": ["UAT-PET-BTL-1500"],
+      "file": "pet-btl-1500.jpg",
+      "altTh": "ขวด PET 1.5 ลิตร",
+      "altEn": "PET bottle 1.5 litres",
+      "source": "ai-render",
+      "prompt": "Product photograph: a clear PET plastic bottle of 1.5 litres with a white cap, 3/4 view; pure white seamless background, soft natural daylight from the side, a subtle soft contact shadow. No text, no logos, no branding, no people. Ultra-photorealistic packaging catalogue photograph."
+    },
+    {
+      "skus": ["UAT-PET-BTL-250", "UAT-PET-BTL-500"],
+      "file": "pet-round.jpg",
+      "altTh": "ขวด PET ใส ทรงกลม",
+      "altEn": "Clear PET round bottle",
+      "source": "ai-render",
+      "prompt": "Product photograph: a clear PET round plastic bottle with a white screw cap, 3/4 view; pure white seamless background, soft natural daylight from the side, a subtle soft contact shadow. No text, no logos, no branding, no people. Ultra-photorealistic packaging catalogue photograph."
+    },
+    {
+      "skus": ["UAT-PET-BTL-350"],
+      "file": "pet-btl-350.jpg",
+      "altTh": "ขวด PET 350 มล. (ชา / น้ำผลไม้)",
+      "altEn": "PET bottle 350 ml (tea / juice)",
+      "source": "ai-render",
+      "prompt": "Product photograph: a clear PET plastic tea or juice bottle with a white cap, 3/4 view; pure white seamless background, soft natural daylight from the side, a subtle soft contact shadow. No text, no logos, no branding, no people. Ultra-photorealistic packaging catalogue photograph."
+    },
+    {
+      "skus": ["UAT-PET-BTL-60"],
+      "file": "pet-btl-60.jpg",
+      "altTh": "ขวด PET กลม 60 มล. ฝาฟลิปท็อป",
+      "altEn": "PET round bottle 60 ml, flip-top cap",
+      "source": "ai-render",
+      "prompt": "Product photograph: a small clear PET round bottle with a white flip-top cap, 3/4 view; pure white seamless background, soft natural daylight from the side, a subtle soft contact shadow. No text, no logos, no branding, no people. Ultra-photorealistic packaging catalogue photograph."
+    },
+    {
+      "skus": ["UAT-PET-CUP-16OZ", "UAT-PET-CUP-22OZ"],
+      "file": "pet-cup.jpg",
+      "altTh": "แก้ว PET ใส",
+      "altEn": "Clear PET cup",
+      "source": "ai-render",
+      "prompt": "Product photograph: a clear PET plastic cold-drink cup, empty, 3/4 view; pure white seamless background, soft natural daylight from the side, a subtle soft contact shadow. No text, no logos, no branding, no people. Ultra-photorealistic packaging catalogue photograph."
+    },
+    {
+      "skus": ["UAT-PET-JAR-1000"],
+      "file": "pet-jar-1000.jpg",
+      "altTh": "โหลคุกกี้ PET 1 ลิตร ฝาเกลียว",
+      "altEn": "PET cookie jar 1 litre",
+      "source": "ai-render",
+      "prompt": "Product photograph: a clear PET plastic cookie jar with a white screw lid, 3/4 view; pure white seamless background, soft natural daylight from the side, a subtle soft contact shadow. No text, no logos, no branding, no people. Ultra-photorealistic packaging catalogue photograph."
+    },
+    {
+      "skus": ["UAT-PET-JAR-250", "UAT-PET-JAR-500"],
+      "file": "pet-jar-alu.jpg",
+      "altTh": "กระปุก PET ฝาอลูมิเนียม",
+      "altEn": "PET jar, aluminium lid",
+      "source": "ai-render",
+      "prompt": "Product photograph: a clear PET plastic jar with a silver aluminium screw lid, 3/4 view; pure white seamless background, soft natural daylight from the side, a subtle soft contact shadow. No text, no logos, no branding, no people. Ultra-photorealistic packaging catalogue photograph."
+    },
+    {
+      "skus": ["UAT-PET-PUMP-250"],
+      "file": "pet-pump-250.jpg",
+      "altTh": "ขวดปั๊ม PET 250 มล. หัวปั๊มสีขาว",
+      "altEn": "PET pump bottle 250 ml, white pump",
+      "source": "ai-render",
+      "prompt": "Product photograph: a clear PET pump bottle with a white lotion pump, 3/4 view; pure white seamless background, soft natural daylight from the side, a subtle soft contact shadow. No text, no logos, no branding, no people. Ultra-photorealistic packaging catalogue photograph."
+    },
+    {
+      "skus": ["UAT-PET-PUMP-500"],
+      "file": "pet-pump-500.jpg",
+      "altTh": "ขวดปั๊ม PET 500 มล. สีชา",
+      "altEn": "Amber PET pump bottle 500 ml",
+      "source": "ai-render",
+      "prompt": "Product photograph: an amber PET plastic pump bottle with a black lotion pump, 3/4 view; pure white seamless background, soft natural daylight from the side, a subtle soft contact shadow. No text, no logos, no branding, no people. Ultra-photorealistic packaging catalogue photograph."
+    },
+    {
+      "skus": ["UAT-PET-SPRAY-100", "UAT-PET-SPRAY-30"],
+      "file": "pet-spray.jpg",
+      "altTh": "ขวดสเปรย์ PET หัวพ่นละอองฝอย",
+      "altEn": "PET mist spray bottle",
+      "source": "ai-render",
+      "prompt": "Product photograph: a clear PET plastic fine-mist spray bottle with a white sprayer, 3/4 view; pure white seamless background, soft natural daylight from the side, a subtle soft contact shadow. No text, no logos, no branding, no people. Ultra-photorealistic packaging catalogue photograph."
+    },
+    {
+      "skus": ["UAT-PET-SQ-150"],
+      "file": "pet-sq-150.jpg",
+      "altTh": "ขวด PET ทรงเหลี่ยม 150 มล.",
+      "altEn": "PET square bottle 150 ml",
+      "source": "ai-render",
+      "prompt": "Product photograph: a clear square PET plastic bottle with a white cap, 3/4 view; pure white seamless background, soft natural daylight from the side, a subtle soft contact shadow. No text, no logos, no branding, no people. Ultra-photorealistic packaging catalogue photograph."
+    },
+    {
+      "skus": ["UAT-PET-UCUP-16OZ"],
+      "file": "pet-ucup-16oz.jpg",
+      "altTh": "แก้วทรงยู PET 16 ออนซ์",
+      "altEn": "U-shape PET cup 16 oz",
+      "source": "ai-render",
+      "prompt": "Product photograph: a clear U-shaped PET plastic drink cup, empty, 3/4 view; pure white seamless background, soft natural daylight from the side, a subtle soft contact shadow. No text, no logos, no branding, no people. Ultra-photorealistic packaging catalogue photograph."
+    },
+    {
+      "skus": [
+        "UAT-POSTBOX-0",
+        "UAT-POSTBOX-00",
+        "UAT-POSTBOX-2A",
+        "UAT-POSTBOX-A",
+        "UAT-POSTBOX-B",
+        "UAT-POSTBOX-C",
+        "UAT-POSTBOX-D",
+        "UAT-POSTBOX-E",
+        "UAT-POSTBOX-F"
+      ],
+      "file": "postbox.jpg",
+      "altTh": "กล่องไปรษณีย์ ฝาชน ไม่พิมพ์",
+      "altEn": "Plain postal box",
+      "source": "ai-render",
+      "prompt": "Product photograph: a plain brown corrugated postal box, closed, 3/4 view; pure white seamless background, soft natural daylight from the side, a subtle soft contact shadow. No text, no logos, no branding, no people. Ultra-photorealistic packaging catalogue photograph."
+    },
+    {
+      "skus": ["UAT-PP-BENTO-2"],
+      "file": "pp-bento-2.jpg",
+      "altTh": "กล่องข้าว PP 2 ช่อง พร้อมฝา",
+      "altEn": "PP bento box 2 compartments with lid",
+      "source": "ai-render",
+      "prompt": "Product photograph: a black PP plastic bento food container with two compartments and a clear lid, 3/4 view; pure white seamless background, soft natural daylight from the side, a subtle soft contact shadow. No text, no logos, no branding, no people. Ultra-photorealistic packaging catalogue photograph."
+    },
+    {
+      "skus": ["UAT-PP-BOX-750"],
+      "file": "pp-box-750.jpg",
+      "altTh": "กล่องข้าว PP ไมโครเวฟ 750 มล. พร้อมฝา",
+      "altEn": "PP microwavable container 750 ml with lid",
+      "source": "ai-render",
+      "prompt": "Product photograph: a white PP microwavable food container with a white lid, 3/4 view; pure white seamless background, soft natural daylight from the side, a subtle soft contact shadow. No text, no logos, no branding, no people. Ultra-photorealistic packaging catalogue photograph."
+    },
+    {
+      "skus": ["UAT-PP-JAR-30G", "UAT-PP-JAR-50G"],
+      "file": "pp-cream-jar.jpg",
+      "altTh": "กระปุกครีม PP สีขาว",
+      "altEn": "PP cream jar, white",
+      "source": "ai-render",
+      "prompt": "Product photograph: a small white PP plastic cosmetic cream jar with a white lid, 3/4 view; pure white seamless background, soft natural daylight from the side, a subtle soft contact shadow. No text, no logos, no branding, no people. Ultra-photorealistic packaging catalogue photograph."
+    },
+    {
+      "skus": ["UAT-SNACK-BOX-WIN"],
+      "file": "snack-box-win.jpg",
+      "altTh": "กล่องขนมมีหน้าต่าง 10×10×5 ซม.",
+      "altEn": "Snack box with window 10×10×5 cm",
+      "source": "ai-render",
+      "prompt": "Product photograph: a small white paperboard snack box with a clear window on the lid, 3/4 view; pure white seamless background, soft natural daylight from the side, a subtle soft contact shadow. No text, no logos, no branding, no people. Ultra-photorealistic packaging catalogue photograph."
+    },
+    {
+      "skus": ["UAT-STRAW-PAPER-6"],
+      "file": "straw-paper-6.jpg",
+      "altTh": "หลอดกระดาษ 6 มม. ห่อซองกระดาษ",
+      "altEn": "Paper straw 6 mm, paper-wrapped",
+      "source": "ai-render",
+      "prompt": "Product photograph: a few white paper straws in white paper wrappers, 3/4 view; pure white seamless background, soft natural daylight from the side, a subtle soft contact shadow. No text, no logos, no branding, no people. Ultra-photorealistic packaging catalogue photograph."
+    },
+    {
+      "skus": ["UAT-STRETCH-FILM-50"],
+      "file": "stretch-film-50.jpg",
+      "altTh": "ฟิล์มยืดพันพาเลท 50 ซม. × 300 ม.",
+      "altEn": "Stretch film 50 cm × 300 m",
+      "source": "ai-render",
+      "prompt": "Product photograph: a roll of clear pallet stretch film, 3/4 view; pure white seamless background, soft natural daylight from the side, a subtle soft contact shadow. No text, no logos, no branding, no people. Ultra-photorealistic packaging catalogue photograph."
+    },
+    {
+      "skus": ["UAT-TSHIRT-9X18"],
+      "file": "tshirt-9x18.jpg",
+      "altTh": "ถุงหิ้ว HDPE 9×18 นิ้ว (ถุงก๊อบแก๊บ)",
+      "altEn": "HDPE T-shirt bag 9×18 inch",
+      "source": "ai-render",
+      "prompt": "Product photograph: a white HDPE plastic T-shirt carrier bag, flat, 3/4 view; pure white seamless background, soft natural daylight from the side, a subtle soft contact shadow. No text, no logos, no branding, no people. Ultra-photorealistic packaging catalogue photograph."
+    },
+    {
+      "skus": ["UAT-TUBE-100", "UAT-TUBE-50"],
+      "file": "squeeze-tube.jpg",
+      "altTh": "หลอดบีบ PE ฝาฟลิปท็อป",
+      "altEn": "PE squeeze tube, flip-top cap",
+      "source": "ai-render",
+      "prompt": "Product photograph: a white PE squeeze tube with a white cap, standing on its cap, 3/4 view; pure white seamless background, soft natural daylight from the side, a subtle soft contact shadow. No text, no logos, no branding, no people. Ultra-photorealistic packaging catalogue photograph."
+    },
+    {
+      "skus": ["UAT-VACUUM-20X30"],
+      "file": "vacuum-20x30.jpg",
+      "altTh": "ถุงสุญญากาศ 20×30 ซม. (ลายนูน)",
+      "altEn": "Embossed vacuum bag 20×30 cm",
+      "source": "ai-render",
+      "prompt": "Product photograph: a clear embossed vacuum sealer bag, empty, lying flat, 3/4 view; pure white seamless background, soft natural daylight from the side, a subtle soft contact shadow. No text, no logos, no branding, no people. Ultra-photorealistic packaging catalogue photograph."
+    },
+    {
+      "skus": ["UAT-WHITE-BAG-M"],
+      "file": "white-bag-m.jpg",
+      "altTh": "ถุงกระดาษขาวหูเกลียว M (25×12×32 ซม.)",
+      "altEn": "White paper bag with twisted handles M",
+      "source": "ai-render",
+      "prompt": "Product photograph: a white paper shopping bag with white twisted paper handles, standing, 3/4 view; pure white seamless background, soft natural daylight from the side, a subtle soft contact shadow. No text, no logos, no branding, no people. Ultra-photorealistic packaging catalogue photograph."
+    },
+    {
+      "skus": ["UAT-ZIP-CLEAR-10X15", "UAT-ZIP-CLEAR-15X22", "UAT-ZIP-CLEAR-5X7"],
+      "file": "zip-clear.jpg",
+      "altTh": "ซองซิปใส",
+      "altEn": "Clear zip bag",
+      "source": "ai-render",
+      "prompt": "Product photograph: a clear plastic zip-lock bag, empty, lying flat, 3/4 view; pure white seamless background, soft natural daylight from the side, a subtle soft contact shadow. No text, no logos, no branding, no people. Ultra-photorealistic packaging catalogue photograph."
+    },
+    {
+      "skus": ["UAT-ZIP-FOIL-10X15", "UAT-ZIP-FOIL-13X20", "UAT-ZIP-FOIL-15X22"],
+      "file": "zip-foil.jpg",
+      "altTh": "ซองฟอยล์ซิปล็อก ตั้งได้",
+      "altEn": "Foil stand-up zip pouch",
+      "source": "ai-render",
+      "prompt": "Product photograph: a silver foil stand-up zip pouch, standing, 3/4 view; pure white seamless background, soft natural daylight from the side, a subtle soft contact shadow. No text, no logos, no branding, no people. Ultra-photorealistic packaging catalogue photograph."
+    },
+    {
+      "skus": ["UAT-ZIP-KRAFT-WIN-14X20"],
+      "file": "zip-kraft-win-14x20.jpg",
+      "altTh": "ซองคราฟท์ตั้งได้ มีหน้าต่าง 14×20 ซม.",
+      "altEn": "Kraft stand-up zip pouch with window 14×20 cm",
+      "source": "ai-render",
+      "prompt": "Product photograph: a brown kraft stand-up zip pouch with a clear oval window, standing, 3/4 view; pure white seamless background, soft natural daylight from the side, a subtle soft contact shadow. No text, no logos, no branding, no people. Ultra-photorealistic packaging catalogue photograph."
+    }
+  ]
+}
