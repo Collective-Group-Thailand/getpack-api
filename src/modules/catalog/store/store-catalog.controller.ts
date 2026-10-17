@@ -413,7 +413,7 @@ export class StoreCatalogController {
     id: 'store.catalog.search',
     summary: 'Search products, articles and FAQs',
     description:
-      'Trigram search (`pg_trgm`) over catalogue products, stock products, showcase products, articles and published FAQ questions (`faq`, key = FAQ id), ranked by similarity (top 20).',
+      'Trigram search (`pg_trgm`) over catalogue products, stock products, showcase products, published style-library bases (`style`, key = base code; their names, codes and search synonyms), articles and published FAQ questions (`faq`, key = FAQ id), ranked by similarity (the best 8 of each kind, 40 in all).',
     implements: ['D-100', 'D-102'],
   })
   @ApiSuccess(200, {

@@ -1,6 +1,6 @@
 {
   "name": "getpack-api",
-  "version": "0.71.0",
+  "version": "0.72.0",
   "description": "getpack — Your Packaging Production Partner · backend (NestJS)",
   "private": true,
   "license": "UNLICENSED",

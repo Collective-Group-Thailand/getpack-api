@@ -64,7 +64,9 @@ const OPTION_ORDER: CatalogOptionKind[] = [
   'assembly',
 ];
 const ACTIVE = 'active' as const;
-const SEARCH_LIMIT = 20;
+const SEARCH_LIMIT = 40;
+/** Per kind, before the overall cut: a style library of 120 bases must not push every product off the list. */
+const SEARCH_PER_KIND = 8;
 
 type SeoRow = Prisma.SeoPageGetPayload<{ include: { ogImageFile: { select: { publicId: true } } } }> | null;
 
@@ -944,6 +946,7 @@ export class StoreCatalogService {
       }[]
     >(Prisma.sql`
       SELECT kind, key, title_th, title_en, image, score FROM (
+        SELECT hits.*, row_number() OVER (PARTITION BY kind ORDER BY score DESC, key ASC) AS rank FROM (
         SELECT 'catalog_product' AS kind, cp.slug AS key, cp.name_th AS title_th, cp.name_en AS title_en,
                (SELECT fo.public_id::text FROM catalog_product_images i JOIN file_objects fo ON fo.id = i.file_object_id
                  WHERE i.catalog_product_id = cp.id ORDER BY i.sort LIMIT 1) AS image,
@@ -967,6 +970,19 @@ export class StoreCatalogService {
          WHERE sc.status = 'active' AND cp.status = 'active'
            AND (sc.name_th % ${q} OR sc.name_en % ${q} OR sc.name_th ILIKE ${like} OR sc.name_en ILIKE ${like})
         UNION ALL
+        SELECT 'style', sb.code, sb.name_th, sb.name_en,
+               (SELECT fo.public_id::text FROM file_objects fo
+                 WHERE fo.id = sb.photo_file_id AND fo.scan_status = 'clean' AND fo.purged_at IS NULL),
+               GREATEST(similarity(sb.name_th, ${q}::text), similarity(sb.name_en, ${q}::text), similarity(sb.code, ${q}::text),
+                        coalesce((SELECT max(similarity(sy.term, ${q}::text)) FROM style_synonyms sy WHERE sy.base_id = sb.id), 0)
+               )::float8
+          FROM style_bases sb
+         WHERE sb.status = 'active' AND NOT sb.hidden
+           AND EXISTS (SELECT 1 FROM style_variants v WHERE v.base_id = sb.id AND v.status = 'active' AND v.publishable)
+           AND (sb.name_th % ${q}::text OR sb.name_en % ${q}::text OR sb.code ILIKE ${like}::text OR sb.name_th ILIKE ${like}::text
+                OR sb.name_en ILIKE ${like}::text
+                OR EXISTS (SELECT 1 FROM style_synonyms sy WHERE sy.base_id = sb.id AND (sy.term % ${q}::text OR sy.term ILIKE ${like}::text)))
+        UNION ALL
         SELECT 'faq', f.public_id::text, f.question_th, f.question_en, NULL,
                GREATEST(similarity(f.question_th, ${q}), similarity(coalesce(f.question_en, ''), ${q}))::float8
           FROM faqs f LEFT JOIN faq_categories fc ON fc.id = f.category_id
@@ -979,9 +995,11 @@ export class StoreCatalogService {
           FROM articles a
          WHERE a.status = 'published' AND a.audience = 'public' AND a.deleted_at IS NULL AND a.published_at <= now()
            AND (a.title_th % ${q} OR a.title_en % ${q} OR a.title_th ILIKE ${like} OR a.title_en ILIKE ${like})
-      ) hits
+      ) hits) ranked
+      -- No kind crowds the others out: the best few of each kind (SEARCH_PER_KIND), then the best overall.
+      WHERE rank <= ${SEARCH_PER_KIND}::int
       ORDER BY score DESC, key ASC
-      LIMIT ${SEARCH_LIMIT}`);
+      LIMIT ${SEARCH_LIMIT}::int`);
     return rows.map((r) => ({
       kind: r.kind,
       key: r.key,

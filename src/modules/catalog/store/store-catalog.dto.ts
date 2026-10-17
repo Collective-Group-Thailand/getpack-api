@@ -733,7 +733,7 @@ export class StoreSearchQuery {
 
 export class StoreSearchHitDto {
   @ApiProperty({
-    enum: ['catalog_product', 'stock_product', 'showcase_product', 'article', 'faq'],
+    enum: ['catalog_product', 'stock_product', 'showcase_product', 'style', 'article', 'faq'],
     enumName: 'StoreSearchHitKind',
     example: 'catalog_product',
     description: 'Clients must tolerate new kinds (additive enum)',
@@ -742,7 +742,8 @@ export class StoreSearchHitDto {
 
   @ApiProperty({
     example: 'mailer-box',
-    description: 'Slug to open; SKU for stock products; the FAQ id (uuid) for `faq`',
+    description:
+      'Slug to open; SKU for stock products; the base code for `style`; the FAQ id (uuid) for `faq`',
   })
   key!: string;
 
