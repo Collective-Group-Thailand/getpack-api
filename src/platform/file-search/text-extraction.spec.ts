@@ -4,7 +4,7 @@ import { join } from 'node:path';
 
 import { CHUNK_CHARS, chunkPages, splitText } from './chunking';
 import { DocumentTextExtractor, type ExtractOptions, fromTsv, kindOf } from './text-extractor';
-import { cleanText, fold, foldWithMap, likeEscape, skeleton, snippetOf } from './text-fold';
+import { cleanText, fold, foldWithMap, likeEscape, longestCommon, skeleton, snippetOf } from './text-fold';
 
 const FIXTURES = join(__dirname, '../../../test/fixtures/file-text');
 const fixture = (name: string) => readFileSync(join(FIXTURES, name));
@@ -57,6 +57,13 @@ describe('text folding (D-427)', () => {
     const s = snippetOf('สัญญาเช่า เครื่องพิมพ์ออฟเซ็ต', 'เครืองพิมพ');
     const [a, b] = s.highlights[0]!;
     expect(s.text.slice(a, b)).toBe('เครื่องพิมพ');
+  });
+
+  it('marks the longest shared run of a fuzzy match', () => {
+    const s = snippetOf('ผู้เช่าเพื่อเช่าเครื่องพิมพ์ออฟเซ็ต Heidelberg', 'ค่าเชาเครืองพิมพ');
+    const [a, b] = s.highlights[0]!;
+    expect(s.text.slice(a, b)).toBe('เช่าเครื่องพิมพ');
+    expect(longestCommon('abcdef', 'zcdez')).toEqual({ at: 2, length: 3 });
   });
 
   it('highlights each word of a several-word query', () => {

@@ -46,6 +46,8 @@ export const ADMIN_MENU: readonly MenuEntry[] = [
   },
   { key: 'samples', path: '/admin/samples', permission: 'samples.read' },
   { key: 'inbox', path: '/admin/inbox', permission: 'conversations.read' },
+  // D-427: search inside documents and attachments (each hit under its record's own read permission).
+  { key: 'file_search', path: '/admin/file-search', permission: 'files.read' },
   { key: 'marketing', path: '/admin/marketing', permission: 'promotions.read' },
   { key: 'cms', path: '/admin/cms', permission: 'cms.manage' },
   // D-412: studio templates and elements, review moderation, LINE menus, privacy and agreements.

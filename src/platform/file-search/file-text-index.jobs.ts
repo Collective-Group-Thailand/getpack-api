@@ -26,7 +26,7 @@ export const TEXT_INDEX_DEFAULTS: FileTextIndexSettings = {
 };
 
 /** Files read per tick at most, and how long one tick may keep reading before it hands over to the next. */
-const BATCH = 4;
+const BATCH = 25;
 const TICK_BUDGET_MS = 90_000;
 /** A claimed file is retried by another worker after this (an OCR'd 30-page scan takes a few minutes). */
 const LEASE_MS = 20 * 60_000;
@@ -80,7 +80,7 @@ export class FileTextIndexJobs {
     return added;
   }
 
-  /** Reads queued files, a few per tick, within a time budget. */
+  /** Reads queued files within a time budget per tick, newest first (a fresh upload is searchable soonest). */
   @ScheduledJob({ name: 'files.text_extract', every: 15_000 })
   async extractPending(): Promise<number> {
     const options = await this.options();
@@ -104,7 +104,7 @@ export class FileTextIndexJobs {
          SELECT id FROM file_texts
           WHERE status = 'pending' AND (lease_until IS NULL OR lease_until < ${now})
             AND (retry_at IS NULL OR retry_at <= ${now})
-          ORDER BY id LIMIT ${limit}
+          ORDER BY id DESC LIMIT ${limit}
           FOR UPDATE SKIP LOCKED)
       RETURNING id, file_object_id, attempts`;
   }

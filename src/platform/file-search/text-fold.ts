@@ -162,12 +162,14 @@ export function snippetOf(content: string, query: string, width = WINDOW): Snipp
     const keep: number[] = [];
     for (let i = 0; i < folded.length; i++) if (skeleton(folded[i]!) !== '') keep.push(i);
     const bare = keep.map((i) => folded[i]).join('');
-    spans = find(
-      bare,
-      keep.map((i) => map[i]!),
-      keep.map((i) => ends[i]!),
-      needles.map(skeleton),
-    );
+    const starts = keep.map((i) => map[i]!);
+    const stops = keep.map((i) => ends[i]!);
+    spans = find(bare, starts, stops, needles.map(skeleton));
+    if (spans.length === 0) {
+      // A fuzzy match (a letter or two misread): mark the longest run the query shares with the passage.
+      const best = longestCommon(bare, skeleton(needles[0] ?? ''));
+      if (best && best.length >= 4) spans = [[starts[best.at]!, stops[best.at + best.length - 1]!]];
+    }
   }
   spans.sort((a, b) => a[0] - b[0]);
   const merged: [number, number][] = [];
@@ -195,6 +197,24 @@ export function snippetOf(content: string, query: string, width = WINDOW): Snipp
     .filter(([a, b]) => a >= start && b <= end)
     .map(([a, b]) => [a - start + prefix.length, b - start + prefix.length] as [number, number]);
   return { text: `${prefix}${text.slice(start, end)}${suffix}`, highlights };
+}
+
+/** The longest substring of `b` found in `a` (dynamic programming; passages are ≤ 1,000 and queries ≤ 200). */
+export function longestCommon(a: string, b: string): { at: number; length: number } | null {
+  if (!a || !b) return null;
+  let prev = new Array<number>(b.length + 1).fill(0);
+  let best = { at: 0, length: 0 };
+  for (let i = 1; i <= a.length; i++) {
+    const row = new Array<number>(b.length + 1).fill(0);
+    for (let j = 1; j <= b.length; j++) {
+      if (a[i - 1] === b[j - 1]) {
+        row[j] = prev[j - 1]! + 1;
+        if (row[j]! > best.length) best = { at: i - row[j]!, length: row[j]! };
+      }
+    }
+    prev = row;
+  }
+  return best.length ? best : null;
 }
 
 /**
