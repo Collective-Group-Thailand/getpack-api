@@ -140,6 +140,7 @@ export const ROLES: readonly RoleDefinition[] = [
     nameTh: 'ผู้ดูแลระบบ',
     nameEn: 'Admin',
     permissions: [
+      'files.reindex',
       'settings.change',
       'agents.read',
       'agents.manage',

@@ -33,6 +33,7 @@ Legend: ● granted · ◆ granted and sensitive (cost/margin data, D-141).
 | `audit_logs.export` — Export the audit log (itself audited) | ● |  |  |  |  |  |  |  |  | ● |  |  |  |  | ● |  |
 | `files.upload` — Upload files | ● | ● | ● | ● | ● | ● | ● | ● | ● | ● | ● | ● | ● | ● |  | ● |
 | `files.read` — Download files of records the user can see | ● | ● | ● | ● | ● | ● | ● | ● | ● | ● | ● | ● | ● | ● | ● | ● |
+| `files.reindex` — Queue files to be read again for content search (D-427) | ● |  |  |  | ● |  |  |  |  |  |  |  |  |  |  |  |
 | `notification_templates.manage` — Edit and publish notification templates | ● |  |  |  | ● |  |  |  |  |  |  |  |  |  |  |  |
 | `notification_routes.manage` — Edit the notification routing matrix (D-143) | ● |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |
 | `outbox.manage` — List dead-lettered domain events and replay them | ● |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |

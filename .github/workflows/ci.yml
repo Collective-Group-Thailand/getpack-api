@@ -36,6 +36,8 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: ./.github/actions/setup
+      - name: Document readers for content search (D-427)
+        run: sudo apt-get update -q && sudo apt-get install -y -q --no-install-recommends poppler-utils tesseract-ocr tesseract-ocr-tha
       - run: pnpm test:cov
       - uses: actions/upload-artifact@v4
         with:
@@ -57,6 +59,8 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: ./.github/actions/setup
+      - name: Document readers for content search (D-427)
+        run: sudo apt-get update -q && sudo apt-get install -y -q --no-install-recommends poppler-utils tesseract-ocr tesseract-ocr-tha
       - run: pnpm test:e2e
       - name: Every problem code the e2e run saw is documented (U-B2)
         run: pnpm contract:observed-errors

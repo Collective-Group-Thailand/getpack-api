@@ -1,6 +1,7 @@
 import { NextActionDto } from '@common/next-actions/next-action.dto';
 import { PageQuery } from '@common/pagination/pagination.dto';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import { FileTextStateDto } from '@platform/file-search/file-search.dto';
 import { Transform, Type } from 'class-transformer';
 import {
   ArrayMaxSize,
@@ -1422,6 +1423,13 @@ export class ErpDocFileDto {
 
   @ApiProperty({ example: 284311 })
   sizeBytes!: number;
+
+  @ApiProperty({
+    type: FileTextStateDto,
+    description:
+      'D-427 whether the file’s content is searchable: read (and how), still being read, or not readable',
+  })
+  text!: FileTextStateDto;
 }
 
 export class ErpDocVersionDto {

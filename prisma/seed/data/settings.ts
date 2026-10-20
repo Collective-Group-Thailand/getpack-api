@@ -323,6 +323,24 @@ export const SETTINGS: readonly SettingSeed[] = [
     ownerRole: 'sales_manager',
   },
 
+  // --- Files (D-427)
+  {
+    key: 'files.text_index',
+    valueType: 'json',
+    value: {
+      enabled: true,
+      ocr: true,
+      ocrLanguages: 'tha+eng',
+      ocrMaxPages: 30,
+      ocrDpi: 300,
+      maxBytes: 104_857_600,
+      maxChars: 1_000_000,
+      maxAttempts: 3,
+    },
+    description:
+      'D-427 how stored documents are read for content search: OCR (Tesseract), limits and retries',
+    decisions: ['D-427'],
+  },
   // --- B2B (D-121, D-122)
   {
     key: 'b2b.kyc_certificate_max_age_months',

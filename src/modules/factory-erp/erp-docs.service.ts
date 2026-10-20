@@ -8,9 +8,11 @@ import {
   type ErpDocLink,
   type ErpRecordStatus,
   type FileObject,
+  type FileText,
   type Prisma,
 } from '@generated/prisma/client';
 import { Injectable, Logger } from '@nestjs/common';
+import { textStateOf } from '@platform/file-search/file-search.service';
 import { ScheduledJob } from '@platform/maintenance/scheduled-job.decorator';
 
 import { ErpAlertsService } from './erp-alerts.service';
@@ -34,7 +36,7 @@ const today = () => bangkokDate(new Date());
 const DOC_INCLUDE = {
   folder: true,
   versions: {
-    include: { file: true, createdBy: { select: { displayName: true } } },
+    include: { file: { include: { text: true } }, createdBy: { select: { displayName: true } } },
     orderBy: { version: 'desc' },
   },
 } as const;
@@ -431,8 +433,15 @@ export class ErpDocsService {
   }
 }
 
-function fileDto(f: FileObject): ErpDocFileDto {
-  return { id: f.publicId, name: f.originalName, mimeType: f.mimeType, sizeBytes: Number(f.sizeBytes) };
+function fileDto(f: FileObject & { text: FileText | null }): ErpDocFileDto {
+  return {
+    id: f.publicId,
+    name: f.originalName,
+    mimeType: f.mimeType,
+    sizeBytes: Number(f.sizeBytes),
+    // D-427: whether its content is searchable yet.
+    text: textStateOf(f.text),
+  };
 }
 
 function summary(d: DocRow): ErpDocSummaryDto {

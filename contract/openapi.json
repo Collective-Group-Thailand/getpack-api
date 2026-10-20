@@ -9096,6 +9096,41 @@
         ],
         "type": "object"
       },
+      "AdminFileSource": {
+        "enum": [
+          "job_attachment",
+          "shipment_label",
+          "shipment_packing_list",
+          "agreement_signed",
+          "board_strength_sheet",
+          "inspection_attachment",
+          "claim_attachment",
+          "rfq_attachment",
+          "company_attachment",
+          "factory_attachment",
+          "price_proposal_attachment",
+          "discount_memo_attachment",
+          "sample_attachment",
+          "design_service_attachment",
+          "vendor_invoice_attachment",
+          "close_task_attachment",
+          "other_attachment",
+          "vendor_invoice",
+          "wht_certificate",
+          "payout_remittance",
+          "customer_document",
+          "customer_wht_certificate",
+          "company_statement",
+          "quote",
+          "slip",
+          "conversation_file",
+          "agreement_template",
+          "structural_request_file",
+          "structural_request_delivery",
+          "style_intake"
+        ],
+        "type": "string"
+      },
       "AdminJobDto": {
         "properties": {
           "acceptDueAt": {
@@ -11089,6 +11124,46 @@
           "rewardPoints",
           "approvalId",
           "decidedAt"
+        ],
+        "type": "object"
+      },
+      "AdminReindexFilesDto": {
+        "properties": {
+          "fileIds": {
+            "description": "These files (public ids); without, every file in `statuses`",
+            "items": {
+              "format": "uuid",
+              "type": "string"
+            },
+            "maxItems": 500,
+            "type": "array"
+          },
+          "statuses": {
+            "default": [
+              "failed"
+            ],
+            "example": [
+              "failed",
+              "unsupported"
+            ],
+            "items": {
+              "$ref": "#/components/schemas/FileTextStatus"
+            },
+            "type": "array"
+          }
+        },
+        "type": "object"
+      },
+      "AdminReindexFilesResultDto": {
+        "properties": {
+          "queued": {
+            "description": "Files queued to be read again",
+            "example": 4,
+            "type": "number"
+          }
+        },
+        "required": [
+          "queued"
         ],
         "type": "object"
       },
@@ -43370,13 +43445,22 @@
           "sizeBytes": {
             "example": 284311,
             "type": "number"
+          },
+          "text": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/FileTextStateDto"
+              }
+            ],
+            "description": "D-427 whether the file’s content is searchable: read (and how), still being read, or not readable"
           }
         },
         "required": [
           "id",
           "name",
           "mimeType",
-          "sizeBytes"
+          "sizeBytes",
+          "text"
         ],
         "type": "object"
       },
@@ -63428,6 +63512,381 @@
         ],
         "type": "string"
       },
+      "FileSearchFileDto": {
+        "properties": {
+          "id": {
+            "example": "0192f3a0-7c1e-7d2a-9b1f-00000000f101",
+            "format": "uuid",
+            "type": "string"
+          },
+          "mimeType": {
+            "example": "application/pdf",
+            "type": "string"
+          },
+          "name": {
+            "example": "สัญญาเช่าเครื่องพิมพ์ SM74.pdf",
+            "type": "string"
+          },
+          "sizeBytes": {
+            "example": 143190,
+            "type": "number"
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "mimeType",
+          "sizeBytes"
+        ],
+        "type": "object"
+      },
+      "FileSearchHitDto": {
+        "properties": {
+          "exact": {
+            "description": "The words were found as typed (not only close or by meaning)",
+            "example": true,
+            "type": "boolean"
+          },
+          "file": {
+            "$ref": "#/components/schemas/FileSearchFileDto"
+          },
+          "matches": {
+            "description": "Up to three best passages",
+            "items": {
+              "$ref": "#/components/schemas/FileSearchMatchDto"
+            },
+            "type": "array"
+          },
+          "text": {
+            "$ref": "#/components/schemas/FileSearchTextDto"
+          },
+          "usages": {
+            "description": "Where the file is used (the ones the person may see)",
+            "items": {
+              "$ref": "#/components/schemas/FileSearchUsageDto"
+            },
+            "type": "array"
+          }
+        },
+        "required": [
+          "file",
+          "usages",
+          "matches",
+          "exact",
+          "text"
+        ],
+        "type": "object"
+      },
+      "FileSearchIndexingDto": {
+        "properties": {
+          "failed": {
+            "description": "Files that could not be read",
+            "example": 0,
+            "type": "number"
+          },
+          "pending": {
+            "description": "Files of this scope still being read",
+            "example": 3,
+            "type": "number"
+          }
+        },
+        "required": [
+          "pending",
+          "failed"
+        ],
+        "type": "object"
+      },
+      "FileSearchMatchDto": {
+        "properties": {
+          "by": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/FileSearchMatchKind"
+              }
+            ],
+            "example": "keyword"
+          },
+          "highlights": {
+            "description": "Highlighted spans of the snippet, `[start, end)` in UTF-16 code units",
+            "example": [
+              [
+                2,
+                22
+              ]
+            ],
+            "items": {
+              "items": {
+                "type": "integer"
+              },
+              "maxItems": 2,
+              "minItems": 2,
+              "type": "array"
+            },
+            "type": "array"
+          },
+          "ocr": {
+            "description": "Read by OCR (expect misreadings)",
+            "example": true,
+            "type": "boolean"
+          },
+          "page": {
+            "description": "Page, sheet or slide number",
+            "example": 1,
+            "type": [
+              "number",
+              "null"
+            ]
+          },
+          "sheet": {
+            "description": "Excel sheet name",
+            "example": null,
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "snippet": {
+            "example": "… สัญญาเช่าเครื่องจักร เลขที่ CT-2569-0142 ทำที่ บริษัท กระดาษไทยการพิมพ์ …",
+            "type": "string"
+          }
+        },
+        "required": [
+          "page",
+          "sheet",
+          "ocr",
+          "snippet",
+          "highlights",
+          "by"
+        ],
+        "type": "object"
+      },
+      "FileSearchMatchKind": {
+        "enum": [
+          "keyword",
+          "meaning"
+        ],
+        "type": "string"
+      },
+      "FileSearchMetaDto": {
+        "properties": {
+          "indexing": {
+            "$ref": "#/components/schemas/FileSearchIndexingDto"
+          },
+          "meaning": {
+            "description": "Search by meaning is on in this deployment",
+            "example": true,
+            "type": "boolean"
+          },
+          "page": {
+            "example": 1,
+            "type": "number"
+          },
+          "perPage": {
+            "example": 25,
+            "type": "number"
+          },
+          "total": {
+            "description": "Files found (at most 200)",
+            "example": 1,
+            "type": "number"
+          }
+        },
+        "required": [
+          "page",
+          "perPage",
+          "total",
+          "meaning",
+          "indexing"
+        ],
+        "type": "object"
+      },
+      "FileSearchMode": {
+        "enum": [
+          "hybrid",
+          "keyword",
+          "meaning"
+        ],
+        "type": "string"
+      },
+      "FileSearchResponseDto": {
+        "properties": {
+          "data": {
+            "items": {
+              "$ref": "#/components/schemas/FileSearchHitDto"
+            },
+            "type": "array"
+          },
+          "meta": {
+            "$ref": "#/components/schemas/FileSearchMetaDto"
+          }
+        },
+        "required": [
+          "data",
+          "meta"
+        ],
+        "type": "object"
+      },
+      "FileSearchTextDto": {
+        "properties": {
+          "method": {
+            "description": "pdf_text, pdf_ocr, pdf_mixed, image_ocr, docx, xlsx, pptx or plain",
+            "example": "pdf_ocr",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "ocrConfidence": {
+            "description": "Mean OCR word confidence, 0–100",
+            "example": 91.4,
+            "type": [
+              "number",
+              "null"
+            ]
+          },
+          "ocrPages": {
+            "example": 2,
+            "type": "number"
+          },
+          "pageCount": {
+            "example": 2,
+            "type": [
+              "number",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "method",
+          "pageCount",
+          "ocrPages",
+          "ocrConfidence"
+        ],
+        "type": "object"
+      },
+      "FileSearchUsageDto": {
+        "properties": {
+          "code": {
+            "description": "The record’s number or code",
+            "example": "IV-2610-0012",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "current": {
+            "description": "False for an older version",
+            "example": true,
+            "type": "boolean"
+          },
+          "parentId": {
+            "description": "The record above it, where the source has one (a job attachment: the job’s order)",
+            "example": null,
+            "format": "uuid",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "source": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/FileSource"
+              }
+            ],
+            "example": "erp_doc"
+          },
+          "subjectId": {
+            "description": "The record the file belongs to (its page is the source’s page for this id)",
+            "example": "0192f3a0-7c1e-7d2a-9b1f-00000000d001",
+            "format": "uuid",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "title": {
+            "description": "Its title or counterparty",
+            "example": "สัญญาเช่าเครื่องพิมพ์",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "usedAt": {
+            "example": "2026-10-20T10:15:00+07:00",
+            "format": "date-time",
+            "type": "string"
+          },
+          "version": {
+            "description": "Document or PDF version",
+            "example": 2,
+            "type": [
+              "number",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "source",
+          "subjectId",
+          "parentId",
+          "code",
+          "title",
+          "version",
+          "current",
+          "usedAt"
+        ],
+        "type": "object"
+      },
+      "FileSource": {
+        "enum": [
+          "erp_doc",
+          "erp_supplier_invoice",
+          "erp_quotation",
+          "erp_delivery_note",
+          "erp_delivery_pod",
+          "erp_sales_invoice",
+          "erp_sales_note",
+          "erp_receipt",
+          "erp_receipt_wht",
+          "erp_billing_note",
+          "erp_wht_certificate",
+          "erp_quality_check",
+          "erp_maintenance_photo",
+          "job_attachment",
+          "shipment_label",
+          "shipment_packing_list",
+          "agreement_signed",
+          "board_strength_sheet",
+          "inspection_attachment",
+          "claim_attachment",
+          "rfq_attachment",
+          "company_attachment",
+          "factory_attachment",
+          "price_proposal_attachment",
+          "discount_memo_attachment",
+          "sample_attachment",
+          "design_service_attachment",
+          "vendor_invoice_attachment",
+          "close_task_attachment",
+          "other_attachment",
+          "vendor_invoice",
+          "wht_certificate",
+          "payout_remittance",
+          "customer_document",
+          "customer_wht_certificate",
+          "company_statement",
+          "quote",
+          "slip",
+          "conversation_file",
+          "agreement_template",
+          "structural_request_file",
+          "structural_request_delivery",
+          "style_intake"
+        ],
+        "type": "string"
+      },
       "FileTaxReportDto": {
         "properties": {
           "filedAt": {
@@ -63448,6 +63907,97 @@
           "filingRef"
         ],
         "type": "object"
+      },
+      "FileTextStateDto": {
+        "properties": {
+          "charCount": {
+            "example": 2140,
+            "type": "number"
+          },
+          "error": {
+            "description": "Why it was not read",
+            "example": null,
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "meaning": {
+            "description": "Embedded for search by meaning",
+            "example": true,
+            "type": "boolean"
+          },
+          "method": {
+            "example": "pdf_ocr",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "ocrConfidence": {
+            "example": 91.4,
+            "type": [
+              "number",
+              "null"
+            ]
+          },
+          "ocrPages": {
+            "example": 2,
+            "type": "number"
+          },
+          "pageCount": {
+            "example": 2,
+            "type": [
+              "number",
+              "null"
+            ]
+          },
+          "readAt": {
+            "example": "2026-10-20T10:16:02+07:00",
+            "format": "date-time",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "skippedPages": {
+            "description": "Pages over the OCR limit, left unread",
+            "example": 0,
+            "type": "number"
+          },
+          "status": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/FileTextStatus"
+              }
+            ],
+            "example": "indexed"
+          }
+        },
+        "required": [
+          "status",
+          "method",
+          "pageCount",
+          "ocrPages",
+          "skippedPages",
+          "ocrConfidence",
+          "charCount",
+          "meaning",
+          "readAt",
+          "error"
+        ],
+        "type": "object"
+      },
+      "FileTextStatus": {
+        "enum": [
+          "pending",
+          "indexed",
+          "empty",
+          "unsupported",
+          "too_large",
+          "failed"
+        ],
+        "type": "string"
       },
       "FileUploadStatus": {
         "enum": [
@@ -74385,6 +74935,29 @@
           "deductions"
         ],
         "type": "object"
+      },
+      "PartnerFileSource": {
+        "enum": [
+          "erp_doc",
+          "erp_supplier_invoice",
+          "erp_quotation",
+          "erp_delivery_note",
+          "erp_delivery_pod",
+          "erp_sales_invoice",
+          "erp_sales_note",
+          "erp_receipt",
+          "erp_receipt_wht",
+          "erp_billing_note",
+          "erp_wht_certificate",
+          "erp_quality_check",
+          "erp_maintenance_photo",
+          "job_attachment",
+          "shipment_label",
+          "shipment_packing_list",
+          "agreement_signed",
+          "board_strength_sheet"
+        ],
+        "type": "string"
       },
       "PartnerJobDto": {
         "properties": {
@@ -113439,7 +114012,7 @@
     "contact": {},
     "description": "getpack — Your Packaging Production Partner, operated by Collective Group (Thailand).\nRules: `docs/contract/api-conventions.md` (shared with getpack-web).\n\n- **Surfaces:** `/v1/auth`, `/v1/store` (customer), `/v1/admin` (staff), `/v1/partner` (factories), `/v1/b2b` (company API clients, D-291), `/webhooks`. A token is accepted only on its own audience's prefix.\n- **Money:** decimal strings with exactly 2 decimals (`\"1234.50\"`) plus `currency: \"THB\"` on the object; never JSON numbers. Clients never compute prices.\n- **Dates:** ISO 8601 with offset, rendered in `Asia/Bangkok` (`2026-09-22T14:05:00+07:00`); date-only fields `YYYY-MM-DD`.\n- **IDs:** uuid only; business keys (`orderCode`) are separate fields.\n- **Errors:** RFC 9457 `application/problem+json` with a stable `code`; `title`/`detail` localised by `Accept-Language` (`th` default, `en`).\n- **Lists:** `?page&perPage(≤100)&sort&order&q` → `{ data, meta: { page, perPage, total } }`; feeds use `?cursor&limit` → `{ data, meta: { nextCursor } }`.\n- **Idempotency:** irreversible POSTs require `Idempotency-Key` (uuid); replays within 24 h return the original response.\n- **Concurrency:** editable resources return `ETag`; updates send `If-Match` (412 `concurrency.stale`).\n- **Files:** presign → PUT to the returned URL → reference the `fileId`.",
     "title": "getpack API",
-    "version": "0.73.1",
+    "version": "0.74.0",
     "x-getpack-dieline": {
       "bundleSha256": "ccc03fe8ee1fee2f8cc4f90c6eb15731949ec59916aad738478812243c46e9f1",
       "getpackWebCommit": "fa265f3153a577041379ab031cc083e10cd2f9e5",
@@ -246771,6 +247344,684 @@
         ]
       }
     },
+    "/v1/admin/file-search": {
+      "get": {
+        "description": "Words found in the text read from each file (text layer or OCR, Thai and English; spaces and case ignored, close OCR misreadings allowed) and — when on — by meaning. One hit per file with where it is used and up to three highlighted passages with their page; exact matches first. Only usages whose record the caller may read (`vendor_invoice` needs `payables.read`, `claim_attachment` `claims.read`, …). Searches are audited (data access) (D-427).\n\nImplements: D-427, ADR-0013.",
+        "operationId": "admin.fileSearch.search",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "page",
+            "required": false,
+            "schema": {
+              "default": 1,
+              "minimum": 1,
+              "type": "integer"
+            }
+          },
+          {
+            "in": "query",
+            "name": "perPage",
+            "required": false,
+            "schema": {
+              "default": 25,
+              "maximum": 100,
+              "minimum": 1,
+              "type": "integer"
+            }
+          },
+          {
+            "description": "Sort field; each endpoint validates it against its own allow-list.",
+            "in": "query",
+            "name": "sort",
+            "required": false,
+            "schema": {
+              "example": "createdAt",
+              "maxLength": 64,
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "order",
+            "required": false,
+            "schema": {
+              "$ref": "#/components/schemas/SortOrder"
+            }
+          },
+          {
+            "description": "Words or a phrase as typed: matched inside the text read from each file (spaces and case ignored, close OCR misreadings allowed) and, with search by meaning on, by meaning (D-427).",
+            "in": "query",
+            "name": "q",
+            "required": false,
+            "schema": {
+              "example": "สัญญาเช่าเครื่องจักร",
+              "maxLength": 200,
+              "minLength": 2,
+              "type": "string"
+            }
+          },
+          {
+            "description": "`keyword` only, `meaning` only, or both (`hybrid`, ranked together)",
+            "in": "query",
+            "name": "mode",
+            "required": false,
+            "schema": {
+              "$ref": "#/components/schemas/FileSearchMode"
+            }
+          },
+          {
+            "description": "Also older versions of a document (default: the current one only)",
+            "in": "query",
+            "name": "allVersions",
+            "required": false,
+            "schema": {
+              "type": "boolean"
+            }
+          },
+          {
+            "description": "Also archived documents and cancelled records",
+            "in": "query",
+            "name": "archived",
+            "required": false,
+            "schema": {
+              "type": "boolean"
+            }
+          },
+          {
+            "description": "Only files used here (comma-separated); every source the person may see by default",
+            "in": "query",
+            "name": "sources",
+            "required": false,
+            "schema": {
+              "items": {
+                "$ref": "#/components/schemas/AdminFileSource"
+              },
+              "type": "array"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "data": [
+                    {
+                      "exact": true,
+                      "file": {
+                        "id": "0192f3a0-7c1e-7d2a-9b1f-00000000f101",
+                        "mimeType": "application/pdf",
+                        "name": "สัญญาเช่าเครื่องพิมพ์ SM74 (สแกน).pdf",
+                        "sizeBytes": 143190
+                      },
+                      "matches": [
+                        {
+                          "by": "keyword",
+                          "highlights": [
+                            [
+                              0,
+                              20
+                            ]
+                          ],
+                          "ocr": true,
+                          "page": 1,
+                          "sheet": null,
+                          "snippet": "สัญญาเช่าเครื่องจักร เลขที่ CT-2569-0142 ทำที่ บริษัท กระดาษไทยการพิมพ์ จำกัด …"
+                        }
+                      ],
+                      "text": {
+                        "method": "pdf_ocr",
+                        "ocrConfidence": 91.4,
+                        "ocrPages": 2,
+                        "pageCount": 2
+                      },
+                      "usages": [
+                        {
+                          "code": "IV-2610-0012",
+                          "current": true,
+                          "parentId": null,
+                          "source": "vendor_invoice",
+                          "subjectId": "0192f3a0-7c1e-7d2a-9b1f-00000000d001",
+                          "title": "บริษัท กระดาษไทยการพิมพ์ จำกัด",
+                          "usedAt": "2026-10-20T10:15:00+07:00",
+                          "version": null
+                        }
+                      ]
+                    }
+                  ],
+                  "meta": {
+                    "indexing": {
+                      "failed": 0,
+                      "pending": 0
+                    },
+                    "meaning": true,
+                    "page": 1,
+                    "perPage": 25,
+                    "total": 1
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/FileSearchResponseDto"
+                }
+              }
+            },
+            "description": "Files found",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.unauthenticated": {
+                    "$ref": "#/components/examples/problem.auth.unauthenticated"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.unauthenticated`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.forbidden": {
+                    "$ref": "#/components/examples/problem.auth.forbidden"
+                  },
+                  "auth.wrong_audience": {
+                    "$ref": "#/components/examples/problem.auth.wrong_audience"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.forbidden`, `auth.wrong_audience`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "validation.failed": {
+                    "$ref": "#/components/examples/problem.validation.failed"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `validation.failed`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "staff": []
+          }
+        ],
+        "summary": "Search inside documents and attachments",
+        "tags": [
+          "admin.fileSearch"
+        ],
+        "x-required-permissions": [
+          "files.read"
+        ]
+      }
+    },
+    "/v1/admin/file-search/actions/reindex": {
+      "post": {
+        "description": "Queues the given files — or every file in the given text states (default: failed) — to be read again, e.g. after an OCR language was installed or the limits were raised. Unchanged text keeps its index (D-427).\n\nImplements: D-427.\n\n**Files:** upload first — `admin.files.presign` → PUT the bytes to the returned URL → `…/actions/complete` — then send the `fileId` (contract §3).",
+        "operationId": "admin.fileSearch.reindex",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "examples": {
+                "default": {
+                  "value": {
+                    "statuses": [
+                      "failed"
+                    ]
+                  }
+                }
+              },
+              "schema": {
+                "$ref": "#/components/schemas/AdminReindexFilesDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "queued": 4
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/AdminReindexFilesResultDto"
+                }
+              }
+            },
+            "description": "Queued",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "400": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.bad_request": {
+                    "$ref": "#/components/examples/problem.http.bad_request"
+                  },
+                  "http.malformed_json": {
+                    "$ref": "#/components/examples/problem.http.malformed_json"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.bad_request`, `http.malformed_json`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.unauthenticated": {
+                    "$ref": "#/components/examples/problem.auth.unauthenticated"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.unauthenticated`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.forbidden": {
+                    "$ref": "#/components/examples/problem.auth.forbidden"
+                  },
+                  "auth.wrong_audience": {
+                    "$ref": "#/components/examples/problem.auth.wrong_audience"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.forbidden`, `auth.wrong_audience`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "validation.failed": {
+                    "$ref": "#/components/examples/problem.validation.failed"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `validation.failed`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "staff": []
+          }
+        ],
+        "summary": "Read files again",
+        "tags": [
+          "admin.fileSearch"
+        ],
+        "x-required-permissions": [
+          "files.reindex"
+        ]
+      }
+    },
+    "/v1/admin/file-search/{fileId}/text": {
+      "get": {
+        "description": "Whether it is searchable, still being read, or could not be read — and how it was read (D-427).\n\nImplements: D-427.",
+        "operationId": "admin.fileSearch.textState",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "fileId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "charCount": 2140,
+                  "error": null,
+                  "meaning": true,
+                  "method": "pdf_ocr",
+                  "ocrConfidence": 91.4,
+                  "ocrPages": 2,
+                  "pageCount": 2,
+                  "readAt": "2026-10-20T10:16:02+07:00",
+                  "skippedPages": 0,
+                  "status": "indexed"
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/FileTextStateDto"
+                }
+              }
+            },
+            "description": "The state",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.unauthenticated": {
+                    "$ref": "#/components/examples/problem.auth.unauthenticated"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.unauthenticated`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.forbidden": {
+                    "$ref": "#/components/examples/problem.auth.forbidden"
+                  },
+                  "auth.wrong_audience": {
+                    "$ref": "#/components/examples/problem.auth.wrong_audience"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.forbidden`, `auth.wrong_audience`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "404": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.not_found": {
+                    "$ref": "#/components/examples/problem.http.not_found"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.not_found`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "staff": []
+          }
+        ],
+        "summary": "How a file’s text stands",
+        "tags": [
+          "admin.fileSearch"
+        ],
+        "x-required-permissions": [
+          "files.read"
+        ]
+      }
+    },
     "/v1/admin/files/presign": {
       "post": {
         "description": "Returns a presigned URL (or, for large files, multipart part URLs). PUT the bytes to S3, then call `…/actions/complete`. The purpose decides retention, accepted types and size (financial records ≥ 10 years).\n\nImplements: ADR-0003.",
@@ -367536,7 +368787,19 @@
                         "id": "0192f3a0-7c1e-7d2a-9b1f-00000000ee54",
                         "mimeType": "application/pdf",
                         "name": "FSC-certificate-2026.pdf",
-                        "sizeBytes": 284311
+                        "sizeBytes": 284311,
+                        "text": {
+                          "charCount": 2140,
+                          "error": null,
+                          "meaning": true,
+                          "method": "pdf_ocr",
+                          "ocrConfidence": 91.4,
+                          "ocrPages": 2,
+                          "pageCount": 2,
+                          "readAt": "2026-10-20T10:16:02+07:00",
+                          "skippedPages": 0,
+                          "status": "indexed"
+                        }
                       },
                       "folder": {
                         "docCount": 4,
@@ -367792,7 +369055,19 @@
                     "id": "0192f3a0-7c1e-7d2a-9b1f-00000000ee54",
                     "mimeType": "application/pdf",
                     "name": "FSC-certificate-2026.pdf",
-                    "sizeBytes": 284311
+                    "sizeBytes": 284311,
+                    "text": {
+                      "charCount": 2140,
+                      "error": null,
+                      "meaning": true,
+                      "method": "pdf_ocr",
+                      "ocrConfidence": 91.4,
+                      "ocrPages": 2,
+                      "pageCount": 2,
+                      "readAt": "2026-10-20T10:16:02+07:00",
+                      "skippedPages": 0,
+                      "status": "indexed"
+                    }
                   },
                   "folder": {
                     "docCount": 4,
@@ -367823,7 +369098,19 @@
                         "id": "0192f3a0-7c1e-7d2a-9b1f-00000000ee54",
                         "mimeType": "application/pdf",
                         "name": "FSC-certificate-2026.pdf",
-                        "sizeBytes": 284311
+                        "sizeBytes": 284311,
+                        "text": {
+                          "charCount": 2140,
+                          "error": null,
+                          "meaning": true,
+                          "method": "pdf_ocr",
+                          "ocrConfidence": 91.4,
+                          "ocrPages": 2,
+                          "pageCount": 2,
+                          "readAt": "2026-10-20T10:16:02+07:00",
+                          "skippedPages": 0,
+                          "status": "indexed"
+                        }
                       },
                       "id": "0192f3a0-7c1e-7d2a-9b1f-00000000ee53",
                       "note": null,
@@ -368928,7 +370215,19 @@
                     "id": "0192f3a0-7c1e-7d2a-9b1f-00000000ee54",
                     "mimeType": "application/pdf",
                     "name": "FSC-certificate-2026.pdf",
-                    "sizeBytes": 284311
+                    "sizeBytes": 284311,
+                    "text": {
+                      "charCount": 2140,
+                      "error": null,
+                      "meaning": true,
+                      "method": "pdf_ocr",
+                      "ocrConfidence": 91.4,
+                      "ocrPages": 2,
+                      "pageCount": 2,
+                      "readAt": "2026-10-20T10:16:02+07:00",
+                      "skippedPages": 0,
+                      "status": "indexed"
+                    }
                   },
                   "folder": {
                     "docCount": 4,
@@ -368959,7 +370258,19 @@
                         "id": "0192f3a0-7c1e-7d2a-9b1f-00000000ee54",
                         "mimeType": "application/pdf",
                         "name": "FSC-certificate-2026.pdf",
-                        "sizeBytes": 284311
+                        "sizeBytes": 284311,
+                        "text": {
+                          "charCount": 2140,
+                          "error": null,
+                          "meaning": true,
+                          "method": "pdf_ocr",
+                          "ocrConfidence": 91.4,
+                          "ocrPages": 2,
+                          "pageCount": 2,
+                          "readAt": "2026-10-20T10:16:02+07:00",
+                          "skippedPages": 0,
+                          "status": "indexed"
+                        }
                       },
                       "id": "0192f3a0-7c1e-7d2a-9b1f-00000000ee53",
                       "note": null,
@@ -369170,7 +370481,19 @@
                     "id": "0192f3a0-7c1e-7d2a-9b1f-00000000ee54",
                     "mimeType": "application/pdf",
                     "name": "FSC-certificate-2026.pdf",
-                    "sizeBytes": 284311
+                    "sizeBytes": 284311,
+                    "text": {
+                      "charCount": 2140,
+                      "error": null,
+                      "meaning": true,
+                      "method": "pdf_ocr",
+                      "ocrConfidence": 91.4,
+                      "ocrPages": 2,
+                      "pageCount": 2,
+                      "readAt": "2026-10-20T10:16:02+07:00",
+                      "skippedPages": 0,
+                      "status": "indexed"
+                    }
                   },
                   "folder": {
                     "docCount": 4,
@@ -369201,7 +370524,19 @@
                         "id": "0192f3a0-7c1e-7d2a-9b1f-00000000ee54",
                         "mimeType": "application/pdf",
                         "name": "FSC-certificate-2026.pdf",
-                        "sizeBytes": 284311
+                        "sizeBytes": 284311,
+                        "text": {
+                          "charCount": 2140,
+                          "error": null,
+                          "meaning": true,
+                          "method": "pdf_ocr",
+                          "ocrConfidence": 91.4,
+                          "ocrPages": 2,
+                          "pageCount": 2,
+                          "readAt": "2026-10-20T10:16:02+07:00",
+                          "skippedPages": 0,
+                          "status": "indexed"
+                        }
                       },
                       "id": "0192f3a0-7c1e-7d2a-9b1f-00000000ee53",
                       "note": null,
@@ -369499,7 +370834,19 @@
                     "id": "0192f3a0-7c1e-7d2a-9b1f-00000000ee54",
                     "mimeType": "application/pdf",
                     "name": "FSC-certificate-2026.pdf",
-                    "sizeBytes": 284311
+                    "sizeBytes": 284311,
+                    "text": {
+                      "charCount": 2140,
+                      "error": null,
+                      "meaning": true,
+                      "method": "pdf_ocr",
+                      "ocrConfidence": 91.4,
+                      "ocrPages": 2,
+                      "pageCount": 2,
+                      "readAt": "2026-10-20T10:16:02+07:00",
+                      "skippedPages": 0,
+                      "status": "indexed"
+                    }
                   },
                   "folder": {
                     "docCount": 4,
@@ -369530,7 +370877,19 @@
                         "id": "0192f3a0-7c1e-7d2a-9b1f-00000000ee54",
                         "mimeType": "application/pdf",
                         "name": "FSC-certificate-2026.pdf",
-                        "sizeBytes": 284311
+                        "sizeBytes": 284311,
+                        "text": {
+                          "charCount": 2140,
+                          "error": null,
+                          "meaning": true,
+                          "method": "pdf_ocr",
+                          "ocrConfidence": 91.4,
+                          "ocrPages": 2,
+                          "pageCount": 2,
+                          "readAt": "2026-10-20T10:16:02+07:00",
+                          "skippedPages": 0,
+                          "status": "indexed"
+                        }
                       },
                       "id": "0192f3a0-7c1e-7d2a-9b1f-00000000ee53",
                       "note": null,
@@ -369758,6 +371117,337 @@
         ],
         "x-required-permissions": [
           "factory_documents.manage"
+        ]
+      }
+    },
+    "/v1/partner/factories/{factoryId}/erp/file-search": {
+      "get": {
+        "description": "Words found in the text read from each file (text layer or OCR, Thai and English; spaces and case ignored, close OCR misreadings allowed) and — when on — by meaning. One hit per file with where it is used (document, invoice, job …) and up to three highlighted passages with their page; exact matches first. A usage shows only with its area’s read permission (`erp_doc` needs `factory_documents.read`, `erp_supplier_invoice` `factory_ap.read`, …) (D-427).\n\nImplements: D-427, ADR-0013.",
+        "operationId": "partner.erpFileSearch.search",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "factoryId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "page",
+            "required": false,
+            "schema": {
+              "default": 1,
+              "minimum": 1,
+              "type": "integer"
+            }
+          },
+          {
+            "in": "query",
+            "name": "perPage",
+            "required": false,
+            "schema": {
+              "default": 25,
+              "maximum": 100,
+              "minimum": 1,
+              "type": "integer"
+            }
+          },
+          {
+            "description": "Sort field; each endpoint validates it against its own allow-list.",
+            "in": "query",
+            "name": "sort",
+            "required": false,
+            "schema": {
+              "example": "createdAt",
+              "maxLength": 64,
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "order",
+            "required": false,
+            "schema": {
+              "$ref": "#/components/schemas/SortOrder"
+            }
+          },
+          {
+            "description": "Words or a phrase as typed: matched inside the text read from each file (spaces and case ignored, close OCR misreadings allowed) and, with search by meaning on, by meaning (D-427).",
+            "in": "query",
+            "name": "q",
+            "required": false,
+            "schema": {
+              "example": "สัญญาเช่าเครื่องจักร",
+              "maxLength": 200,
+              "minLength": 2,
+              "type": "string"
+            }
+          },
+          {
+            "description": "`keyword` only, `meaning` only, or both (`hybrid`, ranked together)",
+            "in": "query",
+            "name": "mode",
+            "required": false,
+            "schema": {
+              "$ref": "#/components/schemas/FileSearchMode"
+            }
+          },
+          {
+            "description": "Also older versions of a document (default: the current one only)",
+            "in": "query",
+            "name": "allVersions",
+            "required": false,
+            "schema": {
+              "type": "boolean"
+            }
+          },
+          {
+            "description": "Also archived documents and cancelled records",
+            "in": "query",
+            "name": "archived",
+            "required": false,
+            "schema": {
+              "type": "boolean"
+            }
+          },
+          {
+            "description": "Only files used here (comma-separated); every source the person may see by default",
+            "in": "query",
+            "name": "sources",
+            "required": false,
+            "schema": {
+              "items": {
+                "$ref": "#/components/schemas/PartnerFileSource"
+              },
+              "type": "array"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "data": [
+                    {
+                      "exact": true,
+                      "file": {
+                        "id": "0192f3a0-7c1e-7d2a-9b1f-00000000f101",
+                        "mimeType": "application/pdf",
+                        "name": "สัญญาเช่าเครื่องพิมพ์ SM74 (สแกน).pdf",
+                        "sizeBytes": 143190
+                      },
+                      "matches": [
+                        {
+                          "by": "keyword",
+                          "highlights": [
+                            [
+                              0,
+                              20
+                            ]
+                          ],
+                          "ocr": true,
+                          "page": 1,
+                          "sheet": null,
+                          "snippet": "สัญญาเช่าเครื่องจักร เลขที่ CT-2569-0142 ทำที่ บริษัท กระดาษไทยการพิมพ์ จำกัด …"
+                        }
+                      ],
+                      "text": {
+                        "method": "pdf_ocr",
+                        "ocrConfidence": 91.4,
+                        "ocrPages": 2,
+                        "pageCount": 2
+                      },
+                      "usages": [
+                        {
+                          "code": null,
+                          "current": true,
+                          "parentId": null,
+                          "source": "erp_doc",
+                          "subjectId": "0192f3a0-7c1e-7d2a-9b1f-00000000d001",
+                          "title": "สัญญาเช่าเครื่องพิมพ์ SM74",
+                          "usedAt": "2026-10-20T10:15:00+07:00",
+                          "version": 2
+                        }
+                      ]
+                    }
+                  ],
+                  "meta": {
+                    "indexing": {
+                      "failed": 0,
+                      "pending": 0
+                    },
+                    "meaning": true,
+                    "page": 1,
+                    "perPage": 25,
+                    "total": 1
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/FileSearchResponseDto"
+                }
+              }
+            },
+            "description": "Files found",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.unauthenticated": {
+                    "$ref": "#/components/examples/problem.auth.unauthenticated"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.unauthenticated`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.forbidden": {
+                    "$ref": "#/components/examples/problem.auth.forbidden"
+                  },
+                  "auth.wrong_audience": {
+                    "$ref": "#/components/examples/problem.auth.wrong_audience"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.forbidden`, `auth.wrong_audience`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "404": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.not_found": {
+                    "$ref": "#/components/examples/problem.http.not_found"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.not_found`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "validation.failed": {
+                    "$ref": "#/components/examples/problem.validation.failed"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `validation.failed`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "partner": []
+          }
+        ],
+        "summary": "Search inside the factory’s documents and files",
+        "tags": [
+          "partner.erpFileSearch"
+        ],
+        "x-required-permissions": [
+          "factory_documents.read"
         ]
       }
     },
@@ -560298,6 +561988,10 @@
       "name": "admin.featureFlags"
     },
     {
+      "description": "Search inside the documents and attachments getpack keeps (text layer or Thai/English OCR, by meaning), per record permission (D-427).",
+      "name": "admin.fileSearch"
+    },
+    {
       "description": "Staff uploads and downloads (presign → PUT → complete → signed download).",
       "name": "admin.files"
     },
@@ -560652,6 +562346,10 @@
     {
       "description": "getpack Factory ERP: folders and versioned documents linked to ERP records, with expiry reminders (D-356).",
       "name": "partner.erpDocuments"
+    },
+    {
+      "description": "Search inside the factory’s own documents and files (text layer or Thai/English OCR, by meaning) (D-427).",
+      "name": "partner.erpFileSearch"
     },
     {
       "description": "getpack Factory ERP: asset categories, the fixed-asset register, monthly depreciation and disposals (D-393).",

@@ -59,6 +59,7 @@ import { AuditQueryService } from '@platform/audit/audit-query.service';
 import { AdminCalendarController } from '@platform/calendar/calendar-admin.controller';
 import { OutboxAdminController } from '@platform/domain-events/outbox-admin.controller';
 import { FeatureFlagsController } from '@platform/feature-flags/feature-flags.controller';
+import { AdminFileSearchController } from '@platform/file-search/file-search.controllers';
 import { AdminFilesController } from '@platform/files/files.controllers';
 import { AdminDeepLinksController } from '@platform/notifications/deep-links.controller';
 import { AdminInboxController } from '@platform/notifications/my-notifications.controller';
@@ -80,6 +81,7 @@ import { SettingsAdminModule } from '@platform/settings/settings-admin.module';
   providers: [UsersAdminService, AuditQueryService, FactoryOwnersService],
   controllers: [
     AdminFilesController,
+    AdminFileSearchController,
 
     AdminRealtimeController,
     AdminWebPushController,

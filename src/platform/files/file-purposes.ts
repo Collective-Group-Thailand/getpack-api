@@ -14,6 +14,13 @@ export interface FilePurposeRule {
 const MiB = 1024 * 1024;
 const IMAGES = ['image/png', 'image/jpeg', 'image/webp'];
 const PDF = ['application/pdf'];
+const OFFICE = [
+  'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+  'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+  'application/vnd.openxmlformats-officedocument.presentationml.presentation',
+  'application/msword',
+  'application/vnd.ms-excel',
+];
 
 export const FILE_PURPOSES = {
   /** Customer artwork (large print files). */
@@ -41,8 +48,16 @@ export const FILE_PURPOSES = {
     maxBytes: 100 * MiB,
     mimeTypes: [...PDF, ...IMAGES, 'video/mp4', 'video/quicktime'],
   },
-  /** Accounting and legal documents (tax invoices from factories, agreements). */
-  document: { retentionClass: 'financial_record', maxBytes: 50 * MiB, mimeTypes: [...PDF, ...IMAGES] },
+  /**
+   * Accounting and legal documents (tax invoices from factories, agreements) and the factory document library
+   * (D-356): also Word, Excel, PowerPoint, CSV and plain text, which content search reads (D-427); old .doc / .xls
+   * are kept but not read.
+   */
+  document: {
+    retentionClass: 'financial_record',
+    maxBytes: 50 * MiB,
+    mimeTypes: [...PDF, ...IMAGES, 'image/tiff', ...OFFICE, 'text/csv', 'text/plain'],
+  },
   /** Spreadsheet imports (catalogue, geography — D-005 Excel import tools) and style library JSON (D-411). */
   import: {
     retentionClass: 'transient',

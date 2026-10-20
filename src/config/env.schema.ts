@@ -349,6 +349,20 @@ export class EnvironmentVariables {
   @IsString()
   PDF_CHROMIUM_PATH?: string;
 
+  /**
+   * D-427 content search by meaning: `local` (multilingual-e5-small in the process, files in
+   * `FILE_SEARCH_MODEL_DIR`), `fake` (hashed trigrams, tests) or `off` (keyword search only). Unset: `fake` with
+   * fake integrations, otherwise `local` when the model files are present and `off` when they are not.
+   */
+  @IsOptional()
+  @IsIn(['local', 'fake', 'off'])
+  FILE_SEARCH_EMBEDDINGS?: 'local' | 'fake' | 'off';
+
+  /** D-427 directory of the ONNX embedding model (the Docker image bakes it in at build time). */
+  @IsOptional()
+  @IsString()
+  FILE_SEARCH_MODEL_DIR?: string;
+
   /** Registered sender name shown on SMS. */
   @IsOptional()
   @IsString()

@@ -13,6 +13,7 @@ import { DatabaseModule } from '@database/database.module';
 import { RedisModule } from '@database/redis.module';
 import { IntegrationsModule } from '@integrations/integrations.module';
 import { AdvisoryModule } from '@modules/advisory/advisory.module';
+import { AgentsModule } from '@modules/agents/agents.module';
 import { AnalyticsModule } from '@modules/analytics/analytics.module';
 import { ArtworkModule } from '@modules/artwork/artwork.module';
 import { AssistantApiModule, AssistantModule } from '@modules/assistant/assistant.module';
@@ -40,7 +41,6 @@ import { IamModule } from '@modules/iam/iam.module';
 import { LaunchpadModule } from '@modules/launchpad/launchpad.module';
 import { LedgerModule } from '@modules/ledger/ledger.module';
 import { LogisticsModule } from '@modules/logistics/logistics.module';
-import { AgentsModule } from '@modules/agents/agents.module';
 import { LoyaltyModule } from '@modules/loyalty/loyalty.module';
 import { OpsModule } from '@modules/ops/ops.module';
 import { OrdersModule } from '@modules/orders/orders.module';
@@ -70,6 +70,7 @@ import { type MiddlewareConsumer, Module, type NestModule } from '@nestjs/common
 import { APP_FILTER, APP_GUARD, APP_INTERCEPTOR } from '@nestjs/core';
 import { seconds, ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler';
 import { ApprovalsModule } from '@platform/approvals/approvals.module';
+import { FileSearchModule } from '@platform/file-search/file-search.module';
 import { FilesModule } from '@platform/files/files.module';
 import { HealthModule } from '@platform/health/health.module';
 import { NotificationsModule } from '@platform/notifications/notifications.module';
@@ -116,6 +117,7 @@ import { LoggerModule } from 'nestjs-pino';
     ApprovalsModule,
     NotificationsModule,
     FilesModule,
+    FileSearchModule,
     SettingsAdminModule,
     CatalogModule,
     StorefrontRevalidationModule,

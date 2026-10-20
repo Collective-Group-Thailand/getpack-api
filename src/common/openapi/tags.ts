@@ -3,6 +3,10 @@
  * contract build. Tags are `<surface>.<resource>` (`store.orders`) or `ops.<area>`.
  */
 export const API_TAGS: Record<string, string> = {
+  'admin.fileSearch':
+    'Search inside the documents and attachments getpack keeps (text layer or Thai/English OCR, by meaning), per record permission (D-427).',
+  'partner.erpFileSearch':
+    'Search inside the factory’s own documents and files (text layer or Thai/English OCR, by meaning) (D-427).',
   'store.customerProfile': 'The signed-in customer’s profile: customer type and customer code (D-020).',
   'store.addresses':
     'Delivery and billing addresses of the signed-in customer; orders keep a snapshot (D-142).',

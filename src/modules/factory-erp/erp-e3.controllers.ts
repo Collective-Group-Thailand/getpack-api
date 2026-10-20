@@ -25,6 +25,7 @@ import {
   Query,
 } from '@nestjs/common';
 import { ApiBody, ApiParam } from '@nestjs/swagger';
+import { FILE_TEXT_STATE_EXAMPLE } from '@platform/file-search/file-search.examples';
 
 import { GR } from './erp.controllers';
 import { ERP_IDS, ErpChargeInput, ErpDraftFromReorderResultDto, ErpGoodsReceiptDto } from './erp.dto';
@@ -393,6 +394,7 @@ const FILE = {
   name: 'FSC-certificate-2026.pdf',
   mimeType: 'application/pdf',
   sizeBytes: 284311,
+  text: FILE_TEXT_STATE_EXAMPLE,
 };
 const DOC_SUMMARY: ErpDocSummaryDto = {
   id: E3_IDS.doc,

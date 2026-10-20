@@ -943,6 +943,9 @@ model FileObject {
 
   erpQualityCheckPdf ErpQualityCheck[] @relation("ErpQualityCheckPdf")
 
+  /// D-427 the text read out of the file for content search (search.prisma).
+  text FileText? @relation("FileTextFile")
+
 
   // --- Sales agents D-416 (generated back-relations)
   salesAgentApplicationIdDocuments SalesAgentApplication[] @relation("SalesAgentApplicationIdDocument")

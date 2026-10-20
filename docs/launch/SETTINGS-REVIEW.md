@@ -5,7 +5,7 @@
 > (a new effective-dated version, audited — D-063) and signs item 5 of `docs/LAUNCH-CHECKLIST.md`. A *proposed* or
 > *pending* value is not a decision: it goes live only once its owner confirms it.
 
-**116 settings** — 67 confirmed · 20 proposed · 4 pending the CPA (⚖) · 2 pending the business · 23 defined without a value (not set until their owner sets them).
+**117 settings** — 68 confirmed · 20 proposed · 4 pending the CPA (⚖) · 2 pending the business · 23 defined without a value (not set until their owner sets them).
 
 ## Settings
 
@@ -59,6 +59,7 @@
 | `dielines.downloads_per_minute` | `5` | confirmed | superadmin | D-203, D-271 | D-203 / D-271 dieline downloads a signed-in customer may take in any 60 seconds |
 | `discounts.cs_limit_pct` | `5` | confirmed | superadmin | D-052 | D-052 discount CS may give without a discount memo |
 | `documents.retention_years` | `10` | confirmed | finance_manager | D-033 | D-033 / accounting-design §2 record retention of documents and ledgers (≥ 10 years, above the 5-year statutory minimum) |
+| `files.text_index` | `{"enabled":true,"ocr":true,"ocrLanguages":"tha+eng","ocrMaxPages":30,"ocrDpi":300,"maxBytes":104857600,"maxChars":1000000,"maxAttempts":3}` | confirmed | superadmin | D-427 | D-427 how stored documents are read for content search: OCR (Tesseract), limits and retries |
 | `fixed_assets.depreciation_start` | `acquisition_month` | pending_cpa | finance_manager | D-150 | D-150 first month of straight-line depreciation: the month the asset is acquired (full month) or the month after (⚖ pro-rata by days is not used) |
 | `fulfilment.colour_tolerance_delta_e` | `{"standard":"3","flexo":"5"}` | confirmed | superadmin | D-186 | D-186 published colour tolerance, ΔE2000 against the approved proof, for printed products (≤ 3; ≤ 5 for flexo) |
 | `fulfilment.dimensional_tolerance_mm` | `{"folding":"1","tag_sleeve":"1","corrugate":"3"}` | confirmed | superadmin | D-186 | D-186 published dimensional tolerance ± mm per calculator (folding cartons incl. tags & sleeves ± 1, corrugated ± 3); a calculator not listed publishes none |

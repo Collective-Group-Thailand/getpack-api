@@ -1,0 +1,96 @@
+// D-427 document content search (ADR-0013): text read out of stored files — the text layer of a PDF, Word,
+// Excel and PowerPoint files, plain text, and OCR (Tesseract, Thai + English) of scans and photos — split into
+// chunks searched by keyword (pg_trgm) and by meaning (pgvector, `search.file_text_embeddings`).
+//
+// Not modelled here, kept in schema `search` by migration `20261212000001_file_text_search` (Prisma cannot declare
+// an HNSW index or a view, and the drift check reads `public` only):
+//   - `search.file_text_embeddings` — one vector per chunk per embedding model, HNSW (cosine);
+//   - `search.file_usages` — the allowlist: which stored files are documents worth reading, where each is used,
+//     whose it is and which permission shows it on which surface.
+
+enum FileTextStatus {
+  /// Waiting for (or being read by) the worker.
+  pending
+  /// Text read and chunked.
+  indexed
+  /// Read, but no text in it (a blank scan, a photo with no writing).
+  empty
+  /// A type the reader cannot open (old .doc / .xls, DWG, video, …).
+  unsupported
+  /// Larger than `files.text_index.maxBytes`.
+  too_large
+  /// Reading failed `files.text_index.maxAttempts` times (a corrupt or password-protected file).
+  failed
+
+  @@map("file_text_status")
+}
+
+/// The text of one stored file (D-427): one row per file the search allowlist covers, made by the worker after the
+/// malware scan passed. Derived data — deleted with its file, emptied when the file is purged.
+model FileText {
+  id           BigInt         @id(map: "pk_file_texts") @default(autoincrement())
+  fileObjectId BigInt         @unique(map: "ux_file_texts__file_object_id") @map("file_object_id")
+  status       FileTextStatus @default(pending)
+  /// How the text was read: pdf_text, pdf_ocr (every page by OCR), pdf_mixed, image_ocr, docx, xlsx, pptx, plain.
+  method       String?
+  /// Pages (PDF), sheets (Excel) or slides (PowerPoint) read.
+  pageCount    Int?           @map("page_count")
+  /// Pages read by OCR (no usable text layer).
+  ocrPages     Int            @default(0) @map("ocr_pages")
+  /// Pages over `files.text_index.ocrMaxPages`, left unread.
+  skippedPages Int            @default(0) @map("skipped_pages")
+  charCount    Int            @default(0) @map("char_count")
+  /// Mean Tesseract word confidence over OCR'd pages (0–100); null without OCR.
+  ocrConfidence Decimal?      @map("ocr_confidence") @db.Decimal(5, 2)
+  /// SHA-256 of the whole text: an unchanged re-read keeps its chunks and embeddings.
+  textSha256   Bytes?         @map("text_sha256")
+  attempts     Int            @default(0) @db.SmallInt
+  lastError    String?        @map("last_error")
+  /// A claimed row is retried by another worker after this (crash safety).
+  leaseUntil   DateTime?      @map("lease_until") @db.Timestamptz(6)
+  /// The worker retries a failed attempt after this.
+  retryAt      DateTime?      @map("retry_at") @db.Timestamptz(6)
+  extractedAt  DateTime?      @map("extracted_at") @db.Timestamptz(6)
+  /// The embedding model whose vectors are complete for this text (null until embedded, or with embeddings off).
+  embeddedModel String?       @map("embedded_model")
+  embeddedAt   DateTime?      @map("embedded_at") @db.Timestamptz(6)
+  createdAt    DateTime       @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt    DateTime       @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  fileObject FileObject      @relation("FileTextFile", fields: [fileObjectId], references: [id], onDelete: Cascade, onUpdate: Restrict, map: "fk_file_texts__file_object_id")
+  chunks     FileTextChunk[]
+
+  @@index([status, retryAt], map: "ix_file_texts__status__retry_at")
+  @@map("file_texts")
+}
+
+/// A passage of a file's text (≈ 1,000 characters, on page / sheet / slide boundaries), the unit search returns.
+model FileTextChunk {
+  id           BigInt   @id(map: "pk_file_text_chunks") @default(autoincrement())
+  fileTextId   BigInt   @map("file_text_id")
+  /// Denormalised from the file text: search filters chunks by the files a surface may show.
+  fileObjectId BigInt   @map("file_object_id")
+  chunkIndex   Int      @map("chunk_index")
+  /// 1-based page (PDF), sheet or slide number; null for a document without pages (Word, plain text).
+  page         Int?
+  /// The sheet's name in an Excel file.
+  sheet        String?
+  /// True when the passage was read by OCR.
+  ocr          Boolean  @default(false)
+  /// The passage as read, shown as the snippet.
+  content      String
+  /// `content` folded for matching (NFKC, lower case, every space removed — Thai has none and OCR adds some at
+  /// random): keyword search is a substring / trigram match on this.
+  searchText   String   @map("search_text")
+  /// `search_text` without Thai vowel signs above / below the line and tone marks: the near-match tier.
+  searchSkeleton String  @map("search_skeleton")
+  createdAt    DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  fileText FileText @relation(fields: [fileTextId], references: [id], onDelete: Cascade, onUpdate: Restrict, map: "fk_file_text_chunks__file_text_id")
+
+  @@unique([fileTextId, chunkIndex], map: "ux_file_text_chunks__file_text_id__chunk_index")
+  @@index([fileObjectId], map: "ix_file_text_chunks__file_object_id")
+  @@index([searchText(ops: raw("gin_trgm_ops"))], type: Gin, map: "ix_file_text_chunks__search_text_trgm")
+  @@index([searchSkeleton(ops: raw("gin_trgm_ops"))], type: Gin, map: "ix_file_text_chunks__search_skeleton_trgm")
+  @@map("file_text_chunks")
+}

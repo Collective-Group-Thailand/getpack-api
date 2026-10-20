@@ -3,6 +3,30 @@
 Contract-facing changes per release. The contract itself is `contract/openapi.json`; mappings for `getpack-web` are in
 `docs/contract-requests-triage.md`.
 
+## v0.74.0 — Search inside documents (D-427, ADR-0013)
+
+Additive.
+
+- New `partner.erpFileSearch.search` (`GET /v1/partner/factories/{factoryId}/erp/file-search`, `factory_documents.read`)
+  and `admin.fileSearch.search` (`GET /v1/admin/file-search`, `files.read`, audited): search the text read out of
+  stored files — PDF text layers, Tesseract OCR (Thai + English) of scans and photos, Word, Excel, PowerPoint, plain
+  text — by keyword (spaces, case and Thai marks forgiven, exact matches first) and by meaning. One hit per file:
+  where it is used (`usages[]` with `source`, `subjectId`, `parentId`, `code`, `title`, `version`), up to three
+  passages with `highlights` and their `page` / `sheet`, how it was read (`text`). `q` (2–200), `mode`
+  (`hybrid` | `keyword` | `meaning`), `sources[]`, `allVersions`, `archived`, `page`, `perPage`; `meta.meaning` (search
+  by meaning on) and `meta.indexing` (files still being read / that failed).
+- Each usage shows under its record's read permission (`erp_doc` → `factory_documents.read`, `vendor_invoice` →
+  `payables.read`, …); the partner surface only ever sees its own factory; the back office never sees factories' ERP
+  files. Never read: KYC, sales-agent ID and bank books, exports, bank files, artwork / design files, catalogue images.
+- New `admin.fileSearch.textState` (`GET /v1/admin/file-search/{fileId}/text`) and `admin.fileSearch.reindex`
+  (`POST …/actions/reindex`, new permission `files.reindex`, Admin).
+- `ErpDocFileDto.text` (documents list, document, versions): whether the file's content is searchable —
+  `status` (`pending` | `indexed` | `empty` | `unsupported` | `too_large` | `failed`), `method`, `ocrPages`,
+  `ocrConfidence`, `meaning`, `readAt`, `error`.
+- Upload purpose `document` also accepts Word, Excel, PowerPoint (OOXML and legacy), CSV and plain text.
+- Setting `files.text_index`; env `FILE_SEARCH_EMBEDDINGS`, `FILE_SEARCH_MODEL_DIR`; the image adds poppler-utils,
+  Tesseract (Thai) and the multilingual-e5-small model.
+
 ## v0.73.1 — Image thumbnails (640 px)
 
 Additive. `store.catalog.getImage` takes `?size=thumb`: the WebP thumbnail the file worker makes of every image

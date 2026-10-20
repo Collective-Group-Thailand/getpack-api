@@ -151,3 +151,6 @@ value stops the process before it serves anything.
 | `SENTRY_TRACES_SAMPLE_RATE` | `0`–`0.1` | performance tracing sample; errors are always sent when `SENTRY_DSN` is set |
 | `OTEL_SERVICE_NAME` | `getpack-api` (default) | trace and metric service name |
 | `PDF_CHROMIUM_PATH` | the image's Chromium | set in the Dockerfile (Thai fonts embedded) |
+| `FILE_SEARCH_EMBEDDINGS` | unset | D-427 content search by meaning: `local` (the e5 model in the process), `fake`, `off` (keyword only). Unset = `local` when the model files are in the image, else `off` (logged at start) |
+| `FILE_SEARCH_MODEL_DIR` | `/app/models/multilingual-e5-small` | set in the Dockerfile; the model is downloaded at image build time, pinned to a revision with its SHA-256 (ADR-0013) |
+| `FAKE_OBJECT_STORAGE_DIR` | unset | fake object storage only (development, UAT rehearsal): keeps objects on disk across restarts |

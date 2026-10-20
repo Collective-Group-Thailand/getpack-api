@@ -9,6 +9,26 @@ export interface RefreshLifetime {
   idleHours: number;
 }
 
+/** D-427 / ADR-0013 reading stored files for content search. */
+export interface FileTextIndexSettings {
+  /** Off: no file is read (search returns what is already indexed). */
+  enabled: boolean;
+  /** OCR scans and photos with Tesseract; off reads text layers only. */
+  ocr: boolean;
+  /** Tesseract languages, `+`-joined (installed `tesseract-ocr-<lang>` packages). */
+  ocrLanguages: string;
+  /** Pages of one PDF read by OCR at most; the rest are counted as skipped. */
+  ocrMaxPages: number;
+  /** Resolution PDF pages are rendered at for OCR. */
+  ocrDpi: number;
+  /** Files larger than this are not read (bytes). */
+  maxBytes: number;
+  /** Text kept per file at most (characters). */
+  maxChars: number;
+  /** Attempts before a file is marked failed. */
+  maxAttempts: number;
+}
+
 export interface SettingValues {
   'auth.access_token_ttl_seconds': number;
   'auth.refresh_token_lifetimes': Record<'staff' | 'partner' | 'customer', RefreshLifetime>;
@@ -124,6 +144,8 @@ export interface SettingValues {
   'loyalty.activity_rewards': { signupBaht: string; lineLinkingBaht: string; reviewBaht: string };
   /** D-120 */
   'b2b.kyc_certificate_max_age_months': number;
+  /** D-427 how stored files are read for content search (ADR-0013). */
+  'files.text_index': FileTextIndexSettings;
   'referral.rules': {
     refereeDiscountPct: string;
     refereeDiscountMaxBaht: string;

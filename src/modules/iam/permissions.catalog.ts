@@ -78,6 +78,12 @@ export const PERMISSIONS = [
   { key: 'files.upload', audience: 'staff', description: 'Upload files' },
   { key: 'files.read', audience: 'staff', description: 'Download files of records the user can see' },
   {
+    key: 'files.reindex',
+    audience: 'staff',
+    description: 'Queue files to be read again for content search',
+    decisionRefs: ['D-427'],
+  },
+  {
     key: 'notification_templates.manage',
     audience: 'staff',
     description: 'Edit and publish notification templates',
