@@ -5,10 +5,13 @@
  * once. Prints the plan and writes nothing unless `--confirm`.
  */
 import { NestFactory } from '@nestjs/core';
+import { config } from 'dotenv';
 
 import { AppModule } from '../src/app.module';
 import { PrismaService } from '../src/database/prisma.service';
 import { FileProcessingJobs, THUMBNAIL_WIDTH } from '../src/platform/files/file-processing.jobs';
+
+config({ quiet: true });
 
 async function main(): Promise<void> {
   const confirm = process.argv.includes('--confirm');
