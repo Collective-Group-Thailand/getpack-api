@@ -1,5 +1,6 @@
 import { FACTORY_ROLES } from '@modules/auth/me.dto';
 
+import { SETTINGS } from '../../../prisma/seed/data/settings';
 import { PERMISSIONS } from './permissions.catalog';
 import { ROLES } from './roles.catalog';
 
@@ -116,10 +117,7 @@ describe('IAM catalogues (D-140, D-141)', () => {
 
 describe('setting owners (D-063, ADR-0005)', () => {
   const permission = new Map<string, (typeof PERMISSIONS)[number]>(PERMISSIONS.map((p) => [p.key, p]));
-  it('every role that owns a setting may read and change it — the owner check alone decides which ones', async () => {
-    const { SETTINGS } = (await import('../../../prisma/seed/data/settings')) as {
-      SETTINGS: readonly { ownerRole?: string }[];
-    };
+  it('every role that owns a setting may read and change it — the owner check alone decides which ones', () => {
     const byKey = new Map(ROLES.map((role) => [role.key, role]));
     const owners = [...new Set(SETTINGS.map((setting) => setting.ownerRole ?? 'superadmin'))];
     for (const owner of owners) {

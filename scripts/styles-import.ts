@@ -9,12 +9,15 @@ import { readFileSync } from 'node:fs';
 import { basename } from 'node:path';
 
 import { NestFactory } from '@nestjs/core';
+import { config } from 'dotenv';
 
 import { type UserActor } from '../src/common/context/actor';
 import { PrismaService } from '../src/database/prisma.service';
 import { PermissionResolver } from '../src/modules/iam/permission-resolver.service';
 import { StyleImportService } from '../src/modules/styles/style-import.service';
 import { WorkerModule } from '../src/worker.module';
+
+config({ quiet: true });
 
 async function main(): Promise<void> {
   const args = process.argv.slice(2);

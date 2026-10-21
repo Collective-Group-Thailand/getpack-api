@@ -14,6 +14,7 @@ import { existsSync, readFileSync } from 'node:fs';
 import { dirname, extname, resolve } from 'node:path';
 
 import { NestFactory } from '@nestjs/core';
+import { config } from 'dotenv';
 
 import { AppModule } from '../src/app.module';
 import { type UserActor } from '../src/common/context/actor';
@@ -22,6 +23,8 @@ import { PrismaService } from '../src/database/prisma.service';
 import { PermissionResolver } from '../src/modules/iam/permission-resolver.service';
 import { FileProcessingJobs } from '../src/platform/files/file-processing.jobs';
 import { FilesService } from '../src/platform/files/files.service';
+
+config({ quiet: true });
 
 const MIME: Record<string, string> = {
   '.jpg': 'image/jpeg',
