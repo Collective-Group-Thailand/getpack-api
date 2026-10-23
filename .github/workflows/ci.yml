@@ -145,6 +145,8 @@ jobs:
         uses: aquasecurity/trivy-action@b6643a29fecd7f34b3597bc6acb0a98b03d33ff8 # v0.33.1 (pinned: the un-prefixed tags were removed)
         with:
           image-ref: getpack-api:ci
+          # The action's default Trivy release (v0.65.0) was withdrawn upstream; name one that exists.
+          version: v0.75.0
           severity: HIGH,CRITICAL
           ignore-unfixed: true
           exit-code: '1'

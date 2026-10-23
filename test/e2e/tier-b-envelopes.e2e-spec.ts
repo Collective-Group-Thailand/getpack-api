@@ -16,8 +16,8 @@ import {
 import { bootFulfilmentApp, factoryToken, type FulfilmentApp } from '../support/fulfilment-e2e';
 
 /**
- * Tier-B envelopes (U-B6 tail, D-043, D-234) end to end. The type-B factory F9002 becomes the only folding path (the
- * launch factory F9001 is suspended for the suite) at tier B with an envelope: staff set it, the factory reads it and
+ * Tier-B envelopes (U-B6 tail, D-043, D-234) end to end. The type-B factory F9002 becomes the only folding path (every
+ * other active factory, the launch factory F9001 and any an earlier suite created, is suspended for the suite) at tier B with an envelope: staff set it, the factory reads it and
  * asks for a change, quotes are instant only inside it, and the store sees `partial` availability without a factory.
  */
 describe('tier-B envelopes (e2e, U-B6 tail)', () => {
@@ -28,6 +28,7 @@ describe('tier-B envelopes (e2e, U-B6 tail)', () => {
   let pm: string;
   let cs: string;
   let owner: string;
+  let suspended: bigint[] = [];
   let typeId: string;
 
   const setFlag = async (enabled: boolean) => {
@@ -43,7 +44,13 @@ describe('tier-B envelopes (e2e, U-B6 tail)', () => {
     flags = ctx.app.get(FeatureFlagsService);
     a = await foldingReady(ctx);
     b = (await ctx.prisma.$transaction((tx) => seedDevFoldingB(tx), { timeout: 60_000 })).fixture;
-    await ctx.prisma.factory.update({ where: { code: 'F9001' }, data: { status: 'suspended' } });
+    suspended = (
+      await ctx.prisma.factory.findMany({
+        where: { status: 'active', publicId: { not: b.factoryPublicId } },
+        select: { id: true },
+      })
+    ).map((f) => f.id);
+    await ctx.prisma.factory.updateMany({ where: { id: { in: suspended } }, data: { status: 'suspended' } });
     await ctx.prisma.factory.update({ where: { publicId: b.factoryPublicId }, data: { status: 'active' } });
     await setFlag(true);
     typeId = (await ctx.prisma.productType.findUniqueOrThrow({ where: { code: 'folding_carton' } })).publicId;
@@ -54,7 +61,8 @@ describe('tier-B envelopes (e2e, U-B6 tail)', () => {
 
   afterAll(async () => {
     // Other folding suites price the launch factory alone with engine B off.
-    await ctx?.prisma.factory.update({ where: { code: 'F9001' }, data: { status: 'active' } });
+    if (suspended.length > 0)
+      await ctx.prisma.factory.updateMany({ where: { id: { in: suspended } }, data: { status: 'active' } });
     if (b)
       await ctx.prisma.factory.update({
         where: { publicId: b.factoryPublicId },
