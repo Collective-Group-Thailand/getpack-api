@@ -9,7 +9,7 @@
     "node": ">=24 <25"
   },
   "scripts": {
-    "postinstall": "prisma generate",
+    "postinstall": "node scripts/prisma-clients.mjs",
     "build": "NODE_OPTIONS=--max-old-space-size=6144 nest build",
     "build:fast": "node -e \"require('node:fs').rmSync('dist',{recursive:true,force:true})\" && swc src scripts prisma/seed -d dist --config-file .swcrc --copy-files --ignore \"**/*.spec.ts\" --quiet && node -e \"require('node:fs').copyFileSync('package.json','dist/package.json')\"",
     "start": "node dist/src/main.js",
@@ -27,7 +27,7 @@
     "test:e2e": "node --experimental-vm-modules node_modules/jest/bin/jest.js --config jest.config.ts --selectProjects e2e --maxWorkers=1 --workerIdleMemoryLimit=1536MB",
     "test:cov": "node --experimental-vm-modules node_modules/jest/bin/jest.js --config jest.config.ts --selectProjects unit --coverage",
     "contract:build": "NODE_OPTIONS=--max-old-space-size=6144 nest build && node dist/scripts/contract-build.js",
-    "prisma:generate": "prisma generate",
+    "prisma:generate": "node scripts/prisma-clients.mjs",
     "db:migrate": "prisma migrate deploy",
     "db:migrate:dev": "prisma migrate dev",
     "db:seed": "pnpm build:fast && node dist/prisma/seed/run.js reference",

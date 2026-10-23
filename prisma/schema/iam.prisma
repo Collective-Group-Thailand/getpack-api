@@ -1301,7 +1301,7 @@ model PrivacyRequest {
 
   user       User        @relation("PrivacyRequestUser", fields: [userId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_privacy_requests__user_id")
   exportFile FileObject? @relation("PrivacyRequestExportFile", fields: [exportFileId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_privacy_requests__export_file_id")
-  decidedBy  User?       @relation("PrivacyRequestDecidedBy", fields: [decidedById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_privacy_requests__decided_by")
+  decidedBy  User?       @relation("PrivacyRequestDecidedBy", fields: [decidedById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_privacy_requests__decided_by") // client: keep
 
   @@unique([userId, kind], map: "ux_privacy_requests__one_open", where: raw("(status = 'submitted'::privacy_request_status)"))
   @@index([userId, createdAt(sort: Desc)], map: "ix_privacy_requests__user_id__created_at")

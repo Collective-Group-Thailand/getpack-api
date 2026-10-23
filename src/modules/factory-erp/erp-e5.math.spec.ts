@@ -27,9 +27,24 @@ describe('Factory ERP E5 arithmetic and documents', () => {
   });
 
   it('adds checkpoints up to a result: any fail fails, unanswered waits, notes never decide (D-372)', () => {
-    expect(checkResult([{ type: 'pass_fail', outcome: 'pass' }, { type: 'note', outcome: null }])).toBe('pass');
-    expect(checkResult([{ type: 'pass_fail', outcome: 'pass' }, { type: 'measurement', outcome: null }])).toBe('pending');
-    expect(checkResult([{ type: 'pass_fail', outcome: null }, { type: 'measurement', outcome: 'fail' }])).toBe('fail');
+    expect(
+      checkResult([
+        { type: 'pass_fail', outcome: 'pass' },
+        { type: 'note', outcome: null },
+      ]),
+    ).toBe('pass');
+    expect(
+      checkResult([
+        { type: 'pass_fail', outcome: 'pass' },
+        { type: 'measurement', outcome: null },
+      ]),
+    ).toBe('pending');
+    expect(
+      checkResult([
+        { type: 'pass_fail', outcome: null },
+        { type: 'measurement', outcome: 'fail' },
+      ]),
+    ).toBe('fail');
     expect(checkResult([{ type: 'pass_fail', outcome: 'na' }])).toBe('pass');
     expect(checkResult([{ type: 'pass_fail', outcome: 'pass' }], dec(3))).toBe('conditional');
   });
@@ -71,16 +86,32 @@ describe('Factory ERP E5 arithmetic and documents', () => {
   });
 
   it('computes OEE with performance capped at 100% (D-377)', () => {
-    const o = oeeOf({ plannedMinutes: 480, runMinutes: 400, idealMinutes: 360, good: dec(990), scrap: dec(10) });
+    const o = oeeOf({
+      plannedMinutes: 480,
+      runMinutes: 400,
+      idealMinutes: 360,
+      good: dec(990),
+      scrap: dec(10),
+    });
     expect(pct1(o.availability)).toBe('83.3');
     expect(pct1(o.performance)).toBe('90.0');
     expect(pct1(o.quality)).toBe('99.0');
     expect(o.oee).toBeCloseTo(0.7425, 6);
-    expect(oeeOf({ plannedMinutes: 480, runMinutes: 100, idealMinutes: 300, good: dec(1), scrap: dec(0) }).performance).toBe(1);
+    expect(
+      oeeOf({ plannedMinutes: 480, runMinutes: 100, idealMinutes: 300, good: dec(1), scrap: dec(0) })
+        .performance,
+    ).toBe(1);
     // a day with no shift that still ran: availability 100%, not 0% (D-403)
-    expect(oeeOf({ plannedMinutes: 0, runMinutes: 120, idealMinutes: 60, good: dec(1), scrap: dec(0) }).availability).toBe(1);
-    expect(oeeOf({ plannedMinutes: 0, runMinutes: 0, idealMinutes: 0, good: dec(0), scrap: dec(0) }).availability).toBe(0);
-    expect(oeeOf({ plannedMinutes: 0, runMinutes: 0, idealMinutes: 0, good: dec(0), scrap: dec(0) }).oee).toBe(0);
+    expect(
+      oeeOf({ plannedMinutes: 0, runMinutes: 120, idealMinutes: 60, good: dec(1), scrap: dec(0) })
+        .availability,
+    ).toBe(1);
+    expect(
+      oeeOf({ plannedMinutes: 0, runMinutes: 0, idealMinutes: 0, good: dec(0), scrap: dec(0) }).availability,
+    ).toBe(0);
+    expect(
+      oeeOf({ plannedMinutes: 0, runMinutes: 0, idealMinutes: 0, good: dec(0), scrap: dec(0) }).oee,
+    ).toBe(0);
   });
 
   it('measures shifts, past midnight too (D-380)', () => {
@@ -90,21 +121,47 @@ describe('Factory ERP E5 arithmetic and documents', () => {
 
   it('offers quality actions by state and permission (D-372, D-374)', () => {
     const qc = new Set(['factory_quality.read', 'factory_quality.record']);
-    expect(nextActions({ result: 'pending', kind: 'final', locked: false }, CHECK_ACTIONS, qc).map((a) => a.key)).toEqual(['erp_qc.record']);
-    expect(nextActions({ result: 'pass', kind: 'final', locked: false }, CHECK_ACTIONS, qc).map((a) => a.key)).toEqual(['erp_qc.coa']);
+    expect(
+      nextActions({ result: 'pending', kind: 'final', locked: false }, CHECK_ACTIONS, qc).map((a) => a.key),
+    ).toEqual(['erp_qc.record']);
+    expect(
+      nextActions({ result: 'pass', kind: 'final', locked: false }, CHECK_ACTIONS, qc).map((a) => a.key),
+    ).toEqual(['erp_qc.coa']);
     const manage = new Set([...qc, 'factory_quality.manage']);
     const open = nextActions({ status: 'open', disposition: null, ready: false }, NCR_ACTIONS, manage);
-    expect(open.map((a) => a.key)).toEqual(['erp_ncr.edit', 'erp_ncr.dispose', 'erp_ncr.verify', 'erp_ncr.cancel']);
-    expect(open.find((a) => a.key === 'erp_ncr.verify')?.disabledReason).toBeTruthy();
-    expect(nextActions({ status: 'in_progress', disposition: 'scrap', ready: true }, NCR_ACTIONS, manage).map((a) => a.key)).toEqual([
+    expect(open.map((a) => a.key)).toEqual([
       'erp_ncr.edit',
+      'erp_ncr.dispose',
       'erp_ncr.verify',
+      'erp_ncr.cancel',
     ]);
+    expect(open.find((a) => a.key === 'erp_ncr.verify')?.disabledReason).toBeTruthy();
+    expect(
+      nextActions({ status: 'in_progress', disposition: 'scrap', ready: true }, NCR_ACTIONS, manage).map(
+        (a) => a.key,
+      ),
+    ).toEqual(['erp_ncr.edit', 'erp_ncr.verify']);
   });
 
   it('prints a certificate of analysis with the limits (D-375)', () => {
-    expect(specText({ type: 'measurement', unit: 'mm', minValue: dec('2.9000'), maxValue: dec('3.3000'), targetValue: null })).toBe('2.9 – 3.3 mm');
-    expect(specText({ type: 'measurement', unit: null, minValue: dec('5'), maxValue: null, targetValue: dec('6') })).toBe('≥ 5 (เป้า 6)');
+    expect(
+      specText({
+        type: 'measurement',
+        unit: 'mm',
+        minValue: dec('2.9000'),
+        maxValue: dec('3.3000'),
+        targetValue: null,
+      }),
+    ).toBe('2.9 – 3.3 mm');
+    expect(
+      specText({
+        type: 'measurement',
+        unit: null,
+        minValue: dec('5'),
+        maxValue: null,
+        targetValue: dec('6'),
+      }),
+    ).toBe('≥ 5 (เป้า 6)');
     const html = renderCoaHtml({
       seller: { name: 'บจก. ทดสอบ', address: '1 ถนนทดสอบ', taxId: null, branchCode: null, phone: null },
       logo: null,

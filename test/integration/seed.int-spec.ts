@@ -34,7 +34,7 @@ describe('seeds (PostgreSQL 18)', () => {
       permissions: PERMISSIONS.length,
       settings: SETTINGS.length + 6,
       approval_policies: APPROVAL_POLICIES.length,
-      dev_staff_users: 15,
+      dev_staff_users: 16,
       dev_customer_users: 1,
     });
 
@@ -74,6 +74,7 @@ describe('seeds (PostgreSQL 18)', () => {
        GROUP BY t.id ORDER BY t.code`);
     expect(rows).toEqual([
       { code: 'vat_standard', rate: '7.0000', status: 'approved', versions: '1' },
+      { code: 'wht_commission', rate: '3.0000', status: 'approved', versions: '1' },
       { code: 'wht_customer_hire_of_work', rate: '3.0000', status: 'approved', versions: '1' },
       { code: 'wht_customer_service', rate: '3.0000', status: 'approved', versions: '1' },
       { code: 'wht_customer_transport', rate: '1.0000', status: 'approved', versions: '1' },
@@ -186,7 +187,7 @@ describe('seeds (PostgreSQL 18)', () => {
       SELECT u.email, r.key AS role, ur.scope_type::text AS scope
         FROM users u JOIN user_roles ur ON ur.user_id = u.id JOIN roles r ON r.id = ur.role_id
        WHERE u.kind = 'staff'`);
-    expect(rows).toHaveLength(15);
+    expect(rows).toHaveLength(16);
     for (const row of rows) {
       expect(row.email).toBe(`${row.role.replaceAll('_', '-')}@example.invalid`);
       expect(row.scope).toBe('platform');

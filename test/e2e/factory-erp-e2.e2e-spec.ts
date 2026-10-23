@@ -390,10 +390,10 @@ describe('getpack Factory ERP E2 (e2e)', () => {
 
     // Append-only at the database (D-334, D-338).
     await expect(
-      ctx.prisma.erpPriceRecord.updateMany({ where: { itemId: { gt: 0n } }, data: { note: 'x' } }),
+      ctx.erpPrisma.erpPriceRecord.updateMany({ where: { itemId: { gt: 0n } }, data: { note: 'x' } }),
     ).rejects.toThrow();
     await expect(
-      ctx.prisma.erpSupplierPayment.updateMany({ where: { id: { gt: 0n } }, data: { note: 'x' } }),
+      ctx.erpPrisma.erpSupplierPayment.updateMany({ where: { id: { gt: 0n } }, data: { note: 'x' } }),
     ).rejects.toThrow();
   });
 

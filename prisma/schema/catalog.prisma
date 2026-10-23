@@ -1624,7 +1624,7 @@ model HomeCustomerCase {
 
   photoFile   FileObject? @relation("HomeCasePhotoFile", fields: [photoFileId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_home_customer_cases__photo_file_id")
   consentFile FileObject? @relation("HomeCaseConsentFile", fields: [consentFileId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_home_customer_cases__consent_file_id")
-  approvedBy  User?       @relation("HomeCaseApprovedBy", fields: [approvedById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_home_customer_cases__approved_by")
+  approvedBy  User?       @relation("HomeCaseApprovedBy", fields: [approvedById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_home_customer_cases__approved_by") // client: keep
   createdBy   User?       @relation("HomeCaseCreatedBy", fields: [createdById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_home_customer_cases__created_by")
   updatedBy   User?       @relation("HomeCaseUpdatedBy", fields: [updatedById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_home_customer_cases__updated_by")
 
@@ -2257,8 +2257,8 @@ model StudioTemplate {
   updatedAt           DateTime            @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
 
   thumbnailFile FileObject? @relation("StudioTemplateThumbnail", fields: [thumbnailFileId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_studio_templates__thumbnail_file_id")
-  createdBy     User        @relation("StudioTemplateCreatedBy", fields: [createdById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_studio_templates__created_by")
-  approvedBy    User?       @relation("StudioTemplateApprovedBy", fields: [approvedById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_studio_templates__approved_by")
+  createdBy     User        @relation("StudioTemplateCreatedBy", fields: [createdById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_studio_templates__created_by") // client: keep
+  approvedBy    User?       @relation("StudioTemplateApprovedBy", fields: [approvedById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_studio_templates__approved_by") // client: keep
 
   @@index([status], map: "ix_studio_templates__status")
   @@index([thumbnailFileId], map: "ix_studio_templates__thumbnail_file_id")

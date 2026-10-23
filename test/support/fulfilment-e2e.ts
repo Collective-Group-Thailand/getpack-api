@@ -1,5 +1,6 @@
 import { randomUUID } from 'node:crypto';
 
+import { ErpPrismaService } from '@database/erp-prisma.service';
 import { PrismaService } from '@database/prisma.service';
 import { type FakeScbGateway } from '@integrations/payments/fake-payment-gateways';
 import { SCB_GATEWAY } from '@integrations/payments/payment-gateways.port';
@@ -144,6 +145,7 @@ export async function bootFulfilmentApp(): Promise<FulfilmentApp> {
     app,
     server: app.getHttpServer(),
     prisma,
+    erpPrisma: app.get(ErpPrismaService),
     run: (Date.now() % 1_000_000) + Math.floor(Math.random() * 1000),
     pump,
   };

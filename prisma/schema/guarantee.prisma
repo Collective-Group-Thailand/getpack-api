@@ -37,7 +37,7 @@ model GuaranteePolicyVersion {
   createdAt            DateTime            @default(now()) @map("created_at") @db.Timestamptz(6)
 
   approvalRequest ApprovalRequest?      @relation("GuaranteePolicyVersionApproval", fields: [approvalRequestId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_guarantee_policy_versions__approval_request_id")
-  createdBy       User?                 @relation("GuaranteePolicyVersionCreatedBy", fields: [createdById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_guarantee_policy_versions__created_by")
+  createdBy       User?                 @relation("GuaranteePolicyVersionCreatedBy", fields: [createdById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_guarantee_policy_versions__created_by") // client: keep
   rules           GuaranteePolicyRule[]
   claims          Claim[]               @relation("ClaimGuaranteePolicy")
 

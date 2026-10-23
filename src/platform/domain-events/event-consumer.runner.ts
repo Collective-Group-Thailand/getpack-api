@@ -1,6 +1,7 @@
 import { systemActor } from '@common/context/actor';
 import { RequestContext } from '@common/context/request-context';
-import { PrismaService } from '@database/prisma.service';
+import { ErpPrismaService } from '@database/erp-prisma.service';
+import { type AnyTx, PrismaService } from '@database/prisma.service';
 import { Injectable } from '@nestjs/common';
 
 import { type DomainEventEnvelope } from './domain-event';
@@ -16,6 +17,7 @@ export type ConsumeOutcome = 'processed' | 'duplicate' | 'unknown_consumer';
 export class EventConsumerRunner {
   constructor(
     private readonly prisma: PrismaService,
+    private readonly erpPrisma: ErpPrismaService,
     private readonly registry: SubscriberRegistry,
   ) {}
 
@@ -23,10 +25,13 @@ export class EventConsumerRunner {
     const subscriber = this.registry.get(consumer);
     if (!subscriber) return 'unknown_consumer';
 
+    // The handler runs in a transaction of its own client (ADR-0013); the consumption row is plain SQL on either.
+    const withTx = <T>(work: (tx: AnyTx) => Promise<T>): Promise<T> =>
+      subscriber.client === 'erp' ? this.erpPrisma.withTx(work) : this.prisma.withTx(work);
     return RequestContext.run(
       { correlationId: event.correlationId, causationId: event.id, actor: systemActor(consumer) },
       () =>
-        this.prisma.withTx(async (tx) => {
+        withTx(async (tx) => {
           const inserted = await tx.$executeRaw`
             INSERT INTO event_consumptions (consumer, event_id, outcome)
             VALUES (${consumer}, ${event.id}::uuid, 'processed')

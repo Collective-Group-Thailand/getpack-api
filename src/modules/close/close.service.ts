@@ -1,5 +1,6 @@
 import { type Actor, type UserActor } from '@common/context/actor';
 import { DomainException } from '@common/errors/domain.exception';
+import { dayOf } from '@common/ledger-core/dates';
 import { formatMoney, MoneyDecimal, type MoneyValue } from '@common/money/money';
 import { PrismaService, type Tx } from '@database/prisma.service';
 import {
@@ -10,7 +11,6 @@ import {
 } from '@generated/prisma/client';
 import { FinancialReportsService } from '@modules/financial-reports/financial-reports.service';
 import { FixedAssetsService } from '@modules/fixed-assets/fixed-assets.service';
-import { dayOf } from '@common/ledger-core/dates';
 import { type PeriodCloseGate, PeriodsService } from '@modules/ledger/periods.service';
 import { Injectable } from '@nestjs/common';
 import { AuditService } from '@platform/audit/audit.service';

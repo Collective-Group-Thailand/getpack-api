@@ -25,7 +25,9 @@ export class FactoryScopeResolver implements ScopeResolver, OnModuleInit {
       // D-379: an event may narrow its audience to some roles (the daily summary goes to who reads insight).
       const roles = event.payload['recipientRoles'];
       const roleFilter =
-        Array.isArray(roles) && roles.every((r) => typeof r === 'string') ? { role: { key: { in: roles } } } : {};
+        Array.isArray(roles) && roles.every((r) => typeof r === 'string')
+          ? { role: { key: { in: roles } } }
+          : {};
       const now = new Date();
       const grants = await tx.userRole.findMany({
         where: {

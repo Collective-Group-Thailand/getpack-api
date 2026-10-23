@@ -527,9 +527,9 @@ model JournalEntry {
   reversedBy         JournalEntry?       @relation("JournalEntryReversal")
   recurringJournal   RecurringJournal?   @relation(fields: [recurringJournalId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_journal_entries__recurring_journal_id")
   approvalRequest    ApprovalRequest?    @relation("JournalEntryApprovalRequest", fields: [approvalRequestId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_journal_entries__approval_request_id")
-  createdBy          User?               @relation("JournalEntryCreatedBy", fields: [createdById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_journal_entries__created_by")
-  approvedBy         User?               @relation("JournalEntryApprovedBy", fields: [approvedById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_journal_entries__approved_by")
-  postedBy           User?               @relation("JournalEntryPostedBy", fields: [postedById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_journal_entries__posted_by")
+  createdBy          User?               @relation("JournalEntryCreatedBy", fields: [createdById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_journal_entries__created_by") // client: keep
+  approvedBy         User?               @relation("JournalEntryApprovedBy", fields: [approvedById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_journal_entries__approved_by") // client: keep
+  postedBy           User?               @relation("JournalEntryPostedBy", fields: [postedById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_journal_entries__posted_by") // client: keep
   lines              JournalLine[]
 
   @@unique([entityId, entryNo], map: "ux_journal_entries__entity_id__entry_no")
@@ -1688,7 +1688,7 @@ model BillingStatement {
   entity         Entity                 @relation("BillingStatementEntity", fields: [entityId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_billing_statements__entity_id")
   vendor         Vendor                 @relation("BillingStatementVendor", fields: [vendorId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_billing_statements__vendor_id")
   factory        Factory                @relation("BillingStatementFactory", fields: [factoryId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_billing_statements__factory_id")
-  confirmedBy    User?                  @relation("BillingStatementConfirmedBy", fields: [confirmedByUserId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_billing_statements__confirmed_by_user_id")
+  confirmedBy    User?                  @relation("BillingStatementConfirmedBy", fields: [confirmedByUserId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_billing_statements__confirmed_by_user_id") // client: keep
   lines          BillingStatementLine[]
   vendorInvoices VendorInvoice[]
 
@@ -2484,8 +2484,8 @@ model CloseChecklist {
   entity           Entity       @relation("CloseChecklistEntity", fields: [entityId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_close_checklists__entity_id")
   fiscalPeriod     FiscalPeriod @relation(fields: [fiscalPeriodId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_close_checklists__fiscal_period_id")
   createdBy        User?        @relation("CloseChecklistCreatedBy", fields: [createdById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_close_checklists__created_by")
-  submittedBy      User?        @relation("CloseChecklistSubmittedBy", fields: [submittedById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_close_checklists__submitted_by")
-  closedBy         User?        @relation("CloseChecklistClosedBy", fields: [closedById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_close_checklists__closed_by")
+  submittedBy      User?        @relation("CloseChecklistSubmittedBy", fields: [submittedById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_close_checklists__submitted_by") // client: keep
+  closedBy         User?        @relation("CloseChecklistClosedBy", fields: [closedById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_close_checklists__closed_by") // client: keep
   auditorSignedOff User?        @relation("CloseChecklistAuditorSignedOffBy", fields: [auditorSignedOffById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_close_checklists__auditor_signed_off_by")
   lockedBy         User?        @relation("CloseChecklistLockedBy", fields: [lockedById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_close_checklists__locked_by")
   tasks            CloseTask[]
@@ -2518,7 +2518,7 @@ model CloseTask {
 
   checklist   CloseChecklist @relation(fields: [checklistId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_close_tasks__checklist_id")
   owner       User?          @relation("CloseTaskOwner", fields: [ownerUserId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_close_tasks__owner_user_id")
-  completedBy User?          @relation("CloseTaskCompletedBy", fields: [completedById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_close_tasks__completed_by")
+  completedBy User?          @relation("CloseTaskCompletedBy", fields: [completedById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_close_tasks__completed_by") // client: keep
 
   @@unique([checklistId, key], map: "ux_close_tasks__checklist_id__key")
   @@index([ownerUserId], map: "ix_close_tasks__owner_user_id")

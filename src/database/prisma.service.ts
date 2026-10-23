@@ -3,7 +3,21 @@ import { type Prisma, PrismaClient } from '@generated/prisma/client';
 import { Injectable, type OnModuleDestroy } from '@nestjs/common';
 import { PrismaPg } from '@prisma/adapter-pg';
 
+import { type ErpTx } from './erp-prisma.service';
+
 export type Tx = Prisma.TransactionClient;
+
+/** A transaction of either client (ADR-0013), for the platform writers both use: audit, activity, outbox. */
+export type AnyTx = Tx | ErpTx;
+
+/**
+ * Views either client's transaction as the core one. Only for tables both clients map (audit, activity, domain
+ * events, outbox), with scalar columns only: the ERP client's copy of those models has the same columns, its
+ * generated types are just separate declarations.
+ */
+export function platformTx(tx: AnyTx): Tx {
+  return tx as unknown as Tx;
+}
 
 /** Prisma 7 client over the `pg` driver adapter. Connects lazily on the first query. */
 @Injectable()

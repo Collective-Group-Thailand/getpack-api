@@ -1,6 +1,6 @@
 import { toBangkokIso } from '@common/time/bangkok';
-import { PrismaService } from '@database/prisma.service';
-import { type FileRetentionClass } from '@generated/prisma/client';
+import { ErpPrismaService } from '@database/erp-prisma.service';
+import { type FileRetentionClass } from '@generated/prisma-erp/client';
 import { OBJECT_STORAGE, type ObjectStorage } from '@integrations/s3/object-storage.port';
 import { Inject, Injectable } from '@nestjs/common';
 import { FilesService } from '@platform/files/files.service';
@@ -14,7 +14,7 @@ const TTL_SECONDS = 5 * 60;
 @Injectable()
 export class ErpFilesService {
   constructor(
-    private readonly prisma: PrismaService,
+    private readonly prisma: ErpPrismaService,
     private readonly files: FilesService,
     @Inject(OBJECT_STORAGE) private readonly storage: ObjectStorage,
   ) {}
@@ -44,7 +44,11 @@ export class ErpFilesService {
       fileName: file.originalName,
       contentType: file.mimeType,
     });
-    return { url, fileName: file.originalName, expiresAt: toBangkokIso(new Date(Date.now() + TTL_SECONDS * 1000)) };
+    return {
+      url,
+      fileName: file.originalName,
+      expiresAt: toBangkokIso(new Date(Date.now() + TTL_SECONDS * 1000)),
+    };
   }
 
   /** The factory's logo as a data URI for its documents (none when it has not set one). */
@@ -54,7 +58,8 @@ export class ErpFilesService {
     if (!file || file.purgedAt || !file.mimeType.startsWith('image/')) return null;
     try {
       const chunks: Buffer[] = [];
-      for await (const chunk of await this.storage.getStream(file.storageKey)) chunks.push(Buffer.from(chunk as Buffer));
+      for await (const chunk of await this.storage.getStream(file.storageKey))
+        chunks.push(Buffer.from(chunk as Buffer));
       return `data:${file.mimeType};base64,${Buffer.concat(chunks).toString('base64')}`;
     } catch {
       return null;

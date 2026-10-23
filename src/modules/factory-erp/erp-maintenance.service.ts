@@ -3,13 +3,13 @@ import { assertIfMatch, etagOf } from '@common/etag/etag';
 import { type ActionRule, nextActions } from '@common/next-actions/next-actions';
 import { paginated, toSkipTake } from '@common/pagination/pagination';
 import { addCalendarDays, bangkokDate, toBangkokIso } from '@common/time/bangkok';
-import { type PrismaService, type Tx } from '@database/prisma.service';
+import { type ErpPrismaService, type ErpTx } from '@database/erp-prisma.service';
 import {
   type ErpMaintenanceKind,
   type ErpMaintenancePriority,
   type ErpMaintenanceStatus,
   Prisma,
-} from '@generated/prisma/client';
+} from '@generated/prisma-erp/client';
 import { type CreateMachineDto, type UpdateMachineDto } from '@modules/partners/capability/capability.dto';
 import { CapabilityService } from '@modules/partners/capability/capability.service';
 import { Injectable, Logger } from '@nestjs/common';
@@ -114,7 +114,11 @@ export class ErpMaintenanceService {
   // ------------------------------------------------------------------------------- machines
 
   /** Impressions (good + scrap) finished on each machine since a moment. */
-  async impressions(db: Tx | PrismaService, machineIds: bigint[], since: Date): Promise<Map<bigint, number>> {
+  async impressions(
+    db: ErpTx | ErpPrismaService,
+    machineIds: bigint[],
+    since: Date,
+  ): Promise<Map<bigint, number>> {
     if (machineIds.length === 0) return new Map();
     const rows = await db.$queryRaw<{ machine_id: bigint; n: Prisma.Decimal }[]>(Prisma.sql`
       SELECT machine_id, coalesce(sum(good_qty + scrap_qty), 0) AS n FROM erp_production_operations
@@ -125,7 +129,7 @@ export class ErpMaintenanceService {
 
   /** How far each plan is from due (D-355). */
   async planDue(
-    db: Tx | PrismaService,
+    db: ErpTx | ErpPrismaService,
     plans: {
       machineId: bigint;
       everyDays: number | null;
@@ -234,7 +238,7 @@ export class ErpMaintenanceService {
     return (await this.machines(scope, saved.id))[0]!;
   }
 
-  private async machine(db: Tx | PrismaService, scope: ErpScope, publicId: string) {
+  private async machine(db: ErpTx | ErpPrismaService, scope: ErpScope, publicId: string) {
     const m = await db.factoryMachine.findFirst({ where: { factoryId: scope.factory.id, publicId } });
     if (!m) throw new DomainException('http.not_found');
     return m;
@@ -261,7 +265,7 @@ export class ErpMaintenanceService {
     return planDto(row, (await this.planDue(this.workspace.db, [row]))[0]!);
   }
 
-  private async planParts(tx: Tx, scope: ErpScope, body: ErpSaveMaintenancePlanDto) {
+  private async planParts(tx: ErpTx, scope: ErpScope, body: ErpSaveMaintenancePlanDto) {
     if (body.everyDays == null && body.everyImpressions == null)
       throw new DomainException('validation.failed', {
         errors: [{ path: 'everyDays', code: 'required', message: 'Every N days or every N impressions' }],
@@ -355,7 +359,7 @@ export class ErpMaintenanceService {
    * Returns the existing one when it is already open.
    */
   async openPreventive(
-    db: Tx,
+    db: ErpTx,
     plan: {
       id: bigint;
       publicId: string;
@@ -448,7 +452,7 @@ export class ErpMaintenanceService {
     return mtDto(row, perms);
   }
 
-  private async lock(tx: Tx, scope: ErpScope, publicId: string) {
+  private async lock(tx: ErpTx, scope: ErpScope, publicId: string) {
     const found = await tx.erpMaintenanceOrder.findFirst({
       where: { factoryId: scope.factory.id, publicId },
     });
@@ -461,7 +465,7 @@ export class ErpMaintenanceService {
   }
 
   /** Photos the reporter uploaded for this factory (presign → upload → complete). */
-  private async photos(tx: Tx, scope: ErpScope, publicIds: string[]): Promise<bigint[]> {
+  private async photos(tx: ErpTx, scope: ErpScope, publicIds: string[]): Promise<bigint[]> {
     if (publicIds.length === 0) return [];
     const files = await tx.fileObject.findMany({ where: { publicId: { in: publicIds } } });
     if (

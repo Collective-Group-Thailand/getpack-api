@@ -3,7 +3,7 @@ import { assertIfMatch, etagOf } from '@common/etag/etag';
 import { type ActionRule, nextActions } from '@common/next-actions/next-actions';
 import { paginated, toSkipTake } from '@common/pagination/pagination';
 import { toBangkokIso } from '@common/time/bangkok';
-import { type PrismaService, type Tx } from '@database/prisma.service';
+import { type ErpPrismaService, type ErpTx } from '@database/erp-prisma.service';
 import {
   type ErpCheckKind,
   type ErpCheckpointType,
@@ -17,7 +17,7 @@ import {
   type ErpRecordStatus,
   type ErpUnit,
   Prisma,
-} from '@generated/prisma/client';
+} from '@generated/prisma-erp/client';
 import { PDF_RENDERER, type PdfRenderer } from '@integrations/pdf/pdf-renderer.port';
 import { Inject, Injectable } from '@nestjs/common';
 
@@ -93,7 +93,11 @@ export const TEMPLATE_ACTIONS: ActionRule<{ status: string }>[] = [
 ];
 
 export const CHECK_ACTIONS: ActionRule<{ result: ErpCheckResult; kind: ErpCheckKind; locked: boolean }>[] = [
-  { key: 'erp_qc.record', permissions: ['factory_quality.record'], when: (c) => c.result === 'pending' && !c.locked },
+  {
+    key: 'erp_qc.record',
+    permissions: ['factory_quality.record'],
+    when: (c) => c.result === 'pending' && !c.locked,
+  },
   { key: 'erp_qc.override', permissions: ['factory_quality.manage'], when: (c) => !c.locked },
   {
     key: 'erp_qc.coa',
@@ -102,7 +106,11 @@ export const CHECK_ACTIONS: ActionRule<{ result: ErpCheckResult; kind: ErpCheckK
   },
 ];
 
-export const NCR_ACTIONS: ActionRule<{ status: ErpNcrStatus; disposition: ErpNcrDisposition | null; ready: boolean }>[] = [
+export const NCR_ACTIONS: ActionRule<{
+  status: ErpNcrStatus;
+  disposition: ErpNcrDisposition | null;
+  ready: boolean;
+}>[] = [
   { key: 'erp_ncr.edit', permissions: ['factory_quality.record'], when: (n) => OPEN_NCR.includes(n.status) },
   {
     key: 'erp_ncr.dispose',
@@ -114,7 +122,12 @@ export const NCR_ACTIONS: ActionRule<{ status: ErpNcrStatus; disposition: ErpNcr
     permissions: ['factory_quality.manage'],
     when: (n) => (OPEN_NCR.includes(n.status) ? (n.ready ? true : 'บันทึกวิธีจัดการและการแก้ไขก่อน') : false),
   },
-  { key: 'erp_ncr.close', permissions: ['factory_quality.manage'], irreversible: true, when: (n) => n.status === 'verified' },
+  {
+    key: 'erp_ncr.close',
+    permissions: ['factory_quality.manage'],
+    irreversible: true,
+    when: (n) => n.status === 'verified',
+  },
   {
     key: 'erp_ncr.cancel',
     permissions: ['factory_quality.manage'],
@@ -156,10 +169,18 @@ export class ErpQualityService {
       }),
       this.workspace.db.erpInspectionTemplate.count({ where }),
     ]);
-    return paginated(rows.map((r) => templateDto(r, perms)), total, q);
+    return paginated(
+      rows.map((r) => templateDto(r, perms)),
+      total,
+      q,
+    );
   }
 
-  async getTemplate(scope: ErpScope, publicId: string, perms: ReadonlySet<string>): Promise<ErpInspectionTemplateDto> {
+  async getTemplate(
+    scope: ErpScope,
+    publicId: string,
+    perms: ReadonlySet<string>,
+  ): Promise<ErpInspectionTemplateDto> {
     const row = await this.workspace.db.erpInspectionTemplate.findFirst({
       where: { publicId, factoryId: scope.factory.id },
       include: TEMPLATE_INCLUDE,
@@ -183,7 +204,13 @@ export class ErpQualityService {
           checkpoints: { create: body.checkpoints.map((c, i) => checkpointData(c, i)) },
         },
       });
-      await this.workspace.record(tx, scope, 'erp_inspection_template.created', 'erp_inspection_template', t.publicId);
+      await this.workspace.record(
+        tx,
+        scope,
+        'erp_inspection_template.created',
+        'erp_inspection_template',
+        t.publicId,
+      );
       return t.publicId;
     });
     return this.getTemplate(scope, id, perms);
@@ -197,7 +224,9 @@ export class ErpQualityService {
     perms: ReadonlySet<string>,
   ) {
     await this.workspace.tx(async (tx) => {
-      const t = await tx.erpInspectionTemplate.findFirst({ where: { publicId, factoryId: scope.factory.id } });
+      const t = await tx.erpInspectionTemplate.findFirst({
+        where: { publicId, factoryId: scope.factory.id },
+      });
       if (!t) throw new DomainException('http.not_found');
       await tx.$queryRaw`SELECT id FROM erp_inspection_templates WHERE id = ${t.id} FOR UPDATE`;
       assertIfMatch(ifMatch, etagOf(t.publicId, t.rowVersion));
@@ -216,7 +245,13 @@ export class ErpQualityService {
           checkpoints: { create: body.checkpoints.map((c, i) => checkpointData(c, i)) },
         },
       });
-      await this.workspace.record(tx, scope, 'erp_inspection_template.updated', 'erp_inspection_template', publicId);
+      await this.workspace.record(
+        tx,
+        scope,
+        'erp_inspection_template.updated',
+        'erp_inspection_template',
+        publicId,
+      );
     });
     return this.getTemplate(scope, publicId, perms);
   }
@@ -250,8 +285,15 @@ export class ErpQualityService {
       }),
       this.workspace.db.erpQualityCheck.count({ where }),
     ]);
-    const photos = await this.photoMap(this.workspace.db, rows.flatMap((r) => fileIds(r.photoFileIds)));
-    return paginated(rows.map((r) => checkDto(r, photos, perms)), total, q);
+    const photos = await this.photoMap(
+      this.workspace.db,
+      rows.flatMap((r) => fileIds(r.photoFileIds)),
+    );
+    return paginated(
+      rows.map((r) => checkDto(r, photos, perms)),
+      total,
+      q,
+    );
   }
 
   async getCheck(scope: ErpScope, publicId: string, perms: ReadonlySet<string>): Promise<ErpQualityCheckDto> {
@@ -293,7 +335,9 @@ export class ErpQualityService {
         itemId ??= op.productionOrder.itemId;
       }
       if (body.productionOrderId) {
-        const mo = await tx.erpProductionOrder.findFirst({ where: { publicId: body.productionOrderId, factoryId: f } });
+        const mo = await tx.erpProductionOrder.findFirst({
+          where: { publicId: body.productionOrderId, factoryId: f },
+        });
         if (!mo) throw new DomainException('http.not_found');
         moId = mo.id;
         itemId ??= mo.itemId;
@@ -353,10 +397,17 @@ export class ErpQualityService {
           },
         },
       });
-      await this.workspace.record(tx, scope, 'erp_quality_check.created', 'erp_quality_check', check.publicId, {
-        qcNo: check.qcNo,
-        kind: check.kind,
-      });
+      await this.workspace.record(
+        tx,
+        scope,
+        'erp_quality_check.created',
+        'erp_quality_check',
+        check.publicId,
+        {
+          qcNo: check.qcNo,
+          kind: check.kind,
+        },
+      );
       return check.publicId;
     });
     return this.getCheck(scope, id, perms);
@@ -378,15 +429,20 @@ export class ErpQualityService {
       assertIfMatch(ifMatch, etagOf(check.publicId, check.rowVersion));
       if (check.result !== 'pending' && !perms.has('factory_quality.manage'))
         throw new DomainException('erp.invalid_status', { params: { status: check.result } });
-      if (await this.locked(tx, check)) throw new DomainException('erp.invalid_status', { params: { status: check.result } });
-      const points = await tx.erpQualityCheckpoint.findMany({ where: { checkId: check.id }, orderBy: { seq: 'asc' } });
+      if (await this.locked(tx, check))
+        throw new DomainException('erp.invalid_status', { params: { status: check.result } });
+      const points = await tx.erpQualityCheckpoint.findMany({
+        where: { checkId: check.id },
+        orderBy: { seq: 'asc' },
+      });
       for (const input of body.points ?? []) {
         const p = points.find((x) => x.seq === input.seq);
         if (!p)
           throw new DomainException('validation.failed', {
             errors: [{ path: 'points.seq', code: 'invalid', message: `No checkpoint ${input.seq}` }],
           });
-        const measured = input.measured === undefined ? p.measured : input.measured === null ? null : dec(input.measured);
+        const measured =
+          input.measured === undefined ? p.measured : input.measured === null ? null : dec(input.measured);
         const outcome: CheckpointOutcome | null =
           p.type === 'measurement'
             ? input.outcome === 'na'
@@ -414,8 +470,12 @@ export class ErpQualityService {
       const rejected = body.rejectedQty !== undefined ? dec(body.rejectedQty) : dec(check.rejectedQty);
       const result = check.resultOverridden
         ? check.result
-        : checkResult(points.map((p) => ({ type: p.type, outcome: p.outcome })), rejected);
-      const photos = body.photoFileIds === undefined ? undefined : await this.photos(tx, scope, body.photoFileIds);
+        : checkResult(
+            points.map((p) => ({ type: p.type, outcome: p.outcome })),
+            rejected,
+          );
+      const photos =
+        body.photoFileIds === undefined ? undefined : await this.photos(tx, scope, body.photoFileIds);
       await tx.erpQualityCheck.update({
         where: { id: check.id },
         data: {
@@ -437,10 +497,16 @@ export class ErpQualityService {
   }
 
   /** D-372: someone with quality.manage sets the result (with the reason in the remarks). */
-  async overrideCheck(scope: ErpScope, publicId: string, body: ErpOverrideCheckDto, perms: ReadonlySet<string>) {
+  async overrideCheck(
+    scope: ErpScope,
+    publicId: string,
+    body: ErpOverrideCheckDto,
+    perms: ReadonlySet<string>,
+  ) {
     await this.workspace.tx(async (tx) => {
       const check = await this.lockCheck(tx, scope, publicId);
-      if (await this.locked(tx, check)) throw new DomainException('erp.invalid_status', { params: { status: check.result } });
+      if (await this.locked(tx, check))
+        throw new DomainException('erp.invalid_status', { params: { status: check.result } });
       const result = body.result as ErpCheckResult;
       await tx.erpQualityCheck.update({
         where: { id: check.id },
@@ -486,7 +552,9 @@ export class ErpQualityService {
       product: c.item?.name ?? c.productionOrder?.title ?? '-',
       sku: c.item?.sku ?? null,
       lotNo: c.lotNo,
-      quantity: c.inspectedQty ? `${Number(c.inspectedQty).toLocaleString('th-TH')} ${c.item?.baseUnit ?? ''}`.trim() : null,
+      quantity: c.inspectedQty
+        ? `${Number(c.inspectedQty).toLocaleString('th-TH')} ${c.item?.baseUnit ?? ''}`.trim()
+        : null,
       orderNo: c.productionOrder?.moNo ?? null,
       inspectedOn: toBangkokIso(c.inspectedAt).slice(0, 10),
       inspector: c.inspector.displayName,
@@ -496,19 +564,28 @@ export class ErpQualityService {
         .map((p) => ({
           name: p.name,
           spec: specText(p),
-          reading: p.measured === null ? '-' : `${trimNum(p.measured.toString())}${p.unit ? ` ${p.unit}` : ''}`,
+          reading:
+            p.measured === null ? '-' : `${trimNum(p.measured.toString())}${p.unit ? ` ${p.unit}` : ''}`,
           outcome: p.outcome ?? '',
         })),
       remarks: c.remarks,
     });
     const pdf = await this.renderer.render(html);
-    const stored = await this.files.store(scope, pdf, `COA-${c.qcNo}.pdf`, 'application/pdf', 'financial_record');
+    const stored = await this.files.store(
+      scope,
+      pdf,
+      `COA-${c.qcNo}.pdf`,
+      'application/pdf',
+      'financial_record',
+    );
     await this.workspace.db.erpQualityCheck.update({
       where: { id: c.id },
       data: { pdfFileId: stored.fileId, pdfVersion: c.rowVersion },
     });
     await this.workspace.tx((tx) =>
-      this.workspace.record(tx, scope, 'erp_quality_check.coa_issued', 'erp_quality_check', c.publicId, { qcNo: c.qcNo }),
+      this.workspace.record(tx, scope, 'erp_quality_check.coa_issued', 'erp_quality_check', c.publicId, {
+        qcNo: c.qcNo,
+      }),
     );
     const { fileId: _ignored, ...link } = stored;
     return link;
@@ -541,8 +618,15 @@ export class ErpQualityService {
       }),
       this.workspace.db.erpNcr.count({ where }),
     ]);
-    const photos = await this.photoMap(this.workspace.db, rows.flatMap((r) => fileIds(r.photoFileIds)));
-    return paginated(rows.map((r) => ncrDto(r, photos, perms)), total, q);
+    const photos = await this.photoMap(
+      this.workspace.db,
+      rows.flatMap((r) => fileIds(r.photoFileIds)),
+    );
+    return paginated(
+      rows.map((r) => ncrDto(r, photos, perms)),
+      total,
+      q,
+    );
   }
 
   async getNcr(scope: ErpScope, publicId: string, perms: ReadonlySet<string>): Promise<ErpNcrDto> {
@@ -563,13 +647,27 @@ export class ErpQualityService {
         if (!found) throw new DomainException('http.not_found');
         return found;
       };
-      const check = await find(body.checkId, (p) => tx.erpQualityCheck.findFirst({ where: { publicId: p, factoryId: f } }));
-      const item = await find(body.itemId, (p) => tx.erpItem.findFirst({ where: { publicId: p, factoryId: f } }));
-      const supplier = await find(body.supplierId, (p) => tx.erpTradingPartner.findFirst({ where: { publicId: p, factoryId: f } }));
-      const customer = await find(body.customerId, (p) => tx.erpTradingPartner.findFirst({ where: { publicId: p, factoryId: f } }));
-      const machine = await find(body.machineId, (p) => tx.factoryMachine.findFirst({ where: { publicId: p, factoryId: f } }));
-      const mo = await find(body.productionOrderId, (p) => tx.erpProductionOrder.findFirst({ where: { publicId: p, factoryId: f } }));
-      const gr = await find(body.goodsReceiptId, (p) => tx.erpGoodsReceipt.findFirst({ where: { publicId: p, factoryId: f } }));
+      const check = await find(body.checkId, (p) =>
+        tx.erpQualityCheck.findFirst({ where: { publicId: p, factoryId: f } }),
+      );
+      const item = await find(body.itemId, (p) =>
+        tx.erpItem.findFirst({ where: { publicId: p, factoryId: f } }),
+      );
+      const supplier = await find(body.supplierId, (p) =>
+        tx.erpTradingPartner.findFirst({ where: { publicId: p, factoryId: f } }),
+      );
+      const customer = await find(body.customerId, (p) =>
+        tx.erpTradingPartner.findFirst({ where: { publicId: p, factoryId: f } }),
+      );
+      const machine = await find(body.machineId, (p) =>
+        tx.factoryMachine.findFirst({ where: { publicId: p, factoryId: f } }),
+      );
+      const mo = await find(body.productionOrderId, (p) =>
+        tx.erpProductionOrder.findFirst({ where: { publicId: p, factoryId: f } }),
+      );
+      const gr = await find(body.goodsReceiptId, (p) =>
+        tx.erpGoodsReceipt.findFirst({ where: { publicId: p, factoryId: f } }),
+      );
       const warehouse = body.warehouseId ? await this.workspace.warehouse(tx, scope, body.warehouseId) : null;
       const owner = body.ownerId ? (await factoryUser(tx, f, body.ownerId)).id : scope.actor.userId;
       const ncr = await this.openNcr(tx, scope, {
@@ -609,7 +707,9 @@ export class ErpQualityService {
       if (!OPEN_NCR.includes(ncr.status))
         throw new DomainException('erp.invalid_status', { params: { status: ncr.status } });
       const working =
-        body.rootCause || body.correctiveAction || body.preventiveAction ? ('in_progress' as const) : ncr.status;
+        body.rootCause || body.correctiveAction || body.preventiveAction
+          ? ('in_progress' as const)
+          : ncr.status;
       await tx.erpNcr.update({
         where: { id: ncr.id },
         data: {
@@ -623,13 +723,19 @@ export class ErpQualityService {
           ...(body.ownerId !== undefined && {
             ownerId: body.ownerId ? (await factoryUser(tx, scope.factory.id, body.ownerId)).id : null,
           }),
-          ...(body.actionDueOn !== undefined && { actionDueOn: body.actionDueOn ? day(body.actionDueOn) : null }),
+          ...(body.actionDueOn !== undefined && {
+            actionDueOn: body.actionDueOn ? day(body.actionDueOn) : null,
+          }),
           ...(body.quantity !== undefined && ncr.disposition !== 'scrap' && { quantity: body.quantity }),
           ...(body.warehouseId !== undefined &&
             ncr.disposition !== 'scrap' && {
-              warehouseId: body.warehouseId ? (await this.workspace.warehouse(tx, scope, body.warehouseId)).id : null,
+              warehouseId: body.warehouseId
+                ? (await this.workspace.warehouse(tx, scope, body.warehouseId)).id
+                : null,
             }),
-          ...(body.photoFileIds !== undefined && { photoFileIds: await this.photos(tx, scope, body.photoFileIds) }),
+          ...(body.photoFileIds !== undefined && {
+            photoFileIds: await this.photos(tx, scope, body.photoFileIds),
+          }),
           updatedById: scope.actor.userId,
           rowVersion: { increment: 1 },
         },
@@ -649,7 +755,13 @@ export class ErpQualityService {
       if (disposition === 'scrap') {
         if (!ncr.itemId || !ncr.warehouseId || !ncr.quantity || !dec(ncr.quantity).gt(0))
           throw new DomainException('validation.failed', {
-            errors: [{ path: 'quantity', code: 'required', message: 'A scrap needs the item, quantity and warehouse' }],
+            errors: [
+              {
+                path: 'quantity',
+                code: 'required',
+                message: 'A scrap needs the item, quantity and warehouse',
+              },
+            ],
           });
         const [item, warehouse] = await Promise.all([
           tx.erpItem.findUniqueOrThrow({ where: { id: ncr.itemId } }),
@@ -659,7 +771,15 @@ export class ErpQualityService {
           tx,
           scope,
           await this.workspace.settings(tx, scope.factory.id),
-          [{ item, warehouse, kind: 'adjustment', quantity: dec(ncr.quantity).negated(), reason: `${ncr.ncrNo} ${ncr.title}` }],
+          [
+            {
+              item,
+              warehouse,
+              kind: 'adjustment',
+              quantity: dec(ncr.quantity).negated(),
+              reason: `${ncr.ncrNo} ${ncr.title}`,
+            },
+          ],
           { type: 'ncr', publicId: ncr.publicId, documentNo: ncr.ncrNo },
         );
       }
@@ -674,7 +794,10 @@ export class ErpQualityService {
           rowVersion: { increment: 1 },
         },
       });
-      await this.workspace.record(tx, scope, 'erp_ncr.disposed', 'erp_ncr', publicId, { ncrNo: ncr.ncrNo, disposition });
+      await this.workspace.record(tx, scope, 'erp_ncr.disposed', 'erp_ncr', publicId, {
+        ncrNo: ncr.ncrNo,
+        disposition,
+      });
     });
     return this.getNcr(scope, publicId, perms);
   }
@@ -704,10 +827,16 @@ export class ErpQualityService {
   async closeNcr(scope: ErpScope, publicId: string, perms: ReadonlySet<string>) {
     await this.workspace.tx(async (tx) => {
       const ncr = await this.lockNcr(tx, scope, publicId);
-      if (ncr.status !== 'verified') throw new DomainException('erp.invalid_status', { params: { status: ncr.status } });
+      if (ncr.status !== 'verified')
+        throw new DomainException('erp.invalid_status', { params: { status: ncr.status } });
       await tx.erpNcr.update({
         where: { id: ncr.id },
-        data: { status: 'closed', closedAt: new Date(), updatedById: scope.actor.userId, rowVersion: { increment: 1 } },
+        data: {
+          status: 'closed',
+          closedAt: new Date(),
+          updatedById: scope.actor.userId,
+          rowVersion: { increment: 1 },
+        },
       });
       await this.workspace.record(tx, scope, 'erp_ncr.closed', 'erp_ncr', publicId, { ncrNo: ncr.ncrNo });
     });
@@ -721,7 +850,12 @@ export class ErpQualityService {
         throw new DomainException('erp.invalid_status', { params: { status: ncr.status } });
       await tx.erpNcr.update({
         where: { id: ncr.id },
-        data: { status: 'cancelled', cancelReason: reason, updatedById: scope.actor.userId, rowVersion: { increment: 1 } },
+        data: {
+          status: 'cancelled',
+          cancelReason: reason,
+          updatedById: scope.actor.userId,
+          rowVersion: { increment: 1 },
+        },
       });
       await this.workspace.record(tx, scope, 'erp_ncr.cancelled', 'erp_ncr', publicId, { ncrNo: ncr.ncrNo });
     });
@@ -731,19 +865,36 @@ export class ErpQualityService {
   // ----------------------------------------------------------------------------------- helpers
 
   /** A failed check opens one NCR (D-372) with what the check knew; a failed receipt names the supplier. */
-  private async decided(tx: Tx, scope: ErpScope, check: ErpQualityCheck, result: ErpCheckResult): Promise<void> {
+  private async decided(
+    tx: ErpTx,
+    scope: ErpScope,
+    check: ErpQualityCheck,
+    result: ErpCheckResult,
+  ): Promise<void> {
     if (result === check.result && check.result !== 'pending') return;
     if (result !== 'pending')
-      await this.workspace.record(tx, scope, 'erp_quality_check.decided', 'erp_quality_check', check.publicId, {
-        qcNo: check.qcNo,
-        result,
-      });
+      await this.workspace.record(
+        tx,
+        scope,
+        'erp_quality_check.decided',
+        'erp_quality_check',
+        check.publicId,
+        {
+          qcNo: check.qcNo,
+          result,
+        },
+      );
     if (result !== 'fail') return;
     const existing = await tx.erpNcr.count({ where: { checkId: check.id, status: { not: 'cancelled' } } });
     if (existing > 0) return;
     const fresh = await tx.erpQualityCheck.findUniqueOrThrow({
       where: { id: check.id },
-      include: { item: true, goodsReceiptLine: { include: { goodsReceipt: true } }, productionOrder: true, checkpoints: true },
+      include: {
+        item: true,
+        goodsReceiptLine: { include: { goodsReceipt: true } },
+        productionOrder: true,
+        checkpoints: true,
+      },
     });
     const failed = fresh.checkpoints.filter((p) => p.outcome === 'fail').map((p) => p.name);
     await this.openNcr(tx, scope, {
@@ -758,9 +909,10 @@ export class ErpQualityService {
       machineId: null,
       productionOrderId: fresh.productionOrderId,
       goodsReceiptId: fresh.goodsReceiptLine?.goodsReceiptId ?? null,
-      warehouseId: fresh.goodsReceiptLine?.goodsReceipt.warehouseId ?? fresh.productionOrder?.warehouseId ?? null,
+      warehouseId:
+        fresh.goodsReceiptLine?.goodsReceipt.warehouseId ?? fresh.productionOrder?.warehouseId ?? null,
       quantity: dec(fresh.rejectedQty).gt(0) ? fmtQty(fresh.rejectedQty) : null,
-      unit: (fresh.item?.baseUnit ?? null),
+      unit: fresh.item?.baseUnit ?? null,
       ownerId: scope.actor.userId,
       actionDueOn: null,
       photoFileIds: fileIds(fresh.photoFileIds),
@@ -768,7 +920,7 @@ export class ErpQualityService {
   }
 
   private async openNcr(
-    tx: Tx,
+    tx: ErpTx,
     scope: ErpScope,
     d: Omit<Prisma.ErpNcrUncheckedCreateInput, 'factoryId' | 'ncrNo' | 'createdById'>,
   ): Promise<ErpNcr> {
@@ -789,11 +941,13 @@ export class ErpQualityService {
   }
 
   /** A check an NCR of has been closed or verified no longer changes. */
-  private async locked(tx: Tx, check: ErpQualityCheck): Promise<boolean> {
-    return (await tx.erpNcr.count({ where: { checkId: check.id, status: { in: ['verified', 'closed'] } } })) > 0;
+  private async locked(tx: ErpTx, check: ErpQualityCheck): Promise<boolean> {
+    return (
+      (await tx.erpNcr.count({ where: { checkId: check.id, status: { in: ['verified', 'closed'] } } })) > 0
+    );
   }
 
-  private async checkRow(db: Tx | PrismaService, scope: ErpScope, publicId: string): Promise<CheckRow> {
+  private async checkRow(db: ErpTx | ErpPrismaService, scope: ErpScope, publicId: string): Promise<CheckRow> {
     const row = await db.erpQualityCheck.findFirst({
       where: { publicId, factoryId: scope.factory.id },
       include: CHECK_INCLUDE,
@@ -802,42 +956,49 @@ export class ErpQualityService {
     return row;
   }
 
-  private async lockCheck(tx: Tx, scope: ErpScope, publicId: string): Promise<ErpQualityCheck> {
+  private async lockCheck(tx: ErpTx, scope: ErpScope, publicId: string): Promise<ErpQualityCheck> {
     const row = await tx.erpQualityCheck.findFirst({ where: { publicId, factoryId: scope.factory.id } });
     if (!row) throw new DomainException('http.not_found');
     await tx.$queryRaw`SELECT id FROM erp_quality_checks WHERE id = ${row.id} FOR UPDATE`;
     return row;
   }
 
-  private async lockNcr(tx: Tx, scope: ErpScope, publicId: string): Promise<ErpNcr> {
+  private async lockNcr(tx: ErpTx, scope: ErpScope, publicId: string): Promise<ErpNcr> {
     const row = await tx.erpNcr.findFirst({ where: { publicId, factoryId: scope.factory.id } });
     if (!row) throw new DomainException('http.not_found');
     await tx.$queryRaw`SELECT id FROM erp_ncrs WHERE id = ${row.id} FOR UPDATE`;
-    return (await tx.erpNcr.findUniqueOrThrow({ where: { id: row.id } }));
+    return await tx.erpNcr.findUniqueOrThrow({ where: { id: row.id } });
   }
 
-  private async item(tx: Tx, scope: ErpScope, publicId: string) {
+  private async item(tx: ErpTx, scope: ErpScope, publicId: string) {
     const item = await tx.erpItem.findFirst({ where: { publicId, factoryId: scope.factory.id } });
     if (!item) throw new DomainException('http.not_found');
     return item;
   }
 
   /** Photos must be clean uploads of this factory; stored by public id. */
-  private async photos(tx: Tx, scope: ErpScope, publicIds: string[]): Promise<string[]> {
+  private async photos(tx: ErpTx, scope: ErpScope, publicIds: string[]): Promise<string[]> {
     if (publicIds.length === 0) return [];
     const files = await tx.fileObject.findMany({ where: { publicId: { in: publicIds } } });
     if (
       files.length !== new Set(publicIds).size ||
-      files.some((f) => f.ownerFactoryId !== scope.factory.id || f.uploadStatus !== 'uploaded' || f.scanStatus === 'infected')
+      files.some(
+        (f) =>
+          f.ownerFactoryId !== scope.factory.id ||
+          f.uploadStatus !== 'uploaded' ||
+          f.scanStatus === 'infected',
+      )
     )
       throw new DomainException('erp.file_not_usable');
     return [...new Set(publicIds)];
   }
 
-  private async photoMap(db: Tx | PrismaService, publicIds: string[]): Promise<Map<string, Photo>> {
+  private async photoMap(db: ErpTx | ErpPrismaService, publicIds: string[]): Promise<Map<string, Photo>> {
     if (publicIds.length === 0) return new Map();
     const files = await db.fileObject.findMany({ where: { publicId: { in: [...new Set(publicIds)] } } });
-    return new Map(files.map((f) => [f.publicId, { fileId: f.publicId, name: f.originalName, mimeType: f.mimeType }]));
+    return new Map(
+      files.map((f) => [f.publicId, { fileId: f.publicId, name: f.originalName, mimeType: f.mimeType }]),
+    );
   }
 }
 
@@ -878,7 +1039,8 @@ export function specText(p: {
   return p.targetValue === null ? range : `${range} (เป้า ${trimNum(p.targetValue.toString())})`;
 }
 
-const ready = (n: Pick<ErpNcr, 'disposition' | 'correctiveAction'>) => n.disposition !== null && !!n.correctiveAction;
+const ready = (n: Pick<ErpNcr, 'disposition' | 'correctiveAction'>) =>
+  n.disposition !== null && !!n.correctiveAction;
 
 export function templateDto(r: TemplateRow, perms: ReadonlySet<string>): ErpInspectionTemplateDto {
   return {
@@ -905,7 +1067,11 @@ export function templateDto(r: TemplateRow, perms: ReadonlySet<string>): ErpInsp
   };
 }
 
-export function checkDto(r: CheckRow, photos: Map<string, Photo>, perms: ReadonlySet<string>): ErpQualityCheckDto {
+export function checkDto(
+  r: CheckRow,
+  photos: Map<string, Photo>,
+  perms: ReadonlySet<string>,
+): ErpQualityCheckDto {
   const locked = r.ncrs.some((n) => n.status === 'verified' || n.status === 'closed');
   return {
     id: r.publicId,
@@ -919,7 +1085,9 @@ export function checkDto(r: CheckRow, photos: Map<string, Photo>, perms: Readonl
       ? { id: r.goodsReceiptLine.goodsReceipt.publicId, number: r.goodsReceiptLine.goodsReceipt.grNo }
       : null,
     lineNo: r.goodsReceiptLine?.lineNo ?? null,
-    productionOrder: r.productionOrder ? { id: r.productionOrder.publicId, number: r.productionOrder.moNo } : null,
+    productionOrder: r.productionOrder
+      ? { id: r.productionOrder.publicId, number: r.productionOrder.moNo }
+      : null,
     operation: r.operation?.name ?? null,
     supplier: r.supplier ? partnerRef(r.supplier) : null,
     inspector: userRef(r.inspector)!,
@@ -965,7 +1133,9 @@ export function ncrDto(r: NcrRow, photos: Map<string, Photo>, perms: ReadonlySet
     supplier: r.supplier ? partnerRef(r.supplier) : null,
     customer: r.customer ? partnerRef(r.customer) : null,
     machine: r.machine ? { id: r.machine.publicId, name: r.machine.name } : null,
-    productionOrder: r.productionOrder ? { id: r.productionOrder.publicId, number: r.productionOrder.moNo } : null,
+    productionOrder: r.productionOrder
+      ? { id: r.productionOrder.publicId, number: r.productionOrder.moNo }
+      : null,
     goodsReceipt: r.goodsReceipt ? { id: r.goodsReceipt.publicId, number: r.goodsReceipt.grNo } : null,
     warehouse: r.warehouse ? warehouseRef(r.warehouse) : null,
     quantity: r.quantity === null ? null : fmtQty(r.quantity),
@@ -987,7 +1157,11 @@ export function ncrDto(r: NcrRow, photos: Map<string, Photo>, perms: ReadonlySet
     photos: fileIds(r.photoFileIds).flatMap((id) => (photos.has(id) ? [photos.get(id)!] : [])),
     createdBy: r.createdBy.displayName,
     createdAt: toBangkokIso(r.createdAt),
-    nextActions: nextActions({ status: r.status, disposition: r.disposition, ready: ready(r) }, NCR_ACTIONS, perms),
+    nextActions: nextActions(
+      { status: r.status, disposition: r.disposition, ready: ready(r) },
+      NCR_ACTIONS,
+      perms,
+    ),
     version: r.rowVersion,
   };
 }

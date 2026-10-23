@@ -1,7 +1,7 @@
 import { DomainException } from '@common/errors/domain.exception';
 import { addCalendarDays, bangkokDate, startOfBangkokDay, toBangkokIso } from '@common/time/bangkok';
 import { type WorkingDayCalendar } from '@common/time/working-days';
-import { type ErpProductionStatus, type Prisma } from '@generated/prisma/client';
+import { type ErpProductionStatus, type Prisma } from '@generated/prisma-erp/client';
 import { Injectable } from '@nestjs/common';
 import { BusinessCalendarService } from '@platform/calendar/business-calendar.service';
 import { SettingsService } from '@platform/settings/settings.service';

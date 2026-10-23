@@ -35,7 +35,10 @@ export class HomeCaseDto {
   @ApiProperty({ format: 'uuid', example: IDS.homeCase })
   id!: string;
 
-  @ApiProperty({ example: 'ร้านขนมทดสอบ (fake)', description: 'The customer’s brand, as they allowed it to be shown' })
+  @ApiProperty({
+    example: 'ร้านขนมทดสอบ (fake)',
+    description: 'The customer’s brand, as they allowed it to be shown',
+  })
   brandNameTh!: string;
 
   @ApiProperty({ example: 'เชียงใหม่' })
@@ -61,7 +64,8 @@ export class HomeCaseDto {
     format: 'uuid',
     nullable: true,
     example: IDS.consent,
-    description: 'The customer’s written permission (a private file, never on the storefront); required to approve',
+    description:
+      'The customer’s written permission (a private file, never on the storefront); required to approve',
   })
   consentFileId!: string | null;
 
@@ -272,7 +276,11 @@ export class HomeCaseActionsController {
       'audited, event `catalog.home_case.withdrawn` (D-311). Editing it brings it back as a draft.',
     implements: ['D-311'],
   })
-  @ApiSuccess(200, { description: 'Withdrawn story', type: HomeCaseDto, example: { ...EXAMPLE, status: 'withdrawn' } })
+  @ApiSuccess(200, {
+    description: 'Withdrawn story',
+    type: HomeCaseDto,
+    example: { ...EXAMPLE, status: 'withdrawn' },
+  })
   @ApiStandardErrors(
     'http.bad_request',
     'http.not_found',
@@ -303,7 +311,8 @@ export class HomeCaseActionsController {
       if (to === 'approved') {
         if (current.status !== 'draft')
           throw new DomainException('cms.case_invalid_status', { params: { status: current.status } });
-        if (!current.consentFileId || !current.photoFileId) throw new DomainException('cms.case_consent_required');
+        if (!current.consentFileId || !current.photoFileId)
+          throw new DomainException('cms.case_consent_required');
       } else if (current.status !== 'approved') {
         throw new DomainException('cms.case_invalid_status', { params: { status: current.status } });
       }

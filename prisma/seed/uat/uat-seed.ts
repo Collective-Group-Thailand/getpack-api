@@ -1,4 +1,5 @@
 import { type PrismaClient } from '../../../src/generated/prisma/client';
+import { type PrismaClient as ErpPrismaClient } from '../../../src/generated/prisma-erp/client';
 import { PasswordService } from '../../../src/modules/auth/password.service';
 import { seedDevPriceLists } from '../dev-price-lists';
 import { seedDev } from '../dev-seed';
@@ -33,6 +34,7 @@ export const UAT_FAKE_ENTITY: EntitySeedInput = {
  */
 export async function seedUat(
   prisma: PrismaClient,
+  erpPrisma: ErpPrismaClient,
   opts: { password?: string; entity?: EntitySeedInput; instantTypes?: string[] },
 ): Promise<SeedReport> {
   const report = await seedDev(prisma, opts.password, {
@@ -49,14 +51,15 @@ export async function seedUat(
     { timeout: 300_000 },
   );
   const consents = await seedUatConsentTexts(prisma);
-  const erp = await seedUatErp(prisma);
-  const erpE2 = await seedUatErpE2(prisma);
-  const erpE3 = await seedUatErpE3(prisma);
+  // The factory ERP's tables go through its own client (ADR-0013).
+  const erp = await seedUatErp(erpPrisma);
+  const erpE2 = await seedUatErpE2(erpPrisma);
+  const erpE3 = await seedUatErpE3(erpPrisma);
   const erpE4 = await seedUatErpE4(
-    prisma,
+    erpPrisma,
     opts.password ? await new PasswordService().hash(opts.password) : undefined,
   );
-  const erpE5 = await seedUatErpE5(prisma);
+  const erpE5 = await seedUatErpE5(erpPrisma);
   return {
     ...report,
     ...uat,

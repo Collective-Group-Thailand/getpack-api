@@ -251,7 +251,11 @@ export class ErpSettingsDto {
   @ApiProperty({ type: String, nullable: true, example: 'โทร 02-123-4567 · sales@factory.example.invalid' })
   documentFooter!: string | null;
 
-  @ApiProperty({ type: String, nullable: true, example: 'โอนเข้า ธ.กสิกรไทย 123-4-56789-0 บจก. กล่องดี แพคเกจจิ้ง' })
+  @ApiProperty({
+    type: String,
+    nullable: true,
+    example: 'โอนเข้า ธ.กสิกรไทย 123-4-56789-0 บจก. กล่องดี แพคเกจจิ้ง',
+  })
   bankDetails!: string | null;
 
   @ApiProperty({ type: String, nullable: true, example: 'นายสมชาย ใจดี' })
@@ -260,13 +264,22 @@ export class ErpSettingsDto {
   @ApiProperty({ example: '120.00', description: 'Labour cost per run hour on a production order (D-376)' })
   labourRatePerHour!: string;
 
-  @ApiProperty({ example: '15.0000', description: 'Overhead, % on top of materials, machine and labour (D-376)' })
+  @ApiProperty({
+    example: '15.0000',
+    description: 'Overhead, % on top of materials, machine and labour (D-376)',
+  })
   overheadPct!: string;
 
-  @ApiProperty({ example: true, description: 'Send the 07:40 daily summary to whoever reads insight (D-379)' })
+  @ApiProperty({
+    example: true,
+    description: 'Send the 07:40 daily summary to whoever reads insight (D-379)',
+  })
   dailySummary!: boolean;
 
-  @ApiProperty({ example: '50.0000', description: 'A machine’s OEE under this % yesterday raises an alert (D-383)' })
+  @ApiProperty({
+    example: '50.0000',
+    description: 'A machine’s OEE under this % yesterday raises an alert (D-383)',
+  })
   oeeAlertPct!: string;
 
   @ApiProperty({ example: 1 })
@@ -341,7 +354,12 @@ export class UpdateErpSettingsDto {
   @Max(365)
   quoteValidDays?: number;
 
-  @ApiPropertyOptional({ type: String, nullable: true, format: 'uuid', description: 'An uploaded image of this factory; null removes it' })
+  @ApiPropertyOptional({
+    type: String,
+    nullable: true,
+    format: 'uuid',
+    description: 'An uploaded image of this factory; null removes it',
+  })
   @IsOptional()
   @Transform(emptyToNull)
   @IsUUID()
@@ -547,7 +565,12 @@ export class ErpCreateTradingPartnerDto {
   @IsIn(['juristic', 'individual'])
   entityType?: string;
 
-  @ApiPropertyOptional({ type: String, nullable: true, format: 'uuid', description: 'A user of this factory' })
+  @ApiPropertyOptional({
+    type: String,
+    nullable: true,
+    format: 'uuid',
+    description: 'A user of this factory',
+  })
   @IsOptional()
   @Transform(emptyToNull)
   @IsUUID()
@@ -638,7 +661,12 @@ export class ErpUpdateTradingPartnerDto {
   @IsIn(['juristic', 'individual'])
   entityType?: string;
 
-  @ApiPropertyOptional({ type: String, nullable: true, format: 'uuid', description: 'A user of this factory' })
+  @ApiPropertyOptional({
+    type: String,
+    nullable: true,
+    format: 'uuid',
+    description: 'A user of this factory',
+  })
   @IsOptional()
   @Transform(emptyToNull)
   @IsUUID()

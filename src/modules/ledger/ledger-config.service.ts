@@ -1,5 +1,11 @@
 import { systemActor, type UserActor } from '@common/context/actor';
 import { DomainException } from '@common/errors/domain.exception';
+import {
+  accountCodesOf,
+  type PostingTemplate,
+  ruleApplies,
+  validateTemplate,
+} from '@common/ledger-core/template';
 import { formatMoney, MoneyDecimal } from '@common/money/money';
 import { PrismaService, type Tx } from '@database/prisma.service';
 import {
@@ -18,7 +24,6 @@ import { DomainEvents } from '@platform/domain-events/domain-events.service';
 import { EntitiesService } from '@platform/entities/entities.service';
 
 import { PostingEngine } from './posting/posting-engine.service';
-import { accountCodesOf, type PostingTemplate, ruleApplies, validateTemplate } from '@common/ledger-core/template';
 
 export interface AccountFields {
   code?: string;

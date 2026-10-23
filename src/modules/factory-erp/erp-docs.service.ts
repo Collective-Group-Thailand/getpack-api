@@ -2,14 +2,14 @@ import { DomainException } from '@common/errors/domain.exception';
 import { assertIfMatch, etagOf } from '@common/etag/etag';
 import { paginated, toSkipTake } from '@common/pagination/pagination';
 import { addCalendarDays, bangkokDate, toBangkokIso } from '@common/time/bangkok';
-import { type PrismaService, type Tx } from '@database/prisma.service';
+import { type ErpPrismaService, type ErpTx } from '@database/erp-prisma.service';
 import {
   type ErpDocCategory,
   type ErpDocLink,
   type ErpRecordStatus,
   type FileObject,
   type Prisma,
-} from '@generated/prisma/client';
+} from '@generated/prisma-erp/client';
 import { Injectable, Logger } from '@nestjs/common';
 import { ScheduledJob } from '@platform/maintenance/scheduled-job.decorator';
 
@@ -76,14 +76,14 @@ export class ErpDocsService {
     }));
   }
 
-  private async folder(db: Tx | PrismaService, scope: ErpScope, publicId: string) {
+  private async folder(db: ErpTx | ErpPrismaService, scope: ErpScope, publicId: string) {
     const f = await db.erpDocFolder.findFirst({ where: { factoryId: scope.factory.id, publicId } });
     if (!f) throw new DomainException('http.not_found');
     return f;
   }
 
   private async uniqueName(
-    tx: Tx,
+    tx: ErpTx,
     scope: ErpScope,
     parentId: bigint | null,
     name: string,
@@ -208,7 +208,7 @@ export class ErpDocsService {
   }
 
   /** An uploaded file of this factory, usable (scanned clean or pending). */
-  private async file(tx: Tx, scope: ErpScope, publicId: string): Promise<FileObject> {
+  private async file(tx: ErpTx, scope: ErpScope, publicId: string): Promise<FileObject> {
     const f = await tx.fileObject.findUnique({ where: { publicId } });
     if (
       !f ||
@@ -221,7 +221,7 @@ export class ErpDocsService {
   }
 
   /** The record a document links to, checked to be this factory's, with a label for lists. */
-  private async link(tx: Tx, scope: ErpScope, type: string, publicId: string): Promise<string> {
+  private async link(tx: ErpTx, scope: ErpScope, type: string, publicId: string): Promise<string> {
     const factoryId = scope.factory.id;
     const notFound = () => new DomainException('http.not_found');
     switch (type as ErpDocLink) {
@@ -264,7 +264,7 @@ export class ErpDocsService {
   }
 
   private async linkFields(
-    tx: Tx,
+    tx: ErpTx,
     scope: ErpScope,
     type: string | null | undefined,
     id: string | null | undefined,

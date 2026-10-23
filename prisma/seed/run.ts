@@ -8,6 +8,7 @@ import { PrismaPg } from '@prisma/adapter-pg';
 import { config } from 'dotenv';
 
 import { PrismaClient } from '../../src/generated/prisma/client';
+import { PrismaClient as ErpPrismaClient } from '../../src/generated/prisma-erp/client';
 import { seedDevPriceLists } from './dev-price-lists';
 import { seedDev } from './dev-seed';
 import { type EntitySeedInput, seedReference } from './reference-seed';
@@ -53,8 +54,11 @@ async function main(): Promise<void> {
     const prisma = new PrismaClient({
       adapter: new PrismaPg({ connectionString: required('DATABASE_URL') }),
     });
+    const erpPrisma = new ErpPrismaClient({
+      adapter: new PrismaPg({ connectionString: required('DATABASE_URL') }),
+    });
     try {
-      const report = await seedUat(prisma, {
+      const report = await seedUat(prisma, erpPrisma, {
         password: optional('UAT_SEED_PASSWORD') ?? optional('DEV_SEED_PASSWORD'),
         entity: optional('SEED_ENTITY_CODE') ? entityFromEnv() : undefined,
         instantTypes: optional('UAT_INSTANT_TYPES')?.split(','),
@@ -64,7 +68,7 @@ async function main(): Promise<void> {
         .join(' ');
       console.log(`seed uat: ${created || 'nothing to create (already seeded)'}`);
     } finally {
-      await prisma.$disconnect();
+      await Promise.all([prisma.$disconnect(), erpPrisma.$disconnect()]);
     }
     return;
   }

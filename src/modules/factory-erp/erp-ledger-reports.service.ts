@@ -1,8 +1,8 @@
 import { DomainException } from '@common/errors/domain.exception';
 import { dateOnly, dayOf, monthEnd } from '@common/ledger-core/dates';
 import { MoneyDecimal, type MoneyValue } from '@common/money/money';
-import { type Tx } from '@database/prisma.service';
-import { type ErpGlAccount, type ErpGlSettings, Prisma } from '@generated/prisma/client';
+import { type ErpTx } from '@database/erp-prisma.service';
+import { type ErpGlAccount, type ErpGlSettings, Prisma } from '@generated/prisma-erp/client';
 import { Injectable } from '@nestjs/common';
 import { AuditService } from '@platform/audit/audit.service';
 
@@ -39,8 +39,32 @@ const PL_SECTIONS: { key: string; lines: StatementLine[]; sign: 1 | -1 }[] = [
   { key: 'income_tax', lines: ['income_tax'], sign: 1 },
 ];
 const BS_SECTIONS: { key: string; lines: StatementLine[]; sign: 1 | -1 }[] = [
-  { key: 'assets', lines: ['cash', 'trade_receivables', 'other_receivables', 'inventory', 'tax_assets', 'other_current_assets', 'ppe', 'accumulated_depreciation'], sign: 1 },
-  { key: 'liabilities', lines: ['trade_payables', 'tax_liabilities', 'accrued_expenses', 'customer_advances', 'other_current_liabilities', 'long_term_loans'], sign: -1 },
+  {
+    key: 'assets',
+    lines: [
+      'cash',
+      'trade_receivables',
+      'other_receivables',
+      'inventory',
+      'tax_assets',
+      'other_current_assets',
+      'ppe',
+      'accumulated_depreciation',
+    ],
+    sign: 1,
+  },
+  {
+    key: 'liabilities',
+    lines: [
+      'trade_payables',
+      'tax_liabilities',
+      'accrued_expenses',
+      'customer_advances',
+      'other_current_liabilities',
+      'long_term_loans',
+    ],
+    sign: -1,
+  },
   { key: 'equity', lines: ['capital', 'retained_earnings', 'current_year_profit'], sign: -1 },
 ];
 const PL_TYPES = new Set(['revenue', 'cost_of_sales', 'expense']);
@@ -57,19 +81,31 @@ export class ErpLedgerReportsService {
   async closeYearDto(scope: ErpScope, yearPublicId: string, perms: ReadonlySet<string>) {
     const entry = await this.workspace.tx(async (tx) => {
       const settings = await this.ledger.book(tx, scope.factory.id, scope.actor.userId);
-      const year = await tx.erpGlFiscalYear.findFirst({ where: { factoryId: scope.factory.id, publicId: yearPublicId } });
+      const year = await tx.erpGlFiscalYear.findFirst({
+        where: { factoryId: scope.factory.id, publicId: yearPublicId },
+      });
       if (!year) throw new DomainException('http.not_found');
       const e = await this.closeYear(tx, scope, settings, year.id);
       if (!e) await tx.erpGlFiscalYear.update({ where: { id: year.id }, data: { locked: true } });
-      await this.audit.record(tx, { category: 'finance', action: 'erp_ledger.year_closed', resourceType: 'erp_gl_fiscal_year', resourcePublicId: year.publicId, data: { label: year.label, entryNo: e?.entryNo ?? null } });
-      await this.workspace.record(tx, scope, 'erp_ledger.year_closed', 'erp_gl_fiscal_year', year.publicId, { label: year.label });
+      await this.audit.record(tx, {
+        category: 'finance',
+        action: 'erp_ledger.year_closed',
+        resourceType: 'erp_gl_fiscal_year',
+        resourcePublicId: year.publicId,
+        data: { label: year.label, entryNo: e?.entryNo ?? null },
+      });
+      await this.workspace.record(tx, scope, 'erp_ledger.year_closed', 'erp_gl_fiscal_year', year.publicId, {
+        label: year.label,
+      });
       return e;
     });
     return entry ? [await this.journals.get(scope, entry.publicId, perms)] : [];
   }
 
   private async open(scope: ErpScope, report: string, params: Record<string, unknown>) {
-    const settings = await this.workspace.tx((tx) => this.ledger.book(tx, scope.factory.id, scope.actor.userId));
+    const settings = await this.workspace.tx((tx) =>
+      this.ledger.book(tx, scope.factory.id, scope.actor.userId),
+    );
     await this.audit.record(this.workspace.db, {
       category: 'data_access',
       action: `erp_ledger.report_read`,
@@ -86,7 +122,10 @@ export class ErpLedgerReportsService {
   }
 
   private checkRange(from: string, to: string): void {
-    if (to < from) throw new DomainException('validation.failed', { errors: [{ path: 'to', code: 'invalid', message: 'Before `from`' }] });
+    if (to < from)
+      throw new DomainException('validation.failed', {
+        errors: [{ path: 'to', code: 'invalid', message: 'Before `from`' }],
+      });
   }
 
   /** The fiscal year start holding `day`. */
@@ -117,9 +156,23 @@ export class ErpLedgerReportsService {
         const closing = open.plus(p.debit).minus(p.credit);
         if (closing.gt(0)) totalDebit = totalDebit.plus(closing);
         else totalCredit = totalCredit.plus(closing.abs());
-        return { account: accountRef(a), accountType: a.accountType, opening: money(open), debit: money(p.debit), credit: money(p.credit), closing: money(closing) };
+        return {
+          account: accountRef(a),
+          accountType: a.accountType,
+          opening: money(open),
+          debit: money(p.debit),
+          credit: money(p.credit),
+          closing: money(closing),
+        };
       });
-    return { from, to, rows, totalDebit: money(totalDebit), totalCredit: money(totalCredit), balanced: totalDebit.eq(totalCredit) };
+    return {
+      from,
+      to,
+      rows,
+      totalDebit: money(totalDebit),
+      totalCredit: money(totalCredit),
+      balanced: totalDebit.eq(totalCredit),
+    };
   }
 
   // ======================================================================================= GL detail
@@ -128,11 +181,19 @@ export class ErpLedgerReportsService {
     this.checkRange(from, to);
     await this.open(scope, 'general_ledger', { accountCode, from, to });
     const db = this.workspace.db;
-    const account = await db.erpGlAccount.findFirst({ where: { factoryId: scope.factory.id, code: accountCode } });
+    const account = await db.erpGlAccount.findFirst({
+      where: { factoryId: scope.factory.id, code: accountCode },
+    });
     if (!account) throw new DomainException('http.not_found');
-    const opening = this.ledger.signed((await this.ledger.balances(db, scope.factory.id, { to: addDays(from, -1) })).get(account.id));
+    const opening = this.ledger.signed(
+      (await this.ledger.balances(db, scope.factory.id, { to: addDays(from, -1) })).get(account.id),
+    );
     const lines = await db.erpGlJournalLine.findMany({
-      where: { accountId: account.id, entry: { status: 'posted' }, entryDate: { gte: dateOnly(from), lte: dateOnly(to) } },
+      where: {
+        accountId: account.id,
+        entry: { status: 'posted' },
+        entryDate: { gte: dateOnly(from), lte: dateOnly(to) },
+      },
       include: { entry: true },
       orderBy: [{ entryDate: 'asc' }, { entry: { entryNo: 'asc' } }, { lineNo: 'asc' }],
     });
@@ -145,7 +206,10 @@ export class ErpLedgerReportsService {
         entryNo: e.entryNo!,
         entryDate: dayOf(l.entryDate),
         description: l.description ?? e.description,
-        source: e.sourceDocumentType && e.sourceDocumentPublicId ? { type: e.sourceDocumentType, id: e.sourceDocumentPublicId, number: e.sourceDocumentNo } : null,
+        source:
+          e.sourceDocumentType && e.sourceDocumentPublicId
+            ? { type: e.sourceDocumentType, id: e.sourceDocumentPublicId, number: e.sourceDocumentNo }
+            : null,
         debit: money(dec(l.debit)),
         credit: money(dec(l.credit)),
         balance: money(balance),
@@ -167,22 +231,42 @@ export class ErpLedgerReportsService {
       const lines = spec.lines.map((line) => {
         const rows: ErpGlStatementAccountDto[] = accounts
           .filter((a) => a.isPostable && a.statementLine === line)
-          .map((a) => ({ account: accountRef(a), amount: money(amount(a).times(spec.sign)), comparative: comparative ? money(comparative(a).times(spec.sign)) : null }))
+          .map((a) => ({
+            account: accountRef(a),
+            amount: money(amount(a).times(spec.sign)),
+            comparative: comparative ? money(comparative(a).times(spec.sign)) : null,
+          }))
           .filter((r) => r.amount !== '0.00' || (r.comparative !== null && r.comparative !== '0.00'));
         rows.push(...(extra[line] ?? []));
         const total = rows.reduce((t, r) => t.plus(dec(r.amount)), new MoneyDecimal(0));
-        const ctotal = comparative ? rows.reduce((t, r) => t.plus(dec(r.comparative ?? 0)), new MoneyDecimal(0)) : null;
-        return { key: line, accounts: rows, amount: money(total), comparative: ctotal === null ? null : money(ctotal) };
+        const ctotal = comparative
+          ? rows.reduce((t, r) => t.plus(dec(r.comparative ?? 0)), new MoneyDecimal(0))
+          : null;
+        return {
+          key: line,
+          accounts: rows,
+          amount: money(total),
+          comparative: ctotal === null ? null : money(ctotal),
+        };
       });
       const total = lines.reduce((t, l) => t.plus(dec(l.amount)), new MoneyDecimal(0));
-      const ctotal = comparative ? lines.reduce((t, l) => t.plus(dec(l.comparative ?? 0)), new MoneyDecimal(0)) : null;
-      return { key: spec.key, lines, amount: money(total), comparative: ctotal === null ? null : money(ctotal) };
+      const ctotal = comparative
+        ? lines.reduce((t, l) => t.plus(dec(l.comparative ?? 0)), new MoneyDecimal(0))
+        : null;
+      return {
+        key: spec.key,
+        lines,
+        amount: money(total),
+        comparative: ctotal === null ? null : money(ctotal),
+      };
     });
   }
 
   /** Net profit (credit-positive) of P&L accounts in a balance map. */
   private netProfit(accounts: ErpGlAccount[], map: Map<bigint, AccountBalance>): MoneyValue {
-    return accounts.filter((a) => PL_TYPES.has(a.accountType)).reduce((t, a) => t.minus(this.ledger.signed(map.get(a.id))), new MoneyDecimal(0));
+    return accounts
+      .filter((a) => PL_TYPES.has(a.accountType))
+      .reduce((t, a) => t.minus(this.ledger.signed(map.get(a.id))), new MoneyDecimal(0));
   }
 
   async profitAndLoss(scope: ErpScope, month: string): Promise<ErpGlProfitAndLossDto> {
@@ -229,23 +313,36 @@ export class ErpLedgerReportsService {
       this.ledger.balances(db, scope.factory.id, { to: asOf }),
       this.ledger.balances(db, scope.factory.id, { to: comparativeAsOf }),
       this.ledger.balances(db, scope.factory.id, { from: yearStart, to: asOf }),
-      this.ledger.balances(db, scope.factory.id, { from: this.yearStart(settings, comparativeAsOf), to: comparativeAsOf }),
+      this.ledger.balances(db, scope.factory.id, {
+        from: this.yearStart(settings, comparativeAsOf),
+        to: comparativeAsOf,
+      }),
     ]);
     const bsAccounts = accounts.filter((a) => !PL_TYPES.has(a.accountType));
     // P&L accounts not yet closed to retained earnings sit in equity as the current-year profit
     const profitNow = this.netProfit(accounts, nowYtd).plus(this.unclosedPriorProfit(accounts, now, nowYtd));
-    const profitBefore = this.netProfit(accounts, beforeYtd).plus(this.unclosedPriorProfit(accounts, before, beforeYtd));
+    const profitBefore = this.netProfit(accounts, beforeYtd).plus(
+      this.unclosedPriorProfit(accounts, before, beforeYtd),
+    );
     const retained = accounts.find((a) => a.statementLine === 'current_year_profit') ?? null;
     const extra: Partial<Record<StatementLine, ErpGlStatementAccountDto[]>> = {
       current_year_profit: [
         {
-          account: retained ? accountRef(retained) : { id: scope.factory.publicId, code: '3300', name: 'กำไรขาดทุนปีปัจจุบัน' },
+          account: retained
+            ? accountRef(retained)
+            : { id: scope.factory.publicId, code: '3300', name: 'กำไรขาดทุนปีปัจจุบัน' },
           amount: money(profitNow),
           comparative: money(profitBefore),
         },
       ],
     };
-    const sections = this.sections(bsAccounts, BS_SECTIONS, (a) => this.ledger.signed(now.get(a.id)), (a) => this.ledger.signed(before.get(a.id)), extra);
+    const sections = this.sections(
+      bsAccounts,
+      BS_SECTIONS,
+      (a) => this.ledger.signed(now.get(a.id)),
+      (a) => this.ledger.signed(before.get(a.id)),
+      extra,
+    );
     const of = (key: string) => dec(sections.find((s) => s.key === key)?.amount ?? 0);
     const totalAssets = of('assets');
     const totalLiabilities = of('liabilities');
@@ -263,7 +360,11 @@ export class ErpLedgerReportsService {
   }
 
   /** P&L balances from before the fiscal year that were never closed (no closing entry): still equity. */
-  private unclosedPriorProfit(accounts: ErpGlAccount[], all: Map<bigint, AccountBalance>, ytd: Map<bigint, AccountBalance>): MoneyValue {
+  private unclosedPriorProfit(
+    accounts: ErpGlAccount[],
+    all: Map<bigint, AccountBalance>,
+    ytd: Map<bigint, AccountBalance>,
+  ): MoneyValue {
     return this.netProfit(accounts, all).minus(this.netProfit(accounts, ytd));
   }
 
@@ -282,15 +383,31 @@ export class ErpLedgerReportsService {
     const bs = accounts.filter((a) => a.isPostable && !PL_TYPES.has(a.accountType) && !isCash(a));
     // a balance-sheet account's increase (debit) uses cash, a decrease frees it; P&L non-cash items add back
     const change = (a: ErpGlAccount) => this.ledger.signed(period.get(a.id)).negated();
-    const nonCashPl = accounts.filter((a) => a.isPostable && PL_TYPES.has(a.accountType) && a.cashFlowClass === 'non_cash');
-    const nonCash = nonCashPl.reduce((t, a) => t.plus(this.ledger.signed(period.get(a.id))), new MoneyDecimal(0));
-    const section = (key: 'operating' | 'investing' | 'financing', extraRows: ErpGlStatementAccountDto[] = []) => {
+    const nonCashPl = accounts.filter(
+      (a) => a.isPostable && PL_TYPES.has(a.accountType) && a.cashFlowClass === 'non_cash',
+    );
+    const nonCash = nonCashPl.reduce(
+      (t, a) => t.plus(this.ledger.signed(period.get(a.id))),
+      new MoneyDecimal(0),
+    );
+    const section = (
+      key: 'operating' | 'investing' | 'financing',
+      extraRows: ErpGlStatementAccountDto[] = [],
+    ) => {
       const rows = bs
-        .filter((a) => a.cashFlowClass === key || (key === 'operating' && a.cashFlowClass === 'non_cash' && a.accountType !== 'equity'))
+        .filter(
+          (a) =>
+            a.cashFlowClass === key ||
+            (key === 'operating' && a.cashFlowClass === 'non_cash' && a.accountType !== 'equity'),
+        )
         .map((a) => ({ account: accountRef(a), amount: money(change(a)), comparative: null }))
         .filter((r) => r.amount !== '0.00');
       const all = [...extraRows, ...rows];
-      return { key, accounts: all, amount: money(all.reduce((t, r) => t.plus(dec(r.amount)), new MoneyDecimal(0))) };
+      return {
+        key,
+        accounts: all,
+        amount: money(all.reduce((t, r) => t.plus(dec(r.amount)), new MoneyDecimal(0))),
+      };
     };
     const equityRows = bs
       .filter((a) => a.accountType === 'equity' && a.cashFlowClass !== 'financing')
@@ -298,15 +415,31 @@ export class ErpLedgerReportsService {
       .filter((r) => r.amount !== '0.00');
     const sections = [
       section('operating', [
-        { account: { id: scope.factory.publicId, code: 'NP', name: 'กำไรสุทธิ' }, amount: money(netProfit), comparative: null },
-        ...nonCashPl.map((a) => ({ account: accountRef(a), amount: money(this.ledger.signed(period.get(a.id))), comparative: null })).filter((r) => r.amount !== '0.00'),
+        {
+          account: { id: scope.factory.publicId, code: 'NP', name: 'กำไรสุทธิ' },
+          amount: money(netProfit),
+          comparative: null,
+        },
+        ...nonCashPl
+          .map((a) => ({
+            account: accountRef(a),
+            amount: money(this.ledger.signed(period.get(a.id))),
+            comparative: null,
+          }))
+          .filter((r) => r.amount !== '0.00'),
       ]),
       section('investing'),
       { ...section('financing', equityRows) },
     ];
     const cashAccounts = accounts.filter((a) => a.isPostable && isCash(a));
-    const openingCash = cashAccounts.reduce((t, a) => t.plus(this.ledger.signed(opening.get(a.id))), new MoneyDecimal(0));
-    const closingCash = cashAccounts.reduce((t, a) => t.plus(this.ledger.signed(closing.get(a.id))), new MoneyDecimal(0));
+    const openingCash = cashAccounts.reduce(
+      (t, a) => t.plus(this.ledger.signed(opening.get(a.id))),
+      new MoneyDecimal(0),
+    );
+    const closingCash = cashAccounts.reduce(
+      (t, a) => t.plus(this.ledger.signed(closing.get(a.id))),
+      new MoneyDecimal(0),
+    );
     return {
       from,
       to,
@@ -342,7 +475,9 @@ export class ErpLedgerReportsService {
       const s = stock.find((r) => r.kind === kind);
       const stockValue = dec(s?.value ?? 0);
       const sameAccount = kinds.filter((k) => this.ledger.itemKindAccount(settings, k) === code);
-      const ledgerBalance = account ? this.ledger.signed(balances.get(account.id)).div(sameAccount.length) : new MoneyDecimal(0);
+      const ledgerBalance = account
+        ? this.ledger.signed(balances.get(account.id)).div(sameAccount.length)
+        : new MoneyDecimal(0);
       return {
         kind,
         account: account ? accountRef(account) : { id: scope.factory.publicId, code, name: code },
@@ -354,17 +489,32 @@ export class ErpLedgerReportsService {
     });
     const stockValue = rows.reduce((t, r) => t.plus(dec(r.stockValue)), new MoneyDecimal(0));
     const ledgerBalance = rows.reduce((t, r) => t.plus(dec(r.ledgerBalance)), new MoneyDecimal(0));
-    return { asOf, rows, stockValue: money(stockValue), ledgerBalance: money(ledgerBalance), difference: money(stockValue.minus(ledgerBalance)) };
+    return {
+      asOf,
+      rows,
+      stockValue: money(stockValue),
+      ledgerBalance: money(ledgerBalance),
+      difference: money(stockValue.minus(ledgerBalance)),
+    };
   }
 
   /** Year-end closing (D-390): P&L balances of the fiscal year to retained earnings, dated the year end. */
-  async closeYear(tx: Tx, scope: ErpScope, settings: ErpGlSettings, yearId: bigint) {
-    const year = await tx.erpGlFiscalYear.findFirstOrThrow({ where: { id: yearId, factoryId: scope.factory.id }, include: { periods: true } });
+  async closeYear(tx: ErpTx, scope: ErpScope, settings: ErpGlSettings, yearId: bigint) {
+    const year = await tx.erpGlFiscalYear.findFirstOrThrow({
+      where: { id: yearId, factoryId: scope.factory.id },
+      include: { periods: true },
+    });
     // months 1 – 11 closed, the last month soft-closed: the closing entry lands in it, then it closes (D-390)
     const last = year.periods.reduce((a, p) => (p.periodNo > a.periodNo ? p : a));
-    const open = year.periods.filter((p) => (p.id === last.id ? p.status !== 'soft_closed' : p.status !== 'closed' && p.status !== 'locked'));
-    if (open.length > 0) throw new DomainException('erp.ledger_close_blocked', { params: { count: open.length, items: open.map((p) => dayOf(p.startDate).slice(0, 7)).join(', ') } });
-    if (year.closingEntryId) throw new DomainException('erp.ledger_already_posted', { params: { entryNo: 'closing' } });
+    const open = year.periods.filter((p) =>
+      p.id === last.id ? p.status !== 'soft_closed' : p.status !== 'closed' && p.status !== 'locked',
+    );
+    if (open.length > 0)
+      throw new DomainException('erp.ledger_close_blocked', {
+        params: { count: open.length, items: open.map((p) => dayOf(p.startDate).slice(0, 7)).join(', ') },
+      });
+    if (year.closingEntryId)
+      throw new DomainException('erp.ledger_already_posted', { params: { entryNo: 'closing' } });
     const accounts = await tx.erpGlAccount.findMany({ where: { factoryId: scope.factory.id } });
     const balances = await this.ledger.balances(tx, scope.factory.id, { to: dayOf(year.endDate) });
     const retained = this.ledger.methodAccount(settings, 'retainedEarnings');
@@ -372,19 +522,43 @@ export class ErpLedgerReportsService {
       .filter((a) => PL_TYPES.has(a.accountType))
       .map((a) => ({ a, bal: this.ledger.signed(balances.get(a.id)) }))
       .filter((x) => !x.bal.isZero())
-      .map((x) => ({ accountCode: x.a.code, side: x.bal.gt(0) ? ('credit' as const) : ('debit' as const), amount: x.bal.abs(), description: null }));
-    const net = lines.reduce((t, l) => (l.side === 'credit' ? t.minus(l.amount) : t.plus(l.amount)), new MoneyDecimal(0));
+      .map((x) => ({
+        accountCode: x.a.code,
+        side: x.bal.gt(0) ? ('credit' as const) : ('debit' as const),
+        amount: x.bal.abs(),
+        description: null,
+      }));
+    const net = lines.reduce(
+      (t, l) => (l.side === 'credit' ? t.minus(l.amount) : t.plus(l.amount)),
+      new MoneyDecimal(0),
+    );
     if (lines.length === 0) return null;
-    lines.push({ accountCode: retained, side: net.gt(0) ? 'credit' : 'debit', amount: net.abs(), description: null });
+    lines.push({
+      accountCode: retained,
+      side: net.gt(0) ? 'credit' : 'debit',
+      amount: net.abs(),
+      description: null,
+    });
     // the closed periods take the closing entry: post into the last period of the year, allowed by the close permission
     const entry = await this.ledger.post(
       tx,
       scope.factory.id,
       settings,
-      { kind: 'closing', documentDate: dayOf(year.endDate), description: `ปิดบัญชีปี ${year.label}`, createdById: scope.actor.userId, approvedById: scope.actor.userId, allowSoftClosed: true, lines },
+      {
+        kind: 'closing',
+        documentDate: dayOf(year.endDate),
+        description: `ปิดบัญชีปี ${year.label}`,
+        createdById: scope.actor.userId,
+        approvedById: scope.actor.userId,
+        allowSoftClosed: true,
+        lines,
+      },
       scope.actor,
     );
-    await tx.erpGlFiscalYear.update({ where: { id: year.id }, data: { locked: true, closingEntryId: entry.id } });
+    await tx.erpGlFiscalYear.update({
+      where: { id: year.id },
+      data: { locked: true, closingEntryId: entry.id },
+    });
     return entry;
   }
 }

@@ -1,14 +1,14 @@
 import { type Actor, systemActor, type UserActor } from '@common/context/actor';
 import { DomainException } from '@common/errors/domain.exception';
 import { bangkokDate } from '@common/time/bangkok';
-import { PrismaService, type Tx } from '@database/prisma.service';
+import { ErpPrismaService, type ErpTx } from '@database/erp-prisma.service';
 import {
   type ErpDocumentType,
   type ErpFactorySettings,
   type ErpWarehouse,
   type Factory,
   Prisma,
-} from '@generated/prisma/client';
+} from '@generated/prisma-erp/client';
 import { FactoryAccess } from '@modules/partners/factories/factory-access';
 import { Injectable } from '@nestjs/common';
 import { DomainEvents } from '@platform/domain-events/domain-events.service';
@@ -59,7 +59,7 @@ export interface ErpScope {
 @Injectable()
 export class ErpWorkspace {
   constructor(
-    private readonly prisma: PrismaService,
+    private readonly prisma: ErpPrismaService,
     private readonly access: FactoryAccess,
     private readonly events: DomainEvents,
   ) {}
@@ -70,14 +70,14 @@ export class ErpWorkspace {
     return { actor: user, factory };
   }
 
-  async settings(db: Tx | PrismaService, factoryId: bigint): Promise<ErpFactorySettings> {
+  async settings(db: ErpTx | ErpPrismaService, factoryId: bigint): Promise<ErpFactorySettings> {
     const found = await db.erpFactorySettings.findUnique({ where: { factoryId } });
     if (found) return found;
     return db.erpFactorySettings.upsert({ where: { factoryId }, create: { factoryId }, update: {} });
   }
 
   /** The default warehouse, created as `MAIN` ("คลังหลัก") on first use. */
-  async defaultWarehouse(tx: Tx, factoryId: bigint, userId: bigint | null): Promise<ErpWarehouse> {
+  async defaultWarehouse(tx: ErpTx, factoryId: bigint, userId: bigint | null): Promise<ErpWarehouse> {
     const found = await tx.erpWarehouse.findFirst({ where: { factoryId, isDefault: true } });
     if (found) return found;
     const main = await tx.erpWarehouse.findUnique({ where: { factoryId_code: { factoryId, code: 'MAIN' } } });
@@ -88,7 +88,7 @@ export class ErpWorkspace {
   }
 
   /** A warehouse of this factory by public id (else the default one); archived ones are refused. */
-  async warehouse(tx: Tx, scope: ErpScope, publicId: string | undefined): Promise<ErpWarehouse> {
+  async warehouse(tx: ErpTx, scope: ErpScope, publicId: string | undefined): Promise<ErpWarehouse> {
     if (!publicId) return this.defaultWarehouse(tx, scope.factory.id, scope.actor.userId);
     const found = await tx.erpWarehouse.findFirst({ where: { publicId, factoryId: scope.factory.id } });
     if (!found) throw new DomainException('http.not_found');
@@ -102,7 +102,7 @@ export class ErpWorkspace {
    * row-locks the series until the transaction ends, so numbers are gapless and never reused.
    */
   async nextNumber(
-    tx: Tx,
+    tx: ErpTx,
     factoryId: bigint,
     docType: ErpDocumentType,
     at: Date = new Date(),
@@ -125,7 +125,7 @@ export class ErpWorkspace {
    * factory's own customers — so staff tooling that reads events learns nothing private.
    */
   async record(
-    tx: Tx,
+    tx: ErpTx,
     scope: ErpScope,
     type: string,
     aggregateType: string,
@@ -141,7 +141,7 @@ export class ErpWorkspace {
 
   /** A domain event the ERP records on its own (a getpack job turned into a production order, D-340). */
   async recordSystem(
-    tx: Tx,
+    tx: ErpTx,
     factoryPublicId: string,
     type: string,
     aggregateType: string,
@@ -156,11 +156,11 @@ export class ErpWorkspace {
   }
 
   /** Runs `work` in one transaction (CLAUDE.md: one transaction per state change). */
-  tx<T>(work: (tx: Tx) => Promise<T>): Promise<T> {
+  tx<T>(work: (tx: ErpTx) => Promise<T>): Promise<T> {
     return this.prisma.withTx(work);
   }
 
-  get db(): PrismaService {
+  get db(): ErpPrismaService {
     return this.prisma;
   }
 }

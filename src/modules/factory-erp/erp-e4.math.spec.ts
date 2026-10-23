@@ -7,14 +7,32 @@ import { IV_ACTIONS, openOf } from './erp-receivables.service';
 import { LINE, lineId, lineIdOf, totalsOf } from './erp-sales.shared';
 import { WHT_RATE } from './erp-tax.service';
 
-const PARTY = { name: 'บจก. ทดสอบ', address: '1 ถนนทดสอบ', taxId: '0000500000001', branchCode: '00000', phone: null };
+const PARTY = {
+  name: 'บจก. ทดสอบ',
+  address: '1 ถนนทดสอบ',
+  taxId: '0000500000001',
+  branchCode: '00000',
+  phone: null,
+};
 
 describe('Factory ERP E4 arithmetic and documents', () => {
   it('totals a document in each VAT mode (D-363)', () => {
     const lines = [{ amount: '1000.00' }, { amount: '70.00' }];
-    expect(totalsOf(lines, 'exclusive', '7')).toEqual({ subtotal: '1070.00', vatAmount: '74.90', total: '1144.90' });
-    expect(totalsOf(lines, 'inclusive', '7')).toEqual({ subtotal: '1000.00', vatAmount: '70.00', total: '1070.00' });
-    expect(totalsOf(lines, 'none', '7')).toEqual({ subtotal: '1070.00', vatAmount: '0.00', total: '1070.00' });
+    expect(totalsOf(lines, 'exclusive', '7')).toEqual({
+      subtotal: '1070.00',
+      vatAmount: '74.90',
+      total: '1144.90',
+    });
+    expect(totalsOf(lines, 'inclusive', '7')).toEqual({
+      subtotal: '1000.00',
+      vatAmount: '70.00',
+      total: '1070.00',
+    });
+    expect(totalsOf(lines, 'none', '7')).toEqual({
+      subtotal: '1070.00',
+      vatAmount: '0.00',
+      total: '1070.00',
+    });
   });
 
   it('keeps line ids stable and scoped to their document kind', () => {
@@ -37,13 +55,17 @@ describe('Factory ERP E4 arithmetic and documents', () => {
 
   it('offers invoice actions by status and permission', () => {
     const keys = (status: 'draft' | 'issued', perms: string[], settled = false) =>
-      nextActions({ status, open: dec(status === 'draft' ? 0 : 100), settled }, IV_ACTIONS, new Set(perms)).map(
-        (a) => a.key,
-      );
+      nextActions(
+        { status, open: dec(status === 'draft' ? 0 : 100), settled },
+        IV_ACTIONS,
+        new Set(perms),
+      ).map((a) => a.key);
     const manage = ['factory_receivables.manage', 'factory_receivables.read'];
     expect(keys('draft', manage)).toEqual(expect.arrayContaining(['erp_iv.issue', 'erp_iv.delete']));
     expect(keys('draft', manage)).not.toContain('erp_iv.pdf');
-    expect(keys('issued', manage)).toEqual(expect.arrayContaining(['erp_iv.receive', 'erp_iv.credit', 'erp_iv.pdf']));
+    expect(keys('issued', manage)).toEqual(
+      expect.arrayContaining(['erp_iv.receive', 'erp_iv.credit', 'erp_iv.pdf']),
+    );
     expect(keys('issued', ['factory_receivables.read'])).toEqual(['erp_iv.pdf']);
   });
 
@@ -67,7 +89,9 @@ describe('Factory ERP E4 arithmetic and documents', () => {
       logo: null,
       buyer: { ...PARTY, name: 'ลูกค้า <ทดสอบ>' },
       fullForm: true,
-      lines: [{ description: 'กล่อง', quantity: '1000.0000', unit: 'pcs', unitPrice: '1.07', amount: '1070.00' }],
+      lines: [
+        { description: 'กล่อง', quantity: '1000.0000', unit: 'pcs', unitPrice: '1.07', amount: '1070.00' },
+      ],
       totals: [{ label: 'รวมทั้งสิ้น', value: '1144.90', strong: true }],
       words: '1144.90',
       notes: [],
@@ -93,8 +117,20 @@ describe('Factory ERP E4 arithmetic and documents', () => {
       payee: { ...PARTY, name: 'ผู้รับจ้าง' },
       paidOn: '2026-10-10',
       lines: [
-        { incomeType: 'hire_of_work', description: null, ratePct: '3', baseAmount: '10000.00', whtAmount: '300.00' },
-        { incomeType: 'transport', description: null, ratePct: '1', baseAmount: '2000.00', whtAmount: '20.00' },
+        {
+          incomeType: 'hire_of_work',
+          description: null,
+          ratePct: '3',
+          baseAmount: '10000.00',
+          whtAmount: '300.00',
+        },
+        {
+          incomeType: 'transport',
+          description: null,
+          ratePct: '1',
+          baseAmount: '2000.00',
+          whtAmount: '20.00',
+        },
       ],
       baseAmount: '12000.00',
       whtAmount: '320.00',

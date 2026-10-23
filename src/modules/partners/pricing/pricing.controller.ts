@@ -461,13 +461,17 @@ export class PartnerPriceListsController {
   @ApiEndpoint({
     id: 'partner.priceLists.componentCounts',
     summary: 'Count the lines of each component in one of my price-list versions',
-    description: 'Every registered component with its line count (0 included), for the price screens (D-406). Own factory only (D-044).',
+    description:
+      'Every registered component with its line count (0 included), for the price screens (D-406). Own factory only (D-044).',
     implements: [...GOVERNANCE, 'D-406'],
   })
   @ApiSuccess(200, {
     description: 'Line counts per component',
     type: [PriceComponentCountDto],
-    example: [{ component: 'material_prices', lines: 12 }, { component: 'print_prices', lines: 0 }],
+    example: [
+      { component: 'material_prices', lines: 12 },
+      { component: 'print_prices', lines: 0 },
+    ],
   })
   @ApiStandardErrors('http.not_found', 'validation.failed')
   componentCounts(

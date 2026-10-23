@@ -3,7 +3,7 @@ import { assertIfMatch } from '@common/etag/etag';
 import { type MoneyValue } from '@common/money/money';
 import { paginated, toSkipTake } from '@common/pagination/pagination';
 import { addCalendarDays, bangkokDate } from '@common/time/bangkok';
-import { type PrismaService, type Tx } from '@database/prisma.service';
+import { type ErpPrismaService, type ErpTx } from '@database/erp-prisma.service';
 import {
   type ErpChargeAllocation,
   type ErpChargeKind,
@@ -15,7 +15,7 @@ import {
   type ErpUnit,
   type ErpVatMode,
   type Prisma,
-} from '@generated/prisma/client';
+} from '@generated/prisma-erp/client';
 import { Injectable } from '@nestjs/common';
 import { AuditService } from '@platform/audit/audit.service';
 
@@ -153,7 +153,7 @@ export class ErpPurchasingService {
    * alert threshold.
    */
   private async warnings(
-    db: Tx | PrismaService,
+    db: ErpTx | ErpPrismaService,
     scope: ErpScope,
     po: Omit<PoRow, 'warnings'>,
   ): Promise<ErpPoWarningDto[]> {
@@ -193,7 +193,7 @@ export class ErpPurchasingService {
     return out;
   }
 
-  private async supplier(tx: Tx, scope: ErpScope, publicId: string): Promise<ErpTradingPartner> {
+  private async supplier(tx: ErpTx, scope: ErpScope, publicId: string): Promise<ErpTradingPartner> {
     const s = await tx.erpTradingPartner.findFirst({ where: { factoryId: scope.factory.id, publicId } });
     if (!s) throw new DomainException('http.not_found');
     if (s.kind === 'customer') throw new DomainException('erp.not_a_supplier', { params: { name: s.name } });
@@ -225,7 +225,7 @@ export class ErpPurchasingService {
     });
   }
 
-  private async lines(tx: Tx, scope: ErpScope, body: ErpSavePurchaseOrderDto, supplierId: bigint) {
+  private async lines(tx: ErpTx, scope: ErpScope, body: ErpSavePurchaseOrderDto, supplierId: bigint) {
     const items = await this.stock.items(
       tx,
       scope.factory.id,
@@ -349,7 +349,7 @@ export class ErpPurchasingService {
     return this.get(scope, publicId);
   }
 
-  private async lock(tx: Tx, scope: ErpScope, publicId: string) {
+  private async lock(tx: ErpTx, scope: ErpScope, publicId: string) {
     const found = await tx.erpPurchaseOrder.findFirst({ where: { factoryId: scope.factory.id, publicId } });
     if (!found) throw new DomainException('http.not_found');
     await tx.$queryRaw`SELECT id FROM erp_purchase_orders WHERE id = ${found.id} FOR UPDATE`;
@@ -976,7 +976,7 @@ export class ErpPurchasingService {
 
   /** D-347: raises a price-rise alert when `base` (per base unit) is above the last paid by the threshold. */
   private async priceAlert(
-    tx: Tx,
+    tx: ErpTx,
     scope: ErpScope,
     settings: ErpFactorySettings,
     p: { item: ErpItem; supplier: ErpTradingPartner; base: MoneyValue; documentNo: string; key: string },
@@ -1006,7 +1006,7 @@ export class ErpPurchasingService {
 
   /** D-350: charges with their split over receipt lines (by value or by accepted base quantity). */
   private async chargeParts(
-    tx: Tx,
+    tx: ErpTx,
     scope: ErpScope,
     inputs: ErpChargeInput[],
     lines: { amount: MoneyValue; base: MoneyValue }[],

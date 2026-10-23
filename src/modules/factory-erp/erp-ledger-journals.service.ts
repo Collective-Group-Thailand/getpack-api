@@ -6,8 +6,13 @@ import { MoneyDecimal } from '@common/money/money';
 import { type ActionRule, nextActions } from '@common/next-actions/next-actions';
 import { paginated, toSkipTake } from '@common/pagination/pagination';
 import { bangkokDate } from '@common/time/bangkok';
-import { type Tx } from '@database/prisma.service';
-import { type ErpGlRecurringJournal, type JournalKind, type JournalStatus, Prisma } from '@generated/prisma/client';
+import { type ErpTx } from '@database/erp-prisma.service';
+import {
+  type ErpGlRecurringJournal,
+  type JournalKind,
+  type JournalStatus,
+  Prisma,
+} from '@generated/prisma-erp/client';
 import { Injectable } from '@nestjs/common';
 import { AuditService } from '@platform/audit/audit.service';
 import { ScheduledJob } from '@platform/maintenance/scheduled-job.decorator';
@@ -40,7 +45,15 @@ import { type ErpScope, ErpWorkspace } from './erp-workspace.service';
 
 const JOURNAL_INCLUDE = {
   lines: {
-    include: { account: true, item: true, partner: true, warehouse: true, productionOrder: true, machine: true, bankAccount: true },
+    include: {
+      account: true,
+      item: true,
+      partner: true,
+      warehouse: true,
+      productionOrder: true,
+      machine: true,
+      bankAccount: true,
+    },
     orderBy: { lineNo: 'asc' as const },
   },
   postingRule: true,
@@ -53,20 +66,57 @@ type JournalRow = Prisma.ErpGlJournalEntryGetPayload<{ include: typeof JOURNAL_I
 
 type JournalFacts = { kind: JournalKind; status: JournalStatus; own: boolean; reversed: boolean };
 const JOURNAL_ACTIONS: ActionRule<JournalFacts>[] = [
-  { key: 'erp_journal.edit', permissions: ['factory_ledger.post'], when: (j) => j.kind === 'manual' && j.status === 'draft' },
-  { key: 'erp_journal.submit', permissions: ['factory_ledger.post'], when: (j) => j.kind === 'manual' && j.status === 'draft' },
-  { key: 'erp_journal.approve', permissions: ['factory_ledger.approve'], when: (j) => (j.status === 'pending_approval' ? (j.own ? 'ต้องให้ผู้อนุมัติคนอื่นอนุมัติรายการของตัวเอง' : true) : false) },
-  { key: 'erp_journal.reject', permissions: ['factory_ledger.approve'], when: (j) => j.status === 'pending_approval' },
-  { key: 'erp_journal.delete', permissions: ['factory_ledger.post'], when: (j) => j.kind === 'manual' && j.status === 'draft' },
-  { key: 'erp_journal.reverse', permissions: ['factory_ledger.post'], irreversible: true, when: (j) => (j.status === 'posted' && j.kind !== 'reversal' ? (j.reversed ? 'กลับรายการแล้ว' : true) : false) },
+  {
+    key: 'erp_journal.edit',
+    permissions: ['factory_ledger.post'],
+    when: (j) => j.kind === 'manual' && j.status === 'draft',
+  },
+  {
+    key: 'erp_journal.submit',
+    permissions: ['factory_ledger.post'],
+    when: (j) => j.kind === 'manual' && j.status === 'draft',
+  },
+  {
+    key: 'erp_journal.approve',
+    permissions: ['factory_ledger.approve'],
+    when: (j) =>
+      j.status === 'pending_approval'
+        ? j.own
+          ? 'ต้องให้ผู้อนุมัติคนอื่นอนุมัติรายการของตัวเอง'
+          : true
+        : false,
+  },
+  {
+    key: 'erp_journal.reject',
+    permissions: ['factory_ledger.approve'],
+    when: (j) => j.status === 'pending_approval',
+  },
+  {
+    key: 'erp_journal.delete',
+    permissions: ['factory_ledger.post'],
+    when: (j) => j.kind === 'manual' && j.status === 'draft',
+  },
+  {
+    key: 'erp_journal.reverse',
+    permissions: ['factory_ledger.post'],
+    irreversible: true,
+    when: (j) =>
+      j.status === 'posted' && j.kind !== 'reversal' ? (j.reversed ? 'กลับรายการแล้ว' : true) : false,
+  },
 ];
 const RECURRING_ACTIONS: ActionRule<{ status: string }>[] = [
   { key: 'erp_recurring.edit', permissions: ['factory_ledger.post'], when: () => true },
   { key: 'erp_recurring.run', permissions: ['factory_ledger.post'], when: (r) => r.status === 'active' },
 ];
 
-const sourceDto = (e: { sourceDocumentType: string | null; sourceDocumentPublicId: string | null; sourceDocumentNo: string | null }): ErpGlSourceDocDto | null =>
-  e.sourceDocumentType && e.sourceDocumentPublicId ? { type: e.sourceDocumentType, id: e.sourceDocumentPublicId, number: e.sourceDocumentNo } : null;
+const sourceDto = (e: {
+  sourceDocumentType: string | null;
+  sourceDocumentPublicId: string | null;
+  sourceDocumentNo: string | null;
+}): ErpGlSourceDocDto | null =>
+  e.sourceDocumentType && e.sourceDocumentPublicId
+    ? { type: e.sourceDocumentType, id: e.sourceDocumentPublicId, number: e.sourceDocumentNo }
+    : null;
 const entryRef = (e: { publicId: string; entryNo: string | null } | null): ErpGlSourceDocDto | null =>
   e ? { type: 'erp_gl_journal_entry', id: e.publicId, number: e.entryNo } : null;
 
@@ -91,7 +141,9 @@ export class ErpLedgerJournalsService {
       item: l.item ? itemRef(l.item) : null,
       partner: l.partner ? partnerRef(l.partner) : null,
       warehouse: l.warehouse ? warehouseRef(l.warehouse) : null,
-      productionOrder: l.productionOrder ? { id: l.productionOrder.publicId, code: l.productionOrder.moNo, name: l.productionOrder.title } : null,
+      productionOrder: l.productionOrder
+        ? { id: l.productionOrder.publicId, code: l.productionOrder.moNo, name: l.productionOrder.title }
+        : null,
       machine: l.machine ? { id: l.machine.publicId, name: l.machine.name } : null,
       bankAccount: l.bankAccount ? { id: l.bankAccount.publicId, name: l.bankAccount.name } : null,
       taxCode: l.taxCode,
@@ -123,7 +175,12 @@ export class ErpLedgerJournalsService {
       approvedBy: e.approvedBy?.displayName ?? null,
       postedAt: isoTs(e.postedAt),
       nextActions: nextActions(
-        { kind: e.kind, status: e.status, own: e.createdById === scope.actor.userId, reversed: !!e.reversedBy },
+        {
+          kind: e.kind,
+          status: e.status,
+          own: e.createdById === scope.actor.userId,
+          reversed: !!e.reversedBy,
+        },
         JOURNAL_ACTIONS,
         perms,
       ),
@@ -137,26 +194,49 @@ export class ErpLedgerJournalsService {
       factoryId: scope.factory.id,
       ...(q.kind && { kind: q.kind as JournalKind }),
       ...(q.status && { status: q.status as JournalStatus }),
-      ...(q.month && { entryDate: { gte: dateOnly(`${q.month}-01`), lt: dateOnly(addMonths(`${q.month}-01`, 1)) } }),
+      ...(q.month && {
+        entryDate: { gte: dateOnly(`${q.month}-01`), lt: dateOnly(addMonths(`${q.month}-01`, 1)) },
+      }),
       ...(q.accountCode && { lines: { some: { account: { code: q.accountCode } } } }),
       ...(q.sourceId && { sourceDocumentPublicId: q.sourceId }),
-      ...(q.q && { OR: [{ entryNo: { contains: q.q, mode: 'insensitive' } }, { description: { contains: q.q, mode: 'insensitive' } }, { sourceDocumentNo: { contains: q.q, mode: 'insensitive' } }] }),
+      ...(q.q && {
+        OR: [
+          { entryNo: { contains: q.q, mode: 'insensitive' } },
+          { description: { contains: q.q, mode: 'insensitive' } },
+          { sourceDocumentNo: { contains: q.q, mode: 'insensitive' } },
+        ],
+      }),
     };
     const [rows, total] = await Promise.all([
-      this.workspace.db.erpGlJournalEntry.findMany({ where, include: JOURNAL_INCLUDE, orderBy: [{ entryDate: 'desc' }, { id: 'desc' }], ...toSkipTake(q) }),
+      this.workspace.db.erpGlJournalEntry.findMany({
+        where,
+        include: JOURNAL_INCLUDE,
+        orderBy: [{ entryDate: 'desc' }, { id: 'desc' }],
+        ...toSkipTake(q),
+      }),
       this.workspace.db.erpGlJournalEntry.count({ where }),
     ]);
-    return paginated(rows.map((e) => this.journalDto(e, scope, perms)), total, q);
+    return paginated(
+      rows.map((e) => this.journalDto(e, scope, perms)),
+      total,
+      q,
+    );
   }
 
   async get(scope: ErpScope, publicId: string, perms: ReadonlySet<string>): Promise<ErpGlJournalDto> {
-    const e = await this.workspace.db.erpGlJournalEntry.findFirst({ where: { factoryId: scope.factory.id, publicId }, include: JOURNAL_INCLUDE });
+    const e = await this.workspace.db.erpGlJournalEntry.findFirst({
+      where: { factoryId: scope.factory.id, publicId },
+      include: JOURNAL_INCLUDE,
+    });
     if (!e) throw new DomainException('http.not_found');
     return this.journalDto(e, scope, perms);
   }
 
-  private async row(tx: Tx, scope: ErpScope, publicId: string): Promise<JournalRow> {
-    const e = await tx.erpGlJournalEntry.findFirst({ where: { factoryId: scope.factory.id, publicId }, include: JOURNAL_INCLUDE });
+  private async row(tx: ErpTx, scope: ErpScope, publicId: string): Promise<JournalRow> {
+    const e = await tx.erpGlJournalEntry.findFirst({
+      where: { factoryId: scope.factory.id, publicId },
+      include: JOURNAL_INCLUDE,
+    });
     if (!e) throw new DomainException('http.not_found');
     return e;
   }
@@ -182,11 +262,23 @@ export class ErpLedgerJournalsService {
     }));
   }
 
-  async create(scope: ErpScope, body: ErpGlSaveJournalDto, perms: ReadonlySet<string>): Promise<ErpGlJournalDto> {
+  async create(
+    scope: ErpScope,
+    body: ErpGlSaveJournalDto,
+    perms: ReadonlySet<string>,
+  ): Promise<ErpGlJournalDto> {
     const id = await this.workspace.tx(async (tx) => {
       const settings = await this.ledger.book(tx, scope.factory.id, scope.actor.userId);
       if (body.documentDate < dayOf(settings.ledgerStartOn))
-        throw new DomainException('validation.failed', { errors: [{ path: 'documentDate', code: 'invalid', message: `Before the ledger start ${dayOf(settings.ledgerStartOn)}` }] });
+        throw new DomainException('validation.failed', {
+          errors: [
+            {
+              path: 'documentDate',
+              code: 'invalid',
+              message: `Before the ledger start ${dayOf(settings.ledgerStartOn)}`,
+            },
+          ],
+        });
       const entry = await this.ledger.createEntry(
         tx,
         scope.factory.id,
@@ -201,20 +293,39 @@ export class ErpLedgerJournalsService {
         },
         body.submit ? 'pending_approval' : 'draft',
       );
-      await this.workspace.record(tx, scope, body.submit ? 'erp_journal.submitted' : 'erp_journal.drafted', 'erp_gl_journal_entry', entry.publicId, {});
+      await this.workspace.record(
+        tx,
+        scope,
+        body.submit ? 'erp_journal.submitted' : 'erp_journal.drafted',
+        'erp_gl_journal_entry',
+        entry.publicId,
+        {},
+      );
       return entry.publicId;
     });
     return this.get(scope, id, perms);
   }
 
-  async update(scope: ErpScope, publicId: string, ifMatch: string | undefined, body: ErpGlSaveJournalDto, perms: ReadonlySet<string>): Promise<ErpGlJournalDto> {
+  async update(
+    scope: ErpScope,
+    publicId: string,
+    ifMatch: string | undefined,
+    body: ErpGlSaveJournalDto,
+    perms: ReadonlySet<string>,
+  ): Promise<ErpGlJournalDto> {
     await this.workspace.tx(async (tx) => {
       const settings = await this.ledger.book(tx, scope.factory.id, scope.actor.userId);
       const e = await this.row(tx, scope, publicId);
       assertIfMatch(ifMatch, etagOf(e.publicId, e.rowVersion));
-      if (e.kind !== 'manual' || e.status !== 'draft') throw new DomainException('erp.ledger_journal_not_editable', { params: { status: e.status } });
+      if (e.kind !== 'manual' || e.status !== 'draft')
+        throw new DomainException('erp.ledger_journal_not_editable', { params: { status: e.status } });
       const lines = await this.ledger.validateLines(tx, scope.factory.id, 'manual', this.draftLines(body));
-      const { period, entryDate } = await this.ledger.postingPeriod(tx, scope.factory.id, settings.fiscalYearStartMonth, body.documentDate);
+      const { period, entryDate } = await this.ledger.postingPeriod(
+        tx,
+        scope.factory.id,
+        settings.fiscalYearStartMonth,
+        body.documentDate,
+      );
       const total = lines.reduce((a, l) => a.plus(l.debit), new MoneyDecimal(0));
       await tx.erpGlJournalLine.deleteMany({ where: { entryId: e.id } });
       await tx.erpGlJournalEntry.update({
@@ -246,7 +357,14 @@ export class ErpLedgerJournalsService {
           },
         },
       });
-      await this.workspace.record(tx, scope, body.submit ? 'erp_journal.submitted' : 'erp_journal.updated', 'erp_gl_journal_entry', e.publicId, {});
+      await this.workspace.record(
+        tx,
+        scope,
+        body.submit ? 'erp_journal.submitted' : 'erp_journal.updated',
+        'erp_gl_journal_entry',
+        e.publicId,
+        {},
+      );
     });
     return this.get(scope, publicId, perms);
   }
@@ -254,8 +372,12 @@ export class ErpLedgerJournalsService {
   async submit(scope: ErpScope, publicId: string, perms: ReadonlySet<string>): Promise<ErpGlJournalDto> {
     await this.workspace.tx(async (tx) => {
       const e = await this.row(tx, scope, publicId);
-      if (e.kind !== 'manual' || e.status !== 'draft') throw new DomainException('erp.ledger_journal_not_editable', { params: { status: e.status } });
-      await tx.erpGlJournalEntry.update({ where: { id: e.id }, data: { status: 'pending_approval', rowVersion: { increment: 1 } } });
+      if (e.kind !== 'manual' || e.status !== 'draft')
+        throw new DomainException('erp.ledger_journal_not_editable', { params: { status: e.status } });
+      await tx.erpGlJournalEntry.update({
+        where: { id: e.id },
+        data: { status: 'pending_approval', rowVersion: { increment: 1 } },
+      });
       await this.workspace.record(tx, scope, 'erp_journal.submitted', 'erp_gl_journal_entry', e.publicId, {});
     });
     return this.get(scope, publicId, perms);
@@ -265,9 +387,13 @@ export class ErpLedgerJournalsService {
     await this.workspace.tx(async (tx) => {
       const settings = await this.ledger.book(tx, scope.factory.id, scope.actor.userId);
       const e = await this.row(tx, scope, publicId);
-      if (e.status !== 'pending_approval') throw new DomainException('erp.ledger_journal_not_editable', { params: { status: e.status } });
+      if (e.status !== 'pending_approval')
+        throw new DomainException('erp.ledger_journal_not_editable', { params: { status: e.status } });
       if (e.createdById === scope.actor.userId) throw new DomainException('erp.ledger_self_approval');
-      const posted = await this.ledger.postExisting(tx, settings, e.id, scope.actor, { approvedById: scope.actor.userId, allowSoftClosed: perms.has('factory_ledger.close') });
+      const posted = await this.ledger.postExisting(tx, settings, e.id, scope.actor, {
+        approvedById: scope.actor.userId,
+        allowSoftClosed: perms.has('factory_ledger.close'),
+      });
       await this.audit.record(tx, {
         category: 'finance',
         action: 'erp_ledger.journal_approved',
@@ -275,16 +401,27 @@ export class ErpLedgerJournalsService {
         resourcePublicId: e.publicId,
         data: { entryNo: posted.entryNo, total: money(dec(posted.totalDebit)) },
       });
-      await this.workspace.record(tx, scope, 'erp_journal.posted', 'erp_gl_journal_entry', e.publicId, { entryNo: posted.entryNo });
+      await this.workspace.record(tx, scope, 'erp_journal.posted', 'erp_gl_journal_entry', e.publicId, {
+        entryNo: posted.entryNo,
+      });
     });
     return this.get(scope, publicId, perms);
   }
 
-  async reject(scope: ErpScope, publicId: string, reason: string, perms: ReadonlySet<string>): Promise<ErpGlJournalDto> {
+  async reject(
+    scope: ErpScope,
+    publicId: string,
+    reason: string,
+    perms: ReadonlySet<string>,
+  ): Promise<ErpGlJournalDto> {
     await this.workspace.tx(async (tx) => {
       const e = await this.row(tx, scope, publicId);
-      if (e.status !== 'pending_approval') throw new DomainException('erp.ledger_journal_not_editable', { params: { status: e.status } });
-      await tx.erpGlJournalEntry.update({ where: { id: e.id }, data: { status: 'rejected', rejectionReason: reason, rowVersion: { increment: 1 } } });
+      if (e.status !== 'pending_approval')
+        throw new DomainException('erp.ledger_journal_not_editable', { params: { status: e.status } });
+      await tx.erpGlJournalEntry.update({
+        where: { id: e.id },
+        data: { status: 'rejected', rejectionReason: reason, rowVersion: { increment: 1 } },
+      });
       await this.workspace.record(tx, scope, 'erp_journal.rejected', 'erp_gl_journal_entry', e.publicId, {});
     });
     return this.get(scope, publicId, perms);
@@ -293,18 +430,32 @@ export class ErpLedgerJournalsService {
   async remove(scope: ErpScope, publicId: string): Promise<void> {
     await this.workspace.tx(async (tx) => {
       const e = await this.row(tx, scope, publicId);
-      if (e.kind !== 'manual' || e.status !== 'draft') throw new DomainException('erp.ledger_journal_not_editable', { params: { status: e.status } });
+      if (e.kind !== 'manual' || e.status !== 'draft')
+        throw new DomainException('erp.ledger_journal_not_editable', { params: { status: e.status } });
       await tx.erpGlJournalLine.deleteMany({ where: { entryId: e.id } });
       await tx.erpGlJournalEntry.delete({ where: { id: e.id } });
       await this.workspace.record(tx, scope, 'erp_journal.deleted', 'erp_gl_journal_entry', e.publicId, {});
     });
   }
 
-  async reverse(scope: ErpScope, publicId: string, body: ErpGlReverseJournalDto, perms: ReadonlySet<string>): Promise<ErpGlJournalDto> {
+  async reverse(
+    scope: ErpScope,
+    publicId: string,
+    body: ErpGlReverseJournalDto,
+    perms: ReadonlySet<string>,
+  ): Promise<ErpGlJournalDto> {
     const id = await this.workspace.tx(async (tx) => {
       const settings = await this.ledger.book(tx, scope.factory.id, scope.actor.userId);
       const e = await this.row(tx, scope, publicId);
-      const reversal = await this.ledger.reverse(tx, settings, e, body.documentDate, body.reason, scope.actor, scope.actor.userId);
+      const reversal = await this.ledger.reverse(
+        tx,
+        settings,
+        e,
+        body.documentDate,
+        body.reason,
+        scope.actor,
+        scope.actor.userId,
+      );
       await this.audit.record(tx, {
         category: 'finance',
         action: 'erp_ledger.journal_reversed',
@@ -312,7 +463,9 @@ export class ErpLedgerJournalsService {
         resourcePublicId: e.publicId,
         data: { reversal: reversal.entryNo, reason: body.reason },
       });
-      await this.workspace.record(tx, scope, 'erp_journal.reversed', 'erp_gl_journal_entry', e.publicId, { reversal: reversal.entryNo });
+      await this.workspace.record(tx, scope, 'erp_journal.reversed', 'erp_gl_journal_entry', e.publicId, {
+        reversal: reversal.entryNo,
+      });
       return reversal.publicId;
     });
     return this.get(scope, id, perms);
@@ -333,29 +486,45 @@ export class ErpLedgerJournalsService {
       lines,
       status: r.status,
       lastRunMonth: r.lastRunMonth,
-      total: money(lines.filter((l) => l.side === 'debit').reduce((a, l) => a.plus(dec(l.amount)), new MoneyDecimal(0))),
+      total: money(
+        lines.filter((l) => l.side === 'debit').reduce((a, l) => a.plus(dec(l.amount)), new MoneyDecimal(0)),
+      ),
       nextActions: nextActions({ status: r.status }, RECURRING_ACTIONS, perms),
       version: r.rowVersion,
     };
   }
 
   async listRecurring(scope: ErpScope, perms: ReadonlySet<string>): Promise<ErpGlRecurringDto[]> {
-    const rows = await this.workspace.db.erpGlRecurringJournal.findMany({ where: { factoryId: scope.factory.id }, orderBy: [{ status: 'asc' }, { name: 'asc' }] });
+    const rows = await this.workspace.db.erpGlRecurringJournal.findMany({
+      where: { factoryId: scope.factory.id },
+      orderBy: [{ status: 'asc' }, { name: 'asc' }],
+    });
     return rows.map((r) => this.recurringDto(r, perms));
   }
 
-  private async checkRecurring(tx: Tx, scope: ErpScope, body: ErpGlSaveRecurringDto): Promise<void> {
+  private async checkRecurring(tx: ErpTx, scope: ErpScope, body: ErpGlSaveRecurringDto): Promise<void> {
     await this.ledger.validateLines(
       tx,
       scope.factory.id,
       'recurring',
-      body.lines.map((l) => ({ accountCode: l.accountCode, side: l.side as 'debit', amount: l.amount, description: l.description ?? null })),
+      body.lines.map((l) => ({
+        accountCode: l.accountCode,
+        side: l.side as 'debit',
+        amount: l.amount,
+        description: l.description ?? null,
+      })),
     );
     if (body.endOn && body.endOn < body.startOn)
-      throw new DomainException('validation.failed', { errors: [{ path: 'endOn', code: 'invalid', message: 'Before the start' }] });
+      throw new DomainException('validation.failed', {
+        errors: [{ path: 'endOn', code: 'invalid', message: 'Before the start' }],
+      });
   }
 
-  async createRecurring(scope: ErpScope, body: ErpGlSaveRecurringDto, perms: ReadonlySet<string>): Promise<ErpGlRecurringDto> {
+  async createRecurring(
+    scope: ErpScope,
+    body: ErpGlSaveRecurringDto,
+    perms: ReadonlySet<string>,
+  ): Promise<ErpGlRecurringDto> {
     const r = await this.workspace.tx(async (tx) => {
       await this.ledger.book(tx, scope.factory.id, scope.actor.userId);
       await this.checkRecurring(tx, scope, body);
@@ -373,15 +542,30 @@ export class ErpLedgerJournalsService {
           createdById: scope.actor.userId,
         },
       });
-      await this.workspace.record(tx, scope, 'erp_recurring_journal.created', 'erp_gl_recurring_journal', row.publicId, {});
+      await this.workspace.record(
+        tx,
+        scope,
+        'erp_recurring_journal.created',
+        'erp_gl_recurring_journal',
+        row.publicId,
+        {},
+      );
       return row;
     });
     return this.recurringDto(r, perms);
   }
 
-  async updateRecurring(scope: ErpScope, publicId: string, ifMatch: string | undefined, body: ErpGlSaveRecurringDto, perms: ReadonlySet<string>): Promise<ErpGlRecurringDto> {
+  async updateRecurring(
+    scope: ErpScope,
+    publicId: string,
+    ifMatch: string | undefined,
+    body: ErpGlSaveRecurringDto,
+    perms: ReadonlySet<string>,
+  ): Promise<ErpGlRecurringDto> {
     const r = await this.workspace.tx(async (tx) => {
-      const row = await tx.erpGlRecurringJournal.findFirst({ where: { factoryId: scope.factory.id, publicId } });
+      const row = await tx.erpGlRecurringJournal.findFirst({
+        where: { factoryId: scope.factory.id, publicId },
+      });
       if (!row) throw new DomainException('http.not_found');
       assertIfMatch(ifMatch, etagOf(row.publicId, row.rowVersion));
       await this.checkRecurring(tx, scope, body);
@@ -400,14 +584,27 @@ export class ErpLedgerJournalsService {
           rowVersion: { increment: 1 },
         },
       });
-      await this.workspace.record(tx, scope, 'erp_recurring_journal.updated', 'erp_gl_recurring_journal', row.publicId, {});
+      await this.workspace.record(
+        tx,
+        scope,
+        'erp_recurring_journal.updated',
+        'erp_gl_recurring_journal',
+        row.publicId,
+        {},
+      );
       return updated;
     });
     return this.recurringDto(r, perms);
   }
 
   /** Posts one recurring journal for `month` now (the job, or "run now"); `null` when it already ran that month. */
-  async runRecurring(tx: Tx, r: ErpGlRecurringJournal, month: string, factoryPublicId: string, actor: Actor) {
+  async runRecurring(
+    tx: ErpTx,
+    r: ErpGlRecurringJournal,
+    month: string,
+    factoryPublicId: string,
+    actor: Actor,
+  ) {
     if (r.lastRunMonth && r.lastRunMonth >= month) return null;
     const byUserId = actorColumns(actor).actorUserId;
     const settings = await this.ledger.book(tx, r.factoryId, byUserId);
@@ -425,23 +622,42 @@ export class ErpLedgerJournalsService {
         autoReverseOn: r.autoReverse ? addMonths(`${month}-01`, 1) : null,
         createdById: byUserId,
         approvedById: byUserId,
-        lines: lines.map((l) => ({ accountCode: l.accountCode, side: l.side as 'debit', amount: l.amount, description: l.description ?? null })),
+        lines: lines.map((l) => ({
+          accountCode: l.accountCode,
+          side: l.side as 'debit',
+          amount: l.amount,
+          description: l.description ?? null,
+        })),
       },
       actor,
     );
     await tx.erpGlRecurringJournal.update({ where: { id: r.id }, data: { lastRunMonth: month } });
-    await this.workspace.recordSystem(tx, factoryPublicId, 'erp_recurring_journal.posted', 'erp_gl_recurring_journal', r.publicId, { entryNo: entry.entryNo, month });
+    await this.workspace.recordSystem(
+      tx,
+      factoryPublicId,
+      'erp_recurring_journal.posted',
+      'erp_gl_recurring_journal',
+      r.publicId,
+      { entryNo: entry.entryNo, month },
+    );
     return entry;
   }
 
-  async runRecurringNow(scope: ErpScope, publicId: string, perms: ReadonlySet<string>): Promise<ErpGlJournalDto> {
+  async runRecurringNow(
+    scope: ErpScope,
+    publicId: string,
+    perms: ReadonlySet<string>,
+  ): Promise<ErpGlJournalDto> {
     const id = await this.workspace.tx(async (tx) => {
-      const r = await tx.erpGlRecurringJournal.findFirst({ where: { factoryId: scope.factory.id, publicId } });
+      const r = await tx.erpGlRecurringJournal.findFirst({
+        where: { factoryId: scope.factory.id, publicId },
+      });
       if (!r) throw new DomainException('http.not_found');
       if (r.status !== 'active') throw new DomainException('erp.archived', { params: { name: r.name } });
       const month = bangkokDate(new Date()).slice(0, 7);
       const entry = await this.runRecurring(tx, r, month, scope.factory.publicId, scope.actor);
-      if (!entry) throw new DomainException('erp.ledger_already_posted', { params: { entryNo: `${r.name} ${month}` } });
+      if (!entry)
+        throw new DomainException('erp.ledger_already_posted', { params: { entryNo: `${r.name} ${month}` } });
       return entry.publicId;
     });
     return this.get(scope, id, perms);
@@ -454,14 +670,21 @@ export class ErpLedgerJournalsService {
     const month = today.slice(0, 7);
     const dayNo = Number(today.slice(8, 10));
     const due = await this.workspace.db.erpGlRecurringJournal.findMany({
-      where: { status: 'active', dayOfMonth: { lte: dayNo }, startOn: { lte: dateOnly(today) }, OR: [{ endOn: null }, { endOn: { gte: dateOnly(`${month}-01`) } }], NOT: { lastRunMonth: month } },
+      where: {
+        status: 'active',
+        dayOfMonth: { lte: dayNo },
+        startOn: { lte: dateOnly(today) },
+        OR: [{ endOn: null }, { endOn: { gte: dateOnly(`${month}-01`) } }],
+        NOT: { lastRunMonth: month },
+      },
       include: { factory: { select: { publicId: true } } },
     });
     let posted = 0;
     for (const r of due) {
       try {
         await this.workspace.tx(async (tx) => {
-          if (await this.runRecurring(tx, r, month, r.factory.publicId, systemActor('factory-erp.recurring'))) posted++;
+          if (await this.runRecurring(tx, r, month, r.factory.publicId, systemActor('factory-erp.recurring')))
+            posted++;
         });
       } catch {
         // a closed period or a retired account: the next run retries; the owner sees the gap in the journal list
@@ -483,8 +706,23 @@ export class ErpLedgerJournalsService {
       try {
         await this.workspace.tx(async (tx) => {
           const settings = await this.ledger.book(tx, e.factoryId, null);
-          const reversal = await this.ledger.reverse(tx, settings, e, dayOf(e.autoReverseOn!), 'กลับรายการค้างรับ/ค้างจ่ายอัตโนมัติ', systemActor('factory-erp.auto_reverse'), null);
-          await this.workspace.recordSystem(tx, e.factory.publicId, 'erp_journal.auto_reversed', 'erp_gl_journal_entry', e.publicId, { reversal: reversal.entryNo });
+          const reversal = await this.ledger.reverse(
+            tx,
+            settings,
+            e,
+            dayOf(e.autoReverseOn!),
+            'กลับรายการค้างรับ/ค้างจ่ายอัตโนมัติ',
+            systemActor('factory-erp.auto_reverse'),
+            null,
+          );
+          await this.workspace.recordSystem(
+            tx,
+            e.factory.publicId,
+            'erp_journal.auto_reversed',
+            'erp_gl_journal_entry',
+            e.publicId,
+            { reversal: reversal.entryNo },
+          );
           posted++;
         });
       } catch {
@@ -500,12 +738,31 @@ export class ErpLedgerJournalsService {
   async exportCsv(scope: ErpScope, month: string): Promise<ErpTaxExportResultDto> {
     await this.workspace.tx((tx) => this.ledger.book(tx, scope.factory.id, scope.actor.userId));
     const rows = await this.workspace.db.erpGlJournalLine.findMany({
-      where: { factoryId: scope.factory.id, entry: { status: 'posted' }, entryDate: { gte: dateOnly(`${month}-01`), lt: dateOnly(addMonths(`${month}-01`, 1)) } },
+      where: {
+        factoryId: scope.factory.id,
+        entry: { status: 'posted' },
+        entryDate: { gte: dateOnly(`${month}-01`), lt: dateOnly(addMonths(`${month}-01`, 1)) },
+      },
       include: { account: true, entry: true, partner: true },
       orderBy: [{ entryDate: 'asc' }, { entry: { entryNo: 'asc' } }, { lineNo: 'asc' }],
     });
     const esc = (v: string | null | undefined) => `"${(v ?? '').replace(/"/g, '""')}"`;
-    const header = ['entry_no', 'entry_date', 'document_date', 'kind', 'account_code', 'account_name', 'debit', 'credit', 'description', 'source_type', 'source_no', 'partner', 'tax_code', 'tax_base'];
+    const header = [
+      'entry_no',
+      'entry_date',
+      'document_date',
+      'kind',
+      'account_code',
+      'account_name',
+      'debit',
+      'credit',
+      'description',
+      'source_type',
+      'source_no',
+      'partner',
+      'tax_code',
+      'tax_base',
+    ];
     const lines = rows.map((l) =>
       [
         l.entry.entryNo,

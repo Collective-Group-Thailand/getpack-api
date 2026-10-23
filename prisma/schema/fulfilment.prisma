@@ -292,7 +292,7 @@ model Proof {
   dielineFile   FileObject?        @relation("ProofDielineFile", fields: [dielineFileId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_proofs__dieline_file_id")
   approvedFile  FileObject?        @relation("ProofApprovedFile", fields: [approvedFileId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_proofs__approved_file_id")
   preparedBy    User               @relation("ProofPreparedBy", fields: [preparedById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_proofs__prepared_by")
-  decidedBy     User?              @relation("ProofDecidedBy", fields: [decidedByUserId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_proofs__decided_by_user_id")
+  decidedBy     User?              @relation("ProofDecidedBy", fields: [decidedByUserId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_proofs__decided_by_user_id") // client: keep
   reusedFrom    Proof?             @relation("ProofReusedFrom", fields: [reusedFromProofId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_proofs__reused_from_proof_id")
   reusedBy      Proof[]            @relation("ProofReusedFrom")
   annotations   ProofAnnotation[]
@@ -335,7 +335,7 @@ model ProofAnnotation {
   parent     ProofAnnotation?  @relation("ProofAnnotationReplies", fields: [parentId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_proof_annotations__parent_id")
   replies    ProofAnnotation[] @relation("ProofAnnotationReplies")
   author     User              @relation("ProofAnnotationAuthor", fields: [authorUserId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_proof_annotations__author_user_id")
-  resolvedBy User?             @relation("ProofAnnotationResolvedBy", fields: [resolvedById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_proof_annotations__resolved_by")
+  resolvedBy User?             @relation("ProofAnnotationResolvedBy", fields: [resolvedById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_proof_annotations__resolved_by") // client: keep
 
   @@index([proofId, createdAt], map: "ix_proof_annotations__proof_id__created_at")
   @@index([parentId], map: "ix_proof_annotations__parent_id")
@@ -1025,7 +1025,7 @@ model QcCheck {
 
   job         ProductionJob @relation(fields: [jobId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_qc_checks__job_id")
   factory     Factory       @relation("QcCheckFactory", fields: [factoryId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_qc_checks__factory_id")
-  performedBy User?         @relation("QcCheckPerformedBy", fields: [performedById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_qc_checks__performed_by")
+  performedBy User?         @relation("QcCheckPerformedBy", fields: [performedById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_qc_checks__performed_by") // client: keep
 
   @@index([jobId, performedAt], map: "ix_qc_checks__job_id__performed_at")
   @@index([factoryId, performedAt], map: "ix_qc_checks__factory_id__performed_at")
@@ -1089,7 +1089,7 @@ model JobIssue {
 
   job        ProductionJob @relation(fields: [jobId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_job_issues__job_id")
   factory    Factory       @relation("JobIssueFactory", fields: [factoryId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_job_issues__factory_id")
-  raisedBy   User?         @relation("JobIssueRaisedBy", fields: [raisedById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_job_issues__raised_by")
+  raisedBy   User?         @relation("JobIssueRaisedBy", fields: [raisedById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_job_issues__raised_by") // client: keep
   resolvedBy User?         @relation("JobIssueResolvedBy", fields: [resolvedById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_job_issues__resolved_by")
 
   @@index([jobId], map: "ix_job_issues__job_id")
@@ -1247,7 +1247,7 @@ model Shipment {
   carrierRequestedBy   User?                            @relation("ShipmentCarrierRequestedBy", fields: [carrierRequestedById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_shipments__carrier_requested_by")
   splitFrom            Shipment?                        @relation("ShipmentSplitFrom", fields: [splitFromId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_shipments__split_from_id")
   splits               Shipment[]                       @relation("ShipmentSplitFrom")
-  exceptionResolvedBy  User?                            @relation("ShipmentExceptionResolvedBy", fields: [exceptionResolvedById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_shipments__exception_resolved_by")
+  exceptionResolvedBy  User?                            @relation("ShipmentExceptionResolvedBy", fields: [exceptionResolvedById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_shipments__exception_resolved_by") // client: keep
   entity               Entity                           @relation("ShipmentEntity", fields: [entityId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_shipments__entity_id")
   factory              Factory                          @relation("ShipmentFactory", fields: [factoryId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_shipments__factory_id")
   carrier              Carrier                          @relation("ShipmentCarrier", fields: [carrierId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_shipments__carrier_id")
@@ -1399,7 +1399,7 @@ model ProofOfDeliveryReview {
   reviewedAt        DateTime          @default(now()) @map("reviewed_at") @db.Timestamptz(6)
 
   proofOfDelivery ProofOfDelivery @relation(fields: [proofOfDeliveryId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_proof_of_delivery_reviews__proof_of_delivery_id")
-  reviewedBy      User            @relation("ProofOfDeliveryReviewedBy", fields: [reviewedById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_proof_of_delivery_reviews__reviewed_by")
+  reviewedBy      User            @relation("ProofOfDeliveryReviewedBy", fields: [reviewedById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_proof_of_delivery_reviews__reviewed_by") // client: keep
 
   @@index([proofOfDeliveryId, reviewedAt], map: "ix_proof_of_delivery_reviews__pod_id__reviewed_at")
   @@index([reviewedById], map: "ix_proof_of_delivery_reviews__reviewed_by")
@@ -1596,9 +1596,9 @@ model Claim {
   productionJob         ProductionJob?           @relation("ClaimProductionJob", fields: [productionJobId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_claims__production_job_id")
   customer              User                     @relation("ClaimCustomer", fields: [customerUserId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_claims__customer_user_id")
   factory               Factory?                 @relation("ClaimFactory", fields: [factoryId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_claims__factory_id")
-  liabilityOverriddenBy User?                    @relation("ClaimLiabilityOverriddenBy", fields: [liabilityOverriddenById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_claims__liability_overridden_by")
+  liabilityOverriddenBy User?                    @relation("ClaimLiabilityOverriddenBy", fields: [liabilityOverriddenById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_claims__liability_overridden_by") // client: keep
   factoryRespondedBy    User?                    @relation("ClaimFactoryRespondedBy", fields: [factoryRespondedById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_claims__factory_responded_by")
-  decidedBy             User?                    @relation("ClaimDecidedBy", fields: [decidedById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_claims__decided_by")
+  decidedBy             User?                    @relation("ClaimDecidedBy", fields: [decidedById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_claims__decided_by") // client: keep
   createdBy             User?                    @relation("ClaimCreatedBy", fields: [createdById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_claims__created_by")
   resolutions           ClaimResolution[]
   reproductionJobs      ProductionJob[]          @relation("ProductionJobClaim")
@@ -1958,8 +1958,8 @@ model CannedResponse {
   updatedAt   DateTime  @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
   rowVersion  Int       @default(1) @map("row_version")
 
-  createdBy User                  @relation("CannedResponseCreatedBy", fields: [createdById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_canned_responses__created_by")
-  updatedBy User?                 @relation("CannedResponseUpdatedBy", fields: [updatedById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_canned_responses__updated_by")
+  createdBy User                  @relation("CannedResponseCreatedBy", fields: [createdById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_canned_responses__created_by") // client: keep
+  updatedBy User?                 @relation("CannedResponseUpdatedBy", fields: [updatedById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_canned_responses__updated_by") // client: keep
   messages  ConversationMessage[]
 
   @@index([createdById], map: "ix_canned_responses__created_by")
@@ -2173,7 +2173,7 @@ model DesignComment {
   parent     DesignComment?         @relation("DesignCommentThread", fields: [parentId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_design_comments__parent_id")
   replies    DesignComment[]        @relation("DesignCommentThread")
   author     User                   @relation("DesignCommentAuthor", fields: [authorUserId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_design_comments__author_user_id")
-  resolvedBy User?                  @relation("DesignCommentResolvedBy", fields: [resolvedById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_design_comments__resolved_by")
+  resolvedBy User?                  @relation("DesignCommentResolvedBy", fields: [resolvedById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_design_comments__resolved_by") // client: keep
 
   @@index([documentId, createdAt], map: "ix_design_comments__document_id__created_at")
   @@index([versionId], map: "ix_design_comments__version_id")

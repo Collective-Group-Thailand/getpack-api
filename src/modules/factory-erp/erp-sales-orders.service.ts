@@ -2,7 +2,7 @@ import { DomainException } from '@common/errors/domain.exception';
 import { assertIfMatch, etagOf } from '@common/etag/etag';
 import { type ActionRule, nextActions } from '@common/next-actions/next-actions';
 import { paginated, toSkipTake } from '@common/pagination/pagination';
-import { type Tx } from '@database/prisma.service';
+import { type ErpTx } from '@database/erp-prisma.service';
 import {
   type ErpDeliveryStatus,
   type ErpFulfilment,
@@ -10,7 +10,7 @@ import {
   type ErpSalesOrderStatus,
   type ErpVatMode,
   type Prisma,
-} from '@generated/prisma/client';
+} from '@generated/prisma-erp/client';
 import { Injectable } from '@nestjs/common';
 
 import { dec, fmtCost, fmtMoney, fmtQty, money2 } from './erp.math';
@@ -115,7 +115,12 @@ interface DoFacts {
 }
 
 export const DO_ACTIONS: ActionRule<DoFacts>[] = [
-  { key: 'erp_do.issue', permissions: ['factory_delivery.manage'], irreversible: true, when: (d) => d.status === 'draft' },
+  {
+    key: 'erp_do.issue',
+    permissions: ['factory_delivery.manage'],
+    irreversible: true,
+    when: (d) => d.status === 'draft',
+  },
   { key: 'erp_do.deliver', permissions: ['factory_delivery.manage'], when: (d) => d.status === 'issued' },
   {
     key: 'erp_do.invoice',
@@ -180,18 +185,28 @@ export class ErpSalesOrdersService {
       include: SO_INCLUDE,
     });
     if (!row) throw new DomainException('http.not_found');
-    const credit = await this.exposure(this.workspace.db, row.customerId, row.status === 'draft' ? row : null);
+    const credit = await this.exposure(
+      this.workspace.db,
+      row.customerId,
+      row.status === 'draft' ? row : null,
+    );
     return soDto(row, credit, perms);
   }
 
-  async create(scope: ErpScope, body: ErpSaveSalesOrderDto, perms: ReadonlySet<string>): Promise<ErpSalesOrderDto> {
+  async create(
+    scope: ErpScope,
+    body: ErpSaveSalesOrderDto,
+    perms: ReadonlySet<string>,
+  ): Promise<ErpSalesOrderDto> {
     const id = await this.workspace.tx(async (tx) => {
       const data = await this.fields(tx, scope, body, null);
       const soNo = await this.workspace.nextNumber(tx, scope.factory.id, 'so');
       const so = await tx.erpSalesOrder.create({
         data: { factoryId: scope.factory.id, soNo, createdById: scope.actor.userId, ...data },
       });
-      await this.workspace.record(tx, scope, 'erp_sales_order.drafted', 'erp_sales_order', so.publicId, { soNo });
+      await this.workspace.record(tx, scope, 'erp_sales_order.drafted', 'erp_sales_order', so.publicId, {
+        soNo,
+      });
       return so.publicId;
     });
     return this.get(scope, id, perms);
@@ -202,10 +217,15 @@ export class ErpSalesOrdersService {
     const id = await this.workspace.tx(async (tx) => {
       const q = await tx.erpQuotation.findFirst({
         where: { publicId: quotePublicId, factoryId: scope.factory.id },
-        include: { lines: { include: { item: true }, orderBy: { lineNo: 'asc' } }, customer: true, salesOrders: true },
+        include: {
+          lines: { include: { item: true }, orderBy: { lineNo: 'asc' } },
+          customer: true,
+          salesOrders: true,
+        },
       });
       if (!q) throw new DomainException('http.not_found');
-      if (q.status !== 'accepted') throw new DomainException('erp.invalid_status', { params: { status: q.status } });
+      if (q.status !== 'accepted')
+        throw new DomainException('erp.invalid_status', { params: { status: q.status } });
       const existing = q.salesOrders.find((s) => s.status !== 'cancelled');
       if (existing) return existing.publicId;
       const warehouse = await this.workspace.defaultWarehouse(tx, scope.factory.id, scope.actor.userId);
@@ -221,7 +241,11 @@ export class ErpSalesOrdersService {
           customerPoNo: q.customerPoNo,
           orderDate: day(today()),
           deliveryDate: q.leadTimeDays
-            ? day(new Date(Date.parse(`${today()}T00:00:00Z`) + q.leadTimeDays * 86_400_000).toISOString().slice(0, 10))
+            ? day(
+                new Date(Date.parse(`${today()}T00:00:00Z`) + q.leadTimeDays * 86_400_000)
+                  .toISOString()
+                  .slice(0, 10),
+              )
             : null,
           warehouseId: warehouse.id,
           paymentTermDays: q.paymentTermDays,
@@ -242,7 +266,7 @@ export class ErpSalesOrdersService {
               unitPrice: l.unitPrice,
               discountPct: l.discountPct,
               amount: l.amount,
-              fulfilment: (l.itemId ? 'stock' : 'service'),
+              fulfilment: l.itemId ? 'stock' : 'service',
             })),
           },
         },
@@ -266,7 +290,8 @@ export class ErpSalesOrdersService {
     await this.workspace.tx(async (tx) => {
       const so = await this.lock(tx, scope, publicId);
       assertIfMatch(ifMatch, etagOf(so.publicId, so.rowVersion));
-      if (so.status !== 'draft') throw new DomainException('erp.invalid_status', { params: { status: so.status } });
+      if (so.status !== 'draft')
+        throw new DomainException('erp.invalid_status', { params: { status: so.status } });
       const data = await this.fields(tx, scope, body, so);
       await tx.erpSalesOrderLine.deleteMany({ where: { salesOrderId: so.id } });
       await tx.erpSalesOrder.update({
@@ -281,10 +306,16 @@ export class ErpSalesOrdersService {
    * Confirms a draft (D-361): checks the credit limit (an approver may override with a reason), reserves the
    * stock lines from the warehouse and plans a production order for each make-to-order line.
    */
-  async confirm(scope: ErpScope, publicId: string, body: ErpConfirmSalesOrderDto, perms: ReadonlySet<string>) {
+  async confirm(
+    scope: ErpScope,
+    publicId: string,
+    body: ErpConfirmSalesOrderDto,
+    perms: ReadonlySet<string>,
+  ) {
     await this.workspace.tx(async (tx) => {
       const so = await this.lock(tx, scope, publicId);
-      if (so.status !== 'draft') throw new DomainException('erp.invalid_status', { params: { status: so.status } });
+      if (so.status !== 'draft')
+        throw new DomainException('erp.invalid_status', { params: { status: so.status } });
       const customer = await tx.erpTradingPartner.findUniqueOrThrow({ where: { id: so.customerId } });
       const credit = await this.exposure(tx, so.customerId, so);
       let override: string | null = null;
@@ -306,7 +337,13 @@ export class ErpSalesOrdersService {
       });
       for (const line of lines) {
         if (line.fulfilment === 'stock' && line.itemId) {
-          const got = await this.stock.reserve(tx, scope.factory.id, line.itemId, so.warehouseId, dec(line.quantity));
+          const got = await this.stock.reserve(
+            tx,
+            scope.factory.id,
+            line.itemId,
+            so.warehouseId,
+            dec(line.quantity),
+          );
           await tx.erpSalesOrderLine.update({ where: { id: line.id }, data: { reservedQty: fmtQty(got) } });
         }
         if (line.fulfilment === 'make' && line.item) {
@@ -360,7 +397,9 @@ export class ErpSalesOrdersService {
           rowVersion: { increment: 1 },
         },
       });
-      await this.workspace.record(tx, scope, 'erp_sales_order.closed', 'erp_sales_order', so.publicId, { soNo: so.soNo });
+      await this.workspace.record(tx, scope, 'erp_sales_order.closed', 'erp_sales_order', so.publicId, {
+        soNo: so.soNo,
+      });
     });
     return this.get(scope, publicId, perms);
   }
@@ -380,7 +419,12 @@ export class ErpSalesOrdersService {
       await this.releaseReservations(tx, so);
       for (const l of lines)
         if (l.productionOrder && ['planned', 'released'].includes(l.productionOrder.status))
-          await this.production.cancelIn(tx, scope, l.productionOrder.publicId, `ยกเลิกใบสั่งขาย ${so.soNo}: ${reason}`);
+          await this.production.cancelIn(
+            tx,
+            scope,
+            l.productionOrder.publicId,
+            `ยกเลิกใบสั่งขาย ${so.soNo}: ${reason}`,
+          );
       await tx.erpSalesOrder.update({
         where: { id: so.id },
         data: {
@@ -391,14 +435,19 @@ export class ErpSalesOrdersService {
           rowVersion: { increment: 1 },
         },
       });
-      await this.workspace.record(tx, scope, 'erp_sales_order.cancelled', 'erp_sales_order', so.publicId, { soNo: so.soNo });
+      await this.workspace.record(tx, scope, 'erp_sales_order.cancelled', 'erp_sales_order', so.publicId, {
+        soNo: so.soNo,
+      });
     });
     return this.get(scope, publicId, perms);
   }
 
   /** Delivered status from the lines; closes itself when everything is delivered and invoiced (D-361). */
-  async refresh(tx: Tx, salesOrderId: bigint): Promise<void> {
-    const so = await tx.erpSalesOrder.findUniqueOrThrow({ where: { id: salesOrderId }, include: { lines: true } });
+  async refresh(tx: ErpTx, salesOrderId: bigint): Promise<void> {
+    const so = await tx.erpSalesOrder.findUniqueOrThrow({
+      where: { id: salesOrderId },
+      include: { lines: true },
+    });
     if (!LIVE_SO.includes(so.status)) return;
     const goods = so.lines.filter((l) => l.fulfilment !== 'service');
     const delivered = goods.reduce((a, l) => a.plus(dec(l.deliveredQty)), dec(0));
@@ -427,22 +476,38 @@ export class ErpSalesOrdersService {
    * The customer's credit position (D-361): open receivables plus confirmed orders not yet invoiced, and — for a
    * draft being confirmed — that draft; over when a limit is set and the sum passes it.
    */
-  async exposure(tx: Tx, customerId: bigint, including: ErpSalesOrder | null): Promise<ErpCreditExposureDto> {
+  async exposure(
+    tx: ErpTx,
+    customerId: bigint,
+    including: ErpSalesOrder | null,
+  ): Promise<ErpCreditExposureDto> {
     const customer = await tx.erpTradingPartner.findUniqueOrThrow({ where: { id: customerId } });
     const invoices = await tx.erpSalesInvoice.findMany({
       where: { customerId, status: { in: [...OPEN_INVOICE] } },
     });
     const receivables = invoices.reduce(
-      (a, i) => a.plus(dec(i.total).plus(dec(i.debitedAmount)).minus(dec(i.creditedAmount)).minus(dec(i.receivedAmount))),
+      (a, i) =>
+        a.plus(
+          dec(i.total).plus(dec(i.debitedAmount)).minus(dec(i.creditedAmount)).minus(dec(i.receivedAmount)),
+        ),
       dec(0),
     );
     const orders = await tx.erpSalesOrder.findMany({
       where: { customerId, status: { in: LIVE_SO } },
       include: { lines: true },
     });
-    const uninvoiced = (o: { total: Prisma.Decimal; subtotal: Prisma.Decimal; lines: { amount: Prisma.Decimal; quantity: Prisma.Decimal; invoicedQty: Prisma.Decimal }[] }) => {
+    const uninvoiced = (o: {
+      total: Prisma.Decimal;
+      subtotal: Prisma.Decimal;
+      lines: { amount: Prisma.Decimal; quantity: Prisma.Decimal; invoicedQty: Prisma.Decimal }[];
+    }) => {
       const net = o.lines.reduce(
-        (a, l) => a.plus(dec(l.amount).times(dec(l.quantity).minus(dec(l.invoicedQty))).div(dec(l.quantity))),
+        (a, l) =>
+          a.plus(
+            dec(l.amount)
+              .times(dec(l.quantity).minus(dec(l.invoicedQty)))
+              .div(dec(l.quantity)),
+          ),
         dec(0),
       );
       return dec(o.subtotal).gt(0) ? money2(net.times(dec(o.total)).div(dec(o.subtotal))) : dec(0);
@@ -458,7 +523,7 @@ export class ErpSalesOrdersService {
     };
   }
 
-  private async releaseReservations(tx: Tx, so: ErpSalesOrder) {
+  private async releaseReservations(tx: ErpTx, so: ErpSalesOrder) {
     const lines = await tx.erpSalesOrderLine.findMany({ where: { salesOrderId: so.id } });
     for (const l of lines)
       if (l.itemId && dec(l.reservedQty).gt(0)) {
@@ -467,17 +532,24 @@ export class ErpSalesOrdersService {
       }
   }
 
-  private async lock(tx: Tx, scope: ErpScope, publicId: string): Promise<ErpSalesOrder> {
+  private async lock(tx: ErpTx, scope: ErpScope, publicId: string): Promise<ErpSalesOrder> {
     const so = await tx.erpSalesOrder.findFirst({ where: { publicId, factoryId: scope.factory.id } });
     if (!so) throw new DomainException('http.not_found');
     await tx.$queryRaw`SELECT id FROM erp_sales_orders WHERE id = ${so.id} FOR UPDATE`;
     return so;
   }
 
-  private async fields(tx: Tx, scope: ErpScope, body: ErpSaveSalesOrderDto, current: ErpSalesOrder | null) {
+  private async fields(
+    tx: ErpTx,
+    scope: ErpScope,
+    body: ErpSaveSalesOrderDto,
+    current: ErpSalesOrder | null,
+  ) {
     const customer = await customerOf(tx, scope, body.customerId);
     const opportunity = body.opportunityId
-      ? await tx.erpOpportunity.findFirst({ where: { publicId: body.opportunityId, factoryId: scope.factory.id } })
+      ? await tx.erpOpportunity.findFirst({
+          where: { publicId: body.opportunityId, factoryId: scope.factory.id },
+        })
       : null;
     if (body.opportunityId && !opportunity) throw new DomainException('http.not_found');
     const salespersonId =
@@ -489,7 +561,11 @@ export class ErpSalesOrdersService {
     const warehouse = await this.workspace.warehouse(tx, scope, body.warehouseId);
     const orderDate = body.orderDate ?? (current ? iso(current.orderDate)! : today());
     const deliveryDate =
-      body.deliveryDate === undefined ? (current?.deliveryDate ? iso(current.deliveryDate) : null) : body.deliveryDate;
+      body.deliveryDate === undefined
+        ? current?.deliveryDate
+          ? iso(current.deliveryDate)
+          : null
+        : body.deliveryDate;
     if (deliveryDate && deliveryDate < orderDate)
       throw new DomainException('validation.failed', {
         errors: [{ path: 'deliveryDate', code: 'invalid', message: 'On or after the order date' }],
@@ -500,7 +576,9 @@ export class ErpSalesOrdersService {
       const f = (l.fulfilment ?? (lines[i]!.itemId ? 'stock' : 'service')) as ErpFulfilment;
       if (f !== 'service' && !lines[i]!.itemId)
         throw new DomainException('validation.failed', {
-          errors: [{ path: `lines.${i}.itemId`, code: 'required', message: 'Stock and make lines need an item' }],
+          errors: [
+            { path: `lines.${i}.itemId`, code: 'required', message: 'Stock and make lines need an item' },
+          ],
         });
       return f;
     });
@@ -513,7 +591,8 @@ export class ErpSalesOrdersService {
       deliveryDate: deliveryDate ? day(deliveryDate) : null,
       warehouseId: warehouse.id,
       paymentTermDays: body.paymentTermDays ?? current?.paymentTermDays ?? customer.paymentTermDays,
-      shipToAddress: body.shipToAddress === undefined ? (current?.shipToAddress ?? customer.address) : body.shipToAddress,
+      shipToAddress:
+        body.shipToAddress === undefined ? (current?.shipToAddress ?? customer.address) : body.shipToAddress,
       note: body.note === undefined ? (current?.note ?? null) : body.note,
       vatMode,
       vatRatePct: '7',
@@ -566,7 +645,11 @@ export class ErpSalesOrdersService {
     return paginated(rows.map(doSummary), total, q);
   }
 
-  async getDelivery(scope: ErpScope, publicId: string, perms: ReadonlySet<string>): Promise<ErpDeliveryNoteDto> {
+  async getDelivery(
+    scope: ErpScope,
+    publicId: string,
+    perms: ReadonlySet<string>,
+  ): Promise<ErpDeliveryNoteDto> {
     const row = await this.workspace.db.erpDeliveryNote.findFirst({
       where: { publicId, factoryId: scope.factory.id },
       include: DO_INCLUDE,
@@ -583,7 +666,8 @@ export class ErpSalesOrdersService {
         include: { lines: { include: { item: true }, orderBy: { lineNo: 'asc' } } },
       });
       if (!so) throw new DomainException('http.not_found');
-      if (!OPEN_SO.includes(so.status)) throw new DomainException('erp.invalid_status', { params: { status: so.status } });
+      if (!OPEN_SO.includes(so.status))
+        throw new DomainException('erp.invalid_status', { params: { status: so.status } });
       const goods = so.lines.filter((l) => l.fulfilment !== 'service' && l.itemId);
       const wanted = body.lines?.length
         ? body.lines.map((l) => {
@@ -644,7 +728,8 @@ export class ErpSalesOrdersService {
   async issueDelivery(scope: ErpScope, publicId: string, perms: ReadonlySet<string>) {
     await this.workspace.tx(async (tx) => {
       const dn = await this.lockDelivery(tx, scope, publicId);
-      if (dn.status !== 'draft') throw new DomainException('erp.invalid_status', { params: { status: dn.status } });
+      if (dn.status !== 'draft')
+        throw new DomainException('erp.invalid_status', { params: { status: dn.status } });
       const lines = await tx.erpDeliveryNoteLine.findMany({
         where: { deliveryNoteId: dn.id },
         include: { item: true, salesOrderLine: true },
@@ -716,14 +801,25 @@ export class ErpSalesOrdersService {
     return this.getDelivery(scope, publicId, perms);
   }
 
-  async deliverDelivery(scope: ErpScope, publicId: string, body: ErpDeliveredDto, perms: ReadonlySet<string>) {
+  async deliverDelivery(
+    scope: ErpScope,
+    publicId: string,
+    body: ErpDeliveredDto,
+    perms: ReadonlySet<string>,
+  ) {
     await this.workspace.tx(async (tx) => {
       const dn = await this.lockDelivery(tx, scope, publicId);
-      if (dn.status !== 'issued') throw new DomainException('erp.invalid_status', { params: { status: dn.status } });
+      if (dn.status !== 'issued')
+        throw new DomainException('erp.invalid_status', { params: { status: dn.status } });
       let podFileId: bigint | null = null;
       if (body.podFileId) {
         const f = await tx.fileObject.findUnique({ where: { publicId: body.podFileId } });
-        if (!f || f.ownerFactoryId !== scope.factory.id || f.uploadStatus !== 'uploaded' || f.scanStatus === 'infected')
+        if (
+          !f ||
+          f.ownerFactoryId !== scope.factory.id ||
+          f.uploadStatus !== 'uploaded' ||
+          f.scanStatus === 'infected'
+        )
           throw new DomainException('erp.file_not_usable');
         podFileId = f.id;
       }
@@ -738,9 +834,16 @@ export class ErpSalesOrdersService {
           rowVersion: { increment: 1 },
         },
       });
-      await this.workspace.record(tx, scope, 'erp_delivery_note.delivered', 'erp_delivery_note', dn.publicId, {
-        doNo: dn.doNo,
-      });
+      await this.workspace.record(
+        tx,
+        scope,
+        'erp_delivery_note.delivered',
+        'erp_delivery_note',
+        dn.publicId,
+        {
+          doNo: dn.doNo,
+        },
+      );
     });
     return this.getDelivery(scope, publicId, perms);
   }
@@ -749,14 +852,16 @@ export class ErpSalesOrdersService {
   async cancelDelivery(scope: ErpScope, publicId: string, reason: string, perms: ReadonlySet<string>) {
     await this.workspace.tx(async (tx) => {
       const dn = await this.lockDelivery(tx, scope, publicId);
-      if (dn.status === 'cancelled') throw new DomainException('erp.invalid_status', { params: { status: dn.status } });
+      if (dn.status === 'cancelled')
+        throw new DomainException('erp.invalid_status', { params: { status: dn.status } });
       const lines = await tx.erpDeliveryNoteLine.findMany({
         where: { deliveryNoteId: dn.id },
         include: { item: true },
         orderBy: { lineNo: 'asc' },
       });
       if (dn.status !== 'draft') {
-        if (lines.some((l) => dec(l.invoicedQty).gt(0))) throw new DomainException('erp.invalid_status', { params: { status: 'invoiced' } });
+        if (lines.some((l) => dec(l.invoicedQty).gt(0)))
+          throw new DomainException('erp.invalid_status', { params: { status: 'invoiced' } });
         const warehouse = await tx.erpWarehouse.findUniqueOrThrow({ where: { id: dn.warehouseId } });
         const settings = await this.workspace.settings(tx, scope.factory.id);
         const entries: StockEntry[] = lines
@@ -794,15 +899,22 @@ export class ErpSalesOrdersService {
         },
       });
       if (dn.status !== 'draft') await this.reopen(tx, dn.salesOrderId);
-      await this.workspace.record(tx, scope, 'erp_delivery_note.cancelled', 'erp_delivery_note', dn.publicId, {
-        doNo: dn.doNo,
-      });
+      await this.workspace.record(
+        tx,
+        scope,
+        'erp_delivery_note.cancelled',
+        'erp_delivery_note',
+        dn.publicId,
+        {
+          doNo: dn.doNo,
+        },
+      );
     });
     return this.getDelivery(scope, publicId, perms);
   }
 
   /** After a delivery is taken back the order may be open again. */
-  private async reopen(tx: Tx, salesOrderId: bigint) {
+  private async reopen(tx: ErpTx, salesOrderId: bigint) {
     const so = await tx.erpSalesOrder.findUniqueOrThrow({ where: { id: salesOrderId } });
     if (so.status === 'delivered' || so.status === 'closed' || so.status === 'partially_delivered') {
       await tx.erpSalesOrder.update({ where: { id: so.id }, data: { status: 'confirmed', closedAt: null } });
@@ -810,7 +922,7 @@ export class ErpSalesOrdersService {
     }
   }
 
-  private async lockDelivery(tx: Tx, scope: ErpScope, publicId: string) {
+  private async lockDelivery(tx: ErpTx, scope: ErpScope, publicId: string) {
     const dn = await tx.erpDeliveryNote.findFirst({ where: { publicId, factoryId: scope.factory.id } });
     if (!dn) throw new DomainException('http.not_found');
     await tx.$queryRaw`SELECT id FROM erp_delivery_notes WHERE id = ${dn.id} FOR UPDATE`;
@@ -820,7 +932,15 @@ export class ErpSalesOrdersService {
 
 // ------------------------------------------------------------------------------------- views
 
-function soFacts(lines: { fulfilment: ErpFulfilment; quantity: Prisma.Decimal; deliveredQty: Prisma.Decimal; invoicedQty: Prisma.Decimal }[], status: ErpSalesOrderStatus): SoFacts {
+function soFacts(
+  lines: {
+    fulfilment: ErpFulfilment;
+    quantity: Prisma.Decimal;
+    deliveredQty: Prisma.Decimal;
+    invoicedQty: Prisma.Decimal;
+  }[],
+  status: ErpSalesOrderStatus,
+): SoFacts {
   return {
     status,
     toDeliver: lines.some((l) => l.fulfilment !== 'service' && dec(l.deliveredQty).lt(dec(l.quantity))),
@@ -855,9 +975,15 @@ function soDto(r: SoRow, credit: ErpCreditExposureDto, perms: ReadonlySet<string
   return {
     ...soSummary(r),
     quotation: r.quotation
-      ? { id: r.quotation.publicId, code: `${r.quotation.quoteNo}${r.quotation.revision > 1 ? ` R${r.quotation.revision}` : ''}`, name: r.quotation.quoteNo }
+      ? {
+          id: r.quotation.publicId,
+          code: `${r.quotation.quoteNo}${r.quotation.revision > 1 ? ` R${r.quotation.revision}` : ''}`,
+          name: r.quotation.quoteNo,
+        }
       : null,
-    opportunity: r.opportunity ? { id: r.opportunity.publicId, code: r.opportunity.title, name: r.opportunity.title } : null,
+    opportunity: r.opportunity
+      ? { id: r.opportunity.publicId, code: r.opportunity.title, name: r.opportunity.title }
+      : null,
     warehouse: warehouseRef(r.warehouse),
     paymentTermDays: r.paymentTermDays,
     shipToAddress: r.shipToAddress,
@@ -876,8 +1002,18 @@ function soDto(r: SoRow, credit: ErpCreditExposureDto, perms: ReadonlySet<string
         ? { id: l.productionOrder.publicId, code: l.productionOrder.moNo, name: l.productionOrder.status }
         : null,
     })),
-    deliveryNotes: r.deliveryNotes.map((d) => ({ id: d.publicId, doNo: d.doNo, status: d.status, deliverOn: iso(d.deliverOn)! })),
-    invoices: r.invoices.map((i) => ({ id: i.publicId, invoiceNo: i.invoiceNo, status: i.status, total: fmtMoney(i.total) })),
+    deliveryNotes: r.deliveryNotes.map((d) => ({
+      id: d.publicId,
+      doNo: d.doNo,
+      status: d.status,
+      deliverOn: iso(d.deliverOn)!,
+    })),
+    invoices: r.invoices.map((i) => ({
+      id: i.publicId,
+      invoiceNo: i.invoiceNo,
+      status: i.status,
+      total: fmtMoney(i.total),
+    })),
     credit,
     confirmedAt: isoTs(r.confirmedAt),
     creditOverrideReason: r.creditOverrideReason,
@@ -898,7 +1034,10 @@ function doSummary(
     deliverOn: iso(r.deliverOn)!,
     customer: partnerRef(r.customer),
     salesOrder: { id: r.salesOrder.publicId, code: r.salesOrder.soNo, name: r.salesOrder.soNo },
-    invoiced: r.status !== 'draft' && r.status !== 'cancelled' && r.lines.every((l) => dec(l.invoicedQty).gte(dec(l.quantity))),
+    invoiced:
+      r.status !== 'draft' &&
+      r.status !== 'cancelled' &&
+      r.lines.every((l) => dec(l.invoicedQty).gte(dec(l.quantity))),
   };
 }
 

@@ -224,7 +224,11 @@ export class ErpDocPartyDto {
   @ApiProperty({ example: 'บริษัท กล่องดี แพคเกจจิ้ง จำกัด' })
   name!: string;
 
-  @ApiProperty({ type: String, nullable: true, example: '99/9 ถ.บางนา-ตราด ต.บางพลีใหญ่ อ.บางพลี จ.สมุทรปราการ 10540' })
+  @ApiProperty({
+    type: String,
+    nullable: true,
+    example: '99/9 ถ.บางนา-ตราด ต.บางพลีใหญ่ อ.บางพลี จ.สมุทรปราการ 10540',
+  })
   address!: string | null;
 
   @ApiProperty({ type: String, nullable: true, example: '0000556123451' })
@@ -424,13 +428,13 @@ export class ErpLeadListQuery extends PageQuery {
   @IsOptional()
   @IsUUID()
   salespersonId?: string;
-
 }
 
 export class ErpConvertLeadDto {
   @ApiPropertyOptional({
     format: 'uuid',
-    description: 'An existing trading partner to link (made a customer if it was a supplier only); none = create one',
+    description:
+      'An existing trading partner to link (made a customer if it was a supplier only); none = create one',
   })
   @IsOptional()
   @IsUUID()
@@ -534,7 +538,8 @@ export class ErpOpportunityDto {
 
   @ApiProperty({
     type: [NextActionDto],
-    description: 'Offered: `erp_opportunity.edit`, `erp_opportunity.quote`, `erp_opportunity.win`, `erp_opportunity.lose`',
+    description:
+      'Offered: `erp_opportunity.edit`, `erp_opportunity.quote`, `erp_opportunity.win`, `erp_opportunity.lose`',
   })
   nextActions!: NextActionDto[];
 
@@ -574,7 +579,12 @@ export class ErpSaveOpportunityDto {
   @Matches(AMOUNT)
   value?: string;
 
-  @ApiPropertyOptional({ example: 40, minimum: 0, maximum: 100, description: 'Default: by stage (10 / 40 / 70)' })
+  @ApiPropertyOptional({
+    example: 40,
+    minimum: 0,
+    maximum: 100,
+    description: 'Default: by stage (10 / 40 / 70)',
+  })
   @IsOptional()
   @IsInt()
   @Min(0)
@@ -621,7 +631,6 @@ export class ErpOpportunityListQuery extends PageQuery {
   @IsOptional()
   @IsUUID()
   customerId?: string;
-
 }
 
 export class ErpPipelineStageDto {
@@ -763,13 +772,22 @@ export class ErpSaveActivityDto {
   @IsUUID()
   assigneeId?: string;
 
-  @ApiPropertyOptional({ type: String, nullable: true, format: 'date-time', example: '2026-10-14T10:00:00+07:00' })
+  @ApiPropertyOptional({
+    type: String,
+    nullable: true,
+    format: 'date-time',
+    example: '2026-10-14T10:00:00+07:00',
+  })
   @IsOptional()
   @Transform(emptyToNull)
   @IsISO8601({ strict: true })
   dueAt?: string | null;
 
-  @ApiPropertyOptional({ type: Boolean, example: false, description: 'Logged as already done (a call made, a note)' })
+  @ApiPropertyOptional({
+    type: Boolean,
+    example: false,
+    description: 'Logged as already done (a call made, a note)',
+  })
   @IsOptional()
   @IsBoolean()
   done?: boolean;
@@ -944,10 +962,17 @@ export class ErpQuotationDto extends ErpQuotationSummaryDto {
   @ApiProperty({ type: String, nullable: true, example: null })
   cancelReason!: string | null;
 
-  @ApiProperty({ type: ErpRefDto, nullable: true, description: 'The sales order made from it (code = SO no.)' })
+  @ApiProperty({
+    type: ErpRefDto,
+    nullable: true,
+    description: 'The sales order made from it (code = SO no.)',
+  })
   salesOrder!: ErpRefDto | null;
 
-  @ApiProperty({ type: [ErpQuotationRevisionDto], description: 'Every revision of this number, oldest first' })
+  @ApiProperty({
+    type: [ErpQuotationRevisionDto],
+    description: 'Every revision of this number, oldest first',
+  })
   revisions!: ErpQuotationRevisionDto[];
 
   @ApiProperty({
@@ -984,12 +1009,21 @@ export class ErpSaveQuotationDto {
   @Matches(DAY)
   quoteDate?: string;
 
-  @ApiPropertyOptional({ format: 'date', example: '2026-11-11', description: 'Default: + settings.quoteValidDays' })
+  @ApiPropertyOptional({
+    format: 'date',
+    example: '2026-11-11',
+    description: 'Default: + settings.quoteValidDays',
+  })
   @IsOptional()
   @Matches(DAY)
   validUntil?: string;
 
-  @ApiPropertyOptional({ example: 30, minimum: 0, maximum: 365, description: 'Default: the customer’s terms' })
+  @ApiPropertyOptional({
+    example: 30,
+    minimum: 0,
+    maximum: 365,
+    description: 'Default: the customer’s terms',
+  })
   @IsOptional()
   @IsInt()
   @Min(0)
@@ -1015,7 +1049,12 @@ export class ErpSaveQuotationDto {
   @MaxLength(2000)
   terms?: string | null;
 
-  @ApiPropertyOptional({ type: String, nullable: true, maxLength: 2000, description: 'Internal; not printed' })
+  @ApiPropertyOptional({
+    type: String,
+    nullable: true,
+    maxLength: 2000,
+    description: 'Internal; not printed',
+  })
   @IsOptional()
   @Transform(emptyToNull)
   @IsString()
@@ -1051,7 +1090,6 @@ export class ErpQuotationListQuery extends PageQuery {
   @IsOptional()
   @IsUUID()
   opportunityId?: string;
-
 }
 
 export class ErpQuotationLinkDto {
@@ -1174,7 +1212,8 @@ export class ErpSalesOrderLineInput extends ErpSalesLineInput {
     enum: ERP_FULFILMENTS,
     enumName: 'ErpFulfilment',
     example: 'make',
-    description: '`stock` (reserved on confirm), `make` (a production order) or `service` (no goods). Default: stock with an item, service without',
+    description:
+      '`stock` (reserved on confirm), `make` (a production order) or `service` (no goods). Default: stock with an item, service without',
   })
   @IsOptional()
   @IsIn(ERP_FULFILMENTS)
@@ -1194,7 +1233,11 @@ export class ErpSalesOrderLineDto extends ErpSalesLineDto {
   @ApiProperty({ example: '2000.000' })
   invoicedQty!: string;
 
-  @ApiProperty({ type: ErpRefDto, nullable: true, description: 'Its production order (code = MO no., name = status)' })
+  @ApiProperty({
+    type: ErpRefDto,
+    nullable: true,
+    description: 'Its production order (code = MO no., name = status)',
+  })
   productionOrder!: ErpRefDto | null;
 }
 
@@ -1447,7 +1490,6 @@ export class ErpSalesOrderListQuery extends PageQuery {
   @IsOptional()
   @IsUUID()
   customerId?: string;
-
 }
 
 // ===================================================================================== delivery notes
@@ -1532,7 +1574,12 @@ export class ErpDeliveryNoteLineDto {
   @ApiProperty({ enum: ERP_UNITS, enumName: 'ErpUnit', example: 'pcs' })
   unit!: string;
 
-  @ApiProperty({ type: String, nullable: true, example: '6.420000', description: 'Stock cost per unit once issued' })
+  @ApiProperty({
+    type: String,
+    nullable: true,
+    example: '6.420000',
+    description: 'Stock cost per unit once issued',
+  })
   unitCost!: string | null;
 
   @ApiProperty({ type: String, nullable: true, example: '12840.00' })
@@ -1578,7 +1625,13 @@ export class ErpDeliveryNoteDto extends ErpDeliveryNoteSummaryDto {
   @ApiProperty({ type: String, nullable: true, example: 'คุณสมศรี' })
   receivedBy!: string | null;
 
-  @ApiProperty({ type: String, nullable: true, format: 'uuid', example: null, description: 'Photo of the signed copy' })
+  @ApiProperty({
+    type: String,
+    nullable: true,
+    format: 'uuid',
+    example: null,
+    description: 'Photo of the signed copy',
+  })
   podFileId!: string | null;
 
   @ApiProperty({ type: String, nullable: true, example: null })
@@ -1611,7 +1664,12 @@ export class ErpDeliveredDto {
   @IsISO8601({ strict: true })
   deliveredAt?: string | null;
 
-  @ApiPropertyOptional({ type: String, nullable: true, format: 'uuid', description: 'An uploaded photo of the signed copy' })
+  @ApiPropertyOptional({
+    type: String,
+    nullable: true,
+    format: 'uuid',
+    description: 'An uploaded photo of the signed copy',
+  })
   @IsOptional()
   @Transform(emptyToNull)
   @IsUUID()
@@ -1638,7 +1696,6 @@ export class ErpDeliveryNoteListQuery extends PageQuery {
   @IsOptional()
   @IsUUID()
   salesOrderId?: string;
-
 }
 
 // ===================================================================================== invoices
@@ -1764,7 +1821,10 @@ export class ErpSalesInvoiceDto extends ErpSalesInvoiceSummaryDto {
   @ApiProperty({ type: ErpDocPartyDto, nullable: true, description: 'As printed (set when issued)' })
   seller!: ErpDocPartyDto | null;
 
-  @ApiProperty({ type: ErpDocPartyDto, description: 'As printed once issued; the customer now while a draft' })
+  @ApiProperty({
+    type: ErpDocPartyDto,
+    description: 'As printed once issued; the customer now while a draft',
+  })
   buyer!: ErpDocPartyDto;
 
   @ApiProperty({ example: 'สองหมื่นหกพันเจ็ดร้อยห้าสิบบาทถ้วน' })
@@ -1814,7 +1874,8 @@ export class ErpCreateSalesInvoiceDto {
 
   @ApiPropertyOptional({
     format: 'uuid',
-    description: 'A confirmed sales order: its uninvoiced **service** lines are added (and goods lines when it has no delivery notes)',
+    description:
+      'A confirmed sales order: its uninvoiced **service** lines are added (and goods lines when it has no delivery notes)',
   })
   @IsOptional()
   @IsUUID()
@@ -1828,7 +1889,11 @@ export class ErpCreateSalesInvoiceDto {
   @Type(() => ErpSalesLineInput)
   lines?: ErpSalesLineInput[];
 
-  @ApiPropertyOptional({ format: 'date', example: '2026-10-20', description: 'The planned issue date (default: today)' })
+  @ApiPropertyOptional({
+    format: 'date',
+    example: '2026-10-20',
+    description: 'The planned issue date (default: today)',
+  })
   @IsOptional()
   @Matches(DAY)
   issueDate?: string;
@@ -1840,7 +1905,11 @@ export class ErpCreateSalesInvoiceDto {
   @Max(365)
   paymentTermDays?: number;
 
-  @ApiPropertyOptional({ enum: ERP_VAT_MODES_E4, enumName: 'ErpVatMode', description: 'Default: the order’s, else exclusive (none when not VAT-registered)' })
+  @ApiPropertyOptional({
+    enum: ERP_VAT_MODES_E4,
+    enumName: 'ErpVatMode',
+    description: 'Default: the order’s, else exclusive (none when not VAT-registered)',
+  })
   @IsOptional()
   @IsIn(ERP_VAT_MODES_E4)
   vatMode?: string;
@@ -1852,7 +1921,12 @@ export class ErpCreateSalesInvoiceDto {
   @MaxLength(60)
   customerPoNo?: string | null;
 
-  @ApiPropertyOptional({ type: String, nullable: true, maxLength: 1000, description: 'Printed on the invoice' })
+  @ApiPropertyOptional({
+    type: String,
+    nullable: true,
+    maxLength: 1000,
+    description: 'Printed on the invoice',
+  })
   @IsOptional()
   @Transform(emptyToNull)
   @IsString()
@@ -1861,7 +1935,10 @@ export class ErpCreateSalesInvoiceDto {
 }
 
 export class ErpUpdateSalesInvoiceDto {
-  @ApiPropertyOptional({ type: [ErpSalesLineInput], description: 'Replaces the free lines; delivery lines stay' })
+  @ApiPropertyOptional({
+    type: [ErpSalesLineInput],
+    description: 'Replaces the free lines; delivery lines stay',
+  })
   @IsOptional()
   @IsArray()
   @ArrayMaxSize(100)
@@ -1915,7 +1992,11 @@ export class ErpCashReceiptInput {
 }
 
 export class ErpIssueSalesInvoiceDto {
-  @ApiPropertyOptional({ format: 'date', example: '2026-10-20', description: 'The tax point; default: the draft’s date' })
+  @ApiPropertyOptional({
+    format: 'date',
+    example: '2026-10-20',
+    description: 'The tax point; default: the draft’s date',
+  })
   @IsOptional()
   @Matches(DAY)
   issueDate?: string;
@@ -1935,7 +2016,8 @@ export class ErpSalesInvoiceListQuery extends PageQuery {
     enum: [...ERP_SALES_INVOICE_STATUSES, 'open', 'overdue'],
     enumName: 'ErpSalesInvoiceStatusFilter',
     example: 'open',
-    description: '`open` = issued or partially paid with something left to receive; `overdue` = open past due',
+    description:
+      '`open` = issued or partially paid with something left to receive; `overdue` = open past due',
   })
   @IsOptional()
   @IsIn([...ERP_SALES_INVOICE_STATUSES, 'open', 'overdue'])
@@ -1955,7 +2037,6 @@ export class ErpSalesInvoiceListQuery extends PageQuery {
   @IsOptional()
   @Matches(DAY)
   to?: string;
-
 }
 
 // ===================================================================================== credit / debit notes
@@ -1977,7 +2058,11 @@ export class ErpSalesNoteLineInput {
   @IsUUID()
   itemId?: string;
 
-  @ApiPropertyOptional({ example: '100', pattern: QTY.source, description: '…and how many come back into stock (base units)' })
+  @ApiPropertyOptional({
+    example: '100',
+    pattern: QTY.source,
+    description: '…and how many come back into stock (base units)',
+  })
   @IsOptional()
   @Matches(QTY)
   returnQty?: string;
@@ -1996,12 +2081,18 @@ export class ErpCreateSalesNoteDto {
     enum: ERP_SALES_NOTE_REASONS,
     enumName: 'ErpSalesNoteReason',
     example: 'price_reduced',
-    description: 'Credit: price_reduced, goods_returned, defective, discount_after_sale, overcharged, other; debit: price_increased, undercharged, extra_goods, other',
+    description:
+      'Credit: price_reduced, goods_returned, defective, discount_after_sale, overcharged, other; debit: price_increased, undercharged, extra_goods, other',
   })
   @IsIn(ERP_SALES_NOTE_REASONS)
   reason!: string;
 
-  @ApiPropertyOptional({ type: String, nullable: true, example: 'สินค้าพิมพ์สีเพี้ยน 100 ใบ', maxLength: 500 })
+  @ApiPropertyOptional({
+    type: String,
+    nullable: true,
+    example: 'สินค้าพิมพ์สีเพี้ยน 100 ใบ',
+    maxLength: 500,
+  })
   @IsOptional()
   @Transform(emptyToNull)
   @IsString()
@@ -2013,7 +2104,10 @@ export class ErpCreateSalesNoteDto {
   @Matches(DAY)
   issueDate?: string;
 
-  @ApiPropertyOptional({ format: 'uuid', description: 'Where returned goods go (default: the default warehouse)' })
+  @ApiPropertyOptional({
+    format: 'uuid',
+    description: 'Where returned goods go (default: the default warehouse)',
+  })
   @IsOptional()
   @IsUUID()
   warehouseId?: string;
@@ -2135,7 +2229,11 @@ export class ErpReceiptAllocationInput {
   @IsUUID()
   invoiceId!: string;
 
-  @ApiProperty({ example: '26750', pattern: AMOUNT.source, description: 'Gross amount settled (cash + WHT share)' })
+  @ApiProperty({
+    example: '26750',
+    pattern: AMOUNT.source,
+    description: 'Gross amount settled (cash + WHT share)',
+  })
   @Matches(AMOUNT)
   amount!: string;
 }
@@ -2194,12 +2292,22 @@ export class ErpCreateReceiptDto {
   @Matches(AMOUNT)
   amount!: string;
 
-  @ApiPropertyOptional({ example: '802.50', pattern: AMOUNT.source, description: 'Withholding tax the customer deducted' })
+  @ApiPropertyOptional({
+    example: '802.50',
+    pattern: AMOUNT.source,
+    description: 'Withholding tax the customer deducted',
+  })
   @IsOptional()
   @Matches(AMOUNT)
   whtAmount?: string;
 
-  @ApiPropertyOptional({ type: String, nullable: true, example: '0001/2569', maxLength: 40, description: 'The customer’s 50 ทวิ number' })
+  @ApiPropertyOptional({
+    type: String,
+    nullable: true,
+    example: '0001/2569',
+    maxLength: 40,
+    description: 'The customer’s 50 ทวิ number',
+  })
   @IsOptional()
   @Transform(emptyToNull)
   @IsString()
@@ -2212,7 +2320,13 @@ export class ErpCreateReceiptDto {
   @Matches(DAY)
   whtCertDate?: string | null;
 
-  @ApiPropertyOptional({ type: String, nullable: true, format: 'uuid', example: null, description: 'An uploaded scan of the 50 ทวิ' })
+  @ApiPropertyOptional({
+    type: String,
+    nullable: true,
+    format: 'uuid',
+    example: null,
+    description: 'An uploaded scan of the 50 ทวิ',
+  })
   @IsOptional()
   @Transform(emptyToNull)
   @IsUUID()
@@ -2347,7 +2461,12 @@ export class ErpCreateBillingNoteDto {
   @IsUUID()
   customerId!: string;
 
-  @ApiProperty({ type: [String], format: 'uuid', example: [E4_IDS.invoice], description: 'Open invoices of the customer' })
+  @ApiProperty({
+    type: [String],
+    format: 'uuid',
+    example: [E4_IDS.invoice],
+    description: 'Open invoices of the customer',
+  })
   @IsArray()
   @ArrayMinSize(1)
   @ArrayMaxSize(100)
@@ -2359,7 +2478,13 @@ export class ErpCreateBillingNoteDto {
   @Matches(DAY)
   billingDate?: string;
 
-  @ApiPropertyOptional({ type: String, nullable: true, format: 'date', example: '2026-11-05', description: 'When to collect' })
+  @ApiPropertyOptional({
+    type: String,
+    nullable: true,
+    format: 'date',
+    example: '2026-11-05',
+    description: 'When to collect',
+  })
   @IsOptional()
   @Transform(emptyToNull)
   @Matches(DAY)
@@ -2498,7 +2623,11 @@ export class ErpWhtLineInput {
 }
 
 export class ErpCreateWhtCertificateDto {
-  @ApiProperty({ format: 'uuid', example: E4_IDS.payment, description: 'A supplier payment (E2) that withheld tax' })
+  @ApiProperty({
+    format: 'uuid',
+    example: E4_IDS.payment,
+    description: 'A supplier payment (E2) that withheld tax',
+  })
   @IsUUID()
   paymentId!: string;
 
@@ -2633,7 +2762,8 @@ export class ErpVatReportRowDto {
 
   @ApiProperty({
     enum: ['tax_invoice', 'credit_note', 'debit_note', 'supplier_tax_invoice', 'getpack_statement'],
-    description: '`getpack_statement`: a getpack billing statement the factory confirmed — its sale to getpack (D-401)',
+    description:
+      '`getpack_statement`: a getpack billing statement the factory confirmed — its sale to getpack (D-401)',
     enumName: 'ErpVatRowKind',
     example: 'tax_invoice',
   })
@@ -2700,7 +2830,11 @@ export class ErpVat30Dto {
   @ApiProperty({ example: '910.00', description: 'output − input; negative = carried forward' })
   vatPayable!: string;
 
-  @ApiProperty({ format: 'date', example: '2026-11-15', description: 'Due date of ภ.พ.30 (paper; e-filing usually +8 days)' })
+  @ApiProperty({
+    format: 'date',
+    example: '2026-11-15',
+    description: 'Due date of ภ.พ.30 (paper; e-filing usually +8 days)',
+  })
   dueOn!: string;
 }
 
@@ -2752,7 +2886,11 @@ export class ErpWhtReportDto {
   @ApiProperty({ example: '600.00' })
   whtAmount!: string;
 
-  @ApiProperty({ format: 'date', example: '2026-11-07', description: 'Due date of the paper return (e-filing usually +8 days)' })
+  @ApiProperty({
+    format: 'date',
+    example: '2026-11-07',
+    description: 'Due date of the paper return (e-filing usually +8 days)',
+  })
   dueOn!: string;
 }
 
@@ -2845,7 +2983,10 @@ export class ErpSalesReportDto {
   @ApiProperty({ example: '4900.00' })
   commission!: string;
 
-  @ApiProperty({ example: '58000.00', description: 'Invoiced net − stock cost of what was delivered on those invoices' })
+  @ApiProperty({
+    example: '58000.00',
+    description: 'Invoiced net − stock cost of what was delivered on those invoices',
+  })
   grossProfit!: string;
 }
 

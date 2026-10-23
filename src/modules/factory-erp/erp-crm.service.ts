@@ -2,7 +2,7 @@ import { DomainException } from '@common/errors/domain.exception';
 import { assertIfMatch, etagOf } from '@common/etag/etag';
 import { type ActionRule, nextActions } from '@common/next-actions/next-actions';
 import { paginated, toSkipTake } from '@common/pagination/pagination';
-import { type Tx } from '@database/prisma.service';
+import { type ErpTx } from '@database/erp-prisma.service';
 import {
   type ErpActivity,
   type ErpLead,
@@ -11,7 +11,7 @@ import {
   type ErpTradingPartner,
   Prisma,
   type User,
-} from '@generated/prisma/client';
+} from '@generated/prisma-erp/client';
 import { Injectable } from '@nestjs/common';
 
 import { dec, fmtMoney } from './erp.math';
@@ -60,7 +60,13 @@ const OPP_INCLUDE = {
 } as const;
 type OppRow = Prisma.ErpOpportunityGetPayload<{ include: typeof OPP_INCLUDE }>;
 
-const ACT_INCLUDE = { lead: true, opportunity: true, customer: true, assignee: true, createdBy: true } as const;
+const ACT_INCLUDE = {
+  lead: true,
+  opportunity: true,
+  customer: true,
+  assignee: true,
+  createdBy: true,
+} as const;
 type ActRow = Prisma.ErpActivityGetPayload<{ include: typeof ACT_INCLUDE }>;
 
 export const LEAD_ACTIONS: ActionRule<{ stage: string }>[] = [
@@ -82,14 +88,26 @@ export const LEAD_ACTIONS: ActionRule<{ stage: string }>[] = [
 ];
 
 export const OPPORTUNITY_ACTIONS: ActionRule<{ stage: ErpOpportunityStage; customer: boolean }>[] = [
-  { key: 'erp_opportunity.edit', permissions: ['factory_sales.manage'], when: (o) => OPEN_OPP.includes(o.stage) },
+  {
+    key: 'erp_opportunity.edit',
+    permissions: ['factory_sales.manage'],
+    when: (o) => OPEN_OPP.includes(o.stage),
+  },
   {
     key: 'erp_opportunity.quote',
     permissions: ['factory_sales.manage'],
     when: (o) => (OPEN_OPP.includes(o.stage) ? (o.customer ? true : 'แปลงผู้สนใจเป็นลูกค้าก่อน') : false),
   },
-  { key: 'erp_opportunity.win', permissions: ['factory_sales.manage'], when: (o) => OPEN_OPP.includes(o.stage) },
-  { key: 'erp_opportunity.lose', permissions: ['factory_sales.manage'], when: (o) => OPEN_OPP.includes(o.stage) },
+  {
+    key: 'erp_opportunity.win',
+    permissions: ['factory_sales.manage'],
+    when: (o) => OPEN_OPP.includes(o.stage),
+  },
+  {
+    key: 'erp_opportunity.lose',
+    permissions: ['factory_sales.manage'],
+    when: (o) => OPEN_OPP.includes(o.stage),
+  },
 ];
 
 /**
@@ -128,7 +146,11 @@ export class ErpCrmService {
       }),
       this.workspace.db.erpLead.count({ where }),
     ]);
-    return paginated(rows.map((r) => leadDto(r, perms)), total, q);
+    return paginated(
+      rows.map((r) => leadDto(r, perms)),
+      total,
+      q,
+    );
   }
 
   async getLead(scope: ErpScope, publicId: string, perms: ReadonlySet<string>): Promise<ErpLeadDto> {
@@ -203,7 +225,8 @@ export class ErpCrmService {
           where: { publicId: body.customerId, factoryId: scope.factory.id },
         });
         if (!found) throw new DomainException('http.not_found');
-        if (found.status === 'archived') throw new DomainException('erp.archived', { params: { name: found.name } });
+        if (found.status === 'archived')
+          throw new DomainException('erp.archived', { params: { name: found.name } });
         customer =
           found.kind === 'supplier'
             ? await tx.erpTradingPartner.update({
@@ -285,7 +308,12 @@ export class ErpCrmService {
         throw new DomainException('erp.invalid_status', { params: { status: lead.stage } });
       await tx.erpLead.update({
         where: { id: lead.id },
-        data: { stage: 'lost', lostReason: reason, updatedById: scope.actor.userId, rowVersion: { increment: 1 } },
+        data: {
+          stage: 'lost',
+          lostReason: reason,
+          updatedById: scope.actor.userId,
+          rowVersion: { increment: 1 },
+        },
       });
       await this.workspace.record(tx, scope, 'erp_lead.lost', 'erp_lead', lead.publicId);
     });
@@ -315,10 +343,18 @@ export class ErpCrmService {
       }),
       this.workspace.db.erpOpportunity.count({ where }),
     ]);
-    return paginated(rows.map((r) => opportunityDto(r, perms)), total, q);
+    return paginated(
+      rows.map((r) => opportunityDto(r, perms)),
+      total,
+      q,
+    );
   }
 
-  async getOpportunity(scope: ErpScope, publicId: string, perms: ReadonlySet<string>): Promise<ErpOpportunityDto> {
+  async getOpportunity(
+    scope: ErpScope,
+    publicId: string,
+    perms: ReadonlySet<string>,
+  ): Promise<ErpOpportunityDto> {
     const row = await this.workspace.db.erpOpportunity.findFirst({
       where: { publicId, factoryId: scope.factory.id },
       include: OPP_INCLUDE,
@@ -364,8 +400,7 @@ export class ErpCrmService {
       assertIfMatch(ifMatch, etagOf(opp.publicId, opp.rowVersion));
       if (!OPEN_OPP.includes(opp.stage))
         throw new DomainException('erp.invalid_status', { params: { status: opp.stage } });
-      const { customerId, leadId } =
-        body.customerId || body.leadId ? await this.party(tx, scope, body) : opp;
+      const { customerId, leadId } = body.customerId || body.leadId ? await this.party(tx, scope, body) : opp;
       const stage = (body.stage ?? opp.stage) as ErpOpportunityStage;
       await tx.erpOpportunity.update({
         where: { id: opp.id },
@@ -402,7 +437,7 @@ export class ErpCrmService {
 
   /** D-360: an accepted quotation wins its opportunity (no-op when it is already closed); `actor` null = the customer online. */
   async win(
-    tx: Tx,
+    tx: ErpTx,
     ctx: { factory: ErpScope['factory']; actor: ErpScope['actor'] | null },
     opp: ErpOpportunity,
   ): Promise<void> {
@@ -419,9 +454,21 @@ export class ErpCrmService {
       },
     });
     if (ctx.actor)
-      await this.workspace.record(tx, ctx as ErpScope, 'erp_opportunity.won', 'erp_opportunity', opp.publicId);
+      await this.workspace.record(
+        tx,
+        ctx as ErpScope,
+        'erp_opportunity.won',
+        'erp_opportunity',
+        opp.publicId,
+      );
     else
-      await this.workspace.recordSystem(tx, ctx.factory.publicId, 'erp_opportunity.won', 'erp_opportunity', opp.publicId);
+      await this.workspace.recordSystem(
+        tx,
+        ctx.factory.publicId,
+        'erp_opportunity.won',
+        'erp_opportunity',
+        opp.publicId,
+      );
   }
 
   async loseOpportunity(scope: ErpScope, publicId: string, reason: string, perms: ReadonlySet<string>) {
@@ -464,8 +511,13 @@ export class ErpCrmService {
       },
     );
     const open = rows.filter((r) => OPEN_OPP.includes(r.stage));
-    const soon = day(new Date(Date.parse(`${today()}T00:00:00Z`) + 30 * 86_400_000).toISOString().slice(0, 10));
-    const bySp = new Map<string, { sp: User | null; open: number; value: Prisma.Decimal; weighted: Prisma.Decimal }>();
+    const soon = day(
+      new Date(Date.parse(`${today()}T00:00:00Z`) + 30 * 86_400_000).toISOString().slice(0, 10),
+    );
+    const bySp = new Map<
+      string,
+      { sp: User | null; open: number; value: Prisma.Decimal; weighted: Prisma.Decimal }
+    >();
     for (const r of open) {
       const key = r.salesperson?.publicId ?? '-';
       const e = bySp.get(key) ?? { sp: r.salesperson, open: 0, value: dec(0), weighted: dec(0) };
@@ -479,7 +531,9 @@ export class ErpCrmService {
         factoryId: scope.factory.id,
         assigneeId: scope.actor.userId,
         doneAt: null,
-        dueAt: { lt: day(new Date(Date.parse(`${today()}T00:00:00Z`) + 86_400_000).toISOString().slice(0, 10)) },
+        dueAt: {
+          lt: day(new Date(Date.parse(`${today()}T00:00:00Z`) + 86_400_000).toISOString().slice(0, 10)),
+        },
       },
     });
     const openValue = open.reduce((a, r) => a.plus(dec(r.value)), dec(0));
@@ -505,7 +559,9 @@ export class ErpCrmService {
 
   async listActivities(scope: ErpScope, q: ErpActivityListQuery) {
     const where: Prisma.ErpActivityWhereInput = { factoryId: scope.factory.id };
-    const endOfToday = day(new Date(Date.parse(`${today()}T00:00:00Z`) + 86_400_000).toISOString().slice(0, 10));
+    const endOfToday = day(
+      new Date(Date.parse(`${today()}T00:00:00Z`) + 86_400_000).toISOString().slice(0, 10),
+    );
     const view = q.view ?? 'open';
     if (view === 'open') where.doneAt = null;
     if (view === 'due') Object.assign(where, { doneAt: null, dueAt: { lt: endOfToday } });
@@ -531,11 +587,15 @@ export class ErpCrmService {
     const subjects = [body.leadId, body.opportunityId, body.customerId].filter(Boolean);
     if (subjects.length !== 1)
       throw new DomainException('validation.failed', {
-        errors: [{ path: 'leadId', code: 'one_of', message: 'Exactly one of leadId, opportunityId, customerId' }],
+        errors: [
+          { path: 'leadId', code: 'one_of', message: 'Exactly one of leadId, opportunityId, customerId' },
+        ],
       });
     const id = await this.workspace.tx(async (tx) => {
       const f = scope.factory.id;
-      const lead = body.leadId ? await tx.erpLead.findFirst({ where: { publicId: body.leadId, factoryId: f } }) : null;
+      const lead = body.leadId
+        ? await tx.erpLead.findFirst({ where: { publicId: body.leadId, factoryId: f } })
+        : null;
       const opp = body.opportunityId
         ? await tx.erpOpportunity.findFirst({ where: { publicId: body.opportunityId, factoryId: f } })
         : null;
@@ -563,7 +623,10 @@ export class ErpCrmService {
         },
       });
       if (lead && lead.stage === 'new' && body.done && body.kind !== 'note')
-        await tx.erpLead.update({ where: { id: lead.id }, data: { stage: 'contacted', rowVersion: { increment: 1 } } });
+        await tx.erpLead.update({
+          where: { id: lead.id },
+          data: { stage: 'contacted', rowVersion: { increment: 1 } },
+        });
       return a.publicId;
     });
     return this.getActivity(scope, id);
@@ -578,7 +641,11 @@ export class ErpCrmService {
     return activityDto(row);
   }
 
-  async completeActivity(scope: ErpScope, publicId: string, body: ErpCompleteActivityDto): Promise<ErpActivityDto> {
+  async completeActivity(
+    scope: ErpScope,
+    publicId: string,
+    body: ErpCompleteActivityDto,
+  ): Promise<ErpActivityDto> {
     await this.workspace.tx(async (tx) => {
       const a = await tx.erpActivity.findFirst({ where: { publicId, factoryId: scope.factory.id } });
       if (!a) throw new DomainException('http.not_found');
@@ -603,27 +670,29 @@ export class ErpCrmService {
 
   // ----------------------------------------------------------------------------------- helpers
 
-  private async lockLead(tx: Tx, scope: ErpScope, publicId: string): Promise<ErpLead> {
+  private async lockLead(tx: ErpTx, scope: ErpScope, publicId: string): Promise<ErpLead> {
     const lead = await tx.erpLead.findFirst({ where: { publicId, factoryId: scope.factory.id } });
     if (!lead) throw new DomainException('http.not_found');
     await tx.$queryRaw`SELECT id FROM erp_leads WHERE id = ${lead.id} FOR UPDATE`;
     return lead;
   }
 
-  private async lockOpportunity(tx: Tx, scope: ErpScope, publicId: string): Promise<ErpOpportunity> {
+  private async lockOpportunity(tx: ErpTx, scope: ErpScope, publicId: string): Promise<ErpOpportunity> {
     const opp = await tx.erpOpportunity.findFirst({ where: { publicId, factoryId: scope.factory.id } });
     if (!opp) throw new DomainException('http.not_found');
     await tx.$queryRaw`SELECT id FROM erp_opportunities WHERE id = ${opp.id} FOR UPDATE`;
     return opp;
   }
 
-  private async party(tx: Tx, scope: ErpScope, body: { customerId?: string; leadId?: string }) {
+  private async party(tx: ErpTx, scope: ErpScope, body: { customerId?: string; leadId?: string }) {
     if (!body.customerId && !body.leadId)
       throw new DomainException('validation.failed', {
         errors: [{ path: 'customerId', code: 'required', message: 'A customer or a lead' }],
       });
     const customer = body.customerId
-      ? await tx.erpTradingPartner.findFirst({ where: { publicId: body.customerId, factoryId: scope.factory.id } })
+      ? await tx.erpTradingPartner.findFirst({
+          where: { publicId: body.customerId, factoryId: scope.factory.id },
+        })
       : null;
     if (body.customerId && !customer) throw new DomainException('http.not_found');
     if (customer?.kind === 'supplier')
@@ -637,7 +706,7 @@ export class ErpCrmService {
 
   /** A salesperson: the given factory user, `null` to clear, or the fallback when not given. */
   private async person(
-    tx: Tx,
+    tx: ErpTx,
     scope: ErpScope,
     publicId: string | null | undefined,
     fallback: bigint | null,
@@ -647,7 +716,7 @@ export class ErpCrmService {
     return (await factoryUser(tx, scope.factory.id, publicId)).id;
   }
 
-  private async nextCustomerCode(tx: Tx, factoryId: bigint): Promise<string> {
+  private async nextCustomerCode(tx: ErpTx, factoryId: bigint): Promise<string> {
     const rows = await tx.$queryRaw<{ n: number | null }[]>(Prisma.sql`
       SELECT max(substring(code from '^C(\\d+)$')::int) AS n FROM erp_trading_partners
        WHERE factory_id = ${factoryId} AND code ~ '^C\\d+$'`);

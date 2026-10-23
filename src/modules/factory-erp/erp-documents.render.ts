@@ -1,4 +1,8 @@
-import { issuerSignatureHtml, type RenderBranding, SIGN_STYLE } from '@modules/documents/branding/render-branding';
+import {
+  issuerSignatureHtml,
+  type RenderBranding,
+  SIGN_STYLE,
+} from '@modules/documents/branding/render-branding';
 import { bahtText, thaiDate } from '@modules/receivables/thai-text';
 
 /**
@@ -180,7 +184,10 @@ ${
     ? `<div class="row" style="margin-top:8px">
   <div class="words">${d.words ? `(${esc(d.words)})` : ''}</div>
   <table class="totals"><tbody>${d.totals
-    .map((t) => `<tr${t.strong ? ' class="strong"' : ''}><td>${esc(t.label)}</td><td class="n">${money(t.value)}</td></tr>`)
+    .map(
+      (t) =>
+        `<tr${t.strong ? ' class="strong"' : ''}><td>${esc(t.label)}</td><td class="n">${money(t.value)}</td></tr>`,
+    )
     .join('')}</tbody></table>
 </div>`
     : ''
@@ -214,7 +221,13 @@ export interface WhtCertView {
   payer: DocParty;
   payee: DocParty;
   paidOn: string;
-  lines: { incomeType: string; description: string | null; ratePct: string; baseAmount: string; whtAmount: string }[];
+  lines: {
+    incomeType: string;
+    description: string | null;
+    ratePct: string;
+    baseAmount: string;
+    whtAmount: string;
+  }[];
   baseAmount: string;
   whtAmount: string;
   voided: boolean;
@@ -254,15 +267,22 @@ const ROWS = [
 /** The 50 ทวิ (s.50 bis) as the Revenue Department lays it out: payer, payee, the return, the income rows, the tax. */
 export function renderWhtCertificateHtml(c: WhtCertView): string {
   const byRow = new Map<number, typeof c.lines>();
-  for (const l of c.lines) byRow.set(INCOME_ROW[l.incomeType] ?? 6, [...(byRow.get(INCOME_ROW[l.incomeType] ?? 6) ?? []), l]);
+  for (const l of c.lines)
+    byRow.set(INCOME_ROW[l.incomeType] ?? 6, [...(byRow.get(INCOME_ROW[l.incomeType] ?? 6) ?? []), l]);
   const rows = ROWS.map((label, i) => {
     const ls = byRow.get(i + 1) ?? [];
-    const what = ls.map((l) => `${INCOME_TH[l.incomeType] ?? ''}${l.description ? ` (${l.description})` : ''} ${Number(l.ratePct)}%`).join(', ');
+    const what = ls
+      .map(
+        (l) =>
+          `${INCOME_TH[l.incomeType] ?? ''}${l.description ? ` (${l.description})` : ''} ${Number(l.ratePct)}%`,
+      )
+      .join(', ');
     const base = ls.reduce((a, l) => a + Number(l.baseAmount), 0);
     const wht = ls.reduce((a, l) => a + Number(l.whtAmount), 0);
     return `<tr><td>${esc(label)}${what ? `<br><b>${esc(what)}</b>` : ''}</td><td class="c">${ls.length ? thaiDate(c.paidOn) : ''}</td><td class="n">${ls.length ? money(base.toFixed(2)) : ''}</td><td class="n">${ls.length ? money(wht.toFixed(2)) : ''}</td></tr>`;
   }).join('');
-  const box = (on: boolean, label: string) => `<span style="margin-right:14px">${on ? '☒' : '☐'} ${label}</span>`;
+  const box = (on: boolean, label: string) =>
+    `<span style="margin-right:14px">${on ? '☒' : '☐'} ${label}</span>`;
   const one = (copy: string) => `<div class="page">
 <div class="title" style="text-align:center"><h1>หนังสือรับรองการหักภาษี ณ ที่จ่าย</h1><div class="en">ตามมาตรา 50 ทวิ แห่งประมวลรัษฎากร</div><div class="copy">${copy}</div></div>
 <div style="text-align:right;margin-top:4px">เล่มที่ ${esc(c.bookNo)} &nbsp; เลขที่ ${esc(c.certNo)}</div>

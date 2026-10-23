@@ -61,6 +61,7 @@ import {
   standardSizes,
   subPatterns,
 } from './product-structure/product-structure.resources';
+import { CatalogReadinessController } from './readiness/readiness.controller';
 import {
   designFonts,
   semiDesigns,
@@ -68,7 +69,6 @@ import {
   showcaseCategories,
   showcaseProducts,
 } from './showcase/showcase.resources';
-import { CatalogReadinessController } from './readiness/readiness.controller';
 import { StockProductRelationsController } from './stock/stock.controller';
 import { stockAttributeValues, stockProducts } from './stock/stock.resources';
 

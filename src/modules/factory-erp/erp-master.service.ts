@@ -1,14 +1,14 @@
 import { DomainException } from '@common/errors/domain.exception';
 import { assertIfMatch } from '@common/etag/etag';
 import { paginated, toSkipTake } from '@common/pagination/pagination';
-import { type Tx } from '@database/prisma.service';
+import { type ErpTx } from '@database/erp-prisma.service';
 import {
   type ErpEntityType,
   type ErpItem,
   type ErpPartnerKind,
   type ErpSupplierApprovalPolicy,
   Prisma,
-} from '@generated/prisma/client';
+} from '@generated/prisma-erp/client';
 import { Injectable } from '@nestjs/common';
 import { AuditService } from '@platform/audit/audit.service';
 
@@ -132,13 +132,13 @@ export class ErpMasterService {
     });
   }
 
-  private async logoPublicId(tx: Tx, id: bigint | null): Promise<string | null> {
+  private async logoPublicId(tx: ErpTx, id: bigint | null): Promise<string | null> {
     if (!id) return null;
     return (await tx.fileObject.findUnique({ where: { id }, select: { publicId: true } }))?.publicId ?? null;
   }
 
   /** D-368: the logo must be an uploaded, clean image owned by this factory. */
-  private async logoFile(tx: Tx, scope: ErpScope, publicId: string | null): Promise<bigint | null> {
+  private async logoFile(tx: ErpTx, scope: ErpScope, publicId: string | null): Promise<bigint | null> {
     if (publicId === null) return null;
     const f = await tx.fileObject.findUnique({ where: { publicId } });
     if (
@@ -282,7 +282,7 @@ export class ErpMasterService {
     }
   }
 
-  private async nextPartnerCode(tx: Tx, factoryId: bigint, kind: ErpPartnerKind): Promise<string> {
+  private async nextPartnerCode(tx: ErpTx, factoryId: bigint, kind: ErpPartnerKind): Promise<string> {
     const prefix = CODE_PREFIX[kind];
     const rows = await tx.$queryRaw<{ n: number | null }[]>(Prisma.sql`
       SELECT MAX(substring(code FROM 2)::int) AS n FROM erp_trading_partners
@@ -319,7 +319,9 @@ export class ErpMasterService {
           ...(body.status !== undefined && { status: body.status as 'active' | 'archived' }),
           ...(body.entityType !== undefined && { entityType: body.entityType as ErpEntityType }),
           ...(body.salespersonId !== undefined && {
-            salespersonId: body.salespersonId ? (await factoryUser(tx, scope.factory.id, body.salespersonId)).id : null,
+            salespersonId: body.salespersonId
+              ? (await factoryUser(tx, scope.factory.id, body.salespersonId)).id
+              : null,
           }),
           updatedById: scope.actor.userId,
           rowVersion: { increment: 1 },
@@ -491,7 +493,7 @@ export class ErpMasterService {
   }
 
   private async refs(
-    tx: Tx,
+    tx: ErpTx,
     scope: ErpScope,
     body: { materialId?: string | null; defaultSupplierId?: string | null },
   ) {

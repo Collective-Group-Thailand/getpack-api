@@ -1,6 +1,7 @@
 import { DomainException } from '@common/errors/domain.exception';
-import { type Tx } from '@database/prisma.service';
-import { type ErpTradingPartner } from '@generated/prisma/client';
+import { type ErpTx } from '@database/erp-prisma.service';
+import { PrismaService } from '@database/prisma.service';
+import { type ErpTradingPartner } from '@generated/prisma-erp/client';
 import { invoiceDto as vendorInvoiceDto } from '@modules/payables/payables-views';
 import { VendorInvoicesService } from '@modules/payables/vendor-invoices.service';
 import { CustomerDocumentsService } from '@modules/receivables/customer-documents.service';
@@ -31,6 +32,7 @@ export class ErpGetpackBillingService {
     private readonly pdf: ErpPdfService,
     private readonly vendorInvoices: VendorInvoicesService,
     private readonly documents: CustomerDocumentsService,
+    private readonly prisma: PrismaService,
   ) {}
 
   /** Drafts, issues and submits the tax invoice of a confirmed statement. */
@@ -97,7 +99,7 @@ export class ErpGetpackBillingService {
       if (invoice.status === 'draft' || invoice.status === 'voided' || !invoice.invoiceNo)
         throw notAllowed('the ERP invoice is not issued');
       if (invoice.vendorInvoice) throw notAllowed('this ERP invoice was handed over already');
-      const seller = await this.documents.seller(tx, statement.entityId, new Date());
+      const seller = await this.documents.seller(this.prisma, statement.entityId, new Date());
       if (seller.taxId && invoice.customer.taxId !== seller.taxId)
         throw notAllowed('the ERP invoice is not made out to getpack (tax id)');
       if (scope.factory.isVatRegistered && !invoice.isTaxInvoice)
@@ -136,7 +138,7 @@ export class ErpGetpackBillingService {
     return vendorInvoiceDto(row);
   }
 
-  private async statement(tx: Tx, scope: ErpScope, publicId: string) {
+  private async statement(tx: ErpTx, scope: ErpScope, publicId: string) {
     const statement = await tx.billingStatement.findFirst({
       where: { publicId, factoryId: scope.factory.id },
       include: { lines: { orderBy: { lineNo: 'asc' } }, vendorInvoices: true },
@@ -149,8 +151,8 @@ export class ErpGetpackBillingService {
   }
 
   /** getpack as a customer of the factory: found by getpack's tax id, else created from its registered data. */
-  private async getpackCustomer(tx: Tx, scope: ErpScope, entityId: bigint): Promise<ErpTradingPartner> {
-    const seller = await this.documents.seller(tx, entityId, new Date());
+  private async getpackCustomer(tx: ErpTx, scope: ErpScope, entityId: bigint): Promise<ErpTradingPartner> {
+    const seller = await this.documents.seller(this.prisma, entityId, new Date());
     if (!seller.taxId) throw notAllowed('getpack’s registered data (tax id) is not set');
     const found = await tx.erpTradingPartner.findFirst({
       where: { factoryId: scope.factory.id, taxId: seller.taxId, branchCode: seller.branchCode ?? '00000' },

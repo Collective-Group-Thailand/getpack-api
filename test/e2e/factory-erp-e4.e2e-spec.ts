@@ -34,8 +34,12 @@ describe('getpack Factory ERP E4 (e2e)', () => {
     operator = await factoryToken(ctx, fixture.factoryPublicId, 'factory_operator', 605);
     base = `/v1/partner/factories/${fixture.factoryPublicId}/erp`;
     // A tax invoice needs the seller's registered address (D-363).
-    const factory = await ctx.prisma.factory.findUniqueOrThrow({ where: { publicId: fixture.factoryPublicId } });
-    if (!(await ctx.prisma.factoryAddress.findFirst({ where: { factoryId: factory.id, kind: 'registered' } })))
+    const factory = await ctx.prisma.factory.findUniqueOrThrow({
+      where: { publicId: fixture.factoryPublicId },
+    });
+    if (
+      !(await ctx.prisma.factoryAddress.findFirst({ where: { factoryId: factory.id, kind: 'registered' } }))
+    )
       await ctx.prisma.factoryAddress.create({
         data: { factoryId: factory.id, kind: 'registered', line1: '1 ถนนทดสอบ (E4)', postcode: '10000' },
       });
@@ -81,15 +85,24 @@ describe('getpack Factory ERP E4 (e2e)', () => {
     ).body as Rec;
     const item = (
       await as(ctx, owner)
-        .post(`${base}/items`, { sku: `E4-BOX-${ctx.run}`, name: 'กล่อง E4 (ทดสอบ)', kind: 'finished_good', baseUnit: 'pcs' })
+        .post(`${base}/items`, {
+          sku: `E4-BOX-${ctx.run}`,
+          name: 'กล่อง E4 (ทดสอบ)',
+          kind: 'finished_good',
+          baseUnit: 'pcs',
+        })
         .expect(201)
     ).body as Rec;
 
     // D-359: a lead becomes a customer's opportunity.
-    const lead = (await as(ctx, sales).post(`${base}/leads`, { name: 'ร้านกาแฟ E4', source: 'line' }).expect(201))
-      .body as Rec;
+    const lead = (
+      await as(ctx, sales).post(`${base}/leads`, { name: 'ร้านกาแฟ E4', source: 'line' }).expect(201)
+    ).body as Rec;
     expect(lead.nextActions.map((a: Rec) => a.key)).toContain('erp_lead.convert');
-    const converted = await post(sales, `/leads/${lead.id}/actions/convert`, { customerId: customer.id, openOpportunity: true });
+    const converted = await post(sales, `/leads/${lead.id}/actions/convert`, {
+      customerId: customer.id,
+      openOpportunity: true,
+    });
     expect(converted.lead.stage).toBe('converted');
     expect((await get('/pipeline', sales)).stages.length).toBe(5);
 
@@ -109,7 +122,8 @@ describe('getpack Factory ERP E4 (e2e)', () => {
     expect(qt).toMatchObject({ status: 'draft', subtotal: '1450.00', vatAmount: '101.50', total: '1551.50' });
     const sent = await post(sales, `/quotations/${qt.id}/actions/send`, {}, 200, etag(qt.id, qt.version));
     const token = String(sent.url).split('/q/')[1]!;
-    const view = (await request(ctx.app.getHttpServer()).get(`/v1/store/quote-links/${token}`).expect(200)).body as Rec;
+    const view = (await request(ctx.app.getHttpServer()).get(`/v1/store/quote-links/${token}`).expect(200))
+      .body as Rec;
     expect(view).toMatchObject({ quoteNo: qt.quoteNo, total: '1551.50', status: 'sent' });
     await request(ctx.app.getHttpServer())
       .post(`/v1/store/quote-links/${token}/actions/accept`)
@@ -121,14 +135,26 @@ describe('getpack Factory ERP E4 (e2e)', () => {
     // D-361: the order, confirmed within the credit limit; stock reserved.
     const so = await post(sales, `/quotations/${qt.id}/actions/order`, {}, 201);
     expect(so.lines.map((l: Rec) => l.fulfilment)).toEqual(['stock', 'service']);
-    const confirmed = await post(sales, `/sales-orders/${so.id}/actions/confirm`, {}, 200, etag(so.id, so.version));
+    const confirmed = await post(
+      sales,
+      `/sales-orders/${so.id}/actions/confirm`,
+      {},
+      200,
+      etag(so.id, so.version),
+    );
     expect(confirmed.status).toBe('confirmed');
     // Only free stock is reserved — none here (no opening balance); delivery still issues it (negative stock allowed).
     expect(confirmed.lines[0].reservedQty).toBe('0.000');
 
     // D-362: the delivery note issues the stock and is delivered.
     const dn = await post(storekeeper, '/delivery-notes', { salesOrderId: so.id }, 201);
-    const issued = await post(storekeeper, `/delivery-notes/${dn.id}/actions/issue`, {}, 200, etag(dn.id, dn.version));
+    const issued = await post(
+      storekeeper,
+      `/delivery-notes/${dn.id}/actions/issue`,
+      {},
+      200,
+      etag(dn.id, dn.version),
+    );
     expect(issued.status).toBe('issued');
     const delivered = await post(
       storekeeper,
@@ -140,9 +166,20 @@ describe('getpack Factory ERP E4 (e2e)', () => {
     expect(delivered.status).toBe('delivered');
 
     // D-363: the tax invoice from the delivery note and the service line of the order.
-    const iv = await post(accountant, '/sales-invoices', { customerId: customer.id, deliveryNoteIds: [dn.id], salesOrderId: so.id }, 201);
+    const iv = await post(
+      accountant,
+      '/sales-invoices',
+      { customerId: customer.id, deliveryNoteIds: [dn.id], salesOrderId: so.id },
+      201,
+    );
     expect(iv.total).toBe('1551.50');
-    const ivIssued = await post(accountant, `/sales-invoices/${iv.id}/actions/issue`, {}, 200, etag(iv.id, iv.version));
+    const ivIssued = await post(
+      accountant,
+      `/sales-invoices/${iv.id}/actions/issue`,
+      {},
+      200,
+      etag(iv.id, iv.version),
+    );
     expect(ivIssued.invoiceNo).toMatch(/^IV/);
     expect((await get(`/sales-invoices/${iv.id}/pdf`, accountant)).fileName).toMatch(/\.pdf$/);
 
@@ -150,7 +187,12 @@ describe('getpack Factory ERP E4 (e2e)', () => {
     const cn = await post(
       accountant,
       '/sales-notes',
-      { kind: 'credit', invoiceId: iv.id, reason: 'discount_after_sale', lines: [{ description: 'ส่วนลด', amount: '50' }] },
+      {
+        kind: 'credit',
+        invoiceId: iv.id,
+        reason: 'discount_after_sale',
+        lines: [{ description: 'ส่วนลด', amount: '50' }],
+      },
       201,
     );
     expect((await post(accountant, `/sales-notes/${cn.id}/actions/issue`)).total).toBe('53.50');
@@ -173,7 +215,13 @@ describe('getpack Factory ERP E4 (e2e)', () => {
     const over = await post(
       accountant,
       '/receipts',
-      { customerId: customer.id, receivedOn: ivIssued.issueDate, method: 'cash', amount: '1', allocations: [{ invoiceId: iv.id, amount: '1' }] },
+      {
+        customerId: customer.id,
+        receivedOn: ivIssued.issueDate,
+        method: 'cash',
+        amount: '1',
+        allocations: [{ invoiceId: iv.id, amount: '1' }],
+      },
       422,
     );
     expect(over.code).toBe('erp.allocation_exceeds_open');

@@ -3,7 +3,7 @@ import { DomainException } from '@common/errors/domain.exception';
 import { assertIfMatch, etagOf } from '@common/etag/etag';
 import { type ActionRule, nextActions } from '@common/next-actions/next-actions';
 import { addCalendarDays, bangkokDate, startOfBangkokDay, toBangkokIso } from '@common/time/bangkok';
-import { type ErpRecordStatus, type ErpSkillLevel, type Prisma } from '@generated/prisma/client';
+import { type ErpRecordStatus, type ErpSkillLevel, type Prisma } from '@generated/prisma-erp/client';
 import { Injectable } from '@nestjs/common';
 import { AuditService } from '@platform/audit/audit.service';
 
@@ -109,7 +109,9 @@ export class ErpPeopleService {
   }
 
   private async nameFree(tx: Prisma.TransactionClient, scope: ErpScope, name: string, self: bigint | null) {
-    const taken = await tx.erpShift.findFirst({ where: { factoryId: scope.factory.id, name, NOT: self ? { id: self } : undefined } });
+    const taken = await tx.erpShift.findFirst({
+      where: { factoryId: scope.factory.id, name, NOT: self ? { id: self } : undefined },
+    });
     if (taken) throw new DomainException('erp.code_taken', { params: { code: name } });
   }
 
@@ -132,7 +134,9 @@ export class ErpPeopleService {
   async saveSkill(scope: ErpScope, body: ErpSaveSkillDto): Promise<ErpOperatorSkillDto> {
     const id = await this.workspace.tx(async (tx) => {
       const user = await factoryUser(tx, scope.factory.id, body.userId);
-      const machine = await tx.factoryMachine.findFirst({ where: { publicId: body.machineId, factoryId: scope.factory.id } });
+      const machine = await tx.factoryMachine.findFirst({
+        where: { publicId: body.machineId, factoryId: scope.factory.id },
+      });
       if (!machine) throw new DomainException('http.not_found');
       const data = {
         level: body.level as ErpSkillLevel,
@@ -140,14 +144,26 @@ export class ErpPeopleService {
         note: body.note ?? null,
       };
       const s = await tx.erpOperatorSkill.upsert({
-        where: { factoryId_userId_machineId: { factoryId: scope.factory.id, userId: user.id, machineId: machine.id } },
-        create: { factoryId: scope.factory.id, userId: user.id, machineId: machine.id, ...data, createdById: scope.actor.userId },
+        where: {
+          factoryId_userId_machineId: { factoryId: scope.factory.id, userId: user.id, machineId: machine.id },
+        },
+        create: {
+          factoryId: scope.factory.id,
+          userId: user.id,
+          machineId: machine.id,
+          ...data,
+          createdById: scope.actor.userId,
+        },
         update: { ...data, updatedById: scope.actor.userId, rowVersion: { increment: 1 } },
       });
-      await this.workspace.record(tx, scope, 'erp_operator_skill.saved', 'erp_operator_skill', s.publicId, { level: s.level });
+      await this.workspace.record(tx, scope, 'erp_operator_skill.saved', 'erp_operator_skill', s.publicId, {
+        level: s.level,
+      });
       return s.id;
     });
-    return skillDto(await this.workspace.db.erpOperatorSkill.findUniqueOrThrow({ where: { id }, include: SKILL_INCLUDE }));
+    return skillDto(
+      await this.workspace.db.erpOperatorSkill.findUniqueOrThrow({ where: { id }, include: SKILL_INCLUDE }),
+    );
   }
 
   async deleteSkill(scope: ErpScope, publicId: string): Promise<void> {
@@ -185,11 +201,27 @@ export class ErpPeopleService {
       where: { id: { in: events.map((e) => e.operationId) } },
       include: { machine: true, events: { include: { createdBy: true }, orderBy: { occurredAt: 'asc' } } },
     });
-    type Acc = { user: { publicId: string; displayName: string }; day: string; ops: Set<bigint>; run: number; good: ReturnType<typeof dec>; scrap: ReturnType<typeof dec>; machines: Set<string> };
+    type Acc = {
+      user: { publicId: string; displayName: string };
+      day: string;
+      ops: Set<bigint>;
+      run: number;
+      good: ReturnType<typeof dec>;
+      scrap: ReturnType<typeof dec>;
+      machines: Set<string>;
+    };
     const acc = new Map<string, Acc>();
     const get = (u: { publicId: string; displayName: string }, d: string) => {
       const k = `${u.publicId}:${d}`;
-      const e = acc.get(k) ?? { user: u, day: d, ops: new Set(), run: 0, good: dec(0), scrap: dec(0), machines: new Set() };
+      const e = acc.get(k) ?? {
+        user: u,
+        day: d,
+        ops: new Set(),
+        run: 0,
+        good: dec(0),
+        scrap: dec(0),
+        machines: new Set(),
+      };
       acc.set(k, e);
       return e;
     };
@@ -212,7 +244,17 @@ export class ErpPeopleService {
         if (e.kind === 'start' || e.kind === 'resume') {
           const next = evs.slice(i + 1).find((x) => x.kind !== 'start' && x.kind !== 'resume');
           const seg = operationSegments(
-            [{ kind: 'start', at: e.occurredAt.getTime() }, ...(next ? [{ kind: next.kind === 'pause' ? 'pause' : 'finish', at: next.occurredAt.getTime() } as OpEvent] : [])],
+            [
+              { kind: 'start', at: e.occurredAt.getTime() },
+              ...(next
+                ? [
+                    {
+                      kind: next.kind === 'pause' ? 'pause' : 'finish',
+                      at: next.occurredAt.getTime(),
+                    } as OpEvent,
+                  ]
+                : []),
+            ],
             Math.min(now, end.getTime()),
           );
           a.run += seg.run.reduce((x, [s, t]) => x + overlapMinutes(s, t, start.getTime(), end.getTime()), 0);
@@ -230,7 +272,9 @@ export class ErpPeopleService {
         scrap: fmtQty(a.scrap),
         machines: [...a.machines].sort(),
       }))
-      .sort((x, y) => (x.day === y.day ? x.user.name.localeCompare(y.user.name, 'th') : y.day.localeCompare(x.day)));
+      .sort((x, y) =>
+        x.day === y.day ? x.user.name.localeCompare(y.user.name, 'th') : y.day.localeCompare(x.day),
+      );
     return { from, to, rows };
   }
 
@@ -247,7 +291,11 @@ export class ErpPeopleService {
   }
 
   /** D-381: up to 7 days, one at a time. */
-  async grant(scope: ErpScope, body: ErpGrantSupportDto, perms: ReadonlySet<string>): Promise<ErpSupportGrantDto> {
+  async grant(
+    scope: ErpScope,
+    body: ErpGrantSupportDto,
+    perms: ReadonlySet<string>,
+  ): Promise<ErpSupportGrantDto> {
     const id = await this.workspace.tx(async (tx) => {
       await tx.$queryRaw`SELECT id FROM factories WHERE id = ${scope.factory.id} FOR UPDATE`;
       const active = await tx.erpSupportGrant.count({
@@ -271,17 +319,28 @@ export class ErpPeopleService {
         resourcePublicId: scope.factory.publicId,
         data: { grantId: g.publicId, days: body.days },
       });
-      await this.workspace.record(tx, scope, 'erp_support.granted', 'erp_support_grant', g.publicId, { days: body.days });
+      await this.workspace.record(tx, scope, 'erp_support.granted', 'erp_support_grant', g.publicId, {
+        days: body.days,
+      });
       return g.id;
     });
-    return grantDto(await this.workspace.db.erpSupportGrant.findUniqueOrThrow({ where: { id }, include: GRANT_INCLUDE }), perms);
+    return grantDto(
+      await this.workspace.db.erpSupportGrant.findUniqueOrThrow({ where: { id }, include: GRANT_INCLUDE }),
+      perms,
+    );
   }
 
-  async revoke(scope: ErpScope, publicId: string, reason: string, perms: ReadonlySet<string>): Promise<ErpSupportGrantDto> {
+  async revoke(
+    scope: ErpScope,
+    publicId: string,
+    reason: string,
+    perms: ReadonlySet<string>,
+  ): Promise<ErpSupportGrantDto> {
     const id = await this.workspace.tx(async (tx) => {
       const g = await tx.erpSupportGrant.findFirst({ where: { publicId, factoryId: scope.factory.id } });
       if (!g) throw new DomainException('http.not_found');
-      if (g.revokedAt || g.expiresAt <= new Date()) throw new DomainException('erp.invalid_status', { params: { status: 'ended' } });
+      if (g.revokedAt || g.expiresAt <= new Date())
+        throw new DomainException('erp.invalid_status', { params: { status: 'ended' } });
       await tx.erpSupportGrant.update({
         where: { id: g.id },
         data: {
@@ -302,7 +361,10 @@ export class ErpPeopleService {
       await this.workspace.record(tx, scope, 'erp_support.revoked', 'erp_support_grant', g.publicId);
       return g.id;
     });
-    return grantDto(await this.workspace.db.erpSupportGrant.findUniqueOrThrow({ where: { id }, include: GRANT_INCLUDE }), perms);
+    return grantDto(
+      await this.workspace.db.erpSupportGrant.findUniqueOrThrow({ where: { id }, include: GRANT_INCLUDE }),
+      perms,
+    );
   }
 
   /** D-381: what staff see under an active grant — the dashboard and the ERP settings; every read is kept. */
@@ -328,7 +390,9 @@ export class ErpPeopleService {
       this.master.getSettings({ factory, actor: staff }),
     ]);
     await this.workspace.tx(async (tx) => {
-      await tx.erpSupportView.create({ data: { grantId: grant.id, staffId: staff.userId, what: 'dashboard,settings' } });
+      await tx.erpSupportView.create({
+        data: { grantId: grant.id, staffId: staff.userId, what: 'dashboard,settings' },
+      });
       await tx.erpSupportGrant.update({
         where: { id: grant.id },
         data: { viewCount: { increment: 1 }, lastViewedAt: new Date() },
@@ -340,7 +404,13 @@ export class ErpPeopleService {
         resourcePublicId: factory.publicId,
         data: { grantId: grant.publicId },
       });
-      await this.workspace.recordSystem(tx, factory.publicId, 'erp_support.viewed', 'erp_support_grant', grant.publicId);
+      await this.workspace.recordSystem(
+        tx,
+        factory.publicId,
+        'erp_support.viewed',
+        'erp_support_grant',
+        grant.publicId,
+      );
     });
     return {
       factory: { id: factory.publicId, code: factory.code, name: factory.tradeName ?? factory.legalName },

@@ -1,7 +1,7 @@
 import { type Actor, actorColumns } from '@common/context/actor';
 import { RequestContext } from '@common/context/request-context';
 import { jsonSafe } from '@common/json/json-safe';
-import { type Tx } from '@database/prisma.service';
+import { type AnyTx, platformTx } from '@database/prisma.service';
 import { type ActivityVisibility } from '@generated/prisma/client';
 import { Injectable } from '@nestjs/common';
 
@@ -23,9 +23,9 @@ export interface ActivityEntry {
 /** Human-readable timeline row written with every state change (schema-design §2.6). */
 @Injectable()
 export class ActivityLogService {
-  async record(tx: Tx, entry: ActivityEntry): Promise<void> {
+  async record(tx: AnyTx, entry: ActivityEntry): Promise<void> {
     const actor = entry.actor ?? RequestContext.actor() ?? { type: 'system' as const, name: 'unknown' };
-    await tx.activityLog.create({
+    await platformTx(tx).activityLog.create({
       data: {
         ...actorColumns(actor),
         onBehalfOfUserId: actor.type === 'user' ? (actor.onBehalfOfUserId ?? null) : null,

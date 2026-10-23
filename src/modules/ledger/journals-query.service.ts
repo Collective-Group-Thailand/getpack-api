@@ -1,9 +1,9 @@
+import { dateOnly } from '@common/ledger-core/dates';
 import { PrismaService } from '@database/prisma.service';
 import { type Prisma } from '@generated/prisma/client';
 import { Injectable } from '@nestjs/common';
 
 import { type JournalListQuery } from './ledger.dto';
-import { dateOnly } from '@common/ledger-core/dates';
 import { JOURNAL_INCLUDE } from './manual-journals.service';
 
 /** Journal reads with the drill-down filters (account, source document, domain event) of §1.7. */

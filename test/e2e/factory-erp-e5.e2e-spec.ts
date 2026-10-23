@@ -39,9 +39,16 @@ describe('getpack Factory ERP E5 (e2e)', () => {
 
   type Rec = Record<string, any>; // eslint-disable-line @typescript-eslint/no-explicit-any
   const post = async (token: string, path: string, body: object = {}, status = 200) =>
-    (await as(ctx, token).post(`${base}${path}`).set('Idempotency-Key', randomUUID()).send(body).expect(status)).body as Rec;
+    (
+      await as(ctx, token)
+        .post(`${base}${path}`)
+        .set('Idempotency-Key', randomUUID())
+        .send(body)
+        .expect(status)
+    ).body as Rec;
   const put = async (token: string, path: string, body: object, id: string, version: number, status = 200) =>
-    (await as(ctx, token).put(`${base}${path}`).set('If-Match', etag(id, version)).send(body).expect(status)).body as Rec;
+    (await as(ctx, token).put(`${base}${path}`).set('If-Match', etag(id, version)).send(body).expect(status))
+      .body as Rec;
   const get = async (path: string, token = owner, status = 200) =>
     (await as(ctx, token).get(`${base}${path}`).expect(status)).body as Rec;
   const etag = (id: string, version: number) =>
@@ -50,7 +57,12 @@ describe('getpack Factory ERP E5 (e2e)', () => {
   it('checks quality, works an NCR to close and prints a COA (D-372 – D-375)', async () => {
     const item = (
       await as(ctx, owner)
-        .post(`${base}/items`, { sku: `E5-BOX-${ctx.run}`, name: 'กล่อง E5 (ทดสอบ)', kind: 'finished_good', baseUnit: 'pcs' })
+        .post(`${base}/items`, {
+          sku: `E5-BOX-${ctx.run}`,
+          name: 'กล่อง E5 (ทดสอบ)',
+          kind: 'finished_good',
+          baseUnit: 'pcs',
+        })
         .expect(201)
     ).body as Rec;
     const template = (
@@ -69,11 +81,38 @@ describe('getpack Factory ERP E5 (e2e)', () => {
     ).body as Rec;
     expect(template.checkpoints).toHaveLength(3);
     // QC records; the operator may not keep templates (D-382).
-    await as(ctx, operator).post(`${base}/inspection-templates`, { name: 'x', kind: 'final', checkpoints: [{ name: 'x', type: 'note' }] }).expect(403);
+    await as(ctx, operator)
+      .post(`${base}/inspection-templates`, {
+        name: 'x',
+        kind: 'final',
+        checkpoints: [{ name: 'x', type: 'note' }],
+      })
+      .expect(403);
 
-    const bad = (await as(ctx, qc).post(`${base}/quality-checks`, { kind: 'final', templateId: template.id, itemId: item.id, lotNo: 'L1' }).expect(201)).body as Rec;
+    const bad = (
+      await as(ctx, qc)
+        .post(`${base}/quality-checks`, {
+          kind: 'final',
+          templateId: template.id,
+          itemId: item.id,
+          lotNo: 'L1',
+        })
+        .expect(201)
+    ).body as Rec;
     expect(bad).toMatchObject({ result: 'pending', qcNo: expect.stringMatching(/^QC-\d{4}-\d{4}$/) });
-    const failed = await put(qc, `/quality-checks/${bad.id}`, { points: [{ seq: 1, measured: '305' }, { seq: 2, outcome: 'pass' }], rejectedQty: '20' }, bad.id, bad.version);
+    const failed = await put(
+      qc,
+      `/quality-checks/${bad.id}`,
+      {
+        points: [
+          { seq: 1, measured: '305' },
+          { seq: 2, outcome: 'pass' },
+        ],
+        rejectedQty: '20',
+      },
+      bad.id,
+      bad.version,
+    );
     expect(failed.result).toBe('fail');
     expect(failed.checkpoints[0]).toMatchObject({ outcome: 'fail', measured: '305.0000' });
     expect(failed.ncrs).toHaveLength(1);
@@ -82,17 +121,43 @@ describe('getpack Factory ERP E5 (e2e)', () => {
     let ncr = await get(`/ncrs/${failed.ncrs[0].id}`, qc);
     expect(ncr).toMatchObject({ status: 'open', source: 'quality_check', quantity: '20.000' });
     await post(qc, `/ncrs/${ncr.id}/actions/verify`, { note: 'ok' }, 422);
-    ncr = await put(qc, `/ncrs/${ncr.id}`, { rootCause: 'ตั้งใบมีดผิด', correctiveAction: 'ตัดใหม่ 20 ใบ' }, ncr.id, ncr.version);
+    ncr = await put(
+      qc,
+      `/ncrs/${ncr.id}`,
+      { rootCause: 'ตั้งใบมีดผิด', correctiveAction: 'ตัดใหม่ 20 ใบ' },
+      ncr.id,
+      ncr.version,
+    );
     expect(ncr.status).toBe('in_progress');
-    await as(ctx, operator).post(`${base}/ncrs/${ncr.id}/actions/dispose`).set('Idempotency-Key', randomUUID()).send({ disposition: 'rework' }).expect(403);
+    await as(ctx, operator)
+      .post(`${base}/ncrs/${ncr.id}/actions/dispose`)
+      .set('Idempotency-Key', randomUUID())
+      .send({ disposition: 'rework' })
+      .expect(403);
     ncr = await post(qc, `/ncrs/${ncr.id}/actions/dispose`, { disposition: 'rework' });
     ncr = await post(qc, `/ncrs/${ncr.id}/actions/verify`, { note: 'ล็อตใหม่ผ่าน' });
     expect(ncr.status).toBe('verified');
     ncr = await post(owner, `/ncrs/${ncr.id}/actions/close`);
     expect(ncr).toMatchObject({ status: 'closed', nextActions: [] });
 
-    const good = (await as(ctx, qc).post(`${base}/quality-checks`, { kind: 'final', templateId: template.id, itemId: item.id }).expect(201)).body as Rec;
-    const passed = await put(qc, `/quality-checks/${good.id}`, { points: [{ seq: 1, measured: '300.5' }, { seq: 2, outcome: 'pass' }], inspectedQty: '500' }, good.id, good.version);
+    const good = (
+      await as(ctx, qc)
+        .post(`${base}/quality-checks`, { kind: 'final', templateId: template.id, itemId: item.id })
+        .expect(201)
+    ).body as Rec;
+    const passed = await put(
+      qc,
+      `/quality-checks/${good.id}`,
+      {
+        points: [
+          { seq: 1, measured: '300.5' },
+          { seq: 2, outcome: 'pass' },
+        ],
+        inspectedQty: '500',
+      },
+      good.id,
+      good.version,
+    );
     expect(passed.result).toBe('pass');
     expect(passed.nextActions.map((a: Rec) => a.key)).toContain('erp_qc.coa');
     const coa = await get(`/quality-checks/${good.id}/coa`, qc);
@@ -106,7 +171,12 @@ describe('getpack Factory ERP E5 (e2e)', () => {
   it('keeps rates, shows OEE, costs and the dashboard to who reads insight (D-376 – D-378)', async () => {
     const machines = await get('/machine-rates');
     if (machines.length) {
-      const saved = (await as(ctx, owner).put(`${base}/machine-rates/${machines[0].machine.id}`).send({ hourlyRate: '850' }).expect(200)).body as Rec[];
+      const saved = (
+        await as(ctx, owner)
+          .put(`${base}/machine-rates/${machines[0].machine.id}`)
+          .send({ hourlyRate: '850' })
+          .expect(200)
+      ).body as Rec[];
       expect(saved[0]!.hourlyRate).toBe('850.00');
     }
     const today = new Date(Date.now() + 7 * 3_600_000).toISOString().slice(0, 10);
@@ -115,27 +185,56 @@ describe('getpack Factory ERP E5 (e2e)', () => {
     const month = today.slice(0, 7);
     expect(await get(`/insight/costs?month=${month}`)).toMatchObject({ month });
     expect(await get(`/insight/profitability?month=${month}&by=item`)).toMatchObject({ month, by: 'item' });
-    expect(await get(`/insight/profitability?month=${month}&by=getpack_job`)).toMatchObject({ month, by: 'getpack_job', rows: expect.any(Array) }); // D-402
+    expect(await get(`/insight/profitability?month=${month}&by=getpack_job`)).toMatchObject({
+      month,
+      by: 'getpack_job',
+      rows: expect.any(Array),
+    }); // D-402
     const dash = await get('/dashboard', accountant);
-    expect(dash).toMatchObject({ month, quality: { openNcrs: expect.any(Number) }, getpack: { confirmedNet: expect.any(String), toConfirm: expect.any(Number) } });
+    expect(dash).toMatchObject({
+      month,
+      quality: { openNcrs: expect.any(Number) },
+      getpack: { confirmedNet: expect.any(String), toConfirm: expect.any(Number) },
+    });
     await get('/dashboard', qc, 403);
     await get('/dashboard', operator, 403);
   });
 
   it('keeps shifts and skills, and lets support read only under a grant (D-380, D-381)', async () => {
-    const shift = (await as(ctx, planner).post(`${base}/shifts`, { name: `กะ E5 ${ctx.run}`, startTime: '20:00', endTime: '05:00', days: [1, 2, 3] }).expect(201)).body as Rec;
+    const shift = (
+      await as(ctx, planner)
+        .post(`${base}/shifts`, {
+          name: `กะ E5 ${ctx.run}`,
+          startTime: '20:00',
+          endTime: '05:00',
+          days: [1, 2, 3],
+        })
+        .expect(201)
+    ).body as Rec;
     expect(shift.minutes).toBe(540);
-    await as(ctx, operator).post(`${base}/shifts`, { name: 'x', startTime: '08:00', endTime: '09:00', days: [1] }).expect(403);
-    expect(await get('/work-log?from=2026-10-01&to=2026-10-02', planner)).toMatchObject({ rows: expect.any(Array) });
+    await as(ctx, operator)
+      .post(`${base}/shifts`, { name: 'x', startTime: '08:00', endTime: '09:00', days: [1] })
+      .expect(403);
+    expect(await get('/work-log?from=2026-10-01&to=2026-10-02', planner)).toMatchObject({
+      rows: expect.any(Array),
+    });
 
     const staff = await staffToken(ctx, 'partner_manager');
     const view = `/v1/admin/factories/${fixture.factoryPublicId}/erp/support-view`;
     await as(ctx, staff).get(view).expect(403);
-    await as(ctx, planner).post(`${base}/support-grants`).set('Idempotency-Key', randomUUID()).send({ reason: 'ตรวจต้นทุน', days: 2 }).expect(403);
+    await as(ctx, planner)
+      .post(`${base}/support-grants`)
+      .set('Idempotency-Key', randomUUID())
+      .send({ reason: 'ตรวจต้นทุน', days: 2 })
+      .expect(403);
     const grant = await post(owner, '/support-grants', { reason: 'ตรวจต้นทุน', days: 2 }, 201);
     await post(owner, '/support-grants', { reason: 'อีกครั้ง', days: 1 }, 409);
     const seen = (await as(ctx, staff).get(view).expect(200)).body as Rec;
-    expect(seen).toMatchObject({ reason: 'ตรวจต้นทุน', dashboard: { month: expect.any(String) }, settings: { version: expect.any(Number) } });
+    expect(seen).toMatchObject({
+      reason: 'ตรวจต้นทุน',
+      dashboard: { month: expect.any(String) },
+      settings: { version: expect.any(Number) },
+    });
     const listed = await get('/support-grants');
     expect(listed[0]).toMatchObject({ id: grant.id, active: true, viewCount: 1 });
     await post(owner, `/support-grants/${grant.id}/actions/revoke`, { reason: 'เสร็จแล้ว' });
