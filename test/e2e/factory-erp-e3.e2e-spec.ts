@@ -46,6 +46,12 @@ describe('getpack Factory ERP E2.1 + E3 (e2e)', () => {
   });
 
   afterAll(async () => {
+    // The ERP suites share the dev factory: put back the defaults the supplier-approval case changes (D-351).
+    if (fixture)
+      await ctx.erpPrisma.erpFactorySettings.updateMany({
+        where: { factory: { publicId: fixture.factoryPublicId } },
+        data: { supplierApproval: 'warn', priceAlertPct: '5' },
+      });
     await foldingBackToRfq(ctx);
     await ctx?.app.close();
   });

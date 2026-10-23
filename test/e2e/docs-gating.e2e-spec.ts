@@ -100,9 +100,9 @@ describe('/docs* access in production (contract §5)', () => {
             .expect(200)
         ).body.accessToken as string;
       const director = await token('director@example.invalid'); // APPROVER → settings.read
-      const prepress = await token('prepress@example.invalid'); // no settings.read
+      const logistics = await token('logistics@example.invalid'); // no settings.read (docs/rbac.md)
       await request(server).get('/docs-json').auth(director, { type: 'bearer' }).expect(200);
-      await request(server).get('/docs-json').auth(prepress, { type: 'bearer' }).expect(404);
+      await request(server).get('/docs-json').auth(logistics, { type: 'bearer' }).expect(404);
       await request(server).get('/docs-json').auth('garbage', { type: 'bearer' }).expect(404);
     } finally {
       await app.close();

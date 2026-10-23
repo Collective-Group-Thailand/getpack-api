@@ -108,6 +108,14 @@ describe('outbox relay and subscribers (PostgreSQL 18 + Redis, worker process)',
       relay.relayBatch(10),
     ]);
     await eventually(() => batch.every((e) => received.includes(e.id)));
+    // The handler sees the event before the runner's transaction commits its consumption row.
+    const ids = batch.map((e) => e.id);
+    await eventually(
+      async () =>
+        (await prisma.eventConsumption.count({
+          where: { consumer: 'test.recording', eventId: { in: ids } },
+        })) >= batch.length,
+    );
     for (const event of batch) {
       expect(received.filter((id) => id === event.id)).toHaveLength(1);
       expect(await consumptions(event.id)).toBe(1);

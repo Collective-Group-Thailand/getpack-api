@@ -45,7 +45,7 @@ describe('folding engine B quotes (e2e, U-B6 tail)', () => {
     await seedDev(prisma, E2E_DEV_PASSWORD);
     a = (await prisma.$transaction((tx) => seedDevFolding(tx), { timeout: 60_000 })).fixture;
     b = (await prisma.$transaction((tx) => seedDevFoldingB(tx), { timeout: 60_000 })).fixture;
-    await prisma.factory.update({ where: { code: 'F9002' }, data: { status: 'active' } });
+    await prisma.factory.update({ where: { publicId: b.factoryPublicId }, data: { status: 'active' } });
     await setFlag(false);
     for (const role of ['cs', 'partner-manager']) {
       const res = await request(server)
@@ -58,7 +58,8 @@ describe('folding engine B quotes (e2e, U-B6 tail)', () => {
 
   afterAll(async () => {
     // Other folding suites price the launch factory alone and expect engine B off.
-    await prisma?.factory.update({ where: { code: 'F9002' }, data: { status: 'suspended' } });
+    if (b)
+      await prisma.factory.update({ where: { publicId: b.factoryPublicId }, data: { status: 'suspended' } });
     if (flags) await setFlag(false);
     await app?.close();
   });
@@ -81,7 +82,7 @@ describe('folding engine B quotes (e2e, U-B6 tail)', () => {
     design: { graphic: false, structure: false },
   });
   const bOption = () => `${b.factoryPublicId}:${b.printTypePublicId}`;
-  const factoryB = () => prisma.factory.findUniqueOrThrow({ where: { code: 'F9002' } });
+  const factoryB = () => prisma.factory.findUniqueOrThrow({ where: { publicId: b.factoryPublicId } });
 
   it('holds engine B out of CS and customer quotes while the flag is off', async () => {
     const view = await engine.price('folding', configuration(), { channel: 'cs', log: false });

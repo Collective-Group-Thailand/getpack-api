@@ -142,7 +142,7 @@ jobs:
           cache-from: type=gha
           cache-to: type=gha,mode=max
       - name: Image scan (HIGH/CRITICAL)
-        uses: aquasecurity/trivy-action@0.33.1
+        uses: aquasecurity/trivy-action@b6643a29fecd7f34b3597bc6acb0a98b03d33ff8 # v0.33.1 (pinned: the un-prefixed tags were removed)
         with:
           image-ref: getpack-api:ci
           severity: HIGH,CRITICAL

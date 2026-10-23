@@ -46,6 +46,12 @@ describe('getpack Factory ERP E4 (e2e)', () => {
   });
 
   afterAll(async () => {
+    // The ERP suites share the dev factory: put back the defaults the sale case changes.
+    if (fixture)
+      await ctx.erpPrisma.erpFactorySettings.updateMany({
+        where: { factory: { publicId: fixture.factoryPublicId } },
+        data: { allowNegativeStock: false, quoteValidDays: 30 },
+      });
     await foldingBackToRfq(ctx);
     await ctx?.app.close();
   });

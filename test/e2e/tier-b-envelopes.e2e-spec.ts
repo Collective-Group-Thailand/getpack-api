@@ -44,7 +44,7 @@ describe('tier-B envelopes (e2e, U-B6 tail)', () => {
     a = await foldingReady(ctx);
     b = (await ctx.prisma.$transaction((tx) => seedDevFoldingB(tx), { timeout: 60_000 })).fixture;
     await ctx.prisma.factory.update({ where: { code: 'F9001' }, data: { status: 'suspended' } });
-    await ctx.prisma.factory.update({ where: { code: 'F9002' }, data: { status: 'active' } });
+    await ctx.prisma.factory.update({ where: { publicId: b.factoryPublicId }, data: { status: 'active' } });
     await setFlag(true);
     typeId = (await ctx.prisma.productType.findUniqueOrThrow({ where: { code: 'folding_carton' } })).publicId;
     pm = await staffToken(ctx, 'partner_manager');
@@ -55,7 +55,11 @@ describe('tier-B envelopes (e2e, U-B6 tail)', () => {
   afterAll(async () => {
     // Other folding suites price the launch factory alone with engine B off.
     await ctx?.prisma.factory.update({ where: { code: 'F9001' }, data: { status: 'active' } });
-    await ctx?.prisma.factory.update({ where: { code: 'F9002' }, data: { status: 'suspended' } });
+    if (b)
+      await ctx.prisma.factory.update({
+        where: { publicId: b.factoryPublicId },
+        data: { status: 'suspended' },
+      });
     if (flags) await setFlag(false);
     await foldingBackToRfq(ctx);
     await ctx?.app.close();

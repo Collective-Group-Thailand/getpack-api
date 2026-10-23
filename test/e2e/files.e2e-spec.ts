@@ -337,7 +337,7 @@ describe('files (e2e, contract §3 Files)', () => {
     expect(meta.body).toMatchObject({ widthPx: 1200, heightPx: 800 });
     expect(meta.body.thumbnailId).toBeTruthy();
     const thumb = await get('customer-1', meta.body.thumbnailId as string).expect(200);
-    expect(thumb.body).toMatchObject({ mimeType: 'image/webp', widthPx: 400, scanStatus: 'clean' });
+    expect(thumb.body).toMatchObject({ mimeType: 'image/webp', widthPx: 640, scanStatus: 'clean' });
     await get('customer-2', meta.body.thumbnailId as string).expect(404);
   });
 

@@ -119,22 +119,21 @@ describe('production milestones and the partner surface (e2e, B4.2)', () => {
 
   it('runs the route in order with quantities, evidence, QC and idempotent updates to completion', async () => {
     const { job, orderId } = await acceptedJob(1);
-    await update(operator, job, 'prepress_ready', { action: 'start' }).expect(409);
+    // Accepting the job completed its job_received step (ca63113); the route goes on in order from prepress_ready.
+    await update(operator, job, 'materials_ready', { action: 'start' }).expect(409);
 
     const ref = randomUUID();
-    const started = await update(operator, job, 'job_received', { action: 'start' }, ref).expect(200);
+    const started = await update(operator, job, 'prepress_ready', { action: 'start' }, ref).expect(200);
     expect(started.body).toMatchObject({ applied: true, job: { status: 'in_progress' } });
     expect(
-      (await update(operator, job, 'job_received', { action: 'start' }, ref).expect(200)).body,
+      (await update(operator, job, 'prepress_ready', { action: 'start' }, ref).expect(200)).body,
     ).toMatchObject({ applied: false, reason: 'duplicate' });
-    expect((await update(operator, job, 'job_received', { action: 'start' }).expect(200)).body).toMatchObject(
-      { applied: false, reason: 'already_started' },
-    );
-    await update(operator, job, 'job_received', { action: 'complete' }).expect(200);
-    for (const key of ['prepress_ready', 'materials_ready']) {
-      await update(operator, job, key, { action: 'start' }).expect(200);
-      await update(operator, job, key, { action: 'complete' }).expect(200);
-    }
+    expect(
+      (await update(operator, job, 'prepress_ready', { action: 'start' }).expect(200)).body,
+    ).toMatchObject({ applied: false, reason: 'already_started' });
+    await update(operator, job, 'prepress_ready', { action: 'complete' }).expect(200);
+    await update(operator, job, 'materials_ready', { action: 'start' }).expect(200);
+    await update(operator, job, 'materials_ready', { action: 'complete' }).expect(200);
 
     // Printing needs a photo and its quantities; out + scrap never exceed the ordered quantity + overage.
     await update(operator, job, 'printing', { action: 'start', quantityIn: 1050 }).expect(200);
@@ -172,8 +171,8 @@ describe('production milestones and the partner surface (e2e, B4.2)', () => {
       where: { type: 'production.milestone_reached', aggregateId: orderId },
       orderBy: { occurredAt: 'asc' },
     });
+    // job_received closed with acceptance (ca63113), which records no milestone_reached of its own.
     expect(reached.map((e) => e.payload)).toEqual([
-      expect.objectContaining({ stepKey: 'job_received', labelTh: 'โรงงานรับงานแล้ว' }),
       expect.objectContaining({ stepKey: 'printing', labelTh: 'กำลังพิมพ์' }),
     ]);
 
@@ -344,7 +343,7 @@ describe('production milestones and the partner surface (e2e, B4.2)', () => {
     await as(ctx, lead)
       .post(`/v1/admin/production-jobs/${job.id}/actions/hold`, { reason: 'ลูกค้าขอพักงาน' })
       .expect(200);
-    expect((await update(operator, job, 'job_received', { action: 'start' }).expect(409)).body.code).toBe(
+    expect((await update(operator, job, 'prepress_ready', { action: 'start' }).expect(409)).body.code).toBe(
       'production.invalid_status',
     );
     const resumed = await as(ctx, lead)

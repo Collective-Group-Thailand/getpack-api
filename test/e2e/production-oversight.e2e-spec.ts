@@ -148,8 +148,12 @@ describe('production oversight (e2e, B4.2)', () => {
       .post(`/v1/partner/production-jobs/${job.publicId}/actions/accept`)
       .set('Idempotency-Key', randomUUID())
       .expect(200);
-    // The first step is two days late and the plan ends on the promised date → at risk.
-    const first = await ctx.prisma.jobMilestone.findFirstOrThrow({ where: { jobId: job.id, seq: 1 } });
+    // The first open step (acceptance completed job_received, ca63113) is two days late and the plan ends on
+    // the promised date → at risk.
+    const first = await ctx.prisma.jobMilestone.findFirstOrThrow({
+      where: { jobId: job.id, status: { not: 'completed' } },
+      orderBy: { seq: 'asc' },
+    });
     await ctx.prisma.jobMilestone.update({
       where: { id: first.id },
       data: { dueAt: new Date(Date.now() - 2 * 86_400_000) },

@@ -19,6 +19,8 @@ export interface DevFoldingB {
   priceListVersionId: bigint;
 }
 
+const DEV_B_TAX_ID = '0999999999002';
+
 /**
  * An obviously fake **type-B** folding factory for `pnpm dev` and the tests (D-005, U-B6 tail, D-233): `[DEV]` names, a
  * `dev` code, made-up prices. Factory F9002 holds one print type with engine `b` and a complete B price list (its own
@@ -30,8 +32,13 @@ export interface DevFoldingB {
  */
 export async function seedDevFoldingB(tx: Tx): Promise<{ created: boolean; fixture: DevFoldingB }> {
   const folding = await tx.productType.findUniqueOrThrow({ where: { code: 'folding_carton' } });
-  const existing = await tx.factory.findUnique({ where: { code: 'F9002' } });
+  // Found by its fake tax id, not its code: a factory created through the API before this seed ran takes the next
+  // free code (`MAX + 1`), which can be F9002 in a shared test database.
+  const existing = await tx.factory.findFirst({ where: { taxId: DEV_B_TAX_ID } });
   if (existing) return { created: false, fixture: await describe(tx, existing.id) };
+  const code = (await tx.factory.findUnique({ where: { code: 'F9002' } }))
+    ? await nextFactoryCode(tx)
+    : 'F9002';
   const material = await tx.material.findUniqueOrThrow({ where: { code: 'dev-art-350' } });
   const matt = await tx.finish.findUniqueOrThrow({ where: { code: 'dev-matt' } });
   const cmyk = await tx.inkColour.findUniqueOrThrow({ where: { code: 'dev-cmyk' } });
@@ -52,18 +59,18 @@ export async function seedDevFoldingB(tx: Tx): Promise<{ created: boolean; fixtu
       kind: 'factory',
       legalName: '[DEV] บริษัท โรงงานทดสอบ บี จำกัด',
       juristicType: 'company',
-      taxId: '0999999999002',
+      taxId: DEV_B_TAX_ID,
       isVatRegistered: true,
     },
   });
   const factory = await tx.factory.create({
     data: {
-      code: 'F9002',
+      code,
       vendorId: vendor.id,
       legalName: '[DEV] บริษัท โรงงานทดสอบ บี จำกัด',
       tradeName: '[DEV] Type-B Test Factory',
       juristicType: 'company',
-      taxId: '0999999999002',
+      taxId: DEV_B_TAX_ID,
       isVatRegistered: true,
       status: 'active',
       activatedAt: new Date(),
@@ -299,6 +306,13 @@ export async function seedDevFoldingB(tx: Tx): Promise<{ created: boolean; fixtu
     data: { lineCount, contentSha256, status: 'approved', decidedAt: new Date() },
   });
   return { created: true, fixture: await describe(tx, factory.id) };
+}
+
+/** The same rule as `FactoriesService.nextCode`. */
+async function nextFactoryCode(tx: Tx): Promise<string> {
+  const [row] = await tx.$queryRaw<{ next: number }[]>`
+    SELECT COALESCE(MAX(substring(code FROM '^F([0-9]+)$')::int), 0) + 1 AS next FROM factories`;
+  return `F${String(row?.next ?? 1).padStart(4, '0')}`;
 }
 
 async function describe(tx: Tx, factoryId: bigint): Promise<DevFoldingB> {

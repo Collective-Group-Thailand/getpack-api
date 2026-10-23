@@ -123,7 +123,8 @@ describe('fulfilment from payment to re-production (e2e, B4 quality)', () => {
     const detail = await as(ctx, owner).get(`/v1/partner/production-jobs/${released.publicId}`).expect(200);
     const milestones = (detail.body.milestones as Milestone[]).sort((x, y) => x.seq - y.seq);
     const quantity = 1000;
-    for (const m of milestones) {
+    // Accepting the job completed its job_received step (ca63113).
+    for (const m of milestones.filter((x) => x.status !== 'completed')) {
       const url = `/v1/partner/production-jobs/${released.publicId}/milestones/${m.id}`;
       const ref = randomUUID();
       const start = { action: 'start', clientRef: ref, ...(m.tracksQuantity && { quantityIn: quantity }) };

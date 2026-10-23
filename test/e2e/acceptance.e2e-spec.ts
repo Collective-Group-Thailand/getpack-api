@@ -59,6 +59,13 @@ describe('B1.3 acceptance (e2e: HTTP app + worker process)', () => {
     server = app.getHttpServer();
     prisma = app.get(PrismaService);
     await seedDev(prisma, E2E_DEV_PASSWORD);
+    // The shared e2e database holds the outbox rows of the suites before this one (they run their subscribers with
+    // `pump()`, never the relay). Oldest first, the worker here would work through that backlog before reaching
+    // this suite's events, so it starts from an empty queue.
+    await prisma.outboxMessage.updateMany({
+      where: { status: { in: ['pending', 'failed'] } },
+      data: { status: 'dispatched', dispatchedAt: new Date() },
+    });
     const workerRef = await Test.createTestingModule({
       imports: [WorkerModule, AcceptanceSubscribersModule],
     }).compile();

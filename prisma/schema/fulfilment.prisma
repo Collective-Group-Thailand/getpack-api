@@ -1090,7 +1090,7 @@ model JobIssue {
   job        ProductionJob @relation(fields: [jobId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_job_issues__job_id")
   factory    Factory       @relation("JobIssueFactory", fields: [factoryId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_job_issues__factory_id")
   raisedBy   User?         @relation("JobIssueRaisedBy", fields: [raisedById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_job_issues__raised_by") // client: keep
-  resolvedBy User?         @relation("JobIssueResolvedBy", fields: [resolvedById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_job_issues__resolved_by")
+  resolvedBy User?         @relation("JobIssueResolvedBy", fields: [resolvedById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_job_issues__resolved_by") // client: keep
 
   @@index([jobId], map: "ix_job_issues__job_id")
   @@index([factoryId, status], map: "ix_job_issues__factory_id__status")
