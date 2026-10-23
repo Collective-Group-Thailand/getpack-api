@@ -1,3 +1,4 @@
+import { SIGN_STYLE } from '@modules/documents/branding/render-branding';
 import Handlebars from 'handlebars';
 
 /**
@@ -6,6 +7,10 @@ import Handlebars from 'handlebars';
  * are not configured are left out, never invented. Fonts come from the host (Thai fonts in the image).
  */
 export interface QuoteDocument {
+  /** D-428: getpack's logo at issue (a data URI); the text brand without one. */
+  logo?: string | null;
+  /** D-429: the quotation's signature block (seal and signature), rendered HTML. */
+  signatureHtml?: string | null;
   issuer: {
     legalNameTh: string | null;
     legalNameEn: string | null;
@@ -58,9 +63,12 @@ const TEMPLATE = Handlebars.compile(
   th, td { border-bottom: 1px solid #d0d5db; padding: 5px 6px; text-align: right; }
   th:first-child, td:first-child { text-align: left; } th { background: #f1f3f5; }
   .notes { margin-top: 14px; font-size: 9pt; color: #3d444d; line-height: 1.5; }
+  .logo { max-height: 48px; max-width: 200px; }
+  .sign { width: 40%; margin: 24px 0 0 60%; text-align: center; font-size: 10pt; }
+${SIGN_STYLE}
 </style></head><body>
 <header>
-  <div><div class="brand">getpack</div><div class="tag">Your Packaging Production Partner</div></div>
+  <div>{{#if logo}}<img class="logo" src="{{logo}}" alt="getpack">{{else}}<div class="brand">getpack</div>{{/if}}<div class="tag">Your Packaging Production Partner</div></div>
   <div class="issuer">
     {{#if issuer.legalNameTh}}<strong>{{issuer.legalNameTh}}</strong><br>{{/if}}
     {{#if issuer.legalNameEn}}{{issuer.legalNameEn}}<br>{{/if}}
@@ -89,6 +97,7 @@ const TEMPLATE = Handlebars.compile(
   ราคาเป็นเงินบาท รวมภาษีมูลค่าเพิ่มแล้ว · ใบเสนอราคานี้มีอายุ {{validityDays}} วัน ราคาไม่เปลี่ยนแปลงภายในระยะเวลาดังกล่าว หลังจากนั้นจะคำนวณราคาใหม่<br>
   Prices in THB including VAT · valid for {{validityDays}} days with the price locked; re-priced after expiry.
 </div>
+{{#if signatureHtml}}<div class="sign">{{{signatureHtml}}}</div>{{/if}}
 </body></html>`,
   { strict: false },
 );

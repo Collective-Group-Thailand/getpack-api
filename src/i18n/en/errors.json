@@ -1169,6 +1169,18 @@
     "certificate_invalid": {
       "title": "Certificate already settled",
       "detail": "A certificate in {status} cannot change."
+    },
+    "document_not_replaceable": {
+      "title": "Document cannot be reissued",
+      "detail": "This document cannot be cancelled and reissued: {reason}."
+    },
+    "correction_pending": {
+      "title": "Correction already requested",
+      "detail": "A correction of this document is already waiting for a decision."
+    },
+    "correction_decided": {
+      "title": "Request already decided",
+      "detail": "This correction request has been decided or withdrawn already."
     }
   },
   "payables": {
@@ -1183,6 +1195,10 @@
     "statement_not_confirmable": {
       "title": "Statement cannot change",
       "detail": "A billing statement in {status} cannot be confirmed or disputed."
+    },
+    "erp_invoice_not_allowed": {
+      "title": "Cannot issue from the ERP",
+      "detail": "A tax invoice cannot be issued from the ERP for this billing statement: {reason}."
     }
   },
   "payouts": {
@@ -1997,6 +2013,26 @@
     "statement_paid_by_payout": {
       "title": "Paid by payout runs",
       "detail": "Freelance statements are paid by payout runs"
+    }
+  },
+  "documents": {
+    "image_not_usable": {
+      "title": "Image cannot be used",
+      "detail": "File {fileId} cannot be used as a logo, seal or signature: it must be an image (PNG, JPEG or WebP) you uploaded, fully uploaded and scanned clean."
+    },
+    "signatory_not_eligible": {
+      "title": "Cannot be a signatory",
+      "detail": "A signatory must be an active staff member (getpack) or an active member of the factory."
+    },
+    "signatory_exists": {
+      "title": "Already a signatory",
+      "detail": "This person is a signatory already."
+    }
+  },
+  "etax": {
+    "nothing_to_send": {
+      "title": "No e-Tax e-mail to send",
+      "detail": "This document has no failed e-Tax e-mail (give an address to send a sent one again)."
     }
   }
 }

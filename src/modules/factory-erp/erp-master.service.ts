@@ -107,6 +107,17 @@ export class ErpMasterService {
           rowVersion: { increment: 1 },
         },
       });
+      // D-428: the logo is also the first entry of the factory's document branding history.
+      if (body.documentLogoFileId !== undefined && updated.documentLogoFileId !== current.documentLogoFileId)
+        await tx.documentBrandMark.create({
+          data: {
+            ownerKind: 'factory',
+            factoryId: scope.factory.id,
+            kind: 'logo',
+            fileId: updated.documentLogoFileId,
+            createdById: scope.actor.userId,
+          },
+        });
       await this.audit.record(tx, {
         category: 'config',
         action: 'erp.settings_updated',

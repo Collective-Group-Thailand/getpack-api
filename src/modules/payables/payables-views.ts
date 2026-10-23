@@ -164,6 +164,7 @@ export const invoiceDto = (r: InvoiceRow): VendorInvoiceDto => ({
   status: r.status,
   rejectionReason: r.rejectionReason,
   fileId: r.file?.publicId ?? null,
+  erpInvoiceId: r.erpSalesInvoice?.publicId ?? null,
   lines: r.lines.map((l) => ({
     description: l.description,
     accountCode: l.account?.code ?? null,

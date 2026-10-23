@@ -65,6 +65,10 @@ export const FILE_PURPOSES = {
     maxBytes: 50 * MiB,
     mimeTypes: [...IMAGES, 'image/svg+xml', 'font/ttf', 'font/otf', 'font/woff', 'font/woff2'],
   },
+  /** D-428: a logo or company seal for documents (re-encoded as PNG before use). */
+  brand_mark: { retentionClass: 'financial_record', maxBytes: 10 * MiB, mimeTypes: IMAGES },
+  /** D-429: a signatory's own signature for documents (re-encoded, paper made transparent). */
+  signature: { retentionClass: 'financial_record', maxBytes: 10 * MiB, mimeTypes: IMAGES },
   /** Dieline drawings: partner intake (D-272) and delivered structural designs (D-273). */
   dieline: {
     retentionClass: 'standard',

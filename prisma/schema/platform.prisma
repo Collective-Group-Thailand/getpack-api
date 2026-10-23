@@ -437,10 +437,16 @@ model Entity {
 
   samples Sample[] @relation("SampleEntity")
 
-
   // --- Sales agents D-416 (generated back-relations)
   salesAgentStatements SalesAgentStatement[] @relation("SalesAgentStatementEntity")
   // --- end Sales agents
+
+  // --- Documents D-428 – D-431 (back-relations)
+  documentBrandMarks   DocumentBrandMark[]         @relation("DocumentBrandMarkEntity")
+  documentSignatories  DocumentSignatory[]         @relation("DocumentSignatoryEntity")
+  documentSigningRules DocumentSigningRule[]       @relation("DocumentSigningRuleEntity")
+  eTaxSubmissions      ETaxSubmission[]            @relation("ETaxSubmissionEntity")
+  documentCorrections  DocumentCorrectionRequest[] @relation("DocumentCorrectionRequestEntity")
 
   @@unique([isDefault], map: "ux_entities__is_default", where: raw("is_default"))
   @@map("entities")
@@ -943,11 +949,16 @@ model FileObject {
 
   erpQualityCheckPdf ErpQualityCheck[] @relation("ErpQualityCheckPdf")
 
-
   // --- Sales agents D-416 (generated back-relations)
   salesAgentApplicationIdDocuments SalesAgentApplication[] @relation("SalesAgentApplicationIdDocument")
   salesAgentApplicationBankBooks   SalesAgentApplication[] @relation("SalesAgentApplicationBankBook")
   // --- end Sales agents
+
+  // --- Documents D-428 – D-431 (back-relations)
+  documentBrandMarks            DocumentBrandMark[] @relation("DocumentBrandMarkFile")
+  documentSignatures            DocumentSignature[] @relation("DocumentSignatureFile")
+  eTaxSubmissions               ETaxSubmission[]    @relation("ETaxSubmissionFile")
+  customerDocumentsCancelledPdf CustomerDocument[]  @relation("CustomerDocumentCancelledPdf")
 
   @@index([sha256], map: "ix_file_objects__sha256")
   @@index([uploadStatus, expiresAt], map: "ix_file_objects__upload_status__expires_at")

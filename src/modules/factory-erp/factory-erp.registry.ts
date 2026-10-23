@@ -50,10 +50,12 @@ import {
   PartnerErpLedgerController,
   PartnerErpLedgerReportsController,
 } from './erp-e6.controllers';
+import { PartnerErpGetpackBillingController } from './erp-getpack-billing.controller';
 
 /** `/v1/partner/factories/{factoryId}/erp/*` (E1, E1.1, E2, E2.1, E3, E4, E5, E6). */
 export const FACTORY_ERP_PARTNER_CONTROLLERS: Type<unknown>[] = [
   PartnerErpSettingsController,
+  PartnerErpGetpackBillingController,
   PartnerErpPartnersController,
   PartnerErpWarehousesController,
   PartnerErpItemsController,

@@ -84,6 +84,9 @@ const MESSAGES: Record<string, Render> = {
   'customer_document.issued': document('ออกเอกสาร', 'issued'),
   'customer_document.voided': document('ยกเลิกเอกสาร', 'voided'),
   'customer_document.debit_note_issued': fixed('ออกใบเพิ่มหนี้', 'Debit note issued'),
+  'customer_document.replaced': document('ออกใบกำกับภาษีฉบับใหม่แทน', 'replaced by a corrected one'),
+  'customer_document.correction_requested': document('ขอแก้ไขข้อมูลผู้ซื้อในเอกสาร', 'correction requested'),
+  'customer_document.correction_rejected': document('ไม่อนุมัติการแก้ไขเอกสาร', 'correction declined'),
   // Artwork and proof (glossary: แบบตัวอย่าง / ตรวจแบบก่อนพิมพ์)
   'artwork.submitted': fixed('ได้รับไฟล์งานแล้ว', 'Artwork received'),
   'artwork.preflight_completed': fixed('ตรวจไฟล์อัตโนมัติเสร็จแล้ว', 'Automatic file check done'),

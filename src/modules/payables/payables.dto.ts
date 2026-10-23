@@ -35,7 +35,7 @@ export const WHT_CATEGORIES = ['hire_of_work', 'transport', 'service', 'none', '
 export const BS_STATUSES = ['generated', 'sent', 'confirmed', 'disputed', 'superseded'] as const;
 export const VI_STATUSES = ['recorded', 'validated', 'rejected', 'void'] as const;
 export const INPUT_VAT_STATUSES = ['claimable', 'pending_document', 'not_claimable'] as const;
-export const VI_SOURCES = ['e_tax', 'pdf_upload', 'manual'] as const;
+export const VI_SOURCES = ['e_tax', 'pdf_upload', 'manual', 'erp'] as const;
 export const PAYABLE_SOURCES = ['advance', 'goods_receipt', 'vendor_invoice', 'retention'] as const;
 export const PAYABLE_STATUSES = ['open', 'eligible', 'in_run', 'paid', 'cancelled'] as const;
 export const VENDOR_KINDS = ['factory', 'carrier', 'freelancer', 'service', 'other', 'sales_agent'] as const;
@@ -593,6 +593,15 @@ export class VendorInvoiceDto {
   @ApiProperty({ type: String, format: 'uuid', nullable: true, example: AP_IDS.file })
   fileId!: string | null;
 
+  @ApiProperty({
+    type: String,
+    format: 'uuid',
+    nullable: true,
+    example: null,
+    description: 'D-433: the factory’s own ERP invoice this tax invoice is (source `erp`)',
+  })
+  erpInvoiceId!: string | null;
+
   @ApiProperty({ type: [VendorInvoiceLineDto] })
   lines!: VendorInvoiceLineDto[];
 }
@@ -615,6 +624,7 @@ export const VI_EXAMPLE: VendorInvoiceDto = {
   status: 'recorded',
   rejectionReason: null,
   fileId: AP_IDS.file,
+  erpInvoiceId: null,
   lines: [],
 };
 

@@ -4,6 +4,7 @@ import { ErpAlertsService } from './erp-alerts.service';
 import { ErpCrmService } from './erp-crm.service';
 import { ErpDocsService } from './erp-docs.service';
 import { ErpFilesService } from './erp-files.service';
+import { ErpGetpackBillingService } from './erp-getpack-billing.service';
 import { ErpInboxService } from './erp-inbox.service';
 import { ErpInsightService } from './erp-insight.service';
 import { ErpLedgerService } from './erp-ledger.service';
@@ -62,6 +63,7 @@ const SERVICES = [
   ErpLedgerJournalsService,
   ErpLedgerReportsService,
   ErpLedgerAssetsService,
+  ErpGetpackBillingService,
 ];
 
 /** getpack Factory ERP (D-316 – D-332): E1 trading partners, inventory, purchasing; E1.1

@@ -13,6 +13,7 @@ import { DatabaseModule } from '@database/database.module';
 import { RedisModule } from '@database/redis.module';
 import { IntegrationsModule } from '@integrations/integrations.module';
 import { AdvisoryModule } from '@modules/advisory/advisory.module';
+import { AgentsModule } from '@modules/agents/agents.module';
 import { AnalyticsModule } from '@modules/analytics/analytics.module';
 import { ArtworkModule } from '@modules/artwork/artwork.module';
 import { AssistantApiModule, AssistantModule } from '@modules/assistant/assistant.module';
@@ -33,6 +34,7 @@ import { CustomersModule } from '@modules/customers/customers.module';
 import { DesignServicesModule } from '@modules/design-services/design-services.module';
 import { DesignsModule } from '@modules/designs/designs.module';
 import { DiscountMemosModule } from '@modules/discount-memos/discount-memos.module';
+import { DocumentsModule } from '@modules/documents/documents.module';
 import { FactoryErpModule } from '@modules/factory-erp/factory-erp.module';
 import { FinancialReportsModule } from '@modules/financial-reports/financial-reports.module';
 import { FixedAssetsModule } from '@modules/fixed-assets/fixed-assets.module';
@@ -40,7 +42,6 @@ import { IamModule } from '@modules/iam/iam.module';
 import { LaunchpadModule } from '@modules/launchpad/launchpad.module';
 import { LedgerModule } from '@modules/ledger/ledger.module';
 import { LogisticsModule } from '@modules/logistics/logistics.module';
-import { AgentsModule } from '@modules/agents/agents.module';
 import { LoyaltyModule } from '@modules/loyalty/loyalty.module';
 import { OpsModule } from '@modules/ops/ops.module';
 import { OrdersModule } from '@modules/orders/orders.module';
@@ -158,6 +159,7 @@ import { LoggerModule } from 'nestjs-pino';
     ConversationsModule,
     LedgerModule,
     ReceivablesModule,
+    DocumentsModule,
     PayablesModule,
     PayoutsModule,
     BankingModule,

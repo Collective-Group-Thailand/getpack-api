@@ -20,7 +20,9 @@ import { DownloadUrlDto } from '@platform/files/files.dto';
 
 import { CreditNotesService } from './credit-notes.service';
 import { CustomerDocumentsService, type DocumentRow } from './customer-documents.service';
+import { correctionDto, DocumentCorrectionsService } from './document-corrections.service';
 import { DocumentFilesService } from './document-files.service';
+import { ETaxEmailService } from './etax-email.service';
 import {
   AGING_EXAMPLE,
   AgingQuery,
@@ -28,12 +30,16 @@ import {
   CERT_EXAMPLE,
   CN_REQUEST_EXAMPLE,
   CompanyStatementDto,
+  CORRECTION_EXAMPLE,
+  CorrectionListQuery,
   CREDIT_NOTE_REASON_EXAMPLE,
   CreditNoteReasonDto,
   CreditNoteRequestDto,
   CreditNoteRequestListQuery,
   CustomerDocumentDto,
+  DecideCorrectionDto,
   DOCUMENT_EXAMPLE,
+  DocumentCorrectionDto,
   DocumentDeliveryDto,
   DocumentListQuery,
   DocumentSendResultDto,
@@ -47,7 +53,9 @@ import {
   ReceivableItemDto,
   ReceivableListQuery,
   RecordWhtCertificateDto,
+  RequestCorrectionDto,
   RequestCreditNoteDto,
+  ResendETaxDto,
   STATEMENT_EXAMPLE,
   StatementQuery,
   STORE_CREDIT_EXAMPLE,
@@ -100,6 +108,8 @@ export class AdminCustomerDocumentsController {
     private readonly creditNotes: CreditNotesService,
     private readonly prisma: PrismaService,
     private readonly permissions: PermissionResolver,
+    private readonly corrections: DocumentCorrectionsService,
+    private readonly eTax: ETaxEmailService,
   ) {}
 
   private async doc(actor: Actor, row: DocumentRow | Promise<DocumentRow>) {
@@ -338,7 +348,7 @@ export class AdminCustomerDocumentsController {
     id: 'admin.customerDocuments.void',
     summary: 'Void an invoice or a debit note',
     description:
-      'Only an IV or DN nothing was collected on: its number stays with the reason and its journals are reversed (§4). Tax invoices and receipts are corrected by credit notes. Requires `Idempotency-Key`.',
+      'Only an IV or DN nothing was collected on: its number stays with the reason and its journals are reversed (§4). Tax invoices and receipts are corrected by credit notes (amounts) or `replace` (buyer, D-431). Requires `Idempotency-Key`.',
     implements: DOCS,
   })
   @ApiBody({ type: ReasonDto, examples: { default: { value: { reason: 'ออกผิดลูกค้า' } } } })
@@ -354,6 +364,91 @@ export class AdminCustomerDocumentsController {
     @Body() body: ReasonDto,
   ): Promise<CustomerDocumentDto> {
     return this.doc(actor, this.documents.void(staff(actor), documentId, body.reason));
+  }
+
+  @Post('customer-documents/:documentId/actions/replace')
+  @HttpCode(200)
+  @Can('receivables.documents.replace')
+  @Idempotent()
+  @ApiParam({ name: 'documentId', format: 'uuid' })
+  @ApiEndpoint({
+    id: 'admin.customerDocuments.replace',
+    summary: 'Cancel a tax document and issue it again with a corrected buyer',
+    description:
+      'D-431 (ป.86/2542 ข้อ 25): a new number of the same series, the original’s date and amounts, the corrected buyer ' +
+      'and the note "เป็นการยกเลิกและออกใบกำกับภาษีฉบับใหม่แทนฉบับเดิมเลขที่ …"; the original keeps its number, ' +
+      'void, with a copy stamped "ยกเลิก". The ledger does not move; the receivable and the WHT certificate to collect ' +
+      'follow the new document. With e-Tax by Email on, the cancellation (CIV) and the new invoice are e-mailed. ' +
+      'Answers a pending customer request on the document. Returns the new document. Requires `Idempotency-Key`.',
+    implements: ['D-431', 'D-430'],
+  })
+  @ApiBody({
+    type: RequestCorrectionDto,
+    examples: {
+      default: {
+        value: {
+          reason: 'buyer_address',
+          note: 'ลูกค้าแจ้งที่อยู่ใหม่ทางโทรศัพท์',
+          buyer: {
+            name: 'บริษัท ลูกค้าตัวอย่าง จำกัด',
+            taxId: '0000500000000',
+            branchCode: '00000',
+            address: '123 ถนนใหม่ กรุงเทพมหานคร 10110',
+          },
+        },
+      },
+    },
+  })
+  @ApiSuccess(200, { description: 'The new document', type: CustomerDocumentDto, example: DOCUMENT_EXAMPLE })
+  @ApiStandardErrors(...WRITE, 'receivables.document_not_replaceable', 'numbering.series_missing')
+  async replace(
+    @CurrentActor() actor: Actor,
+    @Param('documentId', ParseUUIDPipe) documentId: string,
+    @Body() body: RequestCorrectionDto,
+  ): Promise<CustomerDocumentDto> {
+    const id = await this.corrections.replace(staff(actor), documentId, body);
+    return this.doc(actor, this.documents.get(id));
+  }
+
+  @Post('customer-documents/:documentId/actions/resend-etax')
+  @HttpCode(200)
+  @Can('receivables.manage')
+  @ApiParam({ name: 'documentId', format: 'uuid' })
+  @ApiEndpoint({
+    id: 'admin.customerDocuments.resendETax',
+    summary: 'Send the e-Tax e-mail again',
+    description:
+      'D-430: a failed e-Tax e-mail (no buyer e-mail, provider refused) is queued now; with `to` it goes to that ' +
+      'address (also re-sending one already sent). Audited.',
+    implements: ['D-430'],
+  })
+  @ApiBody({ type: ResendETaxDto, examples: { default: { value: { to: 'ap@customer.example' } } } })
+  @ApiSuccess(200, { description: 'Document', type: CustomerDocumentDto, example: DOCUMENT_EXAMPLE })
+  @ApiStandardErrors(...WRITE, 'etax.nothing_to_send')
+  async resendETax(
+    @CurrentActor() actor: Actor,
+    @Param('documentId', ParseUUIDPipe) documentId: string,
+    @Body() body: ResendETaxDto,
+  ): Promise<CustomerDocumentDto> {
+    await this.eTax.retry(staff(actor), documentId, body.to?.trim() || null);
+    return this.doc(actor, this.documents.get(documentId));
+  }
+
+  @Get('customer-documents/:documentId/cancelled-pdf')
+  @Can('receivables.read')
+  @ApiParam({ name: 'documentId', format: 'uuid' })
+  @ApiEndpoint({
+    id: 'admin.customerDocuments.cancelledPdf',
+    summary: 'Download the cancelled copy of a replaced document',
+    description: 'D-431: the original stamped "ยกเลิก" with the reason (5-minute link).',
+    implements: ['D-431'],
+  })
+  @ApiSuccess(200, { description: 'Signed URL', type: DownloadUrlDto, example: DOWNLOAD_EXAMPLE })
+  @ApiStandardErrors('http.not_found', 'validation.failed', 'file.not_ready')
+  async cancelledPdf(@Param('documentId', ParseUUIDPipe) documentId: string): Promise<DownloadUrlDto> {
+    const doc = await this.prisma.customerDocument.findUnique({ where: { publicId: documentId } });
+    if (!doc) throw new DomainException('http.not_found');
+    return download(await this.files.downloadUrl(doc.cancelledPdfFileId));
   }
 
   @Post('orders/:orderId/debit-notes')
@@ -716,6 +811,7 @@ export class StoreDocumentsController {
     private readonly storeCredit: StoreCreditService,
     private readonly companies: CompaniesService,
     private readonly prisma: PrismaService,
+    private readonly corrections: DocumentCorrectionsService,
   ) {}
 
   @Get('documents')
@@ -737,6 +833,11 @@ export class StoreDocumentsController {
       {
         ...(company ? { companyId: company.id } : { customerUserId: me.userId }),
         ...(q.orderId && { order: { publicId: q.orderId } }),
+        ...(q.docType && { docType: q.docType }),
+        ...((q.from || q.to) && {
+          documentDate: { ...(q.from && { gte: dateOnly(q.from) }), ...(q.to && { lte: dateOnly(q.to) }) },
+        }),
+        ...(q.q?.trim() && { docNumber: { contains: q.q.trim(), mode: 'insensitive' as const } }),
       },
       q.page,
       q.perPage,
@@ -778,6 +879,96 @@ export class StoreDocumentsController {
     @Param('documentId', ParseUUIDPipe) documentId: string,
   ): Promise<CustomerDocumentDto> {
     return documentDto(await this.readable(customer(actor), documentId));
+  }
+
+  @Get('documents/:documentId/cancelled-pdf')
+  @ApiParam({ name: 'documentId', format: 'uuid' })
+  @ApiEndpoint({
+    id: 'store.documents.cancelledPdf',
+    summary: 'Download the cancelled copy of a replaced document',
+    description: 'D-431: the original stamped "ยกเลิก" with the reason; my own documents or my company’s.',
+    implements: ['D-431'],
+  })
+  @ApiSuccess(200, { description: 'Signed URL', type: DownloadUrlDto, example: DOWNLOAD_EXAMPLE })
+  @ApiStandardErrors('http.not_found', 'validation.failed', 'file.not_ready')
+  async cancelledPdf(
+    @CurrentActor() actor: Actor,
+    @Param('documentId', ParseUUIDPipe) documentId: string,
+  ): Promise<DownloadUrlDto> {
+    const doc = await this.readable(customer(actor), documentId);
+    return download(await this.files.downloadUrl(doc.cancelledPdfFileId));
+  }
+
+  @Post('documents/:documentId/corrections')
+  @Idempotent({ optional: true })
+  @ApiParam({ name: 'documentId', format: 'uuid' })
+  @ApiEndpoint({
+    id: 'store.documents.requestCorrection',
+    summary: 'Ask to correct the buyer on my tax document',
+    description:
+      'D-431: name, address, tax id or branch printed wrong. Finance approves — the document is cancelled and issued ' +
+      'again under a new number with the same date and amounts — or declines with a reason. One open request per ' +
+      'document (409 `receivables.correction_pending`). My own documents, or my company’s with `company_documents.read`.',
+    implements: ['D-431'],
+  })
+  @ApiBody({
+    type: RequestCorrectionDto,
+    examples: {
+      default: {
+        value: {
+          reason: 'buyer_address',
+          note: 'ย้ายสำนักงานแล้ว',
+          buyer: {
+            name: 'บริษัท ลูกค้าตัวอย่าง จำกัด',
+            taxId: '0000500000000',
+            branchCode: '00000',
+            address: '123 ถนนใหม่ กรุงเทพมหานคร 10110',
+          },
+        },
+      },
+    },
+  })
+  @ApiSuccess(201, { description: 'Request', type: DocumentCorrectionDto, example: CORRECTION_EXAMPLE })
+  @ApiStandardErrors(
+    'http.bad_request',
+    'http.malformed_json',
+    'http.not_found',
+    'validation.failed',
+    'receivables.document_not_replaceable',
+    'receivables.correction_pending',
+  )
+  async requestCorrection(
+    @CurrentActor() actor: Actor,
+    @Param('documentId', ParseUUIDPipe) documentId: string,
+    @Body() body: RequestCorrectionDto,
+  ): Promise<DocumentCorrectionDto> {
+    const me = customer(actor);
+    const doc = await this.readable(me, documentId);
+    const row = await this.prisma.customerDocument.findUniqueOrThrow({ where: { publicId: doc.publicId } });
+    return correctionDto(await this.corrections.request(me, row.id, body));
+  }
+
+  @Post('documents/corrections/:requestId/withdraw')
+  @HttpCode(200)
+  @ApiParam({ name: 'requestId', format: 'uuid' })
+  @ApiEndpoint({
+    id: 'store.documents.withdrawCorrection',
+    summary: 'Withdraw my correction request',
+    description: 'While it is still pending (409 `receivables.correction_decided` after).',
+    implements: ['D-431'],
+  })
+  @ApiSuccess(200, {
+    description: 'Request',
+    type: DocumentCorrectionDto,
+    example: { ...CORRECTION_EXAMPLE, status: 'withdrawn' },
+  })
+  @ApiStandardErrors('http.not_found', 'validation.failed', 'receivables.correction_decided')
+  async withdrawCorrection(
+    @CurrentActor() actor: Actor,
+    @Param('requestId', ParseUUIDPipe) requestId: string,
+  ): Promise<DocumentCorrectionDto> {
+    await this.corrections.withdraw(customer(actor), requestId);
+    return correctionDto(await this.corrections.get(requestId));
   }
 
   @Get('store-credit')
@@ -851,5 +1042,79 @@ export class StoreDocumentsController {
       return doc;
     }
     throw new DomainException('http.not_found');
+  }
+}
+
+@ApiSurface('admin', 'documentCorrections')
+@Controller('document-corrections')
+export class AdminDocumentCorrectionsController {
+  constructor(private readonly corrections: DocumentCorrectionsService) {}
+
+  @Get()
+  @Can('receivables.read')
+  @ApiEndpoint({
+    id: 'admin.documentCorrections.list',
+    summary: 'Customers’ correction requests',
+    description: 'D-431: newest first; `status=pending` is Finance’s queue.',
+    implements: ['D-431'],
+  })
+  @ApiPaginated(DocumentCorrectionDto, { example: CORRECTION_EXAMPLE })
+  @ApiStandardErrors('validation.failed')
+  async list(@Query() q: CorrectionListQuery) {
+    const { rows, total } = await this.corrections.list(
+      q.status ? { status: q.status } : {},
+      q.page,
+      q.perPage,
+    );
+    return { data: rows.map(correctionDto), meta: { page: q.page, perPage: q.perPage, total } };
+  }
+
+  @Get(':requestId')
+  @Can('receivables.read')
+  @ApiParam({ name: 'requestId', format: 'uuid' })
+  @ApiEndpoint({
+    id: 'admin.documentCorrections.get',
+    summary: 'A correction request',
+    description: 'D-431: the buyer as printed and as requested.',
+    implements: ['D-431'],
+  })
+  @ApiSuccess(200, { description: 'Request', type: DocumentCorrectionDto, example: CORRECTION_EXAMPLE })
+  @ApiStandardErrors('http.not_found', 'validation.failed')
+  async get(@Param('requestId', ParseUUIDPipe) requestId: string): Promise<DocumentCorrectionDto> {
+    return correctionDto(await this.corrections.get(requestId));
+  }
+
+  @Post(':requestId/decision')
+  @HttpCode(200)
+  @Can('receivables.documents.replace')
+  @Idempotent()
+  @ApiParam({ name: 'requestId', format: 'uuid' })
+  @ApiEndpoint({
+    id: 'admin.documentCorrections.decide',
+    summary: 'Approve or decline a correction request',
+    description:
+      'D-431: approving cancels the document and issues it again with the buyer (as requested, or as corrected in ' +
+      '`buyer`); declining needs a `note` the customer sees. Requires `Idempotency-Key`. Audited.',
+    implements: ['D-431'],
+  })
+  @ApiBody({
+    type: DecideCorrectionDto,
+    examples: {
+      approve: { value: { approve: true } },
+      decline: { value: { approve: false, note: 'เลขประจำตัวผู้เสียภาษีไม่ตรงกับหนังสือรับรอง' } },
+    },
+  })
+  @ApiSuccess(200, {
+    description: 'Request',
+    type: DocumentCorrectionDto,
+    example: { ...CORRECTION_EXAMPLE, status: 'approved' },
+  })
+  @ApiStandardErrors(...WRITE, 'receivables.correction_decided', 'receivables.document_not_replaceable')
+  async decide(
+    @CurrentActor() actor: Actor,
+    @Param('requestId', ParseUUIDPipe) requestId: string,
+    @Body() body: DecideCorrectionDto,
+  ): Promise<DocumentCorrectionDto> {
+    return correctionDto(await this.corrections.decide(staff(actor), requestId, body));
   }
 }

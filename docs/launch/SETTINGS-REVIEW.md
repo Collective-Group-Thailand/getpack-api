@@ -5,7 +5,7 @@
 > (a new effective-dated version, audited — D-063) and signs item 5 of `docs/LAUNCH-CHECKLIST.md`. A *proposed* or
 > *pending* value is not a decision: it goes live only once its owner confirms it.
 
-**116 settings** — 67 confirmed · 20 proposed · 4 pending the CPA (⚖) · 2 pending the business · 23 defined without a value (not set until their owner sets them).
+**120 settings** — 68 confirmed · 22 proposed · 4 pending the CPA (⚖) · 2 pending the business · 24 defined without a value (not set until their owner sets them).
 
 ## Settings
 
@@ -59,6 +59,10 @@
 | `dielines.downloads_per_minute` | `5` | confirmed | superadmin | D-203, D-271 | D-203 / D-271 dieline downloads a signed-in customer may take in any 60 seconds |
 | `discounts.cs_limit_pct` | `5` | confirmed | superadmin | D-052 | D-052 discount CS may give without a discount memo |
 | `documents.retention_years` | `10` | confirmed | finance_manager | D-033 | D-033 / accounting-design §2 record retention of documents and ledgers (≥ 10 years, above the 5-year statutory minimum) |
+| `e_tax.email_cc` | `csemail@etax.teda.th` | confirmed | finance_manager | D-430 | D-430 the ETDA time-stamping address every e-Tax e-mail is copied to (production csemail@etax.teda.th; the ETDA test environment gives its own) |
+| `e_tax.email_from` | `— (not set)` | not set | finance_manager | D-430 | D-430 the e-mail address registered with the Revenue Department for e-Tax Invoice by Email (ก.อ.01); must be verified as a sender in SES. Unset: nothing is sent |
+| `e_tax.email_retry` | `{"backoffMinutes":[5,15,60,180,720]}` | proposed | superadmin | D-430 | D-430 waits between attempts of an e-Tax e-mail the provider refused (technical); after the last one the document shows `failed` for Finance |
+| `e_tax.subject_date_format` | `DDMMBBBB` | proposed | finance_manager | D-430 | D-430 the date in the e-Tax e-mail subject `[date][INV][number]`: DDMMBBBB = day, month, Buddhist year without separators (31052569), as in common practice; confirm in the ETDA test environment |
 | `fixed_assets.depreciation_start` | `acquisition_month` | pending_cpa | finance_manager | D-150 | D-150 first month of straight-line depreciation: the month the asset is acquired (full month) or the month after (⚖ pro-rata by days is not used) |
 | `fulfilment.colour_tolerance_delta_e` | `{"standard":"3","flexo":"5"}` | confirmed | superadmin | D-186 | D-186 published colour tolerance, ΔE2000 against the approved proof, for printed products (≤ 3; ≤ 5 for flexo) |
 | `fulfilment.dimensional_tolerance_mm` | `{"folding":"1","tag_sleeve":"1","corrugate":"3"}` | confirmed | superadmin | D-186 | D-186 published dimensional tolerance ± mm per calculator (folding cartons incl. tags & sleeves ± 1, corrugated ± 3); a calculator not listed publishes none |
@@ -184,7 +188,7 @@ Every integration flag is seeded **off** and switched on by a superadmin once it
 | `payments.scb_direct_debit` | SCB direct debit — R2 (D-111), adapter stubbed |
 | `drawing.engine` | Dieline drawing engine @getpack/dieline (B4.1) — off until the package is published; drawings answer 501 |
 | `assistant.enabled` | Customer assistant (U5.B5, D-218 / D-306) — off at launch; outside local it switches on only after ADR-0012 and a passing evaluation |
-| `e_tax.sending` | Send e-Tax invoices / e-Receipts to the Revenue Department (D-091): XML and PDF are generated in R1; sending is enabled in R2 after registration |
+| `e_tax.sending` | Send tax invoices, credit and debit notes by e-Tax Invoice by Email (D-091, D-430): PDF/A-3 with the ETDA XML to the buyer, copied to ETDA. Switch on after the ก.อ.01 registration and `e_tax.email_from` is set |
 | `pricing.folding_engine_b` | Folding engine B (type-B factories, D-233) in customer and CS quotes — off until docs/pricing-validation-folding-b.md is signed; factory breakdowns price B meanwhile |
 | `advisory.structure_advisor` | Structure Advisor for customers (store.advisory.recommend / choose, D-237) — off until the golden cases of docs/advisory-validation.md are signed by the Partner Manager and Prepress (D-189); staff evaluate meanwhile |
 | `pricing.dieline_quantities` | Dieline-derived quantities in calculator prices (D-267) — off until a calculator's validation document is signed with them; quotes freeze the quantities meanwhile without a price effect |

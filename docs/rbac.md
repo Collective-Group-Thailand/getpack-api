@@ -149,6 +149,9 @@ Legend: ● granted · ◆ granted and sensitive (cost/margin data, D-141).
 | `credit_notes.request` — Request credit notes (issued after a Finance Manager approves, §8) (D-033, D-169) | ● |  |  |  |  |  | ● |  | ● | ● |  |  |  |  |  |  |
 | `receivables.write_off.request` — Request bad-debt write-offs (approved by a Finance Manager, §8) (D-033, D-169) | ● |  |  |  |  |  |  |  | ● | ● |  |  |  |  |  |  |
 | `receivables.debit_notes.issue` — Issue debit notes (D-033) | ● |  |  |  |  |  |  |  |  | ● |  |  |  |  |  |  |
+| `receivables.documents.replace` — Cancel a tax document and issue it again with a corrected buyer (ป.86/2542 ข้อ 25), and decide customers’ correction requests (D-431) | ● |  |  |  |  |  |  |  |  | ● |  |  |  |  |  |  |
+| `document_branding.read` — See the logo, company seal, signatories and signing rules of getpack’s documents (D-428, D-429) | ● | ● |  |  |  |  |  |  | ● | ● |  |  |  |  | ● |  |
+| `document_branding.manage` — Set getpack’s document logo and company seal, name signatories and decide who signs which documents (never upload a signature for someone) (D-428, D-429) | ● | ● |  |  |  |  |  |  |  | ● |  |  |  |  |  |  |
 | `payables.read` — Read POs, goods receipts, billing statements, vendor invoices, payables, vendors and payout runs (D-022, D-090) | ● | ● |  |  |  |  |  |  | ● | ● |  |  |  |  | ● |  |
 | `payables.manage` — Capture and validate factory tax invoices (input VAT only with a valid document, §2) (D-090) | ● |  |  |  |  |  |  |  | ● | ● |  |  |  |  |  |  |
 | `payables.vendors.manage` — Create non-factory vendors and propose their bank accounts (dual approval, §8) (D-033, D-169) | ● |  |  |  |  |  |  |  | ● | ● |  |  |  |  |  |  |

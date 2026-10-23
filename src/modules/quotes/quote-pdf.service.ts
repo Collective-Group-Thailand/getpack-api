@@ -4,6 +4,8 @@ import { bangkokDate } from '@common/time/bangkok';
 import { PrismaService, type Tx } from '@database/prisma.service';
 import { PDF_RENDERER, type PdfRenderer } from '@integrations/pdf/pdf-renderer.port';
 import { OBJECT_STORAGE, type ObjectStorage } from '@integrations/s3/object-storage.port';
+import { DocumentBrandingService } from '@modules/documents/branding/document-branding.service';
+import { issuerSignatureHtml } from '@modules/documents/branding/render-branding';
 import { Inject, Injectable } from '@nestjs/common';
 import { type DomainEventEnvelope } from '@platform/domain-events/domain-event';
 import { DomainEvents } from '@platform/domain-events/domain-events.service';
@@ -43,6 +45,7 @@ export class QuotePdfService {
     private readonly settings: SettingsService,
     private readonly files: FilesService,
     private readonly events: DomainEvents,
+    private readonly branding: DocumentBrandingService,
     @Inject(PDF_RENDERER) private readonly renderer: PdfRenderer,
     @Inject(OBJECT_STORAGE) private readonly storage: ObjectStorage,
   ) {}
@@ -106,7 +109,21 @@ export class QuotePdfService {
       }),
       validityDays: Math.round((quote.validUntil.getTime() - quote.createdAt.getTime()) / DAY_MS),
     };
-    const body = await this.renderer.render(renderQuoteDocument(doc));
+    // D-428/D-429: getpack's logo and, when a rule says so, the quotation's signatory and seal.
+    const branding = await this.branding.resolve(
+      { kind: 'entity', id: quote.entityId },
+      'quotation',
+      new Date(),
+      tx,
+    );
+    const body = await this.renderer.render(
+      renderQuoteDocument({
+        ...doc,
+        logo: branding.logo,
+        signatureHtml:
+          branding.signature || branding.seal ? issuerSignatureHtml('ผู้เสนอราคา', branding, null) : null,
+      }),
+    );
     const actor: UserActor = {
       type: 'user',
       userId: requester.id,

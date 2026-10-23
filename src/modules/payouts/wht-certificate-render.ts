@@ -1,3 +1,8 @@
+import {
+  issuerSignatureHtml,
+  type RenderBranding,
+  SIGN_STYLE,
+} from '@modules/documents/branding/render-branding';
 import { bahtText, thaiDate } from '@modules/receivables/thai-text';
 
 /** 50 ทวิ (หนังสือรับรองการหักภาษี ณ ที่จ่าย) issued by getpack's entity to a factory / vendor (§4 WT). */
@@ -10,6 +15,8 @@ export interface WhtCertificateView {
   incomeTypeCode: string;
   paidAmount: string;
   whtAmount: string;
+  /** D-428/D-429: getpack's logo, seal and the payer's signature at issue. */
+  branding?: RenderBranding;
 }
 
 const esc = (v: string) => v.replaceAll('&', '&amp;').replaceAll('<', '&lt;').replaceAll('>', '&gt;');
@@ -28,7 +35,9 @@ const FORM: Record<WhtCertificateView['form'], string> = {
 export function renderWhtCertificateHtml(v: WhtCertificateView): string {
   return `<!doctype html><html lang="th"><head><meta charset="utf-8"><title>${esc(v.wtNumber)}</title>
 <style>@page{size:A4;margin:14mm}body{font-family:'Sarabun','TH Sarabun New',sans-serif;font-size:12pt}
-table{width:100%;border-collapse:collapse}td,th{border:1px solid #999;padding:4px 6px}.n{text-align:right}</style></head><body>
+table{width:100%;border-collapse:collapse}td,th{border:1px solid #999;padding:4px 6px}.n{text-align:right}
+.logo{max-height:48px;max-width:180px}.sign{width:40%;margin-left:60%;text-align:center}${SIGN_STYLE}</style></head><body>
+${v.branding?.logo ? `<img class="logo" src="${v.branding.logo}" alt="">` : ''}
 <h2 style="text-align:center">หนังสือรับรองการหักภาษี ณ ที่จ่าย<br><small>ตามมาตรา 50 ทวิ แห่งประมวลรัษฎากร</small></h2>
 <p>เล่มที่/เลขที่ ${esc(v.wtNumber)} · แบบ ${FORM[v.form]}</p>
 <p><b>ผู้มีหน้าที่หักภาษี ณ ที่จ่าย</b> ${esc(v.payer.name)} เลขประจำตัวผู้เสียภาษี ${esc(v.payer.taxId)}<br>${esc(v.payer.address)}</p>
@@ -37,6 +46,10 @@ table{width:100%;border-collapse:collapse}td,th{border:1px solid #999;padding:4p
 <tbody><tr><td>${esc(INCOME[v.incomeTypeCode] ?? v.incomeTypeCode)}</td><td>${thaiDate(v.paidOn)}</td><td class="n">${v.paidAmount}</td><td class="n">${v.whtAmount}</td></tr></tbody></table>
 <p>รวมภาษีที่หักนำส่ง (ตัวอักษร) ${bahtText(v.whtAmount)}</p>
 <p>ผู้จ่ายเงิน: (1) หัก ณ ที่จ่าย</p>
-<p style="margin-top:40px;text-align:right">ลงชื่อ ...................................... ผู้จ่ายเงิน</p>
+${
+  v.branding?.signature || v.branding?.seal
+    ? `<div class="sign" style="margin-top:24px">${issuerSignatureHtml('ผู้จ่ายเงิน', v.branding, thaiDate(v.paidOn))}</div>`
+    : '<p style="margin-top:40px;text-align:right">ลงชื่อ ...................................... ผู้จ่ายเงิน</p>'
+}
 </body></html>`;
 }

@@ -847,16 +847,24 @@ model User {
   erpGlBankMatchMatchedBy          ErpGlBankMatch[]          @relation("ErpGlBankMatchMatchedBy")
   erpGlTaxFilingCreatedBy          ErpGlTaxFiling[]          @relation("ErpGlTaxFilingCreatedBy")
 
-
   // --- Sales agents D-416 (generated back-relations)
-  salesAgentApplications          SalesAgentApplication[]   @relation("SalesAgentApplicationUser")
-  salesAgentApplicationsDecided   SalesAgentApplication[]   @relation("SalesAgentApplicationDecidedBy")
-  salesAgent                      SalesAgent?               @relation("SalesAgentUser")
-  salesAgentsAsStaff              SalesAgent[]              @relation("SalesAgentStaffUser")
-  salesAgentLinks                 SalesAgentLink[]          @relation("SalesAgentLinkCustomer")
-  salesAgentLeadsConverted        SalesAgentLead[]          @relation("SalesAgentLeadConvertedUser")
-  salesAgentStatementsApproved    SalesAgentStatement[]     @relation("SalesAgentStatementApprovedBy")
+  salesAgentApplications        SalesAgentApplication[] @relation("SalesAgentApplicationUser")
+  salesAgentApplicationsDecided SalesAgentApplication[] @relation("SalesAgentApplicationDecidedBy")
+  salesAgent                    SalesAgent?             @relation("SalesAgentUser")
+  salesAgentsAsStaff            SalesAgent[]            @relation("SalesAgentStaffUser")
+  salesAgentLinks               SalesAgentLink[]        @relation("SalesAgentLinkCustomer")
+  salesAgentLeadsConverted      SalesAgentLead[]        @relation("SalesAgentLeadConvertedUser")
+  salesAgentStatementsApproved  SalesAgentStatement[]   @relation("SalesAgentStatementApprovedBy")
   // --- end Sales agents
+
+  // --- Documents D-428 – D-431 (back-relations)
+  documentBrandMarksCreated    DocumentBrandMark[]         @relation("DocumentBrandMarkCreatedBy")
+  documentSignatories          DocumentSignatory[]         @relation("DocumentSignatoryUser")
+  documentSignatoriesCreated   DocumentSignatory[]         @relation("DocumentSignatoryCreatedBy")
+  documentSignaturesCreated    DocumentSignature[]         @relation("DocumentSignatureCreatedBy")
+  documentSigningRulesCreated  DocumentSigningRule[]       @relation("DocumentSigningRuleCreatedBy")
+  documentCorrectionsRequested DocumentCorrectionRequest[] @relation("DocumentCorrectionRequestRequestedBy")
+  documentCorrectionsDecided   DocumentCorrectionRequest[] @relation("DocumentCorrectionRequestDecidedBy")
 
   @@unique([kind, email], map: "ux_users__kind__email", where: raw("((email IS NOT NULL) AND (anonymised_at IS NULL))"))
   @@unique([kind, phone], map: "ux_users__kind__phone", where: raw("((phone IS NOT NULL) AND (anonymised_at IS NULL))"))

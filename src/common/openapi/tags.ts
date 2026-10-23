@@ -433,6 +433,12 @@ export const API_TAGS: Record<string, string> = {
   'admin.taxRates':
     'VAT and withholding rates with dated versions (accounting-design §2 ⚖, D-174); changes approved (`tax_setting_change`).',
   // --- B5.2 receivables
+  'admin.documentBranding':
+    'Logo, company seal and signatories of getpack’s documents, and who signs which kind (D-428, D-429).',
+  'partner.documentBranding':
+    'Logo, company seal and signatories of the factory’s ERP documents, and who signs which kind (D-428, D-429).',
+  'admin.documentCorrections':
+    'Customers’ requests to correct the buyer on a tax document; approving cancels and reissues it (D-431).',
   'admin.customerDocuments':
     'Tax invoices, invoices, receipts, credit and debit notes issued by the entity under the getpack brand (D-010, D-092): PDFs, voids, credit notes under maker-checker (D-169).',
   'admin.receivables':
