@@ -93,7 +93,12 @@ function Op(o: {
   implements: string[];
   can?: PermissionKey;
   params?: string[];
-  success?: { status: 200 | 201 | 204; description: string; type?: Type<unknown> | [Type<unknown>]; example?: unknown };
+  success?: {
+    status: 200 | 201 | 204;
+    description: string;
+    type?: Type<unknown> | [Type<unknown>];
+    example?: unknown;
+  };
   paginated?: { type: Type<unknown>; example: unknown };
   body?: { type: Type<unknown>; example: unknown };
   errors?: readonly ErrorCode[];
@@ -121,7 +126,13 @@ function Op(o: {
 
 // ------------------------------------------------------------------------------------- examples
 
-const ITEM = { id: E5_IDS.item, sku: 'BOX-RSC-302015', name: 'กล่องลูกฟูก RSC 30×20×15', kind: 'finished_good', baseUnit: 'pcs' };
+const ITEM = {
+  id: E5_IDS.item,
+  sku: 'BOX-RSC-302015',
+  name: 'กล่องลูกฟูก RSC 30×20×15',
+  kind: 'finished_good',
+  baseUnit: 'pcs',
+};
 const MACHINE = { id: E5_IDS.machine, name: 'เครื่องพิมพ์ออฟเซ็ท 4 สี (ทดสอบ)' };
 const INSPECTOR = { id: E5_IDS.inspector, name: 'ฝ่าย QC ทดสอบ' };
 const SPEC = {
@@ -142,7 +153,20 @@ const TEMPLATE: ErpInspectionTemplateDto = {
   sampleSizeHint: 'สุ่ม 13 ใบต่อล็อต',
   note: null,
   status: 'active',
-  checkpoints: [SPEC, { ...SPEC, seq: 2, name: 'สีตรงตามตัวอย่าง', type: 'pass_fail', unit: null, minValue: null, maxValue: null, targetValue: null, instruction: null }],
+  checkpoints: [
+    SPEC,
+    {
+      ...SPEC,
+      seq: 2,
+      name: 'สีตรงตามตัวอย่าง',
+      type: 'pass_fail',
+      unit: null,
+      minValue: null,
+      maxValue: null,
+      targetValue: null,
+      instruction: null,
+    },
+  ],
   checks: 4,
   nextActions: [ACTION('erp_template.edit'), ACTION('erp_template.use')],
   version: 1,
@@ -170,7 +194,20 @@ const CHECK: ErpQualityCheckDto = {
   inspectedAt: '2026-10-13T14:20:00+07:00',
   checkpoints: [
     { ...SPEC, instruction: null, measured: '3.0500', outcome: 'pass', note: null },
-    { ...SPEC, seq: 2, name: 'สีตรงตามตัวอย่าง', type: 'pass_fail', unit: null, minValue: null, maxValue: null, targetValue: null, instruction: null, measured: null, outcome: 'pass', note: null },
+    {
+      ...SPEC,
+      seq: 2,
+      name: 'สีตรงตามตัวอย่าง',
+      type: 'pass_fail',
+      unit: null,
+      minValue: null,
+      maxValue: null,
+      targetValue: null,
+      instruction: null,
+      measured: null,
+      outcome: 'pass',
+      note: null,
+    },
   ],
   photos: [],
   ncrs: [],
@@ -220,7 +257,12 @@ const PDF_LINK: ErpPdfLinkDto = {
   fileName: 'COA-QC-2610-0004.pdf',
   expiresAt: '2026-10-13T15:05:00+07:00',
 };
-const RATE: ErpMachineRateDto = { machine: MACHINE, hourlyRate: '850.00', note: 'ค่าเสื่อม + ไฟ + ซ่อมบำรุง', updatedAt: '2026-10-01T09:00:00+07:00' };
+const RATE: ErpMachineRateDto = {
+  machine: MACHINE,
+  hourlyRate: '850.00',
+  note: 'ค่าเสื่อม + ไฟ + ซ่อมบำรุง',
+  updatedAt: '2026-10-01T09:00:00+07:00',
+};
 const JOB: ErpJobCostDto = {
   productionOrder: { id: E5_IDS.productionOrder, number: 'MO-2610-0007' },
   title: 'กล่องลูกฟูก RSC 30×20×15 — 5,000 ใบ',
@@ -238,13 +280,28 @@ const JOB: ErpJobCostDto = {
   runMinutes: 300,
   completedAt: '2026-10-12T17:30:00+07:00',
   operations: [
-    { seq: 1, name: 'พิมพ์ 2 สี', machine: MACHINE, plannedMinutes: 300, runMinutes: 300, machineRate: '850.00', machineCost: '4250.00' },
+    {
+      seq: 1,
+      name: 'พิมพ์ 2 สี',
+      machine: MACHINE,
+      plannedMinutes: 300,
+      runMinutes: 300,
+      machineRate: '850.00',
+      machineCost: '4250.00',
+    },
   ],
 };
 const COSTS: ErpCostReportDto = {
   month: '2026-10',
   orders: [{ ...JOB, operations: [] }],
-  totals: { orders: 1, material: '31250.00', machine: '4250.00', labour: '600.00', overhead: '5415.00', total: '41515.00' },
+  totals: {
+    orders: 1,
+    material: '31250.00',
+    machine: '4250.00',
+    labour: '600.00',
+    overhead: '5415.00',
+    total: '41515.00',
+  },
 };
 const PROFIT: ErpProfitReportDto = {
   month: '2026-10',
@@ -296,19 +353,44 @@ const DASHBOARD: ErpDashboardDto = {
   asOf: '2026-10-13',
   month: '2026-10',
   sales: { invoicedNet: '245000.00', target: '300000.00', achievementPct: '81.7', invoices: 12 },
-  getpack: { confirmedNet: '239951.41', confirmedStatements: 2, toConfirm: 2, toConfirmGross: '44999.33', toInvoice: 1 },
+  getpack: {
+    confirmedNet: '239951.41',
+    confirmedStatements: 2,
+    toConfirm: 2,
+    toConfirmGross: '44999.33',
+    toInvoice: 1,
+  },
   receivables: { open: '182000.00', overdue: '42000.00', overdueInvoices: 3 },
   payables: { dueThisWeek: '56000.00', dueThisWeekCount: 4, overdueAmount: '0.00' },
   stock: {
     value: '845000.00',
     lowItems: 1,
-    low: [{ item: { ...ITEM, sku: 'PAP-KA-350', name: 'กระดาษคราฟท์ 350 แกรม', kind: 'raw_material', baseUnit: 'sheet' }, available: '120.000', reorderPoint: '500.000' }],
+    low: [
+      {
+        item: {
+          ...ITEM,
+          sku: 'PAP-KA-350',
+          name: 'กระดาษคราฟท์ 350 แกรม',
+          kind: 'raw_material',
+          baseUnit: 'sheet',
+        },
+        available: '120.000',
+        reorderPoint: '500.000',
+      },
+    ],
   },
   production: {
     inProgress: 5,
     late: 1,
     completedThisMonth: 14,
-    lateOrders: [{ order: { id: E5_IDS.productionOrder, number: 'MO-2610-0007' }, title: 'กล่องลูกฟูก RSC 30×20×15', dueOn: '2026-10-10', status: 'in_progress' }],
+    lateOrders: [
+      {
+        order: { id: E5_IDS.productionOrder, number: 'MO-2610-0007' },
+        title: 'กล่องลูกฟูก RSC 30×20×15',
+        dueOn: '2026-10-10',
+        status: 'in_progress',
+      },
+    ],
   },
   machines: { total: 6, down: 1, oeeYesterdayPct: '68.4' },
   quality: { openNcrs: 3, overdueNcrs: 1, checksThisMonth: 42, passRatePct: '95.2' },
@@ -360,15 +442,41 @@ const GRANT: ErpSupportGrantDto = {
   viewCount: 1,
   grantedBy: 'เจ้าของโรงงาน ทดสอบ',
   createdAt: '2026-10-13T10:00:00+07:00',
-  views: [{ at: '2026-10-13T10:12:00+07:00', staff: 'ทีมพาร์ทเนอร์ getpack (ทดสอบ)', what: 'dashboard,settings' }],
+  views: [
+    { at: '2026-10-13T10:12:00+07:00', staff: 'ทีมพาร์ทเนอร์ getpack (ทดสอบ)', what: 'dashboard,settings' },
+  ],
   nextActions: [ACTION('erp_support.revoke')],
 };
 
 const INBOX: ErpInboxDto = {
   asOf: '2026-10-14',
   items: [
-    { key: 'purchase_request:0192f3a0-7c1e-7d2a-9b1f-00000000f901', section: 'approve', kind: 'purchase_request', tone: 'warning', count: 1, document: { type: 'erp_purchase_request', id: '0192f3a0-7c1e-7d2a-9b1f-00000000f901', number: 'PR-2610-0004' }, party: 'ฝ่ายจัดซื้อ ทดสอบ', amount: null, date: '2026-10-13' },
-    { key: 'receivable_overdue:all', section: 'overdue', kind: 'receivable_overdue', tone: 'danger', count: 3, document: null, party: null, amount: '48150.00', date: null },
+    {
+      key: 'purchase_request:0192f3a0-7c1e-7d2a-9b1f-00000000f901',
+      section: 'approve',
+      kind: 'purchase_request',
+      tone: 'warning',
+      count: 1,
+      document: {
+        type: 'erp_purchase_request',
+        id: '0192f3a0-7c1e-7d2a-9b1f-00000000f901',
+        number: 'PR-2610-0004',
+      },
+      party: 'ฝ่ายจัดซื้อ ทดสอบ',
+      amount: null,
+      date: '2026-10-13',
+    },
+    {
+      key: 'receivable_overdue:all',
+      section: 'overdue',
+      kind: 'receivable_overdue',
+      tone: 'danger',
+      count: 3,
+      document: null,
+      party: null,
+      amount: '48150.00',
+      date: null,
+    },
   ],
   counts: { approve: 1, overdue: 3, today: 0, soon: 0 },
 };
@@ -394,27 +502,50 @@ export class PartnerErpQualityController {
     paginated: { type: ErpInspectionTemplateDto, example: TEMPLATE },
     errors: ['http.not_found', 'validation.failed'],
   })
-  async listTemplates(@CurrentActor() actor: Actor, @Param('factoryId', ParseUUIDPipe) factoryId: string, @Query() q: ErpTemplateListQuery) {
-    return this.quality.listTemplates(await this.workspace.open(actor, factoryId), q, await perms(this.permissions, actor));
+  async listTemplates(
+    @CurrentActor() actor: Actor,
+    @Param('factoryId', ParseUUIDPipe) factoryId: string,
+    @Query() q: ErpTemplateListQuery,
+  ) {
+    return this.quality.listTemplates(
+      await this.workspace.open(actor, factoryId),
+      q,
+      await perms(this.permissions, actor),
+    );
   }
 
   @Post('inspection-templates')
   @Op({
     id: 'partner.erpQuality.createTemplate',
     summary: 'Add an inspection template',
-    description: 'A checklist for one kind of check, optionally for one item: pass / fail, measurements with limits, notes (D-373).',
+    description:
+      'A checklist for one kind of check, optionally for one item: pass / fail, measurements with limits, notes (D-373).',
     implements: ['D-373'],
     can: 'factory_quality.manage',
     etag: true,
     body: {
       type: ErpSaveInspectionTemplateDto,
-      example: { name: 'ตรวจขั้นสุดท้ายกล่อง RSC', kind: 'final', checkpoints: [{ name: 'ความหนาบอร์ด', type: 'measurement', unit: 'mm', minValue: '2.9', maxValue: '3.3' }] },
+      example: {
+        name: 'ตรวจขั้นสุดท้ายกล่อง RSC',
+        kind: 'final',
+        checkpoints: [
+          { name: 'ความหนาบอร์ด', type: 'measurement', unit: 'mm', minValue: '2.9', maxValue: '3.3' },
+        ],
+      },
     },
     success: { status: 201, description: 'Added', type: ErpInspectionTemplateDto, example: TEMPLATE },
     errors: [...WRITE, 'erp.archived'],
   })
-  async createTemplate(@CurrentActor() actor: Actor, @Param('factoryId', ParseUUIDPipe) factoryId: string, @Body() body: ErpSaveInspectionTemplateDto) {
-    return this.quality.createTemplate(await this.workspace.open(actor, factoryId), body, await perms(this.permissions, actor));
+  async createTemplate(
+    @CurrentActor() actor: Actor,
+    @Param('factoryId', ParseUUIDPipe) factoryId: string,
+    @Body() body: ErpSaveInspectionTemplateDto,
+  ) {
+    return this.quality.createTemplate(
+      await this.workspace.open(actor, factoryId),
+      body,
+      await perms(this.permissions, actor),
+    );
   }
 
   @Get('inspection-templates/:templateId')
@@ -428,21 +559,37 @@ export class PartnerErpQualityController {
     etag: true,
     success: { status: 200, description: 'The template', type: ErpInspectionTemplateDto, example: TEMPLATE },
   })
-  async getTemplate(@CurrentActor() actor: Actor, @Param('factoryId', ParseUUIDPipe) factoryId: string, @Param('templateId', ParseUUIDPipe) templateId: string) {
-    return this.quality.getTemplate(await this.workspace.open(actor, factoryId), templateId, await perms(this.permissions, actor));
+  async getTemplate(
+    @CurrentActor() actor: Actor,
+    @Param('factoryId', ParseUUIDPipe) factoryId: string,
+    @Param('templateId', ParseUUIDPipe) templateId: string,
+  ) {
+    return this.quality.getTemplate(
+      await this.workspace.open(actor, factoryId),
+      templateId,
+      await perms(this.permissions, actor),
+    );
   }
 
   @Put('inspection-templates/:templateId')
   @Op({
     id: 'partner.erpQuality.updateTemplate',
     summary: 'Edit an inspection template',
-    description: 'Replaces its checkpoints; checks already made keep their copy. `status: archived` retires it (D-373).',
+    description:
+      'Replaces its checkpoints; checks already made keep their copy. `status: archived` retires it (D-373).',
     implements: ['D-373'],
     can: 'factory_quality.manage',
     params: ['templateId'],
     concurrency: true,
     etag: true,
-    body: { type: ErpSaveInspectionTemplateDto, example: { name: 'ตรวจขั้นสุดท้ายกล่อง RSC', kind: 'final', checkpoints: [{ name: 'สีตรงตามตัวอย่าง', type: 'pass_fail' }] } },
+    body: {
+      type: ErpSaveInspectionTemplateDto,
+      example: {
+        name: 'ตรวจขั้นสุดท้ายกล่อง RSC',
+        kind: 'final',
+        checkpoints: [{ name: 'สีตรงตามตัวอย่าง', type: 'pass_fail' }],
+      },
+    },
     success: { status: 200, description: 'Saved', type: ErpInspectionTemplateDto, example: TEMPLATE },
     errors: WRITE,
   })
@@ -453,7 +600,13 @@ export class PartnerErpQualityController {
     @IfMatch() ifMatch: string | undefined,
     @Body() body: ErpSaveInspectionTemplateDto,
   ) {
-    return this.quality.updateTemplate(await this.workspace.open(actor, factoryId), templateId, ifMatch, body, await perms(this.permissions, actor));
+    return this.quality.updateTemplate(
+      await this.workspace.open(actor, factoryId),
+      templateId,
+      ifMatch,
+      body,
+      await perms(this.permissions, actor),
+    );
   }
 
   @Get('quality-checks')
@@ -466,8 +619,16 @@ export class PartnerErpQualityController {
     paginated: { type: ErpQualityCheckDto, example: CHECK },
     errors: ['http.not_found', 'validation.failed'],
   })
-  async listChecks(@CurrentActor() actor: Actor, @Param('factoryId', ParseUUIDPipe) factoryId: string, @Query() q: ErpQualityCheckListQuery) {
-    return this.quality.listChecks(await this.workspace.open(actor, factoryId), q, await perms(this.permissions, actor));
+  async listChecks(
+    @CurrentActor() actor: Actor,
+    @Param('factoryId', ParseUUIDPipe) factoryId: string,
+    @Query() q: ErpQualityCheckListQuery,
+  ) {
+    return this.quality.listChecks(
+      await this.workspace.open(actor, factoryId),
+      q,
+      await perms(this.permissions, actor),
+    );
   }
 
   @Post('quality-checks')
@@ -480,12 +641,34 @@ export class PartnerErpQualityController {
     implements: ['D-372', 'D-373'],
     can: 'factory_quality.record',
     etag: true,
-    body: { type: ErpCreateQualityCheckDto, example: { kind: 'final', templateId: E5_IDS.template, productionOrderId: E5_IDS.productionOrder, lotNo: 'LOT-2610-07', sampleSize: '13' } },
-    success: { status: 201, description: 'Started', type: ErpQualityCheckDto, example: { ...CHECK, result: 'pending', nextActions: [ACTION('erp_qc.record')] } },
+    body: {
+      type: ErpCreateQualityCheckDto,
+      example: {
+        kind: 'final',
+        templateId: E5_IDS.template,
+        productionOrderId: E5_IDS.productionOrder,
+        lotNo: 'LOT-2610-07',
+        sampleSize: '13',
+      },
+    },
+    success: {
+      status: 201,
+      description: 'Started',
+      type: ErpQualityCheckDto,
+      example: { ...CHECK, result: 'pending', nextActions: [ACTION('erp_qc.record')] },
+    },
     errors: [...WRITE, 'erp.archived'],
   })
-  async createCheck(@CurrentActor() actor: Actor, @Param('factoryId', ParseUUIDPipe) factoryId: string, @Body() body: ErpCreateQualityCheckDto) {
-    return this.quality.createCheck(await this.workspace.open(actor, factoryId), body, await perms(this.permissions, actor));
+  async createCheck(
+    @CurrentActor() actor: Actor,
+    @Param('factoryId', ParseUUIDPipe) factoryId: string,
+    @Body() body: ErpCreateQualityCheckDto,
+  ) {
+    return this.quality.createCheck(
+      await this.workspace.open(actor, factoryId),
+      body,
+      await perms(this.permissions, actor),
+    );
   }
 
   @Get('quality-checks/:checkId')
@@ -499,8 +682,16 @@ export class PartnerErpQualityController {
     etag: true,
     success: { status: 200, description: 'The check', type: ErpQualityCheckDto, example: CHECK },
   })
-  async getCheck(@CurrentActor() actor: Actor, @Param('factoryId', ParseUUIDPipe) factoryId: string, @Param('checkId', ParseUUIDPipe) checkId: string) {
-    return this.quality.getCheck(await this.workspace.open(actor, factoryId), checkId, await perms(this.permissions, actor));
+  async getCheck(
+    @CurrentActor() actor: Actor,
+    @Param('factoryId', ParseUUIDPipe) factoryId: string,
+    @Param('checkId', ParseUUIDPipe) checkId: string,
+  ) {
+    return this.quality.getCheck(
+      await this.workspace.open(actor, factoryId),
+      checkId,
+      await perms(this.permissions, actor),
+    );
   }
 
   @Put('quality-checks/:checkId')
@@ -515,7 +706,18 @@ export class PartnerErpQualityController {
     params: ['checkId'],
     concurrency: true,
     etag: true,
-    body: { type: ErpRecordQualityCheckDto, example: { points: [{ seq: 1, measured: '3.05' }, { seq: 2, outcome: 'pass' }], inspectedQty: '4950', acceptedQty: '4950', rejectedQty: '0' } },
+    body: {
+      type: ErpRecordQualityCheckDto,
+      example: {
+        points: [
+          { seq: 1, measured: '3.05' },
+          { seq: 2, outcome: 'pass' },
+        ],
+        inspectedQty: '4950',
+        acceptedQty: '4950',
+        rejectedQty: '0',
+      },
+    },
     success: { status: 200, description: 'Recorded', type: ErpQualityCheckDto, example: CHECK },
     errors: [...WRITE, 'erp.invalid_status', 'erp.file_not_usable'],
   })
@@ -526,7 +728,13 @@ export class PartnerErpQualityController {
     @IfMatch() ifMatch: string | undefined,
     @Body() body: ErpRecordQualityCheckDto,
   ) {
-    return this.quality.recordCheck(await this.workspace.open(actor, factoryId), checkId, ifMatch, body, await perms(this.permissions, actor));
+    return this.quality.recordCheck(
+      await this.workspace.open(actor, factoryId),
+      checkId,
+      ifMatch,
+      body,
+      await perms(this.permissions, actor),
+    );
   }
 
   @Post('quality-checks/:checkId/actions/override')
@@ -539,8 +747,16 @@ export class PartnerErpQualityController {
     params: ['checkId'],
     idempotent: true,
     status: 200,
-    body: { type: ErpOverrideCheckDto, example: { result: 'conditional', reason: 'ลูกค้ายอมรับสีเพี้ยนเล็กน้อย' } },
-    success: { status: 200, description: 'Set', type: ErpQualityCheckDto, example: { ...CHECK, result: 'conditional', resultOverridden: true } },
+    body: {
+      type: ErpOverrideCheckDto,
+      example: { result: 'conditional', reason: 'ลูกค้ายอมรับสีเพี้ยนเล็กน้อย' },
+    },
+    success: {
+      status: 200,
+      description: 'Set',
+      type: ErpQualityCheckDto,
+      example: { ...CHECK, result: 'conditional', resultOverridden: true },
+    },
     errors: [...WRITE, 'erp.invalid_status'],
   })
   async overrideCheck(
@@ -549,21 +765,31 @@ export class PartnerErpQualityController {
     @Param('checkId', ParseUUIDPipe) checkId: string,
     @Body() body: ErpOverrideCheckDto,
   ) {
-    return this.quality.overrideCheck(await this.workspace.open(actor, factoryId), checkId, body, await perms(this.permissions, actor));
+    return this.quality.overrideCheck(
+      await this.workspace.open(actor, factoryId),
+      checkId,
+      body,
+      await perms(this.permissions, actor),
+    );
   }
 
   @Get('quality-checks/:checkId/coa')
   @Op({
     id: 'partner.erpQuality.coa',
     summary: 'Certificate of analysis',
-    description: 'The PDF of a final check that passed (or passed with conditions), under the factory’s name (D-375).',
+    description:
+      'The PDF of a final check that passed (or passed with conditions), under the factory’s name (D-375).',
     implements: ['D-375'],
     can: 'factory_quality.read',
     params: ['checkId'],
     success: { status: 200, description: 'The link', type: ErpPdfLinkDto, example: PDF_LINK },
     errors: ['http.not_found', 'erp.check_not_passed'],
   })
-  async coa(@CurrentActor() actor: Actor, @Param('factoryId', ParseUUIDPipe) factoryId: string, @Param('checkId', ParseUUIDPipe) checkId: string) {
+  async coa(
+    @CurrentActor() actor: Actor,
+    @Param('factoryId', ParseUUIDPipe) factoryId: string,
+    @Param('checkId', ParseUUIDPipe) checkId: string,
+  ) {
     return this.quality.coa(await this.workspace.open(actor, factoryId), checkId);
   }
 
@@ -571,30 +797,58 @@ export class PartnerErpQualityController {
   @Op({
     id: 'partner.erpQuality.listNcrs',
     summary: 'Nonconformance reports',
-    description: 'Newest first; `status=active` = open, in progress or verified; `overdue=true` = past the action date (D-374).',
+    description:
+      'Newest first; `status=active` = open, in progress or verified; `overdue=true` = past the action date (D-374).',
     implements: ['D-374'],
     can: 'factory_quality.read',
     paginated: { type: ErpNcrDto, example: NCR },
     errors: ['http.not_found', 'validation.failed'],
   })
-  async listNcrs(@CurrentActor() actor: Actor, @Param('factoryId', ParseUUIDPipe) factoryId: string, @Query() q: ErpNcrListQuery) {
-    return this.quality.listNcrs(await this.workspace.open(actor, factoryId), q, await perms(this.permissions, actor));
+  async listNcrs(
+    @CurrentActor() actor: Actor,
+    @Param('factoryId', ParseUUIDPipe) factoryId: string,
+    @Query() q: ErpNcrListQuery,
+  ) {
+    return this.quality.listNcrs(
+      await this.workspace.open(actor, factoryId),
+      q,
+      await perms(this.permissions, actor),
+    );
   }
 
   @Post('ncrs')
   @Op({
     id: 'partner.erpQuality.createNcr',
     summary: 'Raise an NCR',
-    description: '`NCR-YYMM-NNNN` from a check, a receipt, a production order, a customer complaint or internally (D-374).',
+    description:
+      '`NCR-YYMM-NNNN` from a check, a receipt, a production order, a customer complaint or internally (D-374).',
     implements: ['D-374'],
     can: 'factory_quality.record',
     etag: true,
-    body: { type: ErpCreateNcrDto, example: { source: 'customer_complaint', severity: 'major', title: 'กล่องพิมพ์สีเพี้ยน ล็อต 2610-07', description: 'ลูกค้าแจ้งสีแดงอ่อนกว่าตัวอย่าง', itemId: E5_IDS.item, quantity: '200' } },
+    body: {
+      type: ErpCreateNcrDto,
+      example: {
+        source: 'customer_complaint',
+        severity: 'major',
+        title: 'กล่องพิมพ์สีเพี้ยน ล็อต 2610-07',
+        description: 'ลูกค้าแจ้งสีแดงอ่อนกว่าตัวอย่าง',
+        itemId: E5_IDS.item,
+        quantity: '200',
+      },
+    },
     success: { status: 201, description: 'Raised', type: ErpNcrDto, example: { ...NCR, status: 'open' } },
     errors: [...WRITE, 'erp.archived', 'erp.file_not_usable'],
   })
-  async createNcr(@CurrentActor() actor: Actor, @Param('factoryId', ParseUUIDPipe) factoryId: string, @Body() body: ErpCreateNcrDto) {
-    return this.quality.createNcr(await this.workspace.open(actor, factoryId), body, await perms(this.permissions, actor));
+  async createNcr(
+    @CurrentActor() actor: Actor,
+    @Param('factoryId', ParseUUIDPipe) factoryId: string,
+    @Body() body: ErpCreateNcrDto,
+  ) {
+    return this.quality.createNcr(
+      await this.workspace.open(actor, factoryId),
+      body,
+      await perms(this.permissions, actor),
+    );
   }
 
   @Get('ncrs/:ncrId')
@@ -608,21 +862,37 @@ export class PartnerErpQualityController {
     etag: true,
     success: { status: 200, description: 'The NCR', type: ErpNcrDto, example: NCR },
   })
-  async getNcr(@CurrentActor() actor: Actor, @Param('factoryId', ParseUUIDPipe) factoryId: string, @Param('ncrId', ParseUUIDPipe) ncrId: string) {
-    return this.quality.getNcr(await this.workspace.open(actor, factoryId), ncrId, await perms(this.permissions, actor));
+  async getNcr(
+    @CurrentActor() actor: Actor,
+    @Param('factoryId', ParseUUIDPipe) factoryId: string,
+    @Param('ncrId', ParseUUIDPipe) ncrId: string,
+  ) {
+    return this.quality.getNcr(
+      await this.workspace.open(actor, factoryId),
+      ncrId,
+      await perms(this.permissions, actor),
+    );
   }
 
   @Put('ncrs/:ncrId')
   @Op({
     id: 'partner.erpQuality.updateNcr',
     summary: 'Work an NCR',
-    description: 'Root cause, corrective and preventive action, owner and due date; an open NCR becomes in progress (D-374).',
+    description:
+      'Root cause, corrective and preventive action, owner and due date; an open NCR becomes in progress (D-374).',
     implements: ['D-374'],
     can: 'factory_quality.record',
     params: ['ncrId'],
     concurrency: true,
     etag: true,
-    body: { type: ErpUpdateNcrDto, example: { rootCause: 'ผสมหมึกผิดสูตร', correctiveAction: 'พิมพ์ใหม่ 200 ใบ', actionDueOn: '2026-10-20' } },
+    body: {
+      type: ErpUpdateNcrDto,
+      example: {
+        rootCause: 'ผสมหมึกผิดสูตร',
+        correctiveAction: 'พิมพ์ใหม่ 200 ใบ',
+        actionDueOn: '2026-10-20',
+      },
+    },
     success: { status: 200, description: 'Saved', type: ErpNcrDto, example: NCR },
     errors: [...WRITE, 'erp.invalid_status', 'erp.file_not_usable'],
   })
@@ -633,14 +903,21 @@ export class PartnerErpQualityController {
     @IfMatch() ifMatch: string | undefined,
     @Body() body: ErpUpdateNcrDto,
   ) {
-    return this.quality.updateNcr(await this.workspace.open(actor, factoryId), ncrId, ifMatch, body, await perms(this.permissions, actor));
+    return this.quality.updateNcr(
+      await this.workspace.open(actor, factoryId),
+      ncrId,
+      ifMatch,
+      body,
+      await perms(this.permissions, actor),
+    );
   }
 
   @Post('ncrs/:ncrId/actions/dispose')
   @Op({
     id: 'partner.erpQuality.disposeNcr',
     summary: 'Decide what happens to the goods',
-    description: 'Rework, scrap (the quantity leaves stock now), return to supplier, use as is or hold (D-374).',
+    description:
+      'Rework, scrap (the quantity leaves stock now), return to supplier, use as is or hold (D-374).',
     implements: ['D-374'],
     can: 'factory_quality.manage',
     params: ['ncrId'],
@@ -656,7 +933,12 @@ export class PartnerErpQualityController {
     @Param('ncrId', ParseUUIDPipe) ncrId: string,
     @Body() body: ErpDisposeNcrDto,
   ) {
-    return this.quality.disposeNcr(await this.workspace.open(actor, factoryId), ncrId, body, await perms(this.permissions, actor));
+    return this.quality.disposeNcr(
+      await this.workspace.open(actor, factoryId),
+      ncrId,
+      body,
+      await perms(this.permissions, actor),
+    );
   }
 
   @Post('ncrs/:ncrId/actions/verify')
@@ -670,7 +952,12 @@ export class PartnerErpQualityController {
     idempotent: true,
     status: 200,
     body: { type: ErpVerifyNcrDto, example: { note: 'ล็อตถัดไปสีตรงมาตรฐาน' } },
-    success: { status: 200, description: 'Verified', type: ErpNcrDto, example: { ...NCR, status: 'verified', nextActions: [ACTION('erp_ncr.close', true)] } },
+    success: {
+      status: 200,
+      description: 'Verified',
+      type: ErpNcrDto,
+      example: { ...NCR, status: 'verified', nextActions: [ACTION('erp_ncr.close', true)] },
+    },
     errors: [...WRITE, 'erp.invalid_status', 'erp.ncr_action_required'],
   })
   async verifyNcr(
@@ -679,7 +966,12 @@ export class PartnerErpQualityController {
     @Param('ncrId', ParseUUIDPipe) ncrId: string,
     @Body() body: ErpVerifyNcrDto,
   ) {
-    return this.quality.verifyNcr(await this.workspace.open(actor, factoryId), ncrId, body.note, await perms(this.permissions, actor));
+    return this.quality.verifyNcr(
+      await this.workspace.open(actor, factoryId),
+      ncrId,
+      body.note,
+      await perms(this.permissions, actor),
+    );
   }
 
   @Post('ncrs/:ncrId/actions/close')
@@ -692,11 +984,24 @@ export class PartnerErpQualityController {
     params: ['ncrId'],
     idempotent: true,
     status: 200,
-    success: { status: 200, description: 'Closed', type: ErpNcrDto, example: { ...NCR, status: 'closed', closedAt: '2026-10-21T09:00:00+07:00', nextActions: [] } },
+    success: {
+      status: 200,
+      description: 'Closed',
+      type: ErpNcrDto,
+      example: { ...NCR, status: 'closed', closedAt: '2026-10-21T09:00:00+07:00', nextActions: [] },
+    },
     errors: ['http.not_found', 'erp.invalid_status'],
   })
-  async closeNcr(@CurrentActor() actor: Actor, @Param('factoryId', ParseUUIDPipe) factoryId: string, @Param('ncrId', ParseUUIDPipe) ncrId: string) {
-    return this.quality.closeNcr(await this.workspace.open(actor, factoryId), ncrId, await perms(this.permissions, actor));
+  async closeNcr(
+    @CurrentActor() actor: Actor,
+    @Param('factoryId', ParseUUIDPipe) factoryId: string,
+    @Param('ncrId', ParseUUIDPipe) ncrId: string,
+  ) {
+    return this.quality.closeNcr(
+      await this.workspace.open(actor, factoryId),
+      ncrId,
+      await perms(this.permissions, actor),
+    );
   }
 
   @Post('ncrs/:ncrId/actions/cancel')
@@ -710,7 +1015,12 @@ export class PartnerErpQualityController {
     idempotent: true,
     status: 200,
     body: { type: ReasonDto, example: { reason: 'เปิดซ้ำกับ NCR-2610-0001' } },
-    success: { status: 200, description: 'Cancelled', type: ErpNcrDto, example: { ...NCR, status: 'cancelled', cancelReason: 'เปิดซ้ำกับ NCR-2610-0001', nextActions: [] } },
+    success: {
+      status: 200,
+      description: 'Cancelled',
+      type: ErpNcrDto,
+      example: { ...NCR, status: 'cancelled', cancelReason: 'เปิดซ้ำกับ NCR-2610-0001', nextActions: [] },
+    },
     errors: [...WRITE, 'erp.invalid_status'],
   })
   async cancelNcr(
@@ -719,7 +1029,12 @@ export class PartnerErpQualityController {
     @Param('ncrId', ParseUUIDPipe) ncrId: string,
     @Body() body: ReasonDto,
   ) {
-    return this.quality.cancelNcr(await this.workspace.open(actor, factoryId), ncrId, body.reason, await perms(this.permissions, actor));
+    return this.quality.cancelNcr(
+      await this.workspace.open(actor, factoryId),
+      ncrId,
+      body.reason,
+      await perms(this.permissions, actor),
+    );
   }
 }
 
@@ -747,7 +1062,10 @@ export class PartnerErpInsightController {
     success: { status: 200, description: 'The inbox', type: ErpInboxDto, example: INBOX },
   })
   async inbox(@CurrentActor() actor: Actor, @Param('factoryId', ParseUUIDPipe) factoryId: string) {
-    return this.inboxes.inbox(await this.workspace.open(actor, factoryId), await perms(this.permissions, actor));
+    return this.inboxes.inbox(
+      await this.workspace.open(actor, factoryId),
+      await perms(this.permissions, actor),
+    );
   }
 
   @Get('dashboard')
@@ -803,13 +1121,18 @@ export class PartnerErpInsightController {
   @Op({
     id: 'partner.erpInsight.jobCost',
     summary: 'A production order’s cost',
-    description: 'Materials, machine (run minutes × rate), labour and overhead, per operation; at today’s rates (D-376).',
+    description:
+      'Materials, machine (run minutes × rate), labour and overhead, per operation; at today’s rates (D-376).',
     implements: ['D-376'],
     can: 'factory_insight.read',
     params: ['orderId'],
     success: { status: 200, description: 'The cost', type: ErpJobCostDto, example: JOB },
   })
-  async jobCost(@CurrentActor() actor: Actor, @Param('factoryId', ParseUUIDPipe) factoryId: string, @Param('orderId', ParseUUIDPipe) orderId: string) {
+  async jobCost(
+    @CurrentActor() actor: Actor,
+    @Param('factoryId', ParseUUIDPipe) factoryId: string,
+    @Param('orderId', ParseUUIDPipe) orderId: string,
+  ) {
     return this.insight.jobCost(await this.workspace.open(actor, factoryId), orderId);
   }
 
@@ -823,7 +1146,11 @@ export class PartnerErpInsightController {
     success: { status: 200, description: 'The report', type: ErpCostReportDto, example: COSTS },
     errors: ['http.not_found', 'validation.failed'],
   })
-  async costReport(@CurrentActor() actor: Actor, @Param('factoryId', ParseUUIDPipe) factoryId: string, @Query() q: ErpMonthQuery) {
+  async costReport(
+    @CurrentActor() actor: Actor,
+    @Param('factoryId', ParseUUIDPipe) factoryId: string,
+    @Query() q: ErpMonthQuery,
+  ) {
     return this.insight.costReport(await this.workspace.open(actor, factoryId), q.month);
   }
 
@@ -839,8 +1166,16 @@ export class PartnerErpInsightController {
     success: { status: 200, description: 'The report', type: ErpProfitReportDto, example: PROFIT },
     errors: ['http.not_found', 'validation.failed'],
   })
-  async profitability(@CurrentActor() actor: Actor, @Param('factoryId', ParseUUIDPipe) factoryId: string, @Query() q: ErpProfitQuery) {
-    return this.insight.profit(await this.workspace.open(actor, factoryId), q.month, (q.by ?? 'customer') as 'customer' | 'getpack_job');
+  async profitability(
+    @CurrentActor() actor: Actor,
+    @Param('factoryId', ParseUUIDPipe) factoryId: string,
+    @Query() q: ErpProfitQuery,
+  ) {
+    return this.insight.profit(
+      await this.workspace.open(actor, factoryId),
+      q.month,
+      (q.by ?? 'customer') as 'customer' | 'getpack_job',
+    );
   }
 
   @Get('insight/oee')
@@ -855,7 +1190,11 @@ export class PartnerErpInsightController {
     success: { status: 200, description: 'The report', type: ErpOeeReportDto, example: OEE },
     errors: ['http.not_found', 'validation.failed'],
   })
-  async oee(@CurrentActor() actor: Actor, @Param('factoryId', ParseUUIDPipe) factoryId: string, @Query() q: ErpOeeQuery) {
+  async oee(
+    @CurrentActor() actor: Actor,
+    @Param('factoryId', ParseUUIDPipe) factoryId: string,
+    @Query() q: ErpOeeQuery,
+  ) {
     return this.insight.oee(await this.workspace.open(actor, factoryId), q.from, q.to);
   }
 }
@@ -888,15 +1227,23 @@ export class PartnerErpPeopleController {
   @Op({
     id: 'partner.erpPeople.createShift',
     summary: 'Add a shift',
-    description: 'Name, hours (an end at or before the start runs past midnight) and days of the week (D-380).',
+    description:
+      'Name, hours (an end at or before the start runs past midnight) and days of the week (D-380).',
     implements: ['D-380'],
     can: 'factory_people.manage',
     etag: true,
-    body: { type: ErpSaveShiftDto, example: { name: 'กะเช้า', startTime: '08:00', endTime: '17:00', days: [1, 2, 3, 4, 5, 6] } },
+    body: {
+      type: ErpSaveShiftDto,
+      example: { name: 'กะเช้า', startTime: '08:00', endTime: '17:00', days: [1, 2, 3, 4, 5, 6] },
+    },
     success: { status: 201, description: 'Added', type: ErpShiftDto, example: SHIFT },
     errors: [...WRITE, 'erp.code_taken'],
   })
-  async createShift(@CurrentActor() actor: Actor, @Param('factoryId', ParseUUIDPipe) factoryId: string, @Body() body: ErpSaveShiftDto) {
+  async createShift(
+    @CurrentActor() actor: Actor,
+    @Param('factoryId', ParseUUIDPipe) factoryId: string,
+    @Body() body: ErpSaveShiftDto,
+  ) {
     return this.people.createShift(await this.workspace.open(actor, factoryId), body);
   }
 
@@ -910,7 +1257,10 @@ export class PartnerErpPeopleController {
     params: ['shiftId'],
     concurrency: true,
     etag: true,
-    body: { type: ErpSaveShiftDto, example: { name: 'กะเช้า', startTime: '08:00', endTime: '17:00', days: [1, 2, 3, 4, 5] } },
+    body: {
+      type: ErpSaveShiftDto,
+      example: { name: 'กะเช้า', startTime: '08:00', endTime: '17:00', days: [1, 2, 3, 4, 5] },
+    },
     success: { status: 200, description: 'Saved', type: ErpShiftDto, example: SHIFT },
     errors: [...WRITE, 'erp.code_taken'],
   })
@@ -934,7 +1284,11 @@ export class PartnerErpPeopleController {
     success: { status: 200, description: 'Skills', type: [ErpOperatorSkillDto], example: [SKILL] },
     errors: ['http.not_found', 'validation.failed'],
   })
-  async skills(@CurrentActor() actor: Actor, @Param('factoryId', ParseUUIDPipe) factoryId: string, @Query() q: ErpSkillListQuery) {
+  async skills(
+    @CurrentActor() actor: Actor,
+    @Param('factoryId', ParseUUIDPipe) factoryId: string,
+    @Query() q: ErpSkillListQuery,
+  ) {
     return this.people.skills(await this.workspace.open(actor, factoryId), q);
   }
 
@@ -945,11 +1299,23 @@ export class PartnerErpPeopleController {
     description: 'One per person and machine: learner, competent or expert, with the date certified (D-380).',
     implements: ['D-380'],
     can: 'factory_people.manage',
-    body: { type: ErpSaveSkillDto, example: { userId: E5_IDS.operator, machineId: E5_IDS.machine, level: 'competent', certifiedOn: '2026-09-15' } },
+    body: {
+      type: ErpSaveSkillDto,
+      example: {
+        userId: E5_IDS.operator,
+        machineId: E5_IDS.machine,
+        level: 'competent',
+        certifiedOn: '2026-09-15',
+      },
+    },
     success: { status: 200, description: 'Saved', type: ErpOperatorSkillDto, example: SKILL },
     errors: WRITE,
   })
-  async saveSkill(@CurrentActor() actor: Actor, @Param('factoryId', ParseUUIDPipe) factoryId: string, @Body() body: ErpSaveSkillDto) {
+  async saveSkill(
+    @CurrentActor() actor: Actor,
+    @Param('factoryId', ParseUUIDPipe) factoryId: string,
+    @Body() body: ErpSaveSkillDto,
+  ) {
     return this.people.saveSkill(await this.workspace.open(actor, factoryId), body);
   }
 
@@ -964,7 +1330,11 @@ export class PartnerErpPeopleController {
     status: 204,
     success: { status: 204, description: 'Removed' },
   })
-  async deleteSkill(@CurrentActor() actor: Actor, @Param('factoryId', ParseUUIDPipe) factoryId: string, @Param('skillId', ParseUUIDPipe) skillId: string) {
+  async deleteSkill(
+    @CurrentActor() actor: Actor,
+    @Param('factoryId', ParseUUIDPipe) factoryId: string,
+    @Param('skillId', ParseUUIDPipe) skillId: string,
+  ) {
     await this.people.deleteSkill(await this.workspace.open(actor, factoryId), skillId);
   }
 
@@ -972,13 +1342,18 @@ export class PartnerErpPeopleController {
   @Op({
     id: 'partner.erpPeople.workLog',
     summary: 'Work log',
-    description: 'Per person and day from the shop floor’s events: operations, run minutes, good and scrap; up to 31 days (D-380).',
+    description:
+      'Per person and day from the shop floor’s events: operations, run minutes, good and scrap; up to 31 days (D-380).',
     implements: ['D-380'],
     can: 'factory_people.read',
     success: { status: 200, description: 'The log', type: ErpWorkLogDto, example: WORK_LOG },
     errors: ['http.not_found', 'validation.failed'],
   })
-  async workLog(@CurrentActor() actor: Actor, @Param('factoryId', ParseUUIDPipe) factoryId: string, @Query() q: ErpWorkLogQuery) {
+  async workLog(
+    @CurrentActor() actor: Actor,
+    @Param('factoryId', ParseUUIDPipe) factoryId: string,
+    @Query() q: ErpWorkLogQuery,
+  ) {
     return this.people.workLog(await this.workspace.open(actor, factoryId), q.from, q.to, q.userId);
   }
 
@@ -992,7 +1367,10 @@ export class PartnerErpPeopleController {
     success: { status: 200, description: 'Grants', type: [ErpSupportGrantDto], example: [GRANT] },
   })
   async grants(@CurrentActor() actor: Actor, @Param('factoryId', ParseUUIDPipe) factoryId: string) {
-    return this.people.grants(await this.workspace.open(actor, factoryId), await perms(this.permissions, actor));
+    return this.people.grants(
+      await this.workspace.open(actor, factoryId),
+      await perms(this.permissions, actor),
+    );
   }
 
   @Post('support-grants')
@@ -1004,11 +1382,24 @@ export class PartnerErpPeopleController {
     can: 'factory_support.grant',
     idempotent: true,
     body: { type: ErpGrantSupportDto, example: { reason: 'ให้ทีม getpack ช่วยตรวจตัวเลขต้นทุน', days: 3 } },
-    success: { status: 201, description: 'Granted', type: ErpSupportGrantDto, example: { ...GRANT, viewCount: 0, views: [] } },
+    success: {
+      status: 201,
+      description: 'Granted',
+      type: ErpSupportGrantDto,
+      example: { ...GRANT, viewCount: 0, views: [] },
+    },
     errors: [...WRITE, 'erp.support_grant_active'],
   })
-  async grant(@CurrentActor() actor: Actor, @Param('factoryId', ParseUUIDPipe) factoryId: string, @Body() body: ErpGrantSupportDto) {
-    return this.people.grant(await this.workspace.open(actor, factoryId), body, await perms(this.permissions, actor));
+  async grant(
+    @CurrentActor() actor: Actor,
+    @Param('factoryId', ParseUUIDPipe) factoryId: string,
+    @Body() body: ErpGrantSupportDto,
+  ) {
+    return this.people.grant(
+      await this.workspace.open(actor, factoryId),
+      body,
+      await perms(this.permissions, actor),
+    );
   }
 
   @Post('support-grants/:grantId/actions/revoke')
@@ -1022,7 +1413,19 @@ export class PartnerErpPeopleController {
     idempotent: true,
     status: 200,
     body: { type: ReasonDto, example: { reason: 'ตรวจเสร็จแล้ว' } },
-    success: { status: 200, description: 'Revoked', type: ErpSupportGrantDto, example: { ...GRANT, active: false, revokedAt: '2026-10-14T09:00:00+07:00', revokedBy: 'เจ้าของโรงงาน ทดสอบ', revokeReason: 'ตรวจเสร็จแล้ว', nextActions: [] } },
+    success: {
+      status: 200,
+      description: 'Revoked',
+      type: ErpSupportGrantDto,
+      example: {
+        ...GRANT,
+        active: false,
+        revokedAt: '2026-10-14T09:00:00+07:00',
+        revokedBy: 'เจ้าของโรงงาน ทดสอบ',
+        revokeReason: 'ตรวจเสร็จแล้ว',
+        nextActions: [],
+      },
+    },
     errors: [...WRITE, 'erp.invalid_status'],
   })
   async revoke(
@@ -1031,7 +1434,12 @@ export class PartnerErpPeopleController {
     @Param('grantId', ParseUUIDPipe) grantId: string,
     @Body() body: ReasonDto,
   ) {
-    return this.people.revoke(await this.workspace.open(actor, factoryId), grantId, body.reason, await perms(this.permissions, actor));
+    return this.people.revoke(
+      await this.workspace.open(actor, factoryId),
+      grantId,
+      body.reason,
+      await perms(this.permissions, actor),
+    );
   }
 }
 
@@ -1051,7 +1459,18 @@ export class AdminErpSupportController {
       'reads are audited too (D-381).',
     implements: ['D-381'],
     can: 'partners.read',
-    success: { status: 200, description: 'What support may see', type: ErpSupportViewDto, example: { factory: { id: E5_IDS.factory, code: 'F0001', name: 'บจก. กล่องดี แพคเกจจิ้ง (ทดสอบ)' }, expiresAt: GRANT.expiresAt, reason: GRANT.reason, dashboard: DASHBOARD, settings: SETTINGS } },
+    success: {
+      status: 200,
+      description: 'What support may see',
+      type: ErpSupportViewDto,
+      example: {
+        factory: { id: E5_IDS.factory, code: 'F0001', name: 'บจก. กล่องดี แพคเกจจิ้ง (ทดสอบ)' },
+        expiresAt: GRANT.expiresAt,
+        reason: GRANT.reason,
+        dashboard: DASHBOARD,
+        settings: SETTINGS,
+      },
+    },
     errors: ['http.not_found', 'erp.support_not_granted'],
   })
   async view(@CurrentActor() actor: Actor, @Param('factoryId', ParseUUIDPipe) factoryId: string) {

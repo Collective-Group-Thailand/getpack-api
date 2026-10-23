@@ -608,7 +608,11 @@ export async function seedUatErpE3(prisma: PrismaClient): Promise<number> {
 const E4_PEOPLE = [
   { email: 'factory-storekeeper@uat.example.invalid', role: 'factory_storekeeper', name: 'คลังสินค้า ทดสอบ' },
   { email: 'factory-purchaser@uat.example.invalid', role: 'factory_purchaser', name: 'จัดซื้อ ทดสอบ' },
-  { email: 'factory-maintenance@uat.example.invalid', role: 'factory_maintenance', name: 'ช่างซ่อมบำรุง ทดสอบ' },
+  {
+    email: 'factory-maintenance@uat.example.invalid',
+    role: 'factory_maintenance',
+    name: 'ช่างซ่อมบำรุง ทดสอบ',
+  },
   { email: 'factory-sales@uat.example.invalid', role: 'factory_sales', name: 'ฝ่ายขาย ทดสอบ' },
   // E6 (D-396): the factory's external auditor / CPA, read-only on the books.
   { email: 'factory-auditor@uat.example.invalid', role: 'factory_auditor', name: 'ผู้สอบบัญชี ทดสอบ' },
@@ -674,7 +678,10 @@ export async function seedUatErpE4(prisma: PrismaClient, passwordHash: string | 
   return prisma.$transaction(async (tx) => {
     await tx.erpTradingPartner.updateMany({
       where: { factoryId: factory.id, kind: { in: ['customer', 'both'] }, address: null },
-      data: { address: '88/8 ถนนทดสอบ แขวงทดสอบ เขตทดสอบ กรุงเทพฯ 10000 (ข้อมูลปลอม)', salespersonId: seller },
+      data: {
+        address: '88/8 ถนนทดสอบ แขวงทดสอบ เขตทดสอบ กรุงเทพฯ 10000 (ข้อมูลปลอม)',
+        salespersonId: seller,
+      },
     });
     const taken = await tx.erpTradingPartner.findFirst({ where: { factoryId: factory.id, code: 'C0002' } });
     const customer =
@@ -763,8 +770,14 @@ export async function seedUatErpE5(prisma: PrismaClient): Promise<number> {
   });
   const by = owner?.userId ?? (await prisma.user.findFirstOrThrow({ where: { kind: 'staff' } })).id;
   const operator = await prisma.user.findFirst({ where: { email: 'factory-operator@uat.example.invalid' } });
-  const machines = await prisma.factoryMachine.findMany({ where: { factoryId: factory.id, status: 'active' }, orderBy: { id: 'asc' } });
-  const finished = await prisma.erpItem.findFirst({ where: { factoryId: factory.id, kind: 'finished_good' }, orderBy: { id: 'asc' } });
+  const machines = await prisma.factoryMachine.findMany({
+    where: { factoryId: factory.id, status: 'active' },
+    orderBy: { id: 'asc' },
+  });
+  const finished = await prisma.erpItem.findFirst({
+    where: { factoryId: factory.id, kind: 'finished_good' },
+    orderBy: { id: 'asc' },
+  });
   return prisma.$transaction(async (tx) => {
     let n = 0;
     await tx.erpInspectionTemplate.create({
@@ -776,7 +789,15 @@ export async function seedUatErpE5(prisma: PrismaClient): Promise<number> {
         createdById: by,
         checkpoints: {
           create: [
-            { seq: 1, name: 'แกรมกระดาษ', type: 'measurement', unit: 'gsm', minValue: '340', maxValue: '360', targetValue: '350' },
+            {
+              seq: 1,
+              name: 'แกรมกระดาษ',
+              type: 'measurement',
+              unit: 'gsm',
+              minValue: '340',
+              maxValue: '360',
+              targetValue: '350',
+            },
             { seq: 2, name: 'ความชื้น', type: 'measurement', unit: '%', minValue: '6', maxValue: '9' },
             { seq: 3, name: 'ไม่มีรอยฉีก/เปียก', type: 'pass_fail' },
           ],
@@ -793,7 +814,15 @@ export async function seedUatErpE5(prisma: PrismaClient): Promise<number> {
         createdById: by,
         checkpoints: {
           create: [
-            { seq: 1, name: 'ขนาดกว้าง', type: 'measurement', unit: 'mm', minValue: '298', maxValue: '302', targetValue: '300' },
+            {
+              seq: 1,
+              name: 'ขนาดกว้าง',
+              type: 'measurement',
+              unit: 'mm',
+              minValue: '298',
+              maxValue: '302',
+              targetValue: '300',
+            },
             { seq: 2, name: 'สีตรงตามตัวอย่างที่อนุมัติ', type: 'pass_fail' },
             { seq: 3, name: 'กาว/รอยพับเรียบร้อย', type: 'pass_fail' },
             { seq: 4, name: 'หมายเหตุการบรรจุ', type: 'note' },
@@ -804,14 +833,28 @@ export async function seedUatErpE5(prisma: PrismaClient): Promise<number> {
     n += 2;
     if (!(await tx.erpShift.count({ where: { factoryId: factory.id } }))) {
       await tx.erpShift.create({
-        data: { factoryId: factory.id, name: 'กะเช้า', startTime: '08:00', endTime: '17:00', days: [1, 2, 3, 4, 5, 6], note: 'พัก 12:00–13:00', createdById: by },
+        data: {
+          factoryId: factory.id,
+          name: 'กะเช้า',
+          startTime: '08:00',
+          endTime: '17:00',
+          days: [1, 2, 3, 4, 5, 6],
+          note: 'พัก 12:00–13:00',
+          createdById: by,
+        },
       });
       n += 1;
     }
     for (const [i, m] of machines.entries()) {
       await tx.erpMachineRate.upsert({
         where: { factoryId_machineId: { factoryId: factory.id, machineId: m.id } },
-        create: { factoryId: factory.id, machineId: m.id, hourlyRate: i === 0 ? '850' : '450', note: 'ค่าเสื่อม + ไฟ + ซ่อมบำรุง (ทดสอบ)', createdById: by },
+        create: {
+          factoryId: factory.id,
+          machineId: m.id,
+          hourlyRate: i === 0 ? '850' : '450',
+          note: 'ค่าเสื่อม + ไฟ + ซ่อมบำรุง (ทดสอบ)',
+          createdById: by,
+        },
         update: {},
       });
       n += 1;
@@ -823,8 +866,21 @@ export async function seedUatErpE5(prisma: PrismaClient): Promise<number> {
     });
     if (operator && machines[0])
       await tx.erpOperatorSkill.upsert({
-        where: { factoryId_userId_machineId: { factoryId: factory.id, userId: operator.id, machineId: machines[0].id } },
-        create: { factoryId: factory.id, userId: operator.id, machineId: machines[0].id, level: 'competent', certifiedOn: new Date('2026-09-15'), createdById: by },
+        where: {
+          factoryId_userId_machineId: {
+            factoryId: factory.id,
+            userId: operator.id,
+            machineId: machines[0].id,
+          },
+        },
+        create: {
+          factoryId: factory.id,
+          userId: operator.id,
+          machineId: machines[0].id,
+          level: 'competent',
+          certifiedOn: new Date('2026-09-15'),
+          createdById: by,
+        },
         update: {},
       });
     return n;

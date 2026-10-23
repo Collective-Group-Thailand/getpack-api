@@ -794,7 +794,14 @@ export class ErpProductionService {
       const mo = await this.lock(tx, scope, publicId);
       if (!RUNNING.includes(mo.status))
         throw new DomainException('erp.invalid_status', { params: { status: mo.status } });
-      const received = await this.finish(tx, mo, dec(body.goodQty), dec(body.scrapQty ?? '0'), body.note ?? null, scope);
+      const received = await this.finish(
+        tx,
+        mo,
+        dec(body.goodQty),
+        dec(body.scrapQty ?? '0'),
+        body.note ?? null,
+        scope,
+      );
       await this.workspace.record(
         tx,
         scope,
@@ -1351,7 +1358,10 @@ export class ErpProductionService {
         title: `${job.jobNo} · ${spec.productTypeNameTh ?? 'งาน getpack'}`,
         quantity: fmtQty(job.quantityOrdered),
         // getpack sells by `piece`; the ERP counts pieces as `pcs` (D-384) — other shared units carry over.
-        unit: spec.unit && spec.unit !== 'piece' && (ERP_UNITS as readonly string[]).includes(spec.unit) ? spec.unit : 'pcs',
+        unit:
+          spec.unit && spec.unit !== 'piece' && (ERP_UNITS as readonly string[]).includes(spec.unit)
+            ? spec.unit
+            : 'pcs',
         dueOn: job.plannedFinishOn,
         plannedStartOn: job.plannedStartOn,
         priority: Math.max(0, Math.min(9, job.priority)),

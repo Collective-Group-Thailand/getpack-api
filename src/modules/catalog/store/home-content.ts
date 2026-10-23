@@ -24,7 +24,8 @@ export class HomePhotoDto {
   @ApiProperty({
     example: 'hero',
     pattern: '^(hero|sage|frame-4|frame-9|mosaic-[1-5]|template-PK-[A-Z0-9]+-[0-9]+)$',
-    description: '`hero`, `mosaic-1` … `mosaic-5`, `frame-4` / `frame-9` (sample / packing), `sage` or `template-<style code>`',
+    description:
+      '`hero`, `mosaic-1` … `mosaic-5`, `frame-4` / `frame-9` (sample / packing), `sage` or `template-<style code>`',
   })
   position!: string;
 }
@@ -117,7 +118,8 @@ export class HomeContentService {
 
 type Entry = { url?: unknown; alt?: { th?: unknown }; caption?: { th?: unknown } | null } | null | undefined;
 
-const IMAGE_URL = /^\/v1\/store\/catalog\/images\/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+const IMAGE_URL =
+  /^\/v1\/store\/catalog\/images\/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 const text = (v: unknown) => (typeof v === 'string' && v.trim() !== '' ? v.trim() : null);
 
 function photo(position: string, entry: Entry): HomePhotoDto[] {

@@ -101,9 +101,7 @@ export function buildOpenApiDocument(app: INestApplication, version: string): Op
  * getpack-web's CI compares its own `packages/dieline` git tree with `sourceTree`, so the two engines cannot drift
  * silently. Null when no bundle is vendored.
  */
-export function dielineEngineInfo(
-  file = join(process.cwd(), 'vendor/getpack-dieline/VERSION.json'),
-): {
+export function dielineEngineInfo(file = join(process.cwd(), 'vendor/getpack-dieline/VERSION.json')): {
   package: string;
   version: string;
   sourceTree: string;

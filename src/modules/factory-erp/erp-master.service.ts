@@ -319,7 +319,9 @@ export class ErpMasterService {
           ...(body.status !== undefined && { status: body.status as 'active' | 'archived' }),
           ...(body.entityType !== undefined && { entityType: body.entityType as ErpEntityType }),
           ...(body.salespersonId !== undefined && {
-            salespersonId: body.salespersonId ? (await factoryUser(tx, scope.factory.id, body.salespersonId)).id : null,
+            salespersonId: body.salespersonId
+              ? (await factoryUser(tx, scope.factory.id, body.salespersonId)).id
+              : null,
           }),
           updatedById: scope.actor.userId,
           rowVersion: { increment: 1 },

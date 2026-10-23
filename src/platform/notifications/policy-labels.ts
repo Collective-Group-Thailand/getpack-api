@@ -16,7 +16,10 @@ const LABELS: Record<string, { th: string; en: string }> = {
   partner_pricing_mode_change: { th: 'เปลี่ยนรูปแบบราคาโรงงาน', en: 'factory pricing mode change' },
   approval_policy_change: { th: 'เปลี่ยนนโยบายการอนุมัติ', en: 'approval policy change' },
   factory_tolerance_change: { th: 'เปลี่ยนเกณฑ์จำนวนขาด/เกินของโรงงาน', en: 'factory tolerance change' },
-  factory_payout_policy_change: { th: 'เปลี่ยนเงื่อนไขการจ่ายเงินโรงงาน', en: 'factory payout policy change' },
+  factory_payout_policy_change: {
+    th: 'เปลี่ยนเงื่อนไขการจ่ายเงินโรงงาน',
+    en: 'factory payout policy change',
+  },
   guarantee_policy_change: { th: 'เปลี่ยนนโยบายการรับประกัน', en: 'guarantee policy change' },
   customer_shipping_rate_change: { th: 'เปลี่ยนอัตราค่าส่งลูกค้า', en: 'customer shipping rate change' },
   vendor_bank_account_change: { th: 'เปลี่ยนบัญชีธนาคารคู่ค้า', en: 'vendor bank account change' },

@@ -39,7 +39,10 @@ export const partnerRef = (p: Pick<ErpTradingPartner, 'publicId' | 'code' | 'nam
 });
 
 /** The document's VAT mode: a factory not registered for VAT charges none (D-363). */
-export function vatModeFor(factory: Pick<Factory, 'isVatRegistered'>, wanted: string | undefined): ErpVatMode {
+export function vatModeFor(
+  factory: Pick<Factory, 'isVatRegistered'>,
+  wanted: string | undefined,
+): ErpVatMode {
   if (!factory.isVatRegistered) return 'none';
   return (wanted as ErpVatMode | undefined) ?? 'exclusive';
 }
@@ -113,10 +116,7 @@ export async function customerOf(tx: Tx, scope: ErpScope, publicId: string): Pro
 // ------------------------------------------------------------------------------------- people
 
 /** Users holding a role at this factory now (salespeople, assignees). */
-export async function factoryUsers(
-  tx: Tx,
-  factoryId: bigint,
-): Promise<{ user: User; roles: string[] }[]> {
+export async function factoryUsers(tx: Tx, factoryId: bigint): Promise<{ user: User; roles: string[] }[]> {
   const rows = await tx.userRole.findMany({
     where: {
       scopeType: 'factory',
@@ -167,7 +167,8 @@ export async function priceLines(tx: Tx, scope: ErpScope, input: ErpSalesLineInp
   return input.map((l, index) => {
     const item = l.itemId ? byId.get(l.itemId) : undefined;
     if (l.itemId && !item) throw new DomainException('http.not_found');
-    if (item?.status === 'archived') throw new DomainException('erp.archived', { params: { name: item.name } });
+    if (item?.status === 'archived')
+      throw new DomainException('erp.archived', { params: { name: item.name } });
     const description = (l.description ?? '').trim() || item?.name || '';
     if (!description)
       throw new DomainException('validation.failed', {
@@ -197,7 +198,11 @@ export async function priceLines(tx: Tx, scope: ErpScope, input: ErpSalesLineInp
   });
 }
 
-export function totalsOf(lines: { amount: Prisma.Decimal | string }[], mode: ErpVatMode, ratePct: string | Prisma.Decimal) {
+export function totalsOf(
+  lines: { amount: Prisma.Decimal | string }[],
+  mode: ErpVatMode,
+  ratePct: string | Prisma.Decimal,
+) {
   const t = documentTotals(
     lines.map((l) => dec(l.amount)),
     mode,

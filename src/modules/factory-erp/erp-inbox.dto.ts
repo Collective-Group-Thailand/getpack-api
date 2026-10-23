@@ -44,7 +44,10 @@ export class ErpInboxDocumentDto {
   @ApiProperty({ example: 'erp_purchase_request', description: 'What the item opens: an ERP document type' })
   type!: string;
 
-  @ApiProperty({ example: '0192f3a0-7c1e-7d2a-9b1f-00000000f901', description: 'Its public id (a period, a filing: its own key)' })
+  @ApiProperty({
+    example: '0192f3a0-7c1e-7d2a-9b1f-00000000f901',
+    description: 'Its public id (a period, a filing: its own key)',
+  })
   id!: string;
 
   @ApiProperty({ nullable: true, example: 'PR-2610-0004' })
@@ -64,19 +67,36 @@ export class ErpInboxItemDto {
   @ApiProperty({ enum: ERP_INBOX_TONES, enumName: 'ErpInboxTone', example: 'warning' })
   tone!: (typeof ERP_INBOX_TONES)[number];
 
-  @ApiProperty({ example: 1, description: 'Documents behind the item (1 for one document; more for a count)' })
+  @ApiProperty({
+    example: 1,
+    description: 'Documents behind the item (1 for one document; more for a count)',
+  })
   count!: number;
 
-  @ApiProperty({ type: ErpInboxDocumentDto, nullable: true, description: 'The one document it is about; null for a count' })
+  @ApiProperty({
+    type: ErpInboxDocumentDto,
+    nullable: true,
+    description: 'The one document it is about; null for a count',
+  })
   document!: ErpInboxDocumentDto | null;
 
-  @ApiProperty({ nullable: true, example: 'ฝ่ายจัดซื้อ ทดสอบ', description: 'Who or what it concerns (supplier, customer, machine, proposer)' })
+  @ApiProperty({
+    nullable: true,
+    example: 'ฝ่ายจัดซื้อ ทดสอบ',
+    description: 'Who or what it concerns (supplier, customer, machine, proposer)',
+  })
   party!: string | null;
 
   @ApiProperty({ nullable: true, example: '12500.00', pattern: '^-?\\d+\\.\\d{2}$' })
   amount!: string | null;
 
-  @ApiProperty({ type: String, format: 'date', nullable: true, example: '2026-10-14', description: 'Its due / reference day' })
+  @ApiProperty({
+    type: String,
+    format: 'date',
+    nullable: true,
+    example: '2026-10-14',
+    description: 'Its due / reference day',
+  })
   date!: string | null;
 }
 

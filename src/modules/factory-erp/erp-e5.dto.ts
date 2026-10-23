@@ -22,7 +22,16 @@ import {
   ValidateNested,
 } from 'class-validator';
 
-import { AMOUNT, DAY, ERP_RECORD_STATUSES, ERP_UNITS, ErpItemRefDto, ErpRefDto, ErpSettingsDto, QTY } from './erp.dto';
+import {
+  AMOUNT,
+  DAY,
+  ERP_RECORD_STATUSES,
+  ERP_UNITS,
+  ErpItemRefDto,
+  ErpRefDto,
+  ErpSettingsDto,
+  QTY,
+} from './erp.dto';
 import { ERP_PAUSE_REASONS, ErpMaintenancePhotoDto } from './erp-e3.dto';
 
 /**
@@ -441,7 +450,12 @@ export class ErpCheckpointResultDto extends ErpCheckpointSpecDto {
   @ApiProperty({ type: String, nullable: true, example: '3.0500' })
   measured!: string | null;
 
-  @ApiProperty({ enum: ERP_CHECKPOINT_OUTCOMES, enumName: 'ErpCheckpointOutcome', nullable: true, example: 'pass' })
+  @ApiProperty({
+    enum: ERP_CHECKPOINT_OUTCOMES,
+    enumName: 'ErpCheckpointOutcome',
+    nullable: true,
+    example: 'pass',
+  })
   outcome!: string | null;
 
   @ApiProperty({ type: String, nullable: true, example: null })
@@ -490,7 +504,12 @@ export class ErpQualityCheckDto {
   @ApiProperty({ type: ErpDocRefDto, nullable: true, description: 'The production order' })
   productionOrder!: ErpDocRefDto | null;
 
-  @ApiProperty({ type: String, nullable: true, example: null, description: 'In-process: the operation’s name' })
+  @ApiProperty({
+    type: String,
+    nullable: true,
+    example: null,
+    description: 'In-process: the operation’s name',
+  })
   operation!: string | null;
 
   @ApiProperty({ type: ErpRefDto, nullable: true })
@@ -650,7 +669,10 @@ export class ErpCreateNcrDto {
   @IsIn([...ERP_UNITS, null])
   unit?: string | null;
 
-  @ApiPropertyOptional({ format: 'uuid', description: 'Who owns the corrective action (default: the caller)' })
+  @ApiPropertyOptional({
+    format: 'uuid',
+    description: 'Who owns the corrective action (default: the caller)',
+  })
   @IsOptional()
   @IsUUID()
   ownerId?: string;
@@ -704,7 +726,12 @@ export class ErpUpdateNcrDto {
   @MaxLength(2000)
   correctiveAction?: string | null;
 
-  @ApiPropertyOptional({ type: String, nullable: true, example: 'เทียบสีกับแผ่นมาตรฐานทุกล็อต', maxLength: 2000 })
+  @ApiPropertyOptional({
+    type: String,
+    nullable: true,
+    example: 'เทียบสีกับแผ่นมาตรฐานทุกล็อต',
+    maxLength: 2000,
+  })
   @IsOptional()
   @Transform(emptyToNull)
   @IsString()
@@ -817,7 +844,12 @@ export class ErpNcrDto {
   @ApiProperty({ enum: ERP_UNITS, enumName: 'ErpUnit', nullable: true, example: 'pcs' })
   unit!: string | null;
 
-  @ApiProperty({ enum: ERP_NCR_DISPOSITIONS, enumName: 'ErpNcrDisposition', nullable: true, example: 'rework' })
+  @ApiProperty({
+    enum: ERP_NCR_DISPOSITIONS,
+    enumName: 'ErpNcrDisposition',
+    nullable: true,
+    example: 'rework',
+  })
   disposition!: string | null;
 
   @ApiProperty({ type: String, nullable: true, example: null })
@@ -913,7 +945,12 @@ export class ErpMachineRateDto {
   @ApiProperty({ type: ErpMachineRefDto })
   machine!: ErpMachineRefDto;
 
-  @ApiProperty({ type: String, nullable: true, example: '850.00', description: 'Per run hour; null = not set' })
+  @ApiProperty({
+    type: String,
+    nullable: true,
+    example: '850.00',
+    description: 'Per run hour; null = not set',
+  })
   hourlyRate!: string | null;
 
   @ApiProperty({ type: String, nullable: true, example: 'ค่าเสื่อม + ไฟ + ซ่อมบำรุง' })
@@ -1054,7 +1091,8 @@ export class ErpProfitQuery {
 export class ErpProfitRowDto {
   @ApiProperty({
     type: ErpRefDto,
-    description: 'The sales order (code = number), customer, item (code = SKU) or, for `getpack_job`, the production order (code = the getpack job number)',
+    description:
+      'The sales order (code = number), customer, item (code = SKU) or, for `getpack_job`, the production order (code = the getpack job number)',
   })
   key!: ErpRefDto;
 
@@ -1179,7 +1217,12 @@ export class ErpOeeReportDto {
   @ApiProperty({ format: 'date', example: '2026-10-12' })
   to!: string;
 
-  @ApiProperty({ type: String, nullable: true, example: '69.0', description: 'Over all machines, run-weighted' })
+  @ApiProperty({
+    type: String,
+    nullable: true,
+    example: '69.0',
+    description: 'Over all machines, run-weighted',
+  })
   oeePct!: string | null;
 
   @ApiProperty({ type: [ErpOeeMachineDto] })
@@ -1295,7 +1338,12 @@ export class ErpDashQualityDto {
   @ApiProperty({ example: 42 })
   checksThisMonth!: number;
 
-  @ApiProperty({ type: String, nullable: true, example: '95.2', description: 'Decided checks that passed, %' })
+  @ApiProperty({
+    type: String,
+    nullable: true,
+    example: '95.2',
+    description: 'Decided checks that passed, %',
+  })
   passRatePct!: string | null;
 }
 
@@ -1311,19 +1359,29 @@ export class ErpDashFollowUpsDto {
 }
 
 export class ErpDashGetpackDto {
-  @ApiProperty({ example: '239951.41', description: 'Net of the getpack billing statements confirmed this month — the factory’s revenue from getpack (F14, D-397)' })
+  @ApiProperty({
+    example: '239951.41',
+    description:
+      'Net of the getpack billing statements confirmed this month — the factory’s revenue from getpack (F14, D-397)',
+  })
   confirmedNet!: string;
 
   @ApiProperty({ example: 2 })
   confirmedStatements!: number;
 
-  @ApiProperty({ example: 2, description: 'Statements sent by getpack, waiting for the factory to check and confirm' })
+  @ApiProperty({
+    example: 2,
+    description: 'Statements sent by getpack, waiting for the factory to check and confirm',
+  })
   toConfirm!: number;
 
   @ApiProperty({ example: '44999.33' })
   toConfirmGross!: string;
 
-  @ApiProperty({ example: 1, description: 'Confirmed statements without the factory’s tax invoice (getpack pays once it is attached)' })
+  @ApiProperty({
+    example: 1,
+    description: 'Confirmed statements without the factory’s tax invoice (getpack pays once it is attached)',
+  })
   toInvoice!: number;
 }
 
@@ -1376,7 +1434,11 @@ export class ErpSaveShiftDto {
   @Matches(HHMM)
   startTime!: string;
 
-  @ApiProperty({ example: '17:00', pattern: HHMM.source, description: 'At or before the start = past midnight' })
+  @ApiProperty({
+    example: '17:00',
+    pattern: HHMM.source,
+    description: 'At or before the start = past midnight',
+  })
   @Matches(HHMM)
   endTime!: string;
 

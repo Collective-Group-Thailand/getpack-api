@@ -18,7 +18,15 @@ import {
   type ErpProfitReportDto,
   type ErpSaveMachineRateDto,
 } from './erp-e5.dto';
-import { jobCost, oeeOf, operationSegments, type OpEvent, overlapMinutes, pct1, shiftMinutes } from './erp-e5.math';
+import {
+  jobCost,
+  oeeOf,
+  operationSegments,
+  type OpEvent,
+  overlapMinutes,
+  pct1,
+  shiftMinutes,
+} from './erp-e5.math';
 import { day, iso, today } from './erp-sales.shared';
 import { ErpScheduleService } from './erp-schedule.service';
 import { ErpTaxService } from './erp-tax.service';
@@ -29,7 +37,12 @@ const DAY_MS = 86_400_000;
 const MONTH = (m: string) => {
   const [y, mo] = m.split('-').map(Number) as [number, number];
   const next = mo === 12 ? `${y + 1}-01` : `${y}-${String(mo + 1).padStart(2, '0')}`;
-  return { from: day(`${m}-01`), to: day(`${next}-01`), fromTs: startOfBangkokDay(`${m}-01`), toTs: startOfBangkokDay(`${next}-01`) };
+  return {
+    from: day(`${m}-01`),
+    to: day(`${next}-01`),
+    fromTs: startOfBangkokDay(`${m}-01`),
+    toTs: startOfBangkokDay(`${next}-01`),
+  };
 };
 
 type Db = Tx | PrismaService;
@@ -53,7 +66,11 @@ export async function materialValue(db: Db, publicId: string): Promise<MoneyValu
 const runMinutesOf = (events: { kind: string; occurredAt: Date; reason?: string | null }[], now: number) =>
   Math.round(
     operationSegments(
-      events.map((e) => ({ kind: e.kind as OpEvent['kind'], at: e.occurredAt.getTime(), reason: e.reason ?? null })),
+      events.map((e) => ({
+        kind: e.kind as OpEvent['kind'],
+        at: e.occurredAt.getTime(),
+        reason: e.reason ?? null,
+      })),
       now,
     ).run.reduce((a, [s, e]) => a + (e - s) / 60_000, 0),
   );
@@ -132,7 +149,9 @@ export class ErpInsightService {
 
   async saveMachineRate(scope: ErpScope, machinePublicId: string, body: ErpSaveMachineRateDto) {
     await this.workspace.tx(async (tx) => {
-      const m = await tx.factoryMachine.findFirst({ where: { publicId: machinePublicId, factoryId: scope.factory.id } });
+      const m = await tx.factoryMachine.findFirst({
+        where: { publicId: machinePublicId, factoryId: scope.factory.id },
+      });
       if (!m) throw new DomainException('http.not_found');
       await tx.erpMachineRate.upsert({
         where: { factoryId_machineId: { factoryId: scope.factory.id, machineId: m.id } },
@@ -173,7 +192,11 @@ export class ErpInsightService {
     const db = this.workspace.db;
     const settings = await this.workspace.settings(db, scope.factory.id);
     const mos = await db.erpProductionOrder.findMany({
-      where: { factoryId: scope.factory.id, status: { in: ['completed', 'closed'] }, completedAt: { gte: r.fromTs, lt: r.toTs } },
+      where: {
+        factoryId: scope.factory.id,
+        status: { in: ['completed', 'closed'] },
+        completedAt: { gte: r.fromTs, lt: r.toTs },
+      },
       include: MO_COST_INCLUDE,
       orderBy: { completedAt: 'asc' },
     });
@@ -221,7 +244,11 @@ export class ErpInsightService {
    * D-376: what the month's issued invoices earned over the cost of what they delivered, by sales order,
    * customer or item. Revenue is each line's share of its invoice's net; cost is the delivered stock cost.
    */
-  async profit(scope: ErpScope, month: string, by: 'sales_order' | 'customer' | 'item' | 'getpack_job'): Promise<ErpProfitReportDto> {
+  async profit(
+    scope: ErpScope,
+    month: string,
+    by: 'sales_order' | 'customer' | 'item' | 'getpack_job',
+  ): Promise<ErpProfitReportDto> {
     const r = MONTH(month);
     if (by === 'getpack_job') return this.getpackProfit(scope, month);
     const key =
@@ -230,7 +257,9 @@ export class ErpInsightService {
         : by === 'item'
           ? Prisma.sql`coalesce(it.public_id::text, '-') AS id, coalesce(it.sku, '-') AS code, coalesce(it.name, 'รายการอื่น ๆ') AS name`
           : Prisma.sql`coalesce(so.public_id::text, '-') AS id, coalesce(so.so_no, '-') AS code, coalesce(c.name, '') AS name`;
-    const rows = await this.workspace.db.$queryRaw<{ id: string; code: string; name: string; revenue: Prisma.Decimal; cost: Prisma.Decimal }[]>(Prisma.sql`
+    const rows = await this.workspace.db.$queryRaw<
+      { id: string; code: string; name: string; revenue: Prisma.Decimal; cost: Prisma.Decimal }[]
+    >(Prisma.sql`
       WITH lines AS (
         SELECT l.*, i.customer_id, i.sales_order_id,
                CASE WHEN sum(l.amount) OVER (PARTITION BY l.invoice_id) = 0 THEN 0
@@ -288,7 +317,10 @@ export class ErpInsightService {
         status: { in: ['completed', 'closed'] },
         completedAt: { gte: r.fromTs, lt: r.toTs },
       },
-      include: { ...MO_COST_INCLUDE, productionJob: { select: { jobNo: true, purchaseOrder: { select: { netAmount: true } } } } },
+      include: {
+        ...MO_COST_INCLUDE,
+        productionJob: { select: { jobNo: true, purchaseOrder: { select: { netAmount: true } } } },
+      },
       orderBy: { completedAt: 'asc' },
     });
     const pct = (rev: MoneyValue, gp: MoneyValue) => (rev.gt(0) ? gp.times(100).div(rev).toFixed(1) : null);
@@ -331,7 +363,10 @@ export class ErpInsightService {
     const end = startOfBangkokDay(addCalendarDays(to, 1));
     const db = this.workspace.db;
     const [machines, ops, shifts, clock] = await Promise.all([
-      db.factoryMachine.findMany({ where: { factoryId: scope.factory.id, status: 'active' }, orderBy: { name: 'asc' } }),
+      db.factoryMachine.findMany({
+        where: { factoryId: scope.factory.id, status: 'active' },
+        orderBy: { name: 'asc' },
+      }),
       db.erpProductionOperation.findMany({
         where: {
           productionOrder: { factoryId: scope.factory.id },
@@ -360,7 +395,14 @@ export class ErpInsightService {
     let allWeighted = 0;
     for (const m of machines) {
       const mine = ops.filter((o) => o.machineId === m.id);
-      const perDay = days.map((d) => ({ d, planned: planned(d), run: 0, ideal: 0, good: dec(0), scrap: dec(0) }));
+      const perDay = days.map((d) => ({
+        d,
+        planned: planned(d),
+        run: 0,
+        ideal: 0,
+        good: dec(0),
+        scrap: dec(0),
+      }));
       const losses = new Map<string, number>();
       for (const o of mine) {
         const seg = operationSegments(
@@ -395,7 +437,13 @@ export class ErpInsightService {
         }
       }
       const dayDtos = perDay.map((p) => {
-        const o = oeeOf({ plannedMinutes: p.planned, runMinutes: p.run, idealMinutes: p.ideal, good: p.good, scrap: p.scrap });
+        const o = oeeOf({
+          plannedMinutes: p.planned,
+          runMinutes: p.run,
+          idealMinutes: p.ideal,
+          good: p.good,
+          scrap: p.scrap,
+        });
         return {
           day: p.d,
           plannedMinutes: Math.round(p.planned),
@@ -416,7 +464,13 @@ export class ErpInsightService {
         }),
         { planned: 0, run: 0, ideal: 0, good: dec(0), scrap: dec(0) },
       );
-      const o = oeeOf({ plannedMinutes: tot.planned, runMinutes: tot.run, idealMinutes: tot.ideal, good: tot.good, scrap: tot.scrap });
+      const o = oeeOf({
+        plannedMinutes: tot.planned,
+        runMinutes: tot.run,
+        idealMinutes: tot.ideal,
+        good: tot.good,
+        scrap: tot.scrap,
+      });
       // weighted by the time the machine was due to run, overtime included (D-403)
       allRun += Math.max(tot.planned, tot.run);
       allWeighted += o.oee * Math.max(tot.planned, tot.run);
@@ -473,11 +527,21 @@ export class ErpInsightService {
          ORDER BY coalesce(sum(b.on_hand - b.reserved), 0) / nullif(it.reorder_point, 0) ASC`),
       db.erpProductionOrder.groupBy({
         by: ['status'],
-        where: { factoryId: f, OR: [{ status: { in: ['released', 'in_progress'] } }, { status: 'completed', completedAt: { gte: r.fromTs } }] },
+        where: {
+          factoryId: f,
+          OR: [
+            { status: { in: ['released', 'in_progress'] } },
+            { status: 'completed', completedAt: { gte: r.fromTs } },
+          ],
+        },
         _count: { _all: true },
       }),
       db.erpProductionOrder.findMany({
-        where: { factoryId: f, status: { in: ['planned', 'released', 'in_progress'] }, dueOn: { lt: day(t) } },
+        where: {
+          factoryId: f,
+          status: { in: ['planned', 'released', 'in_progress'] },
+          dueOn: { lt: day(t) },
+        },
         orderBy: { dueOn: 'asc' },
       }),
       Promise.all([
@@ -490,7 +554,9 @@ export class ErpInsightService {
       ]),
       Promise.all([
         db.erpNcr.count({ where: { factoryId: f, status: { in: ['open', 'in_progress', 'verified'] } } }),
-        db.erpNcr.count({ where: { factoryId: f, status: { in: ['open', 'in_progress'] }, actionDueOn: { lt: day(t) } } }),
+        db.erpNcr.count({
+          where: { factoryId: f, status: { in: ['open', 'in_progress'] }, actionDueOn: { lt: day(t) } },
+        }),
         db.erpQualityCheck.groupBy({
           by: ['result'],
           where: { factoryId: f, inspectedAt: { gte: r.fromTs, lt: r.toTs } },
@@ -499,7 +565,11 @@ export class ErpInsightService {
       ]),
       Promise.all([
         db.erpActivity.count({
-          where: { factoryId: f, doneAt: null, dueAt: { gte: startOfBangkokDay(t), lt: startOfBangkokDay(addCalendarDays(t, 1)) } },
+          where: {
+            factoryId: f,
+            doneAt: null,
+            dueAt: { gte: startOfBangkokDay(t), lt: startOfBangkokDay(addCalendarDays(t, 1)) },
+          },
         }),
         db.erpActivity.count({ where: { factoryId: f, doneAt: null, dueAt: { lt: new Date() } } }),
         db.erpAlert.count({ where: { factoryId: f, status: 'open' } }),
@@ -514,14 +584,24 @@ export class ErpInsightService {
         _sum: { netAmount: true },
         _count: { _all: true },
       }),
-      db.billingStatement.aggregate({ where: { factoryId: f, status: 'sent' }, _sum: { grossAmount: true }, _count: { _all: true } }),
+      db.billingStatement.aggregate({
+        where: { factoryId: f, status: 'sent' },
+        _sum: { grossAmount: true },
+        _count: { _all: true },
+      }),
       db.billingStatement.count({
-        where: { factoryId: f, status: 'confirmed', vendorInvoices: { none: { status: { in: ['recorded', 'validated'] } } } },
+        where: {
+          factoryId: f,
+          status: 'confirmed',
+          vendorInvoices: { none: { status: { in: ['recorded', 'validated'] } } },
+        },
       }),
     ]);
     const checks = quality[2];
     const decided = checks.filter((c) => c.result !== 'pending').reduce((a, c) => a + c._count._all, 0);
-    const passed = checks.filter((c) => c.result === 'pass' || c.result === 'conditional').reduce((a, c) => a + c._count._all, 0);
+    const passed = checks
+      .filter((c) => c.result === 'pass' || c.result === 'conditional')
+      .reduce((a, c) => a + c._count._all, 0);
     const count = (s: string) => prod.find((p) => p.status === s)?._count._all ?? 0;
     return {
       asOf: t,
@@ -529,7 +609,9 @@ export class ErpInsightService {
       sales: {
         invoicedNet: sales.invoicedNet,
         target: sales.targetNet,
-        achievementPct: dec(sales.targetNet).gt(0) ? dec(sales.invoicedNet).times(100).div(dec(sales.targetNet)).toFixed(1) : null,
+        achievementPct: dec(sales.targetNet).gt(0)
+          ? dec(sales.invoicedNet).times(100).div(dec(sales.targetNet)).toFixed(1)
+          : null,
         invoices: sales.rows.reduce((a, x) => a + x.invoices, 0),
       },
       getpack: {
@@ -539,14 +621,24 @@ export class ErpInsightService {
         toConfirmGross: fmtMoney(waiting._sum.grossAmount ?? 0),
         toInvoice: uninvoiced,
       },
-      receivables: { open: fmtMoney(ar[0]!.open), overdue: fmtMoney(ar[0]!.overdue), overdueInvoices: Number(ar[0]!.n) },
-      payables: { dueThisWeek: fmtMoney(ap[0]!.week), dueThisWeekCount: Number(ap[0]!.n), overdueAmount: fmtMoney(ap[0]!.overdue) },
+      receivables: {
+        open: fmtMoney(ar[0]!.open),
+        overdue: fmtMoney(ar[0]!.overdue),
+        overdueInvoices: Number(ar[0]!.n),
+      },
+      payables: {
+        dueThisWeek: fmtMoney(ap[0]!.week),
+        dueThisWeekCount: Number(ap[0]!.n),
+        overdueAmount: fmtMoney(ap[0]!.overdue),
+      },
       stock: {
         value: fmtMoney(stock._sum.value ?? 0),
         lowItems: low.length,
         low: low.slice(0, 5).flatMap((x) => {
           const it = lowItems.find((i) => i.id === x.id);
-          return it ? [{ item: itemRef(it), available: fmtQty(x.available), reorderPoint: fmtQty(x.reorder_point) }] : [];
+          return it
+            ? [{ item: itemRef(it), available: fmtQty(x.available), reorderPoint: fmtQty(x.reorder_point) }]
+            : [];
         }),
       },
       production: {
@@ -602,7 +694,12 @@ export class ErpInsightService {
                 dedupeKey: `ncr_overdue:${n.publicId}:${t}`,
                 subjectType: 'erp_ncr',
                 subjectPublicId: n.publicId,
-                payload: { ncrNo: n.ncrNo, title: n.title, owner: n.owner?.displayName ?? '-', dueOn: iso(n.actionDueOn) },
+                payload: {
+                  ncrNo: n.ncrNo,
+                  title: n.title,
+                  owner: n.owner?.displayName ?? '-',
+                  dueOn: iso(n.actionDueOn),
+                },
                 dueOn: iso(n.actionDueOn),
               }),
             );
@@ -620,7 +717,12 @@ export class ErpInsightService {
                 dedupeKey: `oee_low:${m.machine.id}:${yesterday}`,
                 subjectType: 'machine',
                 subjectPublicId: m.machine.id,
-                payload: { machine: m.machine.name, day: yesterday, oeePct: m.oeePct, thresholdPct: threshold.toFixed(0) },
+                payload: {
+                  machine: m.machine.name,
+                  day: yesterday,
+                  oeePct: m.oeePct,
+                  thresholdPct: threshold.toFixed(0),
+                },
                 dueOn: null,
               }),
             );
@@ -675,4 +777,3 @@ export class ErpInsightService {
     return true;
   }
 }
-

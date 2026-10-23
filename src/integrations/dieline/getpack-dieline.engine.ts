@@ -298,7 +298,9 @@ export class GetpackDielineEngine implements DielineEngine {
         const variant = pkg
           .variantsOf(recipe)
           .find((v) =>
-            wanted.every(([axis, value]) => (!strict && v.axes[axis!] === undefined) || v.axes[axis!] === value),
+            wanted.every(
+              ([axis, value]) => (!strict && v.axes[axis!] === undefined) || v.axes[axis!] === value,
+            ),
           );
         if (variant) return { recipe, values: { ...variant.values, ...request.sizes } };
       }

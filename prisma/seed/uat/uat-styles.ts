@@ -95,22 +95,29 @@ export async function publishUatStyles(
   // 0 — the master: every base and variant (a no-op when this file was imported before).
   const masterPath = options.masterPath ?? join(process.cwd(), 'docs/design-tool/style-library-master.json');
   const master = await imports.plan('master', 'style-library-master.json', readFileSync(masterPath, 'utf8'));
-  log.push(`master: ${master.noop ? `nothing to import (${master.noopReason})` : JSON.stringify(master.summary)}`);
+  log.push(
+    `master: ${master.noop ? `nothing to import (${master.noopReason})` : JSON.stringify(master.summary)}`,
+  );
   if (options.confirm && !master.noop) await settle(await imports.apply(importer, master));
   // A run imported before but still held (the same file, waiting for its approval) is settled too.
   if (options.confirm)
-    for (const run of await prisma.styleImportRun.findMany({ where: { status: 'pending_approval' }, orderBy: { id: 'asc' } }))
+    for (const run of await prisma.styleImportRun.findMany({
+      where: { status: 'pending_approval' },
+      orderBy: { id: 'asc' },
+    }))
       await settle(run);
 
   // 1 — the engine's recipes.
   const engine = new GetpackDielineEngine();
-  if (!(await engine.available())) throw new Error('the vendored @getpack/dieline bundle is missing (ADR-0010)');
+  if (!(await engine.available()))
+    throw new Error('the vendored @getpack/dieline bundle is missing (ADR-0010)');
   const bundle = await engineBundle(engine);
   const codes = bundle.recipes.map((r) => r.baseCode);
   const plan = await imports.plan('recipes', 'uat-engine-recipes.json', JSON.stringify(bundle));
   log.push(`engine recipes for ${codes.length} bases`);
   log.push(`recipes: ${plan.noop ? `nothing to import (${plan.noopReason})` : JSON.stringify(plan.summary)}`);
-  if (!options.confirm) return { bases: 0, variants: 0, publishable: 0, instant: 0, log: [...log, 'dry run'] };
+  if (!options.confirm)
+    return { bases: 0, variants: 0, publishable: 0, instant: 0, log: [...log, 'dry run'] };
   if (!plan.noop) await settle(await imports.apply(importer, plan));
 
   const bases = await prisma.styleBase.findMany({

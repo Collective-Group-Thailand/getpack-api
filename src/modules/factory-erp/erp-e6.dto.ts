@@ -81,29 +81,74 @@ export const E6_IDS = {
 
 export const ERP_GL_ASSET_STATUSES = ['active', 'disposed', 'written_off'] as const;
 export const ERP_GL_BANK_LINE_STATUSES = ['open', 'matched', 'ignored'] as const;
-export const ERP_GL_BANK_MATCH_TARGETS = ['supplier_payment', 'customer_receipt', 'journal_entry', 'bank_fee', 'interest'] as const;
+export const ERP_GL_BANK_MATCH_TARGETS = [
+  'supplier_payment',
+  'customer_receipt',
+  'journal_entry',
+  'bank_fee',
+  'interest',
+] as const;
 export const ERP_GL_TAX_RETURNS = ['pp30', 'pnd3', 'pnd53'] as const;
-export const ERP_GL_CLOSE_CHECKS = ['stock_valuation', 'payables', 'receivables', 'vat', 'wht', 'bank', 'depreciation', 'open_wip'] as const;
+export const ERP_GL_CLOSE_CHECKS = [
+  'stock_valuation',
+  'payables',
+  'receivables',
+  'vat',
+  'wht',
+  'bank',
+  'depreciation',
+  'open_wip',
+] as const;
 export const ERP_GL_PERIOD_TRANSITIONS = ['soft_close', 'close', 'lock', 'reopen'] as const;
-export const ERP_GL_REPORT_SECTIONS = ['assets', 'liabilities', 'equity', 'revenue', 'other_income', 'cost_of_sales', 'manufacturing_overhead', 'selling_admin', 'finance_cost', 'income_tax'] as const;
+export const ERP_GL_REPORT_SECTIONS = [
+  'assets',
+  'liabilities',
+  'equity',
+  'revenue',
+  'other_income',
+  'cost_of_sales',
+  'manufacturing_overhead',
+  'selling_admin',
+  'finance_cost',
+  'income_tax',
+] as const;
 export const ERP_GL_CASH_FLOW_SECTIONS = ['operating', 'investing', 'financing'] as const;
 
 // ------------------------------------------------------------------------------------ settings
 
 export class ErpGlSettingsDto {
-  @ApiProperty({ format: 'uuid', example: E6_IDS.settings, description: 'The factory id (one settings row per factory)' })
+  @ApiProperty({
+    format: 'uuid',
+    example: E6_IDS.settings,
+    description: 'The factory id (one settings row per factory)',
+  })
   id!: string;
 
   @ApiProperty({ example: 1, minimum: 1, maximum: 12, description: 'First month of the fiscal year' })
   fiscalYearStartMonth!: number;
 
-  @ApiProperty({ type: String, format: 'date', example: '2026-10-01', description: 'Documents dated before this day are not posted (opening balances cover them)' })
+  @ApiProperty({
+    type: String,
+    format: 'date',
+    example: '2026-10-01',
+    description: 'Documents dated before this day are not posted (opening balances cover them)',
+  })
   ledgerStartOn!: string;
 
-  @ApiProperty({ type: 'object', additionalProperties: { type: 'string' }, example: { raw_material: '1141', finished_good: '1143' }, description: 'Item kind → inventory account code' })
+  @ApiProperty({
+    type: 'object',
+    additionalProperties: { type: 'string' },
+    example: { raw_material: '1141', finished_good: '1143' },
+    description: 'Item kind → inventory account code',
+  })
   itemKindAccounts!: Record<string, string>;
 
-  @ApiProperty({ type: 'object', additionalProperties: { type: 'string' }, example: { payables: '2111', receivables: '1131' }, description: 'Purpose → account code the posting rules use' })
+  @ApiProperty({
+    type: 'object',
+    additionalProperties: { type: 'string' },
+    example: { payables: '2111', receivables: '1131' },
+    description: 'Purpose → account code the posting rules use',
+  })
   methodAccounts!: Record<string, string>;
 
   @ApiProperty({ nullable: true, example: 'สำนักงานบัญชี ก.ไก่' })
@@ -144,12 +189,20 @@ export class ErpUpdateGlSettingsDto {
   @Matches(DAY)
   ledgerStartOn?: string;
 
-  @ApiPropertyOptional({ type: 'object', additionalProperties: { type: 'string' }, example: { consumable: '1144' } })
+  @ApiPropertyOptional({
+    type: 'object',
+    additionalProperties: { type: 'string' },
+    example: { consumable: '1144' },
+  })
   @IsOptional()
   @IsObject()
   itemKindAccounts?: Record<string, string>;
 
-  @ApiPropertyOptional({ type: 'object', additionalProperties: { type: 'string' }, example: { otherExpenses: '6900' } })
+  @ApiPropertyOptional({
+    type: 'object',
+    additionalProperties: { type: 'string' },
+    example: { otherExpenses: '6900' },
+  })
   @IsOptional()
   @IsObject()
   methodAccounts?: Record<string, string>;
@@ -212,7 +265,11 @@ export class ErpGlAccountDto {
   @ApiProperty({ enum: ACCOUNT_STATUSES, enumName: 'CapabilityStatus', example: 'active' })
   status!: string;
 
-  @ApiProperty({ example: '125000.00', pattern: SIGNED_AMOUNT.source, description: 'Balance on the normal side as of today (posted entries)' })
+  @ApiProperty({
+    example: '125000.00',
+    pattern: SIGNED_AMOUNT.source,
+    description: 'Balance on the normal side as of today (posted entries)',
+  })
   balance!: string;
 
   @ApiProperty({ example: false, description: 'A change is waiting for approval' })
@@ -236,7 +293,6 @@ export class ErpGlAccountListQuery extends PageQuery {
   @IsIn(ACCOUNT_STATUSES)
   status?: string;
 
-
   @ApiPropertyOptional({ example: true, description: 'Postable accounts only (for pickers)' })
   @IsOptional()
   @Transform(({ value }) => value === true || value === 'true')
@@ -245,7 +301,11 @@ export class ErpGlAccountListQuery extends PageQuery {
 }
 
 export class ErpGlAccountProposalDto {
-  @ApiPropertyOptional({ example: '1147', pattern: ACCOUNT_CODE.source, description: 'Required for `create`' })
+  @ApiPropertyOptional({
+    example: '1147',
+    pattern: ACCOUNT_CODE.source,
+    description: 'Required for `create`',
+  })
   @IsOptional()
   @Transform(trim)
   @Matches(ACCOUNT_CODE)
@@ -310,7 +370,11 @@ export class ErpGlProposeAccountChangeDto {
   @IsIn(ACCOUNT_CHANGE_KINDS)
   kind!: string;
 
-  @ApiPropertyOptional({ format: 'uuid', example: E6_IDS.account, description: 'The account to change (not for `create`)' })
+  @ApiPropertyOptional({
+    format: 'uuid',
+    example: E6_IDS.account,
+    description: 'The account to change (not for `create`)',
+  })
   @IsOptional()
   @IsUUID()
   accountId?: string;
@@ -395,10 +459,20 @@ export class ErpGlCloseCheckDto {
   @ApiProperty({ example: true })
   ok!: boolean;
 
-  @ApiProperty({ example: '845000.00', pattern: SIGNED_AMOUNT.source, nullable: true, description: 'Sub-ledger side' })
+  @ApiProperty({
+    example: '845000.00',
+    pattern: SIGNED_AMOUNT.source,
+    nullable: true,
+    description: 'Sub-ledger side',
+  })
   expected!: string | null;
 
-  @ApiProperty({ example: '845000.00', pattern: SIGNED_AMOUNT.source, nullable: true, description: 'General-ledger side' })
+  @ApiProperty({
+    example: '845000.00',
+    pattern: SIGNED_AMOUNT.source,
+    nullable: true,
+    description: 'General-ledger side',
+  })
   actual!: string | null;
 
   @ApiProperty({ example: '0.00', pattern: SIGNED_AMOUNT.source, nullable: true })
@@ -445,7 +519,10 @@ export class ErpGlPeriodDto {
   @ApiProperty({ nullable: true, example: null })
   closeNote!: string | null;
 
-  @ApiProperty({ type: [ErpGlCloseCheckDto], description: 'The checklist as stored at the last close (empty while open)' })
+  @ApiProperty({
+    type: [ErpGlCloseCheckDto],
+    description: 'The checklist as stored at the last close (empty while open)',
+  })
   closeChecklist!: ErpGlCloseCheckDto[];
 
   @ApiProperty({ type: [NextActionDto] })
@@ -453,7 +530,10 @@ export class ErpGlPeriodDto {
 }
 
 export class ErpGlPeriodListQuery {
-  @ApiPropertyOptional({ example: 'FY2026', description: 'A fiscal year label; default: the current and the previous year' })
+  @ApiPropertyOptional({
+    example: 'FY2026',
+    description: 'A fiscal year label; default: the current and the previous year',
+  })
   @IsOptional()
   @Transform(trim)
   @IsString()
@@ -466,7 +546,12 @@ export class ErpGlPeriodTransitionDto {
   @IsIn(ERP_GL_PERIOD_TRANSITIONS)
   action!: string;
 
-  @ApiPropertyOptional({ example: 'ปิดงวดตุลาคม', nullable: true, maxLength: 500, description: 'Required to reopen' })
+  @ApiPropertyOptional({
+    example: 'ปิดงวดตุลาคม',
+    nullable: true,
+    maxLength: 500,
+    description: 'Required to reopen',
+  })
   @IsOptional()
   @Transform(emptyToNull)
   @IsString()
@@ -521,7 +606,11 @@ export class ErpGlJournalLineDto {
   @ApiProperty({ type: ErpRefDto, nullable: true })
   warehouse!: ErpRefDto | null;
 
-  @ApiProperty({ type: ErpRefDto, nullable: true, description: 'Production order `{ id, code: moNo, name: title }`' })
+  @ApiProperty({
+    type: ErpRefDto,
+    nullable: true,
+    description: 'Production order `{ id, code: moNo, name: title }`',
+  })
   productionOrder!: ErpRefDto | null;
 
   @ApiProperty({ type: PersonRefDto, nullable: true, description: 'Machine' })
@@ -578,7 +667,13 @@ export class ErpGlJournalDto {
   @ApiProperty({ nullable: true, example: null, description: 'The reversal of this entry, if any' })
   reversedBy!: ErpGlSourceDocDto | null;
 
-  @ApiProperty({ type: String, format: 'date', nullable: true, example: null, description: 'An accrual reverses itself on this day' })
+  @ApiProperty({
+    type: String,
+    format: 'date',
+    nullable: true,
+    example: null,
+    description: 'An accrual reverses itself on this day',
+  })
   autoReverseOn!: string | null;
 
   @ApiProperty({ example: '12500.00', pattern: AMOUNT.source })
@@ -633,7 +728,6 @@ export class ErpGlJournalListQuery extends PageQuery {
   @Transform(trim)
   @Matches(ACCOUNT_CODE)
   accountCode?: string;
-
 
   @ApiPropertyOptional({ format: 'uuid', description: 'Entries posted from this document' })
   @IsOptional()
@@ -715,7 +809,12 @@ export class ErpGlSaveJournalDto {
   @MaxLength(500)
   description!: string;
 
-  @ApiPropertyOptional({ nullable: true, example: null, pattern: DAY.source, description: 'An accrual: reverse itself on this day' })
+  @ApiPropertyOptional({
+    nullable: true,
+    example: null,
+    pattern: DAY.source,
+    description: 'An accrual: reverse itself on this day',
+  })
   @IsOptional()
   @Matches(DAY)
   autoReverseOn?: string | null;
@@ -777,7 +876,12 @@ export class ErpGlSaveRecurringDto {
   @MaxLength(200)
   name!: string;
 
-  @ApiProperty({ example: 'ค่าเช่าโรงงาน {month}', minLength: 1, maxLength: 500, description: '`{month}` is replaced by the run month' })
+  @ApiProperty({
+    example: 'ค่าเช่าโรงงาน {month}',
+    minLength: 1,
+    maxLength: 500,
+    description: '`{month}` is replaced by the run month',
+  })
   @Transform(trim)
   @IsString()
   @MinLength(1)
@@ -799,7 +903,10 @@ export class ErpGlSaveRecurringDto {
   @Matches(DAY)
   endOn?: string | null;
 
-  @ApiPropertyOptional({ example: false, description: 'An accrual: each run reverses on the 1st of the next month' })
+  @ApiPropertyOptional({
+    example: false,
+    description: 'An accrual: each run reverses on the 1st of the next month',
+  })
   @IsOptional()
   @IsBoolean()
   autoReverse?: boolean;
@@ -878,10 +985,18 @@ export class ErpGlRuleDto {
   @ApiProperty({ example: 1, nullable: true, description: 'The approved version in force' })
   versionNo!: number | null;
 
-  @ApiProperty({ type: 'object', additionalProperties: true, description: 'The template of the version in force' })
+  @ApiProperty({
+    type: 'object',
+    additionalProperties: true,
+    description: 'The template of the version in force',
+  })
   template!: Record<string, unknown>;
 
-  @ApiProperty({ type: [String], example: ['1141', '2115'], description: 'Literal account codes the template posts to' })
+  @ApiProperty({
+    type: [String],
+    example: ['1141', '2115'],
+    description: 'Literal account codes the template posts to',
+  })
   accountCodes!: string[];
 
   @ApiProperty({ example: 12, description: 'Entries posted by this rule' })
@@ -898,7 +1013,11 @@ export class ErpGlCatchUpDto {
   @ApiProperty({ example: 2, description: 'Events skipped (already posted or nothing to post)' })
   skipped!: number;
 
-  @ApiProperty({ type: [String], example: [], description: 'Events that failed, as `type aggregateId: reason`' })
+  @ApiProperty({
+    type: [String],
+    example: [],
+    description: 'Events that failed, as `type aggregateId: reason`',
+  })
   failed!: string[];
 }
 
@@ -933,7 +1052,11 @@ export class ErpGlTrialBalanceRowDto {
   @ApiProperty({ enum: ACCOUNT_TYPES, enumName: 'AccountType', example: 'asset' })
   accountType!: string;
 
-  @ApiProperty({ example: '100000.00', pattern: SIGNED_AMOUNT.source, description: 'Opening balance, debit positive' })
+  @ApiProperty({
+    example: '100000.00',
+    pattern: SIGNED_AMOUNT.source,
+    description: 'Opening balance, debit positive',
+  })
   opening!: string;
 
   @ApiProperty({ example: '45000.00', pattern: AMOUNT.source })
@@ -942,7 +1065,11 @@ export class ErpGlTrialBalanceRowDto {
   @ApiProperty({ example: '20000.00', pattern: AMOUNT.source })
   credit!: string;
 
-  @ApiProperty({ example: '125000.00', pattern: SIGNED_AMOUNT.source, description: 'Closing balance, debit positive' })
+  @ApiProperty({
+    example: '125000.00',
+    pattern: SIGNED_AMOUNT.source,
+    description: 'Closing balance, debit positive',
+  })
   closing!: string;
 }
 
@@ -995,7 +1122,11 @@ export class ErpGlDetailRowDto {
   @ApiProperty({ example: '0.00', pattern: AMOUNT.source })
   credit!: string;
 
-  @ApiProperty({ example: '112500.00', pattern: SIGNED_AMOUNT.source, description: 'Running balance, debit positive' })
+  @ApiProperty({
+    example: '112500.00',
+    pattern: SIGNED_AMOUNT.source,
+    description: 'Running balance, debit positive',
+  })
   balance!: string;
 }
 
@@ -1023,10 +1154,19 @@ export class ErpGlStatementAccountDto {
   @ApiProperty({ type: ErpGlAccountRefDto })
   account!: ErpGlAccountRefDto;
 
-  @ApiProperty({ example: '245000.00', pattern: SIGNED_AMOUNT.source, description: 'This period (P&L) or as of (BS), on the natural side of the section' })
+  @ApiProperty({
+    example: '245000.00',
+    pattern: SIGNED_AMOUNT.source,
+    description: 'This period (P&L) or as of (BS), on the natural side of the section',
+  })
   amount!: string;
 
-  @ApiProperty({ example: '610000.00', pattern: SIGNED_AMOUNT.source, nullable: true, description: 'Year to date (P&L) or the comparative (BS)' })
+  @ApiProperty({
+    example: '610000.00',
+    pattern: SIGNED_AMOUNT.source,
+    nullable: true,
+    description: 'Year to date (P&L) or the comparative (BS)',
+  })
   comparative!: string | null;
 }
 
@@ -1062,7 +1202,12 @@ export class ErpGlProfitAndLossDto {
   @ApiProperty({ example: '2026-10' })
   month!: string;
 
-  @ApiProperty({ type: String, format: 'date', example: '2026-10-01', description: 'Fiscal year start (YTD comparative)' })
+  @ApiProperty({
+    type: String,
+    format: 'date',
+    example: '2026-10-01',
+    description: 'Fiscal year start (YTD comparative)',
+  })
   yearStart!: string;
 
   @ApiProperty({ type: [ErpGlStatementSectionDto] })
@@ -1091,7 +1236,12 @@ export class ErpGlBalanceSheetDto {
   @ApiProperty({ type: String, format: 'date', example: '2026-10-31' })
   asOf!: string;
 
-  @ApiProperty({ type: String, format: 'date', example: '2025-12-31', description: 'Comparative date (last fiscal year end)' })
+  @ApiProperty({
+    type: String,
+    format: 'date',
+    example: '2025-12-31',
+    description: 'Comparative date (last fiscal year end)',
+  })
   comparativeAsOf!: string;
 
   @ApiProperty({ type: [ErpGlStatementSectionDto], description: 'assets, liabilities, equity' })
@@ -1103,7 +1253,11 @@ export class ErpGlBalanceSheetDto {
   @ApiProperty({ example: '420000.00', pattern: SIGNED_AMOUNT.source })
   totalLiabilities!: string;
 
-  @ApiProperty({ example: '830000.00', pattern: SIGNED_AMOUNT.source, description: 'Including the current-year profit' })
+  @ApiProperty({
+    example: '830000.00',
+    pattern: SIGNED_AMOUNT.source,
+    description: 'Including the current-year profit',
+  })
   totalEquity!: string;
 
   @ApiProperty({ example: '96000.00', pattern: SIGNED_AMOUNT.source })
@@ -1134,7 +1288,11 @@ export class ErpGlCashFlowDto {
   @ApiProperty({ example: '43000.00', pattern: SIGNED_AMOUNT.source })
   netProfit!: string;
 
-  @ApiProperty({ example: '12000.00', pattern: SIGNED_AMOUNT.source, description: 'Depreciation and other non-cash items' })
+  @ApiProperty({
+    example: '12000.00',
+    pattern: SIGNED_AMOUNT.source,
+    description: 'Depreciation and other non-cash items',
+  })
   nonCash!: string;
 
   @ApiProperty({ type: [ErpGlCashFlowSectionDto] })
@@ -1160,10 +1318,18 @@ export class ErpGlStockValuationRowDto {
   @ApiProperty({ example: 12, description: 'Items with stock' })
   items!: number;
 
-  @ApiProperty({ example: '520000.00', pattern: SIGNED_AMOUNT.source, description: 'Stock value (balances × average cost) as of the date' })
+  @ApiProperty({
+    example: '520000.00',
+    pattern: SIGNED_AMOUNT.source,
+    description: 'Stock value (balances × average cost) as of the date',
+  })
   stockValue!: string;
 
-  @ApiProperty({ example: '520000.00', pattern: SIGNED_AMOUNT.source, description: 'Ledger balance as of the date' })
+  @ApiProperty({
+    example: '520000.00',
+    pattern: SIGNED_AMOUNT.source,
+    description: 'Ledger balance as of the date',
+  })
   ledgerBalance!: string;
 
   @ApiProperty({ example: '0.00', pattern: SIGNED_AMOUNT.source })
@@ -1290,12 +1456,20 @@ export class ErpGlCreateAssetDto {
   @Max(600)
   usefulLifeMonths?: number;
 
-  @ApiPropertyOptional({ example: '2026-02-01', pattern: DAY.source, description: 'First month depreciated; default: the month after acquisition' })
+  @ApiPropertyOptional({
+    example: '2026-02-01',
+    pattern: DAY.source,
+    description: 'First month depreciated; default: the month after acquisition',
+  })
   @IsOptional()
   @Matches(DAY)
   depreciationStart?: string;
 
-  @ApiPropertyOptional({ example: '0.00', pattern: AMOUNT.source, description: 'Depreciation already taken before the ledger started (opening balance)' })
+  @ApiPropertyOptional({
+    example: '0.00',
+    pattern: AMOUNT.source,
+    description: 'Depreciation already taken before the ledger started (opening balance)',
+  })
   @IsOptional()
   @Matches(AMOUNT)
   openingAccumulated?: string;
@@ -1318,12 +1492,20 @@ export class ErpGlDisposeAssetDto {
   @Matches(DAY)
   disposedOn!: string;
 
-  @ApiPropertyOptional({ example: '150000.00', pattern: AMOUNT.source, description: 'Sale proceeds; omit or 0 for a write-off' })
+  @ApiPropertyOptional({
+    example: '150000.00',
+    pattern: AMOUNT.source,
+    description: 'Sale proceeds; omit or 0 for a write-off',
+  })
   @IsOptional()
   @Matches(AMOUNT)
   proceeds?: string;
 
-  @ApiPropertyOptional({ format: 'uuid', nullable: true, description: 'The bank account the proceeds went to (default: the default bank account; cash if none)' })
+  @ApiPropertyOptional({
+    format: 'uuid',
+    nullable: true,
+    description: 'The bank account the proceeds went to (default: the default bank account; cash if none)',
+  })
   @IsOptional()
   @IsUUID()
   bankAccountId?: string | null;
@@ -1510,7 +1692,13 @@ export class ErpGlBankAccountDto {
   @ApiProperty({ example: 3, description: 'Statement lines not yet matched or ignored' })
   openLines!: number;
 
-  @ApiProperty({ type: String, format: 'date', nullable: true, example: '2026-10-12', description: 'Last statement line imported' })
+  @ApiProperty({
+    type: String,
+    format: 'date',
+    nullable: true,
+    example: '2026-10-12',
+    description: 'Last statement line imported',
+  })
   lastStatementDate!: string | null;
 
   @ApiProperty({ type: [NextActionDto] })
@@ -1525,7 +1713,11 @@ export class ErpGlStatementRowInputDto {
   @Matches(DAY)
   txnDate!: string;
 
-  @ApiProperty({ example: '-12500.00', pattern: SIGNED_AMOUNT.source, description: 'Signed: deposits positive, withdrawals negative' })
+  @ApiProperty({
+    example: '-12500.00',
+    pattern: SIGNED_AMOUNT.source,
+    description: 'Signed: deposits positive, withdrawals negative',
+  })
   @Matches(SIGNED_AMOUNT)
   amount!: string;
 
@@ -1545,7 +1737,11 @@ export class ErpGlStatementRowInputDto {
 }
 
 export class ErpGlImportStatementDto {
-  @ApiPropertyOptional({ type: [ErpGlStatementRowInputDto], maxItems: 2000, description: 'Rows keyed in or parsed by the browser' })
+  @ApiPropertyOptional({
+    type: [ErpGlStatementRowInputDto],
+    maxItems: 2000,
+    description: 'Rows keyed in or parsed by the browser',
+  })
   @IsOptional()
   @IsArray()
   @ArrayMaxSize(2000)
@@ -1570,7 +1766,10 @@ export class ErpGlImportResultDto {
   @ApiProperty({ example: 25 })
   imported!: number;
 
-  @ApiProperty({ example: 3, description: 'Lines already imported (same date, amount, description and reference)' })
+  @ApiProperty({
+    example: 3,
+    description: 'Lines already imported (same date, amount, description and reference)',
+  })
   duplicates!: number;
 
   @ApiProperty({ example: 18, description: 'Lines matched automatically' })
@@ -1578,7 +1777,11 @@ export class ErpGlImportResultDto {
 }
 
 export class ErpGlBankMatchDto {
-  @ApiProperty({ enum: ERP_GL_BANK_MATCH_TARGETS, enumName: 'ErpGlBankMatchTarget', example: 'supplier_payment' })
+  @ApiProperty({
+    enum: ERP_GL_BANK_MATCH_TARGETS,
+    enumName: 'ErpGlBankMatchTarget',
+    example: 'supplier_payment',
+  })
   targetType!: string;
 
   @ApiProperty({ format: 'uuid', nullable: true, example: E6_IDS.payment })
@@ -1587,7 +1790,11 @@ export class ErpGlBankMatchDto {
   @ApiProperty({ nullable: true, example: 'PV-2610-0004' })
   targetNo!: string | null;
 
-  @ApiProperty({ type: ErpGlSourceDocDto, nullable: true, description: 'The journal entry (bank fee / interest)' })
+  @ApiProperty({
+    type: ErpGlSourceDocDto,
+    nullable: true,
+    description: 'The journal entry (bank fee / interest)',
+  })
   entry!: ErpGlSourceDocDto | null;
 
   @ApiProperty({ example: '12500.00', pattern: AMOUNT.source })
@@ -1631,7 +1838,10 @@ export class ErpGlBankLineDto {
   @ApiProperty({ type: [ErpGlBankMatchDto] })
   matches!: ErpGlBankMatchDto[];
 
-  @ApiProperty({ type: [ErpGlBankMatchDto], description: 'Possible matches (open lines): same amount within 3 days' })
+  @ApiProperty({
+    type: [ErpGlBankMatchDto],
+    description: 'Possible matches (open lines): same amount within 3 days',
+  })
   candidates!: ErpGlBankMatchDto[];
 
   @ApiProperty({ type: String, format: 'date-time', example: '2026-10-13T09:30:00+07:00' })
@@ -1659,11 +1869,18 @@ export class ErpGlBankLineListQuery extends PageQuery {
 }
 
 export class ErpGlMatchBankLineDto {
-  @ApiProperty({ enum: ERP_GL_BANK_MATCH_TARGETS, enumName: 'ErpGlBankMatchTarget', example: 'supplier_payment' })
+  @ApiProperty({
+    enum: ERP_GL_BANK_MATCH_TARGETS,
+    enumName: 'ErpGlBankMatchTarget',
+    example: 'supplier_payment',
+  })
   @IsIn(ERP_GL_BANK_MATCH_TARGETS)
   targetType!: string;
 
-  @ApiPropertyOptional({ format: 'uuid', description: 'The payment, receipt or journal entry (not for a fee / interest)' })
+  @ApiPropertyOptional({
+    format: 'uuid',
+    description: 'The payment, receipt or journal entry (not for a fee / interest)',
+  })
   @IsOptional()
   @IsUUID()
   targetId?: string;
@@ -1673,7 +1890,11 @@ export class ErpGlCashPositionRowDto {
   @ApiProperty({ type: ErpGlBankAccountDto })
   account!: ErpGlBankAccountDto;
 
-  @ApiProperty({ example: '-12500.00', pattern: SIGNED_AMOUNT.source, description: 'Sum of open (unreconciled) statement lines' })
+  @ApiProperty({
+    example: '-12500.00',
+    pattern: SIGNED_AMOUNT.source,
+    description: 'Sum of open (unreconciled) statement lines',
+  })
   unreconciled!: string;
 }
 
@@ -1690,10 +1911,18 @@ export class ErpGlCashPositionDto {
   @ApiProperty({ example: '197000.00', pattern: SIGNED_AMOUNT.source })
   total!: string;
 
-  @ApiProperty({ example: '56000.00', pattern: SIGNED_AMOUNT.source, description: 'Supplier invoices due within 7 days' })
+  @ApiProperty({
+    example: '56000.00',
+    pattern: SIGNED_AMOUNT.source,
+    description: 'Supplier invoices due within 7 days',
+  })
   payablesDue7d!: string;
 
-  @ApiProperty({ example: '82000.00', pattern: SIGNED_AMOUNT.source, description: 'Customer invoices due within 7 days' })
+  @ApiProperty({
+    example: '82000.00',
+    pattern: SIGNED_AMOUNT.source,
+    description: 'Customer invoices due within 7 days',
+  })
   receivablesDue7d!: string;
 }
 
@@ -1709,10 +1938,18 @@ export class ErpGlTaxFilingDto {
   @ApiProperty({ type: String, format: 'date', example: '2026-11-15', description: 'E-filing due date' })
   dueOn!: string;
 
-  @ApiProperty({ example: '12250.00', pattern: SIGNED_AMOUNT.source, description: 'From the ledger: output − input VAT (ภ.พ.30) or WHT payable movement' })
+  @ApiProperty({
+    example: '12250.00',
+    pattern: SIGNED_AMOUNT.source,
+    description: 'From the ledger: output − input VAT (ภ.พ.30) or WHT payable movement',
+  })
   ledgerAmount!: string;
 
-  @ApiProperty({ example: '12250.00', pattern: SIGNED_AMOUNT.source, description: 'From the E4 tax reports (documents)' })
+  @ApiProperty({
+    example: '12250.00',
+    pattern: SIGNED_AMOUNT.source,
+    description: 'From the E4 tax reports (documents)',
+  })
   documentsAmount!: string;
 
   @ApiProperty({ example: true })
@@ -1767,7 +2004,11 @@ export class ErpGlMarkFiledDto {
   @MaxLength(100)
   reference?: string | null;
 
-  @ApiPropertyOptional({ example: '12250.00', pattern: SIGNED_AMOUNT.source, description: 'Default: the ledger amount' })
+  @ApiPropertyOptional({
+    example: '12250.00',
+    pattern: SIGNED_AMOUNT.source,
+    description: 'Default: the ledger amount',
+  })
   @IsOptional()
   @Matches(SIGNED_AMOUNT)
   amount?: string;
@@ -1790,7 +2031,11 @@ export const ERP_GL_VARIABLE_KINDS = ['amount', 'account', 'text', 'flag', 'list
 const PATH = /^[A-Za-z_][A-Za-z0-9_]*(\.[A-Za-z0-9_]+)*$/;
 
 export class ErpGlConditionDto {
-  @ApiProperty({ example: 'taxInvoice', pattern: PATH.source, description: 'A payload path (inside `forEach`, `item.<path>`)' })
+  @ApiProperty({
+    example: 'taxInvoice',
+    pattern: PATH.source,
+    description: 'A payload path (inside `forEach`, `item.<path>`)',
+  })
   @Matches(PATH)
   @MaxLength(100)
   field!: string;
@@ -1799,33 +2044,58 @@ export class ErpGlConditionDto {
   @IsIn(ERP_GL_CONDITION_OPS)
   op!: string;
 
-  @ApiProperty({ example: 'true', maxLength: 100, description: '`true` / `false` for a flag, a number, or text' })
+  @ApiProperty({
+    example: 'true',
+    maxLength: 100,
+    description: '`true` / `false` for a flag, a number, or text',
+  })
   @IsString()
   @MaxLength(100)
   value!: string;
 }
 
 export class ErpGlTemplateLineDto {
-  @ApiPropertyOptional({ nullable: true, example: null, pattern: PATH.source, description: 'Repeat the line for every element of this list (`movements`, `lines`); the element is `item`' })
+  @ApiPropertyOptional({
+    nullable: true,
+    example: null,
+    pattern: PATH.source,
+    description:
+      'Repeat the line for every element of this list (`movements`, `lines`); the element is `item`',
+  })
   @IsOptional()
   @Transform(emptyToNull)
   @Matches(PATH)
   @MaxLength(100)
   forEach?: string | null;
 
-  @ApiPropertyOptional({ type: ErpGlConditionDto, nullable: true, description: 'Post the line only when this holds' })
+  @ApiPropertyOptional({
+    type: ErpGlConditionDto,
+    nullable: true,
+    description: 'Post the line only when this holds',
+  })
   @IsOptional()
   @ValidateNested()
   @Type(() => ErpGlConditionDto)
   when?: ErpGlConditionDto | null;
 
-  @ApiPropertyOptional({ nullable: true, example: '1141', pattern: ACCOUNT_CODE.source, description: 'A fixed account — or `accountPath`' })
+  @ApiPropertyOptional({
+    nullable: true,
+    example: '1141',
+    pattern: ACCOUNT_CODE.source,
+    description: 'A fixed account — or `accountPath`',
+  })
   @IsOptional()
   @Transform(emptyToNull)
   @Matches(ACCOUNT_CODE)
   accountCode?: string | null;
 
-  @ApiPropertyOptional({ nullable: true, example: 'accounts.grir', pattern: PATH.source, description: 'An account the document gives (`accounts.<purpose>`, `cashAccount`, `item.inventoryAccount`, …)' })
+  @ApiPropertyOptional({
+    nullable: true,
+    example: 'accounts.grir',
+    pattern: PATH.source,
+    description:
+      'An account the document gives (`accounts.<purpose>`, `cashAccount`, `item.inventoryAccount`, …)',
+  })
   @IsOptional()
   @Transform(emptyToNull)
   @Matches(PATH)
@@ -1836,14 +2106,24 @@ export class ErpGlTemplateLineDto {
   @IsIn(LEDGER_SIDES)
   side!: string;
 
-  @ApiProperty({ example: 'goodsValue', maxLength: 200, description: 'Amount expression: payload paths, numbers, + - * / ( ), round/min/max/abs; a negative result posts on the other side' })
+  @ApiProperty({
+    example: 'goodsValue',
+    maxLength: 200,
+    description:
+      'Amount expression: payload paths, numbers, + - * / ( ), round/min/max/abs; a negative result posts on the other side',
+  })
   @Transform(trim)
   @IsString()
   @MinLength(1)
   @MaxLength(200)
   amount!: string;
 
-  @ApiPropertyOptional({ nullable: true, example: null, maxLength: 200, description: 'Line text; `{path}` reads the payload' })
+  @ApiPropertyOptional({
+    nullable: true,
+    example: null,
+    maxLength: 200,
+    description: 'Line text; `{path}` reads the payload',
+  })
   @IsOptional()
   @Transform(emptyToNull)
   @IsString()
@@ -1855,21 +2135,35 @@ export class ErpGlTemplateLineDto {
   @IsIn(TAX_CODES)
   taxCode?: string | null;
 
-  @ApiPropertyOptional({ nullable: true, example: null, maxLength: 200, description: 'Tax base expression (with a tax code)' })
+  @ApiPropertyOptional({
+    nullable: true,
+    example: null,
+    maxLength: 200,
+    description: 'Tax base expression (with a tax code)',
+  })
   @IsOptional()
   @Transform(emptyToNull)
   @IsString()
   @MaxLength(200)
   taxBase?: string | null;
 
-  @ApiPropertyOptional({ type: 'object', additionalProperties: { type: 'string' }, example: { item: 'item.itemId' }, description: 'Dimension → payload path (kept as the rule had them)' })
+  @ApiPropertyOptional({
+    type: 'object',
+    additionalProperties: { type: 'string' },
+    example: { item: 'item.itemId' },
+    description: 'Dimension → payload path (kept as the rule had them)',
+  })
   @IsOptional()
   @IsObject()
   dimensions?: Record<string, string>;
 }
 
 export class ErpGlTemplateDto {
-  @ApiProperty({ example: 'รับสินค้า {documentNo} — {partnerName}', maxLength: 300, description: 'Entry text; `{path}` reads the payload' })
+  @ApiProperty({
+    example: 'รับสินค้า {documentNo} — {partnerName}',
+    maxLength: 300,
+    description: 'Entry text; `{path}` reads the payload',
+  })
   @Transform(trim)
   @IsString()
   @MinLength(1)
@@ -1956,7 +2250,11 @@ export class ErpGlRuleDetailDto {
   @ApiProperty({ type: [ErpGlRuleVariableDto], description: 'What the payload carries for this rule' })
   variables!: ErpGlRuleVariableDto[];
 
-  @ApiProperty({ type: [String], example: ['grir', 'payables', 'inputVat'], description: 'Purpose accounts readable as `accounts.<key>`' })
+  @ApiProperty({
+    type: [String],
+    example: ['grir', 'payables', 'inputVat'],
+    description: 'Purpose accounts readable as `accounts.<key>`',
+  })
   purposes!: string[];
 
   @ApiProperty({ type: [NextActionDto] })
@@ -1969,7 +2267,13 @@ export class ErpGlProposeRuleVersionDto {
   @Type(() => ErpGlTemplateDto)
   template!: ErpGlTemplateDto;
 
-  @ApiProperty({ type: String, format: 'date', example: '2026-11-01', pattern: DAY.source, description: 'In force from this day (Bangkok); today or later' })
+  @ApiProperty({
+    type: String,
+    format: 'date',
+    example: '2026-11-01',
+    pattern: DAY.source,
+    description: 'In force from this day (Bangkok); today or later',
+  })
   @Matches(DAY)
   effectiveFrom!: string;
 
@@ -2009,7 +2313,11 @@ export class ErpGlPreviewLineDto {
 }
 
 export class ErpGlPreviewDto {
-  @ApiProperty({ nullable: true, example: 'GR-2610-0003', description: 'The document the preview used (the latest of its kind); null when there is none yet' })
+  @ApiProperty({
+    nullable: true,
+    example: 'GR-2610-0003',
+    description: 'The document the preview used (the latest of its kind); null when there is none yet',
+  })
   sampleNo!: string | null;
 
   @ApiProperty({ type: String, format: 'date-time', nullable: true, example: '2026-10-13T10:00:00+07:00' })

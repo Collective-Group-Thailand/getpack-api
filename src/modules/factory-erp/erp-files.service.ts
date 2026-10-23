@@ -44,7 +44,11 @@ export class ErpFilesService {
       fileName: file.originalName,
       contentType: file.mimeType,
     });
-    return { url, fileName: file.originalName, expiresAt: toBangkokIso(new Date(Date.now() + TTL_SECONDS * 1000)) };
+    return {
+      url,
+      fileName: file.originalName,
+      expiresAt: toBangkokIso(new Date(Date.now() + TTL_SECONDS * 1000)),
+    };
   }
 
   /** The factory's logo as a data URI for its documents (none when it has not set one). */
@@ -54,7 +58,8 @@ export class ErpFilesService {
     if (!file || file.purgedAt || !file.mimeType.startsWith('image/')) return null;
     try {
       const chunks: Buffer[] = [];
-      for await (const chunk of await this.storage.getStream(file.storageKey)) chunks.push(Buffer.from(chunk as Buffer));
+      for await (const chunk of await this.storage.getStream(file.storageKey))
+        chunks.push(Buffer.from(chunk as Buffer));
       return `data:${file.mimeType};base64,${Buffer.concat(chunks).toString('base64')}`;
     } catch {
       return null;

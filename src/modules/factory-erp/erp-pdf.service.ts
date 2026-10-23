@@ -23,7 +23,12 @@ export type ErpPdfKind =
   | 'billing_note'
   | 'wht_certificate';
 
-const METHOD_TH: Record<string, string> = { transfer: 'โอนเงิน', cash: 'เงินสด', cheque: 'เช็ค', other: 'อื่น ๆ' };
+const METHOD_TH: Record<string, string> = {
+  transfer: 'โอนเงิน',
+  cash: 'เงินสด',
+  cheque: 'เช็ค',
+  other: 'อื่น ๆ',
+};
 const REASON_TH: Record<string, string> = {
   price_reduced: 'ลดราคาสินค้า',
   goods_returned: 'รับคืนสินค้า',
@@ -56,7 +61,11 @@ export class ErpPdfService {
     const seller = await this.workspace.tx((tx) => sellerOf(tx, scope.factory));
     // D-428/D-429: the logo, seal and signature in force when the document was issued (now for a draft).
     const owner = { kind: 'factory' as const, id: f };
-    const brand = async (docKind: DocumentSigningKind, at: Date | null | undefined, signedOn: Date | null) => {
+    const brand = async (
+      docKind: DocumentSigningKind,
+      at: Date | null | undefined,
+      signedOn: Date | null,
+    ) => {
       const b = await this.branding.resolve(owner, docKind, at ?? new Date());
       return { branding: b, logo: b.logo, signedOn: signedOn ? thaiDate(iso(signedOn)!) : null };
     };
@@ -68,7 +77,16 @@ export class ErpPdfService {
       draft: false,
       stamp: null as string | null,
     };
-    const unitLines = (lines: { description: string; quantity: Prisma.Decimal; unit: string; unitPrice: Prisma.Decimal; discountPct: Prisma.Decimal; amount: Prisma.Decimal }[]) =>
+    const unitLines = (
+      lines: {
+        description: string;
+        quantity: Prisma.Decimal;
+        unit: string;
+        unitPrice: Prisma.Decimal;
+        discountPct: Prisma.Decimal;
+        amount: Prisma.Decimal;
+      }[],
+    ) =>
       lines.map((l) => ({
         description: l.description,
         quantity: l.quantity.toString(),
@@ -77,7 +95,13 @@ export class ErpPdfService {
         discountPct: l.discountPct.toString(),
         amount: fmtMoney(l.amount),
       }));
-    const vatTotals = (r: { subtotal: Prisma.Decimal; vatAmount: Prisma.Decimal; total: Prisma.Decimal; vatMode: string; vatRatePct: Prisma.Decimal }) =>
+    const vatTotals = (r: {
+      subtotal: Prisma.Decimal;
+      vatAmount: Prisma.Decimal;
+      total: Prisma.Decimal;
+      vatMode: string;
+      vatRatePct: Prisma.Decimal;
+    }) =>
       r.vatMode === 'none'
         ? [{ label: 'รวมทั้งสิ้น', value: fmtMoney(r.total), strong: true }]
         : [
@@ -88,7 +112,12 @@ export class ErpPdfService {
 
     let view: SalesDocView | null = null;
     let wht: Parameters<typeof renderWhtCertificateHtml>[0] | null = null;
-    let cache: { current: bigint | null; version: number; issued: boolean; save: (fileId: bigint) => Promise<unknown> };
+    let cache: {
+      current: bigint | null;
+      version: number;
+      issued: boolean;
+      save: (fileId: bigint) => Promise<unknown>;
+    };
 
     switch (kind) {
       case 'quotation': {
@@ -124,7 +153,11 @@ export class ErpPdfService {
           current: q.pdfFileId,
           version: q.pdfVersion === q.rowVersion ? q.rowVersion : -1,
           issued: false,
-          save: (fileId) => db.erpQuotation.update({ where: { id: q.id }, data: { pdfFileId: fileId, pdfVersion: q.rowVersion } }),
+          save: (fileId) =>
+            db.erpQuotation.update({
+              where: { id: q.id },
+              data: { pdfFileId: fileId, pdfVersion: q.rowVersion },
+            }),
         };
         break;
       }
@@ -164,7 +197,8 @@ export class ErpPdfService {
           include: { customer: true, salesOrder: true, lines: { orderBy: { lineNo: 'asc' } } },
         });
         if (!dn) throw new DomainException('http.not_found');
-        if (dn.status === 'draft') throw new DomainException('erp.invalid_status', { params: { status: dn.status } });
+        if (dn.status === 'draft')
+          throw new DomainException('erp.invalid_status', { params: { status: dn.status } });
         view = {
           ...base,
           ...(await brand('delivery_note', dn.issuedAt ?? dn.createdAt, dn.deliverOn)),
@@ -175,14 +209,21 @@ export class ErpPdfService {
           rows: [
             { label: 'วันที่ส่ง', value: thaiDate(iso(dn.deliverOn)!) },
             { label: 'ใบสั่งขาย', value: dn.salesOrder.soNo },
-            ...(dn.salesOrder.customerPoNo ? [{ label: 'ใบสั่งซื้อลูกค้า', value: dn.salesOrder.customerPoNo }] : []),
+            ...(dn.salesOrder.customerPoNo
+              ? [{ label: 'ใบสั่งซื้อลูกค้า', value: dn.salesOrder.customerPoNo }]
+              : []),
             ...(dn.vehicle ? [{ label: 'รถ / ผู้ส่ง', value: dn.vehicle }] : []),
           ],
           buyer: { ...buyerOf(dn.customer), address: dn.shipToAddress ?? dn.customer.address },
           buyerLabel: 'ส่งถึง',
           fullForm: false,
           quantitiesOnly: true,
-          lines: dn.lines.map((l) => ({ description: l.description, quantity: l.quantity.toString(), unit: l.unit, amount: '0' })),
+          lines: dn.lines.map((l) => ({
+            description: l.description,
+            quantity: l.quantity.toString(),
+            unit: l.unit,
+            amount: '0',
+          })),
           totals: [],
           words: null,
           notes: [
@@ -196,7 +237,11 @@ export class ErpPdfService {
           current: dn.pdfFileId,
           version: dn.pdfVersion === dn.rowVersion ? dn.rowVersion : -1,
           issued: true,
-          save: (fileId) => db.erpDeliveryNote.update({ where: { id: dn.id }, data: { pdfFileId: fileId, pdfVersion: dn.rowVersion } }),
+          save: (fileId) =>
+            db.erpDeliveryNote.update({
+              where: { id: dn.id },
+              data: { pdfFileId: fileId, pdfVersion: dn.rowVersion },
+            }),
         };
         break;
       }
@@ -206,15 +251,32 @@ export class ErpPdfService {
           include: { customer: true, salesOrder: true, lines: { orderBy: { lineNo: 'asc' } } },
         });
         if (!iv) throw new DomainException('http.not_found');
-        if (iv.status === 'draft') throw new DomainException('erp.invalid_status', { params: { status: iv.status } });
+        if (iv.status === 'draft')
+          throw new DomainException('erp.invalid_status', { params: { status: iv.status } });
         const cash = iv.form === 'invoice_receipt';
         view = {
           ...base,
-          ...(await brand(iv.isTaxInvoice ? 'tax_invoice' : cash ? 'receipt' : 'invoice', iv.issuedAt ?? iv.createdAt, iv.issueDate)),
+          ...(await brand(
+            iv.isTaxInvoice ? 'tax_invoice' : cash ? 'receipt' : 'invoice',
+            iv.issuedAt ?? iv.createdAt,
+            iv.issueDate,
+          )),
           issuerSignature: cash ? 0 : 1,
           seller: party(iv.sellerSnapshot) ?? seller,
-          titleTh: iv.isTaxInvoice ? (cash ? 'ใบกำกับภาษี / ใบเสร็จรับเงิน' : 'ใบแจ้งหนี้ / ใบกำกับภาษี') : cash ? 'ใบเสร็จรับเงิน' : 'ใบแจ้งหนี้',
-          titleEn: iv.isTaxInvoice ? (cash ? 'Tax invoice / Receipt' : 'Invoice / Tax invoice') : cash ? 'Receipt' : 'Invoice',
+          titleTh: iv.isTaxInvoice
+            ? cash
+              ? 'ใบกำกับภาษี / ใบเสร็จรับเงิน'
+              : 'ใบแจ้งหนี้ / ใบกำกับภาษี'
+            : cash
+              ? 'ใบเสร็จรับเงิน'
+              : 'ใบแจ้งหนี้',
+          titleEn: iv.isTaxInvoice
+            ? cash
+              ? 'Tax invoice / Receipt'
+              : 'Invoice / Tax invoice'
+            : cash
+              ? 'Receipt'
+              : 'Invoice',
           copies: true,
           docNo: iv.invoiceNo!,
           rows: [
@@ -237,7 +299,11 @@ export class ErpPdfService {
           current: iv.pdfFileId,
           version: iv.pdfVersion === statusVersion(iv.status) ? statusVersion(iv.status) : -1,
           issued: true,
-          save: (fileId) => db.erpSalesInvoice.update({ where: { id: iv.id }, data: { pdfFileId: fileId, pdfVersion: statusVersion(iv.status) } }),
+          save: (fileId) =>
+            db.erpSalesInvoice.update({
+              where: { id: iv.id },
+              data: { pdfFileId: fileId, pdfVersion: statusVersion(iv.status) },
+            }),
         };
         break;
       }
@@ -247,13 +313,20 @@ export class ErpPdfService {
           include: { customer: true, invoice: true, lines: { orderBy: { lineNo: 'asc' } } },
         });
         if (!n) throw new DomainException('http.not_found');
-        if (n.status === 'draft') throw new DomainException('erp.invalid_status', { params: { status: n.status } });
+        if (n.status === 'draft')
+          throw new DomainException('erp.invalid_status', { params: { status: n.status } });
         const credit = n.kind === 'credit';
         view = {
           ...base,
           ...(await brand(credit ? 'credit_note' : 'debit_note', n.issuedAt ?? n.createdAt, n.issueDate)),
           seller: party(n.sellerSnapshot) ?? seller,
-          titleTh: credit ? (n.isTaxDocument ? 'ใบลดหนี้ / ใบกำกับภาษี' : 'ใบลดหนี้') : n.isTaxDocument ? 'ใบเพิ่มหนี้ / ใบกำกับภาษี' : 'ใบเพิ่มหนี้',
+          titleTh: credit
+            ? n.isTaxDocument
+              ? 'ใบลดหนี้ / ใบกำกับภาษี'
+              : 'ใบลดหนี้'
+            : n.isTaxDocument
+              ? 'ใบเพิ่มหนี้ / ใบกำกับภาษี'
+              : 'ใบเพิ่มหนี้',
           titleEn: credit ? 'Credit note' : 'Debit note',
           copies: true,
           docNo: n.noteNo!,
@@ -274,11 +347,18 @@ export class ErpPdfService {
             { label: 'มูลค่าตามใบกำกับภาษีเดิม', value: fmtMoney(n.originalValue) },
             { label: 'มูลค่าที่ถูกต้อง', value: fmtMoney(n.correctValue) },
             { label: credit ? 'ผลต่าง (ลดลง)' : 'ผลต่าง (เพิ่มขึ้น)', value: fmtMoney(n.difference) },
-            ...(dec(n.vatAmount).gt(0) ? [{ label: `ภาษีมูลค่าเพิ่ม ${Number(n.vatRatePct)}%`, value: fmtMoney(n.vatAmount) }] : []),
+            ...(dec(n.vatAmount).gt(0)
+              ? [{ label: `ภาษีมูลค่าเพิ่ม ${Number(n.vatRatePct)}%`, value: fmtMoney(n.vatAmount) }]
+              : []),
             { label: 'รวมทั้งสิ้น', value: fmtMoney(n.total), strong: true },
           ],
           words: bahtText(fmtMoney(n.total)),
-          notes: [{ label: 'เหตุผล', value: `${REASON_TH[n.reason] ?? n.reason}${n.reasonText ? ` — ${n.reasonText}` : ''}` }],
+          notes: [
+            {
+              label: 'เหตุผล',
+              value: `${REASON_TH[n.reason] ?? n.reason}${n.reasonText ? ` — ${n.reasonText}` : ''}`,
+            },
+          ],
           signatures: ['ผู้มีอำนาจลงนาม', 'ผู้รับเอกสาร'],
           stamp: n.status === 'voided' ? 'ยกเลิก' : null,
         };
@@ -286,7 +366,11 @@ export class ErpPdfService {
           current: n.pdfFileId,
           version: n.pdfVersion === statusVersion(n.status) ? statusVersion(n.status) : -1,
           issued: true,
-          save: (fileId) => db.erpSalesNote.update({ where: { id: n.id }, data: { pdfFileId: fileId, pdfVersion: statusVersion(n.status) } }),
+          save: (fileId) =>
+            db.erpSalesNote.update({
+              where: { id: n.id },
+              data: { pdfFileId: fileId, pdfVersion: statusVersion(n.status) },
+            }),
         };
         break;
       }
@@ -307,7 +391,10 @@ export class ErpPdfService {
           docNo: r.receiptNo,
           rows: [
             { label: 'วันที่', value: thaiDate(iso(r.receivedOn)!) },
-            { label: 'ชำระโดย', value: `${METHOD_TH[r.method] ?? r.method}${r.chequeNo ? ` เลขที่ ${r.chequeNo}` : ''}${r.chequeBank ? ` ${r.chequeBank}` : ''}` },
+            {
+              label: 'ชำระโดย',
+              value: `${METHOD_TH[r.method] ?? r.method}${r.chequeNo ? ` เลขที่ ${r.chequeNo}` : ''}${r.chequeBank ? ` ${r.chequeBank}` : ''}`,
+            },
           ],
           buyer: party(r.buyerSnapshot) ?? buyerOf(r.customer),
           fullForm: true,
@@ -317,12 +404,25 @@ export class ErpPdfService {
           })),
           totals: [
             { label: 'รวม', value: fmtMoney(dec(r.amount).abs().plus(dec(r.whtAmount))) },
-            ...(dec(r.whtAmount).gt(0) ? [{ label: 'หัก ภาษีหัก ณ ที่จ่าย', value: fmtMoney(r.whtAmount) }] : []),
-            { label: refund ? 'จ่ายคืนสุทธิ' : 'รับชำระสุทธิ', value: fmtMoney(dec(r.amount).abs()), strong: true },
+            ...(dec(r.whtAmount).gt(0)
+              ? [{ label: 'หัก ภาษีหัก ณ ที่จ่าย', value: fmtMoney(r.whtAmount) }]
+              : []),
+            {
+              label: refund ? 'จ่ายคืนสุทธิ' : 'รับชำระสุทธิ',
+              value: fmtMoney(dec(r.amount).abs()),
+              strong: true,
+            },
           ],
           words: bahtText(fmtMoney(dec(r.amount).abs())),
           notes: [
-            ...(r.whtCertNo ? [{ label: 'หนังสือรับรองการหักภาษี ณ ที่จ่าย', value: `${r.whtCertNo}${r.whtCertDate ? ` ลงวันที่ ${thaiDate(iso(r.whtCertDate)!)}` : ''}` }] : []),
+            ...(r.whtCertNo
+              ? [
+                  {
+                    label: 'หนังสือรับรองการหักภาษี ณ ที่จ่าย',
+                    value: `${r.whtCertNo}${r.whtCertDate ? ` ลงวันที่ ${thaiDate(iso(r.whtCertDate)!)}` : ''}`,
+                  },
+                ]
+              : []),
             ...(r.note ? [{ label: 'หมายเหตุ', value: r.note }] : []),
           ],
           signatures: [refund ? 'ผู้จ่ายเงิน' : 'ผู้รับเงิน'],
@@ -332,7 +432,11 @@ export class ErpPdfService {
           current: r.pdfFileId,
           version: r.pdfVersion === statusVersion(r.status) ? statusVersion(r.status) : -1,
           issued: true,
-          save: (fileId) => db.erpCustomerReceipt.update({ where: { id: r.id }, data: { pdfFileId: fileId, pdfVersion: statusVersion(r.status) } }),
+          save: (fileId) =>
+            db.erpCustomerReceipt.update({
+              where: { id: r.id },
+              data: { pdfFileId: fileId, pdfVersion: statusVersion(r.status) },
+            }),
         };
         break;
       }
@@ -371,7 +475,11 @@ export class ErpPdfService {
           current: b.pdfFileId,
           version: b.pdfVersion === statusVersion(b.status) ? statusVersion(b.status) : -1,
           issued: true,
-          save: (fileId) => db.erpBillingNote.update({ where: { id: b.id }, data: { pdfFileId: fileId, pdfVersion: statusVersion(b.status) } }),
+          save: (fileId) =>
+            db.erpBillingNote.update({
+              where: { id: b.id },
+              data: { pdfFileId: fileId, pdfVersion: statusVersion(b.status) },
+            }),
         };
         break;
       }
@@ -405,7 +513,11 @@ export class ErpPdfService {
           current: c.pdfFileId,
           version: c.pdfVersion === statusVersion(c.status) ? statusVersion(c.status) : -1,
           issued: true,
-          save: (fileId) => db.erpWhtCertificate.update({ where: { id: c.id }, data: { pdfFileId: fileId, pdfVersion: statusVersion(c.status) } }),
+          save: (fileId) =>
+            db.erpWhtCertificate.update({
+              where: { id: c.id },
+              data: { pdfFileId: fileId, pdfVersion: statusVersion(c.status) },
+            }),
         };
         break;
       }
@@ -415,7 +527,13 @@ export class ErpPdfService {
     const html = wht ? renderWhtCertificateHtml(wht) : renderSalesDocHtml(view!);
     const pdf = await this.renderer.render(html);
     const name = wht ? wht.certNo : view!.docNo;
-    const stored = await this.files.store(scope, pdf, `${name}.pdf`, 'application/pdf', cache.issued ? 'financial_record' : 'transient');
+    const stored = await this.files.store(
+      scope,
+      pdf,
+      `${name}.pdf`,
+      'application/pdf',
+      cache.issued ? 'financial_record' : 'transient',
+    );
     await cache.save(stored.fileId);
     const { fileId: _ignored, ...link } = stored;
     return link;

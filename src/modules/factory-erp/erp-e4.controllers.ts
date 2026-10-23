@@ -128,7 +128,12 @@ function Op(o: {
   implements: string[];
   can?: PermissionKey;
   params?: string[];
-  success?: { status: 200 | 201 | 204; description: string; type?: Type<unknown> | [Type<unknown>]; example?: unknown };
+  success?: {
+    status: 200 | 201 | 204;
+    description: string;
+    type?: Type<unknown> | [Type<unknown>];
+    example?: unknown;
+  };
   paginated?: { type: Type<unknown>; example: unknown };
   body?: { type: Type<unknown>; example: unknown };
   errors?: readonly ErrorCode[];
@@ -150,7 +155,9 @@ function Op(o: {
     ...(o.paginated
       ? [
           ApiPaginated(o.paginated.type, {
-            example: Array.isArray(o.paginated.example) ? (o.paginated.example as unknown[])[0] : o.paginated.example,
+            example: Array.isArray(o.paginated.example)
+              ? (o.paginated.example as unknown[])[0]
+              : o.paginated.example,
           }),
         ]
       : []),
@@ -163,7 +170,13 @@ function Op(o: {
 
 const CUSTOMER = { id: E4_IDS.customer, code: 'C0007', name: 'ร้านขนมบ้านสวน' };
 const SALESPERSON = { id: E4_IDS.salesperson, name: 'ฝ่ายขาย ทดสอบ' };
-const ITEM = { id: E4_IDS.productItem, sku: 'BOX-RSC-302015', name: 'กล่องลูกฟูก RSC 30×20×15', kind: 'finished_good', baseUnit: 'pcs' };
+const ITEM = {
+  id: E4_IDS.productItem,
+  sku: 'BOX-RSC-302015',
+  name: 'กล่องลูกฟูก RSC 30×20×15',
+  kind: 'finished_good',
+  baseUnit: 'pcs',
+};
 const LINE_DTO = {
   id: E4_IDS.quotationLine,
   lineNo: 1,
@@ -228,7 +241,12 @@ const OPPORTUNITY: ErpOpportunityDto = {
   wonAt: null,
   closedAt: null,
   createdAt: '2026-10-12T09:30:00+07:00',
-  nextActions: [ACTION('erp_opportunity.edit'), ACTION('erp_opportunity.quote'), ACTION('erp_opportunity.win'), ACTION('erp_opportunity.lose')],
+  nextActions: [
+    ACTION('erp_opportunity.edit'),
+    ACTION('erp_opportunity.quote'),
+    ACTION('erp_opportunity.win'),
+    ACTION('erp_opportunity.lose'),
+  ],
   version: 1,
 };
 const ACTIVITY: ErpActivityDto = {
@@ -274,7 +292,11 @@ const QUOTE_SUMMARY: ErpQuotationSummaryDto = {
 };
 const QUOTE: ErpQuotationDto = {
   ...QUOTE_SUMMARY,
-  opportunity: { id: E4_IDS.opportunity, code: 'กล่องเค้ก 2 ขนาด — ล็อตแรก', name: 'กล่องเค้ก 2 ขนาด — ล็อตแรก' },
+  opportunity: {
+    id: E4_IDS.opportunity,
+    code: 'กล่องเค้ก 2 ขนาด — ล็อตแรก',
+    name: 'กล่องเค้ก 2 ขนาด — ล็อตแรก',
+  },
   paymentTermDays: 30,
   leadTimeDays: 14,
   terms: 'ราคานี้รวมค่าขนส่งในกรุงเทพฯ และปริมณฑล',
@@ -296,7 +318,14 @@ const QUOTE: ErpQuotationDto = {
   cancelReason: null,
   salesOrder: null,
   revisions: [{ id: E4_IDS.quotation, revision: 1, status: 'sent', total: '66875.00' }],
-  nextActions: [ACTION('erp_quote.send'), ACTION('erp_quote.revise'), ACTION('erp_quote.accept'), ACTION('erp_quote.reject'), ACTION('erp_quote.cancel', true), ACTION('erp_quote.pdf')],
+  nextActions: [
+    ACTION('erp_quote.send'),
+    ACTION('erp_quote.revise'),
+    ACTION('erp_quote.accept'),
+    ACTION('erp_quote.reject'),
+    ACTION('erp_quote.cancel', true),
+    ACTION('erp_quote.pdf'),
+  ],
   version: 2,
 };
 const SAVE_QUOTE = {
@@ -374,7 +403,12 @@ const SO: ErpSalesOrderDto = {
   creditOverrideReason: null,
   closeReason: null,
   cancelReason: null,
-  nextActions: [ACTION('erp_so.deliver'), ACTION('erp_so.invoice'), ACTION('erp_so.cancel', true), ACTION('erp_so.pdf')],
+  nextActions: [
+    ACTION('erp_so.deliver'),
+    ACTION('erp_so.invoice'),
+    ACTION('erp_so.cancel', true),
+    ACTION('erp_so.pdf'),
+  ],
   version: 2,
 };
 const SAVE_SO = {
@@ -449,7 +483,9 @@ const IV: ErpSalesInvoiceDto = {
   debitedAmount: '0.00',
   receivedAmount: '0.00',
   lines: [{ ...LINE_DTO, id: E4_IDS.invoiceLine, quantity: '2000.000', amount: '25000.00' }],
-  deliveryNotes: [{ id: E4_IDS.deliveryNote, doNo: 'DO-2610-0002', status: 'delivered', deliverOn: '2026-10-20' }],
+  deliveryNotes: [
+    { id: E4_IDS.deliveryNote, doNo: 'DO-2610-0002', status: 'delivered', deliverOn: '2026-10-20' },
+  ],
   notes: [],
   receipts: [],
   seller: SELLER,
@@ -458,7 +494,13 @@ const IV: ErpSalesInvoiceDto = {
   issuedAt: '2026-10-20T15:00:00+07:00',
   voidedAt: null,
   voidReason: null,
-  nextActions: [ACTION('erp_iv.receive'), ACTION('erp_iv.credit'), ACTION('erp_iv.debit'), ACTION('erp_iv.void', true), ACTION('erp_iv.pdf')],
+  nextActions: [
+    ACTION('erp_iv.receive'),
+    ACTION('erp_iv.credit'),
+    ACTION('erp_iv.debit'),
+    ACTION('erp_iv.void', true),
+    ACTION('erp_iv.pdf'),
+  ],
   version: 2,
 };
 const NOTE: ErpSalesNoteDto = {
@@ -479,7 +521,15 @@ const NOTE: ErpSalesNoteDto = {
   vatAmount: '70.00',
   isTaxDocument: true,
   warehouse: { id: ERP_IDS.warehouse, code: 'MAIN', name: 'คลังหลัก' },
-  lines: [{ lineNo: 1, description: 'รับคืนกล่องพิมพ์สีเพี้ยน 80 ใบ', amount: '1000.00', item: ITEM, returnQty: '80.000' }],
+  lines: [
+    {
+      lineNo: 1,
+      description: 'รับคืนกล่องพิมพ์สีเพี้ยน 80 ใบ',
+      amount: '1000.00',
+      item: ITEM,
+      returnQty: '80.000',
+    },
+  ],
   seller: SELLER,
   buyer: PARTY,
   issuedAt: '2026-10-25T10:00:00+07:00',
@@ -505,7 +555,12 @@ const RECEIPT: ErpCustomerReceiptDto = {
   whtCertDate: '2026-11-10',
   whtFileId: null,
   note: null,
-  allocations: [{ invoice: { id: E4_IDS.invoice, invoiceNo: 'IV-2610-0005', status: 'paid', total: '26750.00' }, amount: '25680.00' }],
+  allocations: [
+    {
+      invoice: { id: E4_IDS.invoice, invoiceNo: 'IV-2610-0005', status: 'paid', total: '26750.00' },
+      amount: '25680.00',
+    },
+  ],
   amountInWords: 'สองหมื่นสี่พันแปดร้อยสี่สิบบาทถ้วน',
   cancelReason: null,
   createdBy: 'บัญชี ทดสอบ',
@@ -537,17 +592,38 @@ const AGING: ErpArAgingDto = {
   currency: 'THB',
   dueSoon: '0.00',
   refundsDue: '0.00',
-  totals: { current: '25680.00', d1_30: '0.00', d31_60: '0.00', d61_90: '0.00', over90: '0.00', total: '25680.00' },
+  totals: {
+    current: '25680.00',
+    d1_30: '0.00',
+    d31_60: '0.00',
+    d61_90: '0.00',
+    over90: '0.00',
+    total: '25680.00',
+  },
   customers: [
     {
       customer: CUSTOMER,
       invoices: 1,
-      buckets: { current: '25680.00', d1_30: '0.00', d31_60: '0.00', d61_90: '0.00', over90: '0.00', total: '25680.00' },
+      buckets: {
+        current: '25680.00',
+        d1_30: '0.00',
+        d31_60: '0.00',
+        d61_90: '0.00',
+        over90: '0.00',
+        total: '25680.00',
+      },
       creditLimit: '100000.00',
     },
   ],
 };
-const WHT_LINE = { lineNo: 1, incomeType: 'hire_of_work', description: 'ค่าจ้างพิมพ์', ratePct: '3.0000', baseAmount: '20000.00', whtAmount: '600.00' };
+const WHT_LINE = {
+  lineNo: 1,
+  incomeType: 'hire_of_work',
+  description: 'ค่าจ้างพิมพ์',
+  ratePct: '3.0000',
+  baseAmount: '20000.00',
+  whtAmount: '600.00',
+};
 const CERT: ErpWhtCertificateDto = {
   id: E4_IDS.certificate,
   certNo: 'WHT-2610-0001',
@@ -559,7 +635,13 @@ const CERT: ErpWhtCertificateDto = {
   baseAmount: '20000.00',
   whtAmount: '600.00',
   payer: SELLER,
-  payee: { name: 'บจก. กระดาษไทย (ทดสอบ)', address: 'กรุงเทพฯ', taxId: '0000555123457', branchCode: '00000', phone: null },
+  payee: {
+    name: 'บจก. กระดาษไทย (ทดสอบ)',
+    address: 'กรุงเทพฯ',
+    taxId: '0000555123457',
+    branchCode: '00000',
+    phone: null,
+  },
   lines: [WHT_LINE],
   voidReason: null,
   createdAt: '2026-10-31T16:00:00+07:00',
@@ -630,7 +712,12 @@ export class PartnerErpCrmController {
     description: 'The users holding a role at this factory, for salesperson and assignee pickers (D-359).',
     implements: ['D-359'],
     can: 'factory_sales.read',
-    success: { status: 200, description: 'People', type: [ErpSalespersonOptionDto], example: [{ ...SALESPERSON, roles: ['factory_sales'] }] },
+    success: {
+      status: 200,
+      description: 'People',
+      type: [ErpSalespersonOptionDto],
+      example: [{ ...SALESPERSON, roles: ['factory_sales'] }],
+    },
   })
   async salespeople(@CurrentActor() actor: Actor, @Param('factoryId', ParseUUIDPipe) factoryId: string) {
     return this.crm.salespeople(await this.workspace.open(actor, factoryId));
@@ -646,8 +733,16 @@ export class PartnerErpCrmController {
     paginated: { type: ErpLeadDto, example: [LEAD] },
     errors: ['http.not_found', 'validation.failed'],
   })
-  async listLeads(@CurrentActor() actor: Actor, @Param('factoryId', ParseUUIDPipe) factoryId: string, @Query() q: ErpLeadListQuery) {
-    return this.crm.listLeads(await this.workspace.open(actor, factoryId), q, await perms(this.permissions, actor));
+  async listLeads(
+    @CurrentActor() actor: Actor,
+    @Param('factoryId', ParseUUIDPipe) factoryId: string,
+    @Query() q: ErpLeadListQuery,
+  ) {
+    return this.crm.listLeads(
+      await this.workspace.open(actor, factoryId),
+      q,
+      await perms(this.permissions, actor),
+    );
   }
 
   @Post('leads')
@@ -658,12 +753,23 @@ export class PartnerErpCrmController {
     implements: ['D-359'],
     can: 'factory_sales.manage',
     etag: true,
-    body: { type: ErpSaveLeadDto, example: { name: 'ร้านขนมบ้านสวน', contactName: 'คุณสมศรี', phone: '080-000-1234', source: 'line' } },
+    body: {
+      type: ErpSaveLeadDto,
+      example: { name: 'ร้านขนมบ้านสวน', contactName: 'คุณสมศรี', phone: '080-000-1234', source: 'line' },
+    },
     success: { status: 201, description: 'Added', type: ErpLeadDto, example: LEAD },
     errors: WRITE,
   })
-  async createLead(@CurrentActor() actor: Actor, @Param('factoryId', ParseUUIDPipe) factoryId: string, @Body() body: ErpSaveLeadDto) {
-    return this.crm.createLead(await this.workspace.open(actor, factoryId), body, await perms(this.permissions, actor));
+  async createLead(
+    @CurrentActor() actor: Actor,
+    @Param('factoryId', ParseUUIDPipe) factoryId: string,
+    @Body() body: ErpSaveLeadDto,
+  ) {
+    return this.crm.createLead(
+      await this.workspace.open(actor, factoryId),
+      body,
+      await perms(this.permissions, actor),
+    );
   }
 
   @Get('leads/:leadId')
@@ -677,8 +783,16 @@ export class PartnerErpCrmController {
     etag: true,
     success: { status: 200, description: 'The lead', type: ErpLeadDto, example: LEAD },
   })
-  async getLead(@CurrentActor() actor: Actor, @Param('factoryId', ParseUUIDPipe) factoryId: string, @Param('leadId', ParseUUIDPipe) leadId: string) {
-    return this.crm.getLead(await this.workspace.open(actor, factoryId), leadId, await perms(this.permissions, actor));
+  async getLead(
+    @CurrentActor() actor: Actor,
+    @Param('factoryId', ParseUUIDPipe) factoryId: string,
+    @Param('leadId', ParseUUIDPipe) leadId: string,
+  ) {
+    return this.crm.getLead(
+      await this.workspace.open(actor, factoryId),
+      leadId,
+      await perms(this.permissions, actor),
+    );
   }
 
   @Put('leads/:leadId')
@@ -691,7 +805,10 @@ export class PartnerErpCrmController {
     params: ['leadId'],
     concurrency: true,
     etag: true,
-    body: { type: ErpSaveLeadDto, example: { name: 'ร้านขนมบ้านสวน', stage: 'qualified', expectedValue: '45000' } },
+    body: {
+      type: ErpSaveLeadDto,
+      example: { name: 'ร้านขนมบ้านสวน', stage: 'qualified', expectedValue: '45000' },
+    },
     success: { status: 200, description: 'Saved', type: ErpLeadDto, example: LEAD },
     errors: [...WRITE, 'erp.invalid_status'],
   })
@@ -702,7 +819,13 @@ export class PartnerErpCrmController {
     @IfMatch() ifMatch: string | undefined,
     @Body() body: ErpSaveLeadDto,
   ) {
-    return this.crm.updateLead(await this.workspace.open(actor, factoryId), leadId, ifMatch, body, await perms(this.permissions, actor));
+    return this.crm.updateLead(
+      await this.workspace.open(actor, factoryId),
+      leadId,
+      ifMatch,
+      body,
+      await perms(this.permissions, actor),
+    );
   }
 
   @Post('leads/:leadId/actions/convert')
@@ -717,12 +840,19 @@ export class PartnerErpCrmController {
     params: ['leadId'],
     idempotent: true,
     status: 200,
-    body: { type: ErpConvertLeadDto, example: { taxId: '0000556123469', paymentTermDays: 30, openOpportunity: true } },
+    body: {
+      type: ErpConvertLeadDto,
+      example: { taxId: '0000556123469', paymentTermDays: 30, openOpportunity: true },
+    },
     success: {
       status: 200,
       description: 'Converted',
       type: ErpConvertLeadResultDto,
-      example: { lead: { ...LEAD, stage: 'converted', customer: CUSTOMER, nextActions: [] }, customer: CUSTOMER, opportunityId: E4_IDS.opportunity },
+      example: {
+        lead: { ...LEAD, stage: 'converted', customer: CUSTOMER, nextActions: [] },
+        customer: CUSTOMER,
+        opportunityId: E4_IDS.opportunity,
+      },
     },
     errors: [...WRITE, 'erp.invalid_status', 'erp.code_taken', 'erp.archived'],
   })
@@ -732,7 +862,12 @@ export class PartnerErpCrmController {
     @Param('leadId', ParseUUIDPipe) leadId: string,
     @Body() body: ErpConvertLeadDto,
   ) {
-    return this.crm.convertLead(await this.workspace.open(actor, factoryId), leadId, body, await perms(this.permissions, actor));
+    return this.crm.convertLead(
+      await this.workspace.open(actor, factoryId),
+      leadId,
+      body,
+      await perms(this.permissions, actor),
+    );
   }
 
   @Post('leads/:leadId/actions/lose')
@@ -746,7 +881,12 @@ export class PartnerErpCrmController {
     idempotent: true,
     status: 200,
     body: { type: ErpLoseDto, example: { reason: 'ลูกค้าเลือกเจ้าอื่นที่ถูกกว่า' } },
-    success: { status: 200, description: 'Lost', type: ErpLeadDto, example: { ...LEAD, stage: 'lost', lostReason: 'ลูกค้าเลือกเจ้าอื่นที่ถูกกว่า', nextActions: [] } },
+    success: {
+      status: 200,
+      description: 'Lost',
+      type: ErpLeadDto,
+      example: { ...LEAD, stage: 'lost', lostReason: 'ลูกค้าเลือกเจ้าอื่นที่ถูกกว่า', nextActions: [] },
+    },
     errors: [...WRITE, 'erp.invalid_status'],
   })
   async loseLead(
@@ -755,7 +895,12 @@ export class PartnerErpCrmController {
     @Param('leadId', ParseUUIDPipe) leadId: string,
     @Body() body: ErpLoseDto,
   ) {
-    return this.crm.loseLead(await this.workspace.open(actor, factoryId), leadId, body.reason, await perms(this.permissions, actor));
+    return this.crm.loseLead(
+      await this.workspace.open(actor, factoryId),
+      leadId,
+      body.reason,
+      await perms(this.permissions, actor),
+    );
   }
 
   @Get('opportunities')
@@ -768,24 +913,49 @@ export class PartnerErpCrmController {
     paginated: { type: ErpOpportunityDto, example: [OPPORTUNITY] },
     errors: ['http.not_found', 'validation.failed'],
   })
-  async listOpportunities(@CurrentActor() actor: Actor, @Param('factoryId', ParseUUIDPipe) factoryId: string, @Query() q: ErpOpportunityListQuery) {
-    return this.crm.listOpportunities(await this.workspace.open(actor, factoryId), q, await perms(this.permissions, actor));
+  async listOpportunities(
+    @CurrentActor() actor: Actor,
+    @Param('factoryId', ParseUUIDPipe) factoryId: string,
+    @Query() q: ErpOpportunityListQuery,
+  ) {
+    return this.crm.listOpportunities(
+      await this.workspace.open(actor, factoryId),
+      q,
+      await perms(this.permissions, actor),
+    );
   }
 
   @Post('opportunities')
   @Op({
     id: 'partner.erpCrm.createOpportunity',
     summary: 'Open an opportunity',
-    description: 'For a customer or a lead, with value, stage and expected close; probability defaults by stage (D-359).',
+    description:
+      'For a customer or a lead, with value, stage and expected close; probability defaults by stage (D-359).',
     implements: ['D-359'],
     can: 'factory_sales.manage',
     etag: true,
-    body: { type: ErpSaveOpportunityDto, example: { title: 'กล่องเค้ก 2 ขนาด — ล็อตแรก', customerId: E4_IDS.customer, value: '62500', expectedCloseOn: '2026-11-15' } },
+    body: {
+      type: ErpSaveOpportunityDto,
+      example: {
+        title: 'กล่องเค้ก 2 ขนาด — ล็อตแรก',
+        customerId: E4_IDS.customer,
+        value: '62500',
+        expectedCloseOn: '2026-11-15',
+      },
+    },
     success: { status: 201, description: 'Opened', type: ErpOpportunityDto, example: OPPORTUNITY },
     errors: [...WRITE, 'erp.customer_required'],
   })
-  async createOpportunity(@CurrentActor() actor: Actor, @Param('factoryId', ParseUUIDPipe) factoryId: string, @Body() body: ErpSaveOpportunityDto) {
-    return this.crm.createOpportunity(await this.workspace.open(actor, factoryId), body, await perms(this.permissions, actor));
+  async createOpportunity(
+    @CurrentActor() actor: Actor,
+    @Param('factoryId', ParseUUIDPipe) factoryId: string,
+    @Body() body: ErpSaveOpportunityDto,
+  ) {
+    return this.crm.createOpportunity(
+      await this.workspace.open(actor, factoryId),
+      body,
+      await perms(this.permissions, actor),
+    );
   }
 
   @Get('opportunities/:opportunityId')
@@ -804,7 +974,11 @@ export class PartnerErpCrmController {
     @Param('factoryId', ParseUUIDPipe) factoryId: string,
     @Param('opportunityId', ParseUUIDPipe) opportunityId: string,
   ) {
-    return this.crm.getOpportunity(await this.workspace.open(actor, factoryId), opportunityId, await perms(this.permissions, actor));
+    return this.crm.getOpportunity(
+      await this.workspace.open(actor, factoryId),
+      opportunityId,
+      await perms(this.permissions, actor),
+    );
   }
 
   @Put('opportunities/:opportunityId')
@@ -817,7 +991,10 @@ export class PartnerErpCrmController {
     params: ['opportunityId'],
     concurrency: true,
     etag: true,
-    body: { type: ErpSaveOpportunityDto, example: { title: 'กล่องเค้ก 2 ขนาด — ล็อตแรก', stage: 'negotiation' } },
+    body: {
+      type: ErpSaveOpportunityDto,
+      example: { title: 'กล่องเค้ก 2 ขนาด — ล็อตแรก', stage: 'negotiation' },
+    },
     success: { status: 200, description: 'Saved', type: ErpOpportunityDto, example: OPPORTUNITY },
     errors: [...WRITE, 'erp.invalid_status', 'erp.customer_required'],
   })
@@ -828,7 +1005,13 @@ export class PartnerErpCrmController {
     @IfMatch() ifMatch: string | undefined,
     @Body() body: ErpSaveOpportunityDto,
   ) {
-    return this.crm.updateOpportunity(await this.workspace.open(actor, factoryId), opportunityId, ifMatch, body, await perms(this.permissions, actor));
+    return this.crm.updateOpportunity(
+      await this.workspace.open(actor, factoryId),
+      opportunityId,
+      ifMatch,
+      body,
+      await perms(this.permissions, actor),
+    );
   }
 
   @Post('opportunities/:opportunityId/actions/win')
@@ -841,7 +1024,12 @@ export class PartnerErpCrmController {
     params: ['opportunityId'],
     idempotent: true,
     status: 200,
-    success: { status: 200, description: 'Won', type: ErpOpportunityDto, example: { ...OPPORTUNITY, stage: 'won', probabilityPct: 100, nextActions: [] } },
+    success: {
+      status: 200,
+      description: 'Won',
+      type: ErpOpportunityDto,
+      example: { ...OPPORTUNITY, stage: 'won', probabilityPct: 100, nextActions: [] },
+    },
     errors: ['http.not_found'],
   })
   async winOpportunity(
@@ -849,7 +1037,11 @@ export class PartnerErpCrmController {
     @Param('factoryId', ParseUUIDPipe) factoryId: string,
     @Param('opportunityId', ParseUUIDPipe) opportunityId: string,
   ) {
-    return this.crm.winOpportunity(await this.workspace.open(actor, factoryId), opportunityId, await perms(this.permissions, actor));
+    return this.crm.winOpportunity(
+      await this.workspace.open(actor, factoryId),
+      opportunityId,
+      await perms(this.permissions, actor),
+    );
   }
 
   @Post('opportunities/:opportunityId/actions/lose')
@@ -863,7 +1055,12 @@ export class PartnerErpCrmController {
     idempotent: true,
     status: 200,
     body: { type: ErpLoseDto, example: { reason: 'ลูกค้าเลื่อนโครงการ' } },
-    success: { status: 200, description: 'Lost', type: ErpOpportunityDto, example: { ...OPPORTUNITY, stage: 'lost', probabilityPct: 0, nextActions: [] } },
+    success: {
+      status: 200,
+      description: 'Lost',
+      type: ErpOpportunityDto,
+      example: { ...OPPORTUNITY, stage: 'lost', probabilityPct: 0, nextActions: [] },
+    },
     errors: [...WRITE, 'erp.invalid_status'],
   })
   async loseOpportunity(
@@ -872,14 +1069,20 @@ export class PartnerErpCrmController {
     @Param('opportunityId', ParseUUIDPipe) opportunityId: string,
     @Body() body: ErpLoseDto,
   ) {
-    return this.crm.loseOpportunity(await this.workspace.open(actor, factoryId), opportunityId, body.reason, await perms(this.permissions, actor));
+    return this.crm.loseOpportunity(
+      await this.workspace.open(actor, factoryId),
+      opportunityId,
+      body.reason,
+      await perms(this.permissions, actor),
+    );
   }
 
   @Get('pipeline')
   @Op({
     id: 'partner.erpCrm.pipeline',
     summary: 'The sales pipeline',
-    description: 'Open opportunities by stage with value and probability-weighted value, this month’s won and lost, by salesperson (D-359).',
+    description:
+      'Open opportunities by stage with value and probability-weighted value, this month’s won and lost, by salesperson (D-359).',
     implements: ['D-359'],
     can: 'factory_sales.read',
     success: { status: 200, description: 'The pipeline', type: ErpPipelineDto, example: PIPELINE },
@@ -898,7 +1101,11 @@ export class PartnerErpCrmController {
     paginated: { type: ErpActivityDto, example: [ACTIVITY] },
     errors: ['http.not_found', 'validation.failed'],
   })
-  async listActivities(@CurrentActor() actor: Actor, @Param('factoryId', ParseUUIDPipe) factoryId: string, @Query() q: ErpActivityListQuery) {
+  async listActivities(
+    @CurrentActor() actor: Actor,
+    @Param('factoryId', ParseUUIDPipe) factoryId: string,
+    @Query() q: ErpActivityListQuery,
+  ) {
     return this.crm.listActivities(await this.workspace.open(actor, factoryId), q);
   }
 
@@ -906,14 +1113,27 @@ export class PartnerErpCrmController {
   @Op({
     id: 'partner.erpCrm.createActivity',
     summary: 'Log an activity or plan a follow-up',
-    description: 'About exactly one lead, opportunity or customer; assigned to a user of this factory (D-359).',
+    description:
+      'About exactly one lead, opportunity or customer; assigned to a user of this factory (D-359).',
     implements: ['D-359'],
     can: 'factory_sales.manage',
-    body: { type: ErpSaveActivityDto, example: { kind: 'call', subject: 'โทรตามใบเสนอราคา', opportunityId: E4_IDS.opportunity, dueAt: '2026-10-14T10:00:00+07:00' } },
+    body: {
+      type: ErpSaveActivityDto,
+      example: {
+        kind: 'call',
+        subject: 'โทรตามใบเสนอราคา',
+        opportunityId: E4_IDS.opportunity,
+        dueAt: '2026-10-14T10:00:00+07:00',
+      },
+    },
     success: { status: 201, description: 'Logged', type: ErpActivityDto, example: ACTIVITY },
     errors: WRITE,
   })
-  async createActivity(@CurrentActor() actor: Actor, @Param('factoryId', ParseUUIDPipe) factoryId: string, @Body() body: ErpSaveActivityDto) {
+  async createActivity(
+    @CurrentActor() actor: Actor,
+    @Param('factoryId', ParseUUIDPipe) factoryId: string,
+    @Body() body: ErpSaveActivityDto,
+  ) {
     return this.crm.createActivity(await this.workspace.open(actor, factoryId), body);
   }
 
@@ -928,7 +1148,12 @@ export class PartnerErpCrmController {
     idempotent: true,
     status: 200,
     body: { type: ErpCompleteActivityDto, example: { outcome: 'ลูกค้าขอส่งตัวอย่างก่อน' } },
-    success: { status: 200, description: 'Done', type: ErpActivityDto, example: { ...ACTIVITY, doneAt: '2026-10-14T10:20:00+07:00', outcome: 'ลูกค้าขอส่งตัวอย่างก่อน' } },
+    success: {
+      status: 200,
+      description: 'Done',
+      type: ErpActivityDto,
+      example: { ...ACTIVITY, doneAt: '2026-10-14T10:20:00+07:00', outcome: 'ลูกค้าขอส่งตัวอย่างก่อน' },
+    },
     errors: [...WRITE, 'erp.invalid_status'],
   })
   async completeActivity(
@@ -964,7 +1189,11 @@ export class PartnerErpQuotationsController {
     paginated: { type: ErpQuotationSummaryDto, example: [QUOTE_SUMMARY] },
     errors: ['http.not_found', 'validation.failed'],
   })
-  async list(@CurrentActor() actor: Actor, @Param('factoryId', ParseUUIDPipe) factoryId: string, @Query() q: ErpQuotationListQuery) {
+  async list(
+    @CurrentActor() actor: Actor,
+    @Param('factoryId', ParseUUIDPipe) factoryId: string,
+    @Query() q: ErpQuotationListQuery,
+  ) {
     return this.quotes.list(await this.workspace.open(actor, factoryId), q);
   }
 
@@ -972,16 +1201,30 @@ export class PartnerErpQuotationsController {
   @Op({
     id: 'partner.erpQuotations.create',
     summary: 'Draft a quotation',
-    description: '`QT-YYMM-NNNN`, for a customer, priced line by line; valid for `settings.quoteValidDays` by default (D-360).',
+    description:
+      '`QT-YYMM-NNNN`, for a customer, priced line by line; valid for `settings.quoteValidDays` by default (D-360).',
     implements: ['D-360'],
     can: 'factory_sales.manage',
     etag: true,
     body: { type: ErpSaveQuotationDto, example: SAVE_QUOTE },
-    success: { status: 201, description: 'Drafted', type: ErpQuotationDto, example: { ...QUOTE, status: 'draft', sentAt: null, linkActive: false } },
+    success: {
+      status: 201,
+      description: 'Drafted',
+      type: ErpQuotationDto,
+      example: { ...QUOTE, status: 'draft', sentAt: null, linkActive: false },
+    },
     errors: [...WRITE, 'erp.customer_required', 'erp.archived'],
   })
-  async create(@CurrentActor() actor: Actor, @Param('factoryId', ParseUUIDPipe) factoryId: string, @Body() body: ErpSaveQuotationDto) {
-    return this.quotes.create(await this.workspace.open(actor, factoryId), body, await perms(this.permissions, actor));
+  async create(
+    @CurrentActor() actor: Actor,
+    @Param('factoryId', ParseUUIDPipe) factoryId: string,
+    @Body() body: ErpSaveQuotationDto,
+  ) {
+    return this.quotes.create(
+      await this.workspace.open(actor, factoryId),
+      body,
+      await perms(this.permissions, actor),
+    );
   }
 
   @Get(':quotationId')
@@ -995,8 +1238,16 @@ export class PartnerErpQuotationsController {
     etag: true,
     success: { status: 200, description: 'The quotation', type: ErpQuotationDto, example: QUOTE },
   })
-  async get(@CurrentActor() actor: Actor, @Param('factoryId', ParseUUIDPipe) factoryId: string, @Param('quotationId', ParseUUIDPipe) quotationId: string) {
-    return this.quotes.get(await this.workspace.open(actor, factoryId), quotationId, await perms(this.permissions, actor));
+  async get(
+    @CurrentActor() actor: Actor,
+    @Param('factoryId', ParseUUIDPipe) factoryId: string,
+    @Param('quotationId', ParseUUIDPipe) quotationId: string,
+  ) {
+    return this.quotes.get(
+      await this.workspace.open(actor, factoryId),
+      quotationId,
+      await perms(this.permissions, actor),
+    );
   }
 
   @Put(':quotationId')
@@ -1010,7 +1261,12 @@ export class PartnerErpQuotationsController {
     concurrency: true,
     etag: true,
     body: { type: ErpSaveQuotationDto, example: SAVE_QUOTE },
-    success: { status: 200, description: 'Saved', type: ErpQuotationDto, example: { ...QUOTE, status: 'draft' } },
+    success: {
+      status: 200,
+      description: 'Saved',
+      type: ErpQuotationDto,
+      example: { ...QUOTE, status: 'draft' },
+    },
     errors: [...WRITE, 'erp.invalid_status', 'erp.customer_required', 'erp.archived'],
   })
   async update(
@@ -1020,7 +1276,13 @@ export class PartnerErpQuotationsController {
     @IfMatch() ifMatch: string | undefined,
     @Body() body: ErpSaveQuotationDto,
   ) {
-    return this.quotes.update(await this.workspace.open(actor, factoryId), quotationId, ifMatch, body, await perms(this.permissions, actor));
+    return this.quotes.update(
+      await this.workspace.open(actor, factoryId),
+      quotationId,
+      ifMatch,
+      body,
+      await perms(this.permissions, actor),
+    );
   }
 
   @Post(':quotationId/actions/send')
@@ -1039,28 +1301,54 @@ export class PartnerErpQuotationsController {
       status: 200,
       description: 'Sent',
       type: ErpQuotationLinkDto,
-      example: { quotation: QUOTE, url: 'https://www.getpack.example/q/q3J9f0T1xYk8Zb2mR4sW6uE7vN0aLcDh', expiresAt: '2026-11-11T23:59:59+07:00' },
+      example: {
+        quotation: QUOTE,
+        url: 'https://www.getpack.example/q/q3J9f0T1xYk8Zb2mR4sW6uE7vN0aLcDh',
+        expiresAt: '2026-11-11T23:59:59+07:00',
+      },
     },
     errors: ['http.not_found', 'erp.invalid_status', 'erp.quotation_expired'],
   })
-  async send(@CurrentActor() actor: Actor, @Param('factoryId', ParseUUIDPipe) factoryId: string, @Param('quotationId', ParseUUIDPipe) quotationId: string) {
-    return this.quotes.send(await this.workspace.open(actor, factoryId), quotationId, await perms(this.permissions, actor));
+  async send(
+    @CurrentActor() actor: Actor,
+    @Param('factoryId', ParseUUIDPipe) factoryId: string,
+    @Param('quotationId', ParseUUIDPipe) quotationId: string,
+  ) {
+    return this.quotes.send(
+      await this.workspace.open(actor, factoryId),
+      quotationId,
+      await perms(this.permissions, actor),
+    );
   }
 
   @Post(':quotationId/actions/revise')
   @Op({
     id: 'partner.erpQuotations.revise',
     summary: 'Revise a quotation',
-    description: 'A new draft under the same number with the next revision, dated today; this one is superseded (D-360).',
+    description:
+      'A new draft under the same number with the next revision, dated today; this one is superseded (D-360).',
     implements: ['D-360'],
     can: 'factory_sales.manage',
     params: ['quotationId'],
     idempotent: true,
-    success: { status: 201, description: 'The new revision', type: ErpQuotationDto, example: { ...QUOTE, revision: 2, status: 'draft' } },
+    success: {
+      status: 201,
+      description: 'The new revision',
+      type: ErpQuotationDto,
+      example: { ...QUOTE, revision: 2, status: 'draft' },
+    },
     errors: ['http.not_found', 'erp.invalid_status'],
   })
-  async revise(@CurrentActor() actor: Actor, @Param('factoryId', ParseUUIDPipe) factoryId: string, @Param('quotationId', ParseUUIDPipe) quotationId: string) {
-    return this.quotes.revise(await this.workspace.open(actor, factoryId), quotationId, await perms(this.permissions, actor));
+  async revise(
+    @CurrentActor() actor: Actor,
+    @Param('factoryId', ParseUUIDPipe) factoryId: string,
+    @Param('quotationId', ParseUUIDPipe) quotationId: string,
+  ) {
+    return this.quotes.revise(
+      await this.workspace.open(actor, factoryId),
+      quotationId,
+      await perms(this.permissions, actor),
+    );
   }
 
   @Post(':quotationId/actions/accept')
@@ -1073,8 +1361,16 @@ export class PartnerErpQuotationsController {
     params: ['quotationId'],
     idempotent: true,
     status: 200,
-    body: { type: ErpRecordAcceptanceDto, example: { name: 'คุณสมศรี ใจดี', position: 'เจ้าของร้าน', customerPoNo: 'PO-6610-015' } },
-    success: { status: 200, description: 'Accepted', type: ErpQuotationDto, example: { ...QUOTE, status: 'accepted', acceptedVia: 'factory' } },
+    body: {
+      type: ErpRecordAcceptanceDto,
+      example: { name: 'คุณสมศรี ใจดี', position: 'เจ้าของร้าน', customerPoNo: 'PO-6610-015' },
+    },
+    success: {
+      status: 200,
+      description: 'Accepted',
+      type: ErpQuotationDto,
+      example: { ...QUOTE, status: 'accepted', acceptedVia: 'factory' },
+    },
     errors: [...WRITE, 'erp.invalid_status', 'erp.quotation_expired'],
   })
   async accept(
@@ -1083,7 +1379,12 @@ export class PartnerErpQuotationsController {
     @Param('quotationId', ParseUUIDPipe) quotationId: string,
     @Body() body: ErpRecordAcceptanceDto,
   ) {
-    return this.quotes.accept(await this.workspace.open(actor, factoryId), quotationId, body, await perms(this.permissions, actor));
+    return this.quotes.accept(
+      await this.workspace.open(actor, factoryId),
+      quotationId,
+      body,
+      await perms(this.permissions, actor),
+    );
   }
 
   @Post(':quotationId/actions/reject')
@@ -1097,7 +1398,12 @@ export class PartnerErpQuotationsController {
     idempotent: true,
     status: 200,
     body: { type: ReasonDto, example: { reason: 'งบประมาณไม่พอในรอบนี้' } },
-    success: { status: 200, description: 'Declined', type: ErpQuotationDto, example: { ...QUOTE, status: 'rejected' } },
+    success: {
+      status: 200,
+      description: 'Declined',
+      type: ErpQuotationDto,
+      example: { ...QUOTE, status: 'rejected' },
+    },
     errors: [...WRITE, 'erp.invalid_status'],
   })
   async reject(
@@ -1106,7 +1412,12 @@ export class PartnerErpQuotationsController {
     @Param('quotationId', ParseUUIDPipe) quotationId: string,
     @Body() body: ReasonDto,
   ) {
-    return this.quotes.reject(await this.workspace.open(actor, factoryId), quotationId, body.reason, await perms(this.permissions, actor));
+    return this.quotes.reject(
+      await this.workspace.open(actor, factoryId),
+      quotationId,
+      body.reason,
+      await perms(this.permissions, actor),
+    );
   }
 
   @Post(':quotationId/actions/cancel')
@@ -1120,7 +1431,12 @@ export class PartnerErpQuotationsController {
     idempotent: true,
     status: 200,
     body: { type: ReasonDto, example: { reason: 'ลูกค้าขอเปลี่ยนสเปกทั้งหมด' } },
-    success: { status: 200, description: 'Cancelled', type: ErpQuotationDto, example: { ...QUOTE, status: 'cancelled' } },
+    success: {
+      status: 200,
+      description: 'Cancelled',
+      type: ErpQuotationDto,
+      example: { ...QUOTE, status: 'cancelled' },
+    },
     errors: [...WRITE, 'erp.invalid_status'],
   })
   async cancel(
@@ -1129,23 +1445,42 @@ export class PartnerErpQuotationsController {
     @Param('quotationId', ParseUUIDPipe) quotationId: string,
     @Body() body: ReasonDto,
   ) {
-    return this.quotes.cancel(await this.workspace.open(actor, factoryId), quotationId, body.reason, await perms(this.permissions, actor));
+    return this.quotes.cancel(
+      await this.workspace.open(actor, factoryId),
+      quotationId,
+      body.reason,
+      await perms(this.permissions, actor),
+    );
   }
 
   @Post(':quotationId/actions/order')
   @Op({
     id: 'partner.erpQuotations.order',
     summary: 'Make a sales order from an accepted quotation',
-    description: 'A draft `SO` with its lines, prices, terms and the customer’s PO; the existing one when already made (D-361).',
+    description:
+      'A draft `SO` with its lines, prices, terms and the customer’s PO; the existing one when already made (D-361).',
     implements: ['D-360', 'D-361'],
     can: 'factory_sales.manage',
     params: ['quotationId'],
     idempotent: true,
-    success: { status: 201, description: 'Drafted', type: ErpSalesOrderDto, example: { ...SO, status: 'draft', nextActions: [ACTION('erp_so.edit'), ACTION('erp_so.confirm')] } },
+    success: {
+      status: 201,
+      description: 'Drafted',
+      type: ErpSalesOrderDto,
+      example: { ...SO, status: 'draft', nextActions: [ACTION('erp_so.edit'), ACTION('erp_so.confirm')] },
+    },
     errors: ['http.not_found', 'erp.invalid_status'],
   })
-  async order(@CurrentActor() actor: Actor, @Param('factoryId', ParseUUIDPipe) factoryId: string, @Param('quotationId', ParseUUIDPipe) quotationId: string) {
-    return this.orders.fromQuotation(await this.workspace.open(actor, factoryId), quotationId, await perms(this.permissions, actor));
+  async order(
+    @CurrentActor() actor: Actor,
+    @Param('factoryId', ParseUUIDPipe) factoryId: string,
+    @Param('quotationId', ParseUUIDPipe) quotationId: string,
+  ) {
+    return this.orders.fromQuotation(
+      await this.workspace.open(actor, factoryId),
+      quotationId,
+      await perms(this.permissions, actor),
+    );
   }
 
   @Get(':quotationId/pdf')
@@ -1156,9 +1491,18 @@ export class PartnerErpQuotationsController {
     implements: ['D-368'],
     can: 'factory_sales.read',
     params: ['quotationId'],
-    success: { status: 200, description: 'The link', type: ErpPdfLinkDto, example: { ...PDF_LINK, fileName: 'QT-2610-0003.pdf' } },
+    success: {
+      status: 200,
+      description: 'The link',
+      type: ErpPdfLinkDto,
+      example: { ...PDF_LINK, fileName: 'QT-2610-0003.pdf' },
+    },
   })
-  async pdf(@CurrentActor() actor: Actor, @Param('factoryId', ParseUUIDPipe) factoryId: string, @Param('quotationId', ParseUUIDPipe) quotationId: string) {
+  async pdf(
+    @CurrentActor() actor: Actor,
+    @Param('factoryId', ParseUUIDPipe) factoryId: string,
+    @Param('quotationId', ParseUUIDPipe) quotationId: string,
+  ) {
     return this.pdfs.pdf(await this.workspace.open(actor, factoryId), 'quotation', quotationId);
   }
 }
@@ -1200,11 +1544,28 @@ export class PublicQuotationLinksController {
   @ApiEndpoint({
     id: 'store.quoteLinks.accept',
     summary: 'Accept the quotation',
-    description: 'The customer’s name, position and PO number are recorded with the acceptance; the factory is told (D-360).',
+    description:
+      'The customer’s name, position and PO number are recorded with the acceptance; the factory is told (D-360).',
     implements: ['D-360'],
   })
-  @ApiBody({ type: PublicAcceptQuotationDto, examples: { default: { value: { name: 'คุณสมศรี ใจดี', position: 'เจ้าของร้าน', customerPoNo: 'PO-6610-015', agree: true } } } })
-  @ApiSuccess(200, { description: 'Accepted', type: PublicQuotationDto, example: { ...PUBLIC_QUOTE, status: 'accepted', acceptedAt: '2026-10-13T09:00:00+07:00', acceptedName: 'คุณสมศรี ใจดี' } })
+  @ApiBody({
+    type: PublicAcceptQuotationDto,
+    examples: {
+      default: {
+        value: { name: 'คุณสมศรี ใจดี', position: 'เจ้าของร้าน', customerPoNo: 'PO-6610-015', agree: true },
+      },
+    },
+  })
+  @ApiSuccess(200, {
+    description: 'Accepted',
+    type: PublicQuotationDto,
+    example: {
+      ...PUBLIC_QUOTE,
+      status: 'accepted',
+      acceptedAt: '2026-10-13T09:00:00+07:00',
+      acceptedName: 'คุณสมศรี ใจดี',
+    },
+  })
   @ApiStandardErrors(...WRITE, 'erp.quotation_expired', 'erp.invalid_status', 'http.too_many_requests')
   accept(@Param('token') token: string, @Body() body: PublicAcceptQuotationDto) {
     return this.quotes.publicAccept(token, body);
@@ -1221,8 +1582,15 @@ export class PublicQuotationLinksController {
     description: 'With a reason for the factory (D-360).',
     implements: ['D-360'],
   })
-  @ApiBody({ type: PublicDeclineQuotationDto, examples: { default: { value: { reason: 'งบประมาณไม่พอในรอบนี้' } } } })
-  @ApiSuccess(200, { description: 'Declined', type: PublicQuotationDto, example: { ...PUBLIC_QUOTE, status: 'rejected' } })
+  @ApiBody({
+    type: PublicDeclineQuotationDto,
+    examples: { default: { value: { reason: 'งบประมาณไม่พอในรอบนี้' } } },
+  })
+  @ApiSuccess(200, {
+    description: 'Declined',
+    type: PublicQuotationDto,
+    example: { ...PUBLIC_QUOTE, status: 'rejected' },
+  })
   @ApiStandardErrors(...WRITE, 'erp.quotation_expired', 'erp.invalid_status', 'http.too_many_requests')
   decline(@Param('token') token: string, @Body() body: PublicDeclineQuotationDto) {
     return this.quotes.publicDecline(token, body.reason);
@@ -1251,7 +1619,11 @@ export class PartnerErpSalesOrdersController {
     paginated: { type: ErpSalesOrderSummaryDto, example: [SO_SUMMARY] },
     errors: ['http.not_found', 'validation.failed'],
   })
-  async list(@CurrentActor() actor: Actor, @Param('factoryId', ParseUUIDPipe) factoryId: string, @Query() q: ErpSalesOrderListQuery) {
+  async list(
+    @CurrentActor() actor: Actor,
+    @Param('factoryId', ParseUUIDPipe) factoryId: string,
+    @Query() q: ErpSalesOrderListQuery,
+  ) {
     return this.orders.list(await this.workspace.open(actor, factoryId), q);
   }
 
@@ -1259,31 +1631,54 @@ export class PartnerErpSalesOrdersController {
   @Op({
     id: 'partner.erpSalesOrders.create',
     summary: 'Enter a sales order',
-    description: 'A draft `SO-YYMM-NNNN`; each goods line from stock or made to order, service lines without goods (D-361).',
+    description:
+      'A draft `SO-YYMM-NNNN`; each goods line from stock or made to order, service lines without goods (D-361).',
     implements: ['D-361'],
     can: 'factory_sales.manage',
     etag: true,
     body: { type: ErpSaveSalesOrderDto, example: SAVE_SO },
-    success: { status: 201, description: 'Drafted', type: ErpSalesOrderDto, example: { ...SO, status: 'draft' } },
+    success: {
+      status: 201,
+      description: 'Drafted',
+      type: ErpSalesOrderDto,
+      example: { ...SO, status: 'draft' },
+    },
     errors: [...WRITE, 'erp.customer_required', 'erp.archived'],
   })
-  async create(@CurrentActor() actor: Actor, @Param('factoryId', ParseUUIDPipe) factoryId: string, @Body() body: ErpSaveSalesOrderDto) {
-    return this.orders.create(await this.workspace.open(actor, factoryId), body, await perms(this.permissions, actor));
+  async create(
+    @CurrentActor() actor: Actor,
+    @Param('factoryId', ParseUUIDPipe) factoryId: string,
+    @Body() body: ErpSaveSalesOrderDto,
+  ) {
+    return this.orders.create(
+      await this.workspace.open(actor, factoryId),
+      body,
+      await perms(this.permissions, actor),
+    );
   }
 
   @Get(':salesOrderId')
   @Op({
     id: 'partner.erpSalesOrders.get',
     summary: 'One sales order',
-    description: 'Lines with reserved, delivered and invoiced quantities, its deliveries and invoices, the customer’s credit position (D-361).',
+    description:
+      'Lines with reserved, delivered and invoiced quantities, its deliveries and invoices, the customer’s credit position (D-361).',
     implements: ['D-361'],
     can: 'factory_sales.read',
     params: ['salesOrderId'],
     etag: true,
     success: { status: 200, description: 'The order', type: ErpSalesOrderDto, example: SO },
   })
-  async get(@CurrentActor() actor: Actor, @Param('factoryId', ParseUUIDPipe) factoryId: string, @Param('salesOrderId', ParseUUIDPipe) salesOrderId: string) {
-    return this.orders.get(await this.workspace.open(actor, factoryId), salesOrderId, await perms(this.permissions, actor));
+  async get(
+    @CurrentActor() actor: Actor,
+    @Param('factoryId', ParseUUIDPipe) factoryId: string,
+    @Param('salesOrderId', ParseUUIDPipe) salesOrderId: string,
+  ) {
+    return this.orders.get(
+      await this.workspace.open(actor, factoryId),
+      salesOrderId,
+      await perms(this.permissions, actor),
+    );
   }
 
   @Put(':salesOrderId')
@@ -1297,7 +1692,12 @@ export class PartnerErpSalesOrdersController {
     concurrency: true,
     etag: true,
     body: { type: ErpSaveSalesOrderDto, example: SAVE_SO },
-    success: { status: 200, description: 'Saved', type: ErpSalesOrderDto, example: { ...SO, status: 'draft' } },
+    success: {
+      status: 200,
+      description: 'Saved',
+      type: ErpSalesOrderDto,
+      example: { ...SO, status: 'draft' },
+    },
     errors: [...WRITE, 'erp.invalid_status', 'erp.customer_required', 'erp.archived'],
   })
   async update(
@@ -1307,7 +1707,13 @@ export class PartnerErpSalesOrdersController {
     @IfMatch() ifMatch: string | undefined,
     @Body() body: ErpSaveSalesOrderDto,
   ) {
-    return this.orders.update(await this.workspace.open(actor, factoryId), salesOrderId, ifMatch, body, await perms(this.permissions, actor));
+    return this.orders.update(
+      await this.workspace.open(actor, factoryId),
+      salesOrderId,
+      ifMatch,
+      body,
+      await perms(this.permissions, actor),
+    );
   }
 
   @Post(':salesOrderId/actions/confirm')
@@ -1332,7 +1738,12 @@ export class PartnerErpSalesOrdersController {
     @Param('salesOrderId', ParseUUIDPipe) salesOrderId: string,
     @Body() body: ErpConfirmSalesOrderDto,
   ) {
-    return this.orders.confirm(await this.workspace.open(actor, factoryId), salesOrderId, body, await perms(this.permissions, actor));
+    return this.orders.confirm(
+      await this.workspace.open(actor, factoryId),
+      salesOrderId,
+      body,
+      await perms(this.permissions, actor),
+    );
   }
 
   @Post(':salesOrderId/actions/close')
@@ -1346,7 +1757,12 @@ export class PartnerErpSalesOrdersController {
     idempotent: true,
     status: 200,
     body: { type: ReasonDto, example: { reason: 'ลูกค้าขอรับเท่าที่ส่งแล้ว' } },
-    success: { status: 200, description: 'Closed', type: ErpSalesOrderDto, example: { ...SO, status: 'closed' } },
+    success: {
+      status: 200,
+      description: 'Closed',
+      type: ErpSalesOrderDto,
+      example: { ...SO, status: 'closed' },
+    },
     errors: [...WRITE, 'erp.invalid_status'],
   })
   async close(
@@ -1355,21 +1771,32 @@ export class PartnerErpSalesOrdersController {
     @Param('salesOrderId', ParseUUIDPipe) salesOrderId: string,
     @Body() body: ReasonDto,
   ) {
-    return this.orders.close(await this.workspace.open(actor, factoryId), salesOrderId, body.reason, await perms(this.permissions, actor));
+    return this.orders.close(
+      await this.workspace.open(actor, factoryId),
+      salesOrderId,
+      body.reason,
+      await perms(this.permissions, actor),
+    );
   }
 
   @Post(':salesOrderId/actions/cancel')
   @Op({
     id: 'partner.erpSalesOrders.cancel',
     summary: 'Cancel a sales order',
-    description: 'Nothing delivered yet; reservations are released and its planned production orders cancelled (D-361).',
+    description:
+      'Nothing delivered yet; reservations are released and its planned production orders cancelled (D-361).',
     implements: ['D-361'],
     can: 'factory_sales.manage',
     params: ['salesOrderId'],
     idempotent: true,
     status: 200,
     body: { type: ReasonDto, example: { reason: 'ลูกค้ายกเลิกคำสั่งซื้อ' } },
-    success: { status: 200, description: 'Cancelled', type: ErpSalesOrderDto, example: { ...SO, status: 'cancelled' } },
+    success: {
+      status: 200,
+      description: 'Cancelled',
+      type: ErpSalesOrderDto,
+      example: { ...SO, status: 'cancelled' },
+    },
     errors: [...WRITE, 'erp.invalid_status', 'erp.materials_issued'],
   })
   async cancel(
@@ -1378,7 +1805,12 @@ export class PartnerErpSalesOrdersController {
     @Param('salesOrderId', ParseUUIDPipe) salesOrderId: string,
     @Body() body: ReasonDto,
   ) {
-    return this.orders.cancel(await this.workspace.open(actor, factoryId), salesOrderId, body.reason, await perms(this.permissions, actor));
+    return this.orders.cancel(
+      await this.workspace.open(actor, factoryId),
+      salesOrderId,
+      body.reason,
+      await perms(this.permissions, actor),
+    );
   }
 
   @Get(':salesOrderId/pdf')
@@ -1389,9 +1821,18 @@ export class PartnerErpSalesOrdersController {
     implements: ['D-368'],
     can: 'factory_sales.read',
     params: ['salesOrderId'],
-    success: { status: 200, description: 'The link', type: ErpPdfLinkDto, example: { ...PDF_LINK, fileName: 'SO-2610-0004.pdf' } },
+    success: {
+      status: 200,
+      description: 'The link',
+      type: ErpPdfLinkDto,
+      example: { ...PDF_LINK, fileName: 'SO-2610-0004.pdf' },
+    },
   })
-  async pdf(@CurrentActor() actor: Actor, @Param('factoryId', ParseUUIDPipe) factoryId: string, @Param('salesOrderId', ParseUUIDPipe) salesOrderId: string) {
+  async pdf(
+    @CurrentActor() actor: Actor,
+    @Param('factoryId', ParseUUIDPipe) factoryId: string,
+    @Param('salesOrderId', ParseUUIDPipe) salesOrderId: string,
+  ) {
     return this.pdfs.pdf(await this.workspace.open(actor, factoryId), 'sales_order', salesOrderId);
   }
 }
@@ -1412,13 +1853,18 @@ export class PartnerErpDeliveryNotesController {
   @Op({
     id: 'partner.erpDeliveryNotes.list',
     summary: 'Delivery notes',
-    description: 'Newest first; `status=uninvoiced` = issued or delivered with lines not yet invoiced (D-362).',
+    description:
+      'Newest first; `status=uninvoiced` = issued or delivered with lines not yet invoiced (D-362).',
     implements: ['D-362'],
     can: 'factory_sales.read',
     paginated: { type: ErpDeliveryNoteSummaryDto, example: [DO_SUMMARY] },
     errors: ['http.not_found', 'validation.failed'],
   })
-  async list(@CurrentActor() actor: Actor, @Param('factoryId', ParseUUIDPipe) factoryId: string, @Query() q: ErpDeliveryNoteListQuery) {
+  async list(
+    @CurrentActor() actor: Actor,
+    @Param('factoryId', ParseUUIDPipe) factoryId: string,
+    @Query() q: ErpDeliveryNoteListQuery,
+  ) {
     return this.orders.listDeliveries(await this.workspace.open(actor, factoryId), q);
   }
 
@@ -1426,16 +1872,37 @@ export class PartnerErpDeliveryNotesController {
   @Op({
     id: 'partner.erpDeliveryNotes.create',
     summary: 'Prepare a delivery',
-    description: 'A draft `DO-YYMM-NNNN` from one sales order’s remaining quantities (all of them by default), D-362.',
+    description:
+      'A draft `DO-YYMM-NNNN` from one sales order’s remaining quantities (all of them by default), D-362.',
     implements: ['D-362'],
     can: 'factory_delivery.manage',
     etag: true,
-    body: { type: ErpCreateDeliveryNoteDto, example: { salesOrderId: E4_IDS.salesOrder, deliverOn: '2026-10-20', lines: [{ salesOrderLineId: E4_IDS.salesOrderLine, quantity: '2000' }] } },
-    success: { status: 201, description: 'Prepared', type: ErpDeliveryNoteDto, example: { ...DO, status: 'draft', issuedAt: null, deliveredAt: null, receivedBy: null } },
+    body: {
+      type: ErpCreateDeliveryNoteDto,
+      example: {
+        salesOrderId: E4_IDS.salesOrder,
+        deliverOn: '2026-10-20',
+        lines: [{ salesOrderLineId: E4_IDS.salesOrderLine, quantity: '2000' }],
+      },
+    },
+    success: {
+      status: 201,
+      description: 'Prepared',
+      type: ErpDeliveryNoteDto,
+      example: { ...DO, status: 'draft', issuedAt: null, deliveredAt: null, receivedBy: null },
+    },
     errors: [...WRITE, 'erp.invalid_status', 'erp.over_delivery', 'erp.nothing_to_deliver', 'erp.archived'],
   })
-  async create(@CurrentActor() actor: Actor, @Param('factoryId', ParseUUIDPipe) factoryId: string, @Body() body: ErpCreateDeliveryNoteDto) {
-    return this.orders.createDelivery(await this.workspace.open(actor, factoryId), body, await perms(this.permissions, actor));
+  async create(
+    @CurrentActor() actor: Actor,
+    @Param('factoryId', ParseUUIDPipe) factoryId: string,
+    @Body() body: ErpCreateDeliveryNoteDto,
+  ) {
+    return this.orders.createDelivery(
+      await this.workspace.open(actor, factoryId),
+      body,
+      await perms(this.permissions, actor),
+    );
   }
 
   @Get(':deliveryNoteId')
@@ -1449,32 +1916,61 @@ export class PartnerErpDeliveryNotesController {
     etag: true,
     success: { status: 200, description: 'The delivery note', type: ErpDeliveryNoteDto, example: DO },
   })
-  async get(@CurrentActor() actor: Actor, @Param('factoryId', ParseUUIDPipe) factoryId: string, @Param('deliveryNoteId', ParseUUIDPipe) deliveryNoteId: string) {
-    return this.orders.getDelivery(await this.workspace.open(actor, factoryId), deliveryNoteId, await perms(this.permissions, actor));
+  async get(
+    @CurrentActor() actor: Actor,
+    @Param('factoryId', ParseUUIDPipe) factoryId: string,
+    @Param('deliveryNoteId', ParseUUIDPipe) deliveryNoteId: string,
+  ) {
+    return this.orders.getDelivery(
+      await this.workspace.open(actor, factoryId),
+      deliveryNoteId,
+      await perms(this.permissions, actor),
+    );
   }
 
   @Post(':deliveryNoteId/actions/issue')
   @Op({
     id: 'partner.erpDeliveryNotes.issue',
     summary: 'Issue the goods',
-    description: '`sales_issue` movements at the moving average, consuming the order’s reservation; the order’s delivered quantities move (D-362).',
+    description:
+      '`sales_issue` movements at the moving average, consuming the order’s reservation; the order’s delivered quantities move (D-362).',
     implements: ['D-362', 'D-321'],
     can: 'factory_delivery.manage',
     params: ['deliveryNoteId'],
     idempotent: true,
     status: 200,
-    success: { status: 200, description: 'Issued', type: ErpDeliveryNoteDto, example: { ...DO, status: 'issued', deliveredAt: null, receivedBy: null } },
-    errors: ['http.not_found', 'erp.invalid_status', 'erp.over_delivery', 'erp.stock_insufficient', 'erp.lot_required'],
+    success: {
+      status: 200,
+      description: 'Issued',
+      type: ErpDeliveryNoteDto,
+      example: { ...DO, status: 'issued', deliveredAt: null, receivedBy: null },
+    },
+    errors: [
+      'http.not_found',
+      'erp.invalid_status',
+      'erp.over_delivery',
+      'erp.stock_insufficient',
+      'erp.lot_required',
+    ],
   })
-  async issue(@CurrentActor() actor: Actor, @Param('factoryId', ParseUUIDPipe) factoryId: string, @Param('deliveryNoteId', ParseUUIDPipe) deliveryNoteId: string) {
-    return this.orders.issueDelivery(await this.workspace.open(actor, factoryId), deliveryNoteId, await perms(this.permissions, actor));
+  async issue(
+    @CurrentActor() actor: Actor,
+    @Param('factoryId', ParseUUIDPipe) factoryId: string,
+    @Param('deliveryNoteId', ParseUUIDPipe) deliveryNoteId: string,
+  ) {
+    return this.orders.issueDelivery(
+      await this.workspace.open(actor, factoryId),
+      deliveryNoteId,
+      await perms(this.permissions, actor),
+    );
   }
 
   @Post(':deliveryNoteId/actions/deliver')
   @Op({
     id: 'partner.erpDeliveryNotes.deliver',
     summary: 'Record the delivery',
-    description: 'Who received it and when, optionally a photo of the signed copy (an uploaded file of this factory), D-362.',
+    description:
+      'Who received it and when, optionally a photo of the signed copy (an uploaded file of this factory), D-362.',
     implements: ['D-362'],
     can: 'factory_delivery.manage',
     params: ['deliveryNoteId'],
@@ -1490,21 +1986,32 @@ export class PartnerErpDeliveryNotesController {
     @Param('deliveryNoteId', ParseUUIDPipe) deliveryNoteId: string,
     @Body() body: ErpDeliveredDto,
   ) {
-    return this.orders.deliverDelivery(await this.workspace.open(actor, factoryId), deliveryNoteId, body, await perms(this.permissions, actor));
+    return this.orders.deliverDelivery(
+      await this.workspace.open(actor, factoryId),
+      deliveryNoteId,
+      body,
+      await perms(this.permissions, actor),
+    );
   }
 
   @Post(':deliveryNoteId/actions/cancel')
   @Op({
     id: 'partner.erpDeliveryNotes.cancel',
     summary: 'Cancel a delivery note',
-    description: 'A draft, or an issued note not yet invoiced — its goods come back at the cost they left with (D-362).',
+    description:
+      'A draft, or an issued note not yet invoiced — its goods come back at the cost they left with (D-362).',
     implements: ['D-362'],
     can: 'factory_delivery.manage',
     params: ['deliveryNoteId'],
     idempotent: true,
     status: 200,
     body: { type: ReasonDto, example: { reason: 'ลูกค้าขอเลื่อนรับสินค้า' } },
-    success: { status: 200, description: 'Cancelled', type: ErpDeliveryNoteDto, example: { ...DO, status: 'cancelled', cancelReason: 'ลูกค้าขอเลื่อนรับสินค้า', nextActions: [] } },
+    success: {
+      status: 200,
+      description: 'Cancelled',
+      type: ErpDeliveryNoteDto,
+      example: { ...DO, status: 'cancelled', cancelReason: 'ลูกค้าขอเลื่อนรับสินค้า', nextActions: [] },
+    },
     errors: [...WRITE, 'erp.invalid_status'],
   })
   async cancel(
@@ -1513,7 +2020,12 @@ export class PartnerErpDeliveryNotesController {
     @Param('deliveryNoteId', ParseUUIDPipe) deliveryNoteId: string,
     @Body() body: ReasonDto,
   ) {
-    return this.orders.cancelDelivery(await this.workspace.open(actor, factoryId), deliveryNoteId, body.reason, await perms(this.permissions, actor));
+    return this.orders.cancelDelivery(
+      await this.workspace.open(actor, factoryId),
+      deliveryNoteId,
+      body.reason,
+      await perms(this.permissions, actor),
+    );
   }
 
   @Get(':deliveryNoteId/pdf')
@@ -1524,10 +2036,19 @@ export class PartnerErpDeliveryNotesController {
     implements: ['D-368'],
     can: 'factory_sales.read',
     params: ['deliveryNoteId'],
-    success: { status: 200, description: 'The link', type: ErpPdfLinkDto, example: { ...PDF_LINK, fileName: 'DO-2610-0002.pdf' } },
+    success: {
+      status: 200,
+      description: 'The link',
+      type: ErpPdfLinkDto,
+      example: { ...PDF_LINK, fileName: 'DO-2610-0002.pdf' },
+    },
     errors: ['http.not_found', 'erp.invalid_status'],
   })
-  async pdf(@CurrentActor() actor: Actor, @Param('factoryId', ParseUUIDPipe) factoryId: string, @Param('deliveryNoteId', ParseUUIDPipe) deliveryNoteId: string) {
+  async pdf(
+    @CurrentActor() actor: Actor,
+    @Param('factoryId', ParseUUIDPipe) factoryId: string,
+    @Param('deliveryNoteId', ParseUUIDPipe) deliveryNoteId: string,
+  ) {
     return this.pdfs.pdf(await this.workspace.open(actor, factoryId), 'delivery_note', deliveryNoteId);
   }
 }
@@ -1548,13 +2069,18 @@ export class PartnerErpSalesInvoicesController {
   @Op({
     id: 'partner.erpSalesInvoices.list',
     summary: 'Invoices and tax invoices',
-    description: 'Newest first; `status=open` = something left to receive, `overdue` = open past due (D-363).',
+    description:
+      'Newest first; `status=open` = something left to receive, `overdue` = open past due (D-363).',
     implements: ['D-363'],
     can: 'factory_receivables.read',
     paginated: { type: ErpSalesInvoiceSummaryDto, example: [IV_SUMMARY] },
     errors: ['http.not_found', 'validation.failed'],
   })
-  async list(@CurrentActor() actor: Actor, @Param('factoryId', ParseUUIDPipe) factoryId: string, @Query() q: ErpSalesInvoiceListQuery) {
+  async list(
+    @CurrentActor() actor: Actor,
+    @Param('factoryId', ParseUUIDPipe) factoryId: string,
+    @Query() q: ErpSalesInvoiceListQuery,
+  ) {
     return this.receivables.listInvoices(await this.workspace.open(actor, factoryId), q);
   }
 
@@ -1568,27 +2094,58 @@ export class PartnerErpSalesInvoicesController {
     implements: ['D-363'],
     can: 'factory_receivables.manage',
     etag: true,
-    body: { type: ErpCreateSalesInvoiceDto, example: { customerId: E4_IDS.customer, deliveryNoteIds: [E4_IDS.deliveryNote] } },
-    success: { status: 201, description: 'Drafted', type: ErpSalesInvoiceDto, example: { ...IV, invoiceNo: null, status: 'draft', seller: null, issuedAt: null } },
-    errors: [...WRITE, 'erp.invalid_status', 'erp.nothing_to_invoice', 'erp.customer_required', 'erp.archived'],
+    body: {
+      type: ErpCreateSalesInvoiceDto,
+      example: { customerId: E4_IDS.customer, deliveryNoteIds: [E4_IDS.deliveryNote] },
+    },
+    success: {
+      status: 201,
+      description: 'Drafted',
+      type: ErpSalesInvoiceDto,
+      example: { ...IV, invoiceNo: null, status: 'draft', seller: null, issuedAt: null },
+    },
+    errors: [
+      ...WRITE,
+      'erp.invalid_status',
+      'erp.nothing_to_invoice',
+      'erp.customer_required',
+      'erp.archived',
+    ],
   })
-  async create(@CurrentActor() actor: Actor, @Param('factoryId', ParseUUIDPipe) factoryId: string, @Body() body: ErpCreateSalesInvoiceDto) {
-    return this.receivables.createInvoice(await this.workspace.open(actor, factoryId), body, await perms(this.permissions, actor));
+  async create(
+    @CurrentActor() actor: Actor,
+    @Param('factoryId', ParseUUIDPipe) factoryId: string,
+    @Body() body: ErpCreateSalesInvoiceDto,
+  ) {
+    return this.receivables.createInvoice(
+      await this.workspace.open(actor, factoryId),
+      body,
+      await perms(this.permissions, actor),
+    );
   }
 
   @Get('sales-invoices/:invoiceId')
   @Op({
     id: 'partner.erpSalesInvoices.get',
     summary: 'One invoice',
-    description: 'Lines, the seller and buyer as printed, notes and receipts against it, what is open (D-363).',
+    description:
+      'Lines, the seller and buyer as printed, notes and receipts against it, what is open (D-363).',
     implements: ['D-363'],
     can: 'factory_receivables.read',
     params: ['invoiceId'],
     etag: true,
     success: { status: 200, description: 'The invoice', type: ErpSalesInvoiceDto, example: IV },
   })
-  async get(@CurrentActor() actor: Actor, @Param('factoryId', ParseUUIDPipe) factoryId: string, @Param('invoiceId', ParseUUIDPipe) invoiceId: string) {
-    return this.receivables.getInvoice(await this.workspace.open(actor, factoryId), invoiceId, await perms(this.permissions, actor));
+  async get(
+    @CurrentActor() actor: Actor,
+    @Param('factoryId', ParseUUIDPipe) factoryId: string,
+    @Param('invoiceId', ParseUUIDPipe) invoiceId: string,
+  ) {
+    return this.receivables.getInvoice(
+      await this.workspace.open(actor, factoryId),
+      invoiceId,
+      await perms(this.permissions, actor),
+    );
   }
 
   @Patch('sales-invoices/:invoiceId')
@@ -1602,7 +2159,12 @@ export class PartnerErpSalesInvoicesController {
     concurrency: true,
     etag: true,
     body: { type: ErpUpdateSalesInvoiceDto, example: { issueDate: '2026-10-21', note: 'ชำระภายใน 30 วัน' } },
-    success: { status: 200, description: 'Saved', type: ErpSalesInvoiceDto, example: { ...IV, invoiceNo: null, status: 'draft' } },
+    success: {
+      status: 200,
+      description: 'Saved',
+      type: ErpSalesInvoiceDto,
+      example: { ...IV, invoiceNo: null, status: 'draft' },
+    },
     errors: [...WRITE, 'erp.invalid_status', 'erp.nothing_to_invoice'],
   })
   async update(
@@ -1612,7 +2174,13 @@ export class PartnerErpSalesInvoicesController {
     @IfMatch() ifMatch: string | undefined,
     @Body() body: ErpUpdateSalesInvoiceDto,
   ) {
-    return this.receivables.updateInvoice(await this.workspace.open(actor, factoryId), invoiceId, ifMatch, body, await perms(this.permissions, actor));
+    return this.receivables.updateInvoice(
+      await this.workspace.open(actor, factoryId),
+      invoiceId,
+      ifMatch,
+      body,
+      await perms(this.permissions, actor),
+    );
   }
 
   @Delete('sales-invoices/:invoiceId')
@@ -1627,7 +2195,11 @@ export class PartnerErpSalesInvoicesController {
     success: { status: 204, description: 'Deleted' },
     errors: ['http.not_found', 'erp.invalid_status'],
   })
-  async remove(@CurrentActor() actor: Actor, @Param('factoryId', ParseUUIDPipe) factoryId: string, @Param('invoiceId', ParseUUIDPipe) invoiceId: string) {
+  async remove(
+    @CurrentActor() actor: Actor,
+    @Param('factoryId', ParseUUIDPipe) factoryId: string,
+    @Param('invoiceId', ParseUUIDPipe) invoiceId: string,
+  ) {
     await this.receivables.deleteInvoice(await this.workspace.open(actor, factoryId), invoiceId);
   }
 
@@ -1653,21 +2225,37 @@ export class PartnerErpSalesInvoicesController {
     @Param('invoiceId', ParseUUIDPipe) invoiceId: string,
     @Body() body: ErpIssueSalesInvoiceDto,
   ) {
-    return this.receivables.issueInvoice(await this.workspace.open(actor, factoryId), invoiceId, body, await perms(this.permissions, actor));
+    return this.receivables.issueInvoice(
+      await this.workspace.open(actor, factoryId),
+      invoiceId,
+      body,
+      await perms(this.permissions, actor),
+    );
   }
 
   @Post('sales-invoices/:invoiceId/actions/void')
   @Op({
     id: 'partner.erpSalesInvoices.void',
     summary: 'Void an issued invoice',
-    description: 'Nothing received or noted against it; the number stays (shown voided in the VAT report), its quantities are free again (D-363).',
+    description:
+      'Nothing received or noted against it; the number stays (shown voided in the VAT report), its quantities are free again (D-363).',
     implements: ['D-363'],
     can: 'factory_receivables.manage',
     params: ['invoiceId'],
     idempotent: true,
     status: 200,
     body: { type: ErpVoidDto, example: { reason: 'ออกผิดชื่อผู้ซื้อ จะออกฉบับใหม่แทน' } },
-    success: { status: 200, description: 'Voided', type: ErpSalesInvoiceDto, example: { ...IV, status: 'voided', voidReason: 'ออกผิดชื่อผู้ซื้อ จะออกฉบับใหม่แทน', nextActions: [ACTION('erp_iv.pdf')] } },
+    success: {
+      status: 200,
+      description: 'Voided',
+      type: ErpSalesInvoiceDto,
+      example: {
+        ...IV,
+        status: 'voided',
+        voidReason: 'ออกผิดชื่อผู้ซื้อ จะออกฉบับใหม่แทน',
+        nextActions: [ACTION('erp_iv.pdf')],
+      },
+    },
     errors: [...WRITE, 'erp.invalid_status', 'erp.document_settled'],
   })
   async voidInvoice(
@@ -1676,7 +2264,12 @@ export class PartnerErpSalesInvoicesController {
     @Param('invoiceId', ParseUUIDPipe) invoiceId: string,
     @Body() body: ErpVoidDto,
   ) {
-    return this.receivables.voidInvoice(await this.workspace.open(actor, factoryId), invoiceId, body.reason, await perms(this.permissions, actor));
+    return this.receivables.voidInvoice(
+      await this.workspace.open(actor, factoryId),
+      invoiceId,
+      body.reason,
+      await perms(this.permissions, actor),
+    );
   }
 
   @Get('sales-invoices/:invoiceId/pdf')
@@ -1690,7 +2283,11 @@ export class PartnerErpSalesInvoicesController {
     success: { status: 200, description: 'The link', type: ErpPdfLinkDto, example: PDF_LINK },
     errors: ['http.not_found', 'erp.invalid_status'],
   })
-  async pdf(@CurrentActor() actor: Actor, @Param('factoryId', ParseUUIDPipe) factoryId: string, @Param('invoiceId', ParseUUIDPipe) invoiceId: string) {
+  async pdf(
+    @CurrentActor() actor: Actor,
+    @Param('factoryId', ParseUUIDPipe) factoryId: string,
+    @Param('invoiceId', ParseUUIDPipe) invoiceId: string,
+  ) {
     return this.pdfs.pdf(await this.workspace.open(actor, factoryId), 'invoice', invoiceId);
   }
 
@@ -1704,7 +2301,11 @@ export class PartnerErpSalesInvoicesController {
     paginated: { type: ErpSalesNoteDto, example: [NOTE] },
     errors: ['http.not_found', 'validation.failed'],
   })
-  async listNotes(@CurrentActor() actor: Actor, @Param('factoryId', ParseUUIDPipe) factoryId: string, @Query() q: ErpSalesNoteListQuery) {
+  async listNotes(
+    @CurrentActor() actor: Actor,
+    @Param('factoryId', ParseUUIDPipe) factoryId: string,
+    @Query() q: ErpSalesNoteListQuery,
+  ) {
     return this.receivables.listNotes(await this.workspace.open(actor, factoryId), q);
   }
 
@@ -1725,14 +2326,34 @@ export class PartnerErpSalesInvoicesController {
         invoiceId: E4_IDS.invoice,
         reason: 'defective',
         reasonText: 'พิมพ์สีเพี้ยน 80 ใบ',
-        lines: [{ description: 'รับคืนกล่องพิมพ์สีเพี้ยน 80 ใบ', amount: '1000', itemId: E4_IDS.productItem, returnQty: '80' }],
+        lines: [
+          {
+            description: 'รับคืนกล่องพิมพ์สีเพี้ยน 80 ใบ',
+            amount: '1000',
+            itemId: E4_IDS.productItem,
+            returnQty: '80',
+          },
+        ],
       },
     },
-    success: { status: 201, description: 'Drafted', type: ErpSalesNoteDto, example: { ...NOTE, noteNo: null, status: 'draft' } },
+    success: {
+      status: 201,
+      description: 'Drafted',
+      type: ErpSalesNoteDto,
+      example: { ...NOTE, noteNo: null, status: 'draft' },
+    },
     errors: [...WRITE, 'erp.invalid_status', 'erp.note_exceeds_invoice'],
   })
-  async createNote(@CurrentActor() actor: Actor, @Param('factoryId', ParseUUIDPipe) factoryId: string, @Body() body: ErpCreateSalesNoteDto) {
-    return this.receivables.createNote(await this.workspace.open(actor, factoryId), body, await perms(this.permissions, actor));
+  async createNote(
+    @CurrentActor() actor: Actor,
+    @Param('factoryId', ParseUUIDPipe) factoryId: string,
+    @Body() body: ErpCreateSalesNoteDto,
+  ) {
+    return this.receivables.createNote(
+      await this.workspace.open(actor, factoryId),
+      body,
+      await perms(this.permissions, actor),
+    );
   }
 
   @Get('sales-notes/:noteId')
@@ -1746,8 +2367,16 @@ export class PartnerErpSalesInvoicesController {
     etag: true,
     success: { status: 200, description: 'The note', type: ErpSalesNoteDto, example: NOTE },
   })
-  async getNote(@CurrentActor() actor: Actor, @Param('factoryId', ParseUUIDPipe) factoryId: string, @Param('noteId', ParseUUIDPipe) noteId: string) {
-    return this.receivables.getNote(await this.workspace.open(actor, factoryId), noteId, await perms(this.permissions, actor));
+  async getNote(
+    @CurrentActor() actor: Actor,
+    @Param('factoryId', ParseUUIDPipe) factoryId: string,
+    @Param('noteId', ParseUUIDPipe) noteId: string,
+  ) {
+    return this.receivables.getNote(
+      await this.workspace.open(actor, factoryId),
+      noteId,
+      await perms(this.permissions, actor),
+    );
   }
 
   @Delete('sales-notes/:noteId')
@@ -1762,7 +2391,11 @@ export class PartnerErpSalesInvoicesController {
     success: { status: 204, description: 'Deleted' },
     errors: ['http.not_found', 'erp.invalid_status'],
   })
-  async removeNote(@CurrentActor() actor: Actor, @Param('factoryId', ParseUUIDPipe) factoryId: string, @Param('noteId', ParseUUIDPipe) noteId: string) {
+  async removeNote(
+    @CurrentActor() actor: Actor,
+    @Param('factoryId', ParseUUIDPipe) factoryId: string,
+    @Param('noteId', ParseUUIDPipe) noteId: string,
+  ) {
     await this.receivables.deleteNote(await this.workspace.open(actor, factoryId), noteId);
   }
 
@@ -1770,17 +2403,32 @@ export class PartnerErpSalesInvoicesController {
   @Op({
     id: 'partner.erpSalesInvoices.issueNote',
     summary: 'Issue a credit or debit note',
-    description: 'Numbers it `CN`/`DR`, freezes it, changes what the invoice is worth and brings returned goods back (D-364).',
+    description:
+      'Numbers it `CN`/`DR`, freezes it, changes what the invoice is worth and brings returned goods back (D-364).',
     implements: ['D-364'],
     can: 'factory_receivables.manage',
     params: ['noteId'],
     idempotent: true,
     status: 200,
     success: { status: 200, description: 'Issued', type: ErpSalesNoteDto, example: NOTE },
-    errors: ['http.not_found', 'erp.invalid_status', 'erp.note_exceeds_invoice', 'erp.invoice_date_order', 'erp.seller_incomplete'],
+    errors: [
+      'http.not_found',
+      'erp.invalid_status',
+      'erp.note_exceeds_invoice',
+      'erp.invoice_date_order',
+      'erp.seller_incomplete',
+    ],
   })
-  async issueNote(@CurrentActor() actor: Actor, @Param('factoryId', ParseUUIDPipe) factoryId: string, @Param('noteId', ParseUUIDPipe) noteId: string) {
-    return this.receivables.issueNote(await this.workspace.open(actor, factoryId), noteId, await perms(this.permissions, actor));
+  async issueNote(
+    @CurrentActor() actor: Actor,
+    @Param('factoryId', ParseUUIDPipe) factoryId: string,
+    @Param('noteId', ParseUUIDPipe) noteId: string,
+  ) {
+    return this.receivables.issueNote(
+      await this.workspace.open(actor, factoryId),
+      noteId,
+      await perms(this.permissions, actor),
+    );
   }
 
   @Post('sales-notes/:noteId/actions/void')
@@ -1794,7 +2442,12 @@ export class PartnerErpSalesInvoicesController {
     idempotent: true,
     status: 200,
     body: { type: ErpVoidDto, example: { reason: 'ออกซ้ำ' } },
-    success: { status: 200, description: 'Voided', type: ErpSalesNoteDto, example: { ...NOTE, status: 'voided', voidReason: 'ออกซ้ำ' } },
+    success: {
+      status: 200,
+      description: 'Voided',
+      type: ErpSalesNoteDto,
+      example: { ...NOTE, status: 'voided', voidReason: 'ออกซ้ำ' },
+    },
     errors: [...WRITE, 'erp.invalid_status', 'erp.document_settled', 'erp.stock_insufficient'],
   })
   async voidNote(
@@ -1803,7 +2456,12 @@ export class PartnerErpSalesInvoicesController {
     @Param('noteId', ParseUUIDPipe) noteId: string,
     @Body() body: ErpVoidDto,
   ) {
-    return this.receivables.voidNote(await this.workspace.open(actor, factoryId), noteId, body.reason, await perms(this.permissions, actor));
+    return this.receivables.voidNote(
+      await this.workspace.open(actor, factoryId),
+      noteId,
+      body.reason,
+      await perms(this.permissions, actor),
+    );
   }
 
   @Get('sales-notes/:noteId/pdf')
@@ -1814,10 +2472,19 @@ export class PartnerErpSalesInvoicesController {
     implements: ['D-368'],
     can: 'factory_receivables.read',
     params: ['noteId'],
-    success: { status: 200, description: 'The link', type: ErpPdfLinkDto, example: { ...PDF_LINK, fileName: 'CN-2610-0001.pdf' } },
+    success: {
+      status: 200,
+      description: 'The link',
+      type: ErpPdfLinkDto,
+      example: { ...PDF_LINK, fileName: 'CN-2610-0001.pdf' },
+    },
     errors: ['http.not_found', 'erp.invalid_status'],
   })
-  async notePdf(@CurrentActor() actor: Actor, @Param('factoryId', ParseUUIDPipe) factoryId: string, @Param('noteId', ParseUUIDPipe) noteId: string) {
+  async notePdf(
+    @CurrentActor() actor: Actor,
+    @Param('factoryId', ParseUUIDPipe) factoryId: string,
+    @Param('noteId', ParseUUIDPipe) noteId: string,
+  ) {
     return this.pdfs.pdf(await this.workspace.open(actor, factoryId), 'note', noteId);
   }
 }
@@ -1844,8 +2511,16 @@ export class PartnerErpReceivablesController {
     paginated: { type: ErpCustomerReceiptDto, example: [RECEIPT] },
     errors: ['http.not_found', 'validation.failed'],
   })
-  async listReceipts(@CurrentActor() actor: Actor, @Param('factoryId', ParseUUIDPipe) factoryId: string, @Query() q: ErpReceiptListQuery) {
-    return this.receivables.listReceipts(await this.workspace.open(actor, factoryId), q, await perms(this.permissions, actor));
+  async listReceipts(
+    @CurrentActor() actor: Actor,
+    @Param('factoryId', ParseUUIDPipe) factoryId: string,
+    @Query() q: ErpReceiptListQuery,
+  ) {
+    return this.receivables.listReceipts(
+      await this.workspace.open(actor, factoryId),
+      q,
+      await perms(this.permissions, actor),
+    );
   }
 
   @Post('receipts')
@@ -1871,10 +2546,24 @@ export class PartnerErpReceivablesController {
       },
     },
     success: { status: 201, description: 'Recorded', type: ErpCustomerReceiptDto, example: RECEIPT },
-    errors: [...WRITE, 'erp.invalid_status', 'erp.allocation_exceeds_open', 'erp.file_not_usable', 'erp.customer_required'],
+    errors: [
+      ...WRITE,
+      'erp.invalid_status',
+      'erp.allocation_exceeds_open',
+      'erp.file_not_usable',
+      'erp.customer_required',
+    ],
   })
-  async receive(@CurrentActor() actor: Actor, @Param('factoryId', ParseUUIDPipe) factoryId: string, @Body() body: ErpCreateReceiptDto) {
-    return this.receivables.receive(await this.workspace.open(actor, factoryId), body, await perms(this.permissions, actor));
+  async receive(
+    @CurrentActor() actor: Actor,
+    @Param('factoryId', ParseUUIDPipe) factoryId: string,
+    @Body() body: ErpCreateReceiptDto,
+  ) {
+    return this.receivables.receive(
+      await this.workspace.open(actor, factoryId),
+      body,
+      await perms(this.permissions, actor),
+    );
   }
 
   @Get('receipts/:receiptId')
@@ -1887,8 +2576,16 @@ export class PartnerErpReceivablesController {
     params: ['receiptId'],
     success: { status: 200, description: 'The receipt', type: ErpCustomerReceiptDto, example: RECEIPT },
   })
-  async getReceipt(@CurrentActor() actor: Actor, @Param('factoryId', ParseUUIDPipe) factoryId: string, @Param('receiptId', ParseUUIDPipe) receiptId: string) {
-    return this.receivables.getReceipt(await this.workspace.open(actor, factoryId), receiptId, await perms(this.permissions, actor));
+  async getReceipt(
+    @CurrentActor() actor: Actor,
+    @Param('factoryId', ParseUUIDPipe) factoryId: string,
+    @Param('receiptId', ParseUUIDPipe) receiptId: string,
+  ) {
+    return this.receivables.getReceipt(
+      await this.workspace.open(actor, factoryId),
+      receiptId,
+      await perms(this.permissions, actor),
+    );
   }
 
   @Post('receipts/:receiptId/actions/cancel')
@@ -1902,7 +2599,17 @@ export class PartnerErpReceivablesController {
     idempotent: true,
     status: 200,
     body: { type: ReasonDto, example: { reason: 'เช็คคืน' } },
-    success: { status: 200, description: 'Cancelled', type: ErpCustomerReceiptDto, example: { ...RECEIPT, status: 'cancelled', cancelReason: 'เช็คคืน', nextActions: [ACTION('erp_rc.pdf')] } },
+    success: {
+      status: 200,
+      description: 'Cancelled',
+      type: ErpCustomerReceiptDto,
+      example: {
+        ...RECEIPT,
+        status: 'cancelled',
+        cancelReason: 'เช็คคืน',
+        nextActions: [ACTION('erp_rc.pdf')],
+      },
+    },
     errors: [...WRITE, 'erp.invalid_status'],
   })
   async cancelReceipt(
@@ -1911,7 +2618,12 @@ export class PartnerErpReceivablesController {
     @Param('receiptId', ParseUUIDPipe) receiptId: string,
     @Body() body: ReasonDto,
   ) {
-    return this.receivables.cancelReceipt(await this.workspace.open(actor, factoryId), receiptId, body.reason, await perms(this.permissions, actor));
+    return this.receivables.cancelReceipt(
+      await this.workspace.open(actor, factoryId),
+      receiptId,
+      body.reason,
+      await perms(this.permissions, actor),
+    );
   }
 
   @Get('receipts/:receiptId/pdf')
@@ -1922,9 +2634,18 @@ export class PartnerErpReceivablesController {
     implements: ['D-368'],
     can: 'factory_receivables.read',
     params: ['receiptId'],
-    success: { status: 200, description: 'The link', type: ErpPdfLinkDto, example: { ...PDF_LINK, fileName: 'RC-2611-0001.pdf' } },
+    success: {
+      status: 200,
+      description: 'The link',
+      type: ErpPdfLinkDto,
+      example: { ...PDF_LINK, fileName: 'RC-2611-0001.pdf' },
+    },
   })
-  async receiptPdf(@CurrentActor() actor: Actor, @Param('factoryId', ParseUUIDPipe) factoryId: string, @Param('receiptId', ParseUUIDPipe) receiptId: string) {
+  async receiptPdf(
+    @CurrentActor() actor: Actor,
+    @Param('factoryId', ParseUUIDPipe) factoryId: string,
+    @Param('receiptId', ParseUUIDPipe) receiptId: string,
+  ) {
     return this.pdfs.pdf(await this.workspace.open(actor, factoryId), 'receipt', receiptId);
   }
 
@@ -1938,8 +2659,16 @@ export class PartnerErpReceivablesController {
     paginated: { type: ErpBillingNoteDto, example: [BILLING] },
     errors: ['http.not_found', 'validation.failed'],
   })
-  async listBillingNotes(@CurrentActor() actor: Actor, @Param('factoryId', ParseUUIDPipe) factoryId: string, @Query() q: ErpBillingNoteListQuery) {
-    return this.receivables.listBillingNotes(await this.workspace.open(actor, factoryId), q, await perms(this.permissions, actor));
+  async listBillingNotes(
+    @CurrentActor() actor: Actor,
+    @Param('factoryId', ParseUUIDPipe) factoryId: string,
+    @Query() q: ErpBillingNoteListQuery,
+  ) {
+    return this.receivables.listBillingNotes(
+      await this.workspace.open(actor, factoryId),
+      q,
+      await perms(this.permissions, actor),
+    );
   }
 
   @Post('billing-notes')
@@ -1950,12 +2679,23 @@ export class PartnerErpReceivablesController {
     implements: ['D-365'],
     can: 'factory_receivables.manage',
     idempotent: true,
-    body: { type: ErpCreateBillingNoteDto, example: { customerId: E4_IDS.customer, invoiceIds: [E4_IDS.invoice], collectOn: '2026-11-05' } },
+    body: {
+      type: ErpCreateBillingNoteDto,
+      example: { customerId: E4_IDS.customer, invoiceIds: [E4_IDS.invoice], collectOn: '2026-11-05' },
+    },
     success: { status: 201, description: 'Issued', type: ErpBillingNoteDto, example: BILLING },
     errors: [...WRITE, 'erp.invalid_status', 'erp.customer_required'],
   })
-  async createBillingNote(@CurrentActor() actor: Actor, @Param('factoryId', ParseUUIDPipe) factoryId: string, @Body() body: ErpCreateBillingNoteDto) {
-    return this.receivables.createBillingNote(await this.workspace.open(actor, factoryId), body, await perms(this.permissions, actor));
+  async createBillingNote(
+    @CurrentActor() actor: Actor,
+    @Param('factoryId', ParseUUIDPipe) factoryId: string,
+    @Body() body: ErpCreateBillingNoteDto,
+  ) {
+    return this.receivables.createBillingNote(
+      await this.workspace.open(actor, factoryId),
+      body,
+      await perms(this.permissions, actor),
+    );
   }
 
   @Get('billing-notes/:billingNoteId')
@@ -1968,8 +2708,16 @@ export class PartnerErpReceivablesController {
     params: ['billingNoteId'],
     success: { status: 200, description: 'The billing note', type: ErpBillingNoteDto, example: BILLING },
   })
-  async getBillingNote(@CurrentActor() actor: Actor, @Param('factoryId', ParseUUIDPipe) factoryId: string, @Param('billingNoteId', ParseUUIDPipe) billingNoteId: string) {
-    return this.receivables.getBillingNote(await this.workspace.open(actor, factoryId), billingNoteId, await perms(this.permissions, actor));
+  async getBillingNote(
+    @CurrentActor() actor: Actor,
+    @Param('factoryId', ParseUUIDPipe) factoryId: string,
+    @Param('billingNoteId', ParseUUIDPipe) billingNoteId: string,
+  ) {
+    return this.receivables.getBillingNote(
+      await this.workspace.open(actor, factoryId),
+      billingNoteId,
+      await perms(this.permissions, actor),
+    );
   }
 
   @Post('billing-notes/:billingNoteId/actions/cancel')
@@ -1983,7 +2731,12 @@ export class PartnerErpReceivablesController {
     idempotent: true,
     status: 200,
     body: { type: ReasonDto, example: { reason: 'วางบิลใหม่รวมใบแจ้งหนี้งวดถัดไป' } },
-    success: { status: 200, description: 'Cancelled', type: ErpBillingNoteDto, example: { ...BILLING, status: 'cancelled' } },
+    success: {
+      status: 200,
+      description: 'Cancelled',
+      type: ErpBillingNoteDto,
+      example: { ...BILLING, status: 'cancelled' },
+    },
     errors: [...WRITE, 'erp.invalid_status'],
   })
   async cancelBillingNote(
@@ -1992,7 +2745,12 @@ export class PartnerErpReceivablesController {
     @Param('billingNoteId', ParseUUIDPipe) billingNoteId: string,
     @Body() body: ReasonDto,
   ) {
-    return this.receivables.cancelBillingNote(await this.workspace.open(actor, factoryId), billingNoteId, body.reason, await perms(this.permissions, actor));
+    return this.receivables.cancelBillingNote(
+      await this.workspace.open(actor, factoryId),
+      billingNoteId,
+      body.reason,
+      await perms(this.permissions, actor),
+    );
   }
 
   @Get('billing-notes/:billingNoteId/pdf')
@@ -2003,9 +2761,18 @@ export class PartnerErpReceivablesController {
     implements: ['D-368'],
     can: 'factory_receivables.read',
     params: ['billingNoteId'],
-    success: { status: 200, description: 'The link', type: ErpPdfLinkDto, example: { ...PDF_LINK, fileName: 'BN-2610-0001.pdf' } },
+    success: {
+      status: 200,
+      description: 'The link',
+      type: ErpPdfLinkDto,
+      example: { ...PDF_LINK, fileName: 'BN-2610-0001.pdf' },
+    },
   })
-  async billingNotePdf(@CurrentActor() actor: Actor, @Param('factoryId', ParseUUIDPipe) factoryId: string, @Param('billingNoteId', ParseUUIDPipe) billingNoteId: string) {
+  async billingNotePdf(
+    @CurrentActor() actor: Actor,
+    @Param('factoryId', ParseUUIDPipe) factoryId: string,
+    @Param('billingNoteId', ParseUUIDPipe) billingNoteId: string,
+  ) {
     return this.pdfs.pdf(await this.workspace.open(actor, factoryId), 'billing_note', billingNoteId);
   }
 
@@ -2013,7 +2780,8 @@ export class PartnerErpReceivablesController {
   @Op({
     id: 'partner.erpReceivables.aging',
     summary: 'What customers owe, by age',
-    description: 'Open invoices per customer: not due, 1–30, 31–60, 61–90, over 90 days past due; refunds due (D-365).',
+    description:
+      'Open invoices per customer: not due, 1–30, 31–60, 61–90, over 90 days past due; refunds due (D-365).',
     implements: ['D-365'],
     can: 'factory_receivables.read',
     success: { status: 200, description: 'The aging', type: ErpArAgingDto, example: AGING },
@@ -2039,7 +2807,8 @@ export class PartnerErpTaxController {
   @Op({
     id: 'partner.erpTax.whtSuggestion',
     summary: 'The 50 ทวิ a supplier payment calls for',
-    description: 'Its share of each paid invoice’s WHT, one line per rate, the return (ภ.ง.ด.3 / 53) and the certificate in force (D-366).',
+    description:
+      'Its share of each paid invoice’s WHT, one line per rate, the return (ภ.ง.ด.3 / 53) and the certificate in force (D-366).',
     implements: ['D-366'],
     can: 'factory_ap.read',
     params: ['paymentId'],
@@ -2047,11 +2816,23 @@ export class PartnerErpTaxController {
       status: 200,
       description: 'The suggestion',
       type: ErpWhtSuggestionDto,
-      example: { payment: CERT.payment, supplier: CERT.supplier, entityType: 'juristic', form: 'pnd53', paidOn: '2026-10-31', lines: [WHT_LINE], certificate: null },
+      example: {
+        payment: CERT.payment,
+        supplier: CERT.supplier,
+        entityType: 'juristic',
+        form: 'pnd53',
+        paidOn: '2026-10-31',
+        lines: [WHT_LINE],
+        certificate: null,
+      },
     },
     errors: ['http.not_found', 'erp.no_withholding'],
   })
-  async suggestion(@CurrentActor() actor: Actor, @Param('factoryId', ParseUUIDPipe) factoryId: string, @Param('paymentId', ParseUUIDPipe) paymentId: string) {
+  async suggestion(
+    @CurrentActor() actor: Actor,
+    @Param('factoryId', ParseUUIDPipe) factoryId: string,
+    @Param('paymentId', ParseUUIDPipe) paymentId: string,
+  ) {
     return this.tax.suggest(await this.workspace.open(actor, factoryId), paymentId);
   }
 
@@ -2065,24 +2846,47 @@ export class PartnerErpTaxController {
     paginated: { type: ErpWhtCertificateDto, example: [CERT] },
     errors: ['http.not_found', 'validation.failed'],
   })
-  async listCertificates(@CurrentActor() actor: Actor, @Param('factoryId', ParseUUIDPipe) factoryId: string, @Query() q: ErpWhtCertificateListQuery) {
-    return this.tax.listCertificates(await this.workspace.open(actor, factoryId), q, await perms(this.permissions, actor));
+  async listCertificates(
+    @CurrentActor() actor: Actor,
+    @Param('factoryId', ParseUUIDPipe) factoryId: string,
+    @Query() q: ErpWhtCertificateListQuery,
+  ) {
+    return this.tax.listCertificates(
+      await this.workspace.open(actor, factoryId),
+      q,
+      await perms(this.permissions, actor),
+    );
   }
 
   @Post('wht-certificates')
   @Op({
     id: 'partner.erpTax.createCertificate',
     summary: 'Issue a 50 ทวิ',
-    description: '`WHT-YYMM-NNNN` for a supplier payment that withheld tax; one in force per payment (D-366).',
+    description:
+      '`WHT-YYMM-NNNN` for a supplier payment that withheld tax; one in force per payment (D-366).',
     implements: ['D-366'],
     can: 'factory_ap.manage',
     idempotent: true,
-    body: { type: ErpCreateWhtCertificateDto, example: { paymentId: E4_IDS.payment, lines: [{ incomeType: 'hire_of_work', ratePct: '3', baseAmount: '20000', whtAmount: '600' }] } },
+    body: {
+      type: ErpCreateWhtCertificateDto,
+      example: {
+        paymentId: E4_IDS.payment,
+        lines: [{ incomeType: 'hire_of_work', ratePct: '3', baseAmount: '20000', whtAmount: '600' }],
+      },
+    },
     success: { status: 201, description: 'Issued', type: ErpWhtCertificateDto, example: CERT },
     errors: [...WRITE, 'erp.no_withholding', 'erp.invalid_status'],
   })
-  async createCertificate(@CurrentActor() actor: Actor, @Param('factoryId', ParseUUIDPipe) factoryId: string, @Body() body: ErpCreateWhtCertificateDto) {
-    return this.tax.createCertificate(await this.workspace.open(actor, factoryId), body, await perms(this.permissions, actor));
+  async createCertificate(
+    @CurrentActor() actor: Actor,
+    @Param('factoryId', ParseUUIDPipe) factoryId: string,
+    @Body() body: ErpCreateWhtCertificateDto,
+  ) {
+    return this.tax.createCertificate(
+      await this.workspace.open(actor, factoryId),
+      body,
+      await perms(this.permissions, actor),
+    );
   }
 
   @Get('wht-certificates/:certificateId')
@@ -2095,8 +2899,16 @@ export class PartnerErpTaxController {
     params: ['certificateId'],
     success: { status: 200, description: 'The certificate', type: ErpWhtCertificateDto, example: CERT },
   })
-  async getCertificate(@CurrentActor() actor: Actor, @Param('factoryId', ParseUUIDPipe) factoryId: string, @Param('certificateId', ParseUUIDPipe) certificateId: string) {
-    return this.tax.getCertificate(await this.workspace.open(actor, factoryId), certificateId, await perms(this.permissions, actor));
+  async getCertificate(
+    @CurrentActor() actor: Actor,
+    @Param('factoryId', ParseUUIDPipe) factoryId: string,
+    @Param('certificateId', ParseUUIDPipe) certificateId: string,
+  ) {
+    return this.tax.getCertificate(
+      await this.workspace.open(actor, factoryId),
+      certificateId,
+      await perms(this.permissions, actor),
+    );
   }
 
   @Post('wht-certificates/:certificateId/actions/void')
@@ -2110,7 +2922,17 @@ export class PartnerErpTaxController {
     idempotent: true,
     status: 200,
     body: { type: ErpVoidDto, example: { reason: 'ประเภทเงินได้ผิด' } },
-    success: { status: 200, description: 'Voided', type: ErpWhtCertificateDto, example: { ...CERT, status: 'voided', voidReason: 'ประเภทเงินได้ผิด', nextActions: [ACTION('erp_wht.pdf')] } },
+    success: {
+      status: 200,
+      description: 'Voided',
+      type: ErpWhtCertificateDto,
+      example: {
+        ...CERT,
+        status: 'voided',
+        voidReason: 'ประเภทเงินได้ผิด',
+        nextActions: [ACTION('erp_wht.pdf')],
+      },
+    },
     errors: [...WRITE, 'erp.invalid_status'],
   })
   async voidCertificate(
@@ -2119,7 +2941,12 @@ export class PartnerErpTaxController {
     @Param('certificateId', ParseUUIDPipe) certificateId: string,
     @Body() body: ErpVoidDto,
   ) {
-    return this.tax.voidCertificate(await this.workspace.open(actor, factoryId), certificateId, body.reason, await perms(this.permissions, actor));
+    return this.tax.voidCertificate(
+      await this.workspace.open(actor, factoryId),
+      certificateId,
+      body.reason,
+      await perms(this.permissions, actor),
+    );
   }
 
   @Get('wht-certificates/:certificateId/pdf')
@@ -2130,9 +2957,18 @@ export class PartnerErpTaxController {
     implements: ['D-366', 'D-368'],
     can: 'factory_ap.read',
     params: ['certificateId'],
-    success: { status: 200, description: 'The link', type: ErpPdfLinkDto, example: { ...PDF_LINK, fileName: 'WHT-2610-0001.pdf' } },
+    success: {
+      status: 200,
+      description: 'The link',
+      type: ErpPdfLinkDto,
+      example: { ...PDF_LINK, fileName: 'WHT-2610-0001.pdf' },
+    },
   })
-  async certificatePdf(@CurrentActor() actor: Actor, @Param('factoryId', ParseUUIDPipe) factoryId: string, @Param('certificateId', ParseUUIDPipe) certificateId: string) {
+  async certificatePdf(
+    @CurrentActor() actor: Actor,
+    @Param('factoryId', ParseUUIDPipe) factoryId: string,
+    @Param('certificateId', ParseUUIDPipe) certificateId: string,
+  ) {
     return this.pdfs.pdf(await this.workspace.open(actor, factoryId), 'wht_certificate', certificateId);
   }
 
@@ -2140,13 +2976,18 @@ export class PartnerErpTaxController {
   @Op({
     id: 'partner.erpTax.salesVat',
     summary: 'Sales tax report (รายงานภาษีขาย)',
-    description: 'The month’s tax invoices and credit / debit notes in date and number order; voided ones with no value (D-367); getpack billing statements the factory confirmed in the month as `getpack_statement` rows (D-401).',
+    description:
+      'The month’s tax invoices and credit / debit notes in date and number order; voided ones with no value (D-367); getpack billing statements the factory confirmed in the month as `getpack_statement` rows (D-401).',
     implements: ['D-367', 'D-401'],
     can: 'factory_tax.read',
     success: { status: 200, description: 'The report', type: ErpVatReportDto, example: VAT_REPORT },
     errors: ['http.not_found', 'validation.failed'],
   })
-  async salesVat(@CurrentActor() actor: Actor, @Param('factoryId', ParseUUIDPipe) factoryId: string, @Query() q: ErpMonthQuery) {
+  async salesVat(
+    @CurrentActor() actor: Actor,
+    @Param('factoryId', ParseUUIDPipe) factoryId: string,
+    @Query() q: ErpMonthQuery,
+  ) {
     return this.tax.salesVat(await this.workspace.open(actor, factoryId), q.month);
   }
 
@@ -2157,10 +2998,19 @@ export class PartnerErpTaxController {
     description: 'Supplier tax invoices dated in the month, not cancelled (D-367).',
     implements: ['D-367'],
     can: 'factory_tax.read',
-    success: { status: 200, description: 'The report', type: ErpVatReportDto, example: { ...VAT_REPORT, kind: 'purchase' } },
+    success: {
+      status: 200,
+      description: 'The report',
+      type: ErpVatReportDto,
+      example: { ...VAT_REPORT, kind: 'purchase' },
+    },
     errors: ['http.not_found', 'validation.failed'],
   })
-  async purchaseVat(@CurrentActor() actor: Actor, @Param('factoryId', ParseUUIDPipe) factoryId: string, @Query() q: ErpMonthQuery) {
+  async purchaseVat(
+    @CurrentActor() actor: Actor,
+    @Param('factoryId', ParseUUIDPipe) factoryId: string,
+    @Query() q: ErpMonthQuery,
+  ) {
     return this.tax.purchaseVat(await this.workspace.open(actor, factoryId), q.month);
   }
 
@@ -2168,18 +3018,32 @@ export class PartnerErpTaxController {
   @Op({
     id: 'partner.erpTax.vat30',
     summary: 'ภ.พ.30 summary',
-    description: 'Output VAT (including getpack statements confirmed in the month, D-401), input VAT and what is payable or carried forward for the month, with the due date (D-367).',
+    description:
+      'Output VAT (including getpack statements confirmed in the month, D-401), input VAT and what is payable or carried forward for the month, with the due date (D-367).',
     implements: ['D-367', 'D-401'],
     can: 'factory_tax.read',
     success: {
       status: 200,
       description: 'The summary',
       type: ErpVat30Dto,
-      example: { month: '2026-10', vatRegistered: true, salesNet: '25000.00', outputVat: '1750.00', purchaseNet: '12000.00', inputVat: '840.00', vatPayable: '910.00', dueOn: '2026-11-15' },
+      example: {
+        month: '2026-10',
+        vatRegistered: true,
+        salesNet: '25000.00',
+        outputVat: '1750.00',
+        purchaseNet: '12000.00',
+        inputVat: '840.00',
+        vatPayable: '910.00',
+        dueOn: '2026-11-15',
+      },
     },
     errors: ['http.not_found', 'validation.failed'],
   })
-  async vat30(@CurrentActor() actor: Actor, @Param('factoryId', ParseUUIDPipe) factoryId: string, @Query() q: ErpMonthQuery) {
+  async vat30(
+    @CurrentActor() actor: Actor,
+    @Param('factoryId', ParseUUIDPipe) factoryId: string,
+    @Query() q: ErpMonthQuery,
+  ) {
     return this.tax.vat30(await this.workspace.open(actor, factoryId), q.month);
   }
 
@@ -2197,7 +3061,20 @@ export class PartnerErpTaxController {
       example: {
         month: '2026-10',
         form: 'pnd53',
-        rows: [{ certNo: 'WHT-2610-0001', paidOn: '2026-10-31', payeeName: 'บจก. กระดาษไทย (ทดสอบ)', payeeTaxId: '0000555123457', payeeBranch: '00000', payeeAddress: 'กรุงเทพฯ', incomeType: 'hire_of_work', ratePct: '3.0000', baseAmount: '20000.00', whtAmount: '600.00' }],
+        rows: [
+          {
+            certNo: 'WHT-2610-0001',
+            paidOn: '2026-10-31',
+            payeeName: 'บจก. กระดาษไทย (ทดสอบ)',
+            payeeTaxId: '0000555123457',
+            payeeBranch: '00000',
+            payeeAddress: 'กรุงเทพฯ',
+            incomeType: 'hire_of_work',
+            ratePct: '3.0000',
+            baseAmount: '20000.00',
+            whtAmount: '600.00',
+          },
+        ],
         baseAmount: '20000.00',
         whtAmount: '600.00',
         dueOn: '2026-11-07',
@@ -2205,23 +3082,41 @@ export class PartnerErpTaxController {
     },
     errors: ['http.not_found', 'validation.failed'],
   })
-  async wht(@CurrentActor() actor: Actor, @Param('factoryId', ParseUUIDPipe) factoryId: string, @Query() q: ErpWhtReportQuery) {
-    return this.tax.wht(await this.workspace.open(actor, factoryId), q.month, q.form === 'pnd3' ? 'pnd3' : 'pnd53');
+  async wht(
+    @CurrentActor() actor: Actor,
+    @Param('factoryId', ParseUUIDPipe) factoryId: string,
+    @Query() q: ErpWhtReportQuery,
+  ) {
+    return this.tax.wht(
+      await this.workspace.open(actor, factoryId),
+      q.month,
+      q.form === 'pnd3' ? 'pnd3' : 'pnd53',
+    );
   }
 
   @Post('tax/exports')
   @Op({
     id: 'partner.erpTax.export',
     summary: 'Export a tax report or the accounting journal',
-    description: 'CSV (UTF-8 with BOM) or XLSX of the month, stored for the factory, behind a short-lived link (D-367).',
+    description:
+      'CSV (UTF-8 with BOM) or XLSX of the month, stored for the factory, behind a short-lived link (D-367).',
     implements: ['D-367'],
     can: 'factory_tax.read',
     status: 200,
     body: { type: ErpTaxExportDto, example: { report: 'sales_vat', month: '2026-10', format: 'csv' } },
-    success: { status: 200, description: 'The file', type: ErpTaxExportResultDto, example: { ...PDF_LINK, fileName: 'sales_vat-2026-10.csv', rows: 12 } },
+    success: {
+      status: 200,
+      description: 'The file',
+      type: ErpTaxExportResultDto,
+      example: { ...PDF_LINK, fileName: 'sales_vat-2026-10.csv', rows: 12 },
+    },
     errors: WRITE,
   })
-  async export(@CurrentActor() actor: Actor, @Param('factoryId', ParseUUIDPipe) factoryId: string, @Body() body: ErpTaxExportDto) {
+  async export(
+    @CurrentActor() actor: Actor,
+    @Param('factoryId', ParseUUIDPipe) factoryId: string,
+    @Body() body: ErpTaxExportDto,
+  ) {
     return this.tax.export(await this.workspace.open(actor, factoryId), body);
   }
 
@@ -2229,13 +3124,18 @@ export class PartnerErpTaxController {
   @Op({
     id: 'partner.erpTax.salesReport',
     summary: 'Sales by salesperson',
-    description: 'Net invoiced, collected, target, achievement and commission for the month; gross profit over delivered stock cost (D-369).',
+    description:
+      'Net invoiced, collected, target, achievement and commission for the month; gross profit over delivered stock cost (D-369).',
     implements: ['D-369'],
     can: 'factory_sales.read',
     success: { status: 200, description: 'The report', type: ErpSalesReportDto, example: SALES_REPORT },
     errors: ['http.not_found', 'validation.failed'],
   })
-  async salesReport(@CurrentActor() actor: Actor, @Param('factoryId', ParseUUIDPipe) factoryId: string, @Query() q: ErpMonthQuery) {
+  async salesReport(
+    @CurrentActor() actor: Actor,
+    @Param('factoryId', ParseUUIDPipe) factoryId: string,
+    @Query() q: ErpMonthQuery,
+  ) {
     return this.tax.salesReport(await this.workspace.open(actor, factoryId), q.month);
   }
 
@@ -2246,11 +3146,23 @@ export class PartnerErpTaxController {
     description: 'Net sales target and commission rate; returns the month’s report (D-369).',
     implements: ['D-369'],
     can: 'factory_sales.approve',
-    body: { type: ErpSaveSalesTargetDto, example: { salespersonId: E4_IDS.salesperson, month: '2026-10', targetNet: '300000', commissionPct: '2' } },
+    body: {
+      type: ErpSaveSalesTargetDto,
+      example: {
+        salespersonId: E4_IDS.salesperson,
+        month: '2026-10',
+        targetNet: '300000',
+        commissionPct: '2',
+      },
+    },
     success: { status: 200, description: 'Saved', type: ErpSalesReportDto, example: SALES_REPORT },
     errors: WRITE,
   })
-  async saveTarget(@CurrentActor() actor: Actor, @Param('factoryId', ParseUUIDPipe) factoryId: string, @Body() body: ErpSaveSalesTargetDto) {
+  async saveTarget(
+    @CurrentActor() actor: Actor,
+    @Param('factoryId', ParseUUIDPipe) factoryId: string,
+    @Body() body: ErpSaveSalesTargetDto,
+  ) {
     return this.tax.saveTarget(await this.workspace.open(actor, factoryId), body);
   }
 }

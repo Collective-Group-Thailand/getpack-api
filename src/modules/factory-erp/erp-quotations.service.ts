@@ -6,7 +6,12 @@ import { type ActionRule, nextActions } from '@common/next-actions/next-actions'
 import { paginated, toSkipTake } from '@common/pagination/pagination';
 import { AppConfig } from '@config/app-config';
 import { type Tx } from '@database/prisma.service';
-import { type ErpQuotation, type ErpQuotationStatus, type ErpVatMode, type Prisma } from '@generated/prisma/client';
+import {
+  type ErpQuotation,
+  type ErpQuotationStatus,
+  type ErpVatMode,
+  type Prisma,
+} from '@generated/prisma/client';
 import { bahtText } from '@modules/receivables/thai-text';
 import { Injectable } from '@nestjs/common';
 import { ScheduledJob } from '@platform/maintenance/scheduled-job.decorator';
@@ -65,7 +70,11 @@ export interface QuoteFacts {
 
 export const QUOTE_ACTIONS: ActionRule<QuoteFacts>[] = [
   { key: 'erp_quote.edit', permissions: ['factory_sales.manage'], when: (q) => q.status === 'draft' },
-  { key: 'erp_quote.send', permissions: ['factory_sales.manage'], when: (q) => OPEN.includes(q.status) && !q.expired },
+  {
+    key: 'erp_quote.send',
+    permissions: ['factory_sales.manage'],
+    when: (q) => OPEN.includes(q.status) && !q.expired,
+  },
   {
     key: 'erp_quote.revise',
     permissions: ['factory_sales.manage'],
@@ -74,10 +83,15 @@ export const QUOTE_ACTIONS: ActionRule<QuoteFacts>[] = [
   {
     key: 'erp_quote.accept',
     permissions: ['factory_sales.manage'],
-    when: (q) => (q.status === 'sent' ? (q.expired ? 'ใบเสนอราคาหมดอายุแล้ว — ออกฉบับแก้ไขใหม่' : true) : false),
+    when: (q) =>
+      q.status === 'sent' ? (q.expired ? 'ใบเสนอราคาหมดอายุแล้ว — ออกฉบับแก้ไขใหม่' : true) : false,
   },
   { key: 'erp_quote.reject', permissions: ['factory_sales.manage'], when: (q) => q.status === 'sent' },
-  { key: 'erp_quote.order', permissions: ['factory_sales.manage'], when: (q) => q.status === 'accepted' && !q.ordered },
+  {
+    key: 'erp_quote.order',
+    permissions: ['factory_sales.manage'],
+    when: (q) => q.status === 'accepted' && !q.ordered,
+  },
   {
     key: 'erp_quote.cancel',
     permissions: ['factory_sales.manage'],
@@ -137,14 +151,20 @@ export class ErpQuotationsService {
     return quoteDto(row, revisions, perms);
   }
 
-  async create(scope: ErpScope, body: ErpSaveQuotationDto, perms: ReadonlySet<string>): Promise<ErpQuotationDto> {
+  async create(
+    scope: ErpScope,
+    body: ErpSaveQuotationDto,
+    perms: ReadonlySet<string>,
+  ): Promise<ErpQuotationDto> {
     const id = await this.workspace.tx(async (tx) => {
       const data = await this.fields(tx, scope, body, null);
       const quoteNo = await this.workspace.nextNumber(tx, scope.factory.id, 'qt');
       const q = await tx.erpQuotation.create({
         data: { factoryId: scope.factory.id, quoteNo, createdById: scope.actor.userId, ...data },
       });
-      await this.workspace.record(tx, scope, 'erp_quotation.drafted', 'erp_quotation', q.publicId, { quoteNo });
+      await this.workspace.record(tx, scope, 'erp_quotation.drafted', 'erp_quotation', q.publicId, {
+        quoteNo,
+      });
       return q.publicId;
     });
     return this.get(scope, id, perms);
@@ -160,7 +180,8 @@ export class ErpQuotationsService {
     await this.workspace.tx(async (tx) => {
       const q = await this.lock(tx, scope, publicId);
       assertIfMatch(ifMatch, etagOf(q.publicId, q.rowVersion));
-      if (q.status !== 'draft') throw new DomainException('erp.invalid_status', { params: { status: q.status } });
+      if (q.status !== 'draft')
+        throw new DomainException('erp.invalid_status', { params: { status: q.status } });
       const data = await this.fields(tx, scope, body, q);
       await tx.erpQuotationLine.deleteMany({ where: { quotationId: q.id } });
       await tx.erpQuotation.update({
@@ -176,7 +197,8 @@ export class ErpQuotationsService {
     const token = randomBytes(24).toString('base64url');
     const expiresAt = await this.workspace.tx(async (tx) => {
       const q = await this.lock(tx, scope, publicId);
-      if (!OPEN.includes(q.status)) throw new DomainException('erp.invalid_status', { params: { status: q.status } });
+      if (!OPEN.includes(q.status))
+        throw new DomainException('erp.invalid_status', { params: { status: q.status } });
       if (iso(q.validUntil)! < today())
         throw new DomainException('erp.quotation_expired', {
           params: { quoteNo: q.quoteNo, validUntil: iso(q.validUntil)! },
@@ -205,7 +227,11 @@ export class ErpQuotationsService {
       });
       return until;
     });
-    return { quotation: await this.get(scope, publicId, perms), url: this.linkUrl(token), expiresAt: isoTs(expiresAt)! };
+    return {
+      quotation: await this.get(scope, publicId, perms),
+      url: this.linkUrl(token),
+      expiresAt: isoTs(expiresAt)!,
+    };
   }
 
   /** A new revision under the same number (D-360); the earlier one is superseded. */
@@ -214,7 +240,10 @@ export class ErpQuotationsService {
       const q = await this.lock(tx, scope, publicId);
       if (!['sent', 'rejected', 'expired'].includes(q.status))
         throw new DomainException('erp.invalid_status', { params: { status: q.status } });
-      const lines = await tx.erpQuotationLine.findMany({ where: { quotationId: q.id }, orderBy: { lineNo: 'asc' } });
+      const lines = await tx.erpQuotationLine.findMany({
+        where: { quotationId: q.id },
+        orderBy: { lineNo: 'asc' },
+      });
       const settings = await this.workspace.settings(tx, scope.factory.id);
       const latest = await tx.erpQuotation.aggregate({
         where: { factoryId: scope.factory.id, quoteNo: q.quoteNo },
@@ -222,7 +251,12 @@ export class ErpQuotationsService {
       });
       await tx.erpQuotation.update({
         where: { id: q.id },
-        data: { status: 'superseded', linkTokenHash: null, updatedById: scope.actor.userId, rowVersion: { increment: 1 } },
+        data: {
+          status: 'superseded',
+          linkTokenHash: null,
+          updatedById: scope.actor.userId,
+          rowVersion: { increment: 1 },
+        },
       });
       const next = await tx.erpQuotation.create({
         data: {
@@ -285,7 +319,8 @@ export class ErpQuotationsService {
   async reject(scope: ErpScope, publicId: string, reason: string, perms: ReadonlySet<string>) {
     await this.workspace.tx(async (tx) => {
       const q = await this.lock(tx, scope, publicId);
-      if (q.status !== 'sent') throw new DomainException('erp.invalid_status', { params: { status: q.status } });
+      if (q.status !== 'sent')
+        throw new DomainException('erp.invalid_status', { params: { status: q.status } });
       await tx.erpQuotation.update({
         where: { id: q.id },
         data: {
@@ -305,7 +340,8 @@ export class ErpQuotationsService {
   async cancel(scope: ErpScope, publicId: string, reason: string, perms: ReadonlySet<string>) {
     await this.workspace.tx(async (tx) => {
       const q = await this.lock(tx, scope, publicId);
-      if (!OPEN.includes(q.status)) throw new DomainException('erp.invalid_status', { params: { status: q.status } });
+      if (!OPEN.includes(q.status))
+        throw new DomainException('erp.invalid_status', { params: { status: q.status } });
       await tx.erpQuotation.update({
         where: { id: q.id },
         data: {
@@ -328,7 +364,9 @@ export class ErpQuotationsService {
     const factory = await this.workspace.db.factory.findUniqueOrThrow({ where: { id: q.factoryId } });
     const settings = await this.workspace.settings(this.workspace.db, q.factoryId);
     const seller = await this.workspace.tx((tx) => sellerOf(tx, factory));
-    const customer = await this.workspace.db.erpTradingPartner.findUniqueOrThrow({ where: { id: q.customerId } });
+    const customer = await this.workspace.db.erpTradingPartner.findUniqueOrThrow({
+      where: { id: q.customerId },
+    });
     const expired = q.status === 'sent' && iso(q.validUntil)! < today();
     return {
       seller,
@@ -376,12 +414,24 @@ export class ErpQuotationsService {
         throw new DomainException('erp.invalid_status', { params: { status: found.status } });
       await tx.erpQuotation.update({
         where: { id: found.id },
-        data: { status: 'rejected', rejectedAt: new Date(), rejectReason: reason, rowVersion: { increment: 1 } },
+        data: {
+          status: 'rejected',
+          rejectedAt: new Date(),
+          rejectReason: reason,
+          rowVersion: { increment: 1 },
+        },
       });
       const factory = await tx.factory.findUniqueOrThrow({ where: { id: found.factoryId } });
-      await this.workspace.recordSystem(tx, factory.publicId, 'erp_quotation.declined_online', 'erp_quotation', found.publicId, {
-        quoteNo: found.quoteNo,
-      });
+      await this.workspace.recordSystem(
+        tx,
+        factory.publicId,
+        'erp_quotation.declined_online',
+        'erp_quotation',
+        found.publicId,
+        {
+          quoteNo: found.quoteNo,
+        },
+      );
     });
     return this.publicView(token);
   }
@@ -410,7 +460,12 @@ export class ErpQuotationsService {
           subjectType: 'quotation',
           subjectPublicId: q.publicId,
           dueOn: iso(q.validUntil),
-          payload: { quoteNo: q.quoteNo, revision: q.revision, customer: q.customer.name, validUntil: iso(q.validUntil) },
+          payload: {
+            quoteNo: q.quoteNo,
+            revision: q.revision,
+            customer: q.customer.name,
+            validUntil: iso(q.validUntil),
+          },
         }),
       );
     return expired.count + soon.length;
@@ -430,7 +485,8 @@ export class ErpQuotationsService {
     body: { name: string; position?: string | null; customerPoNo?: string | null },
     via: 'link' | 'factory',
   ) {
-    if (q.status !== 'sent') throw new DomainException('erp.invalid_status', { params: { status: q.status } });
+    if (q.status !== 'sent')
+      throw new DomainException('erp.invalid_status', { params: { status: q.status } });
     if (iso(q.validUntil)! < today())
       throw new DomainException('erp.quotation_expired', {
         params: { quoteNo: q.quoteNo, validUntil: iso(q.validUntil)! },
@@ -454,9 +510,23 @@ export class ErpQuotationsService {
     }
     const payload = { quoteNo: q.quoteNo, via };
     if (ctx.actor)
-      await this.workspace.record(tx, ctx as ErpScope, 'erp_quotation.accepted', 'erp_quotation', q.publicId, payload);
+      await this.workspace.record(
+        tx,
+        ctx as ErpScope,
+        'erp_quotation.accepted',
+        'erp_quotation',
+        q.publicId,
+        payload,
+      );
     else
-      await this.workspace.recordSystem(tx, ctx.factory.publicId, 'erp_quotation.accepted', 'erp_quotation', q.publicId, payload);
+      await this.workspace.recordSystem(
+        tx,
+        ctx.factory.publicId,
+        'erp_quotation.accepted',
+        'erp_quotation',
+        q.publicId,
+        payload,
+      );
   }
 
   private async byToken(db: Tx | ErpWorkspace['db'], token: string) {
@@ -483,7 +553,9 @@ export class ErpQuotationsService {
   private async fields(tx: Tx, scope: ErpScope, body: ErpSaveQuotationDto, current: ErpQuotation | null) {
     const customer = await customerOf(tx, scope, body.customerId);
     const opportunity = body.opportunityId
-      ? await tx.erpOpportunity.findFirst({ where: { publicId: body.opportunityId, factoryId: scope.factory.id } })
+      ? await tx.erpOpportunity.findFirst({
+          where: { publicId: body.opportunityId, factoryId: scope.factory.id },
+        })
       : null;
     if (body.opportunityId && !opportunity) throw new DomainException('http.not_found');
     const salespersonId =
@@ -494,7 +566,8 @@ export class ErpQuotationsService {
           : (await factoryUser(tx, scope.factory.id, body.salespersonId)).id;
     const settings = await this.workspace.settings(tx, scope.factory.id);
     const quoteDate = body.quoteDate ?? (current ? iso(current.quoteDate)! : today());
-    const validUntil = body.validUntil ?? (current ? iso(current.validUntil)! : addDays(quoteDate, settings.quoteValidDays));
+    const validUntil =
+      body.validUntil ?? (current ? iso(current.validUntil)! : addDays(quoteDate, settings.quoteValidDays));
     if (validUntil < quoteDate)
       throw new DomainException('validation.failed', {
         errors: [{ path: 'validUntil', code: 'invalid', message: 'On or after the quotation date' }],
@@ -553,7 +626,9 @@ function quoteDto(r: QuoteRow, revisions: ErpQuotation[], perms: ReadonlySet<str
   const order = r.salesOrders[0] ?? null;
   return {
     ...quoteSummary(r),
-    opportunity: r.opportunity ? { id: r.opportunity.publicId, code: r.opportunity.title, name: r.opportunity.title } : null,
+    opportunity: r.opportunity
+      ? { id: r.opportunity.publicId, code: r.opportunity.title, name: r.opportunity.title }
+      : null,
     paymentTermDays: r.paymentTermDays,
     leadTimeDays: r.leadTimeDays,
     terms: r.terms,
@@ -574,7 +649,12 @@ function quoteDto(r: QuoteRow, revisions: ErpQuotation[], perms: ReadonlySet<str
     rejectReason: r.rejectReason,
     cancelReason: r.cancelReason,
     salesOrder: order ? { id: order.publicId, code: order.soNo, name: order.soNo } : null,
-    revisions: revisions.map((v) => ({ id: v.publicId, revision: v.revision, status: v.status, total: fmtMoney(v.total) })),
+    revisions: revisions.map((v) => ({
+      id: v.publicId,
+      revision: v.revision,
+      status: v.status,
+      total: fmtMoney(v.total),
+    })),
     nextActions: nextActions({ status: r.status, expired, ordered: order !== null }, QUOTE_ACTIONS, perms),
     version: r.rowVersion,
   };

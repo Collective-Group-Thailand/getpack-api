@@ -1,5 +1,6 @@
 import { type Actor, actorColumns, type UserActor } from '@common/context/actor';
 import { DomainException } from '@common/errors/domain.exception';
+import { addMonths, dateOnly, dayOf, monthEnd } from '@common/ledger-core/dates';
 import { bangkokDate } from '@common/time/bangkok';
 import { PrismaService, type Tx } from '@database/prisma.service';
 import { type FiscalPeriod, type PeriodStatus } from '@generated/prisma/client';
@@ -7,8 +8,6 @@ import { Injectable, Optional } from '@nestjs/common';
 import { ModuleRef } from '@nestjs/core';
 import { AuditService } from '@platform/audit/audit.service';
 import { DomainEvents } from '@platform/domain-events/domain-events.service';
-
-import { addMonths, dateOnly, dayOf, monthEnd } from '@common/ledger-core/dates';
 
 /** Allowed period transitions (accounting-design §1.4, §7 step 9). `closed` never reopens; `locked` is final. */
 const TRANSITIONS: Record<PeriodStatus, PeriodStatus[]> = {

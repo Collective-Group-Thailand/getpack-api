@@ -1,13 +1,13 @@
 import { readdirSync, readFileSync, statSync } from 'node:fs';
 import { join } from 'node:path';
 
+import { CALCULATOR_READS } from './component-reads';
 import { CORRUGATE_PRICE_COMPONENTS } from './corrugate/price-components';
 import { FOLDING_PRICE_COMPONENTS } from './folding/price-components';
 import { LABEL_PRICE_COMPONENTS } from './label/price-components';
 import { POUCH_PRICE_COMPONENTS } from './pouch/price-components';
 import { SERVICE_PRICE_COMPONENTS } from './service/price-components';
 import { STANDARD_PRODUCT_PRICE_COMPONENTS } from './standard-product/price-components';
-import { CALCULATOR_READS } from './component-reads';
 
 const ROOT = join(__dirname, '../../../..');
 const DESCRIPTORS = [

@@ -660,7 +660,12 @@ export class ErpPricingService {
          GROUP BY g.supplier_id`),
       this.workspace.db.erpNcr.groupBy({
         by: ['supplierId'],
-        where: { factoryId, supplierId: { in: supplierIds }, createdAt: { gte: since }, status: { not: 'cancelled' } },
+        where: {
+          factoryId,
+          supplierId: { in: supplierIds },
+          createdAt: { gte: since },
+          status: { not: 'cancelled' },
+        },
         _count: { _all: true },
       }),
     ]);

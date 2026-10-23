@@ -56,7 +56,12 @@ const CERT_INCLUDE = {
 type CertRow = Prisma.ErpWhtCertificateGetPayload<{ include: typeof CERT_INCLUDE }>;
 
 export const WHT_ACTIONS: ActionRule<{ status: string }>[] = [
-  { key: 'erp_wht.void', permissions: ['factory_ap.manage'], irreversible: true, when: (c) => c.status === 'issued' },
+  {
+    key: 'erp_wht.void',
+    permissions: ['factory_ap.manage'],
+    irreversible: true,
+    when: (c) => c.status === 'issued',
+  },
   { key: 'erp_wht.pdf', permissions: ['factory_ap.read'], when: () => true },
 ];
 
@@ -67,7 +72,8 @@ const monthRange = (month: string) => {
   return { from: day(from), to: day(next), next };
 };
 /** Day `d` of the month after `month` (returns are due the following month). */
-const dueIn = (month: string, d: number) => `${monthRange(month).next.slice(0, 8)}${String(d).padStart(2, '0')}`;
+const dueIn = (month: string, d: number) =>
+  `${monthRange(month).next.slice(0, 8)}${String(d).padStart(2, '0')}`;
 
 /**
  * The factory's own tax paperwork (D-366, D-367, D-369): 50 ทวิ certificates for supplier payments, the sales
@@ -88,7 +94,9 @@ export class ErpTaxService {
   async suggest(scope: ErpScope, paymentPublicId: string): Promise<ErpWhtSuggestionDto> {
     return this.workspace.tx(async (tx) => {
       const { payment, lines, form } = await this.suggestion(tx, scope, paymentPublicId);
-      const current = await tx.erpWhtCertificate.findFirst({ where: { paymentId: payment.id, status: 'issued' } });
+      const current = await tx.erpWhtCertificate.findFirst({
+        where: { paymentId: payment.id, status: 'issued' },
+      });
       return {
         payment: { id: payment.publicId, code: payment.paymentNo, name: payment.paymentNo },
         supplier: partnerRef(payment.supplier),
@@ -159,7 +167,11 @@ export class ErpTaxService {
     );
   }
 
-  async getCertificate(scope: ErpScope, publicId: string, perms: ReadonlySet<string>): Promise<ErpWhtCertificateDto> {
+  async getCertificate(
+    scope: ErpScope,
+    publicId: string,
+    perms: ReadonlySet<string>,
+  ): Promise<ErpWhtCertificateDto> {
     const row = await this.workspace.db.erpWhtCertificate.findFirst({
       where: { publicId, factoryId: scope.factory.id },
       include: CERT_INCLUDE,
@@ -173,8 +185,11 @@ export class ErpTaxService {
     const id = await this.workspace.tx(async (tx) => {
       const { payment, lines: suggested, form } = await this.suggestion(tx, scope, body.paymentId);
       await tx.$queryRaw`SELECT id FROM erp_supplier_payments WHERE id = ${payment.id} FOR UPDATE`;
-      const current = await tx.erpWhtCertificate.findFirst({ where: { paymentId: payment.id, status: 'issued' } });
-      if (current) throw new DomainException('erp.invalid_status', { params: { status: `issued ${current.certNo}` } });
+      const current = await tx.erpWhtCertificate.findFirst({
+        where: { paymentId: payment.id, status: 'issued' },
+      });
+      if (current)
+        throw new DomainException('erp.invalid_status', { params: { status: `issued ${current.certNo}` } });
       const lines = (body.lines?.length ? body.lines : suggested).map((l, i) => ({
         lineNo: i + 1,
         incomeType: l.incomeType as ErpWhtIncomeType,
@@ -193,7 +208,12 @@ export class ErpTaxService {
             errors: [{ path: `lines.${i}.whtAmount`, code: 'max', message: 'At most the amount paid' }],
           });
       const paidOn = iso(payment.paidOn)!;
-      const certNo = await this.workspace.nextNumber(tx, scope.factory.id, 'wht', new Date(`${paidOn}T12:00:00+07:00`));
+      const certNo = await this.workspace.nextNumber(
+        tx,
+        scope.factory.id,
+        'wht',
+        new Date(`${paidOn}T12:00:00+07:00`),
+      );
       const s = payment.supplier;
       const cert = await tx.erpWhtCertificate.create({
         data: {
@@ -217,7 +237,14 @@ export class ErpTaxService {
           lines: { create: lines },
         },
       });
-      await this.workspace.record(tx, scope, 'erp_wht_certificate.issued', 'erp_wht_certificate', cert.publicId, { certNo });
+      await this.workspace.record(
+        tx,
+        scope,
+        'erp_wht_certificate.issued',
+        'erp_wht_certificate',
+        cert.publicId,
+        { certNo },
+      );
       return cert.publicId;
     });
     return this.getCertificate(scope, id, perms);
@@ -227,14 +254,22 @@ export class ErpTaxService {
     await this.workspace.tx(async (tx) => {
       const c = await tx.erpWhtCertificate.findFirst({ where: { publicId, factoryId: scope.factory.id } });
       if (!c) throw new DomainException('http.not_found');
-      if (c.status !== 'issued') throw new DomainException('erp.invalid_status', { params: { status: c.status } });
+      if (c.status !== 'issued')
+        throw new DomainException('erp.invalid_status', { params: { status: c.status } });
       await tx.erpWhtCertificate.update({
         where: { id: c.id },
         data: { status: 'voided', voidedAt: new Date(), voidReason: reason },
       });
-      await this.workspace.record(tx, scope, 'erp_wht_certificate.voided', 'erp_wht_certificate', c.publicId, {
-        certNo: c.certNo,
-      });
+      await this.workspace.record(
+        tx,
+        scope,
+        'erp_wht_certificate.voided',
+        'erp_wht_certificate',
+        c.publicId,
+        {
+          certNo: c.certNo,
+        },
+      );
     });
     return this.getCertificate(scope, publicId, perms);
   }
@@ -244,11 +279,21 @@ export class ErpTaxService {
   async salesVat(scope: ErpScope, month: string): Promise<ErpVatReportDto> {
     const r = monthRange(month);
     const invoices = await this.workspace.db.erpSalesInvoice.findMany({
-      where: { factoryId: scope.factory.id, isTaxInvoice: true, invoiceNo: { not: null }, issueDate: { gte: r.from, lt: r.to } },
+      where: {
+        factoryId: scope.factory.id,
+        isTaxInvoice: true,
+        invoiceNo: { not: null },
+        issueDate: { gte: r.from, lt: r.to },
+      },
       orderBy: [{ issueDate: 'asc' }, { invoiceNo: 'asc' }],
     });
     const notes = await this.workspace.db.erpSalesNote.findMany({
-      where: { factoryId: scope.factory.id, isTaxDocument: true, noteNo: { not: null }, issueDate: { gte: r.from, lt: r.to } },
+      where: {
+        factoryId: scope.factory.id,
+        isTaxDocument: true,
+        noteNo: { not: null },
+        issueDate: { gte: r.from, lt: r.to },
+      },
       orderBy: [{ issueDate: 'asc' }, { noteNo: 'asc' }],
     });
     const rows: ErpVatReportRowDto[] = [
@@ -306,7 +351,10 @@ export class ErpTaxService {
     const statements = await this.workspace.db.billingStatement.findMany({
       where: {
         factoryId: scope.factory.id,
-        confirmedAt: { gte: new Date(`${month}-01T00:00:00+07:00`), lt: new Date(`${r.next}T00:00:00+07:00`) },
+        confirmedAt: {
+          gte: new Date(`${month}-01T00:00:00+07:00`),
+          lt: new Date(`${r.next}T00:00:00+07:00`),
+        },
         vatAmount: { gt: 0 },
       },
       include: {
@@ -324,7 +372,14 @@ export class ErpTaxService {
     for (const entityId of new Set(statements.map((s) => s.entityId))) {
       const read = async (key: string): Promise<string | null> => {
         try {
-          return String((await this.settings.at(key as never, { at: new Date(), scope: { type: 'entity', id: entityId } })).value);
+          return String(
+            (
+              await this.settings.at(key as never, {
+                at: new Date(),
+                scope: { type: 'entity', id: entityId },
+              })
+            ).value,
+          );
         } catch (error) {
           if (error instanceof SettingNotFoundError) return null;
           throw error;
@@ -388,7 +443,10 @@ export class ErpTaxService {
   }
 
   async vat30(scope: ErpScope, month: string): Promise<ErpVat30Dto> {
-    const [sales, purchase] = await Promise.all([this.salesVat(scope, month), this.purchaseVat(scope, month)]);
+    const [sales, purchase] = await Promise.all([
+      this.salesVat(scope, month),
+      this.purchaseVat(scope, month),
+    ]);
     return {
       month,
       vatRegistered: scope.factory.isVatRegistered,
@@ -440,12 +498,21 @@ export class ErpTaxService {
     async function* iterate() {
       yield* await Promise.resolve(rows);
     }
-    const written = await writeReport({ key: body.report, nameTh: name, nameEn: name, columns }, iterate(), format, {
-      filters: { month: body.month },
-      generatedAt: new Date(),
-    });
+    const written = await writeReport(
+      { key: body.report, nameTh: name, nameEn: name, columns },
+      iterate(),
+      format,
+      {
+        filters: { month: body.month },
+        generatedAt: new Date(),
+      },
+    );
     const fileName = `${body.report}-${body.month}.${written.extension}`;
-    const { url, fileName: stored, expiresAt } = await this.files.store(scope, written.body, fileName, written.mimeType);
+    const {
+      url,
+      fileName: stored,
+      expiresAt,
+    } = await this.files.store(scope, written.body, fileName, written.mimeType);
     return { url, fileName: stored, expiresAt, rows: written.rowCount };
   }
 
@@ -454,14 +521,20 @@ export class ErpTaxService {
     report: string,
     month: string,
   ): Promise<{ columns: ReportColumn[]; rows: Record<string, string | number | null>[]; name: string }> {
-    const col = (key: string, labelTh: string, labelEn: string, type: ReportColumn['type'] = 'text'): ReportColumn => ({
+    const col = (
+      key: string,
+      labelTh: string,
+      labelEn: string,
+      type: ReportColumn['type'] = 'text',
+    ): ReportColumn => ({
       key,
       labelTh,
       labelEn,
       type,
     });
     if (report === 'sales_vat' || report === 'purchase_vat') {
-      const data = report === 'sales_vat' ? await this.salesVat(scope, month) : await this.purchaseVat(scope, month);
+      const data =
+        report === 'sales_vat' ? await this.salesVat(scope, month) : await this.purchaseVat(scope, month);
       return {
         name: report === 'sales_vat' ? 'รายงานภาษีขาย' : 'รายงานภาษีซื้อ',
         columns: [
@@ -510,11 +583,26 @@ export class ErpTaxService {
     const f = scope.factory.id;
     const db = this.workspace.db;
     const [invoices, notes, receipts, bills, payments] = await Promise.all([
-      db.erpSalesInvoice.findMany({ where: { factoryId: f, invoiceNo: { not: null }, issueDate: { gte: r.from, lt: r.to } }, include: { customer: true } }),
-      db.erpSalesNote.findMany({ where: { factoryId: f, noteNo: { not: null }, issueDate: { gte: r.from, lt: r.to } }, include: { customer: true, invoice: true } }),
-      db.erpCustomerReceipt.findMany({ where: { factoryId: f, receivedOn: { gte: r.from, lt: r.to } }, include: { customer: true, allocations: { include: { invoice: true } } } }),
-      db.erpSupplierInvoice.findMany({ where: { factoryId: f, status: { not: 'cancelled' }, invoiceDate: { gte: r.from, lt: r.to } }, include: { supplier: true } }),
-      db.erpSupplierPayment.findMany({ where: { factoryId: f, paidOn: { gte: r.from, lt: r.to } }, include: { supplier: true } }),
+      db.erpSalesInvoice.findMany({
+        where: { factoryId: f, invoiceNo: { not: null }, issueDate: { gte: r.from, lt: r.to } },
+        include: { customer: true },
+      }),
+      db.erpSalesNote.findMany({
+        where: { factoryId: f, noteNo: { not: null }, issueDate: { gte: r.from, lt: r.to } },
+        include: { customer: true, invoice: true },
+      }),
+      db.erpCustomerReceipt.findMany({
+        where: { factoryId: f, receivedOn: { gte: r.from, lt: r.to } },
+        include: { customer: true, allocations: { include: { invoice: true } } },
+      }),
+      db.erpSupplierInvoice.findMany({
+        where: { factoryId: f, status: { not: 'cancelled' }, invoiceDate: { gte: r.from, lt: r.to } },
+        include: { supplier: true },
+      }),
+      db.erpSupplierPayment.findMany({
+        where: { factoryId: f, paidOn: { gte: r.from, lt: r.to } },
+        include: { supplier: true },
+      }),
     ]);
     const rows: Record<string, string | number | null>[] = [
       ...invoices.map((i) => ({
@@ -601,7 +689,10 @@ export class ErpTaxService {
         method: p.method,
         status: p.reversesId ? 'reversal' : 'paid',
       })),
-    ].sort((a, b) => String(a.date).localeCompare(String(b.date)) || String(a.docNo).localeCompare(String(b.docNo)));
+    ].sort(
+      (a, b) =>
+        String(a.date).localeCompare(String(b.date)) || String(a.docNo).localeCompare(String(b.docNo)),
+    );
     return {
       name: 'สมุดรายวัน (ส่งออกบัญชี)',
       columns: [
@@ -631,7 +722,9 @@ export class ErpTaxService {
       const user = await factoryUser(tx, scope.factory.id, body.salespersonId);
       const month = day(`${body.month}-01`);
       await tx.erpSalesTarget.upsert({
-        where: { factoryId_salespersonId_month: { factoryId: scope.factory.id, salespersonId: user.id, month } },
+        where: {
+          factoryId_salespersonId_month: { factoryId: scope.factory.id, salespersonId: user.id, month },
+        },
         create: {
           factoryId: scope.factory.id,
           salespersonId: user.id,
@@ -661,7 +754,12 @@ export class ErpTaxService {
     const db = this.workspace.db;
     const [invoices, notes, allocations, targets] = await Promise.all([
       db.erpSalesInvoice.findMany({
-        where: { factoryId: f, invoiceNo: { not: null }, status: { not: 'voided' }, issueDate: { gte: r.from, lt: r.to } },
+        where: {
+          factoryId: f,
+          invoiceNo: { not: null },
+          status: { not: 'voided' },
+          issueDate: { gte: r.from, lt: r.to },
+        },
         include: { salesperson: true, lines: { include: { deliveryNoteLine: true } } },
       }),
       db.erpSalesNote.findMany({
@@ -693,13 +791,15 @@ export class ErpTaxService {
       e.net = e.net.plus(dec(i.subtotal));
       e.n += 1;
       for (const l of i.lines)
-        if (l.deliveryNoteLine?.unitCost) e.cost = e.cost.plus(dec(l.deliveryNoteLine.unitCost).times(dec(l.quantity)));
+        if (l.deliveryNoteLine?.unitCost)
+          e.cost = e.cost.plus(dec(l.deliveryNoteLine.unitCost).times(dec(l.quantity)));
     }
     for (const n of notes) {
       const e = of(n.invoice.salesperson);
       e.net = n.kind === 'credit' ? e.net.minus(dec(n.difference)) : e.net.plus(dec(n.difference));
     }
-    for (const a of allocations) of(a.invoice.salesperson).collected = of(a.invoice.salesperson).collected.plus(dec(a.amount));
+    for (const a of allocations)
+      of(a.invoice.salesperson).collected = of(a.invoice.salesperson).collected.plus(dec(a.amount));
     for (const t of targets) of(t.salesperson);
     const rows: ErpSalesPerformanceDto[] = [...acc.values()].map((e) => {
       const t = targets.find((x) => x.salesperson.publicId === e.sp?.publicId);
@@ -710,7 +810,8 @@ export class ErpTaxService {
         targetNet: t ? fmtMoney(t.targetNet) : null,
         invoicedNet: fmtMoney(e.net),
         collected: fmtMoney(e.collected),
-        achievementPct: t && dec(t.targetNet).gt(0) ? e.net.times(100).div(dec(t.targetNet)).toFixed(1) : null,
+        achievementPct:
+          t && dec(t.targetNet).gt(0) ? e.net.times(100).div(dec(t.targetNet)).toFixed(1) : null,
         commissionPct: rate.toFixed(4),
         commission: fmtMoney(money2(e.net.times(rate).div(100))),
         invoices: e.n,
@@ -718,7 +819,8 @@ export class ErpTaxService {
       };
     });
     rows.sort((a, b) => dec(b.invoicedNet).comparedTo(dec(a.invoicedNet)));
-    const sum = (k: 'invoicedNet' | 'commission') => fmtMoney(rows.reduce((a, x) => a.plus(dec(x[k])), dec(0)));
+    const sum = (k: 'invoicedNet' | 'commission') =>
+      fmtMoney(rows.reduce((a, x) => a.plus(dec(x[k])), dec(0)));
     const cost = [...acc.values()].reduce((a, e) => a.plus(e.cost), dec(0));
     return {
       month,

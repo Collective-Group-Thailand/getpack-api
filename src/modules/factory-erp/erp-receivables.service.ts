@@ -16,7 +16,16 @@ import { bahtText } from '@modules/receivables/thai-text';
 import { Injectable } from '@nestjs/common';
 import { ScheduledJob } from '@platform/maintenance/scheduled-job.decorator';
 
-import { AGING_BUCKETS, type AgingBucket, agingBucket, dec, fmtMoney, fmtQty, lineAmount, money2 } from './erp.math';
+import {
+  AGING_BUCKETS,
+  type AgingBucket,
+  agingBucket,
+  dec,
+  fmtMoney,
+  fmtQty,
+  lineAmount,
+  money2,
+} from './erp.math';
 import { ErpAlertsService } from './erp-alerts.service';
 import {
   ERP_CREDIT_REASONS,
@@ -101,8 +110,9 @@ const BN_INCLUDE = {
 type BnRow = Prisma.ErpBillingNoteGetPayload<{ include: typeof BN_INCLUDE }>;
 
 /** total + debit notes − credit notes − received. */
-export const openOf = (i: Pick<ErpSalesInvoice, 'total' | 'debitedAmount' | 'creditedAmount' | 'receivedAmount'>) =>
-  dec(i.total).plus(dec(i.debitedAmount)).minus(dec(i.creditedAmount)).minus(dec(i.receivedAmount));
+export const openOf = (
+  i: Pick<ErpSalesInvoice, 'total' | 'debitedAmount' | 'creditedAmount' | 'receivedAmount'>,
+) => dec(i.total).plus(dec(i.debitedAmount)).minus(dec(i.creditedAmount)).minus(dec(i.receivedAmount));
 
 interface IvFacts {
   status: ErpSalesInvoiceStatus;
@@ -112,7 +122,12 @@ interface IvFacts {
 
 export const IV_ACTIONS: ActionRule<IvFacts>[] = [
   { key: 'erp_iv.edit', permissions: ['factory_receivables.manage'], when: (i) => i.status === 'draft' },
-  { key: 'erp_iv.issue', permissions: ['factory_receivables.manage'], irreversible: true, when: (i) => i.status === 'draft' },
+  {
+    key: 'erp_iv.issue',
+    permissions: ['factory_receivables.manage'],
+    irreversible: true,
+    when: (i) => i.status === 'draft',
+  },
   {
     key: 'erp_iv.receive',
     permissions: ['factory_receivables.manage'],
@@ -125,26 +140,60 @@ export const IV_ACTIONS: ActionRule<IvFacts>[] = [
     permissions: ['factory_receivables.manage'],
     irreversible: true,
     when: (i) =>
-      i.status === 'issued' ? (i.settled ? 'มีใบเสร็จหรือใบลด/เพิ่มหนี้แล้ว — ยกเลิกเอกสารเหล่านั้นก่อน' : true) : false,
+      i.status === 'issued'
+        ? i.settled
+          ? 'มีใบเสร็จหรือใบลด/เพิ่มหนี้แล้ว — ยกเลิกเอกสารเหล่านั้นก่อน'
+          : true
+        : false,
   },
-  { key: 'erp_iv.delete', permissions: ['factory_receivables.manage'], irreversible: true, when: (i) => i.status === 'draft' },
+  {
+    key: 'erp_iv.delete',
+    permissions: ['factory_receivables.manage'],
+    irreversible: true,
+    when: (i) => i.status === 'draft',
+  },
   { key: 'erp_iv.pdf', permissions: ['factory_receivables.read'], when: (i) => i.status !== 'draft' },
 ];
 
 export const NOTE_ACTIONS: ActionRule<{ status: ErpIssuedStatus }>[] = [
-  { key: 'erp_note.issue', permissions: ['factory_receivables.manage'], irreversible: true, when: (n) => n.status === 'draft' },
-  { key: 'erp_note.void', permissions: ['factory_receivables.manage'], irreversible: true, when: (n) => n.status === 'issued' },
-  { key: 'erp_note.delete', permissions: ['factory_receivables.manage'], irreversible: true, when: (n) => n.status === 'draft' },
+  {
+    key: 'erp_note.issue',
+    permissions: ['factory_receivables.manage'],
+    irreversible: true,
+    when: (n) => n.status === 'draft',
+  },
+  {
+    key: 'erp_note.void',
+    permissions: ['factory_receivables.manage'],
+    irreversible: true,
+    when: (n) => n.status === 'issued',
+  },
+  {
+    key: 'erp_note.delete',
+    permissions: ['factory_receivables.manage'],
+    irreversible: true,
+    when: (n) => n.status === 'draft',
+  },
   { key: 'erp_note.pdf', permissions: ['factory_receivables.read'], when: (n) => n.status !== 'draft' },
 ];
 
 export const RC_ACTIONS: ActionRule<{ status: string }>[] = [
-  { key: 'erp_rc.cancel', permissions: ['factory_receivables.manage'], irreversible: true, when: (r) => r.status === 'issued' },
+  {
+    key: 'erp_rc.cancel',
+    permissions: ['factory_receivables.manage'],
+    irreversible: true,
+    when: (r) => r.status === 'issued',
+  },
   { key: 'erp_rc.pdf', permissions: ['factory_receivables.read'], when: () => true },
 ];
 
 export const BN_ACTIONS: ActionRule<{ status: string }>[] = [
-  { key: 'erp_bn.cancel', permissions: ['factory_receivables.manage'], irreversible: true, when: (b) => b.status === 'issued' },
+  {
+    key: 'erp_bn.cancel',
+    permissions: ['factory_receivables.manage'],
+    irreversible: true,
+    when: (b) => b.status === 'issued',
+  },
   { key: 'erp_bn.pdf', permissions: ['factory_receivables.read'], when: () => true },
 ];
 
@@ -190,7 +239,11 @@ export class ErpReceivablesService {
     return paginated(rows.map(invoiceSummary), total, q);
   }
 
-  async getInvoice(scope: ErpScope, publicId: string, perms: ReadonlySet<string>): Promise<ErpSalesInvoiceDto> {
+  async getInvoice(
+    scope: ErpScope,
+    publicId: string,
+    perms: ReadonlySet<string>,
+  ): Promise<ErpSalesInvoiceDto> {
     const row = await this.workspace.db.erpSalesInvoice.findFirst({
       where: { publicId, factoryId: scope.factory.id },
       include: IV_INCLUDE,
@@ -228,10 +281,14 @@ export class ErpReceivablesService {
       for (const dnId of body.deliveryNoteIds ?? []) {
         const dn = await tx.erpDeliveryNote.findFirst({
           where: { publicId: dnId, factoryId: scope.factory.id },
-          include: { salesOrder: true, lines: { include: { salesOrderLine: true }, orderBy: { lineNo: 'asc' } } },
+          include: {
+            salesOrder: true,
+            lines: { include: { salesOrderLine: true }, orderBy: { lineNo: 'asc' } },
+          },
         });
         if (!dn) throw new DomainException('http.not_found');
-        if (dn.customerId !== customer.id) throw new DomainException('erp.invalid_status', { params: { status: 'other_customer' } });
+        if (dn.customerId !== customer.id)
+          throw new DomainException('erp.invalid_status', { params: { status: 'other_customer' } });
         if (dn.status !== 'issued' && dn.status !== 'delivered')
           throw new DomainException('erp.invalid_status', { params: { status: dn.status } });
         salesOrderId ??= dn.salesOrderId;
@@ -260,7 +317,8 @@ export class ErpReceivablesService {
           include: { lines: { orderBy: { lineNo: 'asc' } }, deliveryNotes: true },
         });
         if (!so) throw new DomainException('http.not_found');
-        if (so.customerId !== customer.id) throw new DomainException('erp.invalid_status', { params: { status: 'other_customer' } });
+        if (so.customerId !== customer.id)
+          throw new DomainException('erp.invalid_status', { params: { status: 'other_customer' } });
         if (!['confirmed', 'partially_delivered', 'delivered'].includes(so.status))
           throw new DomainException('erp.invalid_status', { params: { status: so.status } });
         salesOrderId ??= so.id;
@@ -348,7 +406,13 @@ export class ErpReceivablesService {
           lines: { create: lines },
         },
       });
-      await this.workspace.record(tx, scope, 'erp_sales_invoice.drafted', 'erp_sales_invoice', invoice.publicId);
+      await this.workspace.record(
+        tx,
+        scope,
+        'erp_sales_invoice.drafted',
+        'erp_sales_invoice',
+        invoice.publicId,
+      );
       return invoice.publicId;
     });
     return this.getInvoice(scope, id, perms);
@@ -364,9 +428,13 @@ export class ErpReceivablesService {
     await this.workspace.tx(async (tx) => {
       const iv = await this.lockInvoice(tx, scope, publicId);
       assertIfMatch(ifMatch, etagOf(iv.publicId, iv.rowVersion));
-      if (iv.status !== 'draft') throw new DomainException('erp.invalid_status', { params: { status: iv.status } });
+      if (iv.status !== 'draft')
+        throw new DomainException('erp.invalid_status', { params: { status: iv.status } });
       const kept = await tx.erpSalesInvoiceLine.findMany({
-        where: { invoiceId: iv.id, OR: [{ deliveryNoteLineId: { not: null } }, { salesOrderLineId: { not: null } }] },
+        where: {
+          invoiceId: iv.id,
+          OR: [{ deliveryNoteLineId: { not: null } }, { salesOrderLineId: { not: null } }],
+        },
         orderBy: { lineNo: 'asc' },
       });
       let all = kept.map((l) => ({ amount: l.amount }));
@@ -394,7 +462,9 @@ export class ErpReceivablesService {
         });
         all = [...all, ...free.map((l) => ({ amount: new Prisma.Decimal(l.amount) }))];
       } else {
-        all = (await tx.erpSalesInvoiceLine.findMany({ where: { invoiceId: iv.id } })).map((l) => ({ amount: l.amount }));
+        all = (await tx.erpSalesInvoiceLine.findMany({ where: { invoiceId: iv.id } })).map((l) => ({
+          amount: l.amount,
+        }));
       }
       if (!all.length) throw new DomainException('erp.nothing_to_invoice');
       const vatMode = vatModeFor(scope.factory, body.vatMode ?? iv.vatMode);
@@ -421,7 +491,8 @@ export class ErpReceivablesService {
   async deleteInvoice(scope: ErpScope, publicId: string): Promise<void> {
     await this.workspace.tx(async (tx) => {
       const iv = await this.lockInvoice(tx, scope, publicId);
-      if (iv.status !== 'draft') throw new DomainException('erp.invalid_status', { params: { status: iv.status } });
+      if (iv.status !== 'draft')
+        throw new DomainException('erp.invalid_status', { params: { status: iv.status } });
       await this.releaseLines(tx, iv.id);
       await tx.erpSalesInvoiceLine.deleteMany({ where: { invoiceId: iv.id } });
       await tx.erpSalesInvoice.delete({ where: { id: iv.id } });
@@ -434,16 +505,27 @@ export class ErpReceivablesService {
    * invoice — it takes the next number of that month, the seller and buyer are frozen, and a cash sale
    * (`invoice_receipt`) is receipted in full at once.
    */
-  async issueInvoice(scope: ErpScope, publicId: string, body: ErpIssueSalesInvoiceDto, perms: ReadonlySet<string>) {
+  async issueInvoice(
+    scope: ErpScope,
+    publicId: string,
+    body: ErpIssueSalesInvoiceDto,
+    perms: ReadonlySet<string>,
+  ) {
     await this.workspace.tx(async (tx) => {
       const iv = await this.lockInvoice(tx, scope, publicId);
-      if (iv.status !== 'draft') throw new DomainException('erp.invalid_status', { params: { status: iv.status } });
+      if (iv.status !== 'draft')
+        throw new DomainException('erp.invalid_status', { params: { status: iv.status } });
       const issueDate = body.issueDate ?? iso(iv.issueDate)!;
       await this.assertDateOrder(tx, scope.factory.id, issueDate);
       const customer = await tx.erpTradingPartner.findUniqueOrThrow({ where: { id: iv.customerId } });
       const seller = await sellerOf(tx, scope.factory);
       if (iv.isTaxInvoice) assertSellerComplete(seller);
-      const invoiceNo = await this.workspace.nextNumber(tx, scope.factory.id, 'iv', new Date(`${issueDate}T12:00:00+07:00`));
+      const invoiceNo = await this.workspace.nextNumber(
+        tx,
+        scope.factory.id,
+        'iv',
+        new Date(`${issueDate}T12:00:00+07:00`),
+      );
       await tx.erpSalesInvoice.update({
         where: { id: iv.id },
         data: {
@@ -460,7 +542,12 @@ export class ErpReceivablesService {
         },
       });
       if (iv.form === 'invoice_receipt') {
-        const receiptNo = await this.workspace.nextNumber(tx, scope.factory.id, 'rc', new Date(`${issueDate}T12:00:00+07:00`));
+        const receiptNo = await this.workspace.nextNumber(
+          tx,
+          scope.factory.id,
+          'rc',
+          new Date(`${issueDate}T12:00:00+07:00`),
+        );
         const receipt = await tx.erpCustomerReceipt.create({
           data: {
             factoryId: scope.factory.id,
@@ -478,7 +565,9 @@ export class ErpReceivablesService {
           },
         });
         await tx.erpSalesInvoice.update({ where: { id: iv.id }, data: { receivedAmount: iv.total } });
-        await this.workspace.record(tx, scope, 'erp_receipt.issued', 'erp_receipt', receipt.publicId, { receiptNo });
+        await this.workspace.record(tx, scope, 'erp_receipt.issued', 'erp_receipt', receipt.publicId, {
+          receiptNo,
+        });
       }
       await this.settle(tx, iv.id);
       for (const soId of await this.ordersOf(tx, iv.id)) await this.orders.refresh(tx, soId);
@@ -494,7 +583,8 @@ export class ErpReceivablesService {
   async voidInvoice(scope: ErpScope, publicId: string, reason: string, perms: ReadonlySet<string>) {
     await this.workspace.tx(async (tx) => {
       const iv = await this.lockInvoice(tx, scope, publicId);
-      if (iv.status !== 'issued') throw new DomainException('erp.invalid_status', { params: { status: iv.status } });
+      if (iv.status !== 'issued')
+        throw new DomainException('erp.invalid_status', { params: { status: iv.status } });
       const notes = await tx.erpSalesNote.count({ where: { invoiceId: iv.id, status: { not: 'voided' } } });
       const allocations = await tx.erpReceiptAllocation.count({
         where: { invoiceId: iv.id, receipt: { status: 'issued' } },
@@ -564,12 +654,21 @@ export class ErpReceivablesService {
     const returns = body.lines.some((l) => l.returnQty);
     if (returns && (!credit || !['goods_returned', 'defective'].includes(body.reason)))
       throw new DomainException('validation.failed', {
-        errors: [{ path: 'lines', code: 'invalid', message: 'Goods come back only on a credit note for returned or defective goods' }],
+        errors: [
+          {
+            path: 'lines',
+            code: 'invalid',
+            message: 'Goods come back only on a credit note for returned or defective goods',
+          },
+        ],
       });
     const id = await this.workspace.tx(async (tx) => {
-      const iv = await tx.erpSalesInvoice.findFirst({ where: { publicId: body.invoiceId, factoryId: scope.factory.id } });
+      const iv = await tx.erpSalesInvoice.findFirst({
+        where: { publicId: body.invoiceId, factoryId: scope.factory.id },
+      });
       if (!iv) throw new DomainException('http.not_found');
-      if (!LIVE.includes(iv.status)) throw new DomainException('erp.invalid_status', { params: { status: iv.status } });
+      if (!LIVE.includes(iv.status))
+        throw new DomainException('erp.invalid_status', { params: { status: iv.status } });
       const original = await this.netValue(tx, iv);
       const difference = money2(body.lines.reduce((a, l) => a.plus(dec(l.amount)), dec(0)));
       if (!difference.gt(0))
@@ -580,7 +679,9 @@ export class ErpReceivablesService {
         throw new DomainException('erp.note_exceeds_invoice', { params: { max: fmtMoney(original) } });
       const items = new Map<string, bigint>();
       for (const l of body.lines.filter((x) => x.itemId)) {
-        const item = await tx.erpItem.findFirst({ where: { publicId: l.itemId!, factoryId: scope.factory.id } });
+        const item = await tx.erpItem.findFirst({
+          where: { publicId: l.itemId!, factoryId: scope.factory.id },
+        });
         if (!item) throw new DomainException('http.not_found');
         items.set(l.itemId!, item.id);
       }
@@ -616,7 +717,13 @@ export class ErpReceivablesService {
           },
         },
       });
-      await this.workspace.record(tx, scope, `erp_${body.kind}_note.drafted`, 'erp_sales_note', note.publicId);
+      await this.workspace.record(
+        tx,
+        scope,
+        `erp_${body.kind}_note.drafted`,
+        'erp_sales_note',
+        note.publicId,
+      );
       return note.publicId;
     });
     return this.getNote(scope, id, perms);
@@ -625,26 +732,36 @@ export class ErpReceivablesService {
   async issueNote(scope: ErpScope, publicId: string, perms: ReadonlySet<string>) {
     await this.workspace.tx(async (tx) => {
       const note = await this.lockNote(tx, scope, publicId);
-      if (note.status !== 'draft') throw new DomainException('erp.invalid_status', { params: { status: note.status } });
+      if (note.status !== 'draft')
+        throw new DomainException('erp.invalid_status', { params: { status: note.status } });
       const iv = await this.lockInvoiceById(tx, note.invoiceId);
-      if (!LIVE.includes(iv.status)) throw new DomainException('erp.invalid_status', { params: { status: iv.status } });
+      if (!LIVE.includes(iv.status))
+        throw new DomainException('erp.invalid_status', { params: { status: iv.status } });
       const credit = note.kind === 'credit';
       const original = await this.netValue(tx, iv);
       if (credit && dec(note.difference).gt(original))
         throw new DomainException('erp.note_exceeds_invoice', { params: { max: fmtMoney(original) } });
       const issueDate = iso(note.issueDate)!;
-      if (issueDate > today()) throw new DomainException('erp.invoice_date_order', { params: { last: today() } });
+      if (issueDate > today())
+        throw new DomainException('erp.invoice_date_order', { params: { last: today() } });
       const customer = await tx.erpTradingPartner.findUniqueOrThrow({ where: { id: note.customerId } });
       const seller = await sellerOf(tx, scope.factory);
       if (note.isTaxDocument) assertSellerComplete(seller);
-      const noteNo = await this.workspace.nextNumber(tx, scope.factory.id, credit ? 'cn' : 'dr', new Date(`${issueDate}T12:00:00+07:00`));
+      const noteNo = await this.workspace.nextNumber(
+        tx,
+        scope.factory.id,
+        credit ? 'cn' : 'dr',
+        new Date(`${issueDate}T12:00:00+07:00`),
+      );
       await tx.erpSalesNote.update({
         where: { id: note.id },
         data: {
           noteNo,
           status: 'issued',
           originalValue: fmtMoney(original),
-          correctValue: fmtMoney(credit ? original.minus(dec(note.difference)) : original.plus(dec(note.difference))),
+          correctValue: fmtMoney(
+            credit ? original.minus(dec(note.difference)) : original.plus(dec(note.difference)),
+          ),
           sellerSnapshot: seller as unknown as Prisma.InputJsonValue,
           buyerSnapshot: buyerOf(customer) as unknown as Prisma.InputJsonValue,
           issuedAt: new Date(),
@@ -656,12 +773,25 @@ export class ErpReceivablesService {
       await tx.erpSalesInvoice.update({
         where: { id: iv.id },
         data: credit
-          ? { creditedAmount: fmtMoney(dec(iv.creditedAmount).plus(dec(note.total))), rowVersion: { increment: 1 } }
-          : { debitedAmount: fmtMoney(dec(iv.debitedAmount).plus(dec(note.total))), rowVersion: { increment: 1 } },
+          ? {
+              creditedAmount: fmtMoney(dec(iv.creditedAmount).plus(dec(note.total))),
+              rowVersion: { increment: 1 },
+            }
+          : {
+              debitedAmount: fmtMoney(dec(iv.debitedAmount).plus(dec(note.total))),
+              rowVersion: { increment: 1 },
+            },
       });
       await this.returnGoods(tx, scope, note, noteNo, 1);
       await this.settle(tx, iv.id);
-      await this.workspace.record(tx, scope, `erp_${note.kind}_note.issued`, 'erp_sales_note', note.publicId, { noteNo });
+      await this.workspace.record(
+        tx,
+        scope,
+        `erp_${note.kind}_note.issued`,
+        'erp_sales_note',
+        note.publicId,
+        { noteNo },
+      );
     });
     return this.getNote(scope, publicId, perms);
   }
@@ -669,7 +799,8 @@ export class ErpReceivablesService {
   async voidNote(scope: ErpScope, publicId: string, reason: string, perms: ReadonlySet<string>) {
     await this.workspace.tx(async (tx) => {
       const note = await this.lockNote(tx, scope, publicId);
-      if (note.status !== 'issued') throw new DomainException('erp.invalid_status', { params: { status: note.status } });
+      if (note.status !== 'issued')
+        throw new DomainException('erp.invalid_status', { params: { status: note.status } });
       const iv = await this.lockInvoiceById(tx, note.invoiceId);
       const after =
         note.kind === 'credit'
@@ -688,12 +819,25 @@ export class ErpReceivablesService {
       await this.returnGoods(tx, scope, note, note.noteNo ?? '', -1);
       await tx.erpSalesNote.update({
         where: { id: note.id },
-        data: { status: 'voided', voidedAt: new Date(), voidReason: reason, updatedById: scope.actor.userId, rowVersion: { increment: 1 } },
+        data: {
+          status: 'voided',
+          voidedAt: new Date(),
+          voidReason: reason,
+          updatedById: scope.actor.userId,
+          rowVersion: { increment: 1 },
+        },
       });
       await this.settle(tx, iv.id);
-      await this.workspace.record(tx, scope, `erp_${note.kind}_note.voided`, 'erp_sales_note', note.publicId, {
-        noteNo: note.noteNo,
-      });
+      await this.workspace.record(
+        tx,
+        scope,
+        `erp_${note.kind}_note.voided`,
+        'erp_sales_note',
+        note.publicId,
+        {
+          noteNo: note.noteNo,
+        },
+      );
     });
     return this.getNote(scope, publicId, perms);
   }
@@ -701,7 +845,8 @@ export class ErpReceivablesService {
   async deleteNote(scope: ErpScope, publicId: string): Promise<void> {
     await this.workspace.tx(async (tx) => {
       const note = await this.lockNote(tx, scope, publicId);
-      if (note.status !== 'draft') throw new DomainException('erp.invalid_status', { params: { status: note.status } });
+      if (note.status !== 'draft')
+        throw new DomainException('erp.invalid_status', { params: { status: note.status } });
       await tx.erpSalesNoteLine.deleteMany({ where: { noteId: note.id } });
       await tx.erpSalesNote.delete({ where: { id: note.id } });
     });
@@ -727,7 +872,11 @@ export class ErpReceivablesService {
         quantity: sign > 0 ? dec(l.returnQty!) : dec(l.returnQty!).negated(),
         reason: sign > 0 ? `รับคืนตาม ${docNo}` : `ยกเลิกใบลดหนี้ ${docNo}`,
       }));
-    await this.stock.post(tx, scope, settings, entries, { type: 'sales_note', publicId: note.publicId, documentNo: docNo });
+    await this.stock.post(tx, scope, settings, entries, {
+      type: 'sales_note',
+      publicId: note.publicId,
+      documentNo: docNo,
+    });
   }
 
   /** The invoice's value now (net, without VAT): its subtotal plus issued debit and less issued credit differences. */
@@ -763,7 +912,11 @@ export class ErpReceivablesService {
     );
   }
 
-  async getReceipt(scope: ErpScope, publicId: string, perms: ReadonlySet<string>): Promise<ErpCustomerReceiptDto> {
+  async getReceipt(
+    scope: ErpScope,
+    publicId: string,
+    perms: ReadonlySet<string>,
+  ): Promise<ErpCustomerReceiptDto> {
     const row = await this.workspace.db.erpCustomerReceipt.findFirst({
       where: { publicId, factoryId: scope.factory.id },
       include: RC_INCLUDE,
@@ -809,10 +962,13 @@ export class ErpReceivablesService {
         });
       const rows: { invoice: ErpSalesInvoice; amount: Prisma.Decimal }[] = [];
       for (const a of body.allocations) {
-        const found = await tx.erpSalesInvoice.findFirst({ where: { publicId: a.invoiceId, factoryId: scope.factory.id } });
+        const found = await tx.erpSalesInvoice.findFirst({
+          where: { publicId: a.invoiceId, factoryId: scope.factory.id },
+        });
         if (!found || found.customerId !== customer.id) throw new DomainException('http.not_found');
         const iv = await this.lockInvoiceById(tx, found.id);
-        if (!LIVE.includes(iv.status)) throw new DomainException('erp.invalid_status', { params: { status: iv.status } });
+        if (!LIVE.includes(iv.status))
+          throw new DomainException('erp.invalid_status', { params: { status: iv.status } });
         const open = openOf(iv);
         const want = dec(a.amount);
         if (refund ? !open.isNegative() || want.gt(open.negated()) : want.gt(open))
@@ -824,11 +980,21 @@ export class ErpReceivablesService {
       let whtFileId: bigint | null = null;
       if (body.whtFileId) {
         const f = await tx.fileObject.findUnique({ where: { publicId: body.whtFileId } });
-        if (!f || f.ownerFactoryId !== scope.factory.id || f.uploadStatus !== 'uploaded' || f.scanStatus === 'infected')
+        if (
+          !f ||
+          f.ownerFactoryId !== scope.factory.id ||
+          f.uploadStatus !== 'uploaded' ||
+          f.scanStatus === 'infected'
+        )
           throw new DomainException('erp.file_not_usable');
         whtFileId = f.id;
       }
-      const receiptNo = await this.workspace.nextNumber(tx, scope.factory.id, 'rc', new Date(`${body.receivedOn}T12:00:00+07:00`));
+      const receiptNo = await this.workspace.nextNumber(
+        tx,
+        scope.factory.id,
+        'rc',
+        new Date(`${body.receivedOn}T12:00:00+07:00`),
+      );
       const receipt = await tx.erpCustomerReceipt.create({
         data: {
           factoryId: scope.factory.id,
@@ -856,13 +1022,23 @@ export class ErpReceivablesService {
       for (const r of rows) {
         await tx.erpSalesInvoice.update({
           where: { id: r.invoice.id },
-          data: { receivedAmount: fmtMoney(dec(r.invoice.receivedAmount).plus(r.amount)), rowVersion: { increment: 1 } },
+          data: {
+            receivedAmount: fmtMoney(dec(r.invoice.receivedAmount).plus(r.amount)),
+            rowVersion: { increment: 1 },
+          },
         });
         await this.settle(tx, r.invoice.id);
       }
-      await this.workspace.record(tx, scope, refund ? 'erp_refund.issued' : 'erp_receipt.issued', 'erp_receipt', receipt.publicId, {
-        receiptNo,
-      });
+      await this.workspace.record(
+        tx,
+        scope,
+        refund ? 'erp_refund.issued' : 'erp_receipt.issued',
+        'erp_receipt',
+        receipt.publicId,
+        {
+          receiptNo,
+        },
+      );
       return receipt.publicId;
     });
     return this.getReceipt(scope, id, perms);
@@ -877,12 +1053,16 @@ export class ErpReceivablesService {
       });
       if (!r) throw new DomainException('http.not_found');
       await tx.$queryRaw`SELECT id FROM erp_customer_receipts WHERE id = ${r.id} FOR UPDATE`;
-      if (r.status !== 'issued') throw new DomainException('erp.invalid_status', { params: { status: r.status } });
+      if (r.status !== 'issued')
+        throw new DomainException('erp.invalid_status', { params: { status: r.status } });
       for (const a of r.allocations) {
         const iv = await this.lockInvoiceById(tx, a.invoiceId);
         await tx.erpSalesInvoice.update({
           where: { id: iv.id },
-          data: { receivedAmount: fmtMoney(dec(iv.receivedAmount).minus(dec(a.amount))), rowVersion: { increment: 1 } },
+          data: {
+            receivedAmount: fmtMoney(dec(iv.receivedAmount).minus(dec(a.amount))),
+            rowVersion: { increment: 1 },
+          },
         });
         await this.settle(tx, iv.id);
       }
@@ -890,7 +1070,9 @@ export class ErpReceivablesService {
         where: { id: r.id },
         data: { status: 'cancelled', cancelledAt: new Date(), cancelReason: reason },
       });
-      await this.workspace.record(tx, scope, 'erp_receipt.cancelled', 'erp_receipt', r.publicId, { receiptNo: r.receiptNo });
+      await this.workspace.record(tx, scope, 'erp_receipt.cancelled', 'erp_receipt', r.publicId, {
+        receiptNo: r.receiptNo,
+      });
     });
     return this.getReceipt(scope, publicId, perms);
   }
@@ -917,7 +1099,11 @@ export class ErpReceivablesService {
     );
   }
 
-  async getBillingNote(scope: ErpScope, publicId: string, perms: ReadonlySet<string>): Promise<ErpBillingNoteDto> {
+  async getBillingNote(
+    scope: ErpScope,
+    publicId: string,
+    perms: ReadonlySet<string>,
+  ): Promise<ErpBillingNoteDto> {
     const row = await this.workspace.db.erpBillingNote.findFirst({
       where: { publicId, factoryId: scope.factory.id },
       include: BN_INCLUDE,
@@ -942,7 +1128,12 @@ export class ErpReceivablesService {
         return { invoiceId: iv.id, amount: fmtMoney(open) };
       });
       const billingDate = body.billingDate ?? today();
-      const billingNo = await this.workspace.nextNumber(tx, scope.factory.id, 'bn', new Date(`${billingDate}T12:00:00+07:00`));
+      const billingNo = await this.workspace.nextNumber(
+        tx,
+        scope.factory.id,
+        'bn',
+        new Date(`${billingDate}T12:00:00+07:00`),
+      );
       const bn = await tx.erpBillingNote.create({
         data: {
           factoryId: scope.factory.id,
@@ -958,7 +1149,9 @@ export class ErpReceivablesService {
           lines: { create: lines },
         },
       });
-      await this.workspace.record(tx, scope, 'erp_billing_note.issued', 'erp_billing_note', bn.publicId, { billingNo });
+      await this.workspace.record(tx, scope, 'erp_billing_note.issued', 'erp_billing_note', bn.publicId, {
+        billingNo,
+      });
       return bn.publicId;
     });
     return this.getBillingNote(scope, id, perms);
@@ -968,7 +1161,8 @@ export class ErpReceivablesService {
     await this.workspace.tx(async (tx) => {
       const bn = await tx.erpBillingNote.findFirst({ where: { publicId, factoryId: scope.factory.id } });
       if (!bn) throw new DomainException('http.not_found');
-      if (bn.status !== 'issued') throw new DomainException('erp.invalid_status', { params: { status: bn.status } });
+      if (bn.status !== 'issued')
+        throw new DomainException('erp.invalid_status', { params: { status: bn.status } });
       await tx.erpBillingNote.update({
         where: { id: bn.id },
         data: { status: 'cancelled', cancelledAt: new Date(), cancelReason: reason },
@@ -986,11 +1180,15 @@ export class ErpReceivablesService {
       where: { factoryId: scope.factory.id, status: { in: LIVE } },
       include: { customer: true },
     });
-    const zero = () => Object.fromEntries(AGING_BUCKETS.map((b) => [b, dec(0)])) as Record<AgingBucket, Prisma.Decimal>;
+    const zero = () =>
+      Object.fromEntries(AGING_BUCKETS.map((b) => [b, dec(0)])) as Record<AgingBucket, Prisma.Decimal>;
     const totals = zero();
     let dueSoon = dec(0);
     let refunds = dec(0);
-    const byCustomer = new Map<bigint, { customer: (typeof rows)[number]['customer']; n: number; b: Record<AgingBucket, Prisma.Decimal> }>();
+    const byCustomer = new Map<
+      bigint,
+      { customer: (typeof rows)[number]['customer']; n: number; b: Record<AgingBucket, Prisma.Decimal> }
+    >();
     for (const r of rows) {
       const open = openOf(r);
       if (open.isNegative()) {
@@ -1199,7 +1397,9 @@ function invoiceDto(r: IvRow, perms: ReadonlySet<string>): ErpSalesInvoiceDto {
     }
   return {
     ...invoiceSummary(r),
-    salesOrder: r.salesOrder ? { id: r.salesOrder.publicId, code: r.salesOrder.soNo, name: r.salesOrder.soNo } : null,
+    salesOrder: r.salesOrder
+      ? { id: r.salesOrder.publicId, code: r.salesOrder.soNo, name: r.salesOrder.soNo }
+      : null,
     paymentTermDays: r.paymentTermDays,
     customerPoNo: r.customerPoNo,
     note: r.note,
@@ -1212,7 +1412,13 @@ function invoiceDto(r: IvRow, perms: ReadonlySet<string>): ErpSalesInvoiceDto {
     receivedAmount: fmtMoney(r.receivedAmount),
     lines: r.lines.map((l) => salesLineDto(l, LINE.iv)),
     deliveryNotes: [...dns.values()],
-    notes: r.notes.map((n) => ({ id: n.publicId, kind: n.kind, noteNo: n.noteNo, status: n.status, total: fmtMoney(n.total) })),
+    notes: r.notes.map((n) => ({
+      id: n.publicId,
+      kind: n.kind,
+      noteNo: n.noteNo,
+      status: n.status,
+      total: fmtMoney(n.total),
+    })),
     receipts: r.allocations.map((a) => ({
       id: a.receipt.publicId,
       receiptNo: a.receipt.receiptNo,
@@ -1249,7 +1455,12 @@ function noteDto(r: NoteRow, perms: ReadonlySet<string>): ErpSalesNoteDto {
     noteNo: r.noteNo,
     status: r.status,
     total: fmtMoney(r.total),
-    invoice: { id: r.invoice.publicId, invoiceNo: r.invoice.invoiceNo, status: r.invoice.status, total: fmtMoney(r.invoice.total) },
+    invoice: {
+      id: r.invoice.publicId,
+      invoiceNo: r.invoice.invoiceNo,
+      status: r.invoice.status,
+      total: fmtMoney(r.invoice.total),
+    },
     customer: partnerRef(r.customer),
     issueDate: iso(r.issueDate)!,
     reason: r.reason,
@@ -1297,7 +1508,12 @@ function receiptDto(r: RcRow, perms: ReadonlySet<string>): ErpCustomerReceiptDto
     whtFileId: r.whtFile?.publicId ?? null,
     note: r.note,
     allocations: r.allocations.map((a) => ({
-      invoice: { id: a.invoice.publicId, invoiceNo: a.invoice.invoiceNo, status: a.invoice.status, total: fmtMoney(a.invoice.total) },
+      invoice: {
+        id: a.invoice.publicId,
+        invoiceNo: a.invoice.invoiceNo,
+        status: a.invoice.status,
+        total: fmtMoney(a.invoice.total),
+      },
       amount: fmtMoney(a.amount),
     })),
     amountInWords: bahtText(fmtMoney(dec(r.amount).abs())),
@@ -1319,7 +1535,12 @@ function billingDto(r: BnRow, perms: ReadonlySet<string>): ErpBillingNoteDto {
     total: fmtMoney(r.total),
     note: r.note,
     lines: r.lines.map((l) => ({
-      invoice: { id: l.invoice.publicId, invoiceNo: l.invoice.invoiceNo, status: l.invoice.status, total: fmtMoney(l.invoice.total) },
+      invoice: {
+        id: l.invoice.publicId,
+        invoiceNo: l.invoice.invoiceNo,
+        status: l.invoice.status,
+        total: fmtMoney(l.invoice.total),
+      },
       issueDate: iso(l.invoice.issueDate)!,
       dueDate: iso(l.invoice.dueDate)!,
       amount: fmtMoney(l.amount),
