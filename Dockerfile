@@ -24,10 +24,24 @@ FROM base AS prod-deps
 COPY package.json pnpm-lock.yaml ./
 RUN --mount=type=cache,id=pnpm,target=/pnpm/store pnpm install --frozen-lockfile --prod --ignore-scripts
 
+# --- prisma-cli: `prisma migrate deploy` for the one-shot migrate container -----------------------
+# The CLI is a devDependency, so it is installed apart from /app/node_modules at the exact version
+# package.json pins. Its config sits beside it so `prisma/config` resolves.
+FROM ${NODE_IMAGE} AS prisma-cli
+WORKDIR /opt/prisma-cli
+# openssl lets Prisma pick the libssl3 schema-engine build (slim images have no openssl binary)
+RUN apt-get update && apt-get install -y --no-install-recommends openssl && rm -rf /var/lib/apt/lists/*
+COPY package.json /tmp/app-package.json
+RUN version=$(node -p "require('/tmp/app-package.json').devDependencies.prisma") \
+  && echo '{"private":true}' > package.json \
+  && npm install --no-audit --no-fund --omit=dev "prisma@${version}" \
+  && npm cache clean --force && rm /tmp/app-package.json
+COPY prisma.deploy.config.ts ./prisma.config.ts
+
 # --- runtime ------------------------------------------------------------------------------------
 FROM ${NODE_IMAGE} AS runtime
 RUN apt-get update \
-  && apt-get install -y --no-install-recommends tini ca-certificates chromium fonts-thai-tlwg fonts-noto-core \
+  && apt-get install -y --no-install-recommends tini ca-certificates openssl chromium fonts-thai-tlwg fonts-noto-core \
   && rm -rf /var/lib/apt/lists/*
 ENV NODE_ENV=production PDF_CHROMIUM_PATH=/usr/bin/chromium
 WORKDIR /app
@@ -37,6 +51,7 @@ COPY --from=build --chown=node:node /app/package.json ./package.json
 COPY --from=build --chown=node:node /app/prisma ./prisma
 # ADR-0010: the pinned @getpack/dieline bundle the drawing service loads at run time.
 COPY --from=build --chown=node:node /app/vendor ./vendor
+COPY --from=prisma-cli /opt/prisma-cli /opt/prisma-cli
 USER node
 EXPOSE 3000
 ENTRYPOINT ["/usr/bin/tini", "--"]

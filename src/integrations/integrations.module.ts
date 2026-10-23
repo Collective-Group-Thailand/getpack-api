@@ -153,7 +153,7 @@ import { WEBHOOK_SENDER } from './webhooks-out/webhook-sender.port';
         config.useFakes
           ? new FakeEmailSender()
           : new SesEmailSender({
-              region: config.get('AWS_REGION'),
+              region: config.get('SES_REGION') ?? config.get('AWS_REGION'),
               endpoint: config.get('AWS_ENDPOINT_URL'),
               from: config.get('SES_FROM_ADDRESS'),
             }),

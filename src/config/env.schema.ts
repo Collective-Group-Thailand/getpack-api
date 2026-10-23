@@ -101,6 +101,14 @@ export class EnvironmentVariables {
   @IsString()
   AWS_REGION = 'ap-southeast-1';
 
+  /**
+   * Region for Amazon SES when it differs from AWS_REGION — SES is not offered in every region
+   * (e.g. ap-southeast-7, Thailand), so mail goes out of ap-southeast-1. Unset: AWS_REGION.
+   */
+  @IsOptional()
+  @IsString()
+  SES_REGION?: string;
+
   @IsOptional()
   @IsUrl({ require_tld: false, require_protocol: true })
   AWS_ENDPOINT_URL?: string;

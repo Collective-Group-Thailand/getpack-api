@@ -1,0 +1,41 @@
+name: Deploy
+
+# main is green in CI → build the arm64 image of that exact commit → ECR (getpack/api:sha-xxxxxxx + :uat)
+# → deploy to the UAT box (migrate → api + worker → health check → automatic rollback on failure).
+# Production: collective-infra `promote.yml` re-tags the sha that passed UAT (approval-gated).
+# Pipeline and box scripts: Collective-Group-Thailand/collective-infra (README §4).
+
+on:
+  workflow_run:
+    workflows: [CI]
+    types: [completed]
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  id-token: write
+  contents: read
+  packages: read
+
+concurrency:
+  group: deploy-uat
+  cancel-in-progress: false
+
+jobs:
+  build:
+    if: github.event_name == 'workflow_dispatch' || github.event.workflow_run.conclusion == 'success'
+    uses: Collective-Group-Thailand/collective-infra/.github/workflows/reusable-build-push.yml@v1
+    with:
+      image: getpack/api
+      environment: uat
+      moving_tag: uat
+      ref: ${{ github.event.workflow_run.head_sha || github.sha }}
+
+  deploy:
+    needs: build
+    uses: Collective-Group-Thailand/collective-infra/.github/workflows/reusable-deploy.yml@v1
+    with:
+      product: getpack
+      component: api
+      environment: uat
+      image_tag: ${{ needs.build.outputs.image_tag }}
