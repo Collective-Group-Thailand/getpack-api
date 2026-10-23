@@ -31,14 +31,15 @@ RUN --mount=type=cache,id=pnpm,target=/pnpm/store pnpm install --frozen-lockfile
 
 # --- prisma-cli: `prisma migrate deploy` for the one-shot migrate container -----------------------
 # The CLI is a devDependency, so it is installed apart from /app/node_modules at the exact version
-# package.json pins. Its config sits beside it so `prisma/config` resolves.
+# package.json pins. Its config sits beside it so `prisma/config` resolves. The overrides match package.json's
+# pnpm overrides (fixed versions of the CLI's dependencies; the image scan fails on the older ones).
 FROM ${NODE_IMAGE} AS prisma-cli
 WORKDIR /opt/prisma-cli
 # openssl lets Prisma pick the libssl3 schema-engine build (slim images have no openssl binary)
 RUN apt-get update && apt-get install -y --no-install-recommends openssl && rm -rf /var/lib/apt/lists/*
 COPY package.json /tmp/app-package.json
 RUN version=$(node -p "require('/tmp/app-package.json').devDependencies.prisma") \
-  && echo '{"private":true}' > package.json \
+  && echo '{"private":true,"overrides":{"deepmerge-ts":"^8.0.0","mysql2":"^3.22.0"}}' > package.json \
   && npm install --no-audit --no-fund --omit=dev "prisma@${version}" \
   && npm cache clean --force && rm /tmp/app-package.json
 COPY prisma.deploy.config.ts ./prisma.config.ts
@@ -49,6 +50,10 @@ RUN apt-get update \
   && apt-get install -y --no-install-recommends tini ca-certificates openssl chromium fonts-thai-tlwg fonts-noto-core \
   && rm -rf /var/lib/apt/lists/*
 ENV NODE_ENV=production PDF_CHROMIUM_PATH=/usr/bin/chromium
+# The processes run `node` and /opt/prisma-cli/node_modules/.bin/prisma; the base image's npm is not used and
+# carries its own vulnerable dependencies.
+RUN rm -rf /usr/local/lib/node_modules/npm /usr/local/lib/node_modules/corepack \
+  /usr/local/bin/npm /usr/local/bin/npx /usr/local/bin/corepack
 WORKDIR /app
 COPY --from=prod-deps --chown=node:node /app/node_modules ./node_modules
 COPY --from=build --chown=node:node /app/dist ./dist
