@@ -23,6 +23,7 @@ import { CustomersModule } from '@modules/customers/customers.module';
 import { DesignServicesModule } from '@modules/design-services/design-services.module';
 import { DesignsModule } from '@modules/designs/designs.module';
 import { DiscountMemosModule } from '@modules/discount-memos/discount-memos.module';
+import { DocumentsModule } from '@modules/documents/documents.module';
 import { FactoryErpModule } from '@modules/factory-erp/factory-erp.module';
 import { FinancialReportsModule } from '@modules/financial-reports/financial-reports.module';
 import { FixedAssetsModule } from '@modules/fixed-assets/fixed-assets.module';
@@ -130,6 +131,7 @@ import { WorkerLifecycle } from './worker.lifecycle';
     AssistantModule,
     LedgerModule,
     ReceivablesModule,
+    DocumentsModule,
     PayablesModule,
     PayoutsModule,
     BankingModule,

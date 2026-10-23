@@ -1,6 +1,8 @@
 import { DomainException } from '@common/errors/domain.exception';
 import { type Prisma } from '@generated/prisma/client';
+import { type DocumentSigningKind } from '@generated/prisma/client';
 import { PDF_RENDERER, type PdfRenderer } from '@integrations/pdf/pdf-renderer.port';
+import { DocumentBrandingService } from '@modules/documents/branding/document-branding.service';
 import { bahtText, thaiDate } from '@modules/receivables/thai-text';
 import { Inject, Injectable } from '@nestjs/common';
 
@@ -43,6 +45,7 @@ export class ErpPdfService {
   constructor(
     private readonly workspace: ErpWorkspace,
     private readonly files: ErpFilesService,
+    private readonly branding: DocumentBrandingService,
     @Inject(PDF_RENDERER) private readonly renderer: PdfRenderer,
   ) {}
 
@@ -50,11 +53,16 @@ export class ErpPdfService {
     const f = scope.factory.id;
     const db = this.workspace.db;
     const settings = await this.workspace.settings(db, f);
-    const logo = await this.files.logoDataUri(settings.documentLogoFileId);
     const seller = await this.workspace.tx((tx) => sellerOf(tx, scope.factory));
+    // D-428/D-429: the logo, seal and signature in force when the document was issued (now for a draft).
+    const owner = { kind: 'factory' as const, id: f };
+    const brand = async (docKind: DocumentSigningKind, at: Date | null | undefined, signedOn: Date | null) => {
+      const b = await this.branding.resolve(owner, docKind, at ?? new Date());
+      return { branding: b, logo: b.logo, signedOn: signedOn ? thaiDate(iso(signedOn)!) : null };
+    };
     const base = {
       seller,
-      logo,
+      logo: null as string | null,
       footer: settings.documentFooter,
       bankDetails: null as string | null,
       draft: false,
@@ -91,6 +99,7 @@ export class ErpPdfService {
         if (!q) throw new DomainException('http.not_found');
         view = {
           ...base,
+          ...(await brand('quotation', q.status === 'draft' ? null : (q.sentAt ?? q.updatedAt), q.quoteDate)),
           titleTh: 'ใบเสนอราคา',
           titleEn: 'Quotation',
           copies: false,
@@ -127,6 +136,7 @@ export class ErpPdfService {
         if (!so) throw new DomainException('http.not_found');
         view = {
           ...base,
+          ...(await brand('sales_order', so.confirmedAt, so.orderDate)),
           titleTh: 'ใบยืนยันคำสั่งซื้อ',
           titleEn: 'Sales order confirmation',
           copies: false,
@@ -157,6 +167,7 @@ export class ErpPdfService {
         if (dn.status === 'draft') throw new DomainException('erp.invalid_status', { params: { status: dn.status } });
         view = {
           ...base,
+          ...(await brand('delivery_note', dn.issuedAt ?? dn.createdAt, dn.deliverOn)),
           titleTh: 'ใบส่งของ',
           titleEn: 'Delivery note',
           copies: true,
@@ -199,6 +210,8 @@ export class ErpPdfService {
         const cash = iv.form === 'invoice_receipt';
         view = {
           ...base,
+          ...(await brand(iv.isTaxInvoice ? 'tax_invoice' : cash ? 'receipt' : 'invoice', iv.issuedAt ?? iv.createdAt, iv.issueDate)),
+          issuerSignature: cash ? 0 : 1,
           seller: party(iv.sellerSnapshot) ?? seller,
           titleTh: iv.isTaxInvoice ? (cash ? 'ใบกำกับภาษี / ใบเสร็จรับเงิน' : 'ใบแจ้งหนี้ / ใบกำกับภาษี') : cash ? 'ใบเสร็จรับเงิน' : 'ใบแจ้งหนี้',
           titleEn: iv.isTaxInvoice ? (cash ? 'Tax invoice / Receipt' : 'Invoice / Tax invoice') : cash ? 'Receipt' : 'Invoice',
@@ -238,6 +251,7 @@ export class ErpPdfService {
         const credit = n.kind === 'credit';
         view = {
           ...base,
+          ...(await brand(credit ? 'credit_note' : 'debit_note', n.issuedAt ?? n.createdAt, n.issueDate)),
           seller: party(n.sellerSnapshot) ?? seller,
           titleTh: credit ? (n.isTaxDocument ? 'ใบลดหนี้ / ใบกำกับภาษี' : 'ใบลดหนี้') : n.isTaxDocument ? 'ใบเพิ่มหนี้ / ใบกำกับภาษี' : 'ใบเพิ่มหนี้',
           titleEn: credit ? 'Credit note' : 'Debit note',
@@ -285,6 +299,7 @@ export class ErpPdfService {
         const refund = r.kind === 'refund';
         view = {
           ...base,
+          ...(await brand('receipt', r.createdAt, r.receivedOn)),
           seller: party(r.sellerSnapshot) ?? seller,
           titleTh: refund ? 'ใบสำคัญคืนเงิน' : 'ใบเสร็จรับเงิน',
           titleEn: refund ? 'Refund voucher' : 'Receipt',
@@ -329,6 +344,7 @@ export class ErpPdfService {
         if (!b) throw new DomainException('http.not_found');
         view = {
           ...base,
+          ...(await brand('billing_note', b.createdAt, b.billingDate)),
           seller: party(b.sellerSnapshot) ?? seller,
           titleTh: 'ใบวางบิล',
           titleEn: 'Billing note',
@@ -383,6 +399,7 @@ export class ErpPdfService {
           whtAmount: fmtMoney(c.whtAmount),
           voided: c.status === 'voided',
           signatory: settings.signatoryName,
+          branding: await this.branding.resolve(owner, 'wht_certificate', c.createdAt),
         };
         cache = {
           current: c.pdfFileId,

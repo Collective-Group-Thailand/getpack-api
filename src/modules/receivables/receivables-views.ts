@@ -1,7 +1,7 @@
+import { dayOf } from '@common/ledger-core/dates';
 import { nextActions, NO_PERMISSIONS } from '@common/next-actions/next-actions';
 import { toBangkokIso } from '@common/time/bangkok';
 import { type CompanyStatement } from '@generated/prisma/client';
-import { dayOf } from '@common/ledger-core/dates';
 
 import { type CreditNoteRequestRow } from './credit-notes.service';
 import { type BuyerSnapshot, type DocumentRow, type SellerSnapshot } from './customer-documents.service';
@@ -87,6 +87,31 @@ export function documentDto(
         }
       : null,
     pdfReady: d.pdfFileId !== null,
+    eTaxStatus: d.eTaxStatus,
+    eTax: d.eTaxSubmissions.map((e) => ({
+      kind: e.kind,
+      status: e.status,
+      subject: e.subject,
+      to: e.toAddress,
+      cc: e.ccAddress,
+      attempts: e.attempts,
+      lastError: e.lastError,
+      sentAt: e.sentAt ? toBangkokIso(e.sentAt) : null,
+    })),
+    replaces: d.replaces ? { id: d.replaces.publicId, docNumber: d.replaces.docNumber } : null,
+    replacedBy: d.replacedBy ? { id: d.replacedBy.publicId, docNumber: d.replacedBy.docNumber } : null,
+    replacementReason: d.replacementReason,
+    replacementNote: d.replacementNote,
+    cancelledPdfReady: d.cancelledPdfFileId !== null,
+    correction: d.correctionRequests[0]
+      ? {
+          id: d.correctionRequests[0].publicId,
+          status: d.correctionRequests[0].status,
+          reason: d.correctionRequests[0].reason,
+          createdAt: toBangkokIso(d.correctionRequests[0].createdAt),
+          decisionNote: d.correctionRequests[0].decisionNote,
+        }
+      : null,
     voidReason: d.voidReason,
     issuedAt: toBangkokIso(d.issuedAt),
     nextActions: nextActions(d, ADMIN_DOCUMENT_ACTIONS, perms),

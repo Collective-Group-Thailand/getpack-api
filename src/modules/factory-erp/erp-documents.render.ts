@@ -1,3 +1,4 @@
+import { issuerSignatureHtml, type RenderBranding, SIGN_STYLE } from '@modules/documents/branding/render-branding';
 import { bahtText, thaiDate } from '@modules/receivables/thai-text';
 
 /**
@@ -47,6 +48,12 @@ export interface SalesDocView {
   footer: string | null;
   bankDetails: string | null;
   signatures: string[];
+  /** D-429: which of `signatures` is the factory's own (signed and stamped per its rules); default the first. */
+  issuerSignature?: number;
+  /** D-428/D-429: the factory's logo, seal and signature at the document's issue time. */
+  branding?: RenderBranding;
+  /** The document's date, printed beside a signature image. */
+  signedOn?: string | null;
 }
 
 const esc = (v: string | number | null | undefined) =>
@@ -131,6 +138,7 @@ const STYLE = `
   .stamp { position: absolute; top: 90mm; left: 25%; transform: rotate(-18deg); color: #b00; border: 4px solid #b00; font-size: 30pt; font-weight: 800; padding: 6px 26px; opacity: .55; }
   .draft { position: absolute; top: 110mm; left: 30%; transform: rotate(-18deg); color: #999; font-size: 54pt; font-weight: 800; opacity: .25; }
   .foot { position: absolute; bottom: 0; left: 0; right: 0; font-size: 8.5pt; color: #666; display: flex; justify-content: space-between; }
+${SIGN_STYLE}
 `;
 
 function party(p: DocParty, fullForm: boolean): string {
@@ -180,7 +188,11 @@ ${
 ${d.notes.length ? `<div class="notes">${d.notes.map((n) => `<div><b>${esc(n.label)}</b> ${esc(n.value)}</div>`).join('')}</div>` : ''}
 ${d.bankDetails ? `<div class="notes"><b>การชำระเงิน</b> ${esc(d.bankDetails)}</div>` : ''}
 <div class="sigs">${d.signatures
-    .map((s) => `<div class="sig"><div class="line"></div>${esc(s)}<br>วันที่ ........./........./.........</div>`)
+    .map((s, i) =>
+      i === (d.issuerSignature ?? 0) && d.branding && (d.branding.signature || d.branding.seal)
+        ? `<div class="sig">${issuerSignatureHtml(s, d.branding, d.branding.signature?.image ? (d.signedOn ?? null) : null)}</div>`
+        : `<div class="sig"><div class="line"></div>${esc(s)}<br>วันที่ ........./........./.........</div>`,
+    )
     .join('')}</div>
 ${d.stamp ? `<div class="stamp">${esc(d.stamp)}</div>` : ''}
 ${d.draft ? '<div class="draft">ร่าง</div>' : ''}
@@ -207,6 +219,7 @@ export interface WhtCertView {
   whtAmount: string;
   voided: boolean;
   signatory: string | null;
+  branding?: RenderBranding;
 }
 
 const INCOME_ROW: Record<string, number> = {
@@ -261,7 +274,11 @@ export function renderWhtCertificateHtml(c: WhtCertView): string {
 <tbody>${rows}<tr><td colspan="2" class="n"><b>รวมเงินที่จ่ายและภาษีที่หักนำส่ง</b></td><td class="n"><b>${money(c.baseAmount)}</b></td><td class="n"><b>${money(c.whtAmount)}</b></td></tr></tbody></table>
 <div class="words" style="width:100%;margin-top:6px">รวมเงินภาษีที่หักนำส่ง (ตัวอักษร) ${esc(bahtText(c.whtAmount))}</div>
 <div style="margin-top:8px">ผู้จ่ายเงิน ${box(true, '(1) หัก ณ ที่จ่าย')}${box(false, '(2) ออกให้ตลอดไป')}${box(false, '(3) ออกให้ครั้งเดียว')}${box(false, '(4) อื่น ๆ')}</div>
-<div class="sigs"><div class="sig" style="width:60%">ขอรับรองว่าข้อความและตัวเลขดังกล่าวข้างต้นถูกต้องตรงกับความจริงทุกประการ<div class="line"></div>ลงชื่อ ${esc(c.signatory ?? '')} ผู้จ่ายเงิน<br>วันที่ ${thaiDate(c.paidOn)}</div></div>
+<div class="sigs"><div class="sig" style="width:60%">ขอรับรองว่าข้อความและตัวเลขดังกล่าวข้างต้นถูกต้องตรงกับความจริงทุกประการ${
+    c.branding?.signature || c.branding?.seal
+      ? issuerSignatureHtml('ผู้จ่ายเงิน', c.branding, thaiDate(c.paidOn))
+      : `<div class="line"></div>ลงชื่อ ${esc(c.signatory ?? '')} ผู้จ่ายเงิน<br>วันที่ ${thaiDate(c.paidOn)}`
+  }</div></div>
 ${c.voided ? '<div class="stamp">ยกเลิก</div>' : ''}
 <div class="foot"><span>ฉบับที่ 1 (สำหรับผู้ถูกหักภาษี ณ ที่จ่าย ใช้แนบพร้อมกับแบบแสดงรายการภาษี) · ฉบับที่ 2 (สำหรับผู้ถูกหักภาษี ณ ที่จ่าย เก็บไว้เป็นหลักฐาน)</span><span>สร้างด้วย getpack Factory</span></div>
 </div>`;

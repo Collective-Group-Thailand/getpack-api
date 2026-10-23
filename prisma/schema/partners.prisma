@@ -481,11 +481,15 @@ model Factory {
   erpGlBankStatementLines ErpGlBankStatementLine[] @relation("ErpGlBankStatementLineFactory")
   erpGlTaxFilings         ErpGlTaxFiling[]         @relation("ErpGlTaxFilingFactory")
 
-
   // --- Sales agents D-416 (generated back-relations)
   salesAgentLink           SalesAgentFactoryLink? @relation("SalesAgentFactoryLinkFactory")
   salesAgentLeadsConverted SalesAgentLead[]       @relation("SalesAgentLeadConvertedFactory")
   // --- end Sales agents
+
+  // --- Documents D-428, D-429 (back-relations)
+  documentBrandMarks   DocumentBrandMark[]   @relation("DocumentBrandMarkFactory")
+  documentSignatories  DocumentSignatory[]   @relation("DocumentSignatoryFactory")
+  documentSigningRules DocumentSigningRule[] @relation("DocumentSigningRuleFactory")
 
   @@unique([taxId, branchCode], map: "ux_factories__tax_id__branch_code")
   @@index([status], map: "ix_factories__status")
@@ -661,19 +665,19 @@ model SiteVisitInspector {
 // ------------------------------------------------------------------------------------------------
 
 model AgreementTemplate {
-  id          BigInt   @id(map: "pk_agreement_templates") @default(autoincrement())
-  publicId    String   @unique(map: "ux_agreement_templates__public_id") @default(dbgenerated("uuidv7()")) @map("public_id") @db.Uuid
+  id          BigInt         @id(map: "pk_agreement_templates") @default(autoincrement())
+  publicId    String         @unique(map: "ux_agreement_templates__public_id") @default(dbgenerated("uuidv7()")) @map("public_id") @db.Uuid
   /// e.g. `partner_agreement`, `price_data_confidentiality`.
-  key         String   @unique(map: "ux_agreement_templates__key")
+  key         String         @unique(map: "ux_agreement_templates__key")
   /// D-416: who accepts it — factories (onboarding step) or sales agents (application).
   party       AgreementParty @default(factory)
   name        String
   description String?
-  createdAt   DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
-  createdById BigInt?  @map("created_by")
-  updatedAt   DateTime @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
-  updatedById BigInt?  @map("updated_by")
-  rowVersion  Int      @default(1) @map("row_version")
+  createdAt   DateTime       @default(now()) @map("created_at") @db.Timestamptz(6)
+  createdById BigInt?        @map("created_by")
+  updatedAt   DateTime       @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+  updatedById BigInt?        @map("updated_by")
+  rowVersion  Int            @default(1) @map("row_version")
 
   versions  AgreementTemplateVersion[]
   createdBy User?                      @relation("AgreementTemplateCreatedBy", fields: [createdById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_agreement_templates__created_by")
@@ -707,7 +711,6 @@ model AgreementTemplateVersion {
   acceptances     AgreementAcceptance[]
   createdBy       User?                 @relation("AgreementTemplateVersionCreatedBy", fields: [createdById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_agreement_template_versions__created_by")
   decidedBy       User?                 @relation("AgreementTemplateVersionDecidedBy", fields: [decidedById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_agreement_template_versions__decided_by")
-
 
   // --- Sales agents D-416 (generated back-relations)
   salesAgentApplications SalesAgentApplication[] @relation("SalesAgentApplicationAgreement")

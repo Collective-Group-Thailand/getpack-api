@@ -1,5 +1,6 @@
 import { type Actor, systemActor, type UserActor } from '@common/context/actor';
 import { DomainException } from '@common/errors/domain.exception';
+import { dateOnly, dayOf } from '@common/ledger-core/dates';
 import { formatMoney, MoneyDecimal, type MoneyValue } from '@common/money/money';
 import { PrismaService, type Tx } from '@database/prisma.service';
 import {
@@ -13,7 +14,6 @@ import {
   type RevenueCategory,
   type TaxNature,
 } from '@generated/prisma/client';
-import { dateOnly, dayOf } from '@common/ledger-core/dates';
 import { Injectable } from '@nestjs/common';
 import { ActivityLogService } from '@platform/activity/activity-log.service';
 import { AuditService } from '@platform/audit/audit.service';
@@ -36,6 +36,10 @@ export const DOCUMENT_INCLUDE = {
   receivableItem: true,
   pdfFile: { select: { publicId: true } },
   links: { include: { linkedDocument: { select: { publicId: true, docNumber: true, docType: true } } } },
+  eTaxSubmissions: { orderBy: { id: 'asc' } },
+  replaces: { select: { publicId: true, docNumber: true } },
+  replacedBy: { select: { publicId: true, docNumber: true } },
+  correctionRequests: { orderBy: { id: 'desc' }, take: 1 },
 } as const satisfies Prisma.CustomerDocumentInclude;
 export type DocumentRow = Prisma.CustomerDocumentGetPayload<{ include: typeof DOCUMENT_INCLUDE }>;
 
@@ -308,7 +312,11 @@ export class CustomerDocumentsService {
     return out;
   }
 
-  /** Buyer of an order group: its tax profile snapshot (full form) or the customer and billing address. */
+  /**
+   * Buyer of an order group: its tax profile snapshot or the customer and billing address. D-432: every tax
+   * invoice is full form — an individual without a tax profile gets their name and address (no tax id), never
+   * an abbreviated tax invoice (getpack holds no ม.86/6 approval).
+   */
   async buyerOfGroup(tx: Tx, groupId: bigint): Promise<{ buyer: BuyerSnapshot; fullForm: boolean }> {
     const group = await tx.orderGroup.findUniqueOrThrow({
       where: { id: groupId },
@@ -353,9 +361,9 @@ export class CustomerDocumentsService {
         address: billing?.address ?? billing?.line1 ?? null,
         taxType: 'individual',
         withholdsTax: false,
-        documentEmail: null,
+        documentEmail: group.customer.email ?? null,
       },
-      fullForm: false,
+      fullForm: true,
     };
   }
 

@@ -1283,6 +1283,26 @@ export const PERMISSIONS = [
     description: 'Issue debit notes',
     decisionRefs: ['D-033'],
   },
+  {
+    key: 'receivables.documents.replace',
+    audience: 'staff',
+    description:
+      'Cancel a tax document and issue it again with a corrected buyer (ป.86/2542 ข้อ 25), and decide customers’ correction requests',
+    decisionRefs: ['D-431'],
+  },
+  {
+    key: 'document_branding.read',
+    audience: 'staff',
+    description: 'See the logo, company seal, signatories and signing rules of getpack’s documents',
+    decisionRefs: ['D-428', 'D-429'],
+  },
+  {
+    key: 'document_branding.manage',
+    audience: 'staff',
+    description:
+      'Set getpack’s document logo and company seal, name signatories and decide who signs which documents (never upload a signature for someone)',
+    decisionRefs: ['D-428', 'D-429'],
+  },
 
   // --- Finance: payables, payouts, banking (B5.3, accounting-design §2, §6, §8)
   {

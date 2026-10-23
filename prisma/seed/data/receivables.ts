@@ -81,6 +81,6 @@ export const FINANCE_FEATURE_FLAGS = [
   {
     key: 'e_tax.sending',
     description:
-      'Send e-Tax invoices / e-Receipts to the Revenue Department (D-091): XML and PDF are generated in R1; sending is enabled in R2 after registration',
+      'Send tax invoices, credit and debit notes by e-Tax Invoice by Email (D-091, D-430): PDF/A-3 with the ETDA XML to the buyer, copied to ETDA. Switch on after the ก.อ.01 registration and `e_tax.email_from` is set',
   },
 ] as const;

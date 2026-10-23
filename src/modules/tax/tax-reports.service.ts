@@ -498,7 +498,13 @@ export class TaxReportsService {
       (
         await tx.customerDocument.findMany({
           where: { publicId: { in: docIds } },
-          select: { publicId: true, buyerSnapshot: true, docType: true },
+          // D-431: a cancelled-and-reissued tax invoice reports under its replacement's number and buyer.
+          select: {
+            publicId: true,
+            buyerSnapshot: true,
+            docType: true,
+            replacedBy: { select: { docNumber: true, buyerSnapshot: true } },
+          },
         })
       ).map((d) => [d.publicId, d]),
     );
@@ -512,14 +518,16 @@ export class TaxReportsService {
     for (const { row, vat: v, base: b } of byEntry.values()) {
       const e = row.journalEntry;
       const doc = e.sourceDocumentPublicId ? docs.get(e.sourceDocumentPublicId) : undefined;
-      const buyer = doc?.buyerSnapshot as BuyerSnapshot | undefined;
+      const buyer = (doc?.replacedBy?.buyerSnapshot ?? doc?.buyerSnapshot) as BuyerSnapshot | undefined;
       vat = vat.add(v);
       base = base.add(b);
       lines.push({
         seq: lines.length + 1,
         documentDate: dayOf(e.documentDate),
         documentNo:
-          (credit ? e.sourceDocumentNo : (invoiceNos.get(e.publicId) ?? e.sourceDocumentNo)) ?? e.entryNo,
+          (credit
+            ? (doc?.replacedBy?.docNumber ?? e.sourceDocumentNo)
+            : (invoiceNos.get(e.publicId) ?? e.sourceDocumentNo)) ?? e.entryNo,
         sourceType: e.sourceDocumentType,
         sourceId: e.sourceDocumentPublicId,
         journalEntryId: e.publicId,

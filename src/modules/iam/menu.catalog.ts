@@ -82,6 +82,8 @@ export const ADMIN_MENU: readonly MenuEntry[] = [
   { key: 'approvals', path: '/admin/approvals', permission: 'approvals.read' },
   { key: 'users', path: '/admin/users', permission: 'users.read' },
   { key: 'settings', path: '/admin/settings', permission: 'settings.read' },
+  // D-428/D-429: logo, company seal and signatories of getpack's documents.
+  { key: 'document_branding', path: '/admin/document-branding', permission: 'document_branding.read' },
   { key: 'feature_flags', path: '/admin/feature-flags', permission: 'feature_flags.read' },
   {
     key: 'notification_templates',

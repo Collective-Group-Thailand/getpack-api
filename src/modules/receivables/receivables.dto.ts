@@ -1,10 +1,12 @@
 import { ReasonDto } from '@common/dto/reason.dto';
 import { NextActionDto } from '@common/next-actions/next-action.dto';
 import { PageQuery } from '@common/pagination/pagination.dto';
+import { PersonRefDto } from '@modules/financial-reports/financial-reports.dto';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { Transform, Type } from 'class-transformer';
 import {
   IsBoolean,
+  IsDateString,
   IsIn,
   IsInt,
   IsOptional,
@@ -14,6 +16,7 @@ import {
   MaxLength,
   Min,
   MinLength,
+  ValidateNested,
 } from 'class-validator';
 
 /** Receivables & customer documents (B5.2). Money: decimal strings, THB. */
@@ -134,6 +137,70 @@ export class DocumentReceivableDto {
   status!: string;
 }
 
+export const ETAX_STATUSES = [
+  'not_applicable',
+  'pending',
+  'submitted',
+  'accepted',
+  'rejected',
+  'failed',
+] as const;
+export const CORRECTION_REASONS = ['buyer_name', 'buyer_address', 'buyer_tax_id', 'other'] as const;
+export const CORRECTION_STATUSES = ['pending', 'approved', 'rejected', 'withdrawn'] as const;
+
+/** D-430: one e-Tax by Email message of the document. */
+export class ETaxDeliveryDto {
+  @ApiProperty({ enum: ['inv', 'dbn', 'crn', 'civ'], enumName: 'ETaxSubmissionKind', example: 'inv' })
+  kind!: string;
+
+  @ApiProperty({ enum: ['queued', 'sent', 'failed'], enumName: 'ETaxSubmissionStatus', example: 'sent' })
+  status!: string;
+
+  @ApiProperty({ example: '[05102569][INV][TR256910-00001]', description: 'The subject ETDA reads' })
+  subject!: string;
+
+  @ApiProperty({ type: String, nullable: true, example: 'buyer@example.test' })
+  to!: string | null;
+
+  @ApiProperty({
+    example: 'csemail@example.test',
+    description: 'The ETDA time-stamping copy (`e_tax.email_cc`)',
+  })
+  cc!: string;
+
+  @ApiProperty({ type: 'integer', example: 1 })
+  attempts!: number;
+
+  @ApiProperty({
+    type: String,
+    nullable: true,
+    example: null,
+    description: '`etax.no_buyer_email`, `etax.sender_not_set`, `etax.file_too_large` or `etax.send_failed`',
+  })
+  lastError!: string | null;
+
+  @ApiProperty({ type: String, format: 'date-time', nullable: true, example: '2026-10-05T10:01:00+07:00' })
+  sentAt!: string | null;
+}
+
+/** D-431: a customer's request to correct the buyer on the document. */
+export class DocumentCorrectionRefDto {
+  @ApiProperty({ format: 'uuid', example: '0192f3a0-7c1e-7d2a-9b1f-0000000e1001' })
+  id!: string;
+
+  @ApiProperty({ enum: CORRECTION_STATUSES, enumName: 'DocumentCorrectionStatus', example: 'pending' })
+  status!: string;
+
+  @ApiProperty({ enum: CORRECTION_REASONS, enumName: 'DocumentCorrectionReason', example: 'buyer_address' })
+  reason!: string;
+
+  @ApiProperty({ format: 'date-time', example: '2026-10-06T09:00:00+07:00' })
+  createdAt!: string;
+
+  @ApiProperty({ type: String, nullable: true, example: null })
+  decisionNote!: string | null;
+}
+
 export class CustomerDocumentDto {
   @ApiProperty({ format: 'uuid', example: AR_IDS.document })
   id!: string;
@@ -246,6 +313,61 @@ export class CustomerDocumentDto {
   @ApiProperty({ example: true, description: 'The PDF is rendered and can be downloaded' })
   pdfReady!: boolean;
 
+  @ApiProperty({
+    enum: ETAX_STATUSES,
+    enumName: 'ETaxStatus',
+    example: 'submitted',
+    description:
+      'D-430: e-Tax by Email of a tax document — `pending` queued, `submitted` e-mailed to the buyer and ETDA, ' +
+      '`failed` could not be sent (see `eTax`), `not_applicable` not a tax document or sending is off',
+  })
+  eTaxStatus!: string;
+
+  @ApiProperty({
+    type: [ETaxDeliveryDto],
+    description: 'D-430: the e-Tax e-mails of the document (and its cancellation)',
+  })
+  eTax!: ETaxDeliveryDto[];
+
+  @ApiProperty({
+    type: DocumentRefDto,
+    nullable: true,
+    description: 'D-431: the document this one cancels and replaces',
+  })
+  replaces!: DocumentRefDto | null;
+
+  @ApiProperty({
+    type: DocumentRefDto,
+    nullable: true,
+    description: 'D-431: the document that replaced this one',
+  })
+  replacedBy!: DocumentRefDto | null;
+
+  @ApiProperty({
+    enum: CORRECTION_REASONS,
+    enumName: 'DocumentCorrectionReason',
+    nullable: true,
+    example: null,
+    description: 'D-431: why this document replaced another',
+  })
+  replacementReason!: string | null;
+
+  @ApiProperty({ type: String, nullable: true, example: null })
+  replacementNote!: string | null;
+
+  @ApiProperty({
+    example: false,
+    description: 'D-431: the cancelled copy (stamped "ยกเลิก") can be downloaded',
+  })
+  cancelledPdfReady!: boolean;
+
+  @ApiProperty({
+    type: DocumentCorrectionRefDto,
+    nullable: true,
+    description: 'D-431: the latest correction request of the document',
+  })
+  correction!: DocumentCorrectionRefDto | null;
+
   @ApiProperty({ type: String, nullable: true, example: null })
   voidReason!: string | null;
 
@@ -310,6 +432,14 @@ export const DOCUMENT_EXAMPLE: CustomerDocumentDto = {
   ],
   receivable: null,
   pdfReady: true,
+  eTaxStatus: 'not_applicable',
+  eTax: [],
+  replaces: null,
+  replacedBy: null,
+  replacementReason: null,
+  replacementNote: null,
+  cancelledPdfReady: false,
+  correction: null,
   voidReason: null,
   issuedAt: '2026-10-05T10:00:00+07:00',
   nextActions: [{ key: 'customer_document.resend', irreversible: false, disabledReason: null }],
@@ -416,6 +546,25 @@ export class StoreDocumentListQuery extends PageQuery {
   @IsOptional()
   @IsUUID()
   orderId?: string;
+
+  @ApiPropertyOptional({
+    enum: CUSTOMER_DOCUMENT_TYPES,
+    enumName: 'CustomerDocumentType',
+    description: 'One kind of document',
+  })
+  @IsOptional()
+  @IsIn(CUSTOMER_DOCUMENT_TYPES)
+  docType?: (typeof CUSTOMER_DOCUMENT_TYPES)[number];
+
+  @ApiPropertyOptional({ format: 'date', example: '2026-10-01', description: 'Documents dated on or after' })
+  @IsOptional()
+  @IsDateString({ strict: true })
+  from?: string;
+
+  @ApiPropertyOptional({ format: 'date', example: '2026-10-31', description: 'Documents dated on or before' })
+  @IsOptional()
+  @IsDateString({ strict: true })
+  to?: string;
 }
 
 export { ReasonDto };
@@ -1051,3 +1200,205 @@ export class DunningEntryDto {
   @ApiProperty({ type: String, format: 'date-time', nullable: true, example: '2026-10-08T09:00:05+07:00' })
   sentAt!: string | null;
 }
+
+// --- D-431: corrections of issued tax documents -------------------------------------------------------------
+
+export class CorrectedBuyerDto {
+  @ApiProperty({ example: 'บริษัท ลูกค้าตัวอย่าง จำกัด', maxLength: 300 })
+  @IsString()
+  @MinLength(1)
+  @MaxLength(300)
+  name!: string;
+
+  @ApiProperty({
+    type: String,
+    nullable: true,
+    example: '0000500000000',
+    description: '13 digits; null for an individual without one',
+  })
+  @IsOptional()
+  @Matches(/^\d{13}$/)
+  taxId!: string | null;
+
+  @ApiProperty({
+    type: String,
+    nullable: true,
+    example: '00000',
+    description: '5 digits; 00000 = head office',
+  })
+  @IsOptional()
+  @Matches(/^\d{5}$/)
+  branchCode!: string | null;
+
+  @ApiProperty({
+    type: String,
+    nullable: true,
+    example: '123 ถนนตัวอย่าง แขวงตัวอย่าง เขตตัวอย่าง กรุงเทพมหานคร 10110',
+    maxLength: 600,
+  })
+  @IsOptional()
+  @IsString()
+  @MaxLength(600)
+  address!: string | null;
+
+  @ApiPropertyOptional({
+    type: String,
+    nullable: true,
+    example: 'ap@customer.example',
+    description: 'Where e-Tax e-mails go (D-430)',
+  })
+  @IsOptional()
+  @IsString()
+  @MaxLength(254)
+  documentEmail?: string | null;
+}
+
+export class RequestCorrectionDto {
+  @ApiProperty({ enum: CORRECTION_REASONS, enumName: 'DocumentCorrectionReason', example: 'buyer_address' })
+  @IsIn(CORRECTION_REASONS)
+  reason!: (typeof CORRECTION_REASONS)[number];
+
+  @ApiPropertyOptional({ type: String, nullable: true, example: 'ย้ายสำนักงานแล้ว', maxLength: 500 })
+  @IsOptional()
+  @IsString()
+  @MaxLength(500)
+  note?: string | null;
+
+  @ApiProperty({ type: CorrectedBuyerDto, description: 'The buyer as it should read' })
+  @ValidateNested()
+  @Type(() => CorrectedBuyerDto)
+  buyer!: CorrectedBuyerDto;
+}
+
+export class DecideCorrectionDto {
+  @ApiProperty({ example: true, description: 'true cancels the document and issues it again with the buyer' })
+  @IsBoolean()
+  approve!: boolean;
+
+  @ApiPropertyOptional({
+    type: String,
+    nullable: true,
+    example: null,
+    maxLength: 500,
+    description: 'Required to reject',
+  })
+  @IsOptional()
+  @IsString()
+  @MaxLength(500)
+  note?: string | null;
+
+  @ApiPropertyOptional({
+    type: CorrectedBuyerDto,
+    nullable: true,
+    description: 'Finance’s correction of the requested buyer (default: as requested)',
+  })
+  @IsOptional()
+  @ValidateNested()
+  @Type(() => CorrectedBuyerDto)
+  buyer?: CorrectedBuyerDto | null;
+}
+
+export class ResendETaxDto {
+  @ApiPropertyOptional({
+    type: String,
+    nullable: true,
+    example: 'ap@customer.example',
+    description: 'Another buyer address (also re-sends one already sent); default the buyer’s',
+  })
+  @IsOptional()
+  @IsString()
+  @MaxLength(254)
+  to?: string | null;
+}
+
+export class CorrectionListQuery extends PageQuery {
+  @ApiPropertyOptional({
+    enum: CORRECTION_STATUSES,
+    enumName: 'DocumentCorrectionStatus',
+    example: 'pending',
+  })
+  @IsOptional()
+  @IsIn(CORRECTION_STATUSES)
+  status?: (typeof CORRECTION_STATUSES)[number];
+}
+
+export class CorrectionDocumentDto {
+  @ApiProperty({ format: 'uuid', example: AR_IDS.document })
+  id!: string;
+
+  @ApiProperty({ example: 'TR256910-00001' })
+  docNumber!: string;
+
+  @ApiProperty({ enum: CUSTOMER_DOCUMENT_TYPES, enumName: 'CustomerDocumentType', example: 'tr' })
+  docType!: string;
+
+  @ApiProperty({ format: 'date', example: '2026-10-05' })
+  documentDate!: string;
+}
+
+export class DocumentCorrectionDto {
+  @ApiProperty({ format: 'uuid', example: '0192f3a0-7c1e-7d2a-9b1f-0000000e1001' })
+  id!: string;
+
+  @ApiProperty({ type: CorrectionDocumentDto })
+  document!: CorrectionDocumentDto;
+
+  @ApiProperty({ enum: CORRECTION_REASONS, enumName: 'DocumentCorrectionReason', example: 'buyer_address' })
+  reason!: string;
+
+  @ApiProperty({ type: String, nullable: true, example: 'ย้ายสำนักงานแล้ว' })
+  note!: string | null;
+
+  @ApiProperty({ type: DocumentPartyDto, description: 'As requested (approved: as issued)' })
+  buyer!: DocumentPartyDto;
+
+  @ApiProperty({ type: DocumentPartyDto, description: 'As printed on the document now' })
+  currentBuyer!: DocumentPartyDto;
+
+  @ApiProperty({ enum: CORRECTION_STATUSES, enumName: 'DocumentCorrectionStatus', example: 'pending' })
+  status!: string;
+
+  @ApiProperty({ type: PersonRefDto })
+  requestedBy!: PersonRefDto;
+
+  @ApiProperty({ type: PersonRefDto, nullable: true })
+  decidedBy!: PersonRefDto | null;
+
+  @ApiProperty({ type: String, format: 'date-time', nullable: true, example: null })
+  decidedAt!: string | null;
+
+  @ApiProperty({ type: String, nullable: true, example: null })
+  decisionNote!: string | null;
+
+  @ApiProperty({ type: DocumentRefDto, nullable: true, description: 'The reissued document once approved' })
+  replacement!: DocumentRefDto | null;
+
+  @ApiProperty({ format: 'date-time', example: '2026-10-06T09:00:00+07:00' })
+  createdAt!: string;
+}
+
+export const CORRECTION_EXAMPLE: DocumentCorrectionDto = {
+  id: '0192f3a0-7c1e-7d2a-9b1f-0000000e1001',
+  document: { id: AR_IDS.document, docNumber: 'TR256910-00001', docType: 'tr', documentDate: '2026-10-05' },
+  reason: 'buyer_address',
+  note: 'ย้ายสำนักงานแล้ว',
+  buyer: {
+    name: 'บริษัท ลูกค้าตัวอย่าง จำกัด',
+    taxId: '0000500000000',
+    branchCode: '00000',
+    address: '123 ถนนใหม่ กรุงเทพมหานคร 10110',
+  },
+  currentBuyer: {
+    name: 'บริษัท ลูกค้าตัวอย่าง จำกัด',
+    taxId: '0000500000000',
+    branchCode: '00000',
+    address: '9 ถนนเดิม กรุงเทพมหานคร 10500',
+  },
+  status: 'pending',
+  requestedBy: { id: '0192f3a0-7c1e-7d2a-9b1f-0000000e2001', name: 'ลูกค้า ตัวอย่าง' },
+  decidedBy: null,
+  decidedAt: null,
+  decisionNote: null,
+  replacement: null,
+  createdAt: '2026-10-06T09:00:00+07:00',
+};

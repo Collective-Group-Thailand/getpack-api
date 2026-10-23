@@ -3,7 +3,9 @@ import { Global, Module } from '@nestjs/common';
 import { CreditNotesService } from './credit-notes.service';
 import { CustomerDocumentsService } from './customer-documents.service';
 import { DeliveryDocumentsService } from './delivery-documents.service';
+import { DocumentCorrectionsService } from './document-corrections.service';
 import { DocumentFilesService } from './document-files.service';
+import { ETaxEmailService } from './etax-email.service';
 import { ReceiptsService } from './receipts.service';
 import { ReceivablesJobs } from './receivables.jobs';
 import { ReceivablesService } from './receivables.service';
@@ -19,6 +21,8 @@ const SERVICES = [
   ReceivablesService,
   WhtCertificatesService,
   DocumentFilesService,
+  ETaxEmailService,
+  DocumentCorrectionsService,
 ];
 
 /**

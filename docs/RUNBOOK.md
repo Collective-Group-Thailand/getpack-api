@@ -128,6 +128,8 @@ and Partner team; RFQ first response → CS; approvals → the approvers (delega
 | Secrets rotation | Per `docs/launch/SECURITY.md` §3 | |
 | Restore test | Quarterly | `docs/launch/SECURITY.md` §5 |
 | Settings review | Before launch and when a decision changes | `pnpm launch:settings` → `docs/launch/SETTINGS-REVIEW.md` |
+| Switch on e-Tax Invoice by Email (D-430) | Once, after registration | 1. Register for e-Tax by Email (ก.อ.01 on the Revenue Department site; revenue ≤ THB 30 million a year) with the sending address; pass ETDA's domain check (send to `domaincheck@tools.teda.th`). 2. Verify that address as an SES sender (DKIM). 3. Set `e_tax.email_from` (and, for a rehearsal, `e_tax.email_cc` to the ETDA test-environment address); confirm `e_tax.subject_date_format` with ETDA. 4. Send a few documents in the ETDA test environment and check the returned, time-stamped PDFs at validation.etax.teda.th. 5. Switch `e_tax.sending` on. Failed e-mails show on the document (`eTaxStatus: failed`, reason) and are resent from the admin |
+| Document logo, seal and signatures (D-428, D-429) | When they change | Admin → document branding (`document_branding.manage`): logo, seal, signatories, who signs what; each signatory uploads their own signature (admin → my signature). Issued documents never change |
 
 ## 8. Platform environment variables
 
@@ -151,3 +153,4 @@ value stops the process before it serves anything.
 | `SENTRY_TRACES_SAMPLE_RATE` | `0`–`0.1` | performance tracing sample; errors are always sent when `SENTRY_DSN` is set |
 | `OTEL_SERVICE_NAME` | `getpack-api` (default) | trace and metric service name |
 | `PDF_CHROMIUM_PATH` | the image's Chromium | set in the Dockerfile (Thai fonts embedded) |
+| `FAKE_OBJECT_STORAGE_DIR` | unset | fake object storage only (development, UAT rehearsal): keeps objects on disk across restarts |

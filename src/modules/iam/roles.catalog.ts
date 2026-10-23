@@ -44,6 +44,8 @@ export const ROLES: readonly RoleDefinition[] = [
     nameTh: 'ผู้บริหารระดับสูง',
     nameEn: 'C-Level',
     permissions: [
+      'document_branding.read',
+      'document_branding.manage',
       'agents.read',
       'agents.manage',
       'agent_plans.manage',
@@ -386,6 +388,7 @@ export const ROLES: readonly RoleDefinition[] = [
     nameTh: 'ฝ่ายการเงิน',
     nameEn: 'Finance',
     permissions: [
+      'document_branding.read',
       'agents.read',
       'reports.export',
       'reports.schedule',
@@ -444,6 +447,9 @@ export const ROLES: readonly RoleDefinition[] = [
     nameTh: 'ผู้จัดการฝ่ายการเงิน',
     nameEn: 'Finance Manager',
     permissions: [
+      'receivables.documents.replace',
+      'document_branding.read',
+      'document_branding.manage',
       'settings.change',
       'agents.read',
       'agent_commissions.adjust',
@@ -637,6 +643,7 @@ export const ROLES: readonly RoleDefinition[] = [
     nameTh: 'ผู้ตรวจสอบบัญชี',
     nameEn: 'Auditor (read-only)',
     permissions: [
+      'document_branding.read',
       'reports.export',
       'receivables.read',
       'ledger.read',

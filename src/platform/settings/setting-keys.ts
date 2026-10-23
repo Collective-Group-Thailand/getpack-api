@@ -46,6 +46,10 @@ export interface SettingValues {
     overrides: Record<string, 'sale_of_goods' | 'hire_of_work'>;
   };
   /** B5 finance (accounting-design §1.5, §2, §6, §7; ⚖ items pending the CPA). */
+  'e_tax.email_from': string;
+  'e_tax.email_cc': string;
+  'e_tax.subject_date_format': 'DDMMBBBB' | 'DDMMYYYY' | 'YYYYMMDD';
+  'e_tax.email_retry': { backoffMinutes: number[] };
   'tax.rounding_mode': 'line' | 'document';
   'receivables.forfeited_deposit_policy': { forfeitPct: string };
   /** Not seeded: % of the open balance per days-overdue band (`fromDays` inclusive) for P30. */

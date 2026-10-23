@@ -1,3 +1,10 @@
+import {
+  issuerSignatureHtml,
+  NO_BRANDING,
+  type RenderBranding,
+  SIGN_STYLE,
+} from '@modules/documents/branding/render-branding';
+
 import { bahtText, thaiDate, thaiMonth } from './thai-text';
 
 /**
@@ -36,7 +43,12 @@ export interface RenderableDocument {
     phone: string | null;
   };
   buyer: { name: string; taxId: string | null; branchCode: string | null; address: string | null };
-  reference: { docNumber: string; reason: string | null } | null;
+  reference: {
+    docNumber: string;
+    reason: string | null;
+    documentDate?: string | null;
+    docType?: string;
+  } | null;
   lines: {
     description: string;
     quantity: string;
@@ -56,7 +68,21 @@ export interface RenderableDocument {
   wht: string;
   cash: string;
   receiptVia: string | null;
+  /** D-428/D-429: the logo, seal and signature in force at issue (none on documents issued before). */
+  branding?: RenderBranding;
+  /** A sample (the branding preview): a large "ตัวอย่าง" across the page. */
+  watermark?: string | null;
+  /** D-431: this document cancels and replaces an earlier one (ป.86/2542 ข้อ 25). */
+  replaces?: { docNumber: string; documentDate: string; reason: string } | null;
 }
+
+/** D-431: the reasons as printed (and as ETDA's purpose codes name them). */
+export const REPLACEMENT_REASON_TH: Record<string, string> = {
+  buyer_name: 'ชื่อผู้ซื้อไม่ถูกต้อง',
+  buyer_address: 'ที่อยู่ผู้ซื้อไม่ถูกต้อง',
+  buyer_tax_id: 'เลขประจำตัวผู้เสียภาษีหรือสาขาของผู้ซื้อไม่ถูกต้อง',
+  other: 'อื่น ๆ',
+};
 
 export function documentTitle(
   d: Pick<RenderableDocument, 'docType' | 'docKind' | 'isTaxInvoice' | 'amountDue'>,
@@ -94,7 +120,11 @@ const STYLE = `
   td.n { text-align: right; white-space: nowrap; }
   .totals td { border: none; padding: 2px 6px; }
   .void { color: #b00; font-size: 18pt; font-weight: 700; border: 3px solid #b00; padding: 4px 12px; display: inline-block; }
-  .sign { margin-top: 40px; text-align: center; width: 40%; }
+  .sign { margin-top: 28px; text-align: center; width: 40%; }
+  .logo { max-height: 54px; max-width: 200px; display: block; margin-bottom: 4px; }
+  .watermark { position: fixed; top: 38%; left: 18%; transform: rotate(-24deg); font-size: 72pt; font-weight: 800; color: #bbb; opacity: .35; }
+  .replaces { border: 1px solid #b00; color: #600; padding: 6px 10px; border-radius: 4px; margin-top: 8px; }
+${SIGN_STYLE}
 `;
 
 export function renderDocumentHtml(d: RenderableDocument): string {
@@ -111,9 +141,11 @@ export function renderDocumentHtml(d: RenderableDocument): string {
   const total = (label: string, value: string, bold = false) =>
     `<tr><td>${label}</td><td class="n">${bold ? `<b>${money(value)}</b>` : money(value)}</td></tr>`;
   const taxable = (Number(d.net) - Number(d.discount)).toFixed(2);
+  const branding = d.branding ?? NO_BRANDING;
+  const signedOn = branding.signature?.image ? thaiDate(d.documentDate) : null;
   return `<!doctype html><html lang="th"><head><meta charset="utf-8"><title>${esc(d.docNumber)}</title><style>${STYLE}</style></head><body>
 <div class="row">
-  <div><div class="brand">getpack</div>
+  <div>${branding.logo ? `<img class="logo" src="${branding.logo}" alt="">` : '<div class="brand">getpack</div>'}
     <div><b>${esc(sellerName)}</b>${d.seller.legalNameEn ? `<br>${esc(d.seller.legalNameEn)}` : ''}</div>
     <div>${esc(d.seller.addressTh)}</div>
     <div>เลขประจำตัวผู้เสียภาษี ${esc(d.seller.taxId)} ${branch(d.seller.branchCode)}</div>
@@ -124,6 +156,7 @@ export function renderDocumentHtml(d: RenderableDocument): string {
   </div>
 </div>
 ${d.status === 'void' ? `<p><span class="void">ยกเลิก</span> ${esc(d.voidReason)}</p>` : ''}
+${d.replaces ? `<div class="replaces">เป็นการยกเลิกและออกใบกำกับภาษีฉบับใหม่แทนฉบับเดิมเลขที่ ${esc(d.replaces.docNumber)} ลงวันที่ ${thaiDate(d.replaces.documentDate)} — เหตุที่ยกเลิก: ${esc(d.replaces.reason)}</div>` : ''}
 <div class="box" style="margin-top:10px">
   <b>ลูกค้า</b> ${esc(d.buyer.name)}<br>${esc(d.buyer.address)}
   ${d.isFullForm && d.buyer.taxId ? `<br>เลขประจำตัวผู้เสียภาษี ${esc(d.buyer.taxId)} ${branch(d.buyer.branchCode)}` : ''}
@@ -142,7 +175,8 @@ ${d.reference ? `<p>อ้างอิงเอกสาร ${esc(d.reference.do
     ${Number(d.wht) > 0 ? total('หัก ภาษีหัก ณ ที่จ่าย', d.wht) + total('รับชำระสุทธิ', d.cash, true) : ''}
   </tbody></table>
 </div>
-<div class="row"><div class="sign">......................................<br>ผู้รับเงิน / ผู้มีอำนาจลงนาม</div><div class="sign">......................................<br>วันที่</div></div>
+<div class="row"><div></div><div class="sign">${issuerSignatureHtml('ผู้รับเงิน / ผู้มีอำนาจลงนาม', branding, signedOn)}</div></div>
+${d.watermark ? `<div class="watermark">${esc(d.watermark)}</div>` : ''}
 </body></html>`;
 }
 
@@ -157,6 +191,7 @@ export interface RenderableStatement {
   credited: string;
   closing: string;
   lines: { date: string; docNumber: string; description: string; debit: string; credit: string }[];
+  branding?: RenderBranding;
 }
 
 export function renderStatementHtml(s: RenderableStatement): string {
@@ -167,7 +202,7 @@ export function renderStatementHtml(s: RenderableStatement): string {
     )
     .join('');
   return `<!doctype html><html lang="th"><head><meta charset="utf-8"><title>Statement ${esc(s.month)}</title><style>${STYLE}</style></head><body>
-<div class="row"><div><div class="brand">getpack</div><b>${esc(s.seller.legalNameTh ?? '')}</b><br>${esc(s.seller.addressTh)}</div>
+<div class="row"><div>${s.branding?.logo ? `<img class="logo" src="${s.branding.logo}" alt="">` : '<div class="brand">getpack</div>'}<b>${esc(s.seller.legalNameTh ?? '')}</b><br>${esc(s.seller.addressTh)}</div>
 <div><h1>ใบแจ้งยอด<br><small>Statement of account</small></h1><div class="box">ประจำเดือน ${thaiMonth(s.month)}</div></div></div>
 <div class="box" style="margin-top:10px"><b>บริษัท</b> ${esc(s.companyName)} ${s.companyCode ? `(${esc(s.companyCode)})` : ''}</div>
 <table><thead><tr><th>วันที่</th><th>เอกสาร</th><th>รายการ</th><th>เพิ่ม</th><th>ลด</th></tr></thead><tbody>${rows}</tbody></table>
@@ -177,7 +212,9 @@ export function renderStatementHtml(s: RenderableStatement): string {
 <tr><td>รับชำระ</td><td class="n">${money(s.paid)}</td></tr>
 <tr><td>ลดหนี้</td><td class="n">${money(s.credited)}</td></tr>
 <tr><td><b>ยอดคงเหลือ</b></td><td class="n"><b>${money(s.closing)}</b></td></tr>
-</tbody></table></body></html>`;
+</tbody></table>
+${s.branding?.signature ? `<div class="row"><div></div><div class="sign">${issuerSignatureHtml('ผู้มีอำนาจลงนาม', s.branding, null)}</div></div>` : ''}
+</body></html>`;
 }
 
 /**
@@ -185,7 +222,9 @@ export function renderStatementHtml(s: RenderableStatement): string {
  * Department / ETDA cross-industry invoice (ขมธอ. 3-2560); validation against the ETDA schema is part of the R2
  * registration work.
  */
-export function renderETaxXml(d: RenderableDocument & { typeCode: string; issuedAt: string }): string {
+export function renderETaxXml(
+  d: RenderableDocument & { typeCode: string; issuedAt: string; replacesCode?: string | null },
+): string {
   const x = (tag: string, value: string | null | undefined) =>
     value ? `<${tag}>${esc(value)}</${tag}>` : '';
   const lines = d.lines
@@ -197,11 +236,12 @@ export function renderETaxXml(d: RenderableDocument & { typeCode: string; issued
   return `<?xml version="1.0" encoding="UTF-8"?>
 <rsm:TaxInvoice_CrossIndustryInvoice xmlns:rsm="urn:etda:uncefact:data:standard:TaxInvoice_CrossIndustryInvoice:2" xmlns:ram="urn:etda:uncefact:data:standard:TaxInvoice_ReusableAggregateBusinessInformationEntity:2">
 <rsm:ExchangedDocumentContext><ram:GuidelineSpecifiedDocumentContextParameter>${x('ram:ID', 'ER3-2560')}</ram:GuidelineSpecifiedDocumentContextParameter></rsm:ExchangedDocumentContext>
-<rsm:ExchangedDocument>${x('ram:ID', d.docNumber)}${x('ram:Name', documentTitle(d).th)}${x('ram:TypeCode', d.typeCode)}${x('ram:IssueDateTime', d.issuedAt)}${d.reference ? `<ram:IncludedNote>${x('ram:Subject', d.reference.reason)}</ram:IncludedNote>` : ''}</rsm:ExchangedDocument>
+<rsm:ExchangedDocument>${x('ram:ID', d.docNumber)}${x('ram:Name', documentTitle(d).th)}${x('ram:TypeCode', d.typeCode)}${x('ram:IssueDateTime', d.issuedAt)}${d.replaces ? `${x('ram:Purpose', d.replaces.reason)}${x('ram:PurposeCode', replacementPurposeCode(d.replacesCode))}` : d.reference?.reason ? x('ram:Purpose', d.reference.reason) : ''}${d.reference ? `<ram:IncludedNote>${x('ram:Subject', d.reference.reason)}</ram:IncludedNote>` : ''}</rsm:ExchangedDocument>
 <rsm:SupplyChainTradeTransaction>
 <ram:ApplicableHeaderTradeAgreement>
 <ram:SellerTradeParty>${x('ram:Name', d.seller.legalNameTh)}<ram:SpecifiedTaxRegistration>${x('ram:ID', `${d.seller.taxId ?? ''}${d.seller.branchCode ?? ''}`)}</ram:SpecifiedTaxRegistration><ram:PostalTradeAddress>${x('ram:LineOne', d.seller.addressTh)}${x('ram:CountryID', 'TH')}</ram:PostalTradeAddress></ram:SellerTradeParty>
 <ram:BuyerTradeParty>${x('ram:Name', d.buyer.name)}${d.buyer.taxId ? `<ram:SpecifiedTaxRegistration>${x('ram:ID', `${d.buyer.taxId}${d.buyer.branchCode ?? ''}`)}</ram:SpecifiedTaxRegistration>` : ''}<ram:PostalTradeAddress>${x('ram:LineOne', d.buyer.address)}${x('ram:CountryID', 'TH')}</ram:PostalTradeAddress></ram:BuyerTradeParty>
+${referenced(d)}
 </ram:ApplicableHeaderTradeAgreement>
 <ram:ApplicableHeaderTradeSettlement>${x('ram:InvoiceCurrencyCode', 'THB')}<ram:ApplicableTradeTax>${x('ram:TypeCode', 'VAT')}${x('ram:CalculatedRate', d.vatRatePct)}${x('ram:BasisAmount', (Number(d.net) - Number(d.discount)).toFixed(2))}${x('ram:CalculatedAmount', d.vat)}</ram:ApplicableTradeTax><ram:SpecifiedTradeSettlementHeaderMonetarySummation>${x('ram:LineTotalAmount', d.net)}${x('ram:AllowanceTotalAmount', d.discount)}${x('ram:TaxBasisTotalAmount', (Number(d.net) - Number(d.discount)).toFixed(2))}${x('ram:TaxTotalAmount', d.vat)}${x('ram:GrandTotalAmount', d.gross)}</ram:SpecifiedTradeSettlementHeaderMonetarySummation></ram:ApplicableHeaderTradeSettlement>
 ${lines}
@@ -216,4 +256,20 @@ export function eTaxTypeCode(d: Pick<RenderableDocument, 'docType' | 'amountDue'
     { tr: Number(d.amountDue) > 0 ? 'T02' : 'T03', iv: 'T02', rc: 'T03', cn: '81', dn: '80' }[d.docType] ??
     '388'
   );
+}
+
+/** ETDA purpose codes of a cancelled-and-reissued tax invoice (D-431): wrong name, wrong address, other. */
+export function replacementPurposeCode(reason: string | null | undefined): string {
+  return reason === 'buyer_name' ? 'TIVC01' : reason === 'buyer_address' ? 'TIVC02' : 'TIVC99';
+}
+
+/** The document a credit / debit note adjusts or a replacement cancels (`AdditionalReferencedDocument`). */
+function referenced(d: RenderableDocument): string {
+  const ref = d.replaces
+    ? { id: d.replaces.docNumber, date: d.replaces.documentDate }
+    : d.reference?.documentDate
+      ? { id: d.reference.docNumber, date: d.reference.documentDate }
+      : null;
+  if (!ref) return '';
+  return `<ram:AdditionalReferencedDocument><ram:IssuerAssignedID>${esc(ref.id)}</ram:IssuerAssignedID><ram:IssueDateTime>${esc(ref.date)}T00:00:00+07:00</ram:IssueDateTime><ram:ReferenceTypeCode>388</ram:ReferenceTypeCode></ram:AdditionalReferencedDocument>\n`;
 }

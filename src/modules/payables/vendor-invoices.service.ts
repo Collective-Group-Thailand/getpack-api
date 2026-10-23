@@ -19,6 +19,7 @@ export const INVOICE_INCLUDE = {
   billingStatement: { select: { publicId: true, bsNumber: true } },
   lines: { orderBy: { lineNo: 'asc' }, include: { account: { select: { code: true } } } },
   file: { select: { publicId: true } },
+  erpSalesInvoice: { select: { publicId: true } },
 } as const satisfies Prisma.VendorInvoiceInclude;
 export type InvoiceRow = Prisma.VendorInvoiceGetPayload<{ include: typeof INVOICE_INCLUDE }>;
 
@@ -29,8 +30,10 @@ export interface FactoryInvoiceInput {
   sellerBranchCode: string;
   netAmount: string;
   vatAmount: string;
-  source: 'e_tax' | 'pdf_upload';
+  source: 'e_tax' | 'pdf_upload' | 'erp';
   fileId?: string | null;
+  /** D-433: the factory's ERP invoice this is (source `erp`). */
+  erpSalesInvoiceId?: bigint | null;
 }
 
 export interface VendorBillInput {
@@ -404,6 +407,7 @@ export class VendorInvoicesService {
           isTaxInvoice: statement.factory.isVatRegistered,
           source: input.source,
           fileObjectId: file?.id ?? null,
+          erpSalesInvoiceId: input.erpSalesInvoiceId ?? null,
           netAmount: formatMoney(net),
           vatAmount: formatMoney(vat),
           grossAmount: formatMoney(net.add(vat)),

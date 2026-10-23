@@ -7,7 +7,7 @@ import { IV_ACTIONS, openOf } from './erp-receivables.service';
 import { LINE, lineId, lineIdOf, totalsOf } from './erp-sales.shared';
 import { WHT_RATE } from './erp-tax.service';
 
-const PARTY = { name: 'บจก. ทดสอบ', address: '1 ถนนทดสอบ', taxId: '0105500000001', branchCode: '00000', phone: null };
+const PARTY = { name: 'บจก. ทดสอบ', address: '1 ถนนทดสอบ', taxId: '0000500000001', branchCode: '00000', phone: null };
 
 describe('Factory ERP E4 arithmetic and documents', () => {
   it('totals a document in each VAT mode (D-363)', () => {

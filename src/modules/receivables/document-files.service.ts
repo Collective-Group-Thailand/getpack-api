@@ -2,20 +2,24 @@ import { createHash } from 'node:crypto';
 
 import { systemActor } from '@common/context/actor';
 import { DomainException } from '@common/errors/domain.exception';
+import { addMonths, dateOnly, dayOf } from '@common/ledger-core/dates';
 import { formatMoney, MoneyDecimal } from '@common/money/money';
 import { startOfBangkokMonth, toBangkokIso } from '@common/time/bangkok';
 import { PrismaService, type Tx } from '@database/prisma.service';
 import { type Prisma } from '@generated/prisma/client';
 import { PDF_RENDERER, type PdfRenderer } from '@integrations/pdf/pdf-renderer.port';
+import { toPdfA3 } from '@integrations/pdf/pdfa3';
 import { OBJECT_STORAGE, type ObjectStorage } from '@integrations/s3/object-storage.port';
-import { addMonths, dateOnly, dayOf } from '@common/ledger-core/dates';
+import {
+  DocumentBrandingService,
+  signingKindOfCustomerDocument,
+} from '@modules/documents/branding/document-branding.service';
 import { Inject, Injectable, Logger } from '@nestjs/common';
 import { type DomainEventEnvelope } from '@platform/domain-events/domain-event';
 import { DomainEvents } from '@platform/domain-events/domain-events.service';
 import { OnDomainEvent } from '@platform/domain-events/on-domain-event.decorator';
 import { FeatureFlagsService } from '@platform/feature-flags/feature-flags.service';
 import { FilesService } from '@platform/files/files.service';
-import { PDFDocument } from 'pdf-lib';
 
 import {
   type BuyerSnapshot,
@@ -28,15 +32,27 @@ import {
   renderDocumentHtml,
   renderETaxXml,
   renderStatementHtml,
+  REPLACEMENT_REASON_TH,
 } from './document-render';
+import { ETaxEmailService } from './etax-email.service';
 
 const PDF = 'application/pdf';
 const DOWNLOAD_TTL_SECONDS = 5 * 60;
 const D = (v: { toString(): string } | string | number) => new MoneyDecimal(v.toString());
 
 type DocWithLines = Prisma.CustomerDocumentGetPayload<{
-  include: { lines: true; originalDocument: true; creditNoteReason: true };
+  include: { lines: true; originalDocument: true; creditNoteReason: true; replaces: true };
 }>;
+
+const RENDER_INCLUDE = {
+  lines: { orderBy: { lineNo: 'asc' } },
+  originalDocument: true,
+  creditNoteReason: true,
+  replaces: true,
+} as const satisfies Prisma.CustomerDocumentInclude;
+
+/** The name the ETDA XML carries inside the PDF/A-3 (e-Tax by Email). */
+const ETDA_XML_NAME = 'ETDA-invoice.xml';
 
 /**
  * Files of customer documents (B5.2): the PDF of every issued document — Thai, Buddhist-era dates, amount in
@@ -54,6 +70,8 @@ export class DocumentFilesService {
     private readonly flags: FeatureFlagsService,
     private readonly events: DomainEvents,
     private readonly documents: CustomerDocumentsService,
+    private readonly branding: DocumentBrandingService,
+    private readonly eTax: ETaxEmailService,
     @Inject(PDF_RENDERER) private readonly renderer: PdfRenderer,
     @Inject(OBJECT_STORAGE) private readonly storage: ObjectStorage,
   ) {}
@@ -74,7 +92,19 @@ export class DocumentFilesService {
       seller,
       buyer,
       reference: doc.originalDocument
-        ? { docNumber: doc.originalDocument.docNumber, reason: doc.creditNoteReason?.nameTh ?? null }
+        ? {
+            docNumber: doc.originalDocument.docNumber,
+            reason: doc.creditNoteReason?.nameTh ?? null,
+            documentDate: dayOf(doc.originalDocument.documentDate),
+            docType: doc.originalDocument.docType,
+          }
+        : null,
+      replaces: doc.replaces
+        ? {
+            docNumber: doc.replaces.docNumber,
+            documentDate: dayOf(doc.replaces.documentDate),
+            reason: `${REPLACEMENT_REASON_TH[doc.replacementReason ?? 'other'] ?? ''}${doc.replacementNote ? ` (${doc.replacementNote})` : ''}`,
+          }
         : null,
       lines: doc.lines.map((l) => ({
         description: l.description,
@@ -102,7 +132,7 @@ export class DocumentFilesService {
   async renderPending(limit = 50): Promise<number> {
     const pending = await this.prisma.customerDocument.findMany({
       where: { pdfFileId: null },
-      include: { lines: { orderBy: { lineNo: 'asc' } }, originalDocument: true, creditNoteReason: true },
+      include: RENDER_INCLUDE,
       orderBy: { id: 'asc' },
       take: limit,
     });
@@ -118,15 +148,14 @@ export class DocumentFilesService {
     return done;
   }
 
+  /**
+   * The document's PDF: rendered with the branding in force at its issue (D-428/D-429); a tax document is a
+   * PDF/A-3 carrying its ETDA XML (D-430) and, while e-Tax sending is on, queued for e-Tax by Email.
+   */
   private async render(doc: DocWithLines) {
-    const view = DocumentFilesService.renderable(doc);
-    let pdf = await this.renderer.render(renderDocumentHtml(view));
+    const { pdf, xml } = await this.produce(doc);
     let xmlFileId: bigint | null = null;
-    if (doc.isTaxInvoice) {
-      const xml = Buffer.from(
-        renderETaxXml({ ...view, typeCode: eTaxTypeCode(view), issuedAt: toBangkokIso(doc.issuedAt) }),
-        'utf8',
-      );
+    if (xml) {
       const stored = await this.files.storeSystem({
         body: xml,
         fileName: `${doc.docNumber}.xml`,
@@ -135,7 +164,6 @@ export class DocumentFilesService {
         ownerUserId: doc.customerUserId,
       });
       xmlFileId = stored.id;
-      pdf = await this.embed(pdf, xml, doc.docNumber);
     }
     const file = await this.files.storeSystem({
       body: pdf,
@@ -152,9 +180,10 @@ export class DocumentFilesService {
           pdfFileId: file.id,
           pdfSha256: new Uint8Array(createHash('sha256').update(pdf).digest()),
           eTaxXmlFileId: xmlFileId,
-          eTaxStatus: sending ? 'pending' : 'not_applicable',
+          eTaxStatus: 'not_applicable',
         },
       });
+      if (sending) await this.eTax.queue(tx, doc, file.id, { referenceNumber: this.eTaxReference(doc) });
       await this.events.record(
         tx,
         {
@@ -169,19 +198,99 @@ export class DocumentFilesService {
     });
   }
 
-  /** PDF/A-3 style: the e-Tax XML travels inside the PDF (skipped when the renderer is not a real PDF). */
-  private async embed(pdf: Buffer, xml: Buffer, name: string): Promise<Buffer> {
+  /** Scheduled: cancelled copies of replaced documents not made yet (a failure after the replacement). */
+  async renderCancelledPending(limit = 20): Promise<number> {
+    const rows = await this.prisma.customerDocument.findMany({
+      where: { status: 'void', cancelledPdfFileId: null, replacedBy: { isNot: null } },
+      select: { id: true },
+      take: limit,
+    });
+    for (const r of rows) await this.renderCancelledCopy(r.id);
+    return rows.length;
+  }
+
+  /**
+   * D-431: the cancelled copy of a replaced document — the same document stamped "ยกเลิก" with the reason —
+   * kept beside the original PDF and, when the original went out by e-Tax e-mail, sent as its cancellation (CIV).
+   */
+  async renderCancelledCopy(documentId: bigint): Promise<void> {
+    const doc = await this.prisma.customerDocument.findUniqueOrThrow({
+      where: { id: documentId },
+      include: { ...RENDER_INCLUDE, eTaxSubmissions: true, replacedBy: true },
+    });
+    if (doc.cancelledPdfFileId || doc.status !== 'void') return;
+    const { pdf } = await this.produce(doc);
+    const file = await this.files.storeSystem({
+      body: pdf,
+      fileName: `${doc.docNumber}-cancelled.pdf`,
+      mimeType: PDF,
+      retentionClass: 'financial_record',
+      ownerUserId: doc.customerUserId,
+    });
+    const wentOut = doc.eTaxSubmissions.some((s) => s.kind !== 'civ' && s.status === 'sent');
+    await this.prisma.withTx(async (tx) => {
+      await tx.customerDocument.update({ where: { id: doc.id }, data: { cancelledPdfFileId: file.id } });
+      if (wentOut) await this.eTax.queue(tx, doc, file.id, { kind: 'civ' });
+    });
+  }
+
+  /** HTML → PDF with branding; a tax document becomes PDF/A-3 with its ETDA XML inside. */
+  private async produce(doc: DocWithLines): Promise<{ pdf: Buffer; xml: Buffer | null }> {
+    const view = DocumentFilesService.renderable(doc);
+    view.branding = await this.branding.resolve(
+      { kind: 'entity', id: doc.entityId },
+      signingKindOfCustomerDocument(doc.docType, doc.isTaxInvoice),
+      doc.issuedAt,
+    );
+    const html = renderDocumentHtml(view);
+    const pdf = await this.renderer.render(html);
+    if (!doc.isTaxInvoice) return { pdf, xml: null };
+    const xml = Buffer.from(
+      renderETaxXml({
+        ...view,
+        typeCode: eTaxTypeCode(view),
+        issuedAt: toBangkokIso(doc.issuedAt),
+        replacesCode: doc.replacementReason,
+      }),
+      'utf8',
+    );
+    return { pdf: await this.pdfA3(pdf, xml, doc, view), xml };
+  }
+
+  /** PDF/A-3b with the XML as an associated file (skipped when the renderer is not a real PDF, as in tests). */
+  private async pdfA3(
+    pdf: Buffer,
+    xml: Buffer,
+    doc: DocWithLines,
+    view: RenderableDocument,
+  ): Promise<Buffer> {
+    if (!pdf.subarray(0, 5).equals(Buffer.from('%PDF-'))) return pdf;
     try {
-      const doc = await PDFDocument.load(pdf);
-      await doc.attach(xml, `${name}.xml`, {
-        mimeType: 'application/xml',
-        description: 'e-Tax invoice XML (ETDA)',
-        afRelationship: 'Alternative' as never,
+      return await toPdfA3(pdf, {
+        title: `${doc.docNumber}`,
+        author: view.seller.legalNameTh ?? view.seller.legalNameEn ?? 'getpack',
+        subject: `${doc.docType.toUpperCase()} ${doc.docNumber}`,
+        createdAt: doc.issuedAt,
+        attachments: [
+          {
+            name: ETDA_XML_NAME,
+            mimeType: 'text/xml',
+            body: xml,
+            description: 'e-Tax invoice XML (ETDA ขมธอ. 3-2560)',
+          },
+        ],
       });
-      return Buffer.from(await doc.save());
-    } catch {
+    } catch (error) {
+      this.logger.error(`PDF/A-3 of ${doc.docNumber} failed: ${(error as Error).message}`);
       return pdf;
     }
+  }
+
+  /** The number an e-Tax subject cites after the document's own: the replaced invoice, or a note's invoice. */
+  private eTaxReference(doc: DocWithLines): string | null {
+    if (doc.replaces) return doc.replaces.docNumber;
+    if (doc.docType === 'cn' || doc.docType === 'dn') return doc.originalDocument?.docNumber ?? null;
+    return null;
   }
 
   async downloadUrl(fileId: bigint | null): Promise<{ url: string; expiresAt: Date }> {
@@ -272,8 +381,15 @@ export class DocumentFilesService {
     lines.sort((a, b) => a.date.localeCompare(b.date));
     const closing = opening.add(invoiced).sub(paid).sub(credited);
     const seller = await this.documents.seller(tx, company.entityId, new Date());
+    const branding = await this.branding.resolve(
+      { kind: 'entity', id: company.entityId },
+      'statement',
+      new Date(),
+      tx,
+    );
     const body = await this.renderer.render(
       renderStatementHtml({
+        branding,
         companyName: company.legalName,
         companyCode: company.companyCode,
         month,

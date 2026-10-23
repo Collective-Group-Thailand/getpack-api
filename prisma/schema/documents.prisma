@@ -1,0 +1,245 @@
+// ---------------------------------------------------------------------------------------------------------------
+// Document branding, e-Tax Invoice by Email and tax-invoice corrections (D-428 – D-432)
+// ---------------------------------------------------------------------------------------------------------------
+
+/// Whose documents a logo, seal or signatory belongs to (D-428): getpack's legal entity or a partner factory.
+enum DocumentOwnerKind {
+  entity
+  factory
+
+  @@map("document_owner_kind")
+}
+
+enum DocumentBrandMarkKind {
+  logo
+  seal
+
+  @@map("document_brand_mark_kind")
+}
+
+/// The kinds of document a signatory signs and the seal is stamped on (D-429).
+enum DocumentSigningKind {
+  tax_invoice
+  receipt
+  invoice
+  credit_note
+  debit_note
+  quotation
+  sales_order
+  delivery_note
+  billing_note
+  wht_certificate
+  statement
+
+  @@map("document_signing_kind")
+}
+
+/// D-428: the owner's logo and company seal, append-only — a change is a new row, a removal a row without a file —
+/// so a document is always rendered with the marks in force when it was issued.
+model DocumentBrandMark {
+  id          BigInt                @id(map: "pk_document_brand_marks") @default(autoincrement())
+  publicId    String                @unique(map: "ux_document_brand_marks__public_id") @default(dbgenerated("uuidv7()")) @map("public_id") @db.Uuid
+  ownerKind   DocumentOwnerKind     @map("owner_kind")
+  entityId    BigInt?               @map("entity_id")
+  factoryId   BigInt?               @map("factory_id")
+  kind        DocumentBrandMarkKind
+  /// The image (PNG, transparent background); null removes the mark from this moment on.
+  fileId      BigInt?               @map("file_id")
+  createdAt   DateTime              @default(now()) @map("created_at") @db.Timestamptz(6)
+  createdById BigInt                @map("created_by")
+
+  entity    Entity?     @relation("DocumentBrandMarkEntity", fields: [entityId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_document_brand_marks__entity_id")
+  factory   Factory?    @relation("DocumentBrandMarkFactory", fields: [factoryId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_document_brand_marks__factory_id")
+  file      FileObject? @relation("DocumentBrandMarkFile", fields: [fileId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_document_brand_marks__file_id")
+  createdBy User        @relation("DocumentBrandMarkCreatedBy", fields: [createdById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_document_brand_marks__created_by")
+
+  @@index([entityId, kind, createdAt(sort: Desc)], map: "ix_document_brand_marks__entity_id__kind__created_at")
+  @@index([factoryId, kind, createdAt(sort: Desc)], map: "ix_document_brand_marks__factory_id__kind__created_at")
+  @@index([fileId], map: "ix_document_brand_marks__file_id")
+  @@index([createdById], map: "ix_document_brand_marks__created_by")
+  @@map("document_brand_marks")
+}
+
+/// D-429: a person who may sign the owner's documents. Named by the owner's administrator; the person uploads
+/// their own signature (`DocumentSignature`) — nobody else can.
+model DocumentSignatory {
+  id          BigInt            @id(map: "pk_document_signatories") @default(autoincrement())
+  publicId    String            @unique(map: "ux_document_signatories__public_id") @default(dbgenerated("uuidv7()")) @map("public_id") @db.Uuid
+  ownerKind   DocumentOwnerKind @map("owner_kind")
+  entityId    BigInt?           @map("entity_id")
+  factoryId   BigInt?           @map("factory_id")
+  userId      BigInt            @map("user_id")
+  /// Set when the administrator removes the signatory; their signature stops appearing from then on.
+  removedAt   DateTime?         @map("removed_at") @db.Timestamptz(6)
+  createdAt   DateTime          @default(now()) @map("created_at") @db.Timestamptz(6)
+  createdById BigInt            @map("created_by")
+
+  entity     Entity?               @relation("DocumentSignatoryEntity", fields: [entityId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_document_signatories__entity_id")
+  factory    Factory?              @relation("DocumentSignatoryFactory", fields: [factoryId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_document_signatories__factory_id")
+  user       User                  @relation("DocumentSignatoryUser", fields: [userId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_document_signatories__user_id")
+  createdBy  User                  @relation("DocumentSignatoryCreatedBy", fields: [createdById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_document_signatories__created_by")
+  signatures DocumentSignature[]
+  rules      DocumentSigningRule[]
+
+  @@unique([entityId, userId], map: "ux_document_signatories__entity_id__user_id")
+  @@unique([factoryId, userId], map: "ux_document_signatories__factory_id__user_id")
+  @@index([userId], map: "ix_document_signatories__user_id")
+  @@index([createdById], map: "ix_document_signatories__created_by")
+  @@map("document_signatories")
+}
+
+/// D-429: a signatory's signature image with the name and position printed under it, append-only; the latest
+/// row at a document's issue time is the one on the document.
+model DocumentSignature {
+  id          BigInt   @id(map: "pk_document_signatures") @default(autoincrement())
+  publicId    String   @unique(map: "ux_document_signatures__public_id") @default(dbgenerated("uuidv7()")) @map("public_id") @db.Uuid
+  signatoryId BigInt   @map("signatory_id")
+  /// Null: the signatory withdrew their signature (documents print the dotted line again).
+  fileId      BigInt?  @map("file_id")
+  displayName String   @map("display_name")
+  position    String
+  createdAt   DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  createdById BigInt   @map("created_by")
+
+  signatory DocumentSignatory @relation(fields: [signatoryId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_document_signatures__signatory_id")
+  file      FileObject?       @relation("DocumentSignatureFile", fields: [fileId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_document_signatures__file_id")
+  createdBy User              @relation("DocumentSignatureCreatedBy", fields: [createdById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_document_signatures__created_by")
+
+  @@index([signatoryId, createdAt(sort: Desc)], map: "ix_document_signatures__signatory_id__created_at")
+  @@index([fileId], map: "ix_document_signatures__file_id")
+  @@index([createdById], map: "ix_document_signatures__created_by")
+  @@map("document_signatures")
+}
+
+/// D-429: which signatory signs a kind of document and whether the seal is stamped on it, append-only.
+model DocumentSigningRule {
+  id          BigInt              @id(map: "pk_document_signing_rules") @default(autoincrement())
+  ownerKind   DocumentOwnerKind   @map("owner_kind")
+  entityId    BigInt?             @map("entity_id")
+  factoryId   BigInt?             @map("factory_id")
+  docKind     DocumentSigningKind @map("doc_kind")
+  signatoryId BigInt?             @map("signatory_id")
+  stampSeal   Boolean             @default(false) @map("stamp_seal")
+  createdAt   DateTime            @default(now()) @map("created_at") @db.Timestamptz(6)
+  createdById BigInt              @map("created_by")
+
+  entity    Entity?            @relation("DocumentSigningRuleEntity", fields: [entityId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_document_signing_rules__entity_id")
+  factory   Factory?           @relation("DocumentSigningRuleFactory", fields: [factoryId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_document_signing_rules__factory_id")
+  signatory DocumentSignatory? @relation(fields: [signatoryId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_document_signing_rules__signatory_id")
+  createdBy User               @relation("DocumentSigningRuleCreatedBy", fields: [createdById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_document_signing_rules__created_by")
+
+  @@index([entityId, docKind, createdAt(sort: Desc)], map: "ix_document_signing_rules__entity_id__doc_kind__created_at")
+  @@index([factoryId, docKind, createdAt(sort: Desc)], map: "ix_document_signing_rules__factory_id__doc_kind__created_at")
+  @@index([signatoryId], map: "ix_document_signing_rules__signatory_id")
+  @@index([createdById], map: "ix_document_signing_rules__created_by")
+  @@map("document_signing_rules")
+}
+
+// --- e-Tax Invoice by Email (D-430) ------------------------------------------------------------------------------
+
+/// The ETDA subject codes: a tax invoice, a debit note, a credit note, the cancellation of a tax invoice.
+enum ETaxSubmissionKind {
+  inv
+  dbn
+  crn
+  civ
+
+  @@map("etax_submission_kind")
+}
+
+enum ETaxSubmissionStatus {
+  queued
+  sent
+  failed
+
+  @@map("etax_submission_status")
+}
+
+/// D-430: one e-mail to the buyer, copied to the ETDA time-stamping address, carrying one PDF/A-3 with its
+/// `ETDA-invoice.xml` (one document per e-mail, ≤ 3 MB). Retried with back-off; a failure stays visible to Finance.
+model ETaxSubmission {
+  id                 BigInt               @id(map: "pk_etax_submissions") @default(autoincrement())
+  publicId           String               @unique(map: "ux_etax_submissions__public_id") @default(dbgenerated("uuidv7()")) @map("public_id") @db.Uuid
+  entityId           BigInt               @map("entity_id")
+  customerDocumentId BigInt               @map("customer_document_id")
+  kind               ETaxSubmissionKind
+  status             ETaxSubmissionStatus @default(queued)
+  subject            String
+  toAddress          String?              @map("to_address")
+  ccAddress          String               @map("cc_address")
+  fromAddress        String?              @map("from_address")
+  /// The PDF/A-3 that was (or will be) attached.
+  fileId             BigInt               @map("file_id")
+  attempts           Int                  @default(0)
+  nextAttemptAt      DateTime             @default(now()) @map("next_attempt_at") @db.Timestamptz(6)
+  /// Machine code of the last failure (`etax.no_buyer_email`, `etax.file_too_large`, `etax.send_failed`, …).
+  lastError          String?              @map("last_error")
+  providerMessageId  String?              @map("provider_message_id")
+  sentAt             DateTime?            @map("sent_at") @db.Timestamptz(6)
+  createdAt          DateTime             @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  entity           Entity           @relation("ETaxSubmissionEntity", fields: [entityId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_etax_submissions__entity_id")
+  customerDocument CustomerDocument @relation("ETaxSubmissionDocument", fields: [customerDocumentId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_etax_submissions__customer_document_id")
+  file             FileObject       @relation("ETaxSubmissionFile", fields: [fileId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_etax_submissions__file_id")
+
+  @@unique([customerDocumentId, kind], map: "ux_etax_submissions__customer_document_id__kind")
+  @@index([status, nextAttemptAt], map: "ix_etax_submissions__status__next_attempt_at")
+  @@index([entityId], map: "ix_etax_submissions__entity_id")
+  @@index([fileId], map: "ix_etax_submissions__file_id")
+  @@map("etax_submissions")
+}
+
+// --- Corrections of issued tax invoices (D-431) -----------------------------------------------------------------
+
+/// Why a tax invoice was cancelled and issued again (ป.86/2542 ข้อ 25; the ETDA purpose codes TIVC01/02/99).
+enum DocumentCorrectionReason {
+  buyer_name
+  buyer_address
+  buyer_tax_id
+  other
+
+  @@map("document_correction_reason")
+}
+
+enum DocumentCorrectionStatus {
+  pending
+  approved
+  rejected
+  withdrawn
+
+  @@map("document_correction_status")
+}
+
+/// D-431: a customer's request to correct the buyer printed on an issued document. Finance approves it — which
+/// cancels the document and issues the replacement — or rejects it with a reason.
+model DocumentCorrectionRequest {
+  id                    BigInt                   @id(map: "pk_document_correction_requests") @default(autoincrement())
+  publicId              String                   @unique(map: "ux_document_correction_requests__public_id") @default(dbgenerated("uuidv7()")) @map("public_id") @db.Uuid
+  entityId              BigInt                   @map("entity_id")
+  customerDocumentId    BigInt                   @map("customer_document_id")
+  requestedById         BigInt                   @map("requested_by")
+  reason                DocumentCorrectionReason
+  note                  String?
+  /// The buyer as it should read: name, tax id, branch code, address.
+  buyer                 Json
+  status                DocumentCorrectionStatus @default(pending)
+  decidedById           BigInt?                  @map("decided_by")
+  decidedAt             DateTime?                @map("decided_at") @db.Timestamptz(6)
+  decisionNote          String?                  @map("decision_note")
+  replacementDocumentId BigInt?                  @map("replacement_document_id")
+  createdAt             DateTime                 @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  entity              Entity            @relation("DocumentCorrectionRequestEntity", fields: [entityId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_document_correction_requests__entity_id")
+  customerDocument    CustomerDocument  @relation("DocumentCorrectionRequestDocument", fields: [customerDocumentId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_document_correction_requests__customer_document_id")
+  replacementDocument CustomerDocument? @relation("DocumentCorrectionRequestReplacement", fields: [replacementDocumentId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_document_correction_requests__replacement_document_id")
+  requestedBy         User              @relation("DocumentCorrectionRequestRequestedBy", fields: [requestedById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_document_correction_requests__requested_by")
+  decidedBy           User?             @relation("DocumentCorrectionRequestDecidedBy", fields: [decidedById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_document_correction_requests__decided_by")
+
+  @@index([status, createdAt], map: "ix_document_correction_requests__status__created_at")
+  @@index([customerDocumentId], map: "ix_document_correction_requests__customer_document_id")
+  @@index([replacementDocumentId], map: "ix_document_correction_requests__replacement_document_id")
+  @@index([requestedById], map: "ix_document_correction_requests__requested_by")
+  @@index([decidedById], map: "ix_document_correction_requests__decided_by")
+  @@index([entityId], map: "ix_document_correction_requests__entity_id")
+  @@map("document_correction_requests")
+}

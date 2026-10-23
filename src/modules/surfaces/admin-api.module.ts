@@ -18,6 +18,7 @@ import { CUSTOMERS_ADMIN_CONTROLLERS } from '@modules/customers/customers.regist
 import { DESIGN_SERVICES_ADMIN_CONTROLLERS } from '@modules/design-services/design-services.registry';
 import { DESIGNS_ADMIN_CONTROLLERS } from '@modules/designs/designs.registry';
 import { DISCOUNT_MEMOS_ADMIN_CONTROLLERS } from '@modules/discount-memos/discount-memos.registry';
+import { DOCUMENTS_ADMIN_CONTROLLERS } from '@modules/documents/documents.registry';
 import { FACTORY_ERP_ADMIN_CONTROLLERS } from '@modules/factory-erp/factory-erp.registry';
 import { FINANCIAL_REPORTS_ADMIN_CONTROLLERS } from '@modules/financial-reports/financial-reports.registry';
 import { FIXED_ASSETS_ADMIN_CONTROLLERS } from '@modules/fixed-assets/fixed-assets.registry';
@@ -142,6 +143,7 @@ import { SettingsAdminModule } from '@platform/settings/settings-admin.module';
     ...TIMELINE_ADMIN_CONTROLLERS,
     ...LEDGER_ADMIN_CONTROLLERS,
     ...RECEIVABLES_ADMIN_CONTROLLERS,
+    ...DOCUMENTS_ADMIN_CONTROLLERS,
     ...PAYABLES_ADMIN_CONTROLLERS,
     ...PAYOUTS_ADMIN_CONTROLLERS,
     ...BANKING_ADMIN_CONTROLLERS,

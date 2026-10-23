@@ -611,6 +611,9 @@ model ErpSalesInvoice {
   allocations  ErpReceiptAllocation[]  @relation("ErpReceiptAllocationInvoice")
   billingLines ErpBillingNoteInvoice[] @relation("ErpBillingNoteInvoiceInvoice")
 
+  // --- D-433
+  vendorInvoice VendorInvoice? @relation("VendorInvoiceErpSalesInvoice")
+
   @@unique([factoryId, invoiceNo], map: "ux_erp_sales_invoices__factory_id__invoice_no")
   @@index([factoryId, status, issueDate(sort: Desc)], map: "ix_erp_sales_invoices__factory_id__status__issue_date")
   @@index([factoryId, customerId, status], map: "ix_erp_sales_invoices__factory_id__customer_id__status")

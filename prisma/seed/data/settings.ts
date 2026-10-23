@@ -380,6 +380,47 @@ export const SETTINGS: readonly SettingSeed[] = [
     confirmation: 'pending_business',
     ownerRole: 'finance_manager',
   },
+  // --- e-Tax Invoice by Email (D-430); sending itself is the `e_tax.sending` flag
+  {
+    key: 'e_tax.email_from',
+    valueType: 'string',
+    value: null,
+    unset: true,
+    description:
+      'D-430 the e-mail address registered with the Revenue Department for e-Tax Invoice by Email (ก.อ.01); must be verified as a sender in SES. Unset: nothing is sent',
+    decisions: ['D-430'],
+    confirmation: 'pending_business',
+    ownerRole: 'finance_manager',
+  },
+  {
+    key: 'e_tax.email_cc',
+    valueType: 'string',
+    value: 'csemail@etax.teda.th',
+    description:
+      'D-430 the ETDA time-stamping address every e-Tax e-mail is copied to (production csemail@etax.teda.th; the ETDA test environment gives its own)',
+    decisions: ['D-430'],
+    ownerRole: 'finance_manager',
+  },
+  {
+    key: 'e_tax.subject_date_format',
+    valueType: 'enum',
+    value: 'DDMMBBBB',
+    valueSchema: { enum: ['DDMMBBBB', 'DDMMYYYY', 'YYYYMMDD'] },
+    description:
+      'D-430 the date in the e-Tax e-mail subject `[date][INV][number]`: DDMMBBBB = day, month, Buddhist year without separators (31052569), as in common practice; confirm in the ETDA test environment',
+    decisions: ['D-430'],
+    confirmation: 'proposed',
+    ownerRole: 'finance_manager',
+  },
+  {
+    key: 'e_tax.email_retry',
+    valueType: 'json',
+    value: { backoffMinutes: [5, 15, 60, 180, 720] },
+    description:
+      'D-430 waits between attempts of an e-Tax e-mail the provider refused (technical); after the last one the document shows `failed` for Finance',
+    decisions: ['D-430'],
+    confirmation: 'proposed',
+  },
   {
     key: 'receivables.allowance_rates',
     valueType: 'json',

@@ -16,6 +16,7 @@ import {
 import { PDF_RENDERER, type PdfRenderer } from '@integrations/pdf/pdf-renderer.port';
 import { OBJECT_STORAGE, type ObjectStorage } from '@integrations/s3/object-storage.port';
 import { CompanyBankAccountsService } from '@modules/banking/company-bank-accounts.service';
+import { DocumentBrandingService } from '@modules/documents/branding/document-branding.service';
 import { TaxRatesReader, WHT_RATE_CODE } from '@modules/ledger/tax-rates.reader';
 import { PurchasingService } from '@modules/payables/purchasing.service';
 import { VendorInvoicesService } from '@modules/payables/vendor-invoices.service';
@@ -120,6 +121,7 @@ export class PayoutsService {
     private readonly audit: AuditService,
     private readonly events: DomainEvents,
     private readonly documents: CustomerDocumentsService,
+    private readonly branding: DocumentBrandingService,
     @Inject(PDF_RENDERER) private readonly renderer: PdfRenderer,
     @Inject(OBJECT_STORAGE) private readonly storage: ObjectStorage,
   ) {}
@@ -762,6 +764,12 @@ export class PayoutsService {
       incomeTypeCode: main,
       paidAmount: item.whtBase.toFixed(2),
       whtAmount: item.whtAmount.toFixed(2),
+      branding: await this.branding.resolve(
+        { kind: 'entity', id: entityId },
+        'wht_certificate',
+        new Date(),
+        tx,
+      ),
     });
     const body = await this.renderer.render(html);
     const file = await this.files.storeSystem({

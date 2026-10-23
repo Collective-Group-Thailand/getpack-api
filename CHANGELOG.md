@@ -3,6 +3,31 @@
 Contract-facing changes per release. The contract itself is `contract/openapi.json`; mappings for `getpack-web` are in
 `docs/contract-requests-triage.md`.
 
+## v0.75.0 — Document branding, e-Tax by Email, tax-invoice corrections, factory invoices from the ERP
+
+Additive (D-428 – D-433).
+
+- **Branding** (`admin.documentBranding.*`, `partner.documentBranding.*`): logo and company seal (upload purpose
+  `brand_mark`), signatories, and per kind of document who signs it and whether the seal is stamped; a sample PDF
+  (`…preview`). A signatory sets only their own signature (`admin.me.signatures`, `admin.me.updateSignature`,
+  `partner.me.signatures`, `partner.me.updateSignature`; purpose `signature`). Everything is a history: documents
+  render with what was in force at their issue. getpack's tax invoices, receipts, notes, statements, quotations and
+  50 ทวิ, and every factory ERP document, print them. New permissions `document_branding.read` / `.manage`; admin
+  menu `document_branding`.
+- **e-Tax Invoice by Email** (flag `e_tax.sending`, settings `e_tax.email_from`, `e_tax.email_cc`,
+  `e_tax.subject_date_format`, `e_tax.email_retry`): tax documents are PDF/A-3 with `ETDA-invoice.xml` inside and
+  are e-mailed to the buyer, copied to ETDA. `CustomerDocumentDto` gains `eTaxStatus` (`failed` added) and `eTax[]`;
+  `admin.customerDocuments.resendETax`.
+- **Corrections** (`receivables.documents.replace`): `admin.customerDocuments.replace` cancels a tax document and
+  issues it again with a corrected buyer (same date and amounts, new number, ledger untouched);
+  `store.documents.requestCorrection` / `withdrawCorrection`, `admin.documentCorrections.list|get|decide`;
+  `…cancelledPdf` on both surfaces. `CustomerDocumentDto` gains `replaces`, `replacedBy`, `replacementReason`,
+  `replacementNote`, `cancelledPdfReady`, `correction`. `store.documents.list` filters by `docType`, `from`, `to`,
+  `q`.
+- **Full form only** (D-432): new tax documents are full form (`isFullForm` true).
+- **Factory tax invoice from the ERP** (D-433): `partner.erpSalesInvoices.issueToGetpack` and `…handOverToGetpack`;
+  `VendorInvoiceSource` gains `erp`, `VendorInvoiceDto` gains `erpInvoiceId`.
+
 ## v0.73.1 — Image thumbnails (640 px)
 
 Additive. `store.catalog.getImage` takes `?size=thumb`: the WebP thumbnail the file worker makes of every image
