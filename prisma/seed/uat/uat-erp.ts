@@ -1,4 +1,4 @@
-import { Prisma, type PrismaClient } from '../../../src/generated/prisma/client';
+import { Prisma, type PrismaClient } from '../../../src/generated/prisma-erp/client';
 import { UAT_FACTORY_CODE } from './uat-catalog';
 
 /** The opening-stock adjustment of the UAT factory: the books take it as their opening balance (uat:populate). */

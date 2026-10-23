@@ -286,7 +286,7 @@ model ErpActivity {
   rowVersion    Int             @default(1) @map("row_version")
 
   factory     Factory            @relation("ErpActivityFactory", fields: [factoryId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_erp_activities__factory_id")
-  createdBy   User               @relation("ErpActivityCreatedBy", fields: [createdById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_erp_activities__created_by")
+  createdBy   User               @relation("ErpActivityCreatedBy", fields: [createdById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_erp_activities__created_by") // client: keep
   updatedBy   User?              @relation("ErpActivityUpdatedBy", fields: [updatedById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_erp_activities__updated_by")
   lead        ErpLead?           @relation("ErpActivityLead", fields: [leadId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_erp_activities__lead_id")
   opportunity ErpOpportunity?    @relation("ErpActivityOpportunity", fields: [opportunityId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_erp_activities__opportunity_id")
@@ -761,7 +761,7 @@ model ErpCustomerReceipt {
   createdById    BigInt           @map("created_by")
 
   factory     Factory                @relation("ErpCustomerReceiptFactory", fields: [factoryId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_erp_customer_receipts__factory_id")
-  createdBy   User                   @relation("ErpCustomerReceiptCreatedBy", fields: [createdById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_erp_customer_receipts__created_by")
+  createdBy   User                   @relation("ErpCustomerReceiptCreatedBy", fields: [createdById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_erp_customer_receipts__created_by") // client: keep
   customer    ErpTradingPartner      @relation("ErpCustomerReceiptCustomer", fields: [customerId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_erp_customer_receipts__customer_id")
   whtFile     FileObject?            @relation("ErpCustomerReceiptWhtFile", fields: [whtFileId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_erp_customer_receipts__wht_file_id")
   pdfFile     FileObject?            @relation("ErpCustomerReceiptPdf", fields: [pdfFileId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_erp_customer_receipts__pdf_file_id")

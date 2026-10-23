@@ -10,7 +10,7 @@ import {
 } from '@common/ledger-core/template';
 import { type ActionRule, nextActions } from '@common/next-actions/next-actions';
 import { bangkokDate } from '@common/time/bangkok';
-import { Prisma } from '@generated/prisma/client';
+import { Prisma } from '@generated/prisma-erp/client';
 import { Injectable } from '@nestjs/common';
 import { AuditService } from '@platform/audit/audit.service';
 

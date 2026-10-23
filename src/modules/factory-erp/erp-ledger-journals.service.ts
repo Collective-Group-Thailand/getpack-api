@@ -6,13 +6,13 @@ import { MoneyDecimal } from '@common/money/money';
 import { type ActionRule, nextActions } from '@common/next-actions/next-actions';
 import { paginated, toSkipTake } from '@common/pagination/pagination';
 import { bangkokDate } from '@common/time/bangkok';
-import { type Tx } from '@database/prisma.service';
+import { type ErpTx } from '@database/erp-prisma.service';
 import {
   type ErpGlRecurringJournal,
   type JournalKind,
   type JournalStatus,
   Prisma,
-} from '@generated/prisma/client';
+} from '@generated/prisma-erp/client';
 import { Injectable } from '@nestjs/common';
 import { AuditService } from '@platform/audit/audit.service';
 import { ScheduledJob } from '@platform/maintenance/scheduled-job.decorator';
@@ -232,7 +232,7 @@ export class ErpLedgerJournalsService {
     return this.journalDto(e, scope, perms);
   }
 
-  private async row(tx: Tx, scope: ErpScope, publicId: string): Promise<JournalRow> {
+  private async row(tx: ErpTx, scope: ErpScope, publicId: string): Promise<JournalRow> {
     const e = await tx.erpGlJournalEntry.findFirst({
       where: { factoryId: scope.factory.id, publicId },
       include: JOURNAL_INCLUDE,
@@ -502,7 +502,7 @@ export class ErpLedgerJournalsService {
     return rows.map((r) => this.recurringDto(r, perms));
   }
 
-  private async checkRecurring(tx: Tx, scope: ErpScope, body: ErpGlSaveRecurringDto): Promise<void> {
+  private async checkRecurring(tx: ErpTx, scope: ErpScope, body: ErpGlSaveRecurringDto): Promise<void> {
     await this.ledger.validateLines(
       tx,
       scope.factory.id,
@@ -598,7 +598,13 @@ export class ErpLedgerJournalsService {
   }
 
   /** Posts one recurring journal for `month` now (the job, or "run now"); `null` when it already ran that month. */
-  async runRecurring(tx: Tx, r: ErpGlRecurringJournal, month: string, factoryPublicId: string, actor: Actor) {
+  async runRecurring(
+    tx: ErpTx,
+    r: ErpGlRecurringJournal,
+    month: string,
+    factoryPublicId: string,
+    actor: Actor,
+  ) {
     if (r.lastRunMonth && r.lastRunMonth >= month) return null;
     const byUserId = actorColumns(actor).actorUserId;
     const settings = await this.ledger.book(tx, r.factoryId, byUserId);

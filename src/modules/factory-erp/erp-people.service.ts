@@ -3,7 +3,7 @@ import { DomainException } from '@common/errors/domain.exception';
 import { assertIfMatch, etagOf } from '@common/etag/etag';
 import { type ActionRule, nextActions } from '@common/next-actions/next-actions';
 import { addCalendarDays, bangkokDate, startOfBangkokDay, toBangkokIso } from '@common/time/bangkok';
-import { type ErpRecordStatus, type ErpSkillLevel, type Prisma } from '@generated/prisma/client';
+import { type ErpRecordStatus, type ErpSkillLevel, type Prisma } from '@generated/prisma-erp/client';
 import { Injectable } from '@nestjs/common';
 import { AuditService } from '@platform/audit/audit.service';
 

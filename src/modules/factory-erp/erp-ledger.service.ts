@@ -7,7 +7,7 @@ import { MoneyDecimal, type MoneyValue } from '@common/money/money';
 import { type ActionRule, nextActions } from '@common/next-actions/next-actions';
 import { paginated, toSkipTake } from '@common/pagination/pagination';
 import { bangkokDate } from '@common/time/bangkok';
-import { type Tx } from '@database/prisma.service';
+import { type ErpTx } from '@database/erp-prisma.service';
 import {
   type AccountChangeKind,
   type AccountType,
@@ -21,7 +21,7 @@ import {
   type PeriodStatus,
   Prisma,
   type TaxCode,
-} from '@generated/prisma/client';
+} from '@generated/prisma-erp/client';
 import { Injectable } from '@nestjs/common';
 import { AuditService } from '@platform/audit/audit.service';
 
@@ -210,7 +210,7 @@ export class ErpLedgerService {
   // ============================================================================================ book
 
   /** The factory's book: settings, chart and rules exist after this (created from the templates on first use). */
-  async book(tx: Tx, factoryId: bigint, userId: bigint | null): Promise<ErpGlSettings> {
+  async book(tx: ErpTx, factoryId: bigint, userId: bigint | null): Promise<ErpGlSettings> {
     let settings = await tx.erpGlSettings.findUnique({ where: { factoryId } });
     if (!settings) {
       const start = `${bangkokDate(new Date()).slice(0, 7)}-01`;
@@ -241,7 +241,7 @@ export class ErpLedgerService {
     return settings;
   }
 
-  private async anyOwner(tx: Tx, factoryId: bigint): Promise<bigint> {
+  private async anyOwner(tx: ErpTx, factoryId: bigint): Promise<bigint> {
     const owner = await tx.userRole.findFirst({
       where: { scopeType: 'factory', scopeId: factoryId, revokedAt: null, role: { key: 'factory_owner' } },
       select: { userId: true },
@@ -250,7 +250,7 @@ export class ErpLedgerService {
     return owner.userId;
   }
 
-  private async createChart(tx: Tx, factoryId: bigint, userId: bigint | null): Promise<void> {
+  private async createChart(tx: ErpTx, factoryId: bigint, userId: bigint | null): Promise<void> {
     const ids = new Map<string, bigint>();
     for (const a of CHART_TEMPLATE) {
       const row = await tx.erpGlAccount.create({
@@ -274,7 +274,7 @@ export class ErpLedgerService {
   }
 
   /** Creates the template's rules the factory does not have yet (a newer template adds rules; existing ones are kept). */
-  private async createRules(tx: Tx, factoryId: bigint, userId: bigint | null): Promise<void> {
+  private async createRules(tx: ErpTx, factoryId: bigint, userId: bigint | null): Promise<void> {
     const have = new Set(
       (await tx.erpGlPostingRule.findMany({ where: { factoryId }, select: { key: true } })).map((r) => r.key),
     );
@@ -477,7 +477,7 @@ export class ErpLedgerService {
 
   // ======================================================================================== accounts
 
-  async accountsByCode(tx: Tx, factoryId: bigint): Promise<Map<string, ErpGlAccount>> {
+  async accountsByCode(tx: ErpTx, factoryId: bigint): Promise<Map<string, ErpGlAccount>> {
     const rows = await tx.erpGlAccount.findMany({ where: { factoryId } });
     return new Map(rows.map((a) => [a.code, a]));
   }
@@ -487,7 +487,7 @@ export class ErpLedgerService {
    * turns them into signed balances by the account's normal side.
    */
   async balances(
-    tx: Tx,
+    tx: ErpTx,
     factoryId: bigint,
     range: { from?: string; to?: string } = {},
   ): Promise<Map<bigint, AccountBalance>> {
@@ -808,7 +808,7 @@ export class ErpLedgerService {
   // ========================================================================================= periods
 
   /** The fiscal year holding `day` exists after this (12 monthly periods from the settings' start month). */
-  async ensureYear(tx: Tx, factoryId: bigint, startMonth: number, day: string): Promise<void> {
+  async ensureYear(tx: ErpTx, factoryId: bigint, startMonth: number, day: string): Promise<void> {
     const existing = await tx.erpGlPeriod.findFirst({
       where: { factoryId, startDate: { lte: dateOnly(day) }, endDate: { gte: dateOnly(day) } },
       select: { id: true },
@@ -848,7 +848,7 @@ export class ErpLedgerService {
 
   /** The period a document dated `day` posts into: its own if open (or soft-closed when allowed), else the next open one. */
   async postingPeriod(
-    tx: Tx,
+    tx: ErpTx,
     factoryId: bigint,
     startMonth: number,
     day: string,
@@ -942,7 +942,7 @@ export class ErpLedgerService {
     };
   }
 
-  private async period(tx: Tx, scope: ErpScope, publicId: string) {
+  private async period(tx: ErpTx, scope: ErpScope, publicId: string) {
     const p = await tx.erpGlPeriod.findFirst({
       where: { factoryId: scope.factory.id, publicId },
       include: {
@@ -1048,7 +1048,7 @@ export class ErpLedgerService {
 
   /** §6 — the eight close checks of a period, each sub-ledger against its general-ledger account(s). */
   async checklist(
-    tx: Tx,
+    tx: ErpTx,
     scope: ErpScope,
     p: ErpGlPeriod,
     settings: ErpGlSettings,
@@ -1237,7 +1237,7 @@ export class ErpLedgerService {
 
   /** Validates draft lines against the chart and resolves dimensions to ids. */
   async validateLines(
-    tx: Tx,
+    tx: ErpTx,
     factoryId: bigint,
     kind: JournalKind,
     lines: GlDraftLine[],
@@ -1299,7 +1299,7 @@ export class ErpLedgerService {
 
   /** Writes a draft entry with its lines (status draft); `post` finalises it. */
   async createEntry(
-    tx: Tx,
+    tx: ErpTx,
     factoryId: bigint,
     settings: ErpGlSettings,
     draft: GlDraft,
@@ -1358,7 +1358,7 @@ export class ErpLedgerService {
 
   /** Creates and posts in one go (automatic, recurring, reversal and closing entries). */
   async post(
-    tx: Tx,
+    tx: ErpTx,
     factoryId: bigint,
     settings: ErpGlSettings,
     draft: GlDraft,
@@ -1370,7 +1370,7 @@ export class ErpLedgerService {
 
   /** Posts an existing draft / pending entry (manual journals after approval); the period is chosen again now. */
   async postExisting(
-    tx: Tx,
+    tx: ErpTx,
     settings: ErpGlSettings,
     entryId: bigint,
     actor: Actor,
@@ -1399,7 +1399,7 @@ export class ErpLedgerService {
   }
 
   private async finalise(
-    tx: Tx,
+    tx: ErpTx,
     entry: ErpGlJournalEntry,
     allowSoftClosed: boolean,
     actor: Actor,
@@ -1436,7 +1436,7 @@ export class ErpLedgerService {
 
   /** The reversal of a posted entry: mirrored lines, dated `documentDate`. */
   async reverse(
-    tx: Tx,
+    tx: ErpTx,
     settings: ErpGlSettings,
     original: ErpGlJournalEntry,
     documentDate: string,

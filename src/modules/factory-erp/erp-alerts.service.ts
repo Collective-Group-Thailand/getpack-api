@@ -1,8 +1,8 @@
 import { DomainException } from '@common/errors/domain.exception';
 import { paginated, toSkipTake } from '@common/pagination/pagination';
 import { addCalendarDays, bangkokDate, toBangkokIso } from '@common/time/bangkok';
-import { type PrismaService, type Tx } from '@database/prisma.service';
-import { type ErpAlertKind, type ErpAlertStatus, type Prisma } from '@generated/prisma/client';
+import { type ErpPrismaService, type ErpTx } from '@database/erp-prisma.service';
+import { type ErpAlertKind, type ErpAlertStatus, type Prisma } from '@generated/prisma-erp/client';
 import { Injectable, Logger } from '@nestjs/common';
 import { ScheduledJob } from '@platform/maintenance/scheduled-job.decorator';
 
@@ -51,7 +51,7 @@ export class ErpAlertsService {
   constructor(private readonly workspace: ErpWorkspace) {}
 
   /** Raises an alert unless its cause was already raised; returns whether it is new. */
-  async raise(tx: Tx, a: AlertInput): Promise<boolean> {
+  async raise(tx: ErpTx, a: AlertInput): Promise<boolean> {
     const rows = await tx.erpAlert.createManyAndReturn({
       data: [
         {
@@ -137,7 +137,7 @@ export class ErpAlertsService {
   }
 
   /** Closes the open alerts of a subject that no longer apply (a breakdown fixed, a document renewed). */
-  async settle(db: Tx | PrismaService, factoryId: bigint, kind: ErpAlertKind, subjectPublicId: string) {
+  async settle(db: ErpTx | ErpPrismaService, factoryId: bigint, kind: ErpAlertKind, subjectPublicId: string) {
     await db.erpAlert.updateMany({
       where: { factoryId, kind, subjectPublicId, status: 'open' },
       data: { status: 'acknowledged', acknowledgedAt: new Date() },

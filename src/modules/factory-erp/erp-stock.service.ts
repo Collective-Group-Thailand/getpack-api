@@ -3,7 +3,7 @@ import { uuidv7 } from '@common/ids/uuidv7';
 import { type MoneyValue } from '@common/money/money';
 import { paginated, toSkipTake } from '@common/pagination/pagination';
 import { addCalendarDays, bangkokDate, startOfBangkokDay } from '@common/time/bangkok';
-import { type PrismaService, type Tx } from '@database/prisma.service';
+import { type ErpPrismaService, type ErpTx } from '@database/erp-prisma.service';
 import {
   type ErpDocumentType,
   type ErpFactorySettings,
@@ -11,7 +11,7 @@ import {
   type ErpMovementKind,
   type ErpWarehouse,
   Prisma,
-} from '@generated/prisma/client';
+} from '@generated/prisma-erp/client';
 import { Injectable } from '@nestjs/common';
 import { AuditService } from '@platform/audit/audit.service';
 
@@ -94,7 +94,7 @@ export class ErpStockService {
 
   /** Posts entries in order; refuses an issue beyond what is available unless the factory allows it (D-322). */
   async post(
-    tx: Tx,
+    tx: ErpTx,
     scope: ErpScope,
     settings: ErpFactorySettings,
     entries: StockEntry[],
@@ -197,7 +197,7 @@ export class ErpStockService {
    * `landed_cost` movement — so the moving average carries a charge that came after the receipt.
    */
   async revalue(
-    tx: Tx,
+    tx: ErpTx,
     scope: ErpScope,
     _settings: ErpFactorySettings,
     e: {
@@ -246,7 +246,7 @@ export class ErpStockService {
    * Holds stock for a production order (D-341): up to `wanted`, never more than is free (on hand less what is
    * already reserved) in the warehouse; returns what was reserved. The balance row is locked.
    */
-  async reserve(tx: Tx, factoryId: bigint, itemId: bigint, warehouseId: bigint, wanted: MoneyValue) {
+  async reserve(tx: ErpTx, factoryId: bigint, itemId: bigint, warehouseId: bigint, wanted: MoneyValue) {
     if (!wanted.gt(0)) return dec(0);
     await tx.$executeRaw(Prisma.sql`
       INSERT INTO erp_stock_balances (factory_id, item_id, warehouse_id)
@@ -267,7 +267,7 @@ export class ErpStockService {
   }
 
   /** Gives back a reservation (an order cancelled, completed or reduced). */
-  async unreserve(tx: Tx, itemId: bigint, warehouseId: bigint, quantity: MoneyValue) {
+  async unreserve(tx: ErpTx, itemId: bigint, warehouseId: bigint, quantity: MoneyValue) {
     if (!quantity.gt(0)) return;
     const [row] = await tx.$queryRaw<{ id: bigint; reserved: Prisma.Decimal }[]>(Prisma.sql`
       SELECT id, reserved FROM erp_stock_balances
@@ -282,7 +282,7 @@ export class ErpStockService {
 
   /** Items of this factory by public id, in the order asked; unknown ids are 404, archived ones refused. */
   async items(
-    db: Tx | PrismaService,
+    db: ErpTx | ErpPrismaService,
     factoryId: bigint,
     publicIds: string[],
     options: { allowArchived?: boolean } = {},
@@ -433,7 +433,7 @@ export class ErpStockService {
   }
 
   private async document(
-    tx: Tx,
+    tx: ErpTx,
     scope: ErpScope,
     settings: ErpFactorySettings,
     entries: StockEntry[],
@@ -529,7 +529,7 @@ export class ErpStockService {
   /** Base quantity on order per item: issued purchase orders not yet fully received. */
   async onOrder(
     factoryId: bigint,
-    db: Tx | PrismaService = this.workspace.db,
+    db: ErpTx | ErpPrismaService = this.workspace.db,
   ): Promise<Map<bigint, MoneyValue>> {
     const rows = await db.$queryRaw<{ item_id: bigint; qty: Prisma.Decimal }[]>(Prisma.sql`
       SELECT l.item_id, SUM(GREATEST(l.quantity - l.received_qty, 0) * l.factor) AS qty

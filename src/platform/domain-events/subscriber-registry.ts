@@ -1,11 +1,12 @@
-import { type Tx } from '@database/prisma.service';
+import { type AnyTx } from '@database/prisma.service';
 import { Injectable, type OnModuleInit } from '@nestjs/common';
 import { DiscoveryService, MetadataScanner, Reflector } from '@nestjs/core';
 
 import { type DomainEventEnvelope } from './domain-event';
 import { type DomainEventSubscription, ON_DOMAIN_EVENT } from './on-domain-event.decorator';
 
-export type DomainEventHandler = (event: DomainEventEnvelope, tx: Tx) => Promise<void>;
+/** `tx` is the transaction of the subscription's `client` (ADR-0013). */
+export type DomainEventHandler = (event: DomainEventEnvelope, tx: AnyTx) => Promise<void>;
 
 export interface RegisteredSubscriber extends DomainEventSubscription {
   handle: DomainEventHandler;

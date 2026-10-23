@@ -51,7 +51,7 @@ model DocumentBrandMark {
   entity    Entity?     @relation("DocumentBrandMarkEntity", fields: [entityId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_document_brand_marks__entity_id")
   factory   Factory?    @relation("DocumentBrandMarkFactory", fields: [factoryId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_document_brand_marks__factory_id")
   file      FileObject? @relation("DocumentBrandMarkFile", fields: [fileId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_document_brand_marks__file_id")
-  createdBy User        @relation("DocumentBrandMarkCreatedBy", fields: [createdById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_document_brand_marks__created_by")
+  createdBy User        @relation("DocumentBrandMarkCreatedBy", fields: [createdById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_document_brand_marks__created_by") // client: keep
 
   @@index([entityId, kind, createdAt(sort: Desc)], map: "ix_document_brand_marks__entity_id__kind__created_at")
   @@index([factoryId, kind, createdAt(sort: Desc)], map: "ix_document_brand_marks__factory_id__kind__created_at")
@@ -77,7 +77,7 @@ model DocumentSignatory {
   entity     Entity?               @relation("DocumentSignatoryEntity", fields: [entityId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_document_signatories__entity_id")
   factory    Factory?              @relation("DocumentSignatoryFactory", fields: [factoryId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_document_signatories__factory_id")
   user       User                  @relation("DocumentSignatoryUser", fields: [userId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_document_signatories__user_id")
-  createdBy  User                  @relation("DocumentSignatoryCreatedBy", fields: [createdById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_document_signatories__created_by")
+  createdBy  User                  @relation("DocumentSignatoryCreatedBy", fields: [createdById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_document_signatories__created_by") // client: keep
   signatures DocumentSignature[]
   rules      DocumentSigningRule[]
 
@@ -103,7 +103,7 @@ model DocumentSignature {
 
   signatory DocumentSignatory @relation(fields: [signatoryId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_document_signatures__signatory_id")
   file      FileObject?       @relation("DocumentSignatureFile", fields: [fileId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_document_signatures__file_id")
-  createdBy User              @relation("DocumentSignatureCreatedBy", fields: [createdById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_document_signatures__created_by")
+  createdBy User              @relation("DocumentSignatureCreatedBy", fields: [createdById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_document_signatures__created_by") // client: keep
 
   @@index([signatoryId, createdAt(sort: Desc)], map: "ix_document_signatures__signatory_id__created_at")
   @@index([fileId], map: "ix_document_signatures__file_id")
@@ -126,7 +126,7 @@ model DocumentSigningRule {
   entity    Entity?            @relation("DocumentSigningRuleEntity", fields: [entityId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_document_signing_rules__entity_id")
   factory   Factory?           @relation("DocumentSigningRuleFactory", fields: [factoryId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_document_signing_rules__factory_id")
   signatory DocumentSignatory? @relation(fields: [signatoryId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_document_signing_rules__signatory_id")
-  createdBy User               @relation("DocumentSigningRuleCreatedBy", fields: [createdById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_document_signing_rules__created_by")
+  createdBy User               @relation("DocumentSigningRuleCreatedBy", fields: [createdById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_document_signing_rules__created_by") // client: keep
 
   @@index([entityId, docKind, createdAt(sort: Desc)], map: "ix_document_signing_rules__entity_id__doc_kind__created_at")
   @@index([factoryId, docKind, createdAt(sort: Desc)], map: "ix_document_signing_rules__factory_id__doc_kind__created_at")
@@ -232,8 +232,8 @@ model DocumentCorrectionRequest {
   entity              Entity            @relation("DocumentCorrectionRequestEntity", fields: [entityId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_document_correction_requests__entity_id")
   customerDocument    CustomerDocument  @relation("DocumentCorrectionRequestDocument", fields: [customerDocumentId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_document_correction_requests__customer_document_id")
   replacementDocument CustomerDocument? @relation("DocumentCorrectionRequestReplacement", fields: [replacementDocumentId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_document_correction_requests__replacement_document_id")
-  requestedBy         User              @relation("DocumentCorrectionRequestRequestedBy", fields: [requestedById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_document_correction_requests__requested_by")
-  decidedBy           User?             @relation("DocumentCorrectionRequestDecidedBy", fields: [decidedById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_document_correction_requests__decided_by")
+  requestedBy         User              @relation("DocumentCorrectionRequestRequestedBy", fields: [requestedById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_document_correction_requests__requested_by") // client: keep
+  decidedBy           User?             @relation("DocumentCorrectionRequestDecidedBy", fields: [decidedById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_document_correction_requests__decided_by") // client: keep
 
   @@index([status, createdAt], map: "ix_document_correction_requests__status__created_at")
   @@index([customerDocumentId], map: "ix_document_correction_requests__customer_document_id")

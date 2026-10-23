@@ -484,7 +484,7 @@ model OrderGroup {
 
   entity          Entity                @relation("OrderGroupEntity", fields: [entityId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_order_groups__entity_id")
   customer        User                  @relation("OrderGroupCustomer", fields: [customerUserId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_order_groups__customer_user_id")
-  placedBy        User                  @relation("OrderGroupPlacedBy", fields: [placedByUserId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_order_groups__placed_by_user_id")
+  placedBy        User                  @relation("OrderGroupPlacedBy", fields: [placedByUserId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_order_groups__placed_by_user_id") // client: keep
   onBehalfOf      User?                 @relation("OrderGroupOnBehalfOf", fields: [onBehalfOfUserId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_order_groups__on_behalf_of_user_id")
   cart            Cart?                 @relation("OrderGroupCart", fields: [cartId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_order_groups__cart_id")
   cancelReason    OrderCancelReason?    @relation("OrderGroupCancelReason", fields: [cancelReasonId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_order_groups__cancel_reason_id")
@@ -1495,7 +1495,7 @@ model Campaign {
 
   entity      Entity                @relation("CampaignEntity", fields: [entityId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_campaigns__entity_id")
   owner       User                  @relation("CampaignOwner", fields: [ownerUserId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_campaigns__owner_user_id")
-  createdBy   User?                 @relation("CampaignCreatedBy", fields: [createdById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_campaigns__created_by")
+  createdBy   User?                 @relation("CampaignCreatedBy", fields: [createdById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_campaigns__created_by") // client: keep
   promotions  Promotion[]
   redemptions PromotionRedemption[]
   discounts   OrderDiscount[]       @relation("OrderDiscountCampaign")
@@ -1575,7 +1575,7 @@ model CouponBatch {
   createdById BigInt?    @map("created_by")
 
   promotion Promotion    @relation(fields: [promotionId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_coupon_batches__promotion_id")
-  createdBy User?        @relation("CouponBatchCreatedBy", fields: [createdById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_coupon_batches__created_by")
+  createdBy User?        @relation("CouponBatchCreatedBy", fields: [createdById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_coupon_batches__created_by") // client: keep
   codes     CouponCode[]
 
   @@index([promotionId], map: "ix_coupon_batches__promotion_id")
@@ -2095,7 +2095,7 @@ model CompanyMember {
 
   company   Company @relation(fields: [companyId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_company_members__company_id")
   user      User    @relation("CompanyMemberUser", fields: [userId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_company_members__user_id")
-  invitedBy User?   @relation("CompanyMemberInvitedBy", fields: [invitedById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_company_members__invited_by")
+  invitedBy User?   @relation("CompanyMemberInvitedBy", fields: [invitedById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_company_members__invited_by") // client: keep
 
   @@unique([companyId, userId], map: "ux_company_members__company_id__user_id")
   @@index([userId], map: "ix_company_members__user_id")
@@ -2129,7 +2129,7 @@ model CompanyBrandAsset {
 
   company    Company    @relation(fields: [companyId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_company_brand_assets__company_id")
   fileObject FileObject @relation("CompanyBrandAssetFile", fields: [fileObjectId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_company_brand_assets__file_object_id")
-  createdBy  User       @relation("CompanyBrandAssetCreatedBy", fields: [createdById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_company_brand_assets__created_by")
+  createdBy  User       @relation("CompanyBrandAssetCreatedBy", fields: [createdById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_company_brand_assets__created_by") // client: keep
   removedBy  User?      @relation("CompanyBrandAssetRemovedBy", fields: [removedById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_company_brand_assets__removed_by")
 
   kitLogos BrandKitLogo[] @relation("BrandKitLogoAsset")
@@ -2161,7 +2161,7 @@ model CompanyKycDocument {
 
   company    Company    @relation(fields: [companyId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_company_kyc_documents__company_id")
   fileObject FileObject @relation("CompanyKycDocumentFile", fields: [fileObjectId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_company_kyc_documents__file_object_id")
-  verifiedBy User?      @relation("CompanyKycDocumentVerifiedBy", fields: [verifiedById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_company_kyc_documents__verified_by")
+  verifiedBy User?      @relation("CompanyKycDocumentVerifiedBy", fields: [verifiedById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_company_kyc_documents__verified_by") // client: keep
   createdBy  User?      @relation("CompanyKycDocumentCreatedBy", fields: [createdById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_company_kyc_documents__created_by")
 
   @@index([companyId, docType], map: "ix_company_kyc_documents__company_id__doc_type")
@@ -2203,7 +2203,7 @@ model CompanyCreditLimitVersion {
 
   creditLimit     CompanyCreditLimit @relation(fields: [creditLimitId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_company_credit_limit_versions__credit_limit_id")
   approvalRequest ApprovalRequest?   @relation("CompanyCreditLimitVersionApprovalRequest", fields: [approvalRequestId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_company_credit_limit_versions__approval_request_id")
-  createdBy       User?              @relation("CompanyCreditLimitVersionCreatedBy", fields: [createdById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_company_credit_limit_versions__created_by")
+  createdBy       User?              @relation("CompanyCreditLimitVersionCreatedBy", fields: [createdById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_company_credit_limit_versions__created_by") // client: keep
 
   @@unique([creditLimitId, versionNo], map: "ux_company_credit_limit_versions__credit_limit_id__version_no")
   @@index([creditLimitId, effectiveFrom(sort: Desc), versionNo(sort: Desc)], map: "ix_company_credit_limit_versions__resolution", where: raw("(status = 'approved'::config_version_status)"))
@@ -2277,7 +2277,7 @@ model DiscountMemo {
   rowVersion          Int        @default(1) @map("row_version")
 
   entity            Entity                   @relation("DiscountMemoEntity", fields: [entityId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_discount_memos__entity_id")
-  requestedBy       User                     @relation("DiscountMemoRequestedBy", fields: [requestedById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_discount_memos__requested_by")
+  requestedBy       User                     @relation("DiscountMemoRequestedBy", fields: [requestedById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_discount_memos__requested_by") // client: keep
   customer          User?                    @relation("DiscountMemoCustomer", fields: [customerUserId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_discount_memos__customer_user_id")
   company           Company?                 @relation(fields: [companyId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_discount_memos__company_id")
   quote             Quote?                   @relation("DiscountMemoQuote", fields: [quoteId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_discount_memos__quote_id")
@@ -2350,7 +2350,7 @@ model ReorderSuggestion {
   company     Company?    @relation("ReorderSuggestionCompany", fields: [companyId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_reorder_suggestions__company_id")
   productType ProductType @relation("ReorderSuggestionProductType", fields: [productTypeId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_reorder_suggestions__product_type_id")
   lastOrder   Order       @relation("ReorderSuggestionLastOrder", fields: [lastOrderId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_reorder_suggestions__last_order_id")
-  contactedBy User?       @relation("ReorderSuggestionContactedBy", fields: [contactedById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_reorder_suggestions__contacted_by")
+  contactedBy User?       @relation("ReorderSuggestionContactedBy", fields: [contactedById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_reorder_suggestions__contacted_by") // client: keep
   dismissedBy User?       @relation("ReorderSuggestionDismissedBy", fields: [dismissedById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_reorder_suggestions__dismissed_by")
 
   @@unique([skuSha256], map: "ux_reorder_suggestions__sku_sha256")

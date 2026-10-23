@@ -4,7 +4,7 @@ import {
   type CashFlowClass,
   type ErpItemKind,
   type LedgerSide,
-} from '@generated/prisma/client';
+} from '@generated/prisma-erp/client';
 
 /**
  * getpack Factory ERP E6 (docs/prompts/E6-factory-general-ledger.md §4, §5; D-385 – D-388): the chart of accounts

@@ -2,7 +2,7 @@ import { type Actor, actorColumns } from '@common/context/actor';
 import { RequestContext } from '@common/context/request-context';
 import { uuidv7 } from '@common/ids/uuidv7';
 import { jsonSafe } from '@common/json/json-safe';
-import { type Tx } from '@database/prisma.service';
+import { type AnyTx, platformTx } from '@database/prisma.service';
 import { Injectable } from '@nestjs/common';
 
 import { type DomainEventEnvelope, type NewDomainEvent, topicOf } from './domain-event';
@@ -15,10 +15,11 @@ import { type DomainEventEnvelope, type NewDomainEvent, topicOf } from './domain
 @Injectable()
 export class DomainEvents {
   async record<P extends Record<string, unknown>>(
-    tx: Tx,
+    anyTx: AnyTx,
     event: NewDomainEvent<P>,
     actor?: Actor,
   ): Promise<DomainEventEnvelope<P>> {
+    const tx = platformTx(anyTx);
     const context = RequestContext.current();
     const who = actor ?? context?.actor ?? { type: 'system' as const, name: 'unknown' };
     const columns = actorColumns(who);

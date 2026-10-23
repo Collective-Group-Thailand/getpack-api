@@ -1,6 +1,6 @@
 import { toBangkokIso } from '@common/time/bangkok';
-import { PrismaService } from '@database/prisma.service';
-import { type FileRetentionClass } from '@generated/prisma/client';
+import { ErpPrismaService } from '@database/erp-prisma.service';
+import { type FileRetentionClass } from '@generated/prisma-erp/client';
 import { OBJECT_STORAGE, type ObjectStorage } from '@integrations/s3/object-storage.port';
 import { Inject, Injectable } from '@nestjs/common';
 import { FilesService } from '@platform/files/files.service';
@@ -14,7 +14,7 @@ const TTL_SECONDS = 5 * 60;
 @Injectable()
 export class ErpFilesService {
   constructor(
-    private readonly prisma: PrismaService,
+    private readonly prisma: ErpPrismaService,
     private readonly files: FilesService,
     @Inject(OBJECT_STORAGE) private readonly storage: ObjectStorage,
   ) {}

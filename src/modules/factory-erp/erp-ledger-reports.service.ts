@@ -1,8 +1,8 @@
 import { DomainException } from '@common/errors/domain.exception';
 import { dateOnly, dayOf, monthEnd } from '@common/ledger-core/dates';
 import { MoneyDecimal, type MoneyValue } from '@common/money/money';
-import { type Tx } from '@database/prisma.service';
-import { type ErpGlAccount, type ErpGlSettings, Prisma } from '@generated/prisma/client';
+import { type ErpTx } from '@database/erp-prisma.service';
+import { type ErpGlAccount, type ErpGlSettings, Prisma } from '@generated/prisma-erp/client';
 import { Injectable } from '@nestjs/common';
 import { AuditService } from '@platform/audit/audit.service';
 
@@ -499,7 +499,7 @@ export class ErpLedgerReportsService {
   }
 
   /** Year-end closing (D-390): P&L balances of the fiscal year to retained earnings, dated the year end. */
-  async closeYear(tx: Tx, scope: ErpScope, settings: ErpGlSettings, yearId: bigint) {
+  async closeYear(tx: ErpTx, scope: ErpScope, settings: ErpGlSettings, yearId: bigint) {
     const year = await tx.erpGlFiscalYear.findFirstOrThrow({
       where: { id: yearId, factoryId: scope.factory.id },
       include: { periods: true },

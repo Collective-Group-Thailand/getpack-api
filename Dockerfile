@@ -15,6 +15,8 @@ COPY package.json pnpm-lock.yaml ./
 COPY patches ./patches
 COPY prisma ./prisma
 COPY prisma.config.ts ./
+# postinstall generates the core and ERP clients from prisma/schema (ADR-0013).
+COPY scripts/prisma-clients.mjs ./scripts/
 RUN --mount=type=cache,id=pnpm,target=/pnpm/store pnpm install --frozen-lockfile
 COPY . .
 # tsc outgrew Node's default heap (U-B1, 2026-10-04).

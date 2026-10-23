@@ -154,7 +154,7 @@ export async function populatePartnerZone<Cust extends UatCustomer>(d: PartnerZo
         owner().get(`${partner}/erp/ledger/settings`),
         200,
       );
-      const opening = await ctx.prisma.erpStockMovement.findMany({
+      const opening = await ctx.erpPrisma.erpStockMovement.findMany({
         where: { factoryId: factory.id, kind: 'opening', sourcePublicId: UAT_OPENING_STOCK_ID },
         include: { item: { select: { kind: true } } },
       });

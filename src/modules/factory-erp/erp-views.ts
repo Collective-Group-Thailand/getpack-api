@@ -13,7 +13,7 @@ import {
   type Material,
   type Prisma,
   type User,
-} from '@generated/prisma/client';
+} from '@generated/prisma-erp/client';
 
 import {
   type ErpGoodsReceiptDto,

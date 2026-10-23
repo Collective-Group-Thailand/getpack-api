@@ -582,7 +582,7 @@ model ApprovalPolicyVersion {
 
   policy          ApprovalPolicy    @relation(fields: [policyId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_approval_policy_versions__policy_id")
   approvalRequest ApprovalRequest?  @relation("ApprovalPolicyVersionApproval", fields: [approvalRequestId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_approval_policy_versions__approval_request_id")
-  createdBy       User?             @relation("ApprovalPolicyVersionCreatedBy", fields: [createdById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_approval_policy_versions__created_by")
+  createdBy       User?             @relation("ApprovalPolicyVersionCreatedBy", fields: [createdById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_approval_policy_versions__created_by") // client: keep
   decidedBy       User?             @relation("ApprovalPolicyVersionDecidedBy", fields: [decidedById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_approval_policy_versions__decided_by")
   steps           ApprovalStep[]
   requests        ApprovalRequest[] @relation("ApprovalRequestPolicyVersion")
@@ -983,7 +983,7 @@ model Attachment {
   createdById       BigInt?           @map("created_by")
 
   fileObject FileObject @relation(fields: [fileObjectId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_attachments__file_object_id")
-  createdBy  User?      @relation("AttachmentCreatedBy", fields: [createdById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_attachments__created_by")
+  createdBy  User?      @relation("AttachmentCreatedBy", fields: [createdById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_attachments__created_by") // client: keep
 
   @@unique([subjectType, subjectId, fileObjectId, role], map: "ux_attachments__subject__file__role")
   @@index([subjectType, subjectId], map: "ix_attachments__subject")

@@ -2,8 +2,8 @@ import { DomainException } from '@common/errors/domain.exception';
 import { type ActionRule, nextActions } from '@common/next-actions/next-actions';
 import { paginated, toSkipTake } from '@common/pagination/pagination';
 import { bangkokDate } from '@common/time/bangkok';
-import { type Tx } from '@database/prisma.service';
-import { type ErpWhtIncomeType, type Prisma } from '@generated/prisma/client';
+import { type ErpTx } from '@database/erp-prisma.service';
+import { type ErpWhtIncomeType, type Prisma } from '@generated/prisma-erp/client';
 import { type ReportColumn } from '@modules/reports/report-types';
 import { writeReport } from '@modules/reports/report-writer';
 import { Injectable } from '@nestjs/common';
@@ -109,7 +109,7 @@ export class ErpTaxService {
     });
   }
 
-  private async suggestion(tx: Tx, scope: ErpScope, paymentPublicId: string) {
+  private async suggestion(tx: ErpTx, scope: ErpScope, paymentPublicId: string) {
     const payment = await tx.erpSupplierPayment.findFirst({
       where: { publicId: paymentPublicId, factoryId: scope.factory.id },
       include: { supplier: true, allocations: { include: { supplierInvoice: true } } },

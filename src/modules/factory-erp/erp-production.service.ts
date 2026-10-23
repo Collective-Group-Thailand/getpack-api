@@ -4,14 +4,14 @@ import { type MoneyValue } from '@common/money/money';
 import { type ActionRule, nextActions } from '@common/next-actions/next-actions';
 import { paginated, toSkipTake } from '@common/pagination/pagination';
 import { addCalendarDays, bangkokDate, toBangkokIso } from '@common/time/bangkok';
-import { type PrismaService, type Tx } from '@database/prisma.service';
+import { type ErpPrismaService, type ErpTx } from '@database/erp-prisma.service';
 import {
   type ErpItem,
   type ErpPauseReason,
   type ErpProductionStatus,
   type ErpRecordStatus,
   type Prisma,
-} from '@generated/prisma/client';
+} from '@generated/prisma-erp/client';
 import { MilestonesService } from '@modules/production/milestones.service';
 import { Injectable, Logger } from '@nestjs/common';
 import { type DomainEventEnvelope } from '@platform/domain-events/domain-event';
@@ -28,6 +28,7 @@ import {
   operationMinutes,
   roundToPurchase,
 } from './erp.math';
+import { moForCost, orderCost } from './erp-costing';
 import {
   type ErpCompleteProductionDto,
   type ErpCreateProductionOrderDto,
@@ -47,7 +48,6 @@ import {
   type ErpUpdateProductionOrderDto,
 } from './erp-e2.dto';
 import { type ErpFinishOperationDto, type ErpOperationEventDto } from './erp-e3.dto';
-import { moForCost, orderCost } from './erp-insight.service';
 import { ErpPricingService } from './erp-pricing.service';
 import { ErpRequestsService } from './erp-requests.service';
 import { ErpStockService, type StockEntry } from './erp-stock.service';
@@ -202,7 +202,7 @@ export class ErpProductionService {
   }
 
   private async machines(
-    db: Tx | PrismaService,
+    db: ErpTx | ErpPrismaService,
     factoryId: bigint,
     publicIds: (string | null | undefined)[],
   ) {
@@ -212,7 +212,7 @@ export class ErpProductionService {
     return new Map(rows.map((m) => [m.publicId, m.id]));
   }
 
-  private async recipeParts(tx: Tx, scope: ErpScope, body: ErpSaveRecipeDto) {
+  private async recipeParts(tx: ErpTx, scope: ErpScope, body: ErpSaveRecipeDto) {
     const [product] = await this.stock.items(tx, scope.factory.id, [body.itemId]);
     const materials = await this.stock.items(
       tx,
@@ -338,7 +338,7 @@ export class ErpProductionService {
     return paginated(rows.map(moSummary), total, q);
   }
 
-  private async row(db: Tx | PrismaService, scope: ErpScope, publicId: string): Promise<MoRow> {
+  private async row(db: ErpTx | ErpPrismaService, scope: ErpScope, publicId: string): Promise<MoRow> {
     const row = await db.erpProductionOrder.findFirst({
       where: { factoryId: scope.factory.id, publicId },
       include: MO_INCLUDE,
@@ -365,7 +365,7 @@ export class ErpProductionService {
   }
 
   /** Value of the materials consumed: production issues less returns (D-341). */
-  private async materialCost(db: Tx | PrismaService, publicId: string): Promise<MoneyValue> {
+  private async materialCost(db: ErpTx | ErpPrismaService, publicId: string): Promise<MoneyValue> {
     const sum = await db.erpStockMovement.aggregate({
       where: { sourcePublicId: publicId, kind: { in: ['production_issue', 'production_return'] } },
       _sum: { value: true },
@@ -397,7 +397,7 @@ export class ErpProductionService {
   }
 
   private async manualParts(
-    tx: Tx,
+    tx: ErpTx,
     scope: ErpScope,
     materials: ErpCreateProductionOrderDto['materials'],
     operations: ErpCreateProductionOrderDto['operations'],
@@ -445,7 +445,7 @@ export class ErpProductionService {
 
   /** Plans a production order in the caller's transaction (a sales order's make-to-order line, D-361). */
   async plan(
-    tx: Tx,
+    tx: ErpTx,
     scope: ErpScope,
     body: ErpCreateProductionOrderDto,
   ): Promise<{ id: bigint; publicId: string; moNo: string; hasRecipe: boolean }> {
@@ -512,7 +512,7 @@ export class ErpProductionService {
       });
   }
 
-  private async lock(tx: Tx, scope: ErpScope, publicId: string) {
+  private async lock(tx: ErpTx, scope: ErpScope, publicId: string) {
     const found = await tx.erpProductionOrder.findFirst({ where: { factoryId: scope.factory.id, publicId } });
     if (!found) throw new DomainException('http.not_found');
     await tx.$queryRaw`SELECT id FROM erp_production_orders WHERE id = ${found.id} FOR UPDATE`;
@@ -624,7 +624,7 @@ export class ErpProductionService {
     return this.get(scope, publicId, perms);
   }
 
-  private async reserveAll(tx: Tx, mo: MoRow) {
+  private async reserveAll(tx: ErpTx, mo: MoRow) {
     for (const m of mo.materials) {
       const want = dec(m.requiredQty).minus(dec(m.issuedQty)).minus(dec(m.reservedQty));
       const got = await this.stock.reserve(tx, mo.factoryId, m.itemId, mo.warehouseId, want);
@@ -636,7 +636,7 @@ export class ErpProductionService {
     }
   }
 
-  private async releaseAll(tx: Tx, mo: MoRow) {
+  private async releaseAll(tx: ErpTx, mo: MoRow) {
     for (const m of mo.materials) {
       if (!dec(m.reservedQty).gt(0)) continue;
       await this.stock.unreserve(tx, m.itemId, mo.warehouseId, dec(m.reservedQty));
@@ -818,7 +818,7 @@ export class ErpProductionService {
   }
 
   private async finish(
-    tx: Tx,
+    tx: ErpTx,
     mo: MoRow,
     good: MoneyValue,
     scrap: MoneyValue,
@@ -872,7 +872,7 @@ export class ErpProductionService {
   }
 
   /** Cancels an open order in the caller's transaction (a cancelled sales order, D-361). */
-  async cancelIn(tx: Tx, scope: ErpScope, publicId: string, reason: string): Promise<void> {
+  async cancelIn(tx: ErpTx, scope: ErpScope, publicId: string, reason: string): Promise<void> {
     const mo = await this.lock(tx, scope, publicId);
     if (!OPEN.includes(mo.status))
       throw new DomainException('erp.invalid_status', { params: { status: mo.status } });
@@ -1295,8 +1295,11 @@ export class ErpProductionService {
    * work live in one place: the board material the job was quoted on (the item linked to that getpack
    * material) at the sheets the quote counted. Skipped when the factory switched planning off.
    */
-  @OnDomainEvent('production_job.accepted', { consumer: 'factory_erp.job_to_production_order' })
-  async onJobAccepted(event: DomainEventEnvelope, tx: Tx): Promise<void> {
+  @OnDomainEvent('production_job.accepted', {
+    consumer: 'factory_erp.job_to_production_order',
+    client: 'erp',
+  })
+  async onJobAccepted(event: DomainEventEnvelope, tx: ErpTx): Promise<void> {
     const job = await tx.productionJob.findUnique({
       where: { publicId: event.aggregateId },
       include: { factory: true, erpProductionOrder: true },
@@ -1389,8 +1392,11 @@ export class ErpProductionService {
    * D-354: a milestone completed on the job page finishes the operation that stands for it (with the job's
    * quantities), unless the floor already did.
    */
-  @OnDomainEvent(['production_job.milestone_completed'], { consumer: 'factory_erp.milestone_to_operation' })
-  async onMilestoneCompleted(event: DomainEventEnvelope, tx: Tx): Promise<void> {
+  @OnDomainEvent(['production_job.milestone_completed'], {
+    consumer: 'factory_erp.milestone_to_operation',
+    client: 'erp',
+  })
+  async onMilestoneCompleted(event: DomainEventEnvelope, tx: ErpTx): Promise<void> {
     const milestoneId = (event.payload as { milestoneId?: string }).milestoneId;
     if (!milestoneId) return;
     const milestone = await tx.jobMilestone.findUnique({
@@ -1419,8 +1425,9 @@ export class ErpProductionService {
   /** A job taken away (rejected, reassigned) cancels its open production order when nothing was issued. */
   @OnDomainEvent(['production_job.rejected', 'production_job.reassigned'], {
     consumer: 'factory_erp.job_withdrawn',
+    client: 'erp',
   })
-  async onJobWithdrawn(event: DomainEventEnvelope, tx: Tx): Promise<void> {
+  async onJobWithdrawn(event: DomainEventEnvelope, tx: ErpTx): Promise<void> {
     const jobId =
       event.type === 'production_job.reassigned'
         ? (event.payload as { fromJobId?: string }).fromJobId
@@ -1453,8 +1460,8 @@ export class ErpProductionService {
   }
 
   /** A completed getpack job completes its production order (good and scrap quantities from the job). */
-  @OnDomainEvent('production_job.completed', { consumer: 'factory_erp.job_completed' })
-  async onJobCompleted(event: DomainEventEnvelope, tx: Tx): Promise<void> {
+  @OnDomainEvent('production_job.completed', { consumer: 'factory_erp.job_completed', client: 'erp' })
+  async onJobCompleted(event: DomainEventEnvelope, tx: ErpTx): Promise<void> {
     const mo = await tx.erpProductionOrder.findFirst({
       where: { productionJob: { publicId: event.aggregateId }, status: { in: OPEN } },
       include: { ...MO_INCLUDE, factory: true },

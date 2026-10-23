@@ -166,7 +166,7 @@ model StyleRecipe {
   createdAt     DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
 
   base           StyleBase       @relation(fields: [baseId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_style_recipes__base_id")
-  approvedBy     User?           @relation("StyleRecipeApprovedBy", fields: [approvedById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_style_recipes__approved_by")
+  approvedBy     User?           @relation("StyleRecipeApprovedBy", fields: [approvedById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_style_recipes__approved_by") // client: keep
   importRun      StyleImportRun? @relation("StyleRecipeImportRun", fields: [importRunId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_style_recipes__import_run_id")
   dielineRenders DielineRender[]
   intakesMatched StyleIntake[]   @relation("StyleIntakeMatchedRecipe")
@@ -247,7 +247,7 @@ model StyleImportRun {
   decidedAt         DateTime?         @map("decided_at") @db.Timestamptz(6)
 
   approvalRequest ApprovalRequest? @relation("StyleImportRunApproval", fields: [approvalRequestId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_style_import_runs__approval_request_id")
-  createdBy       User?            @relation("StyleImportRunCreatedBy", fields: [createdById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_style_import_runs__created_by")
+  createdBy       User?            @relation("StyleImportRunCreatedBy", fields: [createdById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_style_import_runs__created_by") // client: keep
   bases           StyleBase[]      @relation("StyleBaseLastImportRun")
   recipes         StyleRecipe[]    @relation("StyleRecipeImportRun")
 
@@ -337,8 +337,8 @@ model FactoryProcessCapability {
 
   factory     Factory     @relation("FactoryProcessCapabilityFactory", fields: [factoryId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_factory_process_capabilities__factory_id")
   processType ProcessType @relation(fields: [processTypeId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_factory_process_capabilities__process_type_id")
-  proposedBy  User        @relation("FactoryProcessCapabilityProposedBy", fields: [proposedById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_factory_process_capabilities__proposed_by")
-  verifiedBy  User?       @relation("FactoryProcessCapabilityVerifiedBy", fields: [verifiedById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_factory_process_capabilities__verified_by")
+  proposedBy  User        @relation("FactoryProcessCapabilityProposedBy", fields: [proposedById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_factory_process_capabilities__proposed_by") // client: keep
+  verifiedBy  User?       @relation("FactoryProcessCapabilityVerifiedBy", fields: [verifiedById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_factory_process_capabilities__verified_by") // client: keep
   siteVisit   SiteVisit?  @relation("FactoryProcessCapabilitySiteVisit", fields: [siteVisitId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_factory_process_capabilities__site_visit_id")
 
   @@unique([factoryId, processTypeId, materialClass], map: "ux_factory_process_capabilities__verified", where: raw("(status = 'verified'::process_capability_status)"))
@@ -523,7 +523,7 @@ model StyleIntake {
   matchedRecipe StyleRecipe?   @relation("StyleIntakeMatchedRecipe", fields: [matchedRecipeId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_style_intakes__matched_recipe_id")
   resultRecipe  StyleRecipe?   @relation("StyleIntakeResultRecipe", fields: [resultRecipeId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_style_intakes__result_recipe_id")
   templateBase  StyleBase?     @relation("StyleIntakeTemplateBase", fields: [templateBaseId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_style_intakes__template_base_id")
-  reviewedBy    User?          @relation("StyleIntakeReviewedBy", fields: [reviewedById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_style_intakes__reviewed_by")
+  reviewedBy    User?          @relation("StyleIntakeReviewedBy", fields: [reviewedById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_style_intakes__reviewed_by") // client: keep
 
   @@index([factoryId, createdAt], map: "ix_style_intakes__factory_id__created_at")
   @@index([status], map: "ix_style_intakes__status")
@@ -587,7 +587,7 @@ model StructuralDesignRequest {
   assignedTo    User?                         @relation("StructuralRequestAssignedTo", fields: [assignedToId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_structural_design_requests__assigned_to")
   serviceRfq    Rfq?                          @relation("StructuralRequestServiceRfq", fields: [serviceRfqId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_structural_design_requests__service_rfq_id")
   deliveredFile FileObject?                   @relation("StructuralRequestDeliveredFile", fields: [deliveredFileId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_structural_design_requests__delivered_file_id")
-  approvedBy    User?                         @relation("StructuralRequestApprovedBy", fields: [approvedById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_structural_design_requests__approved_by")
+  approvedBy    User?                         @relation("StructuralRequestApprovedBy", fields: [approvedById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_structural_design_requests__approved_by") // client: keep
   publishedBase StyleBase?                    @relation("StructuralRequestPublishedBase", fields: [publishedBaseId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_structural_design_requests__published_base_id")
   files         StructuralDesignRequestFile[]
 

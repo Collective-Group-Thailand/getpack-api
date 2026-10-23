@@ -1,6 +1,6 @@
 import { DomainException } from '@common/errors/domain.exception';
-import { type Prisma } from '@generated/prisma/client';
-import { type DocumentSigningKind } from '@generated/prisma/client';
+import { type Prisma } from '@generated/prisma-erp/client';
+import { type DocumentSigningKind } from '@generated/prisma-erp/client';
 import { PDF_RENDERER, type PdfRenderer } from '@integrations/pdf/pdf-renderer.port';
 import { DocumentBrandingService } from '@modules/documents/branding/document-branding.service';
 import { bahtText, thaiDate } from '@modules/receivables/thai-text';

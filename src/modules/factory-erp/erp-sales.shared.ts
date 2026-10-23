@@ -1,6 +1,6 @@
 import { DomainException } from '@common/errors/domain.exception';
 import { bangkokDate, toBangkokIso } from '@common/time/bangkok';
-import { type Tx } from '@database/prisma.service';
+import { type ErpTx } from '@database/erp-prisma.service';
 import {
   type ErpItem,
   type ErpTradingPartner,
@@ -9,7 +9,7 @@ import {
   type Factory,
   type Prisma,
   type User,
-} from '@generated/prisma/client';
+} from '@generated/prisma-erp/client';
 import { type PersonRefDto } from '@modules/financial-reports/financial-reports.dto';
 
 import { type ErpRefDto } from './erp.dto';
@@ -68,7 +68,7 @@ export function thaiAddress(a: Prisma.FactoryAddressGetPayload<{ include: typeof
 }
 
 /** The factory as the seller (D-363): legal name, registered address, tax id and branch. */
-export async function sellerOf(tx: Tx, factory: Factory): Promise<ErpDocPartyDto> {
+export async function sellerOf(tx: ErpTx, factory: Factory): Promise<ErpDocPartyDto> {
   const address = await tx.factoryAddress.findFirst({
     where: { factoryId: factory.id, kind: 'registered' },
     include: GEO_INCLUDE,
@@ -105,7 +105,7 @@ export const party = (json: Prisma.JsonValue | null): ErpDocPartyDto | null =>
 // ---------------------------------------------------------------------------------- customers
 
 /** A customer of this factory (kind customer or both), not archived. */
-export async function customerOf(tx: Tx, scope: ErpScope, publicId: string): Promise<ErpTradingPartner> {
+export async function customerOf(tx: ErpTx, scope: ErpScope, publicId: string): Promise<ErpTradingPartner> {
   const p = await tx.erpTradingPartner.findFirst({ where: { publicId, factoryId: scope.factory.id } });
   if (!p) throw new DomainException('http.not_found');
   if (p.status === 'archived') throw new DomainException('erp.archived', { params: { name: p.name } });
@@ -116,7 +116,7 @@ export async function customerOf(tx: Tx, scope: ErpScope, publicId: string): Pro
 // ------------------------------------------------------------------------------------- people
 
 /** Users holding a role at this factory now (salespeople, assignees). */
-export async function factoryUsers(tx: Tx, factoryId: bigint): Promise<{ user: User; roles: string[] }[]> {
+export async function factoryUsers(tx: ErpTx, factoryId: bigint): Promise<{ user: User; roles: string[] }[]> {
   const rows = await tx.userRole.findMany({
     where: {
       scopeType: 'factory',
@@ -137,7 +137,7 @@ export async function factoryUsers(tx: Tx, factoryId: bigint): Promise<{ user: U
 }
 
 /** A user of this factory by public id (else 404 — never someone outside it). */
-export async function factoryUser(tx: Tx, factoryId: bigint, publicId: string): Promise<User> {
+export async function factoryUser(tx: ErpTx, factoryId: bigint, publicId: string): Promise<User> {
   const found = (await factoryUsers(tx, factoryId)).find((u) => u.user.publicId === publicId);
   if (!found) throw new DomainException('http.not_found');
   return found.user;
@@ -158,7 +158,11 @@ export interface PricedLine {
 }
 
 /** Resolves and prices input lines: an item line is in the item's base unit; free text needs a description. */
-export async function priceLines(tx: Tx, scope: ErpScope, input: ErpSalesLineInput[]): Promise<PricedLine[]> {
+export async function priceLines(
+  tx: ErpTx,
+  scope: ErpScope,
+  input: ErpSalesLineInput[],
+): Promise<PricedLine[]> {
   const ids = [...new Set(input.map((l) => l.itemId).filter((x): x is string => !!x))];
   const items = ids.length
     ? await tx.erpItem.findMany({ where: { factoryId: scope.factory.id, publicId: { in: ids } } })

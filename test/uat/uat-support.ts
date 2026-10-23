@@ -1,5 +1,6 @@
 import { randomUUID } from 'node:crypto';
 
+import { ErpPrismaService } from '@database/erp-prisma.service';
 import { PrismaService } from '@database/prisma.service';
 import { REDIS } from '@database/redis.module';
 import { type FakeScbGateway } from '@integrations/payments/fake-payment-gateways';
@@ -62,7 +63,14 @@ export async function bootUatApp(): Promise<FulfilmentApp> {
     }
     throw new Error('event pump did not settle after 25 rounds');
   };
-  return { app, server: app.getHttpServer(), prisma, run: Date.now() % 1_000_000, pump };
+  return {
+    app,
+    server: app.getHttpServer(),
+    prisma,
+    erpPrisma: app.get(ErpPrismaService),
+    run: Date.now() % 1_000_000,
+    pump,
+  };
 }
 
 export const UAT_PASSWORD = () => process.env['UAT_SEED_PASSWORD'] ?? process.env['DEV_SEED_PASSWORD'] ?? '';

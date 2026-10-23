@@ -3,8 +3,8 @@ import { assertIfMatch, etagOf } from '@common/etag/etag';
 import { type ActionRule, nextActions } from '@common/next-actions/next-actions';
 import { paginated, toSkipTake } from '@common/pagination/pagination';
 import { bangkokDate, toBangkokIso } from '@common/time/bangkok';
-import { type PrismaService, type Tx } from '@database/prisma.service';
-import { type ErpRfqStatus, type ErpUnit, type Prisma } from '@generated/prisma/client';
+import { type ErpPrismaService, type ErpTx } from '@database/erp-prisma.service';
+import { type ErpRfqStatus, type ErpUnit, type Prisma } from '@generated/prisma-erp/client';
 import { Injectable } from '@nestjs/common';
 
 import { type ErpDraftFromReorderResultDto } from './erp.dto';
@@ -116,7 +116,7 @@ export class ErpSourcingService {
     );
   }
 
-  private async row(db: Tx | PrismaService, scope: ErpScope, publicId: string): Promise<RfqRow> {
+  private async row(db: ErpTx | ErpPrismaService, scope: ErpScope, publicId: string): Promise<RfqRow> {
     const row = await db.erpRfq.findFirst({
       where: { factoryId: scope.factory.id, publicId },
       include: RFQ_INCLUDE,
@@ -129,7 +129,7 @@ export class ErpSourcingService {
     return rfqDto(await this.row(this.workspace.db, scope, publicId), perms);
   }
 
-  private async lock(tx: Tx, scope: ErpScope, publicId: string) {
+  private async lock(tx: ErpTx, scope: ErpScope, publicId: string) {
     const found = await tx.erpRfq.findFirst({ where: { factoryId: scope.factory.id, publicId } });
     if (!found) throw new DomainException('http.not_found');
     await tx.$queryRaw`SELECT id FROM erp_rfqs WHERE id = ${found.id} FOR UPDATE`;
@@ -137,7 +137,7 @@ export class ErpSourcingService {
   }
 
   /** Lines (from the body, else from the approved request's open lines) and suppliers of a draft. */
-  private async parts(tx: Tx, scope: ErpScope, body: ErpSaveRfqDto) {
+  private async parts(tx: ErpTx, scope: ErpScope, body: ErpSaveRfqDto) {
     let purchaseRequestId: bigint | null = null;
     let wanted = (body.lines ?? []).map((l) => ({
       itemId: l.itemId,

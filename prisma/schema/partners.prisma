@@ -638,7 +638,7 @@ model SiteVisit {
   createdAt        DateTime        @default(now()) @map("created_at") @db.Timestamptz(6)
 
   factory    Factory              @relation(fields: [factoryId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_site_visits__factory_id")
-  recordedBy User                 @relation("SiteVisitRecordedBy", fields: [recordedById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_site_visits__recorded_by")
+  recordedBy User                 @relation("SiteVisitRecordedBy", fields: [recordedById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_site_visits__recorded_by") // client: keep
   inspectors SiteVisitInspector[]
 
   processCapabilities FactoryProcessCapability[] @relation("FactoryProcessCapabilitySiteVisit")
@@ -1322,7 +1322,7 @@ model PriceProposal {
   lines            PriceProposalLine[]
   simulations      PriceImpactSimulation[]
   submittedBy      User?                   @relation("PriceProposalSubmittedBy", fields: [submittedById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_price_proposals__submitted_by")
-  createdBy        User?                   @relation("PriceProposalCreatedBy", fields: [createdById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_price_proposals__created_by")
+  createdBy        User?                   @relation("PriceProposalCreatedBy", fields: [createdById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_price_proposals__created_by") // client: keep
   updatedBy        User?                   @relation("PriceProposalUpdatedBy", fields: [updatedById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_price_proposals__updated_by")
 
   /// One open proposal per price list at a time, so every proposal applies to the version it was based on.
@@ -2452,8 +2452,8 @@ model FactoryChangeRequest {
 
   factory     Factory      @relation(fields: [factoryId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_factory_change_requests__factory_id")
   productType ProductType? @relation("FactoryChangeRequestProductType", fields: [productTypeId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_factory_change_requests__product_type_id")
-  respondedBy User?        @relation("FactoryChangeRequestRespondedBy", fields: [respondedById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_factory_change_requests__responded_by")
-  createdBy   User         @relation("FactoryChangeRequestCreatedBy", fields: [createdById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_factory_change_requests__created_by")
+  respondedBy User?        @relation("FactoryChangeRequestRespondedBy", fields: [respondedById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_factory_change_requests__responded_by") // client: keep
+  createdBy   User         @relation("FactoryChangeRequestCreatedBy", fields: [createdById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_factory_change_requests__created_by") // client: keep
 
   @@index([factoryId, status], map: "ix_factory_change_requests__factory_id__status")
   @@index([status, createdAt], map: "ix_factory_change_requests__status__created_at")
@@ -2979,7 +2979,7 @@ model BoardStrengthSheet {
   factory       Factory    @relation("BoardStrengthSheetFactory", fields: [factoryId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_board_strength_sheets__factory_id")
   material      Material   @relation("BoardStrengthSheetMaterial", fields: [materialId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_board_strength_sheets__material_id")
   dataSheetFile FileObject @relation("BoardStrengthSheetFile", fields: [dataSheetFileId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_board_strength_sheets__data_sheet_file_id")
-  createdBy     User?      @relation("BoardStrengthSheetCreatedBy", fields: [createdById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_board_strength_sheets__created_by")
+  createdBy     User?      @relation("BoardStrengthSheetCreatedBy", fields: [createdById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_board_strength_sheets__created_by") // client: keep
 
   @@unique([factoryId, materialId, versionNo], map: "ux_board_strength_sheets__factory_id__material_id__version_no")
   @@index([materialId, effectiveFrom], map: "ix_board_strength_sheets__material_id__effective_from")

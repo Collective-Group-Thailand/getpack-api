@@ -270,7 +270,7 @@ describe('getpack Factory ERP E1 (e2e)', () => {
 
     // Append-only ledger at the database (D-324).
     await expect(
-      ctx.prisma.erpStockMovement.updateMany({ where: { itemId: { gt: 0n } }, data: { reason: 'x' } }),
+      ctx.erpPrisma.erpStockMovement.updateMany({ where: { itemId: { gt: 0n } }, data: { reason: 'x' } }),
     ).rejects.toThrow();
   });
 

@@ -195,7 +195,7 @@ model ErpAlert {
   acknowledgedById BigInt?        @map("acknowledged_by")
 
   factory        Factory @relation("ErpAlertFactory", fields: [factoryId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_erp_alerts__factory_id")
-  acknowledgedBy User?   @relation("ErpAlertAcknowledgedBy", fields: [acknowledgedById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_erp_alerts__acknowledged_by")
+  acknowledgedBy User?   @relation("ErpAlertAcknowledgedBy", fields: [acknowledgedById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_erp_alerts__acknowledged_by") // client: keep
 
   @@unique([factoryId, dedupeKey], map: "ux_erp_alerts__factory_id__dedupe_key")
   @@index([factoryId, status, createdAt(sort: Desc)], map: "ix_erp_alerts__factory_id__status__created_at")
@@ -228,7 +228,7 @@ model ErpRfq {
 
   factory         Factory             @relation("ErpRfqFactory", fields: [factoryId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_erp_rfqs__factory_id")
   purchaseRequest ErpPurchaseRequest? @relation(fields: [purchaseRequestId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_erp_rfqs__purchase_request_id")
-  createdBy       User                @relation("ErpRfqCreatedBy", fields: [createdById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_erp_rfqs__created_by")
+  createdBy       User                @relation("ErpRfqCreatedBy", fields: [createdById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_erp_rfqs__created_by") // client: keep
   updatedBy       User?               @relation("ErpRfqUpdatedBy", fields: [updatedById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_erp_rfqs__updated_by")
   lines           ErpRfqLine[]
   suppliers       ErpRfqSupplier[]
@@ -333,7 +333,7 @@ model ErpLandedCharge {
   factory      Factory               @relation("ErpLandedChargeFactory", fields: [factoryId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_erp_landed_charges__factory_id")
   goodsReceipt ErpGoodsReceipt       @relation(fields: [goodsReceiptId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_erp_landed_charges__goods_receipt_id")
   partner      ErpTradingPartner?    @relation("ErpLandedChargePartner", fields: [partnerId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_erp_landed_charges__partner_id")
-  createdBy    User                  @relation("ErpLandedChargeCreatedBy", fields: [createdById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_erp_landed_charges__created_by")
+  createdBy    User                  @relation("ErpLandedChargeCreatedBy", fields: [createdById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_erp_landed_charges__created_by") // client: keep
   lines        ErpLandedChargeLine[]
 
   @@index([goodsReceiptId], map: "ix_erp_landed_charges__goods_receipt_id")
@@ -376,7 +376,7 @@ model ErpOperationEvent {
 
   factory   Factory                @relation("ErpOperationEventFactory", fields: [factoryId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_erp_operation_events__factory_id")
   operation ErpProductionOperation @relation(fields: [operationId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_erp_operation_events__operation_id")
-  createdBy User                   @relation("ErpOperationEventCreatedBy", fields: [createdById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_erp_operation_events__created_by")
+  createdBy User                   @relation("ErpOperationEventCreatedBy", fields: [createdById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_erp_operation_events__created_by") // client: keep
 
   @@index([operationId, occurredAt], map: "ix_erp_operation_events__operation_id__occurred_at")
   @@index([factoryId, occurredAt(sort: Desc)], map: "ix_erp_operation_events__factory_id__occurred_at")
@@ -464,7 +464,7 @@ model ErpMaintenanceOrder {
   factory    Factory               @relation("ErpMaintenanceOrderFactory", fields: [factoryId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_erp_maintenance_orders__factory_id")
   machine    FactoryMachine        @relation("ErpMaintenanceOrderMachine", fields: [machineId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_erp_maintenance_orders__machine_id")
   plan       ErpMaintenancePlan?   @relation(fields: [planId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_erp_maintenance_orders__plan_id")
-  reportedBy User?                 @relation("ErpMaintenanceOrderReportedBy", fields: [reportedById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_erp_maintenance_orders__reported_by")
+  reportedBy User?                 @relation("ErpMaintenanceOrderReportedBy", fields: [reportedById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_erp_maintenance_orders__reported_by") // client: keep
   updatedBy  User?                 @relation("ErpMaintenanceOrderUpdatedBy", fields: [updatedById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_erp_maintenance_orders__updated_by")
   photos     ErpMaintenancePhoto[]
   parts      ErpMaintenancePart[]
@@ -513,7 +513,7 @@ model ErpMaintenancePart {
   order     ErpMaintenanceOrder @relation(fields: [orderId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_erp_maintenance_parts__order_id")
   item      ErpItem             @relation(fields: [itemId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_erp_maintenance_parts__item_id")
   warehouse ErpWarehouse        @relation(fields: [warehouseId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_erp_maintenance_parts__warehouse_id")
-  createdBy User                @relation("ErpMaintenancePartCreatedBy", fields: [createdById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_erp_maintenance_parts__created_by")
+  createdBy User                @relation("ErpMaintenancePartCreatedBy", fields: [createdById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_erp_maintenance_parts__created_by") // client: keep
 
   @@index([orderId], map: "ix_erp_maintenance_parts__order_id")
   @@index([itemId], map: "ix_erp_maintenance_parts__item_id")
@@ -597,7 +597,7 @@ model ErpDocVersion {
 
   doc       ErpDoc     @relation(fields: [docId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_erp_doc_versions__doc_id")
   file      FileObject @relation("ErpDocVersionFile", fields: [fileId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_erp_doc_versions__file_id")
-  createdBy User       @relation("ErpDocVersionCreatedBy", fields: [createdById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_erp_doc_versions__created_by")
+  createdBy User       @relation("ErpDocVersionCreatedBy", fields: [createdById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_erp_doc_versions__created_by") // client: keep
 
   @@unique([docId, version], map: "ux_erp_doc_versions__doc_id__version")
   @@index([fileId], map: "ix_erp_doc_versions__file_id")

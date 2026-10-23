@@ -1,5 +1,5 @@
 import { addCalendarDays, startOfBangkokDay } from '@common/time/bangkok';
-import { Prisma } from '@generated/prisma/client';
+import { Prisma } from '@generated/prisma-erp/client';
 import { Injectable } from '@nestjs/common';
 
 import { dec } from './erp.math';

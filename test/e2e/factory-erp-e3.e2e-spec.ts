@@ -312,7 +312,7 @@ describe('getpack Factory ERP E2.1 + E3 (e2e)', () => {
     // Daily sourcing check: the approval review date is far away → nothing; append-only charges.
     await ctx.app.get(ErpAlertsService).sourcingCheck();
     await expect(
-      ctx.prisma.erpLandedCharge.updateMany({ where: { id: { gt: 0n } }, data: { reference: 'x' } }),
+      ctx.erpPrisma.erpLandedCharge.updateMany({ where: { id: { gt: 0n } }, data: { reference: 'x' } }),
     ).rejects.toThrow();
   });
 
@@ -503,7 +503,7 @@ describe('getpack Factory ERP E2.1 + E3 (e2e)', () => {
     ]);
     expect((await get('/alerts?kind=maintenance_due')).data[0]).toMatchObject({ subjectId: plan.id });
     await expect(
-      ctx.prisma.erpOperationEvent.updateMany({ where: { id: { gt: 0n } }, data: { note: 'x' } }),
+      ctx.erpPrisma.erpOperationEvent.updateMany({ where: { id: { gt: 0n } }, data: { note: 'x' } }),
     ).rejects.toThrow();
   });
 

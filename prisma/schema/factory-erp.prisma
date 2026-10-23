@@ -411,7 +411,7 @@ model ErpStockMovement {
   factory   Factory      @relation("ErpStockMovementFactory", fields: [factoryId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_erp_stock_movements__factory_id")
   item      ErpItem      @relation(fields: [itemId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_erp_stock_movements__item_id")
   warehouse ErpWarehouse @relation(fields: [warehouseId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_erp_stock_movements__warehouse_id")
-  createdBy User         @relation("ErpStockMovementCreatedBy", fields: [createdById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_erp_stock_movements__created_by")
+  createdBy User         @relation("ErpStockMovementCreatedBy", fields: [createdById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_erp_stock_movements__created_by") // client: keep
 
   @@index([factoryId, occurredAt(sort: Desc)], map: "ix_erp_stock_movements__factory_id__occurred_at")
   @@index([itemId, occurredAt(sort: Desc)], map: "ix_erp_stock_movements__item_id__occurred_at")
@@ -517,7 +517,7 @@ model ErpGoodsReceipt {
   purchaseOrder ErpPurchaseOrder?     @relation(fields: [purchaseOrderId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_erp_goods_receipts__purchase_order_id")
   supplier      ErpTradingPartner     @relation("ErpGoodsReceiptSupplier", fields: [supplierId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_erp_goods_receipts__supplier_id")
   warehouse     ErpWarehouse          @relation(fields: [warehouseId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_erp_goods_receipts__warehouse_id")
-  createdBy     User                  @relation("ErpGoodsReceiptCreatedBy", fields: [createdById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_erp_goods_receipts__created_by")
+  createdBy     User                  @relation("ErpGoodsReceiptCreatedBy", fields: [createdById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_erp_goods_receipts__created_by") // client: keep
   lines         ErpGoodsReceiptLine[]
   /// D-350: landed charges entered with the receipt (later ones are in `landedCharges`).
   chargesTotal  Decimal               @default(0) @map("charges_total") @db.Decimal(14, 2)
@@ -689,7 +689,7 @@ model ErpItemSupplier {
   reviewOn         DateTime?           @map("review_on") @db.Date
   /// D-346: until when the price breaks hold.
   breaksValidUntil DateTime?           @map("breaks_valid_until") @db.Date
-  approvedBy       User?               @relation("ErpItemSupplierApprovedBy", fields: [approvedById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_erp_item_suppliers__approved_by")
+  approvedBy       User?               @relation("ErpItemSupplierApprovedBy", fields: [approvedById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_erp_item_suppliers__approved_by") // client: keep
   priceBreaks      ErpPriceBreak[]
 
   @@unique([itemId, supplierId], map: "ux_erp_item_suppliers__item_id__supplier_id")
@@ -728,7 +728,7 @@ model ErpPriceRecord {
   factory   Factory           @relation("ErpPriceRecordFactory", fields: [factoryId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_erp_price_records__factory_id")
   item      ErpItem           @relation(fields: [itemId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_erp_price_records__item_id")
   supplier  ErpTradingPartner @relation("ErpPriceRecordSupplier", fields: [supplierId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_erp_price_records__supplier_id")
-  createdBy User              @relation("ErpPriceRecordCreatedBy", fields: [createdById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_erp_price_records__created_by")
+  createdBy User              @relation("ErpPriceRecordCreatedBy", fields: [createdById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_erp_price_records__created_by") // client: keep
 
   @@index([itemId, pricedOn(sort: Desc)], map: "ix_erp_price_records__item_id__priced_on")
   @@index([supplierId, pricedOn(sort: Desc)], map: "ix_erp_price_records__supplier_id__priced_on")
@@ -760,8 +760,8 @@ model ErpPurchaseRequest {
   rowVersion     Int                      @default(1) @map("row_version")
 
   factory   Factory                  @relation("ErpPurchaseRequestFactory", fields: [factoryId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_erp_purchase_requests__factory_id")
-  decidedBy User?                    @relation("ErpPurchaseRequestDecidedBy", fields: [decidedById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_erp_purchase_requests__decided_by")
-  createdBy User                     @relation("ErpPurchaseRequestCreatedBy", fields: [createdById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_erp_purchase_requests__created_by")
+  decidedBy User?                    @relation("ErpPurchaseRequestDecidedBy", fields: [decidedById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_erp_purchase_requests__decided_by") // client: keep
+  createdBy User                     @relation("ErpPurchaseRequestCreatedBy", fields: [createdById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_erp_purchase_requests__created_by") // client: keep
   updatedBy User?                    @relation("ErpPurchaseRequestUpdatedBy", fields: [updatedById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_erp_purchase_requests__updated_by")
   lines     ErpPurchaseRequestLine[]
   rfqs      ErpRfq[]
@@ -840,7 +840,7 @@ model ErpSupplierInvoice {
   supplier      ErpTradingPartner        @relation("ErpSupplierInvoiceSupplier", fields: [supplierId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_erp_supplier_invoices__supplier_id")
   purchaseOrder ErpPurchaseOrder?        @relation(fields: [purchaseOrderId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_erp_supplier_invoices__purchase_order_id")
   file          FileObject?              @relation("ErpSupplierInvoiceFile", fields: [fileId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_erp_supplier_invoices__file_id")
-  approvedBy    User?                    @relation("ErpSupplierInvoiceApprovedBy", fields: [approvedById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_erp_supplier_invoices__approved_by")
+  approvedBy    User?                    @relation("ErpSupplierInvoiceApprovedBy", fields: [approvedById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_erp_supplier_invoices__approved_by") // client: keep
   createdBy     User                     @relation("ErpSupplierInvoiceCreatedBy", fields: [createdById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_erp_supplier_invoices__created_by")
   lines         ErpSupplierInvoiceLine[]
   allocations   ErpPaymentAllocation[]
@@ -900,7 +900,7 @@ model ErpSupplierPayment {
 
   factory         Factory                @relation("ErpSupplierPaymentFactory", fields: [factoryId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_erp_supplier_payments__factory_id")
   supplier        ErpTradingPartner      @relation("ErpSupplierPaymentSupplier", fields: [supplierId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_erp_supplier_payments__supplier_id")
-  createdBy       User                   @relation("ErpSupplierPaymentCreatedBy", fields: [createdById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_erp_supplier_payments__created_by")
+  createdBy       User                   @relation("ErpSupplierPaymentCreatedBy", fields: [createdById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_erp_supplier_payments__created_by") // client: keep
   allocations     ErpPaymentAllocation[]
   reverses        ErpSupplierPayment?    @relation("ErpSupplierPaymentReversal", fields: [reversesId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_erp_supplier_payments__reverses_id")
   reversedBy      ErpSupplierPayment?    @relation("ErpSupplierPaymentReversal")

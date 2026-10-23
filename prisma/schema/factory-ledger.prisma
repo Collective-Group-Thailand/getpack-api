@@ -142,8 +142,8 @@ model ErpGlAccountChange {
 
   factory   Factory       @relation("ErpGlAccountChangeFactory", fields: [factoryId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_erp_gl_account_changes__factory_id")
   account   ErpGlAccount? @relation(fields: [accountId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_erp_gl_account_changes__account_id")
-  createdBy User          @relation("ErpGlAccountChangeCreatedBy", fields: [createdById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_erp_gl_account_changes__created_by")
-  decidedBy User?         @relation("ErpGlAccountChangeDecidedBy", fields: [decidedById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_erp_gl_account_changes__decided_by")
+  createdBy User          @relation("ErpGlAccountChangeCreatedBy", fields: [createdById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_erp_gl_account_changes__created_by") // client: keep
+  decidedBy User?         @relation("ErpGlAccountChangeDecidedBy", fields: [decidedById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_erp_gl_account_changes__decided_by") // client: keep
 
   @@index([factoryId, status], map: "ix_erp_gl_account_changes__factory_id__status")
   @@index([accountId], map: "ix_erp_gl_account_changes__account_id")
@@ -190,7 +190,7 @@ model ErpGlPeriod {
 
   factory          Factory                @relation("ErpGlPeriodFactory", fields: [factoryId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_erp_gl_periods__factory_id")
   fiscalYear       ErpGlFiscalYear        @relation(fields: [fiscalYearId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_erp_gl_periods__fiscal_year_id")
-  statusChangedBy  User?                  @relation("ErpGlPeriodStatusChangedBy", fields: [statusChangedById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_erp_gl_periods__status_changed_by")
+  statusChangedBy  User?                  @relation("ErpGlPeriodStatusChangedBy", fields: [statusChangedById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_erp_gl_periods__status_changed_by") // client: keep
   entries          ErpGlJournalEntry[]
   lines            ErpGlJournalLine[]
   depreciationRuns ErpGlDepreciationRun[]
@@ -242,8 +242,8 @@ model ErpGlJournalEntry {
   reverses           ErpGlJournalEntry?       @relation("ErpGlJournalEntryReversal", fields: [reversesEntryId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_erp_gl_journal_entries__reverses_entry_id")
   reversedBy         ErpGlJournalEntry?       @relation("ErpGlJournalEntryReversal")
   recurringJournal   ErpGlRecurringJournal?   @relation(fields: [recurringJournalId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_erp_gl_journal_entries__recurring_journal_id")
-  createdBy          User?                    @relation("ErpGlJournalEntryCreatedBy", fields: [createdById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_erp_gl_journal_entries__created_by")
-  approvedBy         User?                    @relation("ErpGlJournalEntryApprovedBy", fields: [approvedById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_erp_gl_journal_entries__approved_by")
+  createdBy          User?                    @relation("ErpGlJournalEntryCreatedBy", fields: [createdById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_erp_gl_journal_entries__created_by") // client: keep
+  approvedBy         User?                    @relation("ErpGlJournalEntryApprovedBy", fields: [approvedById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_erp_gl_journal_entries__approved_by") // client: keep
   postedBy           User?                    @relation("ErpGlJournalEntryPostedBy", fields: [postedById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_erp_gl_journal_entries__posted_by")
   lines              ErpGlJournalLine[]
   depreciationRun    ErpGlDepreciationRun?
@@ -347,8 +347,8 @@ model ErpGlPostingRuleVersion {
   decidedById   BigInt?             @map("decided_by")
 
   rule      ErpGlPostingRule    @relation(fields: [ruleId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_erp_gl_posting_rule_versions__rule_id")
-  createdBy User?               @relation("ErpGlPostingRuleVersionCreatedBy", fields: [createdById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_erp_gl_posting_rule_versions__created_by")
-  decidedBy User?               @relation("ErpGlPostingRuleVersionDecidedBy", fields: [decidedById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_erp_gl_posting_rule_versions__decided_by")
+  createdBy User?               @relation("ErpGlPostingRuleVersionCreatedBy", fields: [createdById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_erp_gl_posting_rule_versions__created_by") // client: keep
+  decidedBy User?               @relation("ErpGlPostingRuleVersionDecidedBy", fields: [decidedById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_erp_gl_posting_rule_versions__decided_by") // client: keep
   entries   ErpGlJournalEntry[]
 
   @@unique([ruleId, versionNo], map: "ux_erp_gl_posting_rule_versions__rule_id__version_no")
@@ -481,7 +481,7 @@ model ErpGlDepreciationRun {
   factory   Factory                 @relation("ErpGlDepreciationRunFactory", fields: [factoryId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_erp_gl_depreciation_runs__factory_id")
   period    ErpGlPeriod             @relation(fields: [periodId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_erp_gl_depreciation_runs__period_id")
   entry     ErpGlJournalEntry?      @relation(fields: [entryId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_erp_gl_depreciation_runs__entry_id")
-  createdBy User                    @relation("ErpGlDepreciationRunCreatedBy", fields: [createdById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_erp_gl_depreciation_runs__created_by")
+  createdBy User                    @relation("ErpGlDepreciationRunCreatedBy", fields: [createdById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_erp_gl_depreciation_runs__created_by") // client: keep
   lines     ErpGlDepreciationLine[]
 
   @@index([factoryId], map: "ix_erp_gl_depreciation_runs__factory_id")
@@ -580,7 +580,7 @@ model ErpGlBankMatch {
 
   line      ErpGlBankStatementLine @relation(fields: [lineId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_erp_gl_bank_matches__line_id")
   entry     ErpGlJournalEntry?     @relation(fields: [entryId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_erp_gl_bank_matches__entry_id")
-  matchedBy User?                  @relation("ErpGlBankMatchMatchedBy", fields: [matchedById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_erp_gl_bank_matches__matched_by")
+  matchedBy User?                  @relation("ErpGlBankMatchMatchedBy", fields: [matchedById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_erp_gl_bank_matches__matched_by") // client: keep
 
   @@index([lineId], map: "ix_erp_gl_bank_matches__line_id")
   @@index([targetType, targetPublicId], map: "ix_erp_gl_bank_matches__target")

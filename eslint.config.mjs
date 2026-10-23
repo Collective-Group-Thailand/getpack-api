@@ -69,5 +69,16 @@ export default tseslint.config(
     ...tseslint.configs.disableTypeChecked,
     languageOptions: { sourceType: 'module', parserOptions: { projectService: false } },
   },
+  {
+    // Runs from postinstall before anything is compiled (ADR-0013): plain Node, not part of the TS build.
+    files: ['scripts/**/*.mjs'],
+    ...tseslint.configs.disableTypeChecked,
+    languageOptions: {
+      sourceType: 'module',
+      parserOptions: { projectService: false },
+      globals: { console: 'readonly', process: 'readonly' },
+    },
+    rules: { ...tseslint.configs.disableTypeChecked.rules, 'no-console': 'off' },
+  },
   prettier,
 );

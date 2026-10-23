@@ -1,3 +1,4 @@
+import { ErpPrismaService } from '@database/erp-prisma.service';
 import { PrismaService } from '@database/prisma.service';
 import { REDIS } from '@database/redis.module';
 import { type FakeObjectStorage } from '@integrations/s3/fake-object-storage';
@@ -23,6 +24,8 @@ export interface CommerceApp {
   app: INestApplication;
   server: ReturnType<INestApplication['getHttpServer']>;
   prisma: PrismaService;
+  /** The factory ERP's tables (ADR-0013). */
+  erpPrisma: ErpPrismaService;
   /** Unique per suite run (the e2e database is shared). */
   run: number;
 }
@@ -38,6 +41,7 @@ export async function bootCommerceApp(): Promise<CommerceApp> {
     app,
     server: app.getHttpServer(),
     prisma,
+    erpPrisma: app.get(ErpPrismaService),
     run: (Date.now() % 1_000_000) + Math.floor(Math.random() * 1000),
   };
 }

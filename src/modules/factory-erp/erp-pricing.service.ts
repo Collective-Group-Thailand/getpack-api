@@ -3,7 +3,7 @@ import { assertIfMatch } from '@common/etag/etag';
 import { type MoneyValue } from '@common/money/money';
 import { paginated, toSkipTake } from '@common/pagination/pagination';
 import { addCalendarDays, bangkokDate, toBangkokIso } from '@common/time/bangkok';
-import { type PrismaService, type Tx } from '@database/prisma.service';
+import { type ErpPrismaService, type ErpTx } from '@database/erp-prisma.service';
 import {
   type ErpItem,
   type ErpItemSupplier,
@@ -11,7 +11,7 @@ import {
   type ErpTradingPartner,
   type ErpUnit,
   Prisma,
-} from '@generated/prisma/client';
+} from '@generated/prisma-erp/client';
 import { Injectable } from '@nestjs/common';
 import { AuditService } from '@platform/audit/audit.service';
 
@@ -108,7 +108,7 @@ export class ErpPricingService {
    * has (D-334). Creates the link the first time a supplier is met; the first link of an item becomes its
    * preferred one and the item's default supplier.
    */
-  async note(tx: Tx, n: PriceNote): Promise<void> {
+  async note(tx: ErpTx, n: PriceNote): Promise<void> {
     const base = basePrice(n.unitPrice, n.factor);
     const record = await tx.erpPriceRecord.create({
       data: {
@@ -148,7 +148,7 @@ export class ErpPricingService {
 
   /** The item × supplier link, created on first use in the unit the supplier sold in. */
   async ensureLink(
-    tx: Tx,
+    tx: ErpTx,
     factoryId: bigint,
     item: ErpItem,
     supplier: ErpTradingPartner,
@@ -181,7 +181,7 @@ export class ErpPricingService {
   }
 
   /** Makes `linkId` the item's one preferred supplier; the item's default supplier follows (D-333). */
-  private async prefer(tx: Tx, itemId: bigint, linkId: bigint, supplierId: bigint) {
+  private async prefer(tx: ErpTx, itemId: bigint, linkId: bigint, supplierId: bigint) {
     await tx.erpItemSupplier.updateMany({
       where: { itemId, preferred: true, id: { not: linkId } },
       data: { preferred: false },
@@ -194,7 +194,7 @@ export class ErpPricingService {
    * The item form's default supplier (E1) kept in step with the links: choosing one makes (or finds) its
    * link and prefers it; clearing it leaves no preferred link.
    */
-  async syncDefault(tx: Tx, item: ErpItem, supplierId: bigint | null, userId: bigint) {
+  async syncDefault(tx: ErpTx, item: ErpItem, supplierId: bigint | null, userId: bigint) {
     if (supplierId === null) {
       await tx.erpItemSupplier.updateMany({
         where: { itemId: item.id, preferred: true },
@@ -217,7 +217,7 @@ export class ErpPricingService {
 
   /** Preferred links (else the default supplier's link) of the given items, by item id. */
   async preferred(
-    db: Tx | PrismaService,
+    db: ErpTx | ErpPrismaService,
     factoryId: bigint,
     itemIds: bigint[],
   ): Promise<Map<bigint, ErpItemSupplier & { supplier: ErpTradingPartner }>> {
@@ -236,19 +236,19 @@ export class ErpPricingService {
   }
 
   /** The link of one supplier for one item, if any. */
-  link(db: Tx | PrismaService, itemId: bigint, supplierId: bigint) {
+  link(db: ErpTx | ErpPrismaService, itemId: bigint, supplierId: bigint) {
     return db.erpItemSupplier.findUnique({ where: { itemId_supplierId: { itemId, supplierId } } });
   }
 
   // ------------------------------------------------------------------------------------ links
 
-  private async item(db: Tx | PrismaService, scope: ErpScope, publicId: string) {
+  private async item(db: ErpTx | ErpPrismaService, scope: ErpScope, publicId: string) {
     const item = await db.erpItem.findFirst({ where: { factoryId: scope.factory.id, publicId } });
     if (!item) throw new DomainException('http.not_found');
     return item;
   }
 
-  private async supplier(db: Tx | PrismaService, scope: ErpScope, publicId: string) {
+  private async supplier(db: ErpTx | ErpPrismaService, scope: ErpScope, publicId: string) {
     const s = await db.erpTradingPartner.findFirst({ where: { factoryId: scope.factory.id, publicId } });
     if (!s) throw new DomainException('http.not_found');
     if (s.kind === 'customer') throw new DomainException('erp.not_a_supplier', { params: { name: s.name } });
@@ -479,7 +479,11 @@ export class ErpPricingService {
    * D-346: the price per the link's unit for `qty` of that unit — the largest break not above it while the
    * breaks hold, else the latest price.
    */
-  async priceFor(db: Tx | PrismaService, link: ErpItemSupplier, qty: MoneyValue): Promise<MoneyValue | null> {
+  async priceFor(
+    db: ErpTx | ErpPrismaService,
+    link: ErpItemSupplier,
+    qty: MoneyValue,
+  ): Promise<MoneyValue | null> {
     const valid = !link.breaksValidUntil || iso(link.breaksValidUntil)! >= today();
     if (valid) {
       const breaks = await db.erpPriceBreak.findMany({ where: { itemSupplierId: link.id } });
@@ -493,7 +497,11 @@ export class ErpPricingService {
   }
 
   /** The last price paid (goods receipt) per base unit to a supplier for an item, if any (D-347). */
-  async lastPaid(db: Tx | PrismaService, itemId: bigint, supplierId: bigint): Promise<MoneyValue | null> {
+  async lastPaid(
+    db: ErpTx | ErpPrismaService,
+    itemId: bigint,
+    supplierId: bigint,
+  ): Promise<MoneyValue | null> {
     const r = await db.erpPriceRecord.findFirst({
       where: { itemId, supplierId, source: 'goods_receipt' },
       orderBy: [{ pricedOn: 'desc' }, { id: 'desc' }],
@@ -501,7 +509,7 @@ export class ErpPricingService {
     return r ? dec(r.baseUnitPrice) : null;
   }
 
-  private async lockedLink(tx: Tx, scope: ErpScope, itemPublicId: string, linkPublicId: string) {
+  private async lockedLink(tx: ErpTx, scope: ErpScope, itemPublicId: string, linkPublicId: string) {
     const item = await this.item(tx, scope, itemPublicId);
     const link = await tx.erpItemSupplier.findFirst({
       where: { itemId: item.id, publicId: linkPublicId },

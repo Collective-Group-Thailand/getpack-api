@@ -2,7 +2,7 @@ import { DomainException } from '@common/errors/domain.exception';
 import { assertIfMatch, etagOf } from '@common/etag/etag';
 import { type ActionRule, nextActions } from '@common/next-actions/next-actions';
 import { paginated, toSkipTake } from '@common/pagination/pagination';
-import { type Tx } from '@database/prisma.service';
+import { type ErpTx } from '@database/erp-prisma.service';
 import {
   type ErpDeliveryStatus,
   type ErpFulfilment,
@@ -10,7 +10,7 @@ import {
   type ErpSalesOrderStatus,
   type ErpVatMode,
   type Prisma,
-} from '@generated/prisma/client';
+} from '@generated/prisma-erp/client';
 import { Injectable } from '@nestjs/common';
 
 import { dec, fmtCost, fmtMoney, fmtQty, money2 } from './erp.math';
@@ -443,7 +443,7 @@ export class ErpSalesOrdersService {
   }
 
   /** Delivered status from the lines; closes itself when everything is delivered and invoiced (D-361). */
-  async refresh(tx: Tx, salesOrderId: bigint): Promise<void> {
+  async refresh(tx: ErpTx, salesOrderId: bigint): Promise<void> {
     const so = await tx.erpSalesOrder.findUniqueOrThrow({
       where: { id: salesOrderId },
       include: { lines: true },
@@ -476,7 +476,11 @@ export class ErpSalesOrdersService {
    * The customer's credit position (D-361): open receivables plus confirmed orders not yet invoiced, and — for a
    * draft being confirmed — that draft; over when a limit is set and the sum passes it.
    */
-  async exposure(tx: Tx, customerId: bigint, including: ErpSalesOrder | null): Promise<ErpCreditExposureDto> {
+  async exposure(
+    tx: ErpTx,
+    customerId: bigint,
+    including: ErpSalesOrder | null,
+  ): Promise<ErpCreditExposureDto> {
     const customer = await tx.erpTradingPartner.findUniqueOrThrow({ where: { id: customerId } });
     const invoices = await tx.erpSalesInvoice.findMany({
       where: { customerId, status: { in: [...OPEN_INVOICE] } },
@@ -519,7 +523,7 @@ export class ErpSalesOrdersService {
     };
   }
 
-  private async releaseReservations(tx: Tx, so: ErpSalesOrder) {
+  private async releaseReservations(tx: ErpTx, so: ErpSalesOrder) {
     const lines = await tx.erpSalesOrderLine.findMany({ where: { salesOrderId: so.id } });
     for (const l of lines)
       if (l.itemId && dec(l.reservedQty).gt(0)) {
@@ -528,14 +532,19 @@ export class ErpSalesOrdersService {
       }
   }
 
-  private async lock(tx: Tx, scope: ErpScope, publicId: string): Promise<ErpSalesOrder> {
+  private async lock(tx: ErpTx, scope: ErpScope, publicId: string): Promise<ErpSalesOrder> {
     const so = await tx.erpSalesOrder.findFirst({ where: { publicId, factoryId: scope.factory.id } });
     if (!so) throw new DomainException('http.not_found');
     await tx.$queryRaw`SELECT id FROM erp_sales_orders WHERE id = ${so.id} FOR UPDATE`;
     return so;
   }
 
-  private async fields(tx: Tx, scope: ErpScope, body: ErpSaveSalesOrderDto, current: ErpSalesOrder | null) {
+  private async fields(
+    tx: ErpTx,
+    scope: ErpScope,
+    body: ErpSaveSalesOrderDto,
+    current: ErpSalesOrder | null,
+  ) {
     const customer = await customerOf(tx, scope, body.customerId);
     const opportunity = body.opportunityId
       ? await tx.erpOpportunity.findFirst({
@@ -905,7 +914,7 @@ export class ErpSalesOrdersService {
   }
 
   /** After a delivery is taken back the order may be open again. */
-  private async reopen(tx: Tx, salesOrderId: bigint) {
+  private async reopen(tx: ErpTx, salesOrderId: bigint) {
     const so = await tx.erpSalesOrder.findUniqueOrThrow({ where: { id: salesOrderId } });
     if (so.status === 'delivered' || so.status === 'closed' || so.status === 'partially_delivered') {
       await tx.erpSalesOrder.update({ where: { id: so.id }, data: { status: 'confirmed', closedAt: null } });
@@ -913,7 +922,7 @@ export class ErpSalesOrdersService {
     }
   }
 
-  private async lockDelivery(tx: Tx, scope: ErpScope, publicId: string) {
+  private async lockDelivery(tx: ErpTx, scope: ErpScope, publicId: string) {
     const dn = await tx.erpDeliveryNote.findFirst({ where: { publicId, factoryId: scope.factory.id } });
     if (!dn) throw new DomainException('http.not_found');
     await tx.$queryRaw`SELECT id FROM erp_delivery_notes WHERE id = ${dn.id} FOR UPDATE`;

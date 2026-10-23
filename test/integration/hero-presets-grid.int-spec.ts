@@ -1,3 +1,4 @@
+import { ErpPrismaService } from '@database/erp-prisma.service';
 import { PrismaService } from '@database/prisma.service';
 import { type INestApplication } from '@nestjs/common';
 import { Test } from '@nestjs/testing';
@@ -40,7 +41,7 @@ describe('hero presets grid on the UAT catalogue (D-310)', () => {
     // Bound to IPv4 loopback so a Docker-published port can never shadow the test server (stray 404s).
     await app.listen(0, '127.0.0.1');
     prisma = app.get(PrismaService);
-    await seedUat(prisma, {});
+    await seedUat(prisma, app.get(ErpPrismaService), {});
   }, 600_000);
 
   afterAll(async () => {

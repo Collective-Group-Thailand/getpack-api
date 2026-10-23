@@ -35,7 +35,7 @@ model AdvisoryRecommendation {
   createdAt             DateTime        @default(now()) @map("created_at") @db.Timestamptz(6)
 
   customer            User?            @relation("AdvisoryRecommendationCustomer", fields: [customerUserId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_advisory_recommendations__customer_user_id")
-  createdBy           User?            @relation("AdvisoryRecommendationCreatedBy", fields: [createdById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_advisory_recommendations__created_by")
+  createdBy           User?            @relation("AdvisoryRecommendationCreatedBy", fields: [createdById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_advisory_recommendations__created_by") // client: keep
   productType         ProductType      @relation("AdvisoryRecommendationProductType", fields: [productTypeId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_advisory_recommendations__product_type_id")
   pattern             Pattern          @relation("AdvisoryRecommendationPattern", fields: [patternId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_advisory_recommendations__pattern_id")
   catalogProduct      CatalogProduct?  @relation("AdvisoryRecommendationCatalogProduct", fields: [catalogProductId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_advisory_recommendations__catalog_product_id")

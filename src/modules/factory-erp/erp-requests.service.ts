@@ -3,8 +3,12 @@ import { assertIfMatch, etagOf } from '@common/etag/etag';
 import { type ActionRule, nextActions } from '@common/next-actions/next-actions';
 import { paginated, toSkipTake } from '@common/pagination/pagination';
 import { toBangkokIso } from '@common/time/bangkok';
-import { type Tx } from '@database/prisma.service';
-import { type ErpPurchaseRequestStatus, type ErpRequestSource, type Prisma } from '@generated/prisma/client';
+import { type ErpTx } from '@database/erp-prisma.service';
+import {
+  type ErpPurchaseRequestStatus,
+  type ErpRequestSource,
+  type Prisma,
+} from '@generated/prisma-erp/client';
 import { Injectable } from '@nestjs/common';
 import { AuditService } from '@platform/audit/audit.service';
 
@@ -122,7 +126,7 @@ export class ErpRequestsService {
   }
 
   /** Lines priced at the chosen (else preferred) supplier's latest price per base unit. */
-  private async lines(tx: Tx, scope: ErpScope, body: ErpSavePurchaseRequestDto) {
+  private async lines(tx: ErpTx, scope: ErpScope, body: ErpSavePurchaseRequestDto) {
     const items = await this.stock.items(
       tx,
       scope.factory.id,
@@ -259,7 +263,7 @@ export class ErpRequestsService {
     return this.get(scope, publicId, perms);
   }
 
-  private async lock(tx: Tx, scope: ErpScope, publicId: string) {
+  private async lock(tx: ErpTx, scope: ErpScope, publicId: string) {
     const found = await tx.erpPurchaseRequest.findFirst({ where: { factoryId: scope.factory.id, publicId } });
     if (!found) throw new DomainException('http.not_found');
     await tx.$queryRaw`SELECT id FROM erp_purchase_requests WHERE id = ${found.id} FOR UPDATE`;

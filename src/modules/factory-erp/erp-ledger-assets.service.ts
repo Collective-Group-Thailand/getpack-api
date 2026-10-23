@@ -7,8 +7,8 @@ import { MoneyDecimal, type MoneyValue } from '@common/money/money';
 import { type ActionRule, nextActions } from '@common/next-actions/next-actions';
 import { paginated, toSkipTake } from '@common/pagination/pagination';
 import { bangkokDate } from '@common/time/bangkok';
-import { type Tx } from '@database/prisma.service';
-import { type ErpGlTaxReturn, Prisma } from '@generated/prisma/client';
+import { type ErpTx } from '@database/erp-prisma.service';
+import { type ErpGlTaxReturn, Prisma } from '@generated/prisma-erp/client';
 import { bankFileAdapter, BankFileError, type StatementRow } from '@integrations/bank-files/bank-files';
 import { Injectable } from '@nestjs/common';
 import { AuditService } from '@platform/audit/audit.service';
@@ -136,7 +136,7 @@ export class ErpLedgerAssetsService {
 
   // ====================================================================================== categories
 
-  private async account(tx: Tx, factoryId: bigint, code: string, path: string) {
+  private async account(tx: ErpTx, factoryId: bigint, code: string, path: string) {
     const a = await tx.erpGlAccount.findFirst({ where: { factoryId, code } });
     if (!a || !a.isPostable || a.status !== 'active')
       throw new DomainException('validation.failed', {
@@ -664,7 +664,7 @@ export class ErpLedgerAssetsService {
     return this.bankDto(id, perms);
   }
 
-  private async bank(tx: Tx, scope: ErpScope, publicId: string) {
+  private async bank(tx: ErpTx, scope: ErpScope, publicId: string) {
     const b = await tx.erpGlBankAccount.findFirst({ where: { factoryId: scope.factory.id, publicId } });
     if (!b) throw new DomainException('http.not_found');
     return b;
@@ -768,7 +768,7 @@ export class ErpLedgerAssetsService {
 
   /** Same amount within ±3 days among the factory's supplier payments (out) and customer receipts (in), not yet matched. */
   private async suggest(
-    tx: Tx,
+    tx: ErpTx,
     scope: ErpScope,
     line: { id: bigint; txnDate: Date; amount: Prisma.Decimal },
   ): Promise<ErpGlBankMatchDto[]> {
@@ -834,7 +834,7 @@ export class ErpLedgerAssetsService {
   }
 
   private async applyMatch(
-    tx: Tx,
+    tx: ErpTx,
     scope: ErpScope,
     line: { id: bigint; publicId: string; amount: Prisma.Decimal },
     m: { targetType: string; targetId: string | null; targetNo: string | null },
@@ -874,7 +874,7 @@ export class ErpLedgerAssetsService {
   }
 
   private async lineDto(
-    tx: Tx,
+    tx: ErpTx,
     scope: ErpScope,
     id: bigint,
     perms: ReadonlySet<string>,
@@ -934,7 +934,7 @@ export class ErpLedgerAssetsService {
     return paginated(data, total, q);
   }
 
-  private async line(tx: Tx, scope: ErpScope, publicId: string) {
+  private async line(tx: ErpTx, scope: ErpScope, publicId: string) {
     const l = await tx.erpGlBankStatementLine.findFirst({ where: { factoryId: scope.factory.id, publicId } });
     if (!l) throw new DomainException('http.not_found');
     return l;

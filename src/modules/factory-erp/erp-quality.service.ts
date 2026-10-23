@@ -3,7 +3,7 @@ import { assertIfMatch, etagOf } from '@common/etag/etag';
 import { type ActionRule, nextActions } from '@common/next-actions/next-actions';
 import { paginated, toSkipTake } from '@common/pagination/pagination';
 import { toBangkokIso } from '@common/time/bangkok';
-import { type PrismaService, type Tx } from '@database/prisma.service';
+import { type ErpPrismaService, type ErpTx } from '@database/erp-prisma.service';
 import {
   type ErpCheckKind,
   type ErpCheckpointType,
@@ -17,7 +17,7 @@ import {
   type ErpRecordStatus,
   type ErpUnit,
   Prisma,
-} from '@generated/prisma/client';
+} from '@generated/prisma-erp/client';
 import { PDF_RENDERER, type PdfRenderer } from '@integrations/pdf/pdf-renderer.port';
 import { Inject, Injectable } from '@nestjs/common';
 
@@ -866,7 +866,7 @@ export class ErpQualityService {
 
   /** A failed check opens one NCR (D-372) with what the check knew; a failed receipt names the supplier. */
   private async decided(
-    tx: Tx,
+    tx: ErpTx,
     scope: ErpScope,
     check: ErpQualityCheck,
     result: ErpCheckResult,
@@ -920,7 +920,7 @@ export class ErpQualityService {
   }
 
   private async openNcr(
-    tx: Tx,
+    tx: ErpTx,
     scope: ErpScope,
     d: Omit<Prisma.ErpNcrUncheckedCreateInput, 'factoryId' | 'ncrNo' | 'createdById'>,
   ): Promise<ErpNcr> {
@@ -941,13 +941,13 @@ export class ErpQualityService {
   }
 
   /** A check an NCR of has been closed or verified no longer changes. */
-  private async locked(tx: Tx, check: ErpQualityCheck): Promise<boolean> {
+  private async locked(tx: ErpTx, check: ErpQualityCheck): Promise<boolean> {
     return (
       (await tx.erpNcr.count({ where: { checkId: check.id, status: { in: ['verified', 'closed'] } } })) > 0
     );
   }
 
-  private async checkRow(db: Tx | PrismaService, scope: ErpScope, publicId: string): Promise<CheckRow> {
+  private async checkRow(db: ErpTx | ErpPrismaService, scope: ErpScope, publicId: string): Promise<CheckRow> {
     const row = await db.erpQualityCheck.findFirst({
       where: { publicId, factoryId: scope.factory.id },
       include: CHECK_INCLUDE,
@@ -956,28 +956,28 @@ export class ErpQualityService {
     return row;
   }
 
-  private async lockCheck(tx: Tx, scope: ErpScope, publicId: string): Promise<ErpQualityCheck> {
+  private async lockCheck(tx: ErpTx, scope: ErpScope, publicId: string): Promise<ErpQualityCheck> {
     const row = await tx.erpQualityCheck.findFirst({ where: { publicId, factoryId: scope.factory.id } });
     if (!row) throw new DomainException('http.not_found');
     await tx.$queryRaw`SELECT id FROM erp_quality_checks WHERE id = ${row.id} FOR UPDATE`;
     return row;
   }
 
-  private async lockNcr(tx: Tx, scope: ErpScope, publicId: string): Promise<ErpNcr> {
+  private async lockNcr(tx: ErpTx, scope: ErpScope, publicId: string): Promise<ErpNcr> {
     const row = await tx.erpNcr.findFirst({ where: { publicId, factoryId: scope.factory.id } });
     if (!row) throw new DomainException('http.not_found');
     await tx.$queryRaw`SELECT id FROM erp_ncrs WHERE id = ${row.id} FOR UPDATE`;
     return await tx.erpNcr.findUniqueOrThrow({ where: { id: row.id } });
   }
 
-  private async item(tx: Tx, scope: ErpScope, publicId: string) {
+  private async item(tx: ErpTx, scope: ErpScope, publicId: string) {
     const item = await tx.erpItem.findFirst({ where: { publicId, factoryId: scope.factory.id } });
     if (!item) throw new DomainException('http.not_found');
     return item;
   }
 
   /** Photos must be clean uploads of this factory; stored by public id. */
-  private async photos(tx: Tx, scope: ErpScope, publicIds: string[]): Promise<string[]> {
+  private async photos(tx: ErpTx, scope: ErpScope, publicIds: string[]): Promise<string[]> {
     if (publicIds.length === 0) return [];
     const files = await tx.fileObject.findMany({ where: { publicId: { in: publicIds } } });
     if (
@@ -993,7 +993,7 @@ export class ErpQualityService {
     return [...new Set(publicIds)];
   }
 
-  private async photoMap(db: Tx | PrismaService, publicIds: string[]): Promise<Map<string, Photo>> {
+  private async photoMap(db: ErpTx | ErpPrismaService, publicIds: string[]): Promise<Map<string, Photo>> {
     if (publicIds.length === 0) return new Map();
     const files = await db.fileObject.findMany({ where: { publicId: { in: [...new Set(publicIds)] } } });
     return new Map(

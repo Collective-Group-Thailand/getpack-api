@@ -13,3 +13,4 @@
 | 0010 | [Consuming `@getpack/dieline` in the API](0010-dieline-engine-vendoring.md) | Accepted (U3.B4 / U3.B5) |
 | 0011 | [Studio print file assembled on the server](0011-studio-print-pdf-on-the-server.md) | Accepted (U4.B4) |
 | 0012 | [Assistant model, vendor and data terms](0012-assistant-model-and-data-terms.md) | **Proposed** (U5.B5) — not accepted |
+| 0013 | [Two Prisma clients generated from one schema](0013-prisma-client-split.md) | Accepted |

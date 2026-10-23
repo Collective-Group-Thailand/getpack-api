@@ -1,4 +1,5 @@
 import { toBangkokIso } from '@common/time/bangkok';
+import { ErpPrismaService } from '@database/erp-prisma.service';
 import { PrismaService } from '@database/prisma.service';
 import { type DocumentSigningKind } from '@generated/prisma/client';
 import { PDF_RENDERER, type PdfRenderer } from '@integrations/pdf/pdf-renderer.port';
@@ -49,6 +50,7 @@ const ERP_TITLE: Record<DocumentSigningKind, [string, string]> = {
 export class DocumentPreviewService {
   constructor(
     private readonly prisma: PrismaService,
+    private readonly erp: ErpPrismaService,
     private readonly branding: DocumentBrandingService,
     private readonly documents: CustomerDocumentsService,
     private readonly files: FilesService,
@@ -102,8 +104,8 @@ export class DocumentPreviewService {
       };
       html = renderDocumentHtml(view);
     } else {
-      const factory = await this.prisma.factory.findUniqueOrThrow({ where: { id: owner.id } });
-      const seller = await this.prisma.withTx((tx) => sellerOf(tx, factory));
+      const factory = await this.erp.factory.findUniqueOrThrow({ where: { id: owner.id } });
+      const seller = await sellerOf(this.erp, factory);
       const [th, en] = ERP_TITLE[docKind];
       html = renderSalesDocHtml({
         titleTh: th,

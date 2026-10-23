@@ -5,13 +5,13 @@ import { assertIfMatch, etagOf } from '@common/etag/etag';
 import { type ActionRule, nextActions } from '@common/next-actions/next-actions';
 import { paginated, toSkipTake } from '@common/pagination/pagination';
 import { AppConfig } from '@config/app-config';
-import { type Tx } from '@database/prisma.service';
+import { type ErpTx } from '@database/erp-prisma.service';
 import {
   type ErpQuotation,
   type ErpQuotationStatus,
   type ErpVatMode,
   type Prisma,
-} from '@generated/prisma/client';
+} from '@generated/prisma-erp/client';
 import { bahtText } from '@modules/receivables/thai-text';
 import { Injectable } from '@nestjs/common';
 import { ScheduledJob } from '@platform/maintenance/scheduled-job.decorator';
@@ -479,7 +479,7 @@ export class ErpQuotationsService {
   }
 
   private async markAccepted(
-    tx: Tx,
+    tx: ErpTx,
     ctx: { factory: ErpScope['factory']; actor: ErpScope['actor'] | null },
     q: ErpQuotation,
     body: { name: string; position?: string | null; customerPoNo?: string | null },
@@ -529,7 +529,7 @@ export class ErpQuotationsService {
       );
   }
 
-  private async byToken(db: Tx | ErpWorkspace['db'], token: string) {
+  private async byToken(db: ErpTx | ErpWorkspace['db'], token: string) {
     if (!/^[A-Za-z0-9_-]{20,64}$/.test(token)) throw new DomainException('http.not_found');
     const q = await db.erpQuotation.findFirst({
       where: { linkTokenHash: hash(token) },
@@ -543,14 +543,14 @@ export class ErpQuotationsService {
     return q;
   }
 
-  private async lock(tx: Tx, scope: ErpScope, publicId: string): Promise<ErpQuotation> {
+  private async lock(tx: ErpTx, scope: ErpScope, publicId: string): Promise<ErpQuotation> {
     const q = await tx.erpQuotation.findFirst({ where: { publicId, factoryId: scope.factory.id } });
     if (!q) throw new DomainException('http.not_found');
     await tx.$queryRaw`SELECT id FROM erp_quotations WHERE id = ${q.id} FOR UPDATE`;
     return q;
   }
 
-  private async fields(tx: Tx, scope: ErpScope, body: ErpSaveQuotationDto, current: ErpQuotation | null) {
+  private async fields(tx: ErpTx, scope: ErpScope, body: ErpSaveQuotationDto, current: ErpQuotation | null) {
     const customer = await customerOf(tx, scope, body.customerId);
     const opportunity = body.opportunityId
       ? await tx.erpOpportunity.findFirst({

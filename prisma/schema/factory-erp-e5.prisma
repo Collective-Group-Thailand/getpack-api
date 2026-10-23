@@ -254,7 +254,7 @@ model ErpNcr {
   rowVersion         Int                @default(1) @map("row_version")
 
   factory         Factory             @relation("ErpNcrFactory", fields: [factoryId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_erp_ncrs__factory_id")
-  createdBy       User                @relation("ErpNcrCreatedBy", fields: [createdById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_erp_ncrs__created_by")
+  createdBy       User                @relation("ErpNcrCreatedBy", fields: [createdById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_erp_ncrs__created_by") // client: keep
   updatedBy       User?               @relation("ErpNcrUpdatedBy", fields: [updatedById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_erp_ncrs__updated_by")
   check           ErpQualityCheck?    @relation("ErpNcrCheck", fields: [checkId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_erp_ncrs__check_id")
   supplier        ErpTradingPartner?  @relation("ErpNcrSupplier", fields: [supplierId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_erp_ncrs__supplier_id")
@@ -265,7 +265,7 @@ model ErpNcr {
   goodsReceipt    ErpGoodsReceipt?    @relation("ErpNcrGr", fields: [goodsReceiptId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_erp_ncrs__goods_receipt_id")
   warehouse       ErpWarehouse?       @relation("ErpNcrWarehouse", fields: [warehouseId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_erp_ncrs__warehouse_id")
   owner           User?               @relation("ErpNcrOwner", fields: [ownerId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_erp_ncrs__owner_id")
-  verifiedBy      User?               @relation("ErpNcrVerifiedBy", fields: [verifiedById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_erp_ncrs__verified_by_id")
+  verifiedBy      User?               @relation("ErpNcrVerifiedBy", fields: [verifiedById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_erp_ncrs__verified_by_id") // client: keep
 
   @@unique([factoryId, ncrNo], map: "ux_erp_ncrs__factory_id__ncr_no")
   @@index([factoryId, status, actionDueOn], map: "ix_erp_ncrs__factory_id__status__action_due_on")
@@ -386,9 +386,9 @@ model ErpSupportGrant {
   rowVersion   Int       @default(1) @map("row_version")
 
   factory   Factory          @relation("ErpSupportGrantFactory", fields: [factoryId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_erp_support_grants__factory_id")
-  createdBy User             @relation("ErpSupportGrantCreatedBy", fields: [createdById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_erp_support_grants__created_by")
+  createdBy User             @relation("ErpSupportGrantCreatedBy", fields: [createdById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_erp_support_grants__created_by") // client: keep
   updatedBy User?            @relation("ErpSupportGrantUpdatedBy", fields: [updatedById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_erp_support_grants__updated_by")
-  revokedBy User?            @relation("ErpSupportGrantRevokedBy", fields: [revokedById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_erp_support_grants__revoked_by_id")
+  revokedBy User?            @relation("ErpSupportGrantRevokedBy", fields: [revokedById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_erp_support_grants__revoked_by_id") // client: keep
   views     ErpSupportView[] @relation("ErpSupportGrantViews")
 
   @@index([factoryId, expiresAt(sort: Desc)], map: "ix_erp_support_grants__factory_id__expires_at")

@@ -166,7 +166,7 @@ describe('getpack Factory ERP E6 (e2e)', () => {
     );
     // the database refuses to change a posted entry
     await expect(
-      ctx.prisma.erpGlJournalEntry.update({ where: { publicId: posted.id }, data: { description: 'x' } }),
+      ctx.erpPrisma.erpGlJournalEntry.update({ where: { publicId: posted.id }, data: { description: 'x' } }),
     ).rejects.toThrow();
   });
 

@@ -3,13 +3,13 @@ import { type MoneyValue } from '@common/money/money';
 import { type ActionRule, nextActions } from '@common/next-actions/next-actions';
 import { paginated, toSkipTake } from '@common/pagination/pagination';
 import { addCalendarDays, bangkokDate, toBangkokIso } from '@common/time/bangkok';
-import { type Tx } from '@database/prisma.service';
+import { type ErpTx } from '@database/erp-prisma.service';
 import {
   type ErpPaymentMethod,
   type ErpSupplierInvoiceStatus,
   type ErpVatMode,
   type Prisma,
-} from '@generated/prisma/client';
+} from '@generated/prisma-erp/client';
 import { Injectable } from '@nestjs/common';
 import { AuditService } from '@platform/audit/audit.service';
 
@@ -346,7 +346,7 @@ export class ErpPayablesService {
     return this.getInvoice(scope, id, perms);
   }
 
-  private async lockInvoice(tx: Tx, scope: ErpScope, publicId: string) {
+  private async lockInvoice(tx: ErpTx, scope: ErpScope, publicId: string) {
     const found = await tx.erpSupplierInvoice.findFirst({ where: { factoryId: scope.factory.id, publicId } });
     if (!found) throw new DomainException('http.not_found');
     await tx.$queryRaw`SELECT id FROM erp_supplier_invoices WHERE id = ${found.id} FOR UPDATE`;

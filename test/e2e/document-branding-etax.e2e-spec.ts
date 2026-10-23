@@ -469,7 +469,7 @@ describe('document branding, e-Tax by Email and corrections (e2e, D-428 – D-43
     });
     expect(vi.erpInvoiceId).toBeTruthy();
     expect(vi.fileId).toBeTruthy();
-    const iv = await ctx.prisma.erpSalesInvoice.findUniqueOrThrow({
+    const iv = await ctx.erpPrisma.erpSalesInvoice.findUniqueOrThrow({
       where: { publicId: vi.erpInvoiceId as string },
       include: { customer: true, lines: true },
     });

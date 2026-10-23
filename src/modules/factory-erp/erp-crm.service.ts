@@ -2,7 +2,7 @@ import { DomainException } from '@common/errors/domain.exception';
 import { assertIfMatch, etagOf } from '@common/etag/etag';
 import { type ActionRule, nextActions } from '@common/next-actions/next-actions';
 import { paginated, toSkipTake } from '@common/pagination/pagination';
-import { type Tx } from '@database/prisma.service';
+import { type ErpTx } from '@database/erp-prisma.service';
 import {
   type ErpActivity,
   type ErpLead,
@@ -11,7 +11,7 @@ import {
   type ErpTradingPartner,
   Prisma,
   type User,
-} from '@generated/prisma/client';
+} from '@generated/prisma-erp/client';
 import { Injectable } from '@nestjs/common';
 
 import { dec, fmtMoney } from './erp.math';
@@ -437,7 +437,7 @@ export class ErpCrmService {
 
   /** D-360: an accepted quotation wins its opportunity (no-op when it is already closed); `actor` null = the customer online. */
   async win(
-    tx: Tx,
+    tx: ErpTx,
     ctx: { factory: ErpScope['factory']; actor: ErpScope['actor'] | null },
     opp: ErpOpportunity,
   ): Promise<void> {
@@ -670,21 +670,21 @@ export class ErpCrmService {
 
   // ----------------------------------------------------------------------------------- helpers
 
-  private async lockLead(tx: Tx, scope: ErpScope, publicId: string): Promise<ErpLead> {
+  private async lockLead(tx: ErpTx, scope: ErpScope, publicId: string): Promise<ErpLead> {
     const lead = await tx.erpLead.findFirst({ where: { publicId, factoryId: scope.factory.id } });
     if (!lead) throw new DomainException('http.not_found');
     await tx.$queryRaw`SELECT id FROM erp_leads WHERE id = ${lead.id} FOR UPDATE`;
     return lead;
   }
 
-  private async lockOpportunity(tx: Tx, scope: ErpScope, publicId: string): Promise<ErpOpportunity> {
+  private async lockOpportunity(tx: ErpTx, scope: ErpScope, publicId: string): Promise<ErpOpportunity> {
     const opp = await tx.erpOpportunity.findFirst({ where: { publicId, factoryId: scope.factory.id } });
     if (!opp) throw new DomainException('http.not_found');
     await tx.$queryRaw`SELECT id FROM erp_opportunities WHERE id = ${opp.id} FOR UPDATE`;
     return opp;
   }
 
-  private async party(tx: Tx, scope: ErpScope, body: { customerId?: string; leadId?: string }) {
+  private async party(tx: ErpTx, scope: ErpScope, body: { customerId?: string; leadId?: string }) {
     if (!body.customerId && !body.leadId)
       throw new DomainException('validation.failed', {
         errors: [{ path: 'customerId', code: 'required', message: 'A customer or a lead' }],
@@ -706,7 +706,7 @@ export class ErpCrmService {
 
   /** A salesperson: the given factory user, `null` to clear, or the fallback when not given. */
   private async person(
-    tx: Tx,
+    tx: ErpTx,
     scope: ErpScope,
     publicId: string | null | undefined,
     fallback: bigint | null,
@@ -716,7 +716,7 @@ export class ErpCrmService {
     return (await factoryUser(tx, scope.factory.id, publicId)).id;
   }
 
-  private async nextCustomerCode(tx: Tx, factoryId: bigint): Promise<string> {
+  private async nextCustomerCode(tx: ErpTx, factoryId: bigint): Promise<string> {
     const rows = await tx.$queryRaw<{ n: number | null }[]>(Prisma.sql`
       SELECT max(substring(code from '^C(\\d+)$')::int) AS n FROM erp_trading_partners
        WHERE factory_id = ${factoryId} AND code ~ '^C\\d+$'`);

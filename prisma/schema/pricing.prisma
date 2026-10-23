@@ -595,7 +595,7 @@ model Quote {
   entity         Entity          @relation("QuoteEntity", fields: [entityId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_quotes__entity_id")
   rfqQuote       RfqQuote?       @relation("QuoteRfqQuote", fields: [rfqQuoteId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_quotes__rfq_quote_id")
   customer       User?           @relation("QuoteCustomer", fields: [customerUserId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_quotes__customer_user_id")
-  createdBy      User?           @relation("QuoteCreatedBy", fields: [createdById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_quotes__created_by")
+  createdBy      User?           @relation("QuoteCreatedBy", fields: [createdById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_quotes__created_by") // client: keep
   productType    ProductType     @relation("QuoteProductType", fields: [productTypeId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_quotes__product_type_id")
   catalogProduct CatalogProduct? @relation("QuoteCatalogProduct", fields: [catalogProductId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_quotes__catalog_product_id")
   stockProduct   StockProduct?   @relation("QuoteStockProduct", fields: [stockProductId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_quotes__stock_product_id")
@@ -961,7 +961,7 @@ model RfqFactoryConsultation {
 
   rfq         Rfq     @relation(fields: [rfqId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_rfq_factory_consultations__rfq_id")
   factory     Factory @relation("RfqConsultationFactory", fields: [factoryId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_rfq_factory_consultations__factory_id")
-  requestedBy User    @relation("RfqConsultationRequestedBy", fields: [requestedById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_rfq_factory_consultations__requested_by")
+  requestedBy User    @relation("RfqConsultationRequestedBy", fields: [requestedById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_rfq_factory_consultations__requested_by") // client: keep
   respondedBy User?   @relation("RfqConsultationRespondedBy", fields: [respondedById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_rfq_factory_consultations__responded_by")
 
   /// One open consultation per factory and RFQ.

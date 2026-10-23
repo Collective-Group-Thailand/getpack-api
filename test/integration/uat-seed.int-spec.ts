@@ -4,22 +4,26 @@ import { UAT_FACTORY_CODE } from '../../prisma/seed/uat/uat-catalog';
 import { UAT_PRODUCTS, UAT_STOCK_PRODUCTS } from '../../prisma/seed/uat/uat-data';
 import { seedUat } from '../../prisma/seed/uat/uat-seed';
 import { PrismaClient } from '../../src/generated/prisma/client';
+import { PrismaClient as ErpPrismaClient } from '../../src/generated/prisma-erp/client';
 import { type MigratedDatabase, startMigratedDatabase, stopMigratedDatabase } from '../support/database';
 
 /** `pnpm db:seed:uat` (docs/launch/UAT-DATA.md): the rehearsal catalogue, its copied prices, idempotence. */
 describe('UAT rehearsal seed (PostgreSQL 18)', () => {
   let db: MigratedDatabase;
   let prisma: PrismaClient;
+  let erpPrisma: ErpPrismaClient;
   let first: Record<string, number>;
 
   beforeAll(async () => {
     db = await startMigratedDatabase();
     prisma = new PrismaClient({ adapter: new PrismaPg({ connectionString: db.url }) });
-    first = await seedUat(prisma, {});
+    erpPrisma = new ErpPrismaClient({ adapter: new PrismaPg({ connectionString: db.url }) });
+    first = await seedUat(prisma, erpPrisma, {});
   });
 
   afterAll(async () => {
     await prisma?.$disconnect();
+    await erpPrisma?.$disconnect();
     await stopMigratedDatabase(db);
   });
 
@@ -30,7 +34,7 @@ describe('UAT rehearsal seed (PostgreSQL 18)', () => {
       uat_people: 8,
       uat_consent_texts: 7,
     });
-    expect(await seedUat(prisma, {})).toEqual({});
+    expect(await seedUat(prisma, erpPrisma, {})).toEqual({});
     // Every consent purpose has an approved, effective placeholder text (consents can be recorded).
     const purposes = await prisma.consentPurpose.findMany({
       include: { versions: { where: { status: 'approved', effectiveFrom: { lte: new Date() } } } },

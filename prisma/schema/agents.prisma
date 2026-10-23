@@ -204,7 +204,7 @@ model SalesAgentApplication {
   idDocumentFile   FileObject               @relation("SalesAgentApplicationIdDocument", fields: [idDocumentFileId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_sales_agent_applications__id_document_file_id")
   bankBookFile     FileObject?              @relation("SalesAgentApplicationBankBook", fields: [bankBookFileId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_sales_agent_applications__bank_book_file_id")
   agreementVersion AgreementTemplateVersion @relation("SalesAgentApplicationAgreement", fields: [agreementVersionId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_sales_agent_applications__agreement_version_id")
-  decidedBy        User?                    @relation("SalesAgentApplicationDecidedBy", fields: [decidedById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_sales_agent_applications__decided_by")
+  decidedBy        User?                    @relation("SalesAgentApplicationDecidedBy", fields: [decidedById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_sales_agent_applications__decided_by") // client: keep
   agent            SalesAgent?
 
   @@index([userId], map: "ix_sales_agent_applications__user_id")
@@ -445,7 +445,7 @@ model SalesAgentStatement {
   entity        Entity                 @relation("SalesAgentStatementEntity", fields: [entityId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_sales_agent_statements__entity_id")
   agent         SalesAgent             @relation(fields: [agentId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_sales_agent_statements__agent_id")
   vendorInvoice VendorInvoice?         @relation("SalesAgentStatementVendorInvoice", fields: [vendorInvoiceId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_sales_agent_statements__vendor_invoice_id")
-  approvedBy    User?                  @relation("SalesAgentStatementApprovedBy", fields: [approvedById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_sales_agent_statements__approved_by")
+  approvedBy    User?                  @relation("SalesAgentStatementApprovedBy", fields: [approvedById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_sales_agent_statements__approved_by") // client: keep
   entries       SalesAgentCommission[]
 
   @@index([agentId, periodStart], map: "ix_sales_agent_statements__agent_id__period_start")

@@ -2,7 +2,7 @@ import { DomainException } from '@common/errors/domain.exception';
 import { assertIfMatch, etagOf } from '@common/etag/etag';
 import { type ActionRule, nextActions } from '@common/next-actions/next-actions';
 import { paginated, toSkipTake } from '@common/pagination/pagination';
-import { type Tx } from '@database/prisma.service';
+import { type ErpTx } from '@database/erp-prisma.service';
 import {
   type ErpIssuedStatus,
   type ErpSalesInvoice,
@@ -11,7 +11,7 @@ import {
   type ErpSalesNoteReason,
   type ErpVatMode,
   Prisma,
-} from '@generated/prisma/client';
+} from '@generated/prisma-erp/client';
 import { bahtText } from '@modules/receivables/thai-text';
 import { Injectable } from '@nestjs/common';
 import { ScheduledJob } from '@platform/maintenance/scheduled-job.decorator';
@@ -853,7 +853,7 @@ export class ErpReceivablesService {
   }
 
   /** Goods named on a credit note come back into stock (sign +1) — or go out again when it is voided (−1). */
-  private async returnGoods(tx: Tx, scope: ErpScope, note: ErpSalesNote, docNo: string, sign: 1 | -1) {
+  private async returnGoods(tx: ErpTx, scope: ErpScope, note: ErpSalesNote, docNo: string, sign: 1 | -1) {
     if (note.kind !== 'credit' || !note.warehouseId) return;
     const lines = await tx.erpSalesNoteLine.findMany({
       where: { noteId: note.id, returnQty: { not: null } },
@@ -880,7 +880,7 @@ export class ErpReceivablesService {
   }
 
   /** The invoice's value now (net, without VAT): its subtotal plus issued debit and less issued credit differences. */
-  private async netValue(tx: Tx, iv: ErpSalesInvoice): Promise<Prisma.Decimal> {
+  private async netValue(tx: ErpTx, iv: ErpSalesInvoice): Promise<Prisma.Decimal> {
     const notes = await tx.erpSalesNote.findMany({ where: { invoiceId: iv.id, status: 'issued' } });
     return notes.reduce(
       (a, n) => (n.kind === 'credit' ? a.minus(dec(n.difference)) : a.plus(dec(n.difference))),
@@ -1291,7 +1291,7 @@ export class ErpReceivablesService {
   // ----------------------------------------------------------------------------------- helpers
 
   /** Status from what is open: issued, partially paid, or paid (settled, by money or credit). */
-  async settle(tx: Tx, invoiceId: bigint): Promise<void> {
+  async settle(tx: ErpTx, invoiceId: bigint): Promise<void> {
     const iv = await tx.erpSalesInvoice.findUniqueOrThrow({ where: { id: invoiceId } });
     if (!LIVE.includes(iv.status)) return;
     const open = openOf(iv);
@@ -1303,7 +1303,7 @@ export class ErpReceivablesService {
     if (status !== iv.status) await tx.erpSalesInvoice.update({ where: { id: iv.id }, data: { status } });
   }
 
-  private async assertDateOrder(tx: Tx, factoryId: bigint, issueDate: string) {
+  private async assertDateOrder(tx: ErpTx, factoryId: bigint, issueDate: string) {
     const t = today();
     const last = await tx.erpSalesInvoice.findFirst({
       where: { factoryId, invoiceNo: { not: null } },
@@ -1315,7 +1315,7 @@ export class ErpReceivablesService {
       throw new DomainException('erp.invoice_date_order', { params: { last: lastDay ?? t } });
   }
 
-  private async releaseLines(tx: Tx, invoiceId: bigint) {
+  private async releaseLines(tx: ErpTx, invoiceId: bigint) {
     const lines = await tx.erpSalesInvoiceLine.findMany({ where: { invoiceId } });
     for (const l of lines) {
       if (l.deliveryNoteLineId)
@@ -1331,7 +1331,7 @@ export class ErpReceivablesService {
     }
   }
 
-  private async ordersOf(tx: Tx, invoiceId: bigint): Promise<bigint[]> {
+  private async ordersOf(tx: ErpTx, invoiceId: bigint): Promise<bigint[]> {
     const lines = await tx.erpSalesInvoiceLine.findMany({
       where: { invoiceId, salesOrderLineId: { not: null } },
       include: { salesOrderLine: true },
@@ -1339,25 +1339,25 @@ export class ErpReceivablesService {
     return [...new Set(lines.map((l) => l.salesOrderLine!.salesOrderId))];
   }
 
-  private async reopenOrder(tx: Tx, soId: bigint) {
+  private async reopenOrder(tx: ErpTx, soId: bigint) {
     const so = await tx.erpSalesOrder.findUniqueOrThrow({ where: { id: soId } });
     if (so.status === 'closed' && !so.closeReason)
       await tx.erpSalesOrder.update({ where: { id: so.id }, data: { status: 'delivered', closedAt: null } });
     await this.orders.refresh(tx, soId);
   }
 
-  private async lockInvoice(tx: Tx, scope: ErpScope, publicId: string): Promise<ErpSalesInvoice> {
+  private async lockInvoice(tx: ErpTx, scope: ErpScope, publicId: string): Promise<ErpSalesInvoice> {
     const iv = await tx.erpSalesInvoice.findFirst({ where: { publicId, factoryId: scope.factory.id } });
     if (!iv) throw new DomainException('http.not_found');
     return this.lockInvoiceById(tx, iv.id);
   }
 
-  private async lockInvoiceById(tx: Tx, id: bigint): Promise<ErpSalesInvoice> {
+  private async lockInvoiceById(tx: ErpTx, id: bigint): Promise<ErpSalesInvoice> {
     await tx.$queryRaw`SELECT id FROM erp_sales_invoices WHERE id = ${id} FOR UPDATE`;
     return tx.erpSalesInvoice.findUniqueOrThrow({ where: { id } });
   }
 
-  private async lockNote(tx: Tx, scope: ErpScope, publicId: string): Promise<ErpSalesNote> {
+  private async lockNote(tx: ErpTx, scope: ErpScope, publicId: string): Promise<ErpSalesNote> {
     const n = await tx.erpSalesNote.findFirst({ where: { publicId, factoryId: scope.factory.id } });
     if (!n) throw new DomainException('http.not_found');
     await tx.$queryRaw`SELECT id FROM erp_sales_notes WHERE id = ${n.id} FOR UPDATE`;

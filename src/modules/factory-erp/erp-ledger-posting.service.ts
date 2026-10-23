@@ -9,7 +9,7 @@ import {
 } from '@common/ledger-core/template';
 import { MoneyDecimal, type MoneyValue } from '@common/money/money';
 import { bangkokDate } from '@common/time/bangkok';
-import { type Tx } from '@database/prisma.service';
+import { type ErpTx } from '@database/erp-prisma.service';
 import {
   type ErpGlJournalEntry,
   type ErpGlPostingRule,
@@ -17,14 +17,14 @@ import {
   type ErpGlSettings,
   type Factory,
   Prisma,
-} from '@generated/prisma/client';
+} from '@generated/prisma-erp/client';
 import { Injectable, Logger } from '@nestjs/common';
 import { type DomainEventEnvelope, envelopeFromRow } from '@platform/domain-events/domain-event';
 import { OnDomainEvent } from '@platform/domain-events/on-domain-event.decorator';
 
 import { dec } from './erp.math';
+import { moForCost, orderCost } from './erp-costing';
 import { type ErpGlCatchUpDto } from './erp-e6.dto';
-import { moForCost, orderCost } from './erp-insight.service';
 import { ErpLedgerService, money } from './erp-ledger.service';
 import { POSTING_EVENT_TYPES, REVERSING_EVENTS, SYNC_EVENT_TYPES } from './erp-ledger.template';
 import { type ErpScope, ErpWorkspace } from './erp-workspace.service';
@@ -48,7 +48,7 @@ interface Movement {
 }
 
 type Payload = Record<string, unknown>;
-type Builder = (tx: Tx, ctx: Ctx, event: DomainEventEnvelope) => Promise<Payload | null>;
+type Builder = (tx: ErpTx, ctx: Ctx, event: DomainEventEnvelope) => Promise<Payload | null>;
 interface Ctx {
   factory: Factory;
   settings: ErpGlSettings;
@@ -66,8 +66,8 @@ export class ErpLedgerPostingService {
     private readonly ledger: ErpLedgerService,
   ) {}
 
-  @OnDomainEvent(POSTING_EVENT_TYPES, { consumer: 'factory_erp.ledger_posting' })
-  async onEvent(event: DomainEventEnvelope, tx: Tx): Promise<void> {
+  @OnDomainEvent(POSTING_EVENT_TYPES, { consumer: 'factory_erp.ledger_posting', client: 'erp' })
+  async onEvent(event: DomainEventEnvelope, tx: ErpTx): Promise<void> {
     if (SYNC_EVENT_TYPES.has(event.type)) return;
     await this.postEvent(tx, event);
   }
@@ -77,7 +77,7 @@ export class ErpLedgerPostingService {
    * transaction: the entry exists when the request returns, and the worker never posts it again.
    */
   async postSync(
-    tx: Tx,
+    tx: ErpTx,
     factoryPublicId: string,
     type: string,
     aggregateId: string,
@@ -100,7 +100,7 @@ export class ErpLedgerPostingService {
   }
 
   /** Posts (or reverses) for one event; returns the entries written. */
-  async postEvent(tx: Tx, event: DomainEventEnvelope): Promise<ErpGlJournalEntry[]> {
+  async postEvent(tx: ErpTx, event: DomainEventEnvelope): Promise<ErpGlJournalEntry[]> {
     const factory = await this.factoryOf(tx, event);
     if (!factory) return [];
     const settings = await tx.erpGlSettings.findUnique({ where: { factoryId: factory.id } });
@@ -212,7 +212,7 @@ export class ErpLedgerPostingService {
    * The factory an event belongs to: ERP events name it (`payload.factoryId`, D-317); a getpack payout names the
    * factory it paid; a getpack billing statement is looked up (its event carries the statement only).
    */
-  private async factoryOf(tx: Tx, event: DomainEventEnvelope): Promise<Factory | null> {
+  private async factoryOf(tx: ErpTx, event: DomainEventEnvelope): Promise<Factory | null> {
     const id = (event.payload as { factoryId?: string | null }).factoryId;
     if (id) return tx.factory.findUnique({ where: { publicId: id } });
     if (event.type === 'billing_statement.confirmed') {
@@ -276,7 +276,7 @@ export class ErpLedgerPostingService {
   }
 
   async rulesFor(
-    tx: Tx,
+    tx: ErpTx,
     factoryId: bigint,
     eventType: string,
     at: Date,
@@ -364,7 +364,11 @@ export class ErpLedgerPostingService {
 
   // ======================================================================================= payloads
 
-  private async movements(tx: Tx, ctx: Ctx, where: Prisma.ErpStockMovementWhereInput): Promise<Movement[]> {
+  private async movements(
+    tx: ErpTx,
+    ctx: Ctx,
+    where: Prisma.ErpStockMovementWhereInput,
+  ): Promise<Movement[]> {
     const rows = await tx.erpStockMovement.findMany({
       where: { factoryId: ctx.factory.id, ...where },
       include: { item: true, warehouse: true },
@@ -388,7 +392,7 @@ export class ErpLedgerPostingService {
 
   /** The bank / cash account a payment method posts to: cash, else the default bank account's sub-account, else cash. */
   private async cashAccount(
-    tx: Tx,
+    tx: ErpTx,
     ctx: Ctx,
     method: string,
   ): Promise<{ cashAccount: string; bankAccountId: string | null }> {
@@ -700,7 +704,7 @@ export class ErpLedgerPostingService {
   };
 
   private async supplierInvoice(
-    tx: Tx,
+    tx: ErpTx,
     ctx: Ctx,
     event: DomainEventEnvelope,
     on: 'recorded' | 'approved',
@@ -741,7 +745,7 @@ export class ErpLedgerPostingService {
     };
   }
 
-  private async supplierPayment(tx: Tx, ctx: Ctx, event: DomainEventEnvelope): Promise<Payload | null> {
+  private async supplierPayment(tx: ErpTx, ctx: Ctx, event: DomainEventEnvelope): Promise<Payload | null> {
     const p = await tx.erpSupplierPayment.findFirst({
       where: { factoryId: ctx.factory.id, publicId: event.aggregateId },
       include: { supplier: true },
@@ -777,7 +781,7 @@ export class ErpLedgerPostingService {
     };
   }
 
-  private async stockDocument(tx: Tx, ctx: Ctx, event: DomainEventEnvelope): Promise<Payload | null> {
+  private async stockDocument(tx: ErpTx, ctx: Ctx, event: DomainEventEnvelope): Promise<Payload | null> {
     const movements = await this.movements(tx, ctx, { sourcePublicId: event.aggregateId });
     if (movements.length === 0) return null;
     const first = await tx.erpStockMovement.findFirst({
@@ -794,7 +798,7 @@ export class ErpLedgerPostingService {
   }
 
   private async productionMovements(
-    tx: Tx,
+    tx: ErpTx,
     ctx: Ctx,
     event: DomainEventEnvelope,
     kind: 'production_issue' | 'production_return',
@@ -821,7 +825,7 @@ export class ErpLedgerPostingService {
     };
   }
 
-  private async customerReceipt(tx: Tx, ctx: Ctx, event: DomainEventEnvelope): Promise<Payload | null> {
+  private async customerReceipt(tx: ErpTx, ctx: Ctx, event: DomainEventEnvelope): Promise<Payload | null> {
     const r = await tx.erpCustomerReceipt.findFirst({
       where: { factoryId: ctx.factory.id, publicId: event.aggregateId },
       include: { customer: true },
@@ -840,7 +844,7 @@ export class ErpLedgerPostingService {
     };
   }
 
-  private async salesNote(tx: Tx, ctx: Ctx, event: DomainEventEnvelope): Promise<Payload | null> {
+  private async salesNote(tx: ErpTx, ctx: Ctx, event: DomainEventEnvelope): Promise<Payload | null> {
     const n = await tx.erpSalesNote.findFirst({
       where: { factoryId: ctx.factory.id, publicId: event.aggregateId },
       include: { customer: true },
