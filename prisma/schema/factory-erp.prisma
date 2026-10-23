@@ -286,6 +286,7 @@ model ErpWarehouse {
   erpGlJournalLineWarehouse ErpGlJournalLine[] @relation("ErpGlJournalLineWarehouse")
 
   @@unique([factoryId, code], map: "ux_erp_warehouses__factory_id__code")
+  @@unique([factoryId], map: "ux_erp_warehouses__factory_id__default", where: raw("is_default"))
   @@index([createdById], map: "ix_erp_warehouses__created_by")
   @@index([updatedById], map: "ix_erp_warehouses__updated_by")
   @@map("erp_warehouses")
@@ -692,6 +693,7 @@ model ErpItemSupplier {
   priceBreaks      ErpPriceBreak[]
 
   @@unique([itemId, supplierId], map: "ux_erp_item_suppliers__item_id__supplier_id")
+  @@unique([itemId], map: "ux_erp_item_suppliers__item_id__preferred", where: raw("preferred"))
   @@index([factoryId], map: "ix_erp_item_suppliers__factory_id")
   @@index([supplierId], map: "ix_erp_item_suppliers__supplier_id")
   @@index([createdById], map: "ix_erp_item_suppliers__created_by")
