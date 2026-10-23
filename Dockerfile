@@ -12,6 +12,7 @@ WORKDIR /app
 # --- build: full install, Prisma client generation, compile --------------------------------------
 FROM base AS build
 COPY package.json pnpm-lock.yaml ./
+COPY patches ./patches
 COPY prisma ./prisma
 COPY prisma.config.ts ./
 RUN --mount=type=cache,id=pnpm,target=/pnpm/store pnpm install --frozen-lockfile
@@ -22,6 +23,8 @@ RUN NODE_OPTIONS=--max-old-space-size=6144 pnpm build
 # --- prod-deps: runtime dependencies only (no scripts: the Prisma client is already compiled) ----
 FROM base AS prod-deps
 COPY package.json pnpm-lock.yaml ./
+# pnpm.patchedDependencies must resolve even with --ignore-scripts, or install exits 254 (ENOENT)
+COPY patches ./patches
 RUN --mount=type=cache,id=pnpm,target=/pnpm/store pnpm install --frozen-lockfile --prod --ignore-scripts
 
 # --- prisma-cli: `prisma migrate deploy` for the one-shot migrate container -----------------------

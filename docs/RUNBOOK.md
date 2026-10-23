@@ -143,6 +143,7 @@ value stops the process before it serves anything.
 | `INTEGRATIONS_MODE` | `real` | `fake` keeps every provider in memory (development, tests, the UAT rehearsal) |
 | `OBJECT_STORAGE_MODE` | unset | `fake` / `real` overrides `INTEGRATIONS_MODE` for object storage only (development against a real bucket with fake SMS, LINE, payments and PDF); unset follows `INTEGRATIONS_MODE` |
 | `AWS_REGION` | the deployment region (default `ap-southeast-1`) | |
+| `SES_REGION` | `ap-southeast-1` when `AWS_REGION` has no SES (e.g. `ap-southeast-7`, Thailand) | Region for Amazon SES only; unset uses `AWS_REGION` |
 | `AWS_ENDPOINT_URL` | unset | LocalStack in development only |
 | `S3_BUCKET` | the private files bucket | |
 | `S3_KEY_PREFIX` | unset | A folder inside a bucket shared with other apps, path segments ending in `/` (e.g. `getpack/`); every object key starts with it. Unset writes at the bucket root |

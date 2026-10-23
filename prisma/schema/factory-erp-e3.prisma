@@ -470,6 +470,7 @@ model ErpMaintenanceOrder {
   parts      ErpMaintenancePart[]
 
   @@unique([factoryId, mtNo], map: "ux_erp_maintenance_orders__factory_id__mt_no")
+  @@unique([planId], map: "ux_erp_maintenance_orders__plan_id__open", where: raw("((plan_id IS NOT NULL) AND (status = ANY (ARRAY['open'::erp_maintenance_status, 'scheduled'::erp_maintenance_status, 'in_progress'::erp_maintenance_status])))"))
   @@index([factoryId, status, reportedAt(sort: Desc)], map: "ix_erp_maintenance_orders__factory_id__status__reported_at")
   @@index([machineId, status], map: "ix_erp_maintenance_orders__machine_id__status")
   @@index([planId], map: "ix_erp_maintenance_orders__plan_id")

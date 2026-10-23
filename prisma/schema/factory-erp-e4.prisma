@@ -359,6 +359,7 @@ model ErpQuotation {
   salesOrders   ErpSalesOrder[]    @relation("ErpSalesOrderQuotation")
 
   @@unique([factoryId, quoteNo, revision], map: "ux_erp_quotations__factory_id__quote_no__revision")
+  @@unique([linkTokenHash], map: "ux_erp_quotations__link_token_hash", where: raw("(link_token_hash IS NOT NULL)"))
   @@index([factoryId, status, quoteDate(sort: Desc)], map: "ix_erp_quotations__factory_id__status__quote_date")
   @@index([customerId], map: "ix_erp_quotations__customer_id")
   @@index([opportunityId], map: "ix_erp_quotations__opportunity_id")
@@ -869,6 +870,7 @@ model ErpWhtCertificate {
   lines     ErpWhtCertificateLine[] @relation("ErpWhtCertificateLines")
 
   @@unique([factoryId, certNo], map: "ux_erp_wht_certificates__factory_id__cert_no")
+  @@unique([paymentId], map: "ux_erp_wht_certificates__payment_id__issued", where: raw("(status = 'issued'::erp_issued_status)"))
   @@index([factoryId, paidOn(sort: Desc)], map: "ix_erp_wht_certificates__factory_id__paid_on")
   @@index([paymentId], map: "ix_erp_wht_certificates__payment_id")
   @@index([supplierId], map: "ix_erp_wht_certificates__supplier_id")
