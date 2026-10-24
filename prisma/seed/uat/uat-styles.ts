@@ -185,7 +185,8 @@ export async function publishUatStyles(
   if (skipped.size > 0) log.push(`not in the process taxonomy (D-244): ${[...skipped].sort().join(' ')}`);
 
   // 5 — publishability recomputed for every base (the master's bases without a recipe stay hidden).
-  const result = await prisma.withTx((tx) => app.get(StylePublishingService).recompute(tx));
+  // Same budget as the nightly job (styles.jobs.ts): every base and variant, well over Prisma's 5 s default on a small box.
+  const result = await prisma.withTx((tx) => app.get(StylePublishingService).recompute(tx), { timeout: 120_000 });
   const instant = await prisma.styleVariant.count({ where: { publishable: true, pricePath: 'instant' } });
   log.push(`publishability: ${result.publishable} of ${result.variants} variants shown, ${instant} instant`);
   return { bases: result.bases, variants: result.variants, publishable: result.publishable, instant, log };
