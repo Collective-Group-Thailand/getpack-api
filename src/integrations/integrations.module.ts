@@ -131,6 +131,7 @@ import { WEBHOOK_SENDER } from './webhooks-out/webhook-sender.port';
               apiKey: config.get('THAIBULKSMS_API_KEY'),
               apiSecret: config.get('THAIBULKSMS_API_SECRET'),
               sender: config.get('THAIBULKSMS_SENDER'),
+              creditType: config.get('THAIBULKSMS_FORCE'),
             }),
     },
     {
