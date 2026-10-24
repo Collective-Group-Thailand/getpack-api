@@ -42,7 +42,10 @@ export class ClamdScanner implements VirusScanner {
     return (await this.command('zPING\0')) === 'PONG';
   }
 
-  private command(command: string, body?: Iterable<Buffer> | AsyncIterable<Buffer | Uint8Array>): Promise<string> {
+  private command(
+    command: string,
+    body?: Iterable<Buffer> | AsyncIterable<Buffer | Uint8Array>,
+  ): Promise<string> {
     const { host, port, maxBytes, timeoutMs } = this.options;
     return new Promise((resolve, reject) => {
       const socket = connect({ host, port });
