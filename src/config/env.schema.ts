@@ -116,6 +116,29 @@ export class EnvironmentVariables {
   @IsString()
   S3_BUCKET!: string;
 
+  // --- Malware scanning (D-005 media). Real mode without CLAMAV_HOST keeps every upload `pending`.
+
+  /** clamd host (the platform's `clamav` container). */
+  @IsOptional()
+  @IsString()
+  CLAMAV_HOST?: string;
+
+  @Transform(toNumber)
+  @IsInt()
+  @Min(1)
+  CLAMAV_PORT = 3310;
+
+  /** Bytes of each object sent to clamd; must stay below clamd's StreamMaxLength (platform clamd.conf). */
+  @Transform(toNumber)
+  @IsInt()
+  @Min(1)
+  CLAMAV_MAX_BYTES = 512 * 1024 * 1024;
+
+  @Transform(toNumber)
+  @IsInt()
+  @Min(1000)
+  CLAMAV_TIMEOUT_MS = 120_000;
+
   @Transform(toBoolean)
   @IsBoolean()
   S3_FORCE_PATH_STYLE = false;

@@ -41,6 +41,7 @@ import { ThaiBulkSmsSender } from './sms/thaibulksms-sender';
 import { FakeTeamsWebhook } from './teams/fake-teams';
 import { TEAMS_WEBHOOK } from './teams/teams.port';
 import { TeamsWebhookClient } from './teams/teams-webhook';
+import { ClamdScanner } from './virus-scan/clamd-scanner';
 import { ExternalScanPending } from './virus-scan/external-scan-pending';
 import { FakeVirusScanner } from './virus-scan/fake-virus-scanner';
 import { VIRUS_SCANNER } from './virus-scan/virus-scanner.port';
@@ -234,10 +235,23 @@ import { WEBHOOK_SENDER } from './webhooks-out/webhook-sender.port';
         config.useFakes ? new FakeDielineEngine() : new GetpackDielineEngine(),
     },
     {
+      // Real mode: ClamAV (clamd) when CLAMAV_HOST is set; otherwise files stay `pending` (never served unscanned).
       provide: VIRUS_SCANNER,
-      inject: [AppConfig],
-      useFactory: (config: AppConfig) =>
-        config.useFakes ? new FakeVirusScanner() : new ExternalScanPending(),
+      inject: [AppConfig, OBJECT_STORAGE],
+      useFactory: (config: AppConfig, storage: ObjectStorage) => {
+        if (config.useFakes) return new FakeVirusScanner();
+        const host = config.get('CLAMAV_HOST');
+        if (!host) return new ExternalScanPending();
+        return new ClamdScanner(
+          {
+            host,
+            port: config.get('CLAMAV_PORT'),
+            maxBytes: config.get('CLAMAV_MAX_BYTES'),
+            timeoutMs: config.get('CLAMAV_TIMEOUT_MS'),
+          },
+          storage,
+        );
+      },
     },
   ],
   exports: [

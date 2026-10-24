@@ -11,6 +11,8 @@ src/generated
 *.log
 .DS_Store
 docs
+# style master for `uat-style-fixture.js` (run on the UAT box)
+!docs/design-tool/style-library-master.json
 legacy
 test
 contract

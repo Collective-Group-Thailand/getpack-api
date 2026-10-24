@@ -62,6 +62,10 @@ COPY --from=build --chown=node:node /app/prisma ./prisma
 # ADR-0010: the pinned @getpack/dieline bundle the drawing service loads at run time.
 COPY --from=build --chown=node:node /app/vendor ./vendor
 COPY --from=prisma-cli /opt/prisma-cli /opt/prisma-cli
+# Seed assets for the one-shot scripts run on a box (dist/scripts/*): catalogue / style / home photos and the
+# style master. ~15 MB; the API itself never reads them.
+COPY --from=build --chown=node:node /app/public ./public
+COPY --from=build --chown=node:node /app/docs/design-tool/style-library-master.json ./docs/design-tool/style-library-master.json
 USER node
 EXPOSE 3000
 ENTRYPOINT ["/usr/bin/tini", "--"]

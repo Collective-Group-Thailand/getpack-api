@@ -1,7 +1,8 @@
 /**
  * `pnpm uat:styles [--confirm]` — **UAT only**: imports the style master and the engine recipes, passes the people
  * gates with the UAT fixture accounts and publishes the library (`prisma/seed/uat/uat-styles.ts`, D-407). `uat:populate`
- * runs the same step. Refuses a database whose name does not contain `uat`, and writes nothing without `--confirm`.
+ * runs the same step. Refuses a database whose name does not contain `uat` (unless `UAT_TARGET_CONFIRM=uat-only` on the
+ * hosted UAT stack), and writes nothing without `--confirm`.
  */
 import { NestFactory } from '@nestjs/core';
 import { config } from 'dotenv';

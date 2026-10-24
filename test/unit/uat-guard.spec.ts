@@ -11,4 +11,11 @@ describe('UAT-only scripts (pnpm uat:styles)', () => {
     expect(isUatDatabase(undefined, 'development')).toBe(false);
     expect(isUatDatabase('not a url', 'development')).toBe(false);
   });
+
+  it('on the hosted UAT stack only with the explicit UAT_TARGET_CONFIRM opt-in', () => {
+    const url = 'postgresql://u:p@postgres:5432/getpack';
+    expect(isUatDatabase(url, 'production', undefined)).toBe(false);
+    expect(isUatDatabase(url, 'production', 'yes')).toBe(false);
+    expect(isUatDatabase(url, 'production', 'uat-only')).toBe(true);
+  });
 });
