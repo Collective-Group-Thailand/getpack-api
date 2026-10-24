@@ -1,10 +1,15 @@
 import { ProviderUnavailableError, ResilientHttp } from '../http/resilient-http';
 import { type SmsMessage, type SmsSender } from './sms-sender.port';
 
+export const THAIBULKSMS_CREDIT_TYPES = ['standard', 'corporate'] as const;
+export type ThaiBulkSmsCreditType = (typeof THAIBULKSMS_CREDIT_TYPES)[number];
+
 export interface ThaiBulkSmsConfig {
   apiKey?: string;
   apiSecret?: string;
   sender?: string;
+  /** Credit type (`force`). An approved sender belongs to one type; omitted, the provider chooses. */
+  creditType?: ThaiBulkSmsCreditType;
 }
 
 /**
@@ -12,14 +17,20 @@ export interface ThaiBulkSmsConfig {
  * local Thai numbers (`0812345678`). Not retried: a retry could send the message twice.
  */
 export class ThaiBulkSmsSender implements SmsSender {
-  private readonly http = new ResilientHttp('thaibulksms');
+  private readonly http: ResilientHttp;
 
-  constructor(private readonly config: ThaiBulkSmsConfig) {}
+  constructor(
+    private readonly config: ThaiBulkSmsConfig,
+    fetchImpl: typeof fetch = fetch,
+  ) {
+    this.http = new ResilientHttp('thaibulksms', fetchImpl);
+  }
 
   async send(message: SmsMessage): Promise<{ providerMessageId: string }> {
-    const { apiKey, apiSecret, sender } = this.config;
+    const { apiKey, apiSecret, sender, creditType } = this.config;
     if (!apiKey || !apiSecret || !sender) throw new ProviderUnavailableError('thaibulksms', 'not configured');
     const body = new URLSearchParams({ msisdn: toLocalThai(message.to), message: message.text, sender });
+    if (creditType) body.set('force', creditType);
     const { status, body: result } = await this.http.call('https://api-v2.thaibulksms.com/sms', {
       method: 'POST',
       headers: {

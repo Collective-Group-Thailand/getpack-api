@@ -1,4 +1,5 @@
 import { parseCidrList } from '@common/http/cidr';
+import { THAIBULKSMS_CREDIT_TYPES, type ThaiBulkSmsCreditType } from '@integrations/sms/thaibulksms-sender';
 import { Transform } from 'class-transformer';
 import {
   IsBoolean,
@@ -384,6 +385,11 @@ export class EnvironmentVariables {
   @IsOptional()
   @IsString()
   THAIBULKSMS_SENDER?: string;
+
+  /** Credit type the sender is approved for (`force`); unset lets the provider choose. */
+  @IsOptional()
+  @IsIn(THAIBULKSMS_CREDIT_TYPES)
+  THAIBULKSMS_FORCE?: ThaiBulkSmsCreditType;
 
   /**
    * HMAC key (≥ 32 characters) for lookup hashes of sensitive numbers, e.g. vendor bank accounts for
