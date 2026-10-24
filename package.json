@@ -46,6 +46,7 @@
     "dieline:vendor": "bash scripts/dieline-vendor.sh",
     "styles:recipes-from-engine": "pnpm build:fast && node dist/scripts/styles-recipes-from-engine.js",
     "uat:styles": "pnpm build:fast && node dist/scripts/uat-style-fixture.js",
+    "superadmin:create": "pnpm build:fast && node dist/scripts/create-superadmin.js",
     "dev:tsc": "NODE_OPTIONS=--max-old-space-size=8192 nest start --watch"
   },
   "dependencies": {
