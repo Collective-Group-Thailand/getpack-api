@@ -6,7 +6,9 @@ import { PrismaService, type Tx } from '@database/prisma.service';
 import {
   type AssignmentReason,
   type JobKind,
+  type JobMilestone,
   Prisma,
+  type ProductionJob,
   type ProductionStartMode,
 } from '@generated/prisma/client';
 import { mainJobKind } from '@modules/orders/main-job';
@@ -561,6 +563,41 @@ export class ProductionService {
     return null;
   }
 
+  /** A customer-visible step reached: the order's timeline and notifications (label only, no factory, D-050). */
+  async customerMilestone(tx: Tx, job: ProductionJob, milestone: JobMilestone, actor: Actor) {
+    const order = await tx.order.findUniqueOrThrow({
+      where: { id: job.orderId },
+      include: { customer: { select: { publicId: true } } },
+    });
+    const step = (job.routeSnapshot as unknown as RouteSnapshot).steps.find((s) => s.seq === milestone.seq);
+    const data = {
+      milestoneId: milestone.publicId,
+      stepKey: milestone.stepKey,
+      labelTh: step?.customerLabelTh ?? null,
+      labelEn: step?.customerLabelEn ?? null,
+    };
+    const event = await this.events.record(
+      tx,
+      {
+        type: 'production.milestone_reached',
+        aggregateType: 'order',
+        aggregateId: order.publicId,
+        payload: { orderId: order.publicId, customerId: order.customer.publicId, ...data },
+      },
+      actor,
+    );
+    await this.activity.record(tx, {
+      aggregateType: 'order',
+      aggregatePublicId: order.publicId,
+      action: 'production.milestone_reached',
+      messageKey: 'activity.production.milestone_reached',
+      messageParams: data,
+      visibility: ['internal', 'customer'],
+      domainEventId: event.id,
+      actor,
+    });
+  }
+
   // --- acceptance (D-074) -------------------------------------------------------------------------------
 
   async accept(actor: Actor, jobId: bigint) {
@@ -597,20 +634,39 @@ export class ProductionService {
           },
         });
       }
-      // Accepting *is* receiving the job: the route's "รับงาน" step closes with it, so the factory is
-      // not asked to start and then finish a step that has no work in it (partner UX, 2026-10-09).
-      await tx.jobMilestone.updateMany({
-        where: { jobId: job.id, stepKey: 'job_received', status: { in: ['pending', 'in_progress'] } },
-        data: {
-          status: 'completed',
-          startedAt: at,
-          completedAt: at,
-          onTime: at <= job.acceptDueAt,
-          reportedById: actor.type === 'user' ? actor.userId : null,
-          rowVersion: { increment: 1 },
-        },
-      });
       await this.record(tx, job.id, 'production_job.accepted', { onTime: at <= job.acceptDueAt }, actor);
+      // Accepting *is* receiving the job: the route's "รับงาน" step closes with it, so the factory is
+      // not asked to start and then finish a step that has no work in it (partner UX, 2026-10-09). It is
+      // recorded as a completed step would be: its event, and for the customer the step reached on the order.
+      const received = await tx.jobMilestone.findFirst({
+        where: { jobId: job.id, stepKey: 'job_received', status: { in: ['pending', 'in_progress'] } },
+      });
+      if (received) {
+        const milestone = await tx.jobMilestone.update({
+          where: { id: received.id },
+          data: {
+            status: 'completed',
+            startedAt: received.startedAt ?? at,
+            completedAt: at,
+            onTime: at <= job.acceptDueAt,
+            reportedById: actor.type === 'user' ? actor.userId : null,
+            rowVersion: { increment: 1 },
+          },
+        });
+        await this.record(
+          tx,
+          job.id,
+          'production_job.milestone_completed',
+          {
+            milestoneId: milestone.publicId,
+            stepKey: milestone.stepKey,
+            onTime: milestone.onTime,
+            photos: 0,
+          },
+          actor,
+        );
+        if (milestone.customerVisible) await this.customerMilestone(tx, job, milestone, actor);
+      }
       return tx.productionJob.findUniqueOrThrow({ where: { id: job.id } });
     });
   }

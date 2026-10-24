@@ -171,8 +171,9 @@ describe('production milestones and the partner surface (e2e, B4.2)', () => {
       where: { type: 'production.milestone_reached', aggregateId: orderId },
       orderBy: { occurredAt: 'asc' },
     });
-    // job_received closed with acceptance (ca63113), which records no milestone_reached of its own.
+    // job_received was reached at acceptance, recorded as a completed step is.
     expect(reached.map((e) => e.payload)).toEqual([
+      expect.objectContaining({ stepKey: 'job_received', labelTh: 'โรงงานรับงานแล้ว' }),
       expect.objectContaining({ stepKey: 'printing', labelTh: 'กำลังพิมพ์' }),
     ]);
 

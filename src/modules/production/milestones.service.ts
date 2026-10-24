@@ -3,11 +3,9 @@ import { DomainException } from '@common/errors/domain.exception';
 import { PrismaService, type Tx } from '@database/prisma.service';
 import { type JobMilestone, type Prisma, type ProductionJob, type QcResult } from '@generated/prisma/client';
 import { Injectable } from '@nestjs/common';
-import { ActivityLogService } from '@platform/activity/activity-log.service';
-import { DomainEvents } from '@platform/domain-events/domain-events.service';
 
 import { JobsQueryService } from './jobs-query.service';
-import { ProductionService, type RouteSnapshot } from './production.service';
+import { ProductionService } from './production.service';
 
 const WORKING: readonly string[] = ['accepted', 'in_progress'];
 
@@ -57,8 +55,6 @@ export class MilestonesService {
     private readonly prisma: PrismaService,
     private readonly jobs: JobsQueryService,
     private readonly production: ProductionService,
-    private readonly events: DomainEvents,
-    private readonly activity: ActivityLogService,
   ) {}
 
   async update(
@@ -158,7 +154,7 @@ export class MilestonesService {
         actor,
       );
       if (input.action === 'complete' && milestone.customerVisible)
-        await this.customerMilestone(tx, job, milestone, actor);
+        await this.production.customerMilestone(tx, job, milestone, actor);
       await this.completeIfDone(tx, job.id, actor);
       return { applied: true, reason: null };
     });
@@ -241,41 +237,6 @@ export class MilestonesService {
       { quantityGood: job.quantityGood, quantityScrap: job.quantityScrap },
       actor,
     );
-  }
-
-  /** A customer-visible step reached: the order's timeline and notifications (label only, no factory, D-050). */
-  private async customerMilestone(tx: Tx, job: ProductionJob, milestone: JobMilestone, actor: Actor) {
-    const order = await tx.order.findUniqueOrThrow({
-      where: { id: job.orderId },
-      include: { customer: { select: { publicId: true } } },
-    });
-    const step = (job.routeSnapshot as unknown as RouteSnapshot).steps.find((s) => s.seq === milestone.seq);
-    const data = {
-      milestoneId: milestone.publicId,
-      stepKey: milestone.stepKey,
-      labelTh: step?.customerLabelTh ?? null,
-      labelEn: step?.customerLabelEn ?? null,
-    };
-    const event = await this.events.record(
-      tx,
-      {
-        type: 'production.milestone_reached',
-        aggregateType: 'order',
-        aggregateId: order.publicId,
-        payload: { orderId: order.publicId, customerId: order.customer.publicId, ...data },
-      },
-      actor,
-    );
-    await this.activity.record(tx, {
-      aggregateType: 'order',
-      aggregatePublicId: order.publicId,
-      action: 'production.milestone_reached',
-      messageKey: 'activity.production.milestone_reached',
-      messageParams: data,
-      visibility: ['internal', 'customer'],
-      domainEventId: event.id,
-      actor,
-    });
   }
 
   // --- QC (D-076) ------------------------------------------------------------------------------------
