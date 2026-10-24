@@ -29,7 +29,7 @@ export class ClamdScanner implements VirusScanner {
   ) {}
 
   async scan(input: { key: string; sample: Buffer; sizeBytes: number }): Promise<ScanVerdict> {
-    const source: AsyncIterable<Buffer | Uint8Array> =
+    const source: Iterable<Buffer> | AsyncIterable<Buffer | Uint8Array> =
       input.sizeBytes <= input.sample.length ? [input.sample] : await this.storage.getStream(input.key);
     const reply = await this.command('zINSTREAM\0', source);
     if (/: OK$/.test(reply)) return 'clean';
@@ -42,7 +42,7 @@ export class ClamdScanner implements VirusScanner {
     return (await this.command('zPING\0')) === 'PONG';
   }
 
-  private command(command: string, body?: AsyncIterable<Buffer | Uint8Array>): Promise<string> {
+  private command(command: string, body?: Iterable<Buffer> | AsyncIterable<Buffer | Uint8Array>): Promise<string> {
     const { host, port, maxBytes, timeoutMs } = this.options;
     return new Promise((resolve, reject) => {
       const socket = connect({ host, port });
