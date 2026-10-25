@@ -3,6 +3,23 @@
 Contract-facing changes per release. The contract itself is `contract/openapi.json`; mappings for `getpack-web` are in
 `docs/contract-requests-triage.md`.
 
+## v0.76.0 — Shared packages, storage-based pricing, shared article rules
+
+Additive (D-435 – D-437).
+
+- **Storage** (D-436): `partner.storage.get` — a factory's files and ERP records against its free allowance (5 GB per
+  account type), with the price per GB-month and packs; `admin.storage.listAccounts` (latest daily snapshot of each
+  account, largest first), `admin.storage.getAccount`, `admin.storage.monthlyCharge` (the storage line of a month's
+  platform invoice). Settings `storage.free_gb`, `storage.price_per_gb_month`, `storage.packs`,
+  `storage.record_bytes`, `storage.notice_at_percent` (Superadmin, through `admin.settings.changeValue`). The
+  `*.files.presign` operations may answer `422 storage.allowance_exceeded` for an optional upload (`image`,
+  `avatar`, `design_asset`) of a factory over its allowance while overage is not sold; documents and job files are
+  always accepted. Notification event `storage.threshold_crossed` (inbox link `/storage` in the partner zone).
+- **Articles** (D-437): publishing a public article (`admin.cmsArticles.create` / `.update` with `status:
+  published`) answers `422 validation.failed` with `errors[].path` such as `th.summary` unless each language has a
+  title of at most 120 characters, an excerpt of 1–200 characters and at least one block of text.
+- **Integrations** (D-435): provider adapters come from `@collective/integrations`; no contract change.
+
 ## v0.75.0 — Document branding, e-Tax by Email, tax-invoice corrections, factory invoices from the ERP
 
 Additive (D-428 – D-433).
