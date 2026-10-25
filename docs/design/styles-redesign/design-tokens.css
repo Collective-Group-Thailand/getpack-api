@@ -1,0 +1,24 @@
+/* getpack storefront tokens — extracted from styles-redesign-prototype.html
+   Map these into the existing Tailwind theme / CSS variables; do not duplicate if equivalents exist. */
+:root{
+  --bg:#F6F5F1; --surface:#FFFFFF; --surface-2:#EFEEE9; --stage:#EDECE6;
+  --fg:#16201B; --fg-2:#4A554F; --fg-3:#7B847F; --line:#E3E1DA; --line-2:#CFCDC5;
+  --brand:#17573F; --brand-hover:#0E4430; --brand-tint:#E2EDE7; --on-brand:#FFFFFF;
+  --instant:#8F530E; --instant-tint:#F6EAD9;
+  --shadow:0 1px 2px rgba(22,32,27,.06),0 8px 24px -12px rgba(22,32,27,.18);
+  --f-display:"Anuphan","IBM Plex Sans Thai",ui-sans-serif,system-ui,sans-serif;
+  --f-body:"IBM Plex Sans Thai","Anuphan",ui-sans-serif,system-ui,sans-serif;
+  --f-mono:"IBM Plex Mono",ui-monospace,SFMono-Regular,Menlo,monospace;
+  --r-sm:8px; --r-md:12px; --r-lg:16px;
+  --gutter:max(16px,env(safe-area-inset-left,0px));
+}
+
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){
+  --bg:#0F1412; --surface:#161C19; --surface-2:#1D2521; --stage:#212925;
+  --fg:#ECEFEC; --fg-2:#B5BEB8; --fg-3:#89938D; --line:#29322D; --line-2:#3A453F;
+  --brand:#56BC91; --brand-hover:#71CCA4; --brand-tint:#17322A; --on-brand:#06120C;
+  --instant:#E7AA60; --instant-tint:#33271A;
+  --shadow:0 1px 2px rgba(0,0,0,.3),0 10px 28px -12px rgba(0,0,0,.6); color-scheme:dark}}
+
+/* Fonts (Google Fonts): Anuphan 500/600/700 (display), IBM Plex Sans Thai 400/500/600 (body), IBM Plex Mono 500 (style codes) */

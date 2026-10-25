@@ -1,0 +1,890 @@
+<!doctype html>
+<html lang="th">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<style>body{margin:0}[hidden]{display:none!important}img{max-width:100%}</style>
+<title>getpack Postal Box</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Anuphan:wght@500;600;700&family=IBM+Plex+Sans+Thai:wght@400;500;600&family=IBM+Plex+Mono:wght@500&display=swap">
+</head>
+<body>
+<style>
+
+
+/* Layout: catalog workbench — compact head, icon category rail, sticky facet column + dense product grid, floating compare tray */
+:root{
+  --bg:#F6F5F1; --surface:#FFFFFF; --surface-2:#EFEEE9; --stage:#EDECE6;
+  --fg:#16201B; --fg-2:#4A554F; --fg-3:#7B847F; --line:#E3E1DA; --line-2:#CFCDC5;
+  --brand:#17573F; --brand-hover:#0E4430; --brand-tint:#E2EDE7; --on-brand:#FFFFFF;
+  --instant:#8F530E; --instant-tint:#F6EAD9;
+  --shadow:0 1px 2px rgba(22,32,27,.06),0 8px 24px -12px rgba(22,32,27,.18);
+  --f-display:"Anuphan","IBM Plex Sans Thai",ui-sans-serif,system-ui,sans-serif;
+  --f-body:"IBM Plex Sans Thai","Anuphan",ui-sans-serif,system-ui,sans-serif;
+  --f-mono:"IBM Plex Mono",ui-monospace,SFMono-Regular,Menlo,monospace;
+  --r-sm:8px; --r-md:12px; --r-lg:16px;
+  --gutter:max(16px,env(safe-area-inset-left,0px));
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --bg:#0F1412; --surface:#161C19; --surface-2:#1D2521; --stage:#212925;
+  --fg:#ECEFEC; --fg-2:#B5BEB8; --fg-3:#89938D; --line:#29322D; --line-2:#3A453F;
+  --brand:#56BC91; --brand-hover:#71CCA4; --brand-tint:#17322A; --on-brand:#06120C;
+  --instant:#E7AA60; --instant-tint:#33271A;
+  --shadow:0 1px 2px rgba(0,0,0,.3),0 10px 28px -12px rgba(0,0,0,.6); color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#0F1412; --surface:#161C19; --surface-2:#1D2521; --stage:#212925;
+  --fg:#ECEFEC; --fg-2:#B5BEB8; --fg-3:#89938D; --line:#29322D; --line-2:#3A453F;
+  --brand:#56BC91; --brand-hover:#71CCA4; --brand-tint:#17322A; --on-brand:#06120C;
+  --instant:#E7AA60; --instant-tint:#33271A;
+  --shadow:0 1px 2px rgba(0,0,0,.3),0 10px 28px -12px rgba(0,0,0,.6); color-scheme:dark}
+
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--fg);font:15px/1.6 var(--f-body);-webkit-font-smoothing:antialiased}
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:60;background:var(--surface)}
+button,input,select{font:inherit;color:inherit}
+button{cursor:pointer}
+:focus-visible{outline:2px solid var(--brand);outline-offset:2px;border-radius:6px}
+.wrap{max-width:1360px;margin:0 auto;padding-left:var(--gutter);padding-right:max(16px,env(safe-area-inset-right,0px))}
+.ico{width:20px;height:20px;flex:none;stroke:currentColor;fill:none;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}
+.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)}
+
+/* prototype ribbon */
+.proto{background:var(--fg);color:var(--bg);font-size:13px}
+.proto .wrap{display:flex;align-items:center;gap:12px;min-height:36px;padding-block:4px}
+.proto b{font-weight:600;white-space:nowrap}
+.proto button{margin-left:auto;background:none;border:1px solid color-mix(in srgb,var(--bg) 35%,transparent);border-radius:99px;padding:2px 12px;color:var(--bg);font-size:13px;white-space:nowrap}
+.proto span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+
+/* header */
+.hdr{position:sticky;top:env(safe-area-inset-top,0px);z-index:50;background:color-mix(in srgb,var(--surface) 92%,transparent);backdrop-filter:saturate(1.4) blur(12px);border-bottom:1px solid var(--line)}
+.hdr .wrap{display:flex;align-items:center;gap:28px;height:64px}
+.logo{font:700 26px/1 var(--f-display);letter-spacing:-.03em;color:var(--fg);text-decoration:none;display:flex;align-items:center;gap:2px;flex:none}
+.logo i{display:inline-block;width:9px;height:9px;border-radius:2px;background:var(--brand);transform:translateY(-9px) rotate(45deg)}
+.nav{display:flex;gap:4px;min-width:0}
+.nav a{padding:8px 12px;border-radius:8px;color:var(--fg-2);text-decoration:none;font-weight:500;font-size:14.5px;white-space:nowrap}
+.nav a:hover{background:var(--surface-2);color:var(--fg)}
+.nav a[aria-current]{color:var(--fg);background:var(--surface-2)}
+.hright{margin-left:auto;display:flex;align-items:center;gap:6px;flex:none}
+.ibtn{position:relative;width:40px;height:40px;display:grid;place-items:center;border-radius:10px;border:0;background:none;color:var(--fg-2)}
+.ibtn:hover{background:var(--surface-2);color:var(--fg)}
+.ibtn .dot{position:absolute;top:6px;right:5px;min-width:17px;height:17px;padding:0 4px;border-radius:9px;background:var(--brand);color:var(--on-brand);font:600 10.5px/17px var(--f-body);text-align:center}
+.lang{height:40px;padding:0 10px;border:0;background:none;border-radius:10px;color:var(--fg-2);font-weight:600;font-size:13px;display:flex;align-items:center;gap:6px}
+.lang:hover{background:var(--surface-2)}
+.avatar{width:34px;height:34px;border-radius:50%;background:var(--brand-tint);color:var(--brand);font:600 13px/34px var(--f-body);text-align:center;border:0;margin:0 6px}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;height:42px;padding:0 18px;border-radius:10px;border:1px solid transparent;font-weight:600;font-size:14.5px;white-space:nowrap;text-decoration:none}
+.btn-primary{background:var(--brand);color:var(--on-brand)}
+.btn-primary:hover{background:var(--brand-hover)}
+.btn-ghost{background:var(--surface);border-color:var(--line-2);color:var(--fg)}
+.btn-ghost:hover{border-color:var(--fg-3)}
+.menu-btn{display:none}
+
+
+/* ---------- products & pricing ---------- */
+.head{padding-block:32px 0}
+.crumbs{display:flex;gap:8px;font-size:13px;color:var(--fg-3);margin-bottom:12px}
+.crumbs a{color:inherit;text-decoration:none}
+.head-grid{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,520px);gap:24px 48px;align-items:end}
+h1{font:600 clamp(30px,3.4vw,42px)/1.15 var(--f-display);letter-spacing:-.02em;margin:0;text-wrap:balance}
+.lede{margin:10px 0 0;color:var(--fg-2);max-width:60ch;text-wrap:pretty}
+.search{position:relative}
+.search .ico{position:absolute;left:16px;top:50%;translate:0 -50%;color:var(--fg-3)}
+.search input{width:100%;height:54px;border-radius:14px;border:1px solid var(--line-2);background:var(--surface);padding:0 16px 0 48px;font-size:15.5px;box-shadow:var(--shadow)}
+.search input:focus{outline:none;border-color:var(--brand);box-shadow:0 0 0 4px color-mix(in srgb,var(--brand) 18%,transparent)}
+.headtools{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-top:10px;font-size:13px;color:var(--fg-3);flex-wrap:wrap}
+.vat{display:inline-flex;align-items:center;gap:8px;font-size:13.5px;font-weight:500;color:var(--fg-2);cursor:pointer;white-space:nowrap}
+.switch{appearance:none;width:34px;height:20px;border-radius:10px;background:var(--line-2);position:relative;cursor:pointer;transition:background .15s;flex:none;margin:0}
+.switch::after{content:"";position:absolute;top:3px;left:3px;width:14px;height:14px;border-radius:50%;background:var(--surface);box-shadow:0 1px 2px rgba(0,0,0,.25);transition:translate .15s}
+.switch:checked{background:var(--brand)}.switch:checked::after{translate:14px 0}
+
+/* buying modes */
+.modes{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;margin-top:28px}
+.mode{display:flex;flex-direction:column;gap:10px;padding:18px;border-radius:var(--r-lg);border:1px solid var(--line);background:var(--surface);text-align:left;transition:border-color .15s,box-shadow .15s}
+.mode:hover{border-color:var(--line-2);box-shadow:var(--shadow)}
+.mode[aria-pressed="true"]{border-color:var(--brand);box-shadow:inset 0 0 0 1px var(--brand)}
+.mode .mi{width:36px;height:36px;border-radius:10px;display:grid;place-items:center;background:var(--surface-2);color:var(--fg-2)}
+.mode .mi .ico{width:20px;height:20px}
+.mode.instant .mi{background:var(--instant-tint);color:var(--instant)}
+.mode b{font:600 16px var(--f-display)}
+.mode p{margin:0;font-size:13.5px;color:var(--fg-2);line-height:1.5}
+.mode small{margin-top:auto;font-size:12.5px;color:var(--fg-3)}
+.mode small strong{color:var(--fg);font-weight:600;font-variant-numeric:tabular-nums}
+
+/* section nav */
+.secnav{position:sticky;top:calc(env(safe-area-inset-top,0px) + 64px);z-index:30;background:color-mix(in srgb,var(--bg) 92%,transparent);backdrop-filter:blur(10px);border-bottom:1px solid var(--line);margin-top:32px}
+.secnav .wrap{display:flex;gap:4px;overflow-x:auto;scrollbar-width:none;padding-block:8px}
+.secnav a{flex:none;padding:6px 12px;border-radius:8px;color:var(--fg-2);text-decoration:none;font-size:14px;font-weight:500;white-space:nowrap}
+.secnav a:hover{background:var(--surface-2)}
+.secnav a[aria-current="true"]{background:var(--fg);color:var(--bg)}
+section[id]{scroll-margin-top:130px}
+.sec{padding-block:56px 0}
+.sec-h{display:flex;align-items:flex-end;justify-content:space-between;gap:16px;margin-bottom:20px;flex-wrap:wrap}
+.sec-h h2{font:600 26px/1.25 var(--f-display);margin:0;letter-spacing:-.01em}
+.sec-h p{margin:6px 0 0;color:var(--fg-2);max-width:62ch;font-size:14.5px}
+
+/* calculator */
+.calc{display:grid;grid-template-columns:minmax(0,1.15fr) minmax(0,1fr);border-radius:20px;overflow:hidden;border:1px solid var(--line);background:var(--surface)}
+.calc-in{padding:28px;display:flex;flex-direction:column;gap:20px}
+.field>label,.field>span{display:block;font-size:13px;font-weight:600;margin-bottom:8px}
+.prod-pick{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:8px}
+.prod-pick button{display:flex;align-items:center;gap:10px;padding:8px 10px;border-radius:12px;border:1px solid var(--line-2);background:var(--surface);text-align:left;font-size:13px;line-height:1.3;min-height:58px}
+.prod-pick button .th{width:40px;height:40px;border-radius:8px;background:var(--stage);flex:none;display:grid;place-items:center}
+.prod-pick button .th svg{width:85%;height:85%}
+.prod-pick button[aria-pressed="true"]{border-color:var(--brand);background:var(--brand-tint);box-shadow:inset 0 0 0 1px var(--brand)}
+.qty{display:flex;gap:6px;flex-wrap:wrap;align-items:center}
+.qty button{height:38px;padding:0 14px;border-radius:10px;border:1px solid var(--line-2);background:var(--surface);font-weight:500;font-size:13.5px;font-variant-numeric:tabular-nums}
+.qty button[aria-pressed="true"]{background:var(--fg);color:var(--bg);border-color:var(--fg)}
+.qty input{width:110px;height:38px;border-radius:10px;border:1px solid var(--line-2);background:var(--surface);padding:0 10px;font-weight:600;font-variant-numeric:tabular-nums}
+.chips{display:flex;flex-wrap:wrap;gap:6px}
+.chip{border:1px solid var(--line-2);background:var(--surface);border-radius:99px;padding:5px 14px;font-size:13.5px;color:var(--fg-2)}
+.chip[aria-pressed="true"]{background:var(--brand);border-color:var(--brand);color:var(--on-brand)}
+.calc-out{background:var(--fg);color:var(--bg);padding:28px;display:flex;flex-direction:column;gap:16px;position:relative}
+.calc-out .eyebrow{font-size:12.5px;opacity:.7;letter-spacing:.02em}
+.calc-out .big{font:600 clamp(40px,5vw,56px)/1 var(--f-display);font-variant-numeric:tabular-nums;letter-spacing:-.02em}
+.calc-out .big small{font:500 16px var(--f-body);opacity:.7;margin-left:6px;letter-spacing:0}
+.calc-out dl{display:grid;grid-template-columns:1fr auto;gap:8px 16px;margin:0;font-size:14px;font-variant-numeric:tabular-nums;padding-top:16px;border-top:1px solid color-mix(in srgb,var(--bg) 18%,transparent)}
+.calc-out dt{opacity:.72}.calc-out dd{margin:0;text-align:right;font-weight:500}
+.calc-out dd.tot{font:600 18px var(--f-display)}
+.calc-out .facts{display:flex;gap:16px;flex-wrap:wrap;font-size:13px;opacity:.85}
+.calc-out .facts span{display:inline-flex;gap:6px;align-items:center}
+.calc-out .facts .ico{width:16px;height:16px}
+.calc-out .btn-cta{margin-top:auto;background:var(--bg);color:var(--fg);height:48px;font-size:15.5px}
+.calc-out .btn-cta:hover{background:color-mix(in srgb,var(--bg) 88%,var(--brand))}
+.calc-out .note{font-size:12px;opacity:.6;margin:0}
+.sample{position:absolute;top:16px;right:16px;font:500 11px var(--f-mono);padding:3px 8px;border-radius:6px;border:1px dashed color-mix(in srgb,var(--bg) 45%,transparent);opacity:.75}
+.curve{display:flex;align-items:flex-end;gap:4px;height:44px}
+.curve i{flex:1;background:color-mix(in srgb,var(--bg) 22%,transparent);border-radius:3px 3px 0 0}
+.curve i.on{background:var(--brand)}
+
+/* catalog */
+.toolbar{display:flex;align-items:center;gap:10px 14px;flex-wrap:wrap;margin-bottom:14px}
+.tabs{display:inline-flex;padding:3px;border-radius:12px;background:var(--surface-2);border:1px solid var(--line);overflow-x:auto;max-width:100%;scrollbar-width:none}
+.tabs button{border:0;background:none;padding:7px 14px;border-radius:9px;font-size:14px;font-weight:500;color:var(--fg-2);white-space:nowrap}
+.tabs button small{color:var(--fg-3);margin-left:4px;font-variant-numeric:tabular-nums}
+.tabs button[aria-pressed="true"]{background:var(--surface);color:var(--fg);box-shadow:0 1px 2px rgba(0,0,0,.08)}
+.tb-r{margin-left:auto;display:flex;gap:10px;align-items:center}
+.select{position:relative}
+.select select{appearance:none;height:38px;border-radius:10px;border:1px solid var(--line-2);background:var(--surface);padding:0 36px 0 12px;font-size:13.5px;font-weight:500;max-width:100%}
+.select .ico{position:absolute;right:10px;top:50%;translate:0 -50%;width:16px;height:16px;pointer-events:none;color:var(--fg-3)}
+.vtoggle{display:inline-flex;border:1px solid var(--line-2);border-radius:10px;overflow:hidden}
+.vtoggle button{width:40px;height:36px;border:0;background:var(--surface);color:var(--fg-3);display:grid;place-items:center}
+.vtoggle button[aria-pressed="true"]{background:var(--surface-2);color:var(--fg)}
+.vtoggle .ico{width:18px;height:18px}
+.cats{display:flex;gap:6px;overflow-x:auto;scrollbar-width:none;margin-bottom:20px;padding-bottom:2px}
+.cats .chip{flex:none;display:inline-flex;align-items:center;gap:6px}
+.cats .chip .ico{width:16px;height:16px}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(232px,1fr));gap:20px}
+.card{position:relative;display:flex;flex-direction:column;background:var(--surface);border:1px solid var(--line);border-radius:var(--r-lg);overflow:hidden;transition:box-shadow .2s,border-color .2s,translate .2s}
+.card:hover{box-shadow:var(--shadow);border-color:var(--line-2);translate:0 -2px}
+.stage{position:relative;aspect-ratio:4/3;background:var(--stage);display:grid;place-items:center}
+.stage svg{width:62%;height:78%}
+.badge{position:absolute;top:12px;left:12px;display:inline-flex;align-items:center;gap:4px;font-size:12px;font-weight:600;padding:3px 9px 3px 7px;border-radius:99px}
+.badge .ico{width:13px;height:13px;stroke-width:2}
+.badge.instant{background:var(--instant-tint);color:var(--instant)}
+.badge.stock{background:var(--brand-tint);color:var(--brand)}
+.cbody{padding:14px 16px 16px;display:flex;flex-direction:column;gap:4px;flex:1}
+.cat-l{font-size:12px;color:var(--fg-3)}
+.card h3{font:600 16px/1.4 var(--f-display);margin:0;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;min-height:2.8em}
+.card h3 a{color:inherit;text-decoration:none}
+.card h3 a::after{content:"";position:absolute;inset:0}
+.pr{margin-top:8px;display:flex;align-items:baseline;gap:6px;flex-wrap:wrap}
+.pr small{font-size:12.5px;color:var(--fg-3)}
+.pr b{font:600 22px var(--f-display);color:var(--brand);font-variant-numeric:tabular-nums;letter-spacing:-.01em}
+.pr .q{font:500 14px var(--f-body);color:var(--fg-2)}
+.meta{display:flex;gap:4px 12px;flex-wrap:wrap;font-size:12.5px;color:var(--fg-2);margin-top:4px}
+.meta span{display:inline-flex;align-items:center;gap:5px}
+.meta .ico{width:14px;height:14px;color:var(--fg-3)}
+.cfoot{display:flex;gap:8px;margin-top:14px;position:relative;z-index:1}
+.cfoot .btn{height:36px;font-size:13.5px;padding:0 12px;flex:1}
+.btn-soft{background:var(--surface-2);color:var(--fg);border-color:transparent}
+.btn-soft:hover{background:var(--line)}
+.btn-soft[aria-pressed="true"]{background:var(--brand-tint);color:var(--brand)}
+.tablewrap{overflow-x:auto;border:1px solid var(--line);border-radius:var(--r-lg);background:var(--surface)}
+.ptable{width:100%;border-collapse:collapse;font-size:14px;min-width:820px}
+.ptable th{text-align:left;font-weight:500;font-size:12.5px;color:var(--fg-3);padding:12px 16px;border-bottom:1px solid var(--line);background:var(--surface-2);position:sticky;top:0}
+.ptable td{padding:12px 16px;border-bottom:1px solid var(--line);vertical-align:middle}
+.ptable tr:last-child td{border-bottom:0}
+.ptable td.num{font-variant-numeric:tabular-nums;white-space:nowrap}
+.ptable td.num b{font:600 15px var(--f-display);color:var(--brand)}
+.ptable .btn{height:34px;font-size:13px;padding:0 12px}
+.ptable .nm{display:flex;align-items:center;gap:12px;font-weight:500}
+.ptable .nm .th{width:40px;height:40px;border-radius:8px;background:var(--stage);flex:none;display:grid;place-items:center}
+.ptable .nm .th svg{width:82%;height:82%}
+.pill{display:inline-flex;align-items:center;gap:4px;font-size:12px;font-weight:600;padding:2px 9px;border-radius:99px;white-space:nowrap;background:var(--surface-2);color:var(--fg-2)}
+.pill.instant{background:var(--instant-tint);color:var(--instant)}
+.pill.stock{background:var(--brand-tint);color:var(--brand)}
+.loadmore{display:flex;flex-direction:column;align-items:center;gap:12px;margin-top:32px;font-size:13.5px;color:var(--fg-3)}
+.bar{width:200px;height:4px;border-radius:2px;background:var(--line);overflow:hidden}.bar i{display:block;height:100%;background:var(--brand)}
+.empty{grid-column:1/-1;text-align:center;padding:56px 16px;border:1px dashed var(--line-2);border-radius:var(--r-lg);color:var(--fg-2)}
+
+/* how pricing works */
+.factors{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px}
+.factor{padding:20px;border-radius:var(--r-lg);background:var(--surface);border:1px solid var(--line);display:flex;flex-direction:column;gap:8px}
+.factor svg.fig{width:100%;height:64px;margin-bottom:6px}
+.factor b{font:600 16px var(--f-display)}
+.factor p{margin:0;font-size:13.5px;color:var(--fg-2)}
+.incl{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:8px;margin-top:16px}
+.incl div{display:flex;gap:10px;align-items:flex-start;padding:12px 14px;border-radius:var(--r-md);background:var(--surface-2);font-size:13.5px}
+.incl .ico{width:18px;height:18px;flex:none;margin-top:2px}
+.incl .yes .ico{color:var(--brand)}.incl .no .ico{color:var(--fg-3)}
+
+/* materials */
+.mtable{width:100%;border-collapse:collapse;font-size:14px;min-width:640px}
+.mtable th{text-align:left;font-weight:500;font-size:12.5px;color:var(--fg-3);padding:12px 16px;border-bottom:1px solid var(--line);background:var(--surface-2)}
+.mtable td{padding:14px 16px;border-bottom:1px solid var(--line);vertical-align:top}
+.mtable tr:last-child td{border-bottom:0}
+.mtable code{font:500 13px var(--f-mono)}
+.flute{display:block;width:72px;height:22px}
+
+/* process */
+.steps{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:0;counter-reset:s;border:1px solid var(--line);border-radius:var(--r-lg);background:var(--surface);overflow:hidden}
+.step{padding:22px 20px;border-right:1px solid var(--line);display:flex;flex-direction:column;gap:8px}
+.step:last-child{border-right:0}
+.step .n{width:28px;height:28px;border-radius:50%;background:var(--brand-tint);color:var(--brand);font:600 13px/28px var(--f-display);text-align:center}
+.step b{font:600 16px var(--f-display)}
+.step p{margin:0;font-size:13.5px;color:var(--fg-2)}
+.step .tag{align-self:flex-start;font-size:12px;font-weight:600;padding:2px 9px;border-radius:99px;background:var(--surface-2);color:var(--fg-2);margin-top:auto}
+.pay{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}
+.pay span{font-size:13px;padding:6px 12px;border-radius:8px;border:1px solid var(--line);background:var(--surface)}
+
+/* services */
+.svc{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}
+.svc a{display:flex;gap:14px;padding:18px;border-radius:var(--r-lg);border:1px solid var(--line);background:var(--surface);text-decoration:none;color:var(--fg);align-items:flex-start}
+.svc a:hover{border-color:var(--brand)}
+.svc .ico{width:40px;height:40px;padding:9px;border-radius:12px;background:var(--brand-tint);color:var(--brand);flex:none}
+.svc b{display:block;font:600 15.5px var(--f-display)}
+.svc small{color:var(--fg-2);font-size:13.5px}
+
+/* faq */
+.faq{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:0 32px}
+.faq details{border-bottom:1px solid var(--line)}
+.faq summary{list-style:none;cursor:pointer;padding:16px 0;font-weight:600;font-size:15px;display:flex;justify-content:space-between;gap:12px}
+.faq summary::-webkit-details-marker{display:none}
+.faq summary .ico{width:18px;height:18px;color:var(--fg-3);transition:rotate .2s;flex:none;margin-top:3px}
+.faq details[open] summary .ico{rotate:180deg}
+.faq p{margin:0 0 16px;color:var(--fg-2);font-size:14.5px;max-width:60ch}
+
+.cta-band{margin-block:64px 96px;display:grid;grid-template-columns:minmax(0,1fr) auto;gap:20px;align-items:center;padding:32px;border-radius:20px;background:var(--brand);color:var(--on-brand)}
+.cta-band h2{font:600 24px var(--f-display);margin:0}
+.cta-band p{margin:6px 0 0;opacity:.85}
+.cta-band .btns{display:flex;gap:10px;flex-wrap:wrap}
+.cta-band .btn-w{background:var(--on-brand);color:var(--brand)}
+.cta-band .btn-o{border-color:color-mix(in srgb,var(--on-brand) 50%,transparent);color:var(--on-brand)}
+
+/* round 2 */
+.zip{width:140px;height:38px;border-radius:10px;border:1px solid var(--line-2);background:var(--surface);padding:0 12px;font-weight:600;letter-spacing:.08em;font-variant-numeric:tabular-nums}
+.zip:focus{outline:none;border-color:var(--brand)}
+.ziphint{font-size:12.5px;color:var(--fg-3);margin-left:10px}
+.eta{display:flex;align-items:center;gap:10px;padding:12px 14px;border-radius:12px;background:color-mix(in srgb,var(--bg) 10%,transparent);font-size:14px}
+.eta .ico{width:20px;height:20px;flex:none}
+.eta b{font-weight:600}
+.btn-line{background:transparent;color:var(--bg);border:1px solid color-mix(in srgb,var(--bg) 40%,transparent);height:42px}
+.btn-line:hover{border-color:var(--bg)}
+.reorder{display:flex;align-items:center;gap:8px;justify-content:space-between;margin-top:10px;padding:8px 10px;border-radius:10px;background:var(--brand-tint);font-size:12.5px;color:var(--fg);position:relative;z-index:1}
+.reorder button{border:0;background:var(--brand);color:var(--on-brand);border-radius:8px;padding:4px 10px;font-weight:600;font-size:12.5px;display:inline-flex;gap:4px;align-items:center}
+.bundles{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px}
+.bundle{display:flex;flex-direction:column;border:1px solid var(--line);border-radius:var(--r-lg);background:var(--surface);overflow:hidden}
+.bundle .bst{display:flex;justify-content:center;align-items:center;gap:0;background:var(--stage);padding:20px 12px;min-height:140px}
+.bundle .bst span{width:96px;height:96px;display:grid;place-items:center;margin:0 -10px}
+.bundle .bst span svg{width:100%;height:100%}
+.bundle .bb{padding:16px 18px 18px;display:flex;flex-direction:column;gap:8px;flex:1}
+.bundle h3{font:600 17px var(--f-display);margin:0}
+.bundle p{margin:0;font-size:13.5px;color:var(--fg-2)}
+.bundle ul{margin:4px 0 0;padding:0;list-style:none;display:flex;flex-direction:column;gap:6px;font-size:13.5px}
+.bundle li{display:flex;justify-content:space-between;gap:10px;border-top:1px dashed var(--line);padding-top:6px}
+.bundle li span:last-child{color:var(--fg-3);white-space:nowrap;font-variant-numeric:tabular-nums}
+.bundle .btn{margin-top:auto}
+.kit{display:grid;grid-template-columns:auto minmax(0,1fr) auto;gap:16px;align-items:center;margin-top:12px;padding:18px 20px;border-radius:var(--r-lg);border:1px solid var(--line);background:var(--surface)}
+.kit .sw{display:flex}.kit .sw i{width:30px;height:40px;border-radius:4px;margin-left:-8px;border:1px solid rgba(0,0,0,.12);box-shadow:0 2px 6px rgba(0,0,0,.12)}
+.kit b{font:600 16px var(--f-display);display:block}
+.kit small{color:var(--fg-2);font-size:13.5px}
+.paper{background:#fff;color:#1b1f1d;margin:16px 24px 8px;border:1px solid #ddd;border-radius:6px;padding:28px 28px 22px;font-size:12.5px;box-shadow:0 8px 24px -12px rgba(0,0,0,.3)}
+.paper h4{margin:0;font:700 20px var(--f-display);letter-spacing:-.01em}
+.paper .ph{display:flex;justify-content:space-between;gap:16px;border-bottom:2px solid #17573F;padding-bottom:12px;margin-bottom:12px}
+.paper .ph div:last-child{text-align:right}
+.paper .ph small,.paper .muted{color:#6b736e}
+.paper table{width:100%;border-collapse:collapse;margin:12px 0;font-variant-numeric:tabular-nums}
+.paper th{text-align:left;font-weight:600;border-bottom:1px solid #ccc;padding:6px 4px;font-size:11.5px;color:#555}
+.paper td{padding:7px 4px;border-bottom:1px solid #eee;vertical-align:top}
+.paper td.r,.paper th.r{text-align:right}
+.paper .sum{margin-left:auto;width:min(260px,100%);display:grid;grid-template-columns:1fr auto;gap:4px 12px}
+.paper .sum .t{font-weight:700;font-size:14px;border-top:1px solid #ccc;padding-top:6px}
+.paper .ph-tag{display:inline-block;background:#FFF3D6;color:#8F530E;border:1px dashed #E1B661;border-radius:4px;padding:0 5px;font-size:11px}
+.dlg-f{display:flex;gap:10px;justify-content:flex-end;padding:12px 24px 20px;flex-wrap:wrap}
+@media (max-width:1040px){.bundles{grid-template-columns:minmax(0,1fr)}.kit{grid-template-columns:minmax(0,1fr)}}
+/* rfq tray + toast + dialog */
+.tray{position:fixed;left:50%;bottom:calc(20px + env(safe-area-inset-bottom,0px));translate:-50% 0;z-index:40;display:flex;align-items:center;gap:14px;padding:10px 10px 10px 18px;border-radius:16px;background:var(--fg);color:var(--bg);box-shadow:0 18px 40px -12px rgba(0,0,0,.45);max-width:calc(100% - 32px);transition:translate .25s,opacity .25s}
+.tray[hidden]{display:flex!important;opacity:0;pointer-events:none;translate:-50% 24px}
+.tray p{margin:0;font-size:14px;white-space:nowrap}
+.tray p b{font-variant-numeric:tabular-nums}
+.tray .btn{height:38px;background:var(--bg);color:var(--fg)}
+.tray .x{border:0;background:none;color:var(--bg);opacity:.7;font-size:13px}
+.toast{position:fixed;left:50%;bottom:calc(92px + env(safe-area-inset-bottom,0px));translate:-50% 0;z-index:45;background:var(--surface);color:var(--fg);border:1px solid var(--line-2);box-shadow:var(--shadow);padding:10px 16px;border-radius:10px;font-size:13.5px}
+dialog{border:0;padding:0;border-radius:20px;background:var(--surface);color:var(--fg);width:min(720px,calc(100% - 32px));max-height:calc(100% - 48px);box-shadow:0 30px 80px -20px rgba(0,0,0,.5)}
+dialog::backdrop{background:rgba(10,15,12,.5)}
+.dlg-h{display:flex;align-items:center;justify-content:space-between;padding:20px 24px;border-bottom:1px solid var(--line);position:sticky;top:0;background:var(--surface)}
+.dlg-h h2{font:600 20px var(--f-display);margin:0}
+.dlg-b{padding:8px 24px 24px}
+.dlg-b h3{font:600 15px var(--f-display);margin:20px 0 6px;color:var(--brand)}
+.dlg-b ul{margin:0;padding-left:20px;color:var(--fg-2);font-size:14px;display:flex;flex-direction:column;gap:4px}
+.dlg-b .note{margin-top:20px;padding:12px 14px;border-radius:10px;background:var(--instant-tint);font-size:13.5px}
+.chat{position:fixed;right:calc(20px + env(safe-area-inset-right,0px));bottom:calc(20px + env(safe-area-inset-bottom,0px));z-index:41;transition:bottom .25s}
+.tray:not([hidden])~.chat{bottom:calc(92px + env(safe-area-inset-bottom,0px))}
+.chat>button{display:inline-flex;align-items:center;gap:8px;height:48px;padding:0 18px 0 14px;border-radius:24px;border:0;background:#06C755;color:#fff;font-weight:600;font-size:14.5px;box-shadow:0 12px 30px -10px rgba(6,120,60,.6)}
+.chat>button .ico{width:22px;height:22px}
+.chat-pop{position:absolute;right:0;bottom:60px;width:290px;max-width:calc(100vw - 32px);background:var(--surface);border:1px solid var(--line);border-radius:16px;box-shadow:0 24px 60px -18px rgba(0,0,0,.4);padding:18px}
+.chat-pop h3{font:600 16px var(--f-display);margin:0 0 4px}
+.chat-pop p{margin:0 0 12px;font-size:13.5px;color:var(--fg-2)}
+
+@media (max-width:1180px){.nav a{padding:8px 9px}.hdr .wrap{gap:18px}}
+@media (max-width:1040px){
+  .nav{display:none}.menu-btn{display:grid}
+  .head-grid,.calc{grid-template-columns:minmax(0,1fr)}
+  .modes,.factors{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .steps{grid-template-columns:repeat(2,minmax(0,1fr))}.step:nth-child(2){border-right:0}.step:nth-child(-n+2){border-bottom:1px solid var(--line)}
+  .svc{grid-template-columns:minmax(0,1fr)}
+  .faq{grid-template-columns:minmax(0,1fr)}
+}
+@media (max-width:640px){
+  .hdr .cta,.lang,.avatar{display:none}
+  .hdr .wrap{height:58px}
+  .secnav{top:calc(env(safe-area-inset-top,0px) + 58px)}
+  .head{padding-block:20px 0}
+  .modes{grid-template-columns:minmax(0,1fr);gap:8px}
+  .mode{flex-direction:row;flex-wrap:wrap;align-items:center;gap:6px 12px;padding:14px}
+  .mode p{flex-basis:100%}.mode small{margin-top:0}
+  .grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+  .cbody{padding:12px}.card h3{font-size:14.5px}.pr b{font-size:18px}.cfoot{flex-direction:column}
+  .calc-in,.calc-out{padding:20px}
+  .factors,.steps{grid-template-columns:minmax(0,1fr)}.step{border-right:0;border-bottom:1px solid var(--line)}
+  .tb-r{margin-left:0;width:100%}.tb-r .select{flex:1}.tb-r select{width:100%}
+  .cta-band{grid-template-columns:minmax(0,1fr);padding:24px}
+  .chat>button span{display:none}.chat>button{padding:0 13px}
+  .tray p{font-size:13px}
+}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+
+/* ---------- product page ---------- */
+.pdp{display:grid;grid-template-columns:minmax(0,1.05fr) minmax(0,1fr);gap:40px;align-items:start;padding-block:12px 0}
+.gallery{position:sticky;top:calc(env(safe-area-inset-top,0px) + 84px);display:flex;flex-direction:column;gap:10px}
+.gmain{position:relative;aspect-ratio:1/1;max-width:100%;border-radius:20px;background:var(--stage);display:grid;place-items:center;overflow:hidden}
+.gmain>svg{width:68%;height:68%}
+.gmain .seg{position:absolute;top:14px;left:14px}
+.gmain .cap{position:absolute;left:16px;bottom:14px;font-size:12.5px;color:var(--fg-3)}
+.dimlab{position:absolute;font:600 13px var(--f-mono);color:var(--fg-2);background:var(--surface);border:1px solid var(--line);padding:2px 8px;border-radius:6px}
+.thumbs{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px}
+.thumbs button{aspect-ratio:1/1;border-radius:12px;border:1px solid var(--line);background:var(--stage);display:grid;place-items:center;padding:0}
+.thumbs button svg{width:72%;height:72%}
+.thumbs button[aria-pressed="true"]{border-color:var(--brand);box-shadow:inset 0 0 0 1px var(--brand)}
+.buy{display:flex;flex-direction:column;gap:18px}
+.buy .catl{font-size:13px;color:var(--brand);text-decoration:none;font-weight:500}
+.buy h1{font-size:clamp(28px,3vw,38px)}
+.buy .desc{margin:0;color:var(--fg-2)}
+.pills{display:flex;gap:6px;flex-wrap:wrap}
+.pricebox{border:1px solid var(--line);border-radius:var(--r-lg);background:var(--surface);padding:20px;display:flex;flex-direction:column;gap:16px}
+.pbig{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap}
+.pbig b{font:600 42px/1 var(--f-display);letter-spacing:-.02em;font-variant-numeric:tabular-nums}
+.pbig span{color:var(--fg-2)}
+.psub{font-size:13px;color:var(--fg-3);margin-top:-8px}
+.save{display:inline-flex;align-items:center;gap:6px;font-size:12.5px;font-weight:600;color:var(--brand);background:var(--brand-tint);padding:3px 10px;border-radius:99px}
+.opt-h{display:flex;justify-content:space-between;align-items:baseline;font-size:13px;font-weight:600;margin-bottom:8px}
+.opt-h small{font-weight:400;color:var(--fg-3)}
+.sizes{display:flex;flex-wrap:wrap;gap:6px}
+.sizes button{min-width:46px;height:38px;padding:0 10px;border-radius:10px;border:1px solid var(--line-2);background:var(--surface);font:500 13.5px var(--f-mono)}
+.sizes button[aria-pressed="true"]{background:var(--fg);color:var(--bg);border-color:var(--fg)}
+.sizes button.custom{font-family:var(--f-body);border-style:dashed}
+.mats{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+.mats button{display:flex;flex-direction:column;align-items:flex-start;gap:2px;padding:10px 12px;border-radius:12px;border:1px solid var(--line-2);background:var(--surface);text-align:left;font-size:13.5px;font-weight:500}
+.mats button small{font-weight:400;color:var(--fg-3);font-size:12px}
+.mats button[aria-pressed="true"]{border-color:var(--brand);background:var(--brand-tint);box-shadow:inset 0 0 0 1px var(--brand)}
+.qtys{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:6px}
+.qtys button{display:flex;flex-direction:column;align-items:center;padding:8px 4px;border-radius:12px;border:1px solid var(--line-2);background:var(--surface);font-weight:600;font-variant-numeric:tabular-nums;font-size:14px}
+.qtys button small{font-weight:400;font-size:12px;color:var(--fg-3)}
+.qtys button[aria-pressed="true"]{border-color:var(--brand);background:var(--brand-tint);box-shadow:inset 0 0 0 1px var(--brand)}
+.qtys button[aria-pressed="true"] small{color:var(--brand)}
+.ctas{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px}
+.ctas .btn-primary{grid-column:1/-1;height:50px;font-size:16px}
+.ctas .btn{font-size:13.5px;padding:0 10px}
+.assure{display:flex;flex-direction:column;gap:10px;margin:0;padding:0;list-style:none;font-size:13.5px}
+.assure li{display:flex;gap:10px;align-items:flex-start}
+.assure .ico{width:18px;height:18px;color:var(--brand);flex:none;margin-top:2px}
+.assure b{font-weight:600}
+.samplechip{font:500 11px var(--f-mono);padding:2px 7px;border-radius:6px;border:1px dashed var(--line-2);color:var(--fg-3);white-space:nowrap}
+.dimt{width:100%;border-collapse:collapse;font-size:14px;min-width:720px;font-variant-numeric:tabular-nums}
+.dimt th{text-align:left;font-weight:500;font-size:12.5px;color:var(--fg-3);padding:12px 14px;border-bottom:1px solid var(--line);background:var(--surface-2)}
+.dimt td{padding:11px 14px;border-bottom:1px solid var(--line)}
+.dimt tr:last-child td{border-bottom:0}
+.dimt tr.on td{background:var(--brand-tint)}
+.dimt td.code{font:600 15px var(--f-mono);color:var(--brand)}
+.dimt td .btn{height:32px;font-size:13px;padding:0 12px}
+.tiers2{width:100%;border-collapse:collapse;font-size:15px;font-variant-numeric:tabular-nums}
+.tiers2 th{text-align:left;font-weight:500;font-size:12.5px;color:var(--fg-3);padding:0 14px 10px}
+.tiers2 td{padding:14px;border-top:1px solid var(--line)}
+.tiers2 td:not(:first-child),.tiers2 th:not(:first-child){text-align:right}
+.tiers2 tr.on td{background:var(--brand-tint);font-weight:600}
+.tiers2 .bar{display:inline-block;height:6px;border-radius:3px;background:var(--brand);vertical-align:middle;margin-right:10px;opacity:.7}
+.two{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:16px}
+.card2{border:1px solid var(--line);border-radius:var(--r-lg);background:var(--surface);padding:22px}
+.card2 h3{font:600 17px var(--f-display);margin:0 0 12px}
+.paths{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}
+.path{border:1px solid var(--line);border-radius:var(--r-lg);background:var(--surface);padding:20px;display:flex;flex-direction:column;gap:8px}
+.path .ico{width:40px;height:40px;padding:9px;border-radius:12px;background:var(--brand-tint);color:var(--brand)}
+.path b{font:600 16px var(--f-display)}
+.path p{margin:0;font-size:13.5px;color:var(--fg-2)}
+.path .btn{margin-top:auto;align-self:flex-start;height:36px;font-size:13.5px}
+.flow{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:0;border:1px solid var(--line);border-radius:var(--r-lg);background:var(--surface);overflow:hidden}
+.flow div{padding:16px 14px;border-right:1px solid var(--line);display:flex;flex-direction:column;gap:6px}
+.flow div:last-child{border-right:0}
+.flow .n{font:600 12px var(--f-mono);color:var(--brand)}
+.flow b{font:600 14px var(--f-display)}
+.flow small{font-size:12px;color:var(--fg-3)}
+.rel{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:16px}
+.rv-head{display:grid;grid-template-columns:240px minmax(0,1fr);gap:24px;align-items:start}
+.rv-sum{border:1px solid var(--line);border-radius:var(--r-lg);background:var(--surface);padding:20px;display:flex;flex-direction:column;gap:8px}
+.rv-list{display:flex;flex-direction:column;gap:12px}
+.rv{border:1px solid var(--line);border-radius:var(--r-lg);background:var(--surface);padding:18px;display:grid;grid-template-columns:minmax(0,1fr) 120px;gap:16px}
+.ph{display:block;height:10px;border-radius:5px;background:var(--surface-2)}
+.ph.w60{width:60%}.ph.w80{width:80%}.ph.w40{width:40%}.ph.w90{width:90%}
+.ph-img{width:120px;height:90px;border-radius:10px;background:var(--surface-2);display:grid;place-items:center;color:var(--fg-3);font-size:11px;text-align:center}
+.vtag{display:inline-flex;align-items:center;gap:4px;font-size:12px;font-weight:600;color:var(--brand)}
+.vtag .ico{width:14px;height:14px}
+.rv-empty{border:1px dashed var(--line-2);border-radius:var(--r-lg);padding:28px;text-align:center;color:var(--fg-2)}
+.mbar{display:none}
+.datafix{border:1px dashed #E1B661;background:var(--instant-tint);border-radius:var(--r-md);padding:12px 14px;font-size:13px;color:var(--fg)}
+@media (max-width:640px){.rv-head{grid-template-columns:minmax(0,1fr)}.rv{grid-template-columns:minmax(0,1fr)}}
+@media (max-width:1040px){.pdp{grid-template-columns:minmax(0,1fr)}.gallery{position:static}.two{grid-template-columns:minmax(0,1fr)}.paths{grid-template-columns:minmax(0,1fr)}.flow{grid-template-columns:repeat(2,minmax(0,1fr))}.flow div{border-bottom:1px solid var(--line)}.rel{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media (max-width:640px){
+  .ctas{grid-template-columns:minmax(0,1fr)}
+  .mats{grid-template-columns:minmax(0,1fr)}
+  .pbig b{font-size:34px}
+  .mbar{display:flex;position:fixed;left:0;right:0;bottom:0;z-index:42;align-items:center;gap:12px;padding:10px max(16px,env(safe-area-inset-right,0px)) calc(10px + env(safe-area-inset-bottom,0px)) max(16px,env(safe-area-inset-left,0px));background:var(--surface);border-top:1px solid var(--line);box-shadow:0 -8px 24px -16px rgba(0,0,0,.3)}
+  .mbar div{flex:1;line-height:1.25}.mbar b{font:600 20px var(--f-display);font-variant-numeric:tabular-nums}.mbar small{display:block;font-size:12px;color:var(--fg-3)}
+  .mbar .btn{height:44px}
+  .chat{bottom:calc(84px + env(safe-area-inset-bottom,0px))}
+  main{padding-bottom:72px}
+}
+</style>
+
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <symbol id="i-search" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></symbol>
+  <symbol id="i-cart" viewBox="0 0 24 24"><path d="M3 4h2l2.2 11.2a2 2 0 0 0 2 1.6h8.1a2 2 0 0 0 2-1.5L21 8H6.2"/><circle cx="10" cy="20" r="1.2"/><circle cx="17" cy="20" r="1.2"/></symbol>
+  <symbol id="i-globe" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3a14 14 0 0 1 0 18M12 3a14 14 0 0 0 0 18"/></symbol>
+  <symbol id="i-menu" viewBox="0 0 24 24"><path d="M4 7h16M4 12h16M4 17h16"/></symbol>
+  <symbol id="i-chev" viewBox="0 0 24 24"><path d="m6 9 6 6 6-6"/></symbol>
+  <symbol id="i-x" viewBox="0 0 24 24"><path d="M6 6l12 12M18 6 6 18"/></symbol>
+  <symbol id="i-layers" viewBox="0 0 24 24"><path d="m12 3 9 5-9 5-9-5z"/><path d="m3 13 9 5 9-5"/></symbol>
+  <symbol id="i-bolt" viewBox="0 0 24 24"><path d="M13 2 4 14h7l-1 8 9-12h-7z"/></symbol>
+  <symbol id="i-heart" viewBox="0 0 24 24"><path d="M12 20s-7.5-4.6-7.5-10A4.5 4.5 0 0 1 12 7.3 4.5 4.5 0 0 1 19.5 10c0 5.4-7.5 10-7.5 10z"/></symbol>
+  <symbol id="i-ruler" viewBox="0 0 24 24"><path d="M3 15 15 3l6 6L9 21z"/><path d="m7 11 2 2M10 8l2 2M13 5l2 2"/></symbol>
+  <symbol id="i-stack" viewBox="0 0 24 24"><rect x="4" y="4" width="16" height="5" rx="1"/><rect x="4" y="10" width="16" height="5" rx="1"/><rect x="4" y="16" width="16" height="4" rx="1"/></symbol>
+  <symbol id="i-sliders" viewBox="0 0 24 24"><path d="M4 7h10M18 7h2M4 17h4M12 17h8"/><circle cx="16" cy="7" r="2"/><circle cx="10" cy="17" r="2"/></symbol>
+  <symbol id="i-link" viewBox="0 0 24 24"><path d="M10 14a4 4 0 0 0 5.7 0l3-3a4 4 0 0 0-5.7-5.7l-1 1"/><path d="M14 10a4 4 0 0 0-5.7 0l-3 3a4 4 0 0 0 5.7 5.7l1-1"/></symbol>
+  <symbol id="i-clock" viewBox="0 0 24 24"><circle cx="12" cy="12" r="8.5"/><path d="M12 7.5V12l3 2"/></symbol>
+  <symbol id="i-check" viewBox="0 0 24 24"><path d="m5 12.5 4.5 4.5L19 7.5"/></symbol>
+<symbol id="i-chat" viewBox="0 0 24 24"><path d="M4 5h16v11H10l-4 3.5V16H4z"/><path d="M8.5 10.5h.01M12 10.5h.01M15.5 10.5h.01"/></symbol>
+  <symbol id="i-leaf" viewBox="0 0 24 24"><path d="M5 19c0-8 5-13 15-14-1 10-6 15-14 15"/><path d="M5 19 13 11"/></symbol>
+  <symbol id="i-shield" viewBox="0 0 24 24"><path d="M12 3 5 6v6c0 4.5 3 7.5 7 9 4-1.5 7-4.5 7-9V6z"/><path d="m9 12 2 2 4-4"/></symbol>
+  <symbol id="i-factory" viewBox="0 0 24 24"><path d="M3 20V10l6 3V9l6 3V5h6v15z"/><path d="M7 17h2M12 17h2M17 17h1"/></symbol>
+  <symbol id="i-doc" viewBox="0 0 24 24"><path d="M6 3h8l4 4v14H6z"/><path d="M14 3v4h4M9 12h6M9 16h6"/></symbol>
+  <symbol id="i-folder" viewBox="0 0 24 24"><path d="M3 6h6l2 2h10v11H3z"/></symbol>
+  <symbol id="i-repeat" viewBox="0 0 24 24"><path d="M4 11V9a3 3 0 0 1 3-3h12l-3-3M20 13v2a3 3 0 0 1-3 3H5l3 3"/></symbol>
+  <symbol id="i-users" viewBox="0 0 24 24"><circle cx="9" cy="8" r="3.5"/><path d="M3 20c0-3.3 2.7-6 6-6s6 2.7 6 6M16 4.5a3.5 3.5 0 0 1 0 7M18 14c2 .7 3.5 2.8 3.5 6"/></symbol>
+  <symbol id="i-receipt" viewBox="0 0 24 24"><path d="M6 3h12v18l-3-2-3 2-3-2-3 2z"/><path d="M9 8h6M9 12h6"/></symbol>
+  <symbol id="i-pencil" viewBox="0 0 24 24"><path d="M4 20h4L19 9l-4-4L4 16z"/><path d="m13.5 6.5 4 4"/></symbol>
+  <symbol id="c-all" viewBox="0 0 24 24"><rect x="4" y="4" width="7" height="7" rx="1.5"/><rect x="13" y="4" width="7" height="7" rx="1.5"/><rect x="4" y="13" width="7" height="7" rx="1.5"/><rect x="13" y="13" width="7" height="7" rx="1.5"/></symbol>
+  <symbol id="c-carton" viewBox="0 0 24 24"><path d="m12 3 8 4.5v9L12 21l-8-4.5v-9z"/><path d="m4 7.5 8 4.5 8-4.5M12 12v9"/></symbol>
+  <symbol id="c-corr" viewBox="0 0 24 24"><path d="m12 3 8 4.5v9L12 21l-8-4.5v-9z"/><path d="m4 7.5 8 4.5 8-4.5M12 12v9M8 5.3l8 4.5"/></symbol>
+  <symbol id="c-rigid" viewBox="0 0 24 24"><path d="M3 7h18v4H3z"/><path d="M5 11v9h14v-9"/></symbol>
+  <symbol id="c-bag" viewBox="0 0 24 24"><path d="M5.5 8h13l1 13h-15z"/><path d="M9 10V6.5a3 3 0 0 1 6 0V10"/></symbol>
+  <symbol id="c-label" viewBox="0 0 24 24"><path d="M3 12V4h8l10 10-7 7z"/><circle cx="7.5" cy="7.5" r="1.3"/></symbol>
+  <symbol id="c-sleeve" viewBox="0 0 24 24"><path d="M3 9h14v10H3z"/><path d="m3 9 4-4h14l-4 4M17 19l4-4V5"/></symbol>
+  <symbol id="c-insert" viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="14" rx="1.5"/><path d="M9 5v14M15 5v14M3 12h18"/></symbol>
+  <symbol id="c-help" viewBox="0 0 24 24"><path d="M4 5h16v11H9l-5 4z"/><path d="M9.5 9a2.5 2.5 0 1 1 3.5 2.3c-.6.3-1 .8-1 1.4M12 14.5v.01"/></symbol>
+</svg>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <symbol id="i-box" viewBox="0 0 24 24"><path d="m12 3 8 4.5v9L12 21l-8-4.5v-9z"/><path d="m4 7.5 8 4.5 8-4.5M12 12v9"/></symbol>
+  <symbol id="i-doc" viewBox="0 0 24 24"><path d="M6 3h8l4 4v14H6z"/><path d="M14 3v4h4M9 12h6M9 16h6"/></symbol>
+  <symbol id="i-truck" viewBox="0 0 24 24"><path d="M3 6h11v10H3zM14 10h4l3 3v3h-7"/><circle cx="7" cy="18" r="1.8"/><circle cx="17" cy="18" r="1.8"/></symbol>
+  <symbol id="i-wrench" viewBox="0 0 24 24"><path d="M14.5 5.5a4 4 0 0 0 4.9 4.9L13 16.8 7.2 22 2 16.8 7.2 11l6.4-6.4z"/></symbol>
+  <symbol id="i-clock" viewBox="0 0 24 24"><circle cx="12" cy="12" r="8.5"/><path d="M12 7.5V12l3 2"/></symbol>
+  <symbol id="i-check" viewBox="0 0 24 24"><path d="m5 12.5 4.5 4.5L19 7.5"/></symbol>
+  <symbol id="i-minus" viewBox="0 0 24 24"><path d="M6 12h12"/></symbol>
+  <symbol id="i-grid" viewBox="0 0 24 24"><rect x="4" y="4" width="7" height="7" rx="1.5"/><rect x="13" y="4" width="7" height="7" rx="1.5"/><rect x="4" y="13" width="7" height="7" rx="1.5"/><rect x="13" y="13" width="7" height="7" rx="1.5"/></symbol>
+  <symbol id="i-table" viewBox="0 0 24 24"><rect x="3.5" y="4.5" width="17" height="15" rx="1.5"/><path d="M3.5 9.5h17M3.5 14.5h17M9 9.5v10"/></symbol>
+  <symbol id="i-chat" viewBox="0 0 24 24"><path d="M4 5h16v11H10l-4 3.5V16H4z"/><path d="M8.5 10.5h.01M12 10.5h.01M15.5 10.5h.01"/></symbol>
+  <symbol id="i-plus" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></symbol>
+  <symbol id="i-palette" viewBox="0 0 24 24"><path d="M12 3a9 9 0 1 0 0 18c1.5 0 2-1 2-2s-1-1.5-1-2.5 1-1.5 2-1.5h2a4 4 0 0 0 4-4c0-4.4-4-8-9-8z"/><circle cx="7.5" cy="11" r="1"/><circle cx="10" cy="7" r="1"/><circle cx="15" cy="7.5" r="1"/></symbol>
+  <symbol id="i-cube" viewBox="0 0 24 24"><path d="m12 3 8 4.5v9L12 21l-8-4.5v-9z" stroke-dasharray="2.5 2"/><path d="m4 7.5 8 4.5 8-4.5M12 12v9"/></symbol>
+  <symbol id="i-plate" viewBox="0 0 24 24"><rect x="4" y="5" width="16" height="14" rx="1.5"/><path d="M8 9h8M8 12h8M8 15h5"/></symbol>
+  <symbol id="i-shield" viewBox="0 0 24 24"><path d="M12 3 5 6v6c0 4.5 3 7.5 7 9 4-1.5 7-4.5 7-9V6z"/><path d="m9 12 2 2 4-4"/></symbol>
+  <symbol id="i-repeat" viewBox="0 0 24 24"><path d="M4 11V9a3 3 0 0 1 3-3h12l-3-3M20 13v2a3 3 0 0 1-3 3H5l3 3"/></symbol>
+  <symbol id="i-down" viewBox="0 0 24 24"><path d="M12 4v11M7 10l5 5 5-5M5 20h14"/></symbol>
+</svg>
+
+
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <symbol id="i-upload" viewBox="0 0 24 24"><path d="M12 16V4M7 9l5-5 5 5M5 20h14"/></symbol>
+  <symbol id="i-save" viewBox="0 0 24 24"><path d="M5 4h11l3 3v13H5z"/><path d="M8 4v5h7V4M8 20v-6h8v6"/></symbol>
+  <symbol id="i-scale" viewBox="0 0 24 24"><path d="M12 4v16M5 8h14M5 8l-2 6a3 3 0 0 0 4 0zM19 8l-2 6a3 3 0 0 0 4 0zM8 20h8"/></symbol>
+  <symbol id="i-cal" viewBox="0 0 24 24"><rect x="4" y="5" width="16" height="15" rx="2"/><path d="M4 10h16M9 3v4M15 3v4"/></symbol>
+</svg>
+
+<div class="proto"><div class="wrap"><b>ต้นแบบ Redesign</b><span>หน้า /products/uat-postal-box-b · หน้าสินค้า</span><button type="button" id="notesBtn">ดูสิ่งที่เปลี่ยน</button></div></div>
+
+<header class="hdr">
+  <div class="wrap">
+    <a class="logo" href="#" aria-label="getpack หน้าแรก">getpack<i></i></a>
+    <nav class="nav" aria-label="เมนูหลัก"><a href="#">สตูดิโอออกแบบ</a><a href="#">แบบกล่อง</a><a href="#" aria-current="page">สินค้าและราคา</a><a href="#">สำหรับธุรกิจ</a><a href="#">ติดต่อ</a></nav>
+    <div class="hright">
+      <button class="ibtn" type="button" aria-label="ค้นหา"><svg class="ico"><use href="#i-search"/></svg></button>
+      <button class="ibtn" type="button" aria-label="ตะกร้า"><svg class="ico"><use href="#i-cart"/></svg></button>
+      <button class="lang" type="button" aria-label="เปลี่ยนภาษา"><svg class="ico" style="width:18px;height:18px"><use href="#i-globe"/></svg>TH</button>
+      <button class="avatar" type="button" aria-label="บัญชี Piyapan Pakpisitjaloen" title="Piyapan Pakpisitjaloen">PP</button>
+      <a class="btn btn-primary cta" href="#">เริ่มออกแบบฟรี</a>
+      <button class="ibtn menu-btn" type="button" aria-label="เปิดเมนู"><svg class="ico"><use href="#i-menu"/></svg></button>
+    </div>
+  </div>
+</header>
+
+<main>
+  <div class="wrap head" style="padding-block:24px 0">
+    <nav class="crumbs" aria-label="breadcrumb"><a href="#">หน้าแรก</a><span aria-hidden="true">/</span><a href="#">สินค้าและราคา</a><span aria-hidden="true">/</span><a href="#">กล่องกระดาษลูกฟูก</a><span aria-hidden="true">/</span><span>กล่องไปรษณีย์ ฝาชน 3 ชั้น (ลอน B)</span></nav>
+  </div>
+
+  <div class="wrap pdp">
+    <div class="gallery">
+      <div class="gmain" id="gmain"></div>
+      <div class="thumbs" id="thumbs" role="group" aria-label="มุมมองภาพ"></div>
+    </div>
+
+    <div class="buy">
+      <div style="display:flex;flex-direction:column;gap:8px">
+        <a class="catl" href="#">กล่องกระดาษลูกฟูก</a>
+        <h1>กล่องไปรษณีย์ ฝาชน 3 ชั้น (ลอน B)</h1>
+        <p class="desc">กล่องพัสดุขนาดมาตรฐานยอดนิยมสำหรับร้านค้าออนไลน์ เลือกเบอร์มาตรฐาน 11 ขนาดหรือกำหนดเอง พิมพ์โลโก้สีดำหรือ 4 สี</p>
+        <div class="pills"><span class="pill instant"><svg class="ico" style="width:13px;height:13px"><use href="#i-bolt"/></svg>ราคาทันที</span><span class="pill">กล่องฝาชน (RSC)</span><span class="pill">ขั้นต่ำ 100 ชิ้น</span><span class="pill">ผลิต 5 วันทำการ</span></div>
+      </div>
+
+      <div class="pricebox" aria-live="polite">
+        <div><div class="pbig" id="pbig"></div></div>
+        <div class="psub" id="psub"></div>
+
+        <div><div class="opt-h"><span>ขนาด</span><small id="sizeTxt"></small></div><div class="sizes" id="sizes"></div></div>
+        <div><div class="opt-h"><span>วัสดุ</span><a href="#flutes" style="font-size:12.5px;color:var(--brand);font-weight:500">เลือกลอนอย่างไร</a></div><div class="mats" id="mats"></div></div>
+        <div><div class="opt-h"><span>สีพิมพ์ด้านนอก</span></div><div class="chips" id="prints"></div></div>
+        <div><div class="opt-h"><span>จำนวน</span><small>ราคาต่อชิ้นลดเมื่อสั่งมาก</small></div><div class="qtys" id="qtys"></div></div>
+
+        <div class="ctas">
+          <a class="btn btn-primary" href="#" id="ctaMain">ปรับแต่งต่อและสั่งซื้อ</a>
+          <button class="btn btn-ghost" type="button" id="ctaQuote"><svg class="ico" style="width:16px;height:16px"><use href="#i-save"/></svg>บันทึกใบเสนอราคา</button>
+          <button class="btn btn-ghost" type="button" id="ctaDie"><svg class="ico" style="width:16px;height:16px"><use href="#i-down"/></svg>แบบกล่องเบอร์นี้</button>
+          <a class="btn btn-ghost" href="#"><svg class="ico" style="width:16px;height:16px"><use href="#i-chat"/></svg>สอบถาม</a>
+        </div>
+        <ul class="assure" id="assure"></ul>
+      </div>
+    </div>
+  </div>
+
+  <nav class="secnav" aria-label="ส่วนของหน้า"><div class="wrap" id="secnav">
+    <a href="#size">ขนาด</a><a href="#price">ราคาตามจำนวน</a><a href="#flutes">วัสดุและการพิมพ์</a><a href="#design">งานออกแบบ</a><a href="#how">ขั้นตอนสั่งซื้อ</a><a href="#reviews">รีวิว</a><a href="#faq">คำถามที่พบบ่อย</a>
+  </div></nav>
+
+  <section class="wrap sec" id="size" aria-labelledby="szT">
+    <div class="sec-h"><div><h2 id="szT">ขนาดทั้ง 11 เบอร์</h2><p>ขนาดภายในคือพื้นที่ใส่สินค้า ขนาดภายนอกคำนวณจากความหนาวัสดุ 3 มม. เป็นขนาดอ้างอิง ทีมงานยืนยันอีกครั้งตอนทำแบบ</p></div><a class="btn btn-ghost" href="#">หาเบอร์จากขนาดสินค้า</a></div>
+    <div class="tablewrap"><table class="dimt"><thead><tr><th>เบอร์</th><th>ภายใน ยาว × กว้าง × สูง (มม.)</th><th>ภายนอก (มม.)</th><th>เทียบขนาด</th><th class="r">ราคา/ชิ้น ที่ <span id="qLab">300</span> ชิ้น</th><th></th></tr></thead><tbody id="dimRows"></tbody></table></div>
+    <div class="xlink" style="margin-top:12px;display:grid;grid-template-columns:auto minmax(0,1fr) auto;gap:18px;align-items:center;padding:20px 22px;border-radius:var(--r-lg);border:1px solid var(--line);background:var(--surface)"><svg class="ico" style="width:44px;height:44px;padding:10px;border-radius:12px;background:var(--surface-2);color:var(--fg-2)"><use href="#i-scale"/></svg><span><b style="font:600 16px var(--f-display);display:block">ไม่ตรงกับเบอร์มาตรฐาน?</b><small style="color:var(--fg-2);font-size:14px">กำหนดกว้าง × ยาว × สูงได้เอง ระบบสร้างแผ่นคลี่และคำนวณราคาให้ทันที</small></span><a class="btn btn-ghost" href="#">กำหนดขนาดเอง</a></div>
+  </section>
+
+  <section class="wrap sec" id="price" aria-labelledby="prT">
+    <div class="sec-h"><div><h2 id="prT">ราคาตามจำนวน</h2><p id="prSub"></p></div></div>
+    <div class="two">
+      <div class="card2"><table class="tiers2"><thead><tr><th>จำนวน</th><th>ต่อชิ้น</th><th>รวม</th></tr></thead><tbody id="tierRows"></tbody></table></div>
+      <div class="card2"><h3>อ่านราคาอย่างไร</h3><ul class="assure">
+        <li><svg class="ico"><use href="#i-check"/></svg><span>ราคา<b>รวม VAT 7% แล้ว</b> ยังไม่รวมค่าจัดส่ง ใส่รหัสไปรษณีย์ในขั้นปรับแต่งเพื่อดูค่าส่ง</span></li>
+        <li><svg class="ico"><use href="#i-save"/></svg><span>บันทึกเป็นใบเสนอราคาแล้ว <b>ราคาคงที่ 15 วัน</b></span></li>
+        <li><svg class="ico"><use href="#i-scale"/></svg><span>จำนวนที่ได้รับอาจ<b>น้อยหรือมากกว่าได้ 5%</b> ตามมาตรฐานการผลิต ส่วนที่ขาดคืนเป็นเครดิต</span></li>
+        <li><svg class="ico"><use href="#i-shield"/></svg><span>รับประกันงาน ดูเกณฑ์ในหน้า<a href="#" style="color:var(--brand)">การรับประกันงาน</a></span></li>
+      </ul></div>
+    </div>
+  </section>
+
+  <section class="wrap sec" id="flutes" aria-labelledby="flT">
+    <div class="sec-h"><div><h2 id="flT">วัสดุและการพิมพ์</h2><p>ตัวเลือกที่สินค้านี้รองรับ</p></div><a class="btn btn-ghost" href="#">เปรียบเทียบวัสดุ</a></div>
+    <div class="tablewrap"><table class="mtable"><thead><tr><th>วัสดุ</th><th>ลอน</th><th>เหมาะกับ</th></tr></thead><tbody id="matRows"></tbody></table></div>
+    <div class="two" style="margin-top:12px">
+      <div class="card2"><h3>พิมพ์สีดำ</h3><p style="margin:0;color:var(--fg-2);font-size:14px">โลโก้และข้อความสีเดียว ประหยัด เหมาะกับกล่องคราฟท์ที่ต้องการลุคเรียบ</p></div>
+      <div class="card2"><h3>พิมพ์ 4 สี (CMYK)</h3><p style="margin:0;color:var(--fg-2);font-size:14px">พิมพ์ภาพและสีแบรนด์ได้ครบ บนผิวคราฟท์สีจะออกโทนอุ่นกว่าบนกระดาษขาว</p></div>
+    </div>
+  </section>
+
+  <section class="wrap sec" id="design" aria-labelledby="dsT">
+    <div class="sec-h"><div><h2 id="dsT">งานออกแบบลายกล่อง</h2><p>เลือกวิธีที่สะดวก ทุกทางใช้แบบกล่องของเบอร์ที่เลือก</p></div></div>
+    <div class="paths">
+      <div class="path"><svg class="ico"><use href="#i-upload"/></svg><b>มีไฟล์งานแล้ว</b><p>ดาวน์โหลดแบบกล่องฟรี วางงานในโปรแกรมของคุณ แล้วอัปโหลดกลับมา</p><a class="btn btn-ghost" href="#">อัปโหลดไฟล์</a></div>
+      <div class="path"><svg class="ico"><use href="#i-pencil"/></svg><b>ออกแบบในสตูดิโอ</b><p>วางโลโก้ ข้อความ และภาพบนกล่องจริงในเบราว์เซอร์ เห็นผลแบบ 3 มิติ</p><a class="btn btn-ghost" href="#">เปิดสตูดิโอ</a></div>
+      <div class="path"><svg class="ico"><use href="#i-palette"/></svg><b>ให้ทีมออกแบบ</b><p>บริการออกแบบกราฟิกบรรจุภัณฑ์จากโลโก้และข้อมูลแบรนด์ของคุณ ราคาตามขอบเขตงาน</p><a class="btn btn-ghost" href="#">ดูบริการ</a></div>
+    </div>
+  </section>
+
+  <section class="wrap sec" id="how" aria-labelledby="hwT">
+    <div class="sec-h"><div><h2 id="hwT">ขั้นตอนสั่งซื้อ</h2><p>7 ขั้นในหน้าปรับแต่ง ค่าที่เลือกในหน้านี้จะถูกตั้งไว้ให้แล้ว</p></div></div>
+    <div class="flow" id="flow"></div>
+  </section>
+
+  <section class="wrap sec" id="reviews" aria-labelledby="rvT">
+    <div class="sec-h"><div><h2 id="rvT">รีวิวจากคำสั่งซื้อจริง</h2><p>รับรีวิวเฉพาะจากลูกค้าที่ได้รับสินค้าแล้ว แต่ละรีวิวแสดงเบอร์ จำนวน และสเปกที่สั่ง</p></div>
+      <div class="tabs" role="group" aria-label="สถานะตัวอย่าง"><button type="button" data-rv="empty" aria-pressed="false">ยังไม่มีรีวิว</button><button type="button" data-rv="has" aria-pressed="true">โครงเมื่อมีรีวิว</button></div></div>
+    <div id="rvBody"></div>
+  </section>
+
+  <section class="wrap sec" id="faq" aria-labelledby="faqT">
+    <div class="sec-h"><div><h2 id="faqT">คำถามที่พบบ่อย</h2></div></div>
+    <div class="faq" id="faqList"></div>
+  </section>
+
+  <section class="wrap sec" aria-labelledby="relT" style="padding-bottom:96px">
+    <div class="sec-h"><div><h2 id="relT">สินค้าอื่นในหมวดกล่องกระดาษลูกฟูก</h2></div><a class="btn btn-ghost" href="#">ดูทั้งหมวด</a></div>
+    <div class="rel" id="rel"></div>
+  </section>
+</main>
+
+<div class="mbar" id="mbar"></div>
+<div class="chat"><div class="chat-pop" id="chatPop" hidden><h3>คุยกับทีม getpack</h3><p>ถามเรื่องขนาด วัสดุ หรือส่งไฟล์ให้ทีมตรวจ ทาง LINE ทุกวัน 09:00–18:00 น.</p><a class="btn btn-primary" href="#" style="width:100%;background:#06C755;color:#fff">เปิด LINE</a></div><button type="button" id="chatBtn" aria-expanded="false" aria-controls="chatPop"><svg class="ico"><use href="#i-chat"/></svg><span>คุยทาง LINE</span></button></div>
+<div class="toast" id="toast" hidden></div>
+
+<dialog id="notes" aria-labelledby="notesTitle">
+  <div class="dlg-h"><h2 id="notesTitle">สิ่งที่เปลี่ยนในหน้านี้</h2><button class="ibtn" type="button" id="notesClose" aria-label="ปิด"><svg class="ico"><use href="#i-x"/></svg></button></div>
+  <div class="dlg-b">
+    <h3>สิ่งที่เจอ (หน้าสินค้า + หน้าปรับแต่ง /configure)</h3>
+    <ul>
+      <li><b>ราคาไม่ตรงกัน (ควรแก้ด่วน):</b> หน้ารายการและหน้าสินค้าบอก "เริ่มต้น ฿15.70 ที่ 300 ชิ้น" แต่หน้าปรับแต่งที่ค่าเริ่มต้น (เบอร์ 00 · KA125 ลอน B · พิมพ์ดำ) คิด ฿17.26 ที่ 300 ชิ้น ลูกค้าเห็นราคาเพิ่มทันทีที่กดเข้าไป ทำลายความเชื่อใจ · ราคาอ้างอิงยังระบุ "พิมพ์ 4 สี" ซึ่งไม่ใช่ค่าเริ่มต้นของหน้าปรับแต่ง</li>
+      <li>ราคาต่อชิ้นที่ 100 / 300 / 500 ชิ้นเท่ากัน (฿17.26) แล้วลดที่ 1,000 ชิ้น (฿14.96) ถ้าตั้งใจ ควรบอกลูกค้าว่า "ราคาเท่ากันถึง 500 ชิ้น" ไม่เช่นนั้นตรวจสอบตารางราคา</li>
+      <li>คำอธิบายบอก "พิมพ์โลโก้ 1–2 สี" แต่ตัวเลือกมี "ดำ · พิมพ์ 4 สี"</li>
+      <li>สเปกอ้างอิงเขียน "กว้าง × ยาว × ลึก 97.5 × 140 × 60" แต่ตารางเขียน "ยาว × กว้าง × สูง 140 × 97.5 × 60" ลำดับและคำไม่ตรงกัน</li>
+      <li>"ดาวน์โหลดแบบกล่อง" ไปหน้า /templates ทั่วไป ไม่ใช่ไฟล์ของสินค้าและเบอร์นี้</li>
+      <li>หน้าสินค้ามีเพียงสเปกแบบข้อความ ต้องกดไปหน้าปรับแต่งก่อนถึงจะเห็นราคาของเบอร์/จำนวนที่ต้องการ · ฝั่งซ้ายเว้นว่างยาวใต้ภาพ</li>
+      <li>หน้าปรับแต่งมีของดีที่หน้าสินค้ายังไม่ใช้: ราคาตามจำนวน วันพร้อมจัดส่ง ขนาดภายใน/ภายนอก การยืนราคา 15 วัน และเงื่อนไขจำนวน ±5%</li>
+    </ul>
+    <h3>สิ่งที่ออกแบบใหม่</h3>
+    <ul>
+      <li><b>กล่องซื้อ (buy box)</b> เลือกเบอร์ วัสดุ สีพิมพ์ จำนวน แล้วเห็นราคาต่อชิ้นและยอดรวมทันที ก่อนเข้าหน้าปรับแต่ง (ค่าที่เลือกส่งต่อไปเป็นค่าเริ่มต้น)</li>
+      <li>ข้อความความมั่นใจจากหน้าปรับแต่ง: พร้อมจัดส่งเร็วสุด วันที่ · จำนวน ±5% คืนเครดิต · ราคาคงที่ 15 วัน · รับประกันงาน</li>
+      <li>ปุ่มรอง: <b>บันทึกใบเสนอราคา</b> · <b>แบบกล่องเบอร์นี้</b> (ไฟล์ของเบอร์ที่เลือก) · สอบถาม</li>
+      <li><b>รอบที่ 2: รีวิวจากคำสั่งซื้อจริง</b> รับเฉพาะคำสั่งซื้อที่ส่งของแล้ว ติดป้าย "คำสั่งซื้อที่ยืนยันแล้ว" แสดงเบอร์/จำนวน/สเปกที่สั่ง แนบรูปกล่องจริงได้ กรองตามเบอร์ได้ · ต้นแบบแสดงเป็นโครงสีเทา ไม่มีข้อความรีวิวสมมติ · ระบบจริงซ่อนทั้งส่วน (และไม่ใส่ AggregateRating ใน JSON-LD) จนกว่าจะมีรีวิวถึงเกณฑ์ เช่น 3 รีวิว</li>
+      <li>แกลเลอรีติดด้านซ้าย มีมุมมองภาพ / ขนาดจริง (แสดงมิติของเบอร์ที่เลือก) แก้ช่องว่างฝั่งซ้าย</li>
+      <li>ส่วนล่าง: ตารางขนาดทั้ง 11 เบอร์ พร้อมภายใน/ภายนอกและราคาต่อเบอร์ · ตารางราคาตามจำนวน · วัสดุและการพิมพ์ · 3 ทางทำงานออกแบบ · ขั้นตอน 7 ขั้นของหน้าปรับแต่ง · FAQ · สินค้าที่เกี่ยวข้อง</li>
+      <li>มือถือ: แถบราคาและปุ่มสั่งติดด้านล่าง</li>
+    </ul>
+    <p class="note">ข้อมูลจริง: ชื่อ คำอธิบาย ราคาตามจำนวนของสเปกเริ่มต้น (100–500 ฿17.26, 1,000 ฿14.96) ขนาด 11 เบอร์ ขนาดภายนอกจากความหนา 3 มม. วัสดุ 4 แบบ สีพิมพ์ 2 แบบ ระยะผลิต วันพร้อมส่ง (คิดแบบเดียวกับหน้าปรับแต่ง) เงื่อนไข ±5% ยืนราคา 15 วัน และขั้นตอน 7 ขั้น · ราคาตัวอย่าง: เบอร์อื่นนอกจาก 00 วัสดุอื่นนอกจาก KA125 ลอน B และพิมพ์ 4 สี (ติดป้าย "ราคาตัวอย่าง") · ภาพสินค้าเป็นภาพวาดแทนรูปจริง</p>
+  </div>
+</dialog>
+
+<script>
+(()=>{
+/* ---------- isometric illustration engine ---------- */
+const MAT={
+  white:{t:'#FCFBF8',l:'#ECE9E2',r:'#DAD6CD',in:'#E2DED5'},
+  kraft:{t:'#DEC096',l:'#CCA778',r:'#B89263',in:'#C29C6B'},
+  rigid:{t:'#F5F3EF',l:'#E3DFD7',r:'#CEC9BF',in:'#D8D3C9'},
+  green:{t:'#3C7A61',l:'#2D634E',r:'#224E3D',in:'#285A47'}
+};
+const P=(x,y,z)=>[(x-y)*0.866,(x+y)*0.5-z];
+const F=a=>a.map(p=>P(p[0],p[1],p[2]));
+const HOLE='#4E4B45', WIN='rgba(150,190,205,.5)';
+function box(I,x,y,z,w,d,h,c){I.push(
+  {p:F([[x,y+d,z],[x+w,y+d,z],[x+w,y+d,z+h],[x,y+d,z+h]]),f:c.l},
+  {p:F([[x+w,y,z],[x+w,y+d,z],[x+w,y+d,z+h],[x+w,y,z+h]]),f:c.r},
+  {p:F([[x,y,z+h],[x+w,y,z+h],[x+w,y+d,z+h],[x,y+d,z+h]]),f:c.t})}
+function tray(I,x,y,z,w,d,h,c){I.push(
+  {p:F([[x,y,z],[x+w,y,z],[x+w,y+d,z],[x,y+d,z]]),f:c.in},
+  {p:F([[x,y,z],[x+w,y,z],[x+w,y,z+h],[x,y,z+h]]),f:c.l},
+  {p:F([[x,y,z],[x,y+d,z],[x,y+d,z+h],[x,y,z+h]]),f:c.r},
+  {p:F([[x,y+d,z],[x+w,y+d,z],[x+w,y+d,z+h],[x,y+d,z+h]]),f:c.l},
+  {p:F([[x+w,y,z],[x+w,y+d,z],[x+w,y+d,z+h],[x+w,y,z+h]]),f:c.r})}
+const pl=(I,a,f)=>I.push({p:F(a),f});
+function sell(cx,cy,rx,ry,n=40,a0=0,a1=Math.PI*2){const o=[];for(let i=0;i<=n;i++){const a=a0+(a1-a0)*i/n;o.push([cx+rx*Math.cos(a),cy+ry*Math.sin(a)])}return o}
+function hole(I,x,y,z,rx,ry){const c=P(x,y,z);I.push({p:sell(c[0],c[1],rx,ry,24),f:HOLE,o:.85})}
+function cyl(I,cx,cy,z,r1,r2,h,c,open){
+  const B=P(cx,cy,z),T=P(cx,cy,z+h),bx=1.2247*r1,by=.7071*r1,tx=1.2247*r2,ty=.7071*r2;
+  const body=[[T[0]-tx,T[1]],...sell(B[0],B[1],bx,by,30,Math.PI,0),[T[0]+tx,T[1]],...sell(T[0],T[1],tx,ty,30,0,Math.PI)];
+  I.push({p:body,f:c.l});
+  I.push({p:sell(T[0],T[1],tx,ty),f:open?c.in:c.t});
+}
+const SH={
+  cone(I,c){cyl(I,0,0,0,7,19,42,c,true);},
+  tube(I,c){cyl(I,0,0,0,13,13,38,c);cyl(I,0,0,32,14,14,16,c);},
+  gable(I,c){box(I,0,0,0,24,16,32,c);pl(I,[[0,16,32],[24,16,32],[24,8,42],[0,8,42]],c.t);pl(I,[[24,0,32],[24,16,32],[24,8,42]],c.r);hole(I,12,8,40,1.6,1);},
+  book(I,c){pl(I,[[0,0,10],[34,0,10],[34,-5,40],[0,-5,40]],c.l);tray(I,0,0,0,34,26,10,c);box(I,4,4,0,26,18,5,{t:c.in,l:c.l,r:c.r});},
+  doors(I,c){box(I,0,0,0,28,22,30,c);pl(I,[[2,22,2],[26,22,2],[26,22,28],[2,22,28]],c.in);pl(I,[[0,22,0],[-3,36,0],[-3,36,30],[0,22,30]],c.l);pl(I,[[28,22,0],[33,34,0],[33,34,30],[28,22,30]],c.r);},
+  lid(I,c){box(I,0,0,0,32,24,13,c);box(I,-1,-1,9,34,26,7,c);pl(I,[[6,25,10.5],[26,25,10.5],[26,25,14.5],[6,25,14.5]],WIN);},
+  flip(I,c){pl(I,[[0,0,12],[32,0,12],[32,-8,37],[0,-8,37]],c.l);tray(I,0,0,0,32,24,12,c);box(I,3,3,0,26,18,7,{t:c.in,l:c.l,r:c.r});},
+  fold(I,c){box(I,0,0,0,32,24,15,c);pl(I,[[0,24.3,8],[32,24.3,8],[32,24.3,15],[0,24.3,15]],c.r);pl(I,[[14,24.4,10.5],[18,24.4,10.5],[18,24.4,12],[14,24.4,12]],c.t);},
+  shoulder(I,c){box(I,0,0,0,26,26,15,c);box(I,1.5,1.5,15,23,23,7,{t:c.in,l:c.r,r:c.r});box(I,0,0,23,26,26,11,c);},
+  drawer(I,c){box(I,0,0,0,30,22,12,c);tray(I,30,1.5,.5,14,19,11,c);hole(I,44,11,6,1.1,1.8);},
+  hanger(I,c){pl(I,[[1,8,38],[11,8,38],[11,8,47],[1,8,47]],c.l);hole(I,6,8,44,1.8,1);box(I,0,0,0,12,16,38,c);pl(I,[[2.5,16,10],[9.5,16,10],[9.5,16,28],[2.5,16,28]],WIN);},
+  cake(I,c){box(I,0,0,0,30,30,16,c);pl(I,[[7,7,16],[23,7,16],[23,23,16],[7,23,16]],WIN);pl(I,[[15,3,16],[15,27,16],[15,22,26],[15,8,26]],c.r);hole(I,15,15,22.5,3.4,1.6);},
+  display(I,c){pl(I,[[0,0,0],[30,0,0],[30,22,0],[0,22,0]],c.in);pl(I,[[0,0,0],[30,0,0],[30,0,30],[0,0,30]],c.l);pl(I,[[0,0,0],[0,22,0],[0,22,8],[0,0,30]],c.r);pl(I,[[0,22,0],[30,22,0],[30,22,8],[0,22,8]],c.l);pl(I,[[30,0,0],[30,22,0],[30,22,8],[30,0,30]],c.r);},
+  tear(I,c){pl(I,[[4,7,34],[14,7,34],[14,7,41],[4,7,41]],c.l);hole(I,9,7,38.5,1.6,1);box(I,0,0,0,18,14,34,c);I.push({ln:F([[0,14,25],[18,14,25]])},{ln:F([[18,0,25],[18,14,25]])});},
+  header(I,c){pl(I,[[0,0,8],[32,0,8],[32,0,32],[0,0,32]],c.l);pl(I,[[4,0,22],[28,0,22],[28,0,28],[4,0,28]],'#2E6B54');tray(I,0,0,0,32,22,8,c);},
+  mailer(I,c){pl(I,[[0,0,12],[34,0,12],[34,-9,34],[0,-9,34]],c.l);pl(I,[[0,-9,34],[34,-9,34],[34,-4,36],[0,-4,36]],c.t);tray(I,0,0,0,34,24,12,c);},
+  pyramid(I,c){pl(I,[[0,28,0],[28,28,0],[14,14,34]],c.l);pl(I,[[28,0,0],[28,28,0],[14,14,34]],c.r);hole(I,14,14,30,1.1,.8);},
+  tissue(I,c){box(I,0,0,0,34,20,14,c);const q=P(17,10,14);I.push({p:sell(q[0],q[1],9,2.6),f:HOLE,o:.8});},
+  fruit(I,c){tray(I,0,0,0,34,24,16,c);pl(I,[[12,24,10],[22,24,10],[22,24,13],[12,24,13]],HOLE);hole(I,34,7,8,.8,1.2);hole(I,34,12,8,.8,1.2);hole(I,34,17,8,.8,1.2);},
+  halfslot(I,c){box(I,0,0,0,34,24,18,c);box(I,-1,-1,13,36,26,6,c);pl(I,[[34,9,6],[34,15,6],[34,15,9],[34,9,9]],HOLE);}
+};
+const svgCache={};
+function art(shape,mat){
+  const k=shape+mat; if(svgCache[k]) return svgCache[k];
+  const I=[]; SH[shape](I,MAT[mat]);
+  let x0=1e9,y0=1e9,x1=-1e9,y1=-1e9;
+  I.forEach(it=>(it.p||it.ln).forEach(([x,y])=>{x0=Math.min(x0,x);y0=Math.min(y0,y);x1=Math.max(x1,x);y1=Math.max(y1,y)}));
+  const w=x1-x0,h=y1-y0,s=Math.max(w,h),pad=s*.08,cx=(x0+x1)/2,cy=(y0+y1)/2;
+  const vb=[cx-s/2-pad,cy-s/2-pad,s+pad*2,s+pad*2].map(n=>n.toFixed(2)).join(' ');
+  const pts=a=>a.map(p=>p[0].toFixed(2)+','+p[1].toFixed(2)).join(' ');
+  let out=`<ellipse cx="${cx.toFixed(2)}" cy="${(y1-.6).toFixed(2)}" rx="${(w*.42).toFixed(2)}" ry="${(w*.07).toFixed(2)}" fill="#000" opacity=".09"/>`;
+  I.forEach(it=>{ if(it.ln) out+=`<polyline points="${pts(it.ln)}" fill="none" stroke="rgba(40,40,36,.45)" stroke-width=".5" stroke-dasharray="1.4 1"/>`;
+    else out+=`<polygon points="${pts(it.p)}" fill="${it.f}"${it.o?` fill-opacity="${it.o}"`:''} stroke="rgba(30,34,31,.3)" stroke-width=".35" stroke-linejoin="round"/>`;});
+  return svgCache[k]=`<svg viewBox="${vb}" aria-hidden="true">${out}</svg>`;
+}
+
+
+/* extra iso shapes for products */
+Object.assign(SH,{
+  bigbox(I,c){box(I,0,0,0,32,24,22,c);pl(I,[[0,24,22],[32,24,22],[32,24,22.4],[0,24,22.4]],c.r);I.push({ln:F([[0,12,22],[32,12,22]])});},
+  mailerclosed(I,c){box(I,0,0,0,32,24,13,c);I.push({ln:F([[0,12,13],[32,12,13]])});},
+  tall(I,c){box(I,0,0,0,10,10,30,c);},
+  slim(I,c){box(I,0,0,0,7,7,26,c);},
+  med(I,c){box(I,0,0,0,16,12,22,c);},
+  flat(I,c){box(I,0,0,0,26,18,8,c);},
+  cube(I,c){box(I,0,0,0,18,18,18,c);},
+  wide(I,c){box(I,0,0,0,28,12,14,c);},
+  cards(I,c){box(I,0,0,0,24,16,.8,c);box(I,1.5,-1,.8,24,16,.8,c);box(I,3,-2,1.6,24,16,.8,c);},
+  clam(I,c){box(I,0,0,0,26,20,9,c);pl(I,[[0,20,9],[26,20,9],[26,20,11],[0,20,11]],c.l);}
+});
+const MAT2={...MAT,bagasse:{t:'#F1EADB',l:'#E3D9C4',r:'#D2C6AE',in:'#DDD2BC'}};
+Object.assign(MAT,MAT2);
+/* flat illustrations */
+const FLAT={
+  roundsticker:`<svg viewBox="0 0 100 100"><circle cx="50" cy="52" r="34" fill="#fff" stroke="rgba(0,0,0,.15)"/><circle cx="50" cy="52" r="22" fill="#2E6B54" opacity=".85"/><path d="M40 52h20M50 42v20" stroke="#fff" stroke-width="4" stroke-linecap="round"/></svg>`,
+  rectlabel:`<svg viewBox="0 0 100 100"><rect x="14" y="20" width="72" height="60" rx="4" fill="#fff" stroke="rgba(0,0,0,.15)"/><g fill="#E9E6DF"><rect x="20" y="26" width="28" height="22" rx="5"/><rect x="52" y="26" width="28" height="22" rx="5"/><rect x="20" y="52" width="28" height="22" rx="5"/><rect x="52" y="52" width="28" height="22" rx="5"/></g></svg>`,
+  bottle:`<svg viewBox="0 0 100 100"><rect x="42" y="8" width="16" height="12" rx="2" fill="#5B7A90"/><path d="M40 20h20v8c8 4 12 10 12 18v42a4 4 0 0 1-4 4H32a4 4 0 0 1-4-4V46c0-8 4-14 12-18z" fill="#DCEAF0" stroke="rgba(0,0,0,.15)"/><rect x="28" y="50" width="44" height="22" fill="#2E6B54"/><path d="M36 61h28" stroke="#fff" stroke-width="3"/></svg>`,
+  pplabel:`<svg viewBox="0 0 100 100"><rect x="30" y="14" width="40" height="16" rx="3" fill="#B9B4AA"/><rect x="26" y="30" width="48" height="56" rx="6" fill="#F6F4EF" stroke="rgba(0,0,0,.15)"/><rect x="30" y="44" width="40" height="28" rx="2" fill="rgba(160,200,215,.35)" stroke="rgba(0,0,0,.12)"/><path d="M38 58h24" stroke="#5B7A90" stroke-width="3"/></svg>`,
+  seal:`<svg viewBox="0 0 100 100"><path d="M14 40l36-18 36 18v34L50 92 14 74z" fill="#CCA778"/><path d="M14 40l36 18 36-18" fill="none" stroke="rgba(0,0,0,.18)"/><circle cx="50" cy="56" r="14" fill="#fff" stroke="rgba(0,0,0,.15)"/></svg>`,
+  hangtag:`<svg viewBox="0 0 100 100"><path d="M36 22h28l8 10v52H28V32z" fill="#FBFAF7" stroke="rgba(0,0,0,.18)"/><circle cx="50" cy="32" r="3.5" fill="#888"/><path d="M50 28C46 14 58 8 62 4" fill="none" stroke="#C0392B" stroke-width="1.5"/><path d="M38 54h24M38 62h16" stroke="#2E6B54" stroke-width="3"/></svg>`,
+  jar:`<svg viewBox="0 0 100 100"><rect x="24" y="26" width="52" height="14" rx="4" fill="#C9A24A"/><rect x="22" y="40" width="56" height="44" rx="10" fill="#F2F4F5" stroke="rgba(0,0,0,.15)"/><rect x="30" y="46" width="40" height="32" rx="6" fill="#fff" stroke="rgba(0,0,0,.08)"/></svg>`,
+  airbag:`<svg viewBox="0 0 100 100"><g fill="rgba(170,205,225,.55)" stroke="rgba(60,100,130,.35)"><rect x="18" y="16" width="12" height="70" rx="6"/><rect x="31" y="16" width="12" height="70" rx="6"/><rect x="44" y="16" width="12" height="70" rx="6"/><rect x="57" y="16" width="12" height="70" rx="6"/><rect x="70" y="16" width="12" height="70" rx="6"/></g></svg>`,
+  airless:`<svg viewBox="0 0 100 100"><rect x="42" y="8" width="16" height="10" rx="2" fill="#E8E8E6" stroke="rgba(0,0,0,.15)"/><rect x="38" y="18" width="24" height="14" rx="3" fill="#D9D9D6"/><rect x="36" y="32" width="28" height="58" rx="6" fill="#FFFFFF" stroke="rgba(0,0,0,.15)"/></svg>`,
+  dropper:`<svg viewBox="0 0 100 100"><rect x="44" y="6" width="12" height="16" rx="6" fill="#1F2421"/><rect x="40" y="22" width="20" height="12" rx="2" fill="#2B302D"/><path d="M42 34h16v6c8 3 12 8 12 14v32a4 4 0 0 1-4 4H34a4 4 0 0 1-4-4V54c0-6 4-11 12-14z" fill="#8A5A22" opacity=".9"/><rect x="34" y="58" width="32" height="18" fill="#F3EEE4" opacity=".9"/></svg>`,
+  graphic:`<svg viewBox="0 0 100 100"><rect x="16" y="20" width="68" height="56" rx="6" fill="#fff" stroke="rgba(0,0,0,.15)"/><circle cx="38" cy="42" r="10" fill="#2E6B54" opacity=".85"/><path d="M24 70l18-16 12 10 10-8 16 14z" fill="#CCA778"/></svg>`,
+  plate:`<svg viewBox="0 0 100 100"><rect x="18" y="16" width="64" height="68" rx="3" fill="#C9CFD3" stroke="rgba(0,0,0,.2)"/><rect x="26" y="26" width="48" height="48" fill="#B3BBC1"/><path d="M32 38h36M32 48h36M32 58h24" stroke="#7F8A92" stroke-width="3"/></svg>`
+};
+const ill=d=>d.iso?art(d.iso[0],d.iso[1]):FLAT[d.flat];
+
+
+const $=s=>document.querySelector(s);
+const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const money=n=>n.toLocaleString('th-TH',{minimumFractionDigits:2,maximumFractionDigits:2});
+/* real data from /configure (default spec: 00 · KA125 B · ดำ) */
+const SIZES=[['00',140,97.5,60],['0',170,110,60],['0+4',170,110,100],['A',200,140,60],['2A',200,140,120],['B',250,170,90],['C',300,200,110],['C+8',300,200,190],['D',350,220,140],['E',400,240,170],['F',450,300,220]];
+const TIERS={100:17.26,300:17.26,500:17.26,1000:14.96}; /* VAT-incl., real */
+const MATS=[['KA125B','ลูกฟูก KA125 ลอน B (3 ชั้น)','ค่าเริ่มต้น ผิวคราฟท์สวย',1,'กล่องพัสดุทั่วไป ร้านออนไลน์'],['KT125B','ลูกฟูก KT125 ลอน B (3 ชั้น)','ผิวเกรดประหยัด',.95,'งานที่เน้นต้นทุน'],['KA185B','ลูกฟูก KA185 ลอน B (3 ชั้น)','ผิวหนา แข็งแรงขึ้น',1.12,'สินค้าหนักขึ้น'],['KA125E','ลูกฟูก KA125 ลอน E (3 ชั้น)','ลอนบาง พิมพ์คมกว่า',1.05,'กล่องเล็ก กล่องพิมพ์สวย']];
+const PRINTS=[['black','ดำ',1],['cmyk','พิมพ์ 4 สี (CMYK)',1.15]];
+const QTYS=[100,300,500,1000];
+const S={size:'00',mat:'KA125B',print:'black',qty:300,view:'photo'};
+const board=(L,W,H)=>(2*L+2*W+35)*(H+W);
+const A00=board(140,97.5,60);
+const isReal=()=>S.size==='00'&&S.mat==='KA125B'&&S.print==='black';
+function unit(q,size=S.size){const [,L,W,H]=SIZES.find(s=>s[0]===size);const base=TIERS[q];const f=size==='00'?1:Math.pow(board(L,W,H)/A00,.9);
+  return Math.round(base*f*MATS.find(m=>m[0]===S.mat)[3]*PRINTS.find(p=>p[0]===S.print)[2]*100)/100}
+function addWork(d,n){d=new Date(d);while(n>0){d.setDate(d.getDate()+1);const w=d.getDay();if(w!==0&&w!==6)n--}return d}
+const ready=()=>addWork(new Date(),5+1).toLocaleDateString('th-TH',{day:'numeric',month:'short',year:'numeric'});
+SIZES.forEach(([c,L,W,H])=>{SH['pz_'+c]=(I,m)=>{box(I,0,0,0,L/10,W/10,H/10,m);I.push({ln:F([[0,W/20,H/10],[L/10,W/20,H/10]])})}});
+
+function renderGallery(){
+  const [c,L,W,H]=SIZES.find(s=>s[0]===S.size);
+  const views=[['photo','ภาพสินค้า',art('bigbox','kraft')],['size','ขนาดจริง',art('pz_'+c,'kraft')],['open','เปิดกล่อง',art('mailer','kraft')],['print','ตัวอย่างพิมพ์',art('bigbox','white')]];
+  const v=views.find(x=>x[0]===S.view);
+  $('#gmain').innerHTML=v[2]+(S.view==='size'?`<span class="dimlab" style="left:18%;bottom:22%">ยาว ${L} มม.</span><span class="dimlab" style="right:16%;bottom:26%">กว้าง ${W} มม.</span><span class="dimlab" style="right:12%;top:38%">สูง ${H} มม.</span>`:'')+`<span class="cap">${S.view==='size'?'เบอร์ '+c+' · ขนาดภายใน':v[1]} · ภาพประกอบ</span>`;
+  $('#thumbs').innerHTML=views.map(([k,n,svg])=>`<button type="button" data-view="${k}" aria-pressed="${S.view===k}" aria-label="${n}">${svg}</button>`).join('');
+}
+$('#thumbs').addEventListener('click',e=>{const b=e.target.closest('[data-view]');if(!b)return;S.view=b.dataset.view;renderGallery()});
+
+function renderBuy(){
+  const u=unit(S.qty),tot=u*S.qty,u1=unit(1000),save=Math.round((1-unit(1000)/unit(100))*100);
+  const [c,L,W,H]=SIZES.find(s=>s[0]===S.size);
+  $('#pbig').innerHTML=`<b>฿${money(u)}</b><span>/ชิ้น · รวม ฿${money(tot)}</span>${isReal()?'':'<span class="samplechip">ราคาตัวอย่าง</span>'}`;
+  $('#psub').innerHTML=`${S.qty.toLocaleString('th-TH')} ชิ้น · เบอร์ ${c} · รวม VAT แล้ว · ไม่รวมค่าจัดส่ง`;
+  $('#sizeTxt').textContent=`ภายใน ${L} × ${W} × ${H} มม.`;
+  $('#sizes').innerHTML=SIZES.map(([k])=>`<button type="button" data-size="${k}" aria-pressed="${S.size===k}">${k}</button>`).join('')+`<button type="button" class="custom" data-custom>กำหนดเอง</button>`;
+  $('#mats').innerHTML=MATS.map(([k,n,d])=>`<button type="button" data-mat="${k}" aria-pressed="${S.mat===k}">${n.replace('ลูกฟูก ','')}<small>${d}</small></button>`).join('');
+  $('#prints').innerHTML=PRINTS.map(([k,n])=>`<button type="button" class="chip" data-print="${k}" aria-pressed="${S.print===k}">${n}</button>`).join('');
+  $('#qtys').innerHTML=QTYS.map(q=>`<button type="button" data-qty="${q}" aria-pressed="${S.qty===q}">${q.toLocaleString('th-TH')}<small>฿${money(unit(q))}</small></button>`).join('');
+  $('#assure').innerHTML=`<li><svg class="ico"><use href="#i-truck"/></svg><span>พร้อมจัดส่งเร็วสุด <b>${ready()}</b> · ผลิต 5 วันทำการ</span></li>
+    ${save>0?`<li><svg class="ico"><use href="#i-stack"/></svg><span>สั่ง 1,000 ชิ้น ราคาต่อชิ้นเหลือ <b>฿${money(u1)}</b> (ถูกกว่า ${save}%)</span></li>`:''}
+    <li><svg class="ico"><use href="#i-scale"/></svg><span>จำนวนอาจ ±5% ตามมาตรฐานการผลิต ส่วนที่ขาด<b>คืนเป็นเครดิต</b></span></li>
+    <li><svg class="ico"><use href="#i-save"/></svg><span>บันทึกเป็นใบเสนอราคา <b>ราคาคงที่ 15 วัน</b></span></li>`;
+  $('#ctaDie').innerHTML=`<svg class="ico" style="width:16px;height:16px"><use href="#i-down"/></svg>แบบกล่องเบอร์ ${c}`;
+  $('#mbar').innerHTML=`<div><b>฿${money(u)}</b>/ชิ้น<small>${S.qty.toLocaleString('th-TH')} ชิ้น · เบอร์ ${c} · รวม ฿${money(tot)}</small></div><a class="btn btn-primary" href="#">ปรับแต่งต่อ</a>`;
+  renderLower();
+}
+document.querySelector('.buy').addEventListener('click',e=>{
+  const t=e.target.closest('[data-size],[data-mat],[data-print],[data-qty],[data-custom]');if(!t)return;
+  if(t.dataset.size)S.size=t.dataset.size;if(t.dataset.mat)S.mat=t.dataset.mat;if(t.dataset.print)S.print=t.dataset.print;if(t.dataset.qty)S.qty=+t.dataset.qty;
+  if(t.hasAttribute('data-custom')){toast('ต้นแบบ: เปิดหน้าปรับแต่งที่แท็บ "กำหนดเอง"');return}
+  renderBuy();renderGallery();
+});
+$('#ctaQuote').addEventListener('click',()=>toast('ต้นแบบ: บันทึกใบเสนอราคา ราคาคงที่ 15 วัน'));
+$('#ctaDie').addEventListener('click',()=>toast('ต้นแบบ: ดาวน์โหลดไฟล์แบบกล่องของเบอร์ '+S.size));
+$('#ctaMain').addEventListener('click',e=>{e.preventDefault();toast(`ต้นแบบ: /configure/uat-postal-box-b?size=${S.size}&material=${S.mat}&print=${S.print}&qty=${S.qty}`)});
+
+function renderLower(){
+  const maxL=450;
+  $('#qLab').textContent=S.qty.toLocaleString('th-TH');
+  $('#dimRows').innerHTML=SIZES.map(([c,L,W,H])=>`<tr class="${c===S.size?'on':''}"><td class="code">${c}</td><td>${L} × ${W} × ${H}</td><td>${L+6} × ${W+6} × ${H+6}</td><td><svg width="120" height="34" viewBox="0 0 120 34" aria-hidden="true"><rect x="0" y="${34-H/220*30}" width="${L/maxL*118}" height="${H/220*30}" rx="2" fill="${c===S.size?'#2E7A5C':'#D5B489'}"/></svg></td><td class="r" style="text-align:right">฿${money(unit(S.qty,c))}${c==='00'&&S.mat==='KA125B'&&S.print==='black'?'':' <span class="samplechip">ตัวอย่าง</span>'}</td><td style="text-align:right"><button class="btn btn-ghost" type="button" data-pick="${c}">${c===S.size?'เลือกอยู่':'เลือกเบอร์นี้'}</button></td></tr>`).join('');
+  const mx=unit(100);
+  $('#tierRows').innerHTML=QTYS.map(q=>{const u=unit(q);return `<tr class="${q===S.qty?'on':''}"><td>${q.toLocaleString('th-TH')} ชิ้น</td><td><span class="bar" style="width:${Math.round(u/mx*80)}px"></span>฿${money(u)}</td><td>฿${money(u*q)}</td></tr>`}).join('');
+  const m=MATS.find(x=>x[0]===S.mat)[1],p=PRINTS.find(x=>x[0]===S.print)[1];
+  $('#prSub').innerHTML=`เบอร์ ${S.size} · ${m} · ${p} · รวม VAT ${isReal()?'':'<span class="samplechip">ราคาตัวอย่าง</span>'}`;
+}
+$('#size').addEventListener('click',e=>{const b=e.target.closest('[data-pick]');if(!b)return;S.size=b.dataset.pick;renderBuy();renderGallery();window.scrollTo({top:0,behavior:'smooth'})});
+
+$('#matRows').innerHTML=MATS.map(([k,n,d,f,use])=>`<tr><td><code>${n.replace('ลูกฟูก ','').replace(/ลอน.*$/,'')}</code> ${n.match(/ลอน.*$/)[0]}</td><td>${/ลอน E/.test(n)?'บาง ผิวเรียบ':'มาตรฐาน'}</td><td>${use}</td></tr>`).join('');
+$('#flow').innerHTML=['ขนาดและรูปแบบ','วัสดุ','การพิมพ์','จำนวน','การจัดส่ง','งานออกแบบและตัวอย่าง','สรุปและบันทึก'].map((n,i)=>`<div><span class="n">${String(i+1).padStart(2,'0')}</span><b>${n}</b><small>${i<4?'ตั้งจากหน้านี้':i===4?'ใส่รหัสไปรษณีย์':i===5?'อัปโหลด สตูดิโอ หรือจ้างออกแบบ':'ใบเสนอราคาหรือสั่งซื้อ'}</small></div>`).join('');
+const FAQ=[
+ ['ราคาที่เห็นรวมอะไรบ้าง?','รวมค่ากล่องตามสเปกที่เลือกและ VAT 7% แล้ว ยังไม่รวมค่าจัดส่ง ใส่รหัสไปรษณีย์ในขั้นปรับแต่งเพื่อดูค่าส่ง'],
+ ['ขนาดในตารางเป็นขนาดภายในหรือภายนอก?','ตัวเลขเบอร์และขนาดหลักเป็นขนาดภายใน (พื้นที่ใส่สินค้า) ขนาดภายนอกคำนวณจากความหนาวัสดุ 3 มม. เป็นขนาดอ้างอิง ทีมงานยืนยันอีกครั้งตอนทำแบบ'],
+ ['ได้รับกล่องไม่ครบจำนวนทำอย่างไร?','จำนวนที่ได้รับอาจน้อยหรือมากกว่าได้ 5% ตามมาตรฐานการผลิต ส่วนที่ขาดคืนเป็นเครดิต'],
+ ['ราคาจะเปลี่ยนไหมถ้ายังไม่สั่งตอนนี้?','บันทึกเป็นใบเสนอราคาได้ ราคาคงที่ 15 วัน'],
+ ['ต้องมีไฟล์งานก่อนไหม?','ไม่จำเป็น ออกแบบในสตูดิโอได้ หรือใช้บริการออกแบบกราฟิก ถ้ามีไฟล์แล้วดาวน์โหลดแบบกล่องฟรีไปวางงานได้'],
+ ['ใช้เวลานานแค่ไหน?','ผลิต 5 วันทำการ หน้านี้แสดงวันที่พร้อมจัดส่งเร็วที่สุดตามวันที่สั่ง']];
+$('#faqList').innerHTML=FAQ.map(([q,a])=>`<details><summary>${q}<svg class="ico"><use href="#i-chev"/></svg></summary><p>${a}</p></details>`).join('');
+const REL=[['กล่องลูกฟูกผิวขาว ฝาชน พิมพ์โลโก้',33.83,5,['bigbox','white']],['ลังกระดาษขนย้าย 5 ชั้น (ลอน BC)',198.92,10,['bigbox','kraft']],['กล่องผลไม้ ฝาครอบ (ตัวกล่อง + ฝา)',123.06,5,['halfslot','kraft']],['ถาดลูกฟูกเปิดฝาบน (ถาดผัก / ถาดไข่)',136.65,5,['fruit','kraft']]];
+$('#rel').innerHTML=REL.map(([n,p,l,iso])=>`<article class="card"><div class="stage">${art(iso[0],iso[1])}<span class="badge instant"><svg class="ico"><use href="#i-bolt"/></svg>ราคาทันที</span></div><div class="cbody"><span class="cat-l">กล่องกระดาษลูกฟูก</span><h3><a href="#">${esc(n)}</a></h3><div class="pr"><small>เริ่มต้น</small><b>฿${money(p)}</b><span class="q">/ชิ้น</span></div><div class="meta"><span><svg class="ico"><use href="#i-clock"/></svg>ผลิต ${l} วันทำการ</span></div></div></article>`).join('');
+
+/* reviews: layout skeleton only — never sample review text */
+let RV='has';
+function renderReviews(){
+  document.querySelectorAll('[data-rv]').forEach(b=>b.setAttribute('aria-pressed',b.dataset.rv===RV));
+  if(RV==='empty'){$('#rvBody').innerHTML=`<div class="rv-empty"><b style="font:600 16px var(--f-display);color:var(--fg);display:block;margin-bottom:4px">ส่วนนี้ซ่อนอยู่ในระบบจริง</b>แสดงเมื่อมีรีวิวจากคำสั่งซื้อที่ยืนยันแล้วถึงเกณฑ์ · หลังลูกค้าได้รับสินค้า ระบบส่งคำเชิญรีวิวทางอีเมล/LINE</div>`;return}
+  const specs=['เบอร์ C · 500 ชิ้น · พิมพ์ดำ','เบอร์ B · 300 ชิ้น · พิมพ์ 4 สี','เบอร์ 2A · 1,000 ชิ้น · พิมพ์ดำ'];
+  $('#rvBody').innerHTML=`<div class="rv-head"><div class="rv-sum"><span class="ph w40" style="height:28px"></span><span class="ph w80"></span><span style="font-size:12.5px;color:var(--fg-3)">คะแนนเฉลี่ย · จำนวนรีวิว</span>
+      <div style="margin-top:8px;font-size:12.5px;color:var(--fg-3)">กรองตามเบอร์</div><div class="sizes">${['ทั้งหมด','B','C','2A'].map((s,i)=>`<button type="button" aria-pressed="${i===0}" style="min-width:auto">${s}</button>`).join('')}</div></div>
+    <div class="rv-list">${specs.map(s=>`<article class="rv"><div style="display:flex;flex-direction:column;gap:10px"><span class="vtag"><svg class="ico"><use href="#i-check"/></svg>คำสั่งซื้อที่ยืนยันแล้ว</span><span class="pill" style="align-self:flex-start">${s}</span><span class="ph w90"></span><span class="ph w80"></span><span class="ph w60"></span><span style="font-size:12px;color:var(--fg-3)">ชื่อร้าน/ชื่อย่อ · วันที่รีวิว</span></div><div class="ph-img">รูปกล่องจริง<br>จากลูกค้า</div></article>`).join('')}</div></div>
+    <p style="font-size:12.5px;color:var(--fg-3);margin:12px 0 0">โครงสีเทาคือที่วางข้อความรีวิวจริง ต้นแบบนี้ไม่มีข้อความรีวิวสมมติ</p>`;
+}
+$('#reviews').addEventListener('click',e=>{const b=e.target.closest('[data-rv]');if(!b)return;RV=b.dataset.rv;renderReviews()});
+renderReviews();
+let tt;function toast(m){const t=$('#toast');t.textContent=m;t.hidden=false;clearTimeout(tt);tt=setTimeout(()=>t.hidden=true,2400)}
+$('#chatBtn').addEventListener('click',e=>{e.stopPropagation();const p=$('#chatPop');p.hidden=!p.hidden;$('#chatBtn').setAttribute('aria-expanded',!p.hidden)});
+document.addEventListener('click',e=>{if(!e.target.closest('.chat'))$('#chatPop').hidden=true});
+const links=[...document.querySelectorAll('#secnav a')];
+const io=new IntersectionObserver(es=>{es.forEach(en=>{if(en.isIntersecting)links.forEach(l=>l.setAttribute('aria-current',l.getAttribute('href')==='#'+en.target.id))})},{rootMargin:'-40% 0px -55% 0px'});
+document.querySelectorAll('main section[id]').forEach(s=>io.observe(s));
+const dlg=$('#notes');$('#notesBtn').addEventListener('click',()=>dlg.showModal());$('#notesClose').addEventListener('click',()=>dlg.close());dlg.addEventListener('click',e=>{if(e.target===dlg)dlg.close()});
+renderGallery();renderBuy();
+})();
+</script>
+
+</body>
+</html>

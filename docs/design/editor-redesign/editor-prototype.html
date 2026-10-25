@@ -1,0 +1,1259 @@
+<!doctype html>
+<html lang="th">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>getpack Studio Editor</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Anuphan:wght@400;500;600;700&family=IBM+Plex+Sans+Thai:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&family=Kanit:wght@400;600;800&family=Prompt:wght@400;600;800&family=Sarabun:wght@400;700&family=Mitr:wght@400;600&family=Chakra+Petch:wght@400;700&family=Noto+Serif+Thai:wght@400;700&display=swap">
+<style>
+/* Layout: pro editor shell — top bar, icon rail + asset panel, zoomable dieline canvas with docked live 3D, contextual inspector */
+:root{
+  --bg:#ECEDEA;--chrome:#FFFFFF;--chrome-2:#F6F6F3;--chrome-3:#EEEEEA;--line:#E1E2DD;--line-2:#CDD0C8;
+  --fg:#141A17;--fg-2:#4B5550;--fg-3:#808a84;--accent:#17573F;--accent-2:#1F7A57;--accent-tint:#E1EEE7;--on-accent:#fff;
+  --sel:#2F6BFF;--warn:#B7791F;--warn-tint:#FBF0DC;--err:#C4372C;--err-tint:#FBE4E1;--ok:#1F7A57;
+  --canvas:#E4E5E1;--shadow:0 1px 2px rgba(0,0,0,.06),0 10px 28px -14px rgba(0,0,0,.25);
+  --f-ui:"IBM Plex Sans Thai","Anuphan",ui-sans-serif,system-ui,sans-serif;--f-mono:"IBM Plex Mono",ui-monospace,Menlo,monospace;--f-d:"Anuphan","IBM Plex Sans Thai",sans-serif;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#0D1110;--chrome:#151A18;--chrome-2:#1B211F;--chrome-3:#222A27;--line:#262E2B;--line-2:#34403B;--fg:#E9EEEB;--fg-2:#AEB8B3;--fg-3:#7D8883;--accent:#4CC08F;--accent-2:#6AD3A6;--accent-tint:#173328;--on-accent:#06130D;--sel:#6E95FF;--warn:#E3A84B;--warn-tint:#33281A;--err:#F07468;--err-tint:#3A1D1A;--ok:#4CC08F;--canvas:#101513;--shadow:0 1px 2px rgba(0,0,0,.4),0 12px 30px -14px rgba(0,0,0,.7);color-scheme:dark}}
+:root[data-theme="dark"]{--bg:#0D1110;--chrome:#151A18;--chrome-2:#1B211F;--chrome-3:#222A27;--line:#262E2B;--line-2:#34403B;--fg:#E9EEEB;--fg-2:#AEB8B3;--fg-3:#7D8883;--accent:#4CC08F;--accent-2:#6AD3A6;--accent-tint:#173328;--on-accent:#06130D;--sel:#6E95FF;--warn:#E3A84B;--warn-tint:#33281A;--err:#F07468;--err-tint:#3A1D1A;--ok:#4CC08F;--canvas:#101513;--shadow:0 1px 2px rgba(0,0,0,.4),0 12px 30px -14px rgba(0,0,0,.7);color-scheme:dark}
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+html,body{height:100%}
+body{margin:0;background:var(--bg);color:var(--fg);font:13px/1.45 var(--f-ui);-webkit-font-smoothing:antialiased;overflow:hidden}
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:99;background:var(--chrome)}
+button,input,select,textarea{font:inherit;color:inherit}
+button{cursor:pointer}
+:focus-visible{outline:2px solid var(--sel);outline-offset:1px;border-radius:6px}
+.ico{width:18px;height:18px;flex:none;stroke:currentColor;fill:none;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}
+.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)}
+.app{height:100%;display:grid;grid-template-columns:minmax(0,1fr);grid-template-rows:auto 52px minmax(0,1fr) 30px;padding-left:env(safe-area-inset-left,0px);padding-right:env(safe-area-inset-right,0px)}
+/* prototype ribbon */
+.proto{display:flex;gap:10px;align-items:center;min-height:28px;padding:3px max(12px,env(safe-area-inset-left,0px));background:var(--fg);color:var(--bg);font-size:12px}
+.proto b{white-space:nowrap}.proto span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.proto button{margin-left:auto;border:1px solid color-mix(in srgb,var(--bg) 35%,transparent);background:none;color:var(--bg);border-radius:99px;padding:1px 10px;font-size:12px;white-space:nowrap}
+/* top bar */
+.top{display:flex;align-items:center;gap:6px;padding:0 10px;background:var(--chrome);border-bottom:1px solid var(--line);min-width:0}
+.brandmark{flex:none;white-space:nowrap;font:700 19px/1 var(--f-d);letter-spacing:-.03em;color:var(--fg);text-decoration:none;padding:0 8px 0 4px}
+.brandmark i{display:inline-block;width:6px;height:6px;background:var(--accent);border-radius:1px;transform:translateY(-6px) rotate(45deg);margin-left:1px}
+.fname{border:1px solid transparent;background:none;border-radius:6px;padding:4px 8px;font-weight:600;font-size:13.5px;width:170px;min-width:0}
+.fname:hover{border-color:var(--line)}.fname:focus{outline:none;border-color:var(--sel);background:var(--chrome-2)}
+.saved{font-size:12px;color:var(--fg-3);white-space:nowrap;display:inline-flex;align-items:center;gap:5px}
+.saved::before{content:"";width:6px;height:6px;border-radius:50%;background:var(--ok)}
+.tb{width:32px;height:32px;border:0;background:none;border-radius:7px;display:grid;place-items:center;color:var(--fg-2)}
+.tb:hover{background:var(--chrome-3);color:var(--fg)}.tb[disabled]{opacity:.35;cursor:default}.tb[aria-pressed="true"]{background:var(--accent-tint);color:var(--accent)}
+.sep{width:1px;height:20px;background:var(--line);margin:0 4px;flex:none}
+.steps{display:flex;gap:2px;margin:0 auto;padding:3px;border-radius:10px;background:var(--chrome-2);border:1px solid var(--line)}
+.steps button{border:0;background:none;padding:4px 12px;border-radius:7px;font-weight:500;color:var(--fg-2);display:inline-flex;gap:6px;align-items:center;white-space:nowrap}
+.steps button i{font:600 10.5px var(--f-mono);font-style:normal;color:var(--fg-3)}
+.steps button[aria-current="step"]{background:var(--chrome);color:var(--fg);box-shadow:0 1px 2px rgba(0,0,0,.08)}
+.steps button .badge{min-width:18px;height:18px;border-radius:9px;padding:0 5px;font:600 11px/18px var(--f-ui);background:var(--err);color:#fff}
+.steps button .badge.ok{background:var(--ok)}
+.right{display:flex;align-items:center;gap:4px}
+.avatars{display:flex;margin-right:4px}
+.avatars span{width:26px;height:26px;border-radius:50%;border:2px solid var(--chrome);margin-left:-6px;display:grid;place-items:center;font:600 10.5px var(--f-ui);color:#fff}
+.pchip{white-space:nowrap;display:inline-flex;flex-direction:column;align-items:flex-end;line-height:1.15;padding:0 8px;font-variant-numeric:tabular-nums}
+.pchip b{font:600 14px var(--f-d)}.pchip small{font-size:11px;color:var(--fg-3)}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;height:32px;padding:0 12px;border-radius:8px;border:1px solid transparent;font-weight:600;font-size:13px;white-space:nowrap}
+.btn-p{background:var(--accent);color:var(--on-accent)}.btn-p:hover{background:var(--accent-2)}
+.btn-g{background:var(--chrome);border-color:var(--line-2);color:var(--fg)}.btn-g:hover{border-color:var(--fg-3)}
+.btn-s{background:var(--chrome-3);color:var(--fg)}
+.menu{position:absolute;z-index:60;min-width:240px;background:var(--chrome);border:1px solid var(--line);border-radius:12px;box-shadow:var(--shadow);padding:6px}
+.menu button{width:100%;display:flex;gap:10px;align-items:flex-start;padding:8px 10px;border:0;background:none;border-radius:8px;text-align:left}
+.menu button:hover{background:var(--chrome-2)}
+.menu b{display:block;font-weight:600}.menu small{color:var(--fg-3);font-size:12px}
+/* main */
+.main{display:grid;grid-template-columns:56px 272px minmax(0,1fr) 296px;min-height:0}
+.rail{background:var(--chrome);border-right:1px solid var(--line);display:flex;flex-direction:column;gap:2px;padding:8px 6px;overflow-y:auto}
+.rail button{border:0;background:none;border-radius:9px;padding:7px 2px;display:flex;flex-direction:column;align-items:center;gap:3px;color:var(--fg-2);font-size:10.5px}
+.rail button:hover{background:var(--chrome-2);color:var(--fg)}
+.rail button[aria-pressed="true"]{background:var(--accent-tint);color:var(--accent)}
+.rail .ico{width:20px;height:20px}
+.panel{background:var(--chrome);border-right:1px solid var(--line);overflow-y:auto;padding:14px;display:flex;flex-direction:column;gap:14px;min-width:0}
+.panel h2{font:600 15px var(--f-d);margin:0}
+.ph{font:600 11px var(--f-mono);letter-spacing:.06em;text-transform:uppercase;color:var(--fg-3);margin:4px 0 -6px}
+.search{position:relative}.search input{width:100%;height:34px;border-radius:8px;border:1px solid var(--line);background:var(--chrome-2);padding:0 10px 0 32px}
+.search .ico{position:absolute;left:9px;top:8px;width:16px;height:16px;color:var(--fg-3)}
+.grid3{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
+.grid2{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+.tile{aspect-ratio:1/1;border:1px solid var(--line);border-radius:10px;background:var(--chrome-2);display:grid;place-items:center;padding:8px;color:var(--fg)}
+.tile:hover{border-color:var(--accent)}
+.tile svg{width:100%;height:100%}
+.tile.wide{aspect-ratio:auto;padding:10px;display:flex;flex-direction:column;align-items:flex-start;gap:2px;text-align:left}
+.tile.wide small{color:var(--fg-3);font-size:11.5px}
+.tpl{border:1px solid var(--line);border-radius:12px;background:var(--chrome-2);overflow:hidden;text-align:left;padding:0}
+.tpl:hover{border-color:var(--accent)}
+.tpl .pv{aspect-ratio:16/10;display:grid;place-items:center;background:var(--canvas)}
+.tpl .pv svg{width:92%;height:88%}
+.tpl b{display:block;padding:8px 10px 0;font-weight:600}.tpl small{display:block;padding:0 10px 9px;color:var(--fg-3);font-size:11.5px}
+.txtp{width:100%;border:1px solid var(--line);border-radius:10px;background:var(--chrome-2);padding:10px 12px;text-align:left}
+.txtp:hover{border-color:var(--accent)}
+.fontrow{display:flex;justify-content:space-between;align-items:center;width:100%;border:0;border-bottom:1px solid var(--line);background:none;padding:9px 2px;text-align:left}
+.fontrow:hover{color:var(--accent)}
+.fontrow small{font:500 11px var(--f-mono);color:var(--fg-3)}
+.swatches{display:flex;flex-wrap:wrap;gap:6px}
+.swatch{width:30px;height:30px;border-radius:8px;border:1px solid rgba(0,0,0,.12);padding:0}
+.swatch[aria-pressed="true"]{box-shadow:0 0 0 2px var(--chrome),0 0 0 4px var(--sel)}
+.colorrow{display:grid;grid-template-columns:34px 1fr auto;gap:10px;align-items:center;padding:6px 0;border-bottom:1px solid var(--line)}
+.colorrow i{width:34px;height:34px;border-radius:8px;border:1px solid rgba(0,0,0,.1)}
+.colorrow b{font-weight:600}.colorrow small{display:block;font:500 11px var(--f-mono);color:var(--fg-3)}
+.drop{border:1.5px dashed var(--line-2);border-radius:12px;padding:16px;text-align:center;color:var(--fg-3);font-size:12.5px;cursor:pointer}
+.drop:hover,.drop.on{border-color:var(--accent);color:var(--accent);background:var(--accent-tint)}
+.asset{display:grid;grid-template-columns:48px 1fr auto;gap:10px;align-items:center;padding:6px;border:1px solid var(--line);border-radius:10px;background:var(--chrome-2)}
+.asset img{width:48px;height:48px;object-fit:contain;border-radius:6px;background:var(--canvas)}
+.asset small{display:block;color:var(--fg-3);font:500 11px var(--f-mono)}
+.note{font-size:12px;color:var(--fg-3)}
+.layer{display:grid;grid-template-columns:20px 1fr auto auto;gap:8px;align-items:center;padding:6px 8px;border-radius:8px;border:1px solid transparent;cursor:pointer}
+.layer:hover{background:var(--chrome-2)}
+.layer.on{background:var(--accent-tint);border-color:color-mix(in srgb,var(--accent) 40%,transparent)}
+.layer span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.layer button{border:0;background:none;padding:2px;color:var(--fg-3);display:grid}
+.layer button:hover{color:var(--fg)}
+.layer .ico{width:15px;height:15px}
+.variant{display:grid;grid-template-columns:14px 1fr 74px 24px;gap:8px;align-items:center;padding:8px;border-radius:10px;border:1px solid var(--line);background:var(--chrome-2);cursor:pointer}
+.variant.on{border-color:var(--accent);box-shadow:inset 0 0 0 1px var(--accent)}
+.variant i{width:14px;height:14px;border-radius:4px}
+.variant input{width:100%;height:28px;border-radius:7px;border:1px solid var(--line);background:var(--chrome);text-align:right;padding:0 6px;font-variant-numeric:tabular-nums}
+.variant .nm{border:0;background:none;padding:0;font-weight:600;width:100%;text-align:left;height:auto}
+.cmt{display:grid;grid-template-columns:22px 1fr;gap:8px;padding:8px;border-radius:10px;background:var(--chrome-2);border:1px solid var(--line)}
+.cmt .n{width:22px;height:22px;border-radius:50%;background:var(--sel);color:#fff;display:grid;place-items:center;font:600 11px var(--f-ui)}
+.cmt textarea{width:100%;border:1px solid var(--line);border-radius:7px;background:var(--chrome);min-height:52px;padding:6px 8px;resize:vertical}
+.hist{display:grid;grid-template-columns:1fr auto;gap:2px 10px;padding:8px 6px;border-bottom:1px solid var(--line)}
+.hist small{color:var(--fg-3)}
+/* canvas */
+.stagew{position:relative;min-width:0;min-height:0;display:grid;grid-template-rows:minmax(0,1fr)}
+.stagew.split .v3d{position:absolute;right:14px;top:58px;width:min(30%,236px);aspect-ratio:4/3;border:1px solid var(--line);border-radius:14px;box-shadow:var(--shadow);z-index:4}
+.stagew.split .v3d .cap{font-size:10px}
+.cv{position:relative;overflow:auto;display:grid;background:var(--canvas);background-image:radial-gradient(color-mix(in srgb,var(--fg) 12%,transparent) 1px,transparent 1px);background-size:16px 16px;outline:none}
+.cv.pan{cursor:grab}.cv.panning{cursor:grabbing}.cv.pin{cursor:crosshair}
+.cv svg{display:block;margin:auto}
+.v3d{position:relative;background:radial-gradient(800px 400px at 50% 30%,color-mix(in srgb,var(--chrome) 70%,var(--canvas)),var(--canvas));border-left:1px solid var(--line);display:grid;place-items:center;min-height:0;overflow:hidden}
+.v3d svg{width:86%;height:86%}
+.v3d .cap{position:absolute;left:12px;top:10px;font:500 11px var(--f-mono);letter-spacing:.06em;color:var(--fg-3)}
+.v3d .acts{position:absolute;right:10px;top:8px;display:flex;gap:4px}
+.float{position:absolute;left:50%;bottom:14px;translate:-50% 0;display:flex;gap:4px;align-items:center;padding:5px;border-radius:12px;background:var(--chrome);border:1px solid var(--line);box-shadow:var(--shadow);z-index:5;max-width:calc(100% - 24px);overflow-x:auto;scrollbar-width:none}
+.seg{display:inline-flex;padding:2px;border-radius:8px;background:var(--chrome-2)}
+.seg button{border:0;background:none;padding:4px 10px;border-radius:6px;font-weight:500;color:var(--fg-2);white-space:nowrap;font-size:12.5px}
+.seg button[aria-pressed="true"]{background:var(--chrome);color:var(--fg);box-shadow:0 1px 2px rgba(0,0,0,.1)}
+.zoomv{min-width:46px;text-align:center;font:500 12px var(--f-mono);color:var(--fg-2)}
+.overlays{position:absolute;right:12px;top:12px;z-index:5}
+.ovl{display:flex;flex-direction:column;gap:2px;padding:8px;border-radius:12px;background:var(--chrome);border:1px solid var(--line);box-shadow:var(--shadow);min-width:200px}
+.ovl label{display:flex;align-items:center;gap:8px;padding:4px 6px;border-radius:6px;cursor:pointer;font-size:12.5px}
+.ovl label:hover{background:var(--chrome-2)}
+.ovl i{width:18px;height:0;border-top:2px solid}
+.empty-hint{position:absolute;left:50%;top:18px;translate:-50% 0;z-index:4;background:var(--chrome);border:1px solid var(--line);box-shadow:var(--shadow);border-radius:10px;padding:8px 12px;font-size:12.5px;color:var(--fg-2);white-space:nowrap}
+/* inspector */
+.insp{background:var(--chrome);border-left:1px solid var(--line);display:flex;flex-direction:column;min-height:0}
+.itabs{display:flex;border-bottom:1px solid var(--line);padding:0 8px}
+.itabs button{flex:1;border:0;background:none;padding:12px 6px 10px;font-weight:600;color:var(--fg-3);border-bottom:2px solid transparent;display:inline-flex;gap:6px;justify-content:center;align-items:center}
+.itabs button[aria-selected="true"]{color:var(--fg);border-bottom-color:var(--fg)}
+.itabs .badge{min-width:18px;height:18px;border-radius:9px;padding:0 5px;font:600 11px/18px var(--f-ui);background:var(--err);color:#fff}
+.itabs .badge.ok{background:var(--ok)}
+.ibody{overflow-y:auto;padding:14px;display:flex;flex-direction:column;gap:16px}
+.sec{display:flex;flex-direction:column;gap:8px}
+.sec>b{font-size:12px;font-weight:600;color:var(--fg-2);display:flex;justify-content:space-between;align-items:center}
+.row{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+.row3{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px}
+.num{display:flex;align-items:center;height:32px;border-radius:8px;border:1px solid var(--line);background:var(--chrome-2);padding:0 8px;gap:6px;min-width:0}
+.num:focus-within{border-color:var(--sel)}
+.num span{font:500 11px var(--f-mono);color:var(--fg-3);flex:none}
+.num input{width:100%;min-width:0;border:0;background:none;font-variant-numeric:tabular-nums;font-weight:500;outline:none}
+.sel{width:100%;height:32px;border-radius:8px;border:1px solid var(--line);background:var(--chrome-2);padding:0 8px}
+.ta{width:100%;min-height:60px;border-radius:8px;border:1px solid var(--line);background:var(--chrome-2);padding:8px;resize:vertical}
+.ta:focus,.sel:focus{outline:none;border-color:var(--sel)}
+.btnrow{display:flex;gap:4px;flex-wrap:wrap}
+.ib{width:32px;height:30px;border-radius:7px;border:1px solid var(--line);background:var(--chrome-2);display:grid;place-items:center;color:var(--fg-2)}
+.ib:hover{color:var(--fg);border-color:var(--line-2)}
+.ib[aria-pressed="true"]{background:var(--accent-tint);color:var(--accent);border-color:color-mix(in srgb,var(--accent) 40%,transparent)}
+.ib .ico{width:16px;height:16px}
+.colorin{display:grid;grid-template-columns:32px 1fr;gap:8px;align-items:center}
+.colorin input[type=color]{width:32px;height:32px;border:1px solid var(--line);border-radius:8px;padding:2px;background:var(--chrome-2)}
+.cmyk{font:500 11px var(--f-mono);color:var(--fg-3)}
+.inkline{display:flex;gap:8px;align-items:flex-start;padding:10px;border-radius:10px;background:var(--chrome-2);font-size:12px;color:var(--fg-2)}
+.inkline .ico{width:16px;height:16px;color:var(--accent);margin-top:1px}
+.togrow{display:flex;justify-content:space-between;align-items:center;gap:10px;font-size:12.5px}
+.switch{appearance:none;width:32px;height:18px;border-radius:9px;background:var(--line-2);position:relative;cursor:pointer;margin:0;flex:none}
+.switch::after{content:"";position:absolute;top:2px;left:2px;width:14px;height:14px;border-radius:50%;background:#fff;box-shadow:0 1px 2px rgba(0,0,0,.3);transition:translate .15s}
+.switch:checked{background:var(--accent)}.switch:checked::after{translate:14px 0}
+.issue{display:grid;grid-template-columns:22px 1fr;gap:8px;padding:10px;border-radius:10px;border:1px solid var(--line);background:var(--chrome-2);cursor:pointer;text-align:left;width:100%}
+.issue:hover{border-color:var(--line-2)}
+.issue .dot{width:22px;height:22px;border-radius:50%;display:grid;place-items:center;font:700 11px var(--f-ui);color:#fff}
+.issue.err .dot{background:var(--err)}.issue.warn .dot{background:var(--warn)}
+.issue b{display:block;font-weight:600;font-size:12.5px}.issue small{color:var(--fg-2);font-size:12px}
+.okbox{display:flex;gap:10px;align-items:center;padding:14px;border-radius:12px;background:var(--accent-tint);color:var(--accent);font-weight:600}
+.pricebig{font:700 30px/1 var(--f-d);letter-spacing:-.02em;font-variant-numeric:tabular-nums}
+.pricebig small{font:500 13px var(--f-ui);color:var(--fg-3);letter-spacing:0}
+.kv{display:grid;grid-template-columns:auto 1fr;gap:6px 12px;font-size:12.5px;margin:0}
+.kv dt{color:var(--fg-3)}.kv dd{margin:0;text-align:right;font-variant-numeric:tabular-nums}
+.samplechip{font:500 10.5px var(--f-mono);padding:1px 6px;border-radius:5px;border:1px dashed var(--line-2);color:var(--fg-3);white-space:nowrap}
+.chipset{display:flex;gap:6px;flex-wrap:wrap}
+.chip{border:1px solid var(--line);background:var(--chrome-2);border-radius:99px;padding:4px 12px;font-size:12.5px;color:var(--fg-2)}
+.chip[aria-pressed="true"]{background:var(--fg);color:var(--bg);border-color:var(--fg)}
+/* status bar */
+.status{display:flex;align-items:center;gap:14px;padding:0 12px;background:var(--chrome);border-top:1px solid var(--line);font-size:11.5px;color:var(--fg-3);white-space:nowrap;overflow:hidden}
+.status b{color:var(--fg-2);font-weight:500}
+.status .ready{display:inline-flex;gap:5px;align-items:center;color:var(--ok);font-weight:600}
+.status .ready.bad{color:var(--err)}
+.status .kbd{margin-left:auto}
+/* dialogs, toast */
+dialog{border:0;padding:0;border-radius:18px;background:var(--chrome);color:var(--fg);box-shadow:0 30px 80px -20px rgba(0,0,0,.5);max-width:calc(100% - 24px);max-height:calc(100% - 24px)}
+dialog::backdrop{background:rgba(8,12,10,.55);backdrop-filter:blur(2px)}
+.dh{display:flex;justify-content:space-between;align-items:center;padding:16px 20px;border-bottom:1px solid var(--line)}
+.dh h2{margin:0;font:600 17px var(--f-d)}
+.db{padding:16px 20px 20px}
+.kbdgrid{display:grid;grid-template-columns:1fr auto;gap:8px 24px;font-size:13px}
+kbd{font:500 11.5px var(--f-mono);padding:2px 6px;border-radius:5px;border:1px solid var(--line-2);border-bottom-width:2px;background:var(--chrome-2)}
+.mock{display:grid;grid-template-columns:minmax(0,1fr) 240px;min-height:440px}
+.mock .stagem{display:grid;place-items:center;padding:20px}
+.mock .stagem svg{width:88%;height:88%;max-height:420px;filter:drop-shadow(0 30px 30px rgba(0,0,0,.25))}
+.mock aside{border-left:1px solid var(--line);padding:16px;display:flex;flex-direction:column;gap:14px}
+.bgsw{display:flex;gap:8px}.bgsw button{width:40px;height:40px;border-radius:10px;border:1px solid var(--line);padding:0}
+.bgsw button[aria-pressed="true"]{box-shadow:0 0 0 2px var(--chrome),0 0 0 4px var(--sel)}
+.toast{position:fixed;left:50%;bottom:44px;translate:-50% 0;z-index:90;background:var(--fg);color:var(--bg);padding:9px 14px;border-radius:10px;font-size:12.5px;box-shadow:var(--shadow);max-width:calc(100% - 32px)}
+.notes ul{margin:0;padding-left:18px;color:var(--fg-2);display:flex;flex-direction:column;gap:4px}
+.notes h3{font:600 14px var(--f-d);margin:16px 0 6px;color:var(--accent)}
+.notes .n2{margin-top:14px;padding:10px 12px;border-radius:10px;background:var(--warn-tint);font-size:12.5px}
+.mobile-note{display:none}
+@media (max-width:1380px){.avatars{display:none}.steps button span{display:none}.fname{width:150px}}
+@media (max-width:1180px){.saved{display:none}.fname{width:130px}.itabs button{white-space:nowrap;padding:12px 2px 10px;font-size:12.5px}.top .right{gap:2px}.main{grid-template-columns:52px 240px minmax(0,1fr) 270px}.steps button span{display:none}.avatars,.pchip{display:none}}
+@media (max-width:900px){
+  body{overflow:auto}
+  .app{height:auto;grid-template-rows:auto auto auto auto}
+  .top{flex-wrap:wrap;height:auto;padding:8px 10px;gap:6px 4px}
+  .brandmark{order:0;padding:0 4px 0 2px}.fname{order:1;flex:1 1 120px;width:auto}
+  #undoB{order:2}#redoB{order:3}
+  .top>.sep,.saved,.steps,.top .tb[data-panel="history"]{display:none}
+  .modesw{order:4;margin-left:0}
+  .top .right{order:5;margin-left:auto;flex-wrap:nowrap}
+  .stagew{order:1}.insp{order:2}.rail{order:3}.panel{order:4}
+  .main{grid-template-columns:minmax(0,1fr);grid-auto-rows:auto}
+  .rail{flex-direction:row;border-right:0;border-top:1px solid var(--line);border-bottom:1px solid var(--line);overflow-x:auto;position:sticky;top:0;z-index:6}
+  .rail button{min-width:58px}
+  .stagew{height:58vh;min-height:360px}.stagew.split .v3d{width:150px;top:10px;right:10px}.modesw button span.l2{display:none}.top .right{flex-wrap:wrap}
+  .v3d{border-left:0;border-top:1px solid var(--line)}
+  .panel{order:3;border-right:0;max-height:none}
+  .insp{border-left:0;border-top:1px solid var(--line)}
+  .status{display:none}
+  .mobile-note{display:block;padding:8px 12px;background:var(--warn-tint);font-size:12px;color:var(--fg)}
+  .overlays{display:none}
+  .mock{grid-template-columns:minmax(0,1fr)}.mock aside{border-left:0;border-top:1px solid var(--line)}
+}
+.modesw{display:inline-flex;padding:3px;border-radius:10px;background:var(--chrome-2);border:1px solid var(--line);gap:2px;margin-left:6px}
+.modesw button{border:0;background:none;border-radius:7px;padding:4px 10px;display:inline-flex;align-items:center;gap:6px;font-weight:600;font-size:12.5px;color:var(--fg-3);white-space:nowrap}
+.modesw button .ico{width:15px;height:15px}
+.modesw button[aria-checked="true"]{background:var(--chrome);color:var(--fg);box-shadow:0 1px 2px rgba(0,0,0,.1)}
+.modesw button[aria-checked="true"] .ico{color:var(--accent)}
+html[data-mode="easy"] .pro-only{display:none!important}
+html[data-mode="pro"] .easy-only{display:none!important}
+html[data-mode="easy"] .rail button{padding:9px 2px}
+.issue{grid-template-columns:22px 1fr auto;align-items:start}
+.issue .igo{border:0;background:none;padding:0;text-align:left;min-width:0}
+.fixb{height:28px;padding:0 10px;font-size:12px;border-radius:7px;align-self:center;background:var(--accent);color:var(--on-accent);border:0;font-weight:600;white-space:nowrap}
+.fixall{display:flex;gap:10px;align-items:center;justify-content:space-between;padding:10px 12px;border-radius:12px;background:var(--accent-tint)}
+.fixall span{font-size:12.5px;color:var(--fg-2)}
+/* easy inspector */
+.ezhead{display:flex;gap:10px;align-items:center}
+.ezhead i{width:36px;height:36px;border-radius:10px;background:var(--accent-tint);color:var(--accent);display:grid;place-items:center;flex:none}
+.ezhead b{font:600 15px var(--f-d);display:block}.ezhead small{color:var(--fg-3);font-size:12px}
+.rng{display:grid;grid-template-columns:1fr auto;gap:4px 10px;align-items:center}
+.rng label{font-size:12.5px;color:var(--fg-2)}.rng output{font:500 12px var(--f-mono);color:var(--fg-2);text-align:right}
+.rng input{grid-column:1/-1;width:100%;accent-color:var(--accent);height:22px;margin:0}
+.posgrid{display:grid;grid-template-columns:repeat(3,38px);grid-template-rows:repeat(3,30px);gap:4px;padding:6px;border-radius:10px;background:var(--chrome-2);border:1px solid var(--line);width:max-content}
+.posgrid button{border:1px solid var(--line);border-radius:6px;background:var(--chrome);display:grid;place-items:center;padding:0}
+.posgrid button::after{content:"";width:8px;height:8px;border-radius:2px;background:var(--fg-3)}
+.posgrid button:hover{border-color:var(--accent)}.posgrid button:hover::after{background:var(--accent)}
+.posrow{display:flex;gap:12px;align-items:center}.posrow p{margin:0;font-size:12px;color:var(--fg-3)}
+.ezsw{display:flex;flex-wrap:wrap;gap:8px}.ezsw .swatch{width:36px;height:36px;border-radius:10px}
+.ezsw label.swatch{display:grid;place-items:center;background:conic-gradient(red,yellow,lime,cyan,blue,magenta,red);cursor:pointer;position:relative}
+.ezsw label.swatch input{position:absolute;inset:0;opacity:0;cursor:pointer}
+.ezacts{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:6px}
+.ezacts .btn{height:36px}
+.guide{border:1px solid var(--line);border-radius:14px;padding:14px;background:linear-gradient(180deg,var(--accent-tint),transparent 80%);display:flex;flex-direction:column;gap:10px}
+.guide h3{margin:0;font:600 15px var(--f-d)}
+.guide .bar{height:6px;border-radius:3px;background:var(--line);overflow:hidden}.guide .bar i{display:block;height:100%;background:var(--accent);border-radius:3px;transition:width .3s}
+.guide ol{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:4px}
+.guide li button{width:100%;display:grid;grid-template-columns:24px 1fr auto;gap:10px;align-items:center;border:0;background:none;padding:7px 6px;border-radius:9px;text-align:left}
+.guide li button:hover{background:var(--chrome)}
+.guide li .n{width:24px;height:24px;border-radius:50%;border:1.5px solid var(--line-2);display:grid;place-items:center;font:600 11px var(--f-ui);color:var(--fg-3)}
+.guide li.ok .n{background:var(--accent);border-color:var(--accent);color:var(--on-accent)}
+.guide li.ok b{color:var(--fg-3);text-decoration:line-through;font-weight:500}
+.guide li small{color:var(--fg-3);font-size:11.5px}
+.quick{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+.quick button{border:1px solid var(--line);border-radius:12px;background:var(--chrome-2);padding:12px;display:flex;flex-direction:column;align-items:flex-start;gap:6px;text-align:left;font-weight:600;font-size:12.5px}
+.quick button:hover{border-color:var(--accent)}.quick .ico{color:var(--accent);width:20px;height:20px}
+/* pro toolbox */
+.tools{position:absolute;left:12px;top:12px;z-index:5;display:flex;flex-direction:column;gap:2px;padding:4px;border-radius:12px;background:var(--chrome);border:1px solid var(--line);box-shadow:var(--shadow)}
+.tools button{width:34px;height:34px;border:0;background:none;border-radius:8px;display:grid;place-items:center;color:var(--fg-2);position:relative}
+.tools button:hover{background:var(--chrome-2);color:var(--fg)}
+.tools button[aria-pressed="true"]{background:var(--fg);color:var(--bg)}
+.tools button .ico{width:18px;height:18px}
+.tools hr{border:0;height:1px;background:var(--line);margin:3px 4px}
+.tools button::after{content:attr(data-tip);position:absolute;left:42px;top:50%;translate:0 -50%;white-space:nowrap;background:var(--fg);color:var(--bg);font-size:11.5px;padding:3px 8px;border-radius:6px;opacity:0;pointer-events:none;transition:opacity .12s}
+.tools button:hover::after{opacity:1}
+html[data-mode="pro"] .cv{padding-left:58px}
+.cv.t-draw,.cv.t-pen{cursor:crosshair}.cv.t-text{cursor:text}.cv.t-hand{cursor:grab}.cv.t-eye{cursor:copy}.cv.t-zoom{cursor:zoom-in}
+.mselinfo{display:flex;gap:10px;align-items:center;padding:10px 12px;border-radius:10px;background:var(--accent-tint);font-weight:600}
+.docsw{display:grid;grid-template-columns:34px 1fr auto;gap:10px;align-items:center;padding:6px 0;border-bottom:1px solid var(--line)}
+.docsw label{width:34px;height:34px;border-radius:8px;border:1px solid rgba(0,0,0,.12);position:relative;cursor:pointer;display:block}
+.docsw label input{position:absolute;inset:0;opacity:0;cursor:pointer}
+.docsw small{display:block;font:500 11px var(--f-mono);color:var(--fg-3)}
+.float .tg[aria-pressed="true"]{background:var(--accent-tint);color:var(--accent)}
+.sepsel{height:28px;border-radius:7px;border:1px solid var(--line);background:var(--chrome-2);font-size:12px;padding:0 6px}
+/* growth features */
+.ibody>*,.panel>*{flex-shrink:0}
+.panel .btn,.ibody .btn{white-space:normal;min-height:32px;height:auto;padding:6px 12px;line-height:1.3}
+.card{border:1px solid var(--line);border-radius:12px;padding:12px;background:var(--chrome-2);display:flex;flex-direction:column;gap:8px}
+.card h4{margin:0;font:600 13px var(--f-d);display:flex;align-items:center;gap:6px;justify-content:space-between}
+.opt{display:grid;grid-template-columns:1fr auto;gap:2px 10px;align-items:center;padding:8px 0;border-top:1px solid var(--line)}
+.opt:first-of-type{border-top:0}.opt small{color:var(--fg-3);font-size:11.5px}.opt .save{color:var(--ok);font-weight:600;font-variant-numeric:tabular-nums}
+.tl{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:0}
+.tl li{display:grid;grid-template-columns:14px 1fr;gap:8px;font-size:12px;color:var(--fg-2);padding-bottom:8px;position:relative}
+.tl li::before{content:"";width:10px;height:10px;border-radius:50%;border:2px solid var(--accent);background:var(--chrome);margin-top:3px;z-index:1}
+.tl li::after{content:"";position:absolute;left:5px;top:13px;bottom:0;width:2px;background:var(--line)}.tl li:last-child::after{display:none}
+.tl small{display:block;color:var(--fg-3);font-size:11px}
+.fitbox{display:grid;grid-template-columns:92px 1fr;gap:10px;align-items:center}
+.fitbox svg{width:92px;height:70px}
+.tiers{display:flex;flex-direction:column;gap:4px;font-size:12px}
+.tiers div{display:grid;grid-template-columns:1fr auto auto;gap:8px;padding:5px 8px;border-radius:7px}
+.tiers div.on{background:var(--accent-tint);color:var(--accent);font-weight:600}
+.linkin{display:flex;gap:6px}.linkin input{flex:1;min-width:0;height:32px;border-radius:8px;border:1px solid var(--line);background:var(--chrome);padding:0 10px}
+.found{display:flex;gap:6px;flex-wrap:wrap}.found i{width:26px;height:26px;border-radius:7px;border:1px solid rgba(0,0,0,.1)}
+.chiprow{display:flex;gap:6px;flex-wrap:wrap}
+.lockmsg{display:flex;gap:8px;padding:10px;border-radius:10px;background:var(--warn-tint);font-size:12.5px}
+/* welcome */
+.wel{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}
+.welc{border:1.5px solid var(--line);border-radius:16px;background:var(--chrome-2);padding:16px;text-align:left;display:flex;flex-direction:column;gap:8px;position:relative}
+.welc:hover{border-color:var(--accent)}
+.welc .art{height:96px;border-radius:10px;background:var(--canvas);display:grid;place-items:center;overflow:hidden}
+.welc .art svg{width:88%;height:84%}
+.welc b{font:600 16px var(--f-d)}.welc p{margin:0;color:var(--fg-2);font-size:12.5px}
+.welc ul{margin:0;padding-left:16px;color:var(--fg-3);font-size:12px;display:flex;flex-direction:column;gap:2px}
+.welc .tag{position:absolute;top:10px;right:10px;font:600 10.5px var(--f-ui);padding:2px 8px;border-radius:99px;background:var(--accent);color:var(--on-accent)}
+.welfoot{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;margin-top:14px;font-size:12.5px;color:var(--fg-3)}
+.linkb{border:0;background:none;color:var(--accent);font-weight:600;padding:0;text-decoration:underline;text-underline-offset:3px}
+.toast button{margin-left:10px;border:0;background:var(--accent);color:var(--on-accent);border-radius:6px;padding:2px 10px;font-weight:600}
+@media (max-width:900px){.wel{grid-template-columns:minmax(0,1fr)}.welc .art{display:none}}
+@media (max-width:600px){
+  .proto span{display:none}
+  .top .right .btn-g{font-size:0;gap:0;padding:0 9px}.top .right .btn-g .ico{width:18px!important;height:18px!important}
+  .top .right .tb#themeB{display:none}
+  .modesw{flex:1}.modesw button{flex:1;justify-content:center}
+  .float{bottom:10px;gap:2px;padding:4px}.float .seg button{padding:4px 8px}
+  .float .zoomv,.float [data-zoom="-"],.float [data-zoom="+"]{display:none}
+  .ibody,.panel{padding:14px 16px}
+  .dh{padding:14px 16px}.db{padding:14px 16px 16px}
+}
+@media (max-width:900px){
+  html[data-mode="pro"] .cv{padding-left:0}
+  .tools{flex-direction:row;top:auto;bottom:58px;left:50%;translate:-50% 0;max-width:calc(100% - 24px);overflow-x:auto;scrollbar-width:none}
+  .tools hr{width:1px;height:auto;margin:4px 3px}.tools button{flex:none}.tools button::after{display:none}
+  .stagew.split .v3d .cap{display:none}
+}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+</head>
+<body>
+
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <symbol id="i-undo" viewBox="0 0 24 24"><path d="M9 14 4 9l5-5"/><path d="M4 9h11a5 5 0 0 1 0 10h-3"/></symbol>
+  <symbol id="i-redo" viewBox="0 0 24 24"><path d="m15 14 5-5-5-5"/><path d="M20 9H9a5 5 0 0 0 0 10h3"/></symbol>
+  <symbol id="i-box" viewBox="0 0 24 24"><path d="m12 3 8 4.5v9L12 21l-8-4.5v-9z"/><path d="m4 7.5 8 4.5 8-4.5M12 12v9"/></symbol>
+  <symbol id="i-tpl" viewBox="0 0 24 24"><rect x="3" y="3" width="8" height="8" rx="1.5"/><rect x="13" y="3" width="8" height="5" rx="1.5"/><rect x="13" y="10" width="8" height="11" rx="1.5"/><rect x="3" y="13" width="8" height="8" rx="1.5"/></symbol>
+  <symbol id="i-shapes" viewBox="0 0 24 24"><circle cx="7.5" cy="7.5" r="4"/><rect x="13" y="13" width="8" height="8" rx="1"/><path d="M17 3l4 7h-8z"/></symbol>
+  <symbol id="i-text" viewBox="0 0 24 24"><path d="M5 6V4h14v2M12 4v16M9 20h6"/></symbol>
+  <symbol id="i-upload" viewBox="0 0 24 24"><path d="M12 16V4M7 9l5-5 5 5M5 20h14"/></symbol>
+  <symbol id="i-brand" viewBox="0 0 24 24"><path d="M12 3a9 9 0 1 0 0 18c1.5 0 2-1 2-2s-1-1.5-1-2.5 1-1.5 2-1.5h2a4 4 0 0 0 4-4c0-4.4-4-8-9-8z"/><circle cx="7.5" cy="11" r="1"/><circle cx="10" cy="7" r="1"/><circle cx="15" cy="7.5" r="1"/></symbol>
+  <symbol id="i-bg" viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 15l5-5 4 4 3-3 6 6"/></symbol>
+  <symbol id="i-layers" viewBox="0 0 24 24"><path d="m12 3 9 5-9 5-9-5z"/><path d="m3 13 9 5 9-5"/></symbol>
+  <symbol id="i-variants" viewBox="0 0 24 24"><rect x="3" y="6" width="8" height="12" rx="1.5"/><rect x="13" y="6" width="8" height="12" rx="1.5"/><path d="M7 3v3M17 3v3"/></symbol>
+  <symbol id="i-chat" viewBox="0 0 24 24"><path d="M4 5h16v11H10l-4 3.5V16H4z"/></symbol>
+  <symbol id="i-history" viewBox="0 0 24 24"><path d="M3 12a9 9 0 1 0 3-6.7L3 8"/><path d="M3 3v5h5M12 7v5l3 2"/></symbol>
+  <symbol id="i-share" viewBox="0 0 24 24"><path d="M10 14a4 4 0 0 0 5.7 0l3-3a4 4 0 0 0-5.7-5.7l-1 1"/><path d="M14 10a4 4 0 0 0-5.7 0l-3 3a4 4 0 0 0 5.7 5.7l1-1"/></symbol>
+  <symbol id="i-play" viewBox="0 0 24 24"><path d="M6 4l14 8-14 8z"/></symbol>
+  <symbol id="i-down" viewBox="0 0 24 24"><path d="M12 4v11M7 10l5 5 5-5M5 20h14"/></symbol>
+  <symbol id="i-eye" viewBox="0 0 24 24"><path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/></symbol>
+  <symbol id="i-eyeoff" viewBox="0 0 24 24"><path d="M3 3l18 18M10.6 5.1A10 10 0 0 1 12 5c6.4 0 10 7 10 7a17 17 0 0 1-3.2 3.9M6.6 6.6A17 17 0 0 0 2 12s3.6 7 10 7a9.6 9.6 0 0 0 4.3-1"/></symbol>
+  <symbol id="i-lock" viewBox="0 0 24 24"><rect x="5" y="10" width="14" height="10" rx="2"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/></symbol>
+  <symbol id="i-unlock" viewBox="0 0 24 24"><rect x="5" y="10" width="14" height="10" rx="2"/><path d="M8 10V7a4 4 0 0 1 7.5-2"/></symbol>
+  <symbol id="i-trash" viewBox="0 0 24 24"><path d="M4 7h16M10 11v6M14 11v6M6 7l1 13h10l1-13M9 7V4h6v3"/></symbol>
+  <symbol id="i-copy" viewBox="0 0 24 24"><rect x="8" y="8" width="12" height="12" rx="2"/><path d="M16 8V5a1 1 0 0 0-1-1H5a1 1 0 0 0-1 1v10a1 1 0 0 0 1 1h3"/></symbol>
+  <symbol id="i-al" viewBox="0 0 24 24"><path d="M4 3v18M8 7h10M8 13h6"/></symbol>
+  <symbol id="i-ac" viewBox="0 0 24 24"><path d="M12 3v18M6 7h12M8 13h8"/></symbol>
+  <symbol id="i-ar" viewBox="0 0 24 24"><path d="M20 3v18M6 7h10M10 13h6"/></symbol>
+  <symbol id="i-at" viewBox="0 0 24 24"><path d="M3 4h18M7 8v10M13 8v6"/></symbol>
+  <symbol id="i-am" viewBox="0 0 24 24"><path d="M3 12h18M7 6v12M13 8v8"/></symbol>
+  <symbol id="i-ab" viewBox="0 0 24 24"><path d="M3 20h18M7 6v10M13 10v6"/></symbol>
+  <symbol id="i-front" viewBox="0 0 24 24"><rect x="8" y="8" width="12" height="12" rx="1.5"/><path d="M4 16V5a1 1 0 0 1 1-1h11"/></symbol>
+  <symbol id="i-back" viewBox="0 0 24 24"><rect x="4" y="4" width="12" height="12" rx="1.5" stroke-dasharray="3 2"/><rect x="8" y="8" width="12" height="12" rx="1.5"/></symbol>
+  <symbol id="i-check" viewBox="0 0 24 24"><path d="m5 12.5 4.5 4.5L19 7.5"/></symbol>
+  <symbol id="i-x" viewBox="0 0 24 24"><path d="M6 6l12 12M18 6 6 18"/></symbol>
+  <symbol id="i-plus" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></symbol>
+  <symbol id="i-minus" viewBox="0 0 24 24"><path d="M5 12h14"/></symbol>
+  <symbol id="i-fit" viewBox="0 0 24 24"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/></symbol>
+  <symbol id="i-guides" viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M9 3v18" stroke-dasharray="2 2"/></symbol>
+  <symbol id="i-kbd" viewBox="0 0 24 24"><rect x="2" y="6" width="20" height="12" rx="2"/><path d="M6 10h.01M10 10h.01M14 10h.01M18 10h.01M7 14h10"/></symbol>
+  <symbol id="i-hand" viewBox="0 0 24 24"><path d="M8 13V5.5a1.5 1.5 0 0 1 3 0V12M11 11V4.5a1.5 1.5 0 0 1 3 0V12M14 11V6.5a1.5 1.5 0 0 1 3 0V14a7 7 0 0 1-7 7h-1a6 6 0 0 1-5-3l-2-4a1.5 1.5 0 0 1 2.6-1.5L8 15"/></symbol>
+  <symbol id="i-pointer" viewBox="0 0 24 24"><path d="M5 3l14 7-6 2-2 6z"/></symbol>
+  <symbol id="i-pin" viewBox="0 0 24 24"><path d="M12 21s-7-6.5-7-12a7 7 0 0 1 14 0c0 5.5-7 12-7 12z"/><circle cx="12" cy="9" r="2.5"/></symbol>
+  <symbol id="i-warn" viewBox="0 0 24 24"><path d="M12 3 2 20h20z"/><path d="M12 10v4M12 17h.01"/></symbol>
+  <symbol id="i-sun" viewBox="0 0 24 24"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></symbol>
+  <symbol id="i-cursor" viewBox="0 0 24 24"><path d="M5 3l14 7-6 2-2 6z"/></symbol>
+  <symbol id="i-hand" viewBox="0 0 24 24"><path d="M8 13V5.5a1.5 1.5 0 0 1 3 0V12M11 11V4.5a1.5 1.5 0 0 1 3 0V12M14 11.5V6.5a1.5 1.5 0 0 1 3 0V15a6 6 0 0 1-6 6h-1a6 6 0 0 1-5-2.7L3 14.6a1.5 1.5 0 0 1 2.4-1.8L8 15"/></symbol>
+  <symbol id="i-rect" viewBox="0 0 24 24"><rect x="4" y="6" width="16" height="12" rx="1"/></symbol>
+  <symbol id="i-ellipse" viewBox="0 0 24 24"><ellipse cx="12" cy="12" rx="8" ry="7"/></symbol>
+  <symbol id="i-line" viewBox="0 0 24 24"><path d="M5 19 19 5"/></symbol>
+  <symbol id="i-pen" viewBox="0 0 24 24"><path d="M12 19l7-7 3 3-7 7z"/><path d="M18 13l-1.5-7.5L2 2l3.5 14.5L13 18z"/><path d="M2 2l7.6 7.6"/><circle cx="11" cy="11" r="2"/></symbol>
+  <symbol id="i-eyedrop" viewBox="0 0 24 24"><path d="M2 22l1-1h3l9-9M3 21v-3l9-9"/><path d="M15 6l3-3a2.1 2.1 0 0 1 3 3l-3 3 1 1-2 2-6-6 2-2z"/></symbol>
+  <symbol id="i-zoom" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="m20 20-4-4M8 11h6M11 8v6"/></symbol>
+  <symbol id="i-fliph" viewBox="0 0 24 24"><path d="M12 3v18M9 7 4 17h5zM15 7l5 10h-5z"/></symbol>
+  <symbol id="i-flipv" viewBox="0 0 24 24"><path d="M3 12h18M7 9 17 4v5zM7 15l10 5v-5z"/></symbol>
+  <symbol id="i-disth" viewBox="0 0 24 24"><path d="M4 4v16M20 4v16"/><rect x="9" y="8" width="6" height="8" rx="1"/></symbol>
+  <symbol id="i-distv" viewBox="0 0 24 24"><path d="M4 4h16M4 20h16"/><rect x="8" y="9" width="8" height="6" rx="1"/></symbol>
+  <symbol id="i-layersep" viewBox="0 0 24 24"><circle cx="9" cy="10" r="5"/><circle cx="15" cy="10" r="5"/><circle cx="12" cy="15" r="5"/></symbol>
+  <symbol id="i-chev" viewBox="0 0 24 24"><path d="m9 6 6 6-6 6"/></symbol>
+  <symbol id="i-sparkle" viewBox="0 0 24 24"><path d="M12 3l1.8 5.2L19 10l-5.2 1.8L12 17l-1.8-5.2L5 10l5.2-1.8z"/><path d="M19 15l.8 2.2L22 18l-2.2.8L19 21l-.8-2.2L16 18l2.2-.8z"/></symbol>
+  <symbol id="i-sliders" viewBox="0 0 24 24"><path d="M4 6h10M18 6h2M4 12h4M12 12h8M4 18h12M20 18h0"/><circle cx="16" cy="6" r="2"/><circle cx="10" cy="12" r="2"/><circle cx="18" cy="18" r="2"/></symbol>
+  <symbol id="i-team" viewBox="0 0 24 24"><circle cx="9" cy="8" r="3.5"/><path d="M2.5 20a6.5 6.5 0 0 1 13 0"/><circle cx="17" cy="9" r="2.5"/><path d="M16 14.2a5 5 0 0 1 5.5 4.8"/></symbol>
+  <symbol id="i-wand" viewBox="0 0 24 24"><path d="M4 20 15 9M14 4v3M19 9h3M17.5 5.5l2-2M12 7l-1-1M18 12l1 1"/></symbol>
+  <symbol id="i-cube" viewBox="0 0 24 24"><path d="m12 3 8 4.5v9L12 21l-8-4.5v-9z"/></symbol>
+  <symbol id="i-font" viewBox="0 0 24 24"><path d="M4 20 10 4h1l6 16M6.5 14h8"/><path d="M18 14v6M15 17h6"/></symbol>
+</svg>
+
+<div class="app">
+  <div class="proto"><b>ต้นแบบ Redesign</b><span>ตัวแก้ไขสตูดิโอ (/studio/[id]) · ลาก ย่อ/ขยาย ดับเบิลคลิกข้อความ ลองได้ทุกอย่าง</span><button type="button" id="notesBtn">ดูสิ่งที่เปลี่ยน</button></div>
+
+  <header class="top">
+    <a class="brandmark" href="#" aria-label="getpack กลับหน้าสตูดิโอ">getpack<i></i></a>
+    <label for="fname" class="sr">ชื่อแบบ</label><input class="fname" id="fname" value="กล่องไปรษณีย์ · ร้านขนม">
+    <span class="saved" id="saved">บันทึกแล้ว</span>
+    <div class="modesw" role="radiogroup" aria-label="โหมดตัวแก้ไข" id="modesw"></div>
+    <span class="sep"></span>
+    <button class="tb" type="button" id="undoB" aria-label="ย้อนกลับ (⌘Z)" title="ย้อนกลับ ⌘Z"><svg class="ico"><use href="#i-undo"/></svg></button>
+    <button class="tb" type="button" id="redoB" aria-label="ทำซ้ำ (⇧⌘Z)" title="ทำซ้ำ ⇧⌘Z"><svg class="ico"><use href="#i-redo"/></svg></button>
+    <button class="tb pro-only" type="button" data-panel="history" aria-label="ประวัติเวอร์ชัน" title="ประวัติเวอร์ชัน"><svg class="ico"><use href="#i-history"/></svg></button>
+    <nav class="steps" aria-label="ขั้นตอน" id="steps"></nav>
+    <div class="right">
+      <div class="avatars" aria-label="ผู้ที่เปิดแบบนี้อยู่"><span style="background:#2E6B54" title="Piyapan (คุณ)">PP</span><span style="background:#8A5A22" title="ทีม getpack">GP</span></div>
+      <button class="tb" type="button" id="themeB" aria-label="สลับธีม" title="สลับธีมสว่าง/มืด"><svg class="ico"><use href="#i-sun"/></svg></button>
+      <button class="btn btn-g" type="button" id="shareB"><svg class="ico" style="width:16px;height:16px"><use href="#i-share"/></svg>แชร์</button>
+      <button class="btn btn-g" type="button" id="mockB"><svg class="ico" style="width:16px;height:16px"><use href="#i-play"/></svg>Mockup</button>
+      <button class="btn btn-g pro-only" type="button" id="expB"><svg class="ico" style="width:16px;height:16px"><use href="#i-down"/></svg>ส่งออก</button>
+      <span class="pchip" id="pchip"></span>
+      <button class="btn btn-p" type="button" id="orderB">สั่งผลิต</button>
+    </div>
+  </header>
+
+  <div class="mobile-note">ตัวแก้ไขออกแบบมาสำหรับจอคอมพิวเตอร์ บนมือถือใช้ดูแบบ แก้ข้อความ และสั่งผลิตได้</div>
+
+  <div class="main">
+    <nav class="rail" aria-label="เครื่องมือ" id="rail"></nav>
+    <section class="panel" id="panel" aria-live="polite"></section>
+    <div class="stagew split" id="stagew">
+      <div class="cv" id="cv" tabindex="0" aria-label="พื้นที่ออกแบบแผ่นคลี่"></div>
+      <div class="tools pro-only" id="tools" role="toolbar" aria-label="เครื่องมือวาด" aria-orientation="vertical"></div>
+      <div class="v3d" id="v3d"><span class="cap">3D · ซิงก์กับแผ่นคลี่</span><div class="acts"><button class="tb" type="button" id="v3dBig" aria-label="เปิด Mockup" title="เปิด Mockup"><svg class="ico"><use href="#i-play"/></svg></button></div><div id="iso3d" style="display:contents"></div></div>
+      <div class="overlays pro-only"><button class="tb" type="button" id="ovlB" aria-label="เส้นช่วยและระยะ" title="เส้นช่วยและระยะ" style="background:var(--chrome);border:1px solid var(--line);box-shadow:var(--shadow)"><svg class="ico"><use href="#i-guides"/></svg></button><div class="ovl" id="ovl" hidden></div></div>
+      <div class="float" id="float"></div>
+    </div>
+    <aside class="insp" aria-label="คุณสมบัติ">
+      <div class="itabs" role="tablist" id="itabs"></div>
+      <div class="ibody" id="ibody"></div>
+    </aside>
+  </div>
+
+  <footer class="status" id="status"></footer>
+</div>
+
+<input type="file" id="fileImg" accept="image/png,image/jpeg,image/svg+xml,image/webp" hidden>
+<input type="file" id="fileFont" accept=".ttf,.otf,.woff,.woff2" hidden>
+<div class="menu" id="expMenu" hidden></div>
+<div class="toast" id="toast" hidden></div>
+
+<dialog id="kbdDlg" aria-labelledby="kbdT"><div class="dh"><h2 id="kbdT">ทางลัดแป้นพิมพ์</h2><button class="tb" type="button" data-close aria-label="ปิด"><svg class="ico"><use href="#i-x"/></svg></button></div>
+  <div class="db"><div class="kbdgrid">
+    <span>เลือก / ย้าย</span><span><kbd>V</kbd></span><span>เพิ่มข้อความ</span><span><kbd>T</kbd></span><span>เพิ่มสี่เหลี่ยม / วงกลม</span><span><kbd>R</kbd> <kbd>E</kbd></span>
+    <span>เลื่อนพื้นที่</span><span><kbd>Space</kbd> + ลาก</span><span>ขยับทีละ 1 / 10 มม.</span><span><kbd>←↑→↓</kbd> / <kbd>⇧</kbd>+ลูกศร</span>
+    <span>ทำสำเนา</span><span><kbd>⌘</kbd><kbd>D</kbd></span><span>ลบ</span><span><kbd>Delete</kbd></span><span>ย้อนกลับ / ทำซ้ำ</span><span><kbd>⌘</kbd><kbd>Z</kbd> / <kbd>⇧</kbd><kbd>⌘</kbd><kbd>Z</kbd></span>
+    <span>ขึ้นหน้า / ลงหลัง</span><span><kbd>⌘</kbd><kbd>]</kbd> / <kbd>⌘</kbd><kbd>[</kbd></span><span>ซูมเข้า / ออก / พอดีจอ</span><span><kbd>+</kbd> <kbd>−</kbd> <kbd>⇧</kbd><kbd>1</kbd></span>
+    <span>แก้ข้อความ</span><span>ดับเบิลคลิก</span><span>ปักหมุดความเห็น</span><span><kbd>C</kbd></span>
+    <span>เครื่องมือ (โหมดมืออาชีพ)</span><span><kbd>V</kbd> <kbd>H</kbd> <kbd>Z</kbd> <kbd>T</kbd> <kbd>R</kbd> <kbd>E</kbd> <kbd>L</kbd> <kbd>P</kbd> <kbd>I</kbd></span><span>เลือกหลายชิ้น / ทั้งหมด</span><span><kbd>⇧</kbd>+คลิก · ลากกรอบ · <kbd>⌘</kbd><kbd>A</kbd></span>
+    <span>คัดลอก / ตัด / วาง</span><span><kbd>⌘</kbd><kbd>C</kbd> <kbd>⌘</kbd><kbd>X</kbd> <kbd>⌘</kbd><kbd>V</kbd></span><span>ปากกา: จบเส้น / ปิดรูป</span><span><kbd>Enter</kbd> · คลิกจุดแรก</span>
+    <span>วาดสี่เหลี่ยมจัตุรัส / เส้น 45°</span><span><kbd>⇧</kbd>+ลาก</span><span>เส้นนำ</span><span>คลิกไม้บรรทัด · ลากออกเพื่อลบ</span>
+    <span>ปิดการสแนปชั่วคราว</span><span><kbd>Alt</kbd>+ลาก</span><span></span><span></span>
+  </div></div></dialog>
+
+<dialog id="mockDlg" aria-labelledby="mockT" style="width:min(980px,calc(100% - 24px))"><div class="dh"><h2 id="mockT">Mockup และนำเสนอ</h2><button class="tb" type="button" data-close aria-label="ปิด"><svg class="ico"><use href="#i-x"/></svg></button></div>
+  <div class="mock"><div class="stagem" id="mockStage"></div>
+    <aside><div class="sec"><b>ฉากหลัง</b><div class="bgsw" id="mockBg"></div></div>
+      <div class="sec"><b>รุ่นที่แสดง</b><div class="chipset" id="mockVar"></div></div>
+      <div class="sec"><b>ส่งออกสำหรับขายก่อนผลิต</b><button class="btn btn-p" type="button" data-toast="ต้นแบบ: ส่งออกชุดภาพ PNG 4 มุม × ทุกรุ่น ขนาด 2000 px พื้นหลังโปร่งใสหรือฉากที่เลือก">ชุดภาพ PNG ทุกรุ่น</button><button class="btn btn-g" type="button" data-toast="ต้นแบบ: วิดีโอหมุนกล่อง 6 วินาที (MP4) สำหรับโพสต์ขาย">วิดีโอหมุนกล่อง</button><button class="btn btn-g" type="button" data-toast="ต้นแบบ: แสดง QR ให้สแกนดูกล่องบนโต๊ะจริงด้วย AR บนมือถือ">ดูด้วย AR บนมือถือ</button></div>
+      <p class="note" style="margin:0">ภาพ mockup ใช้แผ่นคลี่จริงของงานนี้ ถ้าแก้แบบ ภาพจะอัปเดตตาม</p></aside></div></dialog>
+
+<dialog id="shareDlg" aria-labelledby="shT" style="width:min(520px,calc(100% - 24px))"><div class="dh"><h2 id="shT">แชร์แบบนี้</h2><button class="tb" type="button" data-close aria-label="ปิด"><svg class="ico"><use href="#i-x"/></svg></button></div>
+  <div class="db" style="display:flex;flex-direction:column;gap:14px">
+    <div class="chipset" id="shareMode"><button type="button" class="chip" aria-pressed="true">ดูและคอมเมนต์ได้</button><button type="button" class="chip" aria-pressed="false">แก้ไขได้</button><button type="button" class="chip" aria-pressed="false">อนุมัติแบบ</button></div>
+    <div style="display:flex;gap:8px"><input class="sel" readonly value="getpack.co/s/ตัวอย่างลิงก์"><button class="btn btn-p" type="button" data-toast="คัดลอกลิงก์แล้ว (ต้นแบบ)">คัดลอก</button></div>
+    <p class="note" style="margin:0">ผู้รับเห็นกล่อง 3D และแผ่นคลี่ ปักหมุดความเห็นได้ทันทีโดยไม่ต้องสมัคร · ลิงก์หมดอายุใน 15 วัน</p>
+    <div class="card"><h4>ทีมของแบรนด์ <span class="samplechip">ตัวอย่าง</span></h4>
+      <div class="opt"><span><b style="font-weight:600">Piyapan</b><br><small>เจ้าของ · ล็อกแบรนด์ได้</small></span><span class="note">เจ้าของ</span></div>
+      <div class="opt"><span><b style="font-weight:600">ฝ่ายการตลาด</b><br><small>ออกแบบและแก้ได้ทุกส่วน</small></span><span class="note">ผู้ออกแบบ</span></div>
+      <div class="opt"><span><b style="font-weight:600">ฝ่ายจัดซื้อ</b><br><small>อนุมัติแบบและสั่งผลิต</small></span><span class="note">ผู้อนุมัติ</span></div>
+      <div class="opt"><span><b style="font-weight:600">สาขาเชียงใหม่</b><br><small>แก้ได้เฉพาะส่วนที่ไม่ล็อก</small></span><span class="note">สาขา</span></div>
+      <button class="btn btn-g" type="button" data-toast="ต้นแบบ: เชิญสมาชิกด้วยอีเมลหรือ LINE และเลือกบทบาท">เชิญสมาชิก</button></div>
+    <div class="inkline"><svg class="ico"><use href="#i-team"/></svg><span>เป็นนักออกแบบ? เข้าร่วมโปรแกรมพันธมิตร getpack รับค่าแนะนำเมื่อลูกค้าของคุณสั่งผลิต <button class="linkb" type="button" data-toast="ต้นแบบ: หน้าโปรแกรมพันธมิตรนักออกแบบ (เงื่อนไขรอทีมธุรกิจ)">ดูรายละเอียด</button></span></div>
+  </div></dialog>
+
+<dialog id="welDlg" aria-labelledby="welT" style="width:min(940px,calc(100% - 24px))"><div class="dh"><div><h2 id="welT">เริ่มออกแบบกล่องของคุณ</h2><p class="note" style="margin:2px 0 0">เลือกวิธีที่สบายที่สุด เปลี่ยนโหมดได้ตลอด งานไม่หาย</p></div><button class="tb" type="button" data-close aria-label="ปิด"><svg class="ico"><use href="#i-x"/></svg></button></div>
+  <div class="db"><div class="wel">
+    <button class="welc" type="button" data-welcome="easy" autofocus><span class="tag">แนะนำครั้งแรก</span><div class="art"><svg viewBox="0 0 160 90"><rect x="20" y="16" width="120" height="60" rx="8" fill="#CDAB7C"/><circle cx="58" cy="44" r="14" fill="#2E6B54"/><rect x="80" y="36" width="44" height="7" rx="3" fill="#1F2421"/><rect x="80" y="48" width="30" height="5" rx="2.5" fill="#1F2421" opacity=".5"/><g transform="translate(118 58)"><circle r="12" fill="#2F6BFF"/><path d="M-5 0l3 3 6-6" stroke="#fff" stroke-width="2.4" fill="none" stroke-linecap="round"/></g></svg></div>
+      <b>โหมดง่าย</b><p>เลือกแม่แบบ ใส่โลโก้ แก้ข้อความ เสร็จในไม่กี่นาที</p><ul><li>ปรับขนาดและตำแหน่งด้วยแถบเลื่อน</li><li>ระบบตรวจงานและแก้ให้อัตโนมัติ</li><li>ไม่ต้องรู้เรื่องงานพิมพ์</li></ul></button>
+    <button class="welc" type="button" data-welcome="pro"><div class="art"><svg viewBox="0 0 160 90"><rect x="0" y="0" width="160" height="8" fill="#0002"/><rect x="0" y="0" width="8" height="90" fill="#0002"/><g stroke="#0004" stroke-width=".8"><path d="M20 0v8M40 0v8M60 0v8M80 0v8M100 0v8M120 0v8M140 0v8M0 20h8M0 40h8M0 60h8M0 80h8"/></g><rect x="24" y="18" width="112" height="56" fill="#CDAB7C" stroke="#E5484D" stroke-width=".8"/><path d="M62 18v56M98 18v56" stroke="#3B6DF0" stroke-dasharray="3 2"/><rect x="30" y="30" width="26" height="16" fill="none" stroke="#2F6BFF" stroke-width="1.2"/><rect x="28" y="28" width="4" height="4" fill="#fff" stroke="#2F6BFF"/><rect x="54" y="44" width="4" height="4" fill="#fff" stroke="#2F6BFF"/><text x="104" y="64" font-size="7" font-family="monospace" fill="#1F2421">C57 M0 Y21 K58</text></svg></div>
+      <b>โหมดมืออาชีพ</b><p>สำหรับนักออกแบบ ทำงานจบในสตูดิโอโดยไม่ต้องใช้โปรแกรมอื่น</p><ul><li>ไม้บรรทัด ค่าตำแหน่งเป็น มม. หมุน จัดแนว</li><li>ชั้น ล็อก ฟอนต์แบรนด์ CMYK หลายรุ่น</li><li>ส่งออก PDF พร้อมพิมพ์ และไฟล์ .ai</li></ul></button>
+    <button class="welc" type="button" data-welcome="team"><div class="art"><svg viewBox="0 0 160 90"><circle cx="62" cy="38" r="14" fill="#2E6B54"/><path d="M38 78a24 24 0 0 1 48 0" fill="#2E6B54"/><circle cx="104" cy="42" r="11" fill="#E8B04B"/><path d="M86 78a18 18 0 0 1 36 0" fill="#E8B04B"/><rect x="92" y="10" width="46" height="18" rx="9" fill="#fff" stroke="#0002"/><circle cx="104" cy="19" r="2" fill="#1F2421"/><circle cx="115" cy="19" r="2" fill="#1F2421"/><circle cx="126" cy="19" r="2" fill="#1F2421"/></svg></div>
+      <b>ให้ทีม getpack ออกแบบให้</b><p>ส่งโลโก้และไอเดีย นักออกแบบทำแบบให้ แล้วคุณตรวจในสตูดิโอนี้</p><ul><li>แก้ไขฟรี 3 ครั้ง</li><li>คอมเมนต์บนแบบได้โดยตรง</li><li>อนุมัติแล้วสั่งผลิตต่อได้ทันที</li></ul></button>
+  </div>
+  <div class="welfoot"><span>มีแบบที่ทำในโปรแกรมอื่นแล้ว? <button class="linkb" type="button" data-welcome="file">อัปโหลดไฟล์ PDF หรือ .ai</button></span><span>เปลี่ยนโหมดได้ที่มุมซ้ายบน</span></div></div></dialog>
+
+<dialog id="notesDlg" aria-labelledby="ntT" style="width:min(760px,calc(100% - 24px))"><div class="dh"><h2 id="ntT">สิ่งที่เปลี่ยนในตัวแก้ไข</h2><button class="tb" type="button" data-close aria-label="ปิด"><svg class="ico"><use href="#i-x"/></svg></button></div>
+  <div class="db notes">
+    <h3>สิ่งที่เจอในตัวแก้ไขเดิม</h3>
+    <ul>
+      <li>แผ่นคลี่เล็ก (ซูม 15–28%) และหน้าต่าง 3D ลอยทับพื้นที่ทำงาน · คอลัมน์ขวาเป็นราคาตลอด ไม่มีที่ให้ปรับคุณสมบัติของชิ้นงาน</li>
+      <li>แม่แบบว่าง ("ยังไม่มีแม่แบบสำหรับประเภทนี้") · ข้อความมีแค่ 3 ปุ่ม ไม่มีตัวเลือกฟอนต์</li>
+      <li>สีแบรนด์ "เก็บไว้ในเบราว์เซอร์นี้" เปลี่ยนเครื่องแล้วหาย</li>
+      <li>"ตรวจงาน" อยู่ในแท็บ ไม่ชี้ตำแหน่งปัญหาบนชิ้นงาน · ราคาในตัวแก้ไข (฿14.79 ที่ 150×100×80) ไม่สอดคล้องกับหน้าปรับแต่ง (฿17.26 ที่เบอร์ 00)</li>
+    </ul>
+    <h3>สองโหมดในตัวแก้ไขเดียว (แนะนำ)</h3>
+    <ul>
+      <li><b>ทำไมไม่แยกเป็น 2 โปรแกรม:</b> แบบเดียวกันเปิดได้ทั้งสองโหมด สลับได้ทุกเมื่อ งานไม่หาย ทีมดูแลโค้ดชุดเดียว และลูกค้าที่เก่งขึ้นค่อยๆ ย้ายไปโหมดมืออาชีพได้เอง</li>
+      <li><b>โหมดง่าย:</b> เครื่องมือเท่าที่จำเป็น (แม่แบบ แบรนด์ ข้อความ รูปภาพ ตกแต่ง พื้นหลัง) · ตัวช่วย 4 ขั้นพร้อมแถบความคืบหน้า · ปรับขนาดด้วยแถบเลื่อน วางตำแหน่งด้วยตาราง 9 ช่อง · ซ่อนไม้บรรทัด ค่าตัวเลข ระยะตัดตก CMYK · ปัญหางานพิมพ์มีปุ่ม "แก้ให้" และ "แก้ทั้งหมดให้"</li>
+      <li><b>โหมดมืออาชีพ:</b> ไม้บรรทัด ค่า X/Y/W/H เป็นมิลลิเมตร หมุน ความทึบ จัดแนว ชั้น/ล็อก เส้นช่วยทุกชนิด CMYK และหมึกที่ใช้ หลายรุ่น ประวัติเวอร์ชัน ส่งออก PDF/.ai และทางลัดแป้นพิมพ์</li>
+      <li><b>เริ่มต้นครั้งแรก:</b> เลือกได้ 3 ทาง ง่าย / มืออาชีพ / ให้ทีม getpack ออกแบบให้ (แก้ไขฟรี 3 ครั้ง) และลิงก์อัปโหลดไฟล์สำหรับคนที่มีแบบอยู่แล้ว · ระบบจำโหมดที่เลือกไว้ และแนะนำโหมดมืออาชีพเมื่อผู้ใช้อัปโหลดฟอนต์</li>
+    </ul>
+    <h3>โหมดมืออาชีพ: เครื่องมือครบแบบโปรแกรมออกแบบจริง</h3>
+    <ul>
+      <li><b>กล่องเครื่องมือ:</b> เลือก (V) · เลื่อนมุมมอง (H) · ซูม (Z) · ข้อความ (T) · สี่เหลี่ยม (R) · วงรี (E) · เส้นตรง (L) · ปากกาวาดรูปทรงอิสระ (P) · ที่ดูดสีและรูปแบบ (I) · ความเห็น (C) · ⇧ ล็อกสัดส่วน/มุม 45°</li>
+      <li><b>เลือกหลายชิ้น:</b> ⇧+คลิก ลากกรอบ ⌘A · ย้ายพร้อมกัน จัดแนวกันเอง กระจายระยะเท่ากัน · คัดลอก/ตัด/วาง ⌘C ⌘X ⌘V</li>
+      <li><b>สแนปอัจฉริยะ:</b> ขอบและกึ่งกลางของแผงและชิ้นงานอื่น + เส้นนำที่ลากจากไม้บรรทัด (ลากกลับเข้าไม้บรรทัดเพื่อลบ) · Alt ปิดสแนปชั่วคราว</li>
+      <li><b>คุณสมบัติ:</b> พลิก/หมุน 90° · เติมสีเดียวหรือไล่สี · เส้นขอบ สี ความหนา เส้นประ · ระยะบรรทัด · ภาพสีเดียวสำหรับพิมพ์ 1 สี</li>
+      <li><b>เครื่องมืองานพิมพ์:</b> แผง "สีในงาน" เปลี่ยนสีเดียวทั้งงานทุกด้านทุกรุ่น นับจำนวนหมึก · ดูแยกหมึก (ดำ / สี) · จำลองหมึกบนผิวคราฟท์ · ส่งออก PDF/X-4, .ai, SVG, PNG 300 dpi, DXF และนำเข้า PDF/.ai</li>
+    </ul>
+    <h3>ฟีเจอร์ที่ทำให้ getpack เป็นผู้นำ (10 ข้อ)</h3>
+    <ul>
+      <li><b>ชุดแบรนด์จากลิงก์ร้าน</b> (แผงแบรนด์) · <b>พอดีกับสินค้าและค่าส่ง</b> (แผงกล่อง: ใส่ขนาดสินค้า ดูช่องว่าง ไซซ์ขนส่ง และเงินที่ประหยัดได้)</li>
+      <li><b>QR อัจฉริยะ</b> (เลือก QR: ปลายทาง LINE OA / เว็บ / สั่งซ้ำ / รับประกัน เปลี่ยนได้หลังพิมพ์) · <b>ล็อกแบรนด์</b> สำหรับทีมและสาขา (โลโก้หลักถูกล็อกไว้เป็นตัวอย่าง ลองในโหมดง่าย) + บทบาททีมในหน้าต่างแชร์</li>
+      <li>แท็บสั่งผลิต: <b>ลดต้นทุนได้</b> (กดใช้ได้ทันที) · <b>พิมพ์รอบรวม</b> · <b>ติดตามการผลิตพร้อมรูปและรายงานสี</b> · <b>เตือนก่อนกล่องหมด</b> จากยอดขายร้านออนไลน์ · <b>ข้อมูลความยั่งยืน</b></li>
+      <li><b>ปลั๊กอิน Figma / Illustrator</b> (เมนูส่งออก) · <b>โปรแกรมพันธมิตรนักออกแบบ</b> (หน้าต่างแชร์)</li>
+    </ul>
+    <h3>อ้างอิงจากโปรแกรมที่ใช้ทำบรรจุภัณฑ์จริง</h3>
+    <ul>
+      <li><b>Adobe Illustrator + Esko DeskPack:</b> บาร์โค้ดที่รับรองว่าพิมพ์แล้วสแกนได้ · ตรวจงานก่อนพิมพ์แบบรายงาน · พิมพ์ขาวรองพื้น · trapping · งานข้อมูลแปรผัน → เรามีตรวจงานสดพร้อมปุ่มแก้ และหลายรุ่นในแบบเดียวแล้ว</li>
+      <li><b>Esko Studio / ArtiosCAD:</b> ดู 3D ระหว่างออกแบบ พับกล่องจากแผ่นคลี่ จำลองงานพิมพ์และงานเคลือบบนวัสดุจริง → เรามี 3D ซิงก์สดและจำลองหมึกบนคราฟท์</li>
+      <li><b>Pacdora:</b> สร้างแผ่นคลี่จากขนาด · ม็อกอัปคลิกเดียว · นำเข้า PDF/AI/DXF → เรามีครบ และเหนือกว่าตรงที่ราคาจริง ตรวจตามมาตรฐานการผลิต และสั่งผลิตได้ในที่เดียว</li>
+      <li><b>สิ่งที่ยังไม่ใส่ (รอยืนยันกับฝ่ายผลิต):</b> ฟอยล์ ปั๊มนูน เคลือบ UV เฉพาะจุด พิมพ์ขาวรองพื้น เพราะต้องรู้ก่อนว่าสายการผลิตทำได้จริง</li>
+    </ul>
+    <h3>ตัวแก้ไขใหม่</h3>
+    <ul>
+      <li><b>พื้นที่ทำงาน:</b> แผ่นคลี่ซูม/เลื่อนได้ (Space+ลาก, ⌘+ล้อเมาส์) + 3D ซิงก์สดแบบแยกจอ · เส้นตัด เส้นพับ ระยะตัดตก ระยะปลอดภัย และป้ายชื่อแผง เปิด/ปิดได้ · สแนปกับกึ่งกลางแผงพร้อมเส้นนำ</li>
+      <li><b>เครื่องมือ:</b> แม่แบบตามธุรกิจ · องค์ประกอบ (รูปทรง สัญลักษณ์บรรจุภัณฑ์ QR บาร์โค้ด) · ข้อความ + ฟอนต์ไทย 9 แบบ + อัปโหลดฟอนต์แบรนด์ (ใช้ได้จริงในต้นแบบ) · อัปโหลดภาพพร้อมบอก DPI · ชุดแบรนด์ระดับบัญชี (โลโก้ สี CMYK ฟอนต์) · พื้นหลัง · ชั้น (ซ่อน/ล็อก/เรียงลำดับ) · รุ่น · ความเห็นแบบปักหมุด · ประวัติเวอร์ชัน</li>
+      <li><b>ตัวตรวจคุณสมบัติตามชิ้นงาน:</b> ตำแหน่ง/ขนาดเป็นมิลลิเมตร หมุน จัดแนวกับแผง ฟอนต์/ขนาด pt/น้ำหนัก/ระยะตัวอักษร สี + ค่า CMYK และบอกว่าสีจะพิมพ์ด้วยระบบไหน</li>
+      <li><b>ตรวจงานสด:</b> นับปัญหาบนแถบขั้นตอน ชี้หมุดบนชิ้นงาน กดแล้วเลือกชิ้นที่มีปัญหา (ทับเส้นพับ เกินระยะปลอดภัย ออกนอกแผ่น DPI ต่ำ ตัวอักษรเล็กกว่า 6 pt สีไม่ตรงกับระบบพิมพ์ที่เลือก)</li>
+      <li><b>หลายรุ่นจากแบบเดียว:</b> ตั้งข้อความ/สีให้เปลี่ยนตามรุ่น สลับดูได้ และใส่จำนวนแต่ละรุ่นในคำสั่งซื้อเดียว</li>
+      <li><b>Mockup:</b> ฉากหลัง ชุดภาพ PNG ทุกรุ่น วิดีโอหมุน AR · <b>แชร์:</b> ดู/คอมเมนต์/แก้ไข/อนุมัติ</li>
+    </ul>
+    <p class="n2">ข้อมูลจริง: เครื่องมือเดิมทุกตัว แผ่นคลี่ 547 × 196 มม. ขนาดภายใน 150 × 100 × 80 มม. วัสดุ KA125 ลอน B ราคา ฿14.79/ชิ้นที่ 300 ชิ้น ผลิต 5 วันทำการ และชนิด QR (ระดับกู้ข้อมูล) · ตัวอย่าง: ราคาเมื่อเปลี่ยนจำนวน/ระบบพิมพ์/พิมพ์ด้านใน/หลายรุ่น แม่แบบ ประวัติเวอร์ชัน และค่า CMYK (แปลงโดยประมาณ)</p>
+  </div></dialog>
+
+<script>
+(()=>{
+const $=s=>document.querySelector(s);
+const esc=s=>String(s??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const money=n=>n.toLocaleString('th-TH',{minimumFractionDigits:2,maximumFractionDigits:2});
+let tt;function toast(m,lbl,fn){const t=$('#toast');t.textContent=m;if(lbl){const b=document.createElement('button');b.type='button';b.textContent=lbl;b.onclick=()=>{t.hidden=true;fn()};t.append(b)}t.hidden=false;clearTimeout(tt);tt=setTimeout(()=>t.hidden=true,lbl?6000:2600)}
+let LS=null;try{LS=window.localStorage}catch(e){}
+const lsGet=k=>{try{return LS&&LS.getItem(k)}catch(e){return null}},lsSet=(k,v)=>{try{LS&&LS.setItem(k,v)}catch(e){}};
+const PT=0.3528; /* 1pt in mm */
+/* ---------- dieline (RSC, inside 150×100×80, sheet 547×196) ---------- */
+const BOX={L:150,W:100,H:80};
+const X=[0,47,197,297,447,547],Y=[0,58,138,196];
+const PANELS=[
+ {id:'glue',n:'ปีกกาว',x:0,y:66,w:47,h:64,glue:true},
+ {id:'front',n:'ด้านหน้า',x:47,y:58,w:150,h:80},{id:'right',n:'ด้านขวา',x:197,y:58,w:100,h:80},{id:'back',n:'ด้านหลัง',x:297,y:58,w:150,h:80},{id:'left',n:'ด้านซ้าย',x:447,y:58,w:100,h:80},
+ {id:'tf',n:'ฝาบน (หน้า)',x:47,y:0,w:150,h:58},{id:'tr',n:'ฝาบน',x:199,y:0,w:96,h:58},{id:'tb',n:'ฝาบน (หลัง)',x:297,y:0,w:150,h:58},{id:'tl',n:'ฝาบน',x:449,y:0,w:96,h:58},
+ {id:'bf',n:'ฝาล่าง',x:47,y:138,w:150,h:58},{id:'br',n:'ฝาล่าง',x:199,y:138,w:96,h:58},{id:'bb',n:'ฝาล่าง',x:297,y:138,w:150,h:58},{id:'bl',n:'ฝาล่าง',x:449,y:138,w:96,h:58}];
+const FOLDS=[[47,58,47,138],[197,58,197,138],[297,58,297,138],[447,58,447,138],[47,58,547,58],[47,138,547,138]];
+const SHEET={w:547,h:196};
+/* ---------- fonts ---------- */
+let FONTS=[['Anuphan','Anuphan'],['IBM Plex Sans Thai','IBM Plex Sans Thai'],['Kanit','Kanit'],['Prompt','Prompt'],['Sarabun','Sarabun'],['Mitr','Mitr'],['Chakra Petch','Chakra Petch'],['Noto Serif Thai','Noto Serif Thai'],['IBM Plex Mono','IBM Plex Mono']];
+/* ---------- brand kit (account-level) ---------- */
+const LOGO_SVG=`data:image/svg+xml;utf8,${encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 120"><circle cx="60" cy="60" r="44" fill="#2E6B54"/><path d="M38 66c10-26 34-30 44-8" stroke="#F4F2EC" stroke-width="9" fill="none" stroke-linecap="round"/><text x="116" y="72" font-family="Arial Black,Arial" font-weight="900" font-size="34" fill="#1F2421">baan</text></svg>')}`;
+const BRAND={name:'ร้านขนมบ้านนุ่ม (ตัวอย่าง)',logos:[{src:LOGO_SVG,name:'โลโก้หลัก.svg',px:[2000,1200],vector:true}],colors:[['เขียวแบรนด์','#2E6B54'],['ถ่าน','#1F2421'],['มัสตาร์ด','#E8B04B'],['ครีม','#F4F2EC']],fonts:['Anuphan','IBM Plex Sans Thai']};
+/* ---------- document state ---------- */
+const uid=()=>Math.random().toString(36).slice(2,8);
+const S={
+  side:'out',bg:'kraft',bgColor:'#2E6B54',print:'cmyk',qty:300,
+  objs:{out:[],in:[]},sel:null,variants:[{id:'v1',name:'รสดั้งเดิม',color:'#2E6B54',qty:300,ov:{}}],vActive:'v1',
+  zoom:1,view:'split',panel:'brand',tab:'design',ovl:{cut:true,fold:true,bleed:true,safe:true,labels:true,grid:false},
+  comments:[],pinMode:false,assets:[],mockBg:0,
+  mode:lsGet('gp.mode')||'easy',tool:'v',msel:[],prod:{l:140,w:90,h:70},gang:false,remind:false,brandScan:null,guides:[{o:'v',p:122},{o:'h',p:98}],printSim:false,sep:'all',clip:null,done:{tpl:false,logo:false,text:false}
+};
+const PRO=()=>S.mode==='pro';
+const MS=()=>{if(S.msel.length>1&&S.msel.includes(S.sel)){const ids=S.msel.filter(id=>OBJ().some(o=>o.id===id));if(ids.length>1)return ids}S.msel=[];return S.sel?[S.sel]:[]};
+const MSO=()=>MS().map(id=>OBJ().find(o=>o.id===id)).filter(Boolean);
+const OV=()=>PRO()?S.ovl:{cut:true,fold:true,labels:true,bleed:false,safe:false,grid:false};
+document.documentElement.dataset.mode=S.mode;
+function seed(){
+  S.objs.out=[
+   {id:uid(),type:'image',name:'โลโก้หลัก',x:72,y:66,w:100,h:60,src:LOGO_SVG,px:[2000,1200],vector:true,blk:true},
+   {id:uid(),type:'text',name:'คำโปรย',x:122,y:131,w:120,h:6,text:'ขนมอบสดใหม่ทุกวัน',font:'Anuphan',size:11,weight:600,align:'middle',fill:'#1F2421',track:0,variant:false},
+   {id:uid(),type:'text',name:'รสชาติ',x:247,y:98,w:90,h:10,text:'รสดั้งเดิม',font:'Kanit',size:22,weight:800,align:'middle',fill:'#2E6B54',track:0,variant:true},
+   {id:uid(),type:'rect',name:'แถบสี',x:297,y:118,w:150,h:20,fill:'#2E6B54',r:0,stroke:null,sw:0},
+   {id:uid(),type:'qr',name:'QR ร้านค้า',x:405,y:72,w:30,h:30,fill:'#1F2421'},
+   {id:uid(),type:'sym',sym:'recycle',name:'สัญลักษณ์รีไซเคิล',x:470,y:110,w:16,h:16,fill:'#1F2421'},
+   {id:uid(),type:'image',name:'โลโก้ฝาบน',x:92,y:12,w:60,h:36,src:LOGO_SVG,px:[2000,1200],vector:true}];
+  S.variants=[{id:'v1',name:'รสดั้งเดิม',color:'#2E6B54',qty:200,ov:{}},{id:'v2',name:'ช็อกโกแลต',color:'#5A3825',qty:100,ov:{}}];
+  const fl=S.objs.out.find(o=>o.name==='รสชาติ');const band=S.objs.out.find(o=>o.name==='แถบสี');band.variant=true;
+  S.variants[1].ov[fl.id]={text:'ช็อกโกแลต',fill:'#5A3825'};S.variants[1].ov[band.id]={fill:'#5A3825'};
+}
+seed();
+const OBJ=()=>S.objs[S.side];
+const vact=()=>S.variants.find(v=>v.id===S.vActive);
+const eff=o=>{const ov=vact()?.ov?.[o.id];return ov?{...o,...ov}:o};
+/* ---------- history ---------- */
+const H={stack:[],i:-1};
+function snap(){const s=JSON.stringify({objs:S.objs,variants:S.variants,bg:S.bg,bgColor:S.bgColor,print:S.print});if(H.stack[H.i]===s)return;H.stack=H.stack.slice(0,H.i+1);H.stack.push(s);H.i=H.stack.length-1;if(H.stack.length>80){H.stack.shift();H.i--}markSaved()}
+function restore(s){const d=JSON.parse(s);Object.assign(S,{objs:d.objs,variants:d.variants,bg:d.bg,bgColor:d.bgColor,print:d.print});if(S.sel&&!OBJ().some(o=>o.id===S.sel))S.sel=null;renderAll()}
+function undo(){if(H.i>0){H.i--;restore(H.stack[H.i])}}function redo(){if(H.i<H.stack.length-1){H.i++;restore(H.stack[H.i])}}
+let saveT;function markSaved(){const el=$('#saved');el.textContent='กำลังบันทึก…';clearTimeout(saveT);saveT=setTimeout(()=>{el.textContent='บันทึกแล้ว '+new Date().toLocaleTimeString('th-TH',{hour:'2-digit',minute:'2-digit'})},600)}
+/* ---------- colour helpers ---------- */
+function hex2rgb(h){h=h.replace('#','');if(h.length===3)h=h.split('').map(c=>c+c).join('');const n=parseInt(h,16);return[(n>>16)&255,(n>>8)&255,n&255]}
+function cmyk(h){const [r,g,b]=hex2rgb(h).map(v=>v/255);const k=1-Math.max(r,g,b);if(k>=1)return'C0 M0 Y0 K100';const c=(1-r-k)/(1-k),m=(1-g-k)/(1-k),y=(1-b-k)/(1-k);return`C${Math.round(c*100)} M${Math.round(m*100)} Y${Math.round(y*100)} K${Math.round(k*100)}`}
+const isBlack=h=>{const [r,g,b]=hex2rgb(h);return r<60&&g<60&&b<60&&Math.max(r,g,b)-Math.min(r,g,b)<25};
+const BG={kraft:'#CDAB7C',white:'#F3F1EC'};
+const panelFill=()=>S.bg==='color'?S.bgColor:BG[S.bg]||BG.kraft;
+/* ---------- object → SVG ---------- */
+function qrPath(n=21){let d='';let seedv=7;const rnd=()=>{seedv=(seedv*9301+49297)%233280;return seedv/233280};const fin=(x,y)=>x<7&&y<7||x>n-8&&y<7||x<7&&y>n-8;
+  for(let y=0;y<n;y++)for(let x=0;x<n;x++){let on;if(fin(x,y)){const cx=x<7?3:n-4,cy=y<7?3:n-4;const dd=Math.max(Math.abs(x-cx),Math.abs(y-cy));on=dd===3||dd<=1}else on=rnd()>.52;if(on)d+=`M${x} ${y}h1v1h-1z`}return d}
+const QR=qrPath();
+const SYM={
+ recycle:'<path d="M12 3.5 9 8.6h2.2l-3.4 5.7H5.4L3 10.2l2-3.5" /><path d="M14.6 4.2l2.7 4.6-1.9 1.1 3.8.4 1.7-3.4-1.8 1.1L16.6 3a2 2 0 0 0-1.7-1H11"/><path d="M19.8 14.6 17 19.4H11.3l.1-2.2-2.2 3.1 2.1 3 .1-2h6.5a2 2 0 0 0 1.7-1l2-3.5"/>',
+ up:'<path d="M7 20V6M7 6 3.5 9.5M7 6l3.5 3.5M17 20V6M17 6l-3.5 3.5M17 6l3.5 3.5M3 22h18"/>',
+ fragile:'<path d="M7 3h10l-1 6a4 4 0 0 1-8 0zM12 13v7M8 21h8"/><path d="M11 5l1 2-1 2"/>',
+ dry:'<path d="M3 12a9 9 0 0 1 18 0zM12 12v7a2 2 0 0 1-4 0"/><path d="M8 4l-1-2M12 3V1M16 4l1-2"/>',
+ food:'<path d="M4 20 14 10M10 4c3 0 6 3 6 6l-2 2-6-6zM6 3l-2 6M3 6l6-2"/><path d="M14 14l6 6"/>'};
+function objSVG(o0,forCanvas,pfx){
+  const o=eff(o0);if(o.hidden)return'';
+  const cx=o.x+o.w/2,cy=o.y+o.h/2;let tf='';if(o.rot)tf+=`rotate(${o.rot} ${cx} ${cy}) `;if(o.fx||o.fy)tf+=`translate(${cx} ${cy}) scale(${o.fx?-1:1} ${o.fy?-1:1}) translate(${-cx} ${-cy})`;const tr=tf?` transform="${tf.trim()}"`:'';
+  if(S.sep!=='all'&&forCanvas&&o.type!=='image'){const blk=o.fill&&o.fill!=='none'&&isBlack(o.fill);if((S.sep==='k')!==!!blk&&!(o.stroke&&S.sep==='k'&&isBlack(o.stroke)))return''}
+  const gid=(pfx||'gc')+o.id;const grad=o.grad&&o.fill&&o.fill!=='none';const defs=grad?`<defs><linearGradient id="${gid}" gradientTransform="rotate(${o.gang??90} .5 .5)"><stop offset="0" stop-color="${o.fill}"/><stop offset="1" stop-color="${o.fill2||'#ffffff'}"/></linearGradient></defs>`:'';const pnt=grad?`url(#${gid})`:(o.fill||'none');const dash=o.dash?` stroke-dasharray="${o.dash}"`:'';
+  const op=o.opacity!=null&&o.opacity<1?` opacity="${o.opacity}"`:'';
+  const dat=forCanvas?` data-id="${o.id}"`:'';
+  if(o.type==='text'){const lines=String(o.text).split('\n');const fs=o.size*PT;const ax=o.align==='start'?o.x:o.align==='end'?o.x+o.w:o.x+o.w/2;
+    return `<g${tr}${op}${dat}><rect x="${o.x}" y="${o.y}" width="${o.w}" height="${o.h}" fill="transparent"/><text x="${ax}" y="${o.y+fs*.92}" font-family="${esc(o.font)}, sans-serif" font-size="${fs.toFixed(3)}" font-weight="${o.weight}" fill="${o.fill}" text-anchor="${o.align}" letter-spacing="${(o.track||0)*fs/1000}" style="white-space:pre">${lines.map((l,i)=>`<tspan x="${ax}" dy="${i?fs*(o.lh||1.2):0}">${esc(l)||' '}</tspan>`).join('')}</text></g>`}
+  if(o.type==='rect')return `${defs}<rect${dat} x="${o.x}" y="${o.y}" width="${o.w}" height="${o.h}" rx="${o.r||0}" fill="${pnt}"${o.stroke?` stroke="${o.stroke}" stroke-width="${o.sw}"${dash}`:''}${tr}${op}/>`;
+  if(o.type==='ellipse')return `${defs}<ellipse${dat} cx="${o.x+o.w/2}" cy="${o.y+o.h/2}" rx="${o.w/2}" ry="${o.h/2}" fill="${pnt}"${o.stroke?` stroke="${o.stroke}" stroke-width="${o.sw}"${dash}`:''}${tr}${op}/>`;
+  if(o.type==='path'){const d=o.pts.map((q,i)=>(i?'L':'M')+(o.x+q[0]*o.w).toFixed(2)+' '+(o.y+q[1]*o.h).toFixed(2)).join('')+(o.closed?'Z':'');
+    return `<g${tr}${op}${dat}>${defs}${forCanvas?`<path d="${d}" fill="${o.closed?'transparent':'none'}" stroke="transparent" stroke-width="3"/>`:''}<path d="${d}" fill="${o.closed?pnt:'none'}"${o.stroke?` stroke="${o.stroke}" stroke-width="${o.sw}" stroke-linejoin="round" stroke-linecap="round"${dash}`:''}/></g>`}
+  if(o.type==='image')return `<g${tr}${op}${dat}><rect x="${o.x}" y="${o.y}" width="${o.w}" height="${o.h}" fill="transparent"/><image href="${o.src}" x="${o.x}" y="${o.y}" width="${o.w}" height="${o.h}" preserveAspectRatio="xMidYMid meet"${o.mono?' filter="url(#monoF)"':''}/></g>`;
+  if(o.type==='qr')return `<g${tr}${op}${dat}><rect x="${o.x}" y="${o.y}" width="${o.w}" height="${o.h}" fill="#fff"/><g transform="translate(${o.x+o.w*.06} ${o.y+o.h*.06}) scale(${o.w*.88/21})"><path d="${QR}" fill="${o.fill}"/></g></g>`;
+  if(o.type==='barcode'){let bars='';let x=0;for(let i=0;i<46;i++){const w=[1,1,2,1,3,1,2][i%7];if(i%2===0)bars+=`<rect x="${x}" y="0" width="${w}" height="${i<3||i>42||i===22||i===23?34:30}"/>`;x+=w}
+    return `<g${tr}${op}${dat}><rect x="${o.x}" y="${o.y}" width="${o.w}" height="${o.h}" fill="#fff"/><g transform="translate(${o.x+o.w*.06} ${o.y+o.h*.08}) scale(${o.w*.88/x} ${o.h*.8/34})" fill="${o.fill}">${bars}</g></g>`}
+  if(o.type==='sym')return `<g${tr}${op}${dat}><rect x="${o.x}" y="${o.y}" width="${o.w}" height="${o.h}" fill="transparent"/><g transform="translate(${o.x} ${o.y}) scale(${o.w/24})" fill="none" stroke="${o.fill}" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">${SYM[o.sym]}</g></g>`;
+  return'';
+}
+const artwork=(side,forCanvas,pfx)=>S.objs[side].map(o=>objSVG(o,forCanvas,pfx)).join('');
+/* ---------- preflight ---------- */
+function bbox(o){return{x0:o.x,y0:o.y,x1:o.x+o.w,y1:o.y+o.h}}
+function preflight(){
+  const out=[];const colors=new Set();
+  const all=[...S.objs.out.map(o=>[o,'out']),...S.objs.in.map(o=>[o,'in'])];
+  for(const [o0,side] of all){const o=eff(o0);if(o.hidden)continue;const b=bbox(o);const tag={id:o.id,side,name:o.name};
+    if(b.x0<-3||b.y0<-3||b.x1>SHEET.w+3||b.y1>SHEET.h+3)out.push({...tag,fix:'fit',lv:'err',t:'อยู่นอกแผ่นคลี่',d:'บางส่วนเกินระยะตัดตก จะถูกตัดทิ้ง',x:(b.x0+b.x1)/2,y:(b.y0+b.y1)/2});
+    const isArt=['text','qr','barcode','sym'].includes(o.type)||o.type==='image';
+    if(isArt){const crosses=FOLDS.some(([x1,y1,x2,y2])=>x1===x2?(b.x0<x1-0.5&&b.x1>x1+0.5&&b.y1>y1&&b.y0<y2):(b.y0<y1-0.5&&b.y1>y1+0.5&&b.x1>x1&&b.x0<x2));
+      if(crosses)out.push({...tag,fix:'fit',lv:o.type==='qr'||o.type==='barcode'?'err':'warn',t:o.type==='qr'||o.type==='barcode'?'โค้ดทับเส้นพับ สแกนไม่ได้':'ทับเส้นพับ',d:'ย้ายให้อยู่ในแผงเดียว หรือจัดให้พับพอดีระหว่างตัวอักษร',x:(b.x0+b.x1)/2,y:(b.y0+b.y1)/2});
+      else{const p=PANELS.find(p=>!p.glue&&(b.x0+b.x1)/2>=p.x&&(b.x0+b.x1)/2<=p.x+p.w&&(b.y0+b.y1)/2>=p.y&&(b.y0+b.y1)/2<=p.y+p.h);
+        if(p&&(b.x0<p.x+3||b.x1>p.x+p.w-3||b.y0<p.y+3||b.y1>p.y+p.h-3))out.push({...tag,fix:'fit',lv:'warn',t:'ชิดขอบเกินระยะปลอดภัย',d:`เว้นจากขอบแผง${p.n}อย่างน้อย 3 มม. กันโดนตัดหรือพับ`,x:(b.x0+b.x1)/2,y:(b.y0+b.y1)/2});}}
+    if(o.type==='text'&&o.size<6)out.push({...tag,fix:'text6',lv:'warn',t:'ตัวอักษรเล็กกว่า 6 pt',d:'อ่านยากเมื่อพิมพ์บนลูกฟูก แนะนำอย่างน้อย 6–7 pt',x:o.x+o.w/2,y:o.y+o.h/2});
+    if(o.type==='image'&&!o.vector&&o.px){const dpi=o.px[0]/(o.w/25.4);if(dpi<150)out.push({...tag,fix:'dpi',lv:'err',t:`ภาพความละเอียดต่ำ (${Math.round(dpi)} dpi)`,d:'ภาพจะแตกเมื่อพิมพ์ ใช้ไฟล์ใหญ่ขึ้นหรือย่อขนาดภาพ (ต้องการ 300 dpi)',x:o.x+o.w/2,y:o.y+o.h/2});else if(dpi<300)out.push({...tag,lv:'warn',t:`ความละเอียด ${Math.round(dpi)} dpi`,d:'พิมพ์ได้ แต่คมชัดน้อยกว่าที่แนะนำ (300 dpi)',x:o.x+o.w/2,y:o.y+o.h/2})}
+    if(o.stroke&&o.sw<0.25)out.push({...tag,fix:'stroke',lv:'warn',t:'เส้นบางกว่า 0.25 มม.',d:'อาจพิมพ์ไม่ติดบนลูกฟูก',x:o.x+o.w/2,y:o.y+o.h/2});
+    if(o.type!=='image'){if(o.fill&&o.fill!=='none')colors.add(o.fill.toLowerCase());if(o.stroke)colors.add(o.stroke.toLowerCase());if(o.grad&&o.fill2)colors.add(o.fill2.toLowerCase())}else if(!o.mono)colors.add('image')}
+  S.variants.forEach(v=>Object.values(v.ov).forEach(ov=>ov.fill&&colors.add(ov.fill.toLowerCase())));
+  if(S.bg==='color')colors.add(S.bgColor.toLowerCase());
+  const nonBlack=[...colors].filter(c=>c==='image'||!isBlack(c));
+  if(S.print==='black'&&nonBlack.length)out.push({fix:'print',lv:'err',t:'งานมีสี แต่เลือกพิมพ์ดำ 1 สี',d:'เปลี่ยนระบบพิมพ์เป็น 4 สี หรือเปลี่ยนชิ้นงานเป็นสีดำ',global:true});
+  if(S.print==='spot'&&nonBlack.filter(c=>c!=='image').length>1)out.push({fix:'print',lv:'warn',t:`ใช้ ${nonBlack.length} สี แต่เลือกสีพิเศษ 1 สี`,d:'จะพิมพ์ได้เพียงสีเดียว เปลี่ยนเป็นพิมพ์ 4 สีถ้าต้องการทุกสี',global:true});
+  if(S.print==='spot'&&nonBlack.includes('image'))out.push({fix:'print',lv:'err',t:'ภาพสีพิมพ์ด้วยสีพิเศษ 1 สีไม่ได้',d:'เปลี่ยนเป็นพิมพ์ 4 สี หรือใช้โลโก้สีเดียว',global:true});
+  return out;
+}
+/* ---------- price (real base ฿14.79 @300, KA125 B; other values sample) ---------- */
+const TIER={100:1.18,300:1,500:.9,1000:.8,2000:.72};
+function price(){const totalQ=S.variants.reduce((a,v)=>a+(+v.qty||0),0)||S.qty;const q=[2000,1000,500,300,100].find(t=>totalQ>=t)||100;
+  let u=14.79*TIER[q]*({black:1,spot:1.05,cmyk:1.12}[S.print]);if(S.objs.in.length)u*=1.08;if(S.variants.length>1)u+= (S.variants.length-1)*350/totalQ;if(S.gang)u*=.85;
+  const real=q===300&&S.print==='cmyk'&&!S.objs.in.length&&S.variants.length===1&&!S.gang;return{u:Math.round(u*100)/100,total:Math.round(u*totalQ*100)/100,q:totalQ,real}}
+/* ---------- rendering: canvas ---------- */
+const PAD=36;
+function dielineSVG(){
+  const f=panelFill();let s='';
+  if(OV().bleed)s+=PANELS.map(p=>`<rect x="${p.x-3}" y="${p.y-3}" width="${p.w+6}" height="${p.h+6}" fill="none" stroke="#E5484D" stroke-opacity=".35" stroke-width=".4" stroke-dasharray="1.5 1.2"/>`).join('');
+  s+=PANELS.map(p=>`<rect x="${p.x}" y="${p.y}" width="${p.w}" height="${p.h}" fill="${p.glue?'#B8956A':f}"/>`).join('');
+  if(S.bg==='stripe')s+=`<g opacity=".25">${PANELS.filter(p=>!p.glue).map(p=>`<rect x="${p.x}" y="${p.y}" width="${p.w}" height="${p.h}" fill="url(#stripe)"/>`).join('')}</g>`;
+  return s;
+}
+function overlaySVG(){let s='';
+  if(OV().safe)s+=PANELS.filter(p=>!p.glue).map(p=>`<rect x="${p.x+3}" y="${p.y+3}" width="${p.w-6}" height="${p.h-6}" fill="none" stroke="#2BA36B" stroke-width=".35" stroke-dasharray=".6 1.2"/>`).join('');
+  if(OV().cut)s+=PANELS.map(p=>`<rect x="${p.x}" y="${p.y}" width="${p.w}" height="${p.h}" fill="none" stroke="#E5484D" stroke-width=".55"/>`).join('');
+  if(OV().fold)s+=FOLDS.map(([a,b,c,d])=>`<line x1="${a}" y1="${b}" x2="${c}" y2="${d}" stroke="#3B6DF0" stroke-width=".55" stroke-dasharray="3 2"/>`).join('');
+  if(OV().labels)s+=PANELS.map(p=>`<text x="${p.x+p.w/2}" y="${p.y+p.h-3}" text-anchor="middle" font-size="3.2" fill="#000" fill-opacity=".35" font-family="IBM Plex Sans Thai">${p.n}</text>`).join('');
+  return s}
+function rulerSVG(){let s=`<rect x="${-PAD}" y="${-PAD}" width="${SHEET.w+PAD*2}" height="12" fill="var(--chrome)" opacity=".9"/><rect x="${-PAD}" y="${-PAD}" width="12" height="${SHEET.h+PAD*2}" fill="var(--chrome)" opacity=".9"/>`;
+  for(let x=0;x<=SHEET.w;x+=10)s+=`<line x1="${x}" y1="${-PAD+(x%50?8:4)}" x2="${x}" y2="${-PAD+12}" stroke="var(--fg-3)" stroke-width=".3"/>${x%50?'':`<text x="${x+1}" y="${-PAD+6}" font-size="3.2" fill="var(--fg-3)" font-family="IBM Plex Mono">${x}</text>`}`;
+  for(let y=0;y<=SHEET.h;y+=10)s+=`<line x1="${-PAD+(y%50?8:4)}" y1="${y}" x2="${-PAD+12}" y2="${y}" stroke="var(--fg-3)" stroke-width=".3"/>${y%50?'':`<text x="${-PAD+1}" y="${y-1}" font-size="3.2" fill="var(--fg-3)" font-family="IBM Plex Mono">${y}</text>`}`;
+  return s}
+function guidesSVG(){const z=S.zoom;return S.guides.map((g,i)=>g.o==='v'?`<g data-guide="${i}" style="cursor:ew-resize"><line x1="${g.p}" y1="${-PAD}" x2="${g.p}" y2="${SHEET.h+PAD}" stroke="transparent" stroke-width="${6/z/3.2}"/><line x1="${g.p}" y1="${-PAD}" x2="${g.p}" y2="${SHEET.h+PAD}" stroke="#00A3C4" stroke-width="1" vector-effect="non-scaling-stroke"/></g>`:`<g data-guide="${i}" style="cursor:ns-resize"><line x1="${-PAD}" y1="${g.p}" x2="${SHEET.w+PAD}" y2="${g.p}" stroke="transparent" stroke-width="${6/z/3.2}"/><line x1="${-PAD}" y1="${g.p}" x2="${SHEET.w+PAD}" y2="${g.p}" stroke="#00A3C4" stroke-width="1" vector-effect="non-scaling-stroke"/></g>`).join('')}
+let marq=null,pen=null,drawPrev=null;
+function extraSVG(){let s='';
+  if(marq){const x=Math.min(marq.a.x,marq.b.x),y=Math.min(marq.a.y,marq.b.y);s+=`<rect x="${x}" y="${y}" width="${Math.abs(marq.b.x-marq.a.x)}" height="${Math.abs(marq.b.y-marq.a.y)}" fill="color-mix(in srgb,var(--sel) 10%,transparent)" stroke="var(--sel)" stroke-width="1" vector-effect="non-scaling-stroke" stroke-dasharray="4 3"/>`}
+  if(drawPrev){const d=drawPrev;s+=d.k==='l'?`<line x1="${d.a.x}" y1="${d.a.y}" x2="${d.b.x}" y2="${d.b.y}" stroke="var(--sel)" stroke-width="1.5" vector-effect="non-scaling-stroke"/>`:d.k==='e'?`<ellipse cx="${d.x+d.w/2}" cy="${d.y+d.h/2}" rx="${d.w/2}" ry="${d.h/2}" fill="color-mix(in srgb,var(--sel) 12%,transparent)" stroke="var(--sel)" stroke-width="1.5" vector-effect="non-scaling-stroke"/>`:`<rect x="${d.x}" y="${d.y}" width="${d.w}" height="${d.h}" fill="color-mix(in srgb,var(--sel) 12%,transparent)" stroke="var(--sel)" stroke-width="1.5" vector-effect="non-scaling-stroke"/>`;
+    s+=`<text x="${(d.b||d).x+(d.w&&!d.b?d.w:0)}" y="${(d.b||d).y+(d.h&&!d.b?d.h:0)+5/S.zoom}" font-size="${10/S.zoom/3.2}" fill="var(--sel)" font-family="IBM Plex Mono">${d.k==='l'?Math.round(Math.hypot(d.b.x-d.a.x,d.b.y-d.a.y))+' มม.':Math.round(d.w)+' × '+Math.round(d.h)+' มม.'}</text>`}
+  if(pen&&pen.pts.length){const z=S.zoom;const d=pen.pts.map((q,i)=>(i?'L':'M')+q[0]+' '+q[1]).join('')+(pen.hover?`L${pen.hover.x} ${pen.hover.y}`:'');s+=`<path d="${d}" fill="none" stroke="var(--sel)" stroke-width="1.5" vector-effect="non-scaling-stroke"/>`+pen.pts.map((q,i)=>`<rect x="${q[0]-3/z/3.2}" y="${q[1]-3/z/3.2}" width="${6/z/3.2}" height="${6/z/3.2}" fill="${i?'#fff':'var(--sel)'}" stroke="var(--sel)" stroke-width="1" vector-effect="non-scaling-stroke"/>`).join('')}
+  return s}
+function selSVG(){const ids=MS();if(ids.length>1){const os=MSO();const u=os.reduce((a,o)=>({x0:Math.min(a.x0,o.x),y0:Math.min(a.y0,o.y),x1:Math.max(a.x1,o.x+o.w),y1:Math.max(a.y1,o.y+o.h)}),{x0:1e9,y0:1e9,x1:-1e9,y1:-1e9});
+  return os.map(o=>`<rect x="${o.x}" y="${o.y}" width="${o.w}" height="${o.h}" fill="none" stroke="var(--sel)" stroke-width="1" vector-effect="non-scaling-stroke" stroke-dasharray="3 2"/>`).join('')+`<rect x="${u.x0}" y="${u.y0}" width="${u.x1-u.x0}" height="${u.y1-u.y0}" fill="none" stroke="var(--sel)" stroke-width="1.4" vector-effect="non-scaling-stroke"/><text x="${u.x0}" y="${u.y1+5/S.zoom}" font-size="${10/S.zoom/3.2}" fill="var(--sel)" font-family="IBM Plex Mono">${ids.length} ชิ้น · ${Math.round(u.x1-u.x0)} × ${Math.round(u.y1-u.y0)} มม.</text>`+extraSVG()}
+  return selOne()+extraSVG()}
+function selOne(){const o=OBJ().find(x=>x.id===S.sel);if(!o)return'';if(o.blk&&!PRO())return `<rect x="${o.x}" y="${o.y}" width="${o.w}" height="${o.h}" fill="none" stroke="var(--warn)" stroke-width="1.2" stroke-dasharray="4 3" vector-effect="non-scaling-stroke"/>`;const e=eff(o);const z=S.zoom;const hs=7/z/3.2;
+  const pts=[[e.x,e.y,'nw'],[e.x+e.w,e.y,'ne'],[e.x,e.y+e.h,'sw'],[e.x+e.w,e.y+e.h,'se']];
+  const tr=e.rot?` transform="rotate(${e.rot} ${e.x+e.w/2} ${e.y+e.h/2})"`:'';
+  return `<g${tr}><rect x="${e.x}" y="${e.y}" width="${e.w}" height="${e.h}" fill="none" stroke="var(--sel)" stroke-width="${1.2/z/3.2}" vector-effect="non-scaling-stroke"/>${o.locked?'':pts.map(([x,y,k])=>`<rect data-h="${k}" x="${x-hs}" y="${y-hs}" width="${hs*2}" height="${hs*2}" fill="#fff" stroke="var(--sel)" stroke-width="1" vector-effect="non-scaling-stroke" style="cursor:${k==='nw'||k==='se'?'nwse':'nesw'}-resize"/>`).join('')}</g>
+   <text x="${e.x}" y="${e.y+e.h+5/z}" font-size="${10/z/3.2}" fill="var(--sel)" font-family="IBM Plex Mono">${Math.round(e.w)} × ${Math.round(e.h)} มม.</text>`}
+function issuesSVG(list){const z=S.zoom;return list.filter(i=>!i.global&&i.side===S.side).map((i,n)=>`<g data-issue="${i.id}" style="cursor:pointer"><circle cx="${i.x}" cy="${i.y}" r="${9/z/3.2}" fill="${i.lv==='err'?'var(--err)':'var(--warn)'}" stroke="#fff" stroke-width="1" vector-effect="non-scaling-stroke"/><text x="${i.x}" y="${i.y+3.4/z}" text-anchor="middle" font-size="${10/z/3.2}" font-weight="700" fill="#fff" font-family="IBM Plex Sans Thai">!</text></g>`).join('')}
+function pinsSVG(){const z=S.zoom;return S.comments.filter(c=>c.side===S.side).map((c,i)=>`<g><circle cx="${c.x}" cy="${c.y}" r="${10/z/3.2}" fill="var(--sel)" stroke="#fff" stroke-width="1.5" vector-effect="non-scaling-stroke"/><text x="${c.x}" y="${c.y+3.6/z}" text-anchor="middle" font-size="${10/z/3.2}" font-weight="700" fill="#fff">${i+1}</text></g>`).join('')}
+let guides=[];
+function renderCanvas(){
+  const z=S.zoom*3.2;/* px per mm at 100% */
+  const W=(SHEET.w+PAD*2)*z,Hh=(SHEET.h+PAD*2)*z;
+  const list=preflight();
+  $('#cv').innerHTML=`<svg id="cvs" width="${W}" height="${Hh}" viewBox="${-PAD} ${-PAD} ${SHEET.w+PAD*2} ${SHEET.h+PAD*2}" role="img" aria-label="แผ่นคลี่ ด้าน${S.side==='out'?'นอก':'ใน'}">
+    <defs><filter id="monoF"><feColorMatrix type="saturate" values="0"/></filter><pattern id="stripe" width="8" height="8" patternUnits="userSpaceOnUse" patternTransform="rotate(45)"><rect width="4" height="8" fill="${S.bgColor}"/></pattern>${OV().grid?'<pattern id="mmgrid" width="10" height="10" patternUnits="userSpaceOnUse"><path d="M10 0H0V10" fill="none" stroke="#000" stroke-opacity=".08" stroke-width=".3"/></pattern>':''}</defs>
+    <g filter="drop-shadow(0 2px 4px rgba(0,0,0,.15))">${dielineSVG()}</g>
+    ${OV().grid?`<rect x="0" y="0" width="${SHEET.w}" height="${SHEET.h}" fill="url(#mmgrid)"/>`:''}
+    <g id="art"${S.printSim?' style="mix-blend-mode:multiply"':''}>${artwork(S.side,true)}</g>
+    <g pointer-events="none">${overlaySVG()}</g>
+    <g pointer-events="none" id="gl">${guides.map(([a,b,c,d])=>`<line x1="${a}" y1="${b}" x2="${c}" y2="${d}" stroke="#E5484D" stroke-width="1" vector-effect="non-scaling-stroke"/>`).join('')}</g>
+    ${PRO()?guidesSVG():''}
+    <g id="selg">${selSVG()}</g>
+    ${issuesSVG(list)}${pinsSVG()}
+    ${PRO()?rulerSVG():''}
+  </svg>`;
+  return list;
+}
+/* ---------- 3D (faces mapped from dieline) ---------- */
+const P3=(x,y,z)=>[(x-y)*0.866,(x+y)*0.5-z];
+function faceMatrix(map,x0,y0){const o=P3(...map(x0,y0)),a=P3(...map(x0+1,y0)),b=P3(...map(x0,y0+1));const ax=a[0]-o[0],ay=a[1]-o[1],bx=b[0]-o[0],by=b[1]-o[1];return `matrix(${ax.toFixed(5)} ${ay.toFixed(5)} ${bx.toFixed(5)} ${by.toFixed(5)} ${(o[0]-x0*ax-y0*bx).toFixed(4)} ${(o[1]-x0*ay-y0*by).toFixed(4)})`}
+let clipN=0;
+function iso3D(big){
+  const {L,W,H}=BOX,f=panelFill(),art=artwork('out',false,'g3'+(clipN+1)),k=58/50;
+  const faces=[
+   {p:PANELS.find(p=>p.id==='tb'),map:(x,y)=>[L-(x-297),(58-y)/k,H],shade:0},
+   {p:PANELS.find(p=>p.id==='tf'),map:(x,y)=>[x-47,W-(58-y)/k,H+.2],shade:0},
+   {p:PANELS.find(p=>p.id==='front'),map:(x,y)=>[x-47,W,H-(y-58)],shade:.05},
+   {p:PANELS.find(p=>p.id==='right'),map:(x,y)=>[L,W-(x-197),H-(y-58)],shade:.2}];
+  const id='c'+(++clipN);
+  const g=faces.map((fc,i)=>{const p=fc.p;const m=faceMatrix(fc.map,p.x,p.y);
+    return `<g transform="${m}"><clipPath id="${id}${i}"><rect x="${p.x}" y="${p.y}" width="${p.w}" height="${p.h}"/></clipPath><g clip-path="url(#${id}${i})"><rect x="${p.x}" y="${p.y}" width="${p.w}" height="${p.h}" fill="${f}"/>${S.bg==='stripe'?`<rect x="${p.x}" y="${p.y}" width="${p.w}" height="${p.h}" fill="url(#stripe3${id})" opacity=".25"/>`:''}${art}<rect x="${p.x}" y="${p.y}" width="${p.w}" height="${p.h}" fill="#000" opacity="${fc.shade}"/><rect x="${p.x}" y="${p.y}" width="${p.w}" height="${p.h}" fill="none" stroke="rgba(0,0,0,.25)" stroke-width=".6"/></g></g>`}).join('');
+  const pts=[[0,0,0],[L,0,0],[L,W,0],[0,W,0],[0,0,H],[L,0,H],[L,W,H],[0,W,H]].map(p=>P3(...p));
+  const xs=pts.map(p=>p[0]),ys=pts.map(p=>p[1]);const x0=Math.min(...xs),x1=Math.max(...xs),y0=Math.min(...ys),y1=Math.max(...ys);const pad=20;
+  const sh=P3(L/2,W/2,0);
+  return `<svg viewBox="${(x0-pad).toFixed(1)} ${(y0-pad).toFixed(1)} ${(x1-x0+pad*2).toFixed(1)} ${(y1-y0+pad*2+10).toFixed(1)}" role="img" aria-label="ภาพ 3D ของกล่อง"><defs><pattern id="stripe3${id}" width="8" height="8" patternUnits="userSpaceOnUse" patternTransform="rotate(45)"><rect width="4" height="8" fill="${S.bgColor}"/></pattern><radialGradient id="shd${id}"><stop offset="0" stop-color="#000" stop-opacity=".28"/><stop offset="1" stop-color="#000" stop-opacity="0"/></radialGradient></defs><ellipse cx="${sh[0]}" cy="${sh[1]+8}" rx="${(x1-x0)*.55}" ry="${(x1-x0)*.16}" fill="url(#shd${id})"/>${g}<path d="M${P3(0,W,H).join(' ')}L${P3(L,W,H).join(' ')}" stroke="rgba(0,0,0,.35)" stroke-width=".8" stroke-dasharray="3 2"/></svg>`;
+}
+function render3D(){if(S.view==='flat')return;$('#iso3d').innerHTML=iso3D()}
+/* ---------- rail + panels ---------- */
+const RAIL=[['box','กล่อง','i-box'],['tpl','แม่แบบ','i-tpl'],['el','องค์ประกอบ','i-shapes'],['text','ข้อความ','i-text'],['up','อัปโหลด','i-upload'],['brand','แบรนด์','i-brand'],['bg','พื้นหลัง','i-bg'],['layers','ชั้น','i-layers'],['var','รุ่น','i-variants'],['cmt','ความเห็น','i-chat']];
+const RAIL_EASY=[['tpl','แม่แบบ','i-tpl'],['brand','แบรนด์','i-brand'],['text','ข้อความ','i-text'],['up','รูปภาพ','i-upload'],['el','ตกแต่ง','i-shapes'],['bg','พื้นหลัง','i-bg'],['box','กล่อง','i-box'],['cmt','ความเห็น','i-chat']];
+const RAILS=()=>PRO()?RAIL:RAIL_EASY;
+RAIL.splice(6,0,['sw','สีในงาน','i-layersep']);
+const TOOLS=[['v','เลือกและย้าย','V','i-cursor'],['h','เลื่อนมุมมอง','H','i-hand'],['z','ซูม (Alt = ซูมออก)','Z','i-zoom'],null,['t','ข้อความ','T','i-text'],['r','สี่เหลี่ยม','R','i-rect'],['e','วงรี','E','i-ellipse'],['l','เส้นตรง','L','i-line'],['p','ปากกา · รูปทรงอิสระ','P','i-pen'],null,['i','ที่ดูดสี','I','i-eyedrop'],['c','ปักหมุดความเห็น','C','i-pin']];
+const TOOLCLS={h:'t-hand',z:'t-zoom',t:'t-text',r:'t-draw',e:'t-draw',l:'t-draw',p:'t-pen',i:'t-eye'};
+function renderTools(){$('#tools').innerHTML=TOOLS.map(x=>x?`<button type="button" data-tool="${x[0]}" aria-pressed="${S.tool===x[0]}" aria-label="${x[1]} (${x[2]})" data-tip="${x[1]}  ${x[2]}"><svg class="ico"><use href="#${x[3]}"/></svg></button>`:'<hr>').join('');const c=$('#cv');Object.values(TOOLCLS).forEach(k=>c.classList.remove(k));if(PRO()&&TOOLCLS[S.tool])c.classList.add(TOOLCLS[S.tool])}
+function setTool(k){if(pen&&k!=='p')finishPen(false);S.tool=k;if(k==='c'){S.pinMode=true;S.panel='cmt';$('#cv').classList.add('pin');renderRail();renderPanel()}renderTools()}
+function docColors(){const m=new Map();const add=(c,n)=>{if(!c||c==='none'||c==='transparent')return;c=c.toLowerCase();m.set(c,(m.get(c)||0)+n)};
+  ['out','in'].forEach(s=>S.objs[s].forEach(o=>{if(o.type==='image')return;add(o.fill,1);add(o.stroke,1);if(o.grad)add(o.fill2,1)}));S.variants.forEach(v=>Object.values(v.ov).forEach(ov=>add(ov.fill,1)));if(S.bg==='color'||S.bg==='stripe')add(S.bgColor,1);return[...m.entries()]}
+function swapColor(a,b){a=a.toLowerCase();const f=(o,k)=>{if((o[k]||'').toLowerCase()===a)o[k]=b};['out','in'].forEach(s=>S.objs[s].forEach(o=>{f(o,'fill');f(o,'stroke');f(o,'fill2')}));S.variants.forEach(v=>Object.values(v.ov).forEach(ov=>f(ov,'fill')));if(S.bgColor.toLowerCase()===a)S.bgColor=b}
+function renderRail(){if(!RAILS().some(r=>r[0]===S.panel)&&S.panel!=='history')S.panel=RAILS()[0][0];$('#rail').innerHTML=RAILS().map(([k,n,i])=>`<button type="button" data-panel="${k}" aria-pressed="${S.panel===k}"><svg class="ico"><use href="#${i}"/></svg>${n}</button>`).join('')}
+function tplThumb(t){const bg=t.bg;return `<svg viewBox="0 0 160 100"><rect x="2" y="30" width="38" height="40" fill="${bg}" stroke="#0002"/><rect x="40" y="30" width="38" height="40" fill="${bg}" stroke="#0002"/><rect x="78" y="30" width="38" height="40" fill="${bg}" stroke="#0002"/><rect x="116" y="30" width="38" height="40" fill="${bg}" stroke="#0002"/><rect x="2" y="10" width="38" height="20" fill="${bg}" stroke="#0002"/><rect x="2" y="70" width="38" height="20" fill="${bg}" stroke="#0002"/><circle cx="21" cy="46" r="8" fill="${t.c1}"/><rect x="10" y="58" width="22" height="3" fill="${t.c2}"/><rect x="84" y="44" width="26" height="6" fill="${t.c1}"/><rect x="78" y="62" width="38" height="8" fill="${t.c2}"/></svg>`}
+const TPLS=[{k:'bakery',n:'เบเกอรี่และขนม',d:'อบอุ่น เป็นกันเอง',bg:'#CDAB7C',c1:'#2E6B54',c2:'#E8B04B',font:'Mitr'},{k:'skin',n:'สกินแคร์',d:'มินิมอล สะอาดตา',bg:'#F3F1EC',c1:'#1F2421',c2:'#C9B8A3',font:'Noto Serif Thai'},{k:'coffee',n:'กาแฟและชา',d:'คราฟท์ ลายเส้น',bg:'#CDAB7C',c1:'#1F2421',c2:'#8A5A22',font:'Chakra Petch'},{k:'shop',n:'ร้านออนไลน์',d:'สดใส จดจำง่าย',bg:'#F3F1EC',c1:'#2E6B54',c2:'#E8B04B',font:'Kanit'}];
+const COURIER=[['S','≤ 35 ซม.',350,32],['M','≤ 45 ซม.',450,45],['L','≤ 60 ซม.',600,65],['XL','≤ 75 ซม.',750,90]];
+function fitHTML(){const P=S.prod,I={l:BOX.L,w:BOX.W,h:BOX.H};const cl={l:(I.l-P.l)/2,w:(I.w-P.w)/2,h:I.h-P.h};const ok=cl.l>=0&&cl.w>=0&&cl.h>=0;const snug=ok&&Math.max(cl.l,cl.w)<=12&&cl.h<=15;
+  const O={l:I.l+6,w:I.w+6,h:I.h+6};const sum=O.l+O.w+O.h;const ti=COURIER.findIndex(c=>sum<=c[2]);const nxt=ti>0?sum-COURIER[ti-1][2]:null;
+  const sx=80/I.l,pw=Math.min(P.l,I.l*1.2)*sx,ph=Math.min(P.w,I.w*1.2)*sx;
+  return `<div class="card"><h4>พอดีกับสินค้าและค่าส่ง</h4><p class="note" style="margin:0">ใส่ขนาดสินค้า (มม.) ระบบบอกว่าใส่ได้ไหม และกล่องตกไซซ์ไหนของขนส่ง (ผลรวม กว้าง+ยาว+สูง)</p>
+   <div class="row3">${['l','w','h'].map(k=>`<label class="num"><span>${{l:'L',w:'W',h:'H'}[k]}</span><input type="number" min="1" value="${P[k]}" data-prod="${k}" aria-label="ขนาดสินค้า ${{l:'ยาว',w:'กว้าง',h:'สูง'}[k]} มม."></label>`).join('')}</div>
+   <div class="fitbox"><svg viewBox="0 0 92 70" aria-hidden="true"><rect x="6" y="${35-I.w*sx/2}" width="80" height="${I.w*sx}" rx="2" fill="#CDAB7C" stroke="#8E6E4B"/><rect x="${46-pw/2}" y="${35-ph/2}" width="${pw}" height="${ph}" rx="2" fill="${ok?'#2E6B54':'#C4372C'}" opacity=".85"/></svg>
+    <div><b style="color:${ok?(snug?'var(--ok)':'var(--warn)'):'var(--err)'}">${ok?(snug?'ใส่พอดี':'ใส่ได้ แต่มีช่องว่างเยอะ'):'สินค้าใหญ่กว่ากล่อง'}</b><br><small class="note">${ok?`เหลือด้านข้าง ${cl.l.toFixed(0)} / ${cl.w.toFixed(0)} มม. · ด้านบน ${cl.h.toFixed(0)} มม.`:'เปลี่ยนเป็นขนาดใหญ่ขึ้นในขั้น "ขนาดและวัสดุ"'}${ok&&!snug?' · กล่องเล็กลงช่วยลดค่าส่งและวัสดุกันกระแทก':''}</small></div></div>
+   <div class="tiers" role="table" aria-label="ไซซ์ขนส่ง">${COURIER.map((c,i)=>`<div class="${i===ti?'on':''}" role="row"><span>${c[0]} · ${c[1]}${i===ti?' ← กล่องนี้':''}</span><span>฿${c[3]}</span><span></span></div>`).join('')}</div>
+   <p class="note" style="margin:0">ขนาดภายนอก ${O.l} × ${O.w} × ${O.h} มม. · ผลรวม ${(sum/10).toFixed(1)} ซม.${ti>0&&nxt<=15?` · ลดอีก ${nxt} มม. จะเป็นไซซ์ ${COURIER[ti-1][0]} ประหยัด ฿${COURIER[ti][3]-COURIER[ti-1][3]}/กล่อง`:''} <span class="samplechip">ตารางขนส่งตัวอย่าง</span></p></div>`}
+function panelHTML(){
+  const p=S.panel;
+  if(p==='box')return `<h2>กล่อง</h2><dl class="kv"><dt>แบบ</dt><dd>กล่องลูกฟูกฝาชน (RSC)</dd><dt>ขนาดภายใน</dt><dd>150 × 100 × 80 มม.</dd><dt>แผ่นคลี่</dt><dd>547 × 196 มม.</dd><dt>วัสดุ</dt><dd>ลูกฟูก KA125 ลอน B (3 ชั้น)</dd></dl><button class="btn btn-g" type="button" data-toast="ต้นแบบ: เปิดขั้น &quot;ขนาดและวัสดุ&quot; โดยไม่เสียงานที่ออกแบบไว้">เปลี่ยนขนาดหรือวัสดุ</button>
+    <div class="sec"><b>ด้านที่ออกแบบ</b><div class="seg"><button type="button" data-side="out" aria-pressed="${S.side==='out'}">ด้านนอก</button><button type="button" data-side="in" aria-pressed="${S.side==='in'}">ด้านใน</button></div><p class="note" style="margin:0">พิมพ์ด้านในเพิ่มราคา ระบบคำนวณให้ในแถบสั่งผลิต</p></div>
+    <div class="sec"><b>ระบบพิมพ์</b><div class="chipset">${[['black','ดำ 1 สี'],['spot','สีพิเศษ 1 สี'],['cmyk','4 สี (CMYK)']].map(([k,n])=>`<button type="button" class="chip" data-print="${k}" aria-pressed="${S.print===k}">${n}</button>`).join('')}</div><p class="note" style="margin:0">ตัวตรวจงานเตือนเมื่อสีในงานไม่ตรงกับระบบพิมพ์</p></div>${fitHTML()}`;
+  if(p==='tpl')return `<h2>แม่แบบ</h2>${PRO()?'':'<p class="note" style="margin:-6px 0 0">กดเลือก 1 แบบ แล้วค่อยแก้ข้อความและสีทีหลัง</p>'}<p class="note" style="margin:-6px 0 0">ใส่ชุดแบรนด์ของคุณให้อัตโนมัติ แก้ทุกส่วนได้</p><div class="grid2">${TPLS.map(t=>`<button type="button" class="tpl" data-tpl="${t.k}"><div class="pv">${tplThumb(t)}</div><b>${t.n}</b><small>${t.d}</small></button>`).join('')}</div><span class="samplechip" style="align-self:flex-start">แม่แบบตัวอย่าง</span>`;
+  if(p==='el')return `<h2>องค์ประกอบ</h2><div class="search"><svg class="ico"><use href="#i-search"/></svg><input placeholder="ค้นหารูปทรงหรือสัญลักษณ์" aria-label="ค้นหาองค์ประกอบ"></div>
+    <div class="ph">รูปทรง</div><div class="grid3"><button class="tile" type="button" data-add="rect" aria-label="สี่เหลี่ยม"><svg viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="14" rx="1" fill="currentColor"/></svg></button><button class="tile" type="button" data-add="rrect" aria-label="สี่เหลี่ยมมุมมน"><svg viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="14" rx="5" fill="currentColor"/></svg></button><button class="tile" type="button" data-add="ellipse" aria-label="วงกลม"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9" fill="currentColor"/></svg></button><button class="tile" type="button" data-add="frame" aria-label="กรอบ"><svg viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="14" rx="1" fill="none" stroke="currentColor" stroke-width="2"/></svg></button><button class="tile" type="button" data-add="line" aria-label="เส้น"><svg viewBox="0 0 24 24"><rect x="3" y="11" width="18" height="2" fill="currentColor"/></svg></button><button class="tile" type="button" data-add="badge" aria-label="ป้ายวงกลม"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9" fill="none" stroke="currentColor" stroke-width="2"/><circle cx="12" cy="12" r="5" fill="currentColor"/></svg></button></div>
+    <div class="ph">สัญลักษณ์บรรจุภัณฑ์</div><div class="grid3">${[['recycle','รีไซเคิล'],['up','ตั้งด้านนี้ขึ้น'],['fragile','ระวังแตก'],['dry','กันน้ำ'],['food','ฟู้ดเกรด']].map(([k,n])=>`<button class="tile wide" type="button" data-add="sym:${k}"><svg viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">${SYM[k]}</svg><small>${n}</small></button>`).join('')}</div>
+    <div class="ph">โค้ด</div><div class="grid2"><button class="tile wide" type="button" data-add="qr"><b>QR โค้ด</b><small>ลิงก์ร้าน LINE หรือเว็บ · ระดับกู้ข้อมูล M</small></button><button class="tile wide" type="button" data-add="barcode"><b>บาร์โค้ด EAN-13</b><small>ใส่เลข 13 หลักของสินค้า</small></button></div>`;
+  if(p==='text')return `<h2>ข้อความ</h2><button class="txtp" type="button" data-add="t:h"><span style="font:800 20px Kanit">เพิ่มหัวข้อ</span></button><button class="txtp" type="button" data-add="t:s"><span style="font:600 15px Anuphan">เพิ่มหัวข้อรอง</span></button><button class="txtp" type="button" data-add="t:b"><span style="font:400 13px 'IBM Plex Sans Thai'">เพิ่มข้อความเนื้อหา เช่น ส่วนประกอบ วิธีเก็บรักษา</span></button>
+    <div class="ph">ฟอนต์ของแบรนด์</div>${BRAND.fonts.map(f=>`<button class="fontrow" type="button" data-font="${esc(f)}"><span style="font-family:'${esc(f)}';font-size:16px">${esc(f)}</span><small>แบรนด์</small></button>`).join('')}
+    <button class="btn btn-g" type="button" id="fontUp"><svg class="ico" style="width:16px;height:16px"><use href="#i-font"/></svg>อัปโหลดฟอนต์ (.ttf .otf .woff2)</button>
+    <div class="ph">ฟอนต์ไทยทั้งหมด</div>${FONTS.map(([f])=>`<button class="fontrow" type="button" data-font="${esc(f)}"><span style="font-family:'${esc(f)}';font-size:16px">${esc(f)} กขค</span><small>Aa</small></button>`).join('')}`;
+  if(p==='up')return `<h2>อัปโหลด</h2><div class="drop" id="dropz" role="button" tabindex="0"><svg class="ico" style="width:22px;height:22px"><use href="#i-upload"/></svg><br><b>ลากไฟล์มาวาง หรือคลิกเพื่อเลือก</b><br>PNG JPG SVG WEBP · ระบบบอก DPI ที่จะพิมพ์ได้</div>
+    ${S.assets.length?S.assets.map((a,i)=>`<div class="asset"><img src="${a.src}" alt=""><div><b style="font-size:12.5px">${esc(a.name)}</b><small>${a.px[0]}×${a.px[1]} px · พิมพ์กว้างได้ถึง ${Math.round(a.px[0]/300*25.4)} มม. ที่ 300 dpi</small></div><button class="btn btn-s" type="button" data-asset="${i}">วาง</button></div>`).join(''):'<p class="note" style="margin:0">ไฟล์ที่อัปโหลดเก็บในแบบนี้และในคลังของบัญชี</p>'}`;
+  if(p==='brand')return `<h2>ชุดแบรนด์</h2><p class="note" style="margin:-6px 0 0">${esc(BRAND.name)} · บันทึกในบัญชี ใช้ได้ทุกแบบและทุกเครื่อง</p>
+    <div class="card"><h4>สร้างชุดแบรนด์จากลิงก์ร้าน</h4><p class="note" style="margin:0">วางลิงก์เว็บ, Instagram หรือ LINE OA ระบบดึงโลโก้และสีหลัก และแนะนำฟอนต์ไทยที่เข้ากัน</p>
+     <div class="linkin"><input id="brandUrl" placeholder="เช่น lin.ee/ร้านของคุณ" aria-label="ลิงก์ร้าน"><button class="btn btn-p" type="button" id="brandScanB">ดึงข้อมูล</button></div>
+     ${S.brandScan==='busy'?'<p class="note" style="margin:0">กำลังอ่านหน้าร้าน…</p>':S.brandScan?`<div class="found">${S.brandScan.colors.map(c=>`<i style="background:${c}" title="${c}"></i>`).join('')}</div><small class="note">ฟอนต์ที่แนะนำ: ${S.brandScan.fonts.join(' · ')}</small><div class="row"><button class="btn btn-p" type="button" id="brandApply">ใช้กับแบบนี้</button><button class="btn btn-g" type="button" id="brandKeep">เก็บในชุดแบรนด์</button></div><span class="samplechip" style="align-self:flex-start">ผลตัวอย่าง</span>`:''}</div>
+    <div class="ph">โลโก้</div>${BRAND.logos.map((l,i)=>`<div class="asset"><img src="${l.src}" alt=""><div><b style="font-size:12.5px">${esc(l.name)}</b><small>${l.vector?'เวกเตอร์ · คมทุกขนาด':l.px.join('×')+' px'}</small></div><button class="btn btn-s" type="button" data-blogo="${i}">วาง</button></div>`).join('')}
+    <div class="ph">สีแบรนด์</div>${BRAND.colors.map(([n,c])=>`<div class="colorrow"><i style="background:${c}"></i><div><b>${n}</b><small>${c.toUpperCase()} · ${cmyk(c)}</small></div><button class="btn btn-s" type="button" data-bcolor="${c}">ใช้</button></div>`).join('')}
+    <div class="ph">ฟอนต์</div>${BRAND.fonts.map((f,i)=>`<div class="colorrow"><i style="display:grid;place-items:center;font:700 16px '${esc(f)}';background:var(--chrome-2)">ก</i><div><b style="font-family:'${esc(f)}'">${esc(f)}</b><small>${i?'เนื้อหา':'หัวข้อ'}</small></div><button class="btn btn-s" type="button" data-font="${esc(f)}">ใช้</button></div>`).join('')}`;
+  if(p==='bg')return `<h2>พื้นหลัง</h2><div class="grid2">${[['kraft','ผิวคราฟท์ (ไม่พิมพ์)',BG.kraft],['white','ขาว',BG.white],['color','สีเต็มแผ่น',S.bgColor],['stripe','ลายทาง',S.bgColor]].map(([k,n,c])=>`<button class="tile wide" type="button" data-bg="${k}" style="${S.bg===k?'border-color:var(--sel);box-shadow:inset 0 0 0 1px var(--sel)':''}"><span style="width:100%;height:46px;border-radius:7px;background:${k==='stripe'?`repeating-linear-gradient(45deg,${c} 0 6px,${BG.kraft} 6px 12px)`:c};border:1px solid #0001"></span><small>${n}</small></button>`).join('')}</div>
+    <div class="sec"><b>สีพื้นหลัง</b><div class="swatches">${BRAND.colors.map(([n,c])=>`<button type="button" class="swatch" style="background:${c}" data-bgcolor="${c}" aria-label="${n}" aria-pressed="${S.bgColor===c}"></button>`).join('')}</div></div><p class="note" style="margin:0">พื้นสีเต็มแผ่นต้องพิมพ์ 4 สีหรือสีพิเศษ ตัวตรวจงานเตือนให้</p>`;
+  if(p==='layers'){const L=[...OBJ()].reverse();return `<h2>ชั้น · ด้าน${S.side==='out'?'นอก':'ใน'}</h2>${L.length?L.map(o=>`<div class="layer ${S.sel===o.id?'on':''}" data-layer="${o.id}"><svg class="ico" style="width:16px;height:16px;color:var(--fg-3)"><use href="#${o.type==='text'?'i-text':o.type==='image'?'i-bg':'i-shapes'}"/></svg><span>${esc(o.name)}${o.variant?' · ตามรุ่น':''}</span><button type="button" data-lhide="${o.id}" aria-label="${o.hidden?'แสดง':'ซ่อน'}"><svg class="ico"><use href="#${o.hidden?'i-eyeoff':'i-eye'}"/></svg></button><button type="button" data-llock="${o.id}" aria-label="${o.locked?'ปลดล็อก':'ล็อก'}"><svg class="ico"><use href="#${o.locked?'i-lock':'i-unlock'}"/></svg></button></div>`).join(''):'<p class="note">ยังไม่มีชิ้นงานในด้านนี้</p>'}<p class="note" style="margin:0">ชั้นบนสุดอยู่ด้านหน้า · ใช้ ⌘] / ⌘[ เพื่อเรียงลำดับ</p>`}
+  if(p==='var'){const tq=S.variants.reduce((a,v)=>a+(+v.qty||0),0);return `<h2>รุ่น</h2><p class="note" style="margin:-6px 0 0">แบบเดียวกัน เปลี่ยนข้อความหรือสีตามรุ่น สั่งทุกรุ่นในคำสั่งซื้อเดียว</p>
+    ${S.variants.map(v=>`<div class="variant ${S.vActive===v.id?'on':''}" data-var="${v.id}"><i style="background:${v.color}"></i><input class="nm" value="${esc(v.name)}" data-vname="${v.id}" aria-label="ชื่อรุ่น"><input type="number" min="0" step="50" value="${v.qty}" data-vqty="${v.id}" aria-label="จำนวนรุ่น ${esc(v.name)}"><button type="button" class="tb" style="width:24px;height:24px" data-vdel="${v.id}" aria-label="ลบรุ่น" ${S.variants.length<2?'disabled':''}><svg class="ico" style="width:14px;height:14px"><use href="#i-x"/></svg></button></div>`).join('')}
+    <button class="btn btn-g" type="button" id="vAdd"><svg class="ico" style="width:16px;height:16px"><use href="#i-plus"/></svg>เพิ่มรุ่น</button>
+    <dl class="kv"><dt>รวมทุกรุ่น</dt><dd><b>${tq.toLocaleString('th-TH')} ชิ้น</b></dd><dt>ชิ้นงานที่เปลี่ยนตามรุ่น</dt><dd>${OBJ().filter(o=>o.variant).length}</dd></dl>
+    <p class="note" style="margin:0">เลือกชิ้นงาน แล้วเปิด "เปลี่ยนตามรุ่น" ในแผงขวา การแก้ไขขณะดูรุ่นใดจะมีผลกับรุ่นนั้น <span class="samplechip">ขั้นต่ำต่อรุ่นรอยืนยัน</span></p>`}
+  if(p==='cmt')return `<h2>ความเห็น</h2><button class="btn ${S.pinMode?'btn-p':'btn-g'}" type="button" id="pinB"><svg class="ico" style="width:16px;height:16px"><use href="#i-pin"/></svg>${S.pinMode?'คลิกบนแผ่นคลี่เพื่อปักหมุด':'ปักหมุดความเห็น (C)'}</button>
+    ${S.comments.length?S.comments.map((c,i)=>`<div class="cmt"><span class="n">${i+1}</span><div><small class="note">คุณ · ด้าน${c.side==='out'?'นอก':'ใน'}</small><textarea data-ctext="${i}" aria-label="ข้อความความเห็น ${i+1}">${esc(c.text)}</textarea></div></div>`).join(''):'<p class="note" style="margin:0">ปักหมุดตรงจุดที่อยากให้ทีมหรือลูกค้าดู ทีม getpack ตอบได้ในนี้เลย</p>'}`;
+  if(p==='sw'){const dc=docColors();return `<h2>สีในงาน</h2><p class="note" style="margin:-6px 0 0">ทุกสีที่ใช้ในแบบนี้ เปลี่ยนสีเดียวแล้วทั้งงานเปลี่ยนตาม (รวมทุกด้านและทุกรุ่น)</p>
+    ${dc.map(([c,n])=>`<div class="docsw"><label style="background:${c}" title="เปลี่ยนสีนี้ทั้งงาน"><input type="color" value="${c}" data-swap="${c}" aria-label="เปลี่ยนสี ${c} ทั้งงาน"></label><div><b style="font-weight:600">${c.toUpperCase()}</b><small>${cmyk(c)}</small><small>ใช้ ${n} ที่${isBlack(c)?' · หมึกดำ':''}</small></div><button class="btn btn-s" type="button" data-savebrand="${c}" title="เก็บเป็นสีแบรนด์">+ แบรนด์</button></div>`).join('')}
+    <div class="sec"><b>จำนวนหมึกที่ใช้</b><dl class="kv"><dt>หมึกดำ</dt><dd>${dc.some(([c])=>isBlack(c))?'มี':'ไม่มี'}</dd><dt>สีอื่น</dt><dd>${dc.filter(([c])=>!isBlack(c)).length} สี</dd><dt>ระบบพิมพ์ที่เลือก</dt><dd>${{black:'ดำ 1 สี',spot:'สีพิเศษ 1 สี',cmyk:'4 สี (CMYK)'}[S.print]}</dd></dl></div>
+    <div class="inkline"><svg class="ico"><use href="#i-layersep"/></svg><span>ดูแยกหมึกได้จากแถบล่าง "แยกสี" · สีพิเศษจากชุดสีของโรงพิมพ์ <span class="samplechip">รอข้อมูลจริง</span></span></div>`}
+  if(p==='history')return `<h2>ประวัติเวอร์ชัน</h2>${[['ตอนนี้','แก้ไขล่าสุด'],['13:42','เริ่มออกแบบ'],['เมื่อวาน 18:10','ทีม getpack ปรับระยะโลโก้'],['เมื่อวาน 17:55','เพิ่มรุ่นช็อกโกแลต']].map(([t,d],i)=>`<div class="hist"><b>${t}</b>${i?'<button class="btn btn-s" type="button" data-toast="ต้นแบบ: ดูเวอร์ชันนี้ และกู้คืนได้">ดู</button>':'<span></span>'}<small>${d}</small></div>`).join('')}<span class="samplechip" style="align-self:flex-start">ข้อมูลตัวอย่าง</span>`;
+  return'';
+}
+function renderPanel(){$('#panel').innerHTML=panelHTML()}
+/* ---------- inspector ---------- */
+function numField(lbl,key,val,step=1){return `<label class="num"><span>${lbl}</span><input type="number" step="${step}" value="${Math.round(val*10)/10}" data-prop="${key}"></label>`}
+const TYPE_N={text:'ข้อความ',rect:'รูปทรง',ellipse:'รูปทรง',image:'รูปภาพ',qr:'QR โค้ด',barcode:'บาร์โค้ด',sym:'สัญลักษณ์'};
+const TYPE_I={text:'i-text',image:'i-bg',qr:'i-shapes',barcode:'i-shapes',sym:'i-shapes',rect:'i-shapes',ellipse:'i-shapes'};
+function guideHTML(){const errs=lastList.filter(i=>i.lv==='err').length;
+  const st=[['tpl','เลือกแม่แบบ','ได้ชุดสีและการจัดวางพร้อมใช้','data-panel="tpl"'],['logo','ใส่โลโก้ของคุณ','อัปโหลด หรือวางลิงก์ร้านให้ระบบสร้างชุดแบรนด์','data-panel="brand"'],['text','แก้ข้อความ','ชื่อสินค้า คำโปรย ส่วนประกอบ','data-quick="text"'],['check','ตรวจงานและสั่งผลิต',errs?`เหลือ ${errs} จุดที่ต้องแก้`:'พร้อมพิมพ์แล้ว','data-tab="check"']];
+  const ok=k=>k==='check'?!errs&&S.done.tpl&&S.done.logo&&S.done.text:S.done[k];const n=st.filter(s=>ok(s[0])).length;
+  return `<div class="guide"><h3>ออกแบบเสร็จใน 4 ขั้น</h3><div class="bar" role="progressbar" aria-valuemin="0" aria-valuemax="4" aria-valuenow="${n}" aria-label="ความคืบหน้า"><i style="width:${n*25}%"></i></div><ol>${st.map(([k,b,s,a],i)=>`<li class="${ok(k)?'ok':''}"><button type="button" ${a}><span class="n">${ok(k)?'✓':i+1}</span><span><b>${b}</b><br><small>${s}</small></span><svg class="ico" style="width:14px;height:14px;color:var(--fg-3)"><use href="#i-chev"/></svg></button></li>`).join('')}</ol></div>`}
+function qrHTML(o){return `<div class="card"><h4>QR อัจฉริยะ <span class="samplechip">ต้นแบบ</span></h4><p class="note" style="margin:0">เปลี่ยนปลายทางได้แม้พิมพ์กล่องไปแล้ว และดูสถิติการสแกนได้</p>
+   <select class="sel" data-prop="qdest" aria-label="ปลายทาง QR">${[['line','เพิ่มเพื่อน LINE OA'],['web','เว็บไซต์หรือร้านออนไลน์'],['reorder','สั่งซื้อซ้ำ'],['warranty','ลงทะเบียนรับประกัน / สมาชิก']].map(([k,n])=>`<option value="${k}"${(o.qdest||'line')===k?' selected':''}>${n}</option>`).join('')}</select>
+   <input class="sel" data-prop="qurl" value="${esc(o.qurl||'')}" placeholder="ลิงก์ปลายทาง" aria-label="ลิงก์ปลายทาง">
+   <dl class="kv"><dt>สแกนแล้ว</dt><dd>เริ่มนับหลังผลิต</dd><dt>ลิงก์บนกล่อง</dt><dd style="font-family:var(--f-mono);font-size:11.5px">gpk.to/••••</dd></dl></div>`}
+function lockedHTML(o){return `<div class="lockmsg"><svg class="ico" style="color:var(--warn)"><use href="#i-lock"/></svg><span><b>${esc(o.name)}</b> ถูกล็อกโดยเจ้าของแบรนด์<br><small class="note">แก้ได้เฉพาะส่วนที่ไม่ล็อก เช่น ข้อความของสาขา</small></span></div>`}
+function inspEasy(){
+  const o=OBJ().find(x=>x.id===S.sel);
+  if(o&&o.blk)return lockedHTML(o);
+  if(!o)return guideHTML()+`<div class="sec"><b>ทำต่อได้เลย</b><div class="quick">
+    <button type="button" data-quick="text"><svg class="ico"><use href="#i-text"/></svg>แก้ข้อความ</button>
+    <button type="button" data-panel="brand"><svg class="ico"><use href="#i-brand"/></svg>ใส่โลโก้</button>
+    <button type="button" data-panel="bg"><svg class="ico"><use href="#i-bg"/></svg>เปลี่ยนสีกล่อง</button>
+    <button type="button" data-quick="mock"><svg class="ico"><use href="#i-play"/></svg>ดูกล่องจริง 3D</button></div></div>
+    <div class="inkline"><svg class="ico"><use href="#i-check"/></svg><span>แตะชิ้นงานบนแผ่นคลี่เพื่อแก้ ดับเบิลคลิกข้อความเพื่อพิมพ์ · ระบบตรวจงานพิมพ์ให้ตลอด</span></div>`;
+  const e=eff(o);const p=PANELS.find(p=>!p.glue&&o.x+o.w/2>=p.x&&o.x+o.w/2<=p.x+p.w&&o.y+o.h/2>=p.y&&o.y+o.h/2<=p.y+p.h);
+  let h=`<div class="ezhead"><i><svg class="ico"><use href="#${TYPE_I[o.type]}"/></svg></i><div><b>${esc(o.name)}</b><small>${TYPE_N[o.type]}${p?' · อยู่ที่'+p.n:''}</small></div></div>`;
+  if(o.type==='text'){const fonts=[...BRAND.fonts,...FONTS.map(f=>f[0]).filter(f=>!BRAND.fonts.includes(f))];
+    h+=`<div class="sec"><b>ข้อความ</b><textarea class="ta" data-prop="text" aria-label="ข้อความ">${esc(e.text)}</textarea>
+    <select class="sel" data-prop="font" aria-label="ฟอนต์"><optgroup label="ฟอนต์แบรนด์">${BRAND.fonts.map(f=>`<option${o.font===f?' selected':''}>${esc(f)}</option>`).join('')}</optgroup><optgroup label="ฟอนต์อื่น">${fonts.slice(BRAND.fonts.length).map(f=>`<option${o.font===f?' selected':''}>${esc(f)}</option>`).join('')}</optgroup></select>
+    <div class="rng"><label for="ezpt">ขนาดตัวอักษร</label><output id="ezptv">${o.size} pt</output><input id="ezpt" type="range" min="6" max="60" step="1" value="${o.size}" data-ezpt></div>
+    <div class="btnrow"><button class="ib" type="button" data-bold aria-pressed="${+o.weight>=700}" aria-label="ตัวหนา" style="font-weight:800">B</button><span class="sep" style="height:30px"></span>${[['start','al','ชิดซ้าย'],['middle','ac','กึ่งกลาง'],['end','ar','ชิดขวา']].map(([k,i,n])=>`<button class="ib" type="button" data-talign="${k}" aria-pressed="${o.align===k}" aria-label="${n}"><svg class="ico"><use href="#i-${i}"/></svg></button>`).join('')}</div></div>`}
+  else{const mx=Math.round((p?p.w:150)*1.1);h+=`<div class="sec"><div class="rng"><label for="ezw">ขนาด</label><output id="ezwv">กว้าง ${Math.round(o.w)} มม.</output><input id="ezw" type="range" min="6" max="${Math.max(mx,Math.ceil(o.w))}" step="1" value="${Math.round(o.w)}" data-ezw></div></div>`}
+  if(o.type!=='image'){const cur=(e.fill||'').toLowerCase();h+=`<div class="sec"><b>สี</b><div class="ezsw">${[...BRAND.colors,['ดำ','#111111'],['ขาว','#FFFFFF']].map(([n,c])=>`<button type="button" class="swatch" style="background:${c}" data-fill="${c}" aria-label="${n}" title="${n}" aria-pressed="${cur===c.toLowerCase()}"></button>`).join('')}<label class="swatch" title="สีอื่น"><input type="color" value="${e.fill&&e.fill!=='none'?e.fill:'#000000'}" data-prop="fill" aria-label="เลือกสีอื่น"></label></div>${S.print==='black'&&e.fill&&!isBlack(e.fill)?'<p class="note" style="margin:0;color:var(--warn)">กล่องนี้พิมพ์สีดำ สีนี้จะพิมพ์ไม่ได้ ไปที่ตรวจงานแล้วกด "แก้ให้"</p>':''}</div>`}
+  if(o.type==='image'){const dpi=o.vector?null:Math.round(o.px[0]/(o.w/25.4));const g=dpi==null||dpi>=300,m=dpi!=null&&dpi>=150&&dpi<300;h+=`<div class="inkline" style="${g?'':m?'background:var(--warn-tint)':'background:var(--err-tint)'}"><svg class="ico" style="color:${g?'var(--ok)':m?'var(--warn)':'var(--err)'}"><use href="#${g?'i-check':'i-warn'}"/></svg><span>${g?'ภาพคมชัด พร้อมพิมพ์':m?'พิมพ์ได้ แต่อาจไม่คมมาก ลองย่อภาพลงเล็กน้อย':'ภาพเล็กเกินไป จะแตกเมื่อพิมพ์ ย่อภาพ หรือใช้ไฟล์ใหญ่ขึ้น'}</span></div>`}
+  h+=`<div class="sec"><b>ตำแหน่งในแผง${p?' · '+p.n:''}</b><div class="posrow"><div class="posgrid" role="group" aria-label="วางตำแหน่ง">${[['tl','บนซ้าย'],['tc','บนกลาง'],['tr','บนขวา'],['ml','กลางซ้าย'],['mc','กึ่งกลาง'],['mr','กลางขวา'],['bl','ล่างซ้าย'],['bc','ล่างกลาง'],['br','ล่างขวา']].map(([k,n])=>`<button type="button" data-pos="${k}" aria-label="${n}" title="${n}"></button>`).join('')}</div><p>หรือลากบนแผ่นคลี่ ระบบช่วยจัดให้ตรงกึ่งกลางแผง</p></div></div>`;
+  if(o.type==='qr')h+=qrHTML(o);
+  if(S.variants.length>1&&o.variant)h+=`<div class="inkline"><svg class="ico"><use href="#i-variants"/></svg><span>ชิ้นนี้เปลี่ยนตามรุ่น กำลังแก้รุ่น "${esc(vact().name)}"</span></div>`;
+  h+=`<div class="ezacts"><button class="btn btn-g" type="button" data-act="dup"><svg class="ico" style="width:16px;height:16px"><use href="#i-copy"/></svg>ทำสำเนา</button><button class="btn btn-g" type="button" data-act="del" style="color:var(--err)"><svg class="ico" style="width:16px;height:16px"><use href="#i-trash"/></svg>ลบ</button><button class="btn btn-g" type="button" data-act="front"><svg class="ico" style="width:16px;height:16px"><use href="#i-front"/></svg>ขึ้นหน้า</button><button class="btn btn-g" type="button" data-act="back"><svg class="ico" style="width:16px;height:16px"><use href="#i-back"/></svg>ไว้ข้างหลัง</button></div>`;
+  return h}
+function inspMulti(){const os=MSO();const cur=(eff(os[0]).fill||'').toLowerCase();
+  return `<div class="mselinfo"><svg class="ico"><use href="#i-layers"/></svg>เลือก ${os.length} ชิ้น</div>
+   <div class="sec"><b>จัดแนวกันเอง</b><div class="btnrow">${[['al','left','ชิดซ้าย'],['ac','hcenter','กึ่งกลางแนวนอน'],['ar','right','ชิดขวา'],['at','top','ชิดบน'],['am','vcenter','กึ่งกลางแนวตั้ง'],['ab','bottom','ชิดล่าง']].map(([i,k,n])=>`<button class="ib" type="button" data-malign="${k}" title="${n}" aria-label="${n}"><svg class="ico"><use href="#i-${i}"/></svg></button>`).join('')}</div>
+   <b>กระจายระยะเท่ากัน</b><div class="btnrow"><button class="ib" type="button" data-mdist="h" title="กระจายแนวนอน" aria-label="กระจายแนวนอน" ${os.length<3?'disabled':''}><svg class="ico"><use href="#i-disth"/></svg></button><button class="ib" type="button" data-mdist="v" title="กระจายแนวตั้ง" aria-label="กระจายแนวตั้ง" ${os.length<3?'disabled':''}><svg class="ico"><use href="#i-distv"/></svg></button><span class="note" style="align-self:center">${os.length<3?'เลือก 3 ชิ้นขึ้นไป':''}</span></div></div>
+   <div class="sec"><b>สีทุกชิ้นที่เลือก</b><div class="swatches">${[...BRAND.colors,['ดำ','#111111']].map(([n,c])=>`<button type="button" class="swatch" style="background:${c}" data-fill="${c}" aria-label="${n}" aria-pressed="${cur===c.toLowerCase()}"></button>`).join('')}</div></div>
+   <div class="btnrow"><button class="ib" type="button" data-act="dup" title="ทำสำเนา ⌘D" aria-label="ทำสำเนา"><svg class="ico"><use href="#i-copy"/></svg></button><button class="ib" type="button" data-act="front" title="นำขึ้นหน้า" aria-label="นำขึ้นหน้า"><svg class="ico"><use href="#i-front"/></svg></button><button class="ib" type="button" data-act="back" title="ส่งไปหลัง" aria-label="ส่งไปหลัง"><svg class="ico"><use href="#i-back"/></svg></button><button class="ib" type="button" data-act="del" title="ลบ" aria-label="ลบ" style="color:var(--err)"><svg class="ico"><use href="#i-trash"/></svg></button></div>`}
+function inspDesign(){
+  if(!PRO())return inspEasy();
+  if(MS().length>1)return inspMulti();
+  const o=OBJ().find(x=>x.id===S.sel);
+  if(!o)return `<div class="sec"><b>เอกสาร</b><dl class="kv"><dt>ด้าน</dt><dd>${S.side==='out'?'ด้านนอก':'ด้านใน'}</dd><dt>ระบบพิมพ์</dt><dd>${{black:'ดำ 1 สี',spot:'สีพิเศษ 1 สี',cmyk:'4 สี (CMYK)'}[S.print]}</dd><dt>ชิ้นงาน</dt><dd>${OBJ().length}</dd><dt>รุ่นที่แสดง</dt><dd>${esc(vact().name)}</dd></dl></div>
+    <div class="inkline"><svg class="ico"><use href="#i-check"/></svg><span>คลิกชิ้นงานเพื่อแก้ ดับเบิลคลิกข้อความเพื่อพิมพ์ · ลากจากแผงซ้ายมาวางได้</span></div>
+    <div class="sec"><b>เส้นช่วย</b>${[['cut','เส้นตัด'],['fold','เส้นพับ'],['bleed','ระยะตัดตก 3 มม.'],['safe','ระยะปลอดภัย 3 มม.'],['labels','ชื่อแผง'],['grid','ตาราง 10 มม.']].map(([k,n])=>`<label class="togrow"><span>${n}</span><input class="switch" type="checkbox" data-ovl="${k}"${S.ovl[k]?' checked':''}></label>`).join('')}</div>`;
+  const e=eff(o);const isV=!!vact().ov[o.id];
+  let h=`<div class="sec"><b><input class="sel" style="height:28px;font-weight:600" value="${esc(o.name)}" data-prop="name" aria-label="ชื่อชิ้นงาน"></b>
+    <div class="row">${numField('X','x',o.x)}${numField('Y','y',o.y)}${numField('W','w',o.w)}${numField('H','h',o.h)}</div><div class="row">${numField('หมุน','rot',o.rot||0,1)}${numField('ทึบ %','opacity',(o.opacity??1)*100,5)}</div><div class="btnrow"><button class="ib" type="button" data-act="fx" aria-pressed="${!!o.fx}" title="พลิกแนวนอน" aria-label="พลิกแนวนอน"><svg class="ico"><use href="#i-fliph"/></svg></button><button class="ib" type="button" data-act="fy" aria-pressed="${!!o.fy}" title="พลิกแนวตั้ง" aria-label="พลิกแนวตั้ง"><svg class="ico"><use href="#i-flipv"/></svg></button><button class="ib" type="button" data-act="r90" title="หมุน 90°" aria-label="หมุน 90 องศา" style="font:600 11px var(--f-mono)">90°</button></div>
+    <div class="btnrow" role="group" aria-label="จัดแนวกับแผง">${[['al','left','ชิดซ้าย'],['ac','hcenter','กึ่งกลางแนวนอน'],['ar','right','ชิดขวา'],['at','top','ชิดบน'],['am','vcenter','กึ่งกลางแนวตั้ง'],['ab','bottom','ชิดล่าง']].map(([i,k,n])=>`<button class="ib" type="button" data-align="${k}" title="${n} (ในแผง)" aria-label="${n}"><svg class="ico"><use href="#i-${i}"/></svg></button>`).join('')}</div></div>`;
+  if(o.type==='text')h+=`<div class="sec"><b>ข้อความ ${isV?'<span class="samplechip" style="border-style:solid;color:var(--accent)">รุ่น '+esc(vact().name)+'</span>':''}</b><textarea class="ta" data-prop="text" aria-label="ข้อความ">${esc(e.text)}</textarea>
+    <select class="sel" data-prop="font" aria-label="ฟอนต์">${FONTS.map(([f])=>`<option${o.font===f?' selected':''} style="font-family:'${esc(f)}'">${esc(f)}</option>`).join('')}</select>
+    <div class="row3">${numField('pt','size',o.size,.5)}<select class="sel" data-prop="weight" aria-label="น้ำหนัก">${[400,500,600,700,800].map(w=>`<option value="${w}"${+o.weight===w?' selected':''}>${{400:'ปกติ',500:'กลาง',600:'หนา',700:'หนามาก',800:'ดำ'}[w]}</option>`).join('')}</select>${numField('ช่องไฟ','track',o.track||0,10)}</div><div class="row">${numField('ระยะบรรทัด','lh',o.lh||1.2,.05)}<button class="btn btn-g" type="button" data-toast="ต้นแบบ: แปลงข้อความเป็นเส้น (outline) สำหรับไฟล์ส่งโรงพิมพ์ ระบบทำให้อัตโนมัติตอนส่งออก PDF">แปลงเป็นเส้น</button></div>
+    <div class="btnrow">${[['start','al','ชิดซ้าย'],['middle','ac','กึ่งกลาง'],['end','ar','ชิดขวา']].map(([k,i,n])=>`<button class="ib" type="button" data-talign="${k}" aria-pressed="${o.align===k}" aria-label="${n}"><svg class="ico"><use href="#i-${i}"/></svg></button>`).join('')}</div></div>`;
+  if(['text','rect','ellipse','qr','barcode','sym','path'].includes(o.type))h+=`<div class="sec"><b>สี${['rect','ellipse','path'].includes(o.type)?`<select class="sel" style="width:auto;height:26px;font-weight:500" data-prop="grad" aria-label="ชนิดการเติมสี"><option value="">สีเดียว</option><option value="1"${o.grad?' selected':''}>ไล่สี</option></select>`:''}</b><div class="colorin"><input type="color" value="${e.fill&&e.fill!=='none'?e.fill:'#000000'}" data-prop="fill" aria-label="เลือกสี"><div><b style="font-weight:600">${(e.fill||'').toUpperCase()}</b><div class="cmyk">${e.fill&&e.fill!=='none'?cmyk(e.fill):'-'}</div></div></div>${o.grad?`<div class="colorin"><input type="color" value="${o.fill2||'#ffffff'}" data-prop="fill2" aria-label="สีปลายทาง"><div class="row" style="grid-template-columns:1fr 1fr"><div><b style="font-weight:600">${(o.fill2||'#FFFFFF').toUpperCase()}</b><div class="cmyk">สีปลายทาง</div></div>${numField('มุม','gang',o.gang??90,15)}</div></div>`:''}<div class="swatches">${BRAND.colors.map(([n,c])=>`<button type="button" class="swatch" style="background:${c}" data-fill="${c}" aria-label="${n}" aria-pressed="${(e.fill||'').toLowerCase()===c.toLowerCase()}"></button>`).join('')}<button type="button" class="swatch" style="background:#1F2421" data-fill="#111111" aria-label="ดำพิมพ์"></button></div>
+    <div class="inkline"><svg class="ico"><use href="#i-sun"/></svg><span>${e.fill&&isBlack(e.fill)?'พิมพ์ด้วยหมึกดำ ใช้ได้ทุกระบบพิมพ์':S.print==='cmyk'?'พิมพ์ด้วย 4 สี (CMYK) สีบนผิวคราฟท์จะออกโทนอุ่นกว่าบนจอ':S.print==='spot'?'พิมพ์เป็นสีพิเศษ 1 สี ต้องเป็นสีเดียวกันทั้งงาน':'ระบบพิมพ์ดำ 1 สีพิมพ์สีนี้ไม่ได้'}</span></div></div>`;
+  if(['rect','ellipse','path'].includes(o.type))h+=`<div class="sec"><b>เส้นขอบ</b><div class="colorin"><input type="color" value="${o.stroke||'#1F2421'}" data-prop="stroke" aria-label="สีเส้นขอบ"><div class="row">${numField('หนา มม.','sw',o.sw||0,.1)}<select class="sel" data-prop="dash" aria-label="ลายเส้น"><option value="">เส้นทึบ</option><option value="2 1"${o.dash==='2 1'?' selected':''}>เส้นประ</option><option value=".3 .8"${o.dash==='.3 .8'?' selected':''}>จุด</option></select></div></div>${o.type==='rect'?`<div class="row">${numField('มุมมน','r',o.r||0,1)}<button class="btn btn-g" type="button" data-act="nostroke">ไม่มีเส้น</button></div>`:`<button class="btn btn-g" type="button" data-act="nostroke">ไม่มีเส้น</button>`}</div>`;
+  if(o.type==='image'){const dpi=o.vector?null:Math.round(o.px[0]/(o.w/25.4));h+=`<div class="sec"><b>ภาพ</b><dl class="kv"><dt>ไฟล์</dt><dd>${o.vector?'เวกเตอร์':o.px.join(' × ')+' px'}</dd><dt>ความละเอียดที่พิมพ์</dt><dd style="color:${dpi==null||dpi>=300?'var(--ok)':dpi>=150?'var(--warn)':'var(--err)'};font-weight:600">${dpi==null?'คมทุกขนาด':dpi+' dpi'}</dd></dl><label class="togrow"><span>ภาพสีเดียว<br><small class="note">สำหรับพิมพ์ดำหรือสีพิเศษ 1 สี</small></span><input class="switch" type="checkbox" data-mono${o.mono?' checked':''}></label><div class="row"><button class="btn btn-g" type="button" data-toast="ต้นแบบ: ลบพื้นหลังภาพอัตโนมัติ">ลบพื้นหลัง</button><button class="btn btn-g" type="button" data-toast="ต้นแบบ: ครอบตัดภาพด้วยกรอบหรือรูปทรง (mask)">ครอบตัด</button></div></div>`}
+  if(o.type==='qr')h+=qrHTML(o);
+  h+=`<div class="sec"><label class="togrow"><span><b style="font-weight:600;color:var(--fg)">ล็อกแบรนด์</b><br><small class="note">ทีมและสาขาย้ายหรือแก้ชิ้นนี้ไม่ได้</small></span><input class="switch" type="checkbox" data-blk${o.blk?' checked':''}></label></div>
+  <div class="sec"><label class="togrow"><span><b style="font-weight:600;color:var(--fg)">เปลี่ยนตามรุ่น</b><br><small class="note">${o.type==='text'?'ข้อความและสี':'สี'}ต่างกันได้ในแต่ละรุ่น</small></span><input class="switch" type="checkbox" data-variant${o.variant?' checked':''}></label></div>
+    <div class="btnrow"><button class="ib" type="button" data-act="dup" title="ทำสำเนา ⌘D" aria-label="ทำสำเนา"><svg class="ico"><use href="#i-copy"/></svg></button><button class="ib" type="button" data-act="front" title="นำขึ้นหน้า ⌘]" aria-label="นำขึ้นหน้า"><svg class="ico"><use href="#i-front"/></svg></button><button class="ib" type="button" data-act="back" title="ส่งไปหลัง ⌘[" aria-label="ส่งไปหลัง"><svg class="ico"><use href="#i-back"/></svg></button><button class="ib" type="button" data-act="lock" aria-pressed="${!!o.locked}" title="ล็อก" aria-label="ล็อก"><svg class="ico"><use href="#i-lock"/></svg></button><button class="ib" type="button" data-act="del" title="ลบ Delete" aria-label="ลบ" style="color:var(--err)"><svg class="ico"><use href="#i-trash"/></svg></button></div>`;
+  return h;
+}
+function inspCheck(list){
+  const errs=list.filter(i=>i.lv==='err').length,warns=list.length-errs;
+  const nf=list.filter(i=>i.fix).length;
+  return (nf>1?`<div class="fixall"><span>แก้ ${nf} จุดให้อัตโนมัติ ตรวจผลได้ และย้อนกลับได้ (⌘Z)</span><button class="fixb" type="button" data-fixall><svg class="ico" style="width:14px;height:14px;vertical-align:-2px"><use href="#i-wand"/></svg> แก้ทั้งหมด</button></div>`:'')+(list.length?`<div class="sec"><b>${errs?`<span style="color:var(--err)">${errs} ต้องแก้</span>`:''} ${warns?`<span style="color:var(--warn)">${warns} ควรดู</span>`:''}</b>${list.map((i,n)=>`<div class="issue ${i.lv}"><span class="dot">${i.lv==='err'?'!':'i'}</span><button class="igo" type="button" data-goto="${i.id||''}" data-gside="${i.side||''}"><b>${esc(i.t)}${i.name?' · '+esc(i.name):''}</b><small>${esc(i.d)}</small></button>${i.fix?`<button class="fixb" type="button" data-fix="${n}">แก้ให้</button>`:''}</div>`).join('')}</div>`:`<div class="okbox"><svg class="ico"><use href="#i-check"/></svg>พร้อมพิมพ์ ไม่พบปัญหา</div>`)+
+  `<div class="sec ${PRO()?'':'pro-only'}"><b>สิ่งที่ตรวจทุกครั้งที่แก้</b><p class="note" style="margin:0">ทับเส้นพับ · ระยะปลอดภัย 3 มม. · ออกนอกแผ่น · ความละเอียดภาพ (300 dpi) · ตัวอักษร ≥ 6 pt · เส้น ≥ 0.25 มม. · สีตรงกับระบบพิมพ์ · โค้ดสแกนได้</p></div>
+   <div class="sec"><b>มาตรฐานงานพิมพ์</b><dl class="kv"><dt>ขนาด</dt><dd>± 3 มม.</dd><dt>สี</dt><dd>ΔE2000 ≤ 3 เทียบตัวอย่างที่อนุมัติ</dd><dt>จำนวน</dt><dd>± 5% ส่วนที่ขาดคืนเครดิต</dd></dl></div>`}
+function inspOrder(list){
+  const p=price(),errs=list.filter(i=>i.lv==='err').length;
+  return `<div class="sec"><span class="note">ราคาของแบบนี้ ${p.real?'':'<span class="samplechip">ราคาตัวอย่าง</span>'}</span><div class="pricebig">฿${money(p.u)}<small> /ชิ้น</small></div><span class="note">รวม ฿${money(p.total)} · ${p.q.toLocaleString('th-TH')} ชิ้น · รวม VAT ไม่รวมค่าส่ง</span></div>
+   <div class="sec"><b>จำนวนตามรุ่น</b>${S.variants.map(v=>`<div class="togrow"><span style="display:flex;gap:8px;align-items:center"><i style="width:12px;height:12px;border-radius:3px;background:${v.color}"></i>${esc(v.name)}</span><label class="num" style="width:110px"><input type="number" min="0" step="50" value="${v.qty}" data-vqty="${v.id}" aria-label="จำนวน ${esc(v.name)}"><span>ชิ้น</span></label></div>`).join('')}</div>
+   <dl class="kv"><dt>ระบบพิมพ์</dt><dd>${{black:'ดำ 1 สี',spot:'สีพิเศษ 1 สี',cmyk:'4 สี'}[S.print]}</dd><dt>พิมพ์ด้านใน</dt><dd>${S.objs.in.length?'มี':'ไม่มี'}</dd><dt>ผลิต</dt><dd>${S.gang?'9':'5'} วันทำการหลังอนุมัติแบบ</dd><dt>วัสดุ</dt><dd>KA125 ลอน B</dd></dl>
+   ${saveHTML(p)}
+   ${errs?`<div class="inkline" style="background:var(--err-tint)"><svg class="ico" style="color:var(--err)"><use href="#i-warn"/></svg><span>แก้ ${errs} ปัญหาในแท็บตรวจงานก่อนสั่งผลิต</span></div>`:''}
+   <button class="btn btn-p" type="button" style="height:42px" ${errs?'disabled style="height:42px;opacity:.5"':''} data-toast="ต้นแบบ: ไปหน้าปรับแต่ง/ตะกร้าพร้อมแบบนี้ทุกรุ่น">สั่งผลิต ${S.variants.length} รุ่น</button>
+   <button class="btn btn-g" type="button" data-toast="ต้นแบบ: บันทึกใบเสนอราคา ราคาคงที่ 15 วัน">บันทึกใบเสนอราคา</button>
+   <button class="btn btn-g" type="button" data-toast="ต้นแบบ: ขอตัวอย่างจริงก่อนผลิต">ขอตัวอย่างจริงก่อนผลิต</button>
+   ${afterHTML()}`}
+function priceWith(ch){const bk=JSON.stringify({print:S.print,variants:S.variants,gang:S.gang});Object.assign(S,ch.s||{});if(ch.q){S.variants=S.variants.map((v,i)=>({...v,qty:i?v.qty:v.qty+ch.q}))}const r=price();const b=JSON.parse(bk);S.print=b.print;S.variants=b.variants;S.gang=b.gang;return r}
+function saveHTML(p){const opts=[];
+  if(S.print!=='black'){const r=priceWith({s:{print:'black'}});opts.push(['black','พิมพ์ดำ 1 สี',`เปลี่ยนสีทั้งงานเป็นดำ ราคาต่อชิ้น ฿${money(r.u)}`,p.u-r.u])}
+  const nt=[300,500,1000,2000].find(x=>x>p.q);if(nt){const r=priceWith({q:nt-p.q});opts.push(['qty',`สั่ง ${nt.toLocaleString('th-TH')} ชิ้น`,`ราคาต่อชิ้น ฿${money(r.u)} (เพิ่ม ${(nt-p.q).toLocaleString('th-TH')} ชิ้น)`,p.u-r.u])}
+  if(S.objs.in.length){opts.push(['noin','ไม่พิมพ์ด้านใน','ด้านในเป็นผิวกระดาษ',p.u-p.u/1.08])}
+  return `<div class="card"><h4>ลดต้นทุนได้ <span class="samplechip">ตัวเลขตัวอย่าง</span></h4>${opts.length?opts.map(([k,n,d,s])=>`<div class="opt"><span><b style="font-weight:600">${n}</b><br><small>${d}</small></span><span style="text-align:right"><span class="save">−฿${money(Math.max(0,s))}</span><br><button class="btn btn-s" type="button" style="height:26px;font-size:12px;margin-top:2px" data-opt="${k}">ใช้</button></span></div>`).join(''):'<p class="note" style="margin:0">ตอนนี้เป็นตัวเลือกที่คุ้มที่สุดแล้ว</p>'}
+   <label class="togrow" style="border-top:1px solid var(--line);padding-top:8px"><span><b style="font-weight:600">พิมพ์รอบรวม</b><br><small class="note">พิมพ์ร่วมกับงานอื่นในแผ่นเดียว ถูกลงประมาณ 15% รอเพิ่ม 4 วันทำการ</small></span><input class="switch" type="checkbox" data-gang${S.gang?' checked':''}></label><span class="samplechip" style="align-self:flex-start">รอยืนยัน</span></div>`}
+function afterHTML(){const q=S.variants.reduce((a,v)=>a+(+v.qty||0),0);const area=(SHEET.w*SHEET.h/1e6);
+  return `<div class="card"><h4>หลังสั่งผลิต คุณจะเห็นทุกขั้น</h4><ol class="tl"><li><span>อนุมัติแบบ<small>ไฟล์ถูกล็อก พร้อมบันทึกผู้อนุมัติ</small></span></li><li><span>เตรียมแม่พิมพ์และไดคัท</span></li><li><span>พิมพ์และขึ้นรูป<small>รูปงานจริงระหว่างผลิต</small></span></li><li><span>ตรวจคุณภาพ<small>รายงานค่าสี ΔE เทียบตัวอย่างที่อนุมัติ · จำนวน · ขนาด</small></span></li><li><span>จัดส่ง<small>แบ่งส่งหลายที่อยู่ได้</small></span></li></ol></div>
+   <div class="card"><h4>เตือนก่อนกล่องหมด</h4><label class="togrow"><span>คาดวันกล่องหมดจากยอดขาย แล้วเตือนให้สั่งซ้ำ</span><input class="switch" type="checkbox" data-remind${S.remind?' checked':''}></label>
+    ${S.remind?`<div class="chiprow">${['Shopee','Lazada','TikTok Shop','LINE MyShop','กรอกยอดขายเอง'].map(n=>`<button class="chip" type="button" data-toast="ต้นแบบ: เชื่อมต่อ ${n} เพื่ออ่านจำนวนออเดอร์ต่อวัน (เฉพาะจำนวน ไม่อ่านข้อมูลลูกค้า)">${n}</button>`).join('')}</div><p class="note" style="margin:0">ตัวอย่าง: ขาย 20 ออเดอร์/วัน กล่อง ${q.toLocaleString('th-TH')} ชิ้นใช้ได้ประมาณ ${Math.round(q/20)} วัน ระบบเตือนก่อนหมด 10 วัน (เผื่อเวลาผลิต)</p>`:''}</div>
+   <div class="card"><h4>ข้อมูลความยั่งยืน <span class="samplechip">รอข้อมูลวัสดุจริง</span></h4><dl class="kv"><dt>กระดาษต่อกล่อง</dt><dd>${area.toFixed(3)} ตร.ม.</dd><dt>ทั้งคำสั่งซื้อ</dt><dd>${(area*q).toFixed(1)} ตร.ม.</dd><dt>เนื้อกระดาษรีไซเคิล</dt><dd>— %</dd><dt>คาร์บอนโดยประมาณ</dt><dd>— kgCO₂e</dd></dl><p class="note" style="margin:0">ใช้ทำรายงานให้ลูกค้าองค์กรและผู้ส่งออก · กล่องที่พอดีสินค้าลดทั้งกระดาษและค่าส่ง</p></div>`}
+function renderInsp(list){
+  const errs=list.filter(i=>i.lv==='err').length;
+  $('#itabs').innerHTML=[['design','ออกแบบ'],['check','ตรวจงาน'],['order','สั่งผลิต']].map(([k,n])=>`<button type="button" role="tab" data-tab="${k}" aria-selected="${S.tab===k}">${n}${k==='check'?`<span class="badge ${list.length?'':'ok'}">${list.length||'✓'}</span>`:''}</button>`).join('');
+  $('#ibody').innerHTML=S.tab==='design'?inspDesign():S.tab==='check'?inspCheck(list):inspOrder(list);
+}
+/* ---------- chrome ---------- */
+function renderMode(){$('#modesw').innerHTML=[['easy','i-sparkle','ง่าย'],['pro','i-sliders','มืออาชีพ']].map(([k,i,n])=>`<button type="button" role="radio" data-setmode="${k}" aria-checked="${S.mode===k}" title="${k==='easy'?'โหมดง่าย: เครื่องมือที่จำเป็น ระบบช่วยแก้ให้':'โหมดมืออาชีพ: ไม้บรรทัด มม. ชั้น CMYK รุ่น ส่งออก'}"><svg class="ico"><use href="#${i}"/></svg>${n}</button>`).join('')}
+function setMode(m,quiet){if(S.mode===m)return;S.mode=m;lsSet('gp.mode',m);document.documentElement.dataset.mode=m;renderMode();renderAll();requestAnimationFrame(()=>{fit();setZoom(S.zoom)});if(!quiet)toast(m==='pro'?'โหมดมืออาชีพ: ไม้บรรทัด ค่า มม. ชั้น CMYK หลายรุ่น และส่งออก':'โหมดง่าย: เครื่องมือเท่าที่จำเป็น ระบบตรวจและแก้งานให้')}
+function renderTop(list){
+  const p=price();const errs=list.filter(i=>i.lv==='err').length;
+  $('#steps').innerHTML=[['design','ออกแบบ','1'],['check','ตรวจงาน','2'],['order','สั่งผลิต','3']].map(([k,n,i])=>`<button type="button" data-tab="${k}" ${S.tab===k?'aria-current="step"':''}><i>${i}</i><span>${n}</span>${k==='check'?`<span class="badge ${list.length?'':'ok'}">${list.length||'✓'}</span>`:''}</button>`).join('');
+  $('#pchip').innerHTML=`<b>฿${money(p.u)}/ชิ้น</b><small>${p.q.toLocaleString('th-TH')} ชิ้น${p.real?'':' · ตัวอย่าง'}</small>`;
+  $('#undoB').disabled=H.i<=0;$('#redoB').disabled=H.i>=H.stack.length-1;
+  $('#orderB').disabled=!!errs;$('#orderB').title=errs?'แก้ปัญหาในตรวจงานก่อน':'สั่งผลิต';$('#orderB').style.opacity=errs?.55:1;
+  if(!PRO()){$('#status').innerHTML=`<span>กล่องไปรษณีย์ <b>150 × 100 × 80 มม.</b></span><span>วัสดุ <b>KA125 ลอน B</b></span><span class="ready ${errs?'bad':''}">${errs?'● ต้องแก้ '+errs+' จุด':'● พร้อมพิมพ์'}</span><span class="kbd">โหมดง่าย · เปลี่ยนเป็นมืออาชีพได้ทุกเมื่อ งานไม่หาย</span>`;return}
+  $('#status').innerHTML=`<span>แผ่นคลี่ <b>547 × 196 มม.</b></span><span>ภายใน <b>150 × 100 × 80</b></span><span>วัสดุ <b>KA125 ลอน B</b></span><span>ด้าน<b>${S.side==='out'?'นอก':'ใน'}</b></span><span id="cursorPos">X — Y —</span><span class="ready ${errs?'bad':''}">${errs?'● ต้องแก้ '+errs+' จุด':list.length?'● พร้อมพิมพ์ (มีข้อแนะนำ)':'● พร้อมพิมพ์'}</span><button class="tb kbd" type="button" id="kbdB" aria-label="ทางลัดแป้นพิมพ์" title="ทางลัดแป้นพิมพ์" style="width:26px;height:24px"><svg class="ico" style="width:16px;height:16px"><use href="#i-kbd"/></svg></button>`;
+}
+function renderFloat(){
+  $('#float').innerHTML=`<div class="seg" role="group" aria-label="มุมมอง">${[['flat','แผ่นคลี่'],['split','แผ่นคลี่ + 3D'],['3d','3D']].map(([k,n])=>`<button type="button" data-view="${k}" aria-pressed="${S.view===k}">${n}</button>`).join('')}</div><span class="sep"></span>
+   <div class="seg" role="group" aria-label="ด้าน">${[['out','ด้านนอก'],['in','ด้านใน']].map(([k,n])=>`<button type="button" data-side="${k}" aria-pressed="${S.side===k}">${n}</button>`).join('')}</div><span class="sep"></span>
+   <button class="tb" type="button" data-zoom="-" aria-label="ซูมออก"><svg class="ico"><use href="#i-minus"/></svg></button><span class="zoomv" id="zoomv">${Math.round(S.zoom*100)}%</span><button class="tb" type="button" data-zoom="+" aria-label="ซูมเข้า"><svg class="ico"><use href="#i-plus"/></svg></button><button class="tb" type="button" data-zoom="fit" aria-label="พอดีจอ" title="พอดีจอ ⇧1"><svg class="ico"><use href="#i-fit"/></svg></button>
+   ${S.variants.length>1?`<span class="sep"></span><div class="seg" role="group" aria-label="รุ่นที่แสดง">${S.variants.map(v=>`<button type="button" data-var="${v.id}" aria-pressed="${S.vActive===v.id}">${esc(v.name)}</button>`).join('')}</div>`:''}`;
+  const sw=$('#stagew');sw.classList.toggle('split',S.view==='split'&&!matchMedia('(max-width:900px)').matches||S.view==='split');$('#cv').hidden=S.view==='3d';$('#v3d').hidden=S.view==='flat';
+}
+function renderOvlB(){const b=$('#ovlB');b.style.color=S.printSim||S.sep!=='all'?'var(--accent)':''}
+function renderOvl(){renderOvlB();$('#ovl').innerHTML=`<b style="font-size:11px;color:var(--fg-3);padding:2px 6px">เส้นช่วย</b>`+[['cut','เส้นตัด','#E5484D'],['fold','เส้นพับ','#3B6DF0'],['bleed','ระยะตัดตก','#E5484D80'],['safe','ระยะปลอดภัย','#2BA36B'],['labels','ชื่อแผง','#999'],['grid','ตาราง 10 มม.','#bbb']].map(([k,n,c])=>`<label><input class="switch" type="checkbox" data-ovl="${k}"${S.ovl[k]?' checked':''}><i style="border-color:${c};${k==='fold'||k==='safe'?'border-top-style:dashed':''}"></i>${n}</label>`).join('')+`<hr style="border:0;height:1px;background:var(--line);margin:4px 0"><b style="font-size:11px;color:var(--fg-3);padding:2px 6px">ดูแบบงานพิมพ์</b><label><input class="switch" type="checkbox" data-psim${S.printSim?' checked':''}>จำลองหมึกบนผิวกล่อง</label><label style="cursor:default">แยกหมึก <select class="sepsel" data-sep aria-label="ดูแยกหมึก" style="margin-left:auto"><option value="all"${S.sep==='all'?' selected':''}>ทุกหมึก</option><option value="k"${S.sep==='k'?' selected':''}>เฉพาะหมึกดำ</option><option value="c"${S.sep==='c'?' selected':''}>เฉพาะสี</option></select></label>`}
+let lastList=[];
+function renderAll(){renderMode();renderTools();lastList=renderCanvas();render3D();renderRail();renderPanel();renderInsp(lastList);renderTop(lastList);renderFloat();renderOvl()}
+function renderLite(){lastList=renderCanvas();render3D();renderInsp(lastList);renderTop(lastList)}
+/* ---------- zoom ---------- */
+function fit(){const cv=$('#cv');const cs=getComputedStyle(cv);const w=cv.clientWidth-parseFloat(cs.paddingLeft)-parseFloat(cs.paddingRight)-24,h=cv.clientHeight-80;S.zoom=Math.max(.2,Math.min(4,Math.min(w/((SHEET.w+PAD*2)*3.2),h/((SHEET.h+PAD*2)*3.2))));}
+function setZoom(z,keep){S.zoom=Math.max(.2,Math.min(6,z));renderCanvas();$('#zoomv').textContent=Math.round(S.zoom*100)+'%'}
+/* ---------- object ops ---------- */
+function curObj(){return OBJ().find(o=>o.id===S.sel)}
+function setProp(o,k,v){
+  const varProps=['text','fill'];
+  if(o.variant&&varProps.includes(k)&&S.variants.length>1){const ov=vact().ov[o.id]||(vact().ov[o.id]={});ov[k]=v;return}
+  o[k]=v;
+}
+function addObj(o){o.id=uid();OBJ().push(o);S.sel=o.id;S.tab='design';snap();renderAll()}
+const centerOf=()=>{const p=PANELS.find(p=>p.id===(S.side==='out'?'front':'back'));return p};
+function addKind(k){const p=centerOf();const bc=BRAND.colors;
+  if(k==='rect')return addObj({type:'rect',name:'สี่เหลี่ยม',x:p.x+45,y:p.y+25,w:60,h:30,fill:bc[2][1],r:0,sw:0});
+  if(k==='rrect')return addObj({type:'rect',name:'สี่เหลี่ยมมุมมน',x:p.x+45,y:p.y+25,w:60,h:30,fill:bc[0][1],r:6,sw:0});
+  if(k==='ellipse')return addObj({type:'ellipse',name:'วงกลม',x:p.x+60,y:p.y+20,w:30,h:30,fill:bc[2][1],sw:0});
+  if(k==='frame')return addObj({type:'rect',name:'กรอบ',x:p.x+10,y:p.y+10,w:p.w-20,h:p.h-20,fill:'none',stroke:bc[1][1],sw:.8,r:0});
+  if(k==='line')return addObj({type:'rect',name:'เส้น',x:p.x+25,y:p.y+40,w:100,h:.8,fill:bc[1][1],r:0,sw:0});
+  if(k==='badge')return addObj({type:'ellipse',name:'ป้ายวงกลม',x:p.x+55,y:p.y+15,w:40,h:40,fill:'none',stroke:bc[0][1],sw:1.2});
+  if(k.startsWith('sym:'))return addObj({type:'sym',sym:k.slice(4),name:{recycle:'สัญลักษณ์รีไซเคิล',up:'ตั้งด้านนี้ขึ้น',fragile:'ระวังแตก',dry:'กันน้ำ',food:'ฟู้ดเกรด'}[k.slice(4)],x:p.x+65,y:p.y+30,w:18,h:18,fill:bc[1][1]});
+  if(k==='qr')return addObj({type:'qr',name:'QR โค้ด',x:p.x+60,y:p.y+22,w:30,h:30,fill:'#111111'});
+  if(k==='barcode')return addObj({type:'barcode',name:'บาร์โค้ด EAN-13',x:p.x+45,y:p.y+28,w:60,h:24,fill:'#111111'});
+  if(k.startsWith('t:')){const t={h:['หัวข้อของคุณ','Kanit',22,800],s:['หัวข้อรอง','Anuphan',14,600],b:['ส่วนประกอบ: แป้งสาลี เนย น้ำตาล ไข่\nเก็บในที่แห้ง ทานภายใน 7 วัน','IBM Plex Sans Thai',8,400]}[k.slice(2)];
+    return addObj({type:'text',name:t[0].split('\n')[0].slice(0,18),x:p.x+15,y:p.y+30,w:120,h:t[2]*PT*1.25*t[0].split('\n').length,text:t[0],font:t[1],size:t[2],weight:t[3],align:'middle',fill:bc[1][1],track:0})}
+}
+function applyTpl(k){const t=TPLS.find(x=>x.k===k);
+  S.objs.out=[
+   {id:uid(),type:'image',name:'โลโก้หลัก',x:77,y:68,w:90,h:52,src:BRAND.logos[0].src,px:[2000,1200],vector:true},
+   {id:uid(),type:'text',name:'คำโปรย',x:72,y:124,w:100,h:6,text:'ทำด้วยใจทุกชิ้น',font:t.font,size:10,weight:600,align:'middle',fill:t.c1,track:40},
+   {id:uid(),type:'rect',name:'แถบสี',x:197,y:58,w:100,h:16,fill:t.c2,r:0,sw:0,variant:true},
+   {id:uid(),type:'text',name:'รสชาติ',x:202,y:96,w:90,h:10,text:vact().name,font:t.font,size:20,weight:700,align:'middle',fill:t.c1,track:0,variant:true},
+   {id:uid(),type:'text',name:'ส่วนประกอบ',x:312,y:72,w:120,h:20,text:'ส่วนประกอบ\nแป้งสาลี เนย น้ำตาล ไข่ไก่\nเก็บในที่แห้ง',font:'IBM Plex Sans Thai',size:7,weight:400,align:'start',fill:'#1F2421',track:0},
+   {id:uid(),type:'qr',name:'QR ร้านค้า',x:405,y:96,w:30,h:30,fill:'#111111'},
+   {id:uid(),type:'sym',sym:'recycle',name:'รีไซเคิล',x:478,y:108,w:16,h:16,fill:'#1F2421'},
+   {id:uid(),type:'image',name:'โลโก้ฝาบน',x:97,y:14,w:50,h:30,src:BRAND.logos[0].src,px:[2000,1200],vector:true}];
+  S.bg=t.bg===BG.kraft?'kraft':'white';S.variants.forEach(v=>v.ov={});S.sel=null;snap();renderAll();S.done.tpl=true;S.done.logo=true;renderInsp(lastList);toast('ใช้แม่แบบ "'+t.n+'" พร้อมโลโก้และสีแบรนด์ของคุณแล้ว')}
+function alignTo(o,k){const c=(o.x+o.w/2),m=(o.y+o.h/2);const p=PANELS.find(p=>!p.glue&&c>=p.x&&c<=p.x+p.w&&m>=p.y&&m<=p.y+p.h)||centerOf();
+  if(k==='left')o.x=p.x+5;if(k==='right')o.x=p.x+p.w-o.w-5;if(k==='hcenter')o.x=p.x+(p.w-o.w)/2;if(k==='top')o.y=p.y+5;if(k==='bottom')o.y=p.y+p.h-o.h-5;if(k==='vcenter')o.y=p.y+(p.h-o.h)/2}
+function fitToPanel(o){const b=bbox(o);let best=null,ba=-1;
+  for(const p of PANELS.filter(p=>!p.glue)){const ix=Math.max(0,Math.min(b.x1,p.x+p.w)-Math.max(b.x0,p.x)),iy=Math.max(0,Math.min(b.y1,p.y+p.h)-Math.max(b.y0,p.y));if(ix*iy>ba){ba=ix*iy;best=p}}
+  const p=ba>0?best:centerOf();const m=4;const sc=Math.min(1,(p.w-m*2)/o.w,(p.h-m*2)/o.h);
+  if(sc<1){const cx=o.x+o.w/2,cy=o.y+o.h/2;o.w*=sc;o.h*=sc;if(o.type==='text')o.size=Math.max(6,Math.round(o.size*sc*2)/2);o.x=cx-o.w/2;o.y=cy-o.h/2}
+  o.x=Math.min(Math.max(o.x,p.x+m),p.x+p.w-m-o.w);o.y=Math.min(Math.max(o.y,p.y+m),p.y+p.h-m-o.h);o.x=Math.round(o.x*10)/10;o.y=Math.round(o.y*10)/10}
+function applyFix(i){
+  if(i.fix==='print'){S.print='cmyk';return}
+  const o=S.objs[i.side]?.find(x=>x.id===i.id);if(!o||(o.blk&&!PRO()))return;
+  if(i.fix==='fit'){o.rot=0;fitToPanel(o)}
+  if(i.fix==='text6'){o.size=7;o.h=o.size*PT*1.25*String(eff(o).text).split('\n').length}
+  if(i.fix==='dpi'){const cx=o.x+o.w/2,cy=o.y+o.h/2,r=o.h/o.w;o.w=o.px[0]/300*25.4;o.h=o.w*r;o.x=cx-o.w/2;o.y=cy-o.h/2}
+  if(i.fix==='stroke')o.sw=.3}
+function fixAll(){let guard=0;let l=preflight().filter(i=>i.fix);const n=l.length;while(l.length&&guard++<4){l.forEach(applyFix);l=preflight().filter(i=>i.fix)}snap();renderAll();toast(l.length?`แก้แล้ว ${n-l.length} จุด เหลือ ${l.length} จุดที่ต้องตัดสินใจเอง`:`แก้ให้แล้ว ${n} จุด · ย้อนกลับได้ด้วย ⌘Z`)}
+/* ---------- canvas pointer ---------- */
+function toMM(ev){const svg=$('#cvs');const pt=svg.createSVGPoint();pt.x=ev.clientX;pt.y=ev.clientY;return pt.matrixTransform(svg.getScreenCTM().inverse())}
+let drag=null,space=false;
+const cv=$('#cv');
+function cap(e){try{cv.setPointerCapture(e.pointerId)}catch(_){}}
+function finishPen(closed){const P=pen;pen=null;if(!P||P.pts.length<2){renderSelLayer();return}
+  const xs=P.pts.map(q=>q[0]),ys=P.pts.map(q=>q[1]);const x=Math.min(...xs),y=Math.min(...ys);const w=Math.max(.01,Math.max(...xs)-x),h=Math.max(.01,Math.max(...ys)-y);
+  addObj({type:'path',name:closed?'รูปทรงอิสระ':'เส้นอิสระ',x,y,w,h,pts:P.pts.map(q=>[(q[0]-x)/w,(q[1]-y)/h]),closed,fill:closed?BRAND.colors[2][1]:'none',stroke:'#1F2421',sw:closed?0:.6});
+  if(closed){const o=curObj();o.stroke=null;o.sw=0;snap();renderAll()}}
+function renderSelLayer(){const g=$('#selg');if(g)g.innerHTML=selSVG()}
+function snapPts(nx,ny,o,moving,e){const tol=2.2/S.zoom;const gl=[];if(e.altKey)return{nx,ny,gl};
+  const XS=[],YS=[];PANELS.filter(p=>!p.glue).forEach(p=>{[p.x,p.x+p.w/2,p.x+p.w].forEach(c=>XS.push([c,p.y,p.y+p.h]));[p.y,p.y+p.h/2,p.y+p.h].forEach(c=>YS.push([c,p.x,p.x+p.w]))});
+  if(PRO()){OBJ().filter(q=>!moving.has(q.id)&&!q.hidden).forEach(q=>{[q.x,q.x+q.w/2,q.x+q.w].forEach(c=>XS.push([c,Math.min(q.y,ny),Math.max(q.y+q.h,ny+o.h)]));[q.y,q.y+q.h/2,q.y+q.h].forEach(c=>YS.push([c,Math.min(q.x,nx),Math.max(q.x+q.w,nx+o.w)]))});
+    S.guides.forEach(g=>g.o==='v'?XS.push([g.p,-PAD,SHEET.h+PAD]):YS.push([g.p,-PAD,SHEET.w+PAD]))}
+  let bx=null,by=null;
+  for(const [c,s0,s1] of XS)for(const off of [0,o.w/2,o.w]){const d=c-(nx+off);if(Math.abs(d)<tol&&(!bx||Math.abs(d)<Math.abs(bx.d)))bx={d,c,s0,s1}}
+  for(const [c,s0,s1] of YS)for(const off of [0,o.h/2,o.h]){const d=c-(ny+off);if(Math.abs(d)<tol&&(!by||Math.abs(d)<Math.abs(by.d)))by={d,c,s0,s1}}
+  if(bx){nx+=bx.d;gl.push([bx.c,bx.s0,bx.c,bx.s1])}if(by){ny+=by.d;gl.push([by.s0,by.c,by.s1,by.c])}return{nx,ny,gl}}
+cv.addEventListener('pointerdown',e=>{
+  const tool=PRO()?S.tool:'v';
+  if(space||e.button===1||tool==='h'){drag={pan:true,sx:e.clientX,sy:e.clientY,sl:cv.scrollLeft,st:cv.scrollTop};cv.classList.add('panning');cap(e);return}
+  const m=toMM(e);
+  if(tool==='z'){setZoom(S.zoom*(e.altKey?1/1.25:1.25));return}
+  if(S.pinMode){S.comments.push({x:m.x,y:m.y,side:S.side,text:''});S.pinMode=false;if(S.tool==='c')S.tool='v';S.panel='cmt';cv.classList.remove('pin');renderAll();setTimeout(()=>document.querySelector(`[data-ctext="${S.comments.length-1}"]`)?.focus(),30);return}
+  if(PRO()){const gd=e.target.closest('[data-guide]');if(gd&&tool==='v'){drag={guide:+gd.dataset.guide};cap(e);return}
+    if(m.y<-PAD+12&&m.x>-PAD+12){S.guides.push({o:'v',p:Math.round(m.x)});drag={guide:S.guides.length-1};cap(e);renderCanvas();return}
+    if(m.x<-PAD+12&&m.y>-PAD+12){S.guides.push({o:'h',p:Math.round(m.y)});drag={guide:S.guides.length-1};cap(e);renderCanvas();return}}
+  if(tool==='i'){const g=e.target.closest('[data-id]');const src=g&&OBJ().find(x=>x.id===g.dataset.id);const tgt=MSO().filter(o=>o.id!==src?.id&&o.type!=='image');
+    if(src&&src.type!=='image'&&tgt.length){const se=eff(src);tgt.forEach(o=>{setProp(o,'fill',se.fill);if(['rect','ellipse','path'].includes(o.type)){o.grad=src.grad;o.fill2=src.fill2;o.stroke=src.stroke;o.sw=src.sw}if(o.type==='text'&&src.type==='text'){o.font=src.font;o.weight=src.weight}});snap();renderLite();toast('ดูดสีและรูปแบบแล้ว')}
+    else toast('เลือกชิ้นงานปลายทางก่อน แล้วใช้ที่ดูดสีคลิกชิ้นที่มีสีที่ต้องการ');return}
+  if(tool==='t'){const p0=centerOf();addObj({type:'text',name:'ข้อความ',x:m.x,y:m.y-2,w:80,h:14*PT*1.25,text:'ข้อความ',font:BRAND.fonts[0],size:14,weight:600,align:'start',fill:BRAND.colors[1][1],track:0});setTool('v');setTimeout(()=>{const ta=$('#ibody textarea[data-prop="text"]');ta?.focus();ta?.select()},30);return}
+  if(['r','e','l'].includes(tool)){drag={draw:tool,m0:m};cap(e);return}
+  if(tool==='p'){if(!pen)pen={pts:[]};const z=S.zoom*3.2;if(pen.pts.length>=3&&Math.hypot(m.x-pen.pts[0][0],m.y-pen.pts[0][1])<6/z){finishPen(true);return}
+    let q=[Math.round(m.x*10)/10,Math.round(m.y*10)/10];if(e.shiftKey&&pen.pts.length){const l=pen.pts[pen.pts.length-1];if(Math.abs(q[0]-l[0])>Math.abs(q[1]-l[1]))q[1]=l[1];else q[0]=l[0]}
+    pen.pts.push(q);renderSelLayer();return}
+  const iss=e.target.closest('[data-issue]');if(iss){S.sel=iss.dataset.issue;S.tab='check';renderAll();return}
+  const h=e.target.closest('[data-h]');const o=curObj();
+  if(h&&o&&!o.locked&&MS().length<2){drag={rs:h.dataset.h,id:o.id,m0:m,o0:{...o}};cap(e);return}
+  const g=e.target.closest('[data-id]');
+  if(g){const ob=OBJ().find(x=>x.id===g.dataset.id);
+    if(e.shiftKey&&PRO()){const cur=MS();S.msel=cur.includes(ob.id)?cur.filter(id=>id!==ob.id):[...cur,ob.id];S.sel=S.msel[S.msel.length-1]||null;if(S.msel.length<2)S.msel=[];renderLite();if(S.panel==='layers')renderPanel();return}
+    const multi=MS().length>1&&MS().includes(ob.id);
+    if(!multi){S.sel=ob.id;S.msel=[]}
+    if(S.tab!=='design')S.tab='design';
+    if(!ob.locked&&!(ob.blk&&!PRO())){drag={mv:true,id:ob.id,m0:m,o0:{...ob},group:multi?MSO().filter(q=>q.id!==ob.id&&!q.locked).map(q=>({o:q,x:q.x,y:q.y})):null};cap(e)}
+    renderLite();if(S.panel==='layers')renderPanel();return}
+  S.sel=null;S.msel=[];
+  if(PRO()){drag={marq:true};marq={a:m,b:m};cap(e)}
+  renderLite();if(S.panel==='layers')renderPanel();
+});
+cv.addEventListener('pointermove',e=>{
+  const svg=$('#cvs');if(!svg)return;const m=toMM(e);$('#cursorPos')&&($('#cursorPos').textContent=`X ${m.x.toFixed(0)} Y ${m.y.toFixed(0)} มม.`);
+  if(pen&&!drag){pen.hover=m;renderSelLayer();return}
+  if(!drag)return;
+  if(drag.pan){cv.scrollLeft=drag.sl-(e.clientX-drag.sx);cv.scrollTop=drag.st-(e.clientY-drag.sy);return}
+  if(drag.guide!=null){const g=S.guides[drag.guide];if(g){g.p=Math.round((g.o==='v'?m.x:m.y)*2)/2;renderCanvas()}return}
+  if(drag.marq){marq.b=m;renderSelLayer();return}
+  if(drag.draw){let a=drag.m0,b={x:m.x,y:m.y};if(e.shiftKey){if(drag.draw==='l'){const ang=Math.round(Math.atan2(b.y-a.y,b.x-a.x)/(Math.PI/4))*(Math.PI/4);const L=Math.hypot(b.x-a.x,b.y-a.y);b={x:a.x+Math.cos(ang)*L,y:a.y+Math.sin(ang)*L}}else{const s=Math.max(Math.abs(b.x-a.x),Math.abs(b.y-a.y));b={x:a.x+Math.sign(b.x-a.x||1)*s,y:a.y+Math.sign(b.y-a.y||1)*s}}}
+    drawPrev={k:drag.draw,a,b,x:Math.min(a.x,b.x),y:Math.min(a.y,b.y),w:Math.abs(b.x-a.x),h:Math.abs(b.y-a.y)};if(drag.draw!=='l'){drawPrev.b=null}renderSelLayer();return}
+  const o=OBJ().find(x=>x.id===drag.id);if(!o)return;const dx=m.x-drag.m0.x,dy=m.y-drag.m0.y;
+  if(drag.mv){const moving=new Set([o.id,...(drag.group||[]).map(g=>g.o.id)]);const r=snapPts(drag.o0.x+dx,drag.o0.y+dy,o,moving,e);guides=r.gl;
+    o.x=Math.round(r.nx*10)/10;o.y=Math.round(r.ny*10)/10;const ddx=o.x-drag.o0.x,ddy=o.y-drag.o0.y;(drag.group||[]).forEach(g=>{g.o.x=Math.round((g.x+ddx)*10)/10;g.o.y=Math.round((g.y+ddy)*10)/10})}
+  else if(drag.rs){const a=drag.o0;let x=a.x,y=a.y,w=a.w,h=a.h;const k=drag.rs;
+    if(k.includes('e'))w=a.w+dx;if(k.includes('s'))h=a.h+dy;if(k.includes('w')){w=a.w-dx;x=a.x+dx}if(k.includes('n')){h=a.h-dy;y=a.y+dy}
+    const keep=o.type==='image'||o.type==='text'||o.type==='qr'||o.type==='sym'||e.shiftKey;
+    if(keep){const r=a.w/a.h;if(Math.abs(w/a.w)>Math.abs(h/a.h))h=w/r;else w=h*r;if(k.includes('w'))x=a.x+a.w-w;if(k.includes('n'))y=a.y+a.h-h}
+    if(w>.5&&h>.01){o.x=x;o.y=y;o.w=w;o.h=h;if(o.type==='text')o.size=Math.max(4,Math.round(a.size*(h/a.h)*2)/2)}}
+  $('#art').innerHTML=artwork(S.side,true);renderSelLayer();
+  const gl=svg.querySelector('#gl');if(gl)gl.innerHTML=guides.map(([a,b,c,d])=>`<line x1="${a}" y1="${b}" x2="${c}" y2="${d}" stroke="#E5484D" stroke-width="1" vector-effect="non-scaling-stroke"/>`).join('');
+});
+cv.addEventListener('pointerup',e=>{if(!drag)return;const was=drag;drag=null;cv.classList.remove('panning');
+  if(was.guide!=null){const g=S.guides[was.guide];if(g&&(g.p<-PAD+12||g.p>(g.o==='v'?SHEET.w:SHEET.h)+PAD-4)){S.guides.splice(was.guide,1);toast('ลบเส้นนำแล้ว')}renderCanvas();return}
+  if(was.marq){const x0=Math.min(marq.a.x,marq.b.x),x1=Math.max(marq.a.x,marq.b.x),y0=Math.min(marq.a.y,marq.b.y),y1=Math.max(marq.a.y,marq.b.y);marq=null;
+    if(x1-x0>1||y1-y0>1){const ids=OBJ().filter(o=>!o.hidden&&!o.locked&&o.x<x1&&o.x+o.w>x0&&o.y<y1&&o.y+o.h>y0).map(o=>o.id);S.msel=ids.length>1?ids:[];S.sel=ids[0]||null}
+    renderLite();if(S.panel==='layers')renderPanel();return}
+  if(was.draw){const d=drawPrev;drawPrev=null;const k=was.draw;const bc=BRAND.colors;let x,y,w,h;
+    if(!d||(k!=='l'&&d.w<1&&d.h<1)||(k==='l'&&Math.hypot(d.b.x-d.a.x,d.b.y-d.a.y)<1)){x=was.m0.x;y=was.m0.y;w=k==='l'?40:30;h=k==='l'?0:k==='e'?30:20;if(k==='l')return finishLine({x,y},{x:x+40,y})}
+    else if(k==='l')return finishLine(d.a,d.b);else{x=d.x;y=d.y;w=Math.max(1,d.w);h=Math.max(1,d.h)}
+    addObj(k==='r'?{type:'rect',name:'สี่เหลี่ยม',x,y,w,h,fill:bc[2][1],r:0,sw:0}:{type:'ellipse',name:'วงรี',x,y,w,h,fill:bc[2][1],sw:0});setTool('v');return}
+  if(was.mv||was.rs){guides=[];snap();renderLite()}});
+function finishLine(a,b){const x=Math.min(a.x,b.x),y=Math.min(a.y,b.y),w=Math.max(.01,Math.abs(b.x-a.x)),h=Math.max(.01,Math.abs(b.y-a.y));
+  addObj({type:'path',name:'เส้น',x,y,w,h,pts:[[(a.x-x)/w,(a.y-y)/h],[(b.x-x)/w,(b.y-y)/h]],closed:false,fill:'none',stroke:'#1F2421',sw:.6});setTool('v')}
+cv.addEventListener('dblclick',e=>{if(pen){pen.pts.pop();finishPen(false);return}const g=e.target.closest('[data-id]');if(!g)return;const o=OBJ().find(x=>x.id===g.dataset.id);if(o?.type!=='text')return;S.sel=o.id;S.tab='design';renderInsp(lastList);const ta=$('#ibody textarea[data-prop="text"]');ta?.focus();ta?.select()});
+cv.addEventListener('wheel',e=>{if(!(e.ctrlKey||e.metaKey))return;e.preventDefault();setZoom(S.zoom*(e.deltaY<0?1.1:.9))},{passive:false});
+/* ---------- events ---------- */
+document.addEventListener('click',e=>{
+  const t=e.target;
+  if(t.closest('#brandScanB')){S.brandScan='busy';renderPanel();setTimeout(()=>{S.brandScan={colors:['#2E6B54','#E8B04B','#F4F2EC','#1F2421','#C2185B'],fonts:['Mitr','IBM Plex Sans Thai']};renderPanel()},900);return}
+  if(t.closest('#brandApply')){const c=S.brandScan.colors;S.bg='kraft';OBJ().forEach(o=>{if(o.type==='rect'&&o.fill&&o.fill!=='none')o.fill=c[1];if(o.type==='text'&&!isBlack(o.fill||'#000')){o.fill=c[0];o.font=S.brandScan.fonts[0]}});S.done.logo=true;snap();renderAll();toast('ใช้สีและฟอนต์จากหน้าร้านแล้ว · ย้อนกลับได้ด้วย ⌘Z');return}
+  if(t.closest('#brandKeep')){S.brandScan.colors.forEach((c,i)=>{if(!BRAND.colors.some(([,x])=>x.toLowerCase()===c.toLowerCase()))BRAND.colors.push(['จากหน้าร้าน '+(i+1),c])});S.brandScan.fonts.forEach(f=>{if(!BRAND.fonts.includes(f))BRAND.fonts.push(f)});renderPanel();toast('เก็บในชุดแบรนด์ของบัญชีแล้ว');return}
+  const op2=t.closest('[data-opt]');if(op2){const k=op2.dataset.opt;if(k==='black'){['out','in'].forEach(s=>S.objs[s].forEach(o=>{if(o.type!=='image'){if(o.fill&&o.fill!=='none')o.fill='#111111';if(o.stroke)o.stroke='#111111';o.grad=false}else o.mono=true}));S.variants.forEach(v=>Object.values(v.ov).forEach(ov=>{if(ov.fill)ov.fill='#111111'}));if(S.bg==='color'||S.bg==='stripe')S.bg='kraft';S.print='black'}
+    if(k==='qty'){const nt=[300,500,1000,2000].find(x=>x>S.variants.reduce((a,v)=>a+(+v.qty||0),0));const tq=S.variants.reduce((a,v)=>a+(+v.qty||0),0);S.variants[0].qty+=nt-tq}
+    if(k==='noin')S.objs.in=[];snap();renderAll();toast('ปรับแล้ว ดูราคาใหม่ด้านบน · ย้อนกลับได้ด้วย ⌘Z');return}
+  const md=t.closest('[data-setmode]');if(md){setMode(md.dataset.setmode);return}
+  const wl=t.closest('[data-welcome]');if(wl){const k=wl.dataset.welcome;$('#welDlg').close();lsSet('gp.welcomed','1');
+    if(k==='easy'||k==='pro'){setMode(k,true);S.mode===k&&renderAll();toast(k==='easy'?'เริ่มจากเลือกแม่แบบ หรือทำตาม 4 ขั้นในแผงออกแบบ':matchMedia('(max-width:900px)').matches?'เปิดเครื่องมือครบชุดแล้ว · ใช้งานเต็มที่บนคอมพิวเตอร์':'เปิดเครื่องมือครบชุดแล้ว กด ? เพื่อดูทางลัด')}
+    if(k==='team')toast('ต้นแบบ: ส่งคำขอให้นักออกแบบ getpack พร้อมโลโก้และแบบร่างนี้ · แก้ไขฟรี 3 ครั้ง');
+    if(k==='file'){setMode('pro',true);toast('ต้นแบบ: อัปโหลด PDF/.ai ที่วางบนแบบกล่องแล้ว ระบบตรวจไฟล์และแสดงราคา')}return}
+  const fx=t.closest('[data-fix]');if(fx){const i=lastList[+fx.dataset.fix];if(i){applyFix(i);snap();renderAll();toast('แก้ให้แล้ว · ย้อนกลับได้ด้วย ⌘Z')}return}
+  if(t.closest('[data-fixall]')){fixAll();return}
+  const qk=t.closest('[data-quick]');if(qk){const k=qk.dataset.quick;if(k==='mock'){openMock();return}if(k==='text'){const o=S.objs.out.find(x=>x.type==='text');if(o){S.side='out';S.sel=o.id;S.tab='design';renderAll();setTimeout(()=>{const ta=$('#ibody textarea[data-prop="text"]');ta?.focus();ta?.select()},30)}else addKind('t:h');return}}
+  const ps=t.closest('[data-pos]');if(ps){const o=curObj();if(o){const k=ps.dataset.pos;alignTo(o,{t:'top',m:'vcenter',b:'bottom'}[k[0]]);alignTo(o,{l:'left',c:'hcenter',r:'right'}[k[1]]);snap();renderLite()}return}
+  if(t.closest('[data-bold]')){const o=curObj();if(o){o.weight=+o.weight>=700?500:800;snap();renderLite()}return}
+  const pn=t.closest('[data-panel]');if(pn){S.panel=pn.dataset.panel;renderRail();renderPanel();return}
+  const tb=t.closest('[data-tab]');if(tb){S.tab=tb.dataset.tab;renderInsp(lastList);renderTop(lastList);return}
+  const ad=t.closest('[data-add]');if(ad){addKind(ad.dataset.add);return}
+  const tp=t.closest('[data-tpl]');if(tp){applyTpl(tp.dataset.tpl);return}
+  const fn=t.closest('[data-font]');if(fn){const o=curObj();if(o?.type==='text'){o.font=fn.dataset.font;snap();renderLite()}else addObj({type:'text',name:'ข้อความ',x:centerOf().x+15,y:centerOf().y+30,w:120,h:10,text:'ข้อความของคุณ',font:fn.dataset.font,size:18,weight:600,align:'middle',fill:BRAND.colors[1][1],track:0});return}
+  const bl=t.closest('[data-blogo]');if(bl){S.done.logo=true;const l=BRAND.logos[+bl.dataset.blogo];const p=centerOf();addObj({type:'image',name:l.name.replace(/\.\w+$/,''),x:p.x+35,y:p.y+12,w:80,h:48,src:l.src,px:l.px,vector:l.vector});return}
+  const as=t.closest('[data-asset]');if(as){S.done.logo=true;const a=S.assets[+as.dataset.asset];const p=centerOf();const r=a.px[1]/a.px[0];const w=Math.min(90,p.w-20);addObj({type:'image',name:a.name.replace(/\.\w+$/,''),x:p.x+(p.w-w)/2,y:p.y+(p.h-w*r)/2,w,h:w*r,src:a.src,px:a.px,vector:a.vector});return}
+  const bc=t.closest('[data-bcolor]');if(bc){const o=curObj();if(o&&o.type!=='image'){setProp(o,'fill',bc.dataset.bcolor);snap();renderLite()}else toast('เลือกชิ้นงานก่อน แล้วกด "ใช้" เพื่อเปลี่ยนสี');return}
+  const bg=t.closest('[data-bg]');if(bg){S.bg=bg.dataset.bg;snap();renderAll();return}
+  const bgc=t.closest('[data-bgcolor]');if(bgc){S.bgColor=bgc.dataset.bgcolor;if(S.bg==='kraft'||S.bg==='white')S.bg='color';snap();renderAll();return}
+  const pr=t.closest('[data-print]');if(pr){S.print=pr.dataset.print;snap();renderAll();return}
+  const sd=t.closest('[data-side]');if(sd){S.side=sd.dataset.side;S.sel=null;renderAll();return}
+  const vw=t.closest('[data-view]');if(vw){S.view=vw.dataset.view;renderFloat();render3D();return}
+  const zm=t.closest('[data-zoom]');if(zm){const v=zm.dataset.zoom;if(v==='fit'){fit();setZoom(S.zoom)}else setZoom(S.zoom*(v==='+'?1.2:1/1.2));return}
+  const vr=t.closest('[data-var]');if(vr&&!t.closest('input')&&!t.closest('[data-vdel]')){S.vActive=vr.dataset.var;renderAll();return}
+  const vd=t.closest('[data-vdel]');if(vd){S.variants=S.variants.filter(v=>v.id!==vd.dataset.vdel);if(!S.variants.some(v=>v.id===S.vActive))S.vActive=S.variants[0].id;snap();renderAll();return}
+  if(t.closest('#vAdd')){const cols=['#8A5A22','#C2185B','#3B6DF0','#E8B04B'];const v={id:uid(),name:'รุ่นใหม่ '+(S.variants.length+1),color:cols[S.variants.length%4],qty:100,ov:{}};OBJ().filter(o=>o.variant).forEach(o=>{v.ov[o.id]={...(o.type==='text'?{text:v.name}:{}),fill:v.color}});S.variants.push(v);S.vActive=v.id;snap();renderAll();toast('เพิ่มรุ่นแล้ว แก้ชื่อและชิ้นงานที่เปลี่ยนตามรุ่นได้เลย');return}
+  const ly=t.closest('[data-layer]');if(ly&&!t.closest('button')){S.sel=ly.dataset.layer;S.tab='design';renderAll();return}
+  const lh=t.closest('[data-lhide]');if(lh){const o=OBJ().find(x=>x.id===lh.dataset.lhide);o.hidden=!o.hidden;snap();renderAll();return}
+  const ll=t.closest('[data-llock]');if(ll){const o=OBJ().find(x=>x.id===ll.dataset.llock);o.locked=!o.locked;snap();renderAll();return}
+  const al=t.closest('[data-align]');if(al){const o=curObj();if(o){alignTo(o,al.dataset.align);snap();renderLite()}return}
+  const ta=t.closest('[data-talign]');if(ta){const o=curObj();o.align=ta.dataset.talign;snap();renderLite();return}
+  const fl=t.closest('[data-fill]');if(fl){MSO().forEach(o=>o.type!=='image'&&setProp(o,'fill',fl.dataset.fill));snap();renderLite();return}
+  const tl=t.closest('[data-tool]');if(tl){setTool(tl.dataset.tool);return}
+  const ma=t.closest('[data-malign]');if(ma){const os=MSO(),k=ma.dataset.malign;const u={x0:Math.min(...os.map(o=>o.x)),y0:Math.min(...os.map(o=>o.y)),x1:Math.max(...os.map(o=>o.x+o.w)),y1:Math.max(...os.map(o=>o.y+o.h))};
+    os.forEach(o=>{if(o.locked)return;if(k==='left')o.x=u.x0;if(k==='right')o.x=u.x1-o.w;if(k==='hcenter')o.x=(u.x0+u.x1)/2-o.w/2;if(k==='top')o.y=u.y0;if(k==='bottom')o.y=u.y1-o.h;if(k==='vcenter')o.y=(u.y0+u.y1)/2-o.h/2});snap();renderLite();return}
+  const md2=t.closest('[data-mdist]');if(md2){const os=MSO().filter(o=>!o.locked);const hz=md2.dataset.mdist==='h';const K=hz?'x':'y',D=hz?'w':'h';os.sort((a,b)=>a[K]-b[K]);const span=os[os.length-1][K]+os[os.length-1][D]-os[0][K];const gap=(span-os.reduce((s,o)=>s+o[D],0))/(os.length-1);let c=os[0][K];os.forEach(o=>{o[K]=Math.round(c*10)/10;c+=o[D]+gap});snap();renderLite();return}
+  if(t.closest('[data-psim]')&&t.tagName==='INPUT'){S.printSim=t.checked;renderCanvas();renderOvlB();toast(S.printSim?'จำลองหมึกบนผิวกล่อง: สีจะเข้มและอุ่นขึ้นเหมือนพิมพ์จริงบนคราฟท์':'ปิดการจำลองพิมพ์');return}
+  const sb=t.closest('[data-savebrand]');if(sb){const c=sb.dataset.savebrand;if(!BRAND.colors.some(([,x])=>x.toLowerCase()===c)){BRAND.colors.push(['สีใหม่ '+(BRAND.colors.length+1),c.toUpperCase()]);toast('เก็บเป็นสีแบรนด์แล้ว ใช้ได้ทุกแบบในบัญชี')}else toast('สีนี้อยู่ในชุดแบรนด์แล้ว');renderPanel();return}
+  const ac=t.closest('[data-act]');if(ac){act(ac.dataset.act);return}
+  const gt=t.closest('[data-goto]');if(gt){if(gt.dataset.gside&&gt.dataset.gside!==S.side)S.side=gt.dataset.gside;if(gt.dataset.goto){S.sel=gt.dataset.goto;S.tab='design'}else{S.panel='box'}renderAll();return}
+  const tst=t.closest('[data-toast]');if(tst){toast(tst.dataset.toast);return}
+  if(t.closest('#pinB')){S.pinMode=!S.pinMode;cv.classList.toggle('pin',S.pinMode);renderPanel();return}
+  if(t.closest('#fontUp')){$('#fileFont').click();return}
+  if(t.closest('#dropz')){$('#fileImg').click();return}
+  if(t.closest('[data-close]')){t.closest('dialog').close();return}
+  if(!t.closest('#expMenu')&&!t.closest('#expB'))$('#expMenu').hidden=true;
+  if(!t.closest('.overlays'))$('#ovl').hidden=true;
+});
+function act(a){const o=curObj();if(!o)return;const arr=OBJ();
+  const ids=MS();if(ids.length>1&&['del','dup','front','back'].includes(a)){const os=MSO();
+    if(a==='del'){S.objs[S.side]=arr.filter(x=>!ids.includes(x.id));S.sel=null;S.msel=[]}
+    if(a==='dup'){const cs=os.map(x=>({...JSON.parse(JSON.stringify(x)),id:uid(),x:x.x+6,y:x.y+6}));arr.push(...cs);S.msel=cs.map(c=>c.id);S.sel=cs[0].id}
+    if(a==='front'){S.objs[S.side]=[...arr.filter(x=>!ids.includes(x.id)),...os]}
+    if(a==='back'){S.objs[S.side]=[...os,...arr.filter(x=>!ids.includes(x.id))]}
+    snap();renderAll();return}
+  if(a==='fx'||a==='fy'){o[a]=!o[a];snap();renderLite();return}
+  if(a==='r90'){o.rot=((o.rot||0)+90)%360;snap();renderLite();return}
+  if(a==='nostroke'){o.stroke=null;o.sw=0;snap();renderLite();return}
+  const i=arr.indexOf(o);
+  if(a==='del'){arr.splice(i,1);S.sel=null}
+  if(a==='dup'){const c={...JSON.parse(JSON.stringify(o)),id:uid(),x:o.x+6,y:o.y+6,name:o.name+' (สำเนา)'};arr.splice(i+1,0,c);S.sel=c.id}
+  if(a==='front'&&i<arr.length-1){arr.splice(i,1);arr.push(o)}
+  if(a==='back'&&i>0){arr.splice(i,1);arr.unshift(o)}
+  if(a==='lock')o.locked=!o.locked;
+  snap();renderAll()}
+document.addEventListener('input',e=>{const t=e.target;
+  if(t.dataset.prop){const o=curObj();if(!o)return;let v=t.value;const k=t.dataset.prop;
+    if(['x','y','w','h','rot','size','track','sw','r','lh','gang'].includes(k))v=parseFloat(v)||0;if(k==='opacity')v=Math.max(0,Math.min(1,(parseFloat(v)||0)/100));if(k==='weight')v=+v;
+    if(k==='size'&&o.type==='text'){const lines=String(eff(o).text).split('\n').length;o.h=v*PT*1.25*lines}
+    if(k==='text'){const lines=String(v).split('\n').length;o.h=o.size*PT*1.25*lines;S.done.text=true}
+    setProp(o,k,v);renderCanvas();render3D();if(k==='name'&&S.panel==='layers')renderPanel();clearTimeout(t._s);t._s=setTimeout(()=>{snap();lastList=preflight();renderTop(lastList);const b=document.querySelector('[data-tab="check"] .badge');},400);return}
+  if(t.hasAttribute('data-ezpt')){const o=curObj();if(!o)return;o.size=+t.value;o.h=o.size*PT*1.25*String(eff(o).text).split('\n').length;$('#ezptv').textContent=o.size+' pt';renderCanvas();render3D();clearTimeout(t._s);t._s=setTimeout(()=>{snap();lastList=preflight();renderTop(lastList)},350);return}
+  if(t.hasAttribute('data-ezw')){const o=curObj();if(!o)return;const cx=o.x+o.w/2,cy=o.y+o.h/2,r=o.h/o.w;o.w=+t.value;o.h=o.w*r;o.x=cx-o.w/2;o.y=cy-o.h/2;$('#ezwv').textContent='กว้าง '+Math.round(o.w)+' มม.';renderCanvas();render3D();clearTimeout(t._s);t._s=setTimeout(()=>{snap();lastList=preflight();renderTop(lastList)},350);return}
+  if(t.dataset.prod){S.prod[t.dataset.prod]=Math.max(1,parseFloat(t.value)||1);const f=t.dataset.prod;renderPanel();const el=document.querySelector(`[data-prod="${f}"]`);if(el){el.focus();const v=el.value;el.value='';el.value=v}return}
+  if(t.dataset.vqty){const v=S.variants.find(x=>x.id===t.dataset.vqty);v.qty=Math.max(0,parseInt(t.value)||0);renderTop(lastList);if(S.tab==='order'){}return}
+  if(t.dataset.vname){const v=S.variants.find(x=>x.id===t.dataset.vname);v.name=t.value;renderFloat();return}
+  if(t.dataset.ctext){S.comments[+t.dataset.ctext].text=t.value;return}
+  if(t.id==='fname'){markSaved()}
+});
+document.addEventListener('change',e=>{const t=e.target;
+  if(t.dataset.ovl){S.ovl[t.dataset.ovl]=t.checked;renderCanvas();renderOvl();if(S.tab==='design'&&!S.sel)renderInsp(lastList);return}
+  if(t.hasAttribute('data-variant')){const o=curObj();o.variant=t.checked;if(!t.checked)S.variants.forEach(v=>delete v.ov[o.id]);snap();renderAll();return}
+  if(t.dataset.prop==='font'||t.dataset.prop==='weight'||t.dataset.prop==='grad'||t.dataset.prop==='dash'){snap();renderLite()}
+  if(t.dataset.prop==='stroke'){const o=curObj();if(o&&!o.sw){o.sw=.5;renderLite()}snap()}
+  if(t.dataset.swap){swapColor(t.dataset.swap,t.value);snap();renderAll();toast('เปลี่ยนสีทั้งงานแล้ว · ย้อนกลับได้ด้วย ⌘Z');return}
+  if(t.hasAttribute('data-gang')){S.gang=t.checked;renderInsp(lastList);renderTop(lastList);return}
+  if(t.hasAttribute('data-remind')){S.remind=t.checked;renderInsp(lastList);return}
+  if(t.hasAttribute('data-blk')){const o=curObj();o.blk=t.checked;snap();renderLite();toast(o.blk?'ล็อกแล้ว: ทีมและสาขาแก้ชิ้นนี้ไม่ได้ (ลองสลับเป็นโหมดง่ายเพื่อดูมุมมองของสาขา)':'ปลดล็อกแล้ว');return}
+  if(t.hasAttribute('data-mono')){const o=curObj();o.mono=t.checked;snap();renderLite();return}
+  if(t.hasAttribute('data-sep')){S.sep=t.value;renderCanvas();renderOvlB();return}
+  if(t.dataset.vqty){snap();renderInsp(lastList);renderTop(lastList);if(S.panel==='var')renderPanel()}
+});
+/* uploads */
+function readImg(f){if(!/^image\//.test(f.type)){toast('ใช้ไฟล์ภาพ PNG JPG SVG หรือ WEBP');return}const r=new FileReader();r.onload=()=>{const img=new Image();img.onload=()=>{const vector=f.type==='image/svg+xml';S.assets.unshift({name:f.name,src:r.result,px:[img.naturalWidth||1000,img.naturalHeight||600],vector});S.panel='up';renderPanel();renderRail();toast(vector?'อัปโหลดแล้ว · เวกเตอร์ คมทุกขนาด':`อัปโหลดแล้ว · ${img.naturalWidth}×${img.naturalHeight} px`)};img.src=r.result};r.readAsDataURL(f)}
+$('#fileImg').addEventListener('change',e=>{[...e.target.files].forEach(readImg);e.target.value=''});
+['dragover','dragenter'].forEach(ev=>document.addEventListener(ev,e=>{if([...e.dataTransfer.types].includes('Files')){e.preventDefault();$('#dropz')?.classList.add('on')}}));
+document.addEventListener('drop',e=>{if(!e.dataTransfer.files.length)return;e.preventDefault();$('#dropz')?.classList.remove('on');[...e.dataTransfer.files].forEach(f=>/\.(ttf|otf|woff2?)$/i.test(f.name)?loadFont(f):readImg(f))});
+async function loadFont(f){try{const buf=await f.arrayBuffer();const fam=f.name.replace(/\.\w+$/,'').replace(/[^\w฀-๿ -]/g,'').slice(0,28)||'BrandFont';const ff=new FontFace(fam,buf);await ff.load();document.fonts.add(ff);FONTS.unshift([fam,fam]);if(!BRAND.fonts.includes(fam))BRAND.fonts.unshift(fam);const o=curObj();if(o?.type==='text'){o.font=fam;snap()}renderAll();PRO()?toast(`เพิ่มฟอนต์ "${fam}" ในชุดแบรนด์แล้ว ใช้ได้ทุกแบบ`):toast(`เพิ่มฟอนต์ "${fam}" แล้ว · ต้องการปรับระยะตัวอักษรละเอียดขึ้น?`,'เปิดโหมดมืออาชีพ',()=>setMode('pro'))}catch(err){toast('อ่านไฟล์ฟอนต์ไม่ได้ ลองไฟล์ .ttf .otf หรือ .woff2')}}
+$('#fileFont').addEventListener('change',e=>{const f=e.target.files[0];if(f)loadFont(f);e.target.value=''});
+/* keyboard */
+document.addEventListener('keydown',e=>{
+  const typing=/INPUT|TEXTAREA|SELECT/.test(document.activeElement.tagName);
+  const mod=e.metaKey||e.ctrlKey;
+  if(mod&&e.key.toLowerCase()==='z'){e.preventDefault();e.shiftKey?redo():undo();return}
+  if(mod&&e.key.toLowerCase()==='y'){e.preventDefault();redo();return}
+  if(typing)return;
+  if(e.code==='Space'){space=true;cv.classList.add('pan');e.preventDefault();return}
+  const o=curObj();
+  if(mod&&e.key.toLowerCase()==='d'&&o){e.preventDefault();act('dup');return}
+  if(mod&&e.key.toLowerCase()==='a'){e.preventDefault();const ids=OBJ().filter(x=>!x.hidden&&!x.locked).map(x=>x.id);S.msel=ids;S.sel=ids[0]||null;renderLite();return}
+  if(mod&&e.key.toLowerCase()==='c'&&o){S.clip=JSON.stringify(MSO());toast(`คัดลอก ${MSO().length} ชิ้น`);return}
+  if(mod&&e.key.toLowerCase()==='x'&&o){S.clip=JSON.stringify(MSO());act('del');return}
+  if(mod&&e.key.toLowerCase()==='v'&&S.clip){e.preventDefault();const cs=JSON.parse(S.clip).map(x=>({...x,id:uid(),x:x.x+5,y:x.y+5}));OBJ().push(...cs);S.msel=cs.length>1?cs.map(c=>c.id):[];S.sel=cs[0].id;S.clip=JSON.stringify(cs);snap();renderAll();return}
+  if(e.key==='Enter'&&pen){finishPen(false);return}
+  if(mod&&e.key===']'&&o){e.preventDefault();act('front');return}if(mod&&e.key==='['&&o){e.preventDefault();act('back');return}
+  if((e.key==='Delete'||e.key==='Backspace')&&pen){pen.pts.pop();renderSelLayer();return}
+  if(o&&o.blk&&!PRO()&&(e.key.startsWith('Arrow')||e.key==='Delete'||e.key==='Backspace')){e.preventDefault();toast('ชิ้นนี้ถูกล็อกโดยเจ้าของแบรนด์');return}
+  if((e.key==='Delete'||e.key==='Backspace')&&o){e.preventDefault();act('del');return}
+  if(o&&!o.locked&&e.key.startsWith('Arrow')){e.preventDefault();const s=e.shiftKey?10:1;MSO().filter(q=>!q.locked).forEach(o=>{if(e.key==='ArrowLeft')o.x-=s;if(e.key==='ArrowRight')o.x+=s;if(e.key==='ArrowUp')o.y-=s;if(e.key==='ArrowDown')o.y+=s});renderLite();clearTimeout(o._k);o._k=setTimeout(snap,300);return}
+  if(e.key==='Escape'){if(pen){pen=null;renderSelLayer();return}if(PRO()&&S.tool!=='v'){setTool('v');return}S.msel=[];S.sel=null;S.pinMode=false;cv.classList.remove('pin');renderLite();return}
+  if(PRO()&&!mod){const k=e.key.toLowerCase();if('vhtrelpizc'.includes(k)&&k.length===1){setTool(k);return}}
+  if(e.key==='t'||e.key==='T'){addKind('t:s');return}if(e.key==='r'||e.key==='R'){addKind('rect');return}if(e.key==='e'||e.key==='E'){addKind('ellipse');return}
+  if(e.key==='c'||e.key==='C'){S.pinMode=true;S.panel='cmt';cv.classList.add('pin');renderRail();renderPanel();return}
+  if(e.key==='+'||e.key==='='){setZoom(S.zoom*1.2);return}if(e.key==='-'){setZoom(S.zoom/1.2);return}if(e.key==='!'&&e.shiftKey){fit();setZoom(S.zoom);return}
+  if(e.key==='?'){$('#kbdDlg').showModal()}
+});
+document.addEventListener('keyup',e=>{if(e.code==='Space'){space=false;cv.classList.remove('pan')}});
+/* top buttons */
+$('#undoB').addEventListener('click',undo);$('#redoB').addEventListener('click',redo);
+$('#themeB').addEventListener('click',()=>{const r=document.documentElement;const dark=r.dataset.theme?r.dataset.theme==='dark':matchMedia('(prefers-color-scheme: dark)').matches;r.dataset.theme=dark?'light':'dark'});
+$('#shareB').addEventListener('click',()=>$('#shareDlg').showModal());
+$('#notesBtn').addEventListener('click',()=>$('#notesDlg').showModal());
+document.addEventListener('click',e=>{if(e.target.closest('#kbdB'))$('#kbdDlg').showModal()});
+$('#ovlB').addEventListener('click',e=>{e.stopPropagation();$('#ovl').hidden=!$('#ovl').hidden});
+$('#orderB').addEventListener('click',()=>{S.tab='order';renderInsp(lastList);renderTop(lastList)});
+$('#expB').addEventListener('click',e=>{const m=$('#expMenu');const r=e.currentTarget.getBoundingClientRect();m.style.top=(r.bottom+6)+'px';m.style.left=Math.max(8,Math.min(innerWidth-260,r.left-80))+'px';
+  m.innerHTML=[['PDF พร้อมพิมพ์ (PDF/X-4)','CMYK · ข้อความแปลงเป็นเส้น · เลเยอร์ไดคัทแยก · ระยะตัดตก'],['ไฟล์ Illustrator (.ai)','งานพร้อมเลเยอร์ ไปแก้ต่อในโปรแกรมอื่นได้'],['SVG','เวกเตอร์สำหรับเว็บหรือส่งต่อ'],['PNG 300 dpi','ภาพแผ่นคลี่ความละเอียดสูง'],['เส้นไดคัท (DXF / .ai เปล่า)','แบบกล่องเปล่า ฟรี'],['ชุดภาพ Mockup 3D','ทุกมุม ทุกรุ่น สำหรับขายก่อนผลิต'],['นำเข้าไฟล์ PDF / .ai','วางงานจากโปรแกรมอื่นลงบนแผ่นคลี่นี้'],['เปิดใน Figma / Illustrator','ปลั๊กอิน getpack: ดึงแผ่นคลี่จริง แล้วส่งงานกลับมาตรวจและสั่งผลิต']].map(([b,s])=>`<button type="button" data-toast="ต้นแบบ: ส่งออก ${b}"><svg class="ico"><use href="#i-down"/></svg><span><b>${b}</b><small>${s}</small></span></button>`).join('');m.hidden=!m.hidden});
+function openMock(){const bgs=['radial-gradient(circle at 50% 30%,#fff,#e6e4df)','linear-gradient(160deg,#C9B08C,#8E6E4B)','linear-gradient(160deg,#E9ECEF,#B9C0C6)','radial-gradient(circle at 50% 30%,#2C3A33,#0E1512)'];
+  const paint=()=>{$('#mockStage').style.background=bgs[S.mockBg];$('#mockStage').innerHTML=iso3D(true);$('#mockBg').innerHTML=bgs.map((b,i)=>`<button type="button" style="background:${b}" data-mbg="${i}" aria-pressed="${S.mockBg===i}" aria-label="ฉากหลัง ${i+1}"></button>`).join('');$('#mockVar').innerHTML=S.variants.map(v=>`<button type="button" class="chip" data-mvar="${v.id}" aria-pressed="${S.vActive===v.id}">${esc(v.name)}</button>`).join('')};
+  paint();$('#mockDlg').showModal();$('#mockDlg').onclick=e=>{const b=e.target.closest('[data-mbg]');if(b){S.mockBg=+b.dataset.mbg;paint()}const v=e.target.closest('[data-mvar]');if(v){S.vActive=v.dataset.mvar;paint();renderAll()}if(e.target===$('#mockDlg'))$('#mockDlg').close()}}
+$('#mockB').addEventListener('click',openMock);$('#v3dBig').addEventListener('click',openMock);
+['kbdDlg','shareDlg','notesDlg','welDlg'].forEach(id=>$('#'+id).addEventListener('click',e=>{if(e.target.id===id)e.target.close()}));
+$('#shareMode').addEventListener('click',e=>{const b=e.target.closest('.chip');if(!b)return;[...$('#shareMode').children].forEach(c=>c.setAttribute('aria-pressed',c===b))});
+/* init */
+snap();renderAll();if(!lsGet('gp.welcomed'))$('#welDlg').showModal();requestAnimationFrame(()=>{fit();setZoom(S.zoom);const c=$('#cv');c.scrollLeft=(c.scrollWidth-c.clientWidth)/2;c.scrollTop=(c.scrollHeight-c.clientHeight)/2});
+addEventListener('resize',()=>{clearTimeout(window._rz);window._rz=setTimeout(()=>{fit();setZoom(S.zoom)},150)});
+})();
+</script>
+
+</body>
+</html>

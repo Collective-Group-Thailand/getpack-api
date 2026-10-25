@@ -1,0 +1,891 @@
+<!doctype html>
+<html lang="th">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<style>body{margin:0}[hidden]{display:none!important}img{max-width:100%}</style>
+<title>getpack Corrugated Boxes</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Anuphan:wght@500;600;700&family=IBM+Plex+Sans+Thai:wght@400;500;600&family=IBM+Plex+Mono:wght@500&display=swap">
+</head>
+<body>
+<style>
+
+
+/* Layout: catalog workbench — compact head, icon category rail, sticky facet column + dense product grid, floating compare tray */
+:root{
+  --bg:#F6F5F1; --surface:#FFFFFF; --surface-2:#EFEEE9; --stage:#EDECE6;
+  --fg:#16201B; --fg-2:#4A554F; --fg-3:#7B847F; --line:#E3E1DA; --line-2:#CFCDC5;
+  --brand:#17573F; --brand-hover:#0E4430; --brand-tint:#E2EDE7; --on-brand:#FFFFFF;
+  --instant:#8F530E; --instant-tint:#F6EAD9;
+  --shadow:0 1px 2px rgba(22,32,27,.06),0 8px 24px -12px rgba(22,32,27,.18);
+  --f-display:"Anuphan","IBM Plex Sans Thai",ui-sans-serif,system-ui,sans-serif;
+  --f-body:"IBM Plex Sans Thai","Anuphan",ui-sans-serif,system-ui,sans-serif;
+  --f-mono:"IBM Plex Mono",ui-monospace,SFMono-Regular,Menlo,monospace;
+  --r-sm:8px; --r-md:12px; --r-lg:16px;
+  --gutter:max(16px,env(safe-area-inset-left,0px));
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --bg:#0F1412; --surface:#161C19; --surface-2:#1D2521; --stage:#212925;
+  --fg:#ECEFEC; --fg-2:#B5BEB8; --fg-3:#89938D; --line:#29322D; --line-2:#3A453F;
+  --brand:#56BC91; --brand-hover:#71CCA4; --brand-tint:#17322A; --on-brand:#06120C;
+  --instant:#E7AA60; --instant-tint:#33271A;
+  --shadow:0 1px 2px rgba(0,0,0,.3),0 10px 28px -12px rgba(0,0,0,.6); color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#0F1412; --surface:#161C19; --surface-2:#1D2521; --stage:#212925;
+  --fg:#ECEFEC; --fg-2:#B5BEB8; --fg-3:#89938D; --line:#29322D; --line-2:#3A453F;
+  --brand:#56BC91; --brand-hover:#71CCA4; --brand-tint:#17322A; --on-brand:#06120C;
+  --instant:#E7AA60; --instant-tint:#33271A;
+  --shadow:0 1px 2px rgba(0,0,0,.3),0 10px 28px -12px rgba(0,0,0,.6); color-scheme:dark}
+
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--fg);font:15px/1.6 var(--f-body);-webkit-font-smoothing:antialiased}
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:60;background:var(--surface)}
+button,input,select{font:inherit;color:inherit}
+button{cursor:pointer}
+:focus-visible{outline:2px solid var(--brand);outline-offset:2px;border-radius:6px}
+.wrap{max-width:1360px;margin:0 auto;padding-left:var(--gutter);padding-right:max(16px,env(safe-area-inset-right,0px))}
+.ico{width:20px;height:20px;flex:none;stroke:currentColor;fill:none;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}
+.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)}
+
+/* prototype ribbon */
+.proto{background:var(--fg);color:var(--bg);font-size:13px}
+.proto .wrap{display:flex;align-items:center;gap:12px;min-height:36px;padding-block:4px}
+.proto b{font-weight:600;white-space:nowrap}
+.proto button{margin-left:auto;background:none;border:1px solid color-mix(in srgb,var(--bg) 35%,transparent);border-radius:99px;padding:2px 12px;color:var(--bg);font-size:13px;white-space:nowrap}
+.proto span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+
+/* header */
+.hdr{position:sticky;top:env(safe-area-inset-top,0px);z-index:50;background:color-mix(in srgb,var(--surface) 92%,transparent);backdrop-filter:saturate(1.4) blur(12px);border-bottom:1px solid var(--line)}
+.hdr .wrap{display:flex;align-items:center;gap:28px;height:64px}
+.logo{font:700 26px/1 var(--f-display);letter-spacing:-.03em;color:var(--fg);text-decoration:none;display:flex;align-items:center;gap:2px;flex:none}
+.logo i{display:inline-block;width:9px;height:9px;border-radius:2px;background:var(--brand);transform:translateY(-9px) rotate(45deg)}
+.nav{display:flex;gap:4px;min-width:0}
+.nav a{padding:8px 12px;border-radius:8px;color:var(--fg-2);text-decoration:none;font-weight:500;font-size:14.5px;white-space:nowrap}
+.nav a:hover{background:var(--surface-2);color:var(--fg)}
+.nav a[aria-current]{color:var(--fg);background:var(--surface-2)}
+.hright{margin-left:auto;display:flex;align-items:center;gap:6px;flex:none}
+.ibtn{position:relative;width:40px;height:40px;display:grid;place-items:center;border-radius:10px;border:0;background:none;color:var(--fg-2)}
+.ibtn:hover{background:var(--surface-2);color:var(--fg)}
+.ibtn .dot{position:absolute;top:6px;right:5px;min-width:17px;height:17px;padding:0 4px;border-radius:9px;background:var(--brand);color:var(--on-brand);font:600 10.5px/17px var(--f-body);text-align:center}
+.lang{height:40px;padding:0 10px;border:0;background:none;border-radius:10px;color:var(--fg-2);font-weight:600;font-size:13px;display:flex;align-items:center;gap:6px}
+.lang:hover{background:var(--surface-2)}
+.avatar{width:34px;height:34px;border-radius:50%;background:var(--brand-tint);color:var(--brand);font:600 13px/34px var(--f-body);text-align:center;border:0;margin:0 6px}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;height:42px;padding:0 18px;border-radius:10px;border:1px solid transparent;font-weight:600;font-size:14.5px;white-space:nowrap;text-decoration:none}
+.btn-primary{background:var(--brand);color:var(--on-brand)}
+.btn-primary:hover{background:var(--brand-hover)}
+.btn-ghost{background:var(--surface);border-color:var(--line-2);color:var(--fg)}
+.btn-ghost:hover{border-color:var(--fg-3)}
+.menu-btn{display:none}
+
+
+/* ---------- products & pricing ---------- */
+.head{padding-block:32px 0}
+.crumbs{display:flex;gap:8px;font-size:13px;color:var(--fg-3);margin-bottom:12px}
+.crumbs a{color:inherit;text-decoration:none}
+.head-grid{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,520px);gap:24px 48px;align-items:end}
+h1{font:600 clamp(30px,3.4vw,42px)/1.15 var(--f-display);letter-spacing:-.02em;margin:0;text-wrap:balance}
+.lede{margin:10px 0 0;color:var(--fg-2);max-width:60ch;text-wrap:pretty}
+.search{position:relative}
+.search .ico{position:absolute;left:16px;top:50%;translate:0 -50%;color:var(--fg-3)}
+.search input{width:100%;height:54px;border-radius:14px;border:1px solid var(--line-2);background:var(--surface);padding:0 16px 0 48px;font-size:15.5px;box-shadow:var(--shadow)}
+.search input:focus{outline:none;border-color:var(--brand);box-shadow:0 0 0 4px color-mix(in srgb,var(--brand) 18%,transparent)}
+.headtools{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-top:10px;font-size:13px;color:var(--fg-3);flex-wrap:wrap}
+.vat{display:inline-flex;align-items:center;gap:8px;font-size:13.5px;font-weight:500;color:var(--fg-2);cursor:pointer;white-space:nowrap}
+.switch{appearance:none;width:34px;height:20px;border-radius:10px;background:var(--line-2);position:relative;cursor:pointer;transition:background .15s;flex:none;margin:0}
+.switch::after{content:"";position:absolute;top:3px;left:3px;width:14px;height:14px;border-radius:50%;background:var(--surface);box-shadow:0 1px 2px rgba(0,0,0,.25);transition:translate .15s}
+.switch:checked{background:var(--brand)}.switch:checked::after{translate:14px 0}
+
+/* buying modes */
+.modes{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;margin-top:28px}
+.mode{display:flex;flex-direction:column;gap:10px;padding:18px;border-radius:var(--r-lg);border:1px solid var(--line);background:var(--surface);text-align:left;transition:border-color .15s,box-shadow .15s}
+.mode:hover{border-color:var(--line-2);box-shadow:var(--shadow)}
+.mode[aria-pressed="true"]{border-color:var(--brand);box-shadow:inset 0 0 0 1px var(--brand)}
+.mode .mi{width:36px;height:36px;border-radius:10px;display:grid;place-items:center;background:var(--surface-2);color:var(--fg-2)}
+.mode .mi .ico{width:20px;height:20px}
+.mode.instant .mi{background:var(--instant-tint);color:var(--instant)}
+.mode b{font:600 16px var(--f-display)}
+.mode p{margin:0;font-size:13.5px;color:var(--fg-2);line-height:1.5}
+.mode small{margin-top:auto;font-size:12.5px;color:var(--fg-3)}
+.mode small strong{color:var(--fg);font-weight:600;font-variant-numeric:tabular-nums}
+
+/* section nav */
+.secnav{position:sticky;top:calc(env(safe-area-inset-top,0px) + 64px);z-index:30;background:color-mix(in srgb,var(--bg) 92%,transparent);backdrop-filter:blur(10px);border-bottom:1px solid var(--line);margin-top:32px}
+.secnav .wrap{display:flex;gap:4px;overflow-x:auto;scrollbar-width:none;padding-block:8px}
+.secnav a{flex:none;padding:6px 12px;border-radius:8px;color:var(--fg-2);text-decoration:none;font-size:14px;font-weight:500;white-space:nowrap}
+.secnav a:hover{background:var(--surface-2)}
+.secnav a[aria-current="true"]{background:var(--fg);color:var(--bg)}
+section[id]{scroll-margin-top:130px}
+.sec{padding-block:56px 0}
+.sec-h{display:flex;align-items:flex-end;justify-content:space-between;gap:16px;margin-bottom:20px;flex-wrap:wrap}
+.sec-h h2{font:600 26px/1.25 var(--f-display);margin:0;letter-spacing:-.01em}
+.sec-h p{margin:6px 0 0;color:var(--fg-2);max-width:62ch;font-size:14.5px}
+
+/* calculator */
+.calc{display:grid;grid-template-columns:minmax(0,1.15fr) minmax(0,1fr);border-radius:20px;overflow:hidden;border:1px solid var(--line);background:var(--surface)}
+.calc-in{padding:28px;display:flex;flex-direction:column;gap:20px}
+.field>label,.field>span{display:block;font-size:13px;font-weight:600;margin-bottom:8px}
+.prod-pick{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:8px}
+.prod-pick button{display:flex;align-items:center;gap:10px;padding:8px 10px;border-radius:12px;border:1px solid var(--line-2);background:var(--surface);text-align:left;font-size:13px;line-height:1.3;min-height:58px}
+.prod-pick button .th{width:40px;height:40px;border-radius:8px;background:var(--stage);flex:none;display:grid;place-items:center}
+.prod-pick button .th svg{width:85%;height:85%}
+.prod-pick button[aria-pressed="true"]{border-color:var(--brand);background:var(--brand-tint);box-shadow:inset 0 0 0 1px var(--brand)}
+.qty{display:flex;gap:6px;flex-wrap:wrap;align-items:center}
+.qty button{height:38px;padding:0 14px;border-radius:10px;border:1px solid var(--line-2);background:var(--surface);font-weight:500;font-size:13.5px;font-variant-numeric:tabular-nums}
+.qty button[aria-pressed="true"]{background:var(--fg);color:var(--bg);border-color:var(--fg)}
+.qty input{width:110px;height:38px;border-radius:10px;border:1px solid var(--line-2);background:var(--surface);padding:0 10px;font-weight:600;font-variant-numeric:tabular-nums}
+.chips{display:flex;flex-wrap:wrap;gap:6px}
+.chip{border:1px solid var(--line-2);background:var(--surface);border-radius:99px;padding:5px 14px;font-size:13.5px;color:var(--fg-2)}
+.chip[aria-pressed="true"]{background:var(--brand);border-color:var(--brand);color:var(--on-brand)}
+.calc-out{background:var(--fg);color:var(--bg);padding:28px;display:flex;flex-direction:column;gap:16px;position:relative}
+.calc-out .eyebrow{font-size:12.5px;opacity:.7;letter-spacing:.02em}
+.calc-out .big{font:600 clamp(40px,5vw,56px)/1 var(--f-display);font-variant-numeric:tabular-nums;letter-spacing:-.02em}
+.calc-out .big small{font:500 16px var(--f-body);opacity:.7;margin-left:6px;letter-spacing:0}
+.calc-out dl{display:grid;grid-template-columns:1fr auto;gap:8px 16px;margin:0;font-size:14px;font-variant-numeric:tabular-nums;padding-top:16px;border-top:1px solid color-mix(in srgb,var(--bg) 18%,transparent)}
+.calc-out dt{opacity:.72}.calc-out dd{margin:0;text-align:right;font-weight:500}
+.calc-out dd.tot{font:600 18px var(--f-display)}
+.calc-out .facts{display:flex;gap:16px;flex-wrap:wrap;font-size:13px;opacity:.85}
+.calc-out .facts span{display:inline-flex;gap:6px;align-items:center}
+.calc-out .facts .ico{width:16px;height:16px}
+.calc-out .btn-cta{margin-top:auto;background:var(--bg);color:var(--fg);height:48px;font-size:15.5px}
+.calc-out .btn-cta:hover{background:color-mix(in srgb,var(--bg) 88%,var(--brand))}
+.calc-out .note{font-size:12px;opacity:.6;margin:0}
+.sample{position:absolute;top:16px;right:16px;font:500 11px var(--f-mono);padding:3px 8px;border-radius:6px;border:1px dashed color-mix(in srgb,var(--bg) 45%,transparent);opacity:.75}
+.curve{display:flex;align-items:flex-end;gap:4px;height:44px}
+.curve i{flex:1;background:color-mix(in srgb,var(--bg) 22%,transparent);border-radius:3px 3px 0 0}
+.curve i.on{background:var(--brand)}
+
+/* catalog */
+.toolbar{display:flex;align-items:center;gap:10px 14px;flex-wrap:wrap;margin-bottom:14px}
+.tabs{display:inline-flex;padding:3px;border-radius:12px;background:var(--surface-2);border:1px solid var(--line);overflow-x:auto;max-width:100%;scrollbar-width:none}
+.tabs button{border:0;background:none;padding:7px 14px;border-radius:9px;font-size:14px;font-weight:500;color:var(--fg-2);white-space:nowrap}
+.tabs button small{color:var(--fg-3);margin-left:4px;font-variant-numeric:tabular-nums}
+.tabs button[aria-pressed="true"]{background:var(--surface);color:var(--fg);box-shadow:0 1px 2px rgba(0,0,0,.08)}
+.tb-r{margin-left:auto;display:flex;gap:10px;align-items:center}
+.select{position:relative}
+.select select{appearance:none;height:38px;border-radius:10px;border:1px solid var(--line-2);background:var(--surface);padding:0 36px 0 12px;font-size:13.5px;font-weight:500;max-width:100%}
+.select .ico{position:absolute;right:10px;top:50%;translate:0 -50%;width:16px;height:16px;pointer-events:none;color:var(--fg-3)}
+.vtoggle{display:inline-flex;border:1px solid var(--line-2);border-radius:10px;overflow:hidden}
+.vtoggle button{width:40px;height:36px;border:0;background:var(--surface);color:var(--fg-3);display:grid;place-items:center}
+.vtoggle button[aria-pressed="true"]{background:var(--surface-2);color:var(--fg)}
+.vtoggle .ico{width:18px;height:18px}
+.cats{display:flex;gap:6px;overflow-x:auto;scrollbar-width:none;margin-bottom:20px;padding-bottom:2px}
+.cats .chip{flex:none;display:inline-flex;align-items:center;gap:6px}
+.cats .chip .ico{width:16px;height:16px}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(232px,1fr));gap:20px}
+.card{position:relative;display:flex;flex-direction:column;background:var(--surface);border:1px solid var(--line);border-radius:var(--r-lg);overflow:hidden;transition:box-shadow .2s,border-color .2s,translate .2s}
+.card:hover{box-shadow:var(--shadow);border-color:var(--line-2);translate:0 -2px}
+.stage{position:relative;aspect-ratio:4/3;background:var(--stage);display:grid;place-items:center}
+.stage svg{width:62%;height:78%}
+.badge{position:absolute;top:12px;left:12px;display:inline-flex;align-items:center;gap:4px;font-size:12px;font-weight:600;padding:3px 9px 3px 7px;border-radius:99px}
+.badge .ico{width:13px;height:13px;stroke-width:2}
+.badge.instant{background:var(--instant-tint);color:var(--instant)}
+.badge.stock{background:var(--brand-tint);color:var(--brand)}
+.cbody{padding:14px 16px 16px;display:flex;flex-direction:column;gap:4px;flex:1}
+.cat-l{font-size:12px;color:var(--fg-3)}
+.card h3{font:600 16px/1.4 var(--f-display);margin:0;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;min-height:2.8em}
+.card h3 a{color:inherit;text-decoration:none}
+.card h3 a::after{content:"";position:absolute;inset:0}
+.pr{margin-top:8px;display:flex;align-items:baseline;gap:6px;flex-wrap:wrap}
+.pr small{font-size:12.5px;color:var(--fg-3)}
+.pr b{font:600 22px var(--f-display);color:var(--brand);font-variant-numeric:tabular-nums;letter-spacing:-.01em}
+.pr .q{font:500 14px var(--f-body);color:var(--fg-2)}
+.meta{display:flex;gap:4px 12px;flex-wrap:wrap;font-size:12.5px;color:var(--fg-2);margin-top:4px}
+.meta span{display:inline-flex;align-items:center;gap:5px}
+.meta .ico{width:14px;height:14px;color:var(--fg-3)}
+.cfoot{display:flex;gap:8px;margin-top:14px;position:relative;z-index:1}
+.cfoot .btn{height:36px;font-size:13.5px;padding:0 12px;flex:1}
+.btn-soft{background:var(--surface-2);color:var(--fg);border-color:transparent}
+.btn-soft:hover{background:var(--line)}
+.btn-soft[aria-pressed="true"]{background:var(--brand-tint);color:var(--brand)}
+.tablewrap{overflow-x:auto;border:1px solid var(--line);border-radius:var(--r-lg);background:var(--surface)}
+.ptable{width:100%;border-collapse:collapse;font-size:14px;min-width:820px}
+.ptable th{text-align:left;font-weight:500;font-size:12.5px;color:var(--fg-3);padding:12px 16px;border-bottom:1px solid var(--line);background:var(--surface-2);position:sticky;top:0}
+.ptable td{padding:12px 16px;border-bottom:1px solid var(--line);vertical-align:middle}
+.ptable tr:last-child td{border-bottom:0}
+.ptable td.num{font-variant-numeric:tabular-nums;white-space:nowrap}
+.ptable td.num b{font:600 15px var(--f-display);color:var(--brand)}
+.ptable .btn{height:34px;font-size:13px;padding:0 12px}
+.ptable .nm{display:flex;align-items:center;gap:12px;font-weight:500}
+.ptable .nm .th{width:40px;height:40px;border-radius:8px;background:var(--stage);flex:none;display:grid;place-items:center}
+.ptable .nm .th svg{width:82%;height:82%}
+.pill{display:inline-flex;align-items:center;gap:4px;font-size:12px;font-weight:600;padding:2px 9px;border-radius:99px;white-space:nowrap;background:var(--surface-2);color:var(--fg-2)}
+.pill.instant{background:var(--instant-tint);color:var(--instant)}
+.pill.stock{background:var(--brand-tint);color:var(--brand)}
+.loadmore{display:flex;flex-direction:column;align-items:center;gap:12px;margin-top:32px;font-size:13.5px;color:var(--fg-3)}
+.bar{width:200px;height:4px;border-radius:2px;background:var(--line);overflow:hidden}.bar i{display:block;height:100%;background:var(--brand)}
+.empty{grid-column:1/-1;text-align:center;padding:56px 16px;border:1px dashed var(--line-2);border-radius:var(--r-lg);color:var(--fg-2)}
+
+/* how pricing works */
+.factors{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px}
+.factor{padding:20px;border-radius:var(--r-lg);background:var(--surface);border:1px solid var(--line);display:flex;flex-direction:column;gap:8px}
+.factor svg.fig{width:100%;height:64px;margin-bottom:6px}
+.factor b{font:600 16px var(--f-display)}
+.factor p{margin:0;font-size:13.5px;color:var(--fg-2)}
+.incl{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:8px;margin-top:16px}
+.incl div{display:flex;gap:10px;align-items:flex-start;padding:12px 14px;border-radius:var(--r-md);background:var(--surface-2);font-size:13.5px}
+.incl .ico{width:18px;height:18px;flex:none;margin-top:2px}
+.incl .yes .ico{color:var(--brand)}.incl .no .ico{color:var(--fg-3)}
+
+/* materials */
+.mtable{width:100%;border-collapse:collapse;font-size:14px;min-width:640px}
+.mtable th{text-align:left;font-weight:500;font-size:12.5px;color:var(--fg-3);padding:12px 16px;border-bottom:1px solid var(--line);background:var(--surface-2)}
+.mtable td{padding:14px 16px;border-bottom:1px solid var(--line);vertical-align:top}
+.mtable tr:last-child td{border-bottom:0}
+.mtable code{font:500 13px var(--f-mono)}
+.flute{display:block;width:72px;height:22px}
+
+/* process */
+.steps{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:0;counter-reset:s;border:1px solid var(--line);border-radius:var(--r-lg);background:var(--surface);overflow:hidden}
+.step{padding:22px 20px;border-right:1px solid var(--line);display:flex;flex-direction:column;gap:8px}
+.step:last-child{border-right:0}
+.step .n{width:28px;height:28px;border-radius:50%;background:var(--brand-tint);color:var(--brand);font:600 13px/28px var(--f-display);text-align:center}
+.step b{font:600 16px var(--f-display)}
+.step p{margin:0;font-size:13.5px;color:var(--fg-2)}
+.step .tag{align-self:flex-start;font-size:12px;font-weight:600;padding:2px 9px;border-radius:99px;background:var(--surface-2);color:var(--fg-2);margin-top:auto}
+.pay{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}
+.pay span{font-size:13px;padding:6px 12px;border-radius:8px;border:1px solid var(--line);background:var(--surface)}
+
+/* services */
+.svc{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}
+.svc a{display:flex;gap:14px;padding:18px;border-radius:var(--r-lg);border:1px solid var(--line);background:var(--surface);text-decoration:none;color:var(--fg);align-items:flex-start}
+.svc a:hover{border-color:var(--brand)}
+.svc .ico{width:40px;height:40px;padding:9px;border-radius:12px;background:var(--brand-tint);color:var(--brand);flex:none}
+.svc b{display:block;font:600 15.5px var(--f-display)}
+.svc small{color:var(--fg-2);font-size:13.5px}
+
+/* faq */
+.faq{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:0 32px}
+.faq details{border-bottom:1px solid var(--line)}
+.faq summary{list-style:none;cursor:pointer;padding:16px 0;font-weight:600;font-size:15px;display:flex;justify-content:space-between;gap:12px}
+.faq summary::-webkit-details-marker{display:none}
+.faq summary .ico{width:18px;height:18px;color:var(--fg-3);transition:rotate .2s;flex:none;margin-top:3px}
+.faq details[open] summary .ico{rotate:180deg}
+.faq p{margin:0 0 16px;color:var(--fg-2);font-size:14.5px;max-width:60ch}
+
+.cta-band{margin-block:64px 96px;display:grid;grid-template-columns:minmax(0,1fr) auto;gap:20px;align-items:center;padding:32px;border-radius:20px;background:var(--brand);color:var(--on-brand)}
+.cta-band h2{font:600 24px var(--f-display);margin:0}
+.cta-band p{margin:6px 0 0;opacity:.85}
+.cta-band .btns{display:flex;gap:10px;flex-wrap:wrap}
+.cta-band .btn-w{background:var(--on-brand);color:var(--brand)}
+.cta-band .btn-o{border-color:color-mix(in srgb,var(--on-brand) 50%,transparent);color:var(--on-brand)}
+
+/* round 2 */
+.zip{width:140px;height:38px;border-radius:10px;border:1px solid var(--line-2);background:var(--surface);padding:0 12px;font-weight:600;letter-spacing:.08em;font-variant-numeric:tabular-nums}
+.zip:focus{outline:none;border-color:var(--brand)}
+.ziphint{font-size:12.5px;color:var(--fg-3);margin-left:10px}
+.eta{display:flex;align-items:center;gap:10px;padding:12px 14px;border-radius:12px;background:color-mix(in srgb,var(--bg) 10%,transparent);font-size:14px}
+.eta .ico{width:20px;height:20px;flex:none}
+.eta b{font-weight:600}
+.btn-line{background:transparent;color:var(--bg);border:1px solid color-mix(in srgb,var(--bg) 40%,transparent);height:42px}
+.btn-line:hover{border-color:var(--bg)}
+.reorder{display:flex;align-items:center;gap:8px;justify-content:space-between;margin-top:10px;padding:8px 10px;border-radius:10px;background:var(--brand-tint);font-size:12.5px;color:var(--fg);position:relative;z-index:1}
+.reorder button{border:0;background:var(--brand);color:var(--on-brand);border-radius:8px;padding:4px 10px;font-weight:600;font-size:12.5px;display:inline-flex;gap:4px;align-items:center}
+.bundles{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px}
+.bundle{display:flex;flex-direction:column;border:1px solid var(--line);border-radius:var(--r-lg);background:var(--surface);overflow:hidden}
+.bundle .bst{display:flex;justify-content:center;align-items:center;gap:0;background:var(--stage);padding:20px 12px;min-height:140px}
+.bundle .bst span{width:96px;height:96px;display:grid;place-items:center;margin:0 -10px}
+.bundle .bst span svg{width:100%;height:100%}
+.bundle .bb{padding:16px 18px 18px;display:flex;flex-direction:column;gap:8px;flex:1}
+.bundle h3{font:600 17px var(--f-display);margin:0}
+.bundle p{margin:0;font-size:13.5px;color:var(--fg-2)}
+.bundle ul{margin:4px 0 0;padding:0;list-style:none;display:flex;flex-direction:column;gap:6px;font-size:13.5px}
+.bundle li{display:flex;justify-content:space-between;gap:10px;border-top:1px dashed var(--line);padding-top:6px}
+.bundle li span:last-child{color:var(--fg-3);white-space:nowrap;font-variant-numeric:tabular-nums}
+.bundle .btn{margin-top:auto}
+.kit{display:grid;grid-template-columns:auto minmax(0,1fr) auto;gap:16px;align-items:center;margin-top:12px;padding:18px 20px;border-radius:var(--r-lg);border:1px solid var(--line);background:var(--surface)}
+.kit .sw{display:flex}.kit .sw i{width:30px;height:40px;border-radius:4px;margin-left:-8px;border:1px solid rgba(0,0,0,.12);box-shadow:0 2px 6px rgba(0,0,0,.12)}
+.kit b{font:600 16px var(--f-display);display:block}
+.kit small{color:var(--fg-2);font-size:13.5px}
+.paper{background:#fff;color:#1b1f1d;margin:16px 24px 8px;border:1px solid #ddd;border-radius:6px;padding:28px 28px 22px;font-size:12.5px;box-shadow:0 8px 24px -12px rgba(0,0,0,.3)}
+.paper h4{margin:0;font:700 20px var(--f-display);letter-spacing:-.01em}
+.paper .ph{display:flex;justify-content:space-between;gap:16px;border-bottom:2px solid #17573F;padding-bottom:12px;margin-bottom:12px}
+.paper .ph div:last-child{text-align:right}
+.paper .ph small,.paper .muted{color:#6b736e}
+.paper table{width:100%;border-collapse:collapse;margin:12px 0;font-variant-numeric:tabular-nums}
+.paper th{text-align:left;font-weight:600;border-bottom:1px solid #ccc;padding:6px 4px;font-size:11.5px;color:#555}
+.paper td{padding:7px 4px;border-bottom:1px solid #eee;vertical-align:top}
+.paper td.r,.paper th.r{text-align:right}
+.paper .sum{margin-left:auto;width:min(260px,100%);display:grid;grid-template-columns:1fr auto;gap:4px 12px}
+.paper .sum .t{font-weight:700;font-size:14px;border-top:1px solid #ccc;padding-top:6px}
+.paper .ph-tag{display:inline-block;background:#FFF3D6;color:#8F530E;border:1px dashed #E1B661;border-radius:4px;padding:0 5px;font-size:11px}
+.dlg-f{display:flex;gap:10px;justify-content:flex-end;padding:12px 24px 20px;flex-wrap:wrap}
+@media (max-width:1040px){.bundles{grid-template-columns:minmax(0,1fr)}.kit{grid-template-columns:minmax(0,1fr)}}
+/* rfq tray + toast + dialog */
+.tray{position:fixed;left:50%;bottom:calc(20px + env(safe-area-inset-bottom,0px));translate:-50% 0;z-index:40;display:flex;align-items:center;gap:14px;padding:10px 10px 10px 18px;border-radius:16px;background:var(--fg);color:var(--bg);box-shadow:0 18px 40px -12px rgba(0,0,0,.45);max-width:calc(100% - 32px);transition:translate .25s,opacity .25s}
+.tray[hidden]{display:flex!important;opacity:0;pointer-events:none;translate:-50% 24px}
+.tray p{margin:0;font-size:14px;white-space:nowrap}
+.tray p b{font-variant-numeric:tabular-nums}
+.tray .btn{height:38px;background:var(--bg);color:var(--fg)}
+.tray .x{border:0;background:none;color:var(--bg);opacity:.7;font-size:13px}
+.toast{position:fixed;left:50%;bottom:calc(92px + env(safe-area-inset-bottom,0px));translate:-50% 0;z-index:45;background:var(--surface);color:var(--fg);border:1px solid var(--line-2);box-shadow:var(--shadow);padding:10px 16px;border-radius:10px;font-size:13.5px}
+dialog{border:0;padding:0;border-radius:20px;background:var(--surface);color:var(--fg);width:min(720px,calc(100% - 32px));max-height:calc(100% - 48px);box-shadow:0 30px 80px -20px rgba(0,0,0,.5)}
+dialog::backdrop{background:rgba(10,15,12,.5)}
+.dlg-h{display:flex;align-items:center;justify-content:space-between;padding:20px 24px;border-bottom:1px solid var(--line);position:sticky;top:0;background:var(--surface)}
+.dlg-h h2{font:600 20px var(--f-display);margin:0}
+.dlg-b{padding:8px 24px 24px}
+.dlg-b h3{font:600 15px var(--f-display);margin:20px 0 6px;color:var(--brand)}
+.dlg-b ul{margin:0;padding-left:20px;color:var(--fg-2);font-size:14px;display:flex;flex-direction:column;gap:4px}
+.dlg-b .note{margin-top:20px;padding:12px 14px;border-radius:10px;background:var(--instant-tint);font-size:13.5px}
+.chat{position:fixed;right:calc(20px + env(safe-area-inset-right,0px));bottom:calc(20px + env(safe-area-inset-bottom,0px));z-index:41;transition:bottom .25s}
+.tray:not([hidden])~.chat{bottom:calc(92px + env(safe-area-inset-bottom,0px))}
+.chat>button{display:inline-flex;align-items:center;gap:8px;height:48px;padding:0 18px 0 14px;border-radius:24px;border:0;background:#06C755;color:#fff;font-weight:600;font-size:14.5px;box-shadow:0 12px 30px -10px rgba(6,120,60,.6)}
+.chat>button .ico{width:22px;height:22px}
+.chat-pop{position:absolute;right:0;bottom:60px;width:290px;max-width:calc(100vw - 32px);background:var(--surface);border:1px solid var(--line);border-radius:16px;box-shadow:0 24px 60px -18px rgba(0,0,0,.4);padding:18px}
+.chat-pop h3{font:600 16px var(--f-display);margin:0 0 4px}
+.chat-pop p{margin:0 0 12px;font-size:13.5px;color:var(--fg-2)}
+
+@media (max-width:1180px){.nav a{padding:8px 9px}.hdr .wrap{gap:18px}}
+@media (max-width:1040px){
+  .nav{display:none}.menu-btn{display:grid}
+  .head-grid,.calc{grid-template-columns:minmax(0,1fr)}
+  .modes,.factors{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .steps{grid-template-columns:repeat(2,minmax(0,1fr))}.step:nth-child(2){border-right:0}.step:nth-child(-n+2){border-bottom:1px solid var(--line)}
+  .svc{grid-template-columns:minmax(0,1fr)}
+  .faq{grid-template-columns:minmax(0,1fr)}
+}
+@media (max-width:640px){
+  .hdr .cta,.lang,.avatar{display:none}
+  .hdr .wrap{height:58px}
+  .secnav{top:calc(env(safe-area-inset-top,0px) + 58px)}
+  .head{padding-block:20px 0}
+  .modes{grid-template-columns:minmax(0,1fr);gap:8px}
+  .mode{flex-direction:row;flex-wrap:wrap;align-items:center;gap:6px 12px;padding:14px}
+  .mode p{flex-basis:100%}.mode small{margin-top:0}
+  .grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+  .cbody{padding:12px}.card h3{font-size:14.5px}.pr b{font-size:18px}.cfoot{flex-direction:column}
+  .calc-in,.calc-out{padding:20px}
+  .factors,.steps{grid-template-columns:minmax(0,1fr)}.step{border-right:0;border-bottom:1px solid var(--line)}
+  .tb-r{margin-left:0;width:100%}.tb-r .select{flex:1}.tb-r select{width:100%}
+  .cta-band{grid-template-columns:minmax(0,1fr);padding:24px}
+  .chat>button span{display:none}.chat>button{padding:0 13px}
+  .tray p{font-size:13px}
+}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+
+/* ---------- category page ---------- */
+.facts{display:flex;flex-wrap:wrap;gap:8px 28px;margin-top:20px}
+.fact{display:flex;flex-direction:column;line-height:1.3}
+.fact small{font-size:12.5px;color:var(--fg-3)}
+.fact b{font:600 20px var(--f-display);font-variant-numeric:tabular-nums}
+.fact b.br{color:var(--brand)}
+.sibs{display:flex;gap:6px;overflow-x:auto;scrollbar-width:none;margin-top:24px;padding-bottom:2px}
+.sibs a{flex:none;display:inline-flex;align-items:center;gap:6px;padding:6px 14px;border-radius:99px;border:1px solid var(--line-2);background:var(--surface);color:var(--fg-2);text-decoration:none;font-size:13.5px}
+.sibs a .ico{width:16px;height:16px}
+.sibs a[aria-current="page"]{background:var(--fg);color:var(--bg);border-color:var(--fg)}
+.sibs span{flex:none;font-size:12.5px;color:var(--fg-3);align-self:center;margin-right:4px}
+.uses{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px}
+.uses button{display:inline-flex;align-items:center;gap:8px;padding:8px 14px;border-radius:12px;border:1px solid var(--line-2);background:var(--surface);font-weight:500;font-size:14px}
+.uses button small{color:var(--fg-3);font-variant-numeric:tabular-nums}
+.uses button[aria-pressed="true"]{border-color:var(--brand);background:var(--brand-tint);color:var(--brand);box-shadow:inset 0 0 0 1px var(--brand)}
+.rows{display:flex;flex-direction:column;gap:12px}
+.prow{position:relative;display:grid;grid-template-columns:220px minmax(0,1fr) 240px;gap:0;border:1px solid var(--line);border-radius:var(--r-lg);background:var(--surface);overflow:hidden;transition:box-shadow .2s,border-color .2s}
+.prow:hover{box-shadow:var(--shadow);border-color:var(--line-2)}
+.prow .stage{aspect-ratio:auto;min-height:170px}
+.prow .stage>svg{width:70%;height:78%}
+.prow .mid{padding:18px 20px;display:flex;flex-direction:column;gap:8px;min-width:0}
+.prow h3{font:600 18px/1.35 var(--f-display);margin:0}
+.prow h3 a{color:inherit;text-decoration:none}
+.prow h3 a::after{content:"";position:absolute;inset:0}
+.prow .desc{margin:0;font-size:14px;color:var(--fg-2)}
+.specs{display:flex;flex-wrap:wrap;gap:6px}
+.specs span{font-size:12.5px;padding:3px 9px;border-radius:6px;background:var(--surface-2);color:var(--fg-2)}
+.prow .right{padding:18px 20px;border-left:1px solid var(--line);display:flex;flex-direction:column;gap:6px;justify-content:center}
+.prow .right .pr{margin-top:0}
+.prow .right .btn{position:relative;z-index:1;margin-top:8px;height:40px}
+.cmpt{width:100%;border-collapse:collapse;font-size:14px;min-width:760px}
+.cmpt th,.cmpt td{padding:12px 14px;border-bottom:1px solid var(--line);text-align:left;vertical-align:top}
+.cmpt thead th{background:var(--surface-2);font-weight:600;font-size:13.5px;vertical-align:bottom}
+.cmpt thead th .th{width:64px;height:52px;border-radius:8px;background:var(--stage);display:grid;place-items:center;margin-bottom:8px}
+.cmpt thead th .th svg{width:80%;height:80%}
+.cmpt tbody th{font-weight:500;color:var(--fg-3);font-size:12.5px;width:120px;background:var(--surface)}
+.cmpt td{background:var(--surface);font-variant-numeric:tabular-nums}
+.cmpt td b{font:600 16px var(--f-display);color:var(--brand)}
+.cmpt tr:last-child td,.cmpt tr:last-child th{border-bottom:0}
+/* size finder */
+.finder{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.1fr);gap:16px}
+.fpanel{border:1px solid var(--line);border-radius:var(--r-lg);background:var(--surface);padding:24px;display:flex;flex-direction:column;gap:16px}
+.fpanel h3{font:600 17px var(--f-display);margin:0}
+.dims{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.dims label{display:flex;flex-direction:column;gap:4px;font-size:12.5px;color:var(--fg-3);flex:1 1 70px;min-width:0}
+.dims input{height:44px;border-radius:10px;border:1px solid var(--line-2);background:var(--surface-2);text-align:center;font:600 16px var(--f-body);font-variant-numeric:tabular-nums;width:100%;min-width:0}
+.dims input:focus{outline:none;border-color:var(--brand);background:var(--surface)}
+.dims .x{color:var(--fg-3);margin-top:18px}
+.rec{border-radius:var(--r-md);padding:16px;background:var(--brand-tint);display:flex;gap:14px;align-items:center}
+.rec.none{background:var(--instant-tint)}
+.rec .code{font:700 30px/1 var(--f-display);color:var(--brand);min-width:64px;text-align:center}
+.rec.none .code{color:var(--instant);font-size:22px}
+.rec b{display:block;font-weight:600}
+.rec small{color:var(--fg-2);font-size:13px}
+.util{height:6px;border-radius:3px;background:color-mix(in srgb,var(--brand) 18%,transparent);overflow:hidden;margin-top:6px}
+.util i{display:block;height:100%;background:var(--brand)}
+.chartbox{border:1px solid var(--line);border-radius:var(--r-lg);background:var(--surface);padding:20px 20px 12px;display:flex;flex-direction:column;gap:12px;min-width:0}
+.chartscroll{overflow-x:auto}
+.chartscroll svg{display:block;min-width:640px;width:100%;height:auto}
+.chartscroll rect{cursor:pointer;transition:fill .15s}
+.chartscroll text{font:600 58px var(--f-mono);fill:var(--fg-3)}
+.chartscroll text.on{fill:var(--brand);font-weight:700}
+.selsize{display:grid;grid-template-columns:120px minmax(0,1fr) auto;gap:16px;align-items:center;padding-top:12px;border-top:1px solid var(--line)}
+.selsize .th{width:120px;height:96px;border-radius:10px;background:var(--stage);display:grid;place-items:center}
+.selsize .th svg{width:80%;height:85%}
+.selsize b{font:600 18px var(--f-display);display:block}
+.selsize small{color:var(--fg-2);font-size:13.5px}
+.selsize .acts{display:flex;flex-direction:column;gap:8px}
+.selsize .acts .btn{height:38px;font-size:13.5px}
+.sizelist{display:flex;flex-wrap:wrap;gap:6px}
+.sizelist button{border:1px solid var(--line-2);background:var(--surface);border-radius:8px;padding:4px 10px;font:500 13px var(--f-mono)}
+.sizelist button[aria-pressed="true"]{background:var(--brand);color:var(--on-brand);border-color:var(--brand)}
+/* flutes */
+.flutes{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}
+.fl{border:1px solid var(--line);border-radius:var(--r-lg);background:var(--surface);padding:20px;display:flex;flex-direction:column;gap:10px}
+.fl svg.xs{width:100%;height:58px}
+.fl h3{font:600 17px var(--f-display);margin:0;display:flex;justify-content:space-between;align-items:baseline}
+.fl h3 small{font:500 12.5px var(--f-body);color:var(--fg-3)}
+.fl p{margin:0;font-size:13.5px;color:var(--fg-2)}
+.meter{display:grid;grid-template-columns:96px minmax(0,1fr);gap:6px 10px;align-items:center;font-size:12.5px;color:var(--fg-3)}
+.meter i{display:flex;gap:3px}
+.meter i u{flex:1;height:6px;border-radius:2px;background:var(--line)}
+.meter i u.on{background:var(--brand)}
+.xlink{display:grid;grid-template-columns:auto minmax(0,1fr) auto;gap:18px;align-items:center;padding:22px 24px;border-radius:var(--r-lg);border:1px solid var(--line);background:var(--surface)}
+.xlink .ico{width:44px;height:44px;padding:10px;border-radius:12px;background:var(--surface-2);color:var(--fg-2)}
+.xlink b{font:600 17px var(--f-display);display:block}
+.xlink small{color:var(--fg-2);font-size:14px}
+.multi{margin-top:16px;border:1px solid var(--line);border-radius:var(--r-lg);background:var(--surface);padding:22px 24px}
+.multi-h{display:flex;justify-content:space-between;align-items:flex-end;gap:12px;flex-wrap:wrap;margin-bottom:14px}
+.multi-h h3{font:600 17px var(--f-display);margin:0}
+.multi-h p{margin:4px 0 0;font-size:13.5px;color:var(--fg-2)}
+.mtab{width:100%;border-collapse:collapse;font-size:14px;font-variant-numeric:tabular-nums;min-width:560px}
+.mtab th{text-align:left;font-weight:500;font-size:12.5px;color:var(--fg-3);padding:8px 10px;border-bottom:1px solid var(--line)}
+.mtab td{padding:10px;border-bottom:1px solid var(--line);vertical-align:middle}
+.mtab td.r,.mtab th.r{text-align:right}
+.mtab .code{font:700 18px var(--f-display);color:var(--brand);width:56px}
+.qstep{display:inline-flex;align-items:center;border:1px solid var(--line-2);border-radius:10px;overflow:hidden}
+.qstep button{width:32px;height:34px;border:0;background:var(--surface-2);font-weight:600}
+.qstep input{width:72px;height:34px;border:0;text-align:center;font-weight:600;background:var(--surface);font-variant-numeric:tabular-nums}
+.qstep input:focus{outline:none}
+.mtab .warn td{color:var(--instant);font-size:12.5px;padding-top:0;border-bottom:1px solid var(--line)}
+.mfoot{display:flex;justify-content:space-between;align-items:center;gap:16px;flex-wrap:wrap;margin-top:14px}
+.mfoot .sum{font-size:14px;color:var(--fg-2)}
+.mfoot .sum b{font:600 22px var(--f-display);color:var(--fg);margin-left:8px;font-variant-numeric:tabular-nums}
+.policy{display:inline-flex;gap:6px;align-items:center;font-size:12.5px;padding:4px 10px;border-radius:8px;background:var(--instant-tint);color:var(--instant)}
+.xbtn{border:0;background:none;color:var(--fg-3);width:32px;height:32px;border-radius:8px;display:grid;place-items:center}
+.xbtn:hover{background:var(--surface-2);color:var(--fg)}
+.xbtn .ico{width:16px;height:16px}
+.samplechip{font:500 11px var(--f-mono);padding:2px 7px;border-radius:6px;border:1px dashed var(--line-2);color:var(--fg-3)}
+@media (max-width:1040px){.prow{grid-template-columns:180px minmax(0,1fr)}.prow .right{grid-column:1/-1;border-left:0;border-top:1px solid var(--line);flex-direction:row;flex-wrap:wrap;align-items:center;justify-content:space-between}.prow .right .btn{margin-top:0}.finder{grid-template-columns:minmax(0,1fr)}.flutes{grid-template-columns:minmax(0,1fr)}}
+@media (max-width:640px){.prow{grid-template-columns:minmax(0,1fr)}.prow .stage{min-height:180px}.selsize{grid-template-columns:minmax(0,1fr)}.selsize .th{width:100%}.xlink{grid-template-columns:minmax(0,1fr)}.facts{gap:12px 20px}.fact b{font-size:17px}}
+</style>
+
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <symbol id="i-search" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></symbol>
+  <symbol id="i-cart" viewBox="0 0 24 24"><path d="M3 4h2l2.2 11.2a2 2 0 0 0 2 1.6h8.1a2 2 0 0 0 2-1.5L21 8H6.2"/><circle cx="10" cy="20" r="1.2"/><circle cx="17" cy="20" r="1.2"/></symbol>
+  <symbol id="i-globe" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3a14 14 0 0 1 0 18M12 3a14 14 0 0 0 0 18"/></symbol>
+  <symbol id="i-menu" viewBox="0 0 24 24"><path d="M4 7h16M4 12h16M4 17h16"/></symbol>
+  <symbol id="i-chev" viewBox="0 0 24 24"><path d="m6 9 6 6 6-6"/></symbol>
+  <symbol id="i-x" viewBox="0 0 24 24"><path d="M6 6l12 12M18 6 6 18"/></symbol>
+  <symbol id="i-layers" viewBox="0 0 24 24"><path d="m12 3 9 5-9 5-9-5z"/><path d="m3 13 9 5 9-5"/></symbol>
+  <symbol id="i-bolt" viewBox="0 0 24 24"><path d="M13 2 4 14h7l-1 8 9-12h-7z"/></symbol>
+  <symbol id="i-heart" viewBox="0 0 24 24"><path d="M12 20s-7.5-4.6-7.5-10A4.5 4.5 0 0 1 12 7.3 4.5 4.5 0 0 1 19.5 10c0 5.4-7.5 10-7.5 10z"/></symbol>
+  <symbol id="i-ruler" viewBox="0 0 24 24"><path d="M3 15 15 3l6 6L9 21z"/><path d="m7 11 2 2M10 8l2 2M13 5l2 2"/></symbol>
+  <symbol id="i-stack" viewBox="0 0 24 24"><rect x="4" y="4" width="16" height="5" rx="1"/><rect x="4" y="10" width="16" height="5" rx="1"/><rect x="4" y="16" width="16" height="4" rx="1"/></symbol>
+  <symbol id="i-sliders" viewBox="0 0 24 24"><path d="M4 7h10M18 7h2M4 17h4M12 17h8"/><circle cx="16" cy="7" r="2"/><circle cx="10" cy="17" r="2"/></symbol>
+  <symbol id="i-link" viewBox="0 0 24 24"><path d="M10 14a4 4 0 0 0 5.7 0l3-3a4 4 0 0 0-5.7-5.7l-1 1"/><path d="M14 10a4 4 0 0 0-5.7 0l-3 3a4 4 0 0 0 5.7 5.7l1-1"/></symbol>
+  <symbol id="i-clock" viewBox="0 0 24 24"><circle cx="12" cy="12" r="8.5"/><path d="M12 7.5V12l3 2"/></symbol>
+  <symbol id="i-check" viewBox="0 0 24 24"><path d="m5 12.5 4.5 4.5L19 7.5"/></symbol>
+<symbol id="i-chat" viewBox="0 0 24 24"><path d="M4 5h16v11H10l-4 3.5V16H4z"/><path d="M8.5 10.5h.01M12 10.5h.01M15.5 10.5h.01"/></symbol>
+  <symbol id="i-leaf" viewBox="0 0 24 24"><path d="M5 19c0-8 5-13 15-14-1 10-6 15-14 15"/><path d="M5 19 13 11"/></symbol>
+  <symbol id="i-shield" viewBox="0 0 24 24"><path d="M12 3 5 6v6c0 4.5 3 7.5 7 9 4-1.5 7-4.5 7-9V6z"/><path d="m9 12 2 2 4-4"/></symbol>
+  <symbol id="i-factory" viewBox="0 0 24 24"><path d="M3 20V10l6 3V9l6 3V5h6v15z"/><path d="M7 17h2M12 17h2M17 17h1"/></symbol>
+  <symbol id="i-doc" viewBox="0 0 24 24"><path d="M6 3h8l4 4v14H6z"/><path d="M14 3v4h4M9 12h6M9 16h6"/></symbol>
+  <symbol id="i-folder" viewBox="0 0 24 24"><path d="M3 6h6l2 2h10v11H3z"/></symbol>
+  <symbol id="i-repeat" viewBox="0 0 24 24"><path d="M4 11V9a3 3 0 0 1 3-3h12l-3-3M20 13v2a3 3 0 0 1-3 3H5l3 3"/></symbol>
+  <symbol id="i-users" viewBox="0 0 24 24"><circle cx="9" cy="8" r="3.5"/><path d="M3 20c0-3.3 2.7-6 6-6s6 2.7 6 6M16 4.5a3.5 3.5 0 0 1 0 7M18 14c2 .7 3.5 2.8 3.5 6"/></symbol>
+  <symbol id="i-receipt" viewBox="0 0 24 24"><path d="M6 3h12v18l-3-2-3 2-3-2-3 2z"/><path d="M9 8h6M9 12h6"/></symbol>
+  <symbol id="i-pencil" viewBox="0 0 24 24"><path d="M4 20h4L19 9l-4-4L4 16z"/><path d="m13.5 6.5 4 4"/></symbol>
+  <symbol id="c-all" viewBox="0 0 24 24"><rect x="4" y="4" width="7" height="7" rx="1.5"/><rect x="13" y="4" width="7" height="7" rx="1.5"/><rect x="4" y="13" width="7" height="7" rx="1.5"/><rect x="13" y="13" width="7" height="7" rx="1.5"/></symbol>
+  <symbol id="c-carton" viewBox="0 0 24 24"><path d="m12 3 8 4.5v9L12 21l-8-4.5v-9z"/><path d="m4 7.5 8 4.5 8-4.5M12 12v9"/></symbol>
+  <symbol id="c-corr" viewBox="0 0 24 24"><path d="m12 3 8 4.5v9L12 21l-8-4.5v-9z"/><path d="m4 7.5 8 4.5 8-4.5M12 12v9M8 5.3l8 4.5"/></symbol>
+  <symbol id="c-rigid" viewBox="0 0 24 24"><path d="M3 7h18v4H3z"/><path d="M5 11v9h14v-9"/></symbol>
+  <symbol id="c-bag" viewBox="0 0 24 24"><path d="M5.5 8h13l1 13h-15z"/><path d="M9 10V6.5a3 3 0 0 1 6 0V10"/></symbol>
+  <symbol id="c-label" viewBox="0 0 24 24"><path d="M3 12V4h8l10 10-7 7z"/><circle cx="7.5" cy="7.5" r="1.3"/></symbol>
+  <symbol id="c-sleeve" viewBox="0 0 24 24"><path d="M3 9h14v10H3z"/><path d="m3 9 4-4h14l-4 4M17 19l4-4V5"/></symbol>
+  <symbol id="c-insert" viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="14" rx="1.5"/><path d="M9 5v14M15 5v14M3 12h18"/></symbol>
+  <symbol id="c-help" viewBox="0 0 24 24"><path d="M4 5h16v11H9l-5 4z"/><path d="M9.5 9a2.5 2.5 0 1 1 3.5 2.3c-.6.3-1 .8-1 1.4M12 14.5v.01"/></symbol>
+</svg>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <symbol id="i-box" viewBox="0 0 24 24"><path d="m12 3 8 4.5v9L12 21l-8-4.5v-9z"/><path d="m4 7.5 8 4.5 8-4.5M12 12v9"/></symbol>
+  <symbol id="i-doc" viewBox="0 0 24 24"><path d="M6 3h8l4 4v14H6z"/><path d="M14 3v4h4M9 12h6M9 16h6"/></symbol>
+  <symbol id="i-truck" viewBox="0 0 24 24"><path d="M3 6h11v10H3zM14 10h4l3 3v3h-7"/><circle cx="7" cy="18" r="1.8"/><circle cx="17" cy="18" r="1.8"/></symbol>
+  <symbol id="i-wrench" viewBox="0 0 24 24"><path d="M14.5 5.5a4 4 0 0 0 4.9 4.9L13 16.8 7.2 22 2 16.8 7.2 11l6.4-6.4z"/></symbol>
+  <symbol id="i-clock" viewBox="0 0 24 24"><circle cx="12" cy="12" r="8.5"/><path d="M12 7.5V12l3 2"/></symbol>
+  <symbol id="i-check" viewBox="0 0 24 24"><path d="m5 12.5 4.5 4.5L19 7.5"/></symbol>
+  <symbol id="i-minus" viewBox="0 0 24 24"><path d="M6 12h12"/></symbol>
+  <symbol id="i-grid" viewBox="0 0 24 24"><rect x="4" y="4" width="7" height="7" rx="1.5"/><rect x="13" y="4" width="7" height="7" rx="1.5"/><rect x="4" y="13" width="7" height="7" rx="1.5"/><rect x="13" y="13" width="7" height="7" rx="1.5"/></symbol>
+  <symbol id="i-table" viewBox="0 0 24 24"><rect x="3.5" y="4.5" width="17" height="15" rx="1.5"/><path d="M3.5 9.5h17M3.5 14.5h17M9 9.5v10"/></symbol>
+  <symbol id="i-chat" viewBox="0 0 24 24"><path d="M4 5h16v11H10l-4 3.5V16H4z"/><path d="M8.5 10.5h.01M12 10.5h.01M15.5 10.5h.01"/></symbol>
+  <symbol id="i-plus" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></symbol>
+  <symbol id="i-palette" viewBox="0 0 24 24"><path d="M12 3a9 9 0 1 0 0 18c1.5 0 2-1 2-2s-1-1.5-1-2.5 1-1.5 2-1.5h2a4 4 0 0 0 4-4c0-4.4-4-8-9-8z"/><circle cx="7.5" cy="11" r="1"/><circle cx="10" cy="7" r="1"/><circle cx="15" cy="7.5" r="1"/></symbol>
+  <symbol id="i-cube" viewBox="0 0 24 24"><path d="m12 3 8 4.5v9L12 21l-8-4.5v-9z" stroke-dasharray="2.5 2"/><path d="m4 7.5 8 4.5 8-4.5M12 12v9"/></symbol>
+  <symbol id="i-plate" viewBox="0 0 24 24"><rect x="4" y="5" width="16" height="14" rx="1.5"/><path d="M8 9h8M8 12h8M8 15h5"/></symbol>
+  <symbol id="i-shield" viewBox="0 0 24 24"><path d="M12 3 5 6v6c0 4.5 3 7.5 7 9 4-1.5 7-4.5 7-9V6z"/><path d="m9 12 2 2 4-4"/></symbol>
+  <symbol id="i-repeat" viewBox="0 0 24 24"><path d="M4 11V9a3 3 0 0 1 3-3h12l-3-3M20 13v2a3 3 0 0 1-3 3H5l3 3"/></symbol>
+  <symbol id="i-down" viewBox="0 0 24 24"><path d="M12 4v11M7 10l5 5 5-5M5 20h14"/></symbol>
+</svg>
+
+
+
+<div class="proto"><div class="wrap"><b>ต้นแบบ Redesign</b><span>หน้า /products/corrugated · หมวดกล่องกระดาษลูกฟูก</span><button type="button" id="notesBtn">ดูสิ่งที่เปลี่ยน</button></div></div>
+
+<header class="hdr">
+  <div class="wrap">
+    <a class="logo" href="#" aria-label="getpack หน้าแรก">getpack<i></i></a>
+    <nav class="nav" aria-label="เมนูหลัก"><a href="#">สตูดิโอออกแบบ</a><a href="#">แบบกล่อง</a><a href="#" aria-current="page">สินค้าและราคา</a><a href="#">สำหรับธุรกิจ</a><a href="#">ติดต่อ</a></nav>
+    <div class="hright">
+      <button class="ibtn" type="button" aria-label="ค้นหา"><svg class="ico"><use href="#i-search"/></svg></button>
+      <button class="ibtn" type="button" aria-label="ตะกร้า"><svg class="ico"><use href="#i-cart"/></svg></button>
+      <button class="lang" type="button" aria-label="เปลี่ยนภาษา"><svg class="ico" style="width:18px;height:18px"><use href="#i-globe"/></svg>TH</button>
+      <button class="avatar" type="button" aria-label="บัญชี Piyapan Pakpisitjaloen" title="Piyapan Pakpisitjaloen">PP</button>
+      <a class="btn btn-primary cta" href="#">เริ่มออกแบบฟรี</a>
+      <button class="ibtn menu-btn" type="button" aria-label="เปิดเมนู"><svg class="ico"><use href="#i-menu"/></svg></button>
+    </div>
+  </div>
+</header>
+
+<main>
+  <section class="wrap head">
+    <nav class="crumbs" aria-label="breadcrumb"><a href="#">หน้าแรก</a><span aria-hidden="true">/</span><a href="#">สินค้าและราคา</a><span aria-hidden="true">/</span><span>กล่องกระดาษลูกฟูก</span></nav>
+    <div class="head-grid">
+      <div>
+        <h1>กล่องกระดาษลูกฟูก</h1>
+        <p class="lede">กล่องส่งพัสดุ ลังขนย้าย และกล่องผลไม้ ทุกรายการเห็นราคาทันที เลือกเบอร์มาตรฐานหรือกำหนดขนาดเองได้ ระบบสร้างแผ่นคลี่และคำนวณราคาให้ทันที</p>
+      </div>
+      <div style="display:flex;justify-content:flex-end"><label class="vat" for="vat"><input class="switch" type="checkbox" id="vat" role="switch" checked>แสดงราคารวม VAT 7%</label></div>
+    </div>
+    <div class="facts" id="facts"></div>
+    <nav class="sibs" aria-label="หมวดอื่น" id="sibs"></nav>
+  </section>
+
+  <nav class="secnav" aria-label="ส่วนของหน้า"><div class="wrap" id="secnav">
+    <a href="#list">สินค้าในหมวดนี้</a><a href="#sizes">หาเบอร์กล่อง</a><a href="#flutes">เลือกลอน</a><a href="#custom">สั่งผลิตตามสเปก</a><a href="#faq">คำถามที่พบบ่อย</a>
+  </div></nav>
+
+  <section class="wrap sec" id="list" aria-labelledby="listT">
+    <div class="sec-h"><div><h2 id="listT">สินค้าในหมวดนี้</h2><p>เลือกตามการใช้งาน หรือสลับเป็นตารางเพื่อเทียบสเปกและราคาทั้งหมด</p></div>
+      <div class="vtoggle" role="group" aria-label="มุมมอง"><button type="button" data-v="rows" aria-pressed="true" aria-label="รายการ"><svg class="ico"><use href="#i-grid"/></svg></button><button type="button" data-v="table" aria-pressed="false" aria-label="ตารางเปรียบเทียบ"><svg class="ico"><use href="#i-table"/></svg></button></div></div>
+    <div class="uses" id="uses" role="group" aria-label="การใช้งาน"></div>
+    <div id="plist"></div>
+  </section>
+
+  <section class="wrap sec" id="sizes" aria-labelledby="szT">
+    <div class="sec-h"><div><h2 id="szT">หาเบอร์กล่องไปรษณีย์</h2><p>กล่องไปรษณีย์ ฝาชน 3 ชั้น (ลอน B) มีเบอร์มาตรฐาน 11 ขนาด ใส่ขนาดสินค้าเพื่อให้ระบบแนะนำเบอร์ที่พอดีที่สุด</p></div></div>
+    <div class="finder">
+      <div class="fpanel">
+        <h3>ขนาดสินค้าของคุณ</h3>
+        <form class="dims" id="dimForm">
+          <label for="d1">ยาว (ซม.)<input id="d1" type="number" inputmode="decimal" min="1" step="0.1" value="25"></label><span class="x">×</span>
+          <label for="d2">กว้าง (ซม.)<input id="d2" type="number" inputmode="decimal" min="1" step="0.1" value="18"></label><span class="x">×</span>
+          <label for="d3">สูง (ซม.)<input id="d3" type="number" inputmode="decimal" min="1" step="0.1" value="8"></label>
+        </form>
+        <p style="margin:0;font-size:12.5px;color:var(--fg-3)">วัดขนาดด้านนอกของสินค้า ระบบเผื่อระยะ 0.5 ซม. ทุกด้าน และลองหมุนสินค้าให้พอดีกล่อง</p>
+        <div id="rec" aria-live="polite"></div>
+        <div><span style="display:block;font-size:12.5px;color:var(--fg-3);margin-bottom:6px">หรือเลือกเบอร์เอง</span><div class="sizelist" id="sizelist"></div></div>
+      </div>
+      <div class="chartbox">
+        <div style="display:flex;justify-content:space-between;align-items:baseline;gap:12px"><h3 style="font:600 17px var(--f-display);margin:0">เทียบขนาดจริง (ด้านหน้า ยาว × สูง)</h3><small style="color:var(--fg-3);font-size:12.5px">มาตราส่วนเดียวกันทุกเบอร์</small></div>
+        <div class="chartscroll" id="chart"></div>
+        <div class="selsize" id="selsize"></div>
+      </div>
+    </div>
+    <div class="multi" id="multi">
+      <div class="multi-h"><div><h3>สั่งหลายเบอร์ในคำสั่งซื้อเดียว</h3><p>ร้านส่วนใหญ่ใช้ 2–4 เบอร์ เพิ่มเบอร์ที่ต้องการ ใส่จำนวน แล้วสั่งรวมครั้งเดียว</p></div><span class="policy"><svg class="ico" style="width:14px;height:14px"><use href="#i-clock"/></svg>นโยบายขั้นต่ำรอยืนยัน: ต่อเบอร์ หรือ ต่อคำสั่งซื้อ</span></div>
+      <div class="tablewrap" style="border:0;background:none"><table class="mtab"><thead><tr><th>เบอร์</th><th>ขนาด (ซม.)</th><th>จำนวน</th><th class="r">ราคา/ชิ้น</th><th class="r">รวม</th><th></th></tr></thead><tbody id="mrows"></tbody></table></div>
+      <div class="mfoot"><span class="sum" id="msum"></span><div style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn btn-ghost" type="button" id="maddSel">เพิ่มเบอร์ที่เลือกอยู่</button><a class="btn btn-primary" href="#" id="morder">สั่งทั้งหมด</a></div></div>
+    </div>
+  </section>
+
+  <section class="wrap sec" id="flutes" aria-labelledby="flT">
+    <div class="sec-h"><div><h2 id="flT">เลือกลอนให้เหมาะกับสินค้า</h2><p>ลอนคือกระดาษคลื่นตรงกลางแผ่นลูกฟูก ความหนาของลอนกำหนดความแข็งแรงและความคมของงานพิมพ์</p></div><a class="btn btn-ghost" href="#">เปรียบเทียบวัสดุทั้งหมด</a></div>
+    <div class="flutes" id="flList"></div>
+  </section>
+
+  <section class="wrap sec" id="custom" aria-labelledby="cuT">
+    <div class="sec-h"><div><h2 id="cuT">ต้องการแบบอื่น</h2></div></div>
+    <div style="display:flex;flex-direction:column;gap:12px">
+      <a class="xlink" href="#" style="text-decoration:none;color:inherit"><svg class="ico"><use href="#c-corr"/></svg><span><b>ดูโครงสร้างกล่องลูกฟูก 32 แบบ</b><small>เมลเลอร์ไดคัท กล่องฝาชน ถาด และทรงพิเศษในคลังแบบกล่อง สั่งผลิตตามสเปกของคุณ</small></span><span class="btn btn-ghost">ไปที่คลังแบบกล่อง</span></a>
+      <div class="xlink" style="background:var(--fg);color:var(--bg);border-color:var(--fg)"><svg class="ico" style="background:color-mix(in srgb,var(--bg) 14%,transparent);color:var(--bg)"><use href="#i-chat"/></svg><span><b>ไม่เจอแบบที่ต้องการ?</b><small style="color:color-mix(in srgb,var(--bg) 75%,transparent)">ส่งสเปกให้ทีม รับใบเสนอราคาภายในวันทำการ</small></span><a class="btn" href="#" style="background:var(--bg);color:var(--fg)">ขอใบเสนอราคา</a></div>
+    </div>
+  </section>
+
+  <section class="wrap sec" id="faq" aria-labelledby="faqT" style="padding-bottom:96px">
+    <div class="sec-h"><div><h2 id="faqT">คำถามที่พบบ่อยเรื่องกล่องลูกฟูก</h2></div></div>
+    <div class="faq" id="faqList"></div>
+  </section>
+</main>
+
+<div class="chat"><div class="chat-pop" id="chatPop" hidden><h3>คุยกับทีม getpack</h3><p>ถามเรื่องขนาด ลอน หรือส่งไฟล์ให้ทีมตรวจ ทาง LINE ทุกวัน 09:00–18:00 น.</p><a class="btn btn-primary" href="#" style="width:100%;background:#06C755;color:#fff">เปิด LINE</a></div><button type="button" id="chatBtn" aria-expanded="false" aria-controls="chatPop"><svg class="ico"><use href="#i-chat"/></svg><span>คุยทาง LINE</span></button></div>
+<div class="toast" id="toast" hidden></div>
+
+<dialog id="notes" aria-labelledby="notesTitle">
+  <div class="dlg-h"><h2 id="notesTitle">สิ่งที่เปลี่ยนในหน้านี้</h2><button class="ibtn" type="button" id="notesClose" aria-label="ปิด"><svg class="ico"><use href="#i-x"/></svg></button></div>
+  <div class="dlg-b">
+    <h3>ปัญหาของหน้าเดิม</h3>
+    <ul>
+      <li>Header ซ้อนทับโลโก้ (เหมือนหน้าอื่น)</li>
+      <li>Sidebar แสดงทั้ง 14 หมวด ทุกหมวดมีเลข "1" และคำว่า "ประเภท" ซึ่งไม่ใช่จำนวนสินค้า ทำให้เข้าใจผิด และกินพื้นที่ครึ่งจอสำหรับสินค้าเพียง 5 รายการ</li>
+      <li>ชิปตัวกรอง "ขอใบเสนอราคา" และ "มีโปรโมชัน" ไม่มีสินค้าตรง (ทุกรายการในหมวดนี้เป็นราคาทันที) ตัวกรองควรแสดงเฉพาะค่าที่มีผลลัพธ์</li>
+      <li>คำโปรยซ้ำชื่อหมวด ไม่มีข้อมูลช่วยเลือก (เบอร์ ลอน การใช้งาน) และไม่มีเนื้อหาสำหรับ SEO</li>
+      <li>ข้อมูลไม่ตรงกัน: คำอธิบายกล่องไปรษณีย์บอก "เลือกพิมพ์โลโก้ 1–2 สีได้" แต่ตัวเลือกสีพิมพ์มี "ดำ · พิมพ์ 4 สี (CMYK)"</li>
+    </ul>
+    <h3>สิ่งที่ออกแบบใหม่ (เป็นแม่แบบใช้กับทุกหมวด)</h3>
+    <ul>
+      <li><b>หัวหมวด</b> คำโปรยเฉพาะหมวด + ตัวเลขสรุปจากข้อมูลจริง (เริ่มต้น ขั้นต่ำ ระยะผลิต จำนวนสินค้า) + สลับหมวดด้วยชิปแนวนอนแทน sidebar</li>
+      <li><b>เลือกตามการใช้งาน</b> แทนตัวกรองที่ไม่มีผล · การ์ดแนวนอนที่มีคำอธิบายและสเปกหลัก · สลับเป็น <b>ตารางเปรียบเทียบ</b> เพราะหมวดมีสินค้าน้อย เทียบได้ทั้งหมดในจอเดียว</li>
+      <li><b>หาเบอร์กล่อง</b> ใช้ตารางเบอร์มาตรฐานจริง 11 ขนาด ใส่ขนาดสินค้าแล้วแนะนำเบอร์ที่เล็กที่สุดที่ใส่ได้ (หมุนสินค้าได้) + ภาพเทียบขนาดจริงมาตราส่วนเดียวกัน + ปุ่มคำนวณราคา/ดาวน์โหลดแบบกล่องของเบอร์นั้น</li>
+      <li><b>รอบที่ 2: ราคาของแต่ละเบอร์</b> ใต้ภาพเทียบขนาด ในผลแนะนำ และในแผงเบอร์ที่เลือก · ราคาเบอร์ 00 (฿15.70) เป็นราคาจริงตามสเปกอ้างอิง เบอร์อื่นเป็นราคาตัวอย่างประมาณจากพื้นที่แผ่นกระดาษ ต้องดึงจาก pricing engine จริง</li>
+      <li><b>รอบที่ 2: สั่งหลายเบอร์ในคำสั่งซื้อเดียว</b> เพิ่มเบอร์ ปรับจำนวนทีละ 50 เห็นยอดรวมทันที · <b>ต้องรอทีมธุรกิจตัดสิน</b> ว่าขั้นต่ำ 100 ชิ้นนับต่อเบอร์หรือต่อคำสั่งซื้อ และผลิตหลายเบอร์ในล็อตเดียวได้หรือไม่ (ต้นแบบเตือนเมื่อเบอร์ใดต่ำกว่า 100)</li>
+      <li><b>เลือกลอน</b> B / E / BC พร้อมภาพหน้าตัดและระดับความแข็งแรง/งานพิมพ์</li>
+      <li><b>ต้องการแบบอื่น</b> เชื่อมไปคลังแบบกล่อง (กล่องลูกฟูก 32 โครงสร้าง) และขอใบเสนอราคา</li>
+      <li><b>FAQ เฉพาะหมวด</b> สำหรับ SEO/AEO</li>
+    </ul>
+    <h3>กฎของแม่แบบสำหรับหมวดอื่น</h3>
+    <ul>
+      <li>หมวดที่ขอใบเสนอราคาอย่างเดียว: ตัวเลขสรุปแสดงขั้นต่ำและ "รับใบเสนอราคาภายในวันทำการ" แทนราคาเริ่มต้น และปุ่มในการ์ดเป็น "เพิ่มในใบขอราคา"</li>
+      <li>ส่วน "หาเบอร์" แสดงเฉพาะหมวดที่มีขนาดมาตรฐาน · ส่วน "เลือกลอน" แทนด้วยคู่มือวัสดุของหมวดนั้น (เช่น ฉลาก: กระดาษ/PP ใส)</li>
+      <li>มุมมองเริ่มต้น: ไม่เกิน 8 รายการใช้การ์ดแนวนอน มากกว่านั้นใช้กริดแบบหน้าสินค้าและราคา</li>
+    </ul>
+    <p class="note">ข้อมูลจริงจากระบบ: ชื่อสินค้า ราคาเริ่มต้น ขั้นต่ำ ระยะผลิต คำอธิบายกล่องไปรษณีย์ สเปกอ้างอิง ตัวเลือกวัสดุ/สีพิมพ์ ตารางเบอร์มาตรฐาน 11 ขนาด จำนวนแบบลูกฟูกในคลังแบบกล่อง (32) และข้อความ "รับใบเสนอราคาภายในวันทำการ" · ที่เขียนเพิ่ม (ต้องให้ทีมตรวจ): คำอธิบายสินค้าอีก 4 รายการ ความหนาลอนโดยประมาณ ระดับความแข็งแรง/งานพิมพ์ และคำตอบ FAQ · ภาพสินค้าเป็นภาพวาดแทนรูปจริง</p>
+  </div>
+</dialog>
+
+<script>
+(()=>{
+/* ---------- isometric illustration engine ---------- */
+const MAT={
+  white:{t:'#FCFBF8',l:'#ECE9E2',r:'#DAD6CD',in:'#E2DED5'},
+  kraft:{t:'#DEC096',l:'#CCA778',r:'#B89263',in:'#C29C6B'},
+  rigid:{t:'#F5F3EF',l:'#E3DFD7',r:'#CEC9BF',in:'#D8D3C9'},
+  green:{t:'#3C7A61',l:'#2D634E',r:'#224E3D',in:'#285A47'}
+};
+const P=(x,y,z)=>[(x-y)*0.866,(x+y)*0.5-z];
+const F=a=>a.map(p=>P(p[0],p[1],p[2]));
+const HOLE='#4E4B45', WIN='rgba(150,190,205,.5)';
+function box(I,x,y,z,w,d,h,c){I.push(
+  {p:F([[x,y+d,z],[x+w,y+d,z],[x+w,y+d,z+h],[x,y+d,z+h]]),f:c.l},
+  {p:F([[x+w,y,z],[x+w,y+d,z],[x+w,y+d,z+h],[x+w,y,z+h]]),f:c.r},
+  {p:F([[x,y,z+h],[x+w,y,z+h],[x+w,y+d,z+h],[x,y+d,z+h]]),f:c.t})}
+function tray(I,x,y,z,w,d,h,c){I.push(
+  {p:F([[x,y,z],[x+w,y,z],[x+w,y+d,z],[x,y+d,z]]),f:c.in},
+  {p:F([[x,y,z],[x+w,y,z],[x+w,y,z+h],[x,y,z+h]]),f:c.l},
+  {p:F([[x,y,z],[x,y+d,z],[x,y+d,z+h],[x,y,z+h]]),f:c.r},
+  {p:F([[x,y+d,z],[x+w,y+d,z],[x+w,y+d,z+h],[x,y+d,z+h]]),f:c.l},
+  {p:F([[x+w,y,z],[x+w,y+d,z],[x+w,y+d,z+h],[x+w,y,z+h]]),f:c.r})}
+const pl=(I,a,f)=>I.push({p:F(a),f});
+function sell(cx,cy,rx,ry,n=40,a0=0,a1=Math.PI*2){const o=[];for(let i=0;i<=n;i++){const a=a0+(a1-a0)*i/n;o.push([cx+rx*Math.cos(a),cy+ry*Math.sin(a)])}return o}
+function hole(I,x,y,z,rx,ry){const c=P(x,y,z);I.push({p:sell(c[0],c[1],rx,ry,24),f:HOLE,o:.85})}
+function cyl(I,cx,cy,z,r1,r2,h,c,open){
+  const B=P(cx,cy,z),T=P(cx,cy,z+h),bx=1.2247*r1,by=.7071*r1,tx=1.2247*r2,ty=.7071*r2;
+  const body=[[T[0]-tx,T[1]],...sell(B[0],B[1],bx,by,30,Math.PI,0),[T[0]+tx,T[1]],...sell(T[0],T[1],tx,ty,30,0,Math.PI)];
+  I.push({p:body,f:c.l});
+  I.push({p:sell(T[0],T[1],tx,ty),f:open?c.in:c.t});
+}
+const SH={
+  cone(I,c){cyl(I,0,0,0,7,19,42,c,true);},
+  tube(I,c){cyl(I,0,0,0,13,13,38,c);cyl(I,0,0,32,14,14,16,c);},
+  gable(I,c){box(I,0,0,0,24,16,32,c);pl(I,[[0,16,32],[24,16,32],[24,8,42],[0,8,42]],c.t);pl(I,[[24,0,32],[24,16,32],[24,8,42]],c.r);hole(I,12,8,40,1.6,1);},
+  book(I,c){pl(I,[[0,0,10],[34,0,10],[34,-5,40],[0,-5,40]],c.l);tray(I,0,0,0,34,26,10,c);box(I,4,4,0,26,18,5,{t:c.in,l:c.l,r:c.r});},
+  doors(I,c){box(I,0,0,0,28,22,30,c);pl(I,[[2,22,2],[26,22,2],[26,22,28],[2,22,28]],c.in);pl(I,[[0,22,0],[-3,36,0],[-3,36,30],[0,22,30]],c.l);pl(I,[[28,22,0],[33,34,0],[33,34,30],[28,22,30]],c.r);},
+  lid(I,c){box(I,0,0,0,32,24,13,c);box(I,-1,-1,9,34,26,7,c);pl(I,[[6,25,10.5],[26,25,10.5],[26,25,14.5],[6,25,14.5]],WIN);},
+  flip(I,c){pl(I,[[0,0,12],[32,0,12],[32,-8,37],[0,-8,37]],c.l);tray(I,0,0,0,32,24,12,c);box(I,3,3,0,26,18,7,{t:c.in,l:c.l,r:c.r});},
+  fold(I,c){box(I,0,0,0,32,24,15,c);pl(I,[[0,24.3,8],[32,24.3,8],[32,24.3,15],[0,24.3,15]],c.r);pl(I,[[14,24.4,10.5],[18,24.4,10.5],[18,24.4,12],[14,24.4,12]],c.t);},
+  shoulder(I,c){box(I,0,0,0,26,26,15,c);box(I,1.5,1.5,15,23,23,7,{t:c.in,l:c.r,r:c.r});box(I,0,0,23,26,26,11,c);},
+  drawer(I,c){box(I,0,0,0,30,22,12,c);tray(I,30,1.5,.5,14,19,11,c);hole(I,44,11,6,1.1,1.8);},
+  hanger(I,c){pl(I,[[1,8,38],[11,8,38],[11,8,47],[1,8,47]],c.l);hole(I,6,8,44,1.8,1);box(I,0,0,0,12,16,38,c);pl(I,[[2.5,16,10],[9.5,16,10],[9.5,16,28],[2.5,16,28]],WIN);},
+  cake(I,c){box(I,0,0,0,30,30,16,c);pl(I,[[7,7,16],[23,7,16],[23,23,16],[7,23,16]],WIN);pl(I,[[15,3,16],[15,27,16],[15,22,26],[15,8,26]],c.r);hole(I,15,15,22.5,3.4,1.6);},
+  display(I,c){pl(I,[[0,0,0],[30,0,0],[30,22,0],[0,22,0]],c.in);pl(I,[[0,0,0],[30,0,0],[30,0,30],[0,0,30]],c.l);pl(I,[[0,0,0],[0,22,0],[0,22,8],[0,0,30]],c.r);pl(I,[[0,22,0],[30,22,0],[30,22,8],[0,22,8]],c.l);pl(I,[[30,0,0],[30,22,0],[30,22,8],[30,0,30]],c.r);},
+  tear(I,c){pl(I,[[4,7,34],[14,7,34],[14,7,41],[4,7,41]],c.l);hole(I,9,7,38.5,1.6,1);box(I,0,0,0,18,14,34,c);I.push({ln:F([[0,14,25],[18,14,25]])},{ln:F([[18,0,25],[18,14,25]])});},
+  header(I,c){pl(I,[[0,0,8],[32,0,8],[32,0,32],[0,0,32]],c.l);pl(I,[[4,0,22],[28,0,22],[28,0,28],[4,0,28]],'#2E6B54');tray(I,0,0,0,32,22,8,c);},
+  mailer(I,c){pl(I,[[0,0,12],[34,0,12],[34,-9,34],[0,-9,34]],c.l);pl(I,[[0,-9,34],[34,-9,34],[34,-4,36],[0,-4,36]],c.t);tray(I,0,0,0,34,24,12,c);},
+  pyramid(I,c){pl(I,[[0,28,0],[28,28,0],[14,14,34]],c.l);pl(I,[[28,0,0],[28,28,0],[14,14,34]],c.r);hole(I,14,14,30,1.1,.8);},
+  tissue(I,c){box(I,0,0,0,34,20,14,c);const q=P(17,10,14);I.push({p:sell(q[0],q[1],9,2.6),f:HOLE,o:.8});},
+  fruit(I,c){tray(I,0,0,0,34,24,16,c);pl(I,[[12,24,10],[22,24,10],[22,24,13],[12,24,13]],HOLE);hole(I,34,7,8,.8,1.2);hole(I,34,12,8,.8,1.2);hole(I,34,17,8,.8,1.2);},
+  halfslot(I,c){box(I,0,0,0,34,24,18,c);box(I,-1,-1,13,36,26,6,c);pl(I,[[34,9,6],[34,15,6],[34,15,9],[34,9,9]],HOLE);}
+};
+const svgCache={};
+function art(shape,mat){
+  const k=shape+mat; if(svgCache[k]) return svgCache[k];
+  const I=[]; SH[shape](I,MAT[mat]);
+  let x0=1e9,y0=1e9,x1=-1e9,y1=-1e9;
+  I.forEach(it=>(it.p||it.ln).forEach(([x,y])=>{x0=Math.min(x0,x);y0=Math.min(y0,y);x1=Math.max(x1,x);y1=Math.max(y1,y)}));
+  const w=x1-x0,h=y1-y0,s=Math.max(w,h),pad=s*.08,cx=(x0+x1)/2,cy=(y0+y1)/2;
+  const vb=[cx-s/2-pad,cy-s/2-pad,s+pad*2,s+pad*2].map(n=>n.toFixed(2)).join(' ');
+  const pts=a=>a.map(p=>p[0].toFixed(2)+','+p[1].toFixed(2)).join(' ');
+  let out=`<ellipse cx="${cx.toFixed(2)}" cy="${(y1-.6).toFixed(2)}" rx="${(w*.42).toFixed(2)}" ry="${(w*.07).toFixed(2)}" fill="#000" opacity=".09"/>`;
+  I.forEach(it=>{ if(it.ln) out+=`<polyline points="${pts(it.ln)}" fill="none" stroke="rgba(40,40,36,.45)" stroke-width=".5" stroke-dasharray="1.4 1"/>`;
+    else out+=`<polygon points="${pts(it.p)}" fill="${it.f}"${it.o?` fill-opacity="${it.o}"`:''} stroke="rgba(30,34,31,.3)" stroke-width=".35" stroke-linejoin="round"/>`;});
+  return svgCache[k]=`<svg viewBox="${vb}" aria-hidden="true">${out}</svg>`;
+}
+
+
+/* extra iso shapes for products */
+Object.assign(SH,{
+  bigbox(I,c){box(I,0,0,0,32,24,22,c);pl(I,[[0,24,22],[32,24,22],[32,24,22.4],[0,24,22.4]],c.r);I.push({ln:F([[0,12,22],[32,12,22]])});},
+  mailerclosed(I,c){box(I,0,0,0,32,24,13,c);I.push({ln:F([[0,12,13],[32,12,13]])});},
+  tall(I,c){box(I,0,0,0,10,10,30,c);},
+  slim(I,c){box(I,0,0,0,7,7,26,c);},
+  med(I,c){box(I,0,0,0,16,12,22,c);},
+  flat(I,c){box(I,0,0,0,26,18,8,c);},
+  cube(I,c){box(I,0,0,0,18,18,18,c);},
+  wide(I,c){box(I,0,0,0,28,12,14,c);},
+  cards(I,c){box(I,0,0,0,24,16,.8,c);box(I,1.5,-1,.8,24,16,.8,c);box(I,3,-2,1.6,24,16,.8,c);},
+  clam(I,c){box(I,0,0,0,26,20,9,c);pl(I,[[0,20,9],[26,20,9],[26,20,11],[0,20,11]],c.l);}
+});
+const MAT2={...MAT,bagasse:{t:'#F1EADB',l:'#E3D9C4',r:'#D2C6AE',in:'#DDD2BC'}};
+Object.assign(MAT,MAT2);
+/* flat illustrations */
+const FLAT={
+  roundsticker:`<svg viewBox="0 0 100 100"><circle cx="50" cy="52" r="34" fill="#fff" stroke="rgba(0,0,0,.15)"/><circle cx="50" cy="52" r="22" fill="#2E6B54" opacity=".85"/><path d="M40 52h20M50 42v20" stroke="#fff" stroke-width="4" stroke-linecap="round"/></svg>`,
+  rectlabel:`<svg viewBox="0 0 100 100"><rect x="14" y="20" width="72" height="60" rx="4" fill="#fff" stroke="rgba(0,0,0,.15)"/><g fill="#E9E6DF"><rect x="20" y="26" width="28" height="22" rx="5"/><rect x="52" y="26" width="28" height="22" rx="5"/><rect x="20" y="52" width="28" height="22" rx="5"/><rect x="52" y="52" width="28" height="22" rx="5"/></g></svg>`,
+  bottle:`<svg viewBox="0 0 100 100"><rect x="42" y="8" width="16" height="12" rx="2" fill="#5B7A90"/><path d="M40 20h20v8c8 4 12 10 12 18v42a4 4 0 0 1-4 4H32a4 4 0 0 1-4-4V46c0-8 4-14 12-18z" fill="#DCEAF0" stroke="rgba(0,0,0,.15)"/><rect x="28" y="50" width="44" height="22" fill="#2E6B54"/><path d="M36 61h28" stroke="#fff" stroke-width="3"/></svg>`,
+  pplabel:`<svg viewBox="0 0 100 100"><rect x="30" y="14" width="40" height="16" rx="3" fill="#B9B4AA"/><rect x="26" y="30" width="48" height="56" rx="6" fill="#F6F4EF" stroke="rgba(0,0,0,.15)"/><rect x="30" y="44" width="40" height="28" rx="2" fill="rgba(160,200,215,.35)" stroke="rgba(0,0,0,.12)"/><path d="M38 58h24" stroke="#5B7A90" stroke-width="3"/></svg>`,
+  seal:`<svg viewBox="0 0 100 100"><path d="M14 40l36-18 36 18v34L50 92 14 74z" fill="#CCA778"/><path d="M14 40l36 18 36-18" fill="none" stroke="rgba(0,0,0,.18)"/><circle cx="50" cy="56" r="14" fill="#fff" stroke="rgba(0,0,0,.15)"/></svg>`,
+  hangtag:`<svg viewBox="0 0 100 100"><path d="M36 22h28l8 10v52H28V32z" fill="#FBFAF7" stroke="rgba(0,0,0,.18)"/><circle cx="50" cy="32" r="3.5" fill="#888"/><path d="M50 28C46 14 58 8 62 4" fill="none" stroke="#C0392B" stroke-width="1.5"/><path d="M38 54h24M38 62h16" stroke="#2E6B54" stroke-width="3"/></svg>`,
+  jar:`<svg viewBox="0 0 100 100"><rect x="24" y="26" width="52" height="14" rx="4" fill="#C9A24A"/><rect x="22" y="40" width="56" height="44" rx="10" fill="#F2F4F5" stroke="rgba(0,0,0,.15)"/><rect x="30" y="46" width="40" height="32" rx="6" fill="#fff" stroke="rgba(0,0,0,.08)"/></svg>`,
+  airbag:`<svg viewBox="0 0 100 100"><g fill="rgba(170,205,225,.55)" stroke="rgba(60,100,130,.35)"><rect x="18" y="16" width="12" height="70" rx="6"/><rect x="31" y="16" width="12" height="70" rx="6"/><rect x="44" y="16" width="12" height="70" rx="6"/><rect x="57" y="16" width="12" height="70" rx="6"/><rect x="70" y="16" width="12" height="70" rx="6"/></g></svg>`,
+  airless:`<svg viewBox="0 0 100 100"><rect x="42" y="8" width="16" height="10" rx="2" fill="#E8E8E6" stroke="rgba(0,0,0,.15)"/><rect x="38" y="18" width="24" height="14" rx="3" fill="#D9D9D6"/><rect x="36" y="32" width="28" height="58" rx="6" fill="#FFFFFF" stroke="rgba(0,0,0,.15)"/></svg>`,
+  dropper:`<svg viewBox="0 0 100 100"><rect x="44" y="6" width="12" height="16" rx="6" fill="#1F2421"/><rect x="40" y="22" width="20" height="12" rx="2" fill="#2B302D"/><path d="M42 34h16v6c8 3 12 8 12 14v32a4 4 0 0 1-4 4H34a4 4 0 0 1-4-4V54c0-6 4-11 12-14z" fill="#8A5A22" opacity=".9"/><rect x="34" y="58" width="32" height="18" fill="#F3EEE4" opacity=".9"/></svg>`,
+  graphic:`<svg viewBox="0 0 100 100"><rect x="16" y="20" width="68" height="56" rx="6" fill="#fff" stroke="rgba(0,0,0,.15)"/><circle cx="38" cy="42" r="10" fill="#2E6B54" opacity=".85"/><path d="M24 70l18-16 12 10 10-8 16 14z" fill="#CCA778"/></svg>`,
+  plate:`<svg viewBox="0 0 100 100"><rect x="18" y="16" width="64" height="68" rx="3" fill="#C9CFD3" stroke="rgba(0,0,0,.2)"/><rect x="26" y="26" width="48" height="48" fill="#B3BBC1"/><path d="M32 38h36M32 48h36M32 58h24" stroke="#7F8A92" stroke-width="3"/></svg>`
+};
+const ill=d=>d.iso?art(d.iso[0],d.iso[1]):FLAT[d.flat];
+
+
+const $=s=>document.querySelector(s);
+const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const money=n=>n.toLocaleString('th-TH',{minimumFractionDigits:2,maximumFractionDigits:2});
+const S={vat:true,use:'all',view:'rows',size:'C',multi:[['B',200],['C',300]]};
+const pv=n=>S.vat?n:n/1.07;
+
+/* ---------- real data: /products/corrugated (5 items) ---------- */
+const PRODS=[
+ {name:'กล่องไปรษณีย์ ฝาชน 3 ชั้น (ลอน B)',price:15.70,moq:100,lead:5,iso:['bigbox','kraft'],use:['ship'],structure:'กล่องฝาชน (RSC)',flute:'ลอน B · 3 ชั้น',surface:'คราฟท์',sizes:'11 เบอร์มาตรฐาน + กำหนดเอง',desc:'กล่องพัสดุขนาดมาตรฐานยอดนิยมสำหรับร้านค้าออนไลน์ เลือกพิมพ์โลโก้ 1–2 สีได้',real:true},
+ {name:'กล่องลูกฟูกผิวขาว ฝาชน พิมพ์โลโก้',price:33.83,moq:100,lead:5,iso:['bigbox','white'],use:['ship','brand'],structure:'กล่องฝาชน (RSC)',flute:null,surface:'ผิวขาว',sizes:null,desc:'ผิวกล่องสีขาว ให้โลโก้และสีแบรนด์สดกว่าผิวคราฟท์ เหมาะกับแบรนด์ที่อยากให้กล่องเป็นส่วนหนึ่งของประสบการณ์'},
+ {name:'ลังกระดาษขนย้าย 5 ชั้น (ลอน BC)',price:198.92,moq:100,lead:10,iso:['bigbox','kraft'],use:['move'],structure:'ลังกระดาษ',flute:'ลอน BC · 5 ชั้น',surface:'คราฟท์',sizes:null,desc:'ผนังสองชั้น รับน้ำหนักและซ้อนได้สูง สำหรับย้ายบ้าน ย้ายออฟฟิศ และเก็บสินค้าในคลัง'},
+ {name:'กล่องผลไม้ ฝาครอบ (ตัวกล่อง + ฝา)',price:123.06,moq:100,lead:5,iso:['halfslot','kraft'],use:['produce'],structure:'ฝาครอบ (ตัวกล่อง + ฝา)',flute:null,surface:'คราฟท์',sizes:null,desc:'ตัวกล่องและฝาแยกชิ้น เปิดตรวจสินค้าง่าย เหมาะกับผลไม้และสินค้าเกษตรที่ต้องขนส่ง'},
+ {name:'ถาดลูกฟูกเปิดฝาบน (ถาดผัก / ถาดไข่)',price:136.65,moq:100,lead:5,iso:['fruit','kraft'],use:['produce'],structure:'ถาดเปิดฝาบน',flute:null,surface:'คราฟท์',sizes:null,desc:'ถาดเปิดด้านบน หยิบและวางขายได้ทันที สำหรับผัก ไข่ และสินค้าที่ต้องโชว์หน้าร้าน'}
+].map((p,i)=>({...p,i}));
+const USES=[['all','ทั้งหมด'],['ship','ส่งพัสดุ / ร้านออนไลน์'],['brand','พิมพ์แบรนด์'],['move','ขนย้าย / คลังสินค้า'],['produce','ผลไม้และผัก']];
+const SIZES=[['00',140,97.5,60],['0',170,110,60],['0+4',170,110,100],['A',200,140,60],['2A',200,140,120],['B',250,170,90],['C',300,200,110],['C+8',300,200,190],['D',350,220,140],['E',400,240,170],['F',450,300,220]];
+const CATS=[['corrugated','กล่องกระดาษลูกฟูก','i-box'],['folding-carton','กล่องกระดาษแข็ง','c-carton'],['label-sticker','สติ๊กเกอร์และฉลาก','c-label'],['tag-sleeve','ป้ายแท็กและปลอก','c-sleeve'],['flexible-pouch','ซองบรรจุภัณฑ์','c-bag'],['standard-product','สินค้ามาตรฐาน','c-insert'],['rigid-box','กล่องแข็งและกล่องของขวัญ','c-rigid'],['paper-bag','ถุงกระดาษ','c-bag'],['food-packaging','บรรจุภัณฑ์อาหาร','c-carton'],['tube','บรรจุภัณฑ์ทรงกระบอก','c-rigid'],['custom-tape','เทปพิมพ์ลาย','c-label'],['pop-display','ชั้นวางสินค้า POP','c-insert'],['other','บรรจุภัณฑ์อื่น ๆ','c-all'],['service','บริการ','i-wrench']];
+
+function renderHead(){
+  const min=Math.min(...PRODS.map(p=>p.price)),leads=PRODS.map(p=>p.lead);
+  $('#facts').innerHTML=`<div class="fact"><small>เริ่มต้น${S.vat?' (รวม VAT)':' (ก่อน VAT)'}</small><b class="br">฿${money(pv(min))}/ชิ้น</b></div><div class="fact"><small>ขั้นต่ำ</small><b>100 ชิ้น</b></div><div class="fact"><small>ระยะผลิต</small><b>${Math.min(...leads)}–${Math.max(...leads)} วันทำการ</b></div><div class="fact"><small>สินค้าในหมวด</small><b>${PRODS.length} รายการ</b></div><div class="fact"><small>วิธีซื้อ</small><b style="color:var(--instant)">ราคาทันทีทุกรายการ</b></div>`;
+  $('#sibs').innerHTML=`<span>หมวดอื่น</span>`+CATS.map(([k,n,i])=>`<a href="#" ${k==='corrugated'?'aria-current="page"':''}><svg class="ico"><use href="#${i}"/></svg>${n}</a>`).join('');
+}
+function renderList(){
+  const counts=Object.fromEntries(USES.map(([k])=>[k,k==='all'?PRODS.length:PRODS.filter(p=>p.use.includes(k)).length]));
+  $('#uses').innerHTML=USES.map(([k,n])=>`<button type="button" data-use="${k}" aria-pressed="${S.use===k}">${n}<small>${counts[k]}</small></button>`).join('');
+  const L=PRODS.filter(p=>S.use==='all'||p.use.includes(S.use));
+  if(S.view==='rows'){
+    $('#plist').innerHTML=`<div class="rows">${L.map(p=>`<article class="prow"><div class="stage">${art(p.iso[0],p.iso[1])}<span class="badge instant"><svg class="ico"><use href="#i-bolt"/></svg>ราคาทันที</span></div>
+      <div class="mid"><h3><a href="#">${esc(p.name)}</a></h3><p class="desc">${p.desc}</p><div class="specs"><span>${p.structure}</span>${p.flute?`<span>${p.flute}</span>`:''}<span>ผิว${p.surface}</span>${p.sizes?`<span>${p.sizes}</span>`:''}</div></div>
+      <div class="right"><div class="pr"><small>เริ่มต้น</small><b>฿${money(pv(p.price))}</b><span class="q">/ชิ้น · ที่ 300 ชิ้น</span></div><div class="meta"><span><svg class="ico"><use href="#i-stack"/></svg>ขั้นต่ำ ${p.moq} ชิ้น</span><span><svg class="ico"><use href="#i-clock"/></svg>ผลิต ${p.lead} วันทำการ</span></div><a class="btn btn-primary" href="#">ปรับแต่งและดูราคา</a></div></article>`).join('')}</div>`;
+  }else{
+    const row=(label,f)=>`<tr><th scope="row">${label}</th>${L.map(p=>`<td>${f(p)}</td>`).join('')}</tr>`;
+    $('#plist').innerHTML=`<div class="tablewrap"><table class="cmpt"><thead><tr><th></th>${L.map(p=>`<th><div class="th">${art(p.iso[0],p.iso[1])}</div>${esc(p.name)}</th>`).join('')}</tr></thead><tbody>
+      ${row('ราคาเริ่มต้น'+(S.vat?' (รวม VAT)':''),p=>`<b>฿${money(pv(p.price))}</b><br><small style="color:var(--fg-3)">ที่ 300 ชิ้น</small>`)}
+      ${row('เหมาะกับ',p=>p.use.map(u=>USES.find(x=>x[0]===u)[1]).join(', '))}
+      ${row('โครงสร้าง',p=>p.structure)}${row('ลอน / ชั้น',p=>p.flute||'<span style="color:var(--fg-3)">ดูในหน้าสินค้า</span>')}${row('ผิว',p=>p.surface)}${row('ขนาด',p=>p.sizes||'<span style="color:var(--fg-3)">ดูในหน้าสินค้า</span>')}
+      ${row('ขั้นต่ำ',p=>p.moq+' ชิ้น')}${row('ระยะผลิต',p=>p.lead+' วันทำการ')}
+      ${row('',p=>`<a class="btn btn-primary" href="#" style="height:36px;font-size:13px">ดูราคา</a>`)}
+    </tbody></table></div>`;
+  }
+}
+$('#list').addEventListener('click',e=>{const u=e.target.closest('[data-use]');if(u){S.use=u.dataset.use;renderList();return}
+  const v=e.target.closest('[data-v]');if(v){S.view=v.dataset.v;document.querySelectorAll('.vtoggle button').forEach(b=>b.setAttribute('aria-pressed',b===v));renderList()}});
+
+/* ---------- size finder (real standard sizes of the postal box) ---------- */
+/* per-size price: real anchor = เบอร์ 00 (reference spec 97.5×140×60 มม.) ฿15.70 at 300 pcs incl. VAT; others are SAMPLE estimates scaled by board area */
+const boardArea=(L,W,H)=>(2*L+2*W+35)*(H+W);
+const A00=boardArea(140,97.5,60);
+const sizePrice=c=>{const [,L,W,H]=SIZES.find(s=>s[0]===c);return c==='00'?15.70:Math.round(15.70*Math.pow(boardArea(L,W,H)/A00,.9)*100)/100};
+SIZES.forEach(([c,L,W,H])=>{SH['sz_'+c]=(I,m)=>{box(I,0,0,0,L/10,W/10,H/10,m);I.push({ln:F([[0,W/20,H/10],[L/10,W/20,H/10]])})}});
+function fitFor(dims){
+  const need=dims.map(d=>d+0.5).sort((a,b)=>b-a);
+  const ok=SIZES.filter(([c,L,W,H])=>{const box=[L/10,W/10,H/10].sort((a,b)=>b-a);return box.every((v,i)=>v>=need[i])});
+  ok.sort((a,b)=>a[1]*a[2]*a[3]-b[1]*b[2]*b[3]);
+  return ok[0]||null;
+}
+function renderFinder(){
+  const v=['#d1','#d2','#d3'].map(s=>parseFloat($(s).value));
+  let html='';
+  if(v.some(n=>!(n>0))) html=`<div class="rec none"><div class="code">–</div><div><b>กรอกยาว กว้าง และสูงให้ครบ</b><small>เป็นตัวเลขหน่วยเซนติเมตร</small></div></div>`;
+  else{const f=fitFor(v);
+    if(f){const [c,L,W,H]=f;const util=Math.round(v.reduce((a,b)=>a*b,1)/((L/10)*(W/10)*(H/10))*100);S.size=c;
+      html=`<div class="rec"><div class="code">${c}</div><div style="flex:1"><b>แนะนำเบอร์ ${c} · ${W/10} × ${L/10} × ${H/10} ซม. · ฿${money(pv(sizePrice(c)))}/ชิ้น</b><small>สินค้าใช้พื้นที่ราว ${util}% ของกล่อง${util<45?' · ถ้าสินค้าขยับได้มาก ลองกำหนดขนาดเองเพื่อลดวัสดุกันกระแทก':''}</small><div class="util"><i style="width:${Math.min(100,util)}%"></i></div></div></div>`;}
+    else html=`<div class="rec none"><div class="code">ไม่มี</div><div><b>ไม่มีเบอร์มาตรฐานที่ใส่ได้</b><small>กำหนดกว้าง × ยาว × สูงเองได้ ระบบสร้างแผ่นคลี่และคำนวณราคาให้ทันที</small></div></div>`;}
+  $('#rec').innerHTML=html;renderChart();
+}
+function renderChart(){
+  const gap=26,maxH=220;let x=0;const parts=[];
+  SIZES.forEach(([c,L,W,H])=>{const on=c===S.size;parts.push(`<g data-size="${c}"><title>เบอร์ ${c}: ${W/10}×${L/10}×${H/10} ซม.</title><rect x="${x}" y="${maxH-H}" width="${L}" height="${H}" rx="4" fill="${on?'#2E7A5C':'#D5B489'}" stroke="${on?'#17573F':'rgba(0,0,0,.18)'}" stroke-width="${on?3:1.5}"></rect><text x="${x+L/2}" y="${maxH+66}" text-anchor="middle" class="${on?'on':''}">${c}</text><text x="${x+L/2}" y="${maxH+122}" text-anchor="middle" style="font-size:44px;font-weight:500" class="${on?'on':''}">฿${Math.round(pv(sizePrice(c)))}</text></g>`);x+=L+gap});
+  $('#chart').innerHTML=`<svg viewBox="-4 -4 ${x-gap+8} ${maxH+140}" role="img" aria-label="เทียบขนาดกล่องไปรษณีย์ทุกเบอร์"><line x1="-4" x2="${x-gap+4}" y1="${maxH}" y2="${maxH}" stroke="var(--line-2)" stroke-width="2"/>${parts.join('')}</svg>`;
+  $('#sizelist').innerHTML=SIZES.map(([c])=>`<button type="button" data-size="${c}" aria-pressed="${c===S.size}">${c}</button>`).join('');
+  const [c,L,W,H]=SIZES.find(s=>s[0]===S.size);
+  $('#selsize').innerHTML=`<div class="th">${art('sz_'+c,'kraft')}</div><div><b>เบอร์ ${c} · ฿${money(pv(sizePrice(c)))}/ชิ้น</b><small>${W/10} × ${L/10} × ${H/10} ซม. (กว้าง × ยาว × สูง) · ลอน B 3 ชั้น · ที่ 300 ชิ้น ${S.vat?'รวม VAT':'ก่อน VAT'}</small>${c==='00'?'':' <span class="samplechip">ราคาตัวอย่าง</span>'}</div><div class="acts"><a class="btn btn-primary" href="#">สั่งเบอร์ ${c}</a><button class="btn btn-ghost" type="button" data-addm="${c}">+ เพิ่มลงรายการหลายเบอร์</button><a class="btn btn-ghost" href="#"><svg class="ico" style="width:16px;height:16px"><use href="#i-down"/></svg>ดาวน์โหลดแบบกล่อง</a></div>`;
+}
+$('#dimForm').addEventListener('input',renderFinder);$('#dimForm').addEventListener('submit',e=>e.preventDefault());
+function addMulti(c){const r=S.multi.find(m=>m[0]===c);if(r){toast('เบอร์ '+c+' อยู่ในรายการแล้ว');return}S.multi.push([c,100]);S.multi.sort((a,b)=>SIZES.findIndex(s=>s[0]===a[0])-SIZES.findIndex(s=>s[0]===b[0]));renderMulti();toast('เพิ่มเบอร์ '+c+' แล้ว')}
+function renderMulti(){
+  let tot=0,qty=0;
+  $('#mrows').innerHTML=S.multi.length?S.multi.map(([c,q],i)=>{const [,L,W,H]=SIZES.find(s=>s[0]===c);const u=pv(sizePrice(c));tot+=u*q;qty+=q;
+    return `<tr><td class="code">${c}</td><td>${W/10} × ${L/10} × ${H/10}</td><td><span class="qstep"><button type="button" data-mq="${i}" data-d="-50" aria-label="ลด">−</button><input type="number" min="0" step="50" value="${q}" data-mi="${i}" aria-label="จำนวนเบอร์ ${c}"><button type="button" data-mq="${i}" data-d="50" aria-label="เพิ่ม">+</button></span></td><td class="r">฿${money(u)}</td><td class="r">฿${money(u*q)}</td><td><button class="xbtn" type="button" data-mx="${i}" aria-label="ลบเบอร์ ${c}"><svg class="ico"><use href="#i-x"/></svg></button></td></tr>${q<100?`<tr class="warn"><td></td><td colspan="5">ต่ำกว่า 100 ชิ้น · ใช้ได้ถ้าขั้นต่ำนับต่อคำสั่งซื้อ (รวม ${'${'}total${'}'} ชิ้น)</td></tr>`:''}`}).join(''):`<tr><td colspan="6" style="color:var(--fg-3)">ยังไม่มีเบอร์ในรายการ เลือกเบอร์ด้านบนแล้วกด "เพิ่มลงรายการหลายเบอร์"</td></tr>`;
+  $('#mrows').innerHTML=$('#mrows').innerHTML.split('${total}').join(qty.toLocaleString('th-TH'));
+  $('#msum').innerHTML=`${S.multi.length} เบอร์ · ${qty.toLocaleString('th-TH')} ชิ้น · รวม${S.vat?' (รวม VAT)':' (ก่อน VAT)'}<b>฿${money(tot)}</b> <span class="samplechip">ราคาตัวอย่าง</span>`;
+}
+$('#sizes').addEventListener('click',e=>{
+  const a=e.target.closest('[data-addm]');if(a){addMulti(a.dataset.addm);return}
+  const q=e.target.closest('[data-mq]');if(q){const r=S.multi[+q.dataset.mq];r[1]=Math.max(0,r[1]+ +q.dataset.d);renderMulti();return}
+  const x=e.target.closest('[data-mx]');if(x){S.multi.splice(+x.dataset.mx,1);renderMulti();return}
+  if(e.target.closest('#maddSel')){addMulti(S.size);return}
+  if(e.target.closest('#morder')){e.preventDefault();toast('ต้นแบบ: ส่งทุกเบอร์เข้าตะกร้าเป็นคำสั่งซื้อเดียว');return}
+  const s=e.target.closest('[data-size]');if(!s)return;S.size=s.dataset.size;renderChart()});
+$('#sizes').addEventListener('change',e=>{const i=e.target.dataset.mi;if(i==null)return;S.multi[+i][1]=Math.max(0,parseInt(e.target.value)||0);renderMulti()});
+
+/* ---------- flutes ---------- */
+const wave=(y,amp,period,w)=>{let d=`M0 ${y}`;for(let x=0;x<w;x+=period)d+=` q${period/4} ${-amp} ${period/2} 0 t${period/2} 0`;return d};
+const FL=[
+ {n:'ลอน B',t:'หนาราว 3 มม.',x:`<path d="M0 10h300M0 48h300" stroke="currentColor" stroke-width="2.5"/><path d="${wave(29,30,24,300)}" fill="none" stroke="var(--brand)" stroke-width="2"/>`,d:'สมดุลระหว่างความแข็งแรงและราคา ใช้กับกล่องพัสดุทั่วไป',m:[3,3,3],ex:'กล่องไปรษณีย์ ฝาชน 3 ชั้น'},
+ {n:'ลอน E',t:'หนาราว 1.5 มม.',x:`<path d="M0 20h300M0 38h300" stroke="currentColor" stroke-width="2.5"/><path d="${wave(29,14,11,300)}" fill="none" stroke="var(--brand)" stroke-width="1.6"/>`,d:'ผิวเรียบ พิมพ์ภาพคมกว่า พับง่าย เหมาะกับกล่องขนาดเล็กและกล่องที่เน้นความสวย',m:[2,5,4],ex:'ตัวเลือกวัสดุ KA125 ลอน E'},
+ {n:'ลอน BC',t:'หนาราว 6 มม. · 5 ชั้น',x:`<path d="M0 4h300M0 29h300M0 54h300" stroke="currentColor" stroke-width="2.5"/><path d="${wave(16.5,22,20,300)}" fill="none" stroke="var(--brand)" stroke-width="1.8"/><path d="${wave(41.5,22,26,300)}" fill="none" stroke="var(--brand)" stroke-width="1.8"/>`,d:'ผนังสองชั้น รับน้ำหนักและซ้อนได้สูง สำหรับลังขนย้ายและสินค้าหนัก',m:[5,2,2],ex:'ลังกระดาษขนย้าย 5 ชั้น'}];
+const meter=n=>`<i>${[1,2,3,4,5].map(k=>`<u class="${k<=n?'on':''}"></u>`).join('')}</i>`;
+$('#flList').innerHTML=FL.map(f=>`<div class="fl"><svg class="xs" viewBox="0 0 300 58" preserveAspectRatio="none" aria-hidden="true" style="color:var(--fg-2)">${f.x}</svg><h3>${f.n}<small>${f.t}</small></h3><p>${f.d}</p><div class="meter"><span>ความแข็งแรง</span>${meter(f.m[0])}<span>ความคมงานพิมพ์</span>${meter(f.m[1])}<span>ความคุ้มค่า</span>${meter(f.m[2])}</div><p style="font-size:12.5px;color:var(--fg-3)">ในหมวดนี้: ${f.ex}</p></div>`).join('');
+
+/* ---------- FAQ ---------- */
+const FAQ=[
+ ['เบอร์กล่อง 00, A, B, C คืออะไร?','เป็นขนาดมาตรฐานของกล่องไปรษณีย์ที่ร้านค้าออนไลน์ใช้กันทั่วไป เช่น เบอร์ C ขนาด 20 × 30 × 11 ซม. ดูครบทั้ง 11 เบอร์ได้ในส่วน "หาเบอร์กล่อง"'],
+ ['ลอน B กับลอน E ต่างกันอย่างไร?','ลอน B หนากว่า แข็งแรงกว่า เหมาะกับกล่องพัสดุทั่วไป ลอน E บางกว่า ผิวเรียบ พิมพ์ภาพคมกว่า เหมาะกับกล่องเล็กหรือกล่องที่เน้นความสวย'],
+ ['กล่อง 3 ชั้นกับ 5 ชั้นต่างกันอย่างไร?','3 ชั้นมีลอนหนึ่งชั้น ใช้กับพัสดุทั่วไป 5 ชั้น (เช่น ลอน BC) มีลอนสองชั้น รับน้ำหนักและซ้อนได้สูงกว่า เหมาะกับลังขนย้ายและสินค้าหนัก'],
+ ['กำหนดขนาดกล่องเองได้ไหม?','ได้ กำหนดกว้าง × ยาว × สูงเองได้ในหน้าปรับแต่ง ระบบสร้างแผ่นคลี่และคำนวณราคาให้ทันที'],
+ ['พิมพ์โลโก้บนกล่องได้แบบไหน?','กล่องไปรษณีย์เลือกพิมพ์สีดำหรือพิมพ์ 4 สี (CMYK) ได้ ถ้าต้องการให้สีแบรนด์สด เลือกกล่องลูกฟูกผิวขาว'],
+ ['สั่งขั้นต่ำและผลิตกี่วัน?','ทุกรายการในหมวดนี้สั่งขั้นต่ำ 100 ชิ้น ผลิต 5–10 วันทำการตามที่ระบุในแต่ละสินค้า'],
+ ['ราคารวม VAT และค่าส่งหรือยัง?','ราคารวม VAT 7% แล้ว แต่ยังไม่รวมค่าจัดส่ง ปิดสวิตช์ด้านบนเพื่อดูราคาก่อน VAT']];
+$('#faqList').innerHTML=FAQ.map(([q,a])=>`<details><summary>${q}<svg class="ico"><use href="#i-chev"/></svg></summary><p>${a}</p></details>`).join('');
+
+/* misc */
+$('#vat').addEventListener('change',e=>{S.vat=e.target.checked;renderHead();renderList();renderFinder();renderMulti()});
+let tt;function toast(m){const t=$('#toast');t.textContent=m;t.hidden=false;clearTimeout(tt);tt=setTimeout(()=>t.hidden=true,2000)}
+$('#chatBtn').addEventListener('click',e=>{e.stopPropagation();const p=$('#chatPop');p.hidden=!p.hidden;$('#chatBtn').setAttribute('aria-expanded',!p.hidden)});
+document.addEventListener('click',e=>{if(!e.target.closest('.chat'))$('#chatPop').hidden=true});
+const links=[...document.querySelectorAll('#secnav a')];
+const io=new IntersectionObserver(es=>{es.forEach(en=>{if(en.isIntersecting)links.forEach(l=>l.setAttribute('aria-current',l.getAttribute('href')==='#'+en.target.id))})},{rootMargin:'-40% 0px -55% 0px'});
+document.querySelectorAll('main section[id]').forEach(s=>io.observe(s));
+const dlg=$('#notes');$('#notesBtn').addEventListener('click',()=>dlg.showModal());$('#notesClose').addEventListener('click',()=>dlg.close());dlg.addEventListener('click',e=>{if(e.target===dlg)dlg.close()});
+renderHead();renderList();renderFinder();renderMulti();
+})();
+</script>
+
+</body>
+</html>
