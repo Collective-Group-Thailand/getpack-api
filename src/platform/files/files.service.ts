@@ -62,10 +62,18 @@ export interface PresignResult {
  * metadata → signed download after an authorisation check on the owning row, never on the key.
  * Unscanned or infected files are never served.
  */
+/** Whether a factory may store an upload of this purpose and size (D-436). */
+export type UploadAdmission = (
+  factoryId: bigint,
+  purpose: FilePurpose,
+  sizeBytes: number,
+) => Promise<{ accepted: boolean }>;
+
 @Injectable()
 export class FilesService {
   private readonly policies = new Map<AttachmentSubject, AttachmentAccessPolicy>();
   private readonly readers = new Map<string, FileReadPolicy>();
+  private admission: UploadAdmission | null = null;
 
   constructor(
     private readonly prisma: PrismaService,
@@ -80,6 +88,11 @@ export class FilesService {
 
   registerAttachmentPolicy(subject: AttachmentSubject, policy: AttachmentAccessPolicy): void {
     this.policies.set(subject, policy);
+  }
+
+  /** Storage metering (D-436) decides whether a factory's upload may be stored; set once at start-up. */
+  registerUploadAdmission(admission: UploadAdmission): void {
+    this.admission = admission;
   }
 
   /** A module whose rows reference files directly decides who else may read them (by the owning row). */
@@ -108,6 +121,12 @@ export class FilesService {
       });
     }
     const owner = await this.ownerOf(actor, input);
+    // D-436: an optional upload of a factory over its allowance waits while overage is not sold; legal and job
+    // files are always accepted, and nothing stored is ever deleted or locked.
+    if (owner.ownerFactoryId !== undefined && this.admission) {
+      const admitted = await this.admission(owner.ownerFactoryId, input.purpose, input.sizeBytes);
+      if (!admitted.accepted) throw new DomainException('storage.allowance_exceeded');
+    }
     const now = new Date();
     const expiresAt = new Date(now.getTime() + UPLOAD_URL_TTL_SECONDS * 1000);
 

@@ -4676,6 +4676,17 @@
           "type": "https://errors.getpack/specs.unit_not_accepted"
         }
       },
+      "problem.storage.allowance_exceeded": {
+        "summary": "storage.allowance_exceeded",
+        "value": {
+          "code": "storage.allowance_exceeded",
+          "detail": "บัญชีของคุณใช้พื้นที่ฟรีครบแล้ว เอกสารและไฟล์ของงานยังอัปโหลดได้ตามปกติ และไม่มีข้อมูลใดถูกลบ ส่วนรูปภาพ โลโก้ และไฟล์ออกแบบจะอัปโหลดได้อีกเมื่อมีพื้นที่ว่างหรือเพิ่มพื้นที่แล้ว",
+          "requestId": "6f1c2d8e-2c7b-4d0e-9d1c-3f1a2b3c4d5e",
+          "status": 422,
+          "title": "พื้นที่จัดเก็บเต็มแล้ว",
+          "type": "https://errors.getpack/storage.allowance_exceeded"
+        }
+      },
       "problem.structural_requests.invalid_transition": {
         "summary": "structural_requests.invalid_transition",
         "value": {
@@ -100135,6 +100146,290 @@
         ],
         "type": "object"
       },
+      "StorageAccountDto": {
+        "properties": {
+          "allowanceBytes": {
+            "example": 5368709120,
+            "type": [
+              "integer",
+              "null"
+            ]
+          },
+          "day": {
+            "description": "Snapshot day (Asia/Bangkok)",
+            "example": "2026-10-25",
+            "format": "date",
+            "type": "string"
+          },
+          "factoryCode": {
+            "example": "F0001",
+            "type": "string"
+          },
+          "factoryId": {
+            "example": "0192f3a0-7c1e-7d2a-9b1f-0000000f0001",
+            "format": "uuid",
+            "type": "string"
+          },
+          "factoryName": {
+            "example": "โรงพิมพ์ตัวอย่าง",
+            "type": "string"
+          },
+          "fileBytes": {
+            "example": 1598029824,
+            "type": "integer"
+          },
+          "records": {
+            "description": "Records counted, all types",
+            "example": 41877,
+            "type": "integer"
+          },
+          "usedBytes": {
+            "example": 1610612736,
+            "type": "integer"
+          },
+          "usedPct": {
+            "example": "30.0",
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "factoryId",
+          "factoryCode",
+          "factoryName",
+          "day",
+          "usedBytes",
+          "fileBytes",
+          "allowanceBytes",
+          "usedPct",
+          "records"
+        ],
+        "type": "object"
+      },
+      "StorageAccountType": {
+        "enum": [
+          "factory",
+          "partner"
+        ],
+        "type": "string"
+      },
+      "StorageChargeDto": {
+        "properties": {
+          "days": {
+            "description": "Days of the month counted",
+            "example": 31,
+            "type": "integer"
+          },
+          "month": {
+            "example": "2026-10",
+            "type": "string"
+          },
+          "overageAmount": {
+            "description": "THB; 0 while overage is not sold",
+            "example": "0.00",
+            "type": "string"
+          },
+          "overageGbMonths": {
+            "description": "Average use above the allowance, GB-months (three decimals)",
+            "example": "0.250",
+            "type": "string"
+          },
+          "packsAmount": {
+            "description": "THB, packs bought",
+            "example": "0.00",
+            "type": "string"
+          },
+          "total": {
+            "description": "THB, the invoice line (before VAT)",
+            "example": "0.00",
+            "type": "string"
+          }
+        },
+        "required": [
+          "month",
+          "days",
+          "overageGbMonths",
+          "overageAmount",
+          "packsAmount",
+          "total"
+        ],
+        "type": "object"
+      },
+      "StoragePackDto": {
+        "properties": {
+          "gb": {
+            "description": "Size in GB (decimal string)",
+            "example": "20",
+            "type": "string"
+          },
+          "key": {
+            "example": "plus-20",
+            "type": "string"
+          },
+          "monthlyPrice": {
+            "description": "Monthly price in THB (decimal string)",
+            "example": "49.00",
+            "type": "string"
+          }
+        },
+        "required": [
+          "key",
+          "gb",
+          "monthlyPrice"
+        ],
+        "type": "object"
+      },
+      "StorageQuotaLevel": {
+        "enum": [
+          "ok",
+          "warning",
+          "full",
+          "over"
+        ],
+        "type": "string"
+      },
+      "StorageRecordCountDto": {
+        "properties": {
+          "bytesEach": {
+            "description": "Counted size of one record (`storage.record_bytes`)",
+            "example": 2048,
+            "type": "integer"
+          },
+          "count": {
+            "example": 1203,
+            "type": "integer"
+          },
+          "type": {
+            "description": "Record type (D-436 counted records)",
+            "example": "sales_invoice",
+            "type": "string"
+          }
+        },
+        "required": [
+          "type",
+          "count",
+          "bytesEach"
+        ],
+        "type": "object"
+      },
+      "StorageUsageDto": {
+        "properties": {
+          "accountType": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/StorageAccountType"
+              }
+            ],
+            "example": "factory"
+          },
+          "allowanceBytes": {
+            "description": "Free allowance plus packs, bytes; null while no allowance is set for the account type",
+            "example": 5368709120,
+            "type": [
+              "integer",
+              "null"
+            ]
+          },
+          "asOf": {
+            "description": "When this was measured (Asia/Bangkok)",
+            "example": "2026-10-25T09:30:00+07:00",
+            "format": "date-time",
+            "type": "string"
+          },
+          "fileBytes": {
+            "description": "Live files the account owns, bytes",
+            "example": 1598029824,
+            "type": "integer"
+          },
+          "freeGb": {
+            "description": "Free allowance in GB (`storage.free_gb`)",
+            "example": "5",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "level": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/StorageQuotaLevel"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "example": "ok"
+          },
+          "noticeAtPercent": {
+            "description": "Usage percentages that send a notice",
+            "example": [
+              80,
+              100
+            ],
+            "items": {
+              "type": "number"
+            },
+            "type": "array"
+          },
+          "packs": {
+            "description": "Add-on packs offered (`storage.packs`)",
+            "items": {
+              "$ref": "#/components/schemas/StoragePackDto"
+            },
+            "type": "array"
+          },
+          "pricePerGbMonth": {
+            "description": "THB per GB-month above the allowance (`storage.price_per_gb_month`); null = overage not sold",
+            "example": null,
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "recordBytes": {
+            "description": "Records at their counted size, bytes",
+            "example": 12582912,
+            "type": "integer"
+          },
+          "records": {
+            "items": {
+              "$ref": "#/components/schemas/StorageRecordCountDto"
+            },
+            "type": "array"
+          },
+          "usedBytes": {
+            "description": "Files + counted records, bytes",
+            "example": 1610612736,
+            "type": "integer"
+          },
+          "usedPct": {
+            "description": "Used ÷ allowance in percent, one decimal",
+            "example": "30.0",
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "accountType",
+          "asOf",
+          "usedBytes",
+          "fileBytes",
+          "recordBytes",
+          "records",
+          "allowanceBytes",
+          "usedPct",
+          "level",
+          "freeGb",
+          "pricePerGbMonth",
+          "noticeAtPercent",
+          "packs"
+        ],
+        "type": "object"
+      },
       "StoreArticleCardDto": {
         "properties": {
           "categorySlugs": {
@@ -191092,7 +191387,7 @@
     },
     "/v1/admin/cms/articles": {
       "get": {
-        "description": "Filters, sort and `q` (free text over slug, titleTh, titleEn). Categories are set through `PUT …/categories`. Publishing stamps `publishedAt` once.\n\nImplements: D-005.",
+        "description": "Filters, sort and `q` (free text over slug, titleTh, titleEn). Categories are set through `PUT …/categories`. Publishing stamps `publishedAt` once. A public article is published only when each language passes the shared article rules (D-437, `validation.failed` otherwise): a title of at most 120 characters, an excerpt of 1–200 characters and at least one block of text.\n\nImplements: D-005.",
         "operationId": "admin.cmsArticles.list",
         "parameters": [
           {
@@ -191369,7 +191664,7 @@
         ]
       },
       "post": {
-        "description": "Audited (config) and published as `catalog.article.created`. Categories are set through `PUT …/categories`. Publishing stamps `publishedAt` once.\n\nImplements: D-005.\n\n**Files:** upload first — `admin.files.presign` → PUT the bytes to the returned URL → `…/actions/complete` — then send the `fileId` (contract §3).",
+        "description": "Audited (config) and published as `catalog.article.created`. Categories are set through `PUT …/categories`. Publishing stamps `publishedAt` once. A public article is published only when each language passes the shared article rules (D-437, `validation.failed` otherwise): a title of at most 120 characters, an excerpt of 1–200 characters and at least one block of text.\n\nImplements: D-005.\n\n**Files:** upload first — `admin.files.presign` → PUT the bytes to the returned URL → `…/actions/complete` — then send the `fileId` (contract §3).",
         "operationId": "admin.cmsArticles.create",
         "parameters": [
           {
@@ -191843,7 +192138,7 @@
         ]
       },
       "get": {
-        "description": "Returns the article and its ETag for a later update. Categories are set through `PUT …/categories`. Publishing stamps `publishedAt` once.\n\nImplements: D-005.",
+        "description": "Returns the article and its ETag for a later update. Categories are set through `PUT …/categories`. Publishing stamps `publishedAt` once. A public article is published only when each language passes the shared article rules (D-437, `validation.failed` otherwise): a title of at most 120 characters, an excerpt of 1–200 characters and at least one block of text.\n\nImplements: D-005.",
         "operationId": "admin.cmsArticles.get",
         "parameters": [
           {
@@ -192053,7 +192348,7 @@
         ]
       },
       "patch": {
-        "description": "Partial update guarded by `If-Match`. Rows are archived through `status`, never deleted (schema-design §1.6). Audited and published as `catalog.article.updated`. Categories are set through `PUT …/categories`. Publishing stamps `publishedAt` once.\n\nImplements: D-005.\n\n**Files:** upload first — `admin.files.presign` → PUT the bytes to the returned URL → `…/actions/complete` — then send the `fileId` (contract §3).",
+        "description": "Partial update guarded by `If-Match`. Rows are archived through `status`, never deleted (schema-design §1.6). Audited and published as `catalog.article.updated`. Categories are set through `PUT …/categories`. Publishing stamps `publishedAt` once. A public article is published only when each language passes the shared article rules (D-437, `validation.failed` otherwise): a title of at most 120 characters, an excerpt of 1–200 characters and at least one block of text.\n\nImplements: D-005.\n\n**Files:** upload first — `admin.files.presign` → PUT the bytes to the returned URL → `…/actions/complete` — then send the `fileId` (contract §3).",
         "operationId": "admin.cmsArticles.update",
         "parameters": [
           {
@@ -251214,7 +251509,7 @@
     },
     "/v1/admin/files/presign": {
       "post": {
-        "description": "Returns a presigned URL (or, for large files, multipart part URLs). PUT the bytes to S3, then call `…/actions/complete`. The purpose decides retention, accepted types and size (financial records ≥ 10 years).\n\nImplements: ADR-0003.",
+        "description": "Returns a presigned URL (or, for large files, multipart part URLs). PUT the bytes to S3, then call `…/actions/complete`. The purpose decides retention, accepted types and size (financial records ≥ 10 years). A factory over its storage allowance while overage is not sold may not add optional files (images, avatars, design assets — `storage.allowance_exceeded`); documents and job files are always accepted (D-436).\n\nImplements: ADR-0003, D-436.",
         "operationId": "admin.files.presign",
         "parameters": [
           {
@@ -251371,6 +251666,9 @@
                   "file.type_not_allowed": {
                     "$ref": "#/components/examples/problem.file.type_not_allowed"
                   },
+                  "storage.allowance_exceeded": {
+                    "$ref": "#/components/examples/problem.storage.allowance_exceeded"
+                  },
                   "validation.failed": {
                     "$ref": "#/components/examples/problem.validation.failed"
                   }
@@ -251380,7 +251678,7 @@
                 }
               }
             },
-            "description": "Problem: `file.too_large`, `file.type_not_allowed`, `validation.failed`",
+            "description": "Problem: `file.too_large`, `file.type_not_allowed`, `storage.allowance_exceeded`, `validation.failed`",
             "headers": {
               "X-Request-Id": {
                 "$ref": "#/components/headers/XRequestId"
@@ -332089,6 +332387,660 @@
         "summary": "Find a colleague",
         "tags": [
           "admin.users"
+        ]
+      }
+    },
+    "/v1/admin/storage/accounts": {
+      "get": {
+        "description": "The latest daily snapshot of each factory account (job at 03:10 Bangkok), largest first: files, records, counted total and the allowance in force that day. The allowance, price per GB-month, packs, counted record sizes and notice thresholds are the `storage.*` settings (D-436).\n\nImplements: D-436.",
+        "operationId": "admin.storage.listAccounts",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "page",
+            "required": false,
+            "schema": {
+              "default": 1,
+              "minimum": 1,
+              "type": "integer"
+            }
+          },
+          {
+            "in": "query",
+            "name": "perPage",
+            "required": false,
+            "schema": {
+              "default": 25,
+              "maximum": 100,
+              "minimum": 1,
+              "type": "integer"
+            }
+          },
+          {
+            "description": "Sort field; each endpoint validates it against its own allow-list.",
+            "in": "query",
+            "name": "sort",
+            "required": false,
+            "schema": {
+              "example": "createdAt",
+              "maxLength": 64,
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "order",
+            "required": false,
+            "schema": {
+              "$ref": "#/components/schemas/SortOrder"
+            }
+          },
+          {
+            "description": "Free-text search",
+            "in": "query",
+            "name": "q",
+            "required": false,
+            "schema": {
+              "maxLength": 200,
+              "type": "string"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "data": [
+                    {
+                      "allowanceBytes": 5368709120,
+                      "day": "2026-10-25",
+                      "factoryCode": "F0001",
+                      "factoryId": "0192f3a0-7c1e-7d2a-9b1f-0000000f0001",
+                      "factoryName": "โรงพิมพ์ตัวอย่าง",
+                      "fileBytes": 1598029824,
+                      "records": 41877,
+                      "usedBytes": 1610612736,
+                      "usedPct": "30.0"
+                    }
+                  ],
+                  "meta": {
+                    "page": 1,
+                    "perPage": 25,
+                    "total": 1
+                  }
+                },
+                "schema": {
+                  "properties": {
+                    "data": {
+                      "items": {
+                        "$ref": "#/components/schemas/StorageAccountDto"
+                      },
+                      "type": "array"
+                    },
+                    "meta": {
+                      "$ref": "#/components/schemas/PageMeta"
+                    }
+                  },
+                  "required": [
+                    "data",
+                    "meta"
+                  ],
+                  "type": "object"
+                }
+              }
+            },
+            "description": "One page of results",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.unauthenticated": {
+                    "$ref": "#/components/examples/problem.auth.unauthenticated"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.unauthenticated`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.forbidden": {
+                    "$ref": "#/components/examples/problem.auth.forbidden"
+                  },
+                  "auth.wrong_audience": {
+                    "$ref": "#/components/examples/problem.auth.wrong_audience"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.forbidden`, `auth.wrong_audience`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "validation.failed": {
+                    "$ref": "#/components/examples/problem.validation.failed"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `validation.failed`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "staff": []
+          }
+        ],
+        "summary": "Storage of every account",
+        "tags": [
+          "admin.storage"
+        ],
+        "x-required-permissions": [
+          "settings.read"
+        ]
+      }
+    },
+    "/v1/admin/storage/accounts/{factoryId}": {
+      "get": {
+        "description": "A factory’s storage measured now, as its own console shows it (D-436).\n\nImplements: D-436.",
+        "operationId": "admin.storage.getAccount",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "factoryId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "accountType": "factory",
+                  "allowanceBytes": 5368709120,
+                  "asOf": "2026-10-25T09:30:00+07:00",
+                  "fileBytes": 1598029824,
+                  "freeGb": "5",
+                  "level": "ok",
+                  "noticeAtPercent": [
+                    80,
+                    100
+                  ],
+                  "packs": [],
+                  "pricePerGbMonth": null,
+                  "recordBytes": 12582912,
+                  "records": [
+                    {
+                      "bytesEach": 2048,
+                      "count": 1203,
+                      "type": "sales_invoice"
+                    },
+                    {
+                      "bytesEach": 256,
+                      "count": 39520,
+                      "type": "stock_movement"
+                    }
+                  ],
+                  "usedBytes": 1610612736,
+                  "usedPct": "30.0"
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/StorageUsageDto"
+                }
+              }
+            },
+            "description": "Usage",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.unauthenticated": {
+                    "$ref": "#/components/examples/problem.auth.unauthenticated"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.unauthenticated`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.forbidden": {
+                    "$ref": "#/components/examples/problem.auth.forbidden"
+                  },
+                  "auth.wrong_audience": {
+                    "$ref": "#/components/examples/problem.auth.wrong_audience"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.forbidden`, `auth.wrong_audience`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "404": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.not_found": {
+                    "$ref": "#/components/examples/problem.http.not_found"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.not_found`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "validation.failed": {
+                    "$ref": "#/components/examples/problem.validation.failed"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `validation.failed`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "staff": []
+          }
+        ],
+        "summary": "One account’s storage now",
+        "tags": [
+          "admin.storage"
+        ],
+        "x-required-permissions": [
+          "settings.read"
+        ]
+      }
+    },
+    "/v1/admin/storage/accounts/{factoryId}/charges/{month}": {
+      "get": {
+        "description": "The storage line of an account’s monthly platform invoice (D-436): the daily snapshots above the allowance, averaged over the month and priced per GB-month with the settings in force on its last day (a day without a snapshot counts as the day before, days before the first as nothing stored). 404 when no allowance is set or the month has no snapshot.\n\nImplements: D-436.",
+        "operationId": "admin.storage.monthlyCharge",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "factoryId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "month",
+            "required": true,
+            "schema": {
+              "example": "2026-10",
+              "type": "string"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "days": 31,
+                  "month": "2026-10",
+                  "overageAmount": "0.00",
+                  "overageGbMonths": "0.000",
+                  "packsAmount": "0.00",
+                  "total": "0.00"
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/StorageChargeDto"
+                }
+              }
+            },
+            "description": "The charge",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.unauthenticated": {
+                    "$ref": "#/components/examples/problem.auth.unauthenticated"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.unauthenticated`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.forbidden": {
+                    "$ref": "#/components/examples/problem.auth.forbidden"
+                  },
+                  "auth.wrong_audience": {
+                    "$ref": "#/components/examples/problem.auth.wrong_audience"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.forbidden`, `auth.wrong_audience`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "404": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.not_found": {
+                    "$ref": "#/components/examples/problem.http.not_found"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.not_found`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "validation.failed": {
+                    "$ref": "#/components/examples/problem.validation.failed"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `validation.failed`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "staff": []
+          }
+        ],
+        "summary": "A month’s storage charge",
+        "tags": [
+          "admin.storage"
+        ],
+        "x-required-permissions": [
+          "settings.read"
         ]
       }
     },
@@ -470625,6 +471577,219 @@
         ]
       }
     },
+    "/v1/partner/factories/{factoryId}/storage": {
+      "get": {
+        "description": "What my factory stores in getpack — files it owns at their size and the records of its ERP at a counted size per type — against the free allowance (5 GB per account type, set by the platform admin), with the price per GB-month above it and the packs on offer. Over the allowance nothing is deleted or locked: documents the law requires are always produced and job files always accepted; only optional uploads (images, logos, design assets) wait while overage is not sold (D-436).\n\nImplements: D-436.",
+        "operationId": "partner.storage.get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "factoryId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "accountType": "factory",
+                  "allowanceBytes": 5368709120,
+                  "asOf": "2026-10-25T09:30:00+07:00",
+                  "fileBytes": 1598029824,
+                  "freeGb": "5",
+                  "level": "ok",
+                  "noticeAtPercent": [
+                    80,
+                    100
+                  ],
+                  "packs": [],
+                  "pricePerGbMonth": null,
+                  "recordBytes": 12582912,
+                  "records": [
+                    {
+                      "bytesEach": 2048,
+                      "count": 1203,
+                      "type": "sales_invoice"
+                    },
+                    {
+                      "bytesEach": 256,
+                      "count": 39520,
+                      "type": "stock_movement"
+                    }
+                  ],
+                  "usedBytes": 1610612736,
+                  "usedPct": "30.0"
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/StorageUsageDto"
+                }
+              }
+            },
+            "description": "Usage",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.unauthenticated": {
+                    "$ref": "#/components/examples/problem.auth.unauthenticated"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.unauthenticated`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.forbidden": {
+                    "$ref": "#/components/examples/problem.auth.forbidden"
+                  },
+                  "auth.wrong_audience": {
+                    "$ref": "#/components/examples/problem.auth.wrong_audience"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.forbidden`, `auth.wrong_audience`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "404": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.not_found": {
+                    "$ref": "#/components/examples/problem.http.not_found"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.not_found`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "validation.failed": {
+                    "$ref": "#/components/examples/problem.validation.failed"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `validation.failed`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "partner": []
+          }
+        ],
+        "summary": "My storage",
+        "tags": [
+          "partner.storage"
+        ],
+        "x-required-permissions": [
+          "factory_profile.read"
+        ]
+      }
+    },
     "/v1/partner/factories/{factoryId}/style-intakes": {
       "get": {
         "description": "Own factory only (D-044), newest first, with Prepress’s decision (D-272).\n\nImplements: D-272, D-242, D-044.",
@@ -472764,7 +473929,7 @@
     },
     "/v1/partner/files/presign": {
       "post": {
-        "description": "Returns a presigned URL (or, for large files, multipart part URLs). PUT the bytes to S3, then call `…/actions/complete`. The purpose decides retention, accepted types and size (financial records ≥ 10 years).\n\nImplements: ADR-0003.",
+        "description": "Returns a presigned URL (or, for large files, multipart part URLs). PUT the bytes to S3, then call `…/actions/complete`. The purpose decides retention, accepted types and size (financial records ≥ 10 years). A factory over its storage allowance while overage is not sold may not add optional files (images, avatars, design assets — `storage.allowance_exceeded`); documents and job files are always accepted (D-436).\n\nImplements: ADR-0003, D-436.",
         "operationId": "partner.files.presign",
         "parameters": [
           {
@@ -472921,6 +474086,9 @@
                   "file.type_not_allowed": {
                     "$ref": "#/components/examples/problem.file.type_not_allowed"
                   },
+                  "storage.allowance_exceeded": {
+                    "$ref": "#/components/examples/problem.storage.allowance_exceeded"
+                  },
                   "validation.failed": {
                     "$ref": "#/components/examples/problem.validation.failed"
                   }
@@ -472930,7 +474098,7 @@
                 }
               }
             },
-            "description": "Problem: `file.too_large`, `file.type_not_allowed`, `validation.failed`",
+            "description": "Problem: `file.too_large`, `file.type_not_allowed`, `storage.allowance_exceeded`, `validation.failed`",
             "headers": {
               "X-Request-Id": {
                 "$ref": "#/components/headers/XRequestId"
@@ -525312,7 +526480,7 @@
     },
     "/v1/store/files/presign": {
       "post": {
-        "description": "Returns a presigned URL (or, for large files, multipart part URLs). PUT the bytes to S3, then call `…/actions/complete`. The purpose decides retention, accepted types and size (financial records ≥ 10 years).\n\nImplements: ADR-0003.",
+        "description": "Returns a presigned URL (or, for large files, multipart part URLs). PUT the bytes to S3, then call `…/actions/complete`. The purpose decides retention, accepted types and size (financial records ≥ 10 years). A factory over its storage allowance while overage is not sold may not add optional files (images, avatars, design assets — `storage.allowance_exceeded`); documents and job files are always accepted (D-436).\n\nImplements: ADR-0003, D-436.",
         "operationId": "store.files.presign",
         "parameters": [
           {
@@ -525469,6 +526637,9 @@
                   "file.type_not_allowed": {
                     "$ref": "#/components/examples/problem.file.type_not_allowed"
                   },
+                  "storage.allowance_exceeded": {
+                    "$ref": "#/components/examples/problem.storage.allowance_exceeded"
+                  },
                   "validation.failed": {
                     "$ref": "#/components/examples/problem.validation.failed"
                   }
@@ -525478,7 +526649,7 @@
                 }
               }
             },
-            "description": "Problem: `file.too_large`, `file.type_not_allowed`, `validation.failed`",
+            "description": "Problem: `file.too_large`, `file.type_not_allowed`, `storage.allowance_exceeded`, `validation.failed`",
             "headers": {
               "X-Request-Id": {
                 "$ref": "#/components/headers/XRequestId"
@@ -568899,6 +570070,10 @@
       "name": "admin.shippingZones"
     },
     {
+      "description": "Storage of every factory account and the monthly storage charge; amounts are the `storage.*` settings (D-436).",
+      "name": "admin.storage"
+    },
+    {
       "description": "Structural design requests of customers (D-273): assign, quote through a service RFQ, deliver, approve, link to the published style, decline.",
       "name": "admin.structuralRequests"
     },
@@ -569257,6 +570432,10 @@
     {
       "description": "The own shipping payout card: read and accept or counter (D-013, D-042).",
       "name": "partner.shippingRates"
+    },
+    {
+      "description": "My factory’s storage against its free allowance — files and counted ERP records; nothing is deleted or locked for being over (D-436).",
+      "name": "partner.storage"
     },
     {
       "description": "The factory offers its dielines to the style library under the intake terms; Prepress decides (D-272).",

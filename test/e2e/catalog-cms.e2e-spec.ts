@@ -112,9 +112,35 @@ describe('CMS and geography admin (e2e, B2.1)', () => {
     ).toBe(1);
   });
 
+  it('publishes a public article only when it passes the shared article rules (D-437)', async () => {
+    const draft = await marketing
+      .post('/v1/admin/cms/articles', { slug: `e2e-rules-${run}`, titleTh: 'บทความไม่มีเนื้อหา' })
+      .expect(201);
+    const refused = await marketing
+      .patch(
+        `/v1/admin/cms/articles/${draft.body.id}`,
+        { status: 'published' },
+        draft.headers['etag'] as string,
+      )
+      .expect(422);
+    expect(refused.body.code).toBe('validation.failed');
+    const paths = (refused.body.errors as { path: string }[]).map((e) => e.path);
+    expect(paths).toEqual(expect.arrayContaining(['th.summary', 'th.sections']));
+  });
+
   it('stamps publishedAt on the first publication only', async () => {
     const article = await marketing
-      .post('/v1/admin/cms/articles', { slug: `e2e-article-${run}`, titleTh: 'บทความทดสอบ' })
+      .post('/v1/admin/cms/articles', {
+        slug: `e2e-article-${run}`,
+        titleTh: 'บทความทดสอบ',
+        excerptTh: 'สรุปสั้น ๆ ของบทความทดสอบ',
+        body: {
+          th: {
+            type: 'doc',
+            content: [{ type: 'paragraph', content: [{ type: 'text', text: 'เนื้อหาทดสอบ' }] }],
+          },
+        },
+      })
       .expect(201);
     expect(article.body.publishedAt).toBeNull();
     const published = await marketing

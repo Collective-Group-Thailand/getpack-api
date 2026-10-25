@@ -1,3 +1,4 @@
+import { type PerAccountType, type StoragePackSetting } from '@modules/storage/storage-settings';
 import { type RuleCatalogue } from '@modules/studio/print-rules';
 /**
  * Typed view of the settings the code reads (ADR-0005). Keys absent here can still be read as
@@ -50,6 +51,12 @@ export interface SettingValues {
   'e_tax.email_cc': string;
   'e_tax.subject_date_format': 'DDMMBBBB' | 'DDMMYYYY' | 'YYYYMMDD';
   'e_tax.email_retry': { backoffMinutes: number[] };
+  /** D-436 storage metering: per account type, null = not set (allowance) / not sold (price). */
+  'storage.free_gb': PerAccountType;
+  'storage.price_per_gb_month': PerAccountType;
+  'storage.packs': StoragePackSetting[];
+  'storage.record_bytes': Record<string, number>;
+  'storage.notice_at_percent': number[];
   'tax.rounding_mode': 'line' | 'document';
   'receivables.forfeited_deposit_policy': { forfeitPct: string };
   /** Not seeded: % of the open balance per days-overdue band (`fromDays` inclusive) for P30. */

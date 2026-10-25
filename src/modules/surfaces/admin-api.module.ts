@@ -47,6 +47,7 @@ import { REORDERS_ADMIN_CONTROLLERS } from '@modules/reorders/reorders.registry'
 import { REPORTS_ADMIN_CONTROLLERS } from '@modules/reports/reports.registry';
 import { SAMPLES_ADMIN_CONTROLLERS } from '@modules/samples/samples.registry';
 import { SHIPPING_ADMIN_CONTROLLERS } from '@modules/shipping/shipping.registry';
+import { STORAGE_ADMIN_CONTROLLERS } from '@modules/storage/storage.registry';
 import { STUDIO_ADMIN_CONTROLLERS } from '@modules/studio/studio.registry';
 import { STYLES_ADMIN_CONTROLLERS } from '@modules/styles/styles.registry';
 import { TAX_ADMIN_CONTROLLERS } from '@modules/tax/tax.registry';
@@ -125,6 +126,7 @@ import { SettingsAdminModule } from '@platform/settings/settings-admin.module';
     ...ORDERS_ADMIN_CONTROLLERS,
     ...CALL_OFFS_ADMIN_CONTROLLERS,
     ...REORDERS_ADMIN_CONTROLLERS,
+    ...STORAGE_ADMIN_CONTROLLERS,
     ...TOOLING_ADMIN_CONTROLLERS,
     ...PAYMENT_SCHEDULES_ADMIN_CONTROLLERS,
     ...PROMOTIONS_ADMIN_CONTROLLERS,

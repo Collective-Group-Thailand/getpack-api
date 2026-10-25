@@ -73,8 +73,10 @@ function filesController(surface: ZoneSurface): Type<unknown> {
       summary: 'Start an upload (presigned PUT)',
       description:
         'Returns a presigned URL (or, for large files, multipart part URLs). PUT the bytes to S3, then call ' +
-        '`…/actions/complete`. The purpose decides retention, accepted types and size (financial records ≥ 10 years).',
-      implements: ['ADR-0003'],
+        '`…/actions/complete`. The purpose decides retention, accepted types and size (financial records ≥ 10 years). ' +
+        'A factory over its storage allowance while overage is not sold may not add optional files (images, ' +
+        'avatars, design assets — `storage.allowance_exceeded`); documents and job files are always accepted (D-436).',
+      implements: ['ADR-0003', 'D-436'],
     })
     @ApiBody({
       type: PresignFileDto,
@@ -107,6 +109,7 @@ function filesController(surface: ZoneSurface): Type<unknown> {
       'validation.failed',
       'file.type_not_allowed',
       'file.too_large',
+      'storage.allowance_exceeded',
     )
     async presign(@CurrentActor() actor: Actor, @Body() body: PresignFileDto): Promise<PresignedUploadDto> {
       const result = await this.files.presign(actor, body);

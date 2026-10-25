@@ -745,6 +745,19 @@ const ROWS: Row[] = [
     'Factory ERP: the owner’s 07:40 summary to whoever reads insight (D-379)',
   ),
   F(
+    'storage.threshold_crossed',
+    ['in_app', 'line'],
+    {
+      th: 'ใช้พื้นที่จัดเก็บแล้ว {{payload.thresholdPct}}%',
+      en: 'Storage {{payload.thresholdPct}}% used',
+    },
+    {
+      th: 'บัญชีโรงงานของคุณใช้พื้นที่ {{payload.used}} จาก {{payload.allowance}} แล้ว ข้อมูลทั้งหมดยังอยู่ครบและเอกสารยังออกได้ตามปกติ ดูรายละเอียดได้ที่หน้าพื้นที่จัดเก็บ',
+      en: 'Your factory account uses {{payload.used}} of {{payload.allowance}}. All data stays and documents are still produced as usual; see the storage page for details',
+    },
+    'Storage: a factory account crossed a usage threshold of its allowance, once per crossing (D-436)',
+  ),
+  F(
     'factory_change_request.answered',
     ['in_app', 'email'],
     { th: 'ทีมพาร์ทเนอร์ตอบคำขอของคุณ', en: 'The Partner team answered your request' },

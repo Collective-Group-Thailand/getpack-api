@@ -16,6 +16,7 @@ import { PRODUCTION_PARTNER_CONTROLLERS } from '@modules/production/production.r
 import { QUOTES_PARTNER_CONTROLLERS } from '@modules/quotes/quotes.registry';
 import { SAMPLES_PARTNER_CONTROLLERS } from '@modules/samples/samples.registry';
 import { SHIPPING_PARTNER_CONTROLLERS } from '@modules/shipping/shipping.registry';
+import { STORAGE_PARTNER_CONTROLLERS } from '@modules/storage/storage.registry';
 import { STYLES_PARTNER_CONTROLLERS } from '@modules/styles/styles.registry';
 import { TOOLING_PARTNER_CONTROLLERS } from '@modules/tooling/tooling.registry';
 import { Module } from '@nestjs/common';
@@ -60,6 +61,7 @@ import { RealtimeModule } from '@platform/realtime/realtime.module';
     ...CLAIMS_PARTNER_CONTROLLERS,
     ...FACTORY_ERP_PARTNER_CONTROLLERS,
     ...DOCUMENTS_PARTNER_CONTROLLERS,
+    ...STORAGE_PARTNER_CONTROLLERS,
   ],
 })
 export class PartnerApiModule {}

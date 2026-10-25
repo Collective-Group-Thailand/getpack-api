@@ -54,6 +54,8 @@ export const ERROR_CODES = {
   'file.not_ready': HttpStatus.CONFLICT,
   'file.infected': HttpStatus.CONFLICT,
   'file.not_multipart': HttpStatus.CONFLICT,
+  /** D-436: an optional upload while the factory is over its allowance and overage is not sold. */
+  'storage.allowance_exceeded': HttpStatus.UNPROCESSABLE_ENTITY,
   'approval.no_matching_step': HttpStatus.UNPROCESSABLE_ENTITY,
   'approval.already_pending': HttpStatus.CONFLICT,
   'approval.not_pending': HttpStatus.CONFLICT,

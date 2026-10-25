@@ -39,6 +39,8 @@ const LINKS: Record<InboxSurface, Record<string, Link>> = {
     billing_statement: (id) => `/billing/${id}`,
     price_proposal: (id) => `/prices/proposals/${id}`,
     factory_change_request: () => '/requests',
+    // D-436: a storage notice opens the factory's storage page.
+    storage_notice: () => '/storage',
     // getpack Factory ERP alerts open what they are about (D-358).
     erp_alert: (_id, p) => {
       const id = typeof p['subjectId'] === 'string' ? p['subjectId'] : null;

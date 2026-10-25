@@ -285,6 +285,12 @@
       "detail": "Only a large upload sent in parts can be resumed; upload the file again."
     }
   },
+  "storage": {
+    "allowance_exceeded": {
+      "title": "Storage allowance reached",
+      "detail": "Your account has used its free storage. Documents and job files are still accepted and nothing is deleted; images, logos and design assets can be added again once space is freed or more storage is available."
+    }
+  },
   "catalog": {
     "code_taken": {
       "title": "Code already in use",

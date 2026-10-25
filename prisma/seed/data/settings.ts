@@ -5,6 +5,12 @@
  * Money and percentages are decimal strings (CLAUDE.md); percentages are in percent (10 = 10 %).
  */
 import { ADVISORY_RULE_SET_SCHEMA } from '../../../src/modules/advisory/rule-set';
+import {
+  DEFAULT_RECORD_BYTES,
+  FREE_GB_DEFAULT,
+  NOT_SET,
+  STORAGE_SETTING_SCHEMAS,
+} from '../../../src/modules/storage/storage-settings';
 import { HERO_PRESETS } from './hero-presets';
 import { INTAKE_TERMS_V1 } from './intake-terms';
 import { STUDIO_PRINT_RULES } from './studio';
@@ -379,6 +385,60 @@ export const SETTINGS: readonly SettingSeed[] = [
     decisions: ['D-033', 'D-020'],
     confirmation: 'pending_business',
     ownerRole: 'finance_manager',
+  },
+  // --- Storage-based pricing of factory and partner accounts (D-436); edited by the platform admin
+  {
+    key: 'storage.free_gb',
+    valueType: 'json',
+    value: FREE_GB_DEFAULT,
+    valueSchema: STORAGE_SETTING_SCHEMAS['storage.free_gb'],
+    description:
+      'D-436 free storage per account in GB, per account type ({"factory": "5", "partner": "5"}); files at their size plus ERP records at their counted size. null for a type = no allowance: usage is still recorded, nothing is held and no notice is sent',
+    decisions: ['D-436'],
+    ownerRole: 'superadmin',
+  },
+  {
+    key: 'storage.price_per_gb_month',
+    valueType: 'json',
+    value: NOT_SET,
+    valueSchema: STORAGE_SETTING_SCHEMAS['storage.price_per_gb_month'],
+    description:
+      'D-436 THB per GB-month above the allowance, per account type (decimal strings); null = overage not sold, and then only optional uploads (images, logos, design assets) wait — legal documents and job files are always stored. The storage line of the monthly platform invoice',
+    decisions: ['D-436'],
+    confirmation: 'pending_business',
+    ownerRole: 'superadmin',
+  },
+  {
+    key: 'storage.packs',
+    valueType: 'json',
+    value: [],
+    valueSchema: STORAGE_SETTING_SCHEMAS['storage.packs'],
+    description:
+      'D-436 add-on storage packs an account can buy ([{"key": "plus-20", "gb": "20", "monthlyPrice": "49.00"}]); none until the platform admin sets them',
+    decisions: ['D-436'],
+    confirmation: 'pending_business',
+    ownerRole: 'superadmin',
+  },
+  {
+    key: 'storage.record_bytes',
+    valueType: 'json',
+    value: DEFAULT_RECORD_BYTES,
+    valueSchema: STORAGE_SETTING_SCHEMAS['storage.record_bytes'],
+    description:
+      'D-436 counted size in bytes of one ERP record per type (sales_invoice, receipt, stock_movement…; `_default` for any other), so the storage bill is predictable and auditable without measuring the database',
+    decisions: ['D-436'],
+    confirmation: 'proposed',
+    ownerRole: 'superadmin',
+  },
+  {
+    key: 'storage.notice_at_percent',
+    valueType: 'json',
+    value: [80, 100],
+    valueSchema: STORAGE_SETTING_SCHEMAS['storage.notice_at_percent'],
+    description:
+      'D-436 usage of the allowance (percent) at which the account owner is told in the partner zone and on LINE — each once per crossing',
+    decisions: ['D-436'],
+    ownerRole: 'superadmin',
   },
   // --- e-Tax Invoice by Email (D-430); sending itself is the `e_tax.sending` flag
   {

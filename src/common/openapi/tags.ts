@@ -486,4 +486,9 @@ export const API_TAGS: Record<string, string> = {
     'Business calendars (D-161, D-209): the national holidays keyed in once a year and each factory’s closures.',
   'admin.ops':
     'Operational signals for launch monitoring (D-113): outbox, queues, webhooks, payouts, ledger postings and SLA breaches against their alert thresholds.',
+  // --- D-436 storage metering
+  'partner.storage':
+    'My factory’s storage against its free allowance — files and counted ERP records; nothing is deleted or locked for being over (D-436).',
+  'admin.storage':
+    'Storage of every factory account and the monthly storage charge; amounts are the `storage.*` settings (D-436).',
 };

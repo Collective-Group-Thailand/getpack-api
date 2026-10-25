@@ -5,7 +5,7 @@
 > (a new effective-dated version, audited — D-063) and signs item 5 of `docs/LAUNCH-CHECKLIST.md`. A *proposed* or
 > *pending* value is not a decision: it goes live only once its owner confirms it.
 
-**120 settings** — 68 confirmed · 22 proposed · 4 pending the CPA (⚖) · 2 pending the business · 24 defined without a value (not set until their owner sets them).
+**125 settings** — 70 confirmed · 23 proposed · 4 pending the CPA (⚖) · 4 pending the business · 24 defined without a value (not set until their owner sets them).
 
 ## Settings
 
@@ -113,6 +113,11 @@
 | `shipping.carton_spec` | `— (not set)` | not set | superadmin | D-013 | D-013 shipping carton used by the packing helper (legacy parcel logic: square footprint grid, stack height, weight limit); not seeded — no carton count until set |
 | `shipping.pallet_spec` | `— (not set)` | not set | superadmin | D-013 | D-013 pallet used to count cartons per pallet (no legacy rule exists); not seeded — no pallet count until set |
 | `shipping.target_margin_pct` | `— (not set)` | not set | superadmin | D-040, D-013 | D-040 group 5 target shipping margin: suggested factory payout = customer rate × (1 − margin); not seeded — no group-5 suggestion until set |
+| `storage.free_gb` | `{"factory":"5","partner":"5"}` | confirmed | superadmin | D-436 | D-436 free storage per account in GB, per account type ({"factory": "5", "partner": "5"}); files at their size plus ERP records at their counted size. null for a type = no allowance: usage is still recorded, nothing is held and no notice is sent |
+| `storage.notice_at_percent` | `[80,100]` | confirmed | superadmin | D-436 | D-436 usage of the allowance (percent) at which the account owner is told in the partner zone and on LINE — each once per crossing |
+| `storage.packs` | `[]` | pending_business | superadmin | D-436 | D-436 add-on storage packs an account can buy ([{"key": "plus-20", "gb": "20", "monthlyPrice": "49.00"}]); none until the platform admin sets them |
+| `storage.price_per_gb_month` | `{"factory":null,"partner":null}` | pending_business | superadmin | D-436 | D-436 THB per GB-month above the allowance, per account type (decimal strings); null = overage not sold, and then only optional uploads (images, logos, design assets) wait — legal documents and job files are always stored. The storage line of the monthly platform invoice |
+| `storage.record_bytes` | `{"_default":1024,"quotation":2048,"sales_order":2048,"delivery_note":2048,"sales_invoice":2048,"sales_note":2048,"receipt":2048,"billing_note":2048,"wht_certificate":2048,"purchase_order":2048,"goods_receipt":2048,"supplier_invoice":2048,"supplier_payment":1024,"production_order":2048,"quality_check":2048,"ncr":2048,"journal_entry":1024,"stock_movement":256,"item":1024,"trading_partner":1024,"document":1024}` | proposed | superadmin | D-436 | D-436 counted size in bytes of one ERP record per type (sales_invoice, receipt, stock_movement…; `_default` for any other), so the storage bill is predictable and auditable without measuring the database |
 | `storefront.support_channels` | `— (not set)` | not set | cs_lead | D-221, D-005 | D-221 getpack support contacts on the storefront (LINE OA id, phone, e-mail, opening hours); getpack’s own accounts (D-005) — not seeded, every field null until the CS Lead sets it |
 | `storefront.support_hours` | `— (not set)` | not set | cs_lead | D-309, D-221 | D-309 hours CS answers on the storefront (Asia/Bangkok): which days and the opening and closing time; not seeded — null until the CS Lead sets it |
 | `studio.funnel_targets` | `{"medianMinutesToCart":10,"artworkToCartPct":"25","preflightPassPct":"90","priceParityPct":"100"}` | confirmed | marketing | D-286 | D-286 studio launch targets of the spec §1: median minutes from studio start to first add-to-cart, % of sessions adding artwork that add to cart, % of studio print files passing preflight, % of studio orders whose checkout equals the studio price |

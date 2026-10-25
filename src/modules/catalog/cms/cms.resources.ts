@@ -44,6 +44,7 @@ import {
   VideoDto,
   VideoListQuery,
 } from './cms.dto';
+import { type CmsArticleInput, publishProblems } from './shared-article';
 
 const TS = '2026-09-25T10:00:00+07:00';
 const iso = (d: Date | null) => (d ? toBangkokIso(d) : null);
@@ -296,6 +297,24 @@ export const ARTICLE_EXAMPLE: ArticleDto = {
 const publishedAt = (status: string | undefined, current: Date | null) =>
   status === 'published' && current === null ? new Date() : undefined;
 
+/**
+ * D-437: a public article is published only when it passes the shared article rules (`@collective/content`): title
+ * ≤ 120 characters, an excerpt of 1–200 characters (the meta description and short answer), at least one section
+ * of text, per language. Drafts and the partner knowledge base (D-295) are not checked.
+ */
+function assertPublishable(article: CmsArticleInput & { status?: string; audience?: string }): void {
+  if (article.status !== 'published' || article.audience === 'partner') return;
+  const problems = publishProblems(article);
+  if (problems.length === 0) return;
+  throw new DomainException('validation.failed', {
+    errors: problems.map((message) => ({
+      path: message.split(':')[0] ?? 'article',
+      code: 'article',
+      message,
+    })),
+  });
+}
+
 export const articles = defineResource({
   key: 'article',
   path: 'articles',
@@ -304,7 +323,10 @@ export const articles = defineResource({
   label: 'article',
   labelPlural: 'articles',
   implements: CMS,
-  note: 'Categories are set through `PUT …/categories`. Publishing stamps `publishedAt` once.',
+  note:
+    'Categories are set through `PUT …/categories`. Publishing stamps `publishedAt` once. A public article is published ' +
+    'only when each language passes the shared article rules (D-437, `validation.failed` otherwise): a title of at ' +
+    'most 120 characters, an excerpt of 1–200 characters and at least one block of text.',
   read: 'cms.manage',
   manage: 'cms.manage',
   delegate: (tx) => tx.article,
@@ -323,21 +345,47 @@ export const articles = defineResource({
   },
   updateExample: { status: 'published' },
   toDto: articleDto,
-  createData: async (input: CreateArticleDto, refs) => ({
-    ...input,
-    body: (input.body ?? {}) as Prisma.InputJsonValue,
-    coverFileId: await refs.optionalFile(input.coverFileId, 'coverFileId'),
-    seoPageId: await refs.optional('seoPage', input.seoPageId, 'seoPageId'),
-    publishedAt: publishedAt(input.status, null),
-  }),
-  updateData: async (input: UpdateArticleDto, refs, current: ArticleRow) =>
-    compact({
+  createData: async (input: CreateArticleDto, refs) => {
+    assertPublishable({
+      slug: input.slug,
+      titleTh: input.titleTh,
+      titleEn: input.titleEn ?? null,
+      excerptTh: input.excerptTh ?? null,
+      excerptEn: input.excerptEn ?? null,
+      body: input.body ?? {},
+      publishedAt: null,
+      status: input.status,
+      audience: input.audience,
+    });
+    return {
+      ...input,
+      body: (input.body ?? {}) as Prisma.InputJsonValue,
+      coverFileId: await refs.optionalFile(input.coverFileId, 'coverFileId'),
+      seoPageId: await refs.optional('seoPage', input.seoPageId, 'seoPageId'),
+      publishedAt: publishedAt(input.status, null),
+    };
+  },
+  updateData: async (input: UpdateArticleDto, refs, current: ArticleRow) => {
+    assertPublishable({
+      slug: input.slug ?? current.slug,
+      titleTh: input.titleTh ?? current.titleTh,
+      titleEn: input.titleEn === undefined ? current.titleEn : input.titleEn,
+      excerptTh: input.excerptTh === undefined ? current.excerptTh : input.excerptTh,
+      excerptEn: input.excerptEn === undefined ? current.excerptEn : input.excerptEn,
+      body: input.body ?? (current.body as Record<string, unknown>),
+      publishedAt: current.publishedAt,
+      updatedAt: new Date(),
+      status: input.status ?? current.status,
+      audience: input.audience ?? current.audience,
+    });
+    return compact({
       ...input,
       body: input.body as Prisma.InputJsonValue | undefined,
       coverFileId: await refs.optionalFile(input.coverFileId, 'coverFileId'),
       seoPageId: await refs.optional('seoPage', input.seoPageId, 'seoPageId'),
       publishedAt: publishedAt(input.status, current.publishedAt),
-    }),
+    });
+  },
   where: (q: ArticleListQuery) =>
     compact({
       status: q.status,

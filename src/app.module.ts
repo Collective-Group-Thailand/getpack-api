@@ -61,6 +61,7 @@ import { RfqModule } from '@modules/rfq/rfq.module';
 import { RfqBasketsModule } from '@modules/rfq/rfq-baskets.module';
 import { SamplesModule } from '@modules/samples/samples.module';
 import { ShippingModule } from '@modules/shipping/shipping.module';
+import { StorageModule } from '@modules/storage/storage.module';
 import { StudioModule } from '@modules/studio/studio.module';
 import { StylesModule } from '@modules/styles/styles.module';
 import { SurfacesModule } from '@modules/surfaces/surfaces.module';
@@ -136,6 +137,7 @@ import { LoggerModule } from 'nestjs-pino';
     OrdersModule,
     ToolingModule,
     ReordersModule,
+    StorageModule,
     LaunchpadModule,
     AssistantModule,
     AssistantApiModule,

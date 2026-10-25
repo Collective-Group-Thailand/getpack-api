@@ -33,6 +33,7 @@ const DOMAINS: Record<string, { th: string; en: string }> = {
   report_run: { th: 'รายงาน', en: 'Report' },
   erp_alert: { th: 'ระบบโรงงาน', en: 'Factory ERP' },
   erp_daily: { th: 'สรุปโรงงานประจำวัน', en: 'Factory daily summary' },
+  storage: { th: 'พื้นที่จัดเก็บ', en: 'Storage' },
   sales_agent_application: { th: 'สมัครตัวแทนขาย', en: 'Agent application' },
   sales_agent_lead: { th: 'ผู้มุ่งหวัง', en: 'Lead' },
   sales_agent_statement: { th: 'ค่าตอบแทนตัวแทน', en: 'Agent commission' },
