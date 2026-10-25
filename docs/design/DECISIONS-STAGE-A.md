@@ -67,3 +67,19 @@ Until answered: hide the dependent element, never use sample data (GLOBAL-RULES 
     number of calls and every spec priced.
 - A1 scope: sweep **all** customer-facing text (locale files, components, metadata, JSON-LD, emails) for
   "โรงงาน"/factory wording, not only the footer, using the wording of GLOBAL-RULES §1.
+
+---
+
+## 7. Stage A API decisions
+
+Decided by the product owner after the Stage A API review (`STAGE-A-REPORT-API.md`).
+
+| Topic | Decision |
+|---|---|
+| D-441 (default spec) | **Confirmed.** Where a product has a reference configuration, it is the configurator's default spec and overrides the admins' per-option default flags. |
+| D-442 (confidentiality leftovers) | **Confirmed**: getpack as carrier sender, metadata stripping on customer-facing files, anonymised production copies of originals. The product owner reviews the details in the report. |
+| VAT on the design fee | **Bug.** The design fee's VAT is missing from `vatAmount`. Fix in **Stage B** together with the shared VAT helper (GLOBAL-RULES §5); no change before then. |
+| VAT rounding rule (pending accountant confirmation) | Round each taxable line **ex-VAT** to 2 decimals; sum all taxable lines (goods, design fee, shipping charged by getpack); VAT = **7 % of that sum, rounded half-up to 2 decimals**. Implement in Stage B with the shared VAT helper. |
+| Carrier pickup at the factory | **Deferred** until a carrier is enabled; carriers stay switched off. |
+| Return address (`entity.return_address`) | The product owner enters it in settings. Bookings stay refused until then. |
+| Customer file access | **Stage B:** role-based access to customer files (not every staff role) plus an access audit log of every download. |
