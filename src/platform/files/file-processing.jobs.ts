@@ -1,12 +1,12 @@
 import { createHash } from 'node:crypto';
 import { type Readable } from 'node:stream';
 
+import { OBJECT_STORAGE, type ObjectStorage } from '@collective/integrations/storage';
+import { VIRUS_SCANNER, type VirusScanner } from '@collective/integrations/virus-scan';
 import { systemActor } from '@common/context/actor';
 import { bytes } from '@common/crypto/hashing';
 import { PrismaService } from '@database/prisma.service';
 import { type FileObject } from '@generated/prisma/client';
-import { OBJECT_STORAGE, type ObjectStorage } from '@integrations/s3/object-storage.port';
-import { VIRUS_SCANNER, type VirusScanner } from '@integrations/virus-scan/virus-scanner.port';
 import { Inject, Injectable, Logger } from '@nestjs/common';
 import { AuditService } from '@platform/audit/audit.service';
 import { DomainEvents } from '@platform/domain-events/domain-events.service';

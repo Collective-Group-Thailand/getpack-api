@@ -1,12 +1,30 @@
 name: Setup
-description: Node 24 + pnpm with cache, frozen install (generates the Prisma client).
+description: Node 24 + pnpm with cache, collective-shared built beside the repo, frozen install (generates the Prisma client).
+inputs:
+  collective-shared-ref:
+    description: Git ref of collective-shared matching package.json (link:../../collective-shared/packages/*, D-435)
+    default: main
+  collective-shared-token:
+    description: Token with read access to Collective-Group-Thailand/collective-shared (a private repository)
+    required: true
 runs:
   using: composite
   steps:
+    - name: Check out collective-shared two levels up (link:../../collective-shared/packages/*, D-435)
+      shell: bash
+      env:
+        TOKEN: ${{ inputs.collective-shared-token }}
+        REF: ${{ inputs.collective-shared-ref }}
+      run: |
+        git clone --depth 1 --branch "$REF" "https://x-access-token:${TOKEN}@github.com/Collective-Group-Thailand/collective-shared.git" ../../collective-shared
     - uses: pnpm/action-setup@v4
     - uses: actions/setup-node@v4
       with:
         node-version-file: .nvmrc
         cache: pnpm
+    - name: Build collective-shared (its packages are linked, so they must be built before the install)
+      shell: bash
+      working-directory: ../../collective-shared
+      run: pnpm install --frozen-lockfile && pnpm build
     - run: pnpm install --frozen-lockfile
       shell: bash

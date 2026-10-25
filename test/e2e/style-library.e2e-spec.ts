@@ -1,8 +1,8 @@
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 
-import { type FakeObjectStorage } from '@integrations/s3/fake-object-storage';
-import { OBJECT_STORAGE } from '@integrations/s3/object-storage.port';
+import { OBJECT_STORAGE } from '@collective/integrations/storage';
+import { type FakeObjectStorage } from '@integrations/storage/fake-object-storage';
 import { envelopeFromRow } from '@platform/domain-events/domain-event';
 import { FileProcessingJobs } from '@platform/files/file-processing.jobs';
 import request from 'supertest';

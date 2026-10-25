@@ -1,7 +1,7 @@
 import { randomUUID } from 'node:crypto';
 
-import { type FakeObjectStorage } from '@integrations/s3/fake-object-storage';
-import { OBJECT_STORAGE } from '@integrations/s3/object-storage.port';
+import { OBJECT_STORAGE } from '@collective/integrations/storage';
+import { type FakeObjectStorage } from '@integrations/storage/fake-object-storage';
 import { JourneysService } from '@modules/analytics/journeys.service';
 import { AnalyticsRollupService } from '@modules/analytics/rollups.service';
 import ExcelJS from 'exceljs';

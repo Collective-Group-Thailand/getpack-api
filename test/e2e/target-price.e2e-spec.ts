@@ -1,9 +1,8 @@
 import { randomUUID } from 'node:crypto';
 
+import { type FakeSmsSender, SMS_SENDER } from '@collective/integrations/sms';
 import { bangkokDate } from '@common/time/bangkok';
 import { PrismaService } from '@database/prisma.service';
-import { type FakeSmsSender } from '@integrations/sms/fake-sms-sender';
-import { SMS_SENDER } from '@integrations/sms/sms-sender.port';
 import { ProspectusService } from '@modules/analytics/prospectus.service';
 import { QuoteOutcomesService } from '@modules/quotes/levers/quote-outcomes.service';
 import { SavedQuotesService } from '@modules/quotes/saved-quotes.service';

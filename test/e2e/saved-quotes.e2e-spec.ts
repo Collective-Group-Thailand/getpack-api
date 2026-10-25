@@ -1,8 +1,6 @@
+import { type FakePdfRenderer, PDF_RENDERER } from '@collective/integrations/pdf';
+import { type FakeSmsSender, SMS_SENDER } from '@collective/integrations/sms';
 import { PrismaService } from '@database/prisma.service';
-import { type FakePdfRenderer } from '@integrations/pdf/fake-pdf-renderer';
-import { PDF_RENDERER } from '@integrations/pdf/pdf-renderer.port';
-import { type FakeSmsSender } from '@integrations/sms/fake-sms-sender';
-import { SMS_SENDER } from '@integrations/sms/sms-sender.port';
 import { QUOTE_REPRICER, type QuoteRepricer } from '@modules/partners/pricing/quote-repricer.port';
 import { QuotePdfService } from '@modules/quotes/quote-pdf.service';
 import { SavedQuotesService } from '@modules/quotes/saved-quotes.service';

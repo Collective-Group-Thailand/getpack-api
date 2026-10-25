@@ -1,5 +1,40 @@
+import { setIntegrationsLogger } from '@collective/integrations';
+import { EMAIL_SENDER, FakeEmailSender, SesEmailSender } from '@collective/integrations/email';
+import {
+  FakeFirebaseVerifier,
+  FakeLineVerifier,
+  FIREBASE_VERIFIER,
+  JoseFirebaseVerifier,
+  LINE_VERIFIER,
+  LineLoginVerifier,
+} from '@collective/integrations/identity';
+import {
+  FakeScbGateway,
+  FakeSlipVerifier,
+  FakeTwoC2PGateway,
+  SCB_GATEWAY,
+  ScbAdapter,
+  SLIP_VERIFIER,
+  Slip2GoAdapter,
+  TWOC2P_GATEWAY,
+  TwoC2PAdapter,
+} from '@collective/integrations/payments/gateways';
+import { FakePdfRenderer, PDF_RENDERER, PuppeteerPdfRenderer } from '@collective/integrations/pdf';
+import { AwsSecretsProvider, FakeSecretsProvider, SECRETS_PROVIDER } from '@collective/integrations/secrets';
+import { FakeSmsSender, SMS_SENDER, ThaiBulkSmsSender } from '@collective/integrations/sms';
+import { OBJECT_STORAGE, type ObjectStorage, S3ObjectStorage } from '@collective/integrations/storage';
+import { FakeTeamsWebhook, TEAMS_WEBHOOK, TeamsWebhookClient } from '@collective/integrations/teams';
+import {
+  ClamdScanner,
+  ExternalScanPending,
+  FakeVirusScanner,
+  VIRUS_SCANNER,
+} from '@collective/integrations/virus-scan';
+import { FakeWebPush, VapidWebPush, WEB_PUSH } from '@collective/integrations/web-push';
+import { FakeWebhookSender, HttpWebhookSender, WEBHOOK_SENDER } from '@collective/integrations/webhooks';
 import { AppConfig } from '@config/app-config';
-import { Global, Module } from '@nestjs/common';
+import { FakeObjectStorage } from '@integrations/storage/fake-object-storage';
+import { Global, Logger, Module } from '@nestjs/common';
 
 import { CARRIER_ADAPTERS, type CarrierAdapter } from './carriers/carrier-adapter.port';
 import { DelivereeAdapter } from './carriers/deliveree.adapter';
@@ -8,53 +43,20 @@ import { FlashExpressAdapter } from './carriers/flash-express.adapter';
 import { DIELINE_ENGINE } from './dieline/dieline-engine.port';
 import { FakeDielineEngine } from './dieline/fake-dieline.engine';
 import { GetpackDielineEngine } from './dieline/getpack-dieline.engine';
-import { EMAIL_SENDER } from './email/email-sender.port';
-import { FakeEmailSender } from './email/fake-email-sender';
-import { SesEmailSender } from './email/ses-email-sender';
-import { FakeFirebaseVerifier, FakeLineVerifier } from './identity/fake-identity-verifiers';
-import { JoseFirebaseVerifier } from './identity/firebase-verifier';
-import { FIREBASE_VERIFIER, LINE_VERIFIER } from './identity/identity-verifier.port';
-import { LineLoginVerifier } from './identity/line-verifier';
 import { FakeLineMessaging } from './line-messaging/fake-line-messaging';
 import { LINE_MESSAGING } from './line-messaging/line-messaging.port';
 import { LineMessagingClient } from './line-messaging/line-messaging-client';
 import { FakeIndexSource } from './material-price-index/fake-index-source';
 import { ManualIndexSource } from './material-price-index/manual-index-source';
 import { MATERIAL_PRICE_INDEX } from './material-price-index/material-price-index.port';
-import { FakeScbGateway, FakeSlipVerifier, FakeTwoC2PGateway } from './payments/fake-payment-gateways';
-import { SCB_GATEWAY, SLIP_VERIFIER, TWOC2P_GATEWAY } from './payments/payment-gateways.port';
-import { ScbAdapter } from './payments/scb.adapter';
-import { Slip2GoAdapter } from './payments/slip2go.adapter';
-import { TwoC2PAdapter } from './payments/twoc2p.adapter';
-import { FakePdfRenderer } from './pdf/fake-pdf-renderer';
-import { PDF_RENDERER } from './pdf/pdf-renderer.port';
-import { PuppeteerPdfRenderer } from './pdf/puppeteer-pdf-renderer';
-import { FakeObjectStorage } from './s3/fake-object-storage';
-import { OBJECT_STORAGE, type ObjectStorage } from './s3/object-storage.port';
-import { S3ObjectStorage } from './s3/s3-object-storage';
-import { AwsSecretsProvider } from './secrets/aws-secrets.provider';
-import { FakeSecretsProvider } from './secrets/fake-secrets.provider';
-import { SECRETS_PROVIDER } from './secrets/secrets.port';
-import { FakeSmsSender } from './sms/fake-sms-sender';
-import { SMS_SENDER } from './sms/sms-sender.port';
-import { ThaiBulkSmsSender } from './sms/thaibulksms-sender';
-import { FakeTeamsWebhook } from './teams/fake-teams';
-import { TEAMS_WEBHOOK } from './teams/teams.port';
-import { TeamsWebhookClient } from './teams/teams-webhook';
-import { ClamdScanner } from './virus-scan/clamd-scanner';
-import { ExternalScanPending } from './virus-scan/external-scan-pending';
-import { FakeVirusScanner } from './virus-scan/fake-virus-scanner';
-import { VIRUS_SCANNER } from './virus-scan/virus-scanner.port';
-import { FakeWebPush } from './web-push/fake-web-push';
-import { VapidWebPush } from './web-push/vapid-web-push';
-import { WEB_PUSH } from './web-push/web-push.port';
-import { FakeWebhookSender } from './webhooks-out/fake-webhook-sender';
-import { HttpWebhookSender } from './webhooks-out/http-webhook-sender';
-import { WEBHOOK_SENDER } from './webhooks-out/webhook-sender.port';
 
 /**
  * Binds each provider port to its real adapter or its fake (`INTEGRATIONS_MODE`).
  * New providers (SES, SCB, 2C2P, LINE…) are added here by the deliverable that needs them.
+ *
+ * Ports, adapters and fakes come from `@collective/integrations` (D-435) except getpack's own:
+ * carriers, dieline, material price index, bank files, and — until collective-shared 0.2 — the
+ * LINE messaging client (rich menus) and the on-disk fake object storage.
  */
 @Global()
 @Module({
@@ -276,4 +278,9 @@ import { WEBHOOK_SENDER } from './webhooks-out/webhook-sender.port';
     DIELINE_ENGINE,
   ],
 })
-export class IntegrationsModule {}
+export class IntegrationsModule {
+  constructor() {
+    // The shared adapters (@collective/integrations, D-435) log through Nest's logger.
+    setIntegrationsLogger(new Logger('Integrations'));
+  }
+}

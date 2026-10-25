@@ -1,8 +1,8 @@
+import { OBJECT_STORAGE, type ObjectStorage } from '@collective/integrations/storage';
 import { type UserActor } from '@common/context/actor';
 import { DomainException } from '@common/errors/domain.exception';
 import { bangkokDate } from '@common/time/bangkok';
 import { PrismaService } from '@database/prisma.service';
-import { OBJECT_STORAGE, type ObjectStorage } from '@integrations/s3/object-storage.port';
 import { PermissionResolver } from '@modules/iam/permission-resolver.service';
 import { Inject, Injectable } from '@nestjs/common';
 import { AuditService } from '@platform/audit/audit.service';

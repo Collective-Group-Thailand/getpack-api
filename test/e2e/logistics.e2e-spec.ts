@@ -1,8 +1,7 @@
 import { randomUUID } from 'node:crypto';
 
+import { type FakePdfRenderer, PDF_RENDERER } from '@collective/integrations/pdf';
 import { bangkokDate } from '@common/time/bangkok';
-import { type FakePdfRenderer } from '@integrations/pdf/fake-pdf-renderer';
-import { PDF_RENDERER } from '@integrations/pdf/pdf-renderer.port';
 import { DeliveryService } from '@modules/logistics/delivery.service';
 import { ProductionOversightService } from '@modules/production/production-oversight.service';
 import request from 'supertest';

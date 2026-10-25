@@ -1,8 +1,7 @@
 import { randomUUID } from 'node:crypto';
 
+import { type FakeSmsSender, SMS_SENDER } from '@collective/integrations/sms';
 import { PrismaService } from '@database/prisma.service';
-import { type FakeSmsSender } from '@integrations/sms/fake-sms-sender';
-import { SMS_SENDER } from '@integrations/sms/sms-sender.port';
 import { PasswordService } from '@modules/auth/password.service';
 import { type INestApplication } from '@nestjs/common';
 import { Test } from '@nestjs/testing';

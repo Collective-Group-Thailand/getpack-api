@@ -1,7 +1,11 @@
 import { randomUUID } from 'node:crypto';
 
-import { type FakeScbGateway, type FakeTwoC2PGateway } from '@integrations/payments/fake-payment-gateways';
-import { SCB_GATEWAY, TWOC2P_GATEWAY } from '@integrations/payments/payment-gateways.port';
+import {
+  type FakeScbGateway,
+  type FakeTwoC2PGateway,
+  SCB_GATEWAY,
+  TWOC2P_GATEWAY,
+} from '@collective/integrations/payments/gateways';
 import { RefundsService } from '@modules/payments/refunds.service';
 import { envelopeFromRow } from '@platform/domain-events/domain-event';
 import request from 'supertest';

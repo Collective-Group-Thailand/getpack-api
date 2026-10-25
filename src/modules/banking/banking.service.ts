@@ -1,5 +1,6 @@
 import { createHash, randomUUID } from 'node:crypto';
 
+import { OBJECT_STORAGE, type ObjectStorage } from '@collective/integrations/storage';
 import { systemActor, type UserActor } from '@common/context/actor';
 import { DomainException } from '@common/errors/domain.exception';
 import { dateOnly, dayOf, isDay } from '@common/ledger-core/dates';
@@ -8,7 +9,6 @@ import { bangkokDate } from '@common/time/bangkok';
 import { PrismaService, type Tx } from '@database/prisma.service';
 import { type BankMatchTarget, type BankStatementLine, type Prisma } from '@generated/prisma/client';
 import { bankFileAdapter, BankFileError, type StatementRow } from '@integrations/bank-files/bank-files';
-import { OBJECT_STORAGE, type ObjectStorage } from '@integrations/s3/object-storage.port';
 import { PaymentsService } from '@modules/payments/payments.service';
 import { readObject } from '@modules/payouts/read-object';
 import { StoreCreditService } from '@modules/receivables/store-credit.service';

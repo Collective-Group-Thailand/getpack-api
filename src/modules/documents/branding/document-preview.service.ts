@@ -1,8 +1,8 @@
+import { PDF_RENDERER, type PdfRenderer } from '@collective/integrations/pdf';
 import { toBangkokIso } from '@common/time/bangkok';
 import { ErpPrismaService } from '@database/erp-prisma.service';
 import { PrismaService } from '@database/prisma.service';
 import { type DocumentSigningKind } from '@generated/prisma/client';
-import { PDF_RENDERER, type PdfRenderer } from '@integrations/pdf/pdf-renderer.port';
 import { renderSalesDocHtml } from '@modules/factory-erp/erp-documents.render';
 import { sellerOf } from '@modules/factory-erp/erp-sales.shared';
 import { CustomerDocumentsService } from '@modules/receivables/customer-documents.service';

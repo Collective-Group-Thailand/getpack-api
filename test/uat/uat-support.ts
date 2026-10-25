@@ -1,12 +1,10 @@
 import { randomUUID } from 'node:crypto';
 
+import { type FakeScbGateway, SCB_GATEWAY } from '@collective/integrations/payments/gateways';
+import { type FakeSmsSender, SMS_SENDER } from '@collective/integrations/sms';
 import { ErpPrismaService } from '@database/erp-prisma.service';
 import { PrismaService } from '@database/prisma.service';
 import { REDIS } from '@database/redis.module';
-import { type FakeScbGateway } from '@integrations/payments/fake-payment-gateways';
-import { SCB_GATEWAY } from '@integrations/payments/payment-gateways.port';
-import { type FakeSmsSender } from '@integrations/sms/fake-sms-sender';
-import { SMS_SENDER } from '@integrations/sms/sms-sender.port';
 import { DiscoveryModule } from '@nestjs/core';
 import { Test } from '@nestjs/testing';
 import { envelopeFromRow } from '@platform/domain-events/domain-event';

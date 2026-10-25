@@ -1,9 +1,9 @@
+import { WEB_PUSH, type WebPushSender } from '@collective/integrations/web-push';
 import { CurrentActor } from '@common/auth/auth.decorators';
 import { type Actor } from '@common/context/actor';
 import { DomainException } from '@common/errors/domain.exception';
 import { ApiEndpoint, ApiStandardErrors, ApiSuccess, ApiUnthrottled } from '@common/openapi/decorators';
 import { toBangkokIso } from '@common/time/bangkok';
-import { WEB_PUSH, type WebPushSender } from '@integrations/web-push/web-push.port';
 import { ApiSurface, type Surface } from '@modules/surfaces/surfaces';
 import {
   Body,

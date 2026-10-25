@@ -1,4 +1,4 @@
-import { FakeSecretsProvider } from '@integrations/secrets/fake-secrets.provider';
+import { FakeSecretsProvider } from '@collective/integrations/secrets';
 
 import { loadSecretsIntoEnv } from './secrets.loader';
 

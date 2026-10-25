@@ -9,8 +9,22 @@ ENV PNPM_HOME=/pnpm PATH=/pnpm:$PATH CI=true
 RUN corepack enable
 WORKDIR /app
 
+# --- @collective/* (D-435): linked from the sibling checkout (`link:../../collective-shared/packages/*`, i.e.
+#     /collective-shared from /app) until they are on GitHub Packages. Built with the monorepo's own install, which
+#     also provides the adapters' peers (AWS SDK, puppeteer-core, web-push…) next to the package code — Node resolves
+#     them from the package's real path, not from /app.
+#       docker build --build-context collective-shared-src=../../collective-shared .
+#     UNVERIFIED: written without a Docker daemon that can pull images (Cowork sandbox, 2026-10-25).
+FROM base AS collective-shared
+WORKDIR /collective-shared
+COPY --from=collective-shared-src package.json pnpm-lock.yaml pnpm-workspace.yaml tsconfig.base.json ./
+COPY --from=collective-shared-src packages ./packages
+RUN --mount=type=cache,id=pnpm,target=/pnpm/store pnpm install --frozen-lockfile --ignore-scripts \
+  && pnpm build
+
 # --- build: full install, Prisma client generation, compile --------------------------------------
 FROM base AS build
+COPY --from=collective-shared /collective-shared /collective-shared
 COPY package.json pnpm-lock.yaml ./
 COPY patches ./patches
 COPY prisma ./prisma
@@ -24,6 +38,7 @@ RUN NODE_OPTIONS=--max-old-space-size=6144 pnpm build
 
 # --- prod-deps: runtime dependencies only (no scripts: the Prisma client is already compiled) ----
 FROM base AS prod-deps
+COPY --from=collective-shared /collective-shared /collective-shared
 COPY package.json pnpm-lock.yaml ./
 # pnpm.patchedDependencies must resolve even with --ignore-scripts, or install exits 254 (ENOENT)
 COPY patches ./patches
@@ -55,6 +70,7 @@ ENV NODE_ENV=production PDF_CHROMIUM_PATH=/usr/bin/chromium
 RUN rm -rf /usr/local/lib/node_modules/npm /usr/local/lib/node_modules/corepack \
   /usr/local/bin/npm /usr/local/bin/npx /usr/local/bin/corepack
 WORKDIR /app
+COPY --from=collective-shared --chown=node:node /collective-shared /collective-shared
 COPY --from=prod-deps --chown=node:node /app/node_modules ./node_modules
 COPY --from=build --chown=node:node /app/dist ./dist
 COPY --from=build --chown=node:node /app/package.json ./package.json

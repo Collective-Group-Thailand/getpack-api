@@ -1,8 +1,12 @@
 import { randomUUID } from 'node:crypto';
 
+import {
+  type FakeScbGateway,
+  type FakeTwoC2PGateway,
+  SCB_GATEWAY,
+  TWOC2P_GATEWAY,
+} from '@collective/integrations/payments/gateways';
 import { systemActor } from '@common/context/actor';
-import { type FakeScbGateway, type FakeTwoC2PGateway } from '@integrations/payments/fake-payment-gateways';
-import { SCB_GATEWAY, TWOC2P_GATEWAY } from '@integrations/payments/payment-gateways.port';
 import { OrdersService } from '@modules/orders/orders.service';
 import { PaymentSchedulesService } from '@modules/payment-schedules/payment-schedules.service';
 import { PaymentsService } from '@modules/payments/payments.service';

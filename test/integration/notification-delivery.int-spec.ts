@@ -1,13 +1,13 @@
+import { FakeEmailSender } from '@collective/integrations/email';
+import { ProviderUnavailableError } from '@collective/integrations/http';
+import { FakeSmsSender } from '@collective/integrations/sms';
+import { FakeTeamsWebhook } from '@collective/integrations/teams';
+import { FakeWebPush } from '@collective/integrations/web-push';
 import { FieldEncryption } from '@common/crypto/field-encryption';
 import { type AppConfig } from '@config/app-config';
 import { PrismaService } from '@database/prisma.service';
 import { type NotificationChannel } from '@generated/prisma/client';
-import { FakeEmailSender } from '@integrations/email/fake-email-sender';
-import { ProviderUnavailableError } from '@integrations/http/resilient-http';
 import { FakeLineMessaging } from '@integrations/line-messaging/fake-line-messaging';
-import { FakeSmsSender } from '@integrations/sms/fake-sms-sender';
-import { FakeTeamsWebhook } from '@integrations/teams/fake-teams';
-import { FakeWebPush } from '@integrations/web-push/fake-web-push';
 import { DomainEvents } from '@platform/domain-events/domain-events.service';
 import { DeepLinksService } from '@platform/notifications/deep-links.service';
 import { NotificationDelivery } from '@platform/notifications/notification-delivery';

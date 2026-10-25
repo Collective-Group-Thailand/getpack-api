@@ -1,5 +1,7 @@
 import { createHash } from 'node:crypto';
 
+import { PDF_RENDERER, type PdfRenderer, toPdfA3 } from '@collective/integrations/pdf';
+import { OBJECT_STORAGE, type ObjectStorage } from '@collective/integrations/storage';
 import { systemActor } from '@common/context/actor';
 import { DomainException } from '@common/errors/domain.exception';
 import { addMonths, dateOnly, dayOf } from '@common/ledger-core/dates';
@@ -7,9 +9,6 @@ import { formatMoney, MoneyDecimal } from '@common/money/money';
 import { startOfBangkokMonth, toBangkokIso } from '@common/time/bangkok';
 import { PrismaService, type Tx } from '@database/prisma.service';
 import { type Prisma } from '@generated/prisma/client';
-import { PDF_RENDERER, type PdfRenderer } from '@integrations/pdf/pdf-renderer.port';
-import { toPdfA3 } from '@integrations/pdf/pdfa3';
-import { OBJECT_STORAGE, type ObjectStorage } from '@integrations/s3/object-storage.port';
 import {
   DocumentBrandingService,
   signingKindOfCustomerDocument,

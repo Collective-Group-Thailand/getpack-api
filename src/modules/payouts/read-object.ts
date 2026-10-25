@@ -1,4 +1,4 @@
-import { type ObjectStorage } from '@integrations/s3/object-storage.port';
+import { type ObjectStorage } from '@collective/integrations/storage';
 
 /** The bytes of a stored object (uploaded bank files, statements, settlement reports). */
 export async function readObject(storage: ObjectStorage, key: string): Promise<Buffer> {

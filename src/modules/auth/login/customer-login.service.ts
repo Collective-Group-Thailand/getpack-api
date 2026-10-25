@@ -1,8 +1,4 @@
-import { type UserActor } from '@common/context/actor';
-import { DomainException } from '@common/errors/domain.exception';
-import { PrismaService, type Tx } from '@database/prisma.service';
-import { type LoginMethod, type User } from '@generated/prisma/client';
-import { ProviderUnavailableError } from '@integrations/http/resilient-http';
+import { ProviderUnavailableError } from '@collective/integrations/http';
 import {
   FIREBASE_VERIFIER,
   type FirebaseVerifier,
@@ -10,7 +6,11 @@ import {
   LINE_VERIFIER,
   type LineVerifier,
   type VerifiedIdentity,
-} from '@integrations/identity/identity-verifier.port';
+} from '@collective/integrations/identity';
+import { type UserActor } from '@common/context/actor';
+import { DomainException } from '@common/errors/domain.exception';
+import { PrismaService, type Tx } from '@database/prisma.service';
+import { type LoginMethod, type User } from '@generated/prisma/client';
 import { Inject, Injectable } from '@nestjs/common';
 import { AuditService } from '@platform/audit/audit.service';
 import { DomainEvents } from '@platform/domain-events/domain-events.service';

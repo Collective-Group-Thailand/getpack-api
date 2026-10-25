@@ -1,9 +1,8 @@
+import { type FakeSmsSender, SMS_SENDER } from '@collective/integrations/sms';
 import { toBangkokIso } from '@common/time/bangkok';
 import { PrismaService } from '@database/prisma.service';
 import { type FakeLineMessaging } from '@integrations/line-messaging/fake-line-messaging';
 import { LINE_MESSAGING } from '@integrations/line-messaging/line-messaging.port';
-import { type FakeSmsSender } from '@integrations/sms/fake-sms-sender';
-import { SMS_SENDER } from '@integrations/sms/sms-sender.port';
 import { type INestApplication, type INestApplicationContext, Injectable, Module } from '@nestjs/common';
 import { Test } from '@nestjs/testing';
 import { type DomainEventEnvelope } from '@platform/domain-events/domain-event';

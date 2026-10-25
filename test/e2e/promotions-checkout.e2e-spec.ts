@@ -1,9 +1,8 @@
 import { randomUUID } from 'node:crypto';
 
+import { type FakeScbGateway, SCB_GATEWAY } from '@collective/integrations/payments/gateways';
 import { MoneyDecimal } from '@common/money/money';
 import { REDIS } from '@database/redis.module';
-import { type FakeScbGateway } from '@integrations/payments/fake-payment-gateways';
-import { SCB_GATEWAY } from '@integrations/payments/payment-gateways.port';
 import { PromotionRedemptions } from '@modules/promotions/promotion-redemptions.service';
 import { envelopeFromRow } from '@platform/domain-events/domain-event';
 import { type Redis } from 'ioredis';

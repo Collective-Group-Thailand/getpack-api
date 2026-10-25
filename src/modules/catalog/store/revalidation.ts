@@ -1,8 +1,8 @@
 import { createHmac } from 'node:crypto';
 
+import { WEBHOOK_SENDER, type WebhookSender } from '@collective/integrations/webhooks';
 import { AppConfig } from '@config/app-config';
 import { type Tx } from '@database/prisma.service';
-import { WEBHOOK_SENDER, type WebhookSender } from '@integrations/webhooks-out/webhook-sender.port';
 import { Global, Inject, Injectable, Logger, Module } from '@nestjs/common';
 import { type DomainEventEnvelope } from '@platform/domain-events/domain-event';
 import { DomainEvents } from '@platform/domain-events/domain-events.service';

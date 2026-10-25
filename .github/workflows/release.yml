@@ -14,6 +14,8 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: ./.github/actions/setup
+        with:
+          collective-shared-token: ${{ secrets.COLLECTIVE_SHARED_TOKEN }}
       - name: Contract at this tag matches the code and passes contract:lint
         env:
           NODE_OPTIONS: --max-old-space-size=6144

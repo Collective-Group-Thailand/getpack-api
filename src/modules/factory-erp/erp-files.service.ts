@@ -1,7 +1,7 @@
+import { OBJECT_STORAGE, type ObjectStorage } from '@collective/integrations/storage';
 import { toBangkokIso } from '@common/time/bangkok';
 import { ErpPrismaService } from '@database/erp-prisma.service';
 import { type FileRetentionClass } from '@generated/prisma-erp/client';
-import { OBJECT_STORAGE, type ObjectStorage } from '@integrations/s3/object-storage.port';
 import { Inject, Injectable } from '@nestjs/common';
 import { FilesService } from '@platform/files/files.service';
 

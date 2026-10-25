@@ -1,10 +1,10 @@
 import { type Readable } from 'node:stream';
 
+import { OBJECT_STORAGE, type ObjectStorage } from '@collective/integrations/storage';
 import { DomainException } from '@common/errors/domain.exception';
 import { MoneyDecimal } from '@common/money/money';
 import { AppConfig } from '@config/app-config';
 import { PrismaService } from '@database/prisma.service';
-import { OBJECT_STORAGE, type ObjectStorage } from '@integrations/s3/object-storage.port';
 import { Inject, Injectable } from '@nestjs/common';
 
 import { HOME_PHOTOS_SLUG } from '../cms/home-photos';

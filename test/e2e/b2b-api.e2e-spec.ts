@@ -1,7 +1,6 @@
 import { createHmac, randomUUID } from 'node:crypto';
 
-import { type FakeWebhookSender } from '@integrations/webhooks-out/fake-webhook-sender';
-import { WEBHOOK_SENDER } from '@integrations/webhooks-out/webhook-sender.port';
+import { type FakeWebhookSender, WEBHOOK_SENDER } from '@collective/integrations/webhooks';
 import { WebhooksService } from '@modules/b2b/webhooks.service';
 import request from 'supertest';
 

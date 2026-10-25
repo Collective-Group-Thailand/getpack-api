@@ -1,7 +1,7 @@
+import { OBJECT_STORAGE, type ObjectStorage } from '@collective/integrations/storage';
 import { systemActor } from '@common/context/actor';
 import { PrismaService } from '@database/prisma.service';
 import { type FileObject, type PreflightStatus, type Prisma } from '@generated/prisma/client';
-import { OBJECT_STORAGE, type ObjectStorage } from '@integrations/s3/object-storage.port';
 import { Inject, Injectable, Logger } from '@nestjs/common';
 import { ScheduledJob } from '@platform/maintenance/scheduled-job.decorator';
 import { SettingsService } from '@platform/settings/settings.service';

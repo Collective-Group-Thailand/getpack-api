@@ -1,8 +1,8 @@
 import { randomUUID } from 'node:crypto';
 
+import { OBJECT_STORAGE, type ObjectStorage } from '@collective/integrations/storage';
 import { MoneyDecimal } from '@common/money/money';
 import { bangkokDate } from '@common/time/bangkok';
-import { OBJECT_STORAGE, type ObjectStorage } from '@integrations/s3/object-storage.port';
 import { CloseService } from '@modules/close/close.service';
 import { PeriodsService } from '@modules/ledger/periods.service';
 import { readObject } from '@modules/payouts/read-object';

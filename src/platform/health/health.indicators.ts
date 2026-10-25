@@ -1,6 +1,6 @@
+import { OBJECT_STORAGE, type ObjectStorage } from '@collective/integrations/storage';
 import { PrismaService } from '@database/prisma.service';
 import { REDIS } from '@database/redis.module';
-import { OBJECT_STORAGE, type ObjectStorage } from '@integrations/s3/object-storage.port';
 import { Inject, Injectable } from '@nestjs/common';
 import { HealthIndicatorService } from '@nestjs/terminus';
 import { type Redis } from 'ioredis';

@@ -1,6 +1,6 @@
+import { OBJECT_STORAGE } from '@collective/integrations/storage';
 import { PrismaService } from '@database/prisma.service';
-import { type FakeObjectStorage } from '@integrations/s3/fake-object-storage';
-import { OBJECT_STORAGE } from '@integrations/s3/object-storage.port';
+import { type FakeObjectStorage } from '@integrations/storage/fake-object-storage';
 import { type INestApplication } from '@nestjs/common';
 import { Test } from '@nestjs/testing';
 import request from 'supertest';

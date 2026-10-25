@@ -1,6 +1,6 @@
 import { randomUUID } from 'node:crypto';
 
-import { OBJECT_STORAGE } from '@integrations/s3/object-storage.port';
+import { OBJECT_STORAGE } from '@collective/integrations/storage';
 
 import { type DevFolding } from '../../prisma/seed/dev-folding';
 import {

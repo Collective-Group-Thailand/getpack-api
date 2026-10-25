@@ -1,3 +1,4 @@
+import { PDF_RENDERER, type PdfRenderer } from '@collective/integrations/pdf';
 import { DomainException } from '@common/errors/domain.exception';
 import { assertIfMatch, etagOf } from '@common/etag/etag';
 import { type ActionRule, nextActions } from '@common/next-actions/next-actions';
@@ -18,7 +19,6 @@ import {
   type ErpUnit,
   Prisma,
 } from '@generated/prisma-erp/client';
-import { PDF_RENDERER, type PdfRenderer } from '@integrations/pdf/pdf-renderer.port';
 import { Inject, Injectable } from '@nestjs/common';
 
 import { dec, fmtQty } from './erp.math';

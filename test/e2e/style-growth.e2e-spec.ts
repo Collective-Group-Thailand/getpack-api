@@ -1,12 +1,12 @@
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 
+import { OBJECT_STORAGE } from '@collective/integrations/storage';
 import { PDFDocument } from 'pdf-lib';
 import request from 'supertest';
 
 import { seedDevFolding } from '../../prisma/seed/dev-folding';
 import { type UserActor } from '../../src/common/context/actor';
-import { OBJECT_STORAGE } from '../../src/integrations/s3/object-storage.port';
 import { NextStylesService } from '../../src/modules/analytics/next-styles';
 import { StyleImportService } from '../../src/modules/styles/style-import.service';
 import { DomainEvents } from '../../src/platform/domain-events/domain-events.service';

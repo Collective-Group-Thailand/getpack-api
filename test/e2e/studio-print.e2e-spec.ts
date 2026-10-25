@@ -2,7 +2,7 @@ import { randomUUID } from 'node:crypto';
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 
-import { OBJECT_STORAGE } from '@integrations/s3/object-storage.port';
+import { OBJECT_STORAGE } from '@collective/integrations/storage';
 import { PreflightService } from '@modules/artwork/preflight/preflight.service';
 import sharp from 'sharp';
 

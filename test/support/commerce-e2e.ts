@@ -1,10 +1,9 @@
+import { type FakeSmsSender, SMS_SENDER } from '@collective/integrations/sms';
+import { OBJECT_STORAGE } from '@collective/integrations/storage';
 import { ErpPrismaService } from '@database/erp-prisma.service';
 import { PrismaService } from '@database/prisma.service';
 import { REDIS } from '@database/redis.module';
-import { type FakeObjectStorage } from '@integrations/s3/fake-object-storage';
-import { OBJECT_STORAGE } from '@integrations/s3/object-storage.port';
-import { type FakeSmsSender } from '@integrations/sms/fake-sms-sender';
-import { SMS_SENDER } from '@integrations/sms/sms-sender.port';
+import { type FakeObjectStorage } from '@integrations/storage/fake-object-storage';
 import { type INestApplication } from '@nestjs/common';
 import { Test } from '@nestjs/testing';
 import { FeatureFlagsService } from '@platform/feature-flags/feature-flags.service';

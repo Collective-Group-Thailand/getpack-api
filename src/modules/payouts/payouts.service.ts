@@ -1,5 +1,7 @@
 import { createHash } from 'node:crypto';
 
+import { PDF_RENDERER, type PdfRenderer } from '@collective/integrations/pdf';
+import { OBJECT_STORAGE, type ObjectStorage } from '@collective/integrations/storage';
 import { systemActor, type UserActor } from '@common/context/actor';
 import { FieldEncryption } from '@common/crypto/field-encryption';
 import { DomainException } from '@common/errors/domain.exception';
@@ -13,8 +15,6 @@ import {
   BankFileError,
   type TransferConfirmation,
 } from '@integrations/bank-files/bank-files';
-import { PDF_RENDERER, type PdfRenderer } from '@integrations/pdf/pdf-renderer.port';
-import { OBJECT_STORAGE, type ObjectStorage } from '@integrations/s3/object-storage.port';
 import { CompanyBankAccountsService } from '@modules/banking/company-bank-accounts.service';
 import { DocumentBrandingService } from '@modules/documents/branding/document-branding.service';
 import { TaxRatesReader, WHT_RATE_CODE } from '@modules/ledger/tax-rates.reader';

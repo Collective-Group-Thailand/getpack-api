@@ -1,11 +1,11 @@
 import { createHash } from 'node:crypto';
 
+import { PDF_RENDERER, type PdfRenderer } from '@collective/integrations/pdf';
 import { type UserActor } from '@common/context/actor';
 import { DomainException } from '@common/errors/domain.exception';
 import { addCalendarDays, startOfBangkokDay } from '@common/time/bangkok';
 import { PrismaService } from '@database/prisma.service';
 import { Prisma } from '@generated/prisma/client';
-import { PDF_RENDERER, type PdfRenderer } from '@integrations/pdf/pdf-renderer.port';
 import { StyleCoverageService } from '@modules/styles/style-coverage.service';
 import { Inject, Injectable, Logger } from '@nestjs/common';
 import { AuditService } from '@platform/audit/audit.service';

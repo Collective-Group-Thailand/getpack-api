@@ -1,5 +1,6 @@
 import { createHash } from 'node:crypto';
 
+import { OBJECT_STORAGE, type ObjectStorage } from '@collective/integrations/storage';
 import { PrismaService } from '@database/prisma.service';
 import { type Prisma, type StyleAssetKind } from '@generated/prisma/client';
 import {
@@ -7,7 +8,6 @@ import {
   type DielineEngine,
   type StoredRecipe,
 } from '@integrations/dieline/dieline-engine.port';
-import { OBJECT_STORAGE, type ObjectStorage } from '@integrations/s3/object-storage.port';
 import { Inject, Injectable, Logger } from '@nestjs/common';
 import { ScheduledJob } from '@platform/maintenance/scheduled-job.decorator';
 

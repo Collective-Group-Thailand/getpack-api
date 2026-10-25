@@ -1,5 +1,6 @@
 import { createHash, randomUUID } from 'node:crypto';
 
+import { OBJECT_STORAGE, type ObjectStorage } from '@collective/integrations/storage';
 import { type Actor, type UserActor } from '@common/context/actor';
 import { bytes } from '@common/crypto/hashing';
 import { DomainException } from '@common/errors/domain.exception';
@@ -11,7 +12,6 @@ import {
   type FileObject,
   type FileRetentionClass,
 } from '@generated/prisma/client';
-import { OBJECT_STORAGE, type ObjectStorage } from '@integrations/s3/object-storage.port';
 import { PermissionResolver } from '@modules/iam/permission-resolver.service';
 import { parseScopeClaim, ScopeDirectory } from '@modules/iam/scope-directory';
 import { ScopingService } from '@modules/iam/scoping.service';

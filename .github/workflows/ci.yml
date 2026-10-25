@@ -19,6 +19,8 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: ./.github/actions/setup
+        with:
+          collective-shared-token: ${{ secrets.COLLECTIVE_SHARED_TOKEN }}
       # The type-aware lint of the whole repo outgrew Node's default heap (U3, 2026-10-03).
       - run: pnpm lint
         env:
@@ -36,6 +38,8 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: ./.github/actions/setup
+        with:
+          collective-shared-token: ${{ secrets.COLLECTIVE_SHARED_TOKEN }}
       - run: pnpm test:cov
       - uses: actions/upload-artifact@v4
         with:
@@ -49,6 +53,8 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: ./.github/actions/setup
+        with:
+          collective-shared-token: ${{ secrets.COLLECTIVE_SHARED_TOKEN }}
       - run: pnpm test:int
 
   e2e:
@@ -57,6 +63,8 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: ./.github/actions/setup
+        with:
+          collective-shared-token: ${{ secrets.COLLECTIVE_SHARED_TOKEN }}
       - run: pnpm test:e2e
       - name: Every problem code the e2e run saw is documented (U-B2)
         run: pnpm contract:observed-errors
@@ -69,6 +77,8 @@ jobs:
         with:
           fetch-depth: 0
       - uses: ./.github/actions/setup
+        with:
+          collective-shared-token: ${{ secrets.COLLECTIVE_SHARED_TOKEN }}
       - name: Regenerate contract
         run: pnpm contract:build
         env:
@@ -115,6 +125,8 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: ./.github/actions/setup
+        with:
+          collective-shared-token: ${{ secrets.COLLECTIVE_SHARED_TOKEN }}
       - name: Schema matches migrations
         run: |
           if [ ! -f prisma/migrations/migration_lock.toml ]; then
@@ -135,6 +147,8 @@ jobs:
           df -h /
       - uses: actions/checkout@v4
       - uses: ./.github/actions/setup
+        with:
+          collective-shared-token: ${{ secrets.COLLECTIVE_SHARED_TOKEN }}
       - run: pnpm build
         env:
           NODE_OPTIONS: --max-old-space-size=6144
@@ -142,6 +156,8 @@ jobs:
       - uses: docker/build-push-action@v6
         with:
           context: .
+          # @collective/* are linked from the sibling checkout (D-435); the Dockerfile builds it in its own stage.
+          build-contexts: collective-shared-src=../../collective-shared
           load: true
           tags: getpack-api:ci
           cache-from: type=gha

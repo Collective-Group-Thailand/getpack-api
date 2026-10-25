@@ -1,5 +1,6 @@
 import { randomBytes, randomInt } from 'node:crypto';
 
+import { SMS_SENDER, type SmsSender } from '@collective/integrations/sms';
 import { hmacSha256, sameDigest } from '@common/crypto/hashing';
 import { DomainException } from '@common/errors/domain.exception';
 import { uuidv7 } from '@common/ids/uuidv7';
@@ -7,7 +8,6 @@ import { AppConfig } from '@config/app-config';
 import { PrismaService } from '@database/prisma.service';
 import { REDIS } from '@database/redis.module';
 import { type OtpPurpose } from '@generated/prisma/client';
-import { SMS_SENDER, type SmsSender } from '@integrations/sms/sms-sender.port';
 import { Inject, Injectable } from '@nestjs/common';
 import { SettingsService } from '@platform/settings/settings.service';
 import { type Redis } from 'ioredis';

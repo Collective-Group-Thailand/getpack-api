@@ -1,4 +1,5 @@
-import { ProviderUnavailableError, ResilientHttp } from '../http/resilient-http';
+import { ProviderUnavailableError, ResilientHttp } from '@collective/integrations/http';
+
 import { type LineMessaging, type LinePush } from './line-messaging.port';
 
 /** `POST /v2/bot/message/push`; retried safely because LINE deduplicates by `X-Line-Retry-Key`. */

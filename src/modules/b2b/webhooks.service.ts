@@ -1,11 +1,11 @@
 import { createHmac, randomBytes } from 'node:crypto';
 
+import { WEBHOOK_SENDER, type WebhookSender } from '@collective/integrations/webhooks';
 import { FieldEncryption } from '@common/crypto/field-encryption';
 import { DomainException } from '@common/errors/domain.exception';
 import { toBangkokIso } from '@common/time/bangkok';
 import { PrismaService, type Tx } from '@database/prisma.service';
 import { type Prisma, type WebhookDelivery, type WebhookSubscription } from '@generated/prisma/client';
-import { WEBHOOK_SENDER, type WebhookSender } from '@integrations/webhooks-out/webhook-sender.port';
 import { Inject, Injectable, Logger } from '@nestjs/common';
 import { AuditService } from '@platform/audit/audit.service';
 import { type DomainEventEnvelope } from '@platform/domain-events/domain-event';

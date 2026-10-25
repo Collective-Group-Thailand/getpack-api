@@ -1,5 +1,7 @@
 import { randomUUID } from 'node:crypto';
 
+import { ProviderUnavailableError } from '@collective/integrations/http';
+import { SECRETS_PROVIDER, type SecretsProvider } from '@collective/integrations/secrets';
 import { type UserActor } from '@common/context/actor';
 import { DomainException } from '@common/errors/domain.exception';
 import { MoneyDecimal, type MoneyValue } from '@common/money/money';
@@ -16,8 +18,6 @@ import {
   type CarrierPlace,
   type FallbackCarrierCode,
 } from '@integrations/carriers/carrier-adapter.port';
-import { ProviderUnavailableError } from '@integrations/http/resilient-http';
-import { SECRETS_PROVIDER, type SecretsProvider } from '@integrations/secrets/secrets.port';
 import { Inject, Injectable, Logger } from '@nestjs/common';
 import { AuditService } from '@platform/audit/audit.service';
 import { DomainEvents } from '@platform/domain-events/domain-events.service';

@@ -1,8 +1,8 @@
 import { randomUUID } from 'node:crypto';
 
+import { OBJECT_STORAGE, type ObjectStorage } from '@collective/integrations/storage';
 import { MoneyDecimal } from '@common/money/money';
 import { addCalendarDays, bangkokDate, startOfBangkokDay } from '@common/time/bangkok';
-import { OBJECT_STORAGE, type ObjectStorage } from '@integrations/s3/object-storage.port';
 import { ProspectusService } from '@modules/analytics/prospectus.service';
 import { AnalyticsRollupService } from '@modules/analytics/rollups.service';
 import { ROLLUP_JOBS } from '@modules/analytics/rollups.sql';

@@ -1,8 +1,8 @@
 import { randomUUID } from 'node:crypto';
 
+import { OBJECT_STORAGE } from '@collective/integrations/storage';
 import { PrismaService } from '@database/prisma.service';
-import { type FakeObjectStorage } from '@integrations/s3/fake-object-storage';
-import { OBJECT_STORAGE } from '@integrations/s3/object-storage.port';
+import { type FakeObjectStorage } from '@integrations/storage/fake-object-storage';
 import { writeWorkbook } from '@modules/catalog/imports/workbook';
 import { CustomerRatesService } from '@modules/shipping/rates/customer-rates.service';
 import { type INestApplication } from '@nestjs/common';

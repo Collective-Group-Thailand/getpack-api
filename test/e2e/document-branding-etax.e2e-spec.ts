@@ -1,7 +1,6 @@
 import { randomUUID } from 'node:crypto';
 
-import { EMAIL_SENDER } from '@integrations/email/email-sender.port';
-import { type FakeEmailSender } from '@integrations/email/fake-email-sender';
+import { EMAIL_SENDER, type FakeEmailSender } from '@collective/integrations/email';
 import { DocumentBrandingService } from '@modules/documents/branding/document-branding.service';
 import { DocumentFilesService } from '@modules/receivables/document-files.service';
 import { ETaxEmailService } from '@modules/receivables/etax-email.service';

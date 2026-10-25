@@ -1,11 +1,11 @@
 import { randomUUID } from 'node:crypto';
 
+import { OBJECT_STORAGE, type ObjectStorage } from '@collective/integrations/storage';
 import { type UserActor } from '@common/context/actor';
 import { decodeCursor, encodeCursor } from '@common/pagination/pagination';
 import { AppConfig } from '@config/app-config';
 import { PrismaService } from '@database/prisma.service';
 import { type AuditCategory, type AuditOutcome, type Prisma } from '@generated/prisma/client';
-import { OBJECT_STORAGE, type ObjectStorage } from '@integrations/s3/object-storage.port';
 import { Inject, Injectable } from '@nestjs/common';
 
 import { AuditService } from './audit.service';

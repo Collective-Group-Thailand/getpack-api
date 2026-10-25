@@ -1,11 +1,10 @@
 import { randomUUID } from 'node:crypto';
 
+import { type FakeScbGateway, SCB_GATEWAY } from '@collective/integrations/payments/gateways';
+import { OBJECT_STORAGE } from '@collective/integrations/storage';
 import { ErpPrismaService } from '@database/erp-prisma.service';
 import { PrismaService } from '@database/prisma.service';
-import { type FakeScbGateway } from '@integrations/payments/fake-payment-gateways';
-import { SCB_GATEWAY } from '@integrations/payments/payment-gateways.port';
-import { type FakeObjectStorage } from '@integrations/s3/fake-object-storage';
-import { OBJECT_STORAGE } from '@integrations/s3/object-storage.port';
+import { type FakeObjectStorage } from '@integrations/storage/fake-object-storage';
 import { PreflightService } from '@modules/artwork/preflight/preflight.service';
 import { PasswordService } from '@modules/auth/password.service';
 import { DiscoveryModule } from '@nestjs/core';

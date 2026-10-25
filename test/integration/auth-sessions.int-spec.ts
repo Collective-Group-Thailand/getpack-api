@@ -1,6 +1,6 @@
+import { FakeSmsSender } from '@collective/integrations/sms';
 import { type AppConfig } from '@config/app-config';
 import { PrismaService } from '@database/prisma.service';
-import { FakeSmsSender } from '@integrations/sms/fake-sms-sender';
 import { OtpService } from '@modules/auth/login/otp.service';
 import { SessionService } from '@modules/auth/sessions/session.service';
 import { AuditService } from '@platform/audit/audit.service';

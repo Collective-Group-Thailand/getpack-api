@@ -1,4 +1,4 @@
-import { ProviderUnavailableError } from '@integrations/http/resilient-http';
+import { ProviderUnavailableError } from '@collective/integrations/http';
 import { type ArgumentsHost, Catch, type ExceptionFilter, HttpException, Logger } from '@nestjs/common';
 import * as Sentry from '@sentry/nestjs';
 import { type Request, type Response } from 'express';

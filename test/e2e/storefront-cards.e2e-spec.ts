@@ -1,5 +1,4 @@
-import { type FakeWebhookSender } from '@integrations/webhooks-out/fake-webhook-sender';
-import { WEBHOOK_SENDER } from '@integrations/webhooks-out/webhook-sender.port';
+import { type FakeWebhookSender, WEBHOOK_SENDER } from '@collective/integrations/webhooks';
 import { DomainEvents } from '@platform/domain-events/domain-events.service';
 import request from 'supertest';
 

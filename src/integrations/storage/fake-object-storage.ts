@@ -3,7 +3,11 @@ import { existsSync, mkdirSync, readFileSync, rmSync, writeFileSync } from 'node
 import { join } from 'node:path';
 import { Readable } from 'node:stream';
 
-import { type ObjectStorage, type PresignedUpload, type StoredObjectInfo } from './object-storage.port';
+import {
+  type ObjectStorage,
+  type PresignedUpload,
+  type StoredObjectInfo,
+} from '@collective/integrations/storage';
 
 const BASE = 'https://fake-s3.invalid';
 
@@ -13,8 +17,11 @@ const BASE = 'https://fake-s3.invalid';
  * directory (`FAKE_OBJECT_STORAGE_DIR`) every object is also kept on disk, so a file a script
  * stored (`cms:home-photos`, `catalog:product-photos`) is served by the dev API after it, and
  * uploads survive a restart; tests give no directory and stay in memory.
+ *
+ * Kept in getpack until @collective/integrations 0.2: the shared fake has no on-disk copy (D-435).
  */
 export class FakeObjectStorage implements ObjectStorage {
+  readonly mode = 'fake' as const;
   available = true;
   readonly objects = new Map<string, { body: Buffer; contentType: string }>();
   private readonly dir: string | undefined;

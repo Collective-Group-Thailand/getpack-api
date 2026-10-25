@@ -1,5 +1,16 @@
 import { randomBytes, randomUUID } from 'node:crypto';
 
+import {
+  SCB_GATEWAY,
+  type ScbConfirmation,
+  type ScbGateway,
+  SLIP_VERIFIER,
+  type SlipCheck,
+  type SlipVerifier,
+  TWOC2P_GATEWAY,
+  type TwoC2PGateway,
+} from '@collective/integrations/payments/gateways';
+import { OBJECT_STORAGE, type ObjectStorage } from '@collective/integrations/storage';
 import { type Actor, systemActor, type UserActor, type WebhookActor } from '@common/context/actor';
 import { DomainException } from '@common/errors/domain.exception';
 import { formatMoney, MoneyDecimal, type MoneyValue } from '@common/money/money';
@@ -12,17 +23,6 @@ import {
   type Prisma,
   type UploadChannel,
 } from '@generated/prisma/client';
-import {
-  SCB_GATEWAY,
-  type ScbConfirmation,
-  type ScbGateway,
-  SLIP_VERIFIER,
-  type SlipCheck,
-  type SlipVerifier,
-  TWOC2P_GATEWAY,
-  type TwoC2PGateway,
-} from '@integrations/payments/payment-gateways.port';
-import { OBJECT_STORAGE, type ObjectStorage } from '@integrations/s3/object-storage.port';
 import { OrderLifecycleHooks } from '@modules/orders/orders.service';
 import { PaymentSchedulesService } from '@modules/payment-schedules/payment-schedules.service';
 import { PromotionRedemptions } from '@modules/promotions/promotion-redemptions.service';

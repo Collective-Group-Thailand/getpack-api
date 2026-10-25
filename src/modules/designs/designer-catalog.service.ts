@@ -1,9 +1,9 @@
 import { type Readable } from 'node:stream';
 
+import { OBJECT_STORAGE, type ObjectStorage } from '@collective/integrations/storage';
 import { DomainException } from '@common/errors/domain.exception';
 import { PrismaService } from '@database/prisma.service';
 import { type Prisma } from '@generated/prisma/client';
-import { OBJECT_STORAGE, type ObjectStorage } from '@integrations/s3/object-storage.port';
 import { sizeRulesOf } from '@modules/catalog/store/size-rules';
 import { imageUrl } from '@modules/catalog/store/store-catalog.service';
 import { Inject, Injectable } from '@nestjs/common';

@@ -1,9 +1,8 @@
 import { randomUUID } from 'node:crypto';
 
+import { type FakeScbGateway, SCB_GATEWAY } from '@collective/integrations/payments/gateways';
 import { systemActor } from '@common/context/actor';
 import { MoneyDecimal } from '@common/money/money';
-import { type FakeScbGateway } from '@integrations/payments/fake-payment-gateways';
-import { SCB_GATEWAY } from '@integrations/payments/payment-gateways.port';
 import { LoyaltyService } from '@modules/loyalty/loyalty.service';
 import { OrdersService } from '@modules/orders/orders.service';
 import { PaymentSchedulesService } from '@modules/payment-schedules/payment-schedules.service';

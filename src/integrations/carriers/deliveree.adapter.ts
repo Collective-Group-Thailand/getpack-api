@@ -1,6 +1,7 @@
 import { timingSafeEqual } from 'node:crypto';
 
-import { ProviderUnavailableError, ResilientHttp } from '../http/resilient-http';
+import { ProviderUnavailableError, ResilientHttp } from '@collective/integrations/http';
+
 import {
   type CarrierAdapter,
   type CarrierBooking,

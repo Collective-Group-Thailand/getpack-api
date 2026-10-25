@@ -1,7 +1,7 @@
+import { OBJECT_STORAGE, type ObjectStorage } from '@collective/integrations/storage';
 import { type UserActor } from '@common/context/actor';
 import { DomainException } from '@common/errors/domain.exception';
 import { bangkokDate } from '@common/time/bangkok';
-import { OBJECT_STORAGE, type ObjectStorage } from '@integrations/s3/object-storage.port';
 import { MAX_IMPORT_ROWS } from '@modules/catalog/imports/import-engine';
 import {
   type CellValue,

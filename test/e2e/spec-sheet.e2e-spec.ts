@@ -1,6 +1,6 @@
 import { randomUUID } from 'node:crypto';
 
-import { PDF_RENDERER } from '@integrations/pdf/pdf-renderer.port';
+import { PDF_RENDERER } from '@collective/integrations/pdf';
 
 import { type DevFolding } from '../../prisma/seed/dev-folding';
 import {

@@ -1,9 +1,9 @@
+import { TWOC2P_GATEWAY, type TwoC2PGateway } from '@collective/integrations/payments/gateways';
 import { type Actor, systemActor, type UserActor } from '@common/context/actor';
 import { DomainException } from '@common/errors/domain.exception';
 import { formatMoney, MoneyDecimal } from '@common/money/money';
 import { PrismaService, type Tx } from '@database/prisma.service';
 import { type Prisma, type Refund, type RefundChannel } from '@generated/prisma/client';
-import { TWOC2P_GATEWAY, type TwoC2PGateway } from '@integrations/payments/payment-gateways.port';
 import { Inject, Injectable, Logger } from '@nestjs/common';
 import { ActivityLogService } from '@platform/activity/activity-log.service';
 import { ApprovalsService } from '@platform/approvals/approvals.service';

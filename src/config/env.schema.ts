@@ -1,5 +1,5 @@
+import { THAIBULKSMS_CREDIT_TYPES, type ThaiBulkSmsCreditType } from '@collective/integrations/sms';
 import { parseCidrList } from '@common/http/cidr';
-import { THAIBULKSMS_CREDIT_TYPES, type ThaiBulkSmsCreditType } from '@integrations/sms/thaibulksms-sender';
 import { Transform } from 'class-transformer';
 import {
   IsBoolean,

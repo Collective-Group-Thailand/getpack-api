@@ -1,5 +1,6 @@
 import { createHash, randomBytes } from 'node:crypto';
 
+import { PDF_RENDERER, type PdfRenderer } from '@collective/integrations/pdf';
 import { type Actor, type UserActor } from '@common/context/actor';
 import { DomainException } from '@common/errors/domain.exception';
 import { assertIfMatch, etagOf } from '@common/etag/etag';
@@ -10,7 +11,6 @@ import {
   type CarrierBookingRequest,
   type FallbackCarrierCode,
 } from '@integrations/carriers/carrier-adapter.port';
-import { PDF_RENDERER, type PdfRenderer } from '@integrations/pdf/pdf-renderer.port';
 import { mainJobKind } from '@modules/orders/main-job';
 import { OrdersService } from '@modules/orders/orders.service';
 import { PaymentSchedulesService } from '@modules/payment-schedules/payment-schedules.service';

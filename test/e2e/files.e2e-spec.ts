@@ -1,9 +1,8 @@
+import { type FakeSmsSender, SMS_SENDER } from '@collective/integrations/sms';
+import { OBJECT_STORAGE } from '@collective/integrations/storage';
+import { EICAR_TEST_STRING } from '@collective/integrations/virus-scan';
 import { PrismaService } from '@database/prisma.service';
-import { type FakeObjectStorage } from '@integrations/s3/fake-object-storage';
-import { OBJECT_STORAGE } from '@integrations/s3/object-storage.port';
-import { type FakeSmsSender } from '@integrations/sms/fake-sms-sender';
-import { SMS_SENDER } from '@integrations/sms/sms-sender.port';
-import { EICAR_TEST_STRING } from '@integrations/virus-scan/fake-virus-scanner';
+import { type FakeObjectStorage } from '@integrations/storage/fake-object-storage';
 import { PasswordService } from '@modules/auth/password.service';
 import { type INestApplication } from '@nestjs/common';
 import { Test } from '@nestjs/testing';

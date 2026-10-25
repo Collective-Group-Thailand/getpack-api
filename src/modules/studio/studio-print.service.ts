@@ -1,3 +1,4 @@
+import { OBJECT_STORAGE, type ObjectStorage } from '@collective/integrations/storage';
 import { systemActor, type UserActor } from '@common/context/actor';
 import { DomainException } from '@common/errors/domain.exception';
 import { PrismaService, type Tx } from '@database/prisma.service';
@@ -9,7 +10,6 @@ import {
   type RecipeBuildRequest,
   type StoredRecipe,
 } from '@integrations/dieline/dieline-engine.port';
-import { OBJECT_STORAGE, type ObjectStorage } from '@integrations/s3/object-storage.port';
 import { ArtworkService } from '@modules/artwork/artwork.service';
 import { type DestinationInputDto } from '@modules/carts/carts.dto';
 import { CartsService } from '@modules/carts/carts.service';

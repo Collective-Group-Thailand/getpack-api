@@ -1,12 +1,12 @@
 import { createHash } from 'node:crypto';
 
+import { PDF_RENDERER, type PdfRenderer } from '@collective/integrations/pdf';
+import { OBJECT_STORAGE, type ObjectStorage } from '@collective/integrations/storage';
 import { type Actor } from '@common/context/actor';
 import { DomainException } from '@common/errors/domain.exception';
 import { bangkokDate } from '@common/time/bangkok';
 import { AppConfig } from '@config/app-config';
 import { PrismaService } from '@database/prisma.service';
-import { PDF_RENDERER, type PdfRenderer } from '@integrations/pdf/pdf-renderer.port';
-import { OBJECT_STORAGE, type ObjectStorage } from '@integrations/s3/object-storage.port';
 import { canonical } from '@modules/catalog/imports/import-engine';
 import { FactoryAccess } from '@modules/partners/factories/factory-access';
 import { Inject, Injectable } from '@nestjs/common';
