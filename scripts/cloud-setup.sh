@@ -48,6 +48,26 @@ if [ -n "$PNPM_VERSION" ] && { [ ! -x "$(npm prefix -g)/bin/pnpm" ] || [ "$("$(n
   log "Installing pnpm@${PNPM_VERSION}"
   npm install -g "pnpm@${PNPM_VERSION}"
 fi
+
+# The VM's PATH lists /opt/node22/bin first, so new shells would still get Node 22: point its tools at the
+# Node ${NODE_MAJOR} ones. Originals are kept once in .orig-node22/; tools already linked are skipped.
+OLD_NODE_BIN="${OLD_NODE_BIN:-/opt/node22/bin}"
+NEW_NODE_BIN="/opt/node${NODE_MAJOR}/bin"
+if [ -d "$OLD_NODE_BIN" ] && [ -x "$NEW_NODE_BIN/node" ] && [ "$OLD_NODE_BIN" != "$NEW_NODE_BIN" ]; then
+  backup="$OLD_NODE_BIN/.orig-node22"
+  $SUDO mkdir -p "$backup"
+  for tool in node npm npx corepack pnpm pnpx; do
+    [ -e "$NEW_NODE_BIN/$tool" ] || continue
+    [ "$(readlink "$OLD_NODE_BIN/$tool" 2>/dev/null || true)" = "$NEW_NODE_BIN/$tool" ] && continue
+    if [ -e "$OLD_NODE_BIN/$tool" ] || [ -L "$OLD_NODE_BIN/$tool" ]; then
+      if [ -e "$backup/$tool" ] || [ -L "$backup/$tool" ]; then $SUDO rm -f "$OLD_NODE_BIN/$tool"
+      else $SUDO mv "$OLD_NODE_BIN/$tool" "$backup/$tool"; fi
+    fi
+    $SUDO ln -s "$NEW_NODE_BIN/$tool" "$OLD_NODE_BIN/$tool"
+    log "Linked $OLD_NODE_BIN/$tool -> $NEW_NODE_BIN/$tool"
+  done
+  hash -r
+fi
 log "pnpm $(pnpm -v) ($(command -v pnpm))"
 
 # --- PostgreSQL + pgvector + Redis ------------------------------------------------------------------
