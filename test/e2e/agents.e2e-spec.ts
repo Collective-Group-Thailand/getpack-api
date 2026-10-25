@@ -373,6 +373,18 @@ describe('sales agents (e2e, D-416 – D-423)', () => {
       })
       .expect(409);
     expect(existing.body.code).toBe('agents.lead_existing_customer');
+    // D-440: a factory already in getpack gets one neutral refusal that names no reason.
+    const known = await ctx.prisma.factory.findFirstOrThrow();
+    const factoryLead = await as(ctx, agent.token)
+      .post('/v1/store/agent/leads', {
+        kind: 'factory',
+        contactName: 'ผู้ติดต่อ (fake)',
+        taxId: known.taxId,
+        consentConfirmed: true,
+      })
+      .expect(409);
+    expect(factoryLead.body.code).toBe('agents.lead_unavailable');
+    expect(`${factoryLead.body.title} ${factoryLead.body.detail}`).not.toMatch(/โรงงาน|factory/i);
     await as(ctx, agent.token)
       .post('/v1/store/agent/leads', {
         kind: 'customer',

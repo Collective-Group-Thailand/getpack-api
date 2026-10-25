@@ -1,4 +1,5 @@
 import { statusLabels } from '@common/labels/status-labels';
+import { STORE_VALUE_ALIASES } from '@common/labels/store-words';
 import { nextActions, NO_PERMISSIONS } from '@common/next-actions/next-actions';
 import { bangkokDate, toBangkokIso } from '@common/time/bangkok';
 import { type Prisma } from '@generated/prisma/client';
@@ -251,12 +252,10 @@ export function orderDto(row: OrderRow, ctx: OrderViewContext = { autoCompleteDa
     cancelReasonNameTh: row.cancelReason?.nameTh ?? null,
     cancelReasonNameEn: row.cancelReason?.nameEn ?? null,
     receipt: receipt(row, ctx),
-    openClaims: row.claims.map((c) => ({
-      id: c.publicId,
-      claimNo: c.claimNo,
-      status: c.status,
-      ...statusLabels('ClaimStatus', c.status),
-    })),
+    openClaims: row.claims.map((c) => {
+      const status = STORE_VALUE_ALIASES[c.status] ?? c.status; // D-440: the customer's claim status
+      return { id: c.publicId, claimNo: c.claimNo, status, ...statusLabels('ClaimStatus', status) };
+    }),
     toleranceOutcome: toleranceOutcome(row),
     createdAt: toBangkokIso(row.createdAt),
     nextActions: nextActions(facts, STORE_ORDER_ACTIONS, NO_PERMISSIONS),

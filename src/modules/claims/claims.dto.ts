@@ -1,5 +1,6 @@
 import { ApiStatusLabelAdminTh, ApiStatusLabelTh } from '@common/labels/status-label.decorators';
 import { statusLabels } from '@common/labels/status-labels';
+import { STORE_CLAIM_OWNERS, storeEnum } from '@common/labels/store-words';
 import { NextActionDto } from '@common/next-actions/next-action.dto';
 import { PageQuery } from '@common/pagination/pagination.dto';
 import { DECISION_CHANNELS } from '@modules/artwork/proofs.dto';
@@ -60,6 +61,12 @@ export const CLAIM_ACTIONS = [
   'factory_deduction',
   'carrier_recovery',
 ] as const;
+/** D-440: what a store response can carry (factory-named values aliased or absent, `store-words.ts`). */
+export const STORE_CLAIM_STATUSES = storeEnum(CLAIM_STATUSES);
+/** Recoveries from a factory or a carrier are never on the customer's claim (`claim-views.ts`). */
+export const STORE_CLAIM_ACTIONS = CLAIM_ACTIONS.filter(
+  (a) => a !== 'factory_deduction' && a !== 'carrier_recovery',
+);
 const MONEY = /^\d{1,12}(\.\d{1,2})?$/;
 
 export const CLAIM_IDS = {
@@ -299,7 +306,7 @@ export class DecideClaimDto {
   goodwillMemoId?: string;
 }
 
-export class ClaimSlaDto {
+export class StoreClaimSlaDto {
   @ApiProperty({ type: String, format: 'date-time', nullable: true, example: '2026-10-23T09:00:00+07:00' })
   responseDueAt!: string | null;
 
@@ -323,13 +330,12 @@ export class ClaimSlaDto {
   decisionOverdue!: boolean;
 
   @ApiProperty({
-    enum: CLAIM_OWNERS,
-    enumName: 'ClaimOwner',
+    enum: STORE_CLAIM_OWNERS,
+    enumName: 'StoreClaimOwner',
     example: 'getpack',
-    description:
-      'Who must act now: getpack, the customer (information), the factory (its review), nobody (D-263)',
+    description: 'Who must act now: getpack (our team), the customer (information), nobody (D-263, D-440)',
   })
-  currentOwner!: (typeof CLAIM_OWNERS)[number];
+  currentOwner!: string;
 
   @ApiProperty({
     type: Number,
@@ -338,6 +344,18 @@ export class ClaimSlaDto {
     description: 'The guarantee version the claim follows (D-260)',
   })
   guaranteeVersionNo!: number | null;
+}
+
+/** Staff and factories: the factory is a party of its own. */
+export class ClaimSlaDto extends StoreClaimSlaDto {
+  @ApiProperty({
+    enum: CLAIM_OWNERS,
+    enumName: 'ClaimOwner',
+    example: 'getpack',
+    description:
+      'Who must act now: getpack, the customer (information), the factory (its review), nobody (D-263)',
+  })
+  declare currentOwner: string;
 }
 
 export const CLAIM_TIMELINE_EVENTS = [
@@ -363,11 +381,11 @@ export class ClaimTimelineDto {
   @ApiProperty({ format: 'uuid', example: '0192f3a0-7c1e-7d2a-9b1f-00000000c101' })
   claimId!: string;
 
-  @ApiProperty({ example: 'under_review' })
+  @ApiProperty({ enum: STORE_CLAIM_STATUSES, enumName: 'StoreClaimStatus', example: 'under_review' })
   status!: string;
 
-  @ApiProperty({ type: ClaimSlaDto })
-  sla!: ClaimSlaDto;
+  @ApiProperty({ type: StoreClaimSlaDto })
+  sla!: StoreClaimSlaDto;
 
   @ApiProperty({
     type: [ClaimTimelineEventDto],
@@ -510,8 +528,8 @@ export class ReorderPreviewQuery {
 
 // --- responses -------------------------------------------------------------------------------------------
 
-export class ClaimResolutionDto {
-  @ApiProperty({ enum: CLAIM_ACTIONS, enumName: 'ClaimAction', example: 'reproduction_job' })
+export class StoreClaimResolutionDto {
+  @ApiProperty({ enum: STORE_CLAIM_ACTIONS, enumName: 'StoreClaimAction', example: 'reproduction_job' })
   action!: string;
 
   @ApiProperty({ nullable: true, example: null })
@@ -532,6 +550,12 @@ export class ClaimResolutionDto {
 
   @ApiProperty({ format: 'date-time', example: '2026-10-25T11:00:00+07:00' })
   executedAt!: string;
+}
+
+/** Staff and factories also see the recoveries (factory deduction, carrier recovery). */
+export class ClaimResolutionDto extends StoreClaimResolutionDto {
+  @ApiProperty({ enum: CLAIM_ACTIONS, enumName: 'ClaimAction', example: 'reproduction_job' })
+  declare action: string;
 }
 
 export class ClaimPhotosDto {
@@ -592,7 +616,7 @@ export class StoreClaimDto {
   })
   origin!: string;
 
-  @ApiProperty({ enum: CLAIM_STATUSES, enumName: 'ClaimStatus', example: 'under_review' })
+  @ApiProperty({ enum: STORE_CLAIM_STATUSES, enumName: 'StoreClaimStatus', example: 'under_review' })
   status!: string;
 
   @ApiStatusLabelTh('ClaimStatus')
@@ -637,8 +661,8 @@ export class StoreClaimDto {
   })
   tolerance!: ClaimToleranceDto;
 
-  @ApiProperty({ type: [ClaimResolutionDto] })
-  resolutions!: ClaimResolutionDto[];
+  @ApiProperty({ type: [StoreClaimResolutionDto] })
+  resolutions!: StoreClaimResolutionDto[];
 
   @ApiProperty({ enum: CLAIM_SEVERITIES, enumName: 'ClaimSeverity', nullable: true, example: null })
   severity!: (typeof CLAIM_SEVERITIES)[number] | null;
@@ -652,8 +676,8 @@ export class StoreClaimDto {
   })
   remedy!: (typeof GUARANTEE_REMEDIES)[number] | null;
 
-  @ApiProperty({ type: ClaimSlaDto, description: 'SLA countdowns and the current owner (D-263)' })
-  sla!: ClaimSlaDto;
+  @ApiProperty({ type: StoreClaimSlaDto, description: 'SLA countdowns and the current owner (D-263)' })
+  sla!: StoreClaimSlaDto;
 
   @ApiProperty({
     type: String,
@@ -690,6 +714,15 @@ export class ClaimDeductionDto {
 }
 
 export class PartnerClaimDto extends StoreClaimDto {
+  @ApiProperty({ enum: CLAIM_STATUSES, enumName: 'ClaimStatus', example: 'under_review' })
+  declare status: string;
+
+  @ApiProperty({ type: [ClaimResolutionDto] })
+  declare resolutions: ClaimResolutionDto[];
+
+  @ApiProperty({ type: ClaimSlaDto, description: 'SLA countdowns and the current owner (D-263)' })
+  declare sla: ClaimSlaDto;
+
   @ApiProperty({ format: 'uuid', nullable: true, example: CLAIM_IDS.job })
   jobId!: string | null;
 

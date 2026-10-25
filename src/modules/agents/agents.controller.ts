@@ -285,7 +285,7 @@ export class StoreAgentController {
     'agents.agent_inactive',
     'agents.too_many_leads',
     'agents.lead_existing_customer',
-    'agents.lead_existing_factory',
+    'agents.lead_unavailable',
     'agents.lead_taken',
     'agents.lead_duplicate',
   )

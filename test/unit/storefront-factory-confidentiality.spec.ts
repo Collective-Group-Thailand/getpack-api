@@ -22,6 +22,18 @@ const ALLOWED = new Set<string>([
   'AgentPlanTermsDto.factoryQualifyDays',
 ]);
 
+/**
+ * D-440: values (enum members and example strings) that name a factory or production capacity. The Thai word is the
+ * one customers must never read (GLOBAL-RULES §1).
+ */
+const FORBIDDEN_VALUE = /factory|capacity|โรงงาน/i;
+
+/**
+ * Enums whose factory value is the sales-agent programme's own term (D-417, D-419): an agent registers a factory as a
+ * lead and earns its bounty — a rule of the programme, never an existing partner's identity, count or location.
+ */
+const ALLOWED_ENUMS = new Set(['AgentLeadKind', 'AgentCommissionKind']);
+
 /** Operations removed by D-435; they must not come back. */
 const REMOVED_PATHS = ['/v1/store/network/stats'];
 
@@ -87,6 +99,50 @@ function exampleKeysOf(
   return out;
 }
 
+/** Every named enum component reachable from a schema, with its values. */
+function enumsOf(
+  node: unknown,
+  seen = new Set<string>(),
+  out = new Map<string, unknown[]>(),
+): Map<string, unknown[]> {
+  if (Array.isArray(node)) {
+    for (const child of node) enumsOf(child, seen, out);
+    return out;
+  }
+  if (!node || typeof node !== 'object') return out;
+  const record = node as Node;
+  if (typeof record.$ref === 'string') {
+    const name = record.$ref.split('/').pop()!;
+    if (seen.has(name)) return out;
+    seen.add(name);
+    const schema = contract.components.schemas[name];
+    if (schema && Array.isArray(schema.enum)) out.set(name, schema.enum as unknown[]);
+    enumsOf(schema, seen, out);
+    return out;
+  }
+  for (const [key, child] of Object.entries(record))
+    if (key !== 'example' && key !== 'examples') enumsOf(child, seen, out);
+  return out;
+}
+
+/** Every string inside the examples of a response (inline ones; component examples are shared with staff). */
+function exampleStringsOf(node: unknown, out: string[] = [], inExample = false): string[] {
+  if (typeof node === 'string') {
+    if (inExample) out.push(node);
+    return out;
+  }
+  if (Array.isArray(node)) {
+    for (const child of node) exampleStringsOf(child, out, inExample);
+    return out;
+  }
+  if (!node || typeof node !== 'object') return out;
+  for (const [key, child] of Object.entries(node as Node)) {
+    if (!inExample && key === 'schema') continue;
+    exampleStringsOf(child, out, inExample || key === 'example' || key === 'examples');
+  }
+  return out;
+}
+
 const storeOperations = Object.entries(contract.paths)
   .filter(([path]) => path.startsWith('/v1/store/'))
   .flatMap(([path, item]) =>
@@ -118,7 +174,7 @@ describe('storefront responses never carry factory data (D-435, GLOBAL-RULES §1
     const leaks: string[] = [];
     for (const { operation } of storeOperations) {
       for (const [status, response] of Object.entries(operation.responses ?? {})) {
-        // Error examples are keyed by their problem `code` (e.g. `agents.lead_existing_factory`), not payload keys.
+        // Error examples are keyed by their problem `code` (checked by the error-code test below), not payload keys.
         if (!status.startsWith('2')) continue;
         for (const key of exampleKeysOf(response)) {
           if (FORBIDDEN.test(key) && !allowedKeys.has(key))
@@ -127,6 +183,44 @@ describe('storefront responses never carry factory data (D-435, GLOBAL-RULES §1
       }
     }
     expect([...new Set(leaks)]).toEqual([]);
+  });
+
+  it('carries no factory- or capacity-named enum value in any store response (D-440)', () => {
+    const leaks: string[] = [];
+    for (const { operation } of storeOperations) {
+      for (const [status, response] of Object.entries(operation.responses ?? {})) {
+        if (!status.startsWith('2')) continue;
+        for (const [name, values] of enumsOf(response))
+          for (const value of values)
+            if (FORBIDDEN_VALUE.test(String(value)) && !ALLOWED_ENUMS.has(name))
+              leaks.push(`${operation.operationId}: ${name}.${String(value)}`);
+      }
+    }
+    expect([...new Set(leaks)]).toEqual([]);
+  });
+
+  it('shows customers no factory word in any store success example (D-440)', () => {
+    const leaks: string[] = [];
+    for (const { operation } of storeOperations) {
+      for (const [status, response] of Object.entries(operation.responses ?? {})) {
+        if (!status.startsWith('2')) continue;
+        for (const text of exampleStringsOf(response))
+          // The agent programme's lead kind `factory` is its own term (ALLOWED_ENUMS).
+          if (FORBIDDEN_VALUE.test(text) && text !== 'factory' && text !== 'factory_bounty')
+            leaks.push(`${operation.operationId} ${status}: ${text}`);
+      }
+    }
+    expect([...new Set(leaks)]).toEqual([]);
+  });
+
+  it('answers no store problem whose code names a factory or capacity (D-440)', () => {
+    const codes = new Set<string>();
+    for (const { operation } of storeOperations)
+      for (const response of Object.values(operation.responses ?? {}))
+        for (const text of exampleStringsOf(response))
+          if (/^[a-z_]+\.[a-z_]+$/.test(text) && FORBIDDEN_VALUE.test(text))
+            codes.add(`${operation.operationId}: ${text}`);
+    expect([...codes]).toEqual([]);
   });
 
   it('no longer publishes network statistics', () => {
@@ -140,5 +234,8 @@ describe('storefront responses never carry factory data (D-435, GLOBAL-RULES §1
       true,
     );
     expect(exampleKeysOf({ example: { partnersCount: 3 } })).toContain('partnersCount');
+    expect(exampleStringsOf({ example: { statusLabelAdminTh: 'รอโรงงานรับงาน' } })).toContain(
+      'รอโรงงานรับงาน',
+    );
   });
 });

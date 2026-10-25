@@ -224,7 +224,7 @@ export const ERROR_CODES = {
   'agents.agent_inactive': HttpStatus.CONFLICT,
   'agents.too_many_leads': HttpStatus.UNPROCESSABLE_ENTITY,
   'agents.lead_existing_customer': HttpStatus.CONFLICT,
-  'agents.lead_existing_factory': HttpStatus.CONFLICT,
+  'agents.lead_unavailable': HttpStatus.CONFLICT,
   'agents.lead_taken': HttpStatus.CONFLICT,
   'agents.lead_duplicate': HttpStatus.CONFLICT,
   'agents.lead_closed': HttpStatus.CONFLICT,

@@ -1,3 +1,4 @@
+import { storeEnum } from '@common/labels/store-words';
 import { BoolField, DecimalField, EnumField, IntField, RefField } from '@modules/catalog/crud/dto-fields';
 import { RATE_MISS_REASONS } from '@modules/shipping/rates/customer-rates.dto';
 import { type MeasurementBasis } from '@modules/specs/dimension-conversion';
@@ -318,6 +319,16 @@ export const TOOLING_WAIVER_EXAMPLE: ToolingWaiverDto = {
   tooling: [{ id: '0192f3a0-7c1e-7d2a-9b1f-0000000e7101', kind: 'die_block' }],
 };
 
+export const QUOTE_NO_PRICE_REASONS = [
+  'no_price_path',
+  'not_priceable',
+  'envelope_not_covered',
+  'capacity_unavailable',
+  'delivery_unavailable',
+  'style_variant_not_publishable',
+  'rfq_required',
+] as const;
+
 export class QuoteStepDto {
   @ApiProperty({ example: 1000 })
   quantity!: number;
@@ -331,18 +342,10 @@ export class QuoteStepDto {
   @ApiProperty({
     nullable: true,
     example: null,
-    enum: [
-      'no_price_path',
-      'not_priceable',
-      'envelope_not_covered',
-      'capacity_unavailable',
-      'delivery_unavailable',
-      'style_variant_not_publishable',
-      'rfq_required',
-    ],
-    enumName: 'QuoteNoPriceReason',
+    enum: storeEnum(QUOTE_NO_PRICE_REASONS),
+    enumName: 'StoreQuoteNoPriceReason',
     description:
-      'Why there is no instant price; `envelope_not_covered`: only tier-B paths priced it, outside their envelopes (D-234); `style_variant_not_publishable`: the named style variant is not published (D-243); `rfq_required`: the variant is published but priced through RFQ — calculator not signed or an option not priced (D-266)',
+      'Why there is no instant price; `envelope_not_covered`: only tier-B paths priced it, outside their envelopes (D-234); `style_variant_not_publishable`: the named style variant is not published (D-243); `rfq_required`: the variant is published but priced through RFQ — calculator not signed or an option not priced (D-266); `not_instant`: no instant price now — request a quotation (D-440)',
   })
   reason!: string | null;
 
@@ -691,6 +694,15 @@ export class QuoteInternalDto {
 }
 
 export class AdminQuoteStepDto extends QuoteStepDto {
+  @ApiProperty({
+    nullable: true,
+    example: null,
+    enum: QUOTE_NO_PRICE_REASONS,
+    enumName: 'QuoteNoPriceReason',
+    description: 'Why there is no instant price (staff: `capacity_unavailable` names the capacity gap)',
+  })
+  declare reason: string | null;
+
   @ApiProperty({ type: QuoteInternalDto, nullable: true })
   internal!: QuoteInternalDto | null;
 }

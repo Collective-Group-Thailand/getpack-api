@@ -71,7 +71,8 @@ describe('call-off agreements (e2e, U2.7)', () => {
     await post(token, '/v1/store/call-off-agreements', { ...body, months: 7 }).expect(422);
     const asked = await post(token, '/v1/store/call-off-agreements', { ...body, months: 6 }).expect(201);
     agreementId = asked.body.id as string;
-    expect(asked.body).toMatchObject({ status: 'pending_factory', committedQuantity: 5000 });
+    expect(asked.body).toMatchObject({ status: 'pending_confirmation', committedQuantity: 5000 });
+    // D-440: the store alias of `pending_factory`.
     // D-435: the customer's view has no factory field and no buy price at all.
     expect(asked.body).not.toHaveProperty('factory');
     expect(asked.body).not.toHaveProperty('buyUnitPrice');

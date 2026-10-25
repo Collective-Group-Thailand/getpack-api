@@ -254,17 +254,6 @@
           "type": "https://errors.getpack/agents.lead_existing_customer"
         }
       },
-      "problem.agents.lead_existing_factory": {
-        "summary": "agents.lead_existing_factory",
-        "value": {
-          "code": "agents.lead_existing_factory",
-          "detail": "โรงงานนี้อยู่ในระบบ getpack แล้ว",
-          "requestId": "6f1c2d8e-2c7b-4d0e-9d1c-3f1a2b3c4d5e",
-          "status": 409,
-          "title": "เป็นโรงงานในระบบแล้ว",
-          "type": "https://errors.getpack/agents.lead_existing_factory"
-        }
-      },
       "problem.agents.lead_taken": {
         "summary": "agents.lead_taken",
         "value": {
@@ -274,6 +263,17 @@
           "status": 409,
           "title": "มีตัวแทนลงทะเบียนแล้ว",
           "type": "https://errors.getpack/agents.lead_taken"
+        }
+      },
+      "problem.agents.lead_unavailable": {
+        "summary": "agents.lead_unavailable",
+        "value": {
+          "code": "agents.lead_unavailable",
+          "detail": "ลงทะเบียนผู้มุ่งหวังรายนี้ไม่ได้ หากมีข้อสงสัยกรุณาติดต่อทีมงาน getpack",
+          "requestId": "6f1c2d8e-2c7b-4d0e-9d1c-3f1a2b3c4d5e",
+          "status": 409,
+          "title": "ลงทะเบียนผู้มุ่งหวังรายนี้ไม่ได้",
+          "type": "https://errors.getpack/agents.lead_unavailable"
         }
       },
       "problem.agents.link_ended": {
@@ -8306,7 +8306,7 @@
             "example": "under_review"
           },
           "statusLabelAdminTh": {
-            "description": "`status` (ClaimStatus) in Thai for staff and partner factories (D-313).",
+            "description": "`status` (ClaimStatus) in Thai for staff and partner factories (D-313); on `/v1/store/*` responses the customer's words, equal to `statusLabelTh` (D-440).",
             "example": "แจ้งเคลมแล้ว",
             "type": "string"
           },
@@ -9627,8 +9627,8 @@
             "example": "released"
           },
           "statusLabelAdminTh": {
-            "description": "`status` (ProductionJobStatus) in Thai for staff and partner factories (D-313).",
-            "example": "รอโรงงานรับงาน",
+            "description": "`status` (ProductionJobStatus) in Thai for staff and partner factories (D-313); on `/v1/store/*` responses the customer's words, equal to `statusLabelTh` (D-440).",
+            "example": "เตรียมผลิต",
             "type": "string"
           },
           "statusLabelTh": {
@@ -9912,8 +9912,8 @@
             "example": "awaiting_template"
           },
           "artworkStatusLabelAdminTh": {
-            "description": "`artworkStatus` (ArtworkStatus) in Thai for staff and partner factories (D-313).",
-            "example": "รอทีมส่งแบบไดคัทให้ลูกค้า",
+            "description": "`artworkStatus` (ArtworkStatus) in Thai for staff and partner factories (D-313); on `/v1/store/*` responses the customer's words, equal to `artworkStatusLabelTh` (D-440).",
+            "example": "รอทีมส่งแบบไดคัทให้",
             "type": "string"
           },
           "artworkStatusLabelTh": {
@@ -9966,7 +9966,7 @@
             "example": "awaiting_payment"
           },
           "customerStatusLabelAdminTh": {
-            "description": "`customerStatus` (CustomerOrderStatus) in Thai for staff and partner factories (D-313).",
+            "description": "`customerStatus` (CustomerOrderStatus) in Thai for staff and partner factories (D-313); on `/v1/store/*` responses the customer's words, equal to `customerStatusLabelTh` (D-440).",
             "example": "รอชำระเงิน",
             "type": "string"
           },
@@ -10095,7 +10095,7 @@
             "type": "string"
           },
           "statusLabelAdminTh": {
-            "description": "`status` (OrderStatus) in Thai for staff and partner factories (D-313).",
+            "description": "`status` (OrderStatus) in Thai for staff and partner factories (D-313); on `/v1/store/*` responses the customer's words, equal to `statusLabelTh` (D-440).",
             "example": "รอชำระเงิน",
             "type": "string"
           },
@@ -10315,7 +10315,7 @@
             "example": "waiting_payment"
           },
           "statusLabelAdminTh": {
-            "description": "`status` (OrderGroupStatus) in Thai for staff and partner factories (D-313).",
+            "description": "`status` (OrderGroupStatus) in Thai for staff and partner factories (D-313); on `/v1/store/*` responses the customer's words, equal to `statusLabelTh` (D-440).",
             "example": "รอผู้อนุมัติของบริษัท",
             "type": "string"
           },
@@ -10448,8 +10448,8 @@
             "example": "approved"
           },
           "artworkStatusLabelAdminTh": {
-            "description": "`artworkStatus` (ArtworkStatus) in Thai for staff and partner factories (D-313).",
-            "example": "รอทีมส่งแบบไดคัทให้ลูกค้า",
+            "description": "`artworkStatus` (ArtworkStatus) in Thai for staff and partner factories (D-313); on `/v1/store/*` responses the customer's words, equal to `artworkStatusLabelTh` (D-440).",
+            "example": "รอทีมส่งแบบไดคัทให้",
             "type": "string"
           },
           "artworkStatusLabelTh": {
@@ -10560,7 +10560,7 @@
             "example": "in_production"
           },
           "statusLabelAdminTh": {
-            "description": "`status` (OrderStatus) in Thai for staff and partner factories (D-313).",
+            "description": "`status` (OrderStatus) in Thai for staff and partner factories (D-313); on `/v1/store/*` responses the customer's words, equal to `statusLabelTh` (D-440).",
             "example": "รอชำระเงิน",
             "type": "string"
           },
@@ -10741,7 +10741,7 @@
             "example": "pending"
           },
           "statusLabelAdminTh": {
-            "description": "`status` (PaymentStatus) in Thai for staff and partner factories (D-313).",
+            "description": "`status` (PaymentStatus) in Thai for staff and partner factories (D-313); on `/v1/store/*` responses the customer's words, equal to `statusLabelTh` (D-440).",
             "example": "เริ่มชำระเงิน",
             "type": "string"
           },
@@ -11108,7 +11108,7 @@
                 "type": "null"
               }
             ],
-            "description": "Why there is no instant price; `envelope_not_covered`: only tier-B paths priced it, outside their envelopes (D-234); `style_variant_not_publishable`: the named style variant is not published (D-243); `rfq_required`: the variant is published but priced through RFQ — calculator not signed or an option not priced (D-266)",
+            "description": "Why there is no instant price (staff: `capacity_unavailable` names the capacity gap)",
             "example": null
           },
           "shippingAmount": {
@@ -11845,7 +11845,7 @@
             "type": "string"
           },
           "statusLabelAdminTh": {
-            "description": "`status` (SampleStatus) in Thai for staff and partner factories (D-313).",
+            "description": "`status` (SampleStatus) in Thai for staff and partner factories (D-313); on `/v1/store/*` responses the customer's words, equal to `statusLabelTh` (D-440).",
             "example": "รอใบเสนอราคา",
             "type": "string"
           },
@@ -12142,7 +12142,7 @@
             "example": "saved"
           },
           "statusLabelAdminTh": {
-            "description": "`status` (QuoteStatus) in Thai for staff and partner factories (D-313).",
+            "description": "`status` (QuoteStatus) in Thai for staff and partner factories (D-313); on `/v1/store/*` responses the customer's words, equal to `statusLabelTh` (D-440).",
             "example": "คำนวณแล้ว",
             "type": "string"
           },
@@ -12627,8 +12627,8 @@
             "example": "ready"
           },
           "statusLabelAdminTh": {
-            "description": "`status` (ShipmentStatus) in Thai for staff and partner factories (D-313).",
-            "example": "ร่างรอบส่ง",
+            "description": "`status` (ShipmentStatus) in Thai for staff and partner factories (D-313); on `/v1/store/*` responses the customer's words, equal to `statusLabelTh` (D-440).",
+            "example": "เตรียมจัดส่ง",
             "type": "string"
           },
           "statusLabelTh": {
@@ -17675,7 +17675,7 @@
             "example": "blocked"
           },
           "preflightStatusLabelAdminTh": {
-            "description": "`preflightStatus` (PreflightStatus) in Thai for staff and partner factories (D-313).",
+            "description": "`preflightStatus` (PreflightStatus) in Thai for staff and partner factories (D-313); on `/v1/store/*` responses the customer's words, equal to `preflightStatusLabelTh` (D-440).",
             "example": "รอตรวจไฟล์อัตโนมัติ",
             "type": "string"
           },
@@ -17716,7 +17716,7 @@
             "example": "submitted"
           },
           "statusLabelAdminTh": {
-            "description": "`status` (SubmissionStatus) in Thai for staff and partner factories (D-313).",
+            "description": "`status` (SubmissionStatus) in Thai for staff and partner factories (D-313); on `/v1/store/*` responses the customer's words, equal to `statusLabelTh` (D-440).",
             "example": "ส่งไฟล์แล้ว",
             "type": "string"
           },
@@ -21187,6 +21187,7 @@
                 "$ref": "#/components/schemas/CallOffStatus"
               }
             ],
+            "description": "`pending_confirmation`: waiting for production to confirm the agreement (D-440)",
             "example": "active"
           },
           "unit": {
@@ -21300,6 +21301,7 @@
         "type": "string"
       },
       "CallOffStatus": {
+        "description": "`pending_confirmation`: waiting for production to confirm the agreement (D-440)",
         "enum": [
           "pending_factory",
           "active",
@@ -24692,7 +24694,6 @@
         "type": "object"
       },
       "ClaimStatus": {
-        "description": "Never a final status (`rejected`, `resolved`, `closed`) here",
         "enum": [
           "submitted",
           "under_review",
@@ -24720,11 +24721,15 @@
             "type": "array"
           },
           "sla": {
-            "$ref": "#/components/schemas/ClaimSlaDto"
+            "$ref": "#/components/schemas/StoreClaimSlaDto"
           },
           "status": {
-            "example": "under_review",
-            "type": "string"
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/StoreClaimStatus"
+              }
+            ],
+            "example": "under_review"
           }
         },
         "required": [
@@ -37973,7 +37978,7 @@
             "example": "in_progress"
           },
           "statusLabelAdminTh": {
-            "description": "`status` (DesignRoundStatus) in Thai for staff and partner factories (D-313).",
+            "description": "`status` (DesignRoundStatus) in Thai for staff and partner factories (D-313); on `/v1/store/*` responses the customer's words, equal to `statusLabelTh` (D-440).",
             "example": "รอชำระค่าแก้ไขเพิ่ม",
             "type": "string"
           },
@@ -38144,7 +38149,7 @@
             "example": "in_progress"
           },
           "statusLabelAdminTh": {
-            "description": "`status` (DesignServiceStatus) in Thai for staff and partner factories (D-313).",
+            "description": "`status` (DesignServiceStatus) in Thai for staff and partner factories (D-313); on `/v1/store/*` responses the customer's words, equal to `statusLabelTh` (D-440).",
             "example": "รอบรีฟงานออกแบบ",
             "type": "string"
           },
@@ -68989,7 +68994,7 @@
             "example": "due"
           },
           "statusLabelAdminTh": {
-            "description": "`status` (InstalmentStatus) in Thai for staff and partner factories (D-313).",
+            "description": "`status` (InstalmentStatus) in Thai for staff and partner factories (D-313); on `/v1/store/*` responses the customer's words, equal to `statusLabelTh` (D-440).",
             "example": "ยังไม่ถึงกำหนด",
             "type": "string"
           },
@@ -72299,7 +72304,7 @@
             "example": "in_progress"
           },
           "statusLabelAdminTh": {
-            "description": "`status` (MilestoneStatus) in Thai for staff and partner factories (D-313).",
+            "description": "`status` (MilestoneStatus) in Thai for staff and partner factories (D-313); on `/v1/store/*` responses the customer's words, equal to `statusLabelTh` (D-440).",
             "example": "ยังไม่เริ่ม",
             "type": "string"
           },
@@ -73815,8 +73820,8 @@
             "example": "awaiting_template"
           },
           "artworkStatusLabelAdminTh": {
-            "description": "`artworkStatus` (ArtworkStatus) in Thai for staff and partner factories (D-313).",
-            "example": "รอทีมส่งแบบไดคัทให้ลูกค้า",
+            "description": "`artworkStatus` (ArtworkStatus) in Thai for staff and partner factories (D-313); on `/v1/store/*` responses the customer's words, equal to `artworkStatusLabelTh` (D-440).",
+            "example": "รอทีมส่งแบบไดคัทให้",
             "type": "string"
           },
           "artworkStatusLabelTh": {
@@ -73869,7 +73874,7 @@
             "example": "awaiting_payment"
           },
           "customerStatusLabelAdminTh": {
-            "description": "`customerStatus` (CustomerOrderStatus) in Thai for staff and partner factories (D-313).",
+            "description": "`customerStatus` (CustomerOrderStatus) in Thai for staff and partner factories (D-313); on `/v1/store/*` responses the customer's words, equal to `customerStatusLabelTh` (D-440).",
             "example": "รอชำระเงิน",
             "type": "string"
           },
@@ -73995,7 +74000,7 @@
             "type": "string"
           },
           "statusLabelAdminTh": {
-            "description": "`status` (OrderStatus) in Thai for staff and partner factories (D-313).",
+            "description": "`status` (OrderStatus) in Thai for staff and partner factories (D-313); on `/v1/store/*` responses the customer's words, equal to `statusLabelTh` (D-440).",
             "example": "รอชำระเงิน",
             "type": "string"
           },
@@ -74185,7 +74190,7 @@
             "example": "waiting_payment"
           },
           "statusLabelAdminTh": {
-            "description": "`status` (OrderGroupStatus) in Thai for staff and partner factories (D-313).",
+            "description": "`status` (OrderGroupStatus) in Thai for staff and partner factories (D-313); on `/v1/store/*` responses the customer's words, equal to `statusLabelTh` (D-440).",
             "example": "รอผู้อนุมัติของบริษัท",
             "type": "string"
           },
@@ -74379,14 +74384,14 @@
           "status": {
             "allOf": [
               {
-                "$ref": "#/components/schemas/ClaimStatus"
+                "$ref": "#/components/schemas/StoreClaimStatus"
               }
             ],
-            "description": "Never a final status (`rejected`, `resolved`, `closed`) here",
+            "description": "Never a final status here",
             "example": "under_review"
           },
           "statusLabelAdminTh": {
-            "description": "`status` (ClaimStatus) in Thai for staff and partner factories (D-313).",
+            "description": "`status` (ClaimStatus) in Thai for staff and partner factories (D-313); on `/v1/store/*` responses the customer's words, equal to `statusLabelTh` (D-440).",
             "example": "แจ้งเคลมแล้ว",
             "type": "string"
           },
@@ -74597,8 +74602,8 @@
             "example": "uploaded"
           },
           "artworkStatusLabelAdminTh": {
-            "description": "`artworkStatus` (ArtworkStatus) in Thai for staff and partner factories (D-313).",
-            "example": "รอทีมส่งแบบไดคัทให้ลูกค้า",
+            "description": "`artworkStatus` (ArtworkStatus) in Thai for staff and partner factories (D-313); on `/v1/store/*` responses the customer's words, equal to `artworkStatusLabelTh` (D-440).",
+            "example": "รอทีมส่งแบบไดคัทให้",
             "type": "string"
           },
           "artworkStatusLabelTh": {
@@ -74666,7 +74671,7 @@
             "example": "paid_for_production"
           },
           "statusLabelAdminTh": {
-            "description": "`status` (OrderStatus) in Thai for staff and partner factories (D-313).",
+            "description": "`status` (OrderStatus) in Thai for staff and partner factories (D-313); on `/v1/store/*` responses the customer's words, equal to `statusLabelTh` (D-440).",
             "example": "รอชำระเงิน",
             "type": "string"
           },
@@ -75502,7 +75507,7 @@
             "example": "under_review"
           },
           "statusLabelAdminTh": {
-            "description": "`status` (ClaimStatus) in Thai for staff and partner factories (D-313).",
+            "description": "`status` (ClaimStatus) in Thai for staff and partner factories (D-313); on `/v1/store/*` responses the customer's words, equal to `statusLabelTh` (D-440).",
             "example": "แจ้งเคลมแล้ว",
             "type": "string"
           },
@@ -75811,8 +75816,8 @@
             "example": "released"
           },
           "statusLabelAdminTh": {
-            "description": "`status` (ProductionJobStatus) in Thai for staff and partner factories (D-313).",
-            "example": "รอโรงงานรับงาน",
+            "description": "`status` (ProductionJobStatus) in Thai for staff and partner factories (D-313); on `/v1/store/*` responses the customer's words, equal to `statusLabelTh` (D-440).",
+            "example": "เตรียมผลิต",
             "type": "string"
           },
           "statusLabelTh": {
@@ -76399,7 +76404,7 @@
             "example": "in_production"
           },
           "statusLabelAdminTh": {
-            "description": "`status` (SampleStatus) in Thai for staff and partner factories (D-313).",
+            "description": "`status` (SampleStatus) in Thai for staff and partner factories (D-313); on `/v1/store/*` responses the customer's words, equal to `statusLabelTh` (D-440).",
             "example": "รอใบเสนอราคา",
             "type": "string"
           },
@@ -76567,8 +76572,8 @@
             "example": "ready"
           },
           "statusLabelAdminTh": {
-            "description": "`status` (ShipmentStatus) in Thai for staff and partner factories (D-313).",
-            "example": "ร่างรอบส่ง",
+            "description": "`status` (ShipmentStatus) in Thai for staff and partner factories (D-313); on `/v1/store/*` responses the customer's words, equal to `statusLabelTh` (D-440).",
+            "example": "เตรียมจัดส่ง",
             "type": "string"
           },
           "statusLabelTh": {
@@ -77338,7 +77343,7 @@
             "example": "pending"
           },
           "statusLabelAdminTh": {
-            "description": "`status` (PaymentStatus) in Thai for staff and partner factories (D-313).",
+            "description": "`status` (PaymentStatus) in Thai for staff and partner factories (D-313); on `/v1/store/*` responses the customer's words, equal to `statusLabelTh` (D-440).",
             "example": "เริ่มชำระเงิน",
             "type": "string"
           },
@@ -79693,8 +79698,8 @@
             "example": "in_review"
           },
           "artworkStatusLabelAdminTh": {
-            "description": "`artworkStatus` (ArtworkStatus) in Thai for staff and partner factories (D-313).",
-            "example": "รอทีมส่งแบบไดคัทให้ลูกค้า",
+            "description": "`artworkStatus` (ArtworkStatus) in Thai for staff and partner factories (D-313); on `/v1/store/*` responses the customer's words, equal to `artworkStatusLabelTh` (D-440).",
+            "example": "รอทีมส่งแบบไดคัทให้",
             "type": "string"
           },
           "artworkStatusLabelTh": {
@@ -79769,7 +79774,7 @@
             "example": "passed_with_warnings"
           },
           "preflightStatusLabelAdminTh": {
-            "description": "`preflightStatus` (PreflightStatus) in Thai for staff and partner factories (D-313).",
+            "description": "`preflightStatus` (PreflightStatus) in Thai for staff and partner factories (D-313); on `/v1/store/*` responses the customer's words, equal to `preflightStatusLabelTh` (D-440).",
             "example": "รอตรวจไฟล์อัตโนมัติ",
             "type": [
               "string",
@@ -82730,7 +82735,7 @@
             "example": "completed"
           },
           "statusLabelAdminTh": {
-            "description": "`status` (MilestoneStatus) in Thai for staff and partner factories (D-313).",
+            "description": "`status` (MilestoneStatus) in Thai for staff and partner factories (D-313); on `/v1/store/*` responses the customer's words, equal to `statusLabelTh` (D-440).",
             "example": "ยังไม่เริ่ม",
             "type": "string"
           },
@@ -83328,8 +83333,8 @@
             "example": "changes_requested"
           },
           "previousStatusLabelAdminTh": {
-            "description": "`previousStatus` (ProofStatus) in Thai for staff and partner factories (D-313).",
-            "example": "รอ Proof จากลูกค้า",
+            "description": "`previousStatus` (ProofStatus) in Thai for staff and partner factories (D-313); on `/v1/store/*` responses the customer's words, equal to `previousStatusLabelTh` (D-440).",
+            "example": "รอคุณตรวจแบบตัวอย่าง",
             "type": "string"
           },
           "previousStatusLabelTh": {
@@ -83486,8 +83491,8 @@
             "example": "pending_customer"
           },
           "statusLabelAdminTh": {
-            "description": "`status` (ProofStatus) in Thai for staff and partner factories (D-313).",
-            "example": "รอ Proof จากลูกค้า",
+            "description": "`status` (ProofStatus) in Thai for staff and partner factories (D-313); on `/v1/store/*` responses the customer's words, equal to `statusLabelTh` (D-440).",
+            "example": "รอคุณตรวจแบบตัวอย่าง",
             "type": "string"
           },
           "statusLabelTh": {
@@ -85677,7 +85682,7 @@
         "type": "string"
       },
       "QuoteNoPriceReason": {
-        "description": "Why there is no instant price; `envelope_not_covered`: only tier-B paths priced it, outside their envelopes (D-234); `style_variant_not_publishable`: the named style variant is not published (D-243); `rfq_required`: the variant is published but priced through RFQ — calculator not signed or an option not priced (D-266)",
+        "description": "Why there is no instant price (staff: `capacity_unavailable` names the capacity gap)",
         "enum": [
           "no_price_path",
           "not_priceable",
@@ -85815,9 +85820,10 @@
           "reason": {
             "allOf": [
               {
-                "$ref": "#/components/schemas/QuotePathReason"
+                "$ref": "#/components/schemas/StoreQuotePathReason"
               }
             ],
+            "description": "`not_instant`: no instant price for this configuration — request a quotation (D-440)",
             "example": "type_rfq_only"
           }
         },
@@ -85829,6 +85835,7 @@
         "type": "object"
       },
       "QuotePathReason": {
+        "description": "Instant path for a configuration inside every envelope (tier A), else why not",
         "enum": [
           "instant_available",
           "type_rfq_only",
@@ -86165,13 +86172,13 @@
           "reason": {
             "anyOf": [
               {
-                "$ref": "#/components/schemas/QuoteNoPriceReason"
+                "$ref": "#/components/schemas/StoreQuoteNoPriceReason"
               },
               {
                 "type": "null"
               }
             ],
-            "description": "Why there is no instant price; `envelope_not_covered`: only tier-B paths priced it, outside their envelopes (D-234); `style_variant_not_publishable`: the named style variant is not published (D-243); `rfq_required`: the variant is published but priced through RFQ — calculator not signed or an option not priced (D-266)",
+            "description": "Why there is no instant price; `envelope_not_covered`: only tier-B paths priced it, outside their envelopes (D-234); `style_variant_not_publishable`: the named style variant is not published (D-243); `rfq_required`: the variant is published but priced through RFQ — calculator not signed or an option not priced (D-266); `not_instant`: no instant price now — request a quotation (D-440)",
             "example": null
           },
           "shippingAmount": {
@@ -87934,7 +87941,7 @@
             "example": "pending_approval"
           },
           "statusLabelAdminTh": {
-            "description": "`status` (RefundStatus) in Thai for staff and partner factories (D-313).",
+            "description": "`status` (RefundStatus) in Thai for staff and partner factories (D-313); on `/v1/store/*` responses the customer's words, equal to `statusLabelTh` (D-440).",
             "example": "ขอคืนเงินแล้ว",
             "type": "string"
           },
@@ -91227,7 +91234,7 @@
             "example": "quoted"
           },
           "statusLabelAdminTh": {
-            "description": "`status` (RfqStatus) in Thai for staff and partner factories (D-313).",
+            "description": "`status` (RfqStatus) in Thai for staff and partner factories (D-313); on `/v1/store/*` responses the customer's words, equal to `statusLabelTh` (D-440).",
             "example": "ได้รับคำขอแล้ว",
             "type": "string"
           },
@@ -91597,7 +91604,7 @@
             "example": "sent"
           },
           "statusLabelAdminTh": {
-            "description": "`status` (RfqQuoteStatus) in Thai for staff and partner factories (D-313).",
+            "description": "`status` (RfqQuoteStatus) in Thai for staff and partner factories (D-313); on `/v1/store/*` responses the customer's words, equal to `statusLabelTh` (D-440).",
             "example": "ร่างใบเสนอราคา",
             "type": "string"
           },
@@ -93007,7 +93014,7 @@
             "type": "string"
           },
           "statusLabelAdminTh": {
-            "description": "`status` (SampleStatus) in Thai for staff and partner factories (D-313).",
+            "description": "`status` (SampleStatus) in Thai for staff and partner factories (D-313); on `/v1/store/*` responses the customer's words, equal to `statusLabelTh` (D-440).",
             "example": "รอใบเสนอราคา",
             "type": "string"
           },
@@ -93788,7 +93795,7 @@
             "example": "saved"
           },
           "statusLabelAdminTh": {
-            "description": "`status` (QuoteStatus) in Thai for staff and partner factories (D-313).",
+            "description": "`status` (QuoteStatus) in Thai for staff and partner factories (D-313); on `/v1/store/*` responses the customer's words, equal to `statusLabelTh` (D-440).",
             "example": "คำนวณแล้ว",
             "type": "string"
           },
@@ -96795,8 +96802,8 @@
             "example": "in_transit"
           },
           "statusLabelAdminTh": {
-            "description": "`status` (ShipmentStatus) in Thai for staff and partner factories (D-313).",
-            "example": "ร่างรอบส่ง",
+            "description": "`status` (ShipmentStatus) in Thai for staff and partner factories (D-313); on `/v1/store/*` responses the customer's words, equal to `statusLabelTh` (D-440).",
+            "example": "เตรียมจัดส่ง",
             "type": "string"
           },
           "statusLabelTh": {
@@ -97847,7 +97854,7 @@
             "example": "passed"
           },
           "statusLabelAdminTh": {
-            "description": "`status` (SlipStatus) in Thai for staff and partner factories (D-313).",
+            "description": "`status` (SlipStatus) in Thai for staff and partner factories (D-313); on `/v1/store/*` responses the customer's words, equal to `statusLabelTh` (D-440).",
             "example": "รอตรวจสลิป",
             "type": "string"
           },
@@ -97958,7 +97965,7 @@
             "example": "passed"
           },
           "statusLabelAdminTh": {
-            "description": "`status` (SlipStatus) in Thai for staff and partner factories (D-313).",
+            "description": "`status` (SlipStatus) in Thai for staff and partner factories (D-313); on `/v1/store/*` responses the customer's words, equal to `statusLabelTh` (D-440).",
             "example": "รอตรวจสลิป",
             "type": "string"
           },
@@ -99065,7 +99072,7 @@
             "example": "quoted"
           },
           "statusLabelAdminTh": {
-            "description": "`status` (RfqStatus) in Thai for staff and partner factories (D-313).",
+            "description": "`status` (RfqStatus) in Thai for staff and partner factories (D-313); on `/v1/store/*` responses the customer's words, equal to `statusLabelTh` (D-440).",
             "example": "ได้รับคำขอแล้ว",
             "type": "string"
           },
@@ -99281,7 +99288,7 @@
             "example": "sent"
           },
           "statusLabelAdminTh": {
-            "description": "`status` (RfqQuoteStatus) in Thai for staff and partner factories (D-313).",
+            "description": "`status` (RfqQuoteStatus) in Thai for staff and partner factories (D-313); on `/v1/store/*` responses the customer's words, equal to `statusLabelTh` (D-440).",
             "example": "ร่างใบเสนอราคา",
             "type": "string"
           },
@@ -100287,8 +100294,8 @@
       "StatusLabelValueDto": {
         "properties": {
           "labelAdminTh": {
-            "description": "Back-office and factory words (\"Proof\")",
-            "example": "รอ Proof จากลูกค้า",
+            "description": "Back-office and factory words (\"Proof\") on `admin.statusLabels.list`; on the store the customer words (same as `labelTh`, D-440)",
+            "example": "รอคุณตรวจแบบตัวอย่าง",
             "type": "string"
           },
           "labelEn": {
@@ -100925,9 +100932,10 @@
           "status": {
             "allOf": [
               {
-                "$ref": "#/components/schemas/CallOffStatus"
+                "$ref": "#/components/schemas/StoreCallOffStatus"
               }
             ],
+            "description": "`pending_confirmation`: waiting for production to confirm the agreement (D-440)",
             "example": "active"
           },
           "unit": {
@@ -100966,11 +100974,31 @@
         ],
         "type": "object"
       },
+      "StoreCallOffStatus": {
+        "description": "`pending_confirmation`: waiting for production to confirm the agreement (D-440)",
+        "enum": [
+          "pending_confirmation",
+          "active",
+          "declined",
+          "cancelled",
+          "expired"
+        ],
+        "type": "string"
+      },
       "StoreCarrier": {
         "enum": [
           "getpack",
           "flash_express",
           "deliveree"
+        ],
+        "type": "string"
+      },
+      "StoreClaimAction": {
+        "enum": [
+          "reproduction_job",
+          "refund",
+          "credit_note",
+          "store_credit"
         ],
         "type": "string"
       },
@@ -101072,7 +101100,7 @@
           },
           "resolutions": {
             "items": {
-              "$ref": "#/components/schemas/ClaimResolutionDto"
+              "$ref": "#/components/schemas/StoreClaimResolutionDto"
             },
             "type": "array"
           },
@@ -101099,7 +101127,7 @@
           "sla": {
             "allOf": [
               {
-                "$ref": "#/components/schemas/ClaimSlaDto"
+                "$ref": "#/components/schemas/StoreClaimSlaDto"
               }
             ],
             "description": "SLA countdowns and the current owner (D-263)"
@@ -101107,13 +101135,13 @@
           "status": {
             "allOf": [
               {
-                "$ref": "#/components/schemas/ClaimStatus"
+                "$ref": "#/components/schemas/StoreClaimStatus"
               }
             ],
             "example": "under_review"
           },
           "statusLabelAdminTh": {
-            "description": "`status` (ClaimStatus) in Thai for staff and partner factories (D-313).",
+            "description": "`status` (ClaimStatus) in Thai for staff and partner factories (D-313); on `/v1/store/*` responses the customer's words, equal to `statusLabelTh` (D-440).",
             "example": "แจ้งเคลมแล้ว",
             "type": "string"
           },
@@ -101178,6 +101206,149 @@
           "nextActions"
         ],
         "type": "object"
+      },
+      "StoreClaimOwner": {
+        "description": "Who must act now: getpack (our team), the customer (information), nobody (D-263, D-440)",
+        "enum": [
+          "getpack",
+          "customer",
+          "none"
+        ],
+        "type": "string"
+      },
+      "StoreClaimResolutionDto": {
+        "properties": {
+          "action": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/StoreClaimAction"
+              }
+            ],
+            "example": "reproduction_job"
+          },
+          "amount": {
+            "example": null,
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "executedAt": {
+            "example": "2026-10-25T11:00:00+07:00",
+            "format": "date-time",
+            "type": "string"
+          },
+          "jobNo": {
+            "description": "Re-production job (staff and factory)",
+            "example": "DEVJOB-2610-00002",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "quantity": {
+            "example": 120,
+            "type": [
+              "integer",
+              "null"
+            ]
+          },
+          "refundId": {
+            "example": null,
+            "format": "uuid",
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "action",
+          "amount",
+          "quantity",
+          "jobNo",
+          "refundId",
+          "executedAt"
+        ],
+        "type": "object"
+      },
+      "StoreClaimSlaDto": {
+        "properties": {
+          "currentOwner": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/StoreClaimOwner"
+              }
+            ],
+            "description": "Who must act now: getpack (our team), the customer (information), nobody (D-263, D-440)",
+            "example": "getpack"
+          },
+          "decisionDueAt": {
+            "description": "Null while getpack waits for the customer’s information (the clock stops, D-263) or once decided",
+            "example": "2026-10-27T09:00:00+07:00",
+            "format": "date-time",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "decisionOverdue": {
+            "example": false,
+            "type": "boolean"
+          },
+          "guaranteeVersionNo": {
+            "description": "The guarantee version the claim follows (D-260)",
+            "example": 1,
+            "type": [
+              "number",
+              "null"
+            ]
+          },
+          "respondedAt": {
+            "example": "2026-10-22T11:00:00+07:00",
+            "format": "date-time",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "responseDueAt": {
+            "example": "2026-10-23T09:00:00+07:00",
+            "format": "date-time",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "responseOverdue": {
+            "description": "No response yet and past its due time",
+            "example": false,
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "responseDueAt",
+          "respondedAt",
+          "responseOverdue",
+          "decisionDueAt",
+          "decisionOverdue",
+          "currentOwner",
+          "guaranteeVersionNo"
+        ],
+        "type": "object"
+      },
+      "StoreClaimStatus": {
+        "description": "Never a final status here",
+        "enum": [
+          "submitted",
+          "under_review",
+          "need_info",
+          "approved",
+          "rejected",
+          "resolved",
+          "closed"
+        ],
+        "type": "string"
       },
       "StoreConfiguratorDesignDto": {
         "properties": {
@@ -101977,7 +102148,7 @@
             "example": "due"
           },
           "statusLabelAdminTh": {
-            "description": "`status` (InstalmentStatus) in Thai for staff and partner factories (D-313).",
+            "description": "`status` (InstalmentStatus) in Thai for staff and partner factories (D-313); on `/v1/store/*` responses the customer's words, equal to `statusLabelTh` (D-440).",
             "example": "ยังไม่ถึงกำหนด",
             "type": "string"
           },
@@ -102858,6 +103029,30 @@
         ],
         "type": "object"
       },
+      "StoreQuoteNoPriceReason": {
+        "description": "Why there is no instant price; `envelope_not_covered`: only tier-B paths priced it, outside their envelopes (D-234); `style_variant_not_publishable`: the named style variant is not published (D-243); `rfq_required`: the variant is published but priced through RFQ — calculator not signed or an option not priced (D-266); `not_instant`: no instant price now — request a quotation (D-440)",
+        "enum": [
+          "no_price_path",
+          "not_priceable",
+          "envelope_not_covered",
+          "not_instant",
+          "delivery_unavailable",
+          "style_variant_not_publishable",
+          "rfq_required"
+        ],
+        "type": "string"
+      },
+      "StoreQuotePathReason": {
+        "description": "`not_instant`: no instant price for this configuration — request a quotation (D-440)",
+        "enum": [
+          "instant_available",
+          "type_rfq_only",
+          "not_instant",
+          "no_price_list",
+          "envelope_not_covered"
+        ],
+        "type": "string"
+      },
       "StoreRecommendDto": {
         "properties": {
           "anonymousId": {
@@ -103268,8 +103463,8 @@
             "example": "delivered"
           },
           "statusLabelAdminTh": {
-            "description": "`status` (ShipmentStatus) in Thai for staff and partner factories (D-313).",
-            "example": "ร่างรอบส่ง",
+            "description": "`status` (ShipmentStatus) in Thai for staff and partner factories (D-313); on `/v1/store/*` responses the customer's words, equal to `statusLabelTh` (D-440).",
+            "example": "เตรียมจัดส่ง",
             "type": "string"
           },
           "statusLabelTh": {
@@ -103335,8 +103530,8 @@
             "example": "out_for_delivery"
           },
           "statusLabelAdminTh": {
-            "description": "`status` (ShipmentStatus) in Thai for staff and partner factories (D-313).",
-            "example": "ร่างรอบส่ง",
+            "description": "`status` (ShipmentStatus) in Thai for staff and partner factories (D-313); on `/v1/store/*` responses the customer's words, equal to `statusLabelTh` (D-440).",
+            "example": "เตรียมจัดส่ง",
             "type": "string"
           },
           "statusLabelTh": {
@@ -107751,11 +107946,17 @@
           "ticketNo": {
             "example": "CS-2610-00001",
             "type": "string"
+          },
+          "topic": {
+            "description": "The topic as sent (`guided_help` for a hand-off), its own field next to the reference (D-440): the reference stays `CS-YYMM-NNNNN` for every topic",
+            "example": "order_status",
+            "type": "string"
           }
         },
         "required": [
           "ticketNo",
           "source",
+          "topic",
           "respondBy",
           "lineUrl",
           "conversationId",
@@ -332829,6 +333030,175 @@
         ]
       }
     },
+    "/v1/admin/status-labels": {
+      "get": {
+        "description": "Every labelled status enum with every value: the customer’s words (`labelTh`), the back office’s and factories’ words (`labelAdminTh`: \"Proof\", factory steps) and English (D-313). The storefront’s copy (`store.statusLabels.list`) carries customer words only (D-440).\n\nImplements: D-313, D-440.",
+        "operationId": "admin.statusLabels.list",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "example": [
+                  {
+                    "enumName": "ProofStatus",
+                    "values": [
+                      {
+                        "labelAdminTh": "รอ Proof จากลูกค้า",
+                        "labelEn": "Awaiting customer",
+                        "labelTh": "รอคุณตรวจแบบตัวอย่าง",
+                        "value": "pending_customer"
+                      },
+                      {
+                        "labelAdminTh": "Proof อนุมัติแล้ว",
+                        "labelEn": "Approved",
+                        "labelTh": "อนุมัติแบบตัวอย่างแล้ว",
+                        "value": "approved"
+                      },
+                      {
+                        "labelAdminTh": "ขอให้แก้ไข Proof",
+                        "labelEn": "Changes requested",
+                        "labelTh": "ขอแก้ไขแบบตัวอย่าง",
+                        "value": "changes_requested"
+                      },
+                      {
+                        "labelAdminTh": "มี Proof ฉบับใหม่แทนแล้ว",
+                        "labelEn": "Superseded",
+                        "labelTh": "มีแบบตัวอย่างฉบับใหม่แล้ว",
+                        "value": "superseded"
+                      }
+                    ]
+                  }
+                ],
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/StatusLabelEnumDto"
+                  },
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Status words per enum",
+            "headers": {
+              "ETag": {
+                "$ref": "#/components/headers/ETag"
+              },
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.unauthenticated": {
+                    "$ref": "#/components/examples/problem.auth.unauthenticated"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.unauthenticated`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.forbidden": {
+                    "$ref": "#/components/examples/problem.auth.forbidden"
+                  },
+                  "auth.wrong_audience": {
+                    "$ref": "#/components/examples/problem.auth.wrong_audience"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.forbidden`, `auth.wrong_audience`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "staff": []
+          }
+        ],
+        "summary": "List the words for every status (staff)",
+        "tags": [
+          "admin.statusLabels"
+        ]
+      }
+    },
     "/v1/admin/structural-requests": {
       "get": {
         "description": "Newest first (latest 500), by step (D-273).\n\nImplements: D-273.",
@@ -490907,11 +491277,11 @@
                   "agents.lead_existing_customer": {
                     "$ref": "#/components/examples/problem.agents.lead_existing_customer"
                   },
-                  "agents.lead_existing_factory": {
-                    "$ref": "#/components/examples/problem.agents.lead_existing_factory"
-                  },
                   "agents.lead_taken": {
                     "$ref": "#/components/examples/problem.agents.lead_taken"
+                  },
+                  "agents.lead_unavailable": {
+                    "$ref": "#/components/examples/problem.agents.lead_unavailable"
                   }
                 },
                 "schema": {
@@ -490919,7 +491289,7 @@
                 }
               }
             },
-            "description": "Problem: `agents.agent_inactive`, `agents.lead_duplicate`, `agents.lead_existing_customer`, `agents.lead_existing_factory`, `agents.lead_taken`",
+            "description": "Problem: `agents.agent_inactive`, `agents.lead_duplicate`, `agents.lead_existing_customer`, `agents.lead_taken`, `agents.lead_unavailable`",
             "headers": {
               "X-Request-Id": {
                 "$ref": "#/components/headers/XRequestId"
@@ -493864,7 +494234,7 @@
                   "releases": [],
                   "remainingQuantity": 0,
                   "startsAt": null,
-                  "status": "pending_factory",
+                  "status": "pending_confirmation",
                   "unit": "piece",
                   "unitPrice": "13.38"
                 },
@@ -502755,7 +503125,7 @@
                       "actionOwner": "customer",
                       "artworkOwner": "team",
                       "artworkStatus": "awaiting_template",
-                      "artworkStatusLabelAdminTh": "รอทีมส่งแบบไดคัทให้ลูกค้า",
+                      "artworkStatusLabelAdminTh": "รอทีมส่งแบบไดคัทให้",
                       "artworkStatusLabelTh": "รอทีมส่งแบบไดคัทให้",
                       "cancelReasonCode": null,
                       "cancelReasonNameEn": null,
@@ -530998,7 +531368,7 @@
                           "actionOwner": "customer",
                           "artworkOwner": "team",
                           "artworkStatus": "awaiting_template",
-                          "artworkStatusLabelAdminTh": "รอทีมส่งแบบไดคัทให้ลูกค้า",
+                          "artworkStatusLabelAdminTh": "รอทีมส่งแบบไดคัทให้",
                           "artworkStatusLabelTh": "รอทีมส่งแบบไดคัทให้",
                           "cancelReasonCode": null,
                           "cancelReasonNameEn": null,
@@ -531347,7 +531717,7 @@
                       "actionOwner": "customer",
                       "artworkOwner": "team",
                       "artworkStatus": "awaiting_template",
-                      "artworkStatusLabelAdminTh": "รอทีมส่งแบบไดคัทให้ลูกค้า",
+                      "artworkStatusLabelAdminTh": "รอทีมส่งแบบไดคัทให้",
                       "artworkStatusLabelTh": "รอทีมส่งแบบไดคัทให้",
                       "cancelReasonCode": null,
                       "cancelReasonNameEn": null,
@@ -531718,7 +532088,7 @@
                       "actionOwner": "customer",
                       "artworkOwner": "team",
                       "artworkStatus": "awaiting_template",
-                      "artworkStatusLabelAdminTh": "รอทีมส่งแบบไดคัทให้ลูกค้า",
+                      "artworkStatusLabelAdminTh": "รอทีมส่งแบบไดคัทให้",
                       "artworkStatusLabelTh": "รอทีมส่งแบบไดคัทให้",
                       "cancelReasonCode": null,
                       "cancelReasonNameEn": null,
@@ -532186,7 +532556,7 @@
                       "actionOwner": "customer",
                       "artworkOwner": "team",
                       "artworkStatus": "awaiting_template",
-                      "artworkStatusLabelAdminTh": "รอทีมส่งแบบไดคัทให้ลูกค้า",
+                      "artworkStatusLabelAdminTh": "รอทีมส่งแบบไดคัทให้",
                       "artworkStatusLabelTh": "รอทีมส่งแบบไดคัทให้",
                       "cancelReasonCode": null,
                       "cancelReasonNameEn": null,
@@ -533672,7 +534042,7 @@
                   "actionOwner": "customer",
                   "artworkOwner": "team",
                   "artworkStatus": "awaiting_template",
-                  "artworkStatusLabelAdminTh": "รอทีมส่งแบบไดคัทให้ลูกค้า",
+                  "artworkStatusLabelAdminTh": "รอทีมส่งแบบไดคัทให้",
                   "artworkStatusLabelTh": "รอทีมส่งแบบไดคัทให้",
                   "cancelReasonCode": null,
                   "cancelReasonNameEn": null,
@@ -533972,7 +534342,7 @@
                   "actionOwner": "customer",
                   "artworkOwner": "team",
                   "artworkStatus": "awaiting_template",
-                  "artworkStatusLabelAdminTh": "รอทีมส่งแบบไดคัทให้ลูกค้า",
+                  "artworkStatusLabelAdminTh": "รอทีมส่งแบบไดคัทให้",
                   "artworkStatusLabelTh": "รอทีมส่งแบบไดคัทให้",
                   "cancelReasonCode": null,
                   "cancelReasonNameEn": null,
@@ -534295,7 +534665,7 @@
                   "actionOwner": "customer",
                   "artworkOwner": "team",
                   "artworkStatus": "awaiting_template",
-                  "artworkStatusLabelAdminTh": "รอทีมส่งแบบไดคัทให้ลูกค้า",
+                  "artworkStatusLabelAdminTh": "รอทีมส่งแบบไดคัทให้",
                   "artworkStatusLabelTh": "รอทีมส่งแบบไดคัทให้",
                   "cancelReasonCode": null,
                   "cancelReasonNameEn": null,
@@ -537933,7 +538303,7 @@
                       "previousProofFileId": "0192f3a0-7c1e-7d2a-9b1f-0000000e2004",
                       "previousProofId": "0192f3a0-7c1e-7d2a-9b1f-0000000e2003",
                       "previousStatus": "changes_requested",
-                      "previousStatusLabelAdminTh": "ขอให้แก้ไข Proof",
+                      "previousStatusLabelAdminTh": "ขอแก้ไขแบบตัวอย่าง",
                       "previousStatusLabelTh": "ขอแก้ไขแบบตัวอย่าง",
                       "previousVersionNo": 1
                     },
@@ -537955,7 +538325,7 @@
                     },
                     "sentAt": "2026-09-27T11:00:00+07:00",
                     "status": "pending_customer",
-                    "statusLabelAdminTh": "รอ Proof จากลูกค้า",
+                    "statusLabelAdminTh": "รอคุณตรวจแบบตัวอย่าง",
                     "statusLabelTh": "รอคุณตรวจแบบตัวอย่าง",
                     "submissionId": "0192f3a0-7c1e-7d2a-9b1f-0000000e2006",
                     "versionNo": 2
@@ -538865,7 +539235,7 @@
                         "location": null,
                         "occurredAt": "2026-10-20T08:00:00+07:00",
                         "status": "picked_up",
-                        "statusLabelAdminTh": "ออกจากโรงงานแล้ว",
+                        "statusLabelAdminTh": "จัดส่งออกแล้ว",
                         "statusLabelTh": "จัดส่งออกแล้ว"
                       },
                       {
@@ -540883,7 +541253,7 @@
                     "previousProofFileId": "0192f3a0-7c1e-7d2a-9b1f-0000000e2004",
                     "previousProofId": "0192f3a0-7c1e-7d2a-9b1f-0000000e2003",
                     "previousStatus": "changes_requested",
-                    "previousStatusLabelAdminTh": "ขอให้แก้ไข Proof",
+                    "previousStatusLabelAdminTh": "ขอแก้ไขแบบตัวอย่าง",
                     "previousStatusLabelTh": "ขอแก้ไขแบบตัวอย่าง",
                     "previousVersionNo": 1
                   },
@@ -540905,7 +541275,7 @@
                   },
                   "sentAt": "2026-09-27T11:00:00+07:00",
                   "status": "pending_customer",
-                  "statusLabelAdminTh": "รอ Proof จากลูกค้า",
+                  "statusLabelAdminTh": "รอคุณตรวจแบบตัวอย่าง",
                   "statusLabelTh": "รอคุณตรวจแบบตัวอย่าง",
                   "submissionId": "0192f3a0-7c1e-7d2a-9b1f-0000000e2006",
                   "versionNo": 2
@@ -541121,7 +541491,7 @@
                     "previousProofFileId": "0192f3a0-7c1e-7d2a-9b1f-0000000e2004",
                     "previousProofId": "0192f3a0-7c1e-7d2a-9b1f-0000000e2003",
                     "previousStatus": "changes_requested",
-                    "previousStatusLabelAdminTh": "ขอให้แก้ไข Proof",
+                    "previousStatusLabelAdminTh": "ขอแก้ไขแบบตัวอย่าง",
                     "previousStatusLabelTh": "ขอแก้ไขแบบตัวอย่าง",
                     "previousVersionNo": 1
                   },
@@ -541143,7 +541513,7 @@
                   },
                   "sentAt": "2026-09-27T11:00:00+07:00",
                   "status": "pending_customer",
-                  "statusLabelAdminTh": "รอ Proof จากลูกค้า",
+                  "statusLabelAdminTh": "รอคุณตรวจแบบตัวอย่าง",
                   "statusLabelTh": "รอคุณตรวจแบบตัวอย่าง",
                   "submissionId": "0192f3a0-7c1e-7d2a-9b1f-0000000e2006",
                   "versionNo": 2
@@ -541382,7 +541752,7 @@
                     "previousProofFileId": "0192f3a0-7c1e-7d2a-9b1f-0000000e2004",
                     "previousProofId": "0192f3a0-7c1e-7d2a-9b1f-0000000e2003",
                     "previousStatus": "changes_requested",
-                    "previousStatusLabelAdminTh": "ขอให้แก้ไข Proof",
+                    "previousStatusLabelAdminTh": "ขอแก้ไขแบบตัวอย่าง",
                     "previousStatusLabelTh": "ขอแก้ไขแบบตัวอย่าง",
                     "previousVersionNo": 1
                   },
@@ -541404,7 +541774,7 @@
                   },
                   "sentAt": "2026-09-27T11:00:00+07:00",
                   "status": "approved",
-                  "statusLabelAdminTh": "รอ Proof จากลูกค้า",
+                  "statusLabelAdminTh": "รอคุณตรวจแบบตัวอย่าง",
                   "statusLabelTh": "รอคุณตรวจแบบตัวอย่าง",
                   "submissionId": "0192f3a0-7c1e-7d2a-9b1f-0000000e2006",
                   "versionNo": 2
@@ -541695,7 +542065,7 @@
                     "previousProofFileId": "0192f3a0-7c1e-7d2a-9b1f-0000000e2004",
                     "previousProofId": "0192f3a0-7c1e-7d2a-9b1f-0000000e2003",
                     "previousStatus": "changes_requested",
-                    "previousStatusLabelAdminTh": "ขอให้แก้ไข Proof",
+                    "previousStatusLabelAdminTh": "ขอแก้ไขแบบตัวอย่าง",
                     "previousStatusLabelTh": "ขอแก้ไขแบบตัวอย่าง",
                     "previousVersionNo": 1
                   },
@@ -541717,7 +542087,7 @@
                   },
                   "sentAt": "2026-09-27T11:00:00+07:00",
                   "status": "changes_requested",
-                  "statusLabelAdminTh": "รอ Proof จากลูกค้า",
+                  "statusLabelAdminTh": "รอคุณตรวจแบบตัวอย่าง",
                   "statusLabelTh": "รอคุณตรวจแบบตัวอย่าง",
                   "submissionId": "0192f3a0-7c1e-7d2a-9b1f-0000000e2006",
                   "versionNo": 2
@@ -542002,7 +542372,7 @@
                     "previousProofFileId": "0192f3a0-7c1e-7d2a-9b1f-0000000e2004",
                     "previousProofId": "0192f3a0-7c1e-7d2a-9b1f-0000000e2003",
                     "previousStatus": "changes_requested",
-                    "previousStatusLabelAdminTh": "ขอให้แก้ไข Proof",
+                    "previousStatusLabelAdminTh": "ขอแก้ไขแบบตัวอย่าง",
                     "previousStatusLabelTh": "ขอแก้ไขแบบตัวอย่าง",
                     "previousVersionNo": 1
                   },
@@ -542024,7 +542394,7 @@
                   },
                   "sentAt": "2026-09-27T11:00:00+07:00",
                   "status": "pending_customer",
-                  "statusLabelAdminTh": "รอ Proof จากลูกค้า",
+                  "statusLabelAdminTh": "รอคุณตรวจแบบตัวอย่าง",
                   "statusLabelTh": "รอคุณตรวจแบบตัวอย่าง",
                   "submissionId": "0192f3a0-7c1e-7d2a-9b1f-0000000e2006",
                   "versionNo": 2
@@ -557131,7 +557501,7 @@
     },
     "/v1/store/status-labels": {
       "get": {
-        "description": "For each labelled status enum (order, order group, payment, instalment, slip, refund, artwork, submission, Proof, preflight, production job, milestone, shipment, claim, quotation, RFQ, RFQ quotation, sample, design service and round) its values with the customer’s words (`labelTh`: \"ตรวจแบบก่อนพิมพ์\" / \"แบบตัวอย่าง\", never a factory — D-050), the back office’s and factories’ words (`labelAdminTh`: \"Proof\") and English. The same words are on every response next to the status (`statusLabelTh`, `statusLabelAdminTh`); enum values never change (D-313). Anonymous, cacheable 5 minutes; a matching `If-None-Match` gets 304.\n\nImplements: D-313, D-050.",
+        "description": "For each labelled status enum (order, customer order status, order group, payment, instalment, slip, refund, artwork, submission, Proof, preflight, production job, milestone, shipment, claim, quotation, RFQ, RFQ quotation, sample, design service and round) its values with the customer’s words (`labelTh`: \"ตรวจแบบก่อนพิมพ์\" / \"แบบตัวอย่าง\", never a factory — D-050) and English. `labelAdminTh` repeats the customer words here (D-440; staff words: `admin.statusLabels.list`), and values only staff see (`factory_review`) are left out. The same words are on every response next to the status (`statusLabelTh`, `statusLabelAdminTh`); enum values never change (D-313). Anonymous, cacheable 5 minutes; a matching `If-None-Match` gets 304.\n\nImplements: D-313, D-050, D-440.",
         "operationId": "store.statusLabels.list",
         "parameters": [
           {
@@ -557147,25 +557517,25 @@
                     "enumName": "ProofStatus",
                     "values": [
                       {
-                        "labelAdminTh": "รอ Proof จากลูกค้า",
+                        "labelAdminTh": "รอคุณตรวจแบบตัวอย่าง",
                         "labelEn": "Awaiting customer",
                         "labelTh": "รอคุณตรวจแบบตัวอย่าง",
                         "value": "pending_customer"
                       },
                       {
-                        "labelAdminTh": "Proof อนุมัติแล้ว",
+                        "labelAdminTh": "อนุมัติแบบตัวอย่างแล้ว",
                         "labelEn": "Approved",
                         "labelTh": "อนุมัติแบบตัวอย่างแล้ว",
                         "value": "approved"
                       },
                       {
-                        "labelAdminTh": "ขอให้แก้ไข Proof",
+                        "labelAdminTh": "ขอแก้ไขแบบตัวอย่าง",
                         "labelEn": "Changes requested",
                         "labelTh": "ขอแก้ไขแบบตัวอย่าง",
                         "value": "changes_requested"
                       },
                       {
-                        "labelAdminTh": "มี Proof ฉบับใหม่แทนแล้ว",
+                        "labelAdminTh": "มีแบบตัวอย่างฉบับใหม่แล้ว",
                         "labelEn": "Superseded",
                         "labelTh": "มีแบบตัวอย่างฉบับใหม่แล้ว",
                         "value": "superseded"
@@ -566195,7 +566565,8 @@
                   "lineUrl": "https://line.me/R/oaMessage/%40getpack-fake/?CS-2610-00001",
                   "respondBy": "2026-10-21T10:00:00+07:00",
                   "source": "contact_form",
-                  "ticketNo": "CS-2610-00001"
+                  "ticketNo": "CS-2610-00001",
+                  "topic": "order_status"
                 },
                 "schema": {
                   "$ref": "#/components/schemas/SupportTicketDto"
@@ -566442,7 +566813,8 @@
                   "lineUrl": "https://line.me/R/oaMessage/%40getpack-fake/?CS-2610-00001",
                   "respondBy": "2026-10-21T10:00:00+07:00",
                   "source": "handoff",
-                  "ticketNo": "CS-2610-00001"
+                  "ticketNo": "CS-2610-00001",
+                  "topic": "guided_help"
                 },
                 "schema": {
                   "$ref": "#/components/schemas/SupportTicketDto"
@@ -570299,6 +570671,10 @@
     {
       "description": "Zones and their postcodes (D-013, D-114).",
       "name": "admin.shippingZones"
+    },
+    {
+      "description": "Status words for staff: customer, back-office and factory words per status (D-313, D-440).",
+      "name": "admin.statusLabels"
     },
     {
       "description": "Structural design requests of customers (D-273): assign, quote through a service RFQ, deliver, approve, link to the published style, decline.",

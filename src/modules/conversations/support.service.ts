@@ -140,6 +140,7 @@ export class SupportService {
     return {
       ticketNo: ticket.ticketNo,
       source: ticket.source,
+      topic: ticket.topic,
       respondBy: toBangkokIso(ticket.respondBy),
       lineUrl: await this.lineUrl(ticket.ticketNo),
       conversationId: customerUserId === null ? null : conversationId,

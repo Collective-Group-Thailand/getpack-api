@@ -145,7 +145,8 @@ export class AgentAttributionService {
             ],
           },
         });
-        if (existing) throw new DomainException('agents.lead_existing_factory');
+        // D-440: one neutral refusal — never tells an agent that a phone / tax id belongs to a factory.
+        if (existing) throw new DomainException('agents.lead_unavailable');
       }
       const taken = await tx.salesAgentLead.findFirst({
         where: {

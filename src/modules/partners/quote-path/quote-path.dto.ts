@@ -1,3 +1,4 @@
+import { storeEnum } from '@common/labels/store-words';
 import { RefField } from '@modules/catalog/crud/dto-fields';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { IsObject, IsOptional, IsString, Matches, MaxLength } from 'class-validator';
@@ -48,7 +49,12 @@ export class QuotePathDto {
   })
   mode!: 'instant' | 'rfq';
 
-  @ApiProperty({ enum: QUOTE_PATH_REASONS, enumName: 'QuotePathReason', example: 'type_rfq_only' })
+  @ApiProperty({
+    enum: storeEnum(QUOTE_PATH_REASONS),
+    enumName: 'StoreQuotePathReason',
+    example: 'type_rfq_only',
+    description: '`not_instant`: no instant price for this configuration — request a quotation (D-440)',
+  })
   reason!: QuotePathReason;
 }
 

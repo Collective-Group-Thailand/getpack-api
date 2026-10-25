@@ -3,10 +3,12 @@
 Repository `getpack-api`, branch `fix/uat-phase0`. Decisions **D-436** (overdue payment: re-quote, never
 auto-cancel; supersedes D-060's cancellation job), **D-437** (one customer status), **D-438** (artwork step owner,
 "รอแบบไดคัท" split), **D-439** (order share of the group, delivery-date basis, tier spend basis, launchpad thumbnail,
-customer step word). Copy this file into `getpack-web/docs/design/account-redesign/` before the web session runs,
+customer step word) and **D-440** (store responses in the customer's words only — added to A2 by the user's
+decisions; see §9). Copy this file into `getpack-web/docs/design/account-redesign/` before the web session runs,
 then `pnpm gen:api` against the new `contract/openapi.json`.
 
-**Additive for the storefront** except two behaviour changes the web must handle: (1) a customer payment on an overdue
+**Breaking for the storefront in §9** (enum values and component names renamed on `/v1/store/*`); §1–§8 are
+**additive** except two behaviour changes the web must handle: (1) a customer payment on an overdue
 group answers `409 order.requote_required`; (2) `order.upload_artwork` and `order.confirm_receipt` are offered in fewer
 states (see §3). One data migration, no new env var, no new setting.
 
@@ -233,3 +235,55 @@ picks the factory server-side and keeps it in `selectedFactoryId` (staff-only `i
    receipt confirmation or `orders.auto_complete_days`, held by open claims). The API states the real rule.
 8. **Not verified end-to-end here.** `pnpm test:e2e` / `test:int` need Docker (not available in this VM). The edited
    e2e specs (`orders`, `payments`, `launchpad`, `production-milestones`) must run locally/CI.
+
+---
+
+## 9. Storefront words: renamed codes and labels (D-440, added to A2 by the user)
+
+One server-side rule for **every `/v1/store/*` response** (`StoreWordsInterceptor`, `src/common/labels/store-words.ts`);
+admin and partner responses are unchanged. The contract's store examples are generated in the same words.
+
+### 9.1 Status words
+
+| Where | Before | After |
+|---|---|---|
+| Every `<field>LabelAdminTh` on a store response (`statusLabelAdminTh`, `artworkStatusLabelAdminTh`, `customerStatusLabelAdminTh`, …) | staff / factory words | **the customer words — always equal to `<field>LabelTh`**. Render `…LabelTh`; treat `…LabelAdminTh` as deprecated on the store. |
+| `store.statusLabels.list` (`GET /v1/store/status-labels`) | `labelAdminTh` = staff words; every enum value | `labelAdminTh` = `labelTh`; staff-only values left out (`ClaimStatus.factory_review`); new enum `CustomerOrderStatus` listed |
+| New `admin.statusLabels.list` (`GET /v1/admin/status-labels`, staff token) | — | the full dictionary with staff words (for the admin zone, which used the store one) |
+
+Staff words that no longer reach a customer: ProductionJobStatus `released` "รอโรงงานรับงาน", `accepted` "โรงงานรับงานแล้ว",
+`rejected` "โรงงานปฏิเสธงาน"; ShipmentStatus `picked_up` "ออกจากโรงงานแล้ว"; ClaimStatus `factory_review` "รอโรงงานตรวจสอบ"
+/ "Factory review"; ArtworkStatus `awaiting_template` "รอทีมส่งแบบไดคัทให้ลูกค้า"; and every "Proof" word (customers read
+"แบบตัวอย่าง"). Customer step word for `job_received`: "รับงานเข้าผลิตแล้ว" (§2).
+
+### 9.2 Enum values (store aliases) and component names
+
+| Staff enum (admin / partner, unchanged) | Value | Store value | Store component | Store operations |
+|---|---|---|---|---|
+| `ClaimStatus` | `factory_review` | **`under_review`** | `StoreClaimStatus` | `store.claims.list/get/submit/respondInfo/getTimeline`, `OrderDto.openClaims[].status` |
+| `ClaimOwner` | `factory` | **`getpack`** | `StoreClaimOwner` (`getpack`, `customer`, `none`) | `StoreClaimSlaDto.currentOwner` (claims, claim timeline) |
+| `ClaimAction` | `factory_deduction`, `carrier_recovery` | never sent (already filtered) | `StoreClaimAction` | `StoreClaimResolutionDto.action` |
+| `CallOffStatus` | `pending_factory` | **`pending_confirmation`** | `StoreCallOffStatus` | `store.callOffs.*` |
+| `QuotePathReason` | `no_active_factory` | **`not_instant`** | `StoreQuotePathReason` | `store.catalog.resolveQuotePath` |
+| `QuoteNoPriceReason` | `capacity_unavailable` | **`not_instant`** | `StoreQuoteNoPriceReason` | `store.quotes.calculate`, `store.studio.quote` (`steps[].reason`) |
+
+New store DTO components: `StoreClaimSlaDto`, `StoreClaimResolutionDto` (the staff `ClaimSlaDto` / `ClaimResolutionDto`
+extend them). Web: regenerate the client; map `not_instant` to "ขอใบเสนอราคา" copy, `pending_confirmation` to "รอยืนยัน".
+No database change (values are mapped at the store boundary; stored data and staff APIs keep their values).
+
+### 9.3 Agents (`store.agent.registerLead`)
+
+| Before | After |
+|---|---|
+| `409 agents.lead_existing_factory` "เป็นโรงงานในระบบแล้ว — โรงงานนี้อยู่ในระบบ getpack แล้ว" | **`409 agents.lead_unavailable`** "ลงทะเบียนผู้มุ่งหวังรายนี้ไม่ได้ — ลงทะเบียนผู้มุ่งหวังรายนี้ไม่ได้ หากมีข้อสงสัยกรุณาติดต่อทีมงาน getpack" (no reason given) |
+
+`agents.lead_existing_customer`, `agents.lead_taken`, `agents.lead_duplicate` are unchanged.
+
+### 9.4 Contact reference
+Unchanged `CS-YYMM-NNNNN`; the topic is the ticket's own field (already stored), now also returned as
+`SupportTicketDto.topic` on `store.support.contact` / `handoff` — see `docs/design/business-redesign/API-CHANGES.md` §8.
+
+### 9.5 Guard
+`test/unit/storefront-factory-confidentiality.spec.ts` now also fails on: a factory- or capacity-named enum value
+reachable from a store success response (except the agent programme's `AgentLeadKind` / `AgentCommissionKind`), a
+"factory" / "capacity" / "โรงงาน" string in a store success example, and a store problem code naming either.

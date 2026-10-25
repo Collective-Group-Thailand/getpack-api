@@ -99,7 +99,7 @@ export class StoreSupportController {
   @ApiSuccess(201, {
     description: 'Ticket opened',
     type: SupportTicketDto,
-    example: { ...SUPPORT_TICKET_EXAMPLE, source: 'handoff' },
+    example: { ...SUPPORT_TICKET_EXAMPLE, source: 'handoff', topic: 'guided_help' },
   })
   @ApiStandardErrors(...ERRORS)
   handoff(

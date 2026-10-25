@@ -135,3 +135,40 @@ See `PLAN.md` §2 (C11–C18, F1–F2) and §3. In short:
 5. EXIF/GPS stripping of customer-visible photos; PDF `Producer`/`Creator` metadata.
 6. Reference format: the pack asks CT-YYYY-#####; tickets today are `CS-YYMM-NNNNN`.
 7. Clean up the unused `trust.*` setting rows in seeded databases (UAT) with a data migration, or leave them?
+
+---
+
+## 8. Decided after A1 (user, 2026-10-25) — implemented in A2 (D-440)
+
+Answers to §7 items 1, 2, 4 and 6. Full tables: `docs/design/account-redesign/API-CHANGES.md` §9.
+
+1. **Staff/factory words** (§7.1): every `/v1/store/*` response now carries the customer words in `*LabelAdminTh`
+   (equal to `*LabelTh`); `store.statusLabels.list` serves customer words only; staff use the new
+   `admin.statusLabels.list`.
+2. **Factory/capacity-named values** (§7.2): on the store `ClaimStatus.factory_review` → `under_review`,
+   `ClaimOwner.factory` → `getpack`, `CallOffStatus.pending_factory` → `pending_confirmation`,
+   `QuotePathReason.no_active_factory` and `QuoteNoPriceReason.capacity_unavailable` → `not_instant`
+   (store components `StoreClaimStatus`, `StoreClaimOwner`, `StoreClaimAction`, `StoreCallOffStatus`,
+   `StoreQuotePathReason`, `StoreQuoteNoPriceReason`). Breaking: regenerate the client.
+3. **Agents** (§7.4): `agents.lead_existing_factory` is replaced by **`agents.lead_unavailable`** (409) — "ลงทะเบียน
+   ผู้มุ่งหวังรายนี้ไม่ได้", no reason given. The other lead refusals are unchanged.
+4. **Contact reference** (§7.6): **keep `CS-YYMM-NNNNN`** for every topic (no `CT-` / `BZ-` / `FP-` prefixes). The topic
+   is the ticket's own field: it was already stored (`support_tickets.topic`, no migration needed) and is now also
+   returned on `store.support.contact` / `store.support.handoff` as **`SupportTicketDto.topic`** (`guided_help` for a
+   hand-off). Web: show the reference as is and the topic from `topic` (e.g. "เรื่อง: สถานะคำสั่งซื้อ · CS-2610-00001").
+
+Example — `POST /v1/store/support/actions/contact` → `201`
+```json
+{
+  "ticketNo": "CS-2610-00001",
+  "source": "contact_form",
+  "topic": "order_status",
+  "respondBy": "2026-10-21T10:00:00+07:00",
+  "lineUrl": "https://line.me/R/oaMessage/%40getpack-fake/?CS-2610-00001",
+  "conversationId": null,
+  "createdAt": "2026-10-20T10:00:00+07:00"
+}
+```
+
+§7.3 (carrier sender), §7.5 (EXIF/GPS, PDF metadata) and §7.7 (`trust.*` rows: leave them; remove in business Phase 4)
+remain open.

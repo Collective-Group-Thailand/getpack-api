@@ -1978,9 +1978,9 @@
       "title": "Already a customer",
       "detail": "This contact is already a getpack customer"
     },
-    "lead_existing_factory": {
-      "title": "Already a factory",
-      "detail": "This factory is already on getpack"
+    "lead_unavailable": {
+      "title": "Lead not accepted",
+      "detail": "This lead cannot be registered. Please contact the getpack team if you have questions."
     },
     "lead_taken": {
       "title": "Lead taken",

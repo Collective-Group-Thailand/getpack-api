@@ -9,6 +9,7 @@ import { BANKING_ADMIN_CONTROLLERS } from '@modules/banking/banking.registry';
 import { CALL_OFFS_ADMIN_CONTROLLERS } from '@modules/call-offs/call-offs.registry';
 import { CARTS_ADMIN_CONTROLLERS } from '@modules/carts/carts.registry';
 import { CATALOG_ADMIN_CONTROLLERS } from '@modules/catalog/catalog.registry';
+import { AdminStatusLabelsController } from '@modules/catalog/store/status-labels.controller';
 import { CHECKOUT_ADMIN_CONTROLLERS } from '@modules/checkout/checkout.registry';
 import { CLAIMS_ADMIN_CONTROLLERS } from '@modules/claims/claims.registry';
 import { CLOSE_ADMIN_CONTROLLERS } from '@modules/close/close.registry';
@@ -86,6 +87,7 @@ import { SettingsAdminModule } from '@platform/settings/settings-admin.module';
     AdminWebPushController,
 
     AdminMeController,
+    AdminStatusLabelsController,
     UsersAdminController,
     RolesAdminController,
     StaffDirectoryController,

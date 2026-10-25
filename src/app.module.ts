@@ -6,6 +6,7 @@ import { ProblemDetailsFilter } from '@common/errors/problem-details.filter';
 import { EtagInterceptor } from '@common/etag/etag.interceptor';
 import { DEFAULT_LANGUAGE } from '@common/i18n/language';
 import { IdempotencyModule } from '@common/idempotency/idempotency.module';
+import { StoreWordsInterceptor } from '@common/labels/store-words.interceptor';
 import { buildLoggerParams } from '@common/logging/logger.options';
 import { AppConfig } from '@config/app-config';
 import { AppConfigModule } from '@config/app-config.module';
@@ -177,6 +178,8 @@ import { LoggerModule } from 'nestjs-pino';
   providers: [
     { provide: APP_FILTER, useClass: ProblemDetailsFilter },
     { provide: APP_GUARD, useClass: ThrottlerGuard },
+    // Outermost: replays and ETag'd bodies alike leave in the storefront's words (D-440).
+    { provide: APP_INTERCEPTOR, useClass: StoreWordsInterceptor },
     { provide: APP_INTERCEPTOR, useClass: EtagInterceptor },
     { provide: APP_INTERCEPTOR, useClass: DeprecationInterceptor },
   ],

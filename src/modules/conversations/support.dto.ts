@@ -128,6 +128,14 @@ export class SupportTicketDto {
   source!: string;
 
   @ApiProperty({
+    example: 'order_status',
+    description:
+      'The topic as sent (`guided_help` for a hand-off), its own field next to the reference (D-440): the reference ' +
+      'stays `CS-YYMM-NNNNN` for every topic',
+  })
+  topic!: string;
+
+  @ApiProperty({
     format: 'date-time',
     example: '2026-10-21T10:00:00+07:00',
     description: 'First-response target: `support.first_response_business_days` business days (D-221, D-175)',
@@ -203,6 +211,7 @@ export class ConversationTicketDto {
 export const SUPPORT_TICKET_EXAMPLE: SupportTicketDto = {
   ticketNo: 'CS-2610-00001',
   source: 'contact_form',
+  topic: 'order_status',
   respondBy: '2026-10-21T10:00:00+07:00',
   lineUrl: 'https://line.me/R/oaMessage/%40getpack-fake/?CS-2610-00001',
   conversationId: null,

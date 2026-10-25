@@ -16,12 +16,15 @@ export function ApiStatusLabelTh(enumName: LabelledEnum, field = 'status', nulla
   });
 }
 
-/** `<field>LabelAdminTh`: the status in the back office's and factories' words ("Proof", factory steps). */
+/**
+ * `<field>LabelAdminTh`: the status in the back office's and factories' words ("Proof", factory steps); on a
+ * `/v1/store/*` response the customer's words (D-440, `store-words.ts`), so the example is the customer's.
+ */
 export function ApiStatusLabelAdminTh(enumName: LabelledEnum, field = 'status', nullable = false) {
   return ApiProperty({
     type: String,
     nullable,
-    example: first(enumName).adminTh,
-    description: `\`${field}\` (${enumName}) in Thai for staff and partner factories (D-313).`,
+    example: first(enumName).th,
+    description: `\`${field}\` (${enumName}) in Thai for staff and partner factories (D-313); on \`/v1/store/*\` responses the customer's words, equal to \`${field}LabelTh\` (D-440).`,
   });
 }

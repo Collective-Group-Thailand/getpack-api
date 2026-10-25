@@ -32,17 +32,30 @@ describe('Phase 4 contract (e2e)', () => {
     const proof = (res.body as { enumName: string; values: { value: string; labelTh: string }[] }[]).find(
       (e) => e.enumName === 'ProofStatus',
     );
+    // D-440: the storefront's dictionary speaks the customer's words only; staff words are on the admin one.
     expect(proof?.values).toContainEqual(
       expect.objectContaining({
         value: 'approved',
         labelTh: 'อนุมัติแบบตัวอย่างแล้ว',
-        labelAdminTh: 'Proof อนุมัติแล้ว',
+        labelAdminTh: 'อนุมัติแบบตัวอย่างแล้ว',
       }),
     );
+    expect(JSON.stringify(res.body)).not.toMatch(/โรงงาน|factory/i);
     await request(ctx.server)
       .get('/v1/store/status-labels')
       .set('If-None-Match', res.headers['etag'] as string)
       .expect(304);
+    const staff = await request(ctx.server)
+      .get('/v1/admin/status-labels')
+      .auth(await staffToken(ctx, 'cs'), { type: 'bearer' })
+      .expect(200);
+    const staffProof = (staff.body as { enumName: string; values: { value: string }[] }[]).find(
+      (e) => e.enumName === 'ProofStatus',
+    );
+    expect(staffProof?.values).toContainEqual(
+      expect.objectContaining({ value: 'approved', labelAdminTh: 'Proof อนุมัติแล้ว' }),
+    );
+    await request(ctx.server).get('/v1/admin/status-labels').expect(401);
   });
 
   it('states each storefront figure from its source and null without one (D-309)', async () => {

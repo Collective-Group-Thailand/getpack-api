@@ -1,5 +1,6 @@
 import { ApiStatusLabelAdminTh, ApiStatusLabelTh } from '@common/labels/status-label.decorators';
 import { statusLabels } from '@common/labels/status-labels';
+import { storeEnum } from '@common/labels/store-words';
 import { NextActionDto } from '@common/next-actions/next-action.dto';
 import { PageQuery } from '@common/pagination/pagination.dto';
 import { IdField, TimestampField } from '@modules/catalog/crud/dto-fields';
@@ -299,8 +300,9 @@ export class OrderOpenClaimDto {
   claimNo!: string;
 
   @ApiProperty({
-    // The whole `ClaimStatus` component (a shared enum); only non-final values occur here.
-    enum: [
+    // D-440: the customer's claim statuses (the factory's review reads `under_review`).
+    // The same component as `StoreClaimDto.status` (claims.dto: `STORE_CLAIM_STATUSES`).
+    enum: storeEnum([
       'submitted',
       'under_review',
       'need_info',
@@ -309,10 +311,10 @@ export class OrderOpenClaimDto {
       'rejected',
       'resolved',
       'closed',
-    ],
-    enumName: 'ClaimStatus',
+    ] as const),
+    enumName: 'StoreClaimStatus',
     example: 'under_review',
-    description: 'Never a final status (`rejected`, `resolved`, `closed`) here',
+    description: 'Never a final status here',
   })
   status!: string;
 

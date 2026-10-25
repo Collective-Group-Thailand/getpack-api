@@ -16,6 +16,7 @@ import {
 
 import { ERROR_CODES, type ErrorCode } from '../errors/error-codes';
 import { ProblemDetails, ProblemFieldError } from '../errors/problem-details.dto';
+import { storeWords } from '../labels/store-words';
 import {
   type HeaderName,
   HEADERS,
@@ -91,9 +92,38 @@ export function buildOpenApiDocument(app: INestApplication, version: string): Op
   const enriched = pruneUnusedComponents(enrichDocument(document));
   enriched.tags = usedTags(enriched);
   addWebhooks(enriched);
+  storeExamplesInStoreWords(enriched);
   const engine = dielineEngineInfo();
   if (engine) (enriched.info as unknown as Record<string, unknown>)['x-getpack-dieline'] = engine;
   return normaliseDocument(enriched);
+}
+
+/**
+ * D-440: the success examples of `/v1/store/*` operations read as the storefront receives them (`StoreWordsInterceptor`):
+ * customer words in every `*LabelAdminTh`, factory-named enum values replaced by their store alias.
+ */
+function storeExamplesInStoreWords(document: OpenAPIObject): void {
+  for (const [path, item] of Object.entries(document.paths)) {
+    if (!path.startsWith('/v1/store/')) continue;
+    for (const operation of Object.values(item as Record<string, unknown>)) {
+      const responses = (
+        operation as { responses?: Record<string, { content?: Record<string, MediaLike> }> } | null
+      )?.responses;
+      for (const [status, response] of Object.entries(responses ?? {})) {
+        if (!status.startsWith('2')) continue;
+        for (const media of Object.values(response.content ?? {})) {
+          if (media.example !== undefined) media.example = storeWords(media.example);
+          for (const example of Object.values(media.examples ?? {}))
+            if (example.value !== undefined) example.value = storeWords(example.value);
+        }
+      }
+    }
+  }
+}
+
+interface MediaLike {
+  example?: unknown;
+  examples?: Record<string, { value?: unknown }>;
 }
 
 /**

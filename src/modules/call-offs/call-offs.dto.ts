@@ -1,5 +1,6 @@
 import { CodeNameRefDto } from '@common/dto/code-name-ref.dto';
 import { CodedRefDto } from '@common/dto/factory-ref.dto';
+import { storeEnum } from '@common/labels/store-words';
 import { PageQuery } from '@common/pagination/pagination.dto';
 import { OrderRefDto } from '@modules/carts/carts.dto';
 import { EnumField, IntField, RefField } from '@modules/catalog/crud/dto-fields';
@@ -62,8 +63,13 @@ export class StoreCallOffAgreementDto {
   @ApiProperty({ format: 'uuid', example: CALL_OFF_IDS.agreement })
   id!: string;
 
-  @ApiProperty({ enum: CALL_OFF_STATUSES, enumName: 'CallOffStatus', example: 'active' })
-  status!: (typeof CALL_OFF_STATUSES)[number];
+  @ApiProperty({
+    enum: storeEnum(CALL_OFF_STATUSES),
+    enumName: 'StoreCallOffStatus',
+    example: 'active',
+    description: '`pending_confirmation`: waiting for production to confirm the agreement (D-440)',
+  })
+  status!: string;
 
   @ApiProperty({ format: 'uuid', example: CALL_OFF_IDS.quote })
   quoteId!: string;
@@ -129,6 +135,9 @@ export class StoreCallOffAgreementDto {
 
 /** The factory's and staff's view of a call-off agreement: with the factory and its locked buy price (D-044). */
 export class CallOffAgreementDto extends StoreCallOffAgreementDto {
+  @ApiProperty({ enum: CALL_OFF_STATUSES, enumName: 'CallOffStatus', example: 'active' })
+  declare status: string;
+
   @ApiProperty({
     type: CodedRefDto,
     description: 'The quotation’s factory, which accepts the lock — staff and the factory only (D-050)',

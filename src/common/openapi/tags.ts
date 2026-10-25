@@ -182,6 +182,8 @@ export const API_TAGS: Record<string, string> = {
   'admin.assistant':
     'Assistant evaluation (≥ 100 Thai cases + red team, nightly), the D-306 clearance and usage by outcome (D-218, ADR-0012).',
   'admin.me': 'The signed-in staff member, permissions and menu entitlements.',
+  'admin.statusLabels':
+    'Status words for staff: customer, back-office and factory words per status (D-313, D-440).',
   // --- B4.1 artwork, proofs, design services, designs & drawings
   'store.artwork':
     'Artwork of my orders: versions, automated preflight with a Thai report (D-070), proofs and annotations (D-073).',
