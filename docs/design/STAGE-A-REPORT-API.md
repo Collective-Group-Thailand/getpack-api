@@ -276,3 +276,80 @@ None (no code change).
 4. Limit staff access to customer artwork to the assigned Prepress and `artwork.read` holders, and audit every download?
 5. Anonymised production copy: which formats must be scrubbed (PDF/AI are straightforward; PSD/EPS/ZIP)?
 API work for retention purge, staff access and upload limit is listed for upload Phase 1–2 and needs approval.
+
+---
+
+## A5b — confidentiality leftovers — PASS
+
+Extra step requested by the product owner after the A1 review. Commits (made and pushed by the subagent):
+`53618916` feat(logistics): getpack is the sender on carrier bookings (D-442) · `077969d5` feat(files): strip
+identifying metadata; production copies of originals (D-442) · `8b56e371` docs(business-redesign): A5b
+API-CHANGES, D-442, progress.
+
+Gate: lint ✔ · typecheck ✔ · unit 174 suites / 1260 tests ✔ · contract test 8/8 ✔ across all `/v1/store/*` ✔ ·
+diff scan clean ✔ · `prisma migrate status` up to date · no new dependencies.
+
+### What changed
+- **Carrier bookings:** Flash Express and Deliveree send getpack's display name, phone and return address from
+  entity settings; no factory name, code, contact, street address or coordinates. A missing setting refuses the
+  booking before the carrier is called. Price estimates still use only the factory's postcode/coordinates. Carriers
+  stay off. Tests: `src/modules/logistics/carrier-sender.spec.ts`; logistics e2e checks the sender.
+- **Metadata on customer-facing uploads:** QC, timeline, POD and claim photos/reports, proofs, published images,
+  avatars and dielines are cleaned at upload — JPEG/PNG/WebP lose EXIF, GPS, XMP, IPTC, comments (no re-encode,
+  orientation kept); PDFs lose author, creator, producer, title, XMP, app private data and comment authors. Customer
+  originals and financial records are not touched. Files that cannot be cleaned (encrypted, signed, unreadable,
+  > 200 MiB) are kept as uploaded and audited.
+- **Generated PDFs:** every Chromium-rendered PDF and Studio print/proof PDF has no title, author, creator,
+  producer or XMP. Exceptions keeping getpack-only data: e-Tax PDF/A-3 (required by the standard) and the designer
+  dieline PDF (D-302).
+- **Customer originals for production** (DECISIONS-STAGE-A §1): on proof approval each original artwork file gets a
+  copy request; worker job `artwork.production_copies` strips document metadata and names it
+  `<orderCode>-original-v<n>.<ext>` (no owner; staff and the job's factories only). New `originalFiles` on partner
+  and admin production-job responses (only contract change; no store endpoint). The locked proof copy is named
+  `<orderCode>-proof-v<n>.<ext>`. Formats that cannot be cleaned safely are marked `unsupported` and not offered.
+- **Settings** (entity-scoped, effective-dated, audited, Superadmin): `entity.display_name` (from
+  `SEED_ENTITY_DISPLAY_NAME`; fake for dev/UAT) and `entity.return_address` (not seeded for the real entity — bookings
+  are refused until a superadmin enters it; fake for dev/UAT). No env vars.
+- **Migration** `20261215000001_files_metadata_production_copies` (with `down.sql`): `file_objects.purpose`,
+  `file_objects.metadata_stripped_at`, table `artwork_production_copies` with status and failure-reason enums.
+- Retention/purge rules unchanged.
+
+API-CHANGES: `docs/design/business-redesign/API-CHANGES-A5b.md` · decision D-442 in `docs/decisions.md`
+
+### Tests to run locally (Docker)
+`pnpm test:e2e` (edited: logistics, artwork; affected because cleaned files change size and SHA-256:
+production-milestones, production-release, production-oversight, claims, design-services, settings, shipping-rates)
+and `pnpm test:int`.
+
+### Open questions
+1. How does a carrier collect at the factory once getpack is the sender (pickup points per factory, separate pickup
+   request, or a getpack hub)? Blocks switching any carrier on.
+2. Originals with no clean copy (TIFF, SVG, EPS/PostScript, Illustrator, PSD, ZIP; encrypted, signed, > 200 MiB):
+   offer as-is, ask the customer for a PDF, or have Prepress convert?
+3. GPS in evidence videos (MP4/MOV) needs a remux tool in the worker image.
+4. SVG and DXF dielines are not cleaned.
+5. Should font and reference files also get production copies (only artwork files today)?
+6. Stripping EXIF removes capture time on claim photos — store it in the database first?
+7. The real return address is needed; confirm the display name should read "getpack".
+8. PDF/X-4 and PDF/A originals lose XMP in the production copy (PDF/X-1a/X-3 keep conformance keys) — acceptable?
+9. Reorders with unchanged artwork: copies carry the earlier order's code — acceptable?
+10. The working proof keeps its upload name; only the locked copy is renamed — acceptable?
+Follow-up (not done): carton labels and packing lists still print "getpack" fixed in code; switch to
+`entity.display_name` (one line).
+
+---
+
+## Summary
+
+| Step | Status | Commits | Open questions |
+|---|---|---|---|
+| A1 — business 0 + 3b | PASS | `7fb3dcff`, `3d5ec27d`, `bf1d62a8` | 4 — all answered (1–3 done in A2; 4 → business Phase 4) |
+| A2 — account 0 | PASS | `d8a10792`, `cb91413e` (merge), `3aa9365d`, `f2f00666`, `cd682d71` | 6 |
+| A3 — pdp 0 | PASS | `053a86a9`, `96f6a793` | 5 |
+| A4 — configurator 0 | PASS (no API changes) | `24bd074d`, `51b08b54`, `90651900` | 4 |
+| A5 — upload 0 | PASS (no API changes) | `a6ff6fc5`, `e217bffa` | 5 |
+| A5b — confidentiality leftovers | PASS | `53618916`, `077969d5`, `8b56e371`, this commit | 10 |
+
+Breaking contract changes for the web (regenerate the API client): A1 (removed endpoint and fields), A2 (customer
+status fields, store-only enums, status labels, agent refusal code). A3 additive; A5b touches no store endpoint.
+Before Stage B: run `pnpm test:e2e` and `pnpm test:int` locally on PostgreSQL 18.
