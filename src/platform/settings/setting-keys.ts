@@ -78,6 +78,11 @@ export interface SettingValues {
     wht_receivable: string[];
   };
   'orders.auto_complete_days': number;
+  /** D-092 / D-442 entity-scoped company data (read with the entity scope). */
+  'entity.display_name': string;
+  'entity.phone': string;
+  /** D-442 not seeded for a real entity: carrier bookings are refused until a superadmin sets it. */
+  'entity.return_address': EntityReturnAddress;
   /** D-417 / D-420 the sales agent programme's rules. */
   'agents.rules': {
     linkCookieDays: number;
@@ -289,6 +294,19 @@ export interface AdvisoryRuleSet {
     transport: Record<'pickup' | 'parcel_domestic' | 'pallet_domestic' | 'sea_export', string>;
     fragility: Record<'low' | 'medium' | 'high', string>;
   };
+}
+
+/** D-442 the issuing entity's return address: the sender address on every carrier booking. */
+export interface EntityReturnAddress {
+  line1: string;
+  line2?: string | null;
+  subdistrict?: string | null;
+  district: string;
+  province: string;
+  postcode: string;
+  /** Needed only by on-demand trucks (Deliveree). */
+  lat?: number | null;
+  lng?: number | null;
 }
 
 export type SettingKey = keyof SettingValues;

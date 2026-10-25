@@ -1,6 +1,8 @@
 import { randomUUID } from 'node:crypto';
 
 import { bangkokDate } from '@common/time/bangkok';
+import { CARRIER_ADAPTERS, type CarrierAdapters } from '@integrations/carriers/carrier-adapter.port';
+import { type FakeCarrierAdapter } from '@integrations/carriers/fake-carrier.adapter';
 import { type FakePdfRenderer } from '@integrations/pdf/fake-pdf-renderer';
 import { PDF_RENDERER } from '@integrations/pdf/pdf-renderer.port';
 import { DeliveryService } from '@modules/logistics/delivery.service';
@@ -9,6 +11,7 @@ import request from 'supertest';
 
 import { SETTINGS } from '../../prisma/seed/data/settings';
 import { type DevFolding } from '../../prisma/seed/dev-folding';
+import { DEV_ENTITY } from '../../prisma/seed/dev-seed';
 import {
   addAddress,
   as,
@@ -499,6 +502,21 @@ describe('logistics: shipments, POD, tolerance and completion (e2e, B4.3)', () =
       'booked with flash_express: โรงงานไม่มีรถวิ่งพื้นที่นี้',
     );
     const ref = booked.body.carrierBookingRef as string;
+    // D-442: the carrier got getpack as the sender (entity settings) — never the factory's name, contact or address.
+    const fakeFlash = ctx.app.get<CarrierAdapters>(CARRIER_ADAPTERS).get('flash_express') as FakeCarrierAdapter;
+    const sent = fakeFlash.booked.get(ref)!;
+    expect(sent.from).toMatchObject({ name: DEV_ENTITY.displayName, phone: DEV_ENTITY.phone, postcode: '10000' });
+    const factoryRow = await ctx.prisma.factory.findUniqueOrThrow({
+      where: { publicId: fixture.factoryPublicId },
+      include: { addresses: true, contacts: true },
+    });
+    for (const leak of [
+      factoryRow.legalName,
+      factoryRow.code,
+      ...factoryRow.addresses.map((a) => a.line1),
+      ...factoryRow.contacts.flatMap((c) => [c.name, c.phone ?? '']),
+    ].filter((v) => v && v.length > 3))
+      expect(JSON.stringify(sent)).not.toContain(leak);
     // The factory no longer reports steps of a carrier-booked trip.
     await post(owner, `/v1/partner/shipments/${s.id}/events`, { status: 'in_transit' }).expect(409);
 

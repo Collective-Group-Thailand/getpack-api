@@ -8,6 +8,9 @@ import { PrismaService, type Tx } from '@database/prisma.service';
 import { type Shipment, type ShipmentStatus } from '@generated/prisma/client';
 import {
   type CarrierBookingRequest,
+  type CarrierContact,
+  type CarrierParcel,
+  type CarrierPlace,
   type FallbackCarrierCode,
 } from '@integrations/carriers/carrier-adapter.port';
 import { PDF_RENDERER, type PdfRenderer } from '@integrations/pdf/pdf-renderer.port';
@@ -22,8 +25,10 @@ import { ActivityLogService } from '@platform/activity/activity-log.service';
 import { DomainEvents } from '@platform/domain-events/domain-events.service';
 import { FilesService } from '@platform/files/files.service';
 import { DocumentNumberingService } from '@platform/numbering/document-numbering.service';
+import { type EntityReturnAddress } from '@platform/settings/setting-keys';
 import { SettingNotFoundError, SettingsService } from '@platform/settings/settings.service';
 
+import { getpackSenderContact } from './carrier-sender';
 import { renderLabelsHtml, renderPackingListHtml, type ShipmentDocument } from './shipment-documents';
 
 export interface ShipmentInput {
@@ -490,16 +495,18 @@ export class ShipmentsService {
   ): Promise<void> {
     const shipment = await this.prisma.shipment.findUniqueOrThrow({
       where: { id: shipmentId },
-      include: { factory: { include: { addresses: true, contacts: true } }, carrier: true, cartons: true },
+      include: { carrier: true, cartons: true },
     });
     assertIfMatch(opts.ifMatch, shipmentEtag(shipment), { required: false });
     if (shipment.status !== 'ready' || shipment.carrier.code !== 'factory_fleet')
       throw new DomainException('shipments.invalid_status', { params: { status: shipment.status } });
     await this.prisma.withTx((tx) => this.assertShippable(tx, shipment.id));
-    const route = this.route(shipment, code);
+    // D-442: the carrier sees getpack as the sender (display name, phone, return address) — never the factory.
     const { booking, carrierId, costAmount } = await this.carriers.book(code, {
       reference: shipment.shipmentNo,
-      ...route,
+      from: await this.carrierSender(shipment.entityId, code, new Date()),
+      to: this.destination(shipment),
+      parcels: this.parcels(shipment),
       pickupAt: pickupAt ?? null,
     });
     await this.prisma.withTx(async (tx) => {
@@ -536,61 +543,78 @@ export class ShipmentsService {
   async carrierQuotes(shipmentId: bigint) {
     const shipment = await this.prisma.shipment.findUniqueOrThrow({
       where: { id: shipmentId },
-      include: { factory: { include: { addresses: true, contacts: true } }, carrier: true, cartons: true },
+      include: { factory: { include: { addresses: true } }, carrier: true, cartons: true },
     });
     if (shipment.status !== 'draft' && shipment.status !== 'ready')
       throw new DomainException('shipments.invalid_status', { params: { status: shipment.status } });
-    const { from, to, parcels } = this.route(shipment, 'fallback');
-    return this.carriers.quoteAll({ from, to, parcels });
+    // A price estimate only: the factory's postcode (and coordinates for trucks), never its name or contact.
+    return this.carriers.quoteAll({
+      from: this.factoryPickupPlace(shipment),
+      to: this.destination(shipment),
+      parcels: this.parcels(shipment),
+    });
   }
 
-  /** Pickup at the factory (pickup, else plant address; primary contact) to the destination, per carton. */
-  private route(
-    shipment: Shipment & {
-      factory: {
-        addresses: {
-          kind: string;
-          line1: string;
-          line2: string | null;
-          postcode: string | null;
-          lat: { toString(): string } | null;
-          lng: { toString(): string } | null;
-        }[];
-        contacts: { isPrimary: boolean; name: string; phone: string | null }[];
-      };
-      cartons: { weightG: number | null }[];
-    },
-    carrier: string,
-  ): Pick<CarrierBookingRequest, 'from' | 'to' | 'parcels'> {
+  /**
+   * D-442: the sender on a carrier booking — getpack's display name, phone and return address from the entity
+   * settings (`entity.display_name`, `entity.phone`, `entity.return_address`); refused when one is missing.
+   */
+  async carrierSender(entityId: bigint, carrier: string, at: Date): Promise<CarrierContact> {
+    const read = async <T>(key: string): Promise<T | null> => {
+      try {
+        return (await this.settings.at<T>(key, { at, scope: { type: 'entity', id: entityId } })).value;
+      } catch (error) {
+        if (error instanceof SettingNotFoundError) return null;
+        throw error;
+      }
+    };
+    return getpackSenderContact(carrier, {
+      displayName: await read<string>('entity.display_name'),
+      phone: await read<string>('entity.phone'),
+      returnAddress: await read<EntityReturnAddress>('entity.return_address'),
+    });
+  }
+
+  /** Where a carrier would collect, for price estimates only (pickup, else plant address): a place, no contact. */
+  private factoryPickupPlace(shipment: {
+    factory: {
+      addresses: {
+        kind: string;
+        postcode: string | null;
+        lat: { toString(): string } | null;
+        lng: { toString(): string } | null;
+      }[];
+    };
+  }): CarrierPlace {
     const pickup =
       shipment.factory.addresses.find((a) => a.kind === 'pickup') ??
       shipment.factory.addresses.find((a) => a.kind === 'plant');
-    const contact = shipment.factory.contacts.find((c) => c.isPrimary) ?? shipment.factory.contacts[0];
-    if (!pickup?.postcode || !contact?.phone)
+    if (!pickup?.postcode)
       throw new DomainException('shipments.carrier_unavailable', {
-        params: { carrier, reason: 'the factory has no pickup address or contact phone' },
+        params: { carrier: 'fallback', reason: 'the factory has no pickup address' },
       });
-    const perCarton = Math.max(1, Math.round(shipment.weightG / shipment.cartonsCount));
     return {
-      from: {
-        name: contact.name,
-        phone: contact.phone,
-        addressLine: [pickup.line1, pickup.line2].filter(Boolean).join(' '),
-        postcode: pickup.postcode,
-        lat: pickup.lat === null ? null : Number(pickup.lat),
-        lng: pickup.lng === null ? null : Number(pickup.lng),
-      },
-      to: {
-        name: shipment.recipientName,
-        phone: shipment.phone,
-        addressLine: [shipment.line1, shipment.line2].filter(Boolean).join(' '),
-        postcode: shipment.postcode,
-      },
-      parcels:
-        shipment.cartons.length > 0
-          ? shipment.cartons.map((c) => ({ weightG: c.weightG ?? perCarton }))
-          : Array.from({ length: shipment.cartonsCount }, () => ({ weightG: perCarton })),
+      postcode: pickup.postcode,
+      lat: pickup.lat === null ? null : Number(pickup.lat),
+      lng: pickup.lng === null ? null : Number(pickup.lng),
     };
+  }
+
+  private destination(shipment: Shipment): CarrierBookingRequest['to'] {
+    return {
+      name: shipment.recipientName,
+      phone: shipment.phone,
+      addressLine: [shipment.line1, shipment.line2].filter(Boolean).join(' '),
+      postcode: shipment.postcode,
+    };
+  }
+
+  /** One parcel per carton (its weight, else the shipment's weight shared out). */
+  private parcels(shipment: Shipment & { cartons: { weightG: number | null }[] }): CarrierParcel[] {
+    const perCarton = Math.max(1, Math.round(shipment.weightG / shipment.cartonsCount));
+    return shipment.cartons.length > 0
+      ? shipment.cartons.map((c) => ({ weightG: c.weightG ?? perCarton }))
+      : Array.from({ length: shipment.cartonsCount }, () => ({ weightG: perCarton }));
   }
 
   // --- exceptions and splits (D-230) --------------------------------------------------------------------------

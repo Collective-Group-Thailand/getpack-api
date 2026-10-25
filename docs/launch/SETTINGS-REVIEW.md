@@ -140,6 +140,8 @@ Seeded per entity from the `SEED_ENTITY_*` environment variables — never from 
 | `entity.branch_code` | D-092 branch code of the issuing entity (00000 = head office) |
 | `entity.address_th` | D-092 registered address (Thai) printed on documents of the issuing entity |
 | `entity.phone` | D-092 contact phone printed on documents of the issuing entity |
+| `entity.display_name` | D-442 company display name customers and carriers see as the sender (carrier waybills, customer-facing files); seeded from SEED_ENTITY_DISPLAY_NAME |
+| `entity.return_address` | D-442 return address of the issuing entity: the sender address on carrier bookings (never a factory address); not seeded for a real entity — carrier bookings are refused until it is set |
 
 ## Approval matrices (ADR-0006)
 

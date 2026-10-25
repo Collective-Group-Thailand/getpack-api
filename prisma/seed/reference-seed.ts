@@ -3,6 +3,7 @@ import { createHash } from 'node:crypto';
 import { type Prisma, type PrismaClient } from '../../src/generated/prisma/client';
 import { PERMISSIONS } from '../../src/modules/iam/permissions.catalog';
 import { ROLES } from '../../src/modules/iam/roles.catalog';
+import { type EntityReturnAddress } from '../../src/platform/settings/setting-keys';
 import { settingValueError } from '../../src/platform/settings/setting-value';
 import { AGENT_AGREEMENT_KEY, AGENT_AGREEMENT_V1_TH, AGENT_PLANS } from './data/agents';
 import { APPROVAL_POLICIES } from './data/approval-policies';
@@ -27,7 +28,12 @@ import { VENDOR_POSTING_RULES } from './data/posting-rules-vendor';
 import { PRICING_FEATURE_FLAGS, QUOTE_LOSS_REASONS, UNMET_DEMAND_REASONS } from './data/quotes';
 import { CREDIT_NOTE_REASONS, FINANCE_FEATURE_FLAGS } from './data/receivables';
 import { CONSENT_PURPOSES, NATIONAL_CALENDAR, SOD_RULES, TAX_RATES, TEAMS } from './data/reference';
-import { ENTITY_SETTING_KEYS, SETTINGS, type SettingSeed } from './data/settings';
+import {
+  ENTITY_RETURN_ADDRESS_SETTING,
+  ENTITY_SETTING_KEYS,
+  SETTINGS,
+  type SettingSeed,
+} from './data/settings';
 import { CARRIERS, CUSTOMER_SHIPPING_RATE_CARDS, ZONE_SCHEMES } from './data/shipping';
 import { PROCESS_TYPES, STYLE_PROCESS_RULES } from './data/styles';
 
@@ -45,6 +51,8 @@ export interface EntitySeedInput {
   branchCode?: string;
   addressTh?: string;
   phone?: string;
+  /** D-442 sender address on carrier bookings; only fake dev / UAT entities carry one (never from code otherwise). */
+  returnAddress?: EntityReturnAddress;
 }
 
 export type SeedReport = Record<string, number>;
@@ -137,18 +145,35 @@ async function ensureEntitySettings(
     ['branchCode', input.branchCode],
     ['addressTh', input.addressTh],
     ['phone', input.phone],
+    ['displayName', input.displayName],
   ];
   for (const [field, value] of values) {
     if (value === undefined || value === '') continue;
     const { key, description } = ENTITY_SETTING_KEYS[field];
     await ensureSetting(
       tx,
-      { key, valueType: 'string', value, description, decisions: ['D-092'] },
+      { key, valueType: 'string', value, description, decisions: field === 'displayName' ? ['D-442'] : ['D-092'] },
       'entity',
       entityId,
       count,
     );
   }
+  // D-442: the definition always exists so a superadmin can enter the first version; a value only for fake entities.
+  await ensureSetting(
+    tx,
+    {
+      key: ENTITY_RETURN_ADDRESS_SETTING.key,
+      valueType: 'json',
+      value: input.returnAddress ?? null,
+      ...(input.returnAddress === undefined && { unset: true as const }),
+      valueSchema: ENTITY_RETURN_ADDRESS_SETTING.valueSchema,
+      description: ENTITY_RETURN_ADDRESS_SETTING.description,
+      decisions: ['D-442', 'D-092'],
+    },
+    'entity',
+    entityId,
+    count,
+  );
 }
 
 async function ensureSetting(

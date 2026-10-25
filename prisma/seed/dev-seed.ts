@@ -13,6 +13,14 @@ export const DEV_ENTITY: EntitySeedInput = {
   branchCode: '00000',
   addressTh: '99/9 ถนนตัวอย่าง แขวงทดสอบ เขตทดสอบ กรุงเทพฯ 10000 (ข้อมูลปลอม)',
   phone: '02-000-0000',
+  returnAddress: {
+    line1: '99/9 ถนนตัวอย่าง (ข้อมูลปลอม)',
+    district: 'เขตทดสอบ',
+    province: 'กรุงเทพมหานคร',
+    postcode: '10000',
+    lat: 13.75,
+    lng: 100.5,
+  },
 };
 
 /** Staff role → team for notification routing (D-143). */

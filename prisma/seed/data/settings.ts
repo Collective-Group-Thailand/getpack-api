@@ -1551,4 +1551,36 @@ export const ENTITY_SETTING_KEYS = {
     key: 'entity.phone',
     description: 'D-092 contact phone printed on documents of the issuing entity',
   },
+  displayName: {
+    key: 'entity.display_name',
+    description:
+      'D-442 company display name customers and carriers see as the sender (carrier waybills, customer-facing files); seeded from SEED_ENTITY_DISPLAY_NAME',
+  },
+} as const;
+
+/**
+ * D-442: the issuing entity's return address — the sender address on every carrier booking (never a factory's
+ * name or address). Entity-scoped and effective-dated like the other entity settings; no value is seeded for a
+ * real entity (no decision gives one): a superadmin enters it, and carrier bookings are refused until then.
+ * `lat` / `lng` are needed only by on-demand trucks (Deliveree).
+ */
+export const ENTITY_RETURN_ADDRESS_SETTING = {
+  key: 'entity.return_address',
+  description:
+    'D-442 return address of the issuing entity: the sender address on carrier bookings (never a factory address); not seeded for a real entity — carrier bookings are refused until it is set',
+  valueSchema: {
+    type: 'object',
+    required: ['line1', 'district', 'province', 'postcode'],
+    additionalProperties: false,
+    properties: {
+      line1: { type: 'string', minLength: 1, maxLength: 200 },
+      line2: { type: ['string', 'null'], maxLength: 200 },
+      subdistrict: { type: ['string', 'null'], maxLength: 100 },
+      district: { type: 'string', minLength: 1, maxLength: 100 },
+      province: { type: 'string', minLength: 1, maxLength: 100 },
+      postcode: { type: 'string', pattern: '^[0-9]{5}$' },
+      lat: { type: ['number', 'null'], minimum: -90, maximum: 90 },
+      lng: { type: ['number', 'null'], minimum: -180, maximum: 180 },
+    },
+  },
 } as const;

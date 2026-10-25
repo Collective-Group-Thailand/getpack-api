@@ -3,7 +3,11 @@ import { PAYMENT_FEATURE_FLAGS } from '../../../prisma/seed/data/commerce';
 import { FULFILMENT_FEATURE_FLAGS } from '../../../prisma/seed/data/fulfilment';
 import { PRICING_FEATURE_FLAGS } from '../../../prisma/seed/data/quotes';
 import { FINANCE_FEATURE_FLAGS } from '../../../prisma/seed/data/receivables';
-import { ENTITY_SETTING_KEYS, SETTINGS } from '../../../prisma/seed/data/settings';
+import {
+  ENTITY_RETURN_ADDRESS_SETTING,
+  ENTITY_SETTING_KEYS,
+  SETTINGS,
+} from '../../../prisma/seed/data/settings';
 
 const cell = (text: string) => text.replace(/\|/g, '\\|').replace(/\n/g, ' ');
 const value = (v: unknown) =>
@@ -45,6 +49,7 @@ export function renderSettingsReview(): string {
     '| Key | What it is |',
     '|---|---|',
     ...Object.values(ENTITY_SETTING_KEYS).map((e) => `| \`${e.key}\` | ${cell(e.description)} |`),
+    `| \`${ENTITY_RETURN_ADDRESS_SETTING.key}\` | ${cell(ENTITY_RETURN_ADDRESS_SETTING.description)} |`,
     '',
     '## Approval matrices (ADR-0006)',
     '',
