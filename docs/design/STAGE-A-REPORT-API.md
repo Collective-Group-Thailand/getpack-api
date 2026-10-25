@@ -124,3 +124,63 @@ database) and `pnpm test:int`, both on PostgreSQL 18.
 4. No overdue notice replaces the old "order cancelled" e-mail. Add a one-time "เลยกำหนดชำระ — ตรวจราคาใหม่และชำระ"?
 5. Confirm-receipt with an open claim is hidden but still accepted by the endpoint. Refuse it server-side too?
 6. Tier wording: the API states the real rule ("completed orders"), not the pack's "นับยอดเมื่อได้รับของแล้ว". Confirm.
+
+---
+
+## A3 — pdp · Phase 0 (price reconciliation) — PASS
+
+Commit (made and pushed by the subagent): `053a86a9` fix(pricing): one store pricing path, default spec and spec
+label (D-441). Under autorun the "stop for approval, then implement" line was replaced by the gate, so the plan in
+`PRICE-CONSISTENCY.md` was implemented.
+
+Gate: lint ✔ · typecheck ✔ · unit 170 suites / 1237 tests ✔ · contract test 8/8 ✔ · diff scan clean ✔ ·
+no calculator, formula or golden-test file changed.
+
+### Findings (reproduced on a local copy of the UAT seed)
+- Issues 1 and 6: one calculator, but two definitions of "default spec". The listing price was cached from the
+  admin's reference configuration (size 00, KA125 B, CMYK, 300 pcs → ฿15.70 locally) by calling the engine directly
+  (skipping store validation, taking the cheapest quantity); the configurator opened on the options flagged default
+  (ดำ). ดำ also prices ฿15.70 locally, so the spec gap alone does not explain UAT's ฿17.26 (see open question 1).
+  ฿14.79 in the Studio = 150 × 100 × 80, KA125 B, **unprinted**, 300 pcs: same calculator, different spec, and the
+  response never said which spec.
+- Issue 2 (flat 100/300/500, lower at 1,000): intended — digital print is cheapest up to 1,000 with a flat per-piece
+  cost; the drop is the sell-margin band (1–999 at 35 %, 1,000+ at 25 %); flexo wins from 2,000.
+- Issue 3: description is admin catalogue text — not changed.
+- Issue 4: API spec lines wrote width first — fixed to ยาว × กว้าง × สูง.
+- Issue 5: per-style, per-size dieline download already exists (`store.dielines.download`).
+
+### What changed (additive for the web; no migration; no env vars)
+- `StorePricingService`: one store pricing path for configurator calculate, homepage hero preview, Studio dock and
+  the starting-price refresh. Starting price = the configurator's own price for its default spec at the reference
+  quantity.
+- Configurator read returns `defaultSpec` (the admin's reference configuration); option defaults, default size and
+  quantity follow it; the product page marks options the same way. **D-441 (assumption):** where a reference
+  configuration exists it overrides the admins' per-option default flags.
+- Every store calculation returns spec lines plus one label string (sizes ยาว × กว้าง × สูง, "ไม่พิมพ์" when nothing
+  prints); the same label on card, price-hint and style starting prices. Saved quotes keep their wording.
+- Starting prices are also recomputed when a sell-margin table or VAT rate is approved.
+- Configurator patterns list their published dieline variants; suggested web link `/templates?product=<slug>&size=<code>`.
+- UAT seed (fake data): reference configurations follow each product's first options; products without an ink
+  option are unprinted. After a re-seed the postal box's starting price is for ดำ.
+- Tests: new e2e `price-consistency` (configurator price for the default spec = hint = card = product page, same
+  label, for every instant product); Studio quote e2e checks its label; unit tests for label and default-spec
+  helpers; size-order expectations updated in four e2e suites.
+
+API-CHANGES: `docs/design/pdp-redesign/API-CHANGES.md` · findings/plan: `docs/design/pdp-redesign/PRICE-CONSISTENCY.md`
+
+### Tests to run locally (Docker)
+`pnpm test:e2e`, at least: price-consistency, price-hints, line-summary, spec-model, studio-quotes, rfqs,
+storefront-cards, style-library, corrugate-quotes, folding-quotes (and checkout, which needs superuser rights the VM
+role lacked). Then `pnpm test:int`.
+
+### Open questions
+1. Why ฿17.26 on UAT? UAT is ~9.9 % higher on every tier than a fresh seed, which looks like a stale cached starting
+   price. Read-only check on UAT: `select computed_at, unit_price from catalog_price_hints h join catalog_products p
+   on p.id = h.catalog_product_id where p.slug = 'uat-postal-box-b'`, and confirm the worker's hourly
+   `pricing.price_hints_refresh` runs; run the refresh once after deploying.
+2. D-441 assumption: should the reference configuration override admins' per-option default flags? And should the
+   postal box open on ดำ or CMYK (admins set it through the reference-configuration endpoint)?
+3. Merge equal tiers in the tier table (e.g. one row "100–500 ชิ้น")? Web display choice.
+4. Copy fixes, not applied: "โลโก้ 1–2 สี" description; white mailer box claims logo printing but has no ink option;
+   seed size names written width × length (e.g. "9.75×14×6 ซม.").
+5. When a style has several published dieline variants, which one does "ดาวน์โหลดแบบกล่อง" use?
