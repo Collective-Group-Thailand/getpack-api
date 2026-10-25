@@ -314,6 +314,54 @@ export class JobToleranceDto {
   colourDeltaE!: string | null;
 }
 
+/**
+ * D-442 (DECISIONS-STAGE-A §1 "Production access to originals"): a customer's original artwork file as production
+ * may download it — document metadata stripped, named by the order code, no customer identity.
+ */
+export class ProductionOriginalFileDto {
+  @ApiProperty({
+    enum: ['pending', 'ready', 'unsupported'],
+    enumName: 'ProductionCopyStatus',
+    example: 'ready',
+    description:
+      '`pending` while the copy is being made; `ready` to download (`fileId`); `unsupported` when the format cannot be cleaned safely — nothing is offered, ask getpack',
+  })
+  status!: 'pending' | 'ready' | 'unsupported';
+
+  @ApiProperty({
+    type: String,
+    format: 'uuid',
+    nullable: true,
+    example: '0192f3a0-7c1e-7d2a-9b1f-0000000f1014',
+    description: 'Download through `files.downloadUrl` once `ready`',
+  })
+  fileId!: string | null;
+
+  @ApiProperty({
+    type: String,
+    nullable: true,
+    example: 'DEVOR-2609-00001-original-v1.pdf',
+    description: 'The order code, the submission version and a counter — never the uploaded name',
+  })
+  fileName!: string | null;
+
+  @ApiProperty({
+    enum: ['unsupported_format', 'encrypted', 'signed', 'unreadable', 'too_large', 'source_unavailable'],
+    enumName: 'ProductionCopyFailure',
+    nullable: true,
+    example: null,
+    description: 'Why an `unsupported` file is not offered',
+  })
+  reason!:
+    | 'unsupported_format'
+    | 'encrypted'
+    | 'signed'
+    | 'unreadable'
+    | 'too_large'
+    | 'source_unavailable'
+    | null;
+}
+
 export class JobArtworkDto {
   @ApiProperty({ format: 'uuid', example: '0192f3a0-7c1e-7d2a-9b1f-0000000f1012' })
   proofId!: string;
@@ -442,6 +490,13 @@ export class PartnerJobDto {
 
   @ApiProperty({ type: String, format: 'uuid', nullable: true, example: null })
   dielineFileId!: string | null;
+
+  @ApiProperty({
+    type: [ProductionOriginalFileDto],
+    description:
+      "D-442: the customer's original artwork files behind the approved proof, as copies without document metadata (author, creator, company, title, XMP) and named by the order code — never the customer's name, contact or company",
+  })
+  originalFiles!: ProductionOriginalFileDto[];
 
   @ApiProperty({
     type: Boolean,
@@ -618,6 +673,14 @@ export const PARTNER_JOB_EXAMPLE: PartnerJobDto = {
   spec: { productTypeCode: 'folding_carton', quantity: 1000 },
   approvedFileId: JOB_IDS.file,
   dielineFileId: null,
+  originalFiles: [
+    {
+      status: 'ready',
+      fileId: '0192f3a0-7c1e-7d2a-9b1f-0000000f1014',
+      fileName: 'DEVOR-2609-00001-original-v1.pdf',
+      reason: null,
+    },
+  ],
   inspectionRequired: false,
   holdReason: null,
   productTypeCode: 'folding_box',

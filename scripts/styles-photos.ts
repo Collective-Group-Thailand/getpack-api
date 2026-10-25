@@ -151,6 +151,7 @@ async function main(): Promise<void> {
         fileName: p.asset.file,
         mimeType: p.mimeType,
         retentionClass: 'standard',
+        purpose: 'image',
       });
       await scans.processOne(stored);
       const scanned = await prisma.fileObject.findUniqueOrThrow({ where: { id: stored.id } });

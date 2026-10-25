@@ -1,3 +1,4 @@
+import { scrubMetadata } from '@common/files/metadata-scrub';
 import puppeteer, { type Browser } from 'puppeteer-core';
 
 import { ProviderUnavailableError } from '../http/resilient-http';
@@ -26,7 +27,10 @@ export class PuppeteerPdfRenderer implements PdfRenderer {
       await page.setContent(html, { waitUntil: 'load', timeout: 20_000 });
       await page.evaluateHandle('document.fonts.ready');
       const pdf = await page.pdf({ format: 'A4', printBackground: true, preferCSSPageSize: true });
-      return Buffer.from(pdf);
+      // D-442: no Title (the page's <title>), Creator (HeadlessChrome) or Producer (Skia) on any document we hand out.
+      const scrubbed = await scrubMetadata(Buffer.from(pdf));
+      if (!scrubbed.ok) throw new ProviderUnavailableError('pdf', `metadata scrub failed: ${scrubbed.reason}`);
+      return scrubbed.body;
     } finally {
       await page.close().catch(() => undefined);
     }

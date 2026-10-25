@@ -11,6 +11,27 @@ enum ArtworkSource {
   @@map("artwork_source")
 }
 
+/// D-442 state of a production copy of a customer original.
+enum ProductionCopyStatus {
+  pending
+  ready
+  unsupported
+
+  @@map("production_copy_status")
+}
+
+/// D-442 why no production copy is offered.
+enum ProductionCopyFailure {
+  unsupported_format
+  encrypted
+  signed
+  unreadable
+  too_large
+  source_unavailable
+
+  @@map("production_copy_failure")
+}
+
 enum ArtworkFileRole {
   artwork
   font
@@ -222,13 +243,43 @@ model ArtworkSubmissionFile {
   sort         Int             @default(0) @db.SmallInt
   createdAt    DateTime        @default(now()) @map("created_at") @db.Timestamptz(6)
 
-  submission ArtworkSubmission  @relation(fields: [submissionId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_artwork_submission_files__submission_id")
-  fileObject FileObject?        @relation("ArtworkSubmissionFileObject", fields: [fileObjectId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_artwork_submission_files__file_object_id")
-  findings   PreflightFinding[]
+  submission     ArtworkSubmission      @relation(fields: [submissionId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_artwork_submission_files__submission_id")
+  fileObject     FileObject?            @relation("ArtworkSubmissionFileObject", fields: [fileObjectId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_artwork_submission_files__file_object_id")
+  findings       PreflightFinding[]
+  productionCopy ArtworkProductionCopy?
 
   @@index([submissionId], map: "ix_artwork_submission_files__submission_id")
   @@index([fileObjectId], map: "ix_artwork_submission_files__file_object_id")
   @@map("artwork_submission_files")
+}
+
+/// D-442 (DECISIONS-STAGE-A §1 "Production access to originals"): the copy of a customer's original artwork file
+/// that production may download — document metadata stripped and named by the order code, so it carries no customer
+/// identity. Requested when the proof of its submission is approved; the worker makes it (`artwork.production_copies`).
+/// `unsupported` = the format cannot be scrubbed safely (or is encrypted / unreadable / too large): nothing is offered.
+model ArtworkProductionCopy {
+  id               BigInt                 @id(map: "pk_artwork_production_copies") @default(autoincrement())
+  publicId         String                 @unique(map: "ux_artwork_production_copies__public_id") @default(dbgenerated("uuidv7()")) @map("public_id") @db.Uuid
+  submissionFileId BigInt                 @unique(map: "ux_artwork_production_copies__submission_file_id") @map("submission_file_id")
+  sourceFileId     BigInt                 @map("source_file_id")
+  copyFileId       BigInt?                @unique(map: "ux_artwork_production_copies__copy_file_id") @map("copy_file_id")
+  status           ProductionCopyStatus   @default(pending)
+  failureReason    ProductionCopyFailure? @map("failure_reason")
+  attempts         Int                    @default(0) @db.SmallInt
+  /// Worker lease: retried by another worker after this instant (crash safety).
+  lockedUntil      DateTime?              @map("locked_until") @db.Timestamptz(6)
+  readyAt          DateTime?              @map("ready_at") @db.Timestamptz(6)
+  createdAt        DateTime               @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt        DateTime               @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+  rowVersion       Int                    @default(1) @map("row_version")
+
+  submissionFile ArtworkSubmissionFile @relation(fields: [submissionFileId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_artwork_production_copies__submission_file_id")
+  sourceFile     FileObject            @relation("ArtworkProductionCopySource", fields: [sourceFileId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_artwork_production_copies__source_file_id")
+  copyFile       FileObject?           @relation("ArtworkProductionCopyFile", fields: [copyFileId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_artwork_production_copies__copy_file_id")
+
+  @@index([sourceFileId], map: "ix_artwork_production_copies__source_file_id")
+  @@index([status, lockedUntil], map: "ix_artwork_production_copies__status")
+  @@map("artwork_production_copies")
 }
 
 /// One finding of an automated preflight run (D-070). Append-only; a re-run writes new rows.

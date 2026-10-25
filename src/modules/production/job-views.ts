@@ -9,6 +9,7 @@ import {
   type JobIssueDto,
   type MilestoneDto,
   type PartnerJobDto,
+  type ProductionOriginalFileDto,
   type QcCheckDto,
   type QcDefectDto,
 } from './production.dto';
@@ -74,7 +75,10 @@ export function milestoneDtos(row: JobRow, photos: Map<bigint, string[]>): Miles
 /** Facts read alongside the job rows (U-B0.3): pieces already on live shipments, the approved proof. */
 export interface JobExtras {
   shipped: Map<bigint, number>;
-  proofs: Map<string, { versionNo: number; decidedAt: Date | null }>;
+  proofs: Map<
+    string,
+    { versionNo: number; decidedAt: Date | null; originalFiles?: ProductionOriginalFileDto[] }
+  >;
 }
 const NO_EXTRAS: JobExtras = { shipped: new Map(), proofs: new Map() };
 
@@ -110,6 +114,7 @@ export function partnerJobDto(
     spec,
     approvedFileId: (spec['approvedFileId'] as string | null) ?? null,
     dielineFileId: (spec['dielineFileId'] as string | null) ?? null,
+    originalFiles: proof?.originalFiles ?? [],
     inspectionRequired: row.inspectionRequired,
     holdReason: row.holdReason,
     productTypeCode: row.order.productType.code,

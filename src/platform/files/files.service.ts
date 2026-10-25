@@ -121,6 +121,7 @@ export class FilesService {
         uploadStatus: 'pending',
         scanStatus: 'pending',
         retentionClass: rule.retentionClass,
+        purpose: input.purpose,
         expiresAt: new Date(now.getTime() + PENDING_TTL_MS),
         ...owner,
         createdById: actor.type === 'user' ? actor.userId : null,
@@ -330,7 +331,14 @@ export class FilesService {
    */
   async storeImported(
     actor: UserActor,
-    input: { body: Buffer; fileName: string; mimeType: string; retentionClass: FileRetentionClass },
+    input: {
+      body: Buffer;
+      fileName: string;
+      mimeType: string;
+      retentionClass: FileRetentionClass;
+      /** D-442: decides whether the worker strips metadata (published photos: `image`). */
+      purpose?: FilePurpose;
+    },
   ): Promise<FileObject> {
     const now = new Date();
     const file = await this.prisma.fileObject.create({
@@ -342,6 +350,7 @@ export class FilesService {
         sizeBytes: BigInt(input.body.length),
         uploadStatus: 'uploaded',
         retentionClass: input.retentionClass,
+        purpose: input.purpose ?? null,
         ownerUserId: actor.userId,
         createdById: actor.userId,
       },
@@ -369,7 +378,7 @@ export class FilesService {
    * same SHA-256, under legal hold, that no workflow edits or replaces. Written in the caller's transaction;
    * the S3 copy happens first (a rolled-back approval leaves only an unreferenced object).
    */
-  async lockedCopy(db: Tx, file: FileObject): Promise<FileObject> {
+  async lockedCopy(db: Tx, file: FileObject, opts: { fileName?: string } = {}): Promise<FileObject> {
     if (file.uploadStatus !== 'uploaded' || file.scanStatus !== 'clean' || !file.sha256)
       throw new DomainException('file.not_ready');
     const now = new Date();
@@ -377,7 +386,10 @@ export class FilesService {
       data: {
         bucket: file.bucket,
         storageKey: `pending/${randomUUID()}`,
-        originalName: file.originalName,
+        // D-442: a neutral name chosen by the caller (the uploader's file name can carry a customer's name).
+        originalName: opts.fileName ?? file.originalName,
+        purpose: file.purpose,
+        metadataStrippedAt: file.metadataStrippedAt,
         mimeType: file.mimeType,
         sizeBytes: file.sizeBytes,
         sha256: file.sha256,

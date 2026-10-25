@@ -1,6 +1,7 @@
 import { randomUUID } from 'node:crypto';
 
 import { PreflightService } from '@modules/artwork/preflight/preflight.service';
+import { ProductionCopiesService } from '@modules/artwork/production-copies.service';
 
 import { type DevFolding } from '../../prisma/seed/dev-folding';
 import {
@@ -439,6 +440,29 @@ describe('artwork submissions and preflight (e2e, B4.1)', () => {
       where: { publicId: approved.body.approvedFileId as string },
     });
     expect(locked).toMatchObject({ legalHold: true, scanStatus: 'clean' });
+    // D-442: production downloads the locked copy under the order code, never the uploaded name; the customer's
+    // original artwork files get production copies (metadata stripped, named by the order code).
+    const orderRow = await ctx.prisma.order.findUniqueOrThrow({ where: { publicId: orderId } });
+    expect(locked.originalName).toBe(`${orderRow.orderCode}-proof-v2.pdf`);
+    const copies = await ctx.prisma.artworkProductionCopy.findMany({
+      where: { submissionFile: { submission: { orderId: orderRow.id } } },
+    });
+    expect(copies.length).toBeGreaterThan(0);
+    expect(copies.every((c) => c.status === 'pending')).toBe(true);
+    const copier = ctx.app.get(ProductionCopiesService);
+    for (const c of copies) await copier.makeOne(c.id);
+    const made = await ctx.prisma.artworkProductionCopy.findMany({
+      where: { id: { in: copies.map((c) => c.id) } },
+      include: { copyFile: true },
+    });
+    for (const c of made) {
+      expect(c.status).toBe('ready');
+      expect(c.copyFile!.originalName).toMatch(new RegExp(`^${orderRow.orderCode}-original-v\\d+(-\\d+)?\\.pdf$`));
+      expect(c.copyFile!.ownerUserId).toBeNull();
+      expect(c.copyFile!.metadataStrippedAt).not.toBeNull();
+    }
+    // The customer cannot read the production copy (it is not theirs); staff can.
+    await as(ctx, token).get(`/v1/store/files/${made[0]!.copyFile!.publicId}/download`).expect(404);
     const row = await ctx.prisma.proof.findUniqueOrThrow({ where: { publicId: p2.body.id as string } });
     expect(row.decisionIp).not.toBeNull();
     await as(ctx, token)

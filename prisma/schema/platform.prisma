@@ -794,35 +794,39 @@ model ApprovalDelegation {
 // ---------------------------------------------------------------------------------------------
 
 model FileObject {
-  id                BigInt             @id(map: "pk_file_objects") @default(autoincrement())
-  publicId          String             @unique(map: "ux_file_objects__public_id") @default(dbgenerated("uuidv7()")) @map("public_id") @db.Uuid
-  bucket            String
-  storageKey        String             @unique(map: "ux_file_objects__storage_key") @map("storage_key")
-  originalName      String             @map("original_name")
-  mimeType          String             @map("mime_type")
-  sizeBytes         BigInt             @map("size_bytes")
-  sha256            Bytes?
-  widthPx           Int?               @map("width_px")
-  heightPx          Int?               @map("height_px")
-  pageCount         Int?               @map("page_count")
-  uploadStatus      FileUploadStatus   @default(pending) @map("upload_status")
-  multipartUploadId String?            @map("multipart_upload_id")
-  scanStatus        FileScanStatus     @default(pending) @map("scan_status")
-  scannedAt         DateTime?          @map("scanned_at") @db.Timestamptz(6)
+  id                 BigInt             @id(map: "pk_file_objects") @default(autoincrement())
+  publicId           String             @unique(map: "ux_file_objects__public_id") @default(dbgenerated("uuidv7()")) @map("public_id") @db.Uuid
+  bucket             String
+  storageKey         String             @unique(map: "ux_file_objects__storage_key") @map("storage_key")
+  originalName       String             @map("original_name")
+  mimeType           String             @map("mime_type")
+  sizeBytes          BigInt             @map("size_bytes")
+  sha256             Bytes?
+  widthPx            Int?               @map("width_px")
+  heightPx           Int?               @map("height_px")
+  pageCount          Int?               @map("page_count")
+  uploadStatus       FileUploadStatus   @default(pending) @map("upload_status")
+  multipartUploadId  String?            @map("multipart_upload_id")
+  scanStatus         FileScanStatus     @default(pending) @map("scan_status")
+  scannedAt          DateTime?          @map("scanned_at") @db.Timestamptz(6)
   /// financial_record = ≥ 10 years (accounting-design.md §2).
-  retentionClass    FileRetentionClass @default(standard) @map("retention_class")
-  legalHold         Boolean            @default(false) @map("legal_hold")
-  ownerUserId       BigInt?            @map("owner_user_id")
-  ownerFactoryId    BigInt?            @map("owner_factory_id")
+  retentionClass     FileRetentionClass @default(standard) @map("retention_class")
+  legalHold          Boolean            @default(false) @map("legal_hold")
+  ownerUserId        BigInt?            @map("owner_user_id")
+  ownerFactoryId     BigInt?            @map("owner_factory_id")
   /// FK to companies is added in B3.5.
-  ownerCompanyId    BigInt?            @map("owner_company_id")
-  thumbnailOfFileId BigInt?            @map("thumbnail_of_file_id")
-  expiresAt         DateTime?          @map("expires_at") @db.Timestamptz(6)
-  purgedAt          DateTime?          @map("purged_at") @db.Timestamptz(6)
-  createdAt         DateTime           @default(now()) @map("created_at") @db.Timestamptz(6)
-  createdById       BigInt?            @map("created_by")
-  updatedAt         DateTime           @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
-  rowVersion        Int                @default(1) @map("row_version")
+  ownerCompanyId     BigInt?            @map("owner_company_id")
+  thumbnailOfFileId  BigInt?            @map("thumbnail_of_file_id")
+  /// D-442 what the upload was for (`FILE_PURPOSES` key); null for system-generated files and rows before D-442.
+  purpose            String?            @db.VarChar(32)
+  /// D-442 identifying metadata (EXIF / GPS, XMP, PDF Info) was removed from the stored bytes at this instant.
+  metadataStrippedAt DateTime?          @map("metadata_stripped_at") @db.Timestamptz(6)
+  expiresAt          DateTime?          @map("expires_at") @db.Timestamptz(6)
+  purgedAt           DateTime?          @map("purged_at") @db.Timestamptz(6)
+  createdAt          DateTime           @default(now()) @map("created_at") @db.Timestamptz(6)
+  createdById        BigInt?            @map("created_by")
+  updatedAt          DateTime           @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+  rowVersion         Int                @default(1) @map("row_version")
 
   owner        User?        @relation("FileObjectOwner", fields: [ownerUserId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_file_objects__owner_user_id")
   ownerFactory Factory?     @relation("FileObjectOwnerFactory", fields: [ownerFactoryId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_file_objects__owner_factory_id")
@@ -872,6 +876,11 @@ model FileObject {
   drawingOutputs          DrawingJob[]            @relation("DrawingJobOutputFile")
   dielineRenders          DielineRender[]         @relation("DielineRenderFile")
   // --- end Fulfilment B4.1
+
+  // --- D-442 production copies of customer originals (back-relations)
+  productionCopySources ArtworkProductionCopy[] @relation("ArtworkProductionCopySource")
+  productionCopy        ArtworkProductionCopy?  @relation("ArtworkProductionCopyFile")
+  // --- end D-442
 
   // --- Fulfilment B4.3 (generated back-relations)
   shipmentLabels       Shipment[]        @relation("ShipmentLabelFile")

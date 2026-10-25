@@ -9494,6 +9494,13 @@
             "format": "uuid",
             "type": "string"
           },
+          "originalFiles": {
+            "description": "D-442: the customer's original artwork files behind the approved proof, as copies without document metadata (author, creator, company, title, XMP) and named by the order code — never the customer's name, contact or company",
+            "items": {
+              "$ref": "#/components/schemas/ProductionOriginalFileDto"
+            },
+            "type": "array"
+          },
           "plannedFinishOn": {
             "example": "2026-10-09",
             "format": "date",
@@ -9673,6 +9680,7 @@
           "spec",
           "approvedFileId",
           "dielineFileId",
+          "originalFiles",
           "inspectionRequired",
           "holdReason",
           "productTypeCode",
@@ -75706,6 +75714,13 @@
             },
             "type": "array"
           },
+          "originalFiles": {
+            "description": "D-442: the customer's original artwork files behind the approved proof, as copies without document metadata (author, creator, company, title, XMP) and named by the order code — never the customer's name, contact or company",
+            "items": {
+              "$ref": "#/components/schemas/ProductionOriginalFileDto"
+            },
+            "type": "array"
+          },
           "plannedFinishOn": {
             "example": "2026-10-09",
             "format": "date",
@@ -75862,6 +75877,7 @@
           "spec",
           "approvedFileId",
           "dielineFileId",
+          "originalFiles",
           "inspectionRequired",
           "holdReason",
           "productTypeCode",
@@ -82641,6 +82657,27 @@
         ],
         "type": "object"
       },
+      "ProductionCopyFailure": {
+        "description": "Why an `unsupported` file is not offered",
+        "enum": [
+          "unsupported_format",
+          "encrypted",
+          "signed",
+          "unreadable",
+          "too_large",
+          "source_unavailable"
+        ],
+        "type": "string"
+      },
+      "ProductionCopyStatus": {
+        "description": "`pending` while the copy is being made; `ready` to download (`fileId`); `unsupported` when the format cannot be cleaned safely — nothing is offered, ask getpack",
+        "enum": [
+          "pending",
+          "ready",
+          "unsupported"
+        ],
+        "type": "string"
+      },
       "ProductionJobStatus": {
         "enum": [
           "released",
@@ -82652,6 +82689,55 @@
           "cancelled"
         ],
         "type": "string"
+      },
+      "ProductionOriginalFileDto": {
+        "properties": {
+          "fileId": {
+            "description": "Download through `files.downloadUrl` once `ready`",
+            "example": "0192f3a0-7c1e-7d2a-9b1f-0000000f1014",
+            "format": "uuid",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "fileName": {
+            "description": "The order code, the submission version and a counter — never the uploaded name",
+            "example": "DEVOR-2609-00001-original-v1.pdf",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "reason": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ProductionCopyFailure"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Why an `unsupported` file is not offered",
+            "example": null
+          },
+          "status": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ProductionCopyStatus"
+              }
+            ],
+            "description": "`pending` while the copy is being made; `ready` to download (`fileId`); `unsupported` when the format cannot be cleaned safely — nothing is offered, ask getpack",
+            "example": "ready"
+          }
+        },
+        "required": [
+          "status",
+          "fileId",
+          "fileName",
+          "reason"
+        ],
+        "type": "object"
       },
       "ProductionStartMode": {
         "enum": [
@@ -279241,6 +279327,14 @@
                   ],
                   "orderCode": "DEVOR-2609-00001",
                   "orderId": "0192f3a0-7c1e-7d2a-9b1f-0000000f1002",
+                  "originalFiles": [
+                    {
+                      "fileId": "0192f3a0-7c1e-7d2a-9b1f-0000000f1014",
+                      "fileName": "DEVOR-2609-00001-original-v1.pdf",
+                      "reason": null,
+                      "status": "ready"
+                    }
+                  ],
                   "plannedFinishOn": "2026-10-09",
                   "plannedStartOn": "2026-09-28",
                   "predictedFinishOn": null,
@@ -294965,6 +295059,14 @@
                       ],
                       "orderCode": "DEVOR-2609-00001",
                       "orderId": "0192f3a0-7c1e-7d2a-9b1f-0000000f1002",
+                      "originalFiles": [
+                        {
+                          "fileId": "0192f3a0-7c1e-7d2a-9b1f-0000000f1014",
+                          "fileName": "DEVOR-2609-00001-original-v1.pdf",
+                          "reason": null,
+                          "status": "ready"
+                        }
+                      ],
                       "plannedFinishOn": "2026-10-09",
                       "plannedStartOn": "2026-09-28",
                       "predictedFinishOn": null,
@@ -295265,6 +295367,14 @@
                   ],
                   "orderCode": "DEVOR-2609-00001",
                   "orderId": "0192f3a0-7c1e-7d2a-9b1f-0000000f1002",
+                  "originalFiles": [
+                    {
+                      "fileId": "0192f3a0-7c1e-7d2a-9b1f-0000000f1014",
+                      "fileName": "DEVOR-2609-00001-original-v1.pdf",
+                      "reason": null,
+                      "status": "ready"
+                    }
+                  ],
                   "plannedFinishOn": "2026-10-09",
                   "plannedStartOn": "2026-09-28",
                   "predictedFinishOn": null,
@@ -295580,6 +295690,14 @@
                   ],
                   "orderCode": "DEVOR-2609-00001",
                   "orderId": "0192f3a0-7c1e-7d2a-9b1f-0000000f1002",
+                  "originalFiles": [
+                    {
+                      "fileId": "0192f3a0-7c1e-7d2a-9b1f-0000000f1014",
+                      "fileName": "DEVOR-2609-00001-original-v1.pdf",
+                      "reason": null,
+                      "status": "ready"
+                    }
+                  ],
                   "plannedFinishOn": "2026-10-09",
                   "plannedStartOn": "2026-09-28",
                   "predictedFinishOn": null,
@@ -295939,6 +296057,14 @@
                   ],
                   "orderCode": "DEVOR-2609-00001",
                   "orderId": "0192f3a0-7c1e-7d2a-9b1f-0000000f1002",
+                  "originalFiles": [
+                    {
+                      "fileId": "0192f3a0-7c1e-7d2a-9b1f-0000000f1014",
+                      "fileName": "DEVOR-2609-00001-original-v1.pdf",
+                      "reason": null,
+                      "status": "ready"
+                    }
+                  ],
                   "plannedFinishOn": "2026-10-09",
                   "plannedStartOn": "2026-09-28",
                   "predictedFinishOn": null,
@@ -296289,6 +296415,14 @@
                   ],
                   "orderCode": "DEVOR-2609-00001",
                   "orderId": "0192f3a0-7c1e-7d2a-9b1f-0000000f1002",
+                  "originalFiles": [
+                    {
+                      "fileId": "0192f3a0-7c1e-7d2a-9b1f-0000000f1014",
+                      "fileName": "DEVOR-2609-00001-original-v1.pdf",
+                      "reason": null,
+                      "status": "ready"
+                    }
+                  ],
                   "plannedFinishOn": "2026-10-09",
                   "plannedStartOn": "2026-09-28",
                   "predictedFinishOn": null,
@@ -472637,6 +472771,14 @@
                           "key": "job.update_milestone"
                         }
                       ],
+                      "originalFiles": [
+                        {
+                          "fileId": "0192f3a0-7c1e-7d2a-9b1f-0000000f1014",
+                          "fileName": "DEVOR-2609-00001-original-v1.pdf",
+                          "reason": null,
+                          "status": "ready"
+                        }
+                      ],
                       "plannedFinishOn": "2026-10-09",
                       "plannedStartOn": "2026-09-28",
                       "productTypeCode": "folding_box",
@@ -479102,6 +479244,14 @@
                           "key": "job.update_milestone"
                         }
                       ],
+                      "originalFiles": [
+                        {
+                          "fileId": "0192f3a0-7c1e-7d2a-9b1f-0000000f1014",
+                          "fileName": "DEVOR-2609-00001-original-v1.pdf",
+                          "reason": null,
+                          "status": "ready"
+                        }
+                      ],
                       "plannedFinishOn": "2026-10-09",
                       "plannedStartOn": "2026-09-28",
                       "productTypeCode": "folding_box",
@@ -479571,6 +479721,14 @@
                       "key": "job.update_milestone"
                     }
                   ],
+                  "originalFiles": [
+                    {
+                      "fileId": "0192f3a0-7c1e-7d2a-9b1f-0000000f1014",
+                      "fileName": "DEVOR-2609-00001-original-v1.pdf",
+                      "reason": null,
+                      "status": "ready"
+                    }
+                  ],
                   "plannedFinishOn": "2026-10-09",
                   "plannedStartOn": "2026-09-28",
                   "productTypeCode": "folding_box",
@@ -479848,6 +480006,14 @@
                       "disabledReason": null,
                       "irreversible": false,
                       "key": "job.update_milestone"
+                    }
+                  ],
+                  "originalFiles": [
+                    {
+                      "fileId": "0192f3a0-7c1e-7d2a-9b1f-0000000f1014",
+                      "fileName": "DEVOR-2609-00001-original-v1.pdf",
+                      "reason": null,
+                      "status": "ready"
                     }
                   ],
                   "plannedFinishOn": "2026-10-09",
@@ -480197,6 +480363,14 @@
                       "disabledReason": null,
                       "irreversible": false,
                       "key": "job.update_milestone"
+                    }
+                  ],
+                  "originalFiles": [
+                    {
+                      "fileId": "0192f3a0-7c1e-7d2a-9b1f-0000000f1014",
+                      "fileName": "DEVOR-2609-00001-original-v1.pdf",
+                      "reason": null,
+                      "status": "ready"
                     }
                   ],
                   "plannedFinishOn": "2026-10-09",
@@ -481603,6 +481777,14 @@
                         "disabledReason": null,
                         "irreversible": false,
                         "key": "job.update_milestone"
+                      }
+                    ],
+                    "originalFiles": [
+                      {
+                        "fileId": "0192f3a0-7c1e-7d2a-9b1f-0000000f1014",
+                        "fileName": "DEVOR-2609-00001-original-v1.pdf",
+                        "reason": null,
+                        "status": "ready"
                       }
                     ],
                     "plannedFinishOn": "2026-10-09",

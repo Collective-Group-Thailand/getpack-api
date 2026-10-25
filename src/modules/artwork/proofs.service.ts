@@ -12,6 +12,8 @@ import { FilesService } from '@platform/files/files.service';
 import { SettingNotFoundError, SettingsService } from '@platform/settings/settings.service';
 
 import { ArtworkService } from './artwork.service';
+import { ProductionCopiesService } from './production-copies.service';
+import { approvedProofName } from './production-copy-names';
 import { type AnnotationDto, type DielineDeliveryDto, type ProofDto } from './proofs.dto';
 
 export const PROOF_INCLUDE = {
@@ -106,6 +108,7 @@ export class ProofsService {
     private readonly files: FilesService,
     private readonly audit: AuditService,
     private readonly settings: SettingsService,
+    private readonly productionCopies: ProductionCopiesService,
   ) {}
 
   // --- reads ----------------------------------------------------------------------------------------
@@ -292,7 +295,12 @@ export class ProofsService {
       this.artwork.assertTakesArtwork(order.status, order.artworkStatus);
       const source = await tx.fileObject.findUniqueOrThrow({ where: { id: proof.proofFileId } });
       const checklist = await this.confirmedChecklist(opts, new Date());
-      const locked = await this.files.lockedCopy(tx, source);
+      // D-442: production downloads this copy — named by the order code, never the uploaded name.
+      const locked = await this.files.lockedCopy(tx, source, {
+        fileName: approvedProofName(order.orderCode, proof.versionNo, source.originalName),
+      });
+      // D-442: production may also download the customer's originals, as copies without customer identity.
+      if (proof.submissionId !== null) await this.productionCopies.request(tx, proof.submissionId);
       const context = RequestContext.current();
       const at = new Date();
       await tx.proof.update({

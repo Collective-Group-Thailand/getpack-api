@@ -3,6 +3,7 @@ import { type Readable } from 'node:stream';
 
 import { systemActor } from '@common/context/actor';
 import { bytes } from '@common/crypto/hashing';
+import { detectScrubFormat, MAX_SCRUB_BYTES, scrubMetadata } from '@common/files/metadata-scrub';
 import { PrismaService } from '@database/prisma.service';
 import { type FileObject } from '@generated/prisma/client';
 import { OBJECT_STORAGE, type ObjectStorage } from '@integrations/s3/object-storage.port';
@@ -12,6 +13,8 @@ import { AuditService } from '@platform/audit/audit.service';
 import { DomainEvents } from '@platform/domain-events/domain-events.service';
 import { ScheduledJob } from '@platform/maintenance/scheduled-job.decorator';
 import sharp from 'sharp';
+
+import { SCRUBBED_PURPOSES } from './file-purposes';
 
 const BATCH = 10;
 /** Kept in memory for scanning, image metadata and PDF page counts. */
@@ -31,8 +34,9 @@ export const THUMBNAIL_WIDTH = 640;
 const IMAGE_TYPES = new Set(['image/png', 'image/jpeg', 'image/webp', 'image/tiff']);
 
 /**
- * Worker side of uploads: SHA-256 over the whole object, malware scan, dimensions / page count,
- * a WebP thumbnail for images; abandoned pending uploads are cleaned up.
+ * Worker side of uploads: SHA-256 over the whole object, malware scan, dimensions / page count, metadata removal
+ * for files shared with customers or production (D-442), a WebP thumbnail for images; abandoned pending uploads are
+ * cleaned up.
  */
 @Injectable()
 export class FileProcessingJobs {
@@ -84,19 +88,40 @@ export class FileProcessingJobs {
       sizeBytes: Number(file.sizeBytes),
     });
     const meta = verdict === 'clean' ? await this.metadata(file, sample) : {};
+    // D-442: files shared with customers or production lose EXIF / GPS, XMP and PDF Info before anyone can read them.
+    const scrub =
+      verdict === 'clean' && file.purpose && SCRUBBED_PURPOSES.has(file.purpose)
+        ? await this.scrub(file, sample)
+        : null;
     await this.prisma.withTx(async (tx) => {
       await tx.fileObject.update({
         where: { id: file.id },
         data: {
-          sha256,
+          sha256: scrub?.kind === 'stripped' ? scrub.sha256 : sha256,
           scanStatus: verdict,
           scannedAt: verdict === 'pending' ? null : new Date(),
           ...meta,
+          ...(scrub?.kind === 'stripped' && {
+            sizeBytes: BigInt(scrub.body.length),
+            metadataStrippedAt: new Date(),
+          }),
           rowVersion: { increment: 1 },
         },
       });
       if (verdict === 'pending') return;
       const actor = systemActor('files.process');
+      if (scrub?.kind === 'failed') {
+        // Kept as uploaded (never guessed at); staff see why in the audit trail.
+        await this.audit.record(tx, {
+          category: 'security',
+          action: 'file.metadata_strip_failed',
+          outcome: 'failure',
+          actor,
+          resourceType: 'file',
+          resourcePublicId: file.publicId,
+          data: { purpose: file.purpose, reason: scrub.reason },
+        });
+      }
       if (verdict === 'infected') {
         await this.audit.record(tx, {
           category: 'security',
@@ -113,14 +138,48 @@ export class FileProcessingJobs {
           type: 'file.scanned',
           aggregateType: 'file',
           aggregateId: file.publicId,
-          payload: { fileId: file.publicId, verdict },
+          payload: { fileId: file.publicId, verdict, metadataStripped: scrub?.kind === 'stripped' },
         },
         actor,
       );
     });
     if (verdict === 'infected') await this.storage.delete(file.storageKey).catch(() => undefined);
     else if (verdict === 'clean' && IMAGE_TYPES.has(file.mimeType))
-      await this.thumbnail(file, sample).catch(() => undefined);
+      await this.thumbnail(file, scrub?.kind === 'stripped' ? scrub.body : sample).catch(() => undefined);
+  }
+
+  /**
+   * Scrubs the stored object in place (D-442): the cleaned bytes replace it before the row is marked clean, so no
+   * download ever serves the original metadata. Formats without a safe scrubber (video, SVG, DXF…) are left as they
+   * are; a scrubbable file that cannot be cleaned (encrypted, unreadable, too large) is reported, not rewritten.
+   */
+  private async scrub(
+    file: FileObject,
+    sample: Buffer,
+  ): Promise<
+    | { kind: 'stripped'; body: Buffer; sha256: Uint8Array<ArrayBuffer> }
+    | { kind: 'failed'; reason: string }
+    | { kind: 'not_applicable' }
+  > {
+    if (!detectScrubFormat(sample)) return { kind: 'not_applicable' };
+    const size = Number(file.sizeBytes);
+    if (size > MAX_SCRUB_BYTES) return { kind: 'failed', reason: 'too_large' };
+    const whole = size <= SAMPLE_BYTES ? sample : await this.readAll(file.storageKey);
+    const result = await scrubMetadata(whole);
+    if (!result.ok) return { kind: 'failed', reason: result.reason };
+    await this.storage.put(file.storageKey, result.body, file.mimeType);
+    return {
+      kind: 'stripped',
+      body: result.body,
+      sha256: bytes(createHash('sha256').update(result.body).digest()),
+    };
+  }
+
+  private async readAll(key: string): Promise<Buffer> {
+    const chunks: Buffer[] = [];
+    for await (const chunk of await this.open(key))
+      chunks.push(Buffer.isBuffer(chunk) ? chunk : Buffer.from(chunk as Uint8Array));
+    return Buffer.concat(chunks);
   }
 
   /** Pending uploads that were never completed (24 h): the object and any multipart upload go. */

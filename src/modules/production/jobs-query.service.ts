@@ -31,6 +31,32 @@ export class JobsQueryService implements OnModuleInit {
         return false;
       const scope = await this.scoping.scopeOf(actor, 'factory');
       if (scope === 'all' || scope.length === 0) return false;
+      // D-442: a production copy of a customer original is readable by the factories making its approved proof.
+      const copy = await this.prisma.artworkProductionCopy.findUnique({
+        where: { copyFileId: file.id },
+        select: {
+          submissionFile: {
+            select: {
+              submission: {
+                select: { orderId: true, proofs: { where: { status: 'approved' }, select: { publicId: true } } },
+              },
+            },
+          },
+        },
+      });
+      if (copy) {
+        const { orderId, proofs } = copy.submissionFile.submission;
+        if (proofs.length === 0) return false;
+        const live = await this.prisma.productionJob.count({
+          where: {
+            factoryId: { in: [...scope] },
+            orderId,
+            status: { notIn: ['rejected', 'cancelled'] },
+            OR: proofs.map((p) => ({ specSnapshot: { path: ['approvedProofId'], equals: p.publicId } })),
+          },
+        });
+        return live > 0;
+      }
       const n = await this.prisma.productionJob.count({
         where: {
           factoryId: { in: [...scope] },
@@ -113,13 +139,55 @@ export class JobsQueryService implements OnModuleInit {
       proofIds.length
         ? this.prisma.proof.findMany({
             where: { publicId: { in: proofIds } },
-            select: { publicId: true, versionNo: true, decidedAt: true },
+            select: {
+              publicId: true,
+              versionNo: true,
+              decidedAt: true,
+              // D-442: the customer originals behind the proof, as production copies (no customer identity).
+              submission: {
+                select: {
+                  files: {
+                    where: { productionCopy: { isNot: null } },
+                    orderBy: [{ sort: 'asc' }, { id: 'asc' }],
+                    select: {
+                      productionCopy: {
+                        select: {
+                          status: true,
+                          failureReason: true,
+                          copyFile: { select: { publicId: true, originalName: true } },
+                        },
+                      },
+                    },
+                  },
+                },
+              },
+            },
           })
         : [],
     ]);
     return {
       shipped: new Map(items.map((i) => [i.orderDestinationId, i._sum.quantity ?? 0])),
-      proofs: new Map(proofs.map((p) => [p.publicId, { versionNo: p.versionNo, decidedAt: p.decidedAt }])),
+      proofs: new Map(
+        proofs.map((p) => [
+          p.publicId,
+          {
+            versionNo: p.versionNo,
+            decidedAt: p.decidedAt,
+            originalFiles: (p.submission?.files ?? []).flatMap(({ productionCopy: copy }) =>
+              copy
+                ? [
+                    {
+                      status: copy.status,
+                      fileId: copy.copyFile?.publicId ?? null,
+                      fileName: copy.copyFile?.originalName ?? null,
+                      reason: copy.failureReason,
+                    },
+                  ]
+                : [],
+            ),
+          },
+        ]),
+      ),
     };
   }
 

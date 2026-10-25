@@ -1,5 +1,6 @@
 import { systemActor, type UserActor } from '@common/context/actor';
 import { DomainException } from '@common/errors/domain.exception';
+import { scrubMetadata } from '@common/files/metadata-scrub';
 import { PrismaService, type Tx } from '@database/prisma.service';
 import { type DesignRenderKind, type PrintSides, type Prisma } from '@generated/prisma/client';
 import {
@@ -362,7 +363,7 @@ export class StudioPrintService {
         });
       }
     }
-    const printPdf = Buffer.from(await print.save());
+    const printPdf = await withoutMetadata(await print.save());
     const thumbs = await this.engine.thumbnails(request, SNAPSHOT_PX);
     const snapshot = thumbs.png3d ?? thumbs.png2d;
     const proof = await this.proofPdf(printPdf, snapshot, doc, job.version.versionNo, outside.engineVersion);
@@ -591,8 +592,7 @@ export class StudioPrintService {
     versionNo: number,
     engineVersion: string,
   ): Promise<Buffer> {
-    const proof = await PDFDocument.create();
-    proof.setTitle(`Digital proof ${doc.publicId} v${versionNo}`);
+    const proof = await PDFDocument.create({ updateMetadata: false });
     const font = await proof.embedFont(StandardFonts.Helvetica);
     const cover = proof.addPage([595.28, 841.89]);
     const image = await proof.embedPng(new Uint8Array(snapshot));
@@ -613,7 +613,7 @@ export class StudioPrintService {
       (await PDFDocument.load(printPdf)).getPageIndices(),
     );
     pages.forEach((p) => proof.addPage(p));
-    return Buffer.from(await proof.save());
+    return withoutMetadata(await proof.save());
   }
 
   private async event(
@@ -629,4 +629,11 @@ export class StudioPrintService {
       actor,
     );
   }
+}
+
+/** D-442: generated PDFs carry no Title / Author / Creator / Producer / XMP (GLOBAL-RULES §1). */
+async function withoutMetadata(pdf: Uint8Array): Promise<Buffer> {
+  const scrubbed = await scrubMetadata(Buffer.from(pdf));
+  if (!scrubbed.ok) throw new Error(`print PDF metadata scrub failed: ${scrubbed.reason}`);
+  return scrubbed.body;
 }

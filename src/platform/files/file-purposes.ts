@@ -78,6 +78,21 @@ export const FILE_PURPOSES = {
 } as const satisfies Record<string, FilePurposeRule>;
 
 export type FilePurpose = keyof typeof FILE_PURPOSES;
+
+/**
+ * D-442 (GLOBAL-RULES §1): uploads shared with customers or production whose identifying metadata (EXIF / GPS, XMP,
+ * PDF Info) the worker removes before the file can be downloaded — QC / milestone / POD / claim photos and reports,
+ * proofs, published images, avatars, dielines. Customer originals (`artwork`, `design_asset`) are kept as uploaded
+ * (production gets a scrubbed copy, `artwork_production_copies`); financial records (`slip`, `document`,
+ * `brand_mark`, `signature`) and imports are never rewritten.
+ */
+export const SCRUBBED_PURPOSES: ReadonlySet<string> = new Set<FilePurpose>([
+  'evidence',
+  'proof',
+  'image',
+  'avatar',
+  'dieline',
+]);
 export const FILE_PURPOSE_KEYS = Object.keys(FILE_PURPOSES) as FilePurpose[];
 
 /** Above this size uploads go multipart (S3 limit for one PUT is 5 GiB; big files resume better). */
