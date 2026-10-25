@@ -60,8 +60,67 @@ API-CHANGES: `docs/design/business-redesign/API-CHANGES.md` · Plan: `docs/desig
 ### 124 vs 125 migrations
 `prisma/migrations` holds 124 migration folders plus `migration_lock.toml`; a plain directory count gives 125.
 
+### Open questions — answered by the user
+1. Staff wording and factory/capacity-named codes on store responses → rename now, as part of A2.
+2. `agents.lead_existing_factory` → replace with one neutral refusal (done in A2).
+3. Contact reference → keep `CS-YYMM-NNNNN`; store the topic as a separate field (done in A2).
+4. Unused `trust.*` setting rows in UAT → leave them. **Follow-up for business Phase 4:** remove them.
+
+---
+
+## A2 — account · Phase 0 (+ A1 answers 1–3) — PASS
+
+Commits (made and pushed by the subagent): `d8a10792` fix(store): one customer order status, overdue re-quote,
+artwork owner (D-436..D-439) · `cb91413e` merge of `origin/fix/uat-phase0` (brought in `DECISIONS-STAGE-A.md`) ·
+`3aa9365d` fix(store)!: customer words only on store responses; neutral agent refusal; ticket topic (D-440) ·
+`f2f00666` test(e2e): store status words are the customer's (D-440).
+
+Gate: lint ✔ · typecheck ✔ · unit 168 suites / 1229 tests ✔ · contract test 8/8 ✔ · diff scan clean ✔ ·
+`prisma migrate status`: 125 migrations, up to date.
+
+### What changed
+- **One customer status** (D-436): every order carries `customerStatus` (Thai/English label) and `actionOwner`,
+  derived server-side from payment, artwork, production, shipping, receipt and open claims. Delivered + open claim
+  reads "ได้รับแล้ว · เคลมกำลังตรวจ": open claims listed, no auto-complete date, no "ยืนยันรับของ", no "หมดเวลาแจ้งเคลม".
+  Unit test per transition.
+- **Overdue payment: re-quote, never auto-cancel** (GLOBAL-RULES §6): job `orders.expire_unpaid` removed; overdue
+  groups flagged (`paymentOverdue`, `payment.overdue`, `overdue` on the overview pay item); paying an overdue group →
+  `409 order.requote_required`. New `POST /v1/store/order-groups/{id}/actions/requote` (reprices through the pricing
+  service at today's price/lead time, shows the difference) and `.../actions/confirm-requote` (`Idempotency-Key` +
+  expected total; sets a new deadline). No long-stop/archive rule (default off).
+- **Artwork status split** (GLOBAL-RULES §6): `awaiting_template` = "รอทีมส่งแบบไดคัทให้" (team),
+  `awaiting_upload` = "รอไฟล์จากคุณ" (customer); `artworkOwner` on orders; "ส่งไฟล์งาน" only while the customer owns
+  the step. Migration `20261214000001_account_artwork_owner_split` (with `down.sql`; deploy → down → up tested).
+- **Display data**: order `payment` has this order's share and the group total; unpaid orders
+  `deliveryDateBasis = after_payment`; tier progress `spendBasisTh` + `spendNotYetCounted`; overview designs carry
+  `thumbnailUrl`; production step "โรงงานรับงานแล้ว" → "รับงานเข้าผลิตแล้ว" (also in recorded timeline entries).
+- Item 6 (error state): no API change — errors already carry `requestId` and `Retry-After`. Item 7: web only.
+- **Customer words only on store responses** (D-440, A1 answer 1): an interceptor rewrites every `/v1/store/*`
+  response — `*LabelAdminTh` fields carry customer words; `ClaimStatus.factory_review` → `under_review`,
+  `ClaimOwner.factory` → `getpack`, `CallOffStatus.pending_factory` → `pending_confirmation`,
+  `QuotePathReason.no_active_factory` and `QuoteNoPriceReason.capacity_unavailable` → `not_instant`;
+  `ClaimAction.factory_deduction` never reaches customers. New store-only enums `StoreClaimStatus`,
+  `StoreClaimOwner`, `StoreClaimAction`, `StoreCallOffStatus`, `StoreQuotePathReason`, `StoreQuoteNoPriceReason`.
+  `/v1/store/status-labels` gives customer words only; staff use new `GET /v1/admin/status-labels`
+  (`admin.statusLabels.list`). Contract test extended to enum values, store examples and error codes.
+- **Agents** (A1 answer 2): `agents.lead_existing_factory` → `409 agents.lead_unavailable` (no reason given).
+- **Contact reference** (A1 answer 3): `CS-YYMM-NNNNN` kept; topic already had its own column, now returned as
+  `SupportTicketDto.topic` (no migration). Noted in `docs/design/business-redesign/API-CHANGES.md` §8.
+- Breaking for the web: regenerate the API client.
+
+API-CHANGES: `docs/design/account-redesign/API-CHANGES.md` (§9 lists every renamed code and label) ·
+decisions D-436–D-440 in `docs/decisions.md`.
+
+### Tests to run locally (Docker)
+`pnpm test:e2e` (full; the subagent ran it once against a local PostgreSQL 16 database: all suites passed on a fresh
+database) and `pnpm test:int`, both on PostgreSQL 18.
+
 ### Open questions
-1. Replace staff wording and factory-named codes on store responses now (breaking for web), or together with A2?
-2. One neutral refusal for agents instead of `agents.lead_existing_factory`?
-3. Contact reference format: pack asks `CT-YYYY-#####`, tickets today are `CS-YYMM-NNNNN`. Which one?
-4. Remove the unused `trust.*` setting rows in UAT with a data migration, or leave them?
+1. Own-file customers cannot upload until the team sends a dieline (drawing engine off or `templateAvailability =
+   none` leaves the order on "รอทีมส่งแบบไดคัทให้"). Allow a customer with a print-ready file to upload straight away?
+2. Hired design also reads "รอทีมส่งแบบไดคัทให้" — the owner is right, the words are not. Add a status value?
+3. Orders with discounts, points or coupons get `order.requote_unavailable` (the team re-quotes). Accept, or carry
+   discounts over?
+4. No overdue notice replaces the old "order cancelled" e-mail. Add a one-time "เลยกำหนดชำระ — ตรวจราคาใหม่และชำระ"?
+5. Confirm-receipt with an open claim is hidden but still accepted by the endpoint. Refuse it server-side too?
+6. Tier wording: the API states the real rule ("completed orders"), not the pack's "นับยอดเมื่อได้รับของแล้ว". Confirm.
